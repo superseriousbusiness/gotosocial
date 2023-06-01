@@ -3104,6 +3104,38 @@ paths:
             summary: Delete your account.
             tags:
                 - accounts
+    /api/v1/accounts/lookup:
+        get:
+            operationId: accountLookupGet
+            parameters:
+                - description: The username or Webfinger address to lookup.
+                  in: query
+                  name: acct
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Result of the lookup.
+                    schema:
+                        $ref: '#/definitions/account'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Quickly lookup a username to see if it is available, skipping WebFinger resolution.
+            tags:
+                - accounts
     /api/v1/accounts/relationships:
         get:
             operationId: accountRelationships
@@ -3138,6 +3170,68 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: See your account's relationships with the given account IDs.
+            tags:
+                - accounts
+    /api/v1/accounts/search:
+        get:
+            operationId: accountSearchGet
+            parameters:
+                - default: 40
+                  description: Number of results to try to return.
+                  in: query
+                  maximum: 80
+                  minimum: 1
+                  name: limit
+                  type: integer
+                - default: 0
+                  description: Page number of results to return (starts at 0). This parameter is currently not used, offsets over 0 will always return 0 results.
+                  in: query
+                  maximum: 10
+                  minimum: 0
+                  name: offset
+                  type: integer
+                - description: |-
+                    Query string to search for. This can be in the following forms:
+                    - `@[username]` -- search for an account with the given username on any domain. Can return multiple results.
+                    - `@[username]@[domain]` -- search for a remote account with exact username and domain. Will only ever return 1 result at most.
+                    - any arbitrary string -- search for accounts containing the given string in their username or display name. Can return multiple results.
+                  in: query
+                  name: q
+                  required: true
+                  type: string
+                - default: false
+                  description: If query is for `@[username]@[domain]`, or a URL, allow the GoToSocial instance to resolve the search by making calls to remote instances (webfinger, ActivityPub, etc).
+                  in: query
+                  name: resolve
+                  type: boolean
+                - default: false
+                  description: Show only accounts that the requesting account follows. If this is set to `true`, then the GoToSocial instance will enhance the search by also searching within account notes, not just in usernames and display names.
+                  in: query
+                  name: following
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Results of the search.
+                    schema:
+                        items:
+                            $ref: '#/definitions/account'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Search for accounts by username and/or display name.
             tags:
                 - accounts
     /api/v1/accounts/update_credentials:

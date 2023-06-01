@@ -44,7 +44,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeletePOSTHandler() {
 	}
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, accounts.DeleteAccountPath, w.FormDataContentType())
+	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, accounts.DeletePath, w.FormDataContentType())
 
 	// call the handler
 	suite.accountsModule.AccountDeletePOSTHandler(ctx)
@@ -66,7 +66,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeletePOSTHandlerWrongPassword()
 	}
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, accounts.DeleteAccountPath, w.FormDataContentType())
+	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, accounts.DeletePath, w.FormDataContentType())
 
 	// call the handler
 	suite.accountsModule.AccountDeletePOSTHandler(ctx)
@@ -86,7 +86,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeletePOSTHandlerNoPassword() {
 	}
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, accounts.DeleteAccountPath, w.FormDataContentType())
+	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, accounts.DeletePath, w.FormDataContentType())
 
 	// call the handler
 	suite.accountsModule.AccountDeletePOSTHandler(ctx)

@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/mail"
 	"net/url"
 	"strings"
 
@@ -111,7 +110,7 @@ func (p *Processor) Get(
 	// supply an offset greater than 0, return nothing as
 	// though there were no additional results.
 	if req.Offset > 0 {
-		return p.packageSearchResponse(ctx, account, nil, nil)
+		return p.packageSearchResult(ctx, account, nil, nil)
 	}
 
 	var (
@@ -123,8 +122,20 @@ func (p *Processor) Get(
 		err           error
 	)
 
-	// Check if the query is something like '@whatever_user' or '@whatever_user@somewhere.com'.
-	keepLooking, err = p.searchByNamestring(ctx, account, query, resolve, appendAccount)
+	// Check if the query is something like
+	// '@someone' or '@someone@somewhere.com'.
+	keepLooking, err = p.accountsByNamestring(
+		ctx,
+		account,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		resolve,
+		following,
+		appendAccount,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("error searching by namestring: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -132,7 +143,7 @@ func (p *Processor) Get(
 
 	if !keepLooking {
 		// Return whatever we have.
-		return p.packageSearchResponse(
+		return p.packageSearchResult(
 			ctx,
 			account,
 			foundAccounts,
@@ -142,7 +153,7 @@ func (p *Processor) Get(
 
 	// Check if the query is a URI with a recognizable
 	// scheme and use it to look for accounts or statuses.
-	keepLooking, err = p.searchByURI(
+	keepLooking, err = p.byURI(
 		ctx,
 		account,
 		query,
@@ -158,7 +169,7 @@ func (p *Processor) Get(
 
 	if !keepLooking {
 		// Return whatever we have.
-		return p.packageSearchResponse(
+		return p.packageSearchResult(
 			ctx,
 			account,
 			foundAccounts,
@@ -168,7 +179,7 @@ func (p *Processor) Get(
 
 	// As a last resort, search for accounts and
 	// statuses using the query as arbitrary text.
-	if err := p.searchByText(
+	if err := p.byText(
 		ctx,
 		account,
 		maxID,
@@ -187,7 +198,7 @@ func (p *Processor) Get(
 
 	// Return whatever we ended
 	// up with (could be nothing).
-	return p.packageSearchResponse(
+	return p.packageSearchResult(
 		ctx,
 		account,
 		foundAccounts,
@@ -195,40 +206,25 @@ func (p *Processor) Get(
 	)
 }
 
-func (p *Processor) searchByNamestring(
+// accountsByNamestring searches for accounts using the
+// provided namestring query. If domain is not set in
+// the namestring, it may return more than one result
+// by doing a text search in the database for accounts
+// matching the query. Otherwise, it tries to return an
+// exact match.
+func (p *Processor) accountsByNamestring(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
+	maxID string,
+	minID string,
+	limit int,
+	offset int,
 	query string,
 	resolve bool,
+	following bool,
 	appendAccount func(*gtsmodel.Account),
 ) (bool, error) {
-	if !strings.Contains(query, "@") {
-		// If there's no '@' in the query at all, we know
-		// for sure that it can't be a namestring. Caller
-		// should keep looking with another search method.
-		return true, nil
-	}
-
-	if query[0] != '@' {
-		// There's an '@' somewhere in the query, but it's
-		// not the first character, so likely this is a
-		// slightly malformed namestring which looks like
-		// an email address (eg., someone@example.org).
-		if _, err := mail.ParseAddress(query); err != nil {
-			// If we can't parse this is as an email address,
-			// there's not much we can do. No need to return
-			// error though; caller should just keep looking
-			// with another search method.
-			return true, nil //nolint:nilerr
-		}
-
-		// Normalize query by just prepending '@'; we'll
-		// end up with something like @someone@example.org
-		query = "@" + query
-	}
-
-	// See if we ended up with something that looks
-	// like @test_user or @test_user@example.org.
+	// See if we have something that looks like a namestring.
 	username, domain, err := util.ExtractNamestringParts(query)
 	if err != nil {
 		// No need to return error; just not a namestring
@@ -237,24 +233,30 @@ func (p *Processor) searchByNamestring(
 		return true, nil //nolint:nilerr
 	}
 
-	// Domain may be empty, which is fine, but
-	// don't search for an empty domain block.
-	if domain != "" {
-		blocked, err := p.state.DB.IsDomainBlocked(ctx, domain)
-		if err != nil {
-			err = gtserror.Newf("error checking domain block: %w", err)
-			return false, gtserror.NewErrorInternalError(err)
-		}
-
-		if blocked {
-			// Don't search for blocked domains.
-			// Caller should stop looking.
-			return false, nil
-		}
+	if domain == "" {
+		// No error, but no domain set. That means the query
+		// looked like '@someone' which is not an exact search.
+		// Try to search for any accounts that match the query
+		// string, and let the caller know they should stop.
+		return false, p.accountsByText(
+			ctx,
+			requestingAccount.ID,
+			maxID,
+			minID,
+			limit,
+			offset,
+			// OK to assume username is set now. Use
+			// it instead of query to omit leading '@'.
+			username,
+			following,
+			appendAccount,
+		)
 	}
 
-	// Check if username + domain points to an account.
-	foundAccount, err := p.searchAccountByUsernameDomain(
+	// No error, and domain and username were both set.
+	// Caller is likely trying to search for an exact
+	// match, from either a remote instance or local.
+	foundAccount, err := p.accountByUsernameDomain(
 		ctx,
 		requestingAccount,
 		username,
@@ -274,29 +276,51 @@ func (p *Processor) searchByNamestring(
 			return false, gtserror.NewErrorInternalError(err)
 		}
 	} else {
-		appendAccount(foundAccount) // Hit!
+		appendAccount(foundAccount)
 	}
 
-	// Regardless of whether we have a hit, return false
-	// to indicate caller should stop looking; namestrings
-	// are a pretty specific format so it's unlikely the
-	// caller was looking for something other than an account.
+	// Regardless of whether we have a hit at this point,
+	// return false to indicate caller should stop looking;
+	// namestrings are a very specific format so it's unlikely
+	// the caller was looking for something other than an account.
 	return false, nil
 }
 
-// searchAccountByUsernameDomain looks for one account with the given
+// accountByUsernameDomain looks for one account with the given
 // username and domain. If domain is empty, or equal to our domain,
 // search will be confined to local accounts.
 //
 // Will return either a hit, an ErrNotRetrievable, an ErrWrongType,
 // or a real error that the caller should handle.
-func (p *Processor) searchAccountByUsernameDomain(
+func (p *Processor) accountByUsernameDomain(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	username string,
 	domain string,
 	resolve bool,
 ) (*gtsmodel.Account, error) {
+	var usernameDomain string
+	if domain == "" || domain == config.GetHost() || domain == config.GetAccountDomain() {
+		// Local lookup, normalize domain.
+		domain = ""
+		usernameDomain = username
+	} else {
+		// Remote lookup.
+		usernameDomain = username + "@" + domain
+
+		// Ensure domain not blocked.
+		blocked, err := p.state.DB.IsDomainBlocked(ctx, domain)
+		if err != nil {
+			err = gtserror.Newf("error checking domain block: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		if blocked {
+			// Don't search on blocked domain.
+			return nil, dereferencing.NewErrNotRetrievable(err)
+		}
+	}
+
 	if resolve {
 		// We're allowed to resolve, leave the
 		// rest up to the dereferencer functions.
@@ -309,18 +333,8 @@ func (p *Processor) searchAccountByUsernameDomain(
 		return account, err
 	}
 
-	// We're not allowed to resolve; search database only.
-	var usernameDomain string
-	if domain == "" || domain == config.GetHost() || domain == config.GetAccountDomain() {
-		// Local lookup, normalize domain.
-		domain = ""
-		usernameDomain = username
-	} else {
-		// Remote lookup.
-		usernameDomain = username + "@" + domain
-	}
-
-	// Search the database for existing account with USERNAME@DOMAIN
+	// We're not allowed to resolve. Search the database
+	// for existing account with given username + domain.
 	account, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("error checking database for account %s: %w", usernameDomain, err)
@@ -336,7 +350,7 @@ func (p *Processor) searchAccountByUsernameDomain(
 	return nil, dereferencing.NewErrNotRetrievable(err)
 }
 
-// searchByURI looks for account(s) or a status with the given URI
+// byURI looks for account(s) or a status with the given URI
 // set as either its URL or ActivityPub URI. If it gets hits, it
 // will call the provided append functions to return results.
 //
@@ -344,7 +358,7 @@ func (p *Processor) searchAccountByUsernameDomain(
 // search should continue (true) or stop (false). False will be
 // returned in cases where a hit has been found, the domain of the
 // searched URI is blocked, or an unrecoverable error has occurred.
-func (p *Processor) searchByURI(
+func (p *Processor) byURI(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	query string,
@@ -383,7 +397,7 @@ func (p *Processor) searchByURI(
 
 	if queryType == queryTypeAny || queryType == queryTypeAccounts {
 		// Check if URI points to an account.
-		foundAccount, err := p.searchAccountByURI(ctx, requestingAccount, uri, resolve)
+		foundAccount, err := p.accountByURI(ctx, requestingAccount, uri, resolve)
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
@@ -407,7 +421,7 @@ func (p *Processor) searchByURI(
 
 	if queryType == queryTypeAny || queryType == queryTypeStatuses {
 		// Check if URI points to a status.
-		foundStatus, err := p.searchStatusByURI(ctx, requestingAccount, uri, resolve)
+		foundStatus, err := p.statusByURI(ctx, requestingAccount, uri, resolve)
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
@@ -434,10 +448,14 @@ func (p *Processor) searchByURI(
 	return false, nil
 }
 
-// searchAccountByURI looks for one account with the given URI.
-// Will return either a hit, an ErrNotRetrievable, an ErrWrongType,
+// accountByURI looks for one account with the given URI.
+// If resolve is false, it will only look in the database.
+// If resolve is true, it will try to resolve the account
+// from remote using the URI, if necessary.
+//
+// Will return either a hit, ErrNotRetrievable, ErrWrongType,
 // or a real error that the caller should handle.
-func (p *Processor) searchAccountByURI(
+func (p *Processor) accountByURI(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	uri *url.URL,
@@ -456,7 +474,7 @@ func (p *Processor) searchAccountByURI(
 	}
 
 	// We're not allowed to resolve; search database only.
-	uriStr := uri.String()
+	uriStr := uri.String() // stringify uri just once
 
 	// Search by ActivityPub URI.
 	account, err := p.state.DB.GetAccountByURI(ctx, uriStr)
@@ -486,10 +504,14 @@ func (p *Processor) searchAccountByURI(
 	return nil, dereferencing.NewErrNotRetrievable(err)
 }
 
-// searchStatusByURI looks for one status with the given URI.
-// Will return either a hit, an ErrNotRetrievable, an ErrWrongType,
+// statusByURI looks for one status with the given URI.
+// If resolve is false, it will only look in the database.
+// If resolve is true, it will try to resolve the status
+// from remote using the URI, if necessary.
+//
+// Will return either a hit, ErrNotRetrievable, ErrWrongType,
 // or a real error that the caller should handle.
-func (p *Processor) searchStatusByURI(
+func (p *Processor) statusByURI(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	uri *url.URL,
@@ -508,7 +530,7 @@ func (p *Processor) searchStatusByURI(
 	}
 
 	// We're not allowed to resolve; search database only.
-	uriStr := uri.String()
+	uriStr := uri.String() // stringify uri just once
 
 	// Search by ActivityPub URI.
 	status, err := p.state.DB.GetStatusByURI(ctx, uriStr)
@@ -538,7 +560,14 @@ func (p *Processor) searchStatusByURI(
 	return nil, dereferencing.NewErrNotRetrievable(err)
 }
 
-func (p *Processor) searchByText(
+// byText searches in the database for accounts and/or
+// statuses containing the given query string, using
+// the provided parameters.
+//
+// If queryType is any (empty string), both accounts
+// and statuses will be searched, else only the given
+// queryType of item will be returned.
+func (p *Processor) byText(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	maxID string,
@@ -561,59 +590,89 @@ func (p *Processor) searchByText(
 
 	if queryType == queryTypeAny || queryType == queryTypeAccounts {
 		// Search for accounts using the given text.
-		accounts, err := p.state.DB.SearchForAccounts(
-			ctx,
+		if err := p.accountsByText(ctx,
 			requestingAccount.ID,
-			query, maxID, minID, limit, following, offset)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return gtserror.Newf("error checking database for accounts using text %s: %w", query, err)
-		}
-
-		for _, account := range accounts {
-			appendAccount(account)
+			maxID,
+			minID,
+			limit,
+			offset,
+			query,
+			following,
+			appendAccount,
+		); err != nil {
+			return err
 		}
 	}
 
 	if queryType == queryTypeAny || queryType == queryTypeStatuses {
 		// Search for statuses using the given text.
-		statuses, err := p.state.DB.SearchForStatuses(
-			ctx,
+		if err := p.statusesByText(ctx,
 			requestingAccount.ID,
-			query, maxID, minID, limit, offset)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return gtserror.Newf("error checking database for statuses using text %s: %w", query, err)
-		}
-
-		for _, status := range statuses {
-			appendStatus(status)
+			maxID,
+			minID,
+			limit,
+			offset,
+			query,
+			appendStatus,
+		); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// packageSearchResponse wraps up the given accounts
-// and statuses into an apimodel SearchResult that
-// can be serialized to an API caller as JSON.
-func (p *Processor) packageSearchResponse(
+// accountsByText searches in the database for limit
+// number of accounts using the given query text.
+func (p *Processor) accountsByText(
 	ctx context.Context,
-	requestingAccount *gtsmodel.Account,
-	accounts []*gtsmodel.Account,
-	statuses []*gtsmodel.Status,
-) (*apimodel.SearchResult, gtserror.WithCode) {
-	apiAccounts, errWithCode := p.packageAccounts(ctx, requestingAccount, accounts)
-	if errWithCode != nil {
-		return nil, errWithCode
+	requestingAccountID string,
+	maxID string,
+	minID string,
+	limit int,
+	offset int,
+	query string,
+	following bool,
+	appendAccount func(*gtsmodel.Account),
+) error {
+	accounts, err := p.state.DB.SearchForAccounts(
+		ctx,
+		requestingAccountID,
+		query, maxID, minID, limit, following, offset)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("error checking database for accounts using text %s: %w", query, err)
 	}
 
-	apiStatuses, errWithCode := p.packageStatuses(ctx, requestingAccount, statuses)
-	if errWithCode != nil {
-		return nil, errWithCode
+	for _, account := range accounts {
+		appendAccount(account)
 	}
 
-	return &apimodel.SearchResult{
-		Accounts: apiAccounts,
-		Statuses: apiStatuses,
-		Hashtags: make([]*apimodel.Tag, 0),
-	}, nil
+	return nil
+}
+
+// statusesByText searches in the database for limit
+// number of statuses using the given query text.
+func (p *Processor) statusesByText(
+	ctx context.Context,
+	requestingAccountID string,
+	maxID string,
+	minID string,
+	limit int,
+	offset int,
+	query string,
+	appendStatus func(*gtsmodel.Status),
+) error {
+	statuses, err := p.state.DB.SearchForStatuses(
+		ctx,
+		requestingAccountID,
+		query, maxID, minID, limit, offset)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("error checking database for statuses using text %s: %w", query, err)
+	}
+
+	for _, status := range statuses {
+		appendStatus(status)
+	}
+
+	return nil
 }

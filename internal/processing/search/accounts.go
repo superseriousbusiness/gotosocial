@@ -1,3 +1,20 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package search
 
 import (
@@ -6,17 +23,24 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *Processor) SearchAccounts(
+// Accounts does a partial search for accounts that
+// match the given query. It expects input that looks
+// like a namestring, and will normalize plaintext to look
+// more like a namestring. For queries that include domain,
+// it will only return one match at most. For namestrings
+// that exclude domain, multiple matches may be returned.
+//
+// This behavior aligns more or less with Mastodon's API.
+// See https://docs.joinmastodon.org/methods/accounts/#search.
+func (p *Processor) Accounts(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	query string,
@@ -37,6 +61,13 @@ func (p *Processor) SearchAccounts(
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
+	// Be nice and normalize query by prepending '@'.
+	// This will make it easier for accountsByNamestring
+	// to pick this up as a valid namestring.
+	if query[0] != '@' {
+		query = "@" + query
+	}
+
 	log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
@@ -49,80 +80,31 @@ func (p *Processor) SearchAccounts(
 		Debugf("beginning search")
 
 	// todo: Currently we don't support offset for paging;
-	// if they supply an offset greater than 0, return nothing
-	// as though there were no additional results.
+	// if caller supplied an offset greater than 0, return
+	// nothing as though there were no additional results.
 	if offset > 0 {
 		return p.packageAccounts(ctx, requestingAccount, foundAccounts)
 	}
 
-	// See if the caller supplied a namestring. If they did,
-	// we can either look it up locally or try to resolve it.
-	username, domain, _ := util.ExtractNamestringParts(query)
-	switch {
-
-	case domain != "":
-		// Namestring with a defined domain; ensure not blocked.
-		blocked, err := p.state.DB.IsDomainBlocked(ctx, domain)
-		if err != nil {
-			err = gtserror.Newf("error checking domain block: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		if blocked {
-			// Don't search for blocked domains.
-			return p.packageAccounts(ctx, requestingAccount, foundAccounts)
-		}
-
-		// If domain was defined, username must be
-		// as well, so we can safely fall through.
-		fallthrough
-
-	case username != "":
-		// Check if username (+ domain) points to
-		// an account; resolve if we're allowed.
-		foundAccount, err := p.searchAccountByUsernameDomain(
-			ctx,
-			requestingAccount,
-			username,
-			domain,
-			resolve,
-		)
-		if err != nil {
-			// Check for semi-expected error types.
-			// On one of these, we can continue.
-			var (
-				errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
-				errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't an account.
-			)
-
-			if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
-				err = gtserror.Newf("error looking up %s as account: %w", query, err)
-				return nil, gtserror.NewErrorInternalError(err)
-			}
-		} else {
-			appendAccount(foundAccount)
-		}
-
-	default:
-		// Not a namestring. Do a text
-		// search for accounts instead.
-		if err := p.searchByText(
-			ctx,
-			requestingAccount,
-			id.Highest,
-			id.Lowest,
-			limit,
-			offset,
-			query,
-			queryTypeAccounts,
-			following,
-			appendAccount,
-			nil,
-		); err != nil {
-			err = gtserror.Newf("error searching by text: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	// Return all accounts we can find that match the
+	// provided query. If it's not a namestring, this
+	// won't return an error, it'll just return 0 results.
+	if _, err := p.accountsByNamestring(
+		ctx,
+		requestingAccount,
+		id.Highest,
+		id.Lowest,
+		limit,
+		offset,
+		query,
+		resolve,
+		following,
+		appendAccount,
+	); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = gtserror.Newf("error searching by namestring: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Return whatever we got (if anything).
 	return p.packageAccounts(ctx, requestingAccount, foundAccounts)
 }

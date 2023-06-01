@@ -36,6 +36,7 @@ const (
 
 	SearchExcludeUnreviewedKey = "exclude_unreviewed"
 	SearchFollowingKey         = "following"
+	SearchLookupKey            = "acct"
 	SearchOffsetKey            = "offset"
 	SearchQueryKey             = "q"
 	SearchResolveKey           = "resolve"
@@ -163,6 +164,16 @@ func ParseSearchResolve(value string, defaultValue bool) (bool, gtserror.WithCod
 /*
 	Parse functions for *REQUIRED* parameters.
 */
+
+func ParseSearchLookup(value string) (string, gtserror.WithCode) {
+	key := SearchLookupKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	return value, nil
+}
 
 func ParseSearchQuery(value string) (string, gtserror.WithCode) {
 	key := SearchQueryKey
