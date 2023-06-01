@@ -734,7 +734,7 @@ func (d *Decoder) kStruct(f *codecFnInfo, rv reflect.Value) {
 
 		// iterate all the items in the stream
 		// if mapped elem-wise to a field, handle it
-		// if more stream items than cap be mapped, error it
+		// if more stream items than can be mapped, error it
 		for j := 0; d.containerNext(j, containerLen, hasLen); j++ {
 			d.arrayElem()
 			if j < len(tisfi) {
