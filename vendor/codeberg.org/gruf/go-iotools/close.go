@@ -17,6 +17,14 @@ func CloserCallback(c io.Closer, cb func()) io.Closer {
 	})
 }
 
+func CloserAfterCallback(c io.Closer, cb func()) io.Closer {
+	return CloserFunc(func() (err error) {
+		defer func() { err = c.Close() }()
+		cb()
+		return
+	})
+}
+
 // CloseOnce wraps an io.Closer to ensure it only performs the close logic once.
 func CloseOnce(c io.Closer) io.Closer {
 	return CloserFunc(func() error {
