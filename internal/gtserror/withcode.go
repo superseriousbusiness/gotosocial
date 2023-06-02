@@ -29,7 +29,10 @@ import (
 // A typical use of this error would be to first log the Original error, then return
 // the Safe error and the StatusCode to an API caller.
 type WithCode interface {
-	// Error returns the original internal error for debugging within the GoToSocial logs.
+	// Original returns the original error.
+	// This should *NEVER* be returned to a client as it may contain sensitive information.
+	Original() error
+	// Error serializes the original internal error for debugging within the GoToSocial logs.
 	// This should *NEVER* be returned to a client as it may contain sensitive information.
 	Error() string
 	// Safe returns the API-safe version of the error for serialization towards a client.
@@ -43,6 +46,10 @@ type withCode struct {
 	original error
 	safe     error
 	code     int
+}
+
+func (e withCode) Original() error {
+	return e.original
 }
 
 func (e withCode) Error() string {
@@ -171,5 +178,16 @@ func NewErrorGone(original error, helpText ...string) WithCode {
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusGone,
+	}
+}
+
+// NewErrorClientClosedRequest returns an ErrorWithCode 499 with the given original error.
+// This error type should only be used when an http caller has already hung up their request.
+// See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx
+func NewErrorClientClosedRequest(original error) WithCode {
+	return withCode{
+		original: original,
+		safe:     errors.New("Client Closed Request"),
+		code:     499,
 	}
 }
