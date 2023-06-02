@@ -23,15 +23,20 @@ import (
 	"strings"
 )
 
+const (
+	StatusClientClosedRequest     = 499
+	StatusTextClientClosedRequest = "Client Closed Request"
+)
+
 // WithCode wraps an internal error with an http code, and a 'safe' version of
 // the error that can be served to clients without revealing internal business logic.
 //
 // A typical use of this error would be to first log the Original error, then return
 // the Safe error and the StatusCode to an API caller.
 type WithCode interface {
-	// Original returns the original error.
+	// Unwrap returns the original error.
 	// This should *NEVER* be returned to a client as it may contain sensitive information.
-	Original() error
+	Unwrap() error
 	// Error serializes the original internal error for debugging within the GoToSocial logs.
 	// This should *NEVER* be returned to a client as it may contain sensitive information.
 	Error() string
@@ -48,7 +53,7 @@ type withCode struct {
 	code     int
 }
 
-func (e withCode) Original() error {
+func (e withCode) Unwrap() error {
 	return e.original
 }
 
@@ -187,7 +192,7 @@ func NewErrorGone(original error, helpText ...string) WithCode {
 func NewErrorClientClosedRequest(original error) WithCode {
 	return withCode{
 		original: original,
-		safe:     errors.New("Client Closed Request"),
-		code:     499,
+		safe:     errors.New(StatusTextClientClosedRequest),
+		code:     StatusClientClosedRequest,
 	}
 }

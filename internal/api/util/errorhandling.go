@@ -109,7 +109,7 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 		// Requester probably left already. Wrap original error
 		// with a less alarming one. We can return early here
 		// because it doesn't matter what we send to the client.
-		errWithCode = gtserror.NewErrorClientClosedRequest(errWithCode.Original())
+		errWithCode = gtserror.NewErrorClientClosedRequest(errWithCode.Unwrap())
 		c.AbortWithStatus(errWithCode.Code())
 		return
 	}

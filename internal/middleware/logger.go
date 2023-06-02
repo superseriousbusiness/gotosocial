@@ -27,6 +27,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -91,11 +92,23 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 				l = l.WithField("error", c.Errors)
 			}
 
+			// Get appropriate text for this code.
+			statusText := http.StatusText(code)
+			if statusText == "" {
+				// Look for custom codes.
+				switch code {
+				case gtserror.StatusClientClosedRequest:
+					statusText = gtserror.StatusTextClientClosedRequest
+				default:
+					statusText = "Unknown Status"
+				}
+			}
+
 			// Generate a nicer looking bytecount
 			size := bytesize.Size(c.Writer.Size())
 
-			// Finally, write log entry with status text body size
-			l.Logf(lvl, "%s: wrote %s", http.StatusText(code), size)
+			// Finally, write log entry with status text + body size.
+			l.Logf(lvl, "%s: wrote %s", statusText, size)
 		}()
 
 		// Process request
