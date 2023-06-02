@@ -229,23 +229,24 @@ stackLoop:
 
 				// Start off the item iterator
 				current.itemIter = items.Begin()
-				if current.itemIter == nil {
-					continue stackLoop
-				}
-			} else {
-				// Get next item iterator object
-				current.itemIter = current.itemIter.Next()
 			}
 
 		itemLoop:
 			for {
+				// Check for remaining iter
 				if current.itemIter == nil {
 					break itemLoop
 				}
 
-				itemIRI, _ := pub.ToId(current.itemIter)
+				// Get current item iterator
+				itemIter := current.itemIter
+
+				// Set the next available iterator
+				current.itemIter = itemIter.Next()
+
+				// Check for available IRI on item
+				itemIRI, _ := pub.ToId(itemIter)
 				if itemIRI == nil {
-					// Unusable iter object
 					continue itemLoop
 				}
 
