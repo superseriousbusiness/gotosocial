@@ -104,7 +104,8 @@ func (a *Account) IsInstance() bool {
 	return a.Username == a.Domain ||
 		a.FollowersURI == "" ||
 		a.FollowingURI == "" ||
-		(a.Username == "internal.fetch" && strings.Contains(a.Note, "internal service actor"))
+		(a.Username == "internal.fetch" && strings.Contains(a.Note, "internal service actor")) ||
+		a.Username == "instance.actor" // <- misskey
 }
 
 // EmojisPopulated returns whether emojis are populated according to current EmojiIDs.
