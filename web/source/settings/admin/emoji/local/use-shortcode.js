@@ -24,7 +24,7 @@ const React = require("react");
 const query = require("../../../lib/query");
 const { useTextInput } = require("../../../lib/form");
 
-const shortcodeRegex = /^[a-z0-9_]+$/;
+const shortcodeRegex = /^\w{2,30}$/;
 
 module.exports = function useShortcode() {
 	const {
@@ -48,12 +48,8 @@ module.exports = function useShortcode() {
 				return "Shortcode must be between 2 and 30 characters";
 			}
 
-			if (code.toLowerCase() != code) {
-				return "Shortcode must be lowercase";
-			}
-
 			if (!shortcodeRegex.test(code)) {
-				return "Shortcode must only contain lowercase letters, numbers, and underscores";
+				return "Shortcode must only contain letters, numbers, and underscores";
 			}
 
 			return "";
