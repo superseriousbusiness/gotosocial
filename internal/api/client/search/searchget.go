@@ -85,9 +85,9 @@ import (
 //		type: string
 //		description: |-
 //			Query string to search for. This can be in the following forms:
-//			- `@[username]` -- search for a local account with the given username. Will only ever return 1 result.
-//			- `@[username]@[domain]` -- search for a remote account with the given username and domain. Will only ever return 1 result.
-//			- `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will almost always return 1 result.
+//			- `@[username]` -- search for an account with the given username on any domain. Can return multiple results.
+//			- @[username]@[domain]` -- search for a remote account with exact username and domain. Will only ever return 1 result at most.
+//			- `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will only ever return 1 result at most.
 //			- any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
 //		in: query
 //		required: true
@@ -107,7 +107,7 @@ import (
 //		name: resolve
 //		type: boolean
 //		description: >-
-//			If searching query is for `@[username]`, `@[username]@[domain]`, or a URL, allow the GoToSocial
+//			If searching query is for `@[username]@[domain]`, or a URL, allow the GoToSocial
 //			instance to resolve the search by making calls to remote instances (webfinger, ActivityPub, etc).
 //		default: false
 //		in: query

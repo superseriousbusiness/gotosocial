@@ -47,6 +47,11 @@ func (p *Processor) packageAccounts(
 	apiAccounts := make([]*apimodel.Account, 0, len(accounts))
 
 	for _, account := range accounts {
+		if account.IsInstance() {
+			// No need to show instance accounts.
+			continue
+		}
+
 		// Ensure requester can see result account.
 		visible, err := p.filter.AccountVisible(ctx, requestingAccount, account)
 		if err != nil {

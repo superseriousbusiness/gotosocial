@@ -370,16 +370,16 @@ func (suite *AccountSearchTestSuite) TestSearchAFollowing() {
 		suite.FailNow(err.Error())
 	}
 
-	if l := len(accounts); l != 6 {
-		suite.FailNow("", "expected length %d got %d", 6, l)
+	if l := len(accounts); l != 5 {
+		suite.FailNow("", "expected length %d got %d", 5, l)
 	}
 
-	usernames := make([]string, 0, 6)
+	usernames := make([]string, 0, 5)
 	for _, account := range accounts {
 		usernames = append(usernames, account.Username)
 	}
 
-	suite.EqualValues([]string{"her_fuckin_maj", "foss_satan", "1happyturtle", "the_mighty_zork", "admin", "localhost:8080"}, usernames)
+	suite.EqualValues([]string{"her_fuckin_maj", "foss_satan", "1happyturtle", "the_mighty_zork", "admin"}, usernames)
 }
 
 func (suite *AccountSearchTestSuite) TestSearchANotFollowing() {
