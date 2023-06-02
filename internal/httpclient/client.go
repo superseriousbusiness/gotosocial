@@ -34,6 +34,7 @@ import (
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v3"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
+	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -265,7 +266,8 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 				}
 			}
 
-			// Ensure unset.
+			// Close + unset rsp.
+			_ = rsp.Body.Close()
 			rsp = nil
 
 		} else if errorsv2.Comparable(err,
@@ -326,11 +328,6 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	// Check response body not too large.
-	if rsp.ContentLength > c.bodyMax {
-		return nil, ErrBodyTooLarge
-	}
-
 	// Seperate the body implementers.
 	rbody := (io.Reader)(rsp.Body)
 	cbody := (io.Closer)(rsp.Body)
@@ -345,11 +342,29 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 	// Don't trust them, limit body reads.
 	rbody = io.LimitReader(rbody, limit)
 
+	// Wrap closer to ensure entire body drained BEFORE close.
+	cbody = iotools.CloserAfterCallback(cbody, func() {
+		_, _ = discard.ReadFrom(rbody)
+	})
+
 	// Wrap body with limit.
 	rsp.Body = &struct {
 		io.Reader
 		io.Closer
 	}{rbody, cbody}
 
+	// Check response body not too large.
+	if rsp.ContentLength > c.bodyMax {
+		_ = rsp.Body.Close()
+		return nil, ErrBodyTooLarge
+	}
+
 	return rsp, nil
 }
+
+// cast discard writer to full interface it supports.
+var discard = io.Discard.(interface { //nolint
+	io.Writer
+	io.StringWriter
+	io.ReaderFrom
+})

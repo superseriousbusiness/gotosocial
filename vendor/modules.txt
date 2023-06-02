@@ -36,7 +36,7 @@ codeberg.org/gruf/go-fastpath/v2
 # codeberg.org/gruf/go-hashenc v1.0.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-hashenc
-# codeberg.org/gruf/go-iotools v0.0.0-20221224124424-3386841cb225
+# codeberg.org/gruf/go-iotools v0.0.0-20230601182242-d933b07dcbef
 ## explicit; go 1.19
 codeberg.org/gruf/go-iotools
 # codeberg.org/gruf/go-kv v1.6.1
