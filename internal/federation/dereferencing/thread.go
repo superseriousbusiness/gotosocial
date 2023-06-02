@@ -22,6 +22,7 @@ import (
 	"net/url"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -97,7 +98,8 @@ func (d *deref) dereferenceStatusAncestors(ctx context.Context, username string,
 			l.Tracef("following remote status ancestors: %s", status.InReplyToURI)
 
 			// Fetch the remote status found at this IRI
-			remoteStatus, _, err := d.getStatusByURI(ctx,
+			remoteStatus, _, err := d.getStatusByURI(
+				ctx,
 				username,
 				replyIRI,
 			)
@@ -184,8 +186,8 @@ stackLoop:
 		}
 
 		if current.page == nil {
-			// This is a local status, no looping to do
 			if current.statusIRI.Host == config.GetHost() {
+				// This is a local status, no looping to do
 				continue stackLoop
 			}
 
@@ -230,28 +232,18 @@ stackLoop:
 				if current.itemIter == nil {
 					continue stackLoop
 				}
+			} else {
+				// Get next item iterator object
+				current.itemIter = current.itemIter.Next()
 			}
 
 		itemLoop:
 			for {
-				var itemIRI *url.URL
-
-				// Get next item iterator object
-				current.itemIter = current.itemIter.Next()
 				if current.itemIter == nil {
 					break itemLoop
 				}
 
-				if iri := current.itemIter.GetIRI(); iri != nil {
-					// Item is already an IRI type
-					itemIRI = iri
-				} else if note := current.itemIter.GetActivityStreamsNote(); note != nil {
-					// Item is a note, fetch the note ID IRI
-					if id := note.GetJSONLDId(); id != nil {
-						itemIRI = id.GetIRI()
-					}
-				}
-
+				itemIRI, _ := pub.ToId(current.itemIter)
 				if itemIRI == nil {
 					// Unusable iter object
 					continue itemLoop
