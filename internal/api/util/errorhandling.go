@@ -83,25 +83,44 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 	}
 }
 
-// ErrorHandler takes the provided gin context and errWithCode and tries to serve
-// a helpful error to the caller. It will do content negotiation to figure out if
-// the caller prefers to see an html page with the error rendered there. If not, or
-// if something goes wrong during the function, it will recover and just try to serve
-// an appropriate application/json content-type error.
+// ErrorHandler takes the provided gin context and errWithCode
+// and tries to serve a helpful error to the caller.
+//
+// It will do content negotiation to figure out if the caller prefers
+// to see an html page with the error rendered there. If not, or if
+// something goes wrong during the function, it will recover and just
+// try to serve an appropriate application/json content-type error.
 // To override the default response type, specify `offers`.
+//
+// If the requester already hung up on the request, ErrorHandler
+// will overwrite the given errWithCode with a 499 error to indicate
+// that the failure wasn't due to something we did, and will avoid
+// trying to write extensive bytes to the caller by just aborting.
+//
+// See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx.
 func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), offers ...MIME) {
-	// set the error on the gin context so that it can be logged
-	// in the gin logger middleware (internal/router/logger.go)
+	if c.Request.Context().Err() != nil {
+		// Context error means requester probably left already.
+		// Wrap original error with a less alarming one. Then
+		// we can return early, because it doesn't matter what
+		// we send to the client at this point; they're gone.
+		errWithCode = gtserror.NewErrorClientClosedRequest(errWithCode.Unwrap())
+		c.AbortWithStatus(errWithCode.Code())
+		return
+	}
+
+	// Set the error on the gin context so that it can be logged
+	// in the gin logger middleware (internal/middleware/logger.go).
 	c.Error(errWithCode) //nolint:errcheck
 
-	// discover if we're allowed to serve a nice html error page,
+	// Discover if we're allowed to serve a nice html error page,
 	// or if we should just use a json. Normally we would want to
 	// check for a returned error, but if an error occurs here we
 	// can just fall back to default behavior (serve json error).
 	accept, _ := NegotiateAccept(c, JSONOrHTMLAcceptHeaders...)
 
 	if errWithCode.Code() == http.StatusNotFound {
-		// use our special not found handler with useful status text
+		// Use our special not found handler with useful status text.
 		NotFoundHandler(c, instanceGet, accept)
 	} else {
 		genericErrorHandler(c, instanceGet, accept, errWithCode)

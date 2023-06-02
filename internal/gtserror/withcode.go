@@ -23,13 +23,23 @@ import (
 	"strings"
 )
 
+// Custom http response codes + text that
+// aren't included in the net/http package.
+const (
+	StatusClientClosedRequest     = 499
+	StatusTextClientClosedRequest = "Client Closed Request"
+)
+
 // WithCode wraps an internal error with an http code, and a 'safe' version of
 // the error that can be served to clients without revealing internal business logic.
 //
 // A typical use of this error would be to first log the Original error, then return
 // the Safe error and the StatusCode to an API caller.
 type WithCode interface {
-	// Error returns the original internal error for debugging within the GoToSocial logs.
+	// Unwrap returns the original error.
+	// This should *NEVER* be returned to a client as it may contain sensitive information.
+	Unwrap() error
+	// Error serializes the original internal error for debugging within the GoToSocial logs.
 	// This should *NEVER* be returned to a client as it may contain sensitive information.
 	Error() string
 	// Safe returns the API-safe version of the error for serialization towards a client.
@@ -43,6 +53,10 @@ type withCode struct {
 	original error
 	safe     error
 	code     int
+}
+
+func (e withCode) Unwrap() error {
+	return e.original
 }
 
 func (e withCode) Error() string {
@@ -171,5 +185,16 @@ func NewErrorGone(original error, helpText ...string) WithCode {
 		original: original,
 		safe:     errors.New(safe),
 		code:     http.StatusGone,
+	}
+}
+
+// NewErrorClientClosedRequest returns an ErrorWithCode 499 with the given original error.
+// This error type should only be used when an http caller has already hung up their request.
+// See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx
+func NewErrorClientClosedRequest(original error) WithCode {
+	return withCode{
+		original: original,
+		safe:     errors.New(StatusTextClientClosedRequest),
+		code:     StatusClientClosedRequest,
 	}
 }
