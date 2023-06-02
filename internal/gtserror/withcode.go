@@ -23,6 +23,8 @@ import (
 	"strings"
 )
 
+// Custom http response codes + text that
+// aren't included in the net/http package.
 const (
 	StatusClientClosedRequest     = 499
 	StatusTextClientClosedRequest = "Client Closed Request"

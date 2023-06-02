@@ -19,7 +19,6 @@ package util
 
 import (
 	"context"
-	"errors"
 	"net/http"
 
 	"codeberg.org/gruf/go-kv"
@@ -100,15 +99,11 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 //
 // See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx.
 func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), offers ...MIME) {
-	var (
-		ctxErr       = c.Request.Context().Err()
-		clientClosed = ctxErr != nil && (errors.Is(ctxErr, context.Canceled) || errors.Is(ctxErr, context.DeadlineExceeded))
-	)
-
-	if clientClosed {
-		// Requester probably left already. Wrap original error
-		// with a less alarming one. We can return early here
-		// because it doesn't matter what we send to the client.
+	if c.Request.Context().Err() != nil {
+		// Context error means requester probably left already.
+		// Wrap original error with a less alarming one. Then
+		// we can return early, because it doesn't matter what
+		// we send to the client at this point; they're gone.
 		errWithCode = gtserror.NewErrorClientClosedRequest(errWithCode.Unwrap())
 		c.AbortWithStatus(errWithCode.Code())
 		return
