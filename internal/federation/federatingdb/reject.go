@@ -70,11 +70,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 					return errors.New("Reject: follow object account and inbox account were not the same")
 				}
 
-				if err := f.state.DB.RejectFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID); err != nil {
-					return err
-				}
-
-				return nil
+				return f.state.DB.RejectFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
 			}
 		}
 
@@ -90,20 +86,19 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 			if !ok {
 				return errors.New("Reject: couldn't parse follow into vocab.ActivityStreamsFollow")
 			}
+
 			// convert the follow to something we can understand
 			gtsFollow, err := f.typeConverter.ASFollowToFollow(ctx, asFollow)
 			if err != nil {
 				return fmt.Errorf("Reject: error converting asfollow to gtsfollow: %s", err)
 			}
+
 			// make sure the addressee of the original follow is the same as whatever inbox this landed in
 			if gtsFollow.AccountID != receivingAccount.ID {
 				return errors.New("Reject: follow object account and inbox account were not the same")
 			}
-			if err := f.state.DB.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID); err != nil {
-				return err
-			}
 
-			return nil
+			return f.state.DB.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
 		}
 	}
 

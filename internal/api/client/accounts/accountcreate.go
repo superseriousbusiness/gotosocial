@@ -141,9 +141,5 @@ func validateCreateAccount(form *apimodel.AccountCreateRequest) error {
 		return err
 	}
 
-	if err := validate.SignUpReason(form.Reason, config.GetAccountsReasonRequired()); err != nil {
-		return err
-	}
-
-	return nil
+	return validate.SignUpReason(form.Reason, config.GetAccountsReasonRequired())
 }

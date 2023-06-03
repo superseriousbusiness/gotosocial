@@ -72,8 +72,6 @@ func (gts *gotosocial) Stop(ctx context.Context) error {
 	if err := gts.apiRouter.Stop(ctx); err != nil {
 		return err
 	}
-	if err := gts.db.Stop(ctx); err != nil {
-		return err
-	}
-	return nil
+
+	return gts.db.Stop(ctx)
 }

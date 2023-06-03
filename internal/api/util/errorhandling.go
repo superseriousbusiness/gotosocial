@@ -117,7 +117,8 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 	// or if we should just use a json. Normally we would want to
 	// check for a returned error, but if an error occurs here we
 	// can just fall back to default behavior (serve json error).
-	accept, _ := NegotiateAccept(c, JSONOrHTMLAcceptHeaders...)
+	// Prefer provided offers, fall back to JSON or HTML.
+	accept, _ := NegotiateAccept(c, append(offers, JSONOrHTMLAcceptHeaders...)...)
 
 	if errWithCode.Code() == http.StatusNotFound {
 		// Use our special not found handler with useful status text.
