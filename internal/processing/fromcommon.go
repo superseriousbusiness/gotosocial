@@ -434,11 +434,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	}
 
 	// delete the status itself
-	if err := p.state.DB.DeleteStatusByID(ctx, statusToDelete.ID); err != nil {
-		return err
-	}
-
-	return nil
+	return p.state.DB.DeleteStatusByID(ctx, statusToDelete.ID)
 }
 
 // deleteStatusFromTimelines completely removes the given status from all timelines.

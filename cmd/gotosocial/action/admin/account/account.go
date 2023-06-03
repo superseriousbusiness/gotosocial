@@ -353,9 +353,5 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	}
 
 	u.EncryptedPassword = string(pw)
-	if err := dbConn.UpdateUser(ctx, u, "encrypted_password"); err != nil {
-		return err
-	}
-
-	return nil
+	return dbConn.UpdateUser(ctx, u, "encrypted_password")
 }

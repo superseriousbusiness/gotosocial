@@ -23,7 +23,9 @@ linters:
     - nilerr
     - revive
 
+# https://golangci-lint.run/usage/linters/#linters-configuration
 linters-settings:
+  # https://golangci-lint.run/usage/linters/#goheader
   goheader:
     template: |-
       GoToSocial
@@ -42,11 +44,44 @@ linters-settings:
 
       You should have received a copy of the GNU Affero General Public License
       along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  # https://golangci-lint.run/usage/linters/#govet
   govet:
     disable:
       - composites
+  # https://golangci-lint.run/usage/linters/#revive
+  revive:
+    rules:
+      # Enable most default rules.
+      # See: https://github.com/mgechev/revive/blob/master/defaults.toml
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-naming
+      - name: error-return
+      - name: error-strings
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unreachable-code
+      # Disable below rules.
+      - name: redefines-builtin-id 
+        disabled: true # This one is just annoying.
+      - name: unused-parameter     
+        disabled: true # We often pass parameters to fulfil interfaces.
+  # https://golangci-lint.run/usage/linters/#staticcheck
   staticcheck:
-    # Enable all checks
-    # Disable:
-    # - SA1012: nil context passing
+    # Enable all checks, but disable SA1012: nil context passing.
+    # See: https://staticcheck.io/docs/configuration/options/#checks
     checks: ["all", "-SA1012"]

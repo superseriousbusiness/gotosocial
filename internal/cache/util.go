@@ -36,6 +36,7 @@ var SentinelError = errors.New("BUG: error should not be returned") //nolint:rev
 // caches, which specifically catches and ignores our sentinel error type.
 func ignoreErrors(err error) bool {
 	return errorsv2.Comparable(
+		err,
 		SentinelError,
 		context.DeadlineExceeded,
 		context.Canceled,
