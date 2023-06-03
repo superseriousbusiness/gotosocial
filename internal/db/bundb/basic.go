@@ -160,7 +160,7 @@ func (b *basicDB) DropTable(ctx context.Context, i interface{}) db.Error {
 }
 
 func (b *basicDB) IsHealthy(ctx context.Context) db.Error {
-	return b.conn.Ping()
+	return b.conn.PingContext(ctx)
 }
 
 func (b *basicDB) Stop(ctx context.Context) db.Error {

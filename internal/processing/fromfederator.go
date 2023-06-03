@@ -167,11 +167,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		}
 	}
 
-	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
-		return err
-	}
-
-	return nil
+	return p.timelineAndNotifyStatus(ctx, status)
 }
 
 // processCreateFaveFromFederator handles Activity Create and Object Like
@@ -208,11 +204,7 @@ func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federato
 		incomingFave.Account = a
 	}
 
-	if err := p.notifyFave(ctx, incomingFave); err != nil {
-		return err
-	}
-
-	return nil
+	return p.notifyFave(ctx, incomingFave)
 }
 
 // processCreateFollowRequestFromFederator handles Activity Create and Object Follow
@@ -327,11 +319,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 		return err
 	}
 
-	if err := p.notifyAnnounce(ctx, incomingAnnounce); err != nil {
-		return err
-	}
-
-	return nil
+	return p.notifyAnnounce(ctx, incomingAnnounce)
 }
 
 // processCreateBlockFromFederator handles Activity Create and Object Block
