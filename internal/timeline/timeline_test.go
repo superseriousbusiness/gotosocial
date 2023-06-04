@@ -18,27 +18,80 @@
 package timeline_test
 
 import (
+	"context"
+	"sort"
+
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type TimelineStandardTestSuite struct {
 	suite.Suite
-	db     db.DB
-	state  state.State
-	tc     typeutils.TypeConverter
-	filter *visibility.Filter
+	state *state.State
 
 	testAccounts    map[string]*gtsmodel.Account
 	testStatuses    map[string]*gtsmodel.Status
 	highestStatusID string
 	lowestStatusID  string
+}
 
-	timeline timeline.Timeline
-	manager  timeline.Manager
+func (suite *TimelineStandardTestSuite) SetupSuite() {
+	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testStatuses = testrig.NewTestStatuses()
+}
+
+func (suite *TimelineStandardTestSuite) SetupTest() {
+	suite.state = new(state.State)
+
+	suite.state.Caches.Init()
+	testrig.StartWorkers(suite.state)
+
+	testrig.InitTestConfig()
+	testrig.InitTestLog()
+
+	suite.state.DB = testrig.NewTestDB(suite.state)
+
+	testrig.StartTimelines(
+		suite.state,
+		visibility.NewFilter(suite.state),
+		testrig.NewTestTypeConverter(suite.state.DB),
+	)
+
+	testrig.StandardDBSetup(suite.state.DB, nil)
+}
+
+func (suite *TimelineStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.state.DB)
+	testrig.StopWorkers(suite.state)
+}
+
+func (suite *TimelineStandardTestSuite) fillTimeline(timelineID string) {
+	// Put testrig statuses in a determinate order
+	// since we can't trust a map to keep order.
+	statuses := []*gtsmodel.Status{}
+	for _, s := range suite.testStatuses {
+		statuses = append(statuses, s)
+	}
+
+	sort.Slice(statuses, func(i, j int) bool {
+		return statuses[i].ID > statuses[j].ID
+	})
+
+	// Statuses are now highest -> lowest.
+	suite.highestStatusID = statuses[0].ID
+	suite.lowestStatusID = statuses[len(statuses)-1].ID
+	if suite.highestStatusID < suite.lowestStatusID {
+		suite.FailNow("", "statuses weren't ordered properly by sort")
+	}
+
+	// Put all test statuses into the timeline; we don't
+	// need to be fussy about who sees what for these tests.
+	for _, status := range statuses {
+		if _, err := suite.state.Timelines.Home.IngestOne(context.Background(), timelineID, status); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
 }

@@ -19,98 +19,83 @@ package timeline_test
 
 import (
 	"context"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type PruneTestSuite struct {
 	TimelineStandardTestSuite
 }
 
-func (suite *PruneTestSuite) SetupSuite() {
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testStatuses = testrig.NewTestStatuses()
-}
-
-func (suite *PruneTestSuite) SetupTest() {
-	suite.state.Caches.Init()
-
-	testrig.InitTestLog()
-	testrig.InitTestConfig()
-
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.filter = visibility.NewFilter(&suite.state)
-
-	testrig.StandardDBSetup(suite.db, nil)
-
-	// let's take local_account_1 as the timeline owner
-	tl := timeline.NewTimeline(
-		context.Background(),
-		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(&suite.state),
-		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
-		tlprocessor.SkipInsert(),
+func (suite *PruneTestSuite) TestPrune() {
+	var (
+		ctx                        = context.Background()
+		testAccountID              = suite.testAccounts["local_account_1"].ID
+		desiredPreparedItemsLength = 5
+		desiredIndexedItemsLength  = 5
 	)
 
-	// put the status IDs in a determinate order since we can't trust a map to keep its order
-	statuses := []*gtsmodel.Status{}
-	for _, s := range suite.testStatuses {
-		statuses = append(statuses, s)
-	}
-	sort.Slice(statuses, func(i, j int) bool {
-		return statuses[i].ID > statuses[j].ID
-	})
+	suite.fillTimeline(testAccountID)
 
-	// prepare the timeline by just shoving all test statuses in it -- let's not be fussy about who sees what
-	for _, s := range statuses {
-		_, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-	}
-
-	suite.timeline = tl
-}
-
-func (suite *PruneTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
-}
-
-func (suite *PruneTestSuite) TestPrune() {
-	// prune down to 5 prepared + 5 indexed
-	suite.Equal(12, suite.timeline.Prune(5, 5))
-	suite.Equal(5, suite.timeline.Len())
+	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
+	suite.NoError(err)
+	suite.Equal(12, pruned)
+	suite.Equal(5, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
 func (suite *PruneTestSuite) TestPruneTwice() {
-	// prune down to 5 prepared + 10 indexed
-	suite.Equal(12, suite.timeline.Prune(5, 10))
-	suite.Equal(10, suite.timeline.Len())
+	var (
+		ctx                        = context.Background()
+		testAccountID              = suite.testAccounts["local_account_1"].ID
+		desiredPreparedItemsLength = 5
+		desiredIndexedItemsLength  = 5
+	)
+
+	suite.fillTimeline(testAccountID)
+
+	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
+	suite.NoError(err)
+	suite.Equal(12, pruned)
+	suite.Equal(5, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 
 	// Prune same again, nothing should be pruned this time.
-	suite.Zero(suite.timeline.Prune(5, 10))
-	suite.Equal(10, suite.timeline.Len())
+	pruned, err = suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
+	suite.NoError(err)
+	suite.Equal(0, pruned)
+	suite.Equal(5, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
 func (suite *PruneTestSuite) TestPruneTo0() {
-	// prune down to 0 prepared + 0 indexed
-	suite.Equal(17, suite.timeline.Prune(0, 0))
-	suite.Equal(0, suite.timeline.Len())
+	var (
+		ctx                        = context.Background()
+		testAccountID              = suite.testAccounts["local_account_1"].ID
+		desiredPreparedItemsLength = 0
+		desiredIndexedItemsLength  = 0
+	)
+
+	suite.fillTimeline(testAccountID)
+
+	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
+	suite.NoError(err)
+	suite.Equal(17, pruned)
+	suite.Equal(0, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
 func (suite *PruneTestSuite) TestPruneToInfinityAndBeyond() {
-	// prune to 99999, this should result in no entries being pruned
-	suite.Equal(0, suite.timeline.Prune(99999, 99999))
-	suite.Equal(17, suite.timeline.Len())
+	var (
+		ctx                        = context.Background()
+		testAccountID              = suite.testAccounts["local_account_1"].ID
+		desiredPreparedItemsLength = 9999999
+		desiredIndexedItemsLength  = 9999999
+	)
+
+	suite.fillTimeline(testAccountID)
+
+	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
+	suite.NoError(err)
+	suite.Equal(0, pruned)
+	suite.Equal(17, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
 func TestPruneTestSuite(t *testing.T) {
