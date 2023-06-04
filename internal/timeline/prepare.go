@@ -21,10 +21,10 @@ import (
 	"container/list"
 	"context"
 	"errors"
-	"fmt"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -129,7 +129,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 				t.items.data.Remove(e)
 			}
 			// We've got a proper db error.
-			return fmt.Errorf("prepareXBetweenIDs: db error while trying to prepare %s: %w", entry.itemID, err)
+			gtserror.Newf("db error while trying to prepare %s: %w", entry.itemID, err)
 		}
 		entry.prepared = prepared
 	}

@@ -20,7 +20,6 @@ package timeline
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -38,14 +37,19 @@ import (
 func ListTimelineGrab(state *state.State) timeline.GrabFunction {
 	return func(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]timeline.Timelineable, bool, error) {
 		statuses, err := state.DB.GetListTimeline(ctx, listID, maxID, sinceID, minID, limit)
-		if err != nil {
-			if errors.Is(err, db.ErrNoEntries) {
-				return nil, true, nil // we just don't have enough statuses left in the db so return stop = true
-			}
-			return nil, false, fmt.Errorf("ListTimelineGrab: error getting statuses from db: %w", err)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = gtserror.Newf("error getting statuses from db: %w", err)
+			return nil, false, err
 		}
 
-		items := make([]timeline.Timelineable, len(statuses))
+		count := len(statuses)
+		if count == 0 {
+			// We just don't have enough statuses
+			// left in the db so return stop = true.
+			return nil, true, nil
+		}
+
+		items := make([]timeline.Timelineable, count)
 		for i, s := range statuses {
 			items[i] = s
 		}
@@ -54,27 +58,31 @@ func ListTimelineGrab(state *state.State) timeline.GrabFunction {
 	}
 }
 
-// HomeTimelineFilter returns a function that satisfies FilterFunction for list timelines.
+// ListTimelineFilter returns a function that satisfies FilterFunction for list timelines.
 func ListTimelineFilter(state *state.State, filter *visibility.Filter) timeline.FilterFunction {
 	return func(ctx context.Context, listID string, item timeline.Timelineable) (shouldIndex bool, err error) {
 		status, ok := item.(*gtsmodel.Status)
 		if !ok {
-			return false, errors.New("ListTimelineFilter: could not convert item to *gtsmodel.Status")
+			err = gtserror.New("could not convert item to *gtsmodel.Status")
+			return false, err
 		}
 
 		list, err := state.DB.GetListByID(ctx, listID)
 		if err != nil {
-			return false, fmt.Errorf("ListTimelineFilter: error getting list with id %s: %w", listID, err)
+			err = gtserror.Newf("error getting list with id %s: %w", listID, err)
+			return false, err
 		}
 
 		requestingAccount, err := state.DB.GetAccountByID(ctx, list.AccountID)
 		if err != nil {
-			return false, fmt.Errorf("ListTimelineFilter: error getting account with id %s: %w", list.AccountID, err)
+			err = gtserror.Newf("error getting account with id %s: %w", list.AccountID, err)
+			return false, err
 		}
 
 		timelineable, err := filter.StatusHomeTimelineable(ctx, requestingAccount, status)
 		if err != nil {
-			return false, fmt.Errorf("ListTimelineFilter: error checking hometimelineability of status %s for account %s: %w", status.ID, list.AccountID, err)
+			err = gtserror.Newf("error checking hometimelineability of status %s for account %s: %w", status.ID, list.AccountID, err)
+			return false, err
 		}
 
 		return timelineable, nil
@@ -86,17 +94,20 @@ func ListTimelineStatusPrepare(state *state.State, tc typeutils.TypeConverter) t
 	return func(ctx context.Context, listID string, itemID string) (timeline.Preparable, error) {
 		status, err := state.DB.GetStatusByID(ctx, itemID)
 		if err != nil {
-			return nil, fmt.Errorf("ListTimelineStatusPrepare: error getting status with id %s: %w", itemID, err)
+			err = gtserror.Newf("error getting status with id %s: %w", itemID, err)
+			return nil, err
 		}
 
 		list, err := state.DB.GetListByID(ctx, listID)
 		if err != nil {
-			return nil, fmt.Errorf("ListTimelineStatusPrepare: error getting list with id %s: %w", listID, err)
+			err = gtserror.Newf("error getting list with id %s: %w", listID, err)
+			return nil, err
 		}
 
 		requestingAccount, err := state.DB.GetAccountByID(ctx, list.AccountID)
 		if err != nil {
-			return nil, fmt.Errorf("ListTimelineStatusPrepare: error getting account with id %s: %w", list.AccountID, err)
+			err = gtserror.Newf("error getting account with id %s: %w", list.AccountID, err)
+			return nil, err
 		}
 
 		return tc.StatusToAPIStatus(ctx, status, requestingAccount)
@@ -114,13 +125,13 @@ func (p *Processor) ListTimelineGet(ctx context.Context, authed *oauth.Auth, lis
 	}
 
 	if list.AccountID != authed.Account.ID {
-		err = fmt.Errorf("list with id %s does not belong to account %s", list.ID, authed.Account.ID)
+		err = gtserror.Newf("list with id %s does not belong to account %s", list.ID, authed.Account.ID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	statuses, err := p.state.Timelines.List.GetTimeline(ctx, listID, maxID, sinceID, minID, limit, false)
-	if err != nil {
-		err = fmt.Errorf("ListTimelineGet: error getting statuses: %w", err)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = gtserror.Newf("error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

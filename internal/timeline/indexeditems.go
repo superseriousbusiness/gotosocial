@@ -20,7 +20,8 @@ package timeline
 import (
 	"container/list"
 	"context"
-	"fmt"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 type indexedItems struct {
@@ -84,7 +85,7 @@ func (i *indexedItems) insertIndexed(ctx context.Context, newEntry *indexedItems
 			currentEntry.boostOfAccountID,
 			currentPosition,
 		); err != nil {
-			return false, fmt.Errorf("insertIndexed: error calling skipInsert: %w", err)
+			return false, gtserror.Newf("error calling skipInsert: %w", err)
 		} else if skip {
 			// We don't need to insert this at all,
 			// so we can safely bail.

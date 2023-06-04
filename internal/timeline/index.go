@@ -21,10 +21,10 @@ import (
 	"container/list"
 	"context"
 	"errors"
-	"fmt"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -136,7 +136,7 @@ func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID st
 		}
 
 		if _, err := t.items.insertIndexed(ctx, entry); err != nil {
-			return fmt.Errorf("error inserting entry with itemID %s into index: %w", entry.itemID, err)
+			return gtserror.Newf("error inserting entry with itemID %s into index: %w", entry.itemID, err)
 		}
 	}
 
@@ -237,7 +237,7 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 	}
 
 	if inserted, err := t.items.insertIndexed(ctx, postIndexEntry); err != nil {
-		return false, fmt.Errorf("IndexAndPrepareOne: error inserting indexed: %w", err)
+		return false, gtserror.Newf("error inserting indexed: %w", err)
 	} else if !inserted {
 		// Entry wasn't inserted, so
 		// don't bother preparing it.
@@ -246,7 +246,7 @@ func (t *timeline) IndexAndPrepareOne(ctx context.Context, statusID string, boos
 
 	preparable, err := t.prepareFunction(ctx, t.timelineID, statusID)
 	if err != nil {
-		return true, fmt.Errorf("IndexAndPrepareOne: error preparing: %w", err)
+		return true, gtserror.Newf("error preparing: %w", err)
 	}
 	postIndexEntry.prepared = preparable
 
