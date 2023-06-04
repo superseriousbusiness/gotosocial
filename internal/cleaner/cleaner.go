@@ -60,7 +60,7 @@ func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error)
 		return len(files), nil
 	}
 
-	errs := make(gtserror.MultiError, 0, len(files))
+	var errs gtserror.MultiError
 
 	for _, path := range files {
 		// Remove each provided storage path.
