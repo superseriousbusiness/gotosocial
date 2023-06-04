@@ -19,83 +19,17 @@ package timeline_test
 
 import (
 	"context"
-	"sort"
+	"sync"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type GetTestSuite struct {
 	TimelineStandardTestSuite
-}
-
-func (suite *GetTestSuite) SetupSuite() {
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testStatuses = testrig.NewTestStatuses()
-}
-
-func (suite *GetTestSuite) SetupTest() {
-	suite.state.Caches.Init()
-
-	testrig.InitTestConfig()
-	testrig.InitTestLog()
-
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.filter = visibility.NewFilter(&suite.state)
-
-	testrig.StandardDBSetup(suite.db, nil)
-
-	// Take local_account_1 as the timeline owner, it
-	// doesn't really matter too much for these tests.
-	tl := timeline.NewTimeline(
-		context.Background(),
-		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(&suite.state),
-		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
-		tlprocessor.SkipInsert(),
-	)
-
-	// Put testrig statuses in a determinate order
-	// since we can't trust a map to keep order.
-	statuses := []*gtsmodel.Status{}
-	for _, s := range suite.testStatuses {
-		statuses = append(statuses, s)
-	}
-
-	sort.Slice(statuses, func(i, j int) bool {
-		return statuses[i].ID > statuses[j].ID
-	})
-
-	// Statuses are now highest -> lowest.
-	suite.highestStatusID = statuses[0].ID
-	suite.lowestStatusID = statuses[len(statuses)-1].ID
-	if suite.highestStatusID < suite.lowestStatusID {
-		suite.FailNow("", "statuses weren't ordered properly by sort")
-	}
-
-	// Put all test statuses into the timeline; we don't
-	// need to be fussy about who sees what for these tests.
-	for _, s := range statuses {
-		_, err := tl.IndexAndPrepareOne(context.Background(), s.GetID(), s.BoostOfID, s.AccountID, s.BoostOfAccountID)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-	}
-
-	suite.timeline = tl
-}
-
-func (suite *GetTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
 }
 
 func (suite *GetTestSuite) checkStatuses(statuses []timeline.Preparable, maxID string, minID string, expectedLength int) {
@@ -127,79 +61,168 @@ func (suite *GetTestSuite) checkStatuses(statuses []timeline.Preparable, maxID s
 	}
 }
 
+func (suite *GetTestSuite) emptyAccountFollows(ctx context.Context, accountID string) {
+	// Get all of account's follows.
+	follows, err := suite.state.DB.GetAccountFollows(
+		gtscontext.SetBarebones(ctx),
+		accountID,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Remove each follow.
+	for _, follow := range follows {
+		if err := suite.state.DB.DeleteFollowByID(ctx, follow.ID); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	// Ensure no follows left.
+	follows, err = suite.state.DB.GetAccountFollows(
+		gtscontext.SetBarebones(ctx),
+		accountID,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	if len(follows) != 0 {
+		suite.FailNow("follows should be empty")
+	}
+}
+
+func (suite *GetTestSuite) emptyAccountStatuses(ctx context.Context, accountID string) {
+	// Get all of account's statuses.
+	statuses, err := suite.state.DB.GetAccountStatuses(
+		ctx,
+		accountID,
+		9999,
+		false,
+		false,
+		id.Highest,
+		id.Lowest,
+		false,
+		false,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Remove each status.
+	for _, status := range statuses {
+		if err := suite.state.DB.DeleteStatusByID(ctx, status.ID); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+}
+
 func (suite *GetTestSuite) TestGetNewTimelinePageDown() {
-	// Take a fresh timeline for this test.
-	// This tests whether indexing works
-	// properly against uninitialized timelines.
-	tl := timeline.NewTimeline(
-		context.Background(),
-		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(&suite.state),
-		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
-		tlprocessor.SkipInsert(),
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = ""
+		limit       = 5
+		local       = false
 	)
 
 	// Get 5 from the top.
-	statuses, err := tl.Get(context.Background(), 5, "", "", "", true)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.checkStatuses(statuses, id.Highest, id.Lowest, 5)
 
 	// Get 5 from next maxID.
-	nextMaxID := statuses[len(statuses)-1].GetID()
-	statuses, err = tl.Get(context.Background(), 5, nextMaxID, "", "", false)
+	maxID = statuses[len(statuses)-1].GetID()
+	statuses, err = suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(statuses, nextMaxID, id.Lowest, 5)
+	suite.checkStatuses(statuses, maxID, id.Lowest, 5)
 }
 
 func (suite *GetTestSuite) TestGetNewTimelinePageUp() {
-	// Take a fresh timeline for this test.
-	// This tests whether indexing works
-	// properly against uninitialized timelines.
-	tl := timeline.NewTimeline(
-		context.Background(),
-		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(&suite.state),
-		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
-		tlprocessor.SkipInsert(),
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = id.Lowest
+		limit       = 5
+		local       = false
 	)
 
 	// Get 5 from the back.
-	statuses, err := tl.Get(context.Background(), 5, "", "", id.Lowest, false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(statuses, id.Highest, id.Lowest, 5)
+	suite.checkStatuses(statuses, id.Highest, minID, 5)
 
-	// Page upwards.
-	nextMinID := statuses[len(statuses)-1].GetID()
-	statuses, err = tl.Get(context.Background(), 5, "", "", nextMinID, false)
+	// Page up from next minID.
+	minID = statuses[0].GetID()
+	statuses, err = suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(statuses, id.Highest, nextMinID, 5)
+	suite.checkStatuses(statuses, id.Highest, minID, 5)
 }
 
 func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossible() {
-	// Take a fresh timeline for this test.
-	// This tests whether indexing works
-	// properly against uninitialized timelines.
-	tl := timeline.NewTimeline(
-		context.Background(),
-		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(&suite.state),
-		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
-		tlprocessor.SkipInsert(),
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = ""
+		limit       = 100
+		local       = false
 	)
 
 	// Get 100 from the top.
-	statuses, err := tl.Get(context.Background(), 100, id.Highest, "", "", false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -207,29 +230,120 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossible() {
 }
 
 func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossiblePageUp() {
-	// Take a fresh timeline for this test.
-	// This tests whether indexing works
-	// properly against uninitialized timelines.
-	tl := timeline.NewTimeline(
-		context.Background(),
-		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(&suite.state),
-		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
-		tlprocessor.SkipInsert(),
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = id.Lowest
+		limit       = 100
+		local       = false
 	)
 
 	// Get 100 from the back.
-	statuses, err := tl.Get(context.Background(), 100, "", "", id.Lowest, false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.checkStatuses(statuses, id.Highest, id.Lowest, 16)
 }
 
+func (suite *GetTestSuite) TestGetNewTimelineNoFollowing() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = ""
+		limit       = 10
+		local       = false
+	)
+
+	suite.emptyAccountFollows(ctx, testAccount.ID)
+
+	// Try to get 10 from the top of the timeline.
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 5)
+
+	for _, s := range statuses {
+		if s.GetAccountID() != testAccount.ID {
+			suite.FailNow("timeline with no follows should only contain posts by timeline owner account")
+		}
+	}
+}
+
+func (suite *GetTestSuite) TestGetNewTimelineNoFollowingNoStatuses() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = ""
+		limit       = 5
+		local       = false
+	)
+
+	suite.emptyAccountFollows(ctx, testAccount.ID)
+	suite.emptyAccountStatuses(ctx, testAccount.ID)
+
+	// Try to get 5 from the top of the timeline.
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 0)
+}
+
 func (suite *GetTestSuite) TestGetNoParams() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = ""
+		limit       = 10
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Get 10 statuses from the top (no params).
-	statuses, err := suite.timeline.Get(context.Background(), 10, "", "", "", false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -241,10 +355,28 @@ func (suite *GetTestSuite) TestGetNoParams() {
 }
 
 func (suite *GetTestSuite) TestGetMaxID() {
-	// Ask for 10 with a max ID somewhere in the middle of the stack.
-	maxID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = "01F8MHBQCBTDKN6X5VHGMMN4MA"
+		sinceID     = ""
+		minID       = ""
+		limit       = 10
+		local       = false
+	)
 
-	statuses, err := suite.timeline.Get(context.Background(), 10, maxID, "", "", false)
+	suite.fillTimeline(testAccount.ID)
+
+	// Ask for 10 with a max ID somewhere in the middle of the stack.
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -254,9 +386,28 @@ func (suite *GetTestSuite) TestGetMaxID() {
 }
 
 func (suite *GetTestSuite) TestGetSinceID() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = "01F8MHBQCBTDKN6X5VHGMMN4MA"
+		minID       = ""
+		limit       = 10
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Ask for 10 with a since ID somewhere in the middle of the stack.
-	sinceID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
-	statuses, err := suite.timeline.Get(context.Background(), 10, "", sinceID, "", false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -269,9 +420,28 @@ func (suite *GetTestSuite) TestGetSinceID() {
 }
 
 func (suite *GetTestSuite) TestGetSinceIDOneOnly() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = "01F8MHBQCBTDKN6X5VHGMMN4MA"
+		minID       = ""
+		limit       = 1
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Ask for 1 with a since ID somewhere in the middle of the stack.
-	sinceID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
-	statuses, err := suite.timeline.Get(context.Background(), 1, "", sinceID, "", false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -284,9 +454,28 @@ func (suite *GetTestSuite) TestGetSinceIDOneOnly() {
 }
 
 func (suite *GetTestSuite) TestGetMinID() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = "01F8MHBQCBTDKN6X5VHGMMN4MA"
+		limit       = 5
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Ask for 5 with a min ID somewhere in the middle of the stack.
-	minID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
-	statuses, err := suite.timeline.Get(context.Background(), 5, "", "", minID, false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -299,9 +488,28 @@ func (suite *GetTestSuite) TestGetMinID() {
 }
 
 func (suite *GetTestSuite) TestGetMinIDOneOnly() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = "01F8MHBQCBTDKN6X5VHGMMN4MA"
+		limit       = 1
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Ask for 1 with a min ID somewhere in the middle of the stack.
-	minID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
-	statuses, err := suite.timeline.Get(context.Background(), 1, "", "", minID, false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -314,9 +522,28 @@ func (suite *GetTestSuite) TestGetMinIDOneOnly() {
 }
 
 func (suite *GetTestSuite) TestGetMinIDFromLowestInTestrig() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = suite.lowestStatusID
+		limit       = 1
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Ask for 1 with minID equal to the lowest status in the testrig.
-	minID := suite.lowestStatusID
-	statuses, err := suite.timeline.Get(context.Background(), 1, "", "", minID, false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -329,9 +556,28 @@ func (suite *GetTestSuite) TestGetMinIDFromLowestInTestrig() {
 }
 
 func (suite *GetTestSuite) TestGetMinIDFromLowestPossible() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = ""
+		sinceID     = ""
+		minID       = id.Lowest
+		limit       = 1
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Ask for 1 with the lowest possible min ID.
-	minID := id.Lowest
-	statuses, err := suite.timeline.Get(context.Background(), 1, "", "", minID, false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -344,11 +590,28 @@ func (suite *GetTestSuite) TestGetMinIDFromLowestPossible() {
 }
 
 func (suite *GetTestSuite) TestGetBetweenID() {
-	// Ask for 10 between these two IDs
-	maxID := "01F8MHCP5P2NWYQ416SBA0XSEV"
-	minID := "01F8MHBQCBTDKN6X5VHGMMN4MA"
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = "01F8MHCP5P2NWYQ416SBA0XSEV"
+		sinceID     = ""
+		minID       = "01F8MHBQCBTDKN6X5VHGMMN4MA"
+		limit       = 10
+		local       = false
+	)
 
-	statuses, err := suite.timeline.Get(context.Background(), 10, maxID, "", minID, false)
+	suite.fillTimeline(testAccount.ID)
+
+	// Ask for 10 between these two IDs
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -358,12 +621,29 @@ func (suite *GetTestSuite) TestGetBetweenID() {
 }
 
 func (suite *GetTestSuite) TestGetBetweenIDImpossible() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+		maxID       = id.Lowest
+		sinceID     = ""
+		minID       = id.Highest
+		limit       = 10
+		local       = false
+	)
+
+	suite.fillTimeline(testAccount.ID)
+
 	// Ask for 10 between these two IDs which present
 	// an impossible query.
-	maxID := id.Lowest
-	minID := id.Highest
-
-	statuses, err := suite.timeline.Get(context.Background(), 10, maxID, "", minID, false)
+	statuses, err := suite.state.Timelines.Home.GetTimeline(
+		ctx,
+		testAccount.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		local,
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -372,18 +652,49 @@ func (suite *GetTestSuite) TestGetBetweenIDImpossible() {
 	suite.checkStatuses(statuses, maxID, minID, 0)
 }
 
-func (suite *GetTestSuite) TestLastGot() {
-	// LastGot should be zero
-	suite.Zero(suite.timeline.LastGot())
+func (suite *GetTestSuite) TestGetTimelinesAsync() {
+	var (
+		ctx           = context.Background()
+		accountToNuke = suite.testAccounts["local_account_1"]
+		maxID         = ""
+		sinceID       = ""
+		minID         = ""
+		limit         = 5
+		local         = false
+		multiplier    = 5
+	)
 
-	// Get some from the top
-	_, err := suite.timeline.Get(context.Background(), 10, "", "", "", false)
-	if err != nil {
-		suite.FailNow(err.Error())
+	// Nuke one account's statuses and follows,
+	// as though the account had just been created.
+	suite.emptyAccountFollows(ctx, accountToNuke.ID)
+	suite.emptyAccountStatuses(ctx, accountToNuke.ID)
+
+	// Get 5 statuses from each timeline in
+	// our testrig at the same time, five times.
+	wg := new(sync.WaitGroup)
+	wg.Add(len(suite.testAccounts) * multiplier)
+
+	for i := 0; i < multiplier; i++ {
+		go func() {
+			for _, testAccount := range suite.testAccounts {
+				if _, err := suite.state.Timelines.Home.GetTimeline(
+					ctx,
+					testAccount.ID,
+					maxID,
+					sinceID,
+					minID,
+					limit,
+					local,
+				); err != nil {
+					suite.FailNow(err.Error())
+				}
+
+				wg.Done()
+			}
+		}()
 	}
 
-	// LastGot should be updated
-	suite.WithinDuration(time.Now(), suite.timeline.LastGot(), 1*time.Second)
+	wg.Wait() // Wait until all get calls have returned.
 }
 
 func TestGetTestSuite(t *testing.T) {

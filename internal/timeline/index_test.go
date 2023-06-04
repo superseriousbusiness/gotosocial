@@ -24,103 +24,65 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type IndexTestSuite struct {
 	TimelineStandardTestSuite
 }
 
-func (suite *IndexTestSuite) SetupSuite() {
-	suite.testAccounts = testrig.NewTestAccounts()
-	suite.testStatuses = testrig.NewTestStatuses()
-}
-
-func (suite *IndexTestSuite) SetupTest() {
-	suite.state.Caches.Init()
-
-	testrig.InitTestLog()
-	testrig.InitTestConfig()
-
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.filter = visibility.NewFilter(&suite.state)
-
-	testrig.StandardDBSetup(suite.db, nil)
-
-	// let's take local_account_1 as the timeline owner, and start with an empty timeline
-	suite.timeline = timeline.NewTimeline(
-		context.Background(),
-		suite.testAccounts["local_account_1"].ID,
-		tlprocessor.HomeTimelineGrab(&suite.state),
-		tlprocessor.HomeTimelineFilter(&suite.state, suite.filter),
-		tlprocessor.HomeTimelineStatusPrepare(&suite.state, suite.tc),
-		tlprocessor.SkipInsert(),
-	)
-}
-
-func (suite *IndexTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
-}
-
 func (suite *IndexTestSuite) TestOldestIndexedItemIDEmpty() {
+	var (
+		ctx           = context.Background()
+		testAccountID = suite.testAccounts["local_account_1"].ID
+	)
+
 	// the oldest indexed post should be an empty string since there's nothing indexed yet
-	postID := suite.timeline.OldestIndexedItemID()
+	postID := suite.state.Timelines.Home.GetOldestIndexedID(ctx, testAccountID)
 	suite.Empty(postID)
 
 	// indexLength should be 0
-	indexLength := suite.timeline.Len()
-	suite.Equal(0, indexLength)
+	suite.Zero(0, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
 func (suite *IndexTestSuite) TestIndexAlreadyIndexed() {
-	testStatus := suite.testStatuses["local_account_1_status_1"]
+	var (
+		ctx           = context.Background()
+		testAccountID = suite.testAccounts["local_account_1"].ID
+		testStatus    = suite.testStatuses["local_account_1_status_1"]
+	)
 
 	// index one post -- it should be indexed
-	indexed, err := suite.timeline.IndexAndPrepareOne(context.Background(), testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err := suite.state.Timelines.Home.IngestOne(ctx, testAccountID, testStatus)
 	suite.NoError(err)
 	suite.True(indexed)
 
 	// try to index the same post again -- it should not be indexed
-	indexed, err = suite.timeline.IndexAndPrepareOne(context.Background(), testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
-	suite.NoError(err)
-	suite.False(indexed)
-}
-
-func (suite *IndexTestSuite) TestIndexAndPrepareAlreadyIndexedAndPrepared() {
-	testStatus := suite.testStatuses["local_account_1_status_1"]
-
-	// index and prepare one post -- it should be indexed
-	indexed, err := suite.timeline.IndexAndPrepareOne(context.Background(), testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
-	suite.NoError(err)
-	suite.True(indexed)
-
-	// try to index and prepare the same post again -- it should not be indexed
-	indexed, err = suite.timeline.IndexAndPrepareOne(context.Background(), testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err = suite.state.Timelines.Home.IngestOne(ctx, testAccountID, testStatus)
 	suite.NoError(err)
 	suite.False(indexed)
 }
 
 func (suite *IndexTestSuite) TestIndexBoostOfAlreadyIndexed() {
-	testStatus := suite.testStatuses["local_account_1_status_1"]
-	boostOfTestStatus := &gtsmodel.Status{
-		CreatedAt:        time.Now(),
-		ID:               "01FD4TA6G2Z6M7W8NJQ3K5WXYD",
-		BoostOfID:        testStatus.ID,
-		AccountID:        "01FD4TAY1C0NGEJVE9CCCX7QKS",
-		BoostOfAccountID: testStatus.AccountID,
-	}
+	var (
+		ctx               = context.Background()
+		testAccountID     = suite.testAccounts["local_account_1"].ID
+		testStatus        = suite.testStatuses["local_account_1_status_1"]
+		boostOfTestStatus = &gtsmodel.Status{
+			CreatedAt:        time.Now(),
+			ID:               "01FD4TA6G2Z6M7W8NJQ3K5WXYD",
+			BoostOfID:        testStatus.ID,
+			AccountID:        "01FD4TAY1C0NGEJVE9CCCX7QKS",
+			BoostOfAccountID: testStatus.AccountID,
+		}
+	)
 
 	// index one post -- it should be indexed
-	indexed, err := suite.timeline.IndexAndPrepareOne(context.Background(), testStatus.ID, testStatus.BoostOfID, testStatus.AccountID, testStatus.BoostOfAccountID)
+	indexed, err := suite.state.Timelines.Home.IngestOne(ctx, testAccountID, testStatus)
 	suite.NoError(err)
 	suite.True(indexed)
 
 	// try to index the a boost of that post -- it should not be indexed
-	indexed, err = suite.timeline.IndexAndPrepareOne(context.Background(), boostOfTestStatus.ID, boostOfTestStatus.BoostOfID, boostOfTestStatus.AccountID, boostOfTestStatus.BoostOfAccountID)
+	indexed, err = suite.state.Timelines.Home.IngestOne(ctx, testAccountID, boostOfTestStatus)
 	suite.NoError(err)
 	suite.False(indexed)
 }

@@ -256,6 +256,9 @@ line under `[Service]`:
 AppArmorProfile=gotosocial
 ```
 
+If you're using SQLite, the AppArmor profile expects the database in
+`/gotosocial/db/` so you'll need to adjust your configuration paths accordingly.
+
 For other deployment methods (e.g. a managed Kubernetes cluster), you should
 review your platform's documentation for how to deploy an application with an
 AppArmor profile.

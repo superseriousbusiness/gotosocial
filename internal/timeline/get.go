@@ -21,11 +21,11 @@ import (
 	"container/list"
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -147,7 +147,7 @@ func (t *timeline) Get(ctx context.Context, amount int, maxID string, sinceID st
 		}
 
 	default:
-		err = errors.New("Get: switch statement exhausted with no results")
+		err = gtserror.New("switch statement exhausted with no results")
 	}
 
 	return items, err
@@ -255,7 +255,8 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 						return true, nil
 					}
 					// We've got a proper db error.
-					return false, fmt.Errorf("getXBetweenIDs: db error while trying to prepare %s: %w", entry.itemID, err)
+					err = gtserror.Newf("db error while trying to prepare %s: %w", entry.itemID, err)
+					return false, err
 				}
 				entry.prepared = prepared
 			}
@@ -349,7 +350,8 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 					continue
 				}
 				// We've got a proper db error.
-				return nil, fmt.Errorf("getXBetweenIDs: db error while trying to prepare %s: %w", entry.itemID, err)
+				err = gtserror.Newf("db error while trying to prepare %s: %w", entry.itemID, err)
+				return nil, err
 			}
 			entry.prepared = prepared
 		}
@@ -396,7 +398,7 @@ func (t *timeline) prepareNextQuery(amount int, maxID string, sinceID string, mi
 		case maxID == "" && minID != "":
 			err = t.prepareXBetweenIDs(ctx, amount, id.Highest, minID, false)
 		default:
-			err = errors.New("Get: switch statement exhausted with no results")
+			err = gtserror.New("switch statement exhausted with no results")
 		}
 
 		if err != nil {

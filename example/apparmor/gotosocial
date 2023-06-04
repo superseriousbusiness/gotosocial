@@ -9,6 +9,7 @@ profile gotosocial flags=(attach_disconnected, mediate_deleted) {
   /usr/local/bin/gotosocial mrix,
 
   owner /gotosocial/{,**} r,
+  owner /gotosocial/db/* wk,
   owner /gotosocial/storage/** wk,
 
   # Allow GoToSocial to write logs

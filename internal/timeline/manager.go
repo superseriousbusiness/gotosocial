@@ -19,7 +19,6 @@ package timeline
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
@@ -75,6 +74,9 @@ type Manager interface {
 
 	// WipeStatusesFromAccountID removes all items by the given accountID from the given timeline.
 	WipeItemsFromAccountID(ctx context.Context, timelineID string, accountID string) error
+
+	// Prune manually triggers a prune operation for the given timelineID.
+	Prune(ctx context.Context, timelineID string, desiredPreparedItemsLength int, desiredIndexedItemsLength int) (int, error)
 
 	// Start starts hourly cleanup jobs for this timeline manager.
 	Start() error
@@ -191,7 +193,7 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, itemID string) e
 	})
 
 	if len(errors) > 0 {
-		return fmt.Errorf("WipeItemFromAllTimelines: one or more errors wiping status %s: %w", itemID, errors.Combine())
+		return gtserror.Newf("one or more errors wiping status %s: %w", itemID, errors.Combine())
 	}
 
 	return nil
@@ -200,6 +202,10 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, itemID string) e
 func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineID string, accountID string) error {
 	_, err := m.getOrCreateTimeline(ctx, timelineID).RemoveAllByOrBoosting(ctx, accountID)
 	return err
+}
+
+func (m *manager) Prune(ctx context.Context, timelineID string, desiredPreparedItemsLength int, desiredIndexedItemsLength int) (int, error) {
+	return m.getOrCreateTimeline(ctx, timelineID).Prune(desiredPreparedItemsLength, desiredIndexedItemsLength), nil
 }
 
 // getOrCreateTimeline returns a timeline with the given id,
