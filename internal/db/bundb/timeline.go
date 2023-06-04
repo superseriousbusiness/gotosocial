@@ -53,15 +53,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
-		Column("status.id").
-		// Find out who accountID follows.
-		Join("LEFT JOIN ? AS ? ON ? = ? AND ? = ?",
-			bun.Ident("follows"),
-			bun.Ident("follow"),
-			bun.Ident("follow.target_account_id"),
-			bun.Ident("status.account_id"),
-			bun.Ident("follow.account_id"),
-			accountID)
+		Column("status.id")
 
 	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
@@ -109,15 +101,21 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		q = q.Order("status.id ASC")
 	}
 
-	// Use a WhereGroup here to specify that we want EITHER statuses posted by accounts that accountID follows,
-	// OR statuses posted by accountID itself (since a user should be able to see their own statuses).
-	//
-	// This is equivalent to something like WHERE ... AND (... OR ...)
-	// See: https://bun.uptrace.dev/guide/queries.html#select
-	q = q.WhereGroup(" AND ", func(*bun.SelectQuery) *bun.SelectQuery {
+	// Subquery to select target (followed) account
+	// IDs from follows owned by given accountID.
+	subQ := t.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
+		Column("follow.target_account_id").
+		Where("? = ?", bun.Ident("follow.account_id"), accountID)
+
+	// Use the subquery in a WhereGroup here to specify that we want EITHER
+	// - statuses posted by accountID itself OR
+	// - statuses posted by accounts that accountID follows
+	q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		return q.
-			WhereOr("? = ?", bun.Ident("follow.account_id"), accountID).
-			WhereOr("? = ?", bun.Ident("status.account_id"), accountID)
+			Where("? = ?", bun.Ident("status.account_id"), accountID).
+			WhereOr("? IN (?)", bun.Ident("status.account_id"), subQ)
 	})
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
