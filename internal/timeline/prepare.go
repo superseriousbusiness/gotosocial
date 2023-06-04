@@ -129,7 +129,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 				t.items.data.Remove(e)
 			}
 			// We've got a proper db error.
-			gtserror.Newf("db error while trying to prepare %s: %w", entry.itemID, err)
+			return gtserror.Newf("db error while trying to prepare %s: %w", entry.itemID, err)
 		}
 		entry.prepared = prepared
 	}
