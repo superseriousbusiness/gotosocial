@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -296,30 +297,23 @@ func (f *federatingDB) collectIRIs(ctx context.Context, iris []*url.URL) (vocab.
 	return collection, nil
 }
 
-// extractFromCtx extracts some useful values from a context passed into the federatingDB via the API:
-//   - The target account that owns the inbox or URI being interacted with.
-//   - The requesting account that posted to the inbox.
-//   - A channel that messages for the processor can be placed into.
+// extractFromCtx extracts some useful values from a context passed into the federatingDB:
 //
-// If a value is not present, nil will be returned for it. It's up to the caller to check this and respond appropriately.
-func extractFromCtx(ctx context.Context) (receivingAccount, requestingAccount *gtsmodel.Account) {
-	receivingAccountI := ctx.Value(ap.ContextReceivingAccount)
-	if receivingAccountI != nil {
-		var ok bool
-		receivingAccount, ok = receivingAccountI.(*gtsmodel.Account)
-		if !ok {
-			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextReceivingAccount)
-		}
-	}
+//   - The account that owns the inbox or URI being interacted with.
+//   - The account that POSTed a request to the inbox.
+//   - Whether this is an internal request (one originating not from
+//     the API but from inside the instance).
+//
+// If the request is internal, the caller can assume that the activity has
+// already been processed elsewhere, and should return with no further action.
+func extractFromCtx(ctx context.Context) (receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, internal bool) {
+	receivingAccount = gtscontext.ReceivingAccount(ctx)
+	requestingAccount = gtscontext.RequestingAccount(ctx)
 
-	requestingAcctI := ctx.Value(ap.ContextRequestingAccount)
-	if requestingAcctI != nil {
-		var ok bool
-		requestingAccount, ok = requestingAcctI.(*gtsmodel.Account)
-		if !ok {
-			log.Panicf(ctx, "context entry with key %s could not be asserted to *gtsmodel.Account", ap.ContextRequestingAccount)
-		}
-	}
+	// If the receiving account wasn't set on the context, that
+	// means this request didn't pass through the API, but
+	// came from inside GtS as the result of a local activity.
+	internal = receivingAccount == nil
 
 	return
 }
@@ -329,9 +323,11 @@ func marshalItem(item vocab.Type) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	b, err := json.Marshal(m)
+
+	b, err := json.MarshalIndent(m, "", "  ")
 	if err != nil {
 		return "", err
 	}
+
 	return string(b), nil
 }

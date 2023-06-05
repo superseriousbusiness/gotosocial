@@ -196,10 +196,15 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	// TODO: alsoKnownAs
 
 	// publicKey
-	pkey, pkeyURL, err := ap.ExtractPublicKeyForOwner(accountable, uri)
+	pkey, pkeyURL, pkeyOwnerID, err := ap.ExtractPublicKey(accountable)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get public key for person %s: %s", uri.String(), err)
 	}
+
+	if pkeyOwnerID.String() != acct.URI {
+		return nil, fmt.Errorf("public key %s was owned by %s and not by %s", pkeyURL, pkeyOwnerID, acct.URI)
+	}
+
 	acct.PublicKey = pkey
 	acct.PublicKeyURI = pkeyURL.String()
 

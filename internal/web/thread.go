@@ -26,10 +26,10 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -92,7 +92,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	// should render the status's AP representation instead
 	accept := apiutil.NegotiateFormat(c, string(apiutil.TextHTML), string(apiutil.AppActivityJSON), string(apiutil.AppActivityLDJSON))
 	if accept == string(apiutil.AppActivityJSON) || accept == string(apiutil.AppActivityLDJSON) {
-		m.returnAPStatus(ctx, c, username, statusID, accept)
+		m.returnAPStatus(c, username, statusID, accept)
 		return
 	}
 
@@ -120,27 +120,17 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	})
 }
 
-func (m *Module) returnAPStatus(ctx context.Context, c *gin.Context, username string, statusID string, accept string) {
-	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
-	}
-
-	signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
-	}
-
-	status, errWithCode := m.processor.Fedi().StatusGet(ctx, username, statusID)
+func (m *Module) returnAPStatus(c *gin.Context, username string, statusID string, accept string) {
+	status, errWithCode := m.processor.Fedi().StatusGet(gtscontext.ExtractSignatureContext(c), username, statusID)
 	if errWithCode != nil {
-		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	b, mErr := json.Marshal(status)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 

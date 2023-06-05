@@ -41,12 +41,9 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		l.Debug("entering Accept")
 	}
 
-	receivingAccount, _ := extractFromCtx(ctx)
-	if receivingAccount == nil {
-		// If the receiving account  wasn't set on the context, that means this request didn't pass
-		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
-		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
-		return nil
+	receivingAccount, _, internal := extractFromCtx(ctx)
+	if internal {
+		return nil // Already processed.
 	}
 
 	acceptObject := accept.GetActivityStreamsObject()

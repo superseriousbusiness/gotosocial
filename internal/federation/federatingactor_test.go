@@ -58,7 +58,7 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 	tc := testrig.NewTestTransportController(&suite.state, httpClient)
 
 	// setup module being tested
-	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.tc, testrig.NewTestMediaManager(&suite.state))
+	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.typeconverter, testrig.NewTestMediaManager(&suite.state))
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)
@@ -73,7 +73,7 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	testAccount := suite.testAccounts["local_account_1"]
 	testRemoteAccount := suite.testAccounts["remote_account_1"]
 
-	err := suite.db.Put(ctx, &gtsmodel.Follow{
+	err := suite.state.DB.Put(ctx, &gtsmodel.Follow{
 		ID:              "01G1TRWV4AYCDBX5HRWT2EVBCV",
 		CreatedAt:       testrig.TimeMustParse("2022-06-02T12:22:21+02:00"),
 		UpdatedAt:       testrig.TimeMustParse("2022-06-02T12:22:21+02:00"),
@@ -103,7 +103,7 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
 	tc := testrig.NewTestTransportController(&suite.state, httpClient)
 	// setup module being tested
-	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.tc, testrig.NewTestMediaManager(&suite.state))
+	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.typeconverter, testrig.NewTestMediaManager(&suite.state))
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)

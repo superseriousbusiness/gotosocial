@@ -25,6 +25,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -51,7 +52,7 @@ func (m *Module) FollowersGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().FollowersGet(apiutil.TransferSignatureContext(c), requestedUsername)
+	resp, errWithCode := m.processor.Fedi().FollowersGet(gtscontext.ExtractSignatureContext(c), requestedUsername)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

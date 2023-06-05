@@ -25,6 +25,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -42,7 +43,7 @@ func (m *Module) EmojiGetHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().EmojiGet(apiutil.TransferSignatureContext(c), requestedEmojiID)
+	resp, errWithCode := m.processor.Fedi().EmojiGet(gtscontext.ExtractSignatureContext(c), requestedEmojiID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

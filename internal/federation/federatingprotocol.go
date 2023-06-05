@@ -31,7 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -116,8 +115,7 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		}
 	}
 
-	withOtherInvolvedIRIs := context.WithValue(ctx, ap.ContextOtherInvolvedIRIs, cleaned)
-	return withOtherInvolvedIRIs, nil
+	return gtscontext.SetOtherIRIs(ctx, cleaned), nil
 }
 
 // AuthenticatePostInbox delegates the authentication of a POST to an
@@ -143,23 +141,23 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	// account by parsing username from `/users/{username}/inbox`.
 	username, err := uris.ParseInboxPath(r.URL)
 	if err != nil {
-		err = fmt.Errorf("AuthenticatePostInbox: could not parse %s as inbox path: %w", r.URL.String(), err)
+		err = gtserror.Newf("could not parse %s as inbox path: %w", r.URL.String(), err)
 		return nil, false, err
 	}
 
 	if username == "" {
-		err = errors.New("AuthenticatePostInbox: inbox username was empty")
+		err = gtserror.New("inbox username was empty")
 		return nil, false, err
 	}
 
 	receivingAccount, err := f.db.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
-		err = fmt.Errorf("AuthenticatePostInbox: could not fetch receiving account %s: %w", username, err)
+		err = gtserror.Newf("could not fetch receiving account %s: %w", username, err)
 		return nil, false, err
 	}
 
-	// Check who's delivering by inspecting the http signature.
-	publicKeyOwnerURI, errWithCode := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
+	// Check who's trying to deliver to us by inspecting the http signature.
+	pubKeyOwner, errWithCode := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
 	if errWithCode != nil {
 		switch errWithCode.Code() {
 		case http.StatusUnauthorized, http.StatusForbidden, http.StatusBadRequest:
@@ -184,25 +182,30 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 
 	// Authentication has passed, check if we need to create a
 	// new instance entry for the Host of the requesting account.
-	if _, err := f.db.GetInstance(ctx, publicKeyOwnerURI.Host); err != nil {
+	if _, err := f.db.GetInstance(ctx, pubKeyOwner.Host); err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// There's been an actual error.
-			err = fmt.Errorf("AuthenticatePostInbox: error getting instance %s: %w", publicKeyOwnerURI.Host, err)
+			err = gtserror.Newf("error getting instance %s: %w", pubKeyOwner.Host, err)
 			return ctx, false, err
 		}
 
-		// we don't have an entry for this instance yet so dereference it
-		instance, err := f.GetRemoteInstance(gtscontext.SetFastFail(ctx), username, &url.URL{
-			Scheme: publicKeyOwnerURI.Scheme,
-			Host:   publicKeyOwnerURI.Host,
-		})
+		// We don't have an entry for this
+		// instance yet; go dereference it.
+		instance, err := f.GetRemoteInstance(
+			gtscontext.SetFastFail(ctx),
+			username,
+			&url.URL{
+				Scheme: pubKeyOwner.Scheme,
+				Host:   pubKeyOwner.Host,
+			},
+		)
 		if err != nil {
-			err = fmt.Errorf("AuthenticatePostInbox: error dereferencing instance %s: %w", publicKeyOwnerURI.Host, err)
+			err = gtserror.Newf("error dereferencing instance %s: %w", pubKeyOwner.Host, err)
 			return nil, false, err
 		}
 
-		if err := f.db.Put(ctx, instance); err != nil {
-			err = fmt.Errorf("AuthenticatePostInbox: error inserting instance entry for %s: %w", publicKeyOwnerURI.Host, err)
+		if err := f.db.Put(ctx, instance); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+			err = gtserror.Newf("error inserting instance entry for %s: %w", pubKeyOwner.Host, err)
 			return nil, false, err
 		}
 	}
@@ -210,7 +213,11 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	// We know the public key owner URI now, so we can
 	// dereference the remote account (or just get it
 	// from the db if we already have it).
-	requestingAccount, _, err := f.GetAccountByURI(gtscontext.SetFastFail(ctx), username, publicKeyOwnerURI)
+	requestingAccount, _, err := f.GetAccountByURI(
+		gtscontext.SetFastFail(ctx),
+		username,
+		pubKeyOwner,
+	)
 	if err != nil {
 		if gtserror.StatusCode(err) == http.StatusGone {
 			// This is the same case as the http.StatusGone check above.
@@ -222,15 +229,16 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			w.WriteHeader(http.StatusAccepted)
 			return ctx, false, nil
 		}
-		err = fmt.Errorf("AuthenticatePostInbox: couldn't get requesting account %s: %w", publicKeyOwnerURI, err)
+
+		err = gtserror.Newf("couldn't get requesting account %s: %w", pubKeyOwner, err)
 		return nil, false, err
 	}
 
 	// We have everything we need now, set the requesting
 	// and receiving accounts on the context for later use.
-	withRequesting := context.WithValue(ctx, ap.ContextRequestingAccount, requestingAccount)
-	withReceiving := context.WithValue(withRequesting, ap.ContextReceivingAccount, receivingAccount)
-	return withReceiving, true, nil
+	ctx = gtscontext.SetRequestingAccount(ctx, requestingAccount)
+	ctx = gtscontext.SetReceivingAccount(ctx, receivingAccount)
+	return ctx, true, nil
 }
 
 // Blocked should determine whether to permit a set of actors given by
@@ -260,33 +268,34 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	}
 
 	// check domain blocks for any other involved IRIs
-	otherInvolvedIRIsI := ctx.Value(ap.ContextOtherInvolvedIRIs)
-	otherInvolvedIRIs, ok := otherInvolvedIRIsI.([]*url.URL)
-	if !ok {
+	otherInvolvedIRIs := gtscontext.OtherIRIs(ctx)
+	if otherInvolvedIRIs == nil {
 		log.Error(ctx, "other involved IRIs not set on request context")
 		return false, errors.New("other involved IRIs not set on request context, so couldn't determine blocks")
 	}
+
 	blocked, err = f.db.AreURIsBlocked(ctx, otherInvolvedIRIs)
 	if err != nil {
 		return false, fmt.Errorf("error checking domain blocks of otherInvolvedIRIs: %s", err)
 	}
+
 	if blocked {
 		return blocked, nil
 	}
 
 	// now check for user-level block from receiving against requesting account
-	receivingAccountI := ctx.Value(ap.ContextReceivingAccount)
-	receivingAccount, ok := receivingAccountI.(*gtsmodel.Account)
-	if !ok {
+	receivingAccount := gtscontext.ReceivingAccount(ctx)
+	if receivingAccount == nil {
 		log.Error(ctx, "receiving account not set on request context")
 		return false, errors.New("receiving account not set on request context, so couldn't determine blocks")
 	}
-	requestingAccountI := ctx.Value(ap.ContextRequestingAccount)
-	requestingAccount, ok := requestingAccountI.(*gtsmodel.Account)
-	if !ok {
+
+	requestingAccount := gtscontext.RequestingAccount(ctx)
+	if requestingAccount == nil {
 		log.Error(ctx, "requesting account not set on request context")
 		return false, errors.New("requesting account not set on request context, so couldn't determine blocks")
 	}
+
 	// the receiver shouldn't block the sender
 	blocked, err = f.db.IsBlocked(ctx, receivingAccount.ID, requestingAccount.ID)
 	if err != nil {

@@ -40,12 +40,9 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		}...)
 	l.Debug("entering Delete")
 
-	receivingAccount, requestingAccount := extractFromCtx(ctx)
-	if receivingAccount == nil {
-		// If the receiving account wasn't set on the context, that means this request didn't pass
-		// through the API, but came from inside GtS as the result of another activity on this instance. That being so,
-		// we can safely just ignore this activity, since we know we've already processed it elsewhere.
-		return nil
+	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
+	if internal {
+		return nil // Already processed.
 	}
 
 	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,

@@ -19,6 +19,11 @@ package gtscontext
 
 import (
 	"context"
+	"net/url"
+
+	"github.com/gin-gonic/gin"
+	"github.com/go-fed/httpsig"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // package private context key type.
@@ -29,8 +34,19 @@ const (
 	_ ctxkey = iota
 	barebonesKey
 	fastFailKey
-	pubKeyIDKey
+	outgoingPubKeyIDKey
 	requestIDKey
+	receivingAccountKey
+	requestingAccountKey
+	otherIRIsKey
+	httpSigVerifierKey
+	httpSigKey
+	httpSignPubKeyIDKey
+
+	// converted context keys for gin Set/Get operations.
+	httpSigVerifier = string(rune(httpSigVerifierKey))
+	httpSig         = string(rune(httpSigKey))
+	httpSigPubKeyID = string(rune(httpSignPubKeyIDKey))
 )
 
 // RequestID returns the request ID associated with context. This value will usually
@@ -48,18 +64,126 @@ func SetRequestID(ctx context.Context, id string) context.Context {
 	return context.WithValue(ctx, requestIDKey, id)
 }
 
-// PublicKeyID returns the public key ID (URI) associated with context. This
+// OutgoignPublicKeyID returns the public key ID (URI) associated with context. This
 // value is useful for logging situations in which a given public key URI is
 // relevant, e.g. for outgoing requests being signed by the given key.
-func PublicKeyID(ctx context.Context) string {
-	id, _ := ctx.Value(pubKeyIDKey).(string)
+func OutgoignPublicKeyID(ctx context.Context) string {
+	id, _ := ctx.Value(outgoingPubKeyIDKey).(string)
 	return id
 }
 
-// SetPublicKeyID stores the given public key ID value and returns the wrapped
+// SetOutgoingPublicKeyID stores the given public key ID value and returns the wrapped
 // context. See PublicKeyID() for further information on the public key ID value.
-func SetPublicKeyID(ctx context.Context, id string) context.Context {
-	return context.WithValue(ctx, pubKeyIDKey, id)
+func SetOutgoingPublicKeyID(ctx context.Context, id string) context.Context {
+	return context.WithValue(ctx, outgoingPubKeyIDKey, id)
+}
+
+// ReceivingAccount returns the local account who owns the resource being
+// interacted with (inbox, uri, etc) in the current ActivityPub request chain.
+func ReceivingAccount(ctx context.Context) *gtsmodel.Account {
+	acct, _ := ctx.Value(receivingAccountKey).(*gtsmodel.Account)
+	return acct
+}
+
+// SetReceivingAccount stores the given receiving account value and returns the wrapped
+// context. See ReceivingAccount() for further information on the receiving account value.
+func SetReceivingAccount(ctx context.Context, acct *gtsmodel.Account) context.Context {
+	return context.WithValue(ctx, receivingAccountKey, acct)
+}
+
+// RequestingAccount returns the remote account interacting with a local
+// resource (inbox, uri, etc) in the current ActivityPub request chain.
+func RequestingAccount(ctx context.Context) *gtsmodel.Account {
+	acct, _ := ctx.Value(requestingAccountKey).(*gtsmodel.Account)
+	return acct
+}
+
+// SetRequestingAccount stores the given requesting account value and returns the wrapped
+// context. See RequestingAccount() for further information on the requesting account value.
+func SetRequestingAccount(ctx context.Context, acct *gtsmodel.Account) context.Context {
+	return context.WithValue(ctx, requestingAccountKey, acct)
+}
+
+// OtherIRIs returns other IRIs which are involved in the current ActivityPub request
+// chain. This usually means: other accounts who are mentioned, CC'd, TO'd, or boosted
+// by the current inbox POST request.
+func OtherIRIs(ctx context.Context) []*url.URL {
+	iris, _ := ctx.Value(otherIRIsKey).([]*url.URL)
+	return iris
+}
+
+// SetOtherIRIs stores the given IRIs slice and returns the wrapped context.
+// See OtherIRIs() for further information on the IRIs slice value.
+func SetOtherIRIs(ctx context.Context, iris []*url.URL) context.Context {
+	return context.WithValue(ctx, otherIRIsKey, iris)
+}
+
+// HTTPSignatureVerifier returns an http signature verifier for the current ActivityPub
+// request chain. This verifier can be called to authenticate the current request.
+func HTTPSignatureVerifier(ctx context.Context) httpsig.Verifier {
+	verifier, _ := ctx.Value(httpSigVerifierKey).(httpsig.Verifier)
+	return verifier
+}
+
+// SetHTTPSignatureVerifier stores the given http signature verifier and returns the
+// wrapped context. See HTTPSignatureVerifier() for further information on the verifier value.
+func SetHTTPSignatureVerifier(ctx context.Context, verifier httpsig.Verifier) context.Context {
+	return context.WithValue(ctx, httpSigVerifierKey, verifier)
+}
+
+// HTTPSignature returns the http signature string
+// value for the current ActivityPub request chain.
+func HTTPSignature(ctx context.Context) string {
+	signature, _ := ctx.Value(httpSigKey).(string)
+	return signature
+}
+
+// SetHTTPSignature stores the given http signature string and returns the wrapped
+// context. See HTTPSignature() for further information on the verifier value.
+func SetHTTPSignature(ctx context.Context, signature string) context.Context {
+	return context.WithValue(ctx, httpSigKey, signature)
+}
+
+// HTTPSignaturePubKeyID returns the public key id of the http signature
+// for the current ActivityPub request chain.
+func HTTPSignaturePubKeyID(ctx context.Context) *url.URL {
+	pubKeyID, _ := ctx.Value(httpSignPubKeyIDKey).(*url.URL)
+	return pubKeyID
+}
+
+// SetHTTPSignaturePubKeyID stores the given http signature public key id and returns
+// the wrapped context. See HTTPSignaturePubKeyID() for further information on the value.
+func SetHTTPSignaturePubKeyID(ctx context.Context, pubKeyID *url.URL) context.Context {
+	return context.WithValue(ctx, httpSignPubKeyIDKey, pubKeyID)
+}
+
+// ExtractSignatureContext extracts an http signature verifier,
+// http signature, and corresponding public key ID from a gin
+// context, and sets those same values onto a go context.
+func ExtractSignatureContext(c *gin.Context) context.Context {
+	ctx := c.Request.Context()
+
+	if verifier, signed := c.Get(httpSigVerifier); signed {
+		ctx = SetHTTPSignatureVerifier(ctx, verifier.(httpsig.Verifier)) //nolint:forcetypeassert
+	}
+
+	if signature := c.GetString(httpSig); signature != "" {
+		ctx = SetHTTPSignature(ctx, signature)
+	}
+
+	if pubKeyID, signed := c.Get(httpSigPubKeyID); signed {
+		ctx = SetHTTPSignaturePubKeyID(ctx, pubKeyID.(*url.URL)) //nolint:forcetypeassert
+	}
+
+	return ctx
+}
+
+// SetSignatureContext sets the provided signature verifier,
+// signature, and public key ID on the given gin context.
+func SetSignatureContext(c *gin.Context, verifier httpsig.Verifier, signature string, pubKeyID *url.URL) {
+	c.Set(httpSigVerifier, verifier)
+	c.Set(httpSig, signature)
+	c.Set(httpSigPubKeyID, pubKeyID)
 }
 
 // IsFastFail returns whether the "fastfail" context key has been set. This

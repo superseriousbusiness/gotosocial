@@ -87,7 +87,7 @@ func (t *transport) GET(r *http.Request) (*http.Response, error) {
 		return nil, errors.New("must be GET request")
 	}
 	ctx := r.Context() // extract, set pubkey ID.
-	ctx = gtscontext.SetPublicKeyID(ctx, t.pubKeyID)
+	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
 	r = r.WithContext(ctx) // replace request ctx.
 	r.Header.Set("User-Agent", t.controller.userAgent)
 	return t.controller.client.DoSigned(r, t.signGET())
@@ -99,7 +99,7 @@ func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 		return nil, errors.New("must be POST request")
 	}
 	ctx := r.Context() // extract, set pubkey ID.
-	ctx = gtscontext.SetPublicKeyID(ctx, t.pubKeyID)
+	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
 	r = r.WithContext(ctx) // replace request ctx.
 	r.Header.Set("User-Agent", t.controller.userAgent)
 	return t.controller.client.DoSigned(r, t.signPOST(body))
