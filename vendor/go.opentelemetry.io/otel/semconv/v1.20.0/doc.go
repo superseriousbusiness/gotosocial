@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
-Package codes defines the canonical error codes used by OpenTelemetry.
-
-It conforms to [the OpenTelemetry
-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/api.md#set-status).
-*/
-package codes // import "go.opentelemetry.io/otel/codes"
+// Package semconv implements OpenTelemetry semantic conventions.
+//
+// OpenTelemetry semantic conventions are agreed standardized naming
+// patterns for OpenTelemetry things. This package represents the conventions
+// as of the v1.20.0 version of the OpenTelemetry specification.
+package semconv // import "go.opentelemetry.io/otel/semconv/v1.20.0"

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
-Package codes defines the canonical error codes used by OpenTelemetry.
+package semconv // import "go.opentelemetry.io/otel/semconv/v1.20.0"
 
-It conforms to [the OpenTelemetry
-specification](https://github.com/open-telemetry/opentelemetry-specification/blob/v1.20.0/specification/trace/api.md#set-status).
-*/
-package codes // import "go.opentelemetry.io/otel/codes"
+// HTTP scheme attributes.
+var (
+	HTTPSchemeHTTP  = HTTPSchemeKey.String("http")
+	HTTPSchemeHTTPS = HTTPSchemeKey.String("https")
+)
