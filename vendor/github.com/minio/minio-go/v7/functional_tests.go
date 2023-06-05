@@ -2539,13 +2539,13 @@ func testTrailingChecksums() {
 		test.ChecksumCRC32C = hashMultiPart(b, int(test.PO.PartSize), test.hasher)
 
 		// Set correct CRC.
-		c.TraceOn(os.Stdout)
+		// c.TraceOn(os.Stderr)
 		resp, err := c.PutObject(context.Background(), bucketName, objectName, bytes.NewReader(b), int64(bufSize), test.PO)
 		if err != nil {
 			logError(testName, function, args, startTime, "", "PutObject failed", err)
 			return
 		}
-		c.TraceOff()
+		// c.TraceOff()
 		cmpChecksum(resp.ChecksumSHA256, test.ChecksumSHA256)
 		cmpChecksum(resp.ChecksumSHA1, test.ChecksumSHA1)
 		cmpChecksum(resp.ChecksumCRC32, test.ChecksumCRC32)
@@ -2655,8 +2655,8 @@ func testPutObjectWithAutomaticChecksums() {
 	}
 
 	// Enable tracing, write to stderr.
-	c.TraceOn(os.Stderr)
-	defer c.TraceOff()
+	// c.TraceOn(os.Stderr)
+	// defer c.TraceOff()
 
 	for i, test := range tests {
 		bufSize := dataFileMap["datafile-10-kB"]
