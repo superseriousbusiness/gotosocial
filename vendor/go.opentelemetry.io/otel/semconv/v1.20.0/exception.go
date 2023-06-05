@@ -12,13 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package internal contains common functionality for all OTLP exporters.
-package internal // import "go.opentelemetry.io/otel/exporters/otlp/internal"
+package semconv // import "go.opentelemetry.io/otel/semconv/v1.20.0"
 
-import "go.opentelemetry.io/otel"
-
-// GetUserAgentHeader return an OTLP header value form "OTel OTLP Exporter Go/{{ .Version }}"
-// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#user-agent
-func GetUserAgentHeader() string {
-	return "OTel OTLP Exporter Go/" + otel.Version()
-}
+const (
+	// ExceptionEventName is the name of the Span event representing an exception.
+	ExceptionEventName = "exception"
+)
