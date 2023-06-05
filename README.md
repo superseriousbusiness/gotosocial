@@ -275,7 +275,6 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
 - [tdewolff/minify](https://github.com/tdewolff/minify); HTML minification for Markdown-submitted posts. [MIT License](https://spdx.org/licenses/MIT.html).
 - [uber-go/automaxprocs](https://github.com/uber-go/automaxprocs); GOMAXPROCS automation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [ulule/limiter](https://github.com/ulule/limiter); http rate limit middleware. [MIT License](https://spdx.org/licenses/MIT.html).
-- [ulule/limiter](https://github.com/ulule/limiter); simple rate limit middleware. [MIT License](https://spdx.org/licenses/MIT.html).
 - [uptrace/bun](https://github.com/uptrace/bun); database ORM. [BSD-2-Clause License](https://spdx.org/licenses/BSD-2-Clause.html).
 - [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); password strength validation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [yuin/goldmark](https://github.com/yuin/goldmark); markdown parser. [MIT License](https://spdx.org/licenses/MIT.html).
