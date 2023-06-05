@@ -280,6 +280,7 @@ Options:
 
 - `KeepVarNames` keeps variable names as they are and omits shortening variable names
 - `Precision` number of significant digits to preserve for numbers, `0` means no trimming
+- `Version` ECMAScript version to use for output, `0` is the latest
 
 ### Comparison with other tools
 
