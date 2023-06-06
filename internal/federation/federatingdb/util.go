@@ -324,7 +324,7 @@ func marshalItem(item vocab.Type) (string, error) {
 		return "", err
 	}
 
-	b, err := json.MarshalIndent(m, "", "  ")
+	b, err := json.Marshal(m)
 	if err != nil {
 		return "", err
 	}

@@ -114,25 +114,6 @@ func (suite *FederatingProtocolTestSuite) authenticatePostInbox(
 	return newContext, authed, b, res.StatusCode
 }
 
-func (suite *FederatingProtocolTestSuite) blocked(
-	ctx context.Context,
-	receivingAccount *gtsmodel.Account,
-	requestingAccount *gtsmodel.Account,
-	otherIRIs []*url.URL,
-	actorIRIs []*url.URL,
-) bool {
-	ctx = gtscontext.SetReceivingAccount(ctx, receivingAccount)
-	ctx = gtscontext.SetRequestingAccount(ctx, requestingAccount)
-	ctx = gtscontext.SetOtherIRIs(ctx, otherIRIs)
-
-	blocked, err := suite.federator.Blocked(ctx, actorIRIs)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	return blocked
-}
-
 func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookDM() {
 	var (
 		receivingAccount = suite.testAccounts["local_account_1"]
@@ -145,10 +126,17 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookDM() {
 		activity,
 	)
 
-	involvedIRIs := gtscontext.OtherIRIs(ctx)
-	suite.Equal([]*url.URL{
-		testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork"),
-	}, involvedIRIs)
+	otherIRIs := gtscontext.OtherIRIs(ctx)
+	otherIRIStrs := make([]string, 0, len(otherIRIs))
+	for _, i := range otherIRIs {
+		otherIRIStrs = append(otherIRIStrs, i.String())
+	}
+
+	suite.Equal([]string{
+		"http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6/activity",
+		"http://localhost:8080/users/the_mighty_zork",
+		"http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6",
+	}, otherIRIStrs)
 }
 
 func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookReply() {
@@ -163,11 +151,17 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookReply() {
 		activity,
 	)
 
-	involvedIRIs := gtscontext.OtherIRIs(ctx)
-	suite.Equal([]*url.URL{
-		testrig.URLMustParse("http://localhost:8080/users/1happyturtle"),
-		testrig.URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
-	}, involvedIRIs)
+	otherIRIs := gtscontext.OtherIRIs(ctx)
+	otherIRIStrs := make([]string, 0, len(otherIRIs))
+	for _, i := range otherIRIs {
+		otherIRIStrs = append(otherIRIStrs, i.String())
+	}
+
+	suite.Equal([]string{
+		"http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe",
+		"http://fossbros-anonymous.io/users/foss_satan/followers",
+		"http://localhost:8080/users/1happyturtle",
+	}, otherIRIStrs)
 }
 
 func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookReplyToReply() {
@@ -182,11 +176,67 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookReplyToRep
 		activity,
 	)
 
-	involvedIRIs := gtscontext.OtherIRIs(ctx)
-	suite.Equal([]*url.URL{
-		testrig.URLMustParse("http://localhost:8080/users/1happyturtle"),
-		testrig.URLMustParse("http://fossbros-anonymous.io/users/foss_satan/followers"),
-	}, involvedIRIs)
+	otherIRIs := gtscontext.OtherIRIs(ctx)
+	otherIRIStrs := make([]string, 0, len(otherIRIs))
+	for _, i := range otherIRIs {
+		otherIRIStrs = append(otherIRIStrs, i.String())
+	}
+
+	suite.Equal([]string{
+		"http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe",
+		"http://fossbros-anonymous.io/users/foss_satan/followers",
+		"http://localhost:8080/users/1happyturtle",
+	}, otherIRIStrs)
+}
+
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookAnnounceForwardedToTurtle() {
+	var (
+		receivingAccount = suite.testAccounts["local_account_2"]
+		activity         = suite.testActivities["announce_forwarded_1_turtle"]
+	)
+
+	ctx := suite.postInboxRequestBodyHook(
+		context.Background(),
+		receivingAccount,
+		activity,
+	)
+
+	otherIRIs := gtscontext.OtherIRIs(ctx)
+	otherIRIStrs := make([]string, 0, len(otherIRIs))
+	for _, i := range otherIRIs {
+		otherIRIStrs = append(otherIRIStrs, i.String())
+	}
+
+	suite.Equal([]string{
+		"http://fossbros-anonymous.io/users/foss_satan/first_announce",
+		"http://example.org/users/Some_User",
+		"http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1",
+	}, otherIRIStrs)
+}
+
+func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookAnnounceForwardedToZork() {
+	var (
+		receivingAccount = suite.testAccounts["local_account_1"]
+		activity         = suite.testActivities["announce_forwarded_2_zork"]
+	)
+
+	ctx := suite.postInboxRequestBodyHook(
+		context.Background(),
+		receivingAccount,
+		activity,
+	)
+
+	otherIRIs := gtscontext.OtherIRIs(ctx)
+	otherIRIStrs := make([]string, 0, len(otherIRIs))
+	for _, i := range otherIRIs {
+		otherIRIStrs = append(otherIRIStrs, i.String())
+	}
+
+	suite.Equal([]string{
+		"http://fossbros-anonymous.io/users/foss_satan/second_announce",
+		"http://example.org/users/Some_User",
+		"http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1",
+	}, otherIRIStrs)
 }
 
 func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
@@ -258,6 +308,19 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGoneNoTombstone() 
 	suite.True(exists)
 }
 
+func (suite *FederatingProtocolTestSuite) blocked(
+	ctx context.Context,
+	receivingAccount *gtsmodel.Account,
+	requestingAccount *gtsmodel.Account,
+	otherIRIs []*url.URL,
+	actorIRIs []*url.URL,
+) (bool, error) {
+	ctx = gtscontext.SetReceivingAccount(ctx, receivingAccount)
+	ctx = gtscontext.SetRequestingAccount(ctx, requestingAccount)
+	ctx = gtscontext.SetOtherIRIs(ctx, otherIRIs)
+	return suite.federator.Blocked(ctx, actorIRIs)
+}
+
 func (suite *FederatingProtocolTestSuite) TestBlockedNoProblem() {
 	var (
 		receivingAccount  = suite.testAccounts["local_account_1"]
@@ -268,7 +331,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedNoProblem() {
 		}
 	)
 
-	blocked := suite.blocked(
+	blocked, err := suite.blocked(
 		context.Background(),
 		receivingAccount,
 		requestingAccount,
@@ -276,6 +339,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedNoProblem() {
 		actorIRIs,
 	)
 
+	suite.NoError(err)
 	suite.False(blocked)
 }
 
@@ -299,7 +363,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedReceiverBlocksRequester() {
 		suite.Fail(err.Error())
 	}
 
-	blocked := suite.blocked(
+	blocked, err := suite.blocked(
 		context.Background(),
 		receivingAccount,
 		requestingAccount,
@@ -307,6 +371,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedReceiverBlocksRequester() {
 		actorIRIs,
 	)
 
+	suite.NoError(err)
 	suite.True(blocked)
 }
 
@@ -333,7 +398,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedCCd() {
 		suite.Fail(err.Error())
 	}
 
-	blocked := suite.blocked(
+	blocked, err := suite.blocked(
 		context.Background(),
 		receivingAccount,
 		requestingAccount,
@@ -341,7 +406,8 @@ func (suite *FederatingProtocolTestSuite) TestBlockedCCd() {
 		actorIRIs,
 	)
 
-	suite.True(blocked)
+	suite.EqualError(err, "block exists between http://localhost:8080/users/the_mighty_zork and one or more of [http://example.org/users/Some_User]")
+	suite.False(blocked)
 }
 
 func (suite *FederatingProtocolTestSuite) TestBlockedRepliedStatus() {
@@ -359,7 +425,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedRepliedStatus() {
 		}
 	)
 
-	blocked := suite.blocked(
+	blocked, err := suite.blocked(
 		context.Background(),
 		receivingAccount,
 		requestingAccount,
@@ -367,7 +433,8 @@ func (suite *FederatingProtocolTestSuite) TestBlockedRepliedStatus() {
 		actorIRIs,
 	)
 
-	suite.True(blocked)
+	suite.EqualError(err, "block exists between http://fossbros-anonymous.io/users/foss_satan and one or more of [http://localhost:8080/users/1happyturtle/statuses/01F8MHBQCBTDKN6X5VHGMMN4MA]")
+	suite.False(blocked)
 }
 
 func TestFederatingProtocolTestSuite(t *testing.T) {
