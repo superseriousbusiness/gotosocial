@@ -64,10 +64,10 @@ func SetRequestID(ctx context.Context, id string) context.Context {
 	return context.WithValue(ctx, requestIDKey, id)
 }
 
-// OutgoignPublicKeyID returns the public key ID (URI) associated with context. This
+// OutgoingPublicKeyID returns the public key ID (URI) associated with context. This
 // value is useful for logging situations in which a given public key URI is
 // relevant, e.g. for outgoing requests being signed by the given key.
-func OutgoignPublicKeyID(ctx context.Context) string {
+func OutgoingPublicKeyID(ctx context.Context) string {
 	id, _ := ctx.Value(outgoingPubKeyIDKey).(string)
 	return id
 }

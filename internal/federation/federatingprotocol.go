@@ -381,7 +381,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 	// Check high-level domain blocks first.
 	blocked, err = f.db.AreURIsBlocked(ctx, otherIRIs)
 	if err != nil {
-		gtserror.Newf("error checking domain block of otherIRIs: %w", err)
+		err := gtserror.Newf("error checking domain block of otherIRIs: %w", err)
 		return false, err
 	}
 
