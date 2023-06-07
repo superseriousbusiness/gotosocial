@@ -21,6 +21,8 @@
 
 const React = require("react");
 
+const getFormMutations = require("./get-form-mutations");
+
 function parseFields(entries, length) {
 	const fields = [];
 
@@ -36,16 +38,28 @@ function parseFields(entries, length) {
 }
 
 module.exports = function useArrayInput({ name, _Name }, { initialValue, length = 0 }) {
+	const fields = React.useRef({});
+
 	const value = React.useMemo(() => parseFields(initialValue, length), [initialValue, length]);
 
 	return {
 		name,
 		value,
+		ctx: fields.current,
 		maxLength: length,
 		selectedValues() {
-			return value.filter((v) => {
-				return v.name?.length > 0 && v.value?.length > 0;
+			// if any form field changed, we need to re-send everything
+			const hasUpdate = Object.values(fields.current).some((fieldSet) => {
+				const { updatedFields } = getFormMutations(fieldSet, { changedOnly: true });
+				return updatedFields.length > 0;
 			});
+			if (hasUpdate) {
+				return Object.values(fields.current).map((fieldSet) => {
+					return getFormMutations(fieldSet, { changedOnly: false }).mutationData;
+				});
+			} else {
+				return [];
+			}
 		}
 	};
 };

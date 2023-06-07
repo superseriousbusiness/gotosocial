@@ -31,6 +31,7 @@ const {
 } = require("../lib/form");
 
 const useFormSubmit = require("../lib/form/submit");
+const { useWithFormContext, FormContext } = require("../lib/form/context");
 
 const {
 	TextInput,
@@ -88,7 +89,12 @@ function UserProfileForm({ data: profile }) {
 		}),
 	};
 
-	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation(), {
+		onFinish: () => {
+			form.avatar.reset();
+			form.header.reset();
+		}
+	});
 
 	return (
 		<form className="user-profile" onSubmit={submitForm}>
@@ -159,39 +165,33 @@ function UserProfileForm({ data: profile }) {
 function ProfileFields({ field: formField }) {
 	return (
 		<div className="fields">
-			{formField.value.map((data, i) => (
-				<Field
-					key={i}
-					data={data}
-					onChange={(key, val) => {
-						formField.value[i][key] = val;
-					}}
-				/>
-			))}
+			<FormContext.Provider value={formField.ctx}>
+				{formField.value.map((data, i) => (
+					<Field
+						key={i}
+						index={i}
+						data={data}
+					/>
+				))}
+			</FormContext.Provider>
 		</div>
 	);
 }
 
-function Field({ data, onChange }) {
-	const name = useTextInput("name", { defaultValue: data.name });
-	const value = useTextInput("value", { defaultValue: data.value });
-
-	React.useEffect(() => {
-		onChange("name", name.value);
-	}, [onChange, name.value]);
-
-	React.useEffect(() => {
-		onChange("value", value.value);
-	}, [onChange, value.value]);
+function Field({ index, data }) {
+	const form = useWithFormContext(index, {
+		name: useTextInput("name", { defaultValue: data.name }),
+		value: useTextInput("value", { defaultValue: data.value })
+	});
 
 	return (
 		<div className="entry">
 			<TextInput
-				field={name}
+				field={form.name}
 				placeholder="Name"
 			/>
 			<TextInput
-				field={value}
+				field={form.value}
 				placeholder="Value"
 			/>
 		</div>
