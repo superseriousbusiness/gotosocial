@@ -439,6 +439,17 @@ section.with-sidebar > div, section.with-sidebar > form {
 			}
 		}
 	}
+
+	.fields {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		
+		.entry {
+			display: flex;
+			gap: 0.5rem;
+		}
+	}
 }
 
 form {

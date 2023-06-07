@@ -26,7 +26,8 @@ const query = require("../lib/query");
 const {
 	useTextInput,
 	useFileInput,
-	useBoolInput
+	useBoolInput,
+	useFieldArrayInput
 } = require("../lib/form");
 
 const useFormSubmit = require("../lib/form/submit");
@@ -65,8 +66,11 @@ function UserProfileForm({ data: profile }) {
 	*/
 
 	const { data: instance } = query.useInstanceQuery();
-	const allowCustomCSS = React.useMemo(() => {
-		return instance?.configuration?.accounts?.allow_custom_css === true;
+	const instanceConfig = React.useMemo(() => {
+		return {
+			allowCustomCSS: instance?.configuration?.accounts?.allow_custom_css === true,
+			maxPinnedFields: instance?.configuration?.accounts?.max_profile_fields ?? 6
+		};
 	}, [instance]);
 
 	const form = {
@@ -78,6 +82,10 @@ function UserProfileForm({ data: profile }) {
 		bot: useBoolInput("bot", { source: profile }),
 		locked: useBoolInput("locked", { source: profile }),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
+		fields: useFieldArrayInput("fields_attributes", {
+			defaultValue: profile?.source?.fields,
+			length: instanceConfig.maxPinnedFields
+		}),
 	};
 
 	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
@@ -129,7 +137,11 @@ function UserProfileForm({ data: profile }) {
 				field={form.enableRSS}
 				label="Enable RSS feed of Public posts"
 			/>
-			{!allowCustomCSS ? null :
+			<b>Profile fields</b>
+			<ProfileFields
+				field={form.fields}
+			/>
+			{!instanceConfig.allowCustomCSS ? null :
 				<TextArea
 					field={form.customCSS}
 					label="Custom CSS"
@@ -141,5 +153,47 @@ function UserProfileForm({ data: profile }) {
 			}
 			<MutationButton label="Save profile info" result={result} />
 		</form>
+	);
+}
+
+function ProfileFields({ field: formField }) {
+	return (
+		<div className="fields">
+			{formField.value.map((data, i) => (
+				<Field
+					key={i}
+					data={data}
+					onChange={(key, val) => {
+						formField.value[i][key] = val;
+					}}
+				/>
+			))}
+		</div>
+	);
+}
+
+function Field({ data, onChange }) {
+	const name = useTextInput("name", { defaultValue: data.name });
+	const value = useTextInput("value", { defaultValue: data.value });
+
+	React.useEffect(() => {
+		onChange("name", name.value);
+	}, [onChange, name.value]);
+
+	React.useEffect(() => {
+		onChange("value", value.value);
+	}, [onChange, value.value]);
+
+	return (
+		<div className="entry">
+			<TextInput
+				field={name}
+				placeholder="Name"
+			/>
+			<TextInput
+				field={value}
+				placeholder="Value"
+			/>
+		</div>
 	);
 }

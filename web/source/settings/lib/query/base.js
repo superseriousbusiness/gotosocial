@@ -20,23 +20,7 @@
 "use strict";
 
 const { createApi, fetchBaseQuery } = require("@reduxjs/toolkit/query/react");
-const { isPlainObject } = require("is-plain-object");
-
-function convertToForm(obj) {
-	const formData = new FormData();
-	Object.entries(obj).forEach(([key, val]) => {
-		if (isPlainObject(val)) {
-			Object.entries(val).forEach(([key2, val2]) => {
-				if (val2 != undefined) {
-					formData.set(`${key}[${key2}]`, val2);
-				}
-			});
-		} else if (val != undefined) {
-			formData.set(key, val);
-		}
-	});
-	return formData;
-}
+const { serialize: serializeForm } = require("object-to-formdata");
 
 function instanceBasedQuery(args, api, extraOptions) {
 	const state = api.getState();
@@ -55,7 +39,9 @@ function instanceBasedQuery(args, api, extraOptions) {
 
 	if (args.asForm) {
 		delete args.asForm;
-		args.body = convertToForm(args.body);
+		args.body = serializeForm(args.body, {
+			indices: true, // Array indices, for profile fields
+		});
 	}
 
 	return fetchBaseQuery({

@@ -74,6 +74,7 @@ module.exports = {
 	useRadioInput: makeHook(require("./radio")),
 	useComboBoxInput: makeHook(require("./combo-box")),
 	useCheckListInput: makeHook(require("./check-list")),
+	useFieldArrayInput: makeHook(require("./field-array")),
 	useValue: function (name, value) {
 		return {
 			name,
