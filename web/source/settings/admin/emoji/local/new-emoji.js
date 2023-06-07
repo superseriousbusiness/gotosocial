@@ -42,9 +42,14 @@ const MutationButton = require("../../../components/form/mutation-button");
 module.exports = function NewEmojiForm() {
 	const shortcode = useShortcode();
 
+	const { data: instance } = query.useInstanceQuery();
+	const emojiMaxSize = React.useMemo(() => {
+		return instance?.configuration?.emojis?.emoji_size_limit ?? 50 * 1024;
+	}, [instance]);
+
 	const image = useFileInput("image", {
 		withPreview: true,
-		maxSize: 50 * 1024 // TODO: get from instance api?
+		maxSize: emojiMaxSize
 	});
 
 	const category = useComboBoxInput("category");
