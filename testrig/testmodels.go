@@ -40,18 +40,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // TrueBool just returns a pointer to boolean true.
 func TrueBool() *bool {
-	b := new(bool)
-	*b = true
-	return b
+	return typeutils.OptionalBool(true)
 }
 
 // FalseBool just returns a pointer to boolean false.
 func FalseBool() *bool {
-	return new(bool)
+	return typeutils.OptionalBool(false)
 }
 
 // StringPtr returns a pointer to the given string.
