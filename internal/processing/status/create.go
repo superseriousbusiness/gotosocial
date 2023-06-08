@@ -36,6 +36,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
+// TODO: make this a configuration option?
+const localOnlyEmojiShortCode = "local_only"
+
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
 func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
 	accountURIs := uris.GenerateURIsForAccount(account.Username)
@@ -330,12 +333,19 @@ func processContent(ctx context.Context, dbService db.DB, formatter text.Formatt
 	status.EmojiIDs = make([]string, 0, len(formatted.Emojis))
 	for _, gtsemoji := range formatted.Emojis {
 		status.EmojiIDs = append(status.EmojiIDs, gtsemoji.ID)
+		// implements #301 (hometown behaviour) for marking a post to not federate via the :local_only: emoji
+		if gtsemoji.Shortcode == localOnlyEmojiShortCode {
+			status.Federated = typeutils.OptionalBool(false)
+		}
 	}
 
 	spoilerformatted := formatter.FromPlainEmojiOnly(ctx, parseMention, accountID, status.ID, form.SpoilerText)
 	for _, gtsemoji := range spoilerformatted.Emojis {
 		status.Emojis = append(status.Emojis, gtsemoji)
 		status.EmojiIDs = append(status.EmojiIDs, gtsemoji.ID)
+		if gtsemoji.Shortcode == localOnlyEmojiShortCode {
+			status.Federated = typeutils.OptionalBool(false)
+		}
 	}
 
 	status.Content = formatted.HTML

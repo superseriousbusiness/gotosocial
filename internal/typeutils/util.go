@@ -26,6 +26,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
+// OptionalBool just return a pointer to the given boolean value
+func OptionalBool(value bool) *bool {
+	b := new(bool)
+	*b = value
+	return b
+}
+
 type statusInteractions struct {
 	Faved      bool
 	Muted      bool
