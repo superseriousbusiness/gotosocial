@@ -16,7 +16,7 @@ tracing-insecure: true
 ```
 
 [otel]: https://opentelemetry.io/
-[obs]: ../../configuration/observability/
+[obs]: ../configuration/observability.md
 [tempo]: https://grafana.com/oss/tempo/
 [grafana]: https://grafana.com/oss/grafana/
 [ext]: https://github.com/superseriousbusiness/gotosocial/tree/main/example/tracing
@@ -25,7 +25,7 @@ tracing-insecure: true
 
 Once you execute a few queries against your instance, you'll be able to find them in Grafana. You can use the Explore tab and pick Tempo as the datasource. Because our example configuration for Grafana enables [TraceQL][traceql], the Explore tab will have the TraceQL query type selected by default. You can switch to "Search" instead and find all traces emitted by GoToSocial under the "GoToSocial" service name.
 
-Using TraceQL, a simple TraceQL query to find all traces related to requests to `/api/v1/instance` would look like this:
+Using TraceQL, a simple query to find all traces related to requests to `/api/v1/instance` would look like this:
 
 ```
 {.http.route = "/api/v1/instance"}
