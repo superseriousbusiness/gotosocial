@@ -444,6 +444,10 @@ func (p *Processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmo
 		return err
 	}
 
+	if err := p.state.Timelines.List.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
+		return err
+	}
+
 	return p.stream.Delete(status.ID)
 }
 

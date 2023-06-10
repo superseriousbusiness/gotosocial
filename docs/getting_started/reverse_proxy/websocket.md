@@ -6,7 +6,7 @@ In order to use this functionality, you need to ensure that whatever proxy you'v
 
 The WebSocket endpoint is located at `wss://example.org/api/v1/streaming` where `example.org` is the hostname of your GoToSocial instance.
 
-The WebSocket endpoint uses the same port as configured in the `port` section of your [general config](../configuration/general.md).
+The WebSocket endpoint uses the same port as configured in the `port` section of your [general config](../../configuration/general.md).
 
 Typical WebSocket **request** headers as sent by Pinafore look like the following:
 
