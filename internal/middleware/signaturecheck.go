@@ -34,7 +34,7 @@ const (
 	sigHeader  = string(httpsig.Signature)
 	authHeader = string(httpsig.Authorization)
 	// untyped error returned by httpsig when no signature is present
-	noSigError = "neither " + sigHeader + " nor " + authHeader + " have signature parameters"
+	noSigError = "neither \"" + sigHeader + "\" nor \"" + authHeader + "\" have signature parameters"
 )
 
 // SignatureCheck returns a gin middleware for checking http signatures.
