@@ -121,7 +121,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 
 		// there's a gts model already pinned to the message, it should be a status
 		if status, ok = federatorMsg.GTSModel.(*gtsmodel.Status); !ok {
-			return errors.New("ProcessFromFederator: note was not parseable as *gtsmodel.Status")
+			return gtserror.New("Note was not parseable as *gtsmodel.Status")
 		}
 
 		// Since this was a create originating AP object
@@ -141,7 +141,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 	} else {
 		// no model pinned, we need to dereference based on the IRI
 		if federatorMsg.APIri == nil {
-			return errors.New("ProcessFromFederator: status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
+			return gtserror.New("status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
 		}
 
 		status, _, err = p.federator.GetStatusByURI(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri)
@@ -168,7 +168,23 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		}
 	}
 
-	return p.timelineAndNotifyStatus(ctx, status)
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error populating status: %w", err)
+	}
+
+	if status.InReplyTo != nil {
+		// Interaction counts changed on the replied status;
+		// uncache the prepared version from all timelines.
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+			return gtserror.Newf("error invalidating status: %w", err)
+		}
+	}
+
+	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+		return gtserror.Newf("error timelining status: %w", err)
+	}
+
+	return nil
 }
 
 // processCreateFaveFromFederator handles Activity Create with Object Like.
@@ -358,16 +374,32 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 
 // processDeleteStatusFromFederator handles Activity Delete and Object Note
 func (p *Processor) processDeleteStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	statusToDelete, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+	status, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		return errors.New("note was not parseable as *gtsmodel.Status")
+		return errors.New("Note was not parseable as *gtsmodel.Status")
 	}
 
-	// delete attachments from this status since this request
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error populating status: %w", err)
+	}
+
+	// Delete attachments from this status, since this request
 	// comes from the federating API, and there's no way the
-	// poster can do a delete + redraft for it on our instance
+	// poster can do a delete + redraft for it on our instance.
 	deleteAttachments := true
-	return p.wipeStatus(ctx, statusToDelete, deleteAttachments)
+	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
+		return gtserror.Newf("error wiping status: %w", err)
+	}
+
+	if status.InReplyTo != nil {
+		// Interaction counts changed on the replied status;
+		// uncache the prepared version from all timelines.
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+			return gtserror.Newf("error invalidating status: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // processDeleteAccountFromFederator handles Activity Delete and Object Profile

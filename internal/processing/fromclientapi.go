@@ -158,14 +158,30 @@ func (p *Processor) processCreateAccountFromClientAPI(ctx context.Context, clien
 func (p *Processor) processCreateStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
 	status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		return errors.New("note was not parseable as *gtsmodel.Status")
+		return gtserror.New("status was not parseable as *gtsmodel.Status")
+	}
+
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error populating status: %w", err)
 	}
 
 	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
-		return err
+		return gtserror.Newf("error timelining status: %w", err)
 	}
 
-	return p.federateStatus(ctx, status)
+	if status.InReplyTo != nil {
+		// Interaction counts changed on the replied status;
+		// uncache the prepared version from all timelines.
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+			return gtserror.Newf("error invalidating status: %w", err)
+		}
+	}
+
+	if err := p.federateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error federating status: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Processor) processCreateFollowRequestFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
@@ -377,25 +393,36 @@ func (p *Processor) processUndoAnnounceFromClientAPI(ctx context.Context, client
 }
 
 func (p *Processor) processDeleteStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
-	statusToDelete, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		return errors.New("note was not parseable as *gtsmodel.Status")
+		return gtserror.New("status was not parseable as *gtsmodel.Status")
 	}
 
-	if statusToDelete.Account == nil {
-		statusToDelete.Account = clientMsg.OriginAccount
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error populating status: %w", err)
 	}
 
-	// don't delete attachments, just unattach them;
-	// since this request comes from the client API
-	// and the poster might want to use the attachments
-	// again in a new post
+	// Don't delete attachments, just unattach them: this
+	// request comes from the client API and the poster
+	// may want to use attachments again in a new post.
 	deleteAttachments := false
-	if err := p.wipeStatus(ctx, statusToDelete, deleteAttachments); err != nil {
-		return err
+	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
+		return gtserror.Newf("error wiping status: %w", err)
 	}
 
-	return p.federateStatusDelete(ctx, statusToDelete)
+	if status.InReplyTo != nil {
+		// Interaction counts changed on the replied status;
+		// uncache the prepared version from all timelines.
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+			return gtserror.Newf("error invalidating status: %w", err)
+		}
+	}
+
+	if err := p.federateStatusDelete(ctx, status); err != nil {
+		return gtserror.Newf("error federating status delete: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Processor) processDeleteAccountFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
