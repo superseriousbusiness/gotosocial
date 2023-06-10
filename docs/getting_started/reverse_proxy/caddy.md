@@ -1,4 +1,4 @@
-# Reverse proxy with Caddy 2
+# Caddy 2
 
 ## Requirements
 
@@ -79,7 +79,7 @@ example.org {
 }
 ```
 
-By default, caddy sets `X-Forwarded-For` in forwarded requests. To make this and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../api/ratelimiting.md) and [general configuration](../configuration/general.md) docs
+By default, caddy sets `X-Forwarded-For` in forwarded requests. To make this and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../../api/ratelimiting.md) and [general configuration](../../configuration/general.md) docs
 
 For advanced configuration check the [reverse_proxy directive](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy) at the Caddy documentation.
 
