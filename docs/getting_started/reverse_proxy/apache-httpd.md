@@ -1,4 +1,4 @@
-# Reverse proxy with Apache HTTP Server
+# Apache HTTP Server
 
 ## Requirements
 
@@ -127,7 +127,7 @@ You should also change `http://127.0.0.1:8080` to the correct address and port (
 
 `ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
 
-By default, apache sets `X-Forwarded-For` in forwarded requests. To make this and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../api/ratelimiting.md) and [general configuration](../configuration/general.md) docs
+By default, apache sets `X-Forwarded-For` in forwarded requests. To make this and rate limiting work, set the `trusted-proxies` configuration variable. See the [rate limiting](../../api/ratelimiting.md) and [general configuration](../../configuration/general.md) docs
 
 Save and close the config file.
 
@@ -206,7 +206,7 @@ Again, replace occurrences of `example.com` in the above config file with the ho
 
 You should also change `http://127.0.0.1:8080` to the correct address and port (if it's not on `127.0.0.1:8080`) of your GtS server. For example, if you're running GoToSocial on another machine with the local ip of `192.168.178.69` and on port `8080` then `http://192.168.178.69:8080/` would be the correct value.
 
-`Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](./websocket.md) document for more information on this.
+`Rewrite*` directives are needed to ensure that Websocket streaming connections also work. See the [websocket](websocket.md) document for more information on this.
 
 `ProxyPreserveHost On` is essential: It guarantees that the proxy and the GoToSocial speak of the same Server name. If not, GoToSocial will build the wrong authentication headers, and all attempts at federation will be rejected with 401 Unauthorized.
 

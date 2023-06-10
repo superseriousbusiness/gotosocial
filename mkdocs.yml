@@ -53,16 +53,22 @@ nav:
       - "user_guide/custom_css.md"
       - "user_guide/password_management.md"
       - "user_guide/rss.md"
-  - "Installation Guide":
-      - "installation_guide/index.md"
-      - "installation_guide/binary.md"
-      - "installation_guide/docker.md"
-      - "installation_guide/nginx.md"
-      - "installation_guide/apache-httpd.md"
-      - "installation_guide/caddy.md"
-      - "installation_guide/third_party.md"
-      - "installation_guide/websocket.md"
-      - "installation_guide/advanced.md"
+  - "Getting Started":
+      - "getting_started/index.md"
+      - "getting_started/releases.md"
+      - "Installation":
+        - "getting_started/installation/index.md"
+        - "getting_started/installation/metal.md"
+        - "getting_started/installation/container.md"
+      - "Reverse Proxy":
+        - "getting_started/reverse_proxy/index.md"
+        - "getting_started/reverse_proxy/nginx.md"
+        - "getting_started/reverse_proxy/apache-httpd.md"
+        - "getting_started/reverse_proxy/caddy.md"
+        - "getting_started/reverse_proxy/websocket.md"
+      - "getting_started/advanced.md"
+      - "getting_started/user_creation.md"
+      - "getting_started/tracing.md"
   - "Configuration":
       - "configuration/index.md"
       - "configuration/general.md"
