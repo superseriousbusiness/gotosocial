@@ -419,7 +419,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	// delete all boosts for this status + remove them from timelines
 	if boosts, err := p.state.DB.GetStatusReblogs(ctx, statusToDelete); err == nil {
 		for _, b := range boosts {
-			if err := p.deleteStatusFromTimelines(ctx, b); err != nil {
+			if err := p.deleteStatusFromTimelines(ctx, b.ID); err != nil {
 				return err
 			}
 			if err := p.state.DB.DeleteStatusByID(ctx, b.ID); err != nil {
@@ -429,7 +429,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	}
 
 	// delete this status from any and all timelines
-	if err := p.deleteStatusFromTimelines(ctx, statusToDelete); err != nil {
+	if err := p.deleteStatusFromTimelines(ctx, statusToDelete.ID); err != nil {
 		return err
 	}
 
@@ -439,28 +439,28 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
-func (p *Processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
-	if err := p.state.Timelines.Home.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
+func (p *Processor) deleteStatusFromTimelines(ctx context.Context, statusID string) error {
+	if err := p.state.Timelines.Home.WipeItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
 
-	if err := p.state.Timelines.List.WipeItemFromAllTimelines(ctx, status.ID); err != nil {
+	if err := p.state.Timelines.List.WipeItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
 
-	return p.stream.Delete(status.ID)
+	return p.stream.Delete(statusID)
 }
 
 // invalidateStatusFromTimelines does cache invalidation on the given status by
 // unpreparing it from all timelines, forcing it to be prepared again (with updated
 // stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
 // both for the status itself, and for any boosts of the status.
-func (p *Processor) invalidateStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
-	if err := p.state.Timelines.Home.UnprepareItemFromAllTimelines(ctx, status.ID); err != nil {
+func (p *Processor) invalidateStatusFromTimelines(ctx context.Context, statusID string) error {
+	if err := p.state.Timelines.Home.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
 
-	return p.state.Timelines.List.UnprepareItemFromAllTimelines(ctx, status.ID)
+	return p.state.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID)
 }
 
 /*

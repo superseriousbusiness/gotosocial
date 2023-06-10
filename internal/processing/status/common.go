@@ -69,21 +69,21 @@ func (p *Processor) getVisibleStatus(ctx context.Context, requestingAccount *gts
 
 // invalidateStatus is a shortcut function for invalidating the prepared/cached
 // representation one status in the home timeline and all list timelines of the
-// requestingAccountID. It should only be called in cases where a status update
+// given accountID. It should only be called in cases where a status update
 // does *not* need to be passed into the processor via the worker queue, since
 // such invalidation will, in that case, be handled by the processor instead.
-func (p *Processor) invalidateStatus(ctx context.Context, requestingAccountID string, targetStatusID string) error {
-	if err := p.state.Timelines.Home.UnprepareItem(ctx, requestingAccountID, targetStatusID); err != nil {
+func (p *Processor) invalidateStatus(ctx context.Context, accountID string, statusID string) error {
+	if err := p.state.Timelines.Home.UnprepareItem(ctx, accountID, statusID); err != nil {
 		return gtserror.Newf("error unpreparing item from home timeline: %w", err)
 	}
 
-	lists, err := p.state.DB.GetListsForAccountID(ctx, requestingAccountID)
+	lists, err := p.state.DB.GetListsForAccountID(ctx, accountID)
 	if err != nil {
-		return gtserror.Newf("db error getting lists for account %s: %w", requestingAccountID, err)
+		return gtserror.Newf("db error getting lists for account %s: %w", accountID, err)
 	}
 
 	for _, list := range lists {
-		if err := p.state.Timelines.List.UnprepareItem(ctx, list.ID, targetStatusID); err != nil {
+		if err := p.state.Timelines.List.UnprepareItem(ctx, list.ID, statusID); err != nil {
 			return gtserror.Newf("error unpreparing item from list timeline %s: %w", list.ID, err)
 		}
 	}

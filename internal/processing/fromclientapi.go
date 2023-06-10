@@ -161,18 +161,14 @@ func (p *Processor) processCreateStatusFromClientAPI(ctx context.Context, client
 		return gtserror.New("status was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("db error populating status: %w", err)
-	}
-
 	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining status: %w", err)
 	}
 
-	if status.InReplyTo != nil {
+	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
 			return gtserror.Newf("error invalidating status: %w", err)
 		}
 	}
@@ -203,17 +199,13 @@ func (p *Processor) processCreateFaveFromClientAPI(ctx context.Context, clientMs
 		return gtserror.New("statusFave was not parseable as *gtsmodel.StatusFave")
 	}
 
-	if err := p.state.DB.PopulateStatusFave(ctx, statusFave); err != nil {
-		return gtserror.Newf("db error populating status fave: %w", err)
-	}
-
 	if err := p.notifyFave(ctx, statusFave); err != nil {
 		return gtserror.Newf("error notifying status fave: %w", err)
 	}
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, statusFave.Status); err != nil {
+	if err := p.invalidateStatusFromTimelines(ctx, statusFave.StatusID); err != nil {
 		return gtserror.Newf("error invalidating status: %w", err)
 	}
 
@@ -230,10 +222,6 @@ func (p *Processor) processCreateAnnounceFromClientAPI(ctx context.Context, clie
 		return errors.New("boost was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("db error populating boost: %w", err)
-	}
-
 	// Timeline and notify.
 	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining boost: %w", err)
@@ -245,7 +233,7 @@ func (p *Processor) processCreateAnnounceFromClientAPI(ctx context.Context, clie
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOf); err != nil {
+	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOfID); err != nil {
 		return gtserror.Newf("error invalidating status: %w", err)
 	}
 
@@ -344,13 +332,9 @@ func (p *Processor) processUndoFaveFromClientAPI(ctx context.Context, clientMsg 
 		return gtserror.New("statusFave was not parseable as *gtsmodel.StatusFave")
 	}
 
-	if err := p.state.DB.PopulateStatusFave(ctx, statusFave); err != nil {
-		return gtserror.Newf("db error populating status fave: %w", err)
-	}
-
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, statusFave.Status); err != nil {
+	if err := p.invalidateStatusFromTimelines(ctx, statusFave.StatusID); err != nil {
 		return gtserror.Newf("error invalidating status: %w", err)
 	}
 
@@ -367,21 +351,17 @@ func (p *Processor) processUndoAnnounceFromClientAPI(ctx context.Context, client
 		return errors.New("boost was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("db error populating boost: %w", err)
-	}
-
 	if err := p.state.DB.DeleteStatusByID(ctx, status.ID); err != nil {
 		return gtserror.Newf("db error deleting boost: %w", err)
 	}
 
-	if err := p.deleteStatusFromTimelines(ctx, status); err != nil {
+	if err := p.deleteStatusFromTimelines(ctx, status.ID); err != nil {
 		return gtserror.Newf("error removing boost from timelines: %w", err)
 	}
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOf); err != nil {
+	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOfID); err != nil {
 		return gtserror.Newf("error invalidating status: %w", err)
 	}
 
@@ -410,10 +390,10 @@ func (p *Processor) processDeleteStatusFromClientAPI(ctx context.Context, client
 		return gtserror.Newf("error wiping status: %w", err)
 	}
 
-	if status.InReplyTo != nil {
+	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
 			return gtserror.Newf("error invalidating status: %w", err)
 		}
 	}

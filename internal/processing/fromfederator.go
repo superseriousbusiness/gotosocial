@@ -168,14 +168,10 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		}
 	}
 
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("db error populating status: %w", err)
-	}
-
-	if status.InReplyTo != nil {
+	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
 			return gtserror.Newf("error invalidating status: %w", err)
 		}
 	}
@@ -194,17 +190,13 @@ func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federato
 		return gtserror.New("Like was not parseable as *gtsmodel.StatusFave")
 	}
 
-	if err := p.state.DB.PopulateStatusFave(ctx, statusFave); err != nil {
-		return gtserror.Newf("db error populating status fave: %w", err)
-	}
-
 	if err := p.notifyFave(ctx, statusFave); err != nil {
 		return gtserror.Newf("error notifying status fave: %w", err)
 	}
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, statusFave.Status); err != nil {
+	if err := p.invalidateStatusFromTimelines(ctx, statusFave.StatusID); err != nil {
 		return gtserror.Newf("error invalidating status: %w", err)
 	}
 
@@ -305,7 +297,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, status); err != nil {
+	if err := p.invalidateStatusFromTimelines(ctx, status.ID); err != nil {
 		return gtserror.Newf("error invalidating status: %w", err)
 	}
 
@@ -379,10 +371,6 @@ func (p *Processor) processDeleteStatusFromFederator(ctx context.Context, federa
 		return errors.New("Note was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("db error populating status: %w", err)
-	}
-
 	// Delete attachments from this status, since this request
 	// comes from the federating API, and there's no way the
 	// poster can do a delete + redraft for it on our instance.
@@ -391,10 +379,10 @@ func (p *Processor) processDeleteStatusFromFederator(ctx context.Context, federa
 		return gtserror.Newf("error wiping status: %w", err)
 	}
 
-	if status.InReplyTo != nil {
+	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyTo); err != nil {
+		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
 			return gtserror.Newf("error invalidating status: %w", err)
 		}
 	}
