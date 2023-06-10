@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -181,33 +182,62 @@ func (p *Processor) processCreateFollowRequestFromClientAPI(ctx context.Context,
 }
 
 func (p *Processor) processCreateFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
-	fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
+	statusFave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
-		return errors.New("fave was not parseable as *gtsmodel.StatusFave")
+		return gtserror.New("statusFave was not parseable as *gtsmodel.StatusFave")
 	}
 
-	if err := p.notifyFave(ctx, fave); err != nil {
-		return err
+	if err := p.state.DB.PopulateStatusFave(ctx, statusFave); err != nil {
+		return gtserror.Newf("db error populating status fave: %w", err)
 	}
 
-	return p.federateFave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+	if err := p.notifyFave(ctx, statusFave); err != nil {
+		return gtserror.Newf("error notifying status fave: %w", err)
+	}
+
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	if err := p.invalidateStatusFromTimelines(ctx, statusFave.Status); err != nil {
+		return gtserror.Newf("error invalidating status: %w", err)
+	}
+
+	if err := p.federateFave(ctx, statusFave, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
+		return gtserror.Newf("error federating status fave: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Processor) processCreateAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
-	boostWrapperStatus, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return errors.New("boost was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.timelineAndNotifyStatus(ctx, boostWrapperStatus); err != nil {
-		return err
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error populating boost: %w", err)
 	}
 
-	if err := p.notifyAnnounce(ctx, boostWrapperStatus); err != nil {
-		return err
+	// Timeline and notify.
+	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+		return gtserror.Newf("error timelining boost: %w", err)
 	}
 
-	return p.federateAnnounce(ctx, boostWrapperStatus, clientMsg.OriginAccount, clientMsg.TargetAccount)
+	if err := p.notifyAnnounce(ctx, status); err != nil {
+		return gtserror.Newf("error notifying boost: %w", err)
+	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOf); err != nil {
+		return gtserror.Newf("error invalidating status: %w", err)
+	}
+
+	if err := p.federateAnnounce(ctx, status, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
+		return gtserror.Newf("error federating boost: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Processor) processCreateBlockFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
@@ -293,28 +323,57 @@ func (p *Processor) processUndoBlockFromClientAPI(ctx context.Context, clientMsg
 }
 
 func (p *Processor) processUndoFaveFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
-	fave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
+	statusFave, ok := clientMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
-		return errors.New("undo was not parseable as *gtsmodel.StatusFave")
+		return gtserror.New("statusFave was not parseable as *gtsmodel.StatusFave")
 	}
-	return p.federateUnfave(ctx, fave, clientMsg.OriginAccount, clientMsg.TargetAccount)
+
+	if err := p.state.DB.PopulateStatusFave(ctx, statusFave); err != nil {
+		return gtserror.Newf("db error populating status fave: %w", err)
+	}
+
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	if err := p.invalidateStatusFromTimelines(ctx, statusFave.Status); err != nil {
+		return gtserror.Newf("error invalidating status: %w", err)
+	}
+
+	if err := p.federateUnfave(ctx, statusFave, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
+		return gtserror.Newf("error federating status unfave: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Processor) processUndoAnnounceFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {
-	boost, ok := clientMsg.GTSModel.(*gtsmodel.Status)
+	status, ok := clientMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		return errors.New("undo was not parseable as *gtsmodel.Status")
+		return errors.New("boost was not parseable as *gtsmodel.Status")
 	}
 
-	if err := p.state.DB.DeleteStatusByID(ctx, boost.ID); err != nil {
-		return err
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error populating boost: %w", err)
 	}
 
-	if err := p.deleteStatusFromTimelines(ctx, boost); err != nil {
-		return err
+	if err := p.state.DB.DeleteStatusByID(ctx, status.ID); err != nil {
+		return gtserror.Newf("db error deleting boost: %w", err)
 	}
 
-	return p.federateUnannounce(ctx, boost, clientMsg.OriginAccount, clientMsg.TargetAccount)
+	if err := p.deleteStatusFromTimelines(ctx, status); err != nil {
+		return gtserror.Newf("error removing boost from timelines: %w", err)
+	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOf); err != nil {
+		return gtserror.Newf("error invalidating status: %w", err)
+	}
+
+	if err := p.federateUnannounce(ctx, status, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
+		return gtserror.Newf("error federating status unboost: %w", err)
+	}
+
+	return nil
 }
 
 func (p *Processor) processDeleteStatusFromClientAPI(ctx context.Context, clientMsg messages.FromClientAPI) error {

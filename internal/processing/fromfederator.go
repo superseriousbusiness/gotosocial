@@ -26,6 +26,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -170,41 +171,28 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 	return p.timelineAndNotifyStatus(ctx, status)
 }
 
-// processCreateFaveFromFederator handles Activity Create and Object Like
+// processCreateFaveFromFederator handles Activity Create with Object Like.
 func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
+	statusFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
-		return errors.New("like was not parseable as *gtsmodel.StatusFave")
+		return gtserror.New("Like was not parseable as *gtsmodel.StatusFave")
 	}
 
-	// make sure the account is pinned
-	if incomingFave.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, incomingFave.AccountID)
-		if err != nil {
-			return err
-		}
-		incomingFave.Account = a
+	if err := p.state.DB.PopulateStatusFave(ctx, statusFave); err != nil {
+		return gtserror.Newf("db error populating status fave: %w", err)
 	}
 
-	// Get the remote account to make sure the avi and header are cached.
-	if incomingFave.Account.Domain != "" {
-		remoteAccountID, err := url.Parse(incomingFave.Account.URI)
-		if err != nil {
-			return err
-		}
-
-		a, _, err := p.federator.GetAccountByURI(ctx,
-			federatorMsg.ReceivingAccount.Username,
-			remoteAccountID,
-		)
-		if err != nil {
-			return err
-		}
-
-		incomingFave.Account = a
+	if err := p.notifyFave(ctx, statusFave); err != nil {
+		return gtserror.Newf("error notifying status fave: %w", err)
 	}
 
-	return p.notifyFave(ctx, incomingFave)
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	if err := p.invalidateStatusFromTimelines(ctx, statusFave.Status); err != nil {
+		return gtserror.Newf("error invalidating status: %w", err)
+	}
+
+	return nil
 }
 
 // processCreateFollowRequestFromFederator handles Activity Create and Object Follow
@@ -267,59 +255,45 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 	return p.notifyFollow(ctx, follow, followRequest.TargetAccount)
 }
 
-// processCreateAnnounceFromFederator handles Activity Create and Object Announce
+// processCreateAnnounceFromFederator handles Activity Create with Object Announce.
 func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	incomingAnnounce, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+	status, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		return errors.New("announce was not parseable as *gtsmodel.Status")
+		return gtserror.New("Announce was not parseable as *gtsmodel.Status")
 	}
 
-	// make sure the account is pinned
-	if incomingAnnounce.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, incomingAnnounce.AccountID)
-		if err != nil {
-			return err
-		}
-		incomingAnnounce.Account = a
+	// Dereference status that this status boosts.
+	if err := p.federator.DereferenceAnnounce(ctx, status, federatorMsg.ReceivingAccount.Username); err != nil {
+		return gtserror.Newf("error dereferencing announce: %w", err)
 	}
 
-	// Get the remote account to make sure the avi and header are cached.
-	if incomingAnnounce.Account.Domain != "" {
-		remoteAccountID, err := url.Parse(incomingAnnounce.Account.URI)
-		if err != nil {
-			return err
-		}
-
-		a, _, err := p.federator.GetAccountByURI(ctx,
-			federatorMsg.ReceivingAccount.Username,
-			remoteAccountID,
-		)
-		if err != nil {
-			return err
-		}
-
-		incomingAnnounce.Account = a
-	}
-
-	if err := p.federator.DereferenceAnnounce(ctx, incomingAnnounce, federatorMsg.ReceivingAccount.Username); err != nil {
-		return fmt.Errorf("error dereferencing announce from federator: %s", err)
-	}
-
-	incomingAnnounceID, err := id.NewULIDFromTime(incomingAnnounce.CreatedAt)
+	// Generate an ID for the boost wrapper status.
+	statusID, err := id.NewULIDFromTime(status.CreatedAt)
 	if err != nil {
-		return err
+		return gtserror.Newf("error generating id: %w", err)
 	}
-	incomingAnnounce.ID = incomingAnnounceID
+	status.ID = statusID
 
-	if err := p.state.DB.PutStatus(ctx, incomingAnnounce); err != nil {
-		return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
-	}
-
-	if err := p.timelineAndNotifyStatus(ctx, incomingAnnounce); err != nil {
-		return err
+	// Store, timeline, and notify.
+	if err := p.state.DB.PutStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error inserting status: %w", err)
 	}
 
-	return p.notifyAnnounce(ctx, incomingAnnounce)
+	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+		return gtserror.Newf("error timelining status: %w", err)
+	}
+
+	if err := p.notifyAnnounce(ctx, status); err != nil {
+		return gtserror.Newf("error notifying status: %w", err)
+	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	if err := p.invalidateStatusFromTimelines(ctx, status); err != nil {
+		return gtserror.Newf("error invalidating status: %w", err)
+	}
+
+	return nil
 }
 
 // processCreateBlockFromFederator handles Activity Create and Object Block

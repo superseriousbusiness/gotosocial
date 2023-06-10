@@ -447,6 +447,18 @@ func (p *Processor) deleteStatusFromTimelines(ctx context.Context, status *gtsmo
 	return p.stream.Delete(status.ID)
 }
 
+// invalidateStatusFromTimelines does cache invalidation on the given status by
+// unpreparing it from all timelines, forcing it to be prepared again (with updated
+// stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
+// both for the status itself, and for any boosts of the status.
+func (p *Processor) invalidateStatusFromTimelines(ctx context.Context, status *gtsmodel.Status) error {
+	if err := p.state.Timelines.Home.UnprepareItemFromAllTimelines(ctx, status.ID); err != nil {
+		return err
+	}
+
+	return p.state.Timelines.List.UnprepareItemFromAllTimelines(ctx, status.ID)
+}
+
 /*
 	EMAIL FUNCTIONS
 */

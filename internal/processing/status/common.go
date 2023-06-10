@@ -29,7 +29,7 @@ import (
 func (p *Processor) apiStatus(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, gtserror.WithCode) {
 	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
 	if err != nil {
-		err = fmt.Errorf("error converting status %s to frontend representation: %w", targetStatus.ID, err)
+		err = gtserror.Newf("error converting status %s to frontend representation: %w", targetStatus.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -65,4 +65,28 @@ func (p *Processor) getVisibleStatus(ctx context.Context, requestingAccount *gts
 	}
 
 	return targetStatus, nil
+}
+
+// invalidateStatus is a shortcut function for invalidating the prepared/cached
+// representation one status in the home timeline and all list timelines of the
+// requestingAccountID. It should only be called in cases where a status update
+// does *not* need to be passed into the processor via the worker queue, since
+// such invalidation will, in that case, be handled by the processor instead.
+func (p *Processor) invalidateStatus(ctx context.Context, requestingAccountID string, targetStatusID string) error {
+	if err := p.state.Timelines.Home.UnprepareItem(ctx, requestingAccountID, targetStatusID); err != nil {
+		return gtserror.Newf("error unpreparing item from home timeline: %w", err)
+	}
+
+	lists, err := p.state.DB.GetListsForAccountID(ctx, requestingAccountID)
+	if err != nil {
+		return gtserror.Newf("db error getting lists for account %s: %w", requestingAccountID, err)
+	}
+
+	for _, list := range lists {
+		if err := p.state.Timelines.List.UnprepareItem(ctx, list.ID, targetStatusID); err != nil {
+			return gtserror.Newf("error unpreparing item from list timeline %s: %w", list.ID, err)
+		}
+	}
+
+	return nil
 }
