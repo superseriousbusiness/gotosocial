@@ -92,6 +92,8 @@ Please note that while GoToSocial strictly respects these settings, other fedive
 
 When set to `false`, this post will not be federated out to other fediverse servers, and will be viewable only to accounts on your GoToSocial instance. This is sometimes called 'local-only' posting.
 
+If your instance has the `:local_only:` emoji, adding this emoji somewhere to the post or its content warning will mark it to not be sent to other instances & be only viewable by local accounts.
+
 ### Boostable
 
 When set to `false`, your post will not be boostable, even if it is unlisted or public. GoToSocial enforces this by refusing dereferencing requests from remote servers in the event that someone tries to boost the post.
