@@ -75,6 +75,14 @@ type Manager interface {
 	// WipeStatusesFromAccountID removes all items by the given accountID from the given timeline.
 	WipeItemsFromAccountID(ctx context.Context, timelineID string, accountID string) error
 
+	// UnprepareItem unprepares/uncaches the prepared version fo the given itemID from the given timelineID.
+	// Use this for cache invalidation when the prepared representation of an item has changed.
+	UnprepareItem(ctx context.Context, timelineID string, itemID string) error
+
+	// UnprepareItemFromAllTimelines unprepares/uncaches the prepared version of the given itemID from all timelines.
+	// Use this for cache invalidation when the prepared representation of an item has changed.
+	UnprepareItemFromAllTimelines(ctx context.Context, itemID string) error
+
 	// Prune manually triggers a prune operation for the given timelineID.
 	Prune(ctx context.Context, timelineID string, desiredPreparedItemsLength int, desiredIndexedItemsLength int) (int, error)
 
@@ -193,7 +201,7 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, itemID string) e
 	})
 
 	if len(errors) > 0 {
-		return gtserror.Newf("one or more errors wiping status %s: %w", itemID, errors.Combine())
+		return gtserror.Newf("error(s) wiping status %s: %w", itemID, errors.Combine())
 	}
 
 	return nil
@@ -202,6 +210,31 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, itemID string) e
 func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineID string, accountID string) error {
 	_, err := m.getOrCreateTimeline(ctx, timelineID).RemoveAllByOrBoosting(ctx, accountID)
 	return err
+}
+
+func (m *manager) UnprepareItemFromAllTimelines(ctx context.Context, itemID string) error {
+	errors := gtserror.MultiError{}
+
+	// Work through all timelines held by this
+	// manager, and call Unprepare for each.
+	m.timelines.Range(func(_ any, v any) bool {
+		// nolint:forcetypeassert
+		if err := v.(Timeline).Unprepare(ctx, itemID); err != nil {
+			errors.Append(err)
+		}
+
+		return true // always continue range
+	})
+
+	if len(errors) > 0 {
+		return gtserror.Newf("error(s) unpreparing status %s: %w", itemID, errors.Combine())
+	}
+
+	return nil
+}
+
+func (m *manager) UnprepareItem(ctx context.Context, timelineID string, itemID string) error {
+	return m.getOrCreateTimeline(ctx, timelineID).Unprepare(ctx, itemID)
 }
 
 func (m *manager) Prune(ctx context.Context, timelineID string, desiredPreparedItemsLength int, desiredIndexedItemsLength int) (int, error) {

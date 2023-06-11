@@ -78,11 +78,21 @@ type Timeline interface {
 		INDEXING + PREPARATION FUNCTIONS
 	*/
 
-	// IndexAndPrepareOne puts a item into the timeline at the appropriate place according to its id, and then immediately prepares it.
+	// IndexAndPrepareOne puts a item into the timeline at the appropriate place
+	// according to its id, and then immediately prepares it.
 	//
-	// The returned bool indicates whether or not the item was actually inserted into the timeline. This will be false
-	// if the item is a boost and the original item or another boost of it already exists < boostReinsertionDepth back in the timeline.
+	// The returned bool indicates whether or not the item was actually inserted
+	// into the timeline. This will be false if the item is a boost and the original
+	// item, or a boost of it, already exists recently in the timeline.
 	IndexAndPrepareOne(ctx context.Context, itemID string, boostOfID string, accountID string, boostOfAccountID string) (bool, error)
+
+	// Unprepare clears the prepared version of the given item (and any boosts
+	// thereof) from the timeline, but leaves the indexed version in place.
+	//
+	// This is useful for cache invalidation when the prepared version of the
+	// item has changed for some reason (edits, updates, etc), but the item does
+	// not need to be removed: it will be prepared again next time Get is called.
+	Unprepare(ctx context.Context, itemID string) error
 
 	/*
 		INFO FUNCTIONS
