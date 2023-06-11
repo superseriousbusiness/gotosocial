@@ -458,11 +458,17 @@ func (p *Processor) deleteStatusFromTimelines(ctx context.Context, statusID stri
 // both for the status itself, and for any boosts of the status.
 func (p *Processor) invalidateStatusFromTimelines(ctx context.Context, statusID string) {
 	if err := p.state.Timelines.Home.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
-		log.Errorf(ctx, "error unpreparing status from home timelines: %v")
+		log.
+			WithContext(ctx).
+			WithField("statusID", statusID).
+			Errorf("error unpreparing status from home timelines: %v", err)
 	}
 
 	if err := p.state.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
-		log.Errorf(ctx, "error unpreparing status from list timelines: %v")
+		log.
+			WithContext(ctx).
+			WithField("statusID", statusID).
+			Errorf("error unpreparing status from list timelines: %v", err)
 	}
 }
 
