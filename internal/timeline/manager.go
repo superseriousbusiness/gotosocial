@@ -201,7 +201,7 @@ func (m *manager) WipeItemFromAllTimelines(ctx context.Context, itemID string) e
 	})
 
 	if len(errors) > 0 {
-		return gtserror.Newf("one or more errors wiping status %s: %w", itemID, errors.Combine())
+		return gtserror.Newf("error(s) wiping status %s: %w", itemID, errors.Combine())
 	}
 
 	return nil
@@ -227,7 +227,7 @@ func (m *manager) UnprepareItemFromAllTimelines(ctx context.Context, itemID stri
 	})
 
 	if len(errors) > 0 {
-		return gtserror.Newf("one or more errors unpreparing status %s: %w", itemID, errors.Combine())
+		return gtserror.Newf("error(s) unpreparing status %s: %w", itemID, errors.Combine())
 	}
 
 	return nil
