@@ -21,9 +21,11 @@ import (
 	"context"
 	"fmt"
 
+	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (p *Processor) apiStatus(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, gtserror.WithCode) {
@@ -73,18 +75,27 @@ func (p *Processor) getVisibleStatus(ctx context.Context, requestingAccount *gts
 // does *not* need to be passed into the processor via the worker queue, since
 // such invalidation will, in that case, be handled by the processor instead.
 func (p *Processor) invalidateStatus(ctx context.Context, accountID string, statusID string) error {
-	if err := p.state.Timelines.Home.UnprepareItem(ctx, accountID, statusID); err != nil {
-		return gtserror.Newf("error unpreparing item from home timeline: %w", err)
-	}
-
+	// Get lists first + bail if this fails.
 	lists, err := p.state.DB.GetListsForAccountID(ctx, accountID)
 	if err != nil {
 		return gtserror.Newf("db error getting lists for account %s: %w", accountID, err)
 	}
 
+	l := log.WithContext(ctx).WithFields(kv.Fields{
+		{"accountID", accountID},
+		{"statusID", statusID},
+	}...)
+
+	// Unprepare item from home + list timelines, just log
+	// if something goes wrong since this is not a showstopper.
+
+	if err := p.state.Timelines.Home.UnprepareItem(ctx, accountID, statusID); err != nil {
+		l.Errorf("error unpreparing item from home timeline: %v", err)
+	}
+
 	for _, list := range lists {
 		if err := p.state.Timelines.List.UnprepareItem(ctx, list.ID, statusID); err != nil {
-			return gtserror.Newf("error unpreparing item from list timeline %s: %w", list.ID, err)
+			l.Errorf("error unpreparing item from list timeline %s: %v", list.ID, err)
 		}
 	}
 
