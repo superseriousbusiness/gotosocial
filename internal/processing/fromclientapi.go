@@ -168,9 +168,7 @@ func (p *Processor) processCreateStatusFromClientAPI(ctx context.Context, client
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
-			return gtserror.Newf("error invalidating status: %w", err)
-		}
+		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
 	if err := p.federateStatus(ctx, status); err != nil {
@@ -205,9 +203,7 @@ func (p *Processor) processCreateFaveFromClientAPI(ctx context.Context, clientMs
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, statusFave.StatusID); err != nil {
-		return gtserror.Newf("error invalidating status: %w", err)
-	}
+	p.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
 
 	if err := p.federateFave(ctx, statusFave, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
 		return gtserror.Newf("error federating status fave: %w", err)
@@ -233,9 +229,7 @@ func (p *Processor) processCreateAnnounceFromClientAPI(ctx context.Context, clie
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOfID); err != nil {
-		return gtserror.Newf("error invalidating status: %w", err)
-	}
+	p.invalidateStatusFromTimelines(ctx, status.BoostOfID)
 
 	if err := p.federateAnnounce(ctx, status, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
 		return gtserror.Newf("error federating boost: %w", err)
@@ -334,9 +328,7 @@ func (p *Processor) processUndoFaveFromClientAPI(ctx context.Context, clientMsg 
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, statusFave.StatusID); err != nil {
-		return gtserror.Newf("error invalidating status: %w", err)
-	}
+	p.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
 
 	if err := p.federateUnfave(ctx, statusFave, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
 		return gtserror.Newf("error federating status unfave: %w", err)
@@ -361,9 +353,7 @@ func (p *Processor) processUndoAnnounceFromClientAPI(ctx context.Context, client
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, status.BoostOfID); err != nil {
-		return gtserror.Newf("error invalidating status: %w", err)
-	}
+	p.invalidateStatusFromTimelines(ctx, status.BoostOfID)
 
 	if err := p.federateUnannounce(ctx, status, clientMsg.OriginAccount, clientMsg.TargetAccount); err != nil {
 		return gtserror.Newf("error federating status unboost: %w", err)
@@ -393,9 +383,7 @@ func (p *Processor) processDeleteStatusFromClientAPI(ctx context.Context, client
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
-			return gtserror.Newf("error invalidating status: %w", err)
-		}
+		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
 	if err := p.federateStatusDelete(ctx, status); err != nil {

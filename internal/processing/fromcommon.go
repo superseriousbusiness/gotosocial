@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 )
@@ -455,12 +456,14 @@ func (p *Processor) deleteStatusFromTimelines(ctx context.Context, statusID stri
 // unpreparing it from all timelines, forcing it to be prepared again (with updated
 // stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
 // both for the status itself, and for any boosts of the status.
-func (p *Processor) invalidateStatusFromTimelines(ctx context.Context, statusID string) error {
+func (p *Processor) invalidateStatusFromTimelines(ctx context.Context, statusID string) {
 	if err := p.state.Timelines.Home.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
-		return err
+		log.Errorf(ctx, "error unpreparing status from home timelines: %v")
 	}
 
-	return p.state.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID)
+	if err := p.state.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
+		log.Errorf(ctx, "error unpreparing status from list timelines: %v")
+	}
 }
 
 /*

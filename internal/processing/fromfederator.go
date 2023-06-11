@@ -171,9 +171,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
-			return gtserror.Newf("error invalidating status: %w", err)
-		}
+		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
 	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
@@ -196,9 +194,7 @@ func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federato
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, statusFave.StatusID); err != nil {
-		return gtserror.Newf("error invalidating status: %w", err)
-	}
+	p.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
 
 	return nil
 }
@@ -297,9 +293,7 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	if err := p.invalidateStatusFromTimelines(ctx, status.ID); err != nil {
-		return gtserror.Newf("error invalidating status: %w", err)
-	}
+	p.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil
 }
@@ -382,9 +376,7 @@ func (p *Processor) processDeleteStatusFromFederator(ctx context.Context, federa
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		if err := p.invalidateStatusFromTimelines(ctx, status.InReplyToID); err != nil {
-			return gtserror.Newf("error invalidating status: %w", err)
-		}
+		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
 	return nil
