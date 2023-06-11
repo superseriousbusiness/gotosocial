@@ -66,9 +66,7 @@ nav:
         - "getting_started/reverse_proxy/apache-httpd.md"
         - "getting_started/reverse_proxy/caddy.md"
         - "getting_started/reverse_proxy/websocket.md"
-      - "getting_started/advanced.md"
       - "getting_started/user_creation.md"
-      - "getting_started/tracing.md"
   - "Configuration":
       - "configuration/index.md"
       - "configuration/general.md"
@@ -85,6 +83,19 @@ nav:
       - "configuration/syslog.md"
       - "configuration/advanced.md"
       - "configuration/observability.md"
+  - "Advanced":
+    - "advanced/index.md"
+    - "advanced/host-account-domain.md"
+    - "advanced/outgoing-proxy.md"
+    - "Caching":
+      - "advanced/caching/index.md"
+      - "advanced/caching/api.md"
+      - "advanced/caching/assets-media.md"
+    - "Enhanced security":
+      - "advanced/security/index.md"
+      - "advanced/security/sandboxing.md"
+    - "advanced/tracing.md"
+
   - "Admin":
       - "admin/settings.md"
       - "admin/cli.md"
