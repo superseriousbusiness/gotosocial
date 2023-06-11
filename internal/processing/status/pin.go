@@ -95,7 +95,13 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 
 	targetStatus.PinnedAt = time.Now()
 	if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error pinning status: %w", err))
+		err = gtserror.Newf("db error pinning status: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if err := p.invalidateStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
+		err = gtserror.Newf("error invalidating status from timelines: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return p.apiStatus(ctx, targetStatus, requestingAccount)
@@ -118,11 +124,19 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, errWithCode
 	}
 
-	if !targetStatus.PinnedAt.IsZero() {
-		targetStatus.PinnedAt = time.Time{}
-		if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error unpinning status: %w", err))
-		}
+	if targetStatus.PinnedAt.IsZero() {
+		return p.apiStatus(ctx, targetStatus, requestingAccount)
+	}
+
+	targetStatus.PinnedAt = time.Time{}
+	if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
+		err = gtserror.Newf("db error unpinning status: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if err := p.invalidateStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
+		err = gtserror.Newf("error invalidating status from timelines: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return p.apiStatus(ctx, targetStatus, requestingAccount)

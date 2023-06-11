@@ -26,6 +26,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -120,7 +121,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 
 		// there's a gts model already pinned to the message, it should be a status
 		if status, ok = federatorMsg.GTSModel.(*gtsmodel.Status); !ok {
-			return errors.New("ProcessFromFederator: note was not parseable as *gtsmodel.Status")
+			return gtserror.New("Note was not parseable as *gtsmodel.Status")
 		}
 
 		// Since this was a create originating AP object
@@ -140,7 +141,7 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 	} else {
 		// no model pinned, we need to dereference based on the IRI
 		if federatorMsg.APIri == nil {
-			return errors.New("ProcessFromFederator: status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
+			return gtserror.New("status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
 		}
 
 		status, _, err = p.federator.GetStatusByURI(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri)
@@ -167,44 +168,35 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		}
 	}
 
-	return p.timelineAndNotifyStatus(ctx, status)
+	if status.InReplyToID != "" {
+		// Interaction counts changed on the replied status;
+		// uncache the prepared version from all timelines.
+		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+	}
+
+	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+		return gtserror.Newf("error timelining status: %w", err)
+	}
+
+	return nil
 }
 
-// processCreateFaveFromFederator handles Activity Create and Object Like
+// processCreateFaveFromFederator handles Activity Create with Object Like.
 func (p *Processor) processCreateFaveFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	incomingFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
+	statusFave, ok := federatorMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
-		return errors.New("like was not parseable as *gtsmodel.StatusFave")
+		return gtserror.New("Like was not parseable as *gtsmodel.StatusFave")
 	}
 
-	// make sure the account is pinned
-	if incomingFave.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, incomingFave.AccountID)
-		if err != nil {
-			return err
-		}
-		incomingFave.Account = a
+	if err := p.notifyFave(ctx, statusFave); err != nil {
+		return gtserror.Newf("error notifying status fave: %w", err)
 	}
 
-	// Get the remote account to make sure the avi and header are cached.
-	if incomingFave.Account.Domain != "" {
-		remoteAccountID, err := url.Parse(incomingFave.Account.URI)
-		if err != nil {
-			return err
-		}
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	p.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
 
-		a, _, err := p.federator.GetAccountByURI(ctx,
-			federatorMsg.ReceivingAccount.Username,
-			remoteAccountID,
-		)
-		if err != nil {
-			return err
-		}
-
-		incomingFave.Account = a
-	}
-
-	return p.notifyFave(ctx, incomingFave)
+	return nil
 }
 
 // processCreateFollowRequestFromFederator handles Activity Create and Object Follow
@@ -267,59 +259,43 @@ func (p *Processor) processCreateFollowRequestFromFederator(ctx context.Context,
 	return p.notifyFollow(ctx, follow, followRequest.TargetAccount)
 }
 
-// processCreateAnnounceFromFederator handles Activity Create and Object Announce
+// processCreateAnnounceFromFederator handles Activity Create with Object Announce.
 func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	incomingAnnounce, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+	status, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		return errors.New("announce was not parseable as *gtsmodel.Status")
+		return gtserror.New("Announce was not parseable as *gtsmodel.Status")
 	}
 
-	// make sure the account is pinned
-	if incomingAnnounce.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, incomingAnnounce.AccountID)
-		if err != nil {
-			return err
-		}
-		incomingAnnounce.Account = a
+	// Dereference status that this status boosts.
+	if err := p.federator.DereferenceAnnounce(ctx, status, federatorMsg.ReceivingAccount.Username); err != nil {
+		return gtserror.Newf("error dereferencing announce: %w", err)
 	}
 
-	// Get the remote account to make sure the avi and header are cached.
-	if incomingAnnounce.Account.Domain != "" {
-		remoteAccountID, err := url.Parse(incomingAnnounce.Account.URI)
-		if err != nil {
-			return err
-		}
-
-		a, _, err := p.federator.GetAccountByURI(ctx,
-			federatorMsg.ReceivingAccount.Username,
-			remoteAccountID,
-		)
-		if err != nil {
-			return err
-		}
-
-		incomingAnnounce.Account = a
-	}
-
-	if err := p.federator.DereferenceAnnounce(ctx, incomingAnnounce, federatorMsg.ReceivingAccount.Username); err != nil {
-		return fmt.Errorf("error dereferencing announce from federator: %s", err)
-	}
-
-	incomingAnnounceID, err := id.NewULIDFromTime(incomingAnnounce.CreatedAt)
+	// Generate an ID for the boost wrapper status.
+	statusID, err := id.NewULIDFromTime(status.CreatedAt)
 	if err != nil {
-		return err
+		return gtserror.Newf("error generating id: %w", err)
 	}
-	incomingAnnounce.ID = incomingAnnounceID
+	status.ID = statusID
 
-	if err := p.state.DB.PutStatus(ctx, incomingAnnounce); err != nil {
-		return fmt.Errorf("error adding dereferenced announce to the db: %s", err)
-	}
-
-	if err := p.timelineAndNotifyStatus(ctx, incomingAnnounce); err != nil {
-		return err
+	// Store, timeline, and notify.
+	if err := p.state.DB.PutStatus(ctx, status); err != nil {
+		return gtserror.Newf("db error inserting status: %w", err)
 	}
 
-	return p.notifyAnnounce(ctx, incomingAnnounce)
+	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+		return gtserror.Newf("error timelining status: %w", err)
+	}
+
+	if err := p.notifyAnnounce(ctx, status); err != nil {
+		return gtserror.Newf("error notifying status: %w", err)
+	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	p.invalidateStatusFromTimelines(ctx, status.ID)
+
+	return nil
 }
 
 // processCreateBlockFromFederator handles Activity Create and Object Block
@@ -384,16 +360,26 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 
 // processDeleteStatusFromFederator handles Activity Delete and Object Note
 func (p *Processor) processDeleteStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	statusToDelete, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+	status, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		return errors.New("note was not parseable as *gtsmodel.Status")
+		return errors.New("Note was not parseable as *gtsmodel.Status")
 	}
 
-	// delete attachments from this status since this request
+	// Delete attachments from this status, since this request
 	// comes from the federating API, and there's no way the
-	// poster can do a delete + redraft for it on our instance
+	// poster can do a delete + redraft for it on our instance.
 	deleteAttachments := true
-	return p.wipeStatus(ctx, statusToDelete, deleteAttachments)
+	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
+		return gtserror.Newf("error wiping status: %w", err)
+	}
+
+	if status.InReplyToID != "" {
+		// Interaction counts changed on the replied status;
+		// uncache the prepared version from all timelines.
+		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+	}
+
+	return nil
 }
 
 // processDeleteAccountFromFederator handles Activity Delete and Object Profile

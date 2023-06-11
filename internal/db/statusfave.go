@@ -35,6 +35,9 @@ type StatusFave interface {
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
 	GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, Error)
 
+	// PopulateStatusFave ensures that all sub-models of a fave are populated (account, status, etc).
+	PopulateStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) error
+
 	// PutStatusFave inserts the given statusFave into the database.
 	PutStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) Error
 

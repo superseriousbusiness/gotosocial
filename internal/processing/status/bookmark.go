@@ -53,7 +53,12 @@ func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmo
 	}
 
 	if err := p.state.DB.PutStatusBookmark(ctx, gtsBookmark); err != nil {
-		err = fmt.Errorf("BookmarkCreate: error putting bookmark in database: %w", err)
+		err = gtserror.Newf("error putting bookmark in database: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if err := p.invalidateStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
+		err = gtserror.Newf("error invalidating status from timelines: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -74,7 +79,12 @@ func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmo
 
 	// We have a bookmark to remove.
 	if err := p.state.DB.DeleteStatusBookmark(ctx, existingBookmarkID); err != nil {
-		err = fmt.Errorf("BookmarkRemove: error removing status bookmark: %w", err)
+		err = gtserror.Newf("error removing status bookmark: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if err := p.invalidateStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
+		err = gtserror.Newf("error invalidating status from timelines: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

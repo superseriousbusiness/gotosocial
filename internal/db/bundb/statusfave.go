@@ -24,6 +24,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -143,6 +144,48 @@ func (s *statusFaveDB) GetStatusFavesForStatus(ctx context.Context, statusID str
 	}
 
 	return faves, nil
+}
+
+func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) error {
+	var (
+		err  error
+		errs = make(gtserror.MultiError, 0, 3)
+	)
+
+	if statusFave.Account == nil {
+		// StatusFave author is not set, fetch from database.
+		statusFave.Account, err = s.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			statusFave.AccountID,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating status fave author: %w", err))
+		}
+	}
+
+	if statusFave.TargetAccount == nil {
+		// StatusFave target account is not set, fetch from database.
+		statusFave.TargetAccount, err = s.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			statusFave.TargetAccountID,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating status fave target account: %w", err))
+		}
+	}
+
+	if statusFave.Status == nil {
+		// StatusFave status is not set, fetch from database.
+		statusFave.Status, err = s.state.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			statusFave.StatusID,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating status fave status: %w", err))
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) db.Error {
