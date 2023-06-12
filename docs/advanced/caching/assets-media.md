@@ -69,4 +69,4 @@ For other options, see the nginx documentation on the [`expires` directive](http
 Nginx does not add cache headers to 4xx or 5xx response codes so a failure to fetch an asset won't get cached by clients. The `autoindex off` directive tells nginx to not serve a directory listing. This should be the default but it doesn't hurt to be explicit. The added `add_header` lines set additional options for the `Cache-Control` header:
 
 * `public` is used to indicate that anyone may cache this resource
-* `immutable` is used to indicate this resource will never change while it is fresh (it's before the end of the expires) allowing clients to forego conditional requests to revalidate the resource during that timespan
+* `immutable` is used to indicate this resource will never change while it is fresh (it's before the end of the expires) allowing clients to forgo conditional requests to revalidate the resource during that timespan.

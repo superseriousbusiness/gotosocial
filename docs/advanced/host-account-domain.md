@@ -7,7 +7,7 @@ This guide explains how to have usernames like `@me@example.org` but run the GoT
 
 ## Background
 
-The way ActivityPub implementations discover how to map your account domain to your host domain is thorugh a protocol called [webfinger](https://www.rfc-editor.org/rfc/rfc7033). This mapping is typically cached by servers and hence why you can't change it after the fact.
+The way ActivityPub implementations discover how to map your account domain to your host domain is through a protocol called [webfinger](https://www.rfc-editor.org/rfc/rfc7033). This mapping is typically cached by servers and hence why you can't change it after the fact.
 
 It works by doing a request to `https://<account domain>/.well-known/webfinger?resource=acct:@me@example.org`. At this point, a server can return a redirect to where the actual webfinger endpoint is, `https://<host domain>/.well-known/webfinger?resource=acct:@me@example.org` or may respond directly. The JSON document that is returned informs you what the endpoint to query is for the user:
 

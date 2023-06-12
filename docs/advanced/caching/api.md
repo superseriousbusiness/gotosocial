@@ -11,7 +11,7 @@ When using a [split domain](../host-account-domain.md) deployment style, you nee
 
 ### Webfinger and hostmeta
 
-Requsets to `/.well-known/webfinger` and `/.well-known/host-meta` can be safely cached. Do be careful to ensure any caching strategy takes query parameters into account when caching webfinger requests as requests to that endpoint are of the form `?resource=acct:@username@domain.tld`.
+Requests to `/.well-known/webfinger` and `/.well-known/host-meta` can be safely cached. Do be careful to ensure any caching strategy takes query parameters into account when caching webfinger requests as requests to that endpoint are of the form `?resource=acct:@username@domain.tld`.
 
 ### Public keys
 
@@ -21,7 +21,7 @@ Many implementations will regularly request the public key for a user in order t
 
 ### nginx
 
-For nginx, you'll need to start by configuring a `cache` zone. The cache zone must be created in the `http` section, not within ` server` or `location`.
+For nginx, you'll need to start by configuring a cache zone. The cache zone must be created in the `http` section, not within `server` or `location`.
 
 ```nginx
 http {

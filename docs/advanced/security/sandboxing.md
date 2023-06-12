@@ -1,11 +1,11 @@
 # Application sandboxing
 
-By sandboxing the GoToSocial binary it's possible to control which parts of the system GoToSocial can access, and limit which things it can read and write. This can be helpful to ensure that even in the face of a security issue in GoToSocial, an attacker is severly hindered in escalating their privileges and gaining a foothold on your system.
+By sandboxing the GoToSocial binary it's possible to control which parts of the system GoToSocial can access, and limit which things it can read and write. This can be helpful to ensure that even in the face of a security issue in GoToSocial, an attacker is severely hindered in escalating their privileges and gaining a foothold on your system.
 
 !!! note
     As GoToSocial is still early in its development, the sandboxing policies we ship may get out of date. If you happen to run into this, please raise an issue on the issue tracker or better yet submit a PR to help us fix it.
 
-Different distributions have different sanbdoxing mechanisms they prefer and support:
+Different distributions have different sandboxing mechanisms they prefer and support:
 
 * **AppArmor** for the Debian or Ubuntu family of distributions or OpenSuSE, including when running with Docker
 * **SELinux** for the Red Hat/Fedora/CentOS family of distributions or Gentoo
