@@ -67,7 +67,7 @@ require (
 	golang.org/x/text v0.9.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.23.0
+	modernc.org/sqlite v1.23.1
 	mvdan.cc/xurls/v2 v2.5.0
 )
 
