@@ -56,7 +56,7 @@ $ systemctl restart gotosocial
 ### Containers
 
 !!! tip
-    You should review the [Docker][docker] or [Podman][podman] documentation on AppArmor.
+    You should review the [Docker](https://docs.docker.com/engine/security/apparmor/) or [Podman](https://docs.podman.io/en/latest/markdown/options/security-opt.html) documentation on AppArmor.
 
 When using our example Compose file, you can tell it to load the AppArmor policy by tweaking it like so:
 
@@ -75,9 +75,4 @@ When launching the container with `docker run` or `podman run`, you'll need the 
 !!! note
     SELinux can only be used in combination with the [binary installation](../../getting_started/installation/metal.md) method. SELinux cannot be used to constrain GoToSocial when running in a container.
 
-The SELinux policy is maintained by the community in the [`lzap/gotosocial-selinux`][selpol] repository on GitHub. Make sure to read its documentation, review the policy before using it and use their issue tracker for any support requests around the SELinux policy.
-
-[lsm]: https://www.kernel.org/doc/html/latest/admin-guide/LSM/index.html
-[docker]: https://docs.docker.com/engine/security/apparmor/
-[podman]: https://docs.podman.io/en/latest/markdown/options/security-opt.html
-[selpol]: https://github.com/lzap/gotosocial-selinux
+The SELinux policy is maintained by the community in the [`lzap/gotosocial-selinux`](https://github.com/lzap/gotosocial-selinux) repository on GitHub. Make sure to read its documentation, review the policy before using it and use their issue tracker for any support requests around the SELinux policy.
