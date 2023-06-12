@@ -57,7 +57,7 @@ In the above commands, replace `yourgotosocial.url` with your actual GoToSocial 
 
 The file you're about to create should look like this:
 
-```nginx.conf
+```nginx
 server {
   listen 80;
   listen [::]:80;
@@ -141,15 +141,20 @@ Now start GoToSocial again:
 sudo systemctl start gotosocial
 ```
 
+## Security hardening
+
+If you want to harden up your NGINX deployment with advanced configuration options, there are many guides online for doing so ([for example](https://beaglesecurity.com/blog/article/nginx-server-security.html)). Try to find one that's up to date. Mozilla also publishes best-practice SSL configuration [here](https://ssl-config.mozilla.org/).
+
 ## Results
 
 You should now be able to open the splash page for your instance in your web browser, and will see that it runs under https!
 
 If you open the NGINX config again, you'll see that Certbot added some extra lines to it.
 
-**Note**: This may look a bit different depending on the options you chose while setting up Certbot, and the NGINX version you're using.
+!!! note
+    This may look a bit different depending on the options you chose while setting up Certbot, and the NGINX version you're using.
 
-```nginx.conf
+```nginx
 server {
   server_name example.org;
   location / {
@@ -183,4 +188,4 @@ server {
 }
 ```
 
-A number of additional configurations for nginx, including static asset serving and caching, are documented in the [Advanced](../advanced.md) section of our documentation.
+A number of additional configurations for nginx, including static asset serving and caching, are documented in the [Advanced](../../advanced/index.md) section of our documentation.
