@@ -113,7 +113,8 @@ func SignatureCheck(uriBlocked func(context.Context, *url.URL) (bool, db.Error))
 		ctx = gtscontext.SetHTTPSignature(ctx, signature)
 		ctx = gtscontext.SetHTTPSignaturePubKeyID(ctx, pubKeyID)
 
-		// Clone the request to replace the context.
-		c.Request = c.Request.Clone(ctx)
+		// Replace request with a shallow
+		// copy with the new context.
+		c.Request = c.Request.WithContext(ctx)
 	}
 }
