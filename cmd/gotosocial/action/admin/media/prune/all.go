@@ -21,6 +21,7 @@ var All action.GTSAction = func(ctx context.Context) error {
 
 	days := config.GetMediaRemoteCacheDays()
 	prune.cleaner.Media().All(ctx, days)
+	prune.cleaner.Emoji().All(ctx)
 
 	return prune.shutdown(ctx)
 }

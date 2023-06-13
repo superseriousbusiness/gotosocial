@@ -438,7 +438,7 @@ func (m *Media) getRelatedAccount(ctx context.Context, media *gtsmodel.MediaAtta
 	}
 
 	if account == nil {
-		log.Warnf(ctx, "account missing for %s", media.File.Path)
+		// account is missing.
 		return nil, true, nil
 	}
 
@@ -461,7 +461,7 @@ func (m *Media) getRelatedStatus(ctx context.Context, media *gtsmodel.MediaAttac
 	}
 
 	if status == nil {
-		log.Warnf(ctx, "status missing for %s", media.File.Path)
+		// status is missing.
 		return nil, true, nil
 	}
 
