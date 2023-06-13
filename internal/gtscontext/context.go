@@ -40,12 +40,7 @@ const (
 	otherIRIsKey
 	httpSigVerifierKey
 	httpSigKey
-	httpSignPubKeyIDKey
-
-	// converted context keys for gin Set/Get operations.
-	httpSigVerifier = string(rune(httpSigVerifierKey))
-	httpSig         = string(rune(httpSigKey))
-	httpSigPubKeyID = string(rune(httpSignPubKeyIDKey))
+	httpSigPubKeyIDKey
 )
 
 // RequestID returns the request ID associated with context. This value will usually
@@ -146,14 +141,14 @@ func SetHTTPSignature(ctx context.Context, signature string) context.Context {
 // HTTPSignaturePubKeyID returns the public key id of the http signature
 // for the current ActivityPub request chain.
 func HTTPSignaturePubKeyID(ctx context.Context) *url.URL {
-	pubKeyID, _ := ctx.Value(httpSignPubKeyIDKey).(*url.URL)
+	pubKeyID, _ := ctx.Value(httpSigPubKeyIDKey).(*url.URL)
 	return pubKeyID
 }
 
 // SetHTTPSignaturePubKeyID stores the given http signature public key id and returns
 // the wrapped context. See HTTPSignaturePubKeyID() for further information on the value.
 func SetHTTPSignaturePubKeyID(ctx context.Context, pubKeyID *url.URL) context.Context {
-	return context.WithValue(ctx, httpSignPubKeyIDKey, pubKeyID)
+	return context.WithValue(ctx, httpSigPubKeyIDKey, pubKeyID)
 }
 
 // IsFastFail returns whether the "fastfail" context key has been set. This
