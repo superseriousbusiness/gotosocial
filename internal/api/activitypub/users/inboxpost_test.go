@@ -517,6 +517,31 @@ func (suite *InboxPostTestSuite) TestPostFromBlockedAccount() {
 	)
 }
 
+func (suite *InboxPostTestSuite) TestPostFromBlockedAccountToOtherAccount() {
+	var (
+		requestingAccount = suite.testAccounts["remote_account_1"]
+		targetAccount     = suite.testAccounts["local_account_1"]
+		activity          = suite.testActivities["reply_to_turtle_for_turtle"]
+		statusURI         = "http://fossbros-anonymous.io/users/foss_satan/statuses/2f1195a6-5cb0-4475-adf5-92ab9a0147fe"
+	)
+
+	// Post an reply to turtle to ZORK from remote account.
+	// Turtle blocks the remote account but is only tangentially
+	// related to this POST request. The response will indicate
+	// accepted but the post won't actually be processed.
+	suite.inboxPost(
+		activity.Activity,
+		requestingAccount,
+		targetAccount,
+		http.StatusAccepted,
+		`{"status":"Accepted"}`,
+		suite.signatureCheck,
+	)
+
+	_, err := suite.state.DB.GetStatusByURI(context.Background(), statusURI)
+	suite.ErrorIs(err, db.ErrNoEntries)
+}
+
 func (suite *InboxPostTestSuite) TestPostUnauthorized() {
 	var (
 		requestingAccount = suite.testAccounts["remote_account_1"]

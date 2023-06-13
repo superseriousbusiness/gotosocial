@@ -30,7 +30,7 @@ import (
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
 // Eg., POST to https://example.org/users/whatever/inbox.
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
-	_, err := m.processor.Fedi().InboxPost(apiutil.TransferSignatureContext(c), c.Writer, c.Request)
+	_, err := m.processor.Fedi().InboxPost(c.Request.Context(), c.Writer, c.Request)
 	if err != nil {
 		errWithCode := new(gtserror.WithCode)
 

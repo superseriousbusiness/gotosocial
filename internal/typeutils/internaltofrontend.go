@@ -43,6 +43,7 @@ const (
 	instancePollsMinExpiration                  = 300     // seconds
 	instancePollsMaxExpiration                  = 2629746 // seconds
 	instanceAccountsMaxFeaturedTags             = 10
+	instanceAccountsMaxProfileFields            = 6 // FIXME: https://github.com/superseriousbusiness/gotosocial/issues/1876
 	instanceSourceURL                           = "https://github.com/superseriousbusiness/gotosocial"
 )
 
@@ -756,6 +757,7 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Polls.MaxExpiration = instancePollsMaxExpiration
 	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
+	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
 
 	// URLs
@@ -882,6 +884,7 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Polls.MaxExpiration = instancePollsMaxExpiration
 	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
+	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
 
 	// registrations

@@ -32,6 +32,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -343,42 +344,59 @@ func ExtractURL(i WithURL) (*url.URL, error) {
 	return nil, errors.New("could not extract url")
 }
 
-// ExtractPublicKeyForOwner extracts the public key from an interface, as long as it belongs to the specified owner.
-// It will return the public key itself, the id/URL of the public key, or an error if something goes wrong.
-func ExtractPublicKeyForOwner(i WithPublicKey, forOwner *url.URL) (*rsa.PublicKey, *url.URL, error) {
-	publicKeyProp := i.GetW3IDSecurityV1PublicKey()
-	if publicKeyProp == nil {
-		return nil, nil, errors.New("public key property was nil")
+// ExtractPublicKey extracts the public key, public key ID, and public
+// key owner ID from an interface, or an error if something goes wrong.
+func ExtractPublicKey(i WithPublicKey) (
+	*rsa.PublicKey, // pubkey
+	*url.URL, // pubkey ID
+	*url.URL, // pubkey owner
+	error,
+) {
+	pubKeyProp := i.GetW3IDSecurityV1PublicKey()
+	if pubKeyProp == nil {
+		return nil, nil, nil, gtserror.New("public key property was nil")
 	}
 
-	for iter := publicKeyProp.Begin(); iter != publicKeyProp.End(); iter = iter.Next() {
+	for iter := pubKeyProp.Begin(); iter != pubKeyProp.End(); iter = iter.Next() {
+		if !iter.IsW3IDSecurityV1PublicKey() {
+			continue
+		}
+
 		pkey := iter.Get()
 		if pkey == nil {
 			continue
 		}
 
-		pkeyID, err := pub.GetId(pkey)
-		if err != nil || pkeyID == nil {
+		pubKeyID, err := pub.GetId(pkey)
+		if err != nil {
 			continue
 		}
 
-		if pkey.GetW3IDSecurityV1Owner() == nil || pkey.GetW3IDSecurityV1Owner().Get() == nil || pkey.GetW3IDSecurityV1Owner().Get().String() != forOwner.String() {
+		pubKeyOwnerProp := pkey.GetW3IDSecurityV1Owner()
+		if pubKeyOwnerProp == nil {
 			continue
 		}
 
-		if pkey.GetW3IDSecurityV1PublicKeyPem() == nil {
+		pubKeyOwner := pubKeyOwnerProp.GetIRI()
+		if pubKeyOwner == nil {
 			continue
 		}
 
-		pkeyPem := pkey.GetW3IDSecurityV1PublicKeyPem().Get()
+		pubKeyPemProp := pkey.GetW3IDSecurityV1PublicKeyPem()
+		if pubKeyPemProp == nil {
+			continue
+		}
+
+		pkeyPem := pubKeyPemProp.Get()
 		if pkeyPem == "" {
 			continue
 		}
 
 		block, _ := pem.Decode([]byte(pkeyPem))
 		if block == nil {
-			return nil, nil, errors.New("could not decode publicKeyPem: no PEM data")
+			continue
 		}
+
 		var p crypto.PublicKey
 		switch block.Type {
 		case "PUBLIC KEY":
@@ -386,19 +404,26 @@ func ExtractPublicKeyForOwner(i WithPublicKey, forOwner *url.URL) (*rsa.PublicKe
 		case "RSA PUBLIC KEY":
 			p, err = x509.ParsePKCS1PublicKey(block.Bytes)
 		default:
-			return nil, nil, fmt.Errorf("could not parse public key: unknown block type: %q", block.Type)
+			err = fmt.Errorf("unknown block type: %q", block.Type)
 		}
 		if err != nil {
-			return nil, nil, fmt.Errorf("could not parse public key from block bytes: %s", err)
+			err = gtserror.Newf("could not parse public key from block bytes: %w", err)
+			return nil, nil, nil, err
 		}
+
 		if p == nil {
-			return nil, nil, errors.New("returned public key was empty")
+			return nil, nil, nil, gtserror.New("returned public key was empty")
 		}
-		if publicKey, ok := p.(*rsa.PublicKey); ok {
-			return publicKey, pkeyID, nil
+
+		pubKey, ok := p.(*rsa.PublicKey)
+		if !ok {
+			continue
 		}
+
+		return pubKey, pubKeyID, pubKeyOwner, nil
 	}
-	return nil, nil, errors.New("couldn't find public key")
+
+	return nil, nil, nil, gtserror.New("couldn't find public key")
 }
 
 // ExtractContent returns a string representation of the interface's Content property,

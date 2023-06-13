@@ -21,9 +21,9 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -107,7 +107,7 @@ func (suite *FederatingDBTestSuite) TearDownTest() {
 
 func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) context.Context {
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, ap.ContextReceivingAccount, receivingAccount)
-	ctx = context.WithValue(ctx, ap.ContextRequestingAccount, requestingAccount)
+	ctx = gtscontext.SetReceivingAccount(ctx, receivingAccount)
+	ctx = gtscontext.SetRequestingAccount(ctx, requestingAccount)
 	return ctx
 }

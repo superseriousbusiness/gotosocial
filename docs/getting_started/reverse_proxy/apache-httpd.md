@@ -1,36 +1,10 @@
 # Apache HTTP Server
 
-## Requirements
+In order to use Apache as a reverse proxy for GoToSocial you'll need to have it installed on your server. If you intend for the Apache instance to also handle TLS, you'll need to [provision TLS certificates](../../advanced/certificates.md) too.
 
-For this you will need the Apache HTTP Server.
+Apache is [packaged for many distributions](https://repology.org/project/apache/versions). It's very likely you can install it with your distribution's package manager. You can also run Apache using a container runtime with the [official Apache image](https://hub.docker.com/_/httpd) that's published to the Docker Hub.
 
-That is a fairly popular package so your distro will probably have it.
-
-### Ubuntu
-
-```bash
-sudo apt install apache2
-```
-
-### Arch
-
-```bash
-sudo pacman -S apache
-```
-
-### OpenSuse
-
-```bash
-sudo zypper install apache2
-```
-
-### Install modules
-
-You'll also need to install additional modules for Apache HTTP Server. You can do that with the following command:
-
-```bash
-sudo a2enmod proxy_http md ssl headers rewrite
-```
+In this guide we'll also show how to use certbot to provision the TLS certificates. It too is [packaged in many distributions](https://repology.org/project/certbot/versions) but many distributions tend to ship fairly old versions of certbot. If you run into trouble it may be worth considering using the [container image](https://hub.docker.com/r/certbot/certbot) instead.
 
 ## Configure GoToSocial
 
@@ -54,7 +28,28 @@ sudo systemctl restart gotosocial.service
 
 Or if you don't have a systemd service just restart it manually.
 
-## Set up Apache HTTP Server with SSL managed using MD module
+## Set up Apache
+
+### Required Apache modules
+
+You need to ensure you have a number of Apache modules installed and enabled. All these modules *should* ship with your distribution's Apache package, but they may have been split out into separate packages.
+
+You can check which modules you have installed with `apachectl -M`.
+
+You'll need to have the following modules loaded:
+
+* `proxy_http` to proxy HTTP requests to GoToSocial
+* `ssl` to handle SSL/TLS
+* `headers` to manipulate HTTP request and response headers
+* `rewrite` to rewrite HTTP requests
+* `md` for Lets Encrypt, available since 2.4.30
+
+On Debian, Ubuntu and openSUSE, you can use the [`a2enmod`](https://manpages.debian.org/bookworm/apache2/a2enmod.8.en.html) utility to load any additional modules. For the Red Hat/CentOS family of distributions, you'll need to add a [`LoadModule` directive](https://httpd.apache.org/docs/2.4/mod/mod_so.html#loadmodule) to your Apache configuration instead.
+
+### TLS with mod_md
+
+!!! note
+    `mod_md` is only available since Apache 2.4.30 and still considered experimental. It works well enough in practice and is the most convenient method.
 
 Now we'll configure Apache HTTP Server to serve GoToSocial requests.
 
@@ -169,7 +164,10 @@ If this happens, you'll need to do one (or all) of the below:
 1. Update `/etc/apache2/sites-enabled/000-default.conf` and change the `ServerAdmin` value to a valid email address (then reload Apache HTTP Server).
 2. Add the line `MDContactEmail your.email.address@whatever.com` below the `MDomain` line in `/etc/apache2/sites-available/example.com.conf`, replacing `your.email.address@whatever.com` with a valid email address, and `example.com` with your GtS host name.
 
-## Set up Apache HTTP Server with SSL managed manually or by an external software (e.g. Certbot or acme.sh)
+### TLS with externally managed certificates
+
+!!! note
+    We have additional documentation on how to [provision TLS certificates](../../advanced/certificates.md) that also provides links to additional content and tutorials for different distributions that may be good to review.
 
 If you prefer to have a manual setup or setting SSL using a different service to manage it (Certbot, etc), then you can use a simpler setup for your Apache HTTP Server.
 

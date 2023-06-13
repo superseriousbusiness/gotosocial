@@ -80,7 +80,7 @@ func (m *Module) FeaturedCollectionGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().FeaturedCollectionGet(apiutil.TransferSignatureContext(c), requestedUsername)
+	resp, errWithCode := m.processor.Fedi().FeaturedCollectionGet(c.Request.Context(), requestedUsername)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

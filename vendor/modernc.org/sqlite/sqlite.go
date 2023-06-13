@@ -2066,3 +2066,29 @@ func finalTrampoline(tls *libc.TLS, ctx uintptr) {
 	delete(xAggregateContext.m, id)
 	xAggregateContext.ids.reclaim(id)
 }
+
+// int sqlite3_limit(sqlite3*, int id, int newVal);
+func (c *conn) limit(id int, newVal int) int {
+	return int(sqlite3.Xsqlite3_limit(c.tls, c.db, int32(id), int32(newVal)))
+}
+
+// Limit calls sqlite3_limit, see the docs at
+// https://www.sqlite.org/c3ref/limit.html for details.
+//
+// To get a sql.Conn from a *sql.DB, use (*sql.DB).Conn().  Limits are bound to
+// the particular instance of 'c', so getting a new connection only to pass it
+// to Limit is possibly not useful above querying what are the various
+// configured default values.
+func Limit(c *sql.Conn, id int, newVal int) (r int, err error) {
+	err = c.Raw(func(driverConn any) error {
+		switch dc := driverConn.(type) {
+		case *conn:
+			r = dc.limit(id, newVal)
+			return nil
+		default:
+			return fmt.Errorf("unexpected driverConn type: %T", driverConn)
+		}
+	})
+	return r, err
+
+}
