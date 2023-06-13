@@ -43,6 +43,7 @@ import (
 //
 //	consumes:
 //	- multipart/form-data
+//	- application/x-www-form-urlencoded
 //	- application/json
 //
 //	produces:
@@ -213,6 +214,17 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 		if err != nil {
 			return nil, fmt.Errorf("custom json binding failed: %w", err)
 		}
+	case binding.MIMEPOSTForm:
+		// Bind with default form binding first.
+		if err := c.ShouldBindWith(form, binding.FormPost); err != nil {
+			return nil, err
+		}
+
+		// Now use custom form binding for
+		// field attributes in the form data.
+		if err := c.ShouldBindWith(form, fieldsAttributesFormBinding{}); err != nil {
+			return nil, fmt.Errorf("custom form binding failed: %w", err)
+		}
 	case binding.MIMEMultipartPOSTForm:
 		// Bind with default form binding first.
 		if err := c.ShouldBindWith(form, binding.FormMultipart); err != nil {
@@ -225,7 +237,7 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 			return nil, fmt.Errorf("custom form binding failed: %w", err)
 		}
 	default:
-		err := fmt.Errorf("content-type %s not supported for this endpoint; supported content-types are %s, %s", ct, binding.MIMEJSON, binding.MIMEMultipartPOSTForm)
+		err := fmt.Errorf("content-type %s not supported for this endpoint; supported content-types are %s, %s, %s", ct, binding.MIMEJSON, binding.MIMEPOSTForm, binding.MIMEMultipartPOSTForm)
 		return nil, err
 	}
 

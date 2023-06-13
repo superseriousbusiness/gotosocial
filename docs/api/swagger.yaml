@@ -3151,6 +3151,7 @@ paths:
         patch:
             consumes:
                 - multipart/form-data
+                - application/x-www-form-urlencoded
                 - application/json
             operationId: accountUpdate
             parameters:
