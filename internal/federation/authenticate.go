@@ -149,7 +149,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	}
 
 	// At this point no algorithms passed.
-	err := fmt.Errorf(
+	err := gtserror.Newf(
 		"authentication NOT PASSED for public key %s; tried algorithms %+v; signature value was '%s'",
 		pubKeyIDStr, signature, signingAlgorithms,
 	)
