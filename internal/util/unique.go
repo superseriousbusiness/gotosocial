@@ -19,28 +19,46 @@ package util
 
 import "net/url"
 
-// UniqueStrings returns a deduplicated version of a given string slice.
-func UniqueStrings(s []string) []string {
-	keys := make(map[string]bool, len(s))
-	list := []string{}
-	for _, entry := range s {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
+// UniqueStrings returns a deduplicated version of the given
+// slice of strings, without changing the order of the entries.
+func UniqueStrings(strings []string) []string {
+	var (
+		l      = len(strings)
+		keys   = make(map[string]any, l) // Use map to dedupe items.
+		unique = make([]string, 0, l)    // Return slice.
+	)
+
+	for _, str := range strings {
+		// Check if already set as a key in the map;
+		// if not, add to return slice + mark key as set.
+		if _, set := keys[str]; !set {
+			keys[str] = nil // Value doesn't matter.
+			unique = append(unique, str)
 		}
 	}
-	return list
+
+	return unique
 }
 
-// UniqueURIs returns a deduplicated version of a given *url.URL slice.
-func UniqueURIs(s []*url.URL) []*url.URL {
-	keys := make(map[string]bool, len(s))
-	list := []*url.URL{}
-	for _, entry := range s {
-		if _, value := keys[entry.String()]; !value {
-			keys[entry.String()] = true
-			list = append(list, entry)
+// UniqueURIs returns a deduplicated version of the given
+// slice of URIs, without changing the order of the entries.
+func UniqueURIs(uris []*url.URL) []*url.URL {
+	var (
+		l      = len(uris)
+		keys   = make(map[string]any, l) // Use map to dedupe items.
+		unique = make([]*url.URL, 0, l)  // Return slice.
+	)
+
+	for _, uri := range uris {
+		uriStr := uri.String()
+
+		// Check if already set as a key in the map;
+		// if not, add to return slice + mark key as set.
+		if _, set := keys[uriStr]; !set {
+			keys[uriStr] = nil // Value doesn't matter.
+			unique = append(unique, uri)
 		}
 	}
-	return list
+
+	return unique
 }
