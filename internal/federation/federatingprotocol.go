@@ -156,10 +156,6 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		}
 	}
 
-	// OtherIRIs will likely contain some
-	// duplicate entries now, so remove them.
-	otherIRIs = util.UniqueURIs(otherIRIs)
-
 	// Clean any instances of the public URI, since
 	// we don't care about that in this context.
 	otherIRIs = func(iris []*url.URL) []*url.URL {
@@ -173,6 +169,10 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 
 		return np
 	}(otherIRIs)
+
+	// OtherIRIs will likely contain some
+	// duplicate entries now, so remove them.
+	otherIRIs = util.UniqueURIs(otherIRIs)
 
 	// Finished, set other IRIs on the context
 	// so they can be checked for blocks later.
