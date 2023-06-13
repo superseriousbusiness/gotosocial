@@ -271,7 +271,7 @@ func (f *federator) callForPubKey(
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		err := fmt.Errorf("account with public key %s is gone", pubKeyID)
+		err := gtserror.Newf("account with public key %s is gone", pubKeyID)
 		return nil, gtserror.NewErrorGone(err)
 	}
 
