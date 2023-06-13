@@ -52,28 +52,14 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		l.Debug("entering Update")
 	}
 
-	receivingAccount, _ := extractFromCtx(ctx)
-	if receivingAccount == nil {
-		// If the receiving account wasn't set on the context, that means
-		// this request didn't pass through the API, but came from inside
-		// GtS as the result of another activity on this instance. As such,
-		// we must have already processed it in order to reach this stage.
-		return nil
-	}
-
-	requestingAcctI := ctx.Value(ap.ContextRequestingAccount)
-	if requestingAcctI == nil {
-		return errors.New("Update: requesting account wasn't set on context")
-	}
-
-	requestingAcct, ok := requestingAcctI.(*gtsmodel.Account)
-	if !ok {
-		return errors.New("Update: requesting account was set on context but couldn't be parsed")
+	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
+	if internal {
+		return nil // Already processed.
 	}
 
 	switch asType.GetTypeName() {
 	case ap.ActorApplication, ap.ActorGroup, ap.ActorOrganization, ap.ActorPerson, ap.ActorService:
-		return f.updateAccountable(ctx, receivingAccount, requestingAcct, asType)
+		return f.updateAccountable(ctx, receivingAccount, requestingAccount, asType)
 	}
 
 	return nil

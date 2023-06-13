@@ -26,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -75,7 +74,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	// should render the account's AP representation instead
 	accept := apiutil.NegotiateFormat(c, string(apiutil.TextHTML), string(apiutil.AppActivityJSON), string(apiutil.AppActivityLDJSON))
 	if accept == string(apiutil.AppActivityJSON) || accept == string(apiutil.AppActivityLDJSON) {
-		m.returnAPProfile(ctx, c, username, accept)
+		m.returnAPProfile(c, username, accept)
 		return
 	}
 
@@ -145,27 +144,17 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	})
 }
 
-func (m *Module) returnAPProfile(ctx context.Context, c *gin.Context, username string, accept string) {
-	verifier, signed := c.Get(string(ap.ContextRequestingPublicKeyVerifier))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeyVerifier, verifier)
-	}
-
-	signature, signed := c.Get(string(ap.ContextRequestingPublicKeySignature))
-	if signed {
-		ctx = context.WithValue(ctx, ap.ContextRequestingPublicKeySignature, signature)
-	}
-
-	user, errWithCode := m.processor.Fedi().UserGet(ctx, username, c.Request.URL)
+func (m *Module) returnAPProfile(c *gin.Context, username string, accept string) {
+	user, errWithCode := m.processor.Fedi().UserGet(c.Request.Context(), username, c.Request.URL)
 	if errWithCode != nil {
-		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	b, mErr := json.Marshal(user)
 	if mErr != nil {
 		err := fmt.Errorf("could not marshal json: %s", mErr)
-		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1) //nolint:contextcheck
+		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 		return
 	}
 

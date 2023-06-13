@@ -84,15 +84,14 @@ func IsASMediaType(ct string) bool {
 	}
 }
 
-// federatingActor wraps the pub.FederatingActor interface
+// federatingActor wraps the pub.FederatingActor
 // with some custom GoToSocial-specific logic.
 type federatingActor struct {
 	sideEffectActor pub.DelegateActor
 	wrapped         pub.FederatingActor
 }
 
-// newFederatingProtocol returns a new federatingActor, which
-// implements the pub.FederatingActor interface.
+// newFederatingActor returns a federatingActor.
 func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub.Database, clock pub.Clock) pub.FederatingActor {
 	sideEffectActor := pub.NewSideEffectActor(c, s2s, nil, db, clock)
 	sideEffectActor.Serialize = ap.Serialize // hook in our own custom Serialize function
@@ -133,8 +132,11 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	ctx, authenticated, err := f.sideEffectActor.AuthenticatePostInbox(ctx, w, r)
 	if err != nil {
 		return false, gtserror.NewErrorInternalError(err)
-	} else if !authenticated {
-		return false, gtserror.NewErrorUnauthorized(errors.New("unauthorized"))
+	}
+
+	if !authenticated {
+		err = errors.New("not authenticated")
+		return false, gtserror.NewErrorUnauthorized(err)
 	}
 
 	/*
@@ -148,20 +150,38 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		return false, errWithCode
 	}
 
-	// Set additional context data.
+	// Set additional context data. Primarily this means
+	// looking at the Activity and seeing which IRIs are
+	// involved in it tangentially.
 	ctx, err = f.sideEffectActor.PostInboxRequestBodyHook(ctx, r, activity)
 	if err != nil {
 		return false, gtserror.NewErrorInternalError(err)
 	}
 
-	// Check authorization of the activity.
+	// Check authorization of the activity; this will include blocks.
 	authorized, err := f.sideEffectActor.AuthorizePostInbox(ctx, w, activity)
 	if err != nil {
+		if errors.As(err, new(errOtherIRIBlocked)) {
+			// There's no direct block between requester(s) and
+			// receiver. However, one or more of the other IRIs
+			// involved in the request (account replied to, note
+			// boosted, etc) is blocked either at domain level or
+			// by the receiver. We don't need to return 403 here,
+			// instead, just return 202 accepted but don't do any
+			// further processing of the activity.
+			return true, nil
+		}
+
+		// Real error has occurred.
 		return false, gtserror.NewErrorInternalError(err)
 	}
 
 	if !authorized {
-		return false, gtserror.NewErrorForbidden(errors.New("blocked"))
+		// Block exists either from this instance against
+		// one or more directly involved actors, or between
+		// receiving account and one of those actors.
+		err = errors.New("blocked")
+		return false, gtserror.NewErrorForbidden(err)
 	}
 
 	// Copy existing URL + add request host and scheme.

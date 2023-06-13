@@ -20,10 +20,11 @@ package federation_test
 import (
 	"github.com/stretchr/testify/suite"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -31,46 +32,58 @@ import (
 
 type FederatorStandardTestSuite struct {
 	suite.Suite
-	db             db.DB
-	storage        *storage.Driver
-	state          state.State
-	tc             typeutils.TypeConverter
+	storage             *storage.Driver
+	state               state.State
+	typeconverter       typeutils.TypeConverter
+	transportController transport.Controller
+	httpClient          *testrig.MockHTTPClient
+	federator           federation.Federator
+
 	testAccounts   map[string]*gtsmodel.Account
 	testStatuses   map[string]*gtsmodel.Status
 	testActivities map[string]testrig.ActivityWithSignature
 	testTombstones map[string]*gtsmodel.Tombstone
 }
 
-// SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
 func (suite *FederatorStandardTestSuite) SetupSuite() {
-	// setup standard items
-	testrig.StartWorkers(&suite.state)
-	suite.storage = testrig.NewInMemoryStorage()
-	suite.state.Storage = suite.storage
 	suite.testAccounts = testrig.NewTestAccounts()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.testTombstones = testrig.NewTestTombstones()
 }
 
 func (suite *FederatorStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+	testrig.StartWorkers(&suite.state)
+
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
-	suite.state.Caches.Init()
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
-	suite.state.DB = suite.db
+
+	suite.state.DB = testrig.NewTestDB(&suite.state)
+	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
+	suite.storage = testrig.NewInMemoryStorage()
+	suite.state.Storage = suite.storage
+	suite.typeconverter = testrig.NewTestTypeConverter(suite.state.DB)
 
 	testrig.StartTimelines(
 		&suite.state,
 		visibility.NewFilter(&suite.state),
-		suite.tc,
+		suite.typeconverter,
 	)
 
-	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
-	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
+	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
+
+	suite.transportController = testrig.NewTestTransportController(&suite.state, suite.httpClient)
+	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, testrig.NewTestMediaManager(&suite.state))
+
+	testrig.StandardDBSetup(suite.state.DB, nil)
+	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
 }
 
-// TearDownTest drops tables to make sure there's no data in the db
 func (suite *FederatorStandardTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
+	testrig.StandardDBTeardown(suite.state.DB)
+	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }

@@ -51,7 +51,7 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().FollowingGet(apiutil.TransferSignatureContext(c), requestedUsername)
+	resp, errWithCode := m.processor.Fedi().FollowingGet(c.Request.Context(), requestedUsername)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
