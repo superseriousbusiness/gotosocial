@@ -21,7 +21,7 @@
 
 const Promise = require("bluebird");
 const React = require("react");
-const syncpipe = require("syncpipe");
+const getFormMutations = require("./get-form-mutations");
 
 module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = true, onFinish } = {}) {
 	if (!Array.isArray(mutationQuery)) {
@@ -44,25 +44,12 @@ module.exports = function useFormSubmit(form, mutationQuery, { changedOnly = tru
 			}
 			usedAction.current = action;
 			// transform the field definitions into an object with just their values 
-			let updatedFields = [];
-			const mutationData = syncpipe(form, [
-				(_) => Object.values(_),
-				(_) => _.map((field) => {
-					if (field.selectedValues != undefined) {
-						let selected = field.selectedValues();
-						if (!changedOnly || selected.length > 0) {
-							updatedFields.push(field);
-							return [field.name, selected];
-						}
-					} else if (!changedOnly || field.hasChanged()) {
-						updatedFields.push(field);
-						return [field.name, field.value];
-					}
-					return null;
-				}),
-				(_) => _.filter((value) => value != null),
-				(_) => Object.fromEntries(_)
-			]);
+
+			const { mutationData, updatedFields } = getFormMutations(form, { changedOnly });
+
+			if (updatedFields.length == 0) {
+				return;
+			}
 
 			mutationData.action = action;
 

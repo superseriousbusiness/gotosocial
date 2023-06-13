@@ -26,10 +26,12 @@ const query = require("../lib/query");
 const {
 	useTextInput,
 	useFileInput,
-	useBoolInput
+	useBoolInput,
+	useFieldArrayInput
 } = require("../lib/form");
 
 const useFormSubmit = require("../lib/form/submit");
+const { useWithFormContext, FormContext } = require("../lib/form/context");
 
 const {
 	TextInput,
@@ -65,8 +67,11 @@ function UserProfileForm({ data: profile }) {
 	*/
 
 	const { data: instance } = query.useInstanceQuery();
-	const allowCustomCSS = React.useMemo(() => {
-		return instance?.configuration?.accounts?.allow_custom_css === true;
+	const instanceConfig = React.useMemo(() => {
+		return {
+			allowCustomCSS: instance?.configuration?.accounts?.allow_custom_css === true,
+			maxPinnedFields: instance?.configuration?.accounts?.max_profile_fields ?? 6
+		};
 	}, [instance]);
 
 	const form = {
@@ -78,9 +83,18 @@ function UserProfileForm({ data: profile }) {
 		bot: useBoolInput("bot", { source: profile }),
 		locked: useBoolInput("locked", { source: profile }),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
+		fields: useFieldArrayInput("fields_attributes", {
+			defaultValue: profile?.source?.fields,
+			length: instanceConfig.maxPinnedFields
+		}),
 	};
 
-	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
+	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation(), {
+		onFinish: () => {
+			form.avatar.reset();
+			form.header.reset();
+		}
+	});
 
 	return (
 		<form className="user-profile" onSubmit={submitForm}>
@@ -129,7 +143,11 @@ function UserProfileForm({ data: profile }) {
 				field={form.enableRSS}
 				label="Enable RSS feed of Public posts"
 			/>
-			{!allowCustomCSS ? null :
+			<b>Profile fields</b>
+			<ProfileFields
+				field={form.fields}
+			/>
+			{!instanceConfig.allowCustomCSS ? null :
 				<TextArea
 					field={form.customCSS}
 					label="Custom CSS"
@@ -141,5 +159,41 @@ function UserProfileForm({ data: profile }) {
 			}
 			<MutationButton label="Save profile info" result={result} />
 		</form>
+	);
+}
+
+function ProfileFields({ field: formField }) {
+	return (
+		<div className="fields">
+			<FormContext.Provider value={formField.ctx}>
+				{formField.value.map((data, i) => (
+					<Field
+						key={i}
+						index={i}
+						data={data}
+					/>
+				))}
+			</FormContext.Provider>
+		</div>
+	);
+}
+
+function Field({ index, data }) {
+	const form = useWithFormContext(index, {
+		name: useTextInput("name", { defaultValue: data.name }),
+		value: useTextInput("value", { defaultValue: data.value })
+	});
+
+	return (
+		<div className="entry">
+			<TextInput
+				field={form.name}
+				placeholder="Name"
+			/>
+			<TextInput
+				field={form.value}
+				placeholder="Value"
+			/>
+		</div>
 	);
 }

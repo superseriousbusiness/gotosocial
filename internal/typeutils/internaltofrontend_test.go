@@ -647,7 +647,8 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
     },
     "accounts": {
       "allow_custom_css": true,
-      "max_featured_tags": 10
+      "max_featured_tags": 10,
+      "max_profile_fields": 6
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -730,7 +731,8 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
     },
     "accounts": {
       "allow_custom_css": true,
-      "max_featured_tags": 10
+      "max_featured_tags": 10,
+      "max_profile_fields": 6
     },
     "statuses": {
       "max_characters": 5000,
