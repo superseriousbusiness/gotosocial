@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -74,16 +75,18 @@ func setupPrune(ctx context.Context) (*prune, error) {
 }
 
 func (p *prune) shutdown(ctx context.Context) error {
+	var errs gtserror.MultiError
+
 	if err := p.storage.Close(); err != nil {
-		return fmt.Errorf("error closing storage backend: %w", err)
+		errs.Appendf("error closing storage backend: %v", err)
 	}
 
 	if err := p.dbService.Stop(ctx); err != nil {
-		return fmt.Errorf("error closing dbservice: %w", err)
+		errs.Appendf("error stopping database: %v", err)
 	}
 
 	p.state.Workers.Stop()
 	p.state.Caches.Stop()
 
-	return nil
+	return errs.Combine()
 }

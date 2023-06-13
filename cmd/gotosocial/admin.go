@@ -170,7 +170,7 @@ func adminCommands() *cobra.Command {
 
 	adminMediaCmd := &cobra.Command{
 		Use:   "media",
-		Short: "admin commands related stored media attachments/emojis",
+		Short: "admin commands related to stored media / emojis",
 	}
 
 	/*
@@ -178,7 +178,7 @@ func adminCommands() *cobra.Command {
 	*/
 	adminMediaPruneCmd := &cobra.Command{
 		Use:   "prune",
-		Short: "admin commands for pruning unused/orphaned media from storage",
+		Short: "admin commands for pruning media from storage",
 	}
 
 	adminMediaPruneOrphanedCmd := &cobra.Command{
@@ -196,7 +196,7 @@ func adminCommands() *cobra.Command {
 
 	adminMediaPruneRemoteCmd := &cobra.Command{
 		Use:   "remote",
-		Short: "prune unused/stale remote media from storage, older than given number of days",
+		Short: "prune unused / stale media from storage, older than given number of days",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return preRun(preRunArgs{cmd: cmd})
 		},
@@ -209,7 +209,7 @@ func adminCommands() *cobra.Command {
 
 	adminMediaPruneAllCmd := &cobra.Command{
 		Use:   "all",
-		Short: "perform all media prune / cleaning commands",
+		Short: "perform all media and emoji prune / cleaning commands",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return preRun(preRunArgs{cmd: cmd})
 		},

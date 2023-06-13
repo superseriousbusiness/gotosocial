@@ -267,6 +267,10 @@ func (m *Media) isOrphaned(ctx context.Context, path string) (bool, error) {
 		// 5th -> file extension
 	)
 
+	// Start a log entry for media.
+	l := log.WithContext(ctx).
+		WithField("media", mediaID)
+
 	switch media.Type(mediaType) {
 	case media.TypeAttachment:
 		// Look for media in database stored by ID.
@@ -279,7 +283,7 @@ func (m *Media) isOrphaned(ctx context.Context, path string) (bool, error) {
 		}
 
 		if media == nil {
-			// Not found in DB.
+			l.Debug("missing db entry for media")
 			return true, nil
 		}
 
@@ -305,7 +309,7 @@ func (m *Media) isOrphaned(ctx context.Context, path string) (bool, error) {
 		}
 
 		if emoji == nil {
-			// Not found in DB.
+			l.Debug("missing db entry for emoji")
 			return true, nil
 		}
 	}
@@ -314,12 +318,16 @@ func (m *Media) isOrphaned(ctx context.Context, path string) (bool, error) {
 }
 
 func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment) (bool, error) {
-	// Check whether we have the required account for media.
+	// Start a log entry for media.
+	l := log.WithContext(ctx).
+		WithField("media", media.ID)
+
+		// Check whether we have the required account for media.
 	account, missing, err := m.getRelatedAccount(ctx, media)
 	if err != nil {
 		return false, err
 	} else if missing {
-		// Media account missing, delete it.
+		l.Debug("deleting due to missing account")
 		return true, m.delete(ctx, media)
 	}
 
@@ -328,7 +336,7 @@ func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment
 		headerInUse := (*media.Header && media.ID == account.HeaderMediaAttachmentID)
 		avatarInUse := (*media.Avatar && media.ID == account.AvatarMediaAttachmentID)
 		if (headerInUse || avatarInUse) && account.SuspendedAt.IsZero() {
-			// note that suspended accounts do not count as in-use.
+			l.Debug("skipping as account media in use")
 			return false, nil
 		}
 	}
@@ -338,7 +346,7 @@ func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment
 	if err != nil {
 		return false, err
 	} else if missing {
-		// Media status missing, delete it.
+		l.Debug("deleting due to missing status")
 		return true, m.delete(ctx, media)
 	}
 
@@ -346,12 +354,14 @@ func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment
 		// Check whether still attached to status.
 		for _, id := range status.AttachmentIDs {
 			if id == media.ID {
+				l.Debug("skippping as attached to status")
 				return false, nil
 			}
 		}
 	}
 
 	// Media totally unused, delete it.
+	l.Debug("deleting unused media")
 	return true, m.delete(ctx, media)
 }
 
@@ -364,22 +374,32 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 		return false, nil
 	}
 
+	// Start a log entry for media.
+	l := log.WithContext(ctx).
+		WithField("media", media.ID)
+
 	// Check whether we have the required account for media.
 	_, missingAccount, err := m.getRelatedAccount(ctx, media)
-	if err != nil || missingAccount {
+	if err != nil {
 		return false, err
+	} else if missingAccount {
+		l.Debug("skipping due to missing account")
+		return false, nil
 	}
 
 	// Check whether we have the required status for media.
 	_, missingStatus, err := m.getRelatedStatus(ctx, media)
-	if err != nil || missingStatus {
+	if err != nil {
 		return false, err
+	} else if missingStatus {
+		l.Debug("skipping due to missing status")
+		return false, nil
 	}
 
 	// So we know this a valid cached media entry.
 	// Check that we have the files on disk required....
 	return m.checkFiles(ctx, func() error {
-		// Media missing files, uncache it.
+		l.Debug("uncaching due to missing media")
 		return m.uncache(ctx, media)
 	},
 		media.Thumbnail.Path,
@@ -388,18 +408,26 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 }
 
 func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmodel.MediaAttachment) (bool, error) {
+	if !*media.Cached {
+		// Already uncached.
+		return false, nil
+	}
+
+	// Start a log entry for media.
+	l := log.WithContext(ctx).
+		WithField("media", media.ID)
+
 	// Check whether we have the required account for media.
 	account, missing, err := m.getRelatedAccount(ctx, media)
 	if err != nil {
 		return false, err
 	} else if missing {
-		// Account missing, skip it.
+		l.Debug("skipping due to missing account")
 		return false, nil
 	}
 
 	if account != nil && account.FetchedAt.After(after) {
-		// This is a recently loaded account,
-		// no need to uncache this media.
+		l.Debug("skipping due to recently fetched account")
 		return false, nil
 	}
 
@@ -408,17 +436,17 @@ func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmo
 	if err != nil {
 		return false, err
 	} else if missing {
-		// Status missing, skip it.
+		l.Debug("skipping due to missing status")
 		return false, nil
 	}
 
 	if status != nil && status.FetchedAt.After(after) {
-		// This is a recently loaded status,
-		// no need to uncache this media.
+		l.Debug("skipping due to recently fetched status")
 		return false, nil
 	}
 
 	// This media is too old, uncache it.
+	l.Debug("uncaching old remote media")
 	return true, m.uncache(ctx, media)
 }
 
@@ -484,6 +512,7 @@ func (m *Media) uncache(ctx context.Context, media *gtsmodel.MediaAttachment) er
 	}
 
 	// Update attachment to reflect that we no longer have it cached.
+	log.Debugf(ctx, "marking media attachment as uncached: %s", media.ID)
 	media.Cached = func() *bool { i := false; return &i }()
 	if err := m.state.DB.UpdateAttachment(ctx, media, "cached"); err != nil {
 		return gtserror.Newf("error updating media: %w", err)
@@ -508,6 +537,7 @@ func (m *Media) delete(ctx context.Context, media *gtsmodel.MediaAttachment) err
 	}
 
 	// Delete media attachment entirely from the database.
+	log.Debugf(ctx, "deleting media attachment: %s", media.ID)
 	if err := m.state.DB.DeleteAttachment(ctx, media.ID); err != nil {
 		return gtserror.Newf("error deleting media: %w", err)
 	}

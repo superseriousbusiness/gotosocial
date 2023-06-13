@@ -19,7 +19,6 @@ package prune
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -29,25 +28,31 @@ import (
 
 // Orphaned prunes orphaned media from storage.
 var Orphaned action.GTSAction = func(ctx context.Context) error {
+	// Setup pruning utilities.
 	prune, err := setupPrune(ctx)
 	if err != nil {
 		return err
 	}
 
+	defer func() {
+		// Ensure pruner gets shutdown on exit.
+		if err := prune.shutdown(ctx); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
+
 	if config.GetAdminMediaPruneDryRun() {
+		log.Info(ctx, "prune DRY RUN")
 		ctx = gtscontext.SetDryRun(ctx)
 	}
 
-	pruned, err := prune.cleaner.Media().PruneOrphaned(ctx)
-	if err != nil {
-		return fmt.Errorf("error pruning: %s", err)
+	// Perform the actual pruning with logging.
+	prune.cleaner.Media().LogPruneOrphaned(ctx)
+
+	// Perform a cleanup of storage (for removed local dirs).
+	if err := prune.storage.Storage.Clean(ctx); err != nil {
+		log.Error(ctx, "error cleaning storage: %v", err)
 	}
 
-	if config.GetAdminMediaPruneDryRun() /* dick heyyoooooo */ {
-		log.Infof(ctx, "DRY RUN: %d items are orphaned and eligible to be pruned", pruned)
-	} else {
-		log.Infof(ctx, "%d orphaned items were pruned", pruned)
-	}
-
-	return prune.shutdown(ctx)
+	return nil
 }

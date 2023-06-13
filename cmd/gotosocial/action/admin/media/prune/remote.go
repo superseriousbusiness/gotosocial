@@ -19,7 +19,6 @@ package prune
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
@@ -30,33 +29,34 @@ import (
 
 // Remote prunes old and/or unused remote media.
 var Remote action.GTSAction = func(ctx context.Context) error {
+	// Setup pruning utilities.
 	prune, err := setupPrune(ctx)
 	if err != nil {
 		return err
 	}
 
+	defer func() {
+		// Ensure pruner gets shutdown on exit.
+		if err := prune.shutdown(ctx); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
+
 	if config.GetAdminMediaPruneDryRun() {
+		log.Info(ctx, "prune DRY RUN")
 		ctx = gtscontext.SetDryRun(ctx)
 	}
 
-	pruned, err := prune.cleaner.Media().PruneUnused(ctx)
-	if err != nil {
-		return fmt.Errorf("error pruning: %w", err)
-	}
-
 	t := time.Now().Add(-24 * time.Hour * time.Duration(config.GetMediaRemoteCacheDays()))
-	uncached, err := prune.cleaner.Media().UncacheRemote(ctx, t)
-	if err != nil {
-		return fmt.Errorf("error pruning: %w", err)
+
+	// Perform the actual pruning with logging.
+	prune.cleaner.Media().LogPruneUnused(ctx)
+	prune.cleaner.Media().LogUncacheRemote(ctx, t)
+
+	// Perform a cleanup of storage (for removed local dirs).
+	if err := prune.storage.Storage.Clean(ctx); err != nil {
+		log.Error(ctx, "error cleaning storage: %v", err)
 	}
 
-	total := pruned + uncached
-
-	if config.GetAdminMediaPruneDryRun() /* dick heyyoooooo */ {
-		log.Infof(ctx, "DRY RUN: %d remote items are unused/stale and eligible to be pruned", total)
-	} else {
-		log.Infof(ctx, "%d unused/stale remote items were pruned", pruned)
-	}
-
-	return prune.shutdown(ctx)
+	return nil
 }

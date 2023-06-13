@@ -85,6 +85,7 @@ func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error)
 
 	for _, path := range files {
 		// Remove each provided storage path.
+		log.Debugf(ctx, "removing file: %s", path)
 		err := c.state.Storage.Delete(ctx, path)
 		if err != nil && !errors.Is(err, storage.ErrNotFound) {
 			errs.Appendf("error removing %s: %v", path, err)
