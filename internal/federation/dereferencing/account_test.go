@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -174,8 +174,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 		"thisaccountdoesnotexist",
 		config.GetHost(),
 	)
-	var errNotRetrievable *dereferencing.ErrNotRetrievable
-	suite.ErrorAs(err, &errNotRetrievable)
+	suite.True(gtserror.Unretrievable(err))
 	suite.EqualError(err, "item could not be retrieved: no entries")
 	suite.Nil(fetchedAccount)
 }
@@ -189,8 +188,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 		"thisaccountdoesnotexist",
 		"localhost:8080",
 	)
-	var errNotRetrievable *dereferencing.ErrNotRetrievable
-	suite.ErrorAs(err, &errNotRetrievable)
+	suite.True(gtserror.Unretrievable(err))
 	suite.EqualError(err, "item could not be retrieved: no entries")
 	suite.Nil(fetchedAccount)
 }
@@ -203,8 +201,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 		fetchingAccount.Username,
 		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
 	)
-	var errNotRetrievable *dereferencing.ErrNotRetrievable
-	suite.ErrorAs(err, &errNotRetrievable)
+	suite.True(gtserror.Unretrievable(err))
 	suite.EqualError(err, "item could not be retrieved: no entries")
 	suite.Nil(fetchedAccount)
 }

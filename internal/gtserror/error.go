@@ -33,10 +33,34 @@ const (
 	statusCodeKey
 	notFoundKey
 	errorTypeKey
+	unrtrvableKey
+	wrongTypeKey
 
 	// Types returnable from Type(...).
 	TypeSMTP ErrorType = "smtp" // smtp (mail)
 )
+
+// Unretrievable ...
+func Unretrievable(err error) bool {
+	_, ok := errors.Value(err, unrtrvableKey).(struct{})
+	return ok
+}
+
+// SetUnretrievable ...
+func SetUnretrievable(err error) error {
+	return errors.WithValue(err, unrtrvableKey, struct{}{})
+}
+
+// WrongType ...
+func WrongType(err error) bool {
+	_, ok := errors.Value(err, wrongTypeKey).(struct{})
+	return ok
+}
+
+// SetWrongType ...
+func SetWrongType(err error) error {
+	return errors.WithValue(err, unrtrvableKey, struct{}{})
+}
 
 // StatusCode checks error for a stored status code value. For example
 // an error from an outgoing HTTP request may be stored, or an API handler

@@ -138,7 +138,7 @@ func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, erro
 			}
 
 			// Existing emoji we're refreshing, so only need to update.
-			_, err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji, columns...)
+			err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji, columns...)
 			return err
 		}
 

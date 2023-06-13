@@ -38,20 +38,41 @@ const (
 
 type Cleaner struct {
 	state *state.State
+	emoji Emoji
 	media Media
 }
 
 func New(state *state.State) *Cleaner {
 	c := new(Cleaner)
 	c.state = state
+	c.emoji.Cleaner = c
 	c.media.Cleaner = c
 	scheduleJobs(c)
 	return c
 }
 
+// Emoji returns the emoji set of cleaner utilities.
+func (c *Cleaner) Emoji() *Emoji {
+	return &c.emoji
+}
+
 // Media returns the media set of cleaner utilities.
 func (c *Cleaner) Media() *Media {
 	return &c.media
+}
+
+func (c *Cleaner) checkFiles(ctx context.Context, onMissing func() error, files ...string) (bool, error) {
+	for _, file := range files {
+		// Check whether each file exists in storage.
+		have, err := c.state.Storage.Has(ctx, file)
+		if err != nil {
+			return false, gtserror.Newf("error checking storage for %s: %w", file, err)
+		} else if !have {
+			// Missing files, perform hook.
+			return true, onMissing()
+		}
+	}
+	return false, nil
 }
 
 func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error) {
@@ -105,6 +126,7 @@ func scheduleJobs(c *Cleaner) {
 	c.state.Workers.Scheduler.Schedule(sched.NewJob(func(start time.Time) {
 		log.Info(nil, "starting media clean")
 		c.Media().All(doneCtx, config.GetMediaRemoteCacheDays())
+		c.Emoji().All(doneCtx)
 		log.Infof(nil, "finished media clean after %s", time.Since(start))
 	}).EveryAt(midnight, day))
 }

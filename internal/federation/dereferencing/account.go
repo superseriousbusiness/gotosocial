@@ -116,7 +116,7 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 	if account == nil {
 		// Ensure that this is isn't a search for a local account.
 		if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
-			return nil, nil, NewErrNotRetrievable(err) // this will be db.ErrNoEntries
+			return nil, nil, gtserror.SetUnretrievable(err) // this will be db.ErrNoEntries
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
@@ -178,7 +178,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	if account == nil {
 		if domain == "" {
 			// failed local lookup, will be db.ErrNoEntries.
-			return nil, nil, NewErrNotRetrievable(err)
+			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
@@ -304,8 +304,10 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 		accDomain, accURI, err := d.fingerRemoteAccount(ctx, tsport, account.Username, account.Domain)
 		if err != nil {
 			if account.URI == "" {
-				// this is a new account (to us) with username@domain but failed webfinger, nothing more we can do.
-				return nil, nil, &ErrNotRetrievable{gtserror.Newf("error webfingering account: %w", err)}
+				// this is a new account (to us) with username@domain
+				// but failed webfinger, nothing more we can do.
+				err := gtserror.Newf("error webfingering account: %w", err)
+				return nil, nil, gtserror.SetUnretrievable(err)
 			}
 
 			// Simply log this error and move on, we already have an account URI.
@@ -355,7 +357,8 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	// Dereference latest version of the account.
 	b, err := tsport.Dereference(ctx, uri)
 	if err != nil {
-		return nil, nil, &ErrNotRetrievable{gtserror.Newf("error deferencing %s: %w", uri, err)}
+		err := gtserror.Newf("error deferencing %s: %w", uri, err)
+		return nil, nil, gtserror.SetUnretrievable(err)
 	}
 
 	// Attempt to resolve ActivityPub account from data.

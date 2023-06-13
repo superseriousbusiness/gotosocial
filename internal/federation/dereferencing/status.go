@@ -106,7 +106,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 	if status == nil {
 		// Ensure that this is isn't a search for a local status.
 		if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
-			return nil, nil, NewErrNotRetrievable(err) // this will be db.ErrNoEntries
+			return nil, nil, gtserror.SetUnretrievable(err) // this will be db.ErrNoEntries
 		}
 
 		// Create and pass-through a new bare-bones model for deref.
@@ -226,7 +226,8 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			return nil, nil, &ErrNotRetrievable{gtserror.Newf("error deferencing %s: %w", uri, err)}
+			err := gtserror.Newf("error deferencing %s: %w", uri, err)
+			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
 		// Attempt to resolve ActivityPub status from data.

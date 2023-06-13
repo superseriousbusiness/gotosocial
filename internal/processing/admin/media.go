@@ -55,7 +55,11 @@ func (p *Processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gt
 	}
 
 	// Start background task performing all media cleanup tasks.
-	go p.cleaner.Media().All(context.Background(), mediaRemoteCacheDays)
+	go func() {
+		ctx := context.Background()
+		p.cleaner.Media().All(ctx, mediaRemoteCacheDays)
+		p.cleaner.Emoji().All(ctx)
+	}()
 
 	return nil
 }

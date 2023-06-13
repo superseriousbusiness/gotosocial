@@ -279,13 +279,20 @@ stackLoop:
 
 			// Get the current page's "next" property
 			pageNext := current.page.GetActivityStreamsNext()
-			if pageNext == nil {
+			if pageNext == nil || !pageNext.IsIRI() {
 				continue stackLoop
 			}
 
-			// Get the "next" page property IRI
+			// Get the IRI of the "next" property.
 			pageNextIRI := pageNext.GetIRI()
-			if pageNextIRI == nil {
+
+			// Ensure this isn't a self-referencing page...
+			// We don't need to store / check against a map of IRIs
+			// as our getStatusByIRI() function above prevents iter'ing
+			// over statuses that have been dereferenced recently.
+			if id := current.page.GetJSONLDId(); id != nil &&
+				pageNextIRI.String() == id.Get().String() {
+				log.Warnf(ctx, "self referencing collection page: %s", pageNextIRI)
 				continue stackLoop
 			}
 

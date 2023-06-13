@@ -44,14 +44,15 @@ func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error 
 	})
 }
 
-func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) error {
 	emoji.UpdatedAt = time.Now()
 	if len(columns) > 0 {
 		// If we're updating by column, ensure "updated_at" is included.
 		columns = append(columns, "updated_at")
 	}
 
-	err := e.state.Caches.GTS.Emoji().Store(emoji, func() error {
+	// Update the emoji model in the database.
+	return e.state.Caches.GTS.Emoji().Store(emoji, func() error {
 		_, err := e.conn.
 			NewUpdate().
 			Model(emoji).
@@ -60,11 +61,6 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 			Exec(ctx)
 		return e.conn.ProcessError(err)
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return emoji, nil
 }
 
 func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
@@ -115,7 +111,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 	})
 }
 
-func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, error) {
 	emojiIDs := []string{}
 
 	subQuery := e.conn.
@@ -227,6 +223,29 @@ func (e *emojiDB) GetEmojis(ctx context.Context, domain string, includeDisabled 
 			opp := len(emojiIDs) - 1 - i
 			emojiIDs[i], emojiIDs[opp] = emojiIDs[opp], emojiIDs[i]
 		}
+	}
+
+	return e.GetEmojisByIDs(ctx, emojiIDs)
+}
+
+func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
+	emojiIDs := []string{}
+
+	q := e.conn.NewSelect().
+		Table("emojis").
+		Column("id").
+		Order("id DESC")
+
+	if maxID != "" {
+		q = q.Where("? < ?", bun.Ident("id"), maxID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx, &emojiIDs); err != nil {
+		return nil, e.conn.ProcessError(err)
 	}
 
 	return e.GetEmojisByIDs(ctx, emojiIDs)

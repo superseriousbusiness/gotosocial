@@ -52,7 +52,7 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	// page through emojis 20 at a time, looking for those with missing images
 	for {
 		// Fetch next block of emojis from database
-		emojis, err := m.state.DB.GetEmojis(ctx, domain, false, true, "", maxShortcodeDomain, "", 20)
+		emojis, err := m.state.DB.GetEmojisBy(ctx, domain, false, true, "", maxShortcodeDomain, "", 20)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				// an actual error has occurred

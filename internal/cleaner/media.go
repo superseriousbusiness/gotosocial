@@ -378,26 +378,13 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 
 	// So we know this a valid cached media entry.
 	// Check that we have the files on disk required....
-
-	// Check whether the thumbnail size file exists in storage.
-	haveThumb, err := m.state.Storage.Has(ctx, media.Thumbnail.Path)
-	if err != nil {
-		return false, gtserror.Newf("error checking storage for %s: %w", media.Thumbnail.Path, err)
-	} else if !haveThumb {
+	return m.checkFiles(ctx, func() error {
 		// Media missing files, uncache it.
-		return true, m.uncache(ctx, media)
-	}
-
-	// Check whether the original size file exists in storage.
-	haveOrig, err := m.state.Storage.Has(ctx, media.File.Path)
-	if err != nil {
-		return false, gtserror.Newf("error checking storage for %s: %w", media.File.Path, err)
-	} else if !haveOrig {
-		// Media missing files, uncache it.
-		return true, m.uncache(ctx, media)
-	}
-
-	return false, nil
+		return m.uncache(ctx, media)
+	},
+		media.Thumbnail.Path,
+		media.File.Path,
+	)
 }
 
 func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmodel.MediaAttachment) (bool, error) {
@@ -451,7 +438,7 @@ func (m *Media) getRelatedAccount(ctx context.Context, media *gtsmodel.MediaAtta
 	}
 
 	if account == nil {
-		// Account is missing.
+		log.Warnf(ctx, "account missing for %s", media.File.Path)
 		return nil, true, nil
 	}
 
@@ -474,7 +461,7 @@ func (m *Media) getRelatedStatus(ctx context.Context, media *gtsmodel.MediaAttac
 	}
 
 	if status == nil {
-		// Status is missing.
+		log.Warnf(ctx, "status missing for %s", media.File.Path)
 		return nil, true, nil
 	}
 

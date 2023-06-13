@@ -76,7 +76,7 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		fedDB:     federatingDB,
 		clock:     clock,
 		client:    client,
-		trspCache: cache.New[string, *transport](0, 100, 0),
+		trspCache: cache.New[string, *transport](0, 1, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
 		senders:   senders,
 	}
