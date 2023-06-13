@@ -73,19 +73,14 @@ func SignatureCheck(uriBlocked func(context.Context, *url.URL) (bool, db.Error))
 		// from the remote server. This will be something like:
 		// https://example.org/users/some_remote_user#main-key
 		pubKeyIDStr := verifier.KeyId()
-		pubKeyID, err := url.Parse(pubKeyIDStr)
-		if err != nil {
-			log.Debugf(ctx, "pubkey id %s could not be parsed as a url: %s", pubKeyIDStr, err)
-			c.AbortWithStatus(http.StatusUnauthorized)
-			return
-		}
 
 		// Key can sometimes be nil, according to url parse
 		// func: 'Trying to parse a hostname and path without
 		// a scheme is invalid but may not necessarily return
-		// an error, due to parsing ambiguities'. Check this.
-		if pubKeyID == nil {
-			log.Debugf(ctx, "pubkey id %s was nil after parsing as a url", pubKeyIDStr)
+		// an error, due to parsing ambiguities'. Catch this.
+		pubKeyID, err := url.Parse(pubKeyIDStr)
+		if err != nil || pubKeyID == nil {
+			log.Warnf(ctx, "pubkey id %s could not be parsed as a url", pubKeyIDStr)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
