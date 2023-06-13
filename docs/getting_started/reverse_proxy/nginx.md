@@ -1,28 +1,10 @@
 # NGINX
 
-## Requirements
+In order to use NGINX as a reverse proxy for GoToSocial you'll need to have it installed on your server. If you intend for the NGINX instance to also handle TLS, you'll need to [provision TLS certificates](../../advanced/certificates.md) too.
 
-For this you will need [Certbot](https://certbot.eff.org/), the Certbot NGINX plugin and of course [NGINX](https://www.nginx.com/) itself.
+NGINX is [packaged for many distributions](https://repology.org/project/nginx/versions). It's very likely you can install it with your distribution's package manager. You can also run NGINX using a container runtime with the [official NGINX image](https://hub.docker.com/_/nginx) that's published to the Docker Hub.
 
-These are popular packages so your distro will probably have them.
-
-### Ubuntu
-
-```bash
-sudo apt install certbot python3-certbot-nginx nginx
-```
-
-### Arch
-
-```bash
-sudo pacman -S certbot certbot-nginx nginx
-```
-
-### OpenSuse
-
-```bash
-sudo zypper install nginx python3-certbot python3-certbot-nginx
-```
+In this guide we'll also show how to use certbot to provision the TLS certificates. It too is [packaged in many distributions](https://repology.org/project/certbot/versions) but many distributions tend to ship fairly old versions of certbot. If you run into trouble it may be worth considering using the [container image](https://hub.docker.com/r/certbot/certbot) instead.
 
 ## Configure GoToSocial
 
@@ -34,11 +16,17 @@ sudo systemctl stop gotosocial
 
 Or if you don't have a systemd service just stop it manually.
 
-In your GoToSocial config turn off letsencrypt by setting `letsencrypt-enabled` to `false`.
+Tweak your GoToSocial configuration like so:
 
-If you we running GoToSocial on port 443, change the `port` value back to the default `8080`.
+```yaml
+letsencrypt-enabled: false
+port: 8080
+bind-address: 127.0.0.1
+```
 
-If the reverse proxy will be running on the same machine, set the `bind-address` to `"localhost"` so that the GoToSocial server is only accessible via loopback. Otherwise it may be possible to bypass your proxy by connecting to GoToSocial directly, which might be undesirable.
+The first setting disables the built-in provisioning of TLS certificates. Since NGINX will now be handling that traffic GoToSocial no longer needs to be bound to port 443, or any privileged port.
+
+By setting the `bind-address` to `127.0.0.1` GoToSocial will no longer be accessible directly from the outside. If your NGINX and GoToSocial instance aren't running on the same server you'll need to bind to an IP address that lets your reverse proxy reach your GoToSocial instance. By binding to a private IP address you can be sure GoToSocial can't be accessed except through NGINX.
 
 ## Set up NGINX
 
@@ -119,7 +107,10 @@ Everything working? Great! Then restart nginx to load your new config file.
 sudo systemctl restart nginx
 ```
 
-## Setting up SSL with certbot
+## Set up TLS
+
+!!! note
+    We have additional documentation on how to [provision TLS certificates](../../advanced/certificates.md) that also provides links to additional content and tutorials for different distributions that may be good to review.
 
 You should now be able to run certbot and it will guide you through the steps required to enable https for your instance.
 

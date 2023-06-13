@@ -72,4 +72,4 @@ GoToSocial needs ports `80` and `443` open.
 If you can't leave `443` and `80` open on the machine, don't worry! You can configure these ports in GoToSocial, but you'll have to also configure port forwarding to properly forward traffic on `443` and `80` to whatever ports you choose.
 
 !!! tip
-    You should configure a firewall on your machine, as well as some protection against brute-force SSH login attempts and the like. A simple frontend to help you configure your firewall is [UFW](https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-ubuntu-18-04). You should also consider a tool like [Fail2Ban](https://linuxize.com/post/install-configure-fail2ban-on-ubuntu-20-04/) in order to automatically block malicious users.
+    You should configure a firewall on your machine, as well as some protection against brute-force SSH login attempts and the like. Take a look at our [firewall documentation](../advanced/security/firewall.md) for pointers on what to configure and tools that can help you out.

@@ -91,9 +91,11 @@ nav:
       - "advanced/caching/index.md"
       - "advanced/caching/api.md"
       - "advanced/caching/assets-media.md"
+    - "advanced/certificates.md"
     - "Enhanced security":
       - "advanced/security/index.md"
       - "advanced/security/sandboxing.md"
+      - "advanced/security/firewall.md"
     - "advanced/tracing.md"
 
   - "Admin":
