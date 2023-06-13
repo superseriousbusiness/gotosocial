@@ -8,3 +8,4 @@ These guides cover improving the security posture of your GoToSocial deployment.
 ## Guides
 
 * [Sandboxing the GoToSocial binary](sandboxing.md)
+* [Firewall configuration](firewall.md)

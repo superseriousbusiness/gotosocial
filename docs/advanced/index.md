@@ -8,7 +8,9 @@ We consider these topics advanced because applying them incorrectly does have th
 
 * [Split-domain deployment (API vs. account domain)](host-account-domain.md)
 * [Using an HTTP proxy for client/outgoing requests](outgoing-proxy.md)
+* [Provisioning TLS certificates](certificates.md)
 * [Caching API responses](caching/api.md)
 * [Serving and caching assets and media from local storage](caching/assets-media.md)
 * [Process sandboxing](security/sandboxing.md)
+* [Firewall configuration](security/firewall.md)
 * [Tracing](tracing.md)
