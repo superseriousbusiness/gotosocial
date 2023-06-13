@@ -24,7 +24,7 @@ port: 8080
 bind-address: 127.0.0.1
 ```
 
-The first setting disables the built-in provisioning of TLS certificates. Since NGINX will now be handling that traffic GoToSocial no longer needs to be bound to port 443, or any priviledged port.
+The first setting disables the built-in provisioning of TLS certificates. Since NGINX will now be handling that traffic GoToSocial no longer needs to be bound to port 443, or any privileged port.
 
 By setting the `bind-address` to `127.0.0.1` GoToSocial will no longer be accessible directly from the outside. If your NGINX and GoToSocial instance aren't running on the same server you'll need to bind to an IP address that lets your reverse proxy reach your GoToSocial instance. By binding to a private IP address you can be sure GoToSocial can't be accessed except through NGINX.
 

@@ -1,6 +1,6 @@
 # Provisioning TLS certificates
 
-As explained in the [deployment considersations](../getting_started/index.md), federation requires the use of TLS as most instances refuse to federate over unencrypted transports.
+As explained in the [deployment considerations](../getting_started/index.md), federation requires the use of TLS as most instances refuse to federate over unencrypted transports.
 
 GoToSocial comes with built-in support for provisioning and renewing its own TLS certificates through Lets Encrypt. This guide looks at how you can provision your own certificates independently from GoToSocial. This can be useful if you want full control over how the certificates are provisioned, or because you're using a [reverse proxy](../getting_started/reverse_proxy/index.md) which is doing TLS termination.
 
