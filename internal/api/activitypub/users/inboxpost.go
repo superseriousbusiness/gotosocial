@@ -23,7 +23,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -31,7 +30,7 @@ import (
 // InboxPOSTHandler deals with incoming POST requests to an actor's inbox.
 // Eg., POST to https://example.org/users/whatever/inbox.
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
-	_, err := m.processor.Fedi().InboxPost(gtscontext.ExtractSignatureContext(c), c.Writer, c.Request)
+	_, err := m.processor.Fedi().InboxPost(c.Request.Context(), c.Writer, c.Request)
 	if err != nil {
 		errWithCode := new(gtserror.WithCode)
 

@@ -21,7 +21,6 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/gin-gonic/gin"
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -155,35 +154,6 @@ func HTTPSignaturePubKeyID(ctx context.Context) *url.URL {
 // the wrapped context. See HTTPSignaturePubKeyID() for further information on the value.
 func SetHTTPSignaturePubKeyID(ctx context.Context, pubKeyID *url.URL) context.Context {
 	return context.WithValue(ctx, httpSignPubKeyIDKey, pubKeyID)
-}
-
-// ExtractSignatureContext extracts an http signature verifier,
-// http signature, and corresponding public key ID from a gin
-// context, and sets those same values onto a go context.
-func ExtractSignatureContext(c *gin.Context) context.Context {
-	ctx := c.Request.Context()
-
-	if verifier, signed := c.Get(httpSigVerifier); signed {
-		ctx = SetHTTPSignatureVerifier(ctx, verifier.(httpsig.Verifier)) //nolint:forcetypeassert
-	}
-
-	if signature := c.GetString(httpSig); signature != "" {
-		ctx = SetHTTPSignature(ctx, signature)
-	}
-
-	if pubKeyID, signed := c.Get(httpSigPubKeyID); signed {
-		ctx = SetHTTPSignaturePubKeyID(ctx, pubKeyID.(*url.URL)) //nolint:forcetypeassert
-	}
-
-	return ctx
-}
-
-// SetSignatureContext sets the provided signature verifier,
-// signature, and public key ID on the given gin context.
-func SetSignatureContext(c *gin.Context, verifier httpsig.Verifier, signature string, pubKeyID *url.URL) {
-	c.Set(httpSigVerifier, verifier)
-	c.Set(httpSig, signature)
-	c.Set(httpSigPubKeyID, pubKeyID)
 }
 
 // IsFastFail returns whether the "fastfail" context key has been set. This

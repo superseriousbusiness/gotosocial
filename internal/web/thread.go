@@ -29,7 +29,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -121,7 +120,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 }
 
 func (m *Module) returnAPStatus(c *gin.Context, username string, statusID string, accept string) {
-	status, errWithCode := m.processor.Fedi().StatusGet(gtscontext.ExtractSignatureContext(c), username, statusID)
+	status, errWithCode := m.processor.Fedi().StatusGet(c.Request.Context(), username, statusID)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

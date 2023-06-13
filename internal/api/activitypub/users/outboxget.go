@@ -27,7 +27,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -130,7 +129,7 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 		maxID = maxIDString
 	}
 
-	resp, errWithCode := m.processor.Fedi().OutboxGet(gtscontext.ExtractSignatureContext(c), requestedUsername, page, maxID, minID)
+	resp, errWithCode := m.processor.Fedi().OutboxGet(c.Request.Context(), requestedUsername, page, maxID, minID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

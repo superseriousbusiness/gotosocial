@@ -29,7 +29,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -146,7 +145,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 }
 
 func (m *Module) returnAPProfile(c *gin.Context, username string, accept string) {
-	user, errWithCode := m.processor.Fedi().UserGet(gtscontext.ExtractSignatureContext(c), username, c.Request.URL)
+	user, errWithCode := m.processor.Fedi().UserGet(c.Request.Context(), username, c.Request.URL)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

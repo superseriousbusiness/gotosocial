@@ -25,7 +25,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -59,7 +58,7 @@ func (m *Module) StatusGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().StatusGet(gtscontext.ExtractSignatureContext(c), requestedUsername, requestedStatusID)
+	resp, errWithCode := m.processor.Fedi().StatusGet(c.Request.Context(), requestedUsername, requestedStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

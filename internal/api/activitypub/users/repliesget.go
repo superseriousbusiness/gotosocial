@@ -27,7 +27,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -150,7 +149,7 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		minID = minIDString
 	}
 
-	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(gtscontext.ExtractSignatureContext(c), requestedUsername, requestedStatusID, page, onlyOtherAccounts, c.Query("only_other_accounts") != "", minID)
+	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(c.Request.Context(), requestedUsername, requestedStatusID, page, onlyOtherAccounts, c.Query("only_other_accounts") != "", minID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
