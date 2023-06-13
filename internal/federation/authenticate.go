@@ -77,24 +77,24 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	// this is an unsigned request.
 	verifier := gtscontext.HTTPSignatureVerifier(ctx)
 	if verifier == nil {
-		errWithCode := gtserror.NewErrorUnauthorized(errUnsigned, errUnsigned.Error()+" (verifier)")
-		log.Debug(ctx, errWithCode)
+		err := gtserror.Newf("%w", errUnsigned)
+		errWithCode := gtserror.NewErrorUnauthorized(err, errUnsigned.Error(), "(verifier)")
 		return nil, errWithCode
 	}
 
 	// We should have the signature itself set too.
 	signature := gtscontext.HTTPSignature(ctx)
 	if signature == "" {
-		errWithCode := gtserror.NewErrorUnauthorized(errUnsigned, errUnsigned.Error()+" (signature)")
-		log.Debug(ctx, errWithCode)
+		err := gtserror.Newf("%w", errUnsigned)
+		errWithCode := gtserror.NewErrorUnauthorized(err, errUnsigned.Error(), "(signature)")
 		return nil, errWithCode
 	}
 
 	// And finally the public key ID URI.
 	pubKeyID := gtscontext.HTTPSignaturePubKeyID(ctx)
 	if pubKeyID == nil {
-		errWithCode := gtserror.NewErrorUnauthorized(errUnsigned, errUnsigned.Error()+" (pubKeyID)")
-		log.Debug(ctx, errWithCode.Safe())
+		err := gtserror.Newf("%w", errUnsigned)
+		errWithCode := gtserror.NewErrorUnauthorized(err, errUnsigned.Error(), "(pubKeyID)")
 		return nil, errWithCode
 	}
 
