@@ -231,8 +231,9 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// is updated, and/or federating callbacks are handled
 		// properly.
 		if !errors.Is(err, db.ErrAlreadyExists) {
-			err = fmt.Errorf("PostInboxScheme: error calling sideEffectActor.InboxForwarding: %w", err)
-			return false, gtserror.NewErrorInternalError(err)
+			// Failed inbox forwarding is not a show-stopper,
+			// and doesn't even necessarily denote a real error.
+			l.Warnf("error calling sideEffectActor.InboxForwarding: %q", err)
 		}
 	}
 
