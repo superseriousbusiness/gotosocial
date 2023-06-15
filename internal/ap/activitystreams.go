@@ -57,8 +57,10 @@ const (
 	ObjectArticle           = "Article"           // ActivityStreamsArticle https://www.w3.org/TR/activitystreams-vocabulary/#dfn-article
 	ObjectAudio             = "Audio"             // ActivityStreamsAudio https://www.w3.org/TR/activitystreams-vocabulary/#dfn-audio
 	ObjectDocument          = "Document"          // ActivityStreamsDocument https://www.w3.org/TR/activitystreams-vocabulary/#dfn-document
+	ObjectEmoji             = "Emoji"             // Custom emoji type.
 	ObjectEvent             = "Event"             // ActivityStreamsEvent https://www.w3.org/TR/activitystreams-vocabulary/#dfn-event
 	ObjectImage             = "Image"             // ActivityStreamsImage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-image
+	ObjectMention           = "Mention"           // ActivityStreamsMention https://www.w3.org/TR/activitystreams-vocabulary/#dfn-mention
 	ObjectNote              = "Note"              // ActivityStreamsNote https://www.w3.org/TR/activitystreams-vocabulary/#dfn-note
 	ObjectPage              = "Page"              // ActivityStreamsPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-page
 	ObjectPlace             = "Place"             // ActivityStreamsPlace https://www.w3.org/TR/activitystreams-vocabulary/#dfn-place

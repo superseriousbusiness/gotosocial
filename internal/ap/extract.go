@@ -49,7 +49,7 @@ func ExtractPreferredUsername(i WithPreferredUsername) (string, error) {
 	return u.GetXMLSchemaString(), nil
 }
 
-// ExtractName returns a string representation of an interface's name property,
+// ExtractName returns the first string representation of an interface's name property,
 // or an empty string if this is not found.
 func ExtractName(i WithName) string {
 	nameProp := i.GetActivityStreamsName()
@@ -138,12 +138,14 @@ func ExtractCCs(i WithCC) ([]*url.URL, error) {
 	return cc, nil
 }
 
-// ExtractAttributedTo returns the URL of the actor that the withAttributedTo is attributed to.
+// ExtractAttributedTo returns the URL of the actor
+// that the withAttributedTo is attributed to.
 func ExtractAttributedTo(i WithAttributedTo) (*url.URL, error) {
 	attributedToProp := i.GetActivityStreamsAttributedTo()
 	if attributedToProp == nil {
 		return nil, errors.New("attributedToProp was nil")
 	}
+
 	for iter := attributedToProp.Begin(); iter != attributedToProp.End(); iter = iter.Next() {
 		if iter.IsIRI() {
 			if iter.GetIRI() != nil {
@@ -151,6 +153,7 @@ func ExtractAttributedTo(i WithAttributedTo) (*url.URL, error) {
 			}
 		}
 	}
+
 	return nil, errors.New("couldn't find iri for attributed to")
 }
 
@@ -510,7 +513,7 @@ func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 	return tags, nil
 }
 
-// ExtractHashtag returns a gtsmodel tag from a hashtaggable.
+// ExtractHashtag returns a gtsmodel.Tag from a hashtaggable.
 func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	tag := &gtsmodel.Tag{}
 
@@ -530,21 +533,25 @@ func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	return tag, nil
 }
 
-// ExtractEmojis returns a slice of emojis on the interface.
+// ExtractEmojis extracts a slice of gtsmodel.Emojis
+// from a WithTag. If an entry in the WithTag is not an emoji,
+// it will be quietly ignored.
 func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
-	emojis := []*gtsmodel.Emoji{}
-	emojiMap := make(map[string]*gtsmodel.Emoji)
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
-		return emojis, nil
+		return nil, nil
 	}
+
+	var (
+		l      = tagsProp.Len()
+		emojis = make([]*gtsmodel.Emoji, 0, l)
+		keys   = make(map[string]any, l) // Use map to dedupe items.
+	)
+
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
 		t := iter.GetType()
-		if t == nil {
-			continue
-		}
-
-		if t.GetTypeName() != "Emoji" {
+		if t == nil || t.GetTypeName() != ObjectEmoji {
+			// Not an emoji we can work with.
 			continue
 		}
 
@@ -555,76 +562,87 @@ func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 
 		emoji, err := ExtractEmoji(emojiable)
 		if err != nil {
-			continue
+			return nil, err
 		}
 
-		emojiMap[emoji.URI] = emoji
+		// Only append this emoji if we haven't
+		// seen it already, to avoid duplicates
+		// in the slice.
+		if _, set := keys[emoji.URI]; !set {
+			keys[emoji.URI] = nil // Value doesn't matter.
+			emojis = append(emojis, emoji)
+		}
 	}
-	for _, emoji := range emojiMap {
-		emojis = append(emojis, emoji)
-	}
+
 	return emojis, nil
 }
 
-// ExtractEmoji ...
+// ExtractEmoji extracts a minimal gtsmodel.Emoji from an Emojiable.
 func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
-	emoji := &gtsmodel.Emoji{}
-
+	// Use AP ID as emoji URI.
 	idProp := i.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id for emoji")
 	}
 	uri := idProp.GetIRI()
-	emoji.URI = uri.String()
-	emoji.Domain = uri.Host
 
+	// Extract emoji last updated time (optional).
+	var updatedAt time.Time
+	updatedProp := i.GetActivityStreamsUpdated()
+	if updatedProp != nil && updatedProp.IsXMLSchemaDateTime() {
+		updatedAt = updatedProp.Get()
+	}
+
+	// Extract emoji name aka shortcode.
 	name := ExtractName(i)
 	if name == "" {
 		return nil, errors.New("name prop empty")
 	}
-	emoji.Shortcode = strings.Trim(name, ":")
+	shortcode := strings.Trim(name, ":")
 
-	if i.GetActivityStreamsIcon() == nil {
-		return nil, errors.New("no icon for emoji")
-	}
-	imageURL, err := ExtractIconURL(i)
+	// Extract emoji image URL from Icon property.
+	imageRemoteURL, err := ExtractIconURL(i)
 	if err != nil {
 		return nil, errors.New("no url for emoji image")
 	}
-	emoji.ImageRemoteURL = imageURL.String()
+	imageRemoteURLStr := imageRemoteURL.String()
 
-	// assume false for both to begin
-	emoji.Disabled = new(bool)
-	emoji.VisibleInPicker = new(bool)
-
-	updatedProp := i.GetActivityStreamsUpdated()
-	if updatedProp != nil && updatedProp.IsXMLSchemaDateTime() {
-		emoji.UpdatedAt = updatedProp.Get()
-	}
-
-	return emoji, nil
+	return &gtsmodel.Emoji{
+		UpdatedAt:       updatedAt,
+		Shortcode:       shortcode,
+		Domain:          uri.Host,
+		ImageRemoteURL:  imageRemoteURLStr,
+		URI:             uri.String(),
+		Disabled:        new(bool), // Assume false by default.
+		VisibleInPicker: new(bool), // Assume false by default.
+	}, nil
 }
 
-// ExtractMentions extracts a slice of gtsmodel Mentions from a WithTag interface.
+// ExtractMentions extracts a slice of gtsmodel.Mentions
+// from a WithTag. If an entry in the WithTag is not a mention,
+// it will be quietly ignored.
 func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
-	mentions := []*gtsmodel.Mention{}
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
-		return mentions, nil
+		return nil, nil
 	}
+
+	var (
+		l        = tagsProp.Len()
+		mentions = make([]*gtsmodel.Mention, 0, l)
+		keys     = make(map[string]any, l) // Use map to dedupe items.
+	)
+
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
 		t := iter.GetType()
-		if t == nil {
-			continue
-		}
-
-		if t.GetTypeName() != "Mention" {
+		if t == nil || t.GetTypeName() != ObjectMention {
+			// Not a mention we can work with.
 			continue
 		}
 
 		mentionable, ok := t.(Mentionable)
 		if !ok {
-			return nil, errors.New("mention was not convertable to ap.Mentionable")
+			continue
 		}
 
 		mention, err := ExtractMention(mentionable)
@@ -632,39 +650,48 @@ func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 			return nil, err
 		}
 
-		mentions = append(mentions, mention)
+		// Only append this mention if we haven't
+		// seen it already, to avoid duplicates
+		// in the slice.
+		if _, set := keys[mention.TargetAccountURI]; !set {
+			keys[mention.TargetAccountURI] = nil // Value doesn't matter.
+			mentions = append(mentions, mention)
+		}
 	}
+
 	return mentions, nil
 }
 
-// ExtractMention extracts a gts model mention from a Mentionable.
+// ExtractMention extracts a minimal gtsmodel.Mention from a Mentionable.
 func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
-	mention := &gtsmodel.Mention{}
-
-	mentionString := ExtractName(i)
-	if mentionString == "" {
+	nameString := ExtractName(i)
+	if nameString == "" {
 		return nil, errors.New("name prop empty")
 	}
 
-	// just make sure the mention string is valid so we can handle it properly later on...
-	if _, _, err := util.ExtractNamestringParts(mentionString); err != nil {
+	// Ensure namestring is valid so we
+	// can handle it properly later on.
+	if _, _, err := util.ExtractNamestringParts(nameString); err != nil {
 		return nil, err
 	}
-	mention.NameString = mentionString
 
-	// the href prop should be the AP URI of a user we know, eg https://example.org/users/whatever_user
+	// The href prop should be the AP URI
+	// of the target account.
 	hrefProp := i.GetActivityStreamsHref()
 	if hrefProp == nil || !hrefProp.IsIRI() {
 		return nil, errors.New("no href prop")
 	}
-	mention.TargetAccountURI = hrefProp.GetIRI().String()
-	return mention, nil
+
+	return &gtsmodel.Mention{
+		NameString:       nameString,
+		TargetAccountURI: hrefProp.GetIRI().String(),
+	}, nil
 }
 
 // ExtractActorURI extracts the first Actor URI
 // it can find from a WithActor interface.
-func ExtractActorURI(i WithActor) (*url.URL, error) {
-	actorProp := i.GetActivityStreamsActor()
+func ExtractActorURI(withActor WithActor) (*url.URL, error) {
+	actorProp := withActor.GetActivityStreamsActor()
 	if actorProp == nil {
 		return nil, errors.New("actor property was nil")
 	}
@@ -682,8 +709,8 @@ func ExtractActorURI(i WithActor) (*url.URL, error) {
 
 // ExtractObjectURI extracts the first Object URI
 // it can find from a WithObject interface.
-func ExtractObjectURI(i WithObject) (*url.URL, error) {
-	objectProp := i.GetActivityStreamsObject()
+func ExtractObjectURI(withObject WithObject) (*url.URL, error) {
+	objectProp := withObject.GetActivityStreamsObject()
 	if objectProp == nil {
 		return nil, errors.New("object property was nil")
 	}
@@ -693,96 +720,113 @@ func ExtractObjectURI(i WithObject) (*url.URL, error) {
 		if err == nil {
 			// Found one we can use.
 			return id, nil
+		}	// Use AP ID as emoji URI.
+		idProp := i.GetJSONLDId()
+		if idProp == nil || !idProp.IsIRI() {
+			return nil, errors.New("no id for emoji")
 		}
+		uri := idProp.GetIRI()
 	}
 
 	return nil, errors.New("no iri found for object prop")
 }
 
-// ExtractObjects extracts a slice of URL objects from a WithObject interface.
-func ExtractObjects(i WithObject) ([]*url.URL, error) {
-	objectProp := i.GetActivityStreamsObject()
+// ExtractObjectURIs extracts the URLs of each Object
+// it can find from a WithObject interface.
+func ExtractObjectURIs(withObject WithObject) ([]*url.URL, error) {
+	objectProp := withObject.GetActivityStreamsObject()
 	if objectProp == nil {
 		return nil, errors.New("object property was nil")
 	}
 
 	urls := make([]*url.URL, 0, objectProp.Len())
 	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
-		if iter.IsIRI() && iter.GetIRI() != nil {
-			urls = append(urls, iter.GetIRI())
+		id, err := pub.ToId(iter)
+		if err == nil {
+			// Found one we can use.
+			urls = append(urls, id)
 		}
 	}
 
 	return urls, nil
 }
 
-// ExtractVisibility extracts the gtsmodel.Visibility of a given addressable with a To and CC property.
+// ExtractVisibility extracts the gtsmodel.Visibility
+// of a given addressable with a To and CC property.
 //
-// ActorFollowersURI is needed to check whether the visibility is FollowersOnly or not. The passed-in value
-// should just be the string value representation of the followers URI of the actor who created the activity,
-// eg https://example.org/users/whoever/followers.
+// ActorFollowersURI is needed to check whether the
+// visibility is FollowersOnly or not. The passed-in
+// value should just be the string value representation
+// of the followers URI of the actor who created the activity,
+// eg., `https://example.org/users/whoever/followers`.
 func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmodel.Visibility, error) {
 	to, err := ExtractTos(addressable)
 	if err != nil {
-		return "", fmt.Errorf("deriveVisibility: error extracting TO values: %s", err)
+		return "", gtserror.Newf("error extracting TO values: %w", err)
 	}
 
 	cc, err := ExtractCCs(addressable)
 	if err != nil {
-		return "", fmt.Errorf("deriveVisibility: error extracting CC values: %s", err)
+		return "", gtserror.Newf("error extracting CC values: %s", err)
 	}
 
 	if len(to) == 0 && len(cc) == 0 {
-		return "", errors.New("deriveVisibility: message wasn't TO or CC anyone")
+		return "", gtserror.Newf("message wasn't TO or CC anyone")
 	}
 
-	// for visibility derivation, we start by assuming most restrictive, and work our way to least restrictive
+	// Assume most restrictive visibility,
+	// and work our way up from there.
 	visibility := gtsmodel.VisibilityDirect
 
-	// if it's got followers in TO and it's not also CC'ed to public, it's followers only
 	if isFollowers(to, actorFollowersURI) {
+		// Followers in TO: it's at least followers only.
 		visibility = gtsmodel.VisibilityFollowersOnly
 	}
 
-	// if it's CC'ed to public, it's unlocked
-	// mentioned SPECIFIC ACCOUNTS also get added to CC'es if it's not a direct message
 	if isPublic(cc) {
+		// CC'd to public: it's at least unlocked.
 		visibility = gtsmodel.VisibilityUnlocked
 	}
 
-	// if it's To public, it's just straight up public
 	if isPublic(to) {
+		// TO'd to public: it's a public post.
 		visibility = gtsmodel.VisibilityPublic
 	}
 
 	return visibility, nil
 }
 
-// isPublic checks if at least one entry in the given uris slice equals
-// the activitystreams public uri.
+// isPublic checks if at least one entry in the given
+// uris slice equals the activitystreams public uri.
 func isPublic(uris []*url.URL) bool {
-	for _, entry := range uris {
-		if strings.EqualFold(entry.String(), pub.PublicActivityPubIRI) {
+	for _, uri := range uris {
+		if pub.IsPublic(uri.String()) {
 			return true
 		}
 	}
+
 	return false
 }
 
-// isFollowers checks if at least one entry in the given uris slice equals
-// the given followersURI.
+// isFollowers checks if at least one entry in the given
+// uris slice equals the given followersURI.
 func isFollowers(uris []*url.URL, followersURI string) bool {
-	for _, entry := range uris {
-		if strings.EqualFold(entry.String(), followersURI) {
+	for _, uri := range uris {
+		if strings.EqualFold(uri.String(), followersURI) {
 			return true
 		}
 	}
+
 	return false
 }
 
-// ExtractSensitive extracts whether or not an item is 'sensitive'.
-// If no sensitive property is set on the item at all, or if this property
-// isn't a boolean, then false will be returned by default.
+// ExtractSensitive extracts whether or not an item should
+// be marked as sensitive according to its ActivityStreams
+// sensitive property.
+//
+// If no sensitive property is set on the item at all, or
+// if this property isn't a boolean, then false will be
+// returned by default.
 func ExtractSensitive(withSensitive WithSensitive) bool {
 	sensitiveProp := withSensitive.GetActivityStreamsSensitive()
 	if sensitiveProp == nil {
@@ -798,8 +842,8 @@ func ExtractSensitive(withSensitive WithSensitive) bool {
 	return false
 }
 
-// ExtractSharedInbox extracts the sharedInbox URI properly from an Actor.
-// Returns nil if this property is not set.
+// ExtractSharedInbox extracts the sharedInbox URI property
+// from an Actor. Returns nil if this property is not set.
 func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 	endpointsProp := withEndpoints.GetActivityStreamsEndpoints()
 	if endpointsProp == nil {
@@ -807,22 +851,21 @@ func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 	}
 
 	for iter := endpointsProp.Begin(); iter != endpointsProp.End(); iter = iter.Next() {
-		if iter.IsActivityStreamsEndpoints() {
-			endpoints := iter.Get()
-			if endpoints == nil {
-				return nil
-			}
-			sharedInboxProp := endpoints.GetActivityStreamsSharedInbox()
-			if sharedInboxProp == nil {
-				return nil
-			}
-
-			if !sharedInboxProp.IsIRI() {
-				return nil
-			}
-
-			return sharedInboxProp.GetIRI()
+		if !iter.IsActivityStreamsEndpoints() {
+			continue
 		}
+
+		endpoints := iter.Get()
+		if endpoints == nil {
+			continue
+		}
+
+		sharedInboxProp := endpoints.GetActivityStreamsSharedInbox()
+		if sharedInboxProp == nil || !sharedInboxProp.IsIRI() {
+			continue
+		}
+
+		return sharedInboxProp.GetIRI()
 	}
 
 	return nil

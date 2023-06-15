@@ -620,19 +620,20 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	status.AccountURI = account.URI
 	status.Account = account
 
-	// Below IDs will all be included in the
-	// boosted status, so set them empty here.
-	status.AttachmentIDs = make([]string, 0)
-	status.TagIDs = make([]string, 0)
-	status.MentionIDs = make([]string, 0)
-	status.EmojiIDs = make([]string, 0)
-
+	// Calculate intended visibility of the boost.
 	visibility, err := ap.ExtractVisibility(announceable, account.FollowersURI)
 	if err != nil {
 		err = gtserror.Newf("error extracting visibility: %w", err)
 		return nil, isNew, err
 	}
 	status.Visibility = visibility
+
+	// Below IDs will all be included in the
+	// boosted status, so set them empty here.
+	status.AttachmentIDs = make([]string, 0)
+	status.TagIDs = make([]string, 0)
+	status.MentionIDs = make([]string, 0)
+	status.EmojiIDs = make([]string, 0)
 
 	// Remaining fields on the boost status will be taken
 	// from the boosted status; it's not our job to do all
@@ -678,7 +679,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 	// maybe some statuses.
 	//
 	// Throw away anything that's not relevant to us.
-	objects, err := ap.ExtractObjects(flaggable)
+	objects, err := ap.ExtractObjectURIs(flaggable)
 	if err != nil {
 		return nil, fmt.Errorf("ASFlagToReport: error extracting objects: %w", err)
 	}
