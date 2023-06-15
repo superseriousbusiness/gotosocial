@@ -1147,6 +1147,13 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: MaxFeaturedTags
+            max_profile_fields:
+                description: |-
+                    The maximum number of profile fields allowed for each account.
+                    Currently not configurable, so this is hardcoded to 6. (https://github.com/superseriousbusiness/gotosocial/issues/1876)
+                format: int64
+                type: integer
+                x-go-name: MaxProfileFields
         title: InstanceConfigurationAccounts models instance account config parameters.
         type: object
         x-go-name: InstanceConfigurationAccounts
