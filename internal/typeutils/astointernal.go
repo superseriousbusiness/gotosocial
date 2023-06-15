@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -386,7 +387,7 @@ func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := ap.ExtractActor(followable)
+	origin, err := ap.ExtractActorURI(followable)
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
@@ -395,7 +396,7 @@ func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := ap.ExtractObject(followable)
+	target, err := ap.ExtractObjectURI(followable)
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
@@ -420,7 +421,7 @@ func (c *converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := ap.ExtractActor(followable)
+	origin, err := ap.ExtractActorURI(followable)
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
@@ -429,7 +430,7 @@ func (c *converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := ap.ExtractObject(followable)
+	target, err := ap.ExtractObjectURI(followable)
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
@@ -454,7 +455,7 @@ func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := ap.ExtractActor(likeable)
+	origin, err := ap.ExtractActorURI(likeable)
 	if err != nil {
 		return nil, errors.New("error extracting actor property from like")
 	}
@@ -463,7 +464,7 @@ func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := ap.ExtractObject(likeable)
+	target, err := ap.ExtractObjectURI(likeable)
 	if err != nil {
 		return nil, errors.New("error extracting object property from like")
 	}
@@ -502,7 +503,7 @@ func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 	}
 	uri := idProp.GetIRI().String()
 
-	origin, err := ap.ExtractActor(blockable)
+	origin, err := ap.ExtractActorURI(blockable)
 	if err != nil {
 		return nil, errors.New("ASBlockToBlock: error extracting actor property from block")
 	}
@@ -511,7 +512,7 @@ func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
 
-	target, err := ap.ExtractObject(blockable)
+	target, err := ap.ExtractObjectURI(blockable)
 	if err != nil {
 		return nil, errors.New("ASBlockToBlock: error extracting object property from block")
 	}
@@ -530,72 +531,112 @@ func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 	}, nil
 }
 
+// Implementation note: this function creates and returns a boost WRAPPER
+// status which references the boosted status in its BoostOf field. No
+// dereferencing is done on the boosted status by this function. Callers
+// should look at `status.BoostOf` to see the status being boosted, and do
+// dereferencing on it as appropriate.
+//
+// The returned boolean indicates whether or not the boost has already been
+// seen before by this instance. If it was, then status.BoostOf should be a
+// fully filled-out status. If not, then only status.BoostOf.URI will be set.
 func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
-	status := &gtsmodel.Status{}
-	isNew := true
-
-	// check if we already have the boost in the database
-	idProp := announceable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, isNew, errors.New("no id property set on announce, or was not an iri")
+	// Ensure item has an ID URI set.
+	_, statusURIStr, err := getURI(announceable)
+	if err != nil {
+		err = gtserror.Newf("error extracting URI: %w", err)
+		return nil, false, err
 	}
-	uri := idProp.GetIRI().String()
 
-	if status, err := c.db.GetStatusByURI(ctx, uri); err == nil {
-		// we already have it, great, just return it as-is :)
-		isNew = false
+	var (
+		status *gtsmodel.Status
+		isNew  bool
+	)
+
+	// Check if we already have this boost in the database.
+	status, err = c.db.GetStatusByURI(ctx, statusURIStr)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// Real database error.
+		err = gtserror.Newf("db error trying to get status with uri %s: %w", statusURIStr, err)
+		return nil, isNew, err
+	}
+
+	if status != nil {
+		// We already have this status,
+		// no need to proceed further.
 		return status, isNew, nil
 	}
-	status.URI = uri
 
-	// get the URI of the announced/boosted status
-	boostedStatusURI, err := ap.ExtractObject(announceable)
+	// If we reach here, we're dealing
+	// with a boost we haven't seen before.
+	isNew = true
+
+	// Start assembling the new status
+	// (we already know the URI).
+	status = new(gtsmodel.Status)
+	status.URI = statusURIStr
+
+	// Get the URI of the boosted status.
+	boostOfURI, err := ap.ExtractObjectURI(announceable)
 	if err != nil {
-		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error getting object from announce: %s", err)
+		err = gtserror.Newf("error extracting Object: %w", err)
+		return nil, isNew, err
 	}
 
-	// set the URI on the new status for dereferencing later
-	status.BoostOf = &gtsmodel.Status{
-		URI: boostedStatusURI.String(),
+	// Set the URI of the boosted status on
+	// the new status, for later dereferencing.
+	boostOf := &gtsmodel.Status{
+		URI: boostOfURI.String(),
 	}
+	status.BoostOf = boostOf
 
-	// get the published time for the announce
+	// Extract published time for the boost.
 	published, err := ap.ExtractPublished(announceable)
 	if err != nil {
-		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting published time: %s", err)
+		err = gtserror.Newf("error extracting published: %w", err)
+		return nil, isNew, err
 	}
 	status.CreatedAt = published
 	status.UpdatedAt = published
 
-	// get the actor's IRI (ie., the person who boosted the status)
-	actor, err := ap.ExtractActor(announceable)
+	// Extract URI of the boosting account.
+	accountURI, err := ap.ExtractActorURI(announceable)
 	if err != nil {
-		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting actor: %s", err)
+		err = gtserror.Newf("error extracting Actor: %w", err)
+		return nil, isNew, err
 	}
+	accountURIStr := accountURI.String()
 
-	// get the boosting account based on the URI
-	// this should have been dereferenced already before we hit this point so we can confidently error out if we don't have it
-	boostingAccount, err := c.db.GetAccountByURI(ctx, actor.String())
+	// Try to get the boosting account based on the URI.
+	// This should have been dereferenced already before
+	// we hit this point so we can confidently error out
+	// if we don't have it.
+	account, err := c.db.GetAccountByURI(ctx, accountURIStr)
 	if err != nil {
-		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error in db fetching account with uri %s: %s", actor.String(), err)
+		err = gtserror.Newf("db error trying to get account with uri %s: %w", accountURIStr, err)
+		return nil, isNew, err
 	}
-	status.AccountID = boostingAccount.ID
-	status.AccountURI = boostingAccount.URI
-	status.Account = boostingAccount
+	status.AccountID = account.ID
+	status.AccountURI = account.URI
+	status.Account = account
 
-	// these will all be wrapped in the boosted status so set them empty here
-	status.AttachmentIDs = []string{}
-	status.TagIDs = []string{}
-	status.MentionIDs = []string{}
-	status.EmojiIDs = []string{}
+	// Below IDs will all be included in the
+	// boosted status, so set them empty here.
+	status.AttachmentIDs = make([]string, 0)
+	status.TagIDs = make([]string, 0)
+	status.MentionIDs = make([]string, 0)
+	status.EmojiIDs = make([]string, 0)
 
-	visibility, err := ap.ExtractVisibility(announceable, boostingAccount.FollowersURI)
+	visibility, err := ap.ExtractVisibility(announceable, account.FollowersURI)
 	if err != nil {
-		return nil, isNew, fmt.Errorf("ASAnnounceToStatus: error extracting visibility: %s", err)
+		err = gtserror.Newf("error extracting visibility: %w", err)
+		return nil, isNew, err
 	}
 	status.Visibility = visibility
 
-	// the rest of the fields will be taken from the target status, but it's not our job to do the dereferencing here
+	// Remaining fields on the boost status will be taken
+	// from the boosted status; it's not our job to do all
+	// that dereferencing here.
 	return status, isNew, nil
 }
 
@@ -609,7 +650,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 
 	// Extract account that created the flag / report.
 	// This will usually be an instance actor.
-	actor, err := ap.ExtractActor(flaggable)
+	actor, err := ap.ExtractActorURI(flaggable)
 	if err != nil {
 		return nil, fmt.Errorf("ASFlagToReport: error extracting actor: %w", err)
 	}

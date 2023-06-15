@@ -661,31 +661,41 @@ func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	return mention, nil
 }
 
-// ExtractActor extracts the actor ID/IRI from an interface WithActor.
-func ExtractActor(i WithActor) (*url.URL, error) {
+// ExtractActorURI extracts the first Actor URI
+// it can find from a WithActor interface.
+func ExtractActorURI(i WithActor) (*url.URL, error) {
 	actorProp := i.GetActivityStreamsActor()
 	if actorProp == nil {
 		return nil, errors.New("actor property was nil")
 	}
+
 	for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
-		if iter.IsIRI() && iter.GetIRI() != nil {
-			return iter.GetIRI(), nil
+		id, err := pub.ToId(iter)
+		if err == nil {
+			// Found one we can use.
+			return id, nil
 		}
 	}
+
 	return nil, errors.New("no iri found for actor prop")
 }
 
-// ExtractObject extracts the first URL object from a WithObject interface.
-func ExtractObject(i WithObject) (*url.URL, error) {
+// ExtractObjectURI extracts the first Object URI
+// it can find from a WithObject interface.
+func ExtractObjectURI(i WithObject) (*url.URL, error) {
 	objectProp := i.GetActivityStreamsObject()
 	if objectProp == nil {
 		return nil, errors.New("object property was nil")
 	}
+
 	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
-		if iter.IsIRI() && iter.GetIRI() != nil {
-			return iter.GetIRI(), nil
+		id, err := pub.ToId(iter)
+		if err == nil {
+			// Found one we can use.
+			return id, nil
 		}
 	}
+
 	return nil, errors.New("no iri found for object prop")
 }
 
