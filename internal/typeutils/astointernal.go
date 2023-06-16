@@ -62,13 +62,13 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// avatar aka icon
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if avatarURL, err := ap.ExtractIconURL(accountable); err == nil {
+	if avatarURL, err := ap.ExtractIconURI(accountable); err == nil {
 		acct.AvatarRemoteURL = avatarURL.String()
 	}
 
 	// header aka image
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if headerURL, err := ap.ExtractImageURL(accountable); err == nil {
+	if headerURL, err := ap.ExtractImageURI(accountable); err == nil {
 		acct.HeaderRemoteURL = headerURL.String()
 	}
 
@@ -311,7 +311,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 	// which account posted this status?
 	// if we don't know the account yet we can dereference it later
-	attributedTo, err := ap.ExtractAttributedTo(statusable)
+	attributedTo, err := ap.ExtractAttributedToURI(statusable)
 	if err != nil {
 		return nil, errors.New("ASStatusToStatus: attributedTo was empty")
 	}

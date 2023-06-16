@@ -175,10 +175,6 @@ func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
 	suite.Equal(gtsmodel.VisibilityUnlocked, status.Visibility)
 }
 
-func (suite *ASToInternalTestSuite) TestParseAnnounceActorURI() {
-	
-}
-
 func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	t := suite.jsonToType(owncastService)
 	rep, ok := t.(ap.Accountable)

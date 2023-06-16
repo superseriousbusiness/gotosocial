@@ -15,9 +15,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package ap contains models and utilities for working with activitypub/activitystreams representations.
-//
-// It is built on top of go-fed/activity.
 package ap
 
 import (
@@ -25,7 +22,6 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -37,28 +33,34 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// ExtractPreferredUsername returns a string representation of an interface's preferredUsername property.
+// ExtractPreferredUsername returns a string representation of
+// an interface's preferredUsername property. Will return an
+// error if preferredUsername is nil, not a string, or empty.
 func ExtractPreferredUsername(i WithPreferredUsername) (string, error) {
 	u := i.GetActivityStreamsPreferredUsername()
 	if u == nil || !u.IsXMLSchemaString() {
-		return "", errors.New("preferredUsername was not a string")
+		return "", gtserror.New("preferredUsername nil or not a string")
 	}
+
 	if u.GetXMLSchemaString() == "" {
-		return "", errors.New("preferredUsername was empty")
+		return "", gtserror.New("preferredUsername was empty")
 	}
+
 	return u.GetXMLSchemaString(), nil
 }
 
-// ExtractName returns the first string representation of an interface's name property,
-// or an empty string if this is not found.
+// ExtractName returns the first string representation it
+// can find of an interface's name property, or an empty
+// string if this is not found.
 func ExtractName(i WithName) string {
 	nameProp := i.GetActivityStreamsName()
 	if nameProp == nil {
 		return ""
 	}
 
-	// Take the first useful value for the name string we can find.
 	for iter := nameProp.Begin(); iter != nameProp.End(); iter = iter.Next() {
+		// Name may be parsed as IRI, depending on
+		// how it's formatted, so account for this.
 		switch {
 		case iter.IsXMLSchemaString():
 			return iter.GetXMLSchemaString()
@@ -70,195 +72,223 @@ func ExtractName(i WithName) string {
 	return ""
 }
 
-// ExtractInReplyToURI extracts the inReplyToURI property (if present) from an interface.
+// ExtractInReplyToURI extracts the first inReplyTo URI
+// property it can find from an interface. Will return
+// nil if no valid URI can be found.
 func ExtractInReplyToURI(i WithInReplyTo) *url.URL {
 	inReplyToProp := i.GetActivityStreamsInReplyTo()
 	if inReplyToProp == nil {
-		// the property just wasn't set
 		return nil
 	}
+
 	for iter := inReplyToProp.Begin(); iter != inReplyToProp.End(); iter = iter.Next() {
-		if iter.IsIRI() {
-			if iter.GetIRI() != nil {
-				return iter.GetIRI()
-			}
+		iri, err := pub.ToId(iter)
+		if err == nil && iri != nil {
+			// Found one we can use.
+			return iri
 		}
 	}
-	// couldn't find a URI
+
 	return nil
 }
 
-// ExtractURLItems extracts a slice of URLs from a property that has withItems.
-func ExtractURLItems(i WithItems) []*url.URL {
-	urls := []*url.URL{}
-	items := i.GetActivityStreamsItems()
-	if items == nil || items.Len() == 0 {
-		return urls
+// ExtractItemsURIs extracts each URI it can
+// find for an item from the provided WithItems.
+func ExtractItemsURIs(i WithItems) []*url.URL {
+	itemsProp := i.GetActivityStreamsItems()
+	if itemsProp == nil {
+		return nil
 	}
 
-	for iter := items.Begin(); iter != items.End(); iter = iter.Next() {
-		if iter.IsIRI() {
-			urls = append(urls, iter.GetIRI())
+	uris := make([]*url.URL, 0, itemsProp.Len())
+	for iter := itemsProp.Begin(); iter != itemsProp.End(); iter = iter.Next() {
+		uri, err := pub.ToId(iter)
+		if err == nil {
+			// Found one we can use.
+			uris = append(uris, uri)
 		}
 	}
+
+	return uris
+}
+
+// ExtractToURIs returns a slice of URIs
+// that the given WithTo addresses as To.
+func ExtractToURIs(i WithTo) []*url.URL {
+	toProp := i.GetActivityStreamsTo()
+	if toProp == nil {
+		return nil
+	}
+
+	uris := make([]*url.URL, 0, toProp.Len())
+	for iter := toProp.Begin(); iter != toProp.End(); iter = iter.Next() {
+		uri, err := pub.ToId(iter)
+		if err == nil {
+			// Found one we can use.
+			uris = append(uris, uri)
+		}
+	}
+
+	return uris
+}
+
+// ExtractCcURIs returns a slice of URIs
+// that the given WithCC addresses as Cc.
+func ExtractCcURIs(i WithCC) []*url.URL {
+	ccProp := i.GetActivityStreamsCc()
+	if ccProp == nil {
+		return nil
+	}
+
+	urls := make([]*url.URL, 0, ccProp.Len())
+	for iter := ccProp.Begin(); iter != ccProp.End(); iter = iter.Next() {
+		uri, err := pub.ToId(iter)
+		if err == nil {
+			// Found one we can use.
+			urls = append(urls, uri)
+		}
+	}
+
 	return urls
 }
 
-// ExtractTos returns a list of URIs that the activity addresses as To.
-func ExtractTos(i WithTo) ([]*url.URL, error) {
-	to := []*url.URL{}
-	toProp := i.GetActivityStreamsTo()
-	if toProp == nil {
-		return nil, errors.New("toProp was nil")
-	}
-	for iter := toProp.Begin(); iter != toProp.End(); iter = iter.Next() {
-		if iter.IsIRI() {
-			if iter.GetIRI() != nil {
-				to = append(to, iter.GetIRI())
-			}
-		}
-	}
-	return to, nil
-}
-
-// ExtractCCs returns a list of URIs that the activity addresses as CC.
-func ExtractCCs(i WithCC) ([]*url.URL, error) {
-	cc := []*url.URL{}
-	ccProp := i.GetActivityStreamsCc()
-	if ccProp == nil {
-		return cc, nil
-	}
-	for iter := ccProp.Begin(); iter != ccProp.End(); iter = iter.Next() {
-		if iter.IsIRI() {
-			if iter.GetIRI() != nil {
-				cc = append(cc, iter.GetIRI())
-			}
-		}
-	}
-	return cc, nil
-}
-
-// ExtractAttributedTo returns the URL of the actor
-// that the withAttributedTo is attributed to.
-func ExtractAttributedTo(i WithAttributedTo) (*url.URL, error) {
+// ExtractAttributedToURI returns the first URI it can find in the
+// given WithAttributedTo, or an error if no URI can be found.
+func ExtractAttributedToURI(i WithAttributedTo) (*url.URL, error) {
 	attributedToProp := i.GetActivityStreamsAttributedTo()
 	if attributedToProp == nil {
-		return nil, errors.New("attributedToProp was nil")
+		return nil, gtserror.New("attributedToProp was nil")
 	}
 
 	for iter := attributedToProp.Begin(); iter != attributedToProp.End(); iter = iter.Next() {
-		if iter.IsIRI() {
-			if iter.GetIRI() != nil {
-				return iter.GetIRI(), nil
-			}
+		id, err := pub.ToId(iter)
+		if err == nil {
+			return id, nil
 		}
 	}
 
-	return nil, errors.New("couldn't find iri for attributed to")
+	return nil, gtserror.New("couldn't find iri for attributed to")
 }
 
-// ExtractPublished extracts the publication time of an activity.
+// ExtractPublished extracts the published time from the given
+// WithPublished. Will return an error if the published property
+// is not set, is not a time.Time, or is zero.
 func ExtractPublished(i WithPublished) (time.Time, error) {
+	t := time.Time{}
+
 	publishedProp := i.GetActivityStreamsPublished()
 	if publishedProp == nil {
-		return time.Time{}, errors.New("published prop was nil")
+		return t, gtserror.New("published prop was nil")
 	}
 
 	if !publishedProp.IsXMLSchemaDateTime() {
-		return time.Time{}, errors.New("published prop was not date time")
+		return t, gtserror.New("published prop was not date time")
 	}
 
-	t := publishedProp.Get()
+	t = publishedProp.Get()
 	if t.IsZero() {
-		return time.Time{}, errors.New("published time was zero")
+		return t, gtserror.New("published time was zero")
 	}
+
 	return t, nil
 }
 
-// ExtractIconURL extracts a URL to a supported image file from something like:
+// ExtractIconURI extracts the first URI it can find from
+// the given WithIcon which links to a supported image file.
+// Input will look something like this:
 //
 //	"icon": {
 //	  "mediaType": "image/jpeg",
 //	  "type": "Image",
 //	  "url": "http://example.org/path/to/some/file.jpeg"
 //	},
-func ExtractIconURL(i WithIcon) (*url.URL, error) {
+//
+// If no valid URI can be found, this will return an error.
+func ExtractIconURI(i WithIcon) (*url.URL, error) {
 	iconProp := i.GetActivityStreamsIcon()
 	if iconProp == nil {
-		return nil, errors.New("icon property was nil")
+		return nil, gtserror.New("icon property was nil")
 	}
 
-	// icon can potentially contain multiple entries, so we iterate through all of them
-	// here in order to find the first one that meets these criteria:
-	// 1. is an image
-	// 2. has a URL so we can grab it
+	// Icon can potentially contain multiple entries,
+	// so we iterate through all of them here in order
+	// to find the first one that meets these criteria:
+	//
+	//   1. Is an image.
+	//   2. Has a URL that we can use to derefereince it.
 	for iter := iconProp.Begin(); iter != iconProp.End(); iter = iter.Next() {
-		// 1. is an image
 		if !iter.IsActivityStreamsImage() {
 			continue
 		}
-		imageValue := iter.GetActivityStreamsImage()
-		if imageValue == nil {
+
+		image := iter.GetActivityStreamsImage()
+		if image == nil {
 			continue
 		}
 
-		// 2. has a URL so we can grab it
-		url, err := ExtractURL(imageValue)
-		if err == nil && url != nil {
-			return url, nil
+		imageURL, err := ExtractURL(image)
+		if err == nil && imageURL != nil {
+			return imageURL, nil
 		}
 	}
-	// if we get to this point we didn't find an icon meeting our criteria :'(
-	return nil, errors.New("could not extract valid image from icon")
+
+	return nil, gtserror.New("could not extract valid image URI from icon")
 }
 
-// ExtractImageURL extracts a URL to a supported image file from something like:
+// ExtractImageURI extracts the first URI it can find from
+// the given WithImage which links to a supported image file.
+// Input will look something like this:
 //
 //	"image": {
 //	  "mediaType": "image/jpeg",
 //	  "type": "Image",
 //	  "url": "http://example.org/path/to/some/file.jpeg"
 //	},
-func ExtractImageURL(i WithImage) (*url.URL, error) {
+//
+// If no valid URI can be found, this will return an error.
+func ExtractImageURI(i WithImage) (*url.URL, error) {
 	imageProp := i.GetActivityStreamsImage()
 	if imageProp == nil {
-		return nil, errors.New("icon property was nil")
+		return nil, gtserror.New("image property was nil")
 	}
 
-	// icon can potentially contain multiple entries, so we iterate through all of them
-	// here in order to find the first one that meets these criteria:
-	// 1. is an image
-	// 2. has a URL so we can grab it
+	// Image can potentially contain multiple entries,
+	// so we iterate through all of them here in order
+	// to find the first one that meets these criteria:
+	//
+	//   1. Is an image.
+	//   2. Has a URL that we can use to derefereince it.
 	for iter := imageProp.Begin(); iter != imageProp.End(); iter = iter.Next() {
-		// 1. is an image
 		if !iter.IsActivityStreamsImage() {
 			continue
 		}
-		imageValue := iter.GetActivityStreamsImage()
-		if imageValue == nil {
+
+		image := iter.GetActivityStreamsImage()
+		if image == nil {
 			continue
 		}
 
-		// 2. has a URL so we can grab it
-		url, err := ExtractURL(imageValue)
-		if err == nil && url != nil {
-			return url, nil
+		imageURL, err := ExtractURL(image)
+		if err == nil && imageURL != nil {
+			return imageURL, nil
 		}
 	}
-	// if we get to this point we didn't find an image meeting our criteria :'(
-	return nil, errors.New("could not extract valid image from image property")
+
+	return nil, gtserror.New("could not extract valid image URI from image")
 }
 
-// ExtractSummary extracts the summary/content warning of an interface.
-// Will return an empty string if no summary was present.
+// ExtractSummary extracts the summary/content warning of
+// the given WithSummary interface. Will return an empty
+// string if no summary/content warning was present.
 func ExtractSummary(i WithSummary) string {
 	summaryProp := i.GetActivityStreamsSummary()
-	if summaryProp == nil || summaryProp.Len() == 0 {
-		// no summary to speak of
+	if summaryProp == nil {
 		return ""
 	}
 
 	for iter := summaryProp.Begin(); iter != summaryProp.End(); iter = iter.Next() {
+		// Summary may be parsed as IRI, depending on
+		// how it's formatted, so account for this.
 		switch {
 		case iter.IsXMLSchemaString():
 			return iter.GetXMLSchemaString()
@@ -270,6 +300,10 @@ func ExtractSummary(i WithSummary) string {
 	return ""
 }
 
+// ExtractFields extracts property/value fields from the given
+// WithAttachment interface. Will return an empty slice if no
+// property/value fields can be found. Attachments that are not
+// (well-formed) PropertyValues will be ignored.
 func ExtractFields(i WithAttachment) []*gtsmodel.Field {
 	attachmentProp := i.GetActivityStreamsAttachment()
 	if attachmentProp == nil {
@@ -323,28 +357,38 @@ func ExtractFields(i WithAttachment) []*gtsmodel.Field {
 	return fields
 }
 
-// ExtractDiscoverable extracts the Discoverable boolean of an interface.
+// ExtractDiscoverable extracts the Discoverable boolean
+// of the given WithDiscoverable interface. Will return
+// an error if Discoverable was nil.
 func ExtractDiscoverable(i WithDiscoverable) (bool, error) {
-	if i.GetTootDiscoverable() == nil {
-		return false, errors.New("discoverable was nil")
+	discoverableProp := i.GetTootDiscoverable()
+	if discoverableProp == nil {
+		return false, gtserror.New("discoverable was nil")
 	}
-	return i.GetTootDiscoverable().Get(), nil
+
+	return discoverableProp.Get(), nil
 }
 
-// ExtractURL extracts the URL property of an interface.
+// ExtractURL extracts the first URI it can find from the
+// given WithURL interface, or an error if no URL was set.
+// The ID of a type will not work, this function wants a URI
+// specifically.
 func ExtractURL(i WithURL) (*url.URL, error) {
 	urlProp := i.GetActivityStreamsUrl()
 	if urlProp == nil {
-		return nil, errors.New("url property was nil")
+		return nil, gtserror.New("url property was nil")
 	}
 
 	for iter := urlProp.Begin(); iter != urlProp.End(); iter = iter.Next() {
-		if iter.IsIRI() && iter.GetIRI() != nil {
-			return iter.GetIRI(), nil
+		if !iter.IsIRI() {
+			continue
 		}
+
+		// Found it.
+		return iter.GetIRI(), nil
 	}
 
-	return nil, errors.New("could not extract url")
+	return nil, gtserror.New("could not extract url")
 }
 
 // ExtractPublicKey extracts the public key, public key ID, and public
@@ -429,8 +473,9 @@ func ExtractPublicKey(i WithPublicKey) (
 	return nil, nil, nil, gtserror.New("couldn't find public key")
 }
 
-// ExtractContent returns a string representation of the interface's Content property,
-// or an empty string if no Content is found.
+// ExtractContent returns a string representation of the
+// given interface's Content property, or an empty string
+// if no Content is found.
 func ExtractContent(i WithContent) string {
 	contentProperty := i.GetActivityStreamsContent()
 	if contentProperty == nil {
@@ -439,6 +484,8 @@ func ExtractContent(i WithContent) string {
 
 	for iter := contentProperty.Begin(); iter != contentProperty.End(); iter = iter.Next() {
 		switch {
+		// Content may be parsed as IRI, depending on
+		// how it's formatted, so account for this.
 		case iter.IsXMLSchemaString():
 			return iter.GetXMLSchemaString()
 		case iter.IsIRI():
@@ -449,52 +496,64 @@ func ExtractContent(i WithContent) string {
 	return ""
 }
 
-// ExtractAttachment returns a gts model of an attachment from an attachmentable interface.
+// ExtractAttachment extracts a minimal gtsmodel.Attachment
+// (just remote URL, description, and blurhash) from the given
+// Attachmentable interface, or an error if no remote URL is set.
 func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
-	attachment := &gtsmodel.MediaAttachment{}
-
-	attachmentURL, err := ExtractURL(i)
+	// Get the URL for the attachment file.
+	// If no URL is set, we can't do anything.
+	remoteURL, err := ExtractURL(i)
 	if err != nil {
 		return nil, err
 	}
-	attachment.RemoteURL = attachmentURL.String()
 
-	mediaType := i.GetActivityStreamsMediaType()
-	if mediaType != nil {
-		attachment.File.ContentType = mediaType.Get()
-	}
-	attachment.Type = gtsmodel.FileTypeImage
-
-	attachment.Description = ExtractName(i)
-	attachment.Blurhash = ExtractBlurhash(i)
-
-	attachment.Processing = gtsmodel.ProcessingStatusReceived
-
-	return attachment, nil
+	return &gtsmodel.MediaAttachment{
+		RemoteURL:   remoteURL.String(),
+		Description: ExtractName(i),
+		Blurhash:    ExtractBlurhash(i),
+		Processing:  gtsmodel.ProcessingStatusReceived,
+	}, nil
 }
 
-// ExtractBlurhash extracts the blurhash value (if present) from a WithBlurhash interface.
+// ExtractBlurhash extracts the blurhash string value
+// from the given WithBlurhash interface, or returns
+// an empty string if nothing is found.
 func ExtractBlurhash(i WithBlurhash) string {
-	if i.GetTootBlurhash() == nil {
+	blurhashProp := i.GetTootBlurhash()
+	if blurhashProp == nil {
 		return ""
 	}
-	return i.GetTootBlurhash().Get()
+
+	return blurhashProp.Get()
 }
 
-// ExtractHashtags returns a slice of tags on the interface.
+// ExtractHashtags extracts a slice of minimal gtsmodel.Tags
+// from a WithTag. If an entry in the WithTag is not a hashtag,
+// it will be quietly ignored.
+//
+// TODO: find a better heuristic for determining if something
+// is a hashtag or not, since looking for type name "Hashtag"
+// is non-normative. Perhaps look for things that are either
+// type "Hashtag" or have no type name set at all?
 func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
-	tags := []*gtsmodel.Tag{}
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
-		return tags, nil
+		return nil, nil
 	}
+
+	var (
+		l    = tagsProp.Len()
+		tags = make([]*gtsmodel.Tag, 0, l)
+		keys = make(map[string]any, l) // Use map to dedupe items.
+	)
+
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
 		t := iter.GetType()
 		if t == nil {
 			continue
 		}
 
-		if t.GetTypeName() != "Hashtag" {
+		if t.GetTypeName() != TagHashtag {
 			continue
 		}
 
@@ -508,32 +567,45 @@ func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 			continue
 		}
 
-		tags = append(tags, tag)
+		// Only append this tag if we haven't
+		// seen it already, to avoid duplicates
+		// in the slice.
+		if _, set := keys[tag.URL]; !set {
+			keys[tag.URL] = nil // Value doesn't matter.
+			tags = append(tags, tag)
+			tags = append(tags, tag)
+			tags = append(tags, tag)
+		}
 	}
+
 	return tags, nil
 }
 
-// ExtractHashtag returns a gtsmodel.Tag from a hashtaggable.
+// ExtractEmoji extracts a minimal gtsmodel.Tag
+// from the given Hashtaggable.
 func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
-	tag := &gtsmodel.Tag{}
-
+	// Extract href/link for this tag.
 	hrefProp := i.GetActivityStreamsHref()
 	if hrefProp == nil || !hrefProp.IsIRI() {
-		return nil, errors.New("no href prop")
+		return nil, gtserror.New("no href prop")
 	}
-	tag.URL = hrefProp.GetIRI().String()
+	tagURL := hrefProp.GetIRI().String()
 
+	// Extract name for the tag; trim leading hash
+	// character, so '#example' becomes 'example'.
 	name := ExtractName(i)
 	if name == "" {
-		return nil, errors.New("name prop empty")
+		return nil, gtserror.New("name prop empty")
 	}
+	tagName := strings.TrimPrefix(name, "#")
 
-	tag.Name = strings.TrimPrefix(name, "#")
-
-	return tag, nil
+	return &gtsmodel.Tag{
+		URL:  tagURL,
+		Name: tagName,
+	}, nil
 }
 
-// ExtractEmojis extracts a slice of gtsmodel.Emojis
+// ExtractEmojis extracts a slice of minimal gtsmodel.Emojis
 // from a WithTag. If an entry in the WithTag is not an emoji,
 // it will be quietly ignored.
 func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
@@ -549,18 +621,16 @@ func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 	)
 
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
-		t := iter.GetType()
-		if t == nil || t.GetTypeName() != ObjectEmoji {
-			// Not an emoji we can work with.
+		if !iter.IsTootEmoji() {
 			continue
 		}
 
-		emojiable, ok := t.(Emojiable)
-		if !ok {
+		tootEmoji := iter.GetTootEmoji()
+		if tootEmoji == nil {
 			continue
 		}
 
-		emoji, err := ExtractEmoji(emojiable)
+		emoji, err := ExtractEmoji(tootEmoji)
 		if err != nil {
 			return nil, err
 		}
@@ -577,12 +647,13 @@ func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 	return emojis, nil
 }
 
-// ExtractEmoji extracts a minimal gtsmodel.Emoji from an Emojiable.
+// ExtractEmoji extracts a minimal gtsmodel.Emoji
+// from the given Emojiable.
 func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	// Use AP ID as emoji URI.
 	idProp := i.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
-		return nil, errors.New("no id for emoji")
+		return nil, gtserror.New("no id for emoji")
 	}
 	uri := idProp.GetIRI()
 
@@ -596,14 +667,14 @@ func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	// Extract emoji name aka shortcode.
 	name := ExtractName(i)
 	if name == "" {
-		return nil, errors.New("name prop empty")
+		return nil, gtserror.New("name prop empty")
 	}
 	shortcode := strings.Trim(name, ":")
 
 	// Extract emoji image URL from Icon property.
-	imageRemoteURL, err := ExtractIconURL(i)
+	imageRemoteURL, err := ExtractIconURI(i)
 	if err != nil {
-		return nil, errors.New("no url for emoji image")
+		return nil, gtserror.New("no url for emoji image")
 	}
 	imageRemoteURLStr := imageRemoteURL.String()
 
@@ -618,7 +689,7 @@ func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
 	}, nil
 }
 
-// ExtractMentions extracts a slice of gtsmodel.Mentions
+// ExtractMentions extracts a slice of minimal gtsmodel.Mentions
 // from a WithTag. If an entry in the WithTag is not a mention,
 // it will be quietly ignored.
 func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
@@ -634,18 +705,16 @@ func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 	)
 
 	for iter := tagsProp.Begin(); iter != tagsProp.End(); iter = iter.Next() {
-		t := iter.GetType()
-		if t == nil || t.GetTypeName() != ObjectMention {
-			// Not a mention we can work with.
+		if !iter.IsActivityStreamsMention() {
 			continue
 		}
 
-		mentionable, ok := t.(Mentionable)
-		if !ok {
+		asMention := iter.GetActivityStreamsMention()
+		if asMention == nil {
 			continue
 		}
 
-		mention, err := ExtractMention(mentionable)
+		mention, err := ExtractMention(asMention)
 		if err != nil {
 			return nil, err
 		}
@@ -666,7 +735,7 @@ func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	nameString := ExtractName(i)
 	if nameString == "" {
-		return nil, errors.New("name prop empty")
+		return nil, gtserror.New("name prop empty")
 	}
 
 	// Ensure namestring is valid so we
@@ -679,7 +748,7 @@ func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 	// of the target account.
 	hrefProp := i.GetActivityStreamsHref()
 	if hrefProp == nil || !hrefProp.IsIRI() {
-		return nil, errors.New("no href prop")
+		return nil, gtserror.New("no href prop")
 	}
 
 	return &gtsmodel.Mention{
@@ -693,7 +762,7 @@ func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
 func ExtractActorURI(withActor WithActor) (*url.URL, error) {
 	actorProp := withActor.GetActivityStreamsActor()
 	if actorProp == nil {
-		return nil, errors.New("actor property was nil")
+		return nil, gtserror.New("actor property was nil")
 	}
 
 	for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
@@ -704,7 +773,7 @@ func ExtractActorURI(withActor WithActor) (*url.URL, error) {
 		}
 	}
 
-	return nil, errors.New("no iri found for actor prop")
+	return nil, gtserror.New("no iri found for actor prop")
 }
 
 // ExtractObjectURI extracts the first Object URI
@@ -712,7 +781,7 @@ func ExtractActorURI(withActor WithActor) (*url.URL, error) {
 func ExtractObjectURI(withObject WithObject) (*url.URL, error) {
 	objectProp := withObject.GetActivityStreamsObject()
 	if objectProp == nil {
-		return nil, errors.New("object property was nil")
+		return nil, gtserror.New("object property was nil")
 	}
 
 	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
@@ -720,15 +789,10 @@ func ExtractObjectURI(withObject WithObject) (*url.URL, error) {
 		if err == nil {
 			// Found one we can use.
 			return id, nil
-		}	// Use AP ID as emoji URI.
-		idProp := i.GetJSONLDId()
-		if idProp == nil || !idProp.IsIRI() {
-			return nil, errors.New("no id for emoji")
 		}
-		uri := idProp.GetIRI()
 	}
 
-	return nil, errors.New("no iri found for object prop")
+	return nil, gtserror.New("no iri found for object prop")
 }
 
 // ExtractObjectURIs extracts the URLs of each Object
@@ -736,7 +800,7 @@ func ExtractObjectURI(withObject WithObject) (*url.URL, error) {
 func ExtractObjectURIs(withObject WithObject) ([]*url.URL, error) {
 	objectProp := withObject.GetActivityStreamsObject()
 	if objectProp == nil {
-		return nil, errors.New("object property was nil")
+		return nil, gtserror.New("object property was nil")
 	}
 
 	urls := make([]*url.URL, 0, objectProp.Len())
@@ -760,15 +824,10 @@ func ExtractObjectURIs(withObject WithObject) ([]*url.URL, error) {
 // of the followers URI of the actor who created the activity,
 // eg., `https://example.org/users/whoever/followers`.
 func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmodel.Visibility, error) {
-	to, err := ExtractTos(addressable)
-	if err != nil {
-		return "", gtserror.Newf("error extracting TO values: %w", err)
-	}
-
-	cc, err := ExtractCCs(addressable)
-	if err != nil {
-		return "", gtserror.Newf("error extracting CC values: %s", err)
-	}
+	var (
+		to = ExtractToURIs(addressable)
+		cc = ExtractCcURIs(addressable)
+	)
 
 	if len(to) == 0 && len(cc) == 0 {
 		return "", gtserror.Newf("message wasn't TO or CC anyone")
@@ -794,30 +853,6 @@ func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmo
 	}
 
 	return visibility, nil
-}
-
-// isPublic checks if at least one entry in the given
-// uris slice equals the activitystreams public uri.
-func isPublic(uris []*url.URL) bool {
-	for _, uri := range uris {
-		if pub.IsPublic(uri.String()) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// isFollowers checks if at least one entry in the given
-// uris slice equals the given followersURI.
-func isFollowers(uris []*url.URL, followersURI string) bool {
-	for _, uri := range uris {
-		if strings.EqualFold(uri.String(), followersURI) {
-			return true
-		}
-	}
-
-	return false
 }
 
 // ExtractSensitive extracts whether or not an item should
@@ -869,4 +904,28 @@ func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 	}
 
 	return nil
+}
+
+// isPublic checks if at least one entry in the given
+// uris slice equals the activitystreams public uri.
+func isPublic(uris []*url.URL) bool {
+	for _, uri := range uris {
+		if pub.IsPublic(uri.String()) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isFollowers checks if at least one entry in the given
+// uris slice equals the given followersURI.
+func isFollowers(uris []*url.URL, followersURI string) bool {
+	for _, uri := range uris {
+		if strings.EqualFold(uri.String(), followersURI) {
+			return true
+		}
+	}
+
+	return false
 }

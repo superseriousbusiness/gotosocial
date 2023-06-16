@@ -239,8 +239,8 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		derefd = true
 	}
 
-	// Get the attributed-to status in order to fetch profile.
-	attributedTo, err := ap.ExtractAttributedTo(apubStatus)
+	// Get the attributed-to account in order to fetch profile.
+	attributedTo, err := ap.ExtractAttributedToURI(apubStatus)
 	if err != nil {
 		return nil, nil, gtserror.New("attributedTo was empty")
 	}
