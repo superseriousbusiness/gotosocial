@@ -388,7 +388,7 @@ func ExtractURL(i WithURL) (*url.URL, error) {
 		return iter.GetIRI(), nil
 	}
 
-	return nil, gtserror.New("could not extract url")
+	return nil, gtserror.New("no valid URL property found")
 }
 
 // ExtractPublicKey extracts the public key, public key ID, and public
@@ -504,7 +504,7 @@ func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 	// If no URL is set, we can't do anything.
 	remoteURL, err := ExtractURL(i)
 	if err != nil {
-		return nil, err
+		return nil, gtserror.Newf("error extracting attachment URL: %w", err)
 	}
 
 	return &gtsmodel.MediaAttachment{
