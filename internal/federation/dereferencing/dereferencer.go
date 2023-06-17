@@ -46,11 +46,11 @@ type Dereferencer interface {
 	// RefreshAccount updates the given account if remote and last_fetched is beyond fetch interval, or if force is set. An updated account model is returned,
 	// but in the case of dereferencing, some low-priority account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
 	// An ActivityPub object indicates the account was dereferenced (i.e. updated).
-	RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error)
+	RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, ap.Accountable, error)
 
 	// RefreshAccountAsync enqueues the given account for an asychronous update fetching, if last_fetched is beyond fetch interval, or if forcc is set.
 	// This is a more optimized form of manually enqueueing .UpdateAccount() to the federation worker, since it only enqueues update if necessary.
-	RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool)
+	RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool)
 
 	// GetStatusByURI will attempt to fetch a status by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
 	// whose last_fetched date is beyond a certain interval, the status will be dereferenced. In the case of dereferencing, some low-priority status information

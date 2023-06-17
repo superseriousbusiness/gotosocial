@@ -205,7 +205,6 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	latest, apubAcc, err := d.RefreshAccount(ctx,
 		requestUser,
 		account,
-		nil,
 		false,
 	)
 	if err != nil {
@@ -224,7 +223,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 }
 
 // RefreshAccount: implements Dereferencer{}.RefreshAccount.
-func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error) {
+func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, ap.Accountable, error) {
 	// Check whether needs update (and not forced).
 	if accountUpToDate(account) && !force {
 		return account, nil, nil
@@ -263,7 +262,7 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 }
 
 // RefreshAccountAsync: implements Dereferencer{}.RefreshAccountAsync.
-func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) {
+func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) {
 	// Check whether needs update (and not forced).
 	if accountUpToDate(account) && !force {
 		return
