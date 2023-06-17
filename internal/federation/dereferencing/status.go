@@ -220,8 +220,6 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		return nil, nil, gtserror.Newf("%s is blocked", uri.Host)
 	}
 
-	var derefd bool
-
 	if apubStatus == nil {
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
@@ -235,9 +233,6 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		if err != nil {
 			return nil, nil, gtserror.Newf("error resolving statusable from data for account %s: %w", uri, err)
 		}
-
-		// Mark as deref'd.
-		derefd = true
 	}
 
 	// Get the attributed-to account in order to fetch profile.
@@ -257,17 +252,11 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		log.Warnf(ctx, "status author account ID changed: old=%s new=%s", status.AccountID, author.ID)
 	}
 
-	// By default we assume that apubStatus has been passed,
-	// indicating that the given status is already latest.
-	latestStatus := status
-
-	if derefd {
-		// ActivityPub model was recently dereferenced, so assume that passed status
-		// may contain out-of-date information, convert AP model to our GTS model.
-		latestStatus, err = d.typeConverter.ASStatusToStatus(ctx, apubStatus)
-		if err != nil {
-			return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
-		}
+	// ActivityPub model was recently dereferenced, so assume that passed status
+	// may contain out-of-date information, convert AP model to our GTS model.
+	latestStatus, err := d.typeConverter.ASStatusToStatus(ctx, apubStatus)
+	if err != nil {
+		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
 
 	// Use existing status ID.

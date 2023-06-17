@@ -120,7 +120,7 @@ func (suite *SearchGetTestSuite) getSearch(
 
 	// Check expected code + body.
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
-		errs = append(errs, fmt.Sprintf("expected %d got %d", expectedHTTPStatus, resultCode))
+		errs = append(errs, fmt.Sprintf("expected %d got %d: %v", expectedHTTPStatus, resultCode, ctx.Errors.JSON()))
 	}
 
 	// If we got an expected body, return early.
