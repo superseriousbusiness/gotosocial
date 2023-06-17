@@ -19,11 +19,11 @@ package federatingdb
 
 import (
 	"context"
-	"fmt"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
@@ -46,15 +46,16 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 
 	boost, isNew, err := f.typeConverter.ASAnnounceToStatus(ctx, announce)
 	if err != nil {
-		return fmt.Errorf("Announce: error converting announce to boost: %s", err)
+		return gtserror.Newf("error converting announce to boost: %w", err)
 	}
 
 	if !isNew {
-		// nothing to do here if this isn't a new announce
+		// We've already seen this boost;
+		// nothing else to do here.
 		return nil
 	}
 
-	// it's a new announce so pass it back to the processor async for dereferencing etc
+	// This is a new boost. Process side effects asynchronously.
 	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ActivityAnnounce,
 		APActivityType:   ap.ActivityCreate,

@@ -34,7 +34,7 @@ func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentMissingURL() {
 	d1.SetActivityStreamsUrl(streams.NewActivityStreamsUrlProperty())
 
 	attachment, err := ap.ExtractAttachment(d1)
-	suite.EqualError(err, "could not extract url")
+	suite.EqualError(err, "ExtractAttachment: error extracting attachment URL: ExtractURL: no valid URL property found")
 	suite.Nil(attachment)
 }
 

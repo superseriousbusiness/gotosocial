@@ -110,15 +110,10 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		}
 	}
 
-	// Check for TOs and CCs on the Activity.
+	// Check for TO and CC URIs on the Activity.
 	if addressable, ok := activity.(ap.Addressable); ok {
-		if toURIs, err := ap.ExtractTos(addressable); err == nil {
-			otherIRIs = append(otherIRIs, toURIs...)
-		}
-
-		if ccURIs, err := ap.ExtractCCs(addressable); err == nil {
-			otherIRIs = append(otherIRIs, ccURIs...)
-		}
+		otherIRIs = append(otherIRIs, ap.ExtractToURIs(addressable)...)
+		otherIRIs = append(otherIRIs, ap.ExtractCcURIs(addressable)...)
 	}
 
 	// Now perform the same checks, but for the Object(s) of the Activity.
@@ -146,13 +141,8 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		}
 
 		if addressable, ok := t.(ap.Addressable); ok {
-			if toURIs, err := ap.ExtractTos(addressable); err == nil {
-				otherIRIs = append(otherIRIs, toURIs...)
-			}
-
-			if ccURIs, err := ap.ExtractCCs(addressable); err == nil {
-				otherIRIs = append(otherIRIs, ccURIs...)
-			}
+			otherIRIs = append(otherIRIs, ap.ExtractToURIs(addressable)...)
+			otherIRIs = append(otherIRIs, ap.ExtractCcURIs(addressable)...)
 		}
 	}
 
