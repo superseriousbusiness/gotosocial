@@ -300,7 +300,7 @@ func (m *Media) isOrphaned(ctx context.Context, path string) (bool, error) {
 		// Look for emoji in database stored by static URL.
 		// The media ID part of the storage key for emojis can
 		// change for refreshed items, so search by generated URL.
-		emoji, err := m.state.DB.GetEmojiByID(
+		emoji, err := m.state.DB.GetEmojiByStaticURL(
 			gtscontext.SetBarebones(ctx),
 			staticURL,
 		)
