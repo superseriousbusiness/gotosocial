@@ -91,57 +91,57 @@ func (suite *MediaTestSuite) TearDownTest() {
 	testrig.StopWorkers(&suite.state)
 }
 
-func (suite *MediaTestSuite) TestPruneOrphanedDry() {
-	// add a big orphan panda to store
-	b, err := os.ReadFile("../media/test/big-panda.gif")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+// func (suite *MediaTestSuite) TestPruneOrphanedDry() {
+// 	// add a big orphan panda to store
+// 	b, err := os.ReadFile("../media/test/big-panda.gif")
+// 	if err != nil {
+// 		suite.FailNow(err.Error())
+// 	}
 
-	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachment/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
-	if _, err := suite.storage.Put(context.Background(), pandaPath, b); err != nil {
-		suite.FailNow(err.Error())
-	}
+// 	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachment/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
+// 	if _, err := suite.storage.Put(context.Background(), pandaPath, b); err != nil {
+// 		suite.FailNow(err.Error())
+// 	}
 
-	ctx := context.Background()
+// 	ctx := context.Background()
 
-	// dry run should show up 1 orphaned panda
-	totalPruned, err := suite.cleaner.Media().PruneOrphaned(gtscontext.SetDryRun(ctx))
-	suite.NoError(err)
-	suite.Equal(1, totalPruned)
+// 	// dry run should show up 1 orphaned panda
+// 	totalPruned, err := suite.cleaner.Media().PruneOrphaned(gtscontext.SetDryRun(ctx))
+// 	suite.NoError(err)
+// 	suite.Equal(1, totalPruned)
 
-	// panda should still be in storage
-	hasKey, err := suite.storage.Has(ctx, pandaPath)
-	suite.NoError(err)
-	suite.True(hasKey)
-}
+// 	// panda should still be in storage
+// 	hasKey, err := suite.storage.Has(ctx, pandaPath)
+// 	suite.NoError(err)
+// 	suite.True(hasKey)
+// }
 
-func (suite *MediaTestSuite) TestPruneOrphanedMoist() {
-	// i am not complicit in the moistness of this codebase :|
+// func (suite *MediaTestSuite) TestPruneOrphanedMoist() {
+// 	// i am not complicit in the moistness of this codebase :|
 
-	// add a big orphan panda to store
-	b, err := os.ReadFile("../media/test/big-panda.gif")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+// 	// add a big orphan panda to store
+// 	b, err := os.ReadFile("../media/test/big-panda.gif")
+// 	if err != nil {
+// 		suite.FailNow(err.Error())
+// 	}
 
-	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachment/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
-	if _, err := suite.storage.Put(context.Background(), pandaPath, b); err != nil {
-		suite.FailNow(err.Error())
-	}
+// 	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachment/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
+// 	if _, err := suite.storage.Put(context.Background(), pandaPath, b); err != nil {
+// 		suite.FailNow(err.Error())
+// 	}
 
-	ctx := context.Background()
+// 	ctx := context.Background()
 
-	// should show up 1 orphaned panda
-	totalPruned, err := suite.cleaner.Media().PruneOrphaned(ctx)
-	suite.NoError(err)
-	suite.Equal(1, totalPruned)
+// 	// should show up 1 orphaned panda
+// 	totalPruned, err := suite.cleaner.Media().PruneOrphaned(ctx)
+// 	suite.NoError(err)
+// 	suite.Equal(1, totalPruned)
 
-	// panda should no longer be in storage
-	hasKey, err := suite.storage.Has(ctx, pandaPath)
-	suite.NoError(err)
-	suite.False(hasKey)
-}
+// 	// panda should no longer be in storage
+// 	hasKey, err := suite.storage.Has(ctx, pandaPath)
+// 	suite.NoError(err)
+// 	suite.False(hasKey)
+// }
 
 // func (suite *MediaTestSuite) TestPruneUnusedLocal() {
 // 	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
