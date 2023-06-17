@@ -338,16 +338,17 @@ func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, feder
 	}
 
 	// Because this was an Update, the new AP Object should be set on the message.
-	// incomingAccountable, ok := federatorMsg.APObjectModel.(ap.Accountable)
-	// if !ok {
-	// 	return errors.New("Accountable was not parseable on update account message")
-	// }
+	incomingAccountable, ok := federatorMsg.APObjectModel.(ap.Accountable)
+	if !ok {
+		return errors.New("Accountable was not parseable on update account message")
+	}
 
 	// Fetch up-to-date bio, avatar, header, etc.
 	_, _, err := p.federator.RefreshAccount(
 		ctx,
 		federatorMsg.ReceivingAccount.Username,
 		incomingAccount,
+		incomingAccountable,
 		true,
 	)
 	if err != nil {

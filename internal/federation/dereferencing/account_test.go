@@ -175,7 +175,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 		config.GetHost(),
 	)
 	suite.True(gtserror.Unretrievable(err))
-	suite.EqualError(err, "item could not be retrieved: no entries")
+	suite.EqualError(err, "no entries")
 	suite.Nil(fetchedAccount)
 }
 
@@ -189,7 +189,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 		"localhost:8080",
 	)
 	suite.True(gtserror.Unretrievable(err))
-	suite.EqualError(err, "item could not be retrieved: no entries")
+	suite.EqualError(err, "no entries")
 	suite.Nil(fetchedAccount)
 }
 
@@ -202,7 +202,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
 	)
 	suite.True(gtserror.Unretrievable(err))
-	suite.EqualError(err, "item could not be retrieved: no entries")
+	suite.EqualError(err, "no entries")
 	suite.Nil(fetchedAccount)
 }
 

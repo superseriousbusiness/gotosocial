@@ -124,7 +124,7 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 			ID:     id.NewULID(),
 			Domain: uri.Host,
 			URI:    uriStr,
-		})
+		}, nil)
 	}
 
 	// Check whether needs update.
@@ -141,6 +141,7 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 		requestUser,
 		uri,
 		account,
+		nil,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
@@ -186,7 +187,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 			ID:       id.NewULID(),
 			Username: username,
 			Domain:   domain,
-		})
+		}, nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -205,6 +206,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	latest, apubAcc, err := d.RefreshAccount(ctx,
 		requestUser,
 		account,
+		nil,
 		false,
 	)
 	if err != nil {
@@ -223,7 +225,7 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 }
 
 // RefreshAccount: implements Dereferencer{}.RefreshAccount.
-func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) (*gtsmodel.Account, ap.Accountable, error) {
+func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error) {
 	// Check whether needs update (and not forced).
 	if accountUpToDate(account) && !force {
 		return account, nil, nil
@@ -240,6 +242,7 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 		requestUser,
 		uri,
 		account,
+		apubAcc,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
@@ -262,7 +265,7 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 }
 
 // RefreshAccountAsync: implements Dereferencer{}.RefreshAccountAsync.
-func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, force bool) {
+func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) {
 	// Check whether needs update (and not forced).
 	if accountUpToDate(account) && !force {
 		return
@@ -277,7 +280,7 @@ func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, acc
 
 	// Enqueue a worker function to enrich this account async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		latest, _, err := d.enrichAccount(ctx, requestUser, uri, account)
+		latest, _, err := d.enrichAccount(ctx, requestUser, uri, account, apubAcc)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote account: %v", err)
 			return
@@ -291,7 +294,7 @@ func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, acc
 }
 
 // enrichAccount will enrich the given account, whether a new barebones model, or existing model from the database. It handles necessary dereferencing, webfingering etc.
-func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account) (*gtsmodel.Account, ap.Accountable, error) {
+func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account, apubAcc ap.Accountable) (*gtsmodel.Account, ap.Accountable, error) {
 	// Pre-fetch a transport for requesting username, used by later deref procedures.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
@@ -353,17 +356,19 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	d.startHandshake(requestUser, uri)
 	defer d.stopHandshake(requestUser, uri)
 
-	// Dereference latest version of the account.
-	b, err := tsport.Dereference(ctx, uri)
-	if err != nil {
-		err := gtserror.Newf("error deferencing %s: %w", uri, err)
-		return nil, nil, gtserror.SetUnretrievable(err)
-	}
+	if apubAcc == nil {
+		// Dereference latest version of the account.
+		b, err := tsport.Dereference(ctx, uri)
+		if err != nil {
+			err := gtserror.Newf("error deferencing %s: %w", uri, err)
+			return nil, nil, gtserror.SetUnretrievable(err)
+		}
 
-	// Attempt to resolve ActivityPub account from data.
-	apubAcc, err := ap.ResolveAccountable(ctx, b)
-	if err != nil {
-		return nil, nil, gtserror.Newf("error resolving accountable from data for account %s: %w", uri, err)
+		// Attempt to resolve ActivityPub acc from data.
+		apubAcc, err = ap.ResolveAccountable(ctx, b)
+		if err != nil {
+			return nil, nil, gtserror.Newf("error resolving accountable from data for account %s: %w", uri, err)
+		}
 	}
 
 	// Convert the dereferenced AP account object to our GTS model.
