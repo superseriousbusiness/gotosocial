@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-// ListUpdatePUTHandler swagger:operation PUT /api/v1/list listUpdate
+// ListUpdatePUTHandler swagger:operation PUT /api/v1/lists/{id} listUpdate
 //
 // Update an existing list.
 //

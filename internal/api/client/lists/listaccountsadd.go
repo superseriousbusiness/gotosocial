@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListAccountsPOSTHandler swagger:operation POST /api/v1/list/{id}/accounts addListAccounts
+// ListAccountsPOSTHandler swagger:operation POST /api/v1/lists/{id}/accounts addListAccounts
 //
 // Add one or more accounts to the given list.
 //
