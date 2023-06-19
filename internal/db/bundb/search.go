@@ -78,7 +78,7 @@ func whereLikeSubquery(
 	q *bun.SelectQuery,
 	subQuery *bun.SelectQuery,
 	searchQuery string,
-) {
+) *bun.SelectQuery {
 	// Escape existing wildcard + escape
 	// chars in the search query string.
 	searchQuery = replacer.Replace(searchQuery)
@@ -89,7 +89,7 @@ func whereLikeSubquery(
 
 	// Append resulting WHERE
 	// clause to the main query.
-	q = q.Where(
+	return q.Where(
 		"(?) LIKE ? ESCAPE ?",
 		subQuery, searchQuery, `\`,
 	)
@@ -164,7 +164,7 @@ func (s *searchDB) SearchForAccounts(
 
 	// Search for matches of query
 	// within the accountText subquery.
-	whereLikeSubquery(q, s.accountText(following), query)
+	q = whereLikeSubquery(q, s.accountText(following), query)
 
 	if limit > 0 {
 		// Limit amount of accounts returned.
@@ -272,7 +272,7 @@ func (s *searchDB) SearchForStatuses(
 
 	// Search for matches of query
 	// within the statusText subquery.
-	whereLikeSubquery(q, s.statusText(), query)
+	q = whereLikeSubquery(q, s.statusText(), query)
 
 	if limit > 0 {
 		// Limit amount of statuses returned.
