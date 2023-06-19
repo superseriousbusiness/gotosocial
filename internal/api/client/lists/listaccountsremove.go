@@ -100,7 +100,17 @@ func (m *Module) ListAccountsDELETEHandler(c *gin.Context) {
 	}
 
 	form := &apimodel.ListAccountsChangeRequest{}
-	if err := c.ShouldBind(form); err != nil {
+
+	// XXX: Sending a body with a DELETE request is undefined. Ruby on Rails parses
+	// it fine. Go's (*http.Request).ParseForm only parses POST-style forms for POST,
+	// PUT, and PATCH request methods. Change the method until we're done with
+	// parsing in order to be compatible with Mastodon's client API conventions.
+	oldMethod := c.Request.Method
+	c.Request.Method = "POST"
+	err = c.ShouldBind(form)
+	c.Request.Method = oldMethod
+
+	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
