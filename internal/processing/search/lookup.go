@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strings"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
@@ -81,7 +82,7 @@ func (p *Processor) Lookup(
 		false, // never resolve!
 	)
 	if err != nil {
-		if errors.As(err, new(*dereferencing.ErrNotRetrievable)) {
+		if errorsv2.Assignable(err, (*dereferencing.ErrNotRetrievable)(nil)) {
 			// ErrNotRetrievable is fine, just wrap it in
 			// a 404 to indicate we couldn't find anything.
 			err := fmt.Errorf("%s not found", query)
