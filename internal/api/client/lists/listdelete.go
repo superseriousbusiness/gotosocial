@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListDELETEHandler swagger:operation DELETE /api/v1/list/{id} listDelete
+// ListDELETEHandler swagger:operation DELETE /api/v1/lists/{id} listDelete
 //
 // Delete a single list with the given ID.
 //

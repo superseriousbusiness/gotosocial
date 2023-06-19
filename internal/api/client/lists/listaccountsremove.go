@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListAccountsDELETEHandler swagger:operation DELETE /api/v1/list/{id}/accounts removeListAccounts
+// ListAccountsDELETEHandler swagger:operation DELETE /api/v1/lists/{id}/accounts removeListAccounts
 //
 // Remove one or more accounts from the given list.
 //
