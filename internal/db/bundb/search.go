@@ -61,6 +61,40 @@ type searchDB struct {
 	state *state.State
 }
 
+// replacer is a thread-safe string replacer which escapes
+// common SQLite + Postgres `LIKE` wildcard chars using the
+// escape character `\`. Initialized as a var in this package
+// so it can be reused.
+var replacer = strings.NewReplacer(
+	`\`, `\\`, // Escape char.
+	`%`, `\%`, // Zero or more char.
+	`_`, `\_`, // Exactly one char.
+)
+
+// whereLikeSubquery appends a WHERE clause to the
+// given SelectQuery q, which searches for matches
+// of searchQuery in the given subQuery using LIKE.
+func whereLikeSubquery(
+	q *bun.SelectQuery,
+	subQuery *bun.SelectQuery,
+	searchQuery string,
+) {
+	// Escape existing wildcard + escape
+	// chars in the search query string.
+	searchQuery = replacer.Replace(searchQuery)
+
+	// Add our own wildcards back in; search
+	// zero or more chars around the query.
+	searchQuery = `%` + searchQuery + `%`
+
+	// Append resulting WHERE
+	// clause to the main query.
+	q = q.Where(
+		"(?) LIKE ? ESCAPE ?",
+		subQuery, searchQuery, `\`,
+	)
+}
+
 // Query example (SQLite):
 //
 //	SELECT "account"."id" FROM "accounts" AS "account"
@@ -284,40 +318,6 @@ func (s *searchDB) SearchForStatuses(
 	}
 
 	return statuses, nil
-}
-
-// replacer is a thread-safe string replacer which escapes
-// common SQLite + Postgres `LIKE` wildcard chars using the
-// escape character `\`. Initialized as a var in this package
-// so it can be reused.
-var replacer = strings.NewReplacer(
-	`\`, `\\`, // Escape char.
-	`%`, `\%`, // Zero or more char.
-	`_`, `\_`, // Exactly one char.
-)
-
-// whereLikeSubquery appends a WHERE clause to the
-// given SelectQuery q, which searches for matches
-// of searchQuery in the given subQuery using LIKE.
-func whereLikeSubquery(
-	q *bun.SelectQuery,
-	subQuery *bun.SelectQuery,
-	searchQuery string,
-) {
-	// Escape existing wildcard + escape
-	// chars in the search query string.
-	searchQuery = replacer.Replace(searchQuery)
-
-	// Add our own wildcards back in; search
-	// zero or more chars around the query.
-	searchQuery = `%` + searchQuery + `%`
-
-	// Append resulting WHERE
-	// clause to the main query.
-	q = q.Where(
-		"(?) LIKE ? ESCAPE ?",
-		subQuery, searchQuery, `\`,
-	)
 }
 
 // followedAccounts returns a subquery that selects only IDs
