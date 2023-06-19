@@ -61,21 +61,6 @@ type searchDB struct {
 	state *state.State
 }
 
-const (
-	escapeChar    = "\\"
-	zeroOrMore    = "%"
-	exactlyOne    = "_"
-	escEscapeChar = escapeChar + escapeChar
-	escZeroOrMore = escapeChar + zeroOrMore
-	escExactlyOne = escapeChar + exactlyOne
-)
-
-var replacer = strings.NewReplacer(
-	escapeChar, escEscapeChar,
-	zeroOrMore, escZeroOrMore,
-	exactlyOne, escExactlyOne,
-)
-
 // Query example (SQLite):
 //
 //	SELECT "account"."id" FROM "accounts" AS "account"
@@ -139,19 +124,13 @@ func (s *searchDB) SearchForAccounts(
 		q = q.Where(
 			"? IN (?)",
 			bun.Ident("account.id"),
-			s.followedAccountIDs(accountID),
+			s.followedAccounts(accountID),
 		)
 	}
 
-	// Concatenate account username, displayname,
-	// and bio/note (only if following). The main
-	// query will search within this subquery.
-	q = q.Where(
-		"(?) LIKE ? ESCAPE ?",
-		s.accountText(following),
-		normalizeQuery(query),
-		escapeChar,
-	)
+	// Search for matches of query
+	// within the accountText subquery.
+	whereLikeSubquery(q, s.accountText(following), query)
 
 	if limit > 0 {
 		// Limit amount of accounts returned.
@@ -257,15 +236,9 @@ func (s *searchDB) SearchForStatuses(
 		frontToBack = false
 	}
 
-	// Concatenate status content warning
-	// and content. The main query will
-	// search within this subquery.
-	q = q.Where(
-		"(?) LIKE ? ESCAPE ?",
-		s.statusText(),
-		normalizeQuery(query),
-		escapeChar,
-	)
+	// Search for matches of query
+	// within the statusText subquery.
+	whereLikeSubquery(q, s.statusText(), query)
 
 	if limit > 0 {
 		// Limit amount of statuses returned.
@@ -313,17 +286,43 @@ func (s *searchDB) SearchForStatuses(
 	return statuses, nil
 }
 
-func normalizeQuery(query string) string {
-	// Escape existing wildcard + escape chars.
-	query = replacer.Replace(query)
+// replacer is a thread-safe string replacer which escapes
+// common SQLite + Postgres `LIKE` wildcard chars using the
+// escape character `\`. Initialized as a var in this package
+// so it can be reused.
+var replacer = strings.NewReplacer(
+	`\`, `\\`, // Escape char.
+	`%`, `\%`, // Zero or more char.
+	`_`, `\_`, // Exactly one char.
+)
 
-	// Add our own wildcards back in.
-	query = zeroOrMore + query + zeroOrMore
+// whereLikeSubquery appends a WHERE clause to the
+// given SelectQuery q, which searches for matches
+// of searchQuery in the given subQuery using LIKE.
+func whereLikeSubquery(
+	q *bun.SelectQuery,
+	subQuery *bun.SelectQuery,
+	searchQuery string,
+) {
+	// Escape existing wildcard + escape
+	// chars in the search query string.
+	searchQuery = replacer.Replace(searchQuery)
 
-	return query
+	// Add our own wildcards back in; search
+	// zero or more chars around the query.
+	searchQuery = `%` + searchQuery + `%`
+
+	// Append resulting WHERE
+	// clause to the main query.
+	q = q.Where(
+		"(?) LIKE ? ESCAPE ?",
+		subQuery, searchQuery, `\`,
+	)
 }
 
-func (s *searchDB) followedAccountIDs(accountID string) *bun.SelectQuery {
+// followedAccounts returns a subquery that selects only IDs
+// of accounts that are followed by the given accountID.
+func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
 	return s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
