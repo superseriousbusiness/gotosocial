@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -35,6 +36,14 @@ import (
 
 type AccountUpdateTestSuite struct {
 	AccountStandardTestSuite
+}
+
+func (suite *AccountUpdateTestSuite) updateAccountFromForm(data map[string]string, expectedHTTPStatus int, expectedBody string) (*apimodel.Account, error) {
+	form := url.Values{}
+	for key, val := range data {
+		form[key] = []string{val}
+	}
+	return suite.updateAccount([]byte(form.Encode()), "application/x-www-form-urlencoded", expectedHTTPStatus, expectedBody)
 }
 
 func (suite *AccountUpdateTestSuite) updateAccountFromFormData(data map[string]string, expectedHTTPStatus int, expectedBody string) (*apimodel.Account, error) {
@@ -106,6 +115,32 @@ func (suite *AccountUpdateTestSuite) updateAccount(
 	return resp, nil
 }
 
+func (suite *AccountUpdateTestSuite) TestUpdateAccountBasicForm() {
+	data := map[string]string{
+		"note":                        "this is my new bio read it and weep",
+		"fields_attributes[0][name]":  "pronouns",
+		"fields_attributes[0][value]": "they/them",
+		"fields_attributes[1][name]":  "Website",
+		"fields_attributes[1][value]": "https://example.com",
+	}
+
+	apimodelAccount, err := suite.updateAccountFromForm(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+	suite.Equal("this is my new bio read it and weep", apimodelAccount.Source.Note)
+
+	if l := len(apimodelAccount.Fields); l != 2 {
+		suite.FailNow("", "expected %d fields, got %d", 2, l)
+	}
+	suite.Equal(`pronouns`, apimodelAccount.Fields[0].Name)
+	suite.Equal(`they/them`, apimodelAccount.Fields[0].Value)
+	suite.Equal(`Website`, apimodelAccount.Fields[1].Name)
+	suite.Equal(`<a href="https://example.com" rel="nofollow noreferrer noopener" target="_blank">https://example.com</a>`, apimodelAccount.Fields[1].Value)
+}
+
 func (suite *AccountUpdateTestSuite) TestUpdateAccountBasicFormData() {
 	data := map[string]string{
 		"note":                        "this is my new bio read it and weep",
@@ -166,6 +201,19 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountBasicJSON() {
 	suite.Equal(`<a href="https://example.com" rel="nofollow noreferrer noopener" target="_blank">https://example.com</a>`, apimodelAccount.Fields[1].Value)
 }
 
+func (suite *AccountUpdateTestSuite) TestUpdateAccountLockForm() {
+	data := map[string]string{
+		"locked": "true",
+	}
+
+	apimodelAccount, err := suite.updateAccountFromForm(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.True(apimodelAccount.Locked)
+}
+
 func (suite *AccountUpdateTestSuite) TestUpdateAccountLockFormData() {
 	data := map[string]string{
 		"locked": "true",
@@ -191,6 +239,19 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountLockJSON() {
 	}
 
 	suite.True(apimodelAccount.Locked)
+}
+
+func (suite *AccountUpdateTestSuite) TestUpdateAccountUnlockForm() {
+	data := map[string]string{
+		"locked": "false",
+	}
+
+	apimodelAccount, err := suite.updateAccountFromForm(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.False(apimodelAccount.Locked)
 }
 
 func (suite *AccountUpdateTestSuite) TestUpdateAccountUnlockFormData() {
@@ -238,6 +299,24 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountCache() {
 	}
 
 	suite.Equal("<p>this is my new bio read it and weep</p>", apimodelAccount.Note)
+}
+
+func (suite *AccountUpdateTestSuite) TestUpdateAccountDiscoverableForm() {
+	data := map[string]string{
+		"discoverable": "false",
+	}
+
+	apimodelAccount, err := suite.updateAccountFromForm(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.False(apimodelAccount.Discoverable)
+
+	// Check the account in the database too.
+	dbZork, err := suite.db.GetAccountByID(context.Background(), apimodelAccount.ID)
+	suite.NoError(err)
+	suite.False(*dbZork.Discoverable)
 }
 
 func (suite *AccountUpdateTestSuite) TestUpdateAccountDiscoverableFormData() {
@@ -302,6 +381,15 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountWithImageFormData() {
 	suite.NotEqual("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg", apimodelAccount.HeaderStatic)
 }
 
+func (suite *AccountUpdateTestSuite) TestUpdateAccountEmptyForm() {
+	data := make(map[string]string)
+
+	_, err := suite.updateAccountFromForm(data, http.StatusBadRequest, `{"error":"Bad Request: empty form submitted"}`)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+}
+
 func (suite *AccountUpdateTestSuite) TestUpdateAccountEmptyFormData() {
 	data := make(map[string]string)
 
@@ -309,6 +397,25 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountEmptyFormData() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+}
+
+func (suite *AccountUpdateTestSuite) TestUpdateAccountSourceForm() {
+	data := map[string]string{
+		"source[privacy]":   string(apimodel.VisibilityPrivate),
+		"source[language]":  "de",
+		"source[sensitive]": "true",
+		"locked":            "true",
+	}
+
+	apimodelAccount, err := suite.updateAccountFromForm(data, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(data["source[language]"], apimodelAccount.Source.Language)
+	suite.EqualValues(apimodel.VisibilityPrivate, apimodelAccount.Source.Privacy)
+	suite.True(apimodelAccount.Source.Sensitive)
+	suite.True(apimodelAccount.Locked)
 }
 
 func (suite *AccountUpdateTestSuite) TestUpdateAccountSourceFormData() {

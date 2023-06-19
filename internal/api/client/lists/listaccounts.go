@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListAccountsGETHandler swagger:operation GET /api/v1/list/{id}/accounts listAccounts
+// ListAccountsGETHandler swagger:operation GET /api/v1/lists/{id}/accounts listAccounts
 //
 // Page through accounts in this list.
 //

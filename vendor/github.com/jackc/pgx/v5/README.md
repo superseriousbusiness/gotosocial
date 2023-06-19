@@ -132,12 +132,23 @@ These adapters can be used with the tracelog package.
 * [github.com/jackc/pgx-logrus](https://github.com/jackc/pgx-logrus)
 * [github.com/jackc/pgx-zap](https://github.com/jackc/pgx-zap)
 * [github.com/jackc/pgx-zerolog](https://github.com/jackc/pgx-zerolog)
+* [github.com/mcosta74/pgx-slog](https://github.com/mcosta74/pgx-slog)
 
 ## 3rd Party Libraries with PGX Support
+
+### [github.com/pashagolub/pgxmock](https://github.com/pashagolub/pgxmock)
+
+pgxmock is a mock library implementing pgx interfaces. 
+pgxmock has one and only purpose - to simulate pgx behavior in tests, without needing a real database connection. 
 
 ### [github.com/georgysavva/scany](https://github.com/georgysavva/scany)
 
 Library for scanning data from a database into Go structs and more.
+
+### [github.com/vingarcia/ksql](https://github.com/vingarcia/ksql)
+
+A carefully designed SQL client for making using SQL easier,
+more productive, and less error-prone on Golang.
 
 ### [https://github.com/otan/gopgkrb5](https://github.com/otan/gopgkrb5)
 

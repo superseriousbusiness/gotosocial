@@ -1147,6 +1147,13 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: MaxFeaturedTags
+            max_profile_fields:
+                description: |-
+                    The maximum number of profile fields allowed for each account.
+                    Currently not configurable, so this is hardcoded to 6. (https://github.com/superseriousbusiness/gotosocial/issues/1876)
+                format: int64
+                type: integer
+                x-go-name: MaxProfileFields
         title: InstanceConfigurationAccounts models instance account config parameters.
         type: object
         x-go-name: InstanceConfigurationAccounts
@@ -3238,6 +3245,7 @@ paths:
         patch:
             consumes:
                 - multipart/form-data
+                - application/x-www-form-urlencoded
                 - application/json
             operationId: accountUpdate
             parameters:
@@ -4603,7 +4611,34 @@ paths:
                     description: internal server error
             tags:
                 - instance
-    /api/v1/list:
+    /api/v1/lists:
+        get:
+            operationId: lists
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of all lists owned by the requesting user.
+                    schema:
+                        items:
+                            $ref: '#/definitions/list'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Get all lists for owned by authorized user.
+            tags:
+                - lists
         post:
             consumes:
                 - application/json
@@ -4654,61 +4689,7 @@ paths:
             summary: Create a new list.
             tags:
                 - lists
-        put:
-            consumes:
-                - application/json
-                - application/xml
-                - application/x-www-form-urlencoded
-            operationId: listUpdate
-            parameters:
-                - description: ID of the list
-                  example: Cool People
-                  in: path
-                  name: id
-                  required: true
-                  type: string
-                  x-go-name: Title
-                - description: Title of this list.
-                  example: Cool People
-                  in: formData
-                  name: title
-                  type: string
-                  x-go-name: RepliesPolicy
-                - description: |-
-                    RepliesPolicy for this list.
-                    followed = Show replies to any followed user
-                    list = Show replies to members of the list
-                    none = Show replies to no one
-                  example: list
-                  in: formData
-                  name: replies_policy
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: The newly updated list.
-                    schema:
-                        $ref: '#/definitions/list'
-                "400":
-                    description: bad request
-                "401":
-                    description: unauthorized
-                "403":
-                    description: forbidden
-                "404":
-                    description: not found
-                "406":
-                    description: not acceptable
-                "500":
-                    description: internal server error
-            security:
-                - OAuth2 Bearer:
-                    - write:lists
-            summary: Update an existing list.
-            tags:
-                - lists
-    /api/v1/list/{id}:
+    /api/v1/lists/{id}:
         delete:
             operationId: listDelete
             parameters:
@@ -4769,7 +4750,61 @@ paths:
             summary: Get a single list with the given ID.
             tags:
                 - lists
-    /api/v1/list/{id}/accounts:
+        put:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: listUpdate
+            parameters:
+                - description: ID of the list
+                  example: Cool People
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                  x-go-name: Title
+                - description: Title of this list.
+                  example: Cool People
+                  in: formData
+                  name: title
+                  type: string
+                  x-go-name: RepliesPolicy
+                - description: |-
+                    RepliesPolicy for this list.
+                    followed = Show replies to any followed user
+                    list = Show replies to members of the list
+                    none = Show replies to no one
+                  example: list
+                  in: formData
+                  name: replies_policy
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly updated list.
+                    schema:
+                        $ref: '#/definitions/list'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:lists
+            summary: Update an existing list.
+            tags:
+                - lists
+    /api/v1/lists/{id}/accounts:
         delete:
             consumes:
                 - application/json
@@ -4910,34 +4945,6 @@ paths:
                 - OAuth2 Bearer:
                     - read:lists
             summary: Add one or more accounts to the given list.
-            tags:
-                - lists
-    /api/v1/lists:
-        get:
-            operationId: lists
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: Array of all lists owned by the requesting user.
-                    schema:
-                        items:
-                            $ref: '#/definitions/list'
-                        type: array
-                "400":
-                    description: bad request
-                "401":
-                    description: unauthorized
-                "404":
-                    description: not found
-                "406":
-                    description: not acceptable
-                "500":
-                    description: internal server error
-            security:
-                - OAuth2 Bearer:
-                    - read:lists
-            summary: Get all lists for owned by authorized user.
             tags:
                 - lists
     /api/v1/media/{id}:

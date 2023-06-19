@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-// ListCreatePOSTHandler swagger:operation POST /api/v1/list listCreate
+// ListCreatePOSTHandler swagger:operation POST /api/v1/lists listCreate
 //
 // Create a new list.
 //

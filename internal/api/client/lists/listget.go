@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListGETHandler swagger:operation GET /api/v1/list/{id} list
+// ListGETHandler swagger:operation GET /api/v1/lists/{id} list
 //
 // Get a single list with the given ID.
 //
