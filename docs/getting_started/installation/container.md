@@ -42,21 +42,10 @@ If desired, update the GoToSocial Docker image tag to the version of GtS you wan
 
 `latest`   - the default. This points to the latest stable release of GoToSocial.
 
-`snapshot` - points to whatever code is currently on the main branch. Not guaranteed to be stable, will often be broken. Use with caution.
+`snapshot` - points to whatever code is currently on the main branch. Not guaranteed to be stable, and may often be broken. Use with caution.
 
-You can also replace `latest` with a specific GoToSocial version number. This is recommended when you want to make sure that you don't update your GoToSocial version by accident, which can cause problems.
-
-The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top. Replace `latest` in the docker-compose.yaml with the number of the desired release (without the leading `v` or trailing version name). So for example if you want to run [v0.3.1 Sleepy Sloth](https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.3.1) for whatever reason, you should replace:
-
-```text
-image: superseriousbusiness/gotosocial:latest
-```
-
-with:
-
-```text
-image: superseriousbusiness/gotosocial:0.3.1
-```
+!!! tip
+    You can also replace `latest` with a specific GoToSocial version number. This is recommended when you want to make sure that you don't update your GoToSocial version by accident, which can cause problems. The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top. Replace `latest` in the docker-compose.yaml with the number of the desired release (without the leading `v` or trailing version name).
 
 ### Host
 
@@ -116,7 +105,7 @@ Now that GoToSocial is running, you should create at least a user for yourself. 
 
 ### Done
 
-GoToSocial should now be running on your machine! To verify this, open your browser and go to `http://localhost:443`. You should see the GoToSocial landing page. Well done!
+GoToSocial should now be running on your machine! To verify this, open your browser navigate to whatever you set as your `GTS_HOST` value. You should see the GoToSocial landing page. Well done!
 
 ## (Optional) Reverse Proxy
 
