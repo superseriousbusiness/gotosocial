@@ -71,10 +71,10 @@ var replacer = strings.NewReplacer(
 	`_`, `\_`, // Exactly one char.
 )
 
-// whereLikeSubquery appends a WHERE clause to the
+// whereSubqueryLike appends a WHERE clause to the
 // given SelectQuery q, which searches for matches
 // of searchQuery in the given subQuery using LIKE.
-func whereLikeSubquery(
+func whereSubqueryLike(
 	q *bun.SelectQuery,
 	subQuery *bun.SelectQuery,
 	searchQuery string,
@@ -162,9 +162,12 @@ func (s *searchDB) SearchForAccounts(
 		)
 	}
 
-	// Search for matches of query
-	// within the accountText subquery.
-	q = whereLikeSubquery(q, s.accountText(following), query)
+	// Select account text as subquery.
+	accountTextSubq := s.accountText(following)
+
+	// Search using LIKE for matches of query
+	// string within accountText subquery.
+	q = whereSubqueryLike(q, accountTextSubq, query)
 
 	if limit > 0 {
 		// Limit amount of accounts returned.
@@ -212,114 +215,6 @@ func (s *searchDB) SearchForAccounts(
 	return accounts, nil
 }
 
-// Query example (SQLite):
-//
-//	SELECT "status"."id"
-//	FROM "statuses" AS "status"
-//	WHERE (("status"."account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF') OR ("status"."in_reply_to_account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF'))
-//	AND ("status"."boost_of_id" IS NULL)
-//	AND ("status"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
-//	AND ((SELECT LOWER("status"."content" || COALESCE("status"."content_warning", '')) AS "status_text") LIKE '%hello%' ESCAPE '\')
-//	ORDER BY "status"."id" DESC LIMIT 10
-func (s *searchDB) SearchForStatuses(
-	ctx context.Context,
-	accountID string,
-	query string,
-	maxID string,
-	minID string,
-	limit int,
-	offset int,
-) ([]*gtsmodel.Status, error) {
-	// Ensure reasonable
-	if limit < 0 {
-		limit = 0
-	}
-
-	// Make educated guess for slice size
-	var (
-		statusIDs   = make([]string, 0, limit)
-		frontToBack = true
-	)
-
-	q := s.conn.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		// Select only IDs from table
-		Column("status.id").
-		// Search only for statuses created by accountID,
-		// or statuses posted as a reply to accountID.
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.
-				Where("? = ?", bun.Ident("status.account_id"), accountID).
-				WhereOr("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
-		}).
-		// Ignore boosts.
-		Where("? IS NULL", bun.Ident("status.boost_of_id"))
-
-	// Return only items with a LOWER id than maxID.
-	if maxID == "" {
-		maxID = id.Highest
-	}
-	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
-
-	if minID != "" {
-		// return only statuses HIGHER (ie., newer) than minID
-		q = q.Where("? > ?", bun.Ident("status.id"), minID)
-
-		// page up
-		frontToBack = false
-	}
-
-	// Search for matches of query
-	// within the statusText subquery.
-	q = whereLikeSubquery(q, s.statusText(), query)
-
-	if limit > 0 {
-		// Limit amount of statuses returned.
-		q = q.Limit(limit)
-	}
-
-	if frontToBack {
-		// Page down.
-		q = q.Order("status.id DESC")
-	} else {
-		// Page up.
-		q = q.Order("status.id ASC")
-	}
-
-	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, s.conn.ProcessError(err)
-	}
-
-	if len(statusIDs) == 0 {
-		return nil, nil
-	}
-
-	// If we're paging up, we still want statuses
-	// to be sorted by ID desc, so reverse ids slice.
-	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
-	if !frontToBack {
-		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
-			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
-		}
-	}
-
-	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
-	for _, id := range statusIDs {
-		// Fetch status from db for ID
-		status, err := s.state.DB.GetStatusByID(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "error fetching status %q: %v", id, err)
-			continue
-		}
-
-		// Append status to slice
-		statuses = append(statuses, status)
-	}
-
-	return statuses, nil
-}
-
 // followedAccounts returns a subquery that selects only IDs
 // of accounts that are followed by the given accountID.
 func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
@@ -330,6 +225,10 @@ func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
 		Where("? = ?", bun.Ident("follow.account_id"), accountID)
 }
 
+// statusText returns a subquery that selects a concatenation
+// of account username and display name as "account_text". If
+// `following` is true, then account note will also be included
+// in the concatenation.
 func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	var (
 		accountText = s.conn.NewSelect()
@@ -383,6 +282,119 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	return accountText.ColumnExpr(query, args...)
 }
 
+// Query example (SQLite):
+//
+//	SELECT "status"."id"
+//	FROM "statuses" AS "status"
+//	WHERE ("status"."boost_of_id" IS NULL)
+//	AND (("status"."account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF') OR ("status"."in_reply_to_account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF'))
+//	AND ("status"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
+//	AND ((SELECT LOWER("status"."content" || COALESCE("status"."content_warning", '')) AS "status_text") LIKE '%hello%' ESCAPE '\')
+//	ORDER BY "status"."id" DESC LIMIT 10
+func (s *searchDB) SearchForStatuses(
+	ctx context.Context,
+	accountID string,
+	query string,
+	maxID string,
+	minID string,
+	limit int,
+	offset int,
+) ([]*gtsmodel.Status, error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	var (
+		statusIDs   = make([]string, 0, limit)
+		frontToBack = true
+	)
+
+	q := s.conn.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		// Select only IDs from table
+		Column("status.id").
+		// Ignore boosts.
+		Where("? IS NULL", bun.Ident("status.boost_of_id")).
+		// Select only statuses created by
+		// accountID or replying to accountID.
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where("? = ?", bun.Ident("status.account_id"), accountID).
+				WhereOr("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
+		})
+
+	// Return only items with a LOWER id than maxID.
+	if maxID == "" {
+		maxID = id.Highest
+	}
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
+
+	if minID != "" {
+		// return only statuses HIGHER (ie., newer) than minID
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
+
+		// page up
+		frontToBack = false
+	}
+
+	// Select status text as subquery.
+	statusTextSubq := s.statusText()
+
+	// Search using LIKE for matches of query
+	// string within statusText subquery.
+	q = whereSubqueryLike(q, statusTextSubq, query)
+
+	if limit > 0 {
+		// Limit amount of statuses returned.
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("status.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status.id ASC")
+	}
+
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, s.conn.ProcessError(err)
+	}
+
+	if len(statusIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want statuses
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+		}
+	}
+
+	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
+	for _, id := range statusIDs {
+		// Fetch status from db for ID
+		status, err := s.state.DB.GetStatusByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error fetching status %q: %v", id, err)
+			continue
+		}
+
+		// Append status to slice
+		statuses = append(statuses, status)
+	}
+
+	return statuses, nil
+}
+
+// statusText returns a subquery that selects a concatenation
+// of status content and content warning as "status_text".
 func (s *searchDB) statusText() *bun.SelectQuery {
 	statusText := s.conn.NewSelect()
 
