@@ -26,11 +26,9 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -62,7 +60,6 @@ func (p *Processor) Get(
 	account *gtsmodel.Account,
 	req *apimodel.SearchRequest,
 ) (*apimodel.SearchResult, gtserror.WithCode) {
-
 	var (
 		maxID     = req.MaxID
 		minID     = req.MinID
@@ -127,7 +124,7 @@ func (p *Processor) Get(
 	// accounts, since this is all namestring search can return.
 	if includeAccounts(queryType) {
 		// Copy query to avoid altering original.
-		var queryC = query
+		queryC := query
 
 		// If query looks vaguely like an email address, ie. it doesn't
 		// start with '@' but it has '@' in it somewhere, it's probably
@@ -284,12 +281,7 @@ func (p *Processor) accountsByNamestring(
 	if err != nil {
 		// Check for semi-expected error types.
 		// On one of these, we can continue.
-		var (
-			errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
-			errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't an account.
-		)
-
-		if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
+		if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
 			err = gtserror.Newf("error looking up %s as account: %w", query, err)
 			return false, gtserror.NewErrorInternalError(err)
 		}
@@ -335,7 +327,7 @@ func (p *Processor) accountByUsernameDomain(
 
 		if blocked {
 			// Don't search on blocked domain.
-			return nil, dereferencing.NewErrNotRetrievable(err)
+			return nil, gtserror.SetUnretrievable(err)
 		}
 	}
 
@@ -365,7 +357,7 @@ func (p *Processor) accountByUsernameDomain(
 	}
 
 	err = fmt.Errorf("account %s could not be retrieved locally and we cannot resolve", usernameDomain)
-	return nil, dereferencing.NewErrNotRetrievable(err)
+	return nil, gtserror.SetUnretrievable(err)
 }
 
 // byURI looks for account(s) or a status with the given URI
@@ -419,12 +411,7 @@ func (p *Processor) byURI(
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
-			var (
-				errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
-				errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't an account.
-			)
-
-			if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
+			if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
 				err = gtserror.Newf("error looking up %s as account: %w", uri, err)
 				return false, gtserror.NewErrorInternalError(err)
 			}
@@ -443,12 +430,7 @@ func (p *Processor) byURI(
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
-			var (
-				errNotRetrievable = new(*dereferencing.ErrNotRetrievable) // Item can't be dereferenced.
-				errWrongType      = new(*ap.ErrWrongType)                 // Item was dereferenced, but wasn't a status.
-			)
-
-			if !errors.As(err, errNotRetrievable) && !errors.As(err, errWrongType) {
+			if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
 				err = gtserror.Newf("error looking up %s as status: %w", uri, err)
 				return false, gtserror.NewErrorInternalError(err)
 			}
@@ -519,7 +501,7 @@ func (p *Processor) accountByURI(
 	}
 
 	err = fmt.Errorf("account %s could not be retrieved locally and we cannot resolve", uriStr)
-	return nil, dereferencing.NewErrNotRetrievable(err)
+	return nil, gtserror.SetUnretrievable(err)
 }
 
 // statusByURI looks for one status with the given URI.
@@ -575,7 +557,7 @@ func (p *Processor) statusByURI(
 	}
 
 	err = fmt.Errorf("status %s could not be retrieved locally and we cannot resolve", uriStr)
-	return nil, dereferencing.NewErrNotRetrievable(err)
+	return nil, gtserror.SetUnretrievable(err)
 }
 
 // byText searches in the database for accounts and/or
