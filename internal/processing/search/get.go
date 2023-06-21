@@ -323,10 +323,9 @@ func (p *Processor) accountByUsernameDomain(
 		if err != nil {
 			err = gtserror.Newf("error checking domain block: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		if blocked {
+		} else if blocked {
 			// Don't search on blocked domain.
+			err = gtserror.New("domain blocked")
 			return nil, gtserror.SetUnretrievable(err)
 		}
 	}
