@@ -15,31 +15,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package search
+package db
 
 import (
-	"net/http"
+	"context"
 
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-const (
-	BasePathV1 = "/v1/search" // Base path for serving v1 of the search API, minus the 'api' prefix.
-	BasePathV2 = "/v2/search" // Base path for serving v2 of the search API, minus the 'api' prefix.
-)
+type Search interface {
+	// SearchForAccounts uses the given query text to search for accounts that accountID follows.
+	SearchForAccounts(ctx context.Context, accountID string, query string, maxID string, minID string, limit int, following bool, offset int) ([]*gtsmodel.Account, error)
 
-type Module struct {
-	processor *processing.Processor
-}
-
-func New(processor *processing.Processor) *Module {
-	return &Module{
-		processor: processor,
-	}
-}
-
-func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, BasePathV1, m.SearchGETHandler)
-	attachHandler(http.MethodGet, BasePathV2, m.SearchGETHandler)
+	// SearchForStatuses uses the given query text to search for statuses created by accountID, or in reply to accountID.
+	SearchForStatuses(ctx context.Context, accountID string, query string, maxID string, minID string, limit int, offset int) ([]*gtsmodel.Status, error)
 }

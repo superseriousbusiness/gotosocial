@@ -25,53 +25,33 @@ import (
 )
 
 const (
-	// LimitKey is for setting the return amount limit for eg., requesting an account's statuses
-	LimitKey = "limit"
-	// ExcludeRepliesKey is for specifying whether to exclude replies in a list of returned statuses by an account.
-	ExcludeRepliesKey = "exclude_replies"
-	// ExcludeReblogsKey is for specifying whether to exclude reblogs in a list of returned statuses by an account.
 	ExcludeReblogsKey = "exclude_reblogs"
-	// PinnedKey is for specifying whether to include pinned statuses in a list of returned statuses by an account.
-	PinnedKey = "pinned"
-	// MaxIDKey is for specifying the maximum ID of the status to retrieve.
-	MaxIDKey = "max_id"
-	// MinIDKey is for specifying the minimum ID of the status to retrieve.
-	MinIDKey = "min_id"
-	// OnlyMediaKey is for specifying that only statuses with media should be returned in a list of returned statuses by an account.
-	OnlyMediaKey = "only_media"
-	// OnlyPublicKey is for specifying that only statuses with visibility public should be returned in a list of returned statuses by account.
-	OnlyPublicKey = "only_public"
+	ExcludeRepliesKey = "exclude_replies"
+	LimitKey          = "limit"
+	MaxIDKey          = "max_id"
+	MinIDKey          = "min_id"
+	OnlyMediaKey      = "only_media"
+	OnlyPublicKey     = "only_public"
+	PinnedKey         = "pinned"
 
-	// IDKey is the key to use for retrieving account ID in requests
-	IDKey = "id"
-	// BasePath is the base API path for this module, excluding the 'api' prefix
-	BasePath = "/v1/accounts"
-	// BasePathWithID is the base path for this module with the ID key
+	BasePath       = "/v1/accounts"
+	IDKey          = "id"
 	BasePathWithID = BasePath + "/:" + IDKey
-	// VerifyPath is for verifying account credentials
-	VerifyPath = BasePath + "/verify_credentials"
-	// UpdateCredentialsPath is for updating account credentials
-	UpdateCredentialsPath = BasePath + "/update_credentials"
-	// GetStatusesPath is for showing an account's statuses
-	GetStatusesPath = BasePathWithID + "/statuses"
-	// GetFollowersPath is for showing an account's followers
-	GetFollowersPath = BasePathWithID + "/followers"
-	// GetFollowingPath is for showing account's that an account follows.
-	GetFollowingPath = BasePathWithID + "/following"
-	// GetRelationshipsPath is for showing an account's relationship with other accounts
-	GetRelationshipsPath = BasePath + "/relationships"
-	// FollowPath is for POSTing new follows to, and updating existing follows
-	FollowPath = BasePathWithID + "/follow"
-	// UnfollowPath is for POSTing an unfollow
-	UnfollowPath = BasePathWithID + "/unfollow"
-	// BlockPath is for creating a block of an account
-	BlockPath = BasePathWithID + "/block"
-	// UnblockPath is for removing a block of an account
-	UnblockPath = BasePathWithID + "/unblock"
-	// DeleteAccountPath is for deleting one's account via the API
-	DeleteAccountPath = BasePath + "/delete"
-	// ListsPath is for seeing which lists an account is.
-	ListsPath = BasePathWithID + "/lists"
+
+	BlockPath         = BasePathWithID + "/block"
+	DeletePath        = BasePath + "/delete"
+	FollowersPath     = BasePathWithID + "/followers"
+	FollowingPath     = BasePathWithID + "/following"
+	FollowPath        = BasePathWithID + "/follow"
+	ListsPath         = BasePathWithID + "/lists"
+	LookupPath        = BasePath + "/lookup"
+	RelationshipsPath = BasePath + "/relationships"
+	SearchPath        = BasePath + "/search"
+	StatusesPath      = BasePathWithID + "/statuses"
+	UnblockPath       = BasePathWithID + "/unblock"
+	UnfollowPath      = BasePathWithID + "/unfollow"
+	UpdatePath        = BasePath + "/update_credentials"
+	VerifyPath        = BasePath + "/verify_credentials"
 )
 
 type Module struct {
@@ -92,23 +72,23 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, BasePathWithID, m.AccountGETHandler)
 
 	// delete account
-	attachHandler(http.MethodPost, DeleteAccountPath, m.AccountDeletePOSTHandler)
+	attachHandler(http.MethodPost, DeletePath, m.AccountDeletePOSTHandler)
 
 	// verify account
 	attachHandler(http.MethodGet, VerifyPath, m.AccountVerifyGETHandler)
 
 	// modify account
-	attachHandler(http.MethodPatch, UpdateCredentialsPath, m.AccountUpdateCredentialsPATCHHandler)
+	attachHandler(http.MethodPatch, UpdatePath, m.AccountUpdateCredentialsPATCHHandler)
 
 	// get account's statuses
-	attachHandler(http.MethodGet, GetStatusesPath, m.AccountStatusesGETHandler)
+	attachHandler(http.MethodGet, StatusesPath, m.AccountStatusesGETHandler)
 
 	// get following or followers
-	attachHandler(http.MethodGet, GetFollowersPath, m.AccountFollowersGETHandler)
-	attachHandler(http.MethodGet, GetFollowingPath, m.AccountFollowingGETHandler)
+	attachHandler(http.MethodGet, FollowersPath, m.AccountFollowersGETHandler)
+	attachHandler(http.MethodGet, FollowingPath, m.AccountFollowingGETHandler)
 
 	// get relationship with account
-	attachHandler(http.MethodGet, GetRelationshipsPath, m.AccountRelationshipsGETHandler)
+	attachHandler(http.MethodGet, RelationshipsPath, m.AccountRelationshipsGETHandler)
 
 	// follow or unfollow account
 	attachHandler(http.MethodPost, FollowPath, m.AccountFollowPOSTHandler)
@@ -120,4 +100,8 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// account lists
 	attachHandler(http.MethodGet, ListsPath, m.AccountListsGETHandler)
+
+	// search for accounts
+	attachHandler(http.MethodGet, SearchPath, m.AccountSearchGETHandler)
+	attachHandler(http.MethodGet, LookupPath, m.AccountLookupGETHandler)
 }

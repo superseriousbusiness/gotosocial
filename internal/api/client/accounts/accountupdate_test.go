@@ -76,7 +76,7 @@ func (suite *AccountUpdateTestSuite) updateAccount(
 ) (*apimodel.Account, error) {
 	// Initialize http test context.
 	recorder := httptest.NewRecorder()
-	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, accounts.UpdateCredentialsPath, contentType)
+	ctx := suite.newContext(recorder, http.MethodPatch, bodyBytes, accounts.UpdatePath, contentType)
 
 	// Trigger the handler.
 	suite.accountsModule.AccountUpdateCredentialsPATCHHandler(ctx)

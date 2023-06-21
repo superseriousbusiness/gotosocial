@@ -18,28 +18,25 @@
 package search
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-const (
-	BasePathV1 = "/v1/search" // Base path for serving v1 of the search API, minus the 'api' prefix.
-	BasePathV2 = "/v2/search" // Base path for serving v2 of the search API, minus the 'api' prefix.
-)
-
-type Module struct {
-	processor *processing.Processor
+type Processor struct {
+	state     *state.State
+	federator federation.Federator
+	tc        typeutils.TypeConverter
+	filter    *visibility.Filter
 }
 
-func New(processor *processing.Processor) *Module {
-	return &Module{
-		processor: processor,
+// New returns a new status processor.
+func New(state *state.State, federator federation.Federator, tc typeutils.TypeConverter, filter *visibility.Filter) Processor {
+	return Processor{
+		state:     state,
+		federator: federator,
+		tc:        tc,
+		filter:    filter,
 	}
-}
-
-func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, BasePathV1, m.SearchGETHandler)
-	attachHandler(http.MethodGet, BasePathV2, m.SearchGETHandler)
 }
