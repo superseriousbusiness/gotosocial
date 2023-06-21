@@ -3,6 +3,7 @@ package ttl
 import (
 	"sync"
 	"time"
+	_ "unsafe"
 
 	"codeberg.org/gruf/go-maps"
 )
@@ -11,7 +12,7 @@ import (
 type Entry[Key comparable, Value any] struct {
 	Key    Key
 	Value  Value
-	Expiry time.Time
+	Expiry uint64
 }
 
 // Cache is the underlying Cache implementation, providing both the base Cache interface and unsafe access to underlying map to allow flexibility in building your own.
@@ -67,7 +68,7 @@ func (c *Cache[K, V]) Start(freq time.Duration) (ok bool) {
 	// Safely start
 	c.Lock()
 
-	if ok = c.stop == nil; ok {
+	if ok = (c.stop == nil); ok {
 		// Not yet running, schedule us
 		c.stop = schedule(c.Sweep, freq)
 	}
@@ -83,7 +84,7 @@ func (c *Cache[K, V]) Stop() (ok bool) {
 	// Safely stop
 	c.Lock()
 
-	if ok = c.stop != nil; ok {
+	if ok = (c.stop != nil); ok {
 		// We're running, cancel evicts
 		c.stop()
 		c.stop = nil
@@ -96,23 +97,32 @@ func (c *Cache[K, V]) Stop() (ok bool) {
 }
 
 // Sweep attempts to evict expired items (with callback!) from cache.
-func (c *Cache[K, V]) Sweep(now time.Time) {
+func (c *Cache[K, V]) Sweep(_ time.Time) {
 	var (
 		// evicted key-values.
 		kvs []kv[K, V]
 
 		// hook func ptrs.
 		evict func(K, V)
+
+		// get current nanoseconds.
+		now = runtime_nanotime()
 	)
 
 	c.locked(func() {
+		if c.TTL <= 0 {
+			// sweep is
+			// disabled
+			return
+		}
+
 		// Sentinel value
 		after := -1
 
 		// The cache will be ordered by expiry date, we iterate until we reach the index of
 		// the youngest item that hsa expired, as all succeeding items will also be expired.
 		c.Cache.RangeIf(0, c.Cache.Len(), func(i int, _ K, item *Entry[K, V]) bool {
-			if now.After(item.Expiry) {
+			if now > item.Expiry {
 				after = i
 
 				// evict all older items
@@ -161,10 +171,6 @@ func (c *Cache[K, V]) SetInvalidateCallback(hook func(K, V)) {
 
 // SetTTL: implements cache.Cache's SetTTL().
 func (c *Cache[K, V]) SetTTL(ttl time.Duration, update bool) {
-	if ttl < 0 {
-		panic("ttl must be greater than zero")
-	}
-
 	c.locked(func() {
 		// Set updated TTL
 		diff := ttl - c.TTL
@@ -173,7 +179,7 @@ func (c *Cache[K, V]) SetTTL(ttl time.Duration, update bool) {
 		if update {
 			// Update existing cache entries with new expiry time
 			c.Cache.Range(0, c.Cache.Len(), func(i int, _ K, item *Entry[K, V]) {
-				item.Expiry = item.Expiry.Add(diff)
+				item.Expiry += uint64(diff)
 			})
 		}
 	})
@@ -198,8 +204,8 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 			return
 		}
 
-		// Update fetched item's expiry
-		item.Expiry = time.Now().Add(c.TTL)
+		// Update fetched's expiry
+		item.Expiry = c.expiry()
 
 		// Set value.
 		v = item.Value
@@ -234,7 +240,7 @@ func (c *Cache[K, V]) Add(key K, value V) bool {
 
 		// Alloc new entry.
 		new := c.alloc()
-		new.Expiry = time.Now().Add(c.TTL)
+		new.Expiry = c.expiry()
 		new.Key = key
 		new.Value = value
 
@@ -290,12 +296,12 @@ func (c *Cache[K, V]) Set(key K, value V) {
 			oldV = item.Value
 
 			// Update the existing item.
-			item.Expiry = time.Now().Add(c.TTL)
+			item.Expiry = c.expiry()
 			item.Value = value
 		} else {
 			// Alloc new entry.
 			new := c.alloc()
-			new.Expiry = time.Now().Add(c.TTL)
+			new.Expiry = c.expiry()
 			new.Key = key
 			new.Value = value
 
@@ -355,7 +361,7 @@ func (c *Cache[K, V]) CAS(key K, old V, new V, cmp func(V, V) bool) bool {
 		oldV = item.Value
 
 		// Update value + expiry.
-		item.Expiry = time.Now().Add(c.TTL)
+		item.Expiry = c.expiry()
 		item.Value = new
 
 		// Set hook func ptr.
@@ -396,7 +402,7 @@ func (c *Cache[K, V]) Swap(key K, swp V) V {
 		oldV = item.Value
 
 		// Update value + expiry.
-		item.Expiry = time.Now().Add(c.TTL)
+		item.Expiry = c.expiry()
 		item.Value = swp
 
 		// Set hook func ptr.
@@ -603,12 +609,24 @@ func (c *Cache[K, V]) free(e *Entry[K, V]) {
 	var (
 		zk K
 		zv V
-		zt time.Time
 	)
-	e.Expiry = zt
+	e.Expiry = 0
 	e.Key = zk
 	e.Value = zv
 	c.pool = append(c.pool, e)
+}
+
+//go:linkname runtime_nanotime runtime.nanotime
+func runtime_nanotime() uint64
+
+// expiry returns an the next expiry time to use for an entry,
+// which is equivalent to time.Now().Add(ttl), or zero if disabled.
+func (c *Cache[K, V]) expiry() uint64 {
+	if ttl := c.TTL; ttl > 0 {
+		return runtime_nanotime() +
+			uint64(c.TTL)
+	}
+	return 0
 }
 
 type kv[K comparable, V any] struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 	"time"
+	_ "unsafe"
 
 	"codeberg.org/gruf/go-cache/v3/ttl"
 	"codeberg.org/gruf/go-errors/v2"
@@ -385,7 +386,7 @@ func (c *Cache[Value]) store(res result[Value]) (evict func()) {
 
 	// Store main entry under primary key, using evict hook if needed
 	c.cache.Cache.SetWithHook(pnext, &ttl.Entry[int64, result[Value]]{
-		Expiry: time.Now().Add(c.cache.TTL),
+		Expiry: c.expiry(),
 		Key:    pnext,
 		Value:  res,
 	}, func(_ int64, item *ttl.Entry[int64, result[Value]]) {
@@ -393,6 +394,19 @@ func (c *Cache[Value]) store(res result[Value]) (evict func()) {
 	})
 
 	return evict
+}
+
+//go:linkname runtime_nanotime runtime.nanotime
+func runtime_nanotime() uint64
+
+// expiry returns an the next expiry time to use for an entry,
+// which is equivalent to time.Now().Add(ttl), or zero if disabled.
+func (c *Cache[Value]) expiry() uint64 {
+	if ttl := c.cache.TTL; ttl > 0 {
+		return runtime_nanotime() +
+			uint64(c.cache.TTL)
+	}
+	return 0
 }
 
 type result[Value any] struct {
