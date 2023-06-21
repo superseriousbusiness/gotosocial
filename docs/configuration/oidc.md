@@ -10,6 +10,9 @@ This is very convenient in the following cases:
 - You want to delegate management of users, accounts, passwords etc. to an external service to make admin easier for yourself.
 - You already have a lot of users in an external system and you don't want to have to recreate them all in GoToSocial manually.
 
+!!! tip
+    If a user doesn't exist yet, login will fail if your IdP doesn't return a non-empty `email` as part of the claims. The email needs to be unique on this instance. Though we use the `sub` claim to associate the external identity with a GtS user, when a user is created it needs an email associated with it.
+
 ## Settings
 
 GoToSocial exposes the following configuration settings for OIDC, shown below with their default values.
