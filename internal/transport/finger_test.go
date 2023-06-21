@@ -87,11 +87,9 @@ func (suite *FingerTestSuite) TestFingerWithHostMetaCacheStrategy() {
 
 	// the TTL of the entry should have extended because we did a second
 	// successful finger
-	if repeatTime.Equal(initialTime) {
+	if repeatTime == initialTime {
 		suite.FailNowf("expected webfinger cache entry to have different expiry times", "initial: '%s', repeat: '%s'", initialTime, repeatTime)
-	}
-
-	if repeatTime.Before(initialTime) {
+	} else if repeatTime < initialTime {
 		suite.FailNowf("expected webfinger cache entry to not be a time traveller", "initial: '%s', repeat: '%s'", initialTime, repeatTime)
 	}
 
