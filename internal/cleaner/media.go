@@ -169,8 +169,9 @@ func (m *Media) PruneUnused(ctx context.Context) (int, error) {
 func (m *Media) UncacheRemote(ctx context.Context, olderThan time.Time) (int, error) {
 	var total int
 
-	// Drop time by an hour to improve search.
-	olderThan = olderThan.Add(-time.Hour)
+	// Drop time by a minute to improve search,
+	// (i.e. make it olderThan inclusive search).
+	olderThan = olderThan.Add(-time.Minute)
 
 	// Store recent time.
 	mostRecent := olderThan
