@@ -130,7 +130,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		if _, err := tx.NewSelect().
 			Table("accounts").
 			Column("id").
-			Where("? IN emoji_ids", id).
+			Where("? IN (emojis)", id).
 			Exec(ctx, &accountIDs); err != nil {
 			return err
 		}
@@ -141,7 +141,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			// Select account with ID.
 			if _, err := tx.NewSelect().
 				Table("accounts").
-				Column("emoji_ids").
+				Column("emojis").
 				Where("id = ?", id).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
@@ -155,7 +155,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			if _, err := tx.NewUpdate().
 				Table("accounts").
 				Where("id = ?", id).
-				Set("emoji_ids = ?", emojiIDs).
+				Set("emojis = ?", emojiIDs).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
@@ -166,7 +166,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		if _, err := tx.NewSelect().
 			Table("statuses").
 			Column("id").
-			Where("? IN emoji_ids").
+			Where("? IN (emojis)", id).
 			Exec(ctx, &statusIDs); err != nil {
 			return err
 		}
@@ -177,7 +177,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			// Select statuses with ID.
 			if _, err := tx.NewSelect().
 				Table("statuses").
-				Column("emoji_ids").
+				Column("emojis").
 				Where("id = ?", id).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
@@ -191,7 +191,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			if _, err := tx.NewUpdate().
 				Table("statuses").
 				Where("id = ?", id).
-				Set("emoji_ids = ?", emojiIDs).
+				Set("emojis = ?", emojiIDs).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
@@ -202,8 +202,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		if _, err := tx.NewDelete().
 			Table("emojis").
 			Where("id = ?", id).
-			Exec(ctx); err != nil &&
-			err != sql.ErrNoRows {
+			Exec(ctx); err != nil {
 			return err
 		}
 
