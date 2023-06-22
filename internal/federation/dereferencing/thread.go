@@ -289,7 +289,8 @@ stackLoop:
 			// Ensure this isn't a self-referencing page...
 			// We don't need to store / check against a map of IRIs
 			// as our getStatusByIRI() function above prevents iter'ing
-			// over statuses that have been dereferenced recently.
+			// over statuses that have been dereferenced recently, due to
+			// the `fetched_at` field preventing frequent refetches.
 			if id := current.page.GetJSONLDId(); id != nil &&
 				pageNextIRI.String() == id.Get().String() {
 				log.Warnf(ctx, "self referencing collection page: %s", pageNextIRI)

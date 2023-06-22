@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"strings"
 	"time"
@@ -64,7 +65,31 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 }
 
 func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
-	defer e.state.Caches.GTS.Emoji().Invalidate("ID", id)
+	var (
+		accountIDs []string
+		statusIDs  []string
+	)
+
+	defer func() {
+		// Invalidate cached emoji.
+		e.state.Caches.GTS.
+			Emoji().
+			Invalidate("ID", id)
+
+		for _, id := range accountIDs {
+			// Invalidate cached account.
+			e.state.Caches.GTS.
+				Account().
+				Invalidate("ID", id)
+		}
+
+		for _, id := range statusIDs {
+			// Invalidate cached account.
+			e.state.Caches.GTS.
+				Status().
+				Invalidate("ID", id)
+		}
+	}()
 
 	// Load emoji into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
@@ -82,6 +107,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 
 	return e.conn.RunInTx(ctx, func(tx bun.Tx) error {
 		// delete links between this emoji and any statuses that use it
+		// TODO: remove when we delete this table
 		if _, err := tx.
 			NewDelete().
 			TableExpr("? AS ?", bun.Ident("status_to_emojis"), bun.Ident("status_to_emoji")).
@@ -91,6 +117,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		// delete links between this emoji and any accounts that use it
+		// TODO: remove when we delete this table
 		if _, err := tx.
 			NewDelete().
 			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
@@ -99,12 +126,85 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			return err
 		}
 
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("emojis"), bun.Ident("emoji")).
-			Where("? = ?", bun.Ident("emoji.id"), id).
-			Exec(ctx); err != nil {
-			return e.conn.ProcessError(err)
+		// Select all accounts using this emoji.
+		if _, err := tx.NewSelect().
+			Table("accounts").
+			Column("id").
+			Where("? IN emoji_ids", id).
+			Exec(ctx, &accountIDs); err != nil {
+			return err
+		}
+
+		for _, id := range accountIDs {
+			var emojiIDs []string
+
+			// Select account with ID.
+			if _, err := tx.NewSelect().
+				Table("accounts").
+				Column("emoji_ids").
+				Where("id = ?", id).
+				Exec(ctx); err != nil &&
+				err != sql.ErrNoRows {
+				return err
+			}
+
+			// Drop ID from account emojis.
+			emojiIDs = dropID(emojiIDs, id)
+
+			// Update account emoji IDs.
+			if _, err := tx.NewUpdate().
+				Table("accounts").
+				Where("id = ?", id).
+				Set("emoji_ids = ?", emojiIDs).
+				Exec(ctx); err != nil &&
+				err != sql.ErrNoRows {
+				return err
+			}
+		}
+
+		// Select all statuses using this emoji.
+		if _, err := tx.NewSelect().
+			Table("statuses").
+			Column("id").
+			Where("? IN emoji_ids").
+			Exec(ctx, &statusIDs); err != nil {
+			return err
+		}
+
+		for _, id := range statusIDs {
+			var emojiIDs []string
+
+			// Select statuses with ID.
+			if _, err := tx.NewSelect().
+				Table("statuses").
+				Column("emoji_ids").
+				Where("id = ?", id).
+				Exec(ctx); err != nil &&
+				err != sql.ErrNoRows {
+				return err
+			}
+
+			// Drop ID from account emojis.
+			emojiIDs = dropID(emojiIDs, id)
+
+			// Update status emoji IDs.
+			if _, err := tx.NewUpdate().
+				Table("statuses").
+				Where("id = ?", id).
+				Set("emoji_ids = ?", emojiIDs).
+				Exec(ctx); err != nil &&
+				err != sql.ErrNoRows {
+				return err
+			}
+		}
+
+		// Delete emoji from database.
+		if _, err := tx.NewDelete().
+			Table("emojis").
+			Where("id = ?", id).
+			Exec(ctx); err != nil &&
+			err != sql.ErrNoRows {
+			return err
 		}
 
 		return nil
@@ -470,4 +570,18 @@ func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, emojiCategoryIDs 
 	}
 
 	return emojiCategories, nil
+}
+
+// dropIDs drops given ID string from IDs slice.
+func dropID(ids []string, id string) []string {
+	for i := 0; i < len(ids); {
+		if ids[i] == id {
+			// Remove this reference.
+			copy(ids[i:], ids[i+1:])
+			ids = ids[:len(ids)-1]
+			continue
+		}
+		i++
+	}
+	return ids
 }
