@@ -33,15 +33,17 @@ type Emoji interface {
 	PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) Error
 	// UpdateEmoji updates the given columns of one emoji.
 	// If no columns are specified, every column is updated.
-	UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) (*gtsmodel.Emoji, Error)
+	UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) error
 	// DeleteEmojiByID deletes one emoji by its database ID.
 	DeleteEmojiByID(ctx context.Context, id string) Error
 	// GetEmojisByIDs gets emojis for the given IDs.
 	GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Emoji, Error)
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
-	// GetEmojis gets emojis based on given parameters. Useful for admin actions.
-	GetEmojis(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, Error)
+	// GetEmojis ...
+	GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
+	// GetEmojisBy gets emojis based on given parameters. Useful for admin actions.
+	GetEmojisBy(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, error)
 	// GetEmojiByID gets a specific emoji by its database ID.
 	GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, Error)
 	// GetEmojiByShortcodeDomain gets an emoji based on its shortcode and domain.

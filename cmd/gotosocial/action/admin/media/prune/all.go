@@ -26,8 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Orphaned prunes orphaned media from storage.
-var Orphaned action.GTSAction = func(ctx context.Context) error {
+// All performs all media clean actions
+var All action.GTSAction = func(ctx context.Context) error {
 	// Setup pruning utilities.
 	prune, err := setupPrune(ctx)
 	if err != nil {
@@ -46,8 +46,11 @@ var Orphaned action.GTSAction = func(ctx context.Context) error {
 		ctx = gtscontext.SetDryRun(ctx)
 	}
 
+	days := config.GetMediaRemoteCacheDays()
+
 	// Perform the actual pruning with logging.
-	prune.cleaner.Media().LogPruneOrphaned(ctx)
+	prune.cleaner.Media().All(ctx, days)
+	prune.cleaner.Emoji().All(ctx)
 
 	// Perform a cleanup of storage (for removed local dirs).
 	if err := prune.storage.Storage.Clean(ctx); err != nil {

@@ -214,7 +214,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
 
 	// do a blocking call to fetch the emoji
 	emoji, err := processingEmoji.LoadEmoji(ctx)
-	suite.EqualError(err, "given emoji size 630kiB greater than max allowed 50.0kiB")
+	suite.EqualError(err, "store: given emoji size 630kiB greater than max allowed 50.0kiB")
 	suite.Nil(emoji)
 }
 
@@ -238,7 +238,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
 
 	// do a blocking call to fetch the emoji
 	emoji, err := processingEmoji.LoadEmoji(ctx)
-	suite.EqualError(err, "calculated emoji size 630kiB greater than max allowed 50.0kiB")
+	suite.EqualError(err, "store: calculated emoji size 630kiB greater than max allowed 50.0kiB")
 	suite.Nil(emoji)
 }
 
@@ -626,7 +626,7 @@ func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
 
 	// we should get an error while loading
 	attachment, err := processingMedia.LoadAttachment(ctx)
-	suite.EqualError(err, "error decoding video: error determining video metadata: [width height framerate]")
+	suite.EqualError(err, "finish: error decoding video: error determining video metadata: [width height framerate]")
 	suite.Nil(attachment)
 }
 

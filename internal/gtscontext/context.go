@@ -41,7 +41,22 @@ const (
 	httpSigVerifierKey
 	httpSigKey
 	httpSigPubKeyIDKey
+	dryRunKey
 )
+
+// DryRun returns whether the "dryrun" context key has been set. This can be
+// used to indicate to functions, (that support it), that only a dry-run of
+// the operation should be performed. As opposed to making any permanent changes.
+func DryRun(ctx context.Context) bool {
+	_, ok := ctx.Value(dryRunKey).(struct{})
+	return ok
+}
+
+// SetDryRun sets the "dryrun" context flag and returns this wrapped context.
+// See DryRun() for further information on the "dryrun" context flag.
+func SetDryRun(ctx context.Context) context.Context {
+	return context.WithValue(ctx, dryRunKey, struct{}{})
+}
 
 // RequestID returns the request ID associated with context. This value will usually
 // be set by the request ID middleware handler, either pulling an existing supplied

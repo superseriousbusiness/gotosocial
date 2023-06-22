@@ -106,7 +106,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 	if status == nil {
 		// Ensure that this is isn't a search for a local status.
 		if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
-			return nil, nil, NewErrNotRetrievable(err) // this will be db.ErrNoEntries
+			return nil, nil, gtserror.SetUnretrievable(err) // this will be db.ErrNoEntries
 		}
 
 		// Create and pass-through a new bare-bones model for deref.
@@ -220,13 +220,12 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		return nil, nil, gtserror.Newf("%s is blocked", uri.Host)
 	}
 
-	var derefd bool
-
 	if apubStatus == nil {
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			return nil, nil, &ErrNotRetrievable{gtserror.Newf("error deferencing %s: %w", uri, err)}
+			err := gtserror.Newf("error deferencing %s: %w", uri, err)
+			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
 		// Attempt to resolve ActivityPub status from data.
@@ -234,9 +233,6 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		if err != nil {
 			return nil, nil, gtserror.Newf("error resolving statusable from data for account %s: %w", uri, err)
 		}
-
-		// Mark as deref'd.
-		derefd = true
 	}
 
 	// Get the attributed-to account in order to fetch profile.
@@ -256,17 +252,11 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 		log.Warnf(ctx, "status author account ID changed: old=%s new=%s", status.AccountID, author.ID)
 	}
 
-	// By default we assume that apubStatus has been passed,
-	// indicating that the given status is already latest.
-	latestStatus := status
-
-	if derefd {
-		// ActivityPub model was recently dereferenced, so assume that passed status
-		// may contain out-of-date information, convert AP model to our GTS model.
-		latestStatus, err = d.typeConverter.ASStatusToStatus(ctx, apubStatus)
-		if err != nil {
-			return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
-		}
+	// ActivityPub model was recently dereferenced, so assume that passed status
+	// may contain out-of-date information, convert AP model to our GTS model.
+	latestStatus, err := d.typeConverter.ASStatusToStatus(ctx, apubStatus)
+	if err != nil {
+		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
 
 	// Use existing status ID.
@@ -327,7 +317,7 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	return latestStatus, apubStatus, nil
 }
 
-func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, existing *gtsmodel.Status, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, existing, status *gtsmodel.Status) error {
 	// Allocate new slice to take the yet-to-be created mention IDs.
 	status.MentionIDs = make([]string, len(status.Mentions))
 
@@ -385,7 +375,7 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 		status.MentionIDs[i] = mention.ID
 	}
 
-	for i := 0; i < len(status.MentionIDs); i++ {
+	for i := 0; i < len(status.MentionIDs); {
 		if status.MentionIDs[i] == "" {
 			// This is a failed mention population, likely due
 			// to invalid incoming data / now-deleted accounts.
@@ -393,13 +383,15 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 			copy(status.MentionIDs[i:], status.MentionIDs[i+1:])
 			status.Mentions = status.Mentions[:len(status.Mentions)-1]
 			status.MentionIDs = status.MentionIDs[:len(status.MentionIDs)-1]
+			continue
 		}
+		i++
 	}
 
 	return nil
 }
 
-func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Transport, existing *gtsmodel.Status, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Transport, existing, status *gtsmodel.Status) error {
 	// Allocate new slice to take the yet-to-be fetched attachment IDs.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
@@ -408,7 +400,7 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 
 		// Look for existing media attachment with remoet URL first.
 		existing, ok := existing.GetAttachmentByRemoteURL(placeholder.RemoteURL)
-		if ok && existing.ID != "" {
+		if ok && existing.ID != "" && *existing.Cached {
 			status.Attachments[i] = existing
 			status.AttachmentIDs[i] = existing.ID
 			continue
@@ -447,7 +439,7 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 		status.AttachmentIDs[i] = media.ID
 	}
 
-	for i := 0; i < len(status.AttachmentIDs); i++ {
+	for i := 0; i < len(status.AttachmentIDs); {
 		if status.AttachmentIDs[i] == "" {
 			// This is a failed attachment population, this may
 			// be due to us not currently supporting a media type.
@@ -455,13 +447,15 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 			copy(status.AttachmentIDs[i:], status.AttachmentIDs[i+1:])
 			status.Attachments = status.Attachments[:len(status.Attachments)-1]
 			status.AttachmentIDs = status.AttachmentIDs[:len(status.AttachmentIDs)-1]
+			continue
 		}
+		i++
 	}
 
 	return nil
 }
 
-func (d *deref) fetchStatusEmojis(ctx context.Context, requestUser string, existing *gtsmodel.Status, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusEmojis(ctx context.Context, requestUser string, existing, status *gtsmodel.Status) error {
 	// Fetch the full-fleshed-out emoji objects for our status.
 	emojis, err := d.populateEmojis(ctx, status.Emojis, requestUser)
 	if err != nil {
