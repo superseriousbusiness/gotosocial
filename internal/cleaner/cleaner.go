@@ -61,6 +61,7 @@ func (c *Cleaner) Media() *Media {
 	return &c.media
 }
 
+// checkFiles checks for each of the provided files, and calls onMissing() if any of them are missing. Returns true if missing.
 func (c *Cleaner) checkFiles(ctx context.Context, onMissing func() error, files ...string) (bool, error) {
 	for _, file := range files {
 		// Check whether each file exists in storage.
@@ -75,6 +76,7 @@ func (c *Cleaner) checkFiles(ctx context.Context, onMissing func() error, files 
 	return false, nil
 }
 
+// removeFiles removes the provided files, returning the number of them returned.
 func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error) {
 	if gtscontext.DryRun(ctx) {
 		// Dry run, do nothing.
