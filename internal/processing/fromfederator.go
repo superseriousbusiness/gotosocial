@@ -107,53 +107,32 @@ func (p *Processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 	return nil
 }
 
-// processCreateStatusFromFederator handles Activity Create and Object Note
+// processCreateStatusFromFederator handles Activity Create and Object Note.
 func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	// check for either an IRI that we still need to dereference, OR an already dereferenced
-	// and converted status pinned to the message.
+	// Check the federatorMsg for either an already
+	// dereferenced and converted status pinned to
+	// the message, or an AP IRI that we need to deref.
 	var (
 		status *gtsmodel.Status
 		err    error
 	)
 
 	if federatorMsg.GTSModel != nil {
-		var ok bool
-
-		// there's a gts model already pinned to the message, it should be a status
-		if status, ok = federatorMsg.GTSModel.(*gtsmodel.Status); !ok {
-			return gtserror.New("Note was not parseable as *gtsmodel.Status")
-		}
-
-		// Since this was a create originating AP object
-		// statusable may have been set on message (no problem if not).
-		statusable, _ := federatorMsg.APObjectModel.(ap.Statusable)
-
-		// Call refresh on status to deref if necessary etc.
-		status, _, err = p.federator.RefreshStatus(ctx,
-			federatorMsg.ReceivingAccount.Username,
-			status,
-			statusable,
-			false,
-		)
-		if err != nil {
-			return err
-		}
+		// Model is set, use that.
+		status, err = p.statusFromGTSModel(ctx, federatorMsg)
 	} else {
-		// no model pinned, we need to dereference based on the IRI
-		if federatorMsg.APIri == nil {
-			return gtserror.New("status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
-		}
+		// Model is not set, use IRI.
+		status, err = p.statusFromAPIRI(ctx, federatorMsg)
+	}
 
-		status, _, err = p.federator.GetStatusByURI(ctx, federatorMsg.ReceivingAccount.Username, federatorMsg.APIri)
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return gtserror.Newf("error extracting status from federatorMsg: %w", err)
 	}
 
 	if status.Account == nil || status.Account.IsRemote() {
 		// Either no account attached yet, or a remote account.
 		// Both situations we need to parse account URI to fetch it.
-		remoteAccURI, err := url.Parse(status.AccountURI)
+		accountURI, err := url.Parse(status.AccountURI)
 		if err != nil {
 			return err
 		}
@@ -161,11 +140,20 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		// Ensure that account for this status has been deref'd.
 		status.Account, _, err = p.federator.GetAccountByURI(ctx,
 			federatorMsg.ReceivingAccount.Username,
-			remoteAccURI,
+			accountURI,
 		)
 		if err != nil {
 			return err
 		}
+	}
+
+	// Ensure status ancestors dereferenced. We need at least the
+	// immediate parent (if present) to ascertain timelineability.
+	if err := p.federator.DereferenceStatusAncestors(ctx,
+		federatorMsg.ReceivingAccount.Username,
+		status,
+	); err != nil {
+		return err
 	}
 
 	if status.InReplyToID != "" {
@@ -179,6 +167,58 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 	}
 
 	return nil
+}
+
+func (p *Processor) statusFromGTSModel(ctx context.Context, federatorMsg messages.FromFederator) (*gtsmodel.Status, error) {
+	// There should be a status pinned to the federatorMsg
+	// (we've already checked to ensure this is not nil).
+	status, ok := federatorMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		err := gtserror.New("Note was not parseable as *gtsmodel.Status")
+		return nil, err
+	}
+
+	// AP statusable representation may have also
+	// been set on message (no problem if not).
+	statusable, _ := federatorMsg.APObjectModel.(ap.Statusable)
+
+	// Call refresh on status to update
+	// it (deref remote) if necessary.
+	var err error
+	status, _, err = p.federator.RefreshStatus(
+		ctx,
+		federatorMsg.ReceivingAccount.Username,
+		status,
+		statusable,
+		false,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("%w", err)
+	}
+
+	return status, nil
+}
+
+func (p *Processor) statusFromAPIRI(ctx context.Context, federatorMsg messages.FromFederator) (*gtsmodel.Status, error) {
+	// There should be a status IRI pinned to
+	// the federatorMsg for us to dereference.
+	if federatorMsg.APIri == nil {
+		err := gtserror.New("status was not pinned to federatorMsg, and neither was an IRI for us to dereference")
+		return nil, err
+	}
+
+	// Get the status + ensure we have
+	// the most up-to-date version.
+	status, _, err := p.federator.GetStatusByURI(
+		ctx,
+		federatorMsg.ReceivingAccount.Username,
+		federatorMsg.APIri,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("%w", err)
+	}
+
+	return status, nil
 }
 
 // processCreateFaveFromFederator handles Activity Create with Object Like.
@@ -278,11 +318,21 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 	}
 	status.ID = statusID
 
-	// Store, timeline, and notify.
+	// Store the boost wrapper status.
 	if err := p.state.DB.PutStatus(ctx, status); err != nil {
 		return gtserror.Newf("db error inserting status: %w", err)
 	}
 
+	// Ensure boosted status ancestors dereferenced. We need at least
+	// the immediate parent (if present) to ascertain timelineability.
+	if err := p.federator.DereferenceStatusAncestors(ctx,
+		federatorMsg.ReceivingAccount.Username,
+		status.BoostOf,
+	); err != nil {
+		return err
+	}
+
+	// Timeline and notify the announce.
 	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining status: %w", err)
 	}

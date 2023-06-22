@@ -245,134 +245,171 @@ func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAtt
 }
 
 func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
-	status := &gtsmodel.Status{}
+	status := new(gtsmodel.Status)
 
-	// uri at which this status is reachable
-	uriProp := statusable.GetJSONLDId()
-	if uriProp == nil || !uriProp.IsIRI() {
-		return nil, errors.New("no id property found, or id was not an iri")
+	// status.URI
+	//
+	// ActivityPub ID/URI of this status.
+	idProp := statusable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return nil, gtserror.New("no id property found, or id was not an iri")
 	}
-	status.URI = uriProp.GetIRI().String()
+	status.URI = idProp.GetIRI().String()
 
 	l := log.WithContext(ctx).
 		WithField("statusURI", status.URI)
 
-	// web url for viewing this status
+	// status.URL
+	//
+	// Web URL of this status (optional).
 	if statusURL, err := ap.ExtractURL(statusable); err == nil {
 		status.URL = statusURL.String()
 	} else {
-		// if no URL was set, just take the URI
-		status.URL = status.URI
+		status.URL = status.URI // Fall back to the URI.
 	}
 
-	// the html-formatted content of this status
+	// status.Content
+	//
+	// The (html-formatted) content of this status.
 	status.Content = ap.ExtractContent(statusable)
 
-	// attachments to dereference and fetch later on (we don't do that here)
+	// status.Attachments
+	//
+	// Media attachments for later dereferencing.
 	status.Attachments = c.extractAttachments(statusable)
 
-	// hashtags to dereference later on
+	// status.Hashtags
+	//
+	// Hashtags for later dereferencing.
 	if hashtags, err := ap.ExtractHashtags(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status hashtags: %s", err)
+		l.Infof("error extracting hashtags: %q", err)
 	} else {
 		status.Tags = hashtags
 	}
 
-	// emojis to dereference and fetch later on
+	// status.Emojis
+	//
+	// Custom emojis for later dereferencing.
 	if emojis, err := ap.ExtractEmojis(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status emojis: %s", err)
+		l.Infof("error extracting emojis: %q", err)
 	} else {
 		status.Emojis = emojis
 	}
 
-	// mentions to dereference later on
+	// status.Mentions
+	//
+	// Mentions of other accounts for later dereferencing.
 	if mentions, err := ap.ExtractMentions(statusable); err != nil {
-		l.Infof("ASStatusToStatus: error extracting status mentions: %s", err)
+		l.Infof("error extracting mentions: %q", err)
 	} else {
 		status.Mentions = mentions
 	}
 
-	// cw string for this status
-	// prefer Summary, fall back to Name
+	// status.ContentWarning
+	//
+	// Topic or content warning for this status;
+	// prefer Summary, fall back to Name.
 	if summary := ap.ExtractSummary(statusable); summary != "" {
 		status.ContentWarning = summary
 	} else {
 		status.ContentWarning = ap.ExtractName(statusable)
 	}
 
-	// when was this status created?
+	// status.Published
+	//
+	// Publication time of this status. Thanks to
+	// db defaults, will fall back to now if not set.
 	published, err := ap.ExtractPublished(statusable)
 	if err != nil {
-		l.Infof("ASStatusToStatus: error extracting status published: %s", err)
+		l.Infof("error extracting published: %q", err)
 	} else {
 		status.CreatedAt = published
 		status.UpdatedAt = published
 	}
 
-	// which account posted this status?
-	// if we don't know the account yet we can dereference it later
+	// status.AccountURI
+	// status.AccountID
+	// status.Account
+	//
+	// Account that created the status. Assume we have
+	// this in the db by the time this function is called,
+	// error if we don't.
 	attributedTo, err := ap.ExtractAttributedToURI(statusable)
 	if err != nil {
-		return nil, errors.New("ASStatusToStatus: attributedTo was empty")
+		return nil, gtserror.Newf("%w", err)
 	}
-	status.AccountURI = attributedTo.String()
+	accountURI := attributedTo.String()
 
-	statusOwner, err := c.db.GetAccountByURI(ctx, attributedTo.String())
+	account, err := c.db.GetAccountByURI(ctx, accountURI)
 	if err != nil {
-		return nil, fmt.Errorf("ASStatusToStatus: couldn't get status owner from db: %s", err)
+		err = gtserror.Newf("db error getting status author account %s: %w", accountURI, err)
+		return nil, err
 	}
-	status.AccountID = statusOwner.ID
-	status.AccountURI = statusOwner.URI
-	status.Account = statusOwner
+	status.AccountURI = accountURI
+	status.AccountID = account.ID
+	status.Account = account
 
-	// check if there's a post that this is a reply to
-	inReplyToURI := ap.ExtractInReplyToURI(statusable)
-	if inReplyToURI != nil {
-		// something is set so we can at least set this field on the
-		// status and dereference using this later if we need to
-		status.InReplyToURI = inReplyToURI.String()
+	// status.InReplyToURI
+	// status.InReplyToID
+	// status.InReplyTo
+	// status.InReplyToAccountID
+	// status.InReplyToAccount
+	//
+	// Status that this status replies to, if applicable.
+	// If we don't have this status in the database, we
+	// just set the URI and assume we can deref it later.
+	if uri := ap.ExtractInReplyToURI(statusable); uri != nil {
+		inReplyToURI := uri.String()
+		status.InReplyToURI = inReplyToURI
 
-		// now we can check if we have the replied-to status in our db already
-		if inReplyToStatus, err := c.db.GetStatusByURI(ctx, inReplyToURI.String()); err == nil {
-			// we have the status in our database already
-			// so we can set these fields here and now...
-			status.InReplyToID = inReplyToStatus.ID
-			status.InReplyToAccountID = inReplyToStatus.AccountID
-			status.InReplyTo = inReplyToStatus
-			if status.InReplyToAccount == nil {
-				if inReplyToAccount, err := c.db.GetAccountByID(ctx, inReplyToStatus.AccountID); err == nil {
-					status.InReplyToAccount = inReplyToAccount
-				}
-			}
+		// Check if we already have the replied-to status.
+		inReplyTo, err := c.db.GetStatusByURI(ctx, inReplyToURI)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Real database error.
+			err = gtserror.Newf("db error getting replied-to status %s: %w", inReplyToURI, err)
+			return nil, err
+		}
+
+		if inReplyTo != nil {
+			// We have it in the DB! Set
+			// appropriate fields here and now.
+			status.InReplyToID = inReplyTo.ID
+			status.InReplyTo = inReplyTo
+			status.InReplyToAccountID = inReplyTo.AccountID
+			status.InReplyToAccount = inReplyTo.Account
 		}
 	}
 
-	// visibility entry for this status
-	visibility, err := ap.ExtractVisibility(statusable, status.Account.FollowersURI)
+	// status.Visibility
+	visibility, err := ap.ExtractVisibility(
+		statusable,
+		status.Account.FollowersURI,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("ASStatusToStatus: error extracting visibility: %s", err)
+		err = gtserror.Newf("error extracting visibility: %w", err)
+		return nil, err
 	}
 	status.Visibility = visibility
 
-	// advanced visibility for this status
-	// TODO: a lot of work to be done here -- a new type needs to be created for this in go-fed/activity using ASTOOL
-	// for now we just set everything to true
-	federated := true
-	boostable := true
-	replyable := true
-	likeable := true
+	// Advanced visibility toggles for this status.
+	//
+	// TODO: a lot of work to be done here -- a new type
+	// needs to be created for this in go-fed/activity.
+	// Until this is implemented, assume all true.
+	var trueBool = func() *bool { b := true; return &b }
+	status.Federated = trueBool()
+	status.Boostable = trueBool()
+	status.Replyable = trueBool()
+	status.Likeable = trueBool()
 
-	status.Federated = &federated
-	status.Boostable = &boostable
-	status.Replyable = &replyable
-	status.Likeable = &likeable
-
-	// sensitive
-	sensitive := ap.ExtractSensitive(statusable)
-	status.Sensitive = &sensitive
+	// status.Sensitive
+	status.Sensitive = func() *bool {
+		s := ap.ExtractSensitive(statusable)
+		return &s
+	}()
 
 	// language
-	// we might be able to extract this from the contentMap field
+	// TODO: we might be able to extract this from the contentMap field
 
 	// ActivityStreamsType
 	status.ActivityStreamsType = statusable.GetTypeName()

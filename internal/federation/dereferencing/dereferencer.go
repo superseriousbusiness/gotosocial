@@ -66,6 +66,12 @@ type Dereferencer interface {
 	// This is a more optimized form of manually enqueueing .UpdateStatus() to the federation worker, since it only enqueues update if necessary.
 	RefreshStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, apubStatus ap.Statusable, force bool)
 
+	// DereferenceStatusAncestors iterates upwards from the given status, using InReplyToURI, to ensure that as many parent statuses as possible are dereferenced.
+	DereferenceStatusAncestors(ctx context.Context, requestUser string, status *gtsmodel.Status) error
+
+	// DereferenceStatusDescendents iterates downwards from the given status, using its replies, to ensure that as many children statuses as possible are dereferenced.
+	DereferenceStatusDescendants(ctx context.Context, requestUser string, statusIRI *url.URL, parent ap.Statusable) error
+
 	GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error)
 
 	DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error
