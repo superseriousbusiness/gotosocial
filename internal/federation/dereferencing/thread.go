@@ -122,8 +122,8 @@ func (d *deref) DereferenceStatusAncestors(
 			// the database, presumably because it's been deleted
 			// by another action.
 			//
-			// Mark status orphaned by unsetting fields.
-			l.Debugf("current status has been orphaned (parent %s no longer exists in database)", current.InReplyToID)
+			// TODO: clean this up in a nightly task.
+			l.Warnf("current status has been orphaned (parent %s no longer exists in database)", current.InReplyToID)
 			return nil // Cannot iterate further.
 		}
 
