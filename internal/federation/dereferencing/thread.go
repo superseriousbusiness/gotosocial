@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/url"
 
-	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -125,17 +124,6 @@ func (d *deref) DereferenceStatusAncestors(
 			//
 			// Mark status orphaned by unsetting fields.
 			l.Debugf("current status has been orphaned (parent %s no longer exists in database)", current.InReplyToID)
-
-			current.InReplyToURI = ""
-			current.InReplyToID = ""
-			if err := d.state.DB.UpdateStatus(
-				ctx, current,
-				"in_reply_to_uri",
-				"in_reply_to_id",
-			); err != nil {
-				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
-			}
-
 			return nil // Cannot iterate further.
 		}
 
@@ -145,32 +133,17 @@ func (d *deref) DereferenceStatusAncestors(
 		// has not yet been dereferenced.
 		inReplyToURI, err := url.Parse(current.InReplyToURI)
 		if err != nil || inReplyToURI == nil {
-			// Parent URI is not something we can handle, log this and unset it.
+			// Parent URI is not something we can handle.
 			l.Debug("current status has been orphaned (invalid InReplyToURI)")
-
-			current.InReplyToURI = ""
-			if err := d.state.DB.UpdateStatus(
-				ctx, current,
-				"in_reply_to_uri",
-			); err != nil {
-				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
-			}
-
-			return nil // Cannot continue.
+			return nil //nolint:nilerr
 		}
 
-		// Ensure parent not on a blocked domain.
-		if blocked, err := d.state.DB.IsDomainBlocked(
-			ctx, inReplyToURI.Host,
-		); err != nil {
-			return gtserror.Newf("error checking blocked domain: %w", err)
-		} else if blocked {
-			return nil // Will not continue.
-		}
-
-		// Parent URI is valid and not blocked, try to get it.
-		// Note: This will also work for local statuses, so no
-		// need to check the URI Host value.
+		// Parent URI is valid, try to get it.
+		// getStatusByURI guards against the following conditions:
+		//
+		//   - remote domain is blocked (will return unretrievable)
+		//   - domain is local (will try to return something, or
+		//     return unretrievable).
 		parent, _, err := d.getStatusByURI(ctx, username, inReplyToURI)
 		if err == nil {
 			// We successfully fetched the parent.
@@ -194,14 +167,12 @@ func (d *deref) DereferenceStatusAncestors(
 		// We could not fetch the parent, check if we can do anything
 		// useful with the error. For example, HTTP status code returned
 		// from remote may indicate that the parent has been deleted.
-		code := gtserror.StatusCode(err)
-
-		switch {
+		switch code := gtserror.StatusCode(err); {
 		case code == http.StatusGone || code == http.StatusNotFound:
 			// 410 means the status has definitely been deleted.
 			// 404 means the status has *probably* been deleted.
 			// Update this status to reflect that, then bail.
-			l.Debugf("current status has been orphaned (call to parent returned %d)", code)
+			l.Debugf("current status has been orphaned (call to parent returned code %d)", code)
 
 			current.InReplyToURI = ""
 			if err := d.state.DB.UpdateStatus(
@@ -210,24 +181,25 @@ func (d *deref) DereferenceStatusAncestors(
 			); err != nil {
 				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
 			}
+			return nil
 
 		case code != 0:
 			// We had a code, but not one indicating deletion,
 			// log the code but don't return error or update the
 			// status; we can try again later.
-			l.Debugf("cannot dereference parent (call to parent returned %d)", code)
+			l.Warnf("cannot dereference parent (%q)", err)
+			return nil
 
-		case errorsv2.Assignable(err, (*ErrNotRetrievable)(nil)):
+		case gtserror.Unretrievable(err):
 			// Not retrievable for some other reason, so just
 			// bail; we can try again later if necessary.
-			l.Debugf("cannot dereference parent (ErrNotRetrievable %q)", err)
+			l.Debugf("parent unretrievable (%q)", err)
+			return nil
 
 		default:
 			// Some other error that stops us in our tracks.
 			return gtserror.Newf("error dereferencing parent %s: %w", current.InReplyToURI, err)
 		}
-
-		return nil
 	}
 
 	return gtserror.Newf("reached %d ancestor iterations for %q", maxIter, status.URI)
@@ -373,20 +345,18 @@ stackLoop:
 					continue itemLoop
 				}
 
-				// Ensure item not on a blocked domain.
-				if blocked, err := d.state.DB.IsDomainBlocked(
-					ctx, itemIRI.Host,
-				); err != nil {
-					return gtserror.Newf("error checking blocked domain: %w", err)
-				} else if blocked {
-					// Ignore this item.
-					continue itemLoop
-				}
-
 				// Dereference the remote status and store in the database.
+				// getStatusByURI guards against the following conditions:
+				//
+				//   - remote domain is blocked (will return unretrievable)
+				//   - domain is local (will try to return something, or
+				//     return unretrievable).
 				_, statusable, err := d.getStatusByURI(ctx, username, itemIRI)
 				if err != nil {
-					l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
+					if !gtserror.Unretrievable(err) {
+						l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
+					}
+
 					continue itemLoop
 				}
 

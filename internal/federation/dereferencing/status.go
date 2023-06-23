@@ -225,7 +225,8 @@ func (d *deref) enrichStatus(
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, uri.Host); err != nil {
 		return nil, nil, gtserror.Newf("error checking blocked domain: %w", err)
 	} else if blocked {
-		return nil, nil, gtserror.Newf("%s is blocked", uri.Host)
+		err = gtserror.Newf("%s is blocked", uri.Host)
+		return nil, nil, gtserror.SetUnretrievable(err)
 	}
 
 	if apubStatus == nil {
