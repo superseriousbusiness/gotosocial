@@ -16,21 +16,3 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package dereferencing
-
-import (
-	"fmt"
-)
-
-// ErrNotRetrievable denotes that an item could not be dereferenced
-// with the given parameters.
-type ErrNotRetrievable struct {
-	wrapped error
-}
-
-func (err *ErrNotRetrievable) Error() string {
-	return fmt.Sprintf("item could not be retrieved: %v", err.wrapped)
-}
-
-func NewErrNotRetrievable(err error) error {
-	return &ErrNotRetrievable{wrapped: err}
-}

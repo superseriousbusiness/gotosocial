@@ -25,10 +25,8 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-iotools"
-	"codeberg.org/gruf/go-runners"
-	"codeberg.org/gruf/go-sched"
 	"codeberg.org/gruf/go-store/v2/storage"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -61,7 +59,6 @@ type Manager struct {
 // See internal/concurrency.NewWorkerPool() documentation for further information.
 func NewManager(state *state.State) *Manager {
 	m := &Manager{state: state}
-	scheduleCleanupJobs(m)
 	return m
 }
 
@@ -214,7 +211,7 @@ func (m *Manager) ProcessMedia(ctx context.Context, data DataFunc, accountID str
 func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
-		return nil, fmt.Errorf("preProcessEmoji: error fetching this instance account from the db: %s", err)
+		return nil, gtserror.Newf("error fetching this instance account from the db: %s", err)
 	}
 
 	var (
@@ -227,7 +224,7 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 		// Look for existing emoji by given ID.
 		emoji, err = m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
-			return nil, fmt.Errorf("preProcessEmoji: error fetching emoji to refresh from the db: %s", err)
+			return nil, gtserror.Newf("error fetching emoji to refresh from the db: %s", err)
 		}
 
 		// if this is a refresh, we will end up with new images
@@ -260,7 +257,7 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 
 		newPathID, err = id.NewRandomULID()
 		if err != nil {
-			return nil, fmt.Errorf("preProcessEmoji: error generating alternateID for emoji refresh: %s", err)
+			return nil, gtserror.Newf("error generating alternateID for emoji refresh: %s", err)
 		}
 
 		// store + serve static image at new path ID
@@ -355,34 +352,4 @@ func (m *Manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode str
 	_ = m.state.Workers.Media.MustEnqueueCtx(ctx, emoji.Process)
 
 	return emoji, nil
-}
-
-func scheduleCleanupJobs(m *Manager) {
-	const day = time.Hour * 24
-
-	// Calculate closest midnight.
-	now := time.Now()
-	midnight := now.Round(day)
-
-	if midnight.Before(now) {
-		// since <= 11:59am rounds down.
-		midnight = midnight.Add(day)
-	}
-
-	// Get ctx associated with scheduler run state.
-	done := m.state.Workers.Scheduler.Done()
-	doneCtx := runners.CancelCtx(done)
-
-	// TODO: we'll need to do some thinking to make these
-	// jobs restartable if we want to implement reloads in
-	// the future that make call to Workers.Stop() -> Workers.Start().
-
-	// Schedule the PruneAll task to execute every day at midnight.
-	m.state.Workers.Scheduler.Schedule(sched.NewJob(func(now time.Time) {
-		err := m.PruneAll(doneCtx, config.GetMediaRemoteCacheDays(), true)
-		if err != nil {
-			log.Errorf(nil, "error during prune: %v", err)
-		}
-		log.Infof(nil, "finished pruning all in %s", time.Since(now))
-	}).EveryAt(midnight, day))
 }

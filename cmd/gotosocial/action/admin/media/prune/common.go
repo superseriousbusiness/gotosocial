@@ -21,8 +21,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -32,6 +34,7 @@ type prune struct {
 	dbService db.DB
 	storage   *gtsstorage.Driver
 	manager   *media.Manager
+	cleaner   *cleaner.Cleaner
 	state     *state.State
 }
 
@@ -59,25 +62,31 @@ func setupPrune(ctx context.Context) (*prune, error) {
 	//nolint:contextcheck
 	manager := media.NewManager(&state)
 
+	//nolint:contextcheck
+	cleaner := cleaner.New(&state)
+
 	return &prune{
 		dbService: dbService,
 		storage:   storage,
 		manager:   manager,
+		cleaner:   cleaner,
 		state:     &state,
 	}, nil
 }
 
 func (p *prune) shutdown(ctx context.Context) error {
+	var errs gtserror.MultiError
+
 	if err := p.storage.Close(); err != nil {
-		return fmt.Errorf("error closing storage backend: %w", err)
+		errs.Appendf("error closing storage backend: %v", err)
 	}
 
 	if err := p.dbService.Stop(ctx); err != nil {
-		return fmt.Errorf("error closing dbservice: %w", err)
+		errs.Appendf("error stopping database: %v", err)
 	}
 
 	p.state.Workers.Stop()
 	p.state.Caches.Stop()
 
-	return nil
+	return errs.Combine()
 }

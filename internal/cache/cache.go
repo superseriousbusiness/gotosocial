@@ -92,6 +92,13 @@ func (c *Caches) setuphooks() {
 		c.Visibility.Invalidate("RequesterID", block.TargetAccountID)
 	})
 
+	c.GTS.EmojiCategory().SetInvalidateCallback(func(category *gtsmodel.EmojiCategory) {
+		// Invalidate entire emoji cache,
+		// as we can't know which emojis
+		// specifically this will effect.
+		c.GTS.Emoji().Clear()
+	})
+
 	c.GTS.Follow().SetInvalidateCallback(func(follow *gtsmodel.Follow) {
 		// Invalidate follow origin account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", follow.AccountID)

@@ -109,7 +109,7 @@ func (p *Processor) EmojisGet(
 		return nil, gtserror.NewErrorUnauthorized(fmt.Errorf("user %s not an admin", user.ID), "user is not an admin")
 	}
 
-	emojis, err := p.state.DB.GetEmojis(ctx, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
+	emojis, err := p.state.DB.GetEmojisBy(ctx, domain, includeDisabled, includeEnabled, shortcode, maxShortcodeDomain, minShortcodeDomain, limit)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := fmt.Errorf("EmojisGet: db error: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -385,13 +385,13 @@ func (p *Processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoj
 
 	emojiDisabled := true
 	emoji.Disabled = &emojiDisabled
-	updatedEmoji, err := p.state.DB.UpdateEmoji(ctx, emoji, "disabled")
+	err := p.state.DB.UpdateEmoji(ctx, emoji, "disabled")
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateDisable: error updating emoji %s: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, updatedEmoji)
+	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateDisable: error converting updated emoji %s to admin emoji: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -406,8 +406,6 @@ func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 		err := fmt.Errorf("emojiUpdateModify: emoji %s is not a local emoji, cannot do a modify action on it", emoji.ID)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
-
-	var updatedEmoji *gtsmodel.Emoji
 
 	// keep existing categoryID unless a new one is defined
 	var (
@@ -442,7 +440,7 @@ func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 		}
 
 		var err error
-		updatedEmoji, err = p.state.DB.UpdateEmoji(ctx, emoji, columns...)
+		err = p.state.DB.UpdateEmoji(ctx, emoji, columns...)
 		if err != nil {
 			err = fmt.Errorf("emojiUpdateModify: error updating emoji %s: %s", emoji.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -467,14 +465,14 @@ func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		updatedEmoji, err = processingEmoji.LoadEmoji(ctx)
+		emoji, err = processingEmoji.LoadEmoji(ctx)
 		if err != nil {
 			err = fmt.Errorf("emojiUpdateModify: error loading processed emoji %s: %s", emoji.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
 
-	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, updatedEmoji)
+	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateModify: error converting updated emoji %s to admin emoji: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)

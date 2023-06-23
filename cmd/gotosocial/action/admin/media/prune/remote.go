@@ -19,39 +19,44 @@ package prune
 
 import (
 	"context"
-	"fmt"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Remote prunes old and/or unused remote media.
 var Remote action.GTSAction = func(ctx context.Context) error {
+	// Setup pruning utilities.
 	prune, err := setupPrune(ctx)
 	if err != nil {
 		return err
 	}
 
-	dry := config.GetAdminMediaPruneDryRun()
+	defer func() {
+		// Ensure pruner gets shutdown on exit.
+		if err := prune.shutdown(ctx); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
-	pruned, err := prune.manager.PruneUnusedRemote(ctx, dry)
-	if err != nil {
-		return fmt.Errorf("error pruning: %w", err)
+	if config.GetAdminMediaPruneDryRun() {
+		log.Info(ctx, "prune DRY RUN")
+		ctx = gtscontext.SetDryRun(ctx)
 	}
 
-	uncached, err := prune.manager.UncacheRemote(ctx, config.GetMediaRemoteCacheDays(), dry)
-	if err != nil {
-		return fmt.Errorf("error pruning: %w", err)
+	t := time.Now().Add(-24 * time.Hour * time.Duration(config.GetMediaRemoteCacheDays()))
+
+	// Perform the actual pruning with logging.
+	prune.cleaner.Media().LogPruneUnused(ctx)
+	prune.cleaner.Media().LogUncacheRemote(ctx, t)
+
+	// Perform a cleanup of storage (for removed local dirs).
+	if err := prune.storage.Storage.Clean(ctx); err != nil {
+		log.Error(ctx, "error cleaning storage: %v", err)
 	}
 
-	total := pruned + uncached
-
-	if dry /* dick heyyoooooo */ {
-		log.Infof(ctx, "DRY RUN: %d remote items are unused/stale and eligible to be pruned", total)
-	} else {
-		log.Infof(ctx, "%d unused/stale remote items were pruned", pruned)
-	}
-
-	return prune.shutdown(ctx)
+	return nil
 }

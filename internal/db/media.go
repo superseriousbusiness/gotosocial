@@ -41,6 +41,9 @@ type Media interface {
 	// DeleteAttachment deletes the attachment with given ID from the database.
 	DeleteAttachment(ctx context.Context, id string) error
 
+	// GetAttachments ...
+	GetAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error)
+
 	// GetRemoteOlderThan gets limit n remote media attachments (including avatars and headers) older than the given
 	// olderThan time. These will be returned in order of attachment.created_at descending (newest to oldest in other words).
 	//

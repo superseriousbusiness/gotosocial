@@ -18,6 +18,7 @@
 package admin
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -27,6 +28,7 @@ import (
 
 type Processor struct {
 	state               *state.State
+	cleaner             *cleaner.Cleaner
 	tc                  typeutils.TypeConverter
 	mediaManager        *media.Manager
 	transportController transport.Controller
@@ -37,6 +39,7 @@ type Processor struct {
 func New(state *state.State, tc typeutils.TypeConverter, mediaManager *media.Manager, transportController transport.Controller, emailSender email.Sender) Processor {
 	return Processor{
 		state:               state,
+		cleaner:             cleaner.New(state),
 		tc:                  tc,
 		mediaManager:        mediaManager,
 		transportController: transportController,

@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"crypto/rand"
+	"io"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -52,13 +53,11 @@ func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db
 }
 
 func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
-	auth := make([]byte, 32)
-	crypt := make([]byte, 32)
+	buf := make([]byte, 64)
+	auth := buf[:32]
+	crypt := buf[32:64]
 
-	if _, err := rand.Read(auth); err != nil {
-		return nil, err
-	}
-	if _, err := rand.Read(crypt); err != nil {
+	if _, err := io.ReadFull(rand.Reader, buf); err != nil {
 		return nil, err
 	}
 
