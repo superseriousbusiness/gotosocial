@@ -168,11 +168,10 @@ func (d *deref) DereferenceStatusAncestors(
 		// useful with the error. For example, HTTP status code returned
 		// from remote may indicate that the parent has been deleted.
 		switch code := gtserror.StatusCode(err); {
-		case code == http.StatusGone || code == http.StatusNotFound:
+		case code == http.StatusGone:
 			// 410 means the status has definitely been deleted.
-			// 404 means the status has *probably* been deleted.
 			// Update this status to reflect that, then bail.
-			l.Debugf("current status has been orphaned (call to parent returned code %d)", code)
+			l.Debug("current status has been orphaned (call to parent returned code 410 Gone)")
 
 			current.InReplyToURI = ""
 			if err := d.state.DB.UpdateStatus(
