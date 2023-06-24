@@ -104,7 +104,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 	}
 
 	if status == nil {
-		// Ensure that this is isn't a search for a local status.
+		// Ensure that this isn't a search for a local status.
 		if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
 			return nil, nil, gtserror.SetUnretrievable(err) // this will be db.ErrNoEntries
 		}
@@ -149,7 +149,7 @@ func (d *deref) getStatusByURI(ctx context.Context, requestUser string, uri *url
 // RefreshStatus: implements Dereferencer{}.RefreshStatus().
 func (d *deref) RefreshStatus(ctx context.Context, requestUser string, status *gtsmodel.Status, apubStatus ap.Statusable, force bool) (*gtsmodel.Status, ap.Statusable, error) {
 	// Check whether needs update.
-	if statusUpToDate(status) {
+	if !force && statusUpToDate(status) {
 		return status, nil, nil
 	}
 
@@ -205,8 +205,16 @@ func (d *deref) RefreshStatusAsync(ctx context.Context, requestUser string, stat
 	})
 }
 
-// enrichStatus will enrich the given status, whether a new barebones model, or existing model from the database. It handles necessary dereferencing etc.
-func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.URL, status *gtsmodel.Status, apubStatus ap.Statusable) (*gtsmodel.Status, ap.Statusable, error) {
+// enrichStatus will enrich the given status, whether a new
+// barebones model, or existing model from the database.
+// It handles necessary dereferencing, database updates, etc.
+func (d *deref) enrichStatus(
+	ctx context.Context,
+	requestUser string,
+	uri *url.URL,
+	status *gtsmodel.Status,
+	apubStatus ap.Statusable,
+) (*gtsmodel.Status, ap.Statusable, error) {
 	// Pre-fetch a transport for requesting username, used by later dereferencing.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
@@ -217,7 +225,8 @@ func (d *deref) enrichStatus(ctx context.Context, requestUser string, uri *url.U
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, uri.Host); err != nil {
 		return nil, nil, gtserror.Newf("error checking blocked domain: %w", err)
 	} else if blocked {
-		return nil, nil, gtserror.Newf("%s is blocked", uri.Host)
+		err = gtserror.Newf("%s is blocked", uri.Host)
+		return nil, nil, gtserror.SetUnretrievable(err)
 	}
 
 	if apubStatus == nil {
