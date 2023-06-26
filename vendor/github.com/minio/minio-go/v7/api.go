@@ -124,7 +124,7 @@ type Options struct {
 // Global constants.
 const (
 	libraryName    = "minio-go"
-	libraryVersion = "v7.0.56"
+	libraryVersion = "v7.0.58"
 )
 
 // User Agent should always following the below style.
@@ -363,7 +363,8 @@ const (
 	online  = 1
 )
 
-// IsOnline returns true if healthcheck enabled and client is online
+// IsOnline returns true if healthcheck enabled and client is online.
+// If HealthCheck function has not been called this will always return true.
 func (c *Client) IsOnline() bool {
 	return !c.IsOffline()
 }
@@ -374,22 +375,37 @@ func (c *Client) markOffline() {
 }
 
 // IsOffline returns true if healthcheck enabled and client is offline
+// If HealthCheck function has not been called this will always return false.
 func (c *Client) IsOffline() bool {
 	return atomic.LoadInt32(&c.healthStatus) == offline
 }
 
-// HealthCheck starts a healthcheck to see if endpoint is up. Returns a context cancellation function
-// and and error if health check is already started
+// HealthCheck starts a healthcheck to see if endpoint is up.
+// Returns a context cancellation function, to stop the health check,
+// and an error if health check is already started.
 func (c *Client) HealthCheck(hcDuration time.Duration) (context.CancelFunc, error) {
-	if atomic.LoadInt32(&c.healthStatus) == online {
+	if atomic.LoadInt32(&c.healthStatus) != unknown {
 		return nil, fmt.Errorf("health check is running")
 	}
 	if hcDuration < 1*time.Second {
-		return nil, fmt.Errorf("health check duration should be atleast 1 second")
+		return nil, fmt.Errorf("health check duration should be at least 1 second")
 	}
-	ctx, cancelFn := context.WithCancel(context.Background())
-	atomic.StoreInt32(&c.healthStatus, online)
 	probeBucketName := randString(60, rand.NewSource(time.Now().UnixNano()), "probe-health-")
+	ctx, cancelFn := context.WithCancel(context.Background())
+	atomic.StoreInt32(&c.healthStatus, offline)
+	{
+		// Change to online, if we can connect.
+		gctx, gcancel := context.WithTimeout(ctx, 3*time.Second)
+		_, err := c.getBucketLocation(gctx, probeBucketName)
+		gcancel()
+		if !IsNetworkOrHostDown(err, false) {
+			switch ToErrorResponse(err).Code {
+			case "NoSuchBucket", "AccessDenied", "":
+				atomic.CompareAndSwapInt32(&c.healthStatus, offline, online)
+			}
+		}
+	}
+
 	go func(duration time.Duration) {
 		timer := time.NewTimer(duration)
 		defer timer.Stop()
