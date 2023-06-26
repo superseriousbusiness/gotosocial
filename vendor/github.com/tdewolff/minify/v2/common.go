@@ -34,7 +34,9 @@ func Mediatype(b []byte) []byte {
 		} else if c == '"' {
 			inString = !inString
 			if inString {
-				parse.ToLower(b[lastString:i])
+				if i-lastString < 1024 { // ToLower may otherwise slow down minification greatly
+					parse.ToLower(b[lastString:i])
+				}
 			} else {
 				lastString = j + (i + 1 - start)
 			}
