@@ -184,7 +184,7 @@ func addressable5() ap.Addressable {
 	return note
 }
 
-type ExtractTestSuite struct {
+type APTestSuite struct {
 	suite.Suite
 	document1         vocab.ActivityStreamsDocument
 	attachment1       vocab.ActivityStreamsAttachmentProperty
@@ -196,7 +196,36 @@ type ExtractTestSuite struct {
 	addressable5      ap.Addressable
 }
 
-func (suite *ExtractTestSuite) SetupTest() {
+func (suite *APTestSuite) jsonToType(rawJson string) (vocab.Type, map[string]interface{}) {
+	var raw map[string]interface{}
+	err := json.Unmarshal([]byte(rawJson), &raw)
+	if err != nil {
+		panic(err)
+	}
+
+	t, err := streams.ToType(context.Background(), raw)
+	if err != nil {
+		panic(err)
+	}
+
+	return t, raw
+}
+
+func (suite *APTestSuite) typeToJson(t vocab.Type) string {
+	m, err := ap.Serialize(t)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return string(b)
+}
+
+func (suite *APTestSuite) SetupTest() {
 	suite.document1 = document1()
 	suite.attachment1 = attachment1()
 	suite.noteWithMentions1 = noteWithMentions1()

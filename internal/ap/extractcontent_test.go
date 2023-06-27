@@ -25,7 +25,7 @@ import (
 )
 
 type ExtractContentTestSuite struct {
-	ExtractTestSuite
+	APTestSuite
 }
 
 func (suite *ExtractContentTestSuite) TestExtractContent1() {

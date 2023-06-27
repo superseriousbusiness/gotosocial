@@ -25,7 +25,7 @@ import (
 )
 
 type ExtractMentionsTestSuite struct {
-	ExtractTestSuite
+	APTestSuite
 }
 
 func (suite *ExtractMentionsTestSuite) TestExtractMentions() {

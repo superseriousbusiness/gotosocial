@@ -40,26 +40,35 @@ const (
 	TypeSMTP ErrorType = "smtp" // smtp (mail)
 )
 
-// Unretrievable ...
+// Unretrievable checks error for a stored "unretrievable" flag.
+//
+// Unretrievable indicates that a call to retrieve a resource
+// (account, status, etc) could not be fulfilled, either because
+// it was not found locally, or because some prerequisite remote
+// resource call failed, making it impossible to return the item.
 func Unretrievable(err error) bool {
 	_, ok := errors.Value(err, unrtrvableKey).(struct{})
 	return ok
 }
 
-// SetUnretrievable ...
+// SetUnretrievable will wrap the given error to store an "unretrievable"
+// flag, returning wrapped error. See "Unretrievable" for example use-cases.
 func SetUnretrievable(err error) error {
 	return errors.WithValue(err, unrtrvableKey, struct{}{})
 }
 
-// WrongType ...
+// WrongType checks error for a stored "wrong type" flag. Wrong type
+// indicates that an ActivityPub URI returned a type we weren't expecting:
+// Statusable instead of Accountable, or vice versa, for example.
 func WrongType(err error) bool {
 	_, ok := errors.Value(err, wrongTypeKey).(struct{})
 	return ok
 }
 
-// SetWrongType ...
+// SetWrongType will wrap the given error to store a "wrong type" flag,
+// returning wrapped error. See "WrongType" for example use-cases.
 func SetWrongType(err error) error {
-	return errors.WithValue(err, unrtrvableKey, struct{}{})
+	return errors.WithValue(err, wrongTypeKey, struct{}{})
 }
 
 // StatusCode checks error for a stored status code value. For example

@@ -26,7 +26,7 @@ import (
 )
 
 type ExtractVisibilityTestSuite struct {
-	ExtractTestSuite
+	APTestSuite
 }
 
 func (suite *ExtractVisibilityTestSuite) TestExtractVisibilityPublic() {
