@@ -20,6 +20,7 @@ package transport_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -55,6 +56,12 @@ func (suite *FingerTestSuite) TestFingerWithHostMeta() {
 
 func (suite *FingerTestSuite) TestFingerWithHostMetaCacheStrategy() {
 	wc := suite.state.Caches.GTS.Webfinger()
+
+	// Reset the sweep frequency so nothing interferes with the test
+	wc.Stop()
+	wc.SetTTL(1*time.Hour, false)
+	wc.Start(1 * time.Hour)
+
 	suite.Equal(0, wc.Len(), "expect webfinger cache to be empty")
 
 	_, err := suite.transport.Finger(context.TODO(), "someone", "misconfigured-instance.com")
