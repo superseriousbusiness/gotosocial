@@ -18,48 +18,16 @@
 package ap_test
 
 import (
-	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type NormalizeTestSuite struct {
-	suite.Suite
-}
-
-func (suite *NormalizeTestSuite) jsonToType(rawJson string) (vocab.Type, map[string]interface{}) {
-	var raw map[string]interface{}
-	err := json.Unmarshal([]byte(rawJson), &raw)
-	if err != nil {
-		panic(err)
-	}
-
-	t, err := streams.ToType(context.Background(), raw)
-	if err != nil {
-		panic(err)
-	}
-
-	return t, raw
-}
-
-func (suite *NormalizeTestSuite) typeToJson(t vocab.Type) string {
-	m, err := ap.Serialize(t)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	b, err := json.MarshalIndent(m, "", "  ")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	return string(b)
+	APTestSuite
 }
 
 func (suite *NormalizeTestSuite) getStatusable() (vocab.ActivityStreamsNote, map[string]interface{}) {

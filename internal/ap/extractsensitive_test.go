@@ -25,7 +25,7 @@ import (
 )
 
 type ExtractSensitiveTestSuite struct {
-	ExtractTestSuite
+	APTestSuite
 }
 
 func (suite *ExtractMentionsTestSuite) TestExtractSensitive() {

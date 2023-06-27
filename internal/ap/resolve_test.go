@@ -18,26 +18,35 @@
 package ap_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-type ExtractAttachmentsTestSuite struct {
+type ResolveTestSuite struct {
 	APTestSuite
 }
 
-func (suite *ExtractAttachmentsTestSuite) TestExtractAttachmentMissingURL() {
-	d1 := suite.document1
-	d1.SetActivityStreamsUrl(streams.NewActivityStreamsUrlProperty())
+func (suite *ResolveTestSuite) TestResolveDocumentAsStatusable() {
+	b := []byte(suite.typeToJson(suite.document1))
 
-	attachment, err := ap.ExtractAttachment(d1)
-	suite.EqualError(err, "ExtractAttachment: error extracting attachment URL: ExtractURL: no valid URL property found")
-	suite.Nil(attachment)
+	statusable, err := ap.ResolveStatusable(context.Background(), b)
+	suite.NoError(err)
+	suite.NotNil(statusable)
 }
 
-func TestExtractAttachmentsTestSuite(t *testing.T) {
-	suite.Run(t, &ExtractAttachmentsTestSuite{})
+func (suite *ResolveTestSuite) TestResolveDocumentAsAccountable() {
+	b := []byte(suite.typeToJson(suite.document1))
+
+	accountable, err := ap.ResolveAccountable(context.Background(), b)
+	suite.True(gtserror.WrongType(err))
+	suite.EqualError(err, "ResolveAccountable: could not resolve *typedocument.ActivityStreamsDocument to Accountable")
+	suite.Nil(accountable)
+}
+
+func TestResolveTestSuite(t *testing.T) {
+	suite.Run(t, &ResolveTestSuite{})
 }
