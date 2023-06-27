@@ -321,6 +321,7 @@ readLoop:
 				if websocket.IsUnexpectedCloseError(err, []int{
 					websocket.CloseNormalClosure,
 					websocket.CloseGoingAway,
+					websocket.CloseNoStatusReceived,
 				}...) {
 					l.Errorf("error reading from websocket: %v", err)
 				}
@@ -375,7 +376,7 @@ readLoop:
 		}
 	}
 
-	l.Info("finished reading from websocket connection")
+	l.Debug("finished reading from websocket connection")
 }
 
 // writeToWSConn receives messages coming from the processor via the
@@ -432,5 +433,5 @@ writeLoop:
 		}
 	}
 
-	l.Info("finished writing to websocket connection")
+	l.Debug("finished writing to websocket connection")
 }
