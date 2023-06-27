@@ -20,10 +20,10 @@ package ap
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // ResolveStatusable tries to resolve the given bytes into an ActivityPub Statusable representation.
@@ -33,12 +33,12 @@ import (
 func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	rawStatusable := make(map[string]interface{})
 	if err := json.Unmarshal(b, &rawStatusable); err != nil {
-		return nil, fmt.Errorf("ResolveStatusable: error unmarshalling bytes into json: %w", err)
+		return nil, gtserror.Newf("error unmarshalling bytes into json: %w", err)
 	}
 
 	t, err := streams.ToType(ctx, rawStatusable)
 	if err != nil {
-		return nil, fmt.Errorf("ResolveStatusable: error resolving json into ap vocab type: %w", err)
+		return nil, gtserror.Newf("error resolving json into ap vocab type: %w", err)
 	}
 
 	var (
@@ -68,8 +68,8 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	}
 
 	if !ok {
-		err = fmt.Errorf("ResolveStatusable: could not resolve %T to Statusable", t)
-		return nil, newErrWrongType(err)
+		err = gtserror.Newf("could not resolve %T to Statusable", t)
+		return nil, gtserror.SetWrongType(err)
 	}
 
 	NormalizeIncomingContent(statusable, rawStatusable)
@@ -87,12 +87,12 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 	rawAccountable := make(map[string]interface{})
 	if err := json.Unmarshal(b, &rawAccountable); err != nil {
-		return nil, fmt.Errorf("ResolveAccountable: error unmarshalling bytes into json: %w", err)
+		return nil, gtserror.Newf("error unmarshalling bytes into json: %w", err)
 	}
 
 	t, err := streams.ToType(ctx, rawAccountable)
 	if err != nil {
-		return nil, fmt.Errorf("ResolveAccountable: error resolving json into ap vocab type: %w", err)
+		return nil, gtserror.Newf("error resolving json into ap vocab type: %w", err)
 	}
 
 	var (
@@ -114,8 +114,8 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 	}
 
 	if !ok {
-		err = fmt.Errorf("ResolveAccountable: could not resolve %T to Accountable", t)
-		return nil, newErrWrongType(err)
+		err = gtserror.Newf("could not resolve %T to Accountable", t)
+		return nil, gtserror.SetWrongType(err)
 	}
 
 	NormalizeIncomingSummary(accountable, rawAccountable)
