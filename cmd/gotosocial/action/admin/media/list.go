@@ -61,10 +61,14 @@ var List action.GTSAction = func(ctx context.Context) error {
 
 	for _, a := range attachments {
 		if local && a.RemoteURL == "" {
-			f.WriteString(path.Join(mediaPath, a.File.Path) + "\n")
+			if _, err := f.WriteString(path.Join(mediaPath, a.File.Path) + "\n"); err != nil {
+				return err
+			}
 		}
 		if remote && a.RemoteURL != "" {
-			f.WriteString(a.RemoteURL + "\n")
+			if _, err := f.WriteString(a.RemoteURL + "\n"); err != nil {
+				return err
+			}
 		}
 	}
 
