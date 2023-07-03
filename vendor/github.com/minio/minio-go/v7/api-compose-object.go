@@ -222,6 +222,9 @@ func (c *Client) copyObjectDo(ctx context.Context, srcBucket, srcObject, destBuc
 	if dstOpts.Internal.ReplicationRequest {
 		headers.Set(minIOBucketReplicationRequest, "true")
 	}
+	if dstOpts.Internal.ReplicationValidityCheck {
+		headers.Set(minIOBucketReplicationCheck, "true")
+	}
 	if !dstOpts.Internal.LegalholdTimestamp.IsZero() {
 		headers.Set(minIOBucketReplicationObjectLegalHoldTimestamp, dstOpts.Internal.LegalholdTimestamp.Format(time.RFC3339Nano))
 	}
