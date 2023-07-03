@@ -15,7 +15,7 @@ GoToSocial supports both SQLite and Postgres and you can start using either. We 
 SQLite is great for a single-user instance. If you're planning on hosting multiple people it's advisable to use Postgres instead. You can always use Postgres regardless of the instance size.
 
 !!! tip
-    Please backup your database. The database contains encryption keys for the instance and any user accounts. You won't be able to federate again from the same domain if you lose these keys.
+    Please [backup  your database](../admin/backup_and_restore.md). The database contains encryption keys for the instance and any user accounts. You won't be able to federate again from the same domain if you lose these keys.
 
 ## Domain name
 
