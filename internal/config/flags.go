@@ -200,3 +200,14 @@ func AddAdminMediaPrune(cmd *cobra.Command) {
 	usage := fieldtag("AdminMediaPruneDryRun", "usage")
 	cmd.Flags().Bool(name, true, usage)
 }
+
+// AddAdminMediaList attaches flags pertaining to media list commands.
+func AddAdminMediaList(cmd *cobra.Command) {
+	loc := AdminMediaListLocalFlag()
+	locUsage := fieldtag("AdminMediaListLocal", "usage")
+	cmd.Flags().Bool(loc, false, locUsage)
+
+	remote := AdminMediaListRemoteFlag()
+	remUsage := fieldtag("AdminMediaListRemote", "usage")
+	cmd.Flags().Bool(remote, false, remUsage)
+}

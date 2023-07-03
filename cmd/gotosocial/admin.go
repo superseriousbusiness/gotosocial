@@ -20,6 +20,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media/prune"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -174,6 +175,23 @@ func adminCommands() *cobra.Command {
 	}
 
 	/*
+		ADMIN MEDIA LIST COMMANDS
+	*/
+
+	adminMediaListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "admin command to list and filter media/attachments",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), media.List)
+		},
+	}
+
+	config.AddAdminMediaList(adminMediaListCmd)
+
+	/*
 		ADMIN MEDIA PRUNE COMMANDS
 	*/
 	adminMediaPruneCmd := &cobra.Command{
@@ -220,7 +238,7 @@ func adminCommands() *cobra.Command {
 	config.AddAdminMediaPrune(adminMediaPruneAllCmd)
 	adminMediaPruneCmd.AddCommand(adminMediaPruneAllCmd)
 
-	adminMediaCmd.AddCommand(adminMediaPruneCmd)
+	adminMediaCmd.AddCommand(adminMediaPruneCmd, adminMediaListCmd)
 
 	adminCmd.AddCommand(adminMediaCmd)
 

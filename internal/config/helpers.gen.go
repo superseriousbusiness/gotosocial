@@ -3855,6 +3855,56 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
 
+// GetAdminMediaListLocal safely fetches the Configuration value for state's 'AdminMediaListLocal' field
+func (st *ConfigState) GetAdminMediaListLocal() (v bool) {
+	st.mutex.Lock()
+	v = st.config.AdminMediaListLocal
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdminMediaListLocal safely sets the Configuration value for state's 'AdminMediaListLocal' field
+func (st *ConfigState) SetAdminMediaListLocal(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdminMediaListLocal = v
+	st.reloadToViper()
+}
+
+// AdminMediaListLocalFlag returns the flag name for the 'AdminMediaListLocal' field
+func AdminMediaListLocalFlag() string { return "local" }
+
+// GetAdminMediaListLocal safely fetches the value for global configuration 'AdminMediaListLocal' field
+func GetAdminMediaListLocal() bool { return global.GetAdminMediaListLocal() }
+
+// SetAdminMediaListLocal safely sets the value for global configuration 'AdminMediaListLocal' field
+func SetAdminMediaListLocal(v bool) { global.SetAdminMediaListLocal(v) }
+
+// GetAdminMediaListRemote safely fetches the Configuration value for state's 'AdminMediaListRemote' field
+func (st *ConfigState) GetAdminMediaListRemote() (v bool) {
+	st.mutex.Lock()
+	v = st.config.AdminMediaListRemote
+	st.mutex.Unlock()
+	return
+}
+
+// SetAdminMediaListRemote safely sets the Configuration value for state's 'AdminMediaListRemote' field
+func (st *ConfigState) SetAdminMediaListRemote(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdminMediaListRemote = v
+	st.reloadToViper()
+}
+
+// AdminMediaListRemoteFlag returns the flag name for the 'AdminMediaListRemote' field
+func AdminMediaListRemoteFlag() string { return "remote" }
+
+// GetAdminMediaListRemote safely fetches the value for global configuration 'AdminMediaListRemote' field
+func GetAdminMediaListRemote() bool { return global.GetAdminMediaListRemote() }
+
+// SetAdminMediaListRemote safely sets the value for global configuration 'AdminMediaListRemote' field
+func SetAdminMediaListRemote(v bool) { global.SetAdminMediaListRemote(v) }
+
 // GetRequestIDHeader safely fetches the Configuration value for state's 'RequestIDHeader' field
 func (st *ConfigState) GetRequestIDHeader() (v string) {
 	st.mutex.Lock()
