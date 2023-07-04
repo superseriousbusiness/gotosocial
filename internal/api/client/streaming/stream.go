@@ -258,10 +258,16 @@ func (m *Module) handleWSConn(username string, wsConn *websocket.Conn, stream *s
 	pinger := time.NewTicker(m.dTicker)
 
 	// Read messages coming from the Websocket client connection into the server.
-	go m.readFromWSConn(ctx, cancel, username, wsConn, stream)
+	go func() {
+		defer cancel()
+		m.readFromWSConn(ctx, username, wsConn, stream)
+	}()
 
 	// Write messages coming from the processor into the Websocket client connection.
-	go m.writeToWSConn(ctx, cancel, username, wsConn, stream, pinger)
+	go func() {
+		defer cancel()
+		m.writeToWSConn(ctx, username, wsConn, stream, pinger)
+	}()
 
 	// Wait for either the read or write functions to close, to indicate
 	// that the client has left, or something else has gone wrong.
@@ -286,11 +292,10 @@ func (m *Module) handleWSConn(username string, wsConn *websocket.Conn, stream *s
 // websockets connection, and modifies the subscription StreamTypes
 // of the given stream accordingly after acquiring a lock on it.
 //
-// If an error is encountered while reading, the provided cancelF
-// will be called to indicate that the connection should be closed.
+// This is a blocking function; will return only on read error or
+// if the given context is canceled.
 func (m *Module) readFromWSConn(
 	ctx context.Context,
-	cancel context.CancelFunc,
 	username string,
 	wsConn *websocket.Conn,
 	stream *streampkg.Stream,
@@ -301,9 +306,6 @@ func (m *Module) readFromWSConn(
 			{"username", username},
 			{"streamID", stream.ID},
 		}...)
-
-	// Signal done
-	defer cancel()
 
 readLoop:
 	for {
@@ -384,11 +386,10 @@ readLoop:
 // This function also handles sending ping messages into the websockets
 // connection to keep it alive when no other activity occurs.
 //
-// If an error is encountered while writing, the provided cancelF
-// will be called to indicate that the connection should be closed.
+// This is a blocking function; will return only on write error or
+// if the given context is canceled.
 func (m *Module) writeToWSConn(
 	ctx context.Context,
-	cancel context.CancelFunc,
 	username string,
 	wsConn *websocket.Conn,
 	stream *streampkg.Stream,
@@ -401,9 +402,6 @@ func (m *Module) writeToWSConn(
 			{"streamID", stream.ID},
 		}...)
 
-	// Signal done
-	defer cancel()
-
 writeLoop:
 	for {
 		select {
@@ -413,7 +411,7 @@ writeLoop:
 
 		case msg := <-stream.Messages:
 			// Received a new message from the processor.
-			l.Tracef("sending message to websocket: %+v", msg)
+			l.Tracef("writing message to websocket: %+v", msg)
 			if err := wsConn.WriteJSON(msg); err != nil {
 				l.Debugf("error writing json to websocket: %v", err)
 				break writeLoop
@@ -425,8 +423,8 @@ writeLoop:
 
 		case <-pinger.C:
 			// Time to send a keep-alive "ping".
-			l.Trace("pinging websocket ...")
-			if err := wsConn.WriteMessage(websocket.PingMessage, nil); err != nil {
+			l.Trace("writing ping control message to websocket")
+			if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
 				l.Debugf("error writing ping to websocket: %v", err)
 				break writeLoop
 			}
