@@ -27,6 +27,7 @@ import (
 const (
 	/* Common keys */
 
+	IDKey    = "id"
 	LimitKey = "limit"
 	LocalKey = "local"
 	MaxIDKey = "max_id"
@@ -41,6 +42,11 @@ const (
 	SearchQueryKey             = "q"
 	SearchResolveKey           = "resolve"
 	SearchTypeKey              = "type"
+
+	/* Domain block keys */
+
+	DomainBlockExportKey = "export"
+	DomainBlockImportKey = "import"
 )
 
 // parseError returns gtserror.WithCode set to 400 Bad Request, to indicate
@@ -50,6 +56,8 @@ func parseError(key string, value, defaultValue any, err error) gtserror.WithCod
 	return gtserror.NewErrorBadRequest(err, err.Error())
 }
 
+// requiredError returns gtserror.WithCode set to 400 Bad Request, to indicate
+// to the caller a required key value was not provided, or was empty.
 func requiredError(key string) gtserror.WithCode {
 	err := fmt.Errorf("required key %s was not set or had empty value", key)
 	return gtserror.NewErrorBadRequest(err, err.Error())
@@ -60,110 +68,50 @@ func requiredError(key string) gtserror.WithCode {
 */
 
 func ParseLimit(value string, defaultValue int, max, min int) (int, gtserror.WithCode) {
-	key := LimitKey
-
-	if value == "" {
-		return defaultValue, nil
-	}
-
-	i, err := strconv.Atoi(value)
-	if err != nil {
-		return defaultValue, parseError(key, value, defaultValue, err)
-	}
-
-	if i > max {
-		i = max
-	} else if i < min {
-		i = min
-	}
-
-	return i, nil
+	return parseInt(value, defaultValue, max, min, LimitKey)
 }
 
 func ParseLocal(value string, defaultValue bool) (bool, gtserror.WithCode) {
-	key := LimitKey
-
-	if value == "" {
-		return defaultValue, nil
-	}
-
-	i, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue, parseError(key, value, defaultValue, err)
-	}
-
-	return i, nil
+	return parseBool(value, defaultValue, LocalKey)
 }
 
 func ParseSearchExcludeUnreviewed(value string, defaultValue bool) (bool, gtserror.WithCode) {
-	key := SearchExcludeUnreviewedKey
-
-	if value == "" {
-		return defaultValue, nil
-	}
-
-	i, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue, parseError(key, value, defaultValue, err)
-	}
-
-	return i, nil
+	return parseBool(value, defaultValue, SearchExcludeUnreviewedKey)
 }
 
 func ParseSearchFollowing(value string, defaultValue bool) (bool, gtserror.WithCode) {
-	key := SearchFollowingKey
-
-	if value == "" {
-		return defaultValue, nil
-	}
-
-	i, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue, parseError(key, value, defaultValue, err)
-	}
-
-	return i, nil
+	return parseBool(value, defaultValue, SearchFollowingKey)
 }
 
 func ParseSearchOffset(value string, defaultValue int, max, min int) (int, gtserror.WithCode) {
-	key := SearchOffsetKey
-
-	if value == "" {
-		return defaultValue, nil
-	}
-
-	i, err := strconv.Atoi(value)
-	if err != nil {
-		return defaultValue, parseError(key, value, defaultValue, err)
-	}
-
-	if i > max {
-		i = max
-	} else if i < min {
-		i = min
-	}
-
-	return i, nil
+	return parseInt(value, defaultValue, max, min, SearchOffsetKey)
 }
 
 func ParseSearchResolve(value string, defaultValue bool) (bool, gtserror.WithCode) {
-	key := SearchResolveKey
+	return parseBool(value, defaultValue, SearchResolveKey)
+}
 
-	if value == "" {
-		return defaultValue, nil
-	}
+func ParseDomainBlockExport(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, DomainBlockExportKey)
+}
 
-	i, err := strconv.ParseBool(value)
-	if err != nil {
-		return defaultValue, parseError(key, value, defaultValue, err)
-	}
-
-	return i, nil
+func ParseDomainBlockImport(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, DomainBlockImportKey)
 }
 
 /*
 	Parse functions for *REQUIRED* parameters.
 */
+
+func ParseID(value string) (string, gtserror.WithCode) {
+	key := IDKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	return value, nil
+}
 
 func ParseSearchLookup(value string) (string, gtserror.WithCode) {
 	key := SearchLookupKey
@@ -183,4 +131,40 @@ func ParseSearchQuery(value string) (string, gtserror.WithCode) {
 	}
 
 	return value, nil
+}
+
+/*
+	Internal functions
+*/
+
+func parseBool(value string, defaultValue bool, key string) (bool, gtserror.WithCode) {
+	if value == "" {
+		return defaultValue, nil
+	}
+
+	i, err := strconv.ParseBool(value)
+	if err != nil {
+		return defaultValue, parseError(key, value, defaultValue, err)
+	}
+
+	return i, nil
+}
+
+func parseInt(value string, defaultValue int, max int, min int, key string) (int, gtserror.WithCode) {
+	if value == "" {
+		return defaultValue, nil
+	}
+
+	i, err := strconv.Atoi(value)
+	if err != nil {
+		return defaultValue, parseError(key, value, defaultValue, err)
+	}
+
+	if i > max {
+		i = max
+	} else if i < min {
+		i = min
+	}
+
+	return i, nil
 }

@@ -256,7 +256,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			return nil, false, err
 		}
 
-		if err := f.db.Put(ctx, instance); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+		if err := f.db.PutInstance(ctx, instance); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
 			err = gtserror.Newf("error inserting instance entry for %s: %w", pubKeyOwner.Host, err)
 			return nil, false, err
 		}
