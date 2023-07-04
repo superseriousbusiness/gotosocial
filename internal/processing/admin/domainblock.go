@@ -107,7 +107,7 @@ func (p *Processor) DomainBlocksImport(
 	file, err := domainsF.Open()
 	if err != nil {
 		err = gtserror.Newf("error opening attachment: %w", err)
-		return nil, gtserror.NewErrorBadRequest(err)
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 	defer file.Close()
 
@@ -116,7 +116,7 @@ func (p *Processor) DomainBlocksImport(
 	size, err := io.Copy(buf, file)
 	if err != nil {
 		err = gtserror.Newf("error reading attachment: %w", err)
-		return nil, gtserror.NewErrorBadRequest(err)
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	// Ensure we actually read something.
@@ -129,7 +129,7 @@ func (p *Processor) DomainBlocksImport(
 	domainBlocks := make([]*apimodel.DomainBlock, 0)
 	if err := json.Unmarshal(buf.Bytes(), &domainBlocks); err != nil {
 		err = gtserror.Newf("error parsing attachment as domain blocks: %w", err)
-		return nil, gtserror.NewErrorBadRequest(err)
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	count := len(domainBlocks)

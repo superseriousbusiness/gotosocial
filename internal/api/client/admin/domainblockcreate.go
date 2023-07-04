@@ -200,7 +200,8 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 		}
 
 		err := fmt.Errorf("one or more errors importing domain blocks: %+v", failures)
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnprocessableEntity(err), m.processor.InstanceGetV1)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnprocessableEntity(err, err.Error()), m.processor.InstanceGetV1)
+		return
 	}
 
 	// Success, return slice of domain blocks.
