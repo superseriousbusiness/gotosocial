@@ -81,6 +81,15 @@
 				{{end}}
 			</p>
 		</div>
+
+		<div>
+			<h2>Instance Statistics</h2>
+				<ul>
+					<li>Users: <span class="count">{{.instance.Stats.user_count}}</span></li>
+					<li>Posts: <span class="count">{{.instance.Stats.status_count}}</span></li>
+					<li>Federates with: <span class="count">{{.instance.Stats.domain_count}}</span> instances</li>
+				</ul>
+		</div>
 	</section>
 </main>
 {{ template "footer.tmpl" .}}
