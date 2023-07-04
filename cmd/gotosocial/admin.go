@@ -178,18 +178,29 @@ func adminCommands() *cobra.Command {
 		ADMIN MEDIA LIST COMMANDS
 	*/
 
-	adminMediaListCmd := &cobra.Command{
-		Use:   "list",
-		Short: "admin command to list and filter media/attachments",
+	adminMediaListLocalCmd := &cobra.Command{
+		Use:   "list-local",
+		Short: "admin command to list media on local storage",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), media.List)
+			return run(cmd.Context(), media.ListLocal)
 		},
 	}
 
-	config.AddAdminMediaList(adminMediaListCmd)
+	adminMediaListRemoteCmd := &cobra.Command{
+		Use:   "list-remote",
+		Short: "admin command to list remote media cached on this instance",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), media.ListRemote)
+		},
+	}
+
+	adminMediaCmd.AddCommand(adminMediaListLocalCmd, adminMediaListRemoteCmd)
 
 	/*
 		ADMIN MEDIA PRUNE COMMANDS
@@ -238,7 +249,7 @@ func adminCommands() *cobra.Command {
 	config.AddAdminMediaPrune(adminMediaPruneAllCmd)
 	adminMediaPruneCmd.AddCommand(adminMediaPruneAllCmd)
 
-	adminMediaCmd.AddCommand(adminMediaPruneCmd, adminMediaListCmd)
+	adminMediaCmd.AddCommand(adminMediaPruneCmd)
 
 	adminCmd.AddCommand(adminMediaCmd)
 
