@@ -16,7 +16,7 @@ Most backup tools have built-in support for common databases like PostgreSQL and
 
 ### Media
 
-Local media should be backed up. It's not possible to easily do so in GoToSocial when using backup tools since local and remote media are stored together. This is tracked in [issue 1776](https://github.com/superseriousbusiness/gotosocial/issues/1776).
+Local media should be backed up. You can use the GoToSocial CLI to list all media files that belong to your instance and its users.
 
 Remote media does not have to be backed up. This can be a good way to keep the size of your backups down. Remote media will be fetched from the origin instance, much like how it'll be fetched again if it got pruned due to media retention.
 
@@ -26,7 +26,7 @@ You can go about this a few different ways:
 
 * Imaging the VMs/machines your instance and database runs on
 * Dumping GoToSocial's state with the CLI
-* Backing up database files
+* Backing up database and media files
 * Backup software
 
 Though setting up backup software can be a bit more work, it's by far the best option. It ensures consistent and encrypted backups and can protect you against filesystem corruption in a way that taking disk snapshots and copying the raw database and media files won't.
@@ -90,7 +90,7 @@ The backup file produced will be in the form of a line-separated series of JSON 
 {"type":"instance","id":"01BZDDRPAB8J645ABY31HHF68Y","createdAt":"2021-09-08T10:00:54.763912Z","domain":"localhost:8080","title":"localhost:8080","uri":"http://localhost:8080","reputation":0}
 ```
 
-For information on how to use the commands to import/export, see [here](cli.md#gotosocial-admin-export).
+For information on how to use the commands to import/export, see [here](cli.md#gotosocial-admin-export). Though the `export` command won't backup media, you can use the [`media list-local`](cli.md#gotosocial-admin-media-list-local) command to figure out which media files you should keep.
 
 Advantages:
 
@@ -100,13 +100,15 @@ Advantages:
 
 Disadvantages:
 
-* Loss of statuses/media/etc: don't do a backup/restore this way unless you're willing to drop stuff.
+* Loss of statuses/faves/etc: don't do a backup/restore this way unless you're willing to drop stuff.
 * You need to use the GtS CLI tool to insert data back into a database, unless you write custom tooling for it.
 
 
-### Back up your database files
+### Back up your database files and media
 
 Regardless of whether you're using PostgreSQL or SQLite as your GoToSocial database, it's possible to simply back up the database files directly by using something like [rclone](https://rclone.org/), or following best practices for [backing up Postgres data](https://www.postgresql.org/docs/15/backup.html) or [SQLite data](https://sqlite.org/backup.html).
+
+Use the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local) to get a list of media files you need to safeguard.
 
 Advantages:
 
@@ -147,9 +149,11 @@ How to backup databases with Borgmatic has its own [documentation page](https://
 
 ```yaml
 location:
-    repositories:
-        - path: ssh://<find it in your provider control panel>
-          label: <anything but typically the provider, for example borgbase>
+  repositories:
+    - path: ssh://<find it in your provider control panel>
+      label: <anything but typically the provider, for example borgbase>
+  patterns_from:
+  - /etc/borgmatic/gotosocial_patterns
 
 storage:
   compression: auto,zstd
@@ -173,6 +177,41 @@ hooks:
 ```
 
 For PostgreSQL, you'll want to use `postgresql_databases` instead.
+
+The file mentioned in `patterns_from` can be created by transforming the output from the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local). In order to generate the right patterns you can use the [`media-to-borg-patterns.py`](https://github.com/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) script. How Borg patterns work is explained in [their documentation](https://man.archlinux.org/man/borg-patterns.1).
+
+You'll need to put that file on your GoToSocial instance and make sure the file is executable. It requires Python 3 which you will already have if you have Borg and Borgmatic installed. It only depends on the Python standard library.
+
+!!! note
+    For this to work reliably, you should ensure that the [storage-local-base-path](../configuration/storage.md) in your GoToSocial configuration uses an absolute path. Otherwise you'll have to tweak the paths yourself.
+
+```sh
+$ gotosocial admin media list-local | \
+    /path/to/media-to-borg-patterns.py \
+    <storage-local-base-path>
+```
+
+This will output a pattern set looking roughly like this to your console:
+
+```
+R <storage-local-base-path>
++ pp:<storage-local-base-path>/<account ID>
+- <storage-local-base-path>/*
+```
+
+!!! tip
+    You can view the help by passing `--help` to `media-to-borg-patterns.py`. It can write the output to a file directly by passing the location of a file as the last argument to the script.
+
+Given this set of patterns, Borg will start looking for files starting from `<storage-local-base-path>`. Anything that matches the path prefix, `pp:` will be included. Everything else will match the last pattern, excluding it from the archive.
+
+On a single-user instance, you can run this command once and inline the patterns directly in your Borgmatic configuration [using the `patterns` key](https://torsion.org/borgmatic/docs/reference/configuration/). On multi-user instances you should run this after a user signs up. Alternatively, you can run it every time before you do a backup.
+
+If you're running Borgmatic as a systemd service, you can [create a drop-in](https://wiki.archlinux.org/title/systemd#Drop-in_files) for `borgmatic.service` and run the pattern generation before the backup is started with:
+
+```ini
+[Service]
+ExecStartPre=/path/to/gotosocial admin media list-local | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
+```
 
 Documentation that's good to review:
 
