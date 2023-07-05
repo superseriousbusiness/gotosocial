@@ -14,10 +14,6 @@ Aside from disaster recovery, there are other good reasons to keep backups. Some
 
 Most backup tools have built-in support for common databases like PostgreSQL and SQLite. Ensure you review their documentation first as they often spell out certain considerations and conditions that need to be met for backups to complete and restore successfully.
 
-Postgres can be backed up online. This means you don't have to stop GoToSocial or the database itself. Depending on how your backup utility performs the backup it may cause a slight slowdown while that's in progress.
-
-SQLite can be backed up using the `backup`, `dump` or `clone` functions. This will vary based on your backup utility, but `dump` is commonly used as that results in a SQL dump. Though not strictly necessary it's advised to stop GoToSocial before doing the backup to ensure the DB is in a consistent state.
-
 ### Media
 
 Local media should be backed up. It's not possible to easily do so in GoToSocial when using backup tools since local and remote media are stored together. This is tracked in [issue 1776](https://github.com/superseriousbusiness/gotosocial/issues/1776).
