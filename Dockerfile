@@ -44,4 +44,4 @@ COPY --chown=1000:1000 --from=bundler web /gotosocial/web
 COPY --chown=1000:1000 --from=swagger /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml web/assets/swagger.yaml
 
 VOLUME [ "/gotosocial/storage" ]
-ENTRYPOINT [ "/gotosocial/gotosocial", "--config","/data/config.yaml","server", "start" ]
+ENTRYPOINT [ "/gotosocial/gotosocial", "--config","/gotosocial/storage/config.yaml","server", "start" ]
