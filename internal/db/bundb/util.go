@@ -22,34 +22,6 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// whereEmptyOrNull is a convenience function to return a bun WhereGroup that specifies
-// that the given column should be EITHER an empty string OR null.
-//
-// Use it as follows:
-//
-//	q = q.WhereGroup(" AND ", whereEmptyOrNull("whatever_column"))
-func whereEmptyOrNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.
-			WhereOr("? IS NULL", bun.Ident(column)).
-			WhereOr("? = ''", bun.Ident(column))
-	}
-}
-
-// whereNotEmptyAndNotNull is a convenience function to return a bun WhereGroup that specifies
-// that the given column should be NEITHER an empty string NOR null.
-//
-// Use it as follows:
-//
-//	q = q.WhereGroup(" AND ", whereNotEmptyAndNotNull("whatever_column"))
-func whereNotEmptyAndNotNull(column string) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.
-			Where("? IS NOT NULL", bun.Ident(column)).
-			Where("? != ''", bun.Ident(column))
-	}
-}
-
 // updateWhere parses []db.Where and adds it to the given update query.
 func updateWhere(q *bun.UpdateQuery, where []db.Where) {
 	for _, w := range where {
