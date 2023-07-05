@@ -178,7 +178,7 @@ func (m *Media) UncacheRemote(ctx context.Context, olderThan time.Time) (int, er
 
 	for {
 		// Fetch the next batch of attachments older than last-set time.
-		attachments, err := m.state.DB.GetRemoteOlderThan(ctx, olderThan, selectLimit)
+		attachments, err := m.state.DB.GetRemoteMediaOlderThan(ctx, olderThan, selectLimit)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return total, gtserror.Newf("error getting remote media: %w", err)
 		}

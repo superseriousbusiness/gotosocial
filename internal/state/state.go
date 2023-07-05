@@ -32,6 +32,13 @@ import (
 // subpackage initialization, while the returned subpackage type will later
 // then be set and stored within the State{} itself.
 type State struct {
+	// Instance contains frequently required ID strings
+	// of the current local GoToSocial instance host.
+	Instance struct {
+		ID        string
+		AccountID string
+	}
+
 	// Caches provides access to this state's collection of caches.
 	Caches cache.Caches
 

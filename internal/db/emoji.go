@@ -19,6 +19,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -40,8 +41,13 @@ type Emoji interface {
 	GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Emoji, Error)
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
+
 	// GetEmojis ...
 	GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
+
+	// GetRemoteEmojisOlderThan ...
+	GetRemoteEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error)
+
 	// GetEmojisBy gets emojis based on given parameters. Useful for admin actions.
 	GetEmojisBy(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, error)
 	// GetEmojiByID gets a specific emoji by its database ID.

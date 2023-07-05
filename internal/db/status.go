@@ -28,9 +28,6 @@ type Status interface {
 	// GetStatusByID returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, Error)
 
-	// GetStatuses gets a slice of statuses corresponding to the given status IDs.
-	GetStatuses(ctx context.Context, ids []string) ([]*gtsmodel.Status, Error)
-
 	// GetStatusByURI returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, Error)
 
@@ -57,6 +54,12 @@ type Status interface {
 
 	// CountStatusFaves returns the amount of faves/likes recorded for a status, or an error if something goes wrong
 	CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, Error)
+
+	// GetStatuses gets a slice of statuses corresponding to the given status IDs.
+	GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error)
+
+	// GetStatusesUsingEmoji ...
+	GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error)
 
 	// GetStatusParents gets the parent statuses of a given status.
 	//

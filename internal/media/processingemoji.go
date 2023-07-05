@@ -37,10 +37,9 @@ import (
 // ProcessingEmoji represents an emoji currently processing. It exposes
 // various functions for retrieving data from the process.
 type ProcessingEmoji struct {
-	instAccID string            // instance account ID
 	emoji     *gtsmodel.Emoji   // processing emoji details
-	refresh   bool              // whether this is an existing emoji being refreshed
-	newPathID string            // new emoji path ID to use if refreshed
+	existing  bool              // indicates whether this is an existing emoji ID being refreshed / recached
+	newPathID string            // new emoji path ID to use when being refreshed
 	dataFn    DataFunc          // load-data function, returns media stream
 	done      bool              // done is set when process finishes with non ctx canceled type error
 	proc      runners.Processor // proc helps synchronize only a singular running processing instance
@@ -121,24 +120,9 @@ func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, erro
 			return err
 		}
 
-		if p.refresh {
-			columns := []string{
-				"image_remote_url",
-				"image_static_remote_url",
-				"image_url",
-				"image_static_url",
-				"image_path",
-				"image_static_path",
-				"image_content_type",
-				"image_file_size",
-				"image_static_file_size",
-				"image_updated_at",
-				"shortcode",
-				"uri",
-			}
-
-			// Existing emoji we're refreshing, so only need to update.
-			err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji, columns...)
+		if p.existing {
+			// Existing emoji we're updating, so only update.
+			err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
 			return err
 		}
 
@@ -217,7 +201,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	var pathID string
 
-	if p.refresh {
+	if p.newPathID != "" {
 		// This is a refreshed emoji with a new
 		// path ID that this will be stored under.
 		pathID = p.newPathID
@@ -229,7 +213,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Calculate emoji file path.
 	p.emoji.ImagePath = fmt.Sprintf(
 		"%s/%s/%s/%s.%s",
-		p.instAccID,
+		p.mgr.state.Instance.AccountID,
 		TypeEmoji,
 		SizeOriginal,
 		pathID,
@@ -263,7 +247,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	// Fill in remaining attachment data now it's stored.
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(
-		p.instAccID,
+		p.mgr.state.Instance.AccountID,
 		string(TypeEmoji),
 		string(SizeOriginal),
 		pathID,

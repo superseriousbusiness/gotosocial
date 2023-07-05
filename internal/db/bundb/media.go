@@ -232,7 +232,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	return m.conn.ProcessError(err)
 }
 
-func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetRemoteMediaOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
 	attachmentIDs := []string{}
 
 	q := m.conn.

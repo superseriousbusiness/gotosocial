@@ -328,7 +328,7 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 }
 
 func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
-	emojiIDs := []string{}
+	var emojiIDs []string
 
 	q := e.conn.NewSelect().
 		Table("emojis").
@@ -338,6 +338,27 @@ func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gt
 	if maxID != "" {
 		q = q.Where("? < ?", bun.Ident("id"), maxID)
 	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx, &emojiIDs); err != nil {
+		return nil, e.conn.ProcessError(err)
+	}
+
+	return e.GetEmojisByIDs(ctx, emojiIDs)
+}
+
+func (e *emojiDB) GetRemoteEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error) {
+	var emojiIDs []string
+
+	q := e.conn.NewSelect().
+		Table("emojis").
+		Column("id").
+		Where("cached = ?", true).
+		Where("created_at < ?", olderThan).
+		Order("id DESC")
 
 	if limit != 0 {
 		q = q.Limit(limit)

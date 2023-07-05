@@ -56,6 +56,27 @@ func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Ac
 	)
 }
 
+func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error) {
+	accounts := make([]*gtsmodel.Account, 0, len(ids))
+
+	for _, id := range ids {
+		// Attempt to fetch account from DB.
+		account, err := a.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			id,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error getting account %q: %v", id, err)
+			continue
+		}
+
+		// Append account to return slice.
+		accounts = append(accounts, account)
+	}
+
+	return accounts, nil
+}
+
 func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
 	return a.getAccount(
 		ctx,
@@ -442,6 +463,18 @@ func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username 
 	}
 
 	return account.CustomCSS, nil
+}
+
+func (a *accountDB) GetAccountsUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Account, error) {
+	var accountIDs []string
+	if _, err := a.conn.NewSelect().
+		Table("accounts").
+		Column("id").
+		Where("? IN (emojis)", emojiID).
+		Exec(ctx, &accountIDs); err != nil {
+		return nil, a.conn.ProcessError(err)
+	}
+	return a.GetAccountsByIDs(ctx, accountIDs)
 }
 
 func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, db.Error) {

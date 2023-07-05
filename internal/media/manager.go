@@ -159,7 +159,7 @@ func (m *Manager) PreProcessMedia(ctx context.Context, data DataFunc, accountID 
 	return processingMedia, nil
 }
 
-// PreProcessMediaRecache refetches, reprocesses, and recaches an existing attachment that has been uncached via pruneRemote.
+// PreProcessMediaRecache refetches, reprocesses, and recaches an existing attachment that has been uncached via cleaner pruning.
 //
 // Note: unlike ProcessMedia, this will NOT queue the media to be asychronously processed.
 func (m *Manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error) {
@@ -209,12 +209,8 @@ func (m *Manager) ProcessMedia(ctx context.Context, data DataFunc, accountID str
 //
 // Note: unlike ProcessEmoji, this will NOT queue the emoji to be asynchronously processed.
 func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
-	instanceAccount, err := m.state.DB.GetInstanceAccount(ctx, "")
-	if err != nil {
-		return nil, gtserror.Newf("error fetching this instance account from the db: %s", err)
-	}
-
 	var (
+		err       error
 		newPathID string
 		emoji     *gtsmodel.Emoji
 		now       = time.Now()
@@ -261,8 +257,8 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 		}
 
 		// store + serve static image at new path ID
-		emoji.ImageStaticURL = uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeStatic), newPathID, mimePng)
-		emoji.ImageStaticPath = fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, TypeEmoji, SizeStatic, newPathID, mimePng)
+		emoji.ImageStaticURL = uris.GenerateURIForAttachment(m.state.Instance.AccountID, string(TypeEmoji), string(SizeStatic), newPathID, mimePng)
+		emoji.ImageStaticPath = fmt.Sprintf("%s/%s/%s/%s.%s", m.state.Instance.AccountID, TypeEmoji, SizeStatic, newPathID, mimePng)
 
 		emoji.Shortcode = shortcode
 		emoji.URI = uri
@@ -278,12 +274,12 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 			Domain:                 "", // assume our own domain unless told otherwise
 			ImageRemoteURL:         "",
 			ImageStaticRemoteURL:   "",
-			ImageURL:               "",                                                                                                         // we don't know yet
-			ImageStaticURL:         uris.GenerateURIForAttachment(instanceAccount.ID, string(TypeEmoji), string(SizeStatic), emojiID, mimePng), // all static emojis are encoded as png
-			ImagePath:              "",                                                                                                         // we don't know yet
-			ImageStaticPath:        fmt.Sprintf("%s/%s/%s/%s.%s", instanceAccount.ID, TypeEmoji, SizeStatic, emojiID, mimePng),                 // all static emojis are encoded as png
-			ImageContentType:       "",                                                                                                         // we don't know yet
-			ImageStaticContentType: mimeImagePng,                                                                                               // all static emojis are encoded as png
+			ImageURL:               "",                                                                                                                 // we don't know yet
+			ImageStaticURL:         uris.GenerateURIForAttachment(m.state.Instance.AccountID, string(TypeEmoji), string(SizeStatic), emojiID, mimePng), // all static emojis are encoded as png
+			ImagePath:              "",                                                                                                                 // we don't know yet
+			ImageStaticPath:        fmt.Sprintf("%s/%s/%s/%s.%s", m.state.Instance.AccountID, TypeEmoji, SizeStatic, emojiID, mimePng),                 // all static emojis are encoded as png
+			ImageContentType:       "",                                                                                                                 // we don't know yet
+			ImageStaticContentType: mimeImagePng,                                                                                                       // all static emojis are encoded as png
 			ImageFileSize:          0,
 			ImageStaticFileSize:    0,
 			Disabled:               &disabled,
@@ -329,12 +325,31 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 	}
 
 	processingEmoji := &ProcessingEmoji{
-		instAccID: instanceAccount.ID,
 		emoji:     emoji,
-		refresh:   refresh,
+		existing:  refresh,
 		newPathID: newPathID,
 		dataFn:    data,
 		mgr:       m,
+	}
+
+	return processingEmoji, nil
+}
+
+// PreProcessEmojiRecache refetches, reprocesses, and recaches an existing emoji that has been uncached via cleaner pruning.
+//
+// Note: unlike ProcessEmoji, this will NOT queue the emoji to be asychronously processed.
+func (m *Manager) PreProcessEmojiRecache(ctx context.Context, data DataFunc, emojiID string) (*ProcessingEmoji, error) {
+	// get the existing emoji from the database.
+	emoji, err := m.state.DB.GetEmojiByID(ctx, emojiID)
+	if err != nil {
+		return nil, err
+	}
+
+	processingEmoji := &ProcessingEmoji{
+		emoji:    emoji,
+		dataFn:   data,
+		existing: true, // inidcate recache
+		mgr:      m,
 	}
 
 	return processingEmoji, nil

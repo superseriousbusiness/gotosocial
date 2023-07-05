@@ -50,13 +50,13 @@ func (suite *StatusTestSuite) TestGetStatusByID() {
 	suite.True(*status.Likeable)
 }
 
-func (suite *StatusTestSuite) TestGetStatusesByID() {
+func (suite *StatusTestSuite) TestGetStatusesByIDs() {
 	ids := []string{
 		suite.testStatuses["local_account_1_status_1"].ID,
 		suite.testStatuses["local_account_2_status_3"].ID,
 	}
 
-	statuses, err := suite.db.GetStatuses(context.Background(), ids)
+	statuses, err := suite.db.GetStatusesByIDs(context.Background(), ids)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

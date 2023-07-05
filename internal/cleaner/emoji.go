@@ -20,6 +20,7 @@ package cleaner
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -41,7 +42,7 @@ func (e *Emoji) All(ctx context.Context) {
 	e.LogFixBroken(ctx)
 }
 
-// LogPruneMissing performs emoji.PruneMissing(...), logging the start and outcome.
+// LogPruneMissing performs Emoji.PruneMissing(...), logging the start and outcome.
 func (e *Emoji) LogPruneMissing(ctx context.Context) {
 	log.Info(ctx, "start")
 	if n, err := e.PruneMissing(ctx); err != nil {
@@ -51,7 +52,17 @@ func (e *Emoji) LogPruneMissing(ctx context.Context) {
 	}
 }
 
-// LogFixBroken performs emoji.FixBroken(...), logging the start and outcome.
+// LogUncacheRemote performs Emoji.UncacheRemote(...), logging the start and outcome.
+func (e *Emoji) LogUncacheRemote(ctx context.Context, olderThan time.Time) {
+	log.Infof(ctx, "start older than: %s", olderThan.Format(time.Stamp))
+	if n, err := e.UncacheRemote(ctx, olderThan); err != nil {
+		log.Error(ctx, err)
+	} else {
+		log.Infof(ctx, "uncached: %d", n)
+	}
+}
+
+// LogFixBroken performs Emoji.FixBroken(...), logging the start and outcome.
 func (e *Emoji) LogFixBroken(ctx context.Context) {
 	log.Info(ctx, "start")
 	if n, err := e.FixBroken(ctx); err != nil {
@@ -93,6 +104,54 @@ func (e *Emoji) PruneMissing(ctx context.Context) (int, error) {
 			}
 
 			if fixed {
+				// Update
+				// count.
+				total++
+			}
+		}
+	}
+
+	return total, nil
+}
+
+// UncacheRemote will uncache all remote emoji older than given input time. Context
+// will be checked for `gtscontext.DryRun()` in order to actually perform the action.
+func (e *Emoji) UncacheRemote(ctx context.Context, olderThan time.Time) (int, error) {
+	var total int
+
+	// Drop time by a minute to improve search,
+	// (i.e. make it olderThan inclusive search).
+	olderThan = olderThan.Add(-time.Minute)
+
+	// Store recent time.
+	mostRecent := olderThan
+
+	for {
+		// Fetch the next batch of emojis older than last-set time.
+		emojis, err := e.state.DB.GetRemoteEmojisOlderThan(ctx, olderThan, selectLimit)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return total, gtserror.Newf("error getting remote emoji: %w", err)
+		}
+
+		if len(emojis) == 0 {
+			// reached end.
+			break
+		}
+
+		// Use last created-at as the next 'olderThan' value.
+		olderThan = emojis[len(emojis)-1].CreatedAt
+
+		for _, emoji := range emojis {
+			// Check / uncache each remote emoji.
+			uncached, err := e.uncacheRemote(ctx,
+				mostRecent,
+				emoji,
+			)
+			if err != nil {
+				return total, err
+			}
+
+			if uncached {
 				// Update
 				// count.
 				total++
@@ -163,6 +222,46 @@ func (e *Emoji) pruneMissing(ctx context.Context, emoji *gtsmodel.Emoji) (bool, 
 	)
 }
 
+func (e *Emoji) uncacheRemote(ctx context.Context, after time.Time, emoji *gtsmodel.Emoji) (bool, error) {
+	if !*emoji.Cached {
+		// Already uncached.
+		return false, nil
+	}
+
+	// Start a log entry for emoji.
+	l := log.WithContext(ctx).
+		WithField("emoji", emoji.ID)
+
+	// Load any related accounts using this emoji.
+	accounts, err := e.getRelatedAccounts(ctx, emoji)
+	if err != nil {
+		return false, err
+	}
+
+	for _, account := range accounts {
+		if account.FetchedAt.After(after) {
+			l.Debug("skipping due to recently fetched account")
+			return false, nil
+		}
+	}
+
+	// Load any related statuses using this emoji.
+	statuses, err := e.getRelatedStatuses(ctx, emoji)
+	if err != nil {
+		return false, err
+	}
+
+	for _, status := range statuses {
+		if status.FetchedAt.After(after) {
+			l.Debug("skipping due to recently fetched status")
+		}
+	}
+
+	// This emoji is too old, uncache it.
+	l.Debug("uncaching old remote emoji")
+	return true, e.uncache(ctx, emoji)
+}
+
 func (e *Emoji) fixBroken(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
 	// Check we have the required category for emoji.
 	_, missing, err := e.getRelatedCategory(ctx, emoji)
@@ -212,6 +311,47 @@ func (e *Emoji) getRelatedCategory(ctx context.Context, emoji *gtsmodel.Emoji) (
 	}
 
 	return category, false, nil
+}
+
+func (e *Emoji) getRelatedAccounts(ctx context.Context, emoji *gtsmodel.Emoji) ([]*gtsmodel.Account, error) {
+	accounts, err := e.state.DB.GetAccountsUsingEmoji(ctx, emoji.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error fetching accounts using emoji %s: %w", emoji.ID, err)
+	}
+	return accounts, nil
+}
+
+func (e *Emoji) getRelatedStatuses(ctx context.Context, emoji *gtsmodel.Emoji) ([]*gtsmodel.Status, error) {
+	statuses, err := e.state.DB.GetStatusesUsingEmoji(ctx, emoji.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error fetching statuses using emoji %s: %w", emoji.ID, err)
+	}
+	return statuses, nil
+}
+
+func (e *Emoji) uncache(ctx context.Context, emoji *gtsmodel.Emoji) error {
+	if gtscontext.DryRun(ctx) {
+		// Dry run, do nothing.
+		return nil
+	}
+
+	// Remove emoji and static.
+	_, err := e.removeFiles(ctx,
+		emoji.ImagePath,
+		emoji.ImageStaticPath,
+	)
+	if err != nil {
+		return gtserror.Newf("error removing emoji files: %w", err)
+	}
+
+	// Update emoji to reflect that we no longer have it cached.
+	log.Debugf(ctx, "marking emoji as uncached: %s", emoji.ID)
+	emoji.Cached = func() *bool { i := false; return &i }()
+	if err := e.state.DB.UpdateEmoji(ctx, emoji, "cached"); err != nil {
+		return gtserror.Newf("error updating emoji: %w", err)
+	}
+
+	return nil
 }
 
 func (e *Emoji) delete(ctx context.Context, emoji *gtsmodel.Emoji) error {

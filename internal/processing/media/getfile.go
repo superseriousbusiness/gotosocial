@@ -118,7 +118,7 @@ func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	// retrieve attachment from the database and do basic checks on it
 	a, err := p.state.DB.GetAttachmentByID(ctx, wantedMediaID)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %s", wantedMediaID, err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %w", wantedMediaID, err))
 	}
 
 	if a.AccountID != owningAccountID {
@@ -131,7 +131,7 @@ func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		// 2. we need to fetch it again using a transport and the media manager
 		remoteMediaIRI, err := url.Parse(a.RemoteURL)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error parsing remote media iri %s: %s", a.RemoteURL, err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error parsing remote media iri %s: %w", a.RemoteURL, err))
 		}
 
 		// use an empty string as requestingUsername to use the instance account, unless the request for this
@@ -151,24 +151,24 @@ func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount 
 		//   recache operation -> holding open a media worker.
 		// ]
 
-		dataFn := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
-			t, err := p.transportController.NewTransportForUsername(innerCtx, requestingUsername)
+		dataFn := func(ctx context.Context) (io.ReadCloser, int64, error) {
+			t, err := p.transportController.NewTransportForUsername(ctx, requestingUsername)
 			if err != nil {
 				return nil, 0, err
 			}
-			return t.DereferenceMedia(gtscontext.SetFastFail(innerCtx), remoteMediaIRI)
+			return t.DereferenceMedia(gtscontext.SetFastFail(ctx), remoteMediaIRI)
 		}
 
 		// Start recaching this media with the prepared data function.
 		processingMedia, err := p.mediaManager.PreProcessMediaRecache(ctx, dataFn, wantedMediaID)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching media: %s", err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching media: %w", err))
 		}
 
 		// Load attachment and block until complete
 		a, err = processingMedia.LoadAttachment(ctx)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error loading recached attachment: %s", err))
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error loading recached attachment: %w", err))
 		}
 	}
 
@@ -209,11 +209,41 @@ func (p *Processor) getEmojiContent(ctx context.Context, fileName string, owning
 
 	e, err := p.state.DB.GetEmojiByStaticURL(ctx, imageStaticURL)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %s", fileName, err))
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s could not be taken from the db: %w", fileName, err))
 	}
 
 	if *e.Disabled {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji %s has been disabled", fileName))
+	}
+
+	if !*e.Cached {
+		// if we don't have it cached, then we can assume two things:
+		// 1. this is remote emoji, since local emoji should never be uncached
+		// 2. we need to fetch it again using a transport and the media manager
+		remoteURL, err := url.Parse(e.ImageRemoteURL)
+		if err != nil {
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error parsing remote emoji iri %s: %w", e.ImageRemoteURL, err))
+		}
+
+		dataFn := func(ctx context.Context) (io.ReadCloser, int64, error) {
+			t, err := p.transportController.NewTransportForUsername(ctx, "")
+			if err != nil {
+				return nil, 0, err
+			}
+			return t.DereferenceMedia(gtscontext.SetFastFail(ctx), remoteURL)
+		}
+
+		// Start recaching this emoji with the prepared data function.
+		processingEmoji, err := p.mediaManager.PreProcessEmojiRecache(ctx, dataFn, e.ID)
+		if err != nil {
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error recaching emoji: %w", err))
+		}
+
+		// Load attachment and block until complete
+		e, err = processingEmoji.LoadEmoji(ctx)
+		if err != nil {
+			return nil, gtserror.NewErrorNotFound(fmt.Errorf("error loading recached emoji: %w", err))
+		}
 	}
 
 	switch emojiSize {

@@ -58,18 +58,21 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 	)
 }
 
-func (s *statusDB) GetStatuses(ctx context.Context, ids []string) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error) {
 	statuses := make([]*gtsmodel.Status, 0, len(ids))
 
 	for _, id := range ids {
-		// Attempt fetch from DB
-		status, err := s.GetStatusByID(ctx, id)
+		// Attempt to fetch status from DB.
+		status, err := s.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			id,
+		)
 		if err != nil {
 			log.Errorf(ctx, "error getting status %q: %v", id, err)
 			continue
 		}
 
-		// Append status
+		// Append status to return slice.
 		statuses = append(statuses, status)
 	}
 
@@ -427,6 +430,18 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 
 		return nil
 	})
+}
+
+func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error) {
+	var statusIDs []string
+	if _, err := s.conn.NewSelect().
+		Table("statuses").
+		Column("id").
+		Where("? IN (emojis)", emojiID).
+		Exec(ctx, &statusIDs); err != nil {
+		return nil, s.conn.ProcessError(err)
+	}
+	return s.GetStatusesByIDs(ctx, statusIDs)
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {

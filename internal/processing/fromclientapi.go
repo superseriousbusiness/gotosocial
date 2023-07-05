@@ -982,7 +982,7 @@ func (p *Processor) federateReport(ctx context.Context, report *gtsmodel.Report)
 	}
 
 	if len(report.StatusIDs) > 0 && len(report.Statuses) == 0 {
-		statuses, err := p.state.DB.GetStatuses(ctx, report.StatusIDs)
+		statuses, err := p.state.DB.GetStatusesByIDs(ctx, report.StatusIDs)
 		if err != nil {
 			return fmt.Errorf("federateReport: error getting report statuses from database: %w", err)
 		}

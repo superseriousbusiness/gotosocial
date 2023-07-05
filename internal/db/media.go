@@ -44,12 +44,12 @@ type Media interface {
 	// GetAttachments ...
 	GetAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error)
 
-	// GetRemoteOlderThan gets limit n remote media attachments (including avatars and headers) older than the given
+	// GetRemoteMediaOlderThan gets limit n remote media attachments (including avatars and headers) older than the given
 	// olderThan time. These will be returned in order of attachment.created_at descending (newest to oldest in other words).
 	//
 	// The selected media attachments will be those with both a URL and a RemoteURL filled in.
 	// In other words, media attachments that originated remotely, and that we currently have cached locally.
-	GetRemoteOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, Error)
+	GetRemoteMediaOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, Error)
 
 	// CountRemoteOlderThan is like GetRemoteOlderThan, except instead of getting limit n attachments,
 	// it just counts how many remote attachments in the database (including avatars and headers) meet

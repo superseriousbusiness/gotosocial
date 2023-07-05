@@ -149,7 +149,7 @@ func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*g
 
 	if len(report.StatusIDs) > 0 {
 		// Fetch reported statuses
-		report.Statuses, err = r.state.DB.GetStatuses(ctx, report.StatusIDs)
+		report.Statuses, err = r.state.DB.GetStatusesByIDs(ctx, report.StatusIDs)
 		if err != nil {
 			return nil, fmt.Errorf("error getting status mentions: %w", err)
 		}
