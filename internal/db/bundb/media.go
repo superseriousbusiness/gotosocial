@@ -241,7 +241,7 @@ func (m *mediaDB) GetRemoteOlderThan(ctx context.Context, olderThan time.Time, l
 		Column("media_attachment.id").
 		Where("? = ?", bun.Ident("media_attachment.cached"), true).
 		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
-		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url")).
+		Where("? IS NOT NULL", bun.Ident("media_attachment.remote_url")).
 		Order("media_attachment.created_at DESC")
 
 	if limit != 0 {
@@ -261,8 +261,8 @@ func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time)
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
 		Column("media_attachment.id").
 		Where("? = ?", bun.Ident("media_attachment.cached"), true).
-		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan).
-		WhereGroup(" AND ", whereNotEmptyAndNotNull("media_attachment.remote_url"))
+		Where("? IS NOT NULL", bun.Ident("media_attachment.remote_url")).
+		Where("? < ?", bun.Ident("media_attachment.created_at"), olderThan)
 
 	count, err := q.Count(ctx)
 	if err != nil {
