@@ -23,22 +23,16 @@ import (
 )
 
 var (
-	// ipv6Reserved contains IPv6 reserved IP prefixes.
+	// ipv6GlobalUnicast is the prefix set aside by IANA for global unicast assignments, i.e "the internet".
+	ipv6GlobalUnicast = netip.MustParsePrefix("2000::/3")
+
+	// ipv6Reserved contains IPv6 reserved IP prefixes that fall within ipv6GlobalUnicast.
 	// https://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.xhtml
 	ipv6Reserved = [...]netip.Prefix{
-		netip.MustParsePrefix("::1/128"),           // Loopback
-		netip.MustParsePrefix("::/128"),            // Unspecified address
-		netip.MustParsePrefix("::ffff:0:0/96"),     // IPv4-mapped address
-		netip.MustParsePrefix("64:ff9b:1::/48"),    // IPv4/IPv6 translation, RFC 8215
-		netip.MustParsePrefix("100::/64"),          // Discard prefix, RFC 6666
-		netip.MustParsePrefix("2001::/23"),         // IETF Protocol Assignments, RFC 2928
-		netip.MustParsePrefix("2001:db8::/32"),     // Test, doc, examples
-		netip.MustParsePrefix("2002::/16"),         // 6to4
-		netip.MustParsePrefix("2620:4f:8000::/48"), // Direct Delegation AS112 Service, RFC 7534
-		netip.MustParsePrefix("fc00::/7"),          // Unique Local
-		netip.MustParsePrefix("fe80::/10"),         // Link-local
-		netip.MustParsePrefix("fec0::/10"),         // Site-local, deprecated
-		netip.MustParsePrefix("ff00::/8"),          // Multicast
+		netip.MustParsePrefix("2001::/23"),         // IETF Protocol Assignments (RFC 2928)
+		netip.MustParsePrefix("2001:db8::/32"),     // Documentation (RFC 3849)
+		netip.MustParsePrefix("2002::/16"),         // 6to4 (RFC 3056)
+		netip.MustParsePrefix("2620:4f:8000::/48"), // Direct Delegation AS112 Service (RFC 7534)
 	}
 
 	// ipv4Reserved contains IPv4 reserved IP prefixes.
@@ -78,7 +72,13 @@ func (s *sanitizer) sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 		return err
 	}
 
-	if !(ntwrk == "tcp4" || ntwrk == "tcp6") {
+	// Ensure valid network.
+	const (
+		tcp4 = "tcp4"
+		tcp6 = "tcp6"
+	)
+
+	if !(ntwrk == tcp4 || ntwrk == tcp6) {
 		return ErrInvalidNetwork
 	}
 
@@ -108,7 +108,7 @@ func (s *sanitizer) sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 }
 
 // safeIP returns whether ip is an IPv4/6
-// address in non-reserved, public ranges.
+// address in a non-reserved, public range.
 func safeIP(ip netip.Addr) bool {
 	switch {
 	// IPv4: check if IPv4 in reserved nets
@@ -122,8 +122,16 @@ func safeIP(ip netip.Addr) bool {
 
 	// IPv6: check if IP in IPv6 reserved nets
 	case ip.Is6():
+		if !ipv6GlobalUnicast.Contains(ip) {
+			// Address is not globally routeable,
+			// ie., not "on the internet".
+			return false
+		}
+
 		for _, reserved := range ipv6Reserved {
 			if reserved.Contains(ip) {
+				// Address is globally routeable
+				// but falls in a reserved range.
 				return false
 			}
 		}
