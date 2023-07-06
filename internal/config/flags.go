@@ -55,6 +55,11 @@ func (s *ConfigState) AddGlobalFlags(cmd *cobra.Command) {
 		cmd.PersistentFlags().String(DbSqliteSynchronousFlag(), cfg.DbSqliteSynchronous, fieldtag("DbSqliteSynchronous", "usage"))
 		cmd.PersistentFlags().Uint64(DbSqliteCacheSizeFlag(), uint64(cfg.DbSqliteCacheSize), fieldtag("DbSqliteCacheSize", "usage"))
 		cmd.PersistentFlags().Duration(DbSqliteBusyTimeoutFlag(), cfg.DbSqliteBusyTimeout, fieldtag("DbSqliteBusyTimeout", "usage"))
+
+		// HTTPClient
+		cmd.PersistentFlags().StringSlice(HTTPClientAllowIPsFlag(), cfg.HTTPClient.AllowIPs, "no usage string")
+		cmd.PersistentFlags().StringSlice(HTTPClientBlockIPsFlag(), cfg.HTTPClient.BlockIPs, "no usage string")
+		cmd.PersistentFlags().Duration(HTTPClientTimeoutFlag(), cfg.HTTPClient.Timeout, "no usage string")
 	})
 }
 

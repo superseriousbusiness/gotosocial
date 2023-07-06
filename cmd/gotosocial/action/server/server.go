@@ -105,8 +105,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Set the state storage driver
 	state.Storage = storage
 
-	// Build HTTP client (TODO: add configurables here)
-	client := httpclient.New(httpclient.Config{})
+	// Build HTTP client
+	client := httpclient.New(httpclient.Config{
+		AllowRanges: config.MustParseIPPrefixes(config.GetHTTPClientAllowIPs()),
+		BlockRanges: config.MustParseIPPrefixes(config.GetHTTPClientBlockIPs()),
+		Timeout:     config.GetHTTPClientTimeout(),
+	})
 
 	// Initialize workers.
 	state.Workers.Start()

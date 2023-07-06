@@ -133,7 +133,7 @@ func New(cfg Config) *Client {
 	d.Control = (&sanitizer{
 		allow: cfg.AllowRanges,
 		block: cfg.BlockRanges,
-	}).Sanitize
+	}).sanitize
 
 	// Prepare client fields.
 	c.client.Timeout = cfg.Timeout

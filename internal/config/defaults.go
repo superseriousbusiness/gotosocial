@@ -204,6 +204,12 @@ var Defaults = Configuration{
 		VisibilitySweepFreq: time.Minute,
 	},
 
+	HTTPClient: HTTPClientConfiguration{
+		AllowIPs: nil,
+		BlockIPs: nil,
+		Timeout:  10 * time.Second,
+	},
+
 	AdminMediaPruneDryRun: true,
 
 	RequestIDHeader: "X-Request-Id",

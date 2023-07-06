@@ -2299,6 +2299,81 @@ func GetAdvancedSenderMultiplier() int { return global.GetAdvancedSenderMultipli
 // SetAdvancedSenderMultiplier safely sets the value for global configuration 'AdvancedSenderMultiplier' field
 func SetAdvancedSenderMultiplier(v int) { global.SetAdvancedSenderMultiplier(v) }
 
+// GetHTTPClientAllowIPs safely fetches the Configuration value for state's 'HTTPClient.AllowIPs' field
+func (st *ConfigState) GetHTTPClientAllowIPs() (v []string) {
+	st.mutex.Lock()
+	v = st.config.HTTPClient.AllowIPs
+	st.mutex.Unlock()
+	return
+}
+
+// SetHTTPClientAllowIPs safely sets the Configuration value for state's 'HTTPClient.AllowIPs' field
+func (st *ConfigState) SetHTTPClientAllowIPs(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.HTTPClient.AllowIPs = v
+	st.reloadToViper()
+}
+
+// HTTPClientAllowIPsFlag returns the flag name for the 'HTTPClient.AllowIPs' field
+func HTTPClientAllowIPsFlag() string { return "httpclient-allow-ips" }
+
+// GetHTTPClientAllowIPs safely fetches the value for global configuration 'HTTPClient.AllowIPs' field
+func GetHTTPClientAllowIPs() []string { return global.GetHTTPClientAllowIPs() }
+
+// SetHTTPClientAllowIPs safely sets the value for global configuration 'HTTPClient.AllowIPs' field
+func SetHTTPClientAllowIPs(v []string) { global.SetHTTPClientAllowIPs(v) }
+
+// GetHTTPClientBlockIPs safely fetches the Configuration value for state's 'HTTPClient.BlockIPs' field
+func (st *ConfigState) GetHTTPClientBlockIPs() (v []string) {
+	st.mutex.Lock()
+	v = st.config.HTTPClient.BlockIPs
+	st.mutex.Unlock()
+	return
+}
+
+// SetHTTPClientBlockIPs safely sets the Configuration value for state's 'HTTPClient.BlockIPs' field
+func (st *ConfigState) SetHTTPClientBlockIPs(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.HTTPClient.BlockIPs = v
+	st.reloadToViper()
+}
+
+// HTTPClientBlockIPsFlag returns the flag name for the 'HTTPClient.BlockIPs' field
+func HTTPClientBlockIPsFlag() string { return "httpclient-block-ips" }
+
+// GetHTTPClientBlockIPs safely fetches the value for global configuration 'HTTPClient.BlockIPs' field
+func GetHTTPClientBlockIPs() []string { return global.GetHTTPClientBlockIPs() }
+
+// SetHTTPClientBlockIPs safely sets the value for global configuration 'HTTPClient.BlockIPs' field
+func SetHTTPClientBlockIPs(v []string) { global.SetHTTPClientBlockIPs(v) }
+
+// GetHTTPClientTimeout safely fetches the Configuration value for state's 'HTTPClient.Timeout' field
+func (st *ConfigState) GetHTTPClientTimeout() (v time.Duration) {
+	st.mutex.Lock()
+	v = st.config.HTTPClient.Timeout
+	st.mutex.Unlock()
+	return
+}
+
+// SetHTTPClientTimeout safely sets the Configuration value for state's 'HTTPClient.Timeout' field
+func (st *ConfigState) SetHTTPClientTimeout(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.HTTPClient.Timeout = v
+	st.reloadToViper()
+}
+
+// HTTPClientTimeoutFlag returns the flag name for the 'HTTPClient.Timeout' field
+func HTTPClientTimeoutFlag() string { return "httpclient-timeout" }
+
+// GetHTTPClientTimeout safely fetches the value for global configuration 'HTTPClient.Timeout' field
+func GetHTTPClientTimeout() time.Duration { return global.GetHTTPClientTimeout() }
+
+// SetHTTPClientTimeout safely sets the value for global configuration 'HTTPClient.Timeout' field
+func SetHTTPClientTimeout(v time.Duration) { global.SetHTTPClientTimeout(v) }
+
 // GetCacheGTSAccountMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountMaxSize' field
 func (st *ConfigState) GetCacheGTSAccountMaxSize() (v int) {
 	st.mutex.Lock()

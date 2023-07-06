@@ -20,8 +20,49 @@ package httpclient
 import (
 	"net/netip"
 	"syscall"
+)
 
-	"github.com/superseriousbusiness/gotosocial/internal/netutil"
+var (
+	// ipv6Reserved contains IPv6 reserved IP prefixes.
+	// https://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.xhtml
+	ipv6Reserved = [...]netip.Prefix{
+		netip.MustParsePrefix("::1/128"),           // Loopback
+		netip.MustParsePrefix("::/128"),            // Unspecified address
+		netip.MustParsePrefix("::ffff:0:0/96"),     // IPv4-mapped address
+		netip.MustParsePrefix("64:ff9b:1::/48"),    // IPv4/IPv6 translation, RFC 8215
+		netip.MustParsePrefix("100::/64"),          // Discard prefix, RFC 6666
+		netip.MustParsePrefix("2001::/23"),         // IETF Protocol Assignments, RFC 2928
+		netip.MustParsePrefix("2001:db8::/32"),     // Test, doc, examples
+		netip.MustParsePrefix("2002::/16"),         // 6to4
+		netip.MustParsePrefix("2620:4f:8000::/48"), // Direct Delegation AS112 Service, RFC 7534
+		netip.MustParsePrefix("fc00::/7"),          // Unique Local
+		netip.MustParsePrefix("fe80::/10"),         // Link-local
+		netip.MustParsePrefix("fec0::/10"),         // Site-local, deprecated
+		netip.MustParsePrefix("ff00::/8"),          // Multicast
+	}
+
+	// ipv4Reserved contains IPv4 reserved IP prefixes.
+	// https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
+	ipv4Reserved = [...]netip.Prefix{
+		netip.MustParsePrefix("0.0.0.0/8"),       // Current network
+		netip.MustParsePrefix("10.0.0.0/8"),      // Private
+		netip.MustParsePrefix("100.64.0.0/10"),   // RFC6598
+		netip.MustParsePrefix("127.0.0.0/8"),     // Loopback
+		netip.MustParsePrefix("169.254.0.0/16"),  // Link-local
+		netip.MustParsePrefix("172.16.0.0/12"),   // Private
+		netip.MustParsePrefix("192.0.0.0/24"),    // RFC6890
+		netip.MustParsePrefix("192.0.2.0/24"),    // Test, doc, examples
+		netip.MustParsePrefix("192.31.196.0/24"), // AS112-v4, RFC 7535
+		netip.MustParsePrefix("192.52.193.0/24"), // AMT, RFC 7450
+		netip.MustParsePrefix("192.88.99.0/24"),  // IPv6 to IPv4 relay
+		netip.MustParsePrefix("192.168.0.0/16"),  // Private
+		netip.MustParsePrefix("192.175.48.0/24"), // Direct Delegation AS112 Service, RFC 7534
+		netip.MustParsePrefix("198.18.0.0/15"),   // Benchmarking tests
+		netip.MustParsePrefix("198.51.100.0/24"), // Test, doc, examples
+		netip.MustParsePrefix("203.0.113.0/24"),  // Test, doc, examples
+		netip.MustParsePrefix("224.0.0.0/4"),     // Multicast
+		netip.MustParsePrefix("240.0.0.0/4"),     // Reserved (includes broadcast / 255.255.255.255)
+	}
 )
 
 type sanitizer struct {
@@ -29,8 +70,8 @@ type sanitizer struct {
 	block []netip.Prefix
 }
 
-// Sanitize implements the required net.Dialer.Control function signature.
-func (s *sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
+// sanitize implements the required net.Dialer.Control function signature.
+func (s *sanitizer) sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 	// Parse IP+port from addr
 	ipport, err := netip.ParseAddrPort(addr)
 	if err != nil {
@@ -41,27 +82,55 @@ func (s *sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 		return ErrInvalidNetwork
 	}
 
-	// Seperate the IP
+	// Separate the IP.
 	ip := ipport.Addr()
 
-	// Check if this is explicitly allowed
+	// Check if this IP is explicitly allowed.
 	for i := 0; i < len(s.allow); i++ {
 		if s.allow[i].Contains(ip) {
 			return nil
 		}
 	}
 
-	// Now check if explicity blocked
+	// Check if this IP is explicitly blocked.
 	for i := 0; i < len(s.block); i++ {
 		if s.block[i].Contains(ip) {
 			return ErrReservedAddr
 		}
 	}
 
-	// Validate this is a safe IP
-	if !netutil.ValidateIP(ip) {
+	// Validate this is a safe IP.
+	if !safeIP(ip) {
 		return ErrReservedAddr
 	}
 
 	return nil
+}
+
+// safeIP returns whether ip is an IPv4/6
+// address in non-reserved, public ranges.
+func safeIP(ip netip.Addr) bool {
+	switch {
+	// IPv4: check if IPv4 in reserved nets
+	case ip.Is4():
+		for _, reserved := range ipv4Reserved {
+			if reserved.Contains(ip) {
+				return false
+			}
+		}
+		return true
+
+	// IPv6: check if IP in IPv6 reserved nets
+	case ip.Is6():
+		for _, reserved := range ipv6Reserved {
+			if reserved.Contains(ip) {
+				return false
+			}
+		}
+		return true
+
+	// Assume malicious by default
+	default:
+		return false
+	}
 }

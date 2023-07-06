@@ -96,16 +96,22 @@ func generateFields(output io.Writer, prefixes []string, t reflect.Type) {
 		flagPath := strings.Join(append(prefixes, field.Tag.Get("name")), "-")
 		flagPath = strings.ToLower(flagPath)
 
+		// Get type without "config." prefix.
+		fieldType := strings.ReplaceAll(
+			field.Type.String(),
+			"config.", "",
+		)
+
 		// ConfigState structure helper methods
 		fmt.Fprintf(output, "// Get%s safely fetches the Configuration value for state's '%s' field\n", name, fieldPath)
-		fmt.Fprintf(output, "func (st *ConfigState) Get%s() (v %s) {\n", name, field.Type.String())
+		fmt.Fprintf(output, "func (st *ConfigState) Get%s() (v %s) {\n", name, fieldType)
 		fmt.Fprintf(output, "\tst.mutex.Lock()\n")
 		fmt.Fprintf(output, "\tv = st.config.%s\n", fieldPath)
 		fmt.Fprintf(output, "\tst.mutex.Unlock()\n")
 		fmt.Fprintf(output, "\treturn\n")
 		fmt.Fprintf(output, "}\n\n")
 		fmt.Fprintf(output, "// Set%s safely sets the Configuration value for state's '%s' field\n", name, fieldPath)
-		fmt.Fprintf(output, "func (st *ConfigState) Set%s(v %s) {\n", name, field.Type.String())
+		fmt.Fprintf(output, "func (st *ConfigState) Set%s(v %s) {\n", name, fieldType)
 		fmt.Fprintf(output, "\tst.mutex.Lock()\n")
 		fmt.Fprintf(output, "\tdefer st.mutex.Unlock()\n")
 		fmt.Fprintf(output, "\tst.config.%s = v\n", fieldPath)
@@ -117,8 +123,8 @@ func generateFields(output io.Writer, prefixes []string, t reflect.Type) {
 		fmt.Fprintf(output, "// %sFlag returns the flag name for the '%s' field\n", name, fieldPath)
 		fmt.Fprintf(output, "func %sFlag() string { return \"%s\" }\n\n", name, flagPath)
 		fmt.Fprintf(output, "// Get%s safely fetches the value for global configuration '%s' field\n", name, fieldPath)
-		fmt.Fprintf(output, "func Get%[1]s() %[2]s { return global.Get%[1]s() }\n\n", name, field.Type.String())
+		fmt.Fprintf(output, "func Get%[1]s() %[2]s { return global.Get%[1]s() }\n\n", name, fieldType)
 		fmt.Fprintf(output, "// Set%s safely sets the value for global configuration '%s' field\n", name, fieldPath)
-		fmt.Fprintf(output, "func Set%[1]s(v %[2]s) { global.Set%[1]s(v) }\n\n", name, field.Type.String())
+		fmt.Fprintf(output, "func Set%[1]s(v %[2]s) { global.Set%[1]s(v) }\n\n", name, fieldType)
 	}
 }
