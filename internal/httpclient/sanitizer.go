@@ -24,6 +24,7 @@ import (
 
 var (
 	// ipv6GlobalUnicast is the prefix set aside by IANA for global unicast assignments, i.e "the internet".
+	// https://www.iana.org/assignments/ipv6-unicast-address-assignments/ipv6-unicast-address-assignments.xhtml
 	ipv6GlobalUnicast = netip.MustParsePrefix("2000::/3")
 
 	// ipv6Reserved contains IPv6 reserved IP prefixes that fall within ipv6GlobalUnicast.
