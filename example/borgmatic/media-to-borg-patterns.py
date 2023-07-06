@@ -37,7 +37,7 @@ def main():
 
 	for prefix in prefixes:
 		# Add a path-prefix, pp:, for each path we want to include.
-		output.write("+ pp:"+prefix+"\n")
+		output.write("+ pp:"+os.path.join(os.path.sep, prefix)+"\n")
 
 	# Exclude every file and directory under the storage root. This excludes
 	# everything that wasn't matched by any of our prior patterns. This turns
