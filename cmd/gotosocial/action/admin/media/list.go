@@ -152,10 +152,7 @@ var ListRemote action.GTSAction = func(ctx context.Context) error {
 	media, err := list.GetAllMediaPaths(
 		ctx,
 		func(m *gtsmodel.MediaAttachment) string {
-			if m.RemoteURL != "" {
-				return m.RemoteURL
-			}
-			return ""
+			return m.RemoteURL
 		})
 	if err != nil {
 		return err
