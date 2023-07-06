@@ -64,8 +64,8 @@ func TestSafeIP(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if safe := safeIP(tc.ip); !safe {
-				t.Fatalf("Expected IP %s to be: %t, got: %t", tc.ip, false, safe)
+			if safe := safeIP(tc.ip); safe {
+				t.Fatalf("Expected IP %s to not safe (%t), got: %t", tc.ip, false, safe)
 			}
 		})
 	}
