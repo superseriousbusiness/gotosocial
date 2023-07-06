@@ -20,7 +20,6 @@ package media
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -42,26 +41,35 @@ type list struct {
 	out       *bufio.Writer
 }
 
-var errListDone = errors.New("no more")
+func (l *list) GetAllMediaPaths(ctx context.Context, filter func(*gtsmodel.MediaAttachment) string) ([]string, error) {
+	res := make([]string, 0, 100)
+	for {
+		attachments, err := l.dbService.GetAttachments(ctx, l.maxID, l.limit)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve media metadata from database: %w", err)
+		}
 
-func (l *list) Next(ctx context.Context) ([]*gtsmodel.MediaAttachment, error) {
-	attachments, err := l.dbService.GetAttachments(ctx, l.maxID, l.limit)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve media metadata from database: %w", err)
-	}
-	// If we got less results than our limit, we've reached the
-	// last page to retrieve and we can break the loop. If the
-	// last batch happens to contain exactly the same amount of
-	// items as the limit we'll end up doing one extra query.
-	if len(attachments) < l.limit {
-		return attachments, errListDone
-	}
+		for _, a := range attachments {
+			v := filter(a)
+			if v != "" {
+				res = append(res, v)
+			}
+		}
 
-	// Grab the last ID from the batch and set it as the maxID
-	// that'll be used in the next iteration so we don't get items
-	// we've already seen.
-	l.maxID = attachments[len(attachments)-1].ID
-	return attachments, nil
+		// If we got less results than our limit, we've reached the
+		// last page to retrieve and we can break the loop. If the
+		// last batch happens to contain exactly the same amount of
+		// items as the limit we'll end up doing one extra query.
+		if len(attachments) < l.limit {
+			break
+		}
+
+		// Grab the last ID from the batch and set it as the maxID
+		// that'll be used in the next iteration so we don't get items
+		// we've already seen.
+		l.maxID = attachments[len(attachments)-1].ID
+	}
+	return res, nil
 }
 
 func setupList(ctx context.Context) (*list, error) {
@@ -110,26 +118,20 @@ var ListLocal action.GTSAction = func(ctx context.Context) error {
 	}()
 
 	mediaPath := config.GetStorageLocalBasePath()
-	for {
-		attachments, err := list.Next(ctx)
-		if err == nil || errors.Is(err, errListDone) {
-			for _, a := range attachments {
-				if a.RemoteURL == "" {
-					// Discard the error. We should never fail to write into a
-					// buffered stdout and if that happens we probably won't
-					// be able to write to stderr and see the error
-					_, _ = list.out.WriteString(path.Join(mediaPath, a.File.Path) + "\n")
-				}
+	media, err := list.GetAllMediaPaths(
+		ctx,
+		func(m *gtsmodel.MediaAttachment) string {
+			if m.RemoteURL == "" {
+				return path.Join(mediaPath, m.File.Path)
 			}
-			// We've reached the last page so we can terminate the loop
-			if err != nil {
-				break
-			}
-		}
-		// Next() returned an error other than errListDone
-		if err != nil {
-			return err
-		}
+			return ""
+		})
+	if err != nil {
+		return err
+	}
+
+	for _, m := range media {
+		_, _ = list.out.WriteString(m + "\n")
 	}
 	return nil
 }
@@ -147,26 +149,20 @@ var ListRemote action.GTSAction = func(ctx context.Context) error {
 		}
 	}()
 
-	for {
-		attachments, err := list.Next(ctx)
-		if err == nil || errors.Is(err, errListDone) {
-			for _, a := range attachments {
-				if a.RemoteURL != "" {
-					// Discard the error. We should never fail to write into a
-					// buffered stdout and if that happens we probably won't
-					// be able to write to stderr and see the error
-					_, _ = list.out.WriteString(a.RemoteURL + "\n")
-				}
+	media, err := list.GetAllMediaPaths(
+		ctx,
+		func(m *gtsmodel.MediaAttachment) string {
+			if m.RemoteURL != "" {
+				return m.RemoteURL
 			}
-			// We've reached the last page so we can terminate the loop
-			if err != nil {
-				break
-			}
-		}
-		// Next() returned an error other than errListDone
-		if err != nil {
-			return err
-		}
+			return ""
+		})
+	if err != nil {
+		return err
+	}
+
+	for _, m := range media {
+		_, _ = list.out.WriteString(m + "\n")
 	}
 	return nil
 }
