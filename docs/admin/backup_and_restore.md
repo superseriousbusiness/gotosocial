@@ -16,7 +16,7 @@ Most backup tools have built-in support for common databases like PostgreSQL and
 
 ### Media
 
-Local media should be backed up. You can use the GoToSocial CLI to list all media files that belong to your instance and its users.
+Local media should be backed up. You can use the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local) to list all media files that belong to your instance and its users.
 
 Remote media does not have to be backed up. This can be a good way to keep the size of your backups down. Remote media will be fetched from the origin instance, much like how it'll be fetched again if it got pruned due to media retention.
 
