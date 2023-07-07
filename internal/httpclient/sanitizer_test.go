@@ -15,12 +15,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package httpclient
+package httpclient_test
 
 import (
 	"errors"
 	"net/netip"
 	"testing"
+
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 )
 
 func TestSafeIP(t *testing.T) {
@@ -64,7 +66,7 @@ func TestSafeIP(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if safe := safeIP(tc.ip); safe {
+			if safe := httpclient.SafeIP(tc.ip); safe {
 				t.Fatalf("Expected IP %s to not safe (%t), got: %t", tc.ip, false, safe)
 			}
 		})
@@ -72,12 +74,12 @@ func TestSafeIP(t *testing.T) {
 }
 
 func TestSanitizer(t *testing.T) {
-	s := sanitizer{
-		allow: []netip.Prefix{
+	s := httpclient.Sanitizer{
+		Allow: []netip.Prefix{
 			netip.MustParsePrefix("192.0.0.8/32"),
 			netip.MustParsePrefix("::ffff:169.254.169.254/128"),
 		},
-		block: []netip.Prefix{
+		Block: []netip.Prefix{
 			netip.MustParsePrefix("93.184.216.34/32"), // example.org
 		},
 	}
@@ -93,7 +95,7 @@ func TestSanitizer(t *testing.T) {
 			name:     "IPv4 this host on this network",
 			ntwrk:    "tcp4",
 			addr:     "0.0.0.0:80",
-			expected: ErrReservedAddr,
+			expected: httpclient.ErrReservedAddr,
 		},
 		{
 			name:     "IPv4 dummy address",
@@ -105,31 +107,31 @@ func TestSanitizer(t *testing.T) {
 			name:     "IPv4 Port Control Protocol Anycast",
 			ntwrk:    "tcp4",
 			addr:     "192.0.0.9:80",
-			expected: ErrReservedAddr,
+			expected: httpclient.ErrReservedAddr,
 		},
 		{
 			name:     "IPv4 Traversal Using Relays around NAT Anycast",
 			ntwrk:    "tcp4",
 			addr:     "192.0.0.10:80",
-			expected: ErrReservedAddr,
+			expected: httpclient.ErrReservedAddr,
 		},
 		{
 			name:     "IPv4 NAT64/DNS64 Discovery 1",
 			ntwrk:    "tcp4",
 			addr:     "192.0.0.17:80",
-			expected: ErrReservedAddr,
+			expected: httpclient.ErrReservedAddr,
 		},
 		{
 			name:     "IPv4 NAT64/DNS64 Discovery 2",
 			ntwrk:    "tcp4",
 			addr:     "192.0.0.171:80",
-			expected: ErrReservedAddr,
+			expected: httpclient.ErrReservedAddr,
 		},
 		{
 			name:     "example.org",
 			ntwrk:    "tcp4",
 			addr:     "93.184.216.34:80",
-			expected: ErrReservedAddr, // We blocked this explicitly.
+			expected: httpclient.ErrReservedAddr, // We blocked this explicitly.
 		},
 		// IPv6 tests
 		{
@@ -144,7 +146,7 @@ func TestSanitizer(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if err := s.sanitize(tc.ntwrk, tc.addr, nil); !errors.Is(err, tc.expected) {
+			if err := s.Sanitize(tc.ntwrk, tc.addr, nil); !errors.Is(err, tc.expected) {
 				t.Fatalf("Expected error %q for addr %s, got: %q", tc.expected, tc.addr, err)
 			}
 		})

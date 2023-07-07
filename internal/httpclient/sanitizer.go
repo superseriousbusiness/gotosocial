@@ -60,13 +60,13 @@ var (
 	}
 )
 
-type sanitizer struct {
-	allow []netip.Prefix
-	block []netip.Prefix
+type Sanitizer struct {
+	Allow []netip.Prefix
+	Block []netip.Prefix
 }
 
-// sanitize implements the required net.Dialer.Control function signature.
-func (s *sanitizer) sanitize(ntwrk, addr string, _ syscall.RawConn) error {
+// Sanitize implements the required net.Dialer.Control function signature.
+func (s *Sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 	// Parse IP+port from addr
 	ipport, err := netip.ParseAddrPort(addr)
 	if err != nil {
@@ -87,30 +87,30 @@ func (s *sanitizer) sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 	ip := ipport.Addr()
 
 	// Check if this IP is explicitly allowed.
-	for i := 0; i < len(s.allow); i++ {
-		if s.allow[i].Contains(ip) {
+	for i := 0; i < len(s.Allow); i++ {
+		if s.Allow[i].Contains(ip) {
 			return nil
 		}
 	}
 
 	// Check if this IP is explicitly blocked.
-	for i := 0; i < len(s.block); i++ {
-		if s.block[i].Contains(ip) {
+	for i := 0; i < len(s.Block); i++ {
+		if s.Block[i].Contains(ip) {
 			return ErrReservedAddr
 		}
 	}
 
 	// Validate this is a safe IP.
-	if !safeIP(ip) {
+	if !SafeIP(ip) {
 		return ErrReservedAddr
 	}
 
 	return nil
 }
 
-// safeIP returns whether ip is an IPv4/6
+// SafeIP returns whether ip is an IPv4/6
 // address in a non-reserved, public range.
-func safeIP(ip netip.Addr) bool {
+func SafeIP(ip netip.Addr) bool {
 	switch {
 	// IPv4: check if IPv4 in reserved nets
 	case ip.Is4():
