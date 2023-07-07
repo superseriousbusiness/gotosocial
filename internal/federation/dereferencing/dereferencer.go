@@ -95,7 +95,7 @@ type deref struct {
 	derefEmojis         map[string]*media.ProcessingEmoji
 	derefEmojisMu       mutexes.Mutex
 	handshakes          map[string][]*url.URL
-	handshakeSync       sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
+	handshakesMu        sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.

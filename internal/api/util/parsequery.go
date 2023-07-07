@@ -43,6 +43,11 @@ const (
 	SearchResolveKey           = "resolve"
 	SearchTypeKey              = "type"
 
+	/* Web endpoint keys */
+
+	WebUsernameKey = "username"
+	WebStatusIDKey = "status"
+
 	/* Domain block keys */
 
 	DomainBlockExportKey = "export"
@@ -73,6 +78,14 @@ func ParseLimit(value string, defaultValue int, max, min int) (int, gtserror.Wit
 
 func ParseLocal(value string, defaultValue bool) (bool, gtserror.WithCode) {
 	return parseBool(value, defaultValue, LocalKey)
+}
+
+func ParseMaxID(value string, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+
+	return value
 }
 
 func ParseSearchExcludeUnreviewed(value string, defaultValue bool) (bool, gtserror.WithCode) {
@@ -125,6 +138,26 @@ func ParseSearchLookup(value string) (string, gtserror.WithCode) {
 
 func ParseSearchQuery(value string) (string, gtserror.WithCode) {
 	key := SearchQueryKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	return value, nil
+}
+
+func ParseWebUsername(value string) (string, gtserror.WithCode) {
+	key := WebUsernameKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	return value, nil
+}
+
+func ParseWebStatusID(value string) (string, gtserror.WithCode) {
+	key := WebStatusIDKey
 
 	if value == "" {
 		return "", requiredError(key)

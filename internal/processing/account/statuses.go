@@ -197,3 +197,9 @@ func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 		NextMaxIDValue: nextMaxIDValue,
 	})
 }
+
+// PinnedStatusesGet is a shortcut for getting just an account's pinned statuses.
+// Under the hood, it just calls StatusesGet using mostly default parameters.
+func (p *Processor) PinnedStatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.PageableResponse, gtserror.WithCode) {
+	return p.StatusesGet(ctx, requestingAccount, targetAccountID, 0, false, false, "", "", true, false, false)
+}
