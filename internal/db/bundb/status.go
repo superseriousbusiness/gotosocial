@@ -434,10 +434,9 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 
 func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error) {
 	var statusIDs []string
-	if _, err := s.conn.NewSelect().
+	if _, err := whereLike(s.conn.NewSelect().
 		Table("statuses").
-		Column("id").
-		Where("? IN (emojis)", emojiID).
+		Column("id"), "emojis", emojiID).
 		Exec(ctx, &statusIDs); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}

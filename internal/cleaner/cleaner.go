@@ -61,19 +61,19 @@ func (c *Cleaner) Media() *Media {
 	return &c.media
 }
 
-// checkFiles checks for each of the provided files, and calls onMissing() if any of them are missing. Returns true if missing.
-func (c *Cleaner) checkFiles(ctx context.Context, onMissing func() error, files ...string) (bool, error) {
+// haveFiles returns whether all of the provided files exist within current storage.
+func (c *Cleaner) haveFiles(ctx context.Context, files ...string) (bool, error) {
 	for _, file := range files {
 		// Check whether each file exists in storage.
 		have, err := c.state.Storage.Has(ctx, file)
 		if err != nil {
 			return false, gtserror.Newf("error checking storage for %s: %w", file, err)
 		} else if !have {
-			// Missing files, perform hook.
-			return true, onMissing()
+			// Missing file(s).
+			return false, nil
 		}
 	}
-	return false, nil
+	return true, nil
 }
 
 // removeFiles removes the provided files, returning the number of them returned.
@@ -129,7 +129,7 @@ func scheduleJobs(c *Cleaner) {
 	c.state.Workers.Scheduler.Schedule(sched.NewJob(func(start time.Time) {
 		log.Info(nil, "starting media clean")
 		c.Media().All(doneCtx, config.GetMediaRemoteCacheDays())
-		c.Emoji().All(doneCtx)
+		c.Emoji().All(doneCtx, config.GetMediaRemoteCacheDays())
 		log.Infof(nil, "finished media clean after %s", time.Since(start))
 	}).EveryAt(midnight, day))
 }

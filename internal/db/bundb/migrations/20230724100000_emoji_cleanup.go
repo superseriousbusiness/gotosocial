@@ -24,7 +24,6 @@ import (
 )
 
 func init() {
-	const batchSize = 100
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			if _, err := tx.ExecContext(ctx, "ALTER TABLE emojis ADD COLUMN cached BOOLEAN DEFAULT false"); err != nil {

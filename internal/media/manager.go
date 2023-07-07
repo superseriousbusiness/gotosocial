@@ -51,12 +51,7 @@ type Manager struct {
 	state *state.State
 }
 
-// NewManager returns a media manager with the given db and underlying storage.
-//
-// A worker pool will also be initialized for the manager, to ensure that only
-// a limited number of media will be processed in parallel. The numbers of workers
-// is determined from the $GOMAXPROCS environment variable (usually no. CPU cores).
-// See internal/concurrency.NewWorkerPool() documentation for further information.
+// NewManager returns a media manager with given state.
 func NewManager(state *state.State) *Manager {
 	m := &Manager{state: state}
 	return m
@@ -210,11 +205,16 @@ func (m *Manager) ProcessMedia(ctx context.Context, data DataFunc, accountID str
 // Note: unlike ProcessEmoji, this will NOT queue the emoji to be asynchronously processed.
 func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
 	var (
-		err       error
 		newPathID string
 		emoji     *gtsmodel.Emoji
 		now       = time.Now()
 	)
+
+	// Fetch the local instance account for emoji path generation.
+	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, gtserror.Newf("error fetching instance account: %w", err)
+	}
 
 	if refresh {
 		// Look for existing emoji by given ID.
@@ -257,8 +257,8 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 		}
 
 		// store + serve static image at new path ID
-		emoji.ImageStaticURL = uris.GenerateURIForAttachment(m.state.Instance.AccountID, string(TypeEmoji), string(SizeStatic), newPathID, mimePng)
-		emoji.ImageStaticPath = fmt.Sprintf("%s/%s/%s/%s.%s", m.state.Instance.AccountID, TypeEmoji, SizeStatic, newPathID, mimePng)
+		emoji.ImageStaticURL = uris.GenerateURIForAttachment(instanceAcc.ID, string(TypeEmoji), string(SizeStatic), newPathID, mimePng)
+		emoji.ImageStaticPath = fmt.Sprintf("%s/%s/%s/%s.%s", instanceAcc.ID, TypeEmoji, SizeStatic, newPathID, mimePng)
 
 		emoji.Shortcode = shortcode
 		emoji.URI = uri
@@ -274,12 +274,12 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 			Domain:                 "", // assume our own domain unless told otherwise
 			ImageRemoteURL:         "",
 			ImageStaticRemoteURL:   "",
-			ImageURL:               "",                                                                                                                 // we don't know yet
-			ImageStaticURL:         uris.GenerateURIForAttachment(m.state.Instance.AccountID, string(TypeEmoji), string(SizeStatic), emojiID, mimePng), // all static emojis are encoded as png
-			ImagePath:              "",                                                                                                                 // we don't know yet
-			ImageStaticPath:        fmt.Sprintf("%s/%s/%s/%s.%s", m.state.Instance.AccountID, TypeEmoji, SizeStatic, emojiID, mimePng),                 // all static emojis are encoded as png
-			ImageContentType:       "",                                                                                                                 // we don't know yet
-			ImageStaticContentType: mimeImagePng,                                                                                                       // all static emojis are encoded as png
+			ImageURL:               "",                                                                                                     // we don't know yet
+			ImageStaticURL:         uris.GenerateURIForAttachment(instanceAcc.ID, string(TypeEmoji), string(SizeStatic), emojiID, mimePng), // all static emojis are encoded as png
+			ImagePath:              "",                                                                                                     // we don't know yet
+			ImageStaticPath:        fmt.Sprintf("%s/%s/%s/%s.%s", instanceAcc.ID, TypeEmoji, SizeStatic, emojiID, mimePng),                 // all static emojis are encoded as png
+			ImageContentType:       "",                                                                                                     // we don't know yet
+			ImageStaticContentType: mimeImagePng,                                                                                           // all static emojis are encoded as png
 			ImageFileSize:          0,
 			ImageStaticFileSize:    0,
 			Disabled:               &disabled,

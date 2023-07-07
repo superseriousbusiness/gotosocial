@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -210,10 +211,13 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		pathID = p.emoji.ID
 	}
 
+	// Determine instance account ID from already generated image static path.
+	instanceAccID := regexes.FilePath.FindStringSubmatch(p.emoji.ImageStaticPath)[1]
+
 	// Calculate emoji file path.
 	p.emoji.ImagePath = fmt.Sprintf(
 		"%s/%s/%s/%s.%s",
-		p.mgr.state.Instance.AccountID,
+		instanceAccID,
 		TypeEmoji,
 		SizeOriginal,
 		pathID,
@@ -242,12 +246,13 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			log.Errorf(ctx, "error removing too-large-emoji from storage: %v", err)
 		}
+
 		return gtserror.Newf("calculated emoji size %s greater than max allowed %s", size, maxSize)
 	}
 
 	// Fill in remaining attachment data now it's stored.
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(
-		p.mgr.state.Instance.AccountID,
+		instanceAccID,
 		string(TypeEmoji),
 		string(SizeOriginal),
 		pathID,
@@ -255,6 +260,10 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	)
 	p.emoji.ImageContentType = info.MIME.Value
 	p.emoji.ImageFileSize = int(sz)
+	p.emoji.Cached = func() *bool {
+		ok := true
+		return &ok
+	}()
 
 	return nil
 }
@@ -281,6 +290,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.mgr.state.Storage.Has(ctx, p.emoji.ImageStaticPath); have {
 		log.Warnf(ctx, "static emoji already exists at storage path: %s", p.emoji.ImagePath)
+
 		// Attempt to remove static existing emoji at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
 			return gtserror.Newf("error removing static emoji from storage: %v", err)

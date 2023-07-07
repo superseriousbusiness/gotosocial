@@ -127,10 +127,9 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		// Select all accounts using this emoji.
-		if _, err := tx.NewSelect().
+		if _, err := whereLike(tx.NewSelect().
 			Table("accounts").
-			Column("id").
-			Where("? IN (emojis)", id).
+			Column("id"), "emojis", id).
 			Exec(ctx, &accountIDs); err != nil {
 			return err
 		}
@@ -163,10 +162,9 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		// Select all statuses using this emoji.
-		if _, err := tx.NewSelect().
+		if _, err := whereLike(tx.NewSelect().
 			Table("statuses").
-			Column("id").
-			Where("? IN (emojis)", id).
+			Column("id"), "emojis", id).
 			Exec(ctx, &statusIDs); err != nil {
 			return err
 		}
@@ -336,7 +334,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gt
 		Order("id DESC")
 
 	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("id"), maxID)
+		q = q.Where("id < ?", maxID)
 	}
 
 	if limit != 0 {
@@ -350,15 +348,40 @@ func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gt
 	return e.GetEmojisByIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetRemoteEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error) {
+func (e *emojiDB) GetRemoteEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
 	var emojiIDs []string
 
 	q := e.conn.NewSelect().
 		Table("emojis").
 		Column("id").
-		Where("cached = ?", true).
-		Where("created_at < ?", olderThan).
+		Where("domain IS NOT NULL").
 		Order("id DESC")
+
+	if maxID != "" {
+		q = q.Where("id < ?", maxID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx, &emojiIDs); err != nil {
+		return nil, e.conn.ProcessError(err)
+	}
+
+	return e.GetEmojisByIDs(ctx, emojiIDs)
+}
+
+func (e *emojiDB) GetCachedEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error) {
+	var emojiIDs []string
+
+	q := e.conn.NewSelect().
+		Table("emojis").
+		Column("id").
+		Where("cached = true").
+		Where("domain IS NOT NULL").
+		Where("created_at < ?", olderThan).
+		Order("created_at DESC")
 
 	if limit != 0 {
 		q = q.Limit(limit)

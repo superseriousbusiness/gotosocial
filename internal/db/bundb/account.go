@@ -467,10 +467,9 @@ func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username 
 
 func (a *accountDB) GetAccountsUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Account, error) {
 	var accountIDs []string
-	if _, err := a.conn.NewSelect().
+	if _, err := whereLike(a.conn.NewSelect().
 		Table("accounts").
-		Column("id").
-		Where("? IN (emojis)", emojiID).
+		Column("id"), "emojis", emojiID).
 		Exec(ctx, &accountIDs); err != nil {
 		return nil, a.conn.ProcessError(err)
 	}

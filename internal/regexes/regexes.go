@@ -70,7 +70,7 @@ const (
 	statusesPath   = userPathPrefix + `/` + statuses + `/(` + ulid + `)$`
 	blockPath      = userPathPrefix + `/` + blocks + `/(` + ulid + `)$`
 	reportPath     = `^/?` + reports + `/(` + ulid + `)$`
-	filePath       = `^/?(` + ulid + `)/([a-z]+)/([a-z]+)/(` + ulid + `)\.([a-z]+)$`
+	filePath       = `^/?(` + ulid + `)/([a-z]+)/([a-z]+)/(` + ulid + `)\.([a-z0-9]+)$`
 )
 
 var (

@@ -45,8 +45,11 @@ type Emoji interface {
 	// GetEmojis ...
 	GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
 
+	// GetRemoteEmojis ...
+	GetRemoteEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
+
 	// GetRemoteEmojisOlderThan ...
-	GetRemoteEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error)
+	GetCachedEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error)
 
 	// GetEmojisBy gets emojis based on given parameters. Useful for admin actions.
 	GetEmojisBy(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, error)

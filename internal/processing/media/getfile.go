@@ -205,7 +205,13 @@ func (p *Processor) getEmojiContent(ctx context.Context, fileName string, owning
 	// for using the static URL rather than full size url
 	// is that static emojis are always encoded as png,
 	// so this is more reliable than using full size url
-	imageStaticURL := uris.GenerateURIForAttachment(owningAccountID, string(media.TypeEmoji), string(media.SizeStatic), fileName, "png")
+	imageStaticURL := uris.GenerateURIForAttachment(
+		owningAccountID,
+		string(media.TypeEmoji),
+		string(media.SizeStatic),
+		fileName,
+		"png",
+	)
 
 	e, err := p.state.DB.GetEmojiByStaticURL(ctx, imageStaticURL)
 	if err != nil {
