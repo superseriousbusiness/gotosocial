@@ -388,8 +388,8 @@ func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, 
 
 	if webOnly {
 		q = q.
-			WhereGroup(" AND ", whereEmptyOrNull("status.in_reply_to_uri")).
-			WhereGroup(" AND ", whereEmptyOrNull("status.boost_of_id")).
+			Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
+			Where("? IS NULL", bun.Ident("status.boost_of_id")).
 			Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
 			Where("? = ?", bun.Ident("status.federated"), true)
 	}

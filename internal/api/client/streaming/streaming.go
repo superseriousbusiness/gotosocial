@@ -42,15 +42,18 @@ type Module struct {
 }
 
 func New(processor *processing.Processor, dTicker time.Duration, wsBuf int) *Module {
+	// We expect CORS requests for websockets,
+	// (via eg., semaphore.social) so be lenient.
+	// TODO: make this customizable?
+	checkOrigin := func(r *http.Request) bool { return true }
+
 	return &Module{
 		processor: processor,
 		dTicker:   dTicker,
 		wsUpgrade: websocket.Upgrader{
-			ReadBufferSize:  wsBuf, // we don't expect reads
+			ReadBufferSize:  wsBuf,
 			WriteBufferSize: wsBuf,
-
-			// we expect cors requests (via eg., semaphore.social) so be lenient
-			CheckOrigin: func(r *http.Request) bool { return true },
+			CheckOrigin:     checkOrigin,
 		},
 	}
 }

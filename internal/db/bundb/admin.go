@@ -102,7 +102,7 @@ func (a *adminDB) NewSignup(ctx context.Context, username string, reason string,
 		NewSelect().
 		Model(acct).
 		Where("? = ?", bun.Ident("account.username"), username).
-		WhereGroup(" AND ", whereEmptyOrNull("account.domain")).
+		Where("? IS NULL", bun.Ident("account.domain")).
 		Scan(ctx); err != nil {
 		err = a.conn.ProcessError(err)
 		if err != db.ErrNoEntries {
@@ -199,7 +199,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("account.id").
 		Where("? = ?", bun.Ident("account.username"), username).
-		WhereGroup(" AND ", whereEmptyOrNull("account.domain"))
+		Where("? IS NULL", bun.Ident("account.domain"))
 
 	exists, err := a.conn.Exists(ctx, q)
 	if err != nil {
