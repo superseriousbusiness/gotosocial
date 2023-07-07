@@ -37,6 +37,15 @@ type Instance interface {
 	// GetInstance returns the instance entry for the given domain, if it exists.
 	GetInstance(ctx context.Context, domain string) (*gtsmodel.Instance, Error)
 
+	// GetInstanceByID returns the instance entry corresponding to the given id, if it exists.
+	GetInstanceByID(ctx context.Context, id string) (*gtsmodel.Instance, error)
+
+	// PutInstance inserts the given instance into the database.
+	PutInstance(ctx context.Context, instance *gtsmodel.Instance) error
+
+	// UpdateInstance updates the given instance entry.
+	UpdateInstance(ctx context.Context, instance *gtsmodel.Instance, columns ...string) error
+
 	// GetInstanceAccounts returns a slice of accounts from the given instance, arranged by ID.
 	GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, Error)
 

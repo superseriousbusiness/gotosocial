@@ -42,7 +42,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 		return err
 	}
 
-	// Attempt to store domain in DB
+	// Attempt to store domain block in DB
 	if _, err := d.conn.NewInsert().
 		Model(block).
 		Exec(ctx); err != nil {
@@ -75,6 +75,33 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 		NewSelect().
 		Model(&block).
 		Where("? = ?", bun.Ident("domain_block.domain"), domain)
+	if err := q.Scan(ctx); err != nil {
+		return nil, d.conn.ProcessError(err)
+	}
+
+	return &block, nil
+}
+
+func (d *domainDB) GetDomainBlocks(ctx context.Context) ([]*gtsmodel.DomainBlock, error) {
+	blocks := []*gtsmodel.DomainBlock{}
+
+	if err := d.conn.
+		NewSelect().
+		Model(&blocks).
+		Scan(ctx); err != nil {
+		return nil, d.conn.ProcessError(err)
+	}
+
+	return blocks, nil
+}
+
+func (d *domainDB) GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel.DomainBlock, db.Error) {
+	var block gtsmodel.DomainBlock
+
+	q := d.conn.
+		NewSelect().
+		Model(&block).
+		Where("? = ?", bun.Ident("domain_block.id"), id)
 	if err := q.Scan(ctx); err != nil {
 		return nil, d.conn.ProcessError(err)
 	}

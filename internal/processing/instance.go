@@ -34,11 +34,12 @@ import (
 )
 
 func (p *Processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
-	i := &gtsmodel.Instance{}
-	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
 		return nil, err
 	}
-	return i, nil
+
+	return instance, nil
 }
 
 func (p *Processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
@@ -137,9 +138,10 @@ func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 
 func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
-	i := &gtsmodel.Instance{}
 	host := config.GetHost()
-	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, i); err != nil {
+
+	instance, err := p.state.DB.GetInstance(ctx, host)
+	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", host, err))
 	}
 
@@ -157,7 +159,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
 		}
 		updatingColumns = append(updatingColumns, "title")
-		i.Title = text.SanitizePlaintext(*form.Title) // don't allow html in site title
+		instance.Title = text.SanitizePlaintext(*form.Title) // don't allow html in site title
 	}
 
 	// validate & update site contact account if it's set on the form
@@ -192,7 +194,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		updatingColumns = append(updatingColumns, "contact_account_id")
-		i.ContactAccountID = contactAccount.ID
+		instance.ContactAccountID = contactAccount.ID
 	}
 
 	// validate & update site contact email if it's set on the form
@@ -204,7 +206,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			}
 		}
 		updatingColumns = append(updatingColumns, "contact_email")
-		i.ContactEmail = contactEmail
+		instance.ContactEmail = contactEmail
 	}
 
 	// validate & update site short description if it's set on the form
@@ -213,7 +215,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		updatingColumns = append(updatingColumns, "short_description")
-		i.ShortDescription = text.SanitizeHTML(*form.ShortDescription) // html is OK in site description, but we should sanitize it
+		instance.ShortDescription = text.SanitizeHTML(*form.ShortDescription) // html is OK in site description, but we should sanitize it
 	}
 
 	// validate & update site description if it's set on the form
@@ -222,7 +224,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		updatingColumns = append(updatingColumns, "description")
-		i.Description = text.SanitizeHTML(*form.Description) // html is OK in site description, but we should sanitize it
+		instance.Description = text.SanitizeHTML(*form.Description) // html is OK in site description, but we should sanitize it
 	}
 
 	// validate & update site terms if it's set on the form
@@ -231,7 +233,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 		updatingColumns = append(updatingColumns, "terms")
-		i.Terms = text.SanitizeHTML(*form.Terms) // html is OK in site terms, but we should sanitize it
+		instance.Terms = text.SanitizeHTML(*form.Terms) // html is OK in site terms, but we should sanitize it
 	}
 
 	var updateInstanceAccount bool
@@ -273,12 +275,12 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 	}
 
 	if len(updatingColumns) != 0 {
-		if err := p.state.DB.UpdateByID(ctx, i, i.ID, updatingColumns...); err != nil {
+		if err := p.state.DB.UpdateInstance(ctx, instance, updatingColumns...); err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
 		}
 	}
 
-	ai, err := p.tc.InstanceToAPIV1Instance(ctx, i)
+	ai, err := p.tc.InstanceToAPIV1Instance(ctx, instance)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}

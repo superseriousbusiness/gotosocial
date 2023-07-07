@@ -154,6 +154,10 @@ var Defaults = Configuration{
 			FollowRequestTTL:       time.Minute * 30,
 			FollowRequestSweepFreq: time.Minute,
 
+			InstanceMaxSize:   2000,
+			InstanceTTL:       time.Minute * 30,
+			InstanceSweepFreq: time.Minute,
+
 			ListMaxSize:   2000,
 			ListTTL:       time.Minute * 30,
 			ListSweepFreq: time.Minute,

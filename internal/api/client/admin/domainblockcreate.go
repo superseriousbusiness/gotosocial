@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -140,48 +139,78 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	imp := false
-	importString := c.Query(ImportQueryKey)
-	if importString != "" {
-		i, err := strconv.ParseBool(importString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", ImportQueryKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		imp = i
+	importing, errWithCode := apiutil.ParseDomainBlockImport(c.Query(apiutil.DomainBlockImportKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	form := &apimodel.DomainBlockCreateRequest{}
+	form := new(apimodel.DomainBlockCreateRequest)
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if err := validateCreateDomainBlock(form, imp); err != nil {
-		err := fmt.Errorf("error validating form: %s", err)
+	if err := validateCreateDomainBlock(form, importing); err != nil {
+		err := fmt.Errorf("error validating form: %w", err)
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if imp {
-		// we're importing multiple blocks
-		domainBlocks, errWithCode := m.processor.Admin().DomainBlocksImport(c.Request.Context(), authed.Account, form.Domains)
+	if !importing {
+		// Single domain block creation.
+		domainBlock, errWithCode := m.processor.Admin().DomainBlockCreate(
+			c.Request.Context(),
+			authed.Account,
+			form.Domain,
+			form.Obfuscate,
+			form.PublicComment,
+			form.PrivateComment,
+			"", // No sub ID for single block creation.
+		)
 		if errWithCode != nil {
 			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
-		c.JSON(http.StatusOK, domainBlocks)
+
+		c.JSON(http.StatusOK, domainBlock)
 		return
 	}
 
-	// we're just creating one block
-	domainBlock, errWithCode := m.processor.Admin().DomainBlockCreate(c.Request.Context(), authed.Account, form.Domain, form.Obfuscate, form.PublicComment, form.PrivateComment, "")
+	// We're importing multiple domain blocks,
+	// so we're looking at a multi-status response.
+	multiStatus, errWithCode := m.processor.Admin().DomainBlocksImport(
+		c.Request.Context(),
+		authed.Account,
+		form.Domains, // Pass the file through.
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
-	c.JSON(http.StatusOK, domainBlock)
+
+	// TODO: Return 207 and multiStatus data nicely
+	//       when supported by the admin panel.
+
+	if multiStatus.Metadata.Failure != 0 {
+		failures := make(map[string]any, multiStatus.Metadata.Failure)
+		for _, entry := range multiStatus.Data {
+			// nolint:forcetypeassert
+			failures[entry.Resource.(string)] = entry.Message
+		}
+
+		err := fmt.Errorf("one or more errors importing domain blocks: %+v", failures)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnprocessableEntity(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	// Success, return slice of domain blocks.
+	domainBlocks := make([]any, 0, multiStatus.Metadata.Success)
+	for _, entry := range multiStatus.Data {
+		domainBlocks = append(domainBlocks, entry.Resource)
+	}
+
+	c.JSON(http.StatusOK, domainBlocks)
 }
 
 func validateCreateDomainBlock(form *apimodel.DomainBlockCreateRequest, imp bool) error {

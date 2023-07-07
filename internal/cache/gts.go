@@ -35,6 +35,7 @@ type GTSCaches struct {
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
 	follow        *result.Cache[*gtsmodel.Follow]
 	followRequest *result.Cache[*gtsmodel.FollowRequest]
+	instance      *result.Cache[*gtsmodel.Instance]
 	list          *result.Cache[*gtsmodel.List]
 	listEntry     *result.Cache[*gtsmodel.ListEntry]
 	media         *result.Cache[*gtsmodel.MediaAttachment]
@@ -59,6 +60,7 @@ func (c *GTSCaches) Init() {
 	c.initEmojiCategory()
 	c.initFollow()
 	c.initFollowRequest()
+	c.initInstance()
 	c.initList()
 	c.initListEntry()
 	c.initMedia()
@@ -80,6 +82,7 @@ func (c *GTSCaches) Start() {
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStart(c.follow, config.GetCacheGTSFollowSweepFreq())
 	tryStart(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
+	tryStart(c.instance, config.GetCacheGTSInstanceSweepFreq())
 	tryStart(c.list, config.GetCacheGTSListSweepFreq())
 	tryStart(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
 	tryStart(c.media, config.GetCacheGTSMediaSweepFreq())
@@ -106,6 +109,7 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStop(c.follow, config.GetCacheGTSFollowSweepFreq())
 	tryStop(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
+	tryStop(c.instance, config.GetCacheGTSInstanceSweepFreq())
 	tryStop(c.list, config.GetCacheGTSListSweepFreq())
 	tryStop(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
 	tryStop(c.media, config.GetCacheGTSMediaSweepFreq())
@@ -152,6 +156,11 @@ func (c *GTSCaches) Follow() *result.Cache[*gtsmodel.Follow] {
 // FollowRequest provides access to the gtsmodel FollowRequest database cache.
 func (c *GTSCaches) FollowRequest() *result.Cache[*gtsmodel.FollowRequest] {
 	return c.followRequest
+}
+
+// Instance provides access to the gtsmodel Instance database cache.
+func (c *GTSCaches) Instance() *result.Cache[*gtsmodel.Instance] {
+	return c.instance
 }
 
 // List provides access to the gtsmodel List database cache.
@@ -299,6 +308,19 @@ func (c *GTSCaches) initFollowRequest() {
 		return f2
 	}, config.GetCacheGTSFollowRequestMaxSize())
 	c.followRequest.SetTTL(config.GetCacheGTSFollowRequestTTL(), true)
+}
+
+func (c *GTSCaches) initInstance() {
+	c.instance = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "Domain"},
+	}, func(i1 *gtsmodel.Instance) *gtsmodel.Instance {
+		i2 := new(gtsmodel.Instance)
+		*i2 = *i1
+		return i1
+	}, config.GetCacheGTSInstanceMaxSize())
+	c.instance.SetTTL(config.GetCacheGTSInstanceTTL(), true)
+	c.emojiCategory.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initList() {
