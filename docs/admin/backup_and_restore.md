@@ -1,18 +1,37 @@
 # Backup and Restore
 
-In certain conditions, it may be desirable to be able to back up a GoToSocial instance, and then to restore it again later, or just save the backup somewhere.
+As the GoToSocial database contains the instance as well as all user signing keys it is vital to back it up. If you lose these keys you'll never be able to federate from this domain again. Don't forget to also encrypt your backups in order to keep the data safe at rest.
 
-Some potential scenarios:
+Aside from disaster recovery, there are other good reasons to keep backups. Some potential scenarios for you to consider:
 
 * You want to close down your instance but you might create it again later and you don't want to break federation.
 * You need to migrate to a different database for some reason (Postgres => SQLite or vice versa).
-* You want to keep regular backups of your data just in case something happens.
-* You want to migrate from GoToSocial to a different Fediverse server, or from a different Fediverse server to GoToSocial.
 * You're about to hack around on your instance and you want to make a quick backup so you don't lose everything if you mess up.
 
-There are a few different ways of doing this, most of which require some technical knowledge.
+## What to backup
 
-## Image your disk
+### Database
+
+Most backup tools have built-in support for common databases like PostgreSQL and SQLite. Ensure you review their documentation first as they often spell out certain considerations and conditions that need to be met for backups to complete and restore successfully.
+
+### Media
+
+Local media should be backed up. You can use the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local) to list all media files that belong to your instance and its users.
+
+Remote media does not have to be backed up. This can be a good way to keep the size of your backups down. Remote media will be fetched from the origin instance, much like how it'll be fetched again if it got pruned due to media retention.
+
+## How to backup
+
+You can go about this a few different ways:
+
+* Imaging the VMs/machines your instance and database runs on
+* Dumping GoToSocial's state with the CLI
+* Backing up database and media files
+* Backup software
+
+Though setting up backup software can be a bit more work, it's by far the best option. It ensures consistent and encrypted backups and can protect you against filesystem corruption in a way that taking disk snapshots and copying the raw database and media files won't.
+
+### Image your disk
 
 If you're running GoToSocial on a VPS (a remote machine in the cloud), arguably the easiest way to preserve all of your database entries and media is to image the disk attached to the VPS. This will preserve the whole disk. Many VPS providers offer the option of automatically creating backups on a timer, so you'll always be able to restore if your data is lost.
 
@@ -28,24 +47,7 @@ Disadvantages:
 * Will probably also preserve stuff you don't need, from other programs running on the same machine.
 * Vendor lock-in, difficult to move the data around.
 
-## Back up your database files
-
-Regardless of whether you're using Postgres or SQLite as your GoToSocial database, it's possible to simply back up the database files directly by using something like [rclone](https://rclone.org/), or following best practices for [backing up Postgres data](https://www.postgresql.org/docs/9.1/backup.html) or [SQLite data](https://sqlite.org/backup.html).
-
-Advantages:
-
-* Backups are relatively portable - you can move data from one machine to another.
-* Well-documented procedure with a lot of guides and tooling available.
-* Lots of different ways of doing your backups, depending on what you need.
-
-Disadvantages:
-
-* Can be a bit fiddly to set up initially.
-* You need to figure out where to keep your backups.
-* Restoring from backups can be a pain.
-* Unless you back up media as well, references to media attachments in your db will be broken.
-
-## Use the GoToSocial CLI
+### Use the GoToSocial CLI
 
 The GoToSocial CLI tool also provides commands for backing up and restoring data from your instance, which will preserve the *bare-minimum* necessary data to backup and restore your instance, without breaking federation with other instances.
 
@@ -88,7 +90,7 @@ The backup file produced will be in the form of a line-separated series of JSON 
 {"type":"instance","id":"01BZDDRPAB8J645ABY31HHF68Y","createdAt":"2021-09-08T10:00:54.763912Z","domain":"localhost:8080","title":"localhost:8080","uri":"http://localhost:8080","reputation":0}
 ```
 
-For information on how to use the commands to import/export, see [here](cli.md#gotosocial-admin-export).
+For information on how to use the commands to import/export, see [here](cli.md#gotosocial-admin-export). Though the `export` command won't backup media, you can use the [`media list-local`](cli.md#gotosocial-admin-media-list-local) command to figure out which media files you should keep.
 
 Advantages:
 
@@ -98,5 +100,123 @@ Advantages:
 
 Disadvantages:
 
-* Loss of statuses/media/etc: don't do a backup/restore this way unless you're willing to drop stuff.
+* Loss of statuses/faves/etc: don't do a backup/restore this way unless you're willing to drop stuff.
 * You need to use the GtS CLI tool to insert data back into a database, unless you write custom tooling for it.
+
+
+### Back up your database files and media
+
+Regardless of whether you're using PostgreSQL or SQLite as your GoToSocial database, it's possible to simply back up the database files directly by using something like [rclone](https://rclone.org/), or following best practices for [backing up Postgres data](https://www.postgresql.org/docs/15/backup.html) or [SQLite data](https://sqlite.org/backup.html).
+
+Use the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local) to get a list of media files you need to safeguard.
+
+Advantages:
+
+* Backups are relatively portable - you can move data from one machine to another.
+* Well-documented procedure with a lot of guides and tooling available.
+* Lots of different ways of doing your backups, depending on what you need.
+
+Disadvantages:
+
+* Can be a bit fiddly to set up initially.
+* You need to figure out where to keep your backups.
+* Restoring from backups can be a pain.
+* Unless you back up media as well, references to media attachments in your db will be broken.
+
+### Backup software
+
+Backup software is created with the specific purpose of helping you create, manage and restore your backups. It typically knows how to safely backup your database so you don't have to be an expert on how to do PostgreSQL or SQLite backups. It can backup from the filesystem too.
+
+Though the same advantages and disadvantages roughly apply as with backing up the database files directly, this approach does have some nice extras:
+
+* Backups are highly portable and can be used to restore the database from 0
+* Backups happen on a regular schedule and with configurable retention policies
+* Backups are incremental and compressed to save on storage and bandwidth
+* Backups are encrypted
+* Built-in tooling to list your snapshots and restore from them
+
+!!! tip
+    [Rsync.net](https://rsync.net/), [BorgBase](https://www.borgbase.com/) and [Hetzner Storage](https://www.hetzner.com/storage/storage-box) provide affordable storage that you can use as a backup target. Rsync.net has a special Borg-only backup product that is much cheaper than their regular storage product. If you only want to use them for backups managed with Borg, [sign up here instead](https://www.rsync.net/products/borg.html).
+
+#### Borgmatic
+
+[Borgmatic](https://torsion.org/borgmatic/) is a utility to help perform backups using [Borg](https://www.borgbackup.org/). It's driven by a declarative configuration file using YAML. BorgBase, Rsync.net and Hetzner all support Borg.
+
+!!! warning
+    When initialising the Borg repository, ensure you set it up with a strong encryption key and store that key somewhere safely. Without it you won't be able to decrypt your backups in the future. The ArchWiki entry on Borgmatic explains how to safely pass your encryption key to Borgmatic without storing it plain text in its configuration file.
+
+How to backup databases with Borgmatic has its own [documentation page](https://torsion.org/borgmatic/docs/how-to/backup-your-databases/) that you should review. A simple `config.yaml` for Borgmatic with GoToSocial using SQLite looks like this:
+
+```yaml
+location:
+  repositories:
+    - path: ssh://<find it in your provider control panel>
+      label: <anything but typically the provider, for example borgbase>
+  patterns_from:
+  - /etc/borgmatic/gotosocial_patterns
+
+storage:
+  compression: auto,zstd
+  archive_name_format: '{hostname}-{now:%Y-%m-%d-%H%M%S}'
+  retries: 5
+  retry_wait: 30
+
+retention:
+    keep_daily: 7
+    keep_weekly: 6
+    keep_monthly: 12
+
+hooks:
+  before_backup:
+      - /usr/bin/systemctl stop gotosocial
+  after_backup:
+      - /usr/bin/systemctl start gotosocial
+  sqlite_databases:
+    - name: gotosocial
+      path: /path/to/sqlite.db
+```
+
+For PostgreSQL, you'll want to use `postgresql_databases` instead.
+
+The file mentioned in `patterns_from` can be created by transforming the output from the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local). In order to generate the right patterns you can use the [`media-to-borg-patterns.py`](https://github.com/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) script. How Borg patterns work is explained in [their documentation](https://man.archlinux.org/man/borg-patterns.1).
+
+You'll need to put that file on your GoToSocial instance and make sure the file is executable. It requires Python 3 which you will already have if you have Borg and Borgmatic installed. It only depends on the Python standard library.
+
+!!! note
+    For this to work reliably, you should ensure that the [storage-local-base-path](../configuration/storage.md) in your GoToSocial configuration uses an absolute path. Otherwise you'll have to tweak the paths yourself.
+
+```sh
+$ gotosocial admin media list-local | \
+    /path/to/media-to-borg-patterns.py \
+    <storage-local-base-path>
+```
+
+This will output a pattern set looking roughly like this to your console:
+
+```
+R <storage-local-base-path>
++ pp:<storage-local-base-path>/<account ID>
+- <storage-local-base-path>/*
+```
+
+!!! tip
+    You can view the help by passing `--help` to `media-to-borg-patterns.py`. It can write the output to a file directly by passing the location of a file as the last argument to the script.
+
+Given this set of patterns, Borg will start looking for files starting from `<storage-local-base-path>`. Anything that matches the path prefix, `pp:` will be included. Everything else will match the last pattern, excluding it from the archive.
+
+On a single-user instance, you can run this command once and inline the patterns directly in your Borgmatic configuration [using the `patterns` key](https://torsion.org/borgmatic/docs/reference/configuration/). On multi-user instances you should run this after a user signs up. Alternatively, you can run it every time before you do a backup.
+
+If you're running Borgmatic as a systemd service, you can [create a drop-in](https://wiki.archlinux.org/title/systemd#Drop-in_files) for `borgmatic.service` and run the pattern generation before the backup is started with:
+
+```ini
+[Service]
+ExecStartPre=/path/to/gotosocial admin media list-local | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
+```
+
+Documentation that's good to review:
+
+* Borgmatic [configuration reference](https://torsion.org/borgmatic/docs/reference/configuration/)
+* ArchWiki entry [on Borgmatic](https://wiki.archlinux.org/title/Borgmatic)
+* ArchWiki entry [on Borg](https://wiki.archlinux.org/title/Borg_backup)
+* BorgBase [documentation](https://docs.borgbase.com/)
+* Hetzner community guide on [setting up Borgmatic](https://community.hetzner.com/tutorials/install-and-configure-borgmatic)
