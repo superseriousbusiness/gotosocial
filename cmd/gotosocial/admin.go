@@ -20,6 +20,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account"
+	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media/prune"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -172,6 +173,34 @@ func adminCommands() *cobra.Command {
 		Use:   "media",
 		Short: "admin commands related to stored media / emojis",
 	}
+
+	/*
+		ADMIN MEDIA LIST COMMANDS
+	*/
+
+	adminMediaListLocalCmd := &cobra.Command{
+		Use:   "list-local",
+		Short: "admin command to list media on local storage",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), media.ListLocal)
+		},
+	}
+
+	adminMediaListRemoteCmd := &cobra.Command{
+		Use:   "list-remote",
+		Short: "admin command to list remote media cached on this instance",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), media.ListRemote)
+		},
+	}
+
+	adminMediaCmd.AddCommand(adminMediaListLocalCmd, adminMediaListRemoteCmd)
 
 	/*
 		ADMIN MEDIA PRUNE COMMANDS

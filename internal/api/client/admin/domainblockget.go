@@ -18,10 +18,8 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -87,26 +85,19 @@ func (m *Module) DomainBlockGETHandler(c *gin.Context) {
 		return
 	}
 
-	domainBlockID := c.Param(IDKey)
-	if domainBlockID == "" {
-		err := errors.New("no domain block id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	domainBlockID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	export := false
-	exportString := c.Query(ExportQueryKey)
-	if exportString != "" {
-		i, err := strconv.ParseBool(exportString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", ExportQueryKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		export = i
+	export, errWithCode := apiutil.ParseDomainBlockExport(c.Query(apiutil.DomainBlockExportKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	domainBlock, errWithCode := m.processor.Admin().DomainBlockGet(c.Request.Context(), authed.Account, domainBlockID, export)
+	domainBlock, errWithCode := m.processor.Admin().DomainBlockGet(c.Request.Context(), domainBlockID, export)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

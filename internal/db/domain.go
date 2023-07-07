@@ -26,13 +26,19 @@ import (
 
 // Domain contains DB functions related to domains and domain blocks.
 type Domain interface {
-	// CreateDomainBlock ...
+	// CreateDomainBlock puts the given instance-level domain block into the database.
 	CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) Error
 
-	// GetDomainBlock ...
+	// GetDomainBlock returns one instance-level domain block with the given domain, if it exists.
 	GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, Error)
 
-	// DeleteDomainBlock ...
+	// GetDomainBlockByID returns one instance-level domain block with the given id, if it exists.
+	GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel.DomainBlock, Error)
+
+	// GetDomainBlocks returns all instance-level domain blocks currently enforced by this instance.
+	GetDomainBlocks(ctx context.Context) ([]*gtsmodel.DomainBlock, error)
+
+	// DeleteDomainBlock deletes an instance-level domain block with the given domain, if it exists.
 	DeleteDomainBlock(ctx context.Context, domain string) Error
 
 	// IsDomainBlocked checks if an instance-level domain block exists for the given domain string (eg., `example.org`).

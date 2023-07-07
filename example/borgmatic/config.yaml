@@ -1,0 +1,26 @@
+location:
+  repositories:
+    - path: ssh://<find it in your provider control panel>
+      label: <anything but typically the provider, for example borgbase>
+  patterns_from:
+  - /etc/borgmatic/gotosocial_patterns
+
+storage:
+  compression: auto,zstd
+  archive_name_format: '{hostname}-{now:%Y-%m-%d-%H%M%S}'
+  retries: 5
+  retry_wait: 30
+
+retention:
+    keep_daily: 7
+    keep_weekly: 6
+    keep_monthly: 12
+
+hooks:
+  before_backup:
+      - /usr/bin/systemctl stop gotosocial
+  after_backup:
+      - /usr/bin/systemctl start gotosocial
+  sqlite_databases:
+    - name: gotosocial
+      path: /path/to/sqlite.db

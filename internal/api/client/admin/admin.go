@@ -42,8 +42,6 @@ const (
 	EmailPath              = BasePath + "/email"
 	EmailTestPath          = EmailPath + "/test"
 
-	ExportQueryKey        = "export"
-	ImportQueryKey        = "import"
 	IDKey                 = "id"
 	FilterQueryKey        = "filter"
 	MaxShortcodeDomainKey = "max_shortcode_domain"
