@@ -27,9 +27,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// StatusGet handles the getting of a fedi/activitypub representation of a particular status, performing appropriate
-// authentication before returning a JSON serializable interface to the caller.
+// StatusGet handles the getting of a fedi/activitypub representation of a local status.
+// It performs appropriate authentication before returning a JSON serializable interface.
 func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, requestedStatusID string) (interface{}, gtserror.WithCode) {
+	// Authenticate using http signature.
 	requestedAccount, requestingAccount, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -41,15 +42,18 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, req
 	}
 
 	if status.AccountID != requestedAccount.ID {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID))
+		err := fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	visible, err := p.filter.StatusVisible(ctx, requestingAccount, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
 	if !visible {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", status.ID, requestingAccount.ID))
+		err := fmt.Errorf("status with id %s not visible to user with id %s", status.ID, requestingAccount.ID)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	asStatus, err := p.tc.StatusToAS(ctx, status)

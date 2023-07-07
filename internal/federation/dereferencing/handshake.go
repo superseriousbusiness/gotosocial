@@ -22,68 +22,83 @@ import (
 )
 
 func (d *deref) Handshaking(username string, remoteAccountID *url.URL) bool {
-	d.handshakeSync.Lock()
-	defer d.handshakeSync.Unlock()
+	d.handshakesMu.Lock()
+	defer d.handshakesMu.Unlock()
 
 	if d.handshakes == nil {
-		// handshakes isn't even initialized yet so we can't be handshaking with anyone
+		// Handshakes isn't even initialized yet,
+		// so we can't be handshaking with anyone.
 		return false
 	}
 
 	remoteIDs, ok := d.handshakes[username]
 	if !ok {
-		// user isn't handshaking with anyone, bail
+		// Given username isn't
+		// handshaking with anyone.
 		return false
 	}
 
 	for _, id := range remoteIDs {
 		if id.String() == remoteAccountID.String() {
-			// we are currently handshaking with the remote account, yep
+			// We are currently handshaking
+			// with the remote account.
 			return true
 		}
 	}
 
-	// didn't find it which means we're not handshaking
+	// No results: we're not handshaking
+	// with the remote account.
 	return false
 }
 
 func (d *deref) startHandshake(username string, remoteAccountID *url.URL) {
-	d.handshakeSync.Lock()
-	defer d.handshakeSync.Unlock()
+	d.handshakesMu.Lock()
+	defer d.handshakesMu.Unlock()
 
 	remoteIDs, ok := d.handshakes[username]
 	if !ok {
-		// there was nothing in there yet, so just add this entry and return
+		// No handshakes were stored yet,
+		// so just add this entry and return.
 		d.handshakes[username] = []*url.URL{remoteAccountID}
 		return
 	}
 
-	// add the remote ID to the slice
+	// Add the remote account ID to the slice.
 	remoteIDs = append(remoteIDs, remoteAccountID)
 	d.handshakes[username] = remoteIDs
 }
 
 func (d *deref) stopHandshake(username string, remoteAccountID *url.URL) {
-	d.handshakeSync.Lock()
-	defer d.handshakeSync.Unlock()
+	d.handshakesMu.Lock()
+	defer d.handshakesMu.Unlock()
 
 	remoteIDs, ok := d.handshakes[username]
 	if !ok {
+		// No handshake was in progress,
+		// so there's nothing to stop.
 		return
 	}
 
-	newRemoteIDs := []*url.URL{}
+	// Generate a new remoteIDs slice that
+	// doesn't contain the removed entry.
+	var (
+		remoteAccountIDStr = remoteAccountID.String()
+		newRemoteIDs       = make([]*url.URL, 0, len(remoteIDs)-1)
+	)
+
 	for _, id := range remoteIDs {
-		if id.String() != remoteAccountID.String() {
+		if id.String() != remoteAccountIDStr {
 			newRemoteIDs = append(newRemoteIDs, id)
 		}
 	}
 
 	if len(newRemoteIDs) == 0 {
-		// there are no handshakes so just remove this user entry from the map and save a few bytes
+		// There are no handshakes remaining,
+		// so just remove this username's slice
+		// from the map and save a few bytes.
 		delete(d.handshakes, username)
 	} else {
-		// there are still other handshakes ongoing
+		// There are still other handshakes ongoing.
 		d.handshakes[username] = newRemoteIDs
 	}
 }
