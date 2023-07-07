@@ -255,6 +255,18 @@ Example:
 gotosocial admin import --path example.json --config-path config.yaml
 ```
 
+### gotosocial admin media list-local
+
+This command can be used to list local media. Local media is media that belongs to posts by users with an account on the instance.
+
+The output will be a list of files. The list can be used to drive your backups.
+
+### gotosocial admin media list-remote
+
+This is the corollary to list-local, but instead lists media from remote instances. Remote media belongs to other instances, but was attached to a post we received over federation and have potentially cached locally.
+
+The output will be a list of URLs to retrieve the original content from. GoToSocial automatically retrieves remote media when it needs it, so you should never need to do so yourself.
+
 ### gotosocial admin media prune orphaned
 
 This command can be used to prune orphaned media from your GoToSocial.
