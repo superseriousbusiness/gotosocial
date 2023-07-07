@@ -98,6 +98,11 @@ EXPECT=$(cat <<"EOF"
     "dry-run": true,
     "email": "",
     "host": "example.com",
+    "http-client": {
+        "allow-ips": [],
+        "block-ips": [],
+        "timeout": 10000000000
+    },
     "instance-deliver-to-shared-inboxes": false,
     "instance-expose-peers": true,
     "instance-expose-public-timeline": true,

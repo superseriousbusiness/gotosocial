@@ -20,48 +20,126 @@ package httpclient
 import (
 	"net/netip"
 	"syscall"
-
-	"github.com/superseriousbusiness/gotosocial/internal/netutil"
 )
 
-type sanitizer struct {
-	allow []netip.Prefix
-	block []netip.Prefix
+var (
+	// ipv6GlobalUnicast is the prefix set aside by IANA for global unicast assignments, i.e "the internet".
+	// https://www.iana.org/assignments/ipv6-unicast-address-assignments/ipv6-unicast-address-assignments.xhtml
+	ipv6GlobalUnicast = netip.MustParsePrefix("2000::/3")
+
+	// ipv6Reserved contains IPv6 reserved IP prefixes that fall within ipv6GlobalUnicast.
+	// https://www.iana.org/assignments/iana-ipv6-special-registry/iana-ipv6-special-registry.xhtml
+	ipv6Reserved = [...]netip.Prefix{
+		netip.MustParsePrefix("2001::/23"),         // IETF Protocol Assignments (RFC 2928)
+		netip.MustParsePrefix("2001:db8::/32"),     // Documentation (RFC 3849)
+		netip.MustParsePrefix("2002::/16"),         // 6to4 (RFC 3056)
+		netip.MustParsePrefix("2620:4f:8000::/48"), // Direct Delegation AS112 Service (RFC 7534)
+	}
+
+	// ipv4Reserved contains IPv4 reserved IP prefixes.
+	// https://www.iana.org/assignments/iana-ipv4-special-registry/iana-ipv4-special-registry.xhtml
+	ipv4Reserved = [...]netip.Prefix{
+		netip.MustParsePrefix("0.0.0.0/8"),       // Current network
+		netip.MustParsePrefix("10.0.0.0/8"),      // Private
+		netip.MustParsePrefix("100.64.0.0/10"),   // RFC6598
+		netip.MustParsePrefix("127.0.0.0/8"),     // Loopback
+		netip.MustParsePrefix("169.254.0.0/16"),  // Link-local
+		netip.MustParsePrefix("172.16.0.0/12"),   // Private
+		netip.MustParsePrefix("192.0.0.0/24"),    // RFC6890
+		netip.MustParsePrefix("192.0.2.0/24"),    // Test, doc, examples
+		netip.MustParsePrefix("192.31.196.0/24"), // AS112-v4, RFC 7535
+		netip.MustParsePrefix("192.52.193.0/24"), // AMT, RFC 7450
+		netip.MustParsePrefix("192.88.99.0/24"),  // IPv6 to IPv4 relay
+		netip.MustParsePrefix("192.168.0.0/16"),  // Private
+		netip.MustParsePrefix("192.175.48.0/24"), // Direct Delegation AS112 Service, RFC 7534
+		netip.MustParsePrefix("198.18.0.0/15"),   // Benchmarking tests
+		netip.MustParsePrefix("198.51.100.0/24"), // Test, doc, examples
+		netip.MustParsePrefix("203.0.113.0/24"),  // Test, doc, examples
+		netip.MustParsePrefix("224.0.0.0/4"),     // Multicast
+		netip.MustParsePrefix("240.0.0.0/4"),     // Reserved (includes broadcast / 255.255.255.255)
+	}
+)
+
+type Sanitizer struct {
+	Allow []netip.Prefix
+	Block []netip.Prefix
 }
 
 // Sanitize implements the required net.Dialer.Control function signature.
-func (s *sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
+func (s *Sanitizer) Sanitize(ntwrk, addr string, _ syscall.RawConn) error {
 	// Parse IP+port from addr
 	ipport, err := netip.ParseAddrPort(addr)
 	if err != nil {
 		return err
 	}
 
-	if !(ntwrk == "tcp4" || ntwrk == "tcp6") {
+	// Ensure valid network.
+	const (
+		tcp4 = "tcp4"
+		tcp6 = "tcp6"
+	)
+
+	if !(ntwrk == tcp4 || ntwrk == tcp6) {
 		return ErrInvalidNetwork
 	}
 
-	// Seperate the IP
+	// Separate the IP.
 	ip := ipport.Addr()
 
-	// Check if this is explicitly allowed
-	for i := 0; i < len(s.allow); i++ {
-		if s.allow[i].Contains(ip) {
+	// Check if this IP is explicitly allowed.
+	for i := 0; i < len(s.Allow); i++ {
+		if s.Allow[i].Contains(ip) {
 			return nil
 		}
 	}
 
-	// Now check if explicity blocked
-	for i := 0; i < len(s.block); i++ {
-		if s.block[i].Contains(ip) {
+	// Check if this IP is explicitly blocked.
+	for i := 0; i < len(s.Block); i++ {
+		if s.Block[i].Contains(ip) {
 			return ErrReservedAddr
 		}
 	}
 
-	// Validate this is a safe IP
-	if !netutil.ValidateIP(ip) {
+	// Validate this is a safe IP.
+	if !SafeIP(ip) {
 		return ErrReservedAddr
 	}
 
 	return nil
+}
+
+// SafeIP returns whether ip is an IPv4/6
+// address in a non-reserved, public range.
+func SafeIP(ip netip.Addr) bool {
+	switch {
+	// IPv4: check if IPv4 in reserved nets
+	case ip.Is4():
+		for _, reserved := range ipv4Reserved {
+			if reserved.Contains(ip) {
+				return false
+			}
+		}
+		return true
+
+	// IPv6: check if IP in IPv6 reserved nets
+	case ip.Is6():
+		if !ipv6GlobalUnicast.Contains(ip) {
+			// Address is not globally routeable,
+			// ie., not "on the internet".
+			return false
+		}
+
+		for _, reserved := range ipv6Reserved {
+			if reserved.Contains(ip) {
+				// Address is globally routeable
+				// but falls in a reserved range.
+				return false
+			}
+		}
+		return true
+
+	// Assume malicious by default
+	default:
+		return false
+	}
 }

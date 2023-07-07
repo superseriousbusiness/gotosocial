@@ -81,6 +81,7 @@ nav:
       - "configuration/oidc.md"
       - "configuration/smtp.md"
       - "configuration/syslog.md"
+      - "configuration/httpclient.md"
       - "configuration/advanced.md"
       - "configuration/observability.md"
   - "Advanced":

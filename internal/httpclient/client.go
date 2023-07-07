@@ -130,9 +130,9 @@ func New(cfg Config) *Client {
 	}
 
 	// Protect dialer with IP range sanitizer.
-	d.Control = (&sanitizer{
-		allow: cfg.AllowRanges,
-		block: cfg.BlockRanges,
+	d.Control = (&Sanitizer{
+		Allow: cfg.AllowRanges,
+		Block: cfg.BlockRanges,
 	}).Sanitize
 
 	// Prepare client fields.

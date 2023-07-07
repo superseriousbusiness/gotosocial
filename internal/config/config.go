@@ -150,6 +150,9 @@ type Configuration struct {
 	AdvancedThrottlingRetryAfter time.Duration `name:"advanced-throttling-retry-after" usage:"Retry-After duration response to send for throttled requests."`
 	AdvancedSenderMultiplier     int           `name:"advanced-sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
 
+	// HTTPClient configuration vars.
+	HTTPClient HTTPClientConfiguration `name:"http-client"`
+
 	// Cache configuration vars.
 	Cache CacheConfiguration `name:"cache"`
 
@@ -161,6 +164,12 @@ type Configuration struct {
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 
 	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'."`
+}
+
+type HTTPClientConfiguration struct {
+	AllowIPs []string      `name:"allow-ips"`
+	BlockIPs []string      `name:"block-ips"`
+	Timeout  time.Duration `name:"timeout"`
 }
 
 type CacheConfiguration struct {
