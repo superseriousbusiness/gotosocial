@@ -286,7 +286,7 @@ func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, ex
 	adminGroups := config.GetOIDCAdminGroups()
 	var admin bool
 LOOP:
-	for _, g := range claims.Groups {
+	for _, g := range claims.Attrs["groups"] {
 		for _, ag := range adminGroups {
 			if strings.EqualFold(g, ag) {
 				admin = true
