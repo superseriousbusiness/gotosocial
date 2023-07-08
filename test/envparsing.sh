@@ -123,9 +123,11 @@ EXPECT=$(cat <<"EOF"
     "media-image-max-size": 420,
     "media-remote-cache-days": 30,
     "media-video-max-size": 420,
+    "oidc-account-required-claims": null,
     "oidc-admin-groups": [
         "steamy"
     ],
+    "oidc-admin-required-claims": null,
     "oidc-client-id": "1234",
     "oidc-client-secret": "shhhh its a secret",
     "oidc-enabled": true,
@@ -253,6 +255,8 @@ GTS_OIDC_CLIENT_SECRET='shhhh its a secret' \
 GTS_OIDC_SCOPES='read,write' \
 GTS_OIDC_LINK_EXISTING=true \
 GTS_OIDC_ADMIN_GROUPS='steamy' \
+GTS_OIDC_ACCOUNT_REQUIRED_CLAIMS='' \
+GTS_OIDC_ADMIN_REQUIRED_CLAIMS='' \
 GTS_SMTP_HOST='example.com' \
 GTS_SMTP_PORT=4269 \
 GTS_SMTP_USERNAME='sex-haver' \
