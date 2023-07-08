@@ -231,36 +231,42 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 }
 
 func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) db.Error {
+	// Delete follow request first.
+	if err := r.DeleteFollowRequest(ctx, sourceAccountID, targetAccountID); err != nil {
+		return err
+	}
+
+	// Delete follow request notification
+	return r.state.DB.DeleteNotifications(ctx, []string{
+		string(gtsmodel.NotificationFollowRequest),
+	}, targetAccountID, sourceAccountID)
+}
+
+func (r *relationshipDB) DeleteFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) error {
 	defer r.state.Caches.GTS.FollowRequest().Invalidate("AccountID.TargetAccountID", sourceAccountID, targetAccountID)
 
 	// Load followreq into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
-	_, err := r.GetFollowRequest(gtscontext.SetBarebones(ctx),
+	follow, err := r.GetFollowRequest(
+		gtscontext.SetBarebones(ctx),
 		sourceAccountID,
 		targetAccountID,
 	)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// Already gone.
+			return nil
+		}
 		return err
 	}
 
-	// Attempt to delete follow request.
-	if _, err = r.conn.NewDelete().
+	// Finally delete followreq from DB.
+	_, err = r.conn.NewDelete().
 		Table("follow_requests").
-		Where("? = ? AND ? = ?",
-			bun.Ident("account_id"),
-			sourceAccountID,
-			bun.Ident("target_account_id"),
-			targetAccountID,
-		).
-		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
-	}
-
-	// Delete original follow request notification
-	return r.state.DB.DeleteNotifications(ctx, []string{
-		string(gtsmodel.NotificationFollowRequest),
-	}, targetAccountID, sourceAccountID)
+		Where("? = ?", bun.Ident("id"), follow.ID).
+		Exec(ctx)
+	return r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string) error {

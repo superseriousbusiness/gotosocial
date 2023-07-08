@@ -97,11 +97,17 @@ type Relationship interface {
 	// UpdateFollowRequest updates one follow request by ID.
 	UpdateFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest, columns ...string) error
 
+	// DeleteFollow deletes a follow if it exists between source and target accounts.
+	DeleteFollow(ctx context.Context, sourceAccountID string, targetAccountID string) error
+
 	// DeleteFollowByID deletes a follow from the database with the given ID.
 	DeleteFollowByID(ctx context.Context, id string) error
 
 	// DeleteFollowByURI deletes a follow from the database with the given URI.
 	DeleteFollowByURI(ctx context.Context, uri string) error
+
+	// DeleteFollowRequest deletes a follow request if it exists between source and target accounts.
+	DeleteFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) error
 
 	// DeleteFollowRequestByID deletes a follow request from the database with the given ID.
 	DeleteFollowRequestByID(ctx context.Context, id string) error
