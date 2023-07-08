@@ -734,7 +734,7 @@ func (suite *RelationshipTestSuite) TestRejectFollowRequestNotExisting() {
 	targetAccount := suite.testAccounts["local_account_2"]
 
 	err := suite.db.RejectFollowRequest(ctx, account.ID, targetAccount.ID)
-	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.NoError(err)
 }
 
 func (suite *RelationshipTestSuite) TestGetAccountFollowRequests() {
