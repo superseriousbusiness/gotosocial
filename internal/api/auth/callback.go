@@ -236,6 +236,21 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/oauth"+OauthAuthorizePath)
 }
 
+// allowedByClaims tests if the claims submitted clear all the rules
+//
+// For safety, this function returns false if called with an empty ruleset.
+func allowedByClaims(claims *oidc.Claims, rules []config.OIDCRequirement) bool {
+	if len(rules) == 0 {
+		return false
+	}
+
+	results := []bool{}
+	for _, pair := range rules {
+		results = append(results, slices.Contains(claims.Attrs[pair.Claim], pair.Value))
+	}
+	return !slices.Contains(results, false)
+}
+
 func (m *Module) fetchUserForClaims(ctx context.Context, claims *oidc.Claims, ip net.IP, appID string) (*gtsmodel.User, gtserror.WithCode) {
 	if claims.Sub == "" {
 		err := errors.New("no sub claim found - is your provider OIDC compliant?")
@@ -244,16 +259,7 @@ func (m *Module) fetchUserForClaims(ctx context.Context, claims *oidc.Claims, ip
 
 	// check if the user has the required claims for account creation/login
 	reqClaims := config.GetOIDCAccountRequiredCliams()
-	allowed := false
-	results := []bool{}
-	for _, pair := range reqClaims {
-		results = append(results, slices.Contains(claims.Attrs[pair.Claim], pair.Value))
-	}
-	if !slices.Contains(results, false) {
-		allowed = true
-	}
-
-	if !allowed {
+	if len(reqClaims) > 0 && !allowedByClaims(claims, reqClaims) {
 		return nil, gtserror.NewErrorForbidden(fmt.Errorf("required claims to login/create account are missing"))
 	}
 
@@ -300,12 +306,8 @@ func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, ex
 
 	// check if the user matches all of the admin claims
 	admin := false
-	results := []bool{}
 	reqClaims := config.GetOIDCAdminRequiredClaims()
-	for _, pair := range reqClaims {
-		results = append(results, slices.Contains(claims.Attrs[pair.Claim], pair.Value))
-	}
-	if len(reqClaims) > 0 && !slices.Contains(results, false) {
+	if len(reqClaims) > 0 && allowedByClaims(claims, reqClaims) {
 		admin = true
 	}
 
