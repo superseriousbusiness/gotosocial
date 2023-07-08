@@ -232,6 +232,29 @@ func (r *relationshipDB) deleteFollow(ctx context.Context, id string) error {
 	return nil
 }
 
+func (r *relationshipDB) DeleteFollow(ctx context.Context, sourceAccountID string, targetAccountID string) error {
+	defer r.state.Caches.GTS.Follow().Invalidate("AccountID.TargetAccountID", sourceAccountID, targetAccountID)
+
+	// Load follow into cache before attempting a delete,
+	// as we need it cached in order to trigger the invalidate
+	// callback. This in turn invalidates others.
+	follow, err := r.GetFollow(
+		gtscontext.SetBarebones(ctx),
+		sourceAccountID,
+		targetAccountID,
+	)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// Already gone.
+			return nil
+		}
+		return err
+	}
+
+	// Finally delete follow from DB.
+	return r.deleteFollow(ctx, follow.ID)
+}
+
 func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error {
 	defer r.state.Caches.GTS.Follow().Invalidate("ID", id)
 

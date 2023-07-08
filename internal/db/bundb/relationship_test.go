@@ -836,6 +836,19 @@ func (suite *RelationshipTestSuite) TestGetFollowNotExisting() {
 	suite.Nil(follow)
 }
 
+func (suite *RelationshipTestSuite) TestDeleteFollow() {
+	ctx := context.Background()
+	originAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["admin_account"]
+
+	err := suite.db.DeleteFollow(ctx, originAccount.ID, targetAccount.ID)
+	suite.NoError(err)
+
+	follow, err := suite.db.GetFollow(ctx, originAccount.ID, targetAccount.ID)
+	suite.EqualError(err, db.ErrNoEntries.Error())
+	suite.Nil(follow)
+}
+
 func (suite *RelationshipTestSuite) TestUnfollowRequestExisting() {
 	ctx := context.Background()
 	originAccount := suite.testAccounts["admin_account"]

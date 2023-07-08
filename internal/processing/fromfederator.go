@@ -352,18 +352,58 @@ func (p *Processor) processCreateAnnounceFromFederator(ctx context.Context, fede
 func (p *Processor) processCreateBlockFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
 	block, ok := federatorMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
-		return errors.New("block was not parseable as *gtsmodel.Block")
+		return gtserror.New("block was not parseable as *gtsmodel.Block")
 	}
 
-	// remove any of the blocking account's statuses from the blocked account's timeline, and vice versa
+	// Remove each account's posts from the other's timelines.
+	//
+	// First home timelines.
 	if err := p.state.Timelines.Home.WipeItemsFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
-		return err
+		return gtserror.Newf("%w", err)
 	}
+
 	if err := p.state.Timelines.Home.WipeItemsFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
-		return err
+		return gtserror.Newf("%w", err)
 	}
-	// TODO: same with notifications
-	// TODO: same with bookmarks
+
+	// Now list timelines.
+	if err := p.state.Timelines.List.WipeItemsFromAccountID(ctx, block.AccountID, block.TargetAccountID); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	if err := p.state.Timelines.List.WipeItemsFromAccountID(ctx, block.TargetAccountID, block.AccountID); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	// Remove any follows that existed between blocker + blockee.
+	if err := p.state.DB.DeleteFollowRequest(ctx, block.AccountID, block.TargetAccountID); err != nil {
+		return gtserror.Newf(
+			"db error deleting follow from %s targeting %s: %w",
+			block.AccountID, block.TargetAccountID, err,
+		)
+	}
+
+	if err := p.state.DB.DeleteFollowRequest(ctx, block.TargetAccountID, block.AccountID); err != nil {
+		return gtserror.Newf(
+			"db error deleting follow from %s targeting %s: %w",
+			block.TargetAccountID, block.AccountID, err,
+		)
+	}
+
+	// Remove any follow requests that existed between blocker + blockee.
+	if err := p.state.DB.DeleteFollowRequest(ctx, block.AccountID, block.TargetAccountID); err != nil {
+		return gtserror.Newf(
+			"db error deleting follow request from %s targeting %s: %w",
+			block.AccountID, block.TargetAccountID, err,
+		)
+	}
+
+	if err := p.state.DB.DeleteFollowRequest(ctx, block.TargetAccountID, block.AccountID); err != nil {
+		return gtserror.Newf(
+			"db error deleting follow request from %s targeting %s: %w",
+			block.TargetAccountID, block.AccountID, err,
+		)
+	}
 
 	return nil
 }
