@@ -118,15 +118,17 @@ type Configuration struct {
 	TLSCertificateChain string `name:"tls-certificate-chain" usage:"Filesystem path to the certificate chain including any intermediate CAs and the TLS public key"`
 	TLSCertificateKey   string `name:"tls-certificate-key" usage:"Filesystem path to the TLS private key"`
 
-	OIDCEnabled          bool     `name:"oidc-enabled" usage:"Enabled OIDC authorization for this instance. If set to true, then the other OIDC flags must also be set."`
-	OIDCIdpName          string   `name:"oidc-idp-name" usage:"Name of the OIDC identity provider. Will be shown to the user when logging in."`
-	OIDCSkipVerification bool     `name:"oidc-skip-verification" usage:"Skip verification of tokens returned by the OIDC provider. Should only be set to 'true' for testing purposes, never in a production environment!"`
-	OIDCIssuer           string   `name:"oidc-issuer" usage:"Address of the OIDC issuer. Should be the web address, including protocol, at which the issuer can be reached. Eg., 'https://example.org/auth'"`
-	OIDCClientID         string   `name:"oidc-client-id" usage:"ClientID of GoToSocial, as registered with the OIDC provider."`
-	OIDCClientSecret     string   `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
-	OIDCScopes           []string `name:"oidc-scopes" usage:"OIDC scopes."`
-	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
-	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
+	OIDCEnabled               bool              `name:"oidc-enabled" usage:"Enabled OIDC authorization for this instance. If set to true, then the other OIDC flags must also be set."`
+	OIDCIdpName               string            `name:"oidc-idp-name" usage:"Name of the OIDC identity provider. Will be shown to the user when logging in."`
+	OIDCSkipVerification      bool              `name:"oidc-skip-verification" usage:"Skip verification of tokens returned by the OIDC provider. Should only be set to 'true' for testing purposes, never in a production environment!"`
+	OIDCIssuer                string            `name:"oidc-issuer" usage:"Address of the OIDC issuer. Should be the web address, including protocol, at which the issuer can be reached. Eg., 'https://example.org/auth'"`
+	OIDCClientID              string            `name:"oidc-client-id" usage:"ClientID of GoToSocial, as registered with the OIDC provider."`
+	OIDCClientSecret          string            `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
+	OIDCScopes                []string          `name:"oidc-scopes" usage:"OIDC scopes."`
+	OIDCLinkExisting          bool              `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
+	OIDCAdminGroups           []string          `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
+	OIDCAdminRequiredClaims   []OIDCRequirement `name:"oidc-admin-required-claims" usage:"Having the listed claims and required values makes someone a GtS admin"`
+	OIDCAccountRequiredCliams []OIDCRequirement `name:"oidc-account-required-claims" usage:"Having the listed claims and required values allows someone to login/create an account"`
 
 	TracingEnabled           bool   `name:"tracing-enabled" usage:"Enable OTLP Tracing"`
 	TracingTransport         string `name:"tracing-transport" usage:"grpc or jaeger"`
@@ -164,6 +166,11 @@ type Configuration struct {
 	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
 
 	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'."`
+}
+
+type OIDCRequirement struct {
+	Claim string `name:"claim"`
+	Value string `name:"value"`
 }
 
 type HTTPClientConfiguration struct {

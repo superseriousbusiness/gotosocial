@@ -689,14 +689,14 @@ oidc-client-secret: ""
 # Array of string. Scopes to request from the OIDC provider. The returned values will be used to
 # populate users created in GtS as a result of the authentication flow. 'openid' and 'email' are required.
 # 'profile' is used to extract a username for the newly created user.
-# 'groups' is optional and can be used to determine if a user is an admin based on oidc-admin-groups.
+# You can add any additional scopes, such as whichever scope returns the account or admin claims that are
+# used in oidc-admin-required-claims and oidc-account-required-claims.
 # Examples: See eg., https://auth0.com/docs/scopes/openid-connect-scopes
-# Default: ["openid", "email", "profile", "groups"]
+# Default: ["openid", "email", "profile"]
 oidc-scopes:
   - "openid"
   - "email"
   - "profile"
-  - "groups"
 
 # Bool. Link OIDC authenticated users to existing ones based on their email address.
 # This is mostly intended for migration purposes if you were running previous versions of GTS
@@ -705,10 +705,31 @@ oidc-scopes:
 # Default: false
 oidc-link-existing: false
 
-# Array of string. If the returned ID token contains a 'groups' claim that matches one of the
-# groups in oidc-admin-groups, then this user will be granted admin rights on the GtS instance
+# Array of claim/value objects. The returned ID token will be tested against the specified
+# claims and required value. Only if all required claims match is the account granted admin
+# rights on the GtS instance. The tested claims cannot be a part of the claims returned by the
+# openid, profile, email, address or phone scopes.
+# If this list is empty, then admin access is never granted. At least one condition needs to
+# be present.
+# The claim(s) on the ID token can either be a single string or a list of string. If the
+# specified claim is of a different type, a list of integers for example, the claim is ignored
+# and as such a test against it will always fail.
+# Just because someone has claims that grant them admin access does not automatically mean they
+# can login/create an account. Their account will still be tested against the conditions in
+# oidc-account-required-claims too.
+# Examples: [{claim: groups, value: admin}]
 # Default: []
-oidc-admin-groups: []
+oidc-admin-required-claims: []
+
+# Array of claim:value objects. The returned ID token will be tested against the specified
+# claims and required value. If it matches, the user will be allowed to login and have their
+# account created. The tested claims cannot be a part of the claims returned by the openid,
+# profile, email, address or phone scopes.
+# If this list is empty, then this test is not performed at all and as such any user with an
+# otherwise valid token will be allowed to create an account or login.
+# Examples: [{claim: roles, value: gtsUser}]
+# Default: []
+oidc-account-required-claims: []
 
 #######################
 ##### SMTP CONFIG #####

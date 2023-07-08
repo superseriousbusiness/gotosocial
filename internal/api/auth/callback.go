@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -36,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"golang.org/x/exp/slices"
 )
 
 // extraInfo wraps a form-submitted username and transmitted name
@@ -241,6 +241,22 @@ func (m *Module) fetchUserForClaims(ctx context.Context, claims *oidc.Claims, ip
 		err := errors.New("no sub claim found - is your provider OIDC compliant?")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
+
+	// check if the user has the required claims for account creation/login
+	reqClaims := config.GetOIDCAccountRequiredCliams()
+	allowed := false
+	results := []bool{}
+	for _, pair := range reqClaims {
+		results = append(results, slices.Contains(claims.Attrs[pair.Claim], pair.Value))
+	}
+	if !slices.Contains(results, false) {
+		allowed = true
+	}
+
+	if !allowed {
+		return nil, gtserror.NewErrorForbidden(fmt.Errorf("required claims to login/create account are missing"))
+	}
+
 	user, err := m.db.GetUserByExternalID(ctx, claims.Sub)
 	if err == nil {
 		return user, nil
@@ -282,17 +298,15 @@ func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, ex
 		return nil, gtserror.NewErrorConflict(fmt.Errorf("email address %s is not available", claims.Email), help)
 	}
 
-	// check if the user is in any recognised admin groups
-	adminGroups := config.GetOIDCAdminGroups()
-	var admin bool
-LOOP:
-	for _, g := range claims.Attrs["groups"] {
-		for _, ag := range adminGroups {
-			if strings.EqualFold(g, ag) {
-				admin = true
-				break LOOP
-			}
-		}
+	// check if the user matches all of the admin claims
+	admin := false
+	results := []bool{}
+	reqClaims := config.GetOIDCAdminRequiredClaims()
+	for _, pair := range reqClaims {
+		results = append(results, slices.Contains(claims.Attrs[pair.Claim], pair.Value))
+	}
+	if len(reqClaims) > 0 && !slices.Contains(results, false) {
+		admin = true
 	}
 
 	// We still need to set *a* password even if it's not a password the user will end up using, so set something random.

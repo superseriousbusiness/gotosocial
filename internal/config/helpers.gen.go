@@ -1849,6 +1849,56 @@ func GetOIDCAdminGroups() []string { return global.GetOIDCAdminGroups() }
 // SetOIDCAdminGroups safely sets the value for global configuration 'OIDCAdminGroups' field
 func SetOIDCAdminGroups(v []string) { global.SetOIDCAdminGroups(v) }
 
+// GetOIDCAdminRequiredClaims safely fetches the Configuration value for state's 'OIDCAdminRequiredClaims' field
+func (st *ConfigState) GetOIDCAdminRequiredClaims() (v []OIDCRequirement) {
+	st.mutex.Lock()
+	v = st.config.OIDCAdminRequiredClaims
+	st.mutex.Unlock()
+	return
+}
+
+// SetOIDCAdminRequiredClaims safely sets the Configuration value for state's 'OIDCAdminRequiredClaims' field
+func (st *ConfigState) SetOIDCAdminRequiredClaims(v []OIDCRequirement) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.OIDCAdminRequiredClaims = v
+	st.reloadToViper()
+}
+
+// OIDCAdminRequiredClaimsFlag returns the flag name for the 'OIDCAdminRequiredClaims' field
+func OIDCAdminRequiredClaimsFlag() string { return "oidc-admin-required-claims" }
+
+// GetOIDCAdminRequiredClaims safely fetches the value for global configuration 'OIDCAdminRequiredClaims' field
+func GetOIDCAdminRequiredClaims() []OIDCRequirement { return global.GetOIDCAdminRequiredClaims() }
+
+// SetOIDCAdminRequiredClaims safely sets the value for global configuration 'OIDCAdminRequiredClaims' field
+func SetOIDCAdminRequiredClaims(v []OIDCRequirement) { global.SetOIDCAdminRequiredClaims(v) }
+
+// GetOIDCAccountRequiredCliams safely fetches the Configuration value for state's 'OIDCAccountRequiredCliams' field
+func (st *ConfigState) GetOIDCAccountRequiredCliams() (v []OIDCRequirement) {
+	st.mutex.Lock()
+	v = st.config.OIDCAccountRequiredCliams
+	st.mutex.Unlock()
+	return
+}
+
+// SetOIDCAccountRequiredCliams safely sets the Configuration value for state's 'OIDCAccountRequiredCliams' field
+func (st *ConfigState) SetOIDCAccountRequiredCliams(v []OIDCRequirement) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.OIDCAccountRequiredCliams = v
+	st.reloadToViper()
+}
+
+// OIDCAccountRequiredCliamsFlag returns the flag name for the 'OIDCAccountRequiredCliams' field
+func OIDCAccountRequiredCliamsFlag() string { return "oidc-account-required-claims" }
+
+// GetOIDCAccountRequiredCliams safely fetches the value for global configuration 'OIDCAccountRequiredCliams' field
+func GetOIDCAccountRequiredCliams() []OIDCRequirement { return global.GetOIDCAccountRequiredCliams() }
+
+// SetOIDCAccountRequiredCliams safely sets the value for global configuration 'OIDCAccountRequiredCliams' field
+func SetOIDCAccountRequiredCliams(v []OIDCRequirement) { global.SetOIDCAccountRequiredCliams(v) }
+
 // GetTracingEnabled safely fetches the Configuration value for state's 'TracingEnabled' field
 func (st *ConfigState) GetTracingEnabled() (v bool) {
 	st.mutex.Lock()
