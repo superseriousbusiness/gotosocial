@@ -106,7 +106,9 @@ We support a [Conda](https://docs.conda.io/en/latest/)-based workflow for hackin
 
 Then you can visit [localhost:8000](http://127.0.0.1:8000/) in your browser to view.
 
-If you don't use Conda, you can read the `docs/environment.yml` to see which dependencies are required and `pip install` them manually.
+When adding a new page, you need to include it in the [`mkdocs.yml`](mkdocs.yml) so it shows in the sidebar in the right section.
+
+If you don't use Conda, you can read the `docs/environment.yml` to see which dependencies are required and `pip install` them manually. It's advisable to do this in a virtual environment, which you can create with something like `python3 -m venv /path-to/store-the-venv`. You can then call `/path-to/store-the-venv/bin/pip`, `/path-to/store-the-venv/bin/mkdocs` etc.
 
 ## Development
 
