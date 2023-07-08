@@ -376,14 +376,14 @@ func (p *Processor) processCreateBlockFromFederator(ctx context.Context, federat
 	}
 
 	// Remove any follows that existed between blocker + blockee.
-	if err := p.state.DB.DeleteFollowRequest(ctx, block.AccountID, block.TargetAccountID); err != nil {
+	if err := p.state.DB.DeleteFollow(ctx, block.AccountID, block.TargetAccountID); err != nil {
 		return gtserror.Newf(
 			"db error deleting follow from %s targeting %s: %w",
 			block.AccountID, block.TargetAccountID, err,
 		)
 	}
 
-	if err := p.state.DB.DeleteFollowRequest(ctx, block.TargetAccountID, block.AccountID); err != nil {
+	if err := p.state.DB.DeleteFollow(ctx, block.TargetAccountID, block.AccountID); err != nil {
 		return gtserror.Newf(
 			"db error deleting follow from %s targeting %s: %w",
 			block.TargetAccountID, block.AccountID, err,
