@@ -19,8 +19,6 @@ package web
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -31,86 +29,50 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-const appRSSUTF8 = string(apiutil.AppRSSXML + "; charset=utf-8")
-
-func (m *Module) GetRSSETag(urlPath string, lastModified time.Time, getRSSFeed func() (string, gtserror.WithCode)) (string, error) {
-	if cachedETag, ok := m.eTagCache.Get(urlPath); ok && !lastModified.After(cachedETag.lastModified) {
-		// only return our cached etag if the file wasn't
-		// modified since last time, otherwise generate a
-		// new one; eat fresh!
-		return cachedETag.eTag, nil
-	}
-
-	rssFeed, errWithCode := getRSSFeed()
-	if errWithCode != nil {
-		return "", fmt.Errorf("error getting rss feed: %s", errWithCode)
-	}
-
-	eTag, err := generateEtag(bytes.NewReader([]byte(rssFeed)))
-	if err != nil {
-		return "", fmt.Errorf("error generating etag: %s", err)
-	}
-
-	// put new entry in cache before we return
-	m.eTagCache.Set(urlPath, eTagCacheEntry{
-		eTag:         eTag,
-		lastModified: lastModified,
-	})
-
-	return eTag, nil
-}
-
-func extractIfModifiedSince(r *http.Request) time.Time {
-	hdr := r.Header.Get(ifModifiedSinceHeader)
-
-	if hdr == "" {
-		return time.Time{}
-	}
-
-	t, err := http.ParseTime(hdr)
-	if err != nil {
-		log.Errorf(r.Context(), "couldn't parse if-modified-since %s: %s", hdr, err)
-		return time.Time{}
-	}
-
-	return t
-}
+const appRSSUTF8 = string(apiutil.AppRSSXML) + "; charset=utf-8"
 
 func (m *Module) rssFeedGETHandler(c *gin.Context) {
-	// set this Cache-Control header to instruct clients to validate the response with us
-	// before each reuse (https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
-	c.Header(cacheControlHeader, cacheControlNoCache)
-	ctx := c.Request.Context()
-
 	if _, err := apiutil.NegotiateAccept(c, apiutil.AppRSSXML); err != nil {
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	// usernames on our instance will always be lowercase
-	username := strings.ToLower(c.Param(usernameKey))
-	if username == "" {
-		err := errors.New("no account username specified")
-		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	ifNoneMatch := c.Request.Header.Get(ifNoneMatchHeader)
-	ifModifiedSince := extractIfModifiedSince(c.Request)
-
-	getRssFeed, accountLastPostedPublic, errWithCode := m.processor.Account().GetRSSFeedForUsername(ctx, username)
+	// Fetch + normalize username from URL.
+	username, errWithCode := apiutil.ParseWebUsername(c.Param(apiutil.WebUsernameKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	var rssFeed string
-	cacheKey := c.Request.URL.Path
-	cacheEntry, ok := m.eTagCache.Get(cacheKey)
+	// Usernames on our instance will always be lowercase.
+	//
+	// todo: https://github.com/superseriousbusiness/gotosocial/issues/1813
+	username = strings.ToLower(username)
 
-	if !ok || cacheEntry.lastModified.Before(accountLastPostedPublic) {
-		// we either have no cache entry for this, or we have an expired cache entry; generate a new one
-		rssFeed, errWithCode = getRssFeed()
+	// Retrieve the getRSSFeed function from the processor.
+	// We'll only call the function if we need to, to save db calls.
+	// lastPostAt may be a zero time if account has never posted.
+	getRSSFeed, lastPostAt, errWithCode := m.processor.Account().GetRSSFeedForUsername(c.Request.Context(), username)
+	if errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	var (
+		rssFeed string // Stringified rss feed.
+
+		cacheKey              = c.Request.URL.Path
+		cacheEntry, wasCached = m.eTagCache.Get(cacheKey)
+	)
+
+	if !wasCached || unixAfter(lastPostAt, cacheEntry.lastModified) {
+		// We either have no ETag cache entry for this account's feed,
+		// or we have an expired cache entry (account has posted since
+		// the cache entry was last generated).
+		//
+		// As such, we need to generate a new ETag, and for that we need
+		// the string representation of the RSS feed.
+		rssFeed, errWithCode = getRSSFeed()
 		if errWithCode != nil {
 			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
@@ -122,29 +84,73 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 			return
 		}
 
-		cacheEntry.lastModified = accountLastPostedPublic
-		cacheEntry.eTag = eTag
+		// We never want lastModified to be zero, so if account
+		// has never actually posted anything, just use Now as
+		// the lastModified time instead for cache control.
+		var lastModified time.Time
+		if lastPostAt.IsZero() {
+			lastModified = time.Now()
+		} else {
+			lastModified = lastPostAt
+		}
+
+		// Store the new cache entry.
+		cacheEntry = eTagCacheEntry{
+			eTag:         eTag,
+			lastModified: lastModified,
+		}
 		m.eTagCache.Set(cacheKey, cacheEntry)
 	}
 
+	// Set 'ETag' and 'Last-Modified' headers no matter what;
+	// even if we return 304 in the next checks, caller may
+	// want to cache these header values.
 	c.Header(eTagHeader, cacheEntry.eTag)
-	c.Header(lastModifiedHeader, accountLastPostedPublic.Format(http.TimeFormat))
+	c.Header(lastModifiedHeader, cacheEntry.lastModified.Format(http.TimeFormat))
 
+	// Instruct caller to validate the response with us before
+	// each reuse, so that the 'ETag' and 'Last-Modified' headers
+	// actually take effect.
+	//
+	// "The no-cache response directive indicates that the response
+	// can be stored in caches, but the response must be validated
+	// with the origin server before each reuse, even when the cache
+	// is disconnected from the origin server."
+	//
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
+	c.Header(cacheControlHeader, cacheControlNoCache)
+
+	// Check if caller submitted an ETag via 'If-None-Match'.
+	// If they did + it matches what we have, that means they've
+	// already seen the latest version of this feed, so just bail.
+	ifNoneMatch := c.Request.Header.Get(ifNoneMatchHeader)
 	if ifNoneMatch == cacheEntry.eTag {
 		c.AbortWithStatus(http.StatusNotModified)
 		return
 	}
 
-	lmUnix := cacheEntry.lastModified.Unix()
-	imsUnix := ifModifiedSince.Unix()
-	if lmUnix <= imsUnix {
+	// Check if the caller submitted a time via 'If-Modified-Since'.
+	// If they did, and our cached ETag entry is not newer than the
+	// given time, this means the caller has already seen the latest
+	// version of this feed, so just bail.
+	ifModifiedSince := extractIfModifiedSince(c.Request)
+	if !ifModifiedSince.IsZero() &&
+		!unixAfter(cacheEntry.lastModified, ifModifiedSince) {
 		c.AbortWithStatus(http.StatusNotModified)
 		return
 	}
 
+	// At this point we know that the client wants the newest
+	// representation of the RSS feed, either because they didn't
+	// submit any 'If-None-Match' / 'If-Modified-Since' cache headers,
+	// or because they did but the account has posted more recently
+	// than the values of the submitted headers would suggest.
+	//
+	// If we had a cache hit earlier, we may not have called the
+	// getRSSFeed function yet; if that's the case then do call it
+	// now because we definitely need it.
 	if rssFeed == "" {
-		// we had a cache entry already so we didn't call to get the rss feed yet
-		rssFeed, errWithCode = getRssFeed()
+		rssFeed, errWithCode = getRSSFeed()
 		if errWithCode != nil {
 			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
@@ -152,4 +158,42 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, appRSSUTF8, []byte(rssFeed))
+}
+
+// unixAfter returns true if the unix value of t1
+// is greater than (ie., after) the unix value of t2.
+func unixAfter(t1 time.Time, t2 time.Time) bool {
+	if t1.IsZero() {
+		// if t1 is zero then it cannot
+		// possibly be greater than t2.
+		return false
+	}
+
+	if t2.IsZero() {
+		// t1 is not zero but t2 is,
+		// so t1 is necessarily greater.
+		return true
+	}
+
+	return t1.Unix() > t2.Unix()
+}
+
+// extractIfModifiedSince parses a time.Time from the
+// 'If-Modified-Since' header of the given request.
+//
+// If no time was provided, or the provided time was
+// not parseable, it will return a zero time.
+func extractIfModifiedSince(r *http.Request) time.Time {
+	imsStr := r.Header.Get(ifModifiedSinceHeader)
+	if imsStr == "" {
+		return time.Time{} // Nothing set.
+	}
+
+	ifModifiedSince, err := http.ParseTime(imsStr)
+	if err != nil {
+		log.Errorf(r.Context(), "couldn't parse %s value '%s' as time: %q", ifModifiedSinceHeader, imsStr, err)
+		return time.Time{}
+	}
+
+	return ifModifiedSince
 }
