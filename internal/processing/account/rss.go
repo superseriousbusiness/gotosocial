@@ -66,15 +66,15 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 	// Ensure account has rss feed enabled.
 	if !*account.EnableRSS {
 		err = gtserror.New("account RSS feed not enabled")
-		return nil, time.Time{}, gtserror.NewErrorNotFound(err)
+		return nil, never, gtserror.NewErrorNotFound(err)
 	}
 
 	// LastModified time is needed by callers to check freshness for cacheing.
 	// This might be a zero time.Time if account has never posted; that's fine.
-	lastModified, err := p.state.DB.GetAccountLastPosted(ctx, account.ID, true)
+	lastPostAt, err := p.state.DB.GetAccountLastPosted(ctx, account.ID, true)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting account %s last posted: %w", username, err)
-		return nil, time.Time{}, gtserror.NewErrorInternalError(err)
+		return nil, never, gtserror.NewErrorInternalError(err)
 	}
 
 	return func() (string, gtserror.WithCode) {
@@ -92,7 +92,16 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 			Description: "Posts from " + author,
 			Link:        &feeds.Link{Href: account.URL},
 			Image:       image,
-			Updated:     lastModified,
+		}
+
+		// If the account has never posted anything, just use
+		// account creation time as Updated value for the feed;
+		// we could use time.Now() here but this would likely
+		// mess up cacheing; we want something determinate.
+		if lastPostAt.IsZero() {
+			feed.Updated = account.CreatedAt
+		} else {
+			feed.Updated = lastPostAt
 		}
 
 		// Retrieve latest statuses as they'd be shown on the web view of the account profile.
@@ -123,7 +132,7 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		}
 
 		return rss, nil
-	}, lastModified, nil
+	}, lastPostAt, nil
 }
 
 func (p *Processor) rssImageForAccount(ctx context.Context, account *gtsmodel.Account, author string) (*feeds.Image, gtserror.WithCode) {

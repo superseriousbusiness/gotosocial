@@ -80,7 +80,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSZorkNoPosts() {
 
 	fmt.Println(feed)
 
-	suite.Equal("<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n  <channel>\n    <title>Posts from @the_mighty_zork@localhost:8080</title>\n    <link>http://localhost:8080/@the_mighty_zork</link>\n    <description>Posts from @the_mighty_zork@localhost:8080</description>\n    <image>\n      <url>http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg</url>\n      <title>Avatar for @the_mighty_zork@localhost:8080</title>\n      <link>http://localhost:8080/@the_mighty_zork</link>\n    </image>\n  </channel>\n</rss>", feed)
+	suite.Equal("<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n  <channel>\n    <title>Posts from @the_mighty_zork@localhost:8080</title>\n    <link>http://localhost:8080/@the_mighty_zork</link>\n    <description>Posts from @the_mighty_zork@localhost:8080</description>\n    <pubDate>Fri, 20 May 2022 11:09:18 +0000</pubDate>\n    <lastBuildDate>Fri, 20 May 2022 11:09:18 +0000</lastBuildDate>\n    <image>\n      <url>http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg</url>\n      <title>Avatar for @the_mighty_zork@localhost:8080</title>\n      <link>http://localhost:8080/@the_mighty_zork</link>\n    </image>\n  </channel>\n</rss>", feed)
 }
 
 func TestGetRSSTestSuite(t *testing.T) {
