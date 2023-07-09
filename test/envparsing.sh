@@ -104,6 +104,7 @@ EXPECT=$(cat <<"EOF"
         "timeout": 10000000000
     },
     "instance-deliver-to-shared-inboxes": false,
+    "instance-expose-lookup": true,
     "instance-expose-peers": true,
     "instance-expose-public-timeline": true,
     "instance-expose-suspended": true,
@@ -210,6 +211,7 @@ GTS_TLS_MODE='' \
 GTS_DB_TLS_CA_CERT='' \
 GTS_WEB_TEMPLATE_BASE_DIR='/root' \
 GTS_WEB_ASSET_BASE_DIR='/root' \
+GTS_INSTANCE_EXPOSE_LOOKUP=true \
 GTS_INSTANCE_EXPOSE_PEERS=true \
 GTS_INSTANCE_EXPOSE_SUSPENDED=true \
 GTS_INSTANCE_EXPOSE_SUSPENDED_WEB=true \

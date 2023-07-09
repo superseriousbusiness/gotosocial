@@ -824,6 +824,31 @@ func GetInstanceExposePublicTimeline() bool { return global.GetInstanceExposePub
 // SetInstanceExposePublicTimeline safely sets the value for global configuration 'InstanceExposePublicTimeline' field
 func SetInstanceExposePublicTimeline(v bool) { global.SetInstanceExposePublicTimeline(v) }
 
+// GetInstanceExposeLookup safely fetches the Configuration value for state's 'InstanceExposeLookup' field
+func (st *ConfigState) GetInstanceExposeLookup() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceExposeLookup
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceExposeLookup safely sets the Configuration value for state's 'InstanceExposeLookup' field
+func (st *ConfigState) SetInstanceExposeLookup(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeLookup = v
+	st.reloadToViper()
+}
+
+// InstanceExposeLookupFlag returns the flag name for the 'InstanceExposeLookup' field
+func InstanceExposeLookupFlag() string { return "instance-expose-lookup" }
+
+// GetInstanceExposeLookup safely fetches the value for global configuration 'InstanceExposeLookup' field
+func GetInstanceExposeLookup() bool { return global.GetInstanceExposeLookup() }
+
+// SetInstanceExposeLookup safely sets the value for global configuration 'InstanceExposeLookup' field
+func SetInstanceExposeLookup(v bool) { global.SetInstanceExposeLookup(v) }
+
 // GetInstanceDeliverToSharedInboxes safely fetches the Configuration value for state's 'InstanceDeliverToSharedInboxes' field
 func (st *ConfigState) GetInstanceDeliverToSharedInboxes() (v bool) {
 	st.mutex.RLock()

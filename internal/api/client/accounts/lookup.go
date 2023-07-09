@@ -22,6 +22,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -66,7 +67,16 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) AccountLookupGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
+	var authed *oauth.Auth
+	var err error
+	if config.GetInstanceExposeLookup() {
+		// If the lookup endpoint is allowed to be exposed, still check if we
+		// can extract various authentication properties, but don't require them.
+		authed, err = oauth.Authed(c, false, false, false, false)
+	} else {
+		authed, err = oauth.Authed(c, true, true, true, true)
+	}
+
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
