@@ -53,7 +53,7 @@ advanced-cookies-samesite: "lax"
 advanced-rate-limit-requests: 300
 
 # Int. Amount of open requests to permit per CPU, per router grouping, before applying http
-# request throttling. Any requests beyond the calculated limit are held in a backlog queue for 
+# request throttling. Any requests beyond the calculated limit are held in a backlog queue for
 # up to 30 seconds before either being processed or timing out. Requests that don't fit in the backlog
 # queue will have status 503 returned to them, and the header 'Retry-After' will be set to 30 seconds.
 #
@@ -71,7 +71,7 @@ advanced-rate-limit-requests: 300
 # 2 cpu = 08 open, 032 backlog
 # 4 cpu = 16 open, 064 backlog
 #
-# A multiplier of 8 is a sensible default, but you may wish to increase this for instances 
+# A multiplier of 8 is a sensible default, but you may wish to increase this for instances
 # running on very performant hardware, or decrease it for instances using v. slow CPUs.
 #
 # If you set this to 0 or less, http request throttling will be disabled entirely.
@@ -79,6 +79,13 @@ advanced-rate-limit-requests: 300
 # Examples: [8, 4, 9, 0]
 # Default: 8
 advanced-throttling-multiplier: 8
+
+# Duration. Time period to use as the "retry-after" header value in response to throttled requests.
+# Minimum resolution is 1 second.
+#
+# Examples: [30s, 10s, 5s, 1m]
+# Default: "30s"
+advanced-throttling-retry-after: "30s"
 
 # Int. CPU multiplier for the amount of goroutines to spawn in order to send messages via ActivityPub.
 # Messages will be batched so that at most multiplier * CPU count messages will be sent out at once.

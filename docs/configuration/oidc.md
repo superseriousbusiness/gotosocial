@@ -79,9 +79,8 @@ oidc-scopes:
 # Default: false
 oidc-link-existing: false
 
-# Array of string. If the returned ID token contains a 'groups' claim that
-# matches one of the groups in oidc-admin-groups, then this user will be granted
-# admin rights on the GtS instance
+# Array of string. If the returned ID token contains a 'groups' claim that matches one of the
+# groups in oidc-admin-groups, then this user will be granted admin rights on the GtS instance
 # Default: []
 oidc-admin-groups: []
 ```
