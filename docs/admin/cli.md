@@ -179,7 +179,7 @@ Flags:
 Example:
 
 ```bash
-gotosocial admin account password --username some_username --pasword some_really_good_password --config-path config.yaml
+gotosocial admin account password --username some_username --password some_really_good_password --config-path config.yaml
 ```
 
 ### gotosocial admin export
