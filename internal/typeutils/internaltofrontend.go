@@ -45,11 +45,16 @@ const (
 	instanceAccountsMaxFeaturedTags             = 10
 	instanceAccountsMaxProfileFields            = 6 // FIXME: https://github.com/superseriousbusiness/gotosocial/issues/1876
 	instanceSourceURL                           = "https://github.com/superseriousbusiness/gotosocial"
+	instanceMastodonVersion                     = "3.5.3"
 )
 
 var instanceStatusesSupportedMimeTypes = []string{
 	string(apimodel.StatusContentTypePlain),
 	string(apimodel.StatusContentTypeMarkdown),
+}
+
+func toMastodonVersion(in string) string {
+	return instanceMastodonVersion + "+" + strings.ReplaceAll(in, " ", "-")
 }
 
 func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
@@ -740,6 +745,10 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		MaxTootChars:     uint(config.GetStatusesMaxChars()),
 	}
 
+	if config.GetInstanceInjectMastodonVersion() {
+		instance.Version = toMastodonVersion(instance.Version)
+	}
+
 	// configuration
 	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
 	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
@@ -837,6 +846,10 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
 		Languages:     []string{},                 // todo: not implemented
 		Rules:         []interface{}{},            // todo: not implemented
+	}
+
+	if config.GetInstanceInjectMastodonVersion() {
+		instance.Version = toMastodonVersion(instance.Version)
 	}
 
 	// thumbnail

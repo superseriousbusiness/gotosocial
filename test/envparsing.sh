@@ -108,6 +108,7 @@ EXPECT=$(cat <<"EOF"
     "instance-expose-public-timeline": true,
     "instance-expose-suspended": true,
     "instance-expose-suspended-web": true,
+    "instance-inject-mastodon-version": true,
     "landing-page-user": "admin",
     "letsencrypt-cert-dir": "/gotosocial/storage/certs",
     "letsencrypt-email-address": "",
@@ -215,6 +216,7 @@ GTS_INSTANCE_EXPOSE_SUSPENDED=true \
 GTS_INSTANCE_EXPOSE_SUSPENDED_WEB=true \
 GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
+GTS_INSTANCE_INJECT_MASTODON_VERSION=true \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
 GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \
