@@ -43,8 +43,8 @@ type GetRSSFeed func() (string, gtserror.WithCode)
 // To save db calls, callers to this function should only call the returned GetRSSFeed
 // func if the last-modified time is newer than the last-modified time they have cached.
 //
-// If the account has never posted anything, the returned last-modified time will be zero,
-// and the GetRSSFeed func will return a valid RSS xml with no posts in it.
+// If the account has not yet posted an RSS-eligible status, the returned last-modified
+// time will be zero, and the GetRSSFeed func will return a valid RSS xml with no items.
 func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) (GetRSSFeed, time.Time, gtserror.WithCode) {
 	var (
 		never = time.Time{}
@@ -70,7 +70,8 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 	}
 
 	// LastModified time is needed by callers to check freshness for cacheing.
-	// This might be a zero time.Time if account has never posted; that's fine.
+	// This might be a zero time.Time if account has never posted a status that's
+	// eligible to appear in the RSS feed; that's fine.
 	lastPostAt, err := p.state.DB.GetAccountLastPosted(ctx, account.ID, true)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting account %s last posted: %w", username, err)
@@ -98,11 +99,19 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		// account creation time as Updated value for the feed;
 		// we could use time.Now() here but this would likely
 		// mess up cacheing; we want something determinate.
+		//
+		// We can also return early rather than wasting a db call,
+		// since we already know there's no eligible statuses.
 		if lastPostAt.IsZero() {
 			feed.Updated = account.CreatedAt
-		} else {
-			feed.Updated = lastPostAt
+			return stringifyFeed(feed)
 		}
+
+		// Account has posted at least one status that's
+		// eligible to appear in the RSS feed.
+		//
+		// Reuse the lastPostAt value for feed.Updated.
+		feed.Updated = lastPostAt
 
 		// Retrieve latest statuses as they'd be shown on the web view of the account profile.
 		statuses, err := p.state.DB.GetAccountWebStatuses(ctx, account.ID, rssFeedLength, "")
@@ -112,7 +121,6 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		}
 
 		// Add each status to the rss feed.
-		// There may be no statuses to add; that's fine.
 		for _, status := range statuses {
 			item, err := p.tc.StatusToRSSItem(ctx, status)
 			if err != nil {
@@ -123,15 +131,7 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 			feed.Add(item)
 		}
 
-		// Stringify the feed. Even with no statuses,
-		// this will still produce valid rss xml.
-		rss, err := feed.ToRss()
-		if err != nil {
-			err := gtserror.Newf("error converting feed to rss string: %w", err)
-			return "", gtserror.NewErrorInternalError(err)
-		}
-
-		return rss, nil
+		return stringifyFeed(feed)
 	}, lastPostAt, nil
 }
 
@@ -162,4 +162,16 @@ func (p *Processor) rssImageForAccount(ctx context.Context, account *gtsmodel.Ac
 		Title: "Avatar for " + author,
 		Link:  account.URL,
 	}, nil
+}
+
+func stringifyFeed(feed *feeds.Feed) (string, gtserror.WithCode) {
+	// Stringify the feed. Even with no statuses,
+	// this will still produce valid rss xml.
+	rss, err := feed.ToRss()
+	if err != nil {
+		err := gtserror.Newf("error converting feed to rss string: %w", err)
+		return "", gtserror.NewErrorInternalError(err)
+	}
+
+	return rss, nil
 }
