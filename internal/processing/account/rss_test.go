@@ -55,6 +55,34 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
 	suite.Equal("<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n  <channel>\n    <title>Posts from @the_mighty_zork@localhost:8080</title>\n    <link>http://localhost:8080/@the_mighty_zork</link>\n    <description>Posts from @the_mighty_zork@localhost:8080</description>\n    <pubDate>Wed, 20 Oct 2021 10:40:37 +0000</pubDate>\n    <lastBuildDate>Wed, 20 Oct 2021 10:40:37 +0000</lastBuildDate>\n    <image>\n      <url>http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg</url>\n      <title>Avatar for @the_mighty_zork@localhost:8080</title>\n      <link>http://localhost:8080/@the_mighty_zork</link>\n    </image>\n    <item>\n      <title>introduction post</title>\n      <link>http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY</link>\n      <description>@the_mighty_zork@localhost:8080 made a new post: &#34;hello everyone!&#34;</description>\n      <content:encoded><![CDATA[hello everyone!]]></content:encoded>\n      <author>@the_mighty_zork@localhost:8080</author>\n      <guid>http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY</guid>\n      <pubDate>Wed, 20 Oct 2021 10:40:37 +0000</pubDate>\n      <source>http://localhost:8080/@the_mighty_zork/feed.rss</source>\n    </item>\n  </channel>\n</rss>", feed)
 }
 
+func (suite *GetRSSTestSuite) TestGetAccountRSSZorkNoPosts() {
+	ctx := context.Background()
+
+	// Get all of zork's posts.
+	statuses, err := suite.db.GetAccountStatuses(ctx, suite.testAccounts["local_account_1"].ID, 0, false, false, "", "", false, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Now delete them! Hahaha!
+	for _, status := range statuses {
+		if err := suite.db.DeleteStatusByID(ctx, status.ID); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(ctx, "the_mighty_zork")
+	suite.NoError(err)
+	suite.Empty(lastModified)
+
+	feed, err := getFeed()
+	suite.NoError(err)
+
+	fmt.Println(feed)
+
+	suite.Equal("<?xml version=\"1.0\" encoding=\"UTF-8\"?><rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\">\n  <channel>\n    <title>Posts from @the_mighty_zork@localhost:8080</title>\n    <link>http://localhost:8080/@the_mighty_zork</link>\n    <description>Posts from @the_mighty_zork@localhost:8080</description>\n    <pubDate>Fri, 20 May 2022 11:09:18 +0000</pubDate>\n    <lastBuildDate>Fri, 20 May 2022 11:09:18 +0000</lastBuildDate>\n    <image>\n      <url>http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg</url>\n      <title>Avatar for @the_mighty_zork@localhost:8080</title>\n      <link>http://localhost:8080/@the_mighty_zork</link>\n    </image>\n  </channel>\n</rss>", feed)
+}
+
 func TestGetRSSTestSuite(t *testing.T) {
 	suite.Run(t, new(GetRSSTestSuite))
 }
