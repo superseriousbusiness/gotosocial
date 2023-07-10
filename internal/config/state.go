@@ -32,7 +32,7 @@ import (
 type ConfigState struct { //nolint
 	viper  *viper.Viper
 	config Configuration
-	mutex  sync.Mutex
+	mutex  sync.RWMutex
 }
 
 // NewState returns a new initialized ConfigState instance.

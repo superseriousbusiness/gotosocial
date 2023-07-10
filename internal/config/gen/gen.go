@@ -105,9 +105,9 @@ func generateFields(output io.Writer, prefixes []string, t reflect.Type) {
 		// ConfigState structure helper methods
 		fmt.Fprintf(output, "// Get%s safely fetches the Configuration value for state's '%s' field\n", name, fieldPath)
 		fmt.Fprintf(output, "func (st *ConfigState) Get%s() (v %s) {\n", name, fieldType)
-		fmt.Fprintf(output, "\tst.mutex.Lock()\n")
+		fmt.Fprintf(output, "\tst.mutex.RLock()\n")
 		fmt.Fprintf(output, "\tv = st.config.%s\n", fieldPath)
-		fmt.Fprintf(output, "\tst.mutex.Unlock()\n")
+		fmt.Fprintf(output, "\tst.mutex.RUnlock()\n")
 		fmt.Fprintf(output, "\treturn\n")
 		fmt.Fprintf(output, "}\n\n")
 		fmt.Fprintf(output, "// Set%s safely sets the Configuration value for state's '%s' field\n", name, fieldPath)

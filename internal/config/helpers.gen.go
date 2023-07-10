@@ -26,9 +26,9 @@ import (
 
 // GetLogLevel safely fetches the Configuration value for state's 'LogLevel' field
 func (st *ConfigState) GetLogLevel() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LogLevel
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -51,9 +51,9 @@ func SetLogLevel(v string) { global.SetLogLevel(v) }
 
 // GetLogDbQueries safely fetches the Configuration value for state's 'LogDbQueries' field
 func (st *ConfigState) GetLogDbQueries() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LogDbQueries
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -76,9 +76,9 @@ func SetLogDbQueries(v bool) { global.SetLogDbQueries(v) }
 
 // GetLogClientIP safely fetches the Configuration value for state's 'LogClientIP' field
 func (st *ConfigState) GetLogClientIP() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LogClientIP
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -101,9 +101,9 @@ func SetLogClientIP(v bool) { global.SetLogClientIP(v) }
 
 // GetApplicationName safely fetches the Configuration value for state's 'ApplicationName' field
 func (st *ConfigState) GetApplicationName() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.ApplicationName
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -126,9 +126,9 @@ func SetApplicationName(v string) { global.SetApplicationName(v) }
 
 // GetLandingPageUser safely fetches the Configuration value for state's 'LandingPageUser' field
 func (st *ConfigState) GetLandingPageUser() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LandingPageUser
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -151,9 +151,9 @@ func SetLandingPageUser(v string) { global.SetLandingPageUser(v) }
 
 // GetConfigPath safely fetches the Configuration value for state's 'ConfigPath' field
 func (st *ConfigState) GetConfigPath() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.ConfigPath
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -176,9 +176,9 @@ func SetConfigPath(v string) { global.SetConfigPath(v) }
 
 // GetHost safely fetches the Configuration value for state's 'Host' field
 func (st *ConfigState) GetHost() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Host
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -201,9 +201,9 @@ func SetHost(v string) { global.SetHost(v) }
 
 // GetAccountDomain safely fetches the Configuration value for state's 'AccountDomain' field
 func (st *ConfigState) GetAccountDomain() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AccountDomain
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -226,9 +226,9 @@ func SetAccountDomain(v string) { global.SetAccountDomain(v) }
 
 // GetProtocol safely fetches the Configuration value for state's 'Protocol' field
 func (st *ConfigState) GetProtocol() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Protocol
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -251,9 +251,9 @@ func SetProtocol(v string) { global.SetProtocol(v) }
 
 // GetBindAddress safely fetches the Configuration value for state's 'BindAddress' field
 func (st *ConfigState) GetBindAddress() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.BindAddress
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -276,9 +276,9 @@ func SetBindAddress(v string) { global.SetBindAddress(v) }
 
 // GetPort safely fetches the Configuration value for state's 'Port' field
 func (st *ConfigState) GetPort() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Port
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -301,9 +301,9 @@ func SetPort(v int) { global.SetPort(v) }
 
 // GetTrustedProxies safely fetches the Configuration value for state's 'TrustedProxies' field
 func (st *ConfigState) GetTrustedProxies() (v []string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.TrustedProxies
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -326,9 +326,9 @@ func SetTrustedProxies(v []string) { global.SetTrustedProxies(v) }
 
 // GetSoftwareVersion safely fetches the Configuration value for state's 'SoftwareVersion' field
 func (st *ConfigState) GetSoftwareVersion() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SoftwareVersion
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -351,9 +351,9 @@ func SetSoftwareVersion(v string) { global.SetSoftwareVersion(v) }
 
 // GetDbType safely fetches the Configuration value for state's 'DbType' field
 func (st *ConfigState) GetDbType() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbType
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -376,9 +376,9 @@ func SetDbType(v string) { global.SetDbType(v) }
 
 // GetDbAddress safely fetches the Configuration value for state's 'DbAddress' field
 func (st *ConfigState) GetDbAddress() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbAddress
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -401,9 +401,9 @@ func SetDbAddress(v string) { global.SetDbAddress(v) }
 
 // GetDbPort safely fetches the Configuration value for state's 'DbPort' field
 func (st *ConfigState) GetDbPort() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbPort
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -426,9 +426,9 @@ func SetDbPort(v int) { global.SetDbPort(v) }
 
 // GetDbUser safely fetches the Configuration value for state's 'DbUser' field
 func (st *ConfigState) GetDbUser() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbUser
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -451,9 +451,9 @@ func SetDbUser(v string) { global.SetDbUser(v) }
 
 // GetDbPassword safely fetches the Configuration value for state's 'DbPassword' field
 func (st *ConfigState) GetDbPassword() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbPassword
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -476,9 +476,9 @@ func SetDbPassword(v string) { global.SetDbPassword(v) }
 
 // GetDbDatabase safely fetches the Configuration value for state's 'DbDatabase' field
 func (st *ConfigState) GetDbDatabase() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbDatabase
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -501,9 +501,9 @@ func SetDbDatabase(v string) { global.SetDbDatabase(v) }
 
 // GetDbTLSMode safely fetches the Configuration value for state's 'DbTLSMode' field
 func (st *ConfigState) GetDbTLSMode() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbTLSMode
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -526,9 +526,9 @@ func SetDbTLSMode(v string) { global.SetDbTLSMode(v) }
 
 // GetDbTLSCACert safely fetches the Configuration value for state's 'DbTLSCACert' field
 func (st *ConfigState) GetDbTLSCACert() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbTLSCACert
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -551,9 +551,9 @@ func SetDbTLSCACert(v string) { global.SetDbTLSCACert(v) }
 
 // GetDbMaxOpenConnsMultiplier safely fetches the Configuration value for state's 'DbMaxOpenConnsMultiplier' field
 func (st *ConfigState) GetDbMaxOpenConnsMultiplier() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbMaxOpenConnsMultiplier
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -576,9 +576,9 @@ func SetDbMaxOpenConnsMultiplier(v int) { global.SetDbMaxOpenConnsMultiplier(v) 
 
 // GetDbSqliteJournalMode safely fetches the Configuration value for state's 'DbSqliteJournalMode' field
 func (st *ConfigState) GetDbSqliteJournalMode() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbSqliteJournalMode
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -601,9 +601,9 @@ func SetDbSqliteJournalMode(v string) { global.SetDbSqliteJournalMode(v) }
 
 // GetDbSqliteSynchronous safely fetches the Configuration value for state's 'DbSqliteSynchronous' field
 func (st *ConfigState) GetDbSqliteSynchronous() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbSqliteSynchronous
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -626,9 +626,9 @@ func SetDbSqliteSynchronous(v string) { global.SetDbSqliteSynchronous(v) }
 
 // GetDbSqliteCacheSize safely fetches the Configuration value for state's 'DbSqliteCacheSize' field
 func (st *ConfigState) GetDbSqliteCacheSize() (v bytesize.Size) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbSqliteCacheSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -651,9 +651,9 @@ func SetDbSqliteCacheSize(v bytesize.Size) { global.SetDbSqliteCacheSize(v) }
 
 // GetDbSqliteBusyTimeout safely fetches the Configuration value for state's 'DbSqliteBusyTimeout' field
 func (st *ConfigState) GetDbSqliteBusyTimeout() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.DbSqliteBusyTimeout
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -676,9 +676,9 @@ func SetDbSqliteBusyTimeout(v time.Duration) { global.SetDbSqliteBusyTimeout(v) 
 
 // GetWebTemplateBaseDir safely fetches the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) GetWebTemplateBaseDir() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.WebTemplateBaseDir
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -701,9 +701,9 @@ func SetWebTemplateBaseDir(v string) { global.SetWebTemplateBaseDir(v) }
 
 // GetWebAssetBaseDir safely fetches the Configuration value for state's 'WebAssetBaseDir' field
 func (st *ConfigState) GetWebAssetBaseDir() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.WebAssetBaseDir
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -726,9 +726,9 @@ func SetWebAssetBaseDir(v string) { global.SetWebAssetBaseDir(v) }
 
 // GetInstanceExposePeers safely fetches the Configuration value for state's 'InstanceExposePeers' field
 func (st *ConfigState) GetInstanceExposePeers() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.InstanceExposePeers
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -751,9 +751,9 @@ func SetInstanceExposePeers(v bool) { global.SetInstanceExposePeers(v) }
 
 // GetInstanceExposeSuspended safely fetches the Configuration value for state's 'InstanceExposeSuspended' field
 func (st *ConfigState) GetInstanceExposeSuspended() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.InstanceExposeSuspended
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -776,9 +776,9 @@ func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
 
 // GetInstanceExposeSuspendedWeb safely fetches the Configuration value for state's 'InstanceExposeSuspendedWeb' field
 func (st *ConfigState) GetInstanceExposeSuspendedWeb() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.InstanceExposeSuspendedWeb
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -801,9 +801,9 @@ func SetInstanceExposeSuspendedWeb(v bool) { global.SetInstanceExposeSuspendedWe
 
 // GetInstanceExposePublicTimeline safely fetches the Configuration value for state's 'InstanceExposePublicTimeline' field
 func (st *ConfigState) GetInstanceExposePublicTimeline() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.InstanceExposePublicTimeline
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -826,9 +826,9 @@ func SetInstanceExposePublicTimeline(v bool) { global.SetInstanceExposePublicTim
 
 // GetInstanceDeliverToSharedInboxes safely fetches the Configuration value for state's 'InstanceDeliverToSharedInboxes' field
 func (st *ConfigState) GetInstanceDeliverToSharedInboxes() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.InstanceDeliverToSharedInboxes
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -851,9 +851,9 @@ func SetInstanceDeliverToSharedInboxes(v bool) { global.SetInstanceDeliverToShar
 
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AccountsRegistrationOpen
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -876,9 +876,9 @@ func SetAccountsRegistrationOpen(v bool) { global.SetAccountsRegistrationOpen(v)
 
 // GetAccountsApprovalRequired safely fetches the Configuration value for state's 'AccountsApprovalRequired' field
 func (st *ConfigState) GetAccountsApprovalRequired() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AccountsApprovalRequired
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -901,9 +901,9 @@ func SetAccountsApprovalRequired(v bool) { global.SetAccountsApprovalRequired(v)
 
 // GetAccountsReasonRequired safely fetches the Configuration value for state's 'AccountsReasonRequired' field
 func (st *ConfigState) GetAccountsReasonRequired() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AccountsReasonRequired
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -926,9 +926,9 @@ func SetAccountsReasonRequired(v bool) { global.SetAccountsReasonRequired(v) }
 
 // GetAccountsAllowCustomCSS safely fetches the Configuration value for state's 'AccountsAllowCustomCSS' field
 func (st *ConfigState) GetAccountsAllowCustomCSS() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AccountsAllowCustomCSS
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -951,9 +951,9 @@ func SetAccountsAllowCustomCSS(v bool) { global.SetAccountsAllowCustomCSS(v) }
 
 // GetAccountsCustomCSSLength safely fetches the Configuration value for state's 'AccountsCustomCSSLength' field
 func (st *ConfigState) GetAccountsCustomCSSLength() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AccountsCustomCSSLength
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -976,9 +976,9 @@ func SetAccountsCustomCSSLength(v int) { global.SetAccountsCustomCSSLength(v) }
 
 // GetMediaImageMaxSize safely fetches the Configuration value for state's 'MediaImageMaxSize' field
 func (st *ConfigState) GetMediaImageMaxSize() (v bytesize.Size) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.MediaImageMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1001,9 +1001,9 @@ func SetMediaImageMaxSize(v bytesize.Size) { global.SetMediaImageMaxSize(v) }
 
 // GetMediaVideoMaxSize safely fetches the Configuration value for state's 'MediaVideoMaxSize' field
 func (st *ConfigState) GetMediaVideoMaxSize() (v bytesize.Size) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.MediaVideoMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1026,9 +1026,9 @@ func SetMediaVideoMaxSize(v bytesize.Size) { global.SetMediaVideoMaxSize(v) }
 
 // GetMediaDescriptionMinChars safely fetches the Configuration value for state's 'MediaDescriptionMinChars' field
 func (st *ConfigState) GetMediaDescriptionMinChars() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.MediaDescriptionMinChars
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1051,9 +1051,9 @@ func SetMediaDescriptionMinChars(v int) { global.SetMediaDescriptionMinChars(v) 
 
 // GetMediaDescriptionMaxChars safely fetches the Configuration value for state's 'MediaDescriptionMaxChars' field
 func (st *ConfigState) GetMediaDescriptionMaxChars() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.MediaDescriptionMaxChars
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1076,9 +1076,9 @@ func SetMediaDescriptionMaxChars(v int) { global.SetMediaDescriptionMaxChars(v) 
 
 // GetMediaRemoteCacheDays safely fetches the Configuration value for state's 'MediaRemoteCacheDays' field
 func (st *ConfigState) GetMediaRemoteCacheDays() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.MediaRemoteCacheDays
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1101,9 +1101,9 @@ func SetMediaRemoteCacheDays(v int) { global.SetMediaRemoteCacheDays(v) }
 
 // GetMediaEmojiLocalMaxSize safely fetches the Configuration value for state's 'MediaEmojiLocalMaxSize' field
 func (st *ConfigState) GetMediaEmojiLocalMaxSize() (v bytesize.Size) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.MediaEmojiLocalMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1126,9 +1126,9 @@ func SetMediaEmojiLocalMaxSize(v bytesize.Size) { global.SetMediaEmojiLocalMaxSi
 
 // GetMediaEmojiRemoteMaxSize safely fetches the Configuration value for state's 'MediaEmojiRemoteMaxSize' field
 func (st *ConfigState) GetMediaEmojiRemoteMaxSize() (v bytesize.Size) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.MediaEmojiRemoteMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1151,9 +1151,9 @@ func SetMediaEmojiRemoteMaxSize(v bytesize.Size) { global.SetMediaEmojiRemoteMax
 
 // GetStorageBackend safely fetches the Configuration value for state's 'StorageBackend' field
 func (st *ConfigState) GetStorageBackend() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageBackend
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1176,9 +1176,9 @@ func SetStorageBackend(v string) { global.SetStorageBackend(v) }
 
 // GetStorageLocalBasePath safely fetches the Configuration value for state's 'StorageLocalBasePath' field
 func (st *ConfigState) GetStorageLocalBasePath() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageLocalBasePath
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1201,9 +1201,9 @@ func SetStorageLocalBasePath(v string) { global.SetStorageLocalBasePath(v) }
 
 // GetStorageS3Endpoint safely fetches the Configuration value for state's 'StorageS3Endpoint' field
 func (st *ConfigState) GetStorageS3Endpoint() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageS3Endpoint
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1226,9 +1226,9 @@ func SetStorageS3Endpoint(v string) { global.SetStorageS3Endpoint(v) }
 
 // GetStorageS3AccessKey safely fetches the Configuration value for state's 'StorageS3AccessKey' field
 func (st *ConfigState) GetStorageS3AccessKey() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageS3AccessKey
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1251,9 +1251,9 @@ func SetStorageS3AccessKey(v string) { global.SetStorageS3AccessKey(v) }
 
 // GetStorageS3SecretKey safely fetches the Configuration value for state's 'StorageS3SecretKey' field
 func (st *ConfigState) GetStorageS3SecretKey() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageS3SecretKey
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1276,9 +1276,9 @@ func SetStorageS3SecretKey(v string) { global.SetStorageS3SecretKey(v) }
 
 // GetStorageS3UseSSL safely fetches the Configuration value for state's 'StorageS3UseSSL' field
 func (st *ConfigState) GetStorageS3UseSSL() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageS3UseSSL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1301,9 +1301,9 @@ func SetStorageS3UseSSL(v bool) { global.SetStorageS3UseSSL(v) }
 
 // GetStorageS3BucketName safely fetches the Configuration value for state's 'StorageS3BucketName' field
 func (st *ConfigState) GetStorageS3BucketName() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageS3BucketName
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1326,9 +1326,9 @@ func SetStorageS3BucketName(v string) { global.SetStorageS3BucketName(v) }
 
 // GetStorageS3Proxy safely fetches the Configuration value for state's 'StorageS3Proxy' field
 func (st *ConfigState) GetStorageS3Proxy() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StorageS3Proxy
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1351,9 +1351,9 @@ func SetStorageS3Proxy(v bool) { global.SetStorageS3Proxy(v) }
 
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StatusesMaxChars
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1376,9 +1376,9 @@ func SetStatusesMaxChars(v int) { global.SetStatusesMaxChars(v) }
 
 // GetStatusesCWMaxChars safely fetches the Configuration value for state's 'StatusesCWMaxChars' field
 func (st *ConfigState) GetStatusesCWMaxChars() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StatusesCWMaxChars
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1401,9 +1401,9 @@ func SetStatusesCWMaxChars(v int) { global.SetStatusesCWMaxChars(v) }
 
 // GetStatusesPollMaxOptions safely fetches the Configuration value for state's 'StatusesPollMaxOptions' field
 func (st *ConfigState) GetStatusesPollMaxOptions() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StatusesPollMaxOptions
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1426,9 +1426,9 @@ func SetStatusesPollMaxOptions(v int) { global.SetStatusesPollMaxOptions(v) }
 
 // GetStatusesPollOptionMaxChars safely fetches the Configuration value for state's 'StatusesPollOptionMaxChars' field
 func (st *ConfigState) GetStatusesPollOptionMaxChars() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StatusesPollOptionMaxChars
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1451,9 +1451,9 @@ func SetStatusesPollOptionMaxChars(v int) { global.SetStatusesPollOptionMaxChars
 
 // GetStatusesMediaMaxFiles safely fetches the Configuration value for state's 'StatusesMediaMaxFiles' field
 func (st *ConfigState) GetStatusesMediaMaxFiles() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.StatusesMediaMaxFiles
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1476,9 +1476,9 @@ func SetStatusesMediaMaxFiles(v int) { global.SetStatusesMediaMaxFiles(v) }
 
 // GetLetsEncryptEnabled safely fetches the Configuration value for state's 'LetsEncryptEnabled' field
 func (st *ConfigState) GetLetsEncryptEnabled() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LetsEncryptEnabled
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1501,9 +1501,9 @@ func SetLetsEncryptEnabled(v bool) { global.SetLetsEncryptEnabled(v) }
 
 // GetLetsEncryptPort safely fetches the Configuration value for state's 'LetsEncryptPort' field
 func (st *ConfigState) GetLetsEncryptPort() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LetsEncryptPort
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1526,9 +1526,9 @@ func SetLetsEncryptPort(v int) { global.SetLetsEncryptPort(v) }
 
 // GetLetsEncryptCertDir safely fetches the Configuration value for state's 'LetsEncryptCertDir' field
 func (st *ConfigState) GetLetsEncryptCertDir() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LetsEncryptCertDir
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1551,9 +1551,9 @@ func SetLetsEncryptCertDir(v string) { global.SetLetsEncryptCertDir(v) }
 
 // GetLetsEncryptEmailAddress safely fetches the Configuration value for state's 'LetsEncryptEmailAddress' field
 func (st *ConfigState) GetLetsEncryptEmailAddress() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.LetsEncryptEmailAddress
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1576,9 +1576,9 @@ func SetLetsEncryptEmailAddress(v string) { global.SetLetsEncryptEmailAddress(v)
 
 // GetTLSCertificateChain safely fetches the Configuration value for state's 'TLSCertificateChain' field
 func (st *ConfigState) GetTLSCertificateChain() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.TLSCertificateChain
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1601,9 +1601,9 @@ func SetTLSCertificateChain(v string) { global.SetTLSCertificateChain(v) }
 
 // GetTLSCertificateKey safely fetches the Configuration value for state's 'TLSCertificateKey' field
 func (st *ConfigState) GetTLSCertificateKey() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.TLSCertificateKey
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1626,9 +1626,9 @@ func SetTLSCertificateKey(v string) { global.SetTLSCertificateKey(v) }
 
 // GetOIDCEnabled safely fetches the Configuration value for state's 'OIDCEnabled' field
 func (st *ConfigState) GetOIDCEnabled() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCEnabled
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1651,9 +1651,9 @@ func SetOIDCEnabled(v bool) { global.SetOIDCEnabled(v) }
 
 // GetOIDCIdpName safely fetches the Configuration value for state's 'OIDCIdpName' field
 func (st *ConfigState) GetOIDCIdpName() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCIdpName
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1676,9 +1676,9 @@ func SetOIDCIdpName(v string) { global.SetOIDCIdpName(v) }
 
 // GetOIDCSkipVerification safely fetches the Configuration value for state's 'OIDCSkipVerification' field
 func (st *ConfigState) GetOIDCSkipVerification() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCSkipVerification
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1701,9 +1701,9 @@ func SetOIDCSkipVerification(v bool) { global.SetOIDCSkipVerification(v) }
 
 // GetOIDCIssuer safely fetches the Configuration value for state's 'OIDCIssuer' field
 func (st *ConfigState) GetOIDCIssuer() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCIssuer
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1726,9 +1726,9 @@ func SetOIDCIssuer(v string) { global.SetOIDCIssuer(v) }
 
 // GetOIDCClientID safely fetches the Configuration value for state's 'OIDCClientID' field
 func (st *ConfigState) GetOIDCClientID() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCClientID
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1751,9 +1751,9 @@ func SetOIDCClientID(v string) { global.SetOIDCClientID(v) }
 
 // GetOIDCClientSecret safely fetches the Configuration value for state's 'OIDCClientSecret' field
 func (st *ConfigState) GetOIDCClientSecret() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCClientSecret
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1776,9 +1776,9 @@ func SetOIDCClientSecret(v string) { global.SetOIDCClientSecret(v) }
 
 // GetOIDCScopes safely fetches the Configuration value for state's 'OIDCScopes' field
 func (st *ConfigState) GetOIDCScopes() (v []string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCScopes
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1801,9 +1801,9 @@ func SetOIDCScopes(v []string) { global.SetOIDCScopes(v) }
 
 // GetOIDCLinkExisting safely fetches the Configuration value for state's 'OIDCLinkExisting' field
 func (st *ConfigState) GetOIDCLinkExisting() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCLinkExisting
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1826,9 +1826,9 @@ func SetOIDCLinkExisting(v bool) { global.SetOIDCLinkExisting(v) }
 
 // GetOIDCAdminGroups safely fetches the Configuration value for state's 'OIDCAdminGroups' field
 func (st *ConfigState) GetOIDCAdminGroups() (v []string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.OIDCAdminGroups
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1851,9 +1851,9 @@ func SetOIDCAdminGroups(v []string) { global.SetOIDCAdminGroups(v) }
 
 // GetTracingEnabled safely fetches the Configuration value for state's 'TracingEnabled' field
 func (st *ConfigState) GetTracingEnabled() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.TracingEnabled
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1876,9 +1876,9 @@ func SetTracingEnabled(v bool) { global.SetTracingEnabled(v) }
 
 // GetTracingTransport safely fetches the Configuration value for state's 'TracingTransport' field
 func (st *ConfigState) GetTracingTransport() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.TracingTransport
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1901,9 +1901,9 @@ func SetTracingTransport(v string) { global.SetTracingTransport(v) }
 
 // GetTracingEndpoint safely fetches the Configuration value for state's 'TracingEndpoint' field
 func (st *ConfigState) GetTracingEndpoint() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.TracingEndpoint
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1926,9 +1926,9 @@ func SetTracingEndpoint(v string) { global.SetTracingEndpoint(v) }
 
 // GetTracingInsecureTransport safely fetches the Configuration value for state's 'TracingInsecureTransport' field
 func (st *ConfigState) GetTracingInsecureTransport() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.TracingInsecureTransport
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1951,9 +1951,9 @@ func SetTracingInsecureTransport(v bool) { global.SetTracingInsecureTransport(v)
 
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SMTPHost
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -1976,9 +1976,9 @@ func SetSMTPHost(v string) { global.SetSMTPHost(v) }
 
 // GetSMTPPort safely fetches the Configuration value for state's 'SMTPPort' field
 func (st *ConfigState) GetSMTPPort() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SMTPPort
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2001,9 +2001,9 @@ func SetSMTPPort(v int) { global.SetSMTPPort(v) }
 
 // GetSMTPUsername safely fetches the Configuration value for state's 'SMTPUsername' field
 func (st *ConfigState) GetSMTPUsername() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SMTPUsername
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2026,9 +2026,9 @@ func SetSMTPUsername(v string) { global.SetSMTPUsername(v) }
 
 // GetSMTPPassword safely fetches the Configuration value for state's 'SMTPPassword' field
 func (st *ConfigState) GetSMTPPassword() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SMTPPassword
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2051,9 +2051,9 @@ func SetSMTPPassword(v string) { global.SetSMTPPassword(v) }
 
 // GetSMTPFrom safely fetches the Configuration value for state's 'SMTPFrom' field
 func (st *ConfigState) GetSMTPFrom() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SMTPFrom
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2076,9 +2076,9 @@ func SetSMTPFrom(v string) { global.SetSMTPFrom(v) }
 
 // GetSMTPDiscloseRecipients safely fetches the Configuration value for state's 'SMTPDiscloseRecipients' field
 func (st *ConfigState) GetSMTPDiscloseRecipients() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SMTPDiscloseRecipients
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2101,9 +2101,9 @@ func SetSMTPDiscloseRecipients(v bool) { global.SetSMTPDiscloseRecipients(v) }
 
 // GetSyslogEnabled safely fetches the Configuration value for state's 'SyslogEnabled' field
 func (st *ConfigState) GetSyslogEnabled() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SyslogEnabled
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2126,9 +2126,9 @@ func SetSyslogEnabled(v bool) { global.SetSyslogEnabled(v) }
 
 // GetSyslogProtocol safely fetches the Configuration value for state's 'SyslogProtocol' field
 func (st *ConfigState) GetSyslogProtocol() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SyslogProtocol
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2151,9 +2151,9 @@ func SetSyslogProtocol(v string) { global.SetSyslogProtocol(v) }
 
 // GetSyslogAddress safely fetches the Configuration value for state's 'SyslogAddress' field
 func (st *ConfigState) GetSyslogAddress() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.SyslogAddress
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2176,9 +2176,9 @@ func SetSyslogAddress(v string) { global.SetSyslogAddress(v) }
 
 // GetAdvancedCookiesSamesite safely fetches the Configuration value for state's 'AdvancedCookiesSamesite' field
 func (st *ConfigState) GetAdvancedCookiesSamesite() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdvancedCookiesSamesite
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2201,9 +2201,9 @@ func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v)
 
 // GetAdvancedRateLimitRequests safely fetches the Configuration value for state's 'AdvancedRateLimitRequests' field
 func (st *ConfigState) GetAdvancedRateLimitRequests() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdvancedRateLimitRequests
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2226,9 +2226,9 @@ func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v
 
 // GetAdvancedThrottlingMultiplier safely fetches the Configuration value for state's 'AdvancedThrottlingMultiplier' field
 func (st *ConfigState) GetAdvancedThrottlingMultiplier() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdvancedThrottlingMultiplier
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2251,9 +2251,9 @@ func SetAdvancedThrottlingMultiplier(v int) { global.SetAdvancedThrottlingMultip
 
 // GetAdvancedThrottlingRetryAfter safely fetches the Configuration value for state's 'AdvancedThrottlingRetryAfter' field
 func (st *ConfigState) GetAdvancedThrottlingRetryAfter() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdvancedThrottlingRetryAfter
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2276,9 +2276,9 @@ func SetAdvancedThrottlingRetryAfter(v time.Duration) { global.SetAdvancedThrott
 
 // GetAdvancedSenderMultiplier safely fetches the Configuration value for state's 'AdvancedSenderMultiplier' field
 func (st *ConfigState) GetAdvancedSenderMultiplier() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdvancedSenderMultiplier
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2301,9 +2301,9 @@ func SetAdvancedSenderMultiplier(v int) { global.SetAdvancedSenderMultiplier(v) 
 
 // GetHTTPClientAllowIPs safely fetches the Configuration value for state's 'HTTPClient.AllowIPs' field
 func (st *ConfigState) GetHTTPClientAllowIPs() (v []string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.HTTPClient.AllowIPs
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2326,9 +2326,9 @@ func SetHTTPClientAllowIPs(v []string) { global.SetHTTPClientAllowIPs(v) }
 
 // GetHTTPClientBlockIPs safely fetches the Configuration value for state's 'HTTPClient.BlockIPs' field
 func (st *ConfigState) GetHTTPClientBlockIPs() (v []string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.HTTPClient.BlockIPs
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2351,9 +2351,9 @@ func SetHTTPClientBlockIPs(v []string) { global.SetHTTPClientBlockIPs(v) }
 
 // GetHTTPClientTimeout safely fetches the Configuration value for state's 'HTTPClient.Timeout' field
 func (st *ConfigState) GetHTTPClientTimeout() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.HTTPClient.Timeout
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2376,9 +2376,9 @@ func SetHTTPClientTimeout(v time.Duration) { global.SetHTTPClientTimeout(v) }
 
 // GetCacheGTSAccountMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountMaxSize' field
 func (st *ConfigState) GetCacheGTSAccountMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.AccountMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2401,9 +2401,9 @@ func SetCacheGTSAccountMaxSize(v int) { global.SetCacheGTSAccountMaxSize(v) }
 
 // GetCacheGTSAccountTTL safely fetches the Configuration value for state's 'Cache.GTS.AccountTTL' field
 func (st *ConfigState) GetCacheGTSAccountTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.AccountTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2426,9 +2426,9 @@ func SetCacheGTSAccountTTL(v time.Duration) { global.SetCacheGTSAccountTTL(v) }
 
 // GetCacheGTSAccountSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.AccountSweepFreq' field
 func (st *ConfigState) GetCacheGTSAccountSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.AccountSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2451,9 +2451,9 @@ func SetCacheGTSAccountSweepFreq(v time.Duration) { global.SetCacheGTSAccountSwe
 
 // GetCacheGTSBlockMaxSize safely fetches the Configuration value for state's 'Cache.GTS.BlockMaxSize' field
 func (st *ConfigState) GetCacheGTSBlockMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.BlockMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2476,9 +2476,9 @@ func SetCacheGTSBlockMaxSize(v int) { global.SetCacheGTSBlockMaxSize(v) }
 
 // GetCacheGTSBlockTTL safely fetches the Configuration value for state's 'Cache.GTS.BlockTTL' field
 func (st *ConfigState) GetCacheGTSBlockTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.BlockTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2501,9 +2501,9 @@ func SetCacheGTSBlockTTL(v time.Duration) { global.SetCacheGTSBlockTTL(v) }
 
 // GetCacheGTSBlockSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.BlockSweepFreq' field
 func (st *ConfigState) GetCacheGTSBlockSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.BlockSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2526,9 +2526,9 @@ func SetCacheGTSBlockSweepFreq(v time.Duration) { global.SetCacheGTSBlockSweepFr
 
 // GetCacheGTSDomainBlockMaxSize safely fetches the Configuration value for state's 'Cache.GTS.DomainBlockMaxSize' field
 func (st *ConfigState) GetCacheGTSDomainBlockMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.DomainBlockMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2551,9 +2551,9 @@ func SetCacheGTSDomainBlockMaxSize(v int) { global.SetCacheGTSDomainBlockMaxSize
 
 // GetCacheGTSDomainBlockTTL safely fetches the Configuration value for state's 'Cache.GTS.DomainBlockTTL' field
 func (st *ConfigState) GetCacheGTSDomainBlockTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.DomainBlockTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2576,9 +2576,9 @@ func SetCacheGTSDomainBlockTTL(v time.Duration) { global.SetCacheGTSDomainBlockT
 
 // GetCacheGTSDomainBlockSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.DomainBlockSweepFreq' field
 func (st *ConfigState) GetCacheGTSDomainBlockSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.DomainBlockSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2601,9 +2601,9 @@ func SetCacheGTSDomainBlockSweepFreq(v time.Duration) { global.SetCacheGTSDomain
 
 // GetCacheGTSEmojiMaxSize safely fetches the Configuration value for state's 'Cache.GTS.EmojiMaxSize' field
 func (st *ConfigState) GetCacheGTSEmojiMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.EmojiMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2626,9 +2626,9 @@ func SetCacheGTSEmojiMaxSize(v int) { global.SetCacheGTSEmojiMaxSize(v) }
 
 // GetCacheGTSEmojiTTL safely fetches the Configuration value for state's 'Cache.GTS.EmojiTTL' field
 func (st *ConfigState) GetCacheGTSEmojiTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.EmojiTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2651,9 +2651,9 @@ func SetCacheGTSEmojiTTL(v time.Duration) { global.SetCacheGTSEmojiTTL(v) }
 
 // GetCacheGTSEmojiSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.EmojiSweepFreq' field
 func (st *ConfigState) GetCacheGTSEmojiSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.EmojiSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2676,9 +2676,9 @@ func SetCacheGTSEmojiSweepFreq(v time.Duration) { global.SetCacheGTSEmojiSweepFr
 
 // GetCacheGTSEmojiCategoryMaxSize safely fetches the Configuration value for state's 'Cache.GTS.EmojiCategoryMaxSize' field
 func (st *ConfigState) GetCacheGTSEmojiCategoryMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.EmojiCategoryMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2701,9 +2701,9 @@ func SetCacheGTSEmojiCategoryMaxSize(v int) { global.SetCacheGTSEmojiCategoryMax
 
 // GetCacheGTSEmojiCategoryTTL safely fetches the Configuration value for state's 'Cache.GTS.EmojiCategoryTTL' field
 func (st *ConfigState) GetCacheGTSEmojiCategoryTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.EmojiCategoryTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2726,9 +2726,9 @@ func SetCacheGTSEmojiCategoryTTL(v time.Duration) { global.SetCacheGTSEmojiCateg
 
 // GetCacheGTSEmojiCategorySweepFreq safely fetches the Configuration value for state's 'Cache.GTS.EmojiCategorySweepFreq' field
 func (st *ConfigState) GetCacheGTSEmojiCategorySweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.EmojiCategorySweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2753,9 +2753,9 @@ func SetCacheGTSEmojiCategorySweepFreq(v time.Duration) { global.SetCacheGTSEmoj
 
 // GetCacheGTSFollowMaxSize safely fetches the Configuration value for state's 'Cache.GTS.FollowMaxSize' field
 func (st *ConfigState) GetCacheGTSFollowMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.FollowMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2778,9 +2778,9 @@ func SetCacheGTSFollowMaxSize(v int) { global.SetCacheGTSFollowMaxSize(v) }
 
 // GetCacheGTSFollowTTL safely fetches the Configuration value for state's 'Cache.GTS.FollowTTL' field
 func (st *ConfigState) GetCacheGTSFollowTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.FollowTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2803,9 +2803,9 @@ func SetCacheGTSFollowTTL(v time.Duration) { global.SetCacheGTSFollowTTL(v) }
 
 // GetCacheGTSFollowSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.FollowSweepFreq' field
 func (st *ConfigState) GetCacheGTSFollowSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.FollowSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2828,9 +2828,9 @@ func SetCacheGTSFollowSweepFreq(v time.Duration) { global.SetCacheGTSFollowSweep
 
 // GetCacheGTSFollowRequestMaxSize safely fetches the Configuration value for state's 'Cache.GTS.FollowRequestMaxSize' field
 func (st *ConfigState) GetCacheGTSFollowRequestMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.FollowRequestMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2853,9 +2853,9 @@ func SetCacheGTSFollowRequestMaxSize(v int) { global.SetCacheGTSFollowRequestMax
 
 // GetCacheGTSFollowRequestTTL safely fetches the Configuration value for state's 'Cache.GTS.FollowRequestTTL' field
 func (st *ConfigState) GetCacheGTSFollowRequestTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.FollowRequestTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2878,9 +2878,9 @@ func SetCacheGTSFollowRequestTTL(v time.Duration) { global.SetCacheGTSFollowRequ
 
 // GetCacheGTSFollowRequestSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.FollowRequestSweepFreq' field
 func (st *ConfigState) GetCacheGTSFollowRequestSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.FollowRequestSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2905,9 +2905,9 @@ func SetCacheGTSFollowRequestSweepFreq(v time.Duration) { global.SetCacheGTSFoll
 
 // GetCacheGTSInstanceMaxSize safely fetches the Configuration value for state's 'Cache.GTS.InstanceMaxSize' field
 func (st *ConfigState) GetCacheGTSInstanceMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.InstanceMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2930,9 +2930,9 @@ func SetCacheGTSInstanceMaxSize(v int) { global.SetCacheGTSInstanceMaxSize(v) }
 
 // GetCacheGTSInstanceTTL safely fetches the Configuration value for state's 'Cache.GTS.InstanceTTL' field
 func (st *ConfigState) GetCacheGTSInstanceTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.InstanceTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2955,9 +2955,9 @@ func SetCacheGTSInstanceTTL(v time.Duration) { global.SetCacheGTSInstanceTTL(v) 
 
 // GetCacheGTSInstanceSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.InstanceSweepFreq' field
 func (st *ConfigState) GetCacheGTSInstanceSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.InstanceSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -2980,9 +2980,9 @@ func SetCacheGTSInstanceSweepFreq(v time.Duration) { global.SetCacheGTSInstanceS
 
 // GetCacheGTSListMaxSize safely fetches the Configuration value for state's 'Cache.GTS.ListMaxSize' field
 func (st *ConfigState) GetCacheGTSListMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ListMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3005,9 +3005,9 @@ func SetCacheGTSListMaxSize(v int) { global.SetCacheGTSListMaxSize(v) }
 
 // GetCacheGTSListTTL safely fetches the Configuration value for state's 'Cache.GTS.ListTTL' field
 func (st *ConfigState) GetCacheGTSListTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ListTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3030,9 +3030,9 @@ func SetCacheGTSListTTL(v time.Duration) { global.SetCacheGTSListTTL(v) }
 
 // GetCacheGTSListSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.ListSweepFreq' field
 func (st *ConfigState) GetCacheGTSListSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ListSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3055,9 +3055,9 @@ func SetCacheGTSListSweepFreq(v time.Duration) { global.SetCacheGTSListSweepFreq
 
 // GetCacheGTSListEntryMaxSize safely fetches the Configuration value for state's 'Cache.GTS.ListEntryMaxSize' field
 func (st *ConfigState) GetCacheGTSListEntryMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ListEntryMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3080,9 +3080,9 @@ func SetCacheGTSListEntryMaxSize(v int) { global.SetCacheGTSListEntryMaxSize(v) 
 
 // GetCacheGTSListEntryTTL safely fetches the Configuration value for state's 'Cache.GTS.ListEntryTTL' field
 func (st *ConfigState) GetCacheGTSListEntryTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ListEntryTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3105,9 +3105,9 @@ func SetCacheGTSListEntryTTL(v time.Duration) { global.SetCacheGTSListEntryTTL(v
 
 // GetCacheGTSListEntrySweepFreq safely fetches the Configuration value for state's 'Cache.GTS.ListEntrySweepFreq' field
 func (st *ConfigState) GetCacheGTSListEntrySweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ListEntrySweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3130,9 +3130,9 @@ func SetCacheGTSListEntrySweepFreq(v time.Duration) { global.SetCacheGTSListEntr
 
 // GetCacheGTSMediaMaxSize safely fetches the Configuration value for state's 'Cache.GTS.MediaMaxSize' field
 func (st *ConfigState) GetCacheGTSMediaMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.MediaMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3155,9 +3155,9 @@ func SetCacheGTSMediaMaxSize(v int) { global.SetCacheGTSMediaMaxSize(v) }
 
 // GetCacheGTSMediaTTL safely fetches the Configuration value for state's 'Cache.GTS.MediaTTL' field
 func (st *ConfigState) GetCacheGTSMediaTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.MediaTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3180,9 +3180,9 @@ func SetCacheGTSMediaTTL(v time.Duration) { global.SetCacheGTSMediaTTL(v) }
 
 // GetCacheGTSMediaSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.MediaSweepFreq' field
 func (st *ConfigState) GetCacheGTSMediaSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.MediaSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3205,9 +3205,9 @@ func SetCacheGTSMediaSweepFreq(v time.Duration) { global.SetCacheGTSMediaSweepFr
 
 // GetCacheGTSMentionMaxSize safely fetches the Configuration value for state's 'Cache.GTS.MentionMaxSize' field
 func (st *ConfigState) GetCacheGTSMentionMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.MentionMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3230,9 +3230,9 @@ func SetCacheGTSMentionMaxSize(v int) { global.SetCacheGTSMentionMaxSize(v) }
 
 // GetCacheGTSMentionTTL safely fetches the Configuration value for state's 'Cache.GTS.MentionTTL' field
 func (st *ConfigState) GetCacheGTSMentionTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.MentionTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3255,9 +3255,9 @@ func SetCacheGTSMentionTTL(v time.Duration) { global.SetCacheGTSMentionTTL(v) }
 
 // GetCacheGTSMentionSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.MentionSweepFreq' field
 func (st *ConfigState) GetCacheGTSMentionSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.MentionSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3280,9 +3280,9 @@ func SetCacheGTSMentionSweepFreq(v time.Duration) { global.SetCacheGTSMentionSwe
 
 // GetCacheGTSNotificationMaxSize safely fetches the Configuration value for state's 'Cache.GTS.NotificationMaxSize' field
 func (st *ConfigState) GetCacheGTSNotificationMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.NotificationMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3305,9 +3305,9 @@ func SetCacheGTSNotificationMaxSize(v int) { global.SetCacheGTSNotificationMaxSi
 
 // GetCacheGTSNotificationTTL safely fetches the Configuration value for state's 'Cache.GTS.NotificationTTL' field
 func (st *ConfigState) GetCacheGTSNotificationTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.NotificationTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3330,9 +3330,9 @@ func SetCacheGTSNotificationTTL(v time.Duration) { global.SetCacheGTSNotificatio
 
 // GetCacheGTSNotificationSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.NotificationSweepFreq' field
 func (st *ConfigState) GetCacheGTSNotificationSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.NotificationSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3357,9 +3357,9 @@ func SetCacheGTSNotificationSweepFreq(v time.Duration) { global.SetCacheGTSNotif
 
 // GetCacheGTSReportMaxSize safely fetches the Configuration value for state's 'Cache.GTS.ReportMaxSize' field
 func (st *ConfigState) GetCacheGTSReportMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ReportMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3382,9 +3382,9 @@ func SetCacheGTSReportMaxSize(v int) { global.SetCacheGTSReportMaxSize(v) }
 
 // GetCacheGTSReportTTL safely fetches the Configuration value for state's 'Cache.GTS.ReportTTL' field
 func (st *ConfigState) GetCacheGTSReportTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ReportTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3407,9 +3407,9 @@ func SetCacheGTSReportTTL(v time.Duration) { global.SetCacheGTSReportTTL(v) }
 
 // GetCacheGTSReportSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.ReportSweepFreq' field
 func (st *ConfigState) GetCacheGTSReportSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.ReportSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3432,9 +3432,9 @@ func SetCacheGTSReportSweepFreq(v time.Duration) { global.SetCacheGTSReportSweep
 
 // GetCacheGTSStatusMaxSize safely fetches the Configuration value for state's 'Cache.GTS.StatusMaxSize' field
 func (st *ConfigState) GetCacheGTSStatusMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.StatusMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3457,9 +3457,9 @@ func SetCacheGTSStatusMaxSize(v int) { global.SetCacheGTSStatusMaxSize(v) }
 
 // GetCacheGTSStatusTTL safely fetches the Configuration value for state's 'Cache.GTS.StatusTTL' field
 func (st *ConfigState) GetCacheGTSStatusTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.StatusTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3482,9 +3482,9 @@ func SetCacheGTSStatusTTL(v time.Duration) { global.SetCacheGTSStatusTTL(v) }
 
 // GetCacheGTSStatusSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.StatusSweepFreq' field
 func (st *ConfigState) GetCacheGTSStatusSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.StatusSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3507,9 +3507,9 @@ func SetCacheGTSStatusSweepFreq(v time.Duration) { global.SetCacheGTSStatusSweep
 
 // GetCacheGTSStatusFaveMaxSize safely fetches the Configuration value for state's 'Cache.GTS.StatusFaveMaxSize' field
 func (st *ConfigState) GetCacheGTSStatusFaveMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.StatusFaveMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3532,9 +3532,9 @@ func SetCacheGTSStatusFaveMaxSize(v int) { global.SetCacheGTSStatusFaveMaxSize(v
 
 // GetCacheGTSStatusFaveTTL safely fetches the Configuration value for state's 'Cache.GTS.StatusFaveTTL' field
 func (st *ConfigState) GetCacheGTSStatusFaveTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.StatusFaveTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3557,9 +3557,9 @@ func SetCacheGTSStatusFaveTTL(v time.Duration) { global.SetCacheGTSStatusFaveTTL
 
 // GetCacheGTSStatusFaveSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.StatusFaveSweepFreq' field
 func (st *ConfigState) GetCacheGTSStatusFaveSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.StatusFaveSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3582,9 +3582,9 @@ func SetCacheGTSStatusFaveSweepFreq(v time.Duration) { global.SetCacheGTSStatusF
 
 // GetCacheGTSTombstoneMaxSize safely fetches the Configuration value for state's 'Cache.GTS.TombstoneMaxSize' field
 func (st *ConfigState) GetCacheGTSTombstoneMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.TombstoneMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3607,9 +3607,9 @@ func SetCacheGTSTombstoneMaxSize(v int) { global.SetCacheGTSTombstoneMaxSize(v) 
 
 // GetCacheGTSTombstoneTTL safely fetches the Configuration value for state's 'Cache.GTS.TombstoneTTL' field
 func (st *ConfigState) GetCacheGTSTombstoneTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.TombstoneTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3632,9 +3632,9 @@ func SetCacheGTSTombstoneTTL(v time.Duration) { global.SetCacheGTSTombstoneTTL(v
 
 // GetCacheGTSTombstoneSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.TombstoneSweepFreq' field
 func (st *ConfigState) GetCacheGTSTombstoneSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.TombstoneSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3657,9 +3657,9 @@ func SetCacheGTSTombstoneSweepFreq(v time.Duration) { global.SetCacheGTSTombston
 
 // GetCacheGTSUserMaxSize safely fetches the Configuration value for state's 'Cache.GTS.UserMaxSize' field
 func (st *ConfigState) GetCacheGTSUserMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.UserMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3682,9 +3682,9 @@ func SetCacheGTSUserMaxSize(v int) { global.SetCacheGTSUserMaxSize(v) }
 
 // GetCacheGTSUserTTL safely fetches the Configuration value for state's 'Cache.GTS.UserTTL' field
 func (st *ConfigState) GetCacheGTSUserTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.UserTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3707,9 +3707,9 @@ func SetCacheGTSUserTTL(v time.Duration) { global.SetCacheGTSUserTTL(v) }
 
 // GetCacheGTSUserSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.UserSweepFreq' field
 func (st *ConfigState) GetCacheGTSUserSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.UserSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3732,9 +3732,9 @@ func SetCacheGTSUserSweepFreq(v time.Duration) { global.SetCacheGTSUserSweepFreq
 
 // GetCacheGTSWebfingerMaxSize safely fetches the Configuration value for state's 'Cache.GTS.WebfingerMaxSize' field
 func (st *ConfigState) GetCacheGTSWebfingerMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.WebfingerMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3757,9 +3757,9 @@ func SetCacheGTSWebfingerMaxSize(v int) { global.SetCacheGTSWebfingerMaxSize(v) 
 
 // GetCacheGTSWebfingerTTL safely fetches the Configuration value for state's 'Cache.GTS.WebfingerTTL' field
 func (st *ConfigState) GetCacheGTSWebfingerTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.WebfingerTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3782,9 +3782,9 @@ func SetCacheGTSWebfingerTTL(v time.Duration) { global.SetCacheGTSWebfingerTTL(v
 
 // GetCacheGTSWebfingerSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.WebfingerSweepFreq' field
 func (st *ConfigState) GetCacheGTSWebfingerSweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.GTS.WebfingerSweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3807,9 +3807,9 @@ func SetCacheGTSWebfingerSweepFreq(v time.Duration) { global.SetCacheGTSWebfinge
 
 // GetCacheVisibilityMaxSize safely fetches the Configuration value for state's 'Cache.VisibilityMaxSize' field
 func (st *ConfigState) GetCacheVisibilityMaxSize() (v int) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.VisibilityMaxSize
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3832,9 +3832,9 @@ func SetCacheVisibilityMaxSize(v int) { global.SetCacheVisibilityMaxSize(v) }
 
 // GetCacheVisibilityTTL safely fetches the Configuration value for state's 'Cache.VisibilityTTL' field
 func (st *ConfigState) GetCacheVisibilityTTL() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.VisibilityTTL
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3857,9 +3857,9 @@ func SetCacheVisibilityTTL(v time.Duration) { global.SetCacheVisibilityTTL(v) }
 
 // GetCacheVisibilitySweepFreq safely fetches the Configuration value for state's 'Cache.VisibilitySweepFreq' field
 func (st *ConfigState) GetCacheVisibilitySweepFreq() (v time.Duration) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.Cache.VisibilitySweepFreq
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3882,9 +3882,9 @@ func SetCacheVisibilitySweepFreq(v time.Duration) { global.SetCacheVisibilitySwe
 
 // GetAdminAccountUsername safely fetches the Configuration value for state's 'AdminAccountUsername' field
 func (st *ConfigState) GetAdminAccountUsername() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdminAccountUsername
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3907,9 +3907,9 @@ func SetAdminAccountUsername(v string) { global.SetAdminAccountUsername(v) }
 
 // GetAdminAccountEmail safely fetches the Configuration value for state's 'AdminAccountEmail' field
 func (st *ConfigState) GetAdminAccountEmail() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdminAccountEmail
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3932,9 +3932,9 @@ func SetAdminAccountEmail(v string) { global.SetAdminAccountEmail(v) }
 
 // GetAdminAccountPassword safely fetches the Configuration value for state's 'AdminAccountPassword' field
 func (st *ConfigState) GetAdminAccountPassword() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdminAccountPassword
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3957,9 +3957,9 @@ func SetAdminAccountPassword(v string) { global.SetAdminAccountPassword(v) }
 
 // GetAdminTransPath safely fetches the Configuration value for state's 'AdminTransPath' field
 func (st *ConfigState) GetAdminTransPath() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdminTransPath
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -3982,9 +3982,9 @@ func SetAdminTransPath(v string) { global.SetAdminTransPath(v) }
 
 // GetAdminMediaPruneDryRun safely fetches the Configuration value for state's 'AdminMediaPruneDryRun' field
 func (st *ConfigState) GetAdminMediaPruneDryRun() (v bool) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.AdminMediaPruneDryRun
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
@@ -4007,9 +4007,9 @@ func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
 
 // GetRequestIDHeader safely fetches the Configuration value for state's 'RequestIDHeader' field
 func (st *ConfigState) GetRequestIDHeader() (v string) {
-	st.mutex.Lock()
+	st.mutex.RLock()
 	v = st.config.RequestIDHeader
-	st.mutex.Unlock()
+	st.mutex.RUnlock()
 	return
 }
 
