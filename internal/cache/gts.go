@@ -40,6 +40,7 @@ type GTSCaches struct {
 	listEntry     *result.Cache[*gtsmodel.ListEntry]
 	media         *result.Cache[*gtsmodel.MediaAttachment]
 	mention       *result.Cache[*gtsmodel.Mention]
+	note          *result.Cache[*gtsmodel.Note]
 	notification  *result.Cache[*gtsmodel.Notification]
 	report        *result.Cache[*gtsmodel.Report]
 	status        *result.Cache[*gtsmodel.Status]
@@ -65,6 +66,7 @@ func (c *GTSCaches) Init() {
 	c.initListEntry()
 	c.initMedia()
 	c.initMention()
+	c.initNote()
 	c.initNotification()
 	c.initReport()
 	c.initStatus()
@@ -87,6 +89,7 @@ func (c *GTSCaches) Start() {
 	tryStart(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
 	tryStart(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStart(c.mention, config.GetCacheGTSMentionSweepFreq())
+	tryStart(c.note, config.GetCacheGTSNoteSweepFreq())
 	tryStart(c.notification, config.GetCacheGTSNotificationSweepFreq())
 	tryStart(c.report, config.GetCacheGTSReportSweepFreq())
 	tryStart(c.status, config.GetCacheGTSStatusSweepFreq())
@@ -114,6 +117,7 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
 	tryStop(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStop(c.mention, config.GetCacheGTSNotificationSweepFreq())
+	tryStop(c.note, config.GetCacheGTSNoteSweepFreq())
 	tryStop(c.notification, config.GetCacheGTSNotificationSweepFreq())
 	tryStop(c.report, config.GetCacheGTSReportSweepFreq())
 	tryStop(c.status, config.GetCacheGTSStatusSweepFreq())
@@ -181,6 +185,11 @@ func (c *GTSCaches) Media() *result.Cache[*gtsmodel.MediaAttachment] {
 // Mention provides access to the gtsmodel Mention database cache.
 func (c *GTSCaches) Mention() *result.Cache[*gtsmodel.Mention] {
 	return c.mention
+}
+
+// Note provides access to the gtsmodel Note database cache.
+func (c *GTSCaches) Note() *result.Cache[*gtsmodel.Note] {
+	return c.note
 }
 
 // Notification provides access to the gtsmodel Notification database cache.
@@ -369,6 +378,19 @@ func (c *GTSCaches) initMention() {
 	}, config.GetCacheGTSMentionMaxSize())
 	c.mention.SetTTL(config.GetCacheGTSMentionTTL(), true)
 	c.mention.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initNote() {
+	c.note = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "AccountID.TargetAccountID"},
+	}, func(n1 *gtsmodel.Note) *gtsmodel.Note {
+		n2 := new(gtsmodel.Note)
+		*n2 = *n1
+		return n2
+	}, config.GetCacheGTSNoteMaxSize())
+	c.note.SetTTL(config.GetCacheGTSNoteTTL(), true)
+	c.note.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initNotification() {

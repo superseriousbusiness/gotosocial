@@ -231,3 +231,11 @@ const (
 	AccountRoleAdmin     AccountRoleName = "admin"     // Instance admin
 	AccountRoleUnknown   AccountRoleName = ""          // We don't know / remote account
 )
+
+// AccountNoteRequest models a request to update the private note for an account.
+//
+// swagger:ignore
+type AccountNoteRequest struct {
+	// Comment to use for the note text.
+	Comment string `form:"comment" json:"comment" xml:"comment"`
+}

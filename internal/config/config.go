@@ -229,6 +229,10 @@ type GTSCacheConfiguration struct {
 	MentionTTL       time.Duration `name:"mention-ttl"`
 	MentionSweepFreq time.Duration `name:"mention-sweep-freq"`
 
+	NoteMaxSize   int           `name:"note-max-size"`
+	NoteTTL       time.Duration `name:"note-ttl"`
+	NoteSweepFreq time.Duration `name:"note-sweep-freq"`
+
 	NotificationMaxSize   int           `name:"notification-max-size"`
 	NotificationTTL       time.Duration `name:"notification-ttl"`
 	NotificationSweepFreq time.Duration `name:"notification-sweep-freq"`

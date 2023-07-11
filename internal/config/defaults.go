@@ -174,6 +174,10 @@ var Defaults = Configuration{
 			MentionTTL:       time.Minute * 30,
 			MentionSweepFreq: time.Minute,
 
+			NoteMaxSize:   1000,
+			NoteTTL:       time.Minute * 30,
+			NoteSweepFreq: time.Minute,
+
 			NotificationMaxSize:   1000,
 			NotificationTTL:       time.Minute * 30,
 			NotificationSweepFreq: time.Minute,

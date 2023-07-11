@@ -3278,6 +3278,81 @@ func GetCacheGTSMentionSweepFreq() time.Duration { return global.GetCacheGTSMent
 // SetCacheGTSMentionSweepFreq safely sets the value for global configuration 'Cache.GTS.MentionSweepFreq' field
 func SetCacheGTSMentionSweepFreq(v time.Duration) { global.SetCacheGTSMentionSweepFreq(v) }
 
+// GetCacheGTSNoteMaxSize safely fetches the Configuration value for state's 'Cache.GTS.NoteMaxSize' field
+func (st *ConfigState) GetCacheGTSNoteMaxSize() (v int) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.NoteMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSNoteMaxSize safely sets the Configuration value for state's 'Cache.GTS.NoteMaxSize' field
+func (st *ConfigState) SetCacheGTSNoteMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.NoteMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSNoteMaxSizeFlag returns the flag name for the 'Cache.GTS.NoteMaxSize' field
+func CacheGTSNoteMaxSizeFlag() string { return "cache-gts-note-max-size" }
+
+// GetCacheGTSNoteMaxSize safely fetches the value for global configuration 'Cache.GTS.NoteMaxSize' field
+func GetCacheGTSNoteMaxSize() int { return global.GetCacheGTSNoteMaxSize() }
+
+// SetCacheGTSNoteMaxSize safely sets the value for global configuration 'Cache.GTS.NoteMaxSize' field
+func SetCacheGTSNoteMaxSize(v int) { global.SetCacheGTSNoteMaxSize(v) }
+
+// GetCacheGTSNoteTTL safely fetches the Configuration value for state's 'Cache.GTS.NoteTTL' field
+func (st *ConfigState) GetCacheGTSNoteTTL() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.NoteTTL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSNoteTTL safely sets the Configuration value for state's 'Cache.GTS.NoteTTL' field
+func (st *ConfigState) SetCacheGTSNoteTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.NoteTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSNoteTTLFlag returns the flag name for the 'Cache.GTS.NoteTTL' field
+func CacheGTSNoteTTLFlag() string { return "cache-gts-note-ttl" }
+
+// GetCacheGTSNoteTTL safely fetches the value for global configuration 'Cache.GTS.NoteTTL' field
+func GetCacheGTSNoteTTL() time.Duration { return global.GetCacheGTSNoteTTL() }
+
+// SetCacheGTSNoteTTL safely sets the value for global configuration 'Cache.GTS.NoteTTL' field
+func SetCacheGTSNoteTTL(v time.Duration) { global.SetCacheGTSNoteTTL(v) }
+
+// GetCacheGTSNoteSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.NoteSweepFreq' field
+func (st *ConfigState) GetCacheGTSNoteSweepFreq() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.NoteSweepFreq
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSNoteSweepFreq safely sets the Configuration value for state's 'Cache.GTS.NoteSweepFreq' field
+func (st *ConfigState) SetCacheGTSNoteSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.NoteSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSNoteSweepFreqFlag returns the flag name for the 'Cache.GTS.NoteSweepFreq' field
+func CacheGTSNoteSweepFreqFlag() string { return "cache-gts-note-sweep-freq" }
+
+// GetCacheGTSNoteSweepFreq safely fetches the value for global configuration 'Cache.GTS.NoteSweepFreq' field
+func GetCacheGTSNoteSweepFreq() time.Duration { return global.GetCacheGTSNoteSweepFreq() }
+
+// SetCacheGTSNoteSweepFreq safely sets the value for global configuration 'Cache.GTS.NoteSweepFreq' field
+func SetCacheGTSNoteSweepFreq(v time.Duration) { global.SetCacheGTSNoteSweepFreq(v) }
+
 // GetCacheGTSNotificationMaxSize safely fetches the Configuration value for state's 'Cache.GTS.NotificationMaxSize' field
 func (st *ConfigState) GetCacheGTSNotificationMaxSize() (v int) {
 	st.mutex.RLock()
