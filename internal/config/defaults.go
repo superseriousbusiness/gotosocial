@@ -107,7 +107,7 @@ var Defaults = Configuration{
 	SMTPPort:               0,
 	SMTPUsername:           "",
 	SMTPPassword:           "",
-	SMTPFrom:               "GoToSocial",
+	SMTPFrom:               "",
 	SMTPDiscloseRecipients: false,
 
 	TracingEnabled:           false,
