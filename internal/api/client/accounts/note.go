@@ -32,49 +32,49 @@ import (
 //
 // Set a private note for an account with the given id.
 //
-//		---
-//		tags:
-//		- accounts
+//	---
+//	tags:
+//	- accounts
 //
-//	    consumes:
-//	    - multipart/form-data
+//	consumes:
+//	- multipart/form-data
 //
-//		produces:
-//		- application/json
+//	produces:
+//	- application/json
 //
-//		parameters:
-//		-
-//			name: id
-//			type: string
-//			description: The id of the account for which to set a note.
-//			in: path
-//			required: true
-//		-
-//			name: comment
-//			type: string
-//			description: The text of the note. Omit this parameter or send an empty string to clear the note.
-//			in: formData
-//			default: ""
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: The id of the account for which to set a note.
+//		in: path
+//		required: true
+//	-
+//		name: comment
+//		type: string
+//		description: The text of the note. Omit this parameter or send an empty string to clear the note.
+//		in: formData
+//		default: ""
 //
-//		security:
-//		- OAuth2 Bearer:
-//			- write:accounts
+//	security:
+//	- OAuth2 Bearer:
+//		- write:accounts
 //
-//		responses:
-//			'200':
-//				description: Your relationship to the account.
-//				schema:
-//					"$ref": "#/definitions/accountRelationship"
-//			'400':
-//				description: bad request
-//			'401':
-//				description: unauthorized
-//			'404':
-//				description: not found
-//			'406':
-//				description: not acceptable
-//			'500':
-//				description: internal server error
+//	responses:
+//		'200':
+//			description: Your relationship to the account.
+//			schema:
+//				"$ref": "#/definitions/accountRelationship"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) AccountNotePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
