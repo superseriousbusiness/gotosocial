@@ -20,6 +20,9 @@ EXPECT=$(cat <<"EOF"
     "cache": {
         "gts": {
             "account-max-size": 99,
+            "account-note-max-size": 1000,
+            "account-note-sweep-freq": 60000000000,
+            "account-note-ttl": 1800000000000,
             "account-sweep-freq": 1000000000,
             "account-ttl": 10800000000000,
             "block-max-size": 1000,
