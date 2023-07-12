@@ -107,7 +107,7 @@ var Defaults = Configuration{
 	SMTPPort:               0,
 	SMTPUsername:           "",
 	SMTPPassword:           "",
-	SMTPFrom:               "GoToSocial",
+	SMTPFrom:               "",
 	SMTPDiscloseRecipients: false,
 
 	TracingEnabled:           false,
@@ -122,7 +122,8 @@ var Defaults = Configuration{
 	AdvancedCookiesSamesite:      "lax",
 	AdvancedRateLimitRequests:    300, // 1 per second per 5 minutes
 	AdvancedThrottlingMultiplier: 8,   // 8 open requests per CPU
-	AdvancedSenderMultiplier:     2,   // 2 senders per CPU
+	AdvancedThrottlingRetryAfter: time.Second * 30,
+	AdvancedSenderMultiplier:     2, // 2 senders per CPU
 
 	Cache: CacheConfiguration{
 		GTS: GTSCacheConfiguration{

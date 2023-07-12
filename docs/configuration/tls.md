@@ -52,7 +52,7 @@ letsencrypt-email-address: ""
 ##### MANUAL TLS CONFIG  #####
 ##############################
 
-# String. Path to a PEM-encoded file on disk that includes the certificate chain 
+# String. Path to a PEM-encoded file on disk that includes the certificate chain
 # and the public key
 # Examples: ["/gotosocial/storage/certs/chain.pem"]
 # Default: ""

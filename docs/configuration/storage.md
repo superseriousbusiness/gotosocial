@@ -24,11 +24,9 @@ storage-local-base-path: "/gotosocial/storage"
 
 # String. API endpoint of the S3 compatible service.
 # Only required when running with the s3 storage backend.
-#
-# If your endpoint contains the bucket name, all files will be put into a
-# subdirectory with the name of `storage-s3-bucket`
-#
 # Examples: ["minio:9000", "s3.nl-ams.scw.cloud", "s3.us-west-002.backblazeb2.com"]
+# GoToSocial uses "DNS-style" when accessing buckets.
+# If you are using Scaleways object storage, please remove the "bucket name" from the endpoint address
 # Default: ""
 storage-s3-endpoint: ""
 
@@ -36,6 +34,7 @@ storage-s3-endpoint: ""
 #
 # Default: false
 storage-s3-proxy: false
+
 # Bool. Use SSL for S3 connections.
 #
 # Only set this to 'false' when testing locally.
@@ -49,12 +48,14 @@ storage-s3-use-ssl: true
 # Examples: ["AKIAJSIE27KKMHXI3BJQ","miniouser"]
 # Default: ""
 storage-s3-access-key: ""
+
 # String. Secret key part of the S3 credentials.
 # Consider setting this value using environment variables to avoid leaking it via the config file
 # Only required when running with the s3 storage backend.
 # Examples: ["5bEYu26084qjSFyclM/f2pz4gviSfoOg+mFwBH39","miniopassword"]
 # Default: ""
 storage-s3-secret-key: ""
+
 # String. Name of the storage bucket.
 #
 # If you have already encoded your bucket name in the storage-s3-endpoint, this
