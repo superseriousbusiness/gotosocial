@@ -19,13 +19,12 @@ package federatingdb
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -41,7 +40,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	l := log.Entry{}.WithContext(ctx)
+	l := log.WithContext(ctx)
 
 	if log.Level() >= level.DEBUG {
 		i, err := marshalItem(asType)
@@ -66,40 +65,38 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 }
 
 func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, asType vocab.Type) error {
+	// Ensure delivered asType is a valid Accountable model.
 	accountable, ok := asType.(ap.Accountable)
 	if !ok {
-		return errors.New("updateAccountable: could not convert vocab.Type to Accountable")
+		return gtserror.Newf("could not convert vocab.Type %T to Accountable", asType)
 	}
 
-	updatedAcct, err := f.typeConverter.ASRepresentationToAccount(ctx, accountable, "")
-	if err != nil {
-		return fmt.Errorf("updateAccountable: error converting to account: %w", err)
+	// Extract AP URI of the updated Accountable model.
+	idProp := accountable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return gtserror.New("Accountable id prop was nil or not IRI")
 	}
+	updatedAcctURI := idProp.GetIRI()
 
-	if updatedAcct.Domain == config.GetHost() || updatedAcct.Domain == config.GetAccountDomain() {
-		// No need to update local accounts; in fact, if we try
-		// this it will break the shit out of things so do NOT.
+	// Don't try to update local accounts, it will break things.
+	if updatedAcctURI.Host == config.GetHost() {
 		return nil
 	}
 
-	if requestingAcct.URI != updatedAcct.URI {
-		return fmt.Errorf("updateAccountable: update for account %s was requested by account %s, this is not valid", updatedAcct.URI, requestingAcct.URI)
+	// Ensure Accountable and requesting account are one and the same.
+	if updatedAcctURIStr := updatedAcctURI.String(); requestingAcct.URI != updatedAcctURIStr {
+		return gtserror.Newf("update for %s was requested by %s, this is not valid", updatedAcctURIStr, requestingAcct.URI)
 	}
 
-	// Set some basic fields on the updated account
-	// based on what we already know about the requester.
-	updatedAcct.CreatedAt = requestingAcct.CreatedAt
-	updatedAcct.ID = requestingAcct.ID
-	updatedAcct.Language = requestingAcct.Language
-	updatedAcct.AvatarMediaAttachmentID = requestingAcct.AvatarMediaAttachmentID
-	updatedAcct.HeaderMediaAttachmentID = requestingAcct.HeaderMediaAttachmentID
-
-	// Pass to the processor for further updating of eg., avatar/header,
-	// emojis, etc. The actual db insert/update will take place there.
+	// Pass in to the processor the existing version of the requesting
+	// account that we have, plus the Accountable representation that
+	// was delivered along with the Update, for further asynchronous
+	// updating of eg., avatar/header, emojis, etc. The actual db
+	// inserts/updates will take place there.
 	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ObjectProfile,
 		APActivityType:   ap.ActivityUpdate,
-		GTSModel:         updatedAcct,
+		GTSModel:         requestingAcct,
 		APObjectModel:    accountable,
 		ReceivingAccount: receivingAcct,
 	})

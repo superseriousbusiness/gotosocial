@@ -20,7 +20,6 @@ package processing
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 
 	"codeberg.org/gruf/go-kv"
@@ -422,27 +421,28 @@ func (p *Processor) processCreateFlagFromFederator(ctx context.Context, federato
 
 // processUpdateAccountFromFederator handles Activity Update and Object Profile
 func (p *Processor) processUpdateAccountFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	incomingAccount, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
+	// Parse the old/existing account model.
+	account, ok := federatorMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
-		return errors.New("*gtsmodel.Account was not parseable on update account message")
+		return gtserror.New("account was not parseable as *gtsmodel.Account")
 	}
 
-	// Because this was an Update, the new AP Object should be set on the message.
-	incomingAccountable, ok := federatorMsg.APObjectModel.(ap.Accountable)
+	// Because this was an Update, the new Accountable should be set on the message.
+	apubAcc, ok := federatorMsg.APObjectModel.(ap.Accountable)
 	if !ok {
-		return errors.New("Accountable was not parseable on update account message")
+		return gtserror.New("Accountable was not parseable on update account message")
 	}
 
 	// Fetch up-to-date bio, avatar, header, etc.
 	_, _, err := p.federator.RefreshAccount(
 		ctx,
 		federatorMsg.ReceivingAccount.Username,
-		incomingAccount,
-		incomingAccountable,
-		true,
+		account,
+		apubAcc,
+		true, // Force refresh.
 	)
 	if err != nil {
-		return fmt.Errorf("error enriching updated account from federator: %s", err)
+		return gtserror.Newf("error refreshing updated account: %w", err)
 	}
 
 	return nil
