@@ -167,8 +167,8 @@ type Relationship interface {
 	CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error)
 
 	// GetNote gets a private note from a source account on a target account, if it exists.
-	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Note, error)
+	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error)
 
 	// PutNote creates or updates a private note.
-	PutNote(ctx context.Context, note *gtsmodel.Note) error
+	PutNote(ctx context.Context, note *gtsmodel.AccountNote) error
 }

@@ -60,7 +60,7 @@ var testModels = []interface{}{
 	&gtsmodel.EmojiCategory{},
 	&gtsmodel.Tombstone{},
 	&gtsmodel.Report{},
-	&gtsmodel.Note{},
+	&gtsmodel.AccountNote{},
 }
 
 // NewTestDB returns a new initialized, empty database for testing.
@@ -281,7 +281,7 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
-	for _, v := range NewTestNotes() {
+	for _, v := range NewTestAccountNotes() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}

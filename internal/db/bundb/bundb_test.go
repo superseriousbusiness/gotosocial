@@ -49,7 +49,7 @@ type BunDBStandardTestSuite struct {
 	testFaves        map[string]*gtsmodel.StatusFave
 	testLists        map[string]*gtsmodel.List
 	testListEntries  map[string]*gtsmodel.ListEntry
-	testNotes        map[string]*gtsmodel.Note
+	testAccountNotes map[string]*gtsmodel.AccountNote
 }
 
 func (suite *BunDBStandardTestSuite) SetupSuite() {
@@ -69,7 +69,7 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 	suite.testFaves = testrig.NewTestFaves()
 	suite.testLists = testrig.NewTestLists()
 	suite.testListEntries = testrig.NewTestListEntries()
-	suite.testNotes = testrig.NewTestNotes()
+	suite.testAccountNotes = testrig.NewTestAccountNotes()
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {

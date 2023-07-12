@@ -1891,9 +1891,9 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 	}
 }
 
-// NewTestNotes returns some notes for use in testing.
-func NewTestNotes() map[string]*gtsmodel.Note {
-	return map[string]*gtsmodel.Note{
+// NewTestAccountNotes returns some account notes for use in testing.
+func NewTestAccountNotes() map[string]*gtsmodel.AccountNote {
+	return map[string]*gtsmodel.AccountNote{
 		"local_account_2_note_on_1": {
 			ID:              "01H53TM628GNC4ZDNRGQGPK8S0",
 			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",

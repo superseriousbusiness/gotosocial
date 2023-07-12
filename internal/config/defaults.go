@@ -130,6 +130,10 @@ var Defaults = Configuration{
 			AccountTTL:       time.Minute * 30,
 			AccountSweepFreq: time.Minute,
 
+			AccountNoteMaxSize:   1000,
+			AccountNoteTTL:       time.Minute * 30,
+			AccountNoteSweepFreq: time.Minute,
+
 			BlockMaxSize:   1000,
 			BlockTTL:       time.Minute * 30,
 			BlockSweepFreq: time.Minute,
@@ -173,10 +177,6 @@ var Defaults = Configuration{
 			MentionMaxSize:   2000,
 			MentionTTL:       time.Minute * 30,
 			MentionSweepFreq: time.Minute,
-
-			NoteMaxSize:   1000,
-			NoteTTL:       time.Minute * 30,
-			NoteSweepFreq: time.Minute,
 
 			NotificationMaxSize:   1000,
 			NotificationTTL:       time.Minute * 30,

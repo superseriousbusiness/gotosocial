@@ -19,8 +19,8 @@ package gtsmodel
 
 import "time"
 
-// Note stores a private note from a local account related to any account.
-type Note struct {
+// AccountNote stores a private note from a local account related to any account.
+type AccountNote struct {
 	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`            // id of this item in the database
 	CreatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`     // when was item created
 	UpdatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`     // when was item last updated

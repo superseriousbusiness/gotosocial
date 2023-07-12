@@ -918,7 +918,7 @@ func (suite *RelationshipTestSuite) TestGetNote() {
 	// Retrieve a fixture note
 	account1 := suite.testAccounts["local_account_1"].ID
 	account2 := suite.testAccounts["local_account_2"].ID
-	expectedNote := suite.testNotes["local_account_2_note_on_1"]
+	expectedNote := suite.testAccountNotes["local_account_2_note_on_1"]
 	note, err := suite.db.GetNote(ctx, account2, account1)
 	suite.NoError(err)
 	suite.NotNil(note)
@@ -932,7 +932,7 @@ func (suite *RelationshipTestSuite) TestPutNote() {
 	// put a note in
 	account1 := suite.testAccounts["local_account_1"].ID
 	account2 := suite.testAccounts["local_account_2"].ID
-	err := suite.db.PutNote(ctx, &gtsmodel.Note{
+	err := suite.db.PutNote(ctx, &gtsmodel.AccountNote{
 		ID:              "01H539R2NA0M83JX15Y5RWKE97",
 		AccountID:       account1,
 		TargetAccountID: account2,

@@ -27,20 +27,20 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// Note table.
+			// Account note table.
 			if _, err := tx.
 				NewCreateTable().
-				Model(&gtsmodel.Note{}).
+				Model(&gtsmodel.AccountNote{}).
 				IfNotExists().
 				Exec(ctx); err != nil {
 				return err
 			}
 
-			// Add IDs index to the Note table.
+			// Add IDs index to the account note table.
 			if _, err := tx.
 				NewCreateIndex().
-				Model(&gtsmodel.Note{}).
-				Index("notes_account_id_target_account_id_idx").
+				Model(&gtsmodel.AccountNote{}).
+				Index("account_notes_account_id_target_account_id_idx").
 				Column("account_id", "target_account_id").
 				Exec(ctx); err != nil {
 				return err

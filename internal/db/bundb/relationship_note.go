@@ -27,14 +27,14 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func (r *relationshipDB) GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Note, error) {
+func (r *relationshipDB) GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error) {
 	return r.getNote(
 		ctx,
 		"AccountID.TargetAccountID",
-		func(note *gtsmodel.Note) error {
+		func(note *gtsmodel.AccountNote) error {
 			return r.conn.NewSelect().Model(note).
-				Where("? = ?", bun.Ident("note.account_id"), sourceAccountID).
-				Where("? = ?", bun.Ident("note.target_account_id"), targetAccountID).
+				Where("? = ?", bun.Ident("account_id"), sourceAccountID).
+				Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
 				Scan(ctx)
 		},
 		sourceAccountID,
@@ -42,10 +42,10 @@ func (r *relationshipDB) GetNote(ctx context.Context, sourceAccountID string, ta
 	)
 }
 
-func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Note) error, keyParts ...any) (*gtsmodel.Note, error) {
+func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery func(*gtsmodel.AccountNote) error, keyParts ...any) (*gtsmodel.AccountNote, error) {
 	// Fetch note from cache with loader callback
-	note, err := r.state.Caches.GTS.Note().Load(lookup, func() (*gtsmodel.Note, error) {
-		var note gtsmodel.Note
+	note, err := r.state.Caches.GTS.AccountNote().Load(lookup, func() (*gtsmodel.AccountNote, error) {
+		var note gtsmodel.AccountNote
 
 		// Not cached! Perform database query
 		if err := dbQuery(&note); err != nil {
@@ -85,9 +85,9 @@ func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery fun
 	return note, nil
 }
 
-func (r *relationshipDB) PutNote(ctx context.Context, note *gtsmodel.Note) error {
+func (r *relationshipDB) PutNote(ctx context.Context, note *gtsmodel.AccountNote) error {
 	note.UpdatedAt = time.Now()
-	return r.state.Caches.GTS.Note().Store(note, func() error {
+	return r.state.Caches.GTS.AccountNote().Store(note, func() error {
 		_, err := r.conn.
 			NewInsert().
 			Model(note).

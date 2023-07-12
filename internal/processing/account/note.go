@@ -33,7 +33,7 @@ func (p *Processor) PutNote(ctx context.Context, requestingAccount *gtsmodel.Acc
 		return nil, errWithCode
 	}
 
-	note := &gtsmodel.Note{
+	note := &gtsmodel.AccountNote{
 		ID:              id.NewULID(),
 		AccountID:       requestingAccount.ID,
 		TargetAccountID: targetAccount.ID,
