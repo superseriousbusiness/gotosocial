@@ -208,10 +208,9 @@ func serveFileRange(rw http.ResponseWriter, r *http.Request, src io.Reader, rng 
 		}
 
 		if end > size {
-			// This range exceeds length of the file, therefore unsatisfiable
-			rw.Header().Set("Content-Range", "bytes *"+strconv.FormatInt(size, 10))
-			http.Error(rw, "Unsatisfiable Range", http.StatusRequestedRangeNotSatisfiable)
-			return
+			// According to the http spec if end >= size the server should return the rest of the file
+			// https://www.rfc-editor.org/rfc/rfc9110#section-14.1.2-6
+			end = size - 1
 		}
 	} else {
 		// No end supplied, implying file end
