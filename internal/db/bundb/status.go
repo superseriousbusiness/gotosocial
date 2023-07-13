@@ -63,10 +63,7 @@ func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmo
 
 	for _, id := range ids {
 		// Attempt to fetch status from DB.
-		status, err := s.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			id,
-		)
+		status, err := s.GetStatusByID(ctx, id)
 		if err != nil {
 			log.Errorf(ctx, "error getting status %q: %v", id, err)
 			continue
