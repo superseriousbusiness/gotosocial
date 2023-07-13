@@ -139,6 +139,11 @@ func (suite *CleanerTestSuite) shouldUncacheEmoji(ctx context.Context, emoji *gt
 		return false, nil
 	}
 
+	if emoji.Cached == nil || !*emoji.Cached {
+		// Emoji is already uncached.
+		return false, nil
+	}
+
 	// Get related accounts using this emoji (if any).
 	accounts, err := suite.state.DB.GetAccountsUsingEmoji(ctx, emoji.ID)
 	if err != nil {
