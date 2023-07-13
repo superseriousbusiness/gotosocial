@@ -18,7 +18,6 @@
 package markers
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +25,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 // MarkersGETHandler swagger:operation GET /api/v1/markers markersGet

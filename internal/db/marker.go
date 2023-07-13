@@ -19,6 +19,7 @@ package db
 
 import (
 	"context"
+
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 

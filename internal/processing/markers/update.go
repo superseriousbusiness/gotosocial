@@ -21,9 +21,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )

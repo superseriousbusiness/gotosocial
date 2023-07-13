@@ -18,13 +18,14 @@
 package markers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"net/http"
 )
 
 // MarkersPOSTHandler swagger:operation POST /api/v1/markers markersPost
