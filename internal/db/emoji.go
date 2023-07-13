@@ -42,13 +42,13 @@ type Emoji interface {
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, Error)
 
-	// GetEmojis ...
+	// GetEmojis fetches all emojis with IDs less than 'maxID', up to a maximum of 'limit' emojis.
 	GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
 
-	// GetRemoteEmojis ...
+	// GetRemoteEmojis fetches all remote emojis with IDs less than 'maxID', up to a maximum of 'limit' emojis.
 	GetRemoteEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
 
-	// GetRemoteEmojisOlderThan ...
+	// GetCachedEmojisOlderThan fetches all cached remote emojis with 'updated_at' greater than 'olderThan', up to a maximum of 'limit' emojis.
 	GetCachedEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error)
 
 	// GetEmojisBy gets emojis based on given parameters. Useful for admin actions.

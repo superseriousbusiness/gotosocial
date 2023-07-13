@@ -58,7 +58,7 @@ type Status interface {
 	// GetStatuses gets a slice of statuses corresponding to the given status IDs.
 	GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error)
 
-	// GetStatusesUsingEmoji ...
+	// GetStatusesUsingEmoji fetches all status models using emoji with given ID stored in their 'emojis' column.
 	GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error)
 
 	// GetStatusParents gets the parent statuses of a given status.
