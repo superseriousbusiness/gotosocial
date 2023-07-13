@@ -37,6 +37,7 @@ type DB interface {
 	Emoji
 	Instance
 	List
+	Marker
 	Media
 	Mention
 	Notification

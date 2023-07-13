@@ -1,0 +1,54 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package markers
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+)
+
+// Get returns an API model for the markers of the requested timelines.
+// If a timeline marker hasn't been set yet, it's not included in the response.
+func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, timelines []apimodel.MarkerTimelineName) (*apimodel.Marker, gtserror.WithCode) {
+	markers := make([]*gtsmodel.Marker, 0, len(timelines))
+	for _, timeline := range timelines {
+		marker, err := p.state.DB.GetMarker(ctx, account.ID, typeutils.APIMarkerTimelineNameToMarkerTimelineName(timeline))
+		if err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
+				continue
+			}
+			// Real database error.
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		markers = append(markers, marker)
+	}
+
+	apiMarker, err := p.tc.MarkersToAPIMarker(ctx, markers)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting marker to api: %w", err))
+	}
+
+	return apiMarker, nil
+}

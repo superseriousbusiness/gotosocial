@@ -226,6 +226,10 @@ type GTSCacheConfiguration struct {
 	ListEntryTTL       time.Duration `name:"list-entry-ttl"`
 	ListEntrySweepFreq time.Duration `name:"list-entry-sweep-freq"`
 
+	MarkerMaxSize   int           `name:"marker-max-size"`
+	MarkerTTL       time.Duration `name:"marker-ttl"`
+	MarkerSweepFreq time.Duration `name:"marker-sweep-freq"`
+
 	MediaMaxSize   int           `name:"media-max-size"`
 	MediaTTL       time.Duration `name:"media-ttl"`
 	MediaSweepFreq time.Duration `name:"media-sweep-freq"`

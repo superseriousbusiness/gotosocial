@@ -15,35 +15,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package typeutils
+package db
 
 import (
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"context"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
-	switch m {
-	case apimodel.VisibilityPublic:
-		return gtsmodel.VisibilityPublic
-	case apimodel.VisibilityUnlisted:
-		return gtsmodel.VisibilityUnlocked
-	case apimodel.VisibilityPrivate:
-		return gtsmodel.VisibilityFollowersOnly
-	case apimodel.VisibilityMutualsOnly:
-		return gtsmodel.VisibilityMutualsOnly
-	case apimodel.VisibilityDirect:
-		return gtsmodel.VisibilityDirect
-	}
-	return ""
-}
+type Marker interface {
+	// GetMarker gets one marker with the given timeline.
+	GetMarker(ctx context.Context, accountID string, timeline gtsmodel.MarkerTimelineName) (*gtsmodel.Marker, error)
 
-func APIMarkerTimelineNameToMarkerTimelineName(m apimodel.MarkerTimelineName) gtsmodel.MarkerTimelineName {
-	switch m {
-	case apimodel.MarkerTimelineNameHome:
-		return gtsmodel.MarkerTimelineNameHome
-	case apimodel.MarkerTimelineNameNotifications:
-		return gtsmodel.MarkerTimelineNameNotifications
-	}
-	return ""
+	// UpdateMarker updates the given marker.
+	UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) error
 }
