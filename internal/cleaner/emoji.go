@@ -311,12 +311,12 @@ func (e *Emoji) fixCacheState(ctx context.Context, emoji *gtsmodel.Emoji) (bool,
 	switch {
 	case *emoji.Cached && !exist:
 		// Mark as uncached if expected files don't exist.
-		l.Debug("cached=true exists=false => uncaching")
+		l.Debug("cached=true exists=false => marking uncached")
 		return true, e.uncache(ctx, emoji)
 
 	case !*emoji.Cached && exist:
 		// Remove files if we don't expect them to exist.
-		l.Debug("cached=false exists=true => deleting")
+		l.Debug("cached=false exists=true => removing files")
 		_, err := e.removeFiles(ctx,
 			emoji.ImageStaticPath,
 			emoji.ImagePath,

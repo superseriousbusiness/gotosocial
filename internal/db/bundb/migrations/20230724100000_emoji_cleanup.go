@@ -19,6 +19,7 @@ package migrations
 
 import (
 	"context"
+	"strings"
 
 	"github.com/uptrace/bun"
 )
@@ -26,7 +27,9 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if _, err := tx.ExecContext(ctx, "ALTER TABLE emojis ADD COLUMN cached BOOLEAN DEFAULT false"); err != nil {
+			_, err := tx.ExecContext(ctx, "ALTER TABLE emojis ADD COLUMN cached BOOLEAN DEFAULT false")
+
+			if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
 				return err
 			}
 
