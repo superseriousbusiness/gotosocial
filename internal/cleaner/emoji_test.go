@@ -134,6 +134,11 @@ func (suite *CleanerTestSuite) testEmojiUncacheRemote(ctx context.Context, emoji
 }
 
 func (suite *CleanerTestSuite) shouldUncacheEmoji(ctx context.Context, emoji *gtsmodel.Emoji, after time.Time) (bool, error) {
+	if emoji.ImageRemoteURL == "" {
+		// Local emojis are never uncached.
+		return false, nil
+	}
+
 	// Get related accounts using this emoji (if any).
 	accounts, err := suite.state.DB.GetAccountsUsingEmoji(ctx, emoji.ID)
 	if err != nil {
@@ -281,6 +286,11 @@ func (suite *CleanerTestSuite) testEmojiPruneUnused(ctx context.Context, emojis 
 }
 
 func (suite *CleanerTestSuite) shouldPruneEmoji(ctx context.Context, emoji *gtsmodel.Emoji) (bool, error) {
+	if emoji.ImageRemoteURL == "" {
+		// Local emojis are never pruned.
+		return false, nil
+	}
+
 	// Get related accounts using this emoji (if any).
 	accounts, err := suite.state.DB.GetAccountsUsingEmoji(ctx, emoji.ID)
 	if err != nil {
