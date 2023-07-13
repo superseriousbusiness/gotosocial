@@ -25,12 +25,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ActivityPubAcceptHeaders represents the Accept headers mentioned here:
-var ActivityPubAcceptHeaders = []MIME{
-	AppActivityJSON,
-	AppActivityLDJSON,
-}
-
 // JSONAcceptHeaders is a slice of offers that just contains application/json types.
 var JSONAcceptHeaders = []MIME{
 	AppJSON,
@@ -59,12 +53,34 @@ var HTMLAcceptHeaders = []MIME{
 }
 
 // HTMLOrActivityPubHeaders matches text/html first, then activitypub types.
-// This is useful for user URLs that a user might go to in their browser.
+// This is useful for user URLs that a user might go to in their browser,
+// but which should also be able to serve ActivityPub as a fallback.
+//
 // https://www.w3.org/TR/activitypub/#retrieving-objects
 var HTMLOrActivityPubHeaders = []MIME{
 	TextHTML,
-	AppActivityJSON,
 	AppActivityLDJSON,
+	AppActivityJSON,
+}
+
+// ActivityPubOrHTMLHeaders matches activitypub types first, then text/html.
+// This is useful for URLs that should serve ActivityPub by default, but
+// which a user might also go to in their browser sometimes.
+//
+// https://www.w3.org/TR/activitypub/#retrieving-objects
+var ActivityPubOrHTMLHeaders = []MIME{
+	AppActivityLDJSON,
+	AppActivityJSON,
+	TextHTML,
+}
+
+// ActivityPubHeaders matches only activitypub Accept headers.
+// This is useful for URLs should only serve ActivityPub.
+//
+// https://www.w3.org/TR/activitypub/#retrieving-objects
+var ActivityPubHeaders = []MIME{
+	AppActivityLDJSON,
+	AppActivityJSON,
 }
 
 var HostMetaHeaders = []MIME{

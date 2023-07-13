@@ -41,11 +41,13 @@ func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
 	usersGroup := r.AttachGroup("users")
 
 	// attach shared, non-global middlewares to both of these groups
-	cacheControlMiddleware := middleware.CacheControl("no-store")
+	ccMiddleware := middleware.CacheControl(middleware.CacheControlConfig{
+		Directives: []string{"no-store"},
+	})
 	emojiGroup.Use(m...)
 	usersGroup.Use(m...)
-	emojiGroup.Use(a.signatureCheckMiddleware, cacheControlMiddleware)
-	usersGroup.Use(a.signatureCheckMiddleware, cacheControlMiddleware)
+	emojiGroup.Use(a.signatureCheckMiddleware, ccMiddleware)
+	usersGroup.Use(a.signatureCheckMiddleware, ccMiddleware)
 
 	a.emoji.Route(emojiGroup.Handle)
 	a.users.Route(usersGroup.Handle)
@@ -53,8 +55,17 @@ func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
 
 // Public key endpoint requires different middleware + cache policies from other AP endpoints.
 func (a *ActivityPub) RoutePublicKey(r router.Router, m ...gin.HandlerFunc) {
+	// Create grouping for the 'users/[username]/main-key' prefix.
 	publicKeyGroup := r.AttachGroup(publickey.PublicKeyPath)
-	publicKeyGroup.Use(a.signatureCheckMiddleware, middleware.CacheControl("public,max-age=604800"))
+
+	// Attach middleware allowing public cacheing of main-key.
+	ccMiddleware := middleware.CacheControl(middleware.CacheControlConfig{
+		Directives: []string{"public", "max-age=604800"},
+		Vary:       []string{"Accept", "Accept-Encoding"},
+	})
+	publicKeyGroup.Use(m...)
+	publicKeyGroup.Use(a.signatureCheckMiddleware, ccMiddleware)
+
 	a.publicKey.Route(publicKeyGroup.Handle)
 }
 

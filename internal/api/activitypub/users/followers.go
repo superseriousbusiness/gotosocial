@@ -38,7 +38,7 @@ func (m *Module) FollowersGETHandler(c *gin.Context) {
 		return
 	}
 
-	format, err := apiutil.NegotiateAccept(c, apiutil.HTMLOrActivityPubHeaders...)
+	format, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return

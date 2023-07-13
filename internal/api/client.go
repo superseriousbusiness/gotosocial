@@ -83,7 +83,10 @@ func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	apiGroup.Use(m...)
 	apiGroup.Use(
 		middleware.TokenCheck(c.db, c.processor.OAuthValidateBearerToken),
-		middleware.CacheControl("no-store"), // never cache api responses
+		middleware.CacheControl(middleware.CacheControlConfig{
+			// Never cache client api responses.
+			Directives: []string{"no-store"},
+		}),
 	)
 
 	// for each client api module, pass it the Handle function

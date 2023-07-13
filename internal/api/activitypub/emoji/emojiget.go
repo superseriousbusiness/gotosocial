@@ -36,7 +36,7 @@ func (m *Module) EmojiGetHandler(c *gin.Context) {
 		return
 	}
 
-	format, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubAcceptHeaders...)
+	format, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubHeaders...)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return

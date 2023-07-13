@@ -36,8 +36,8 @@ func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	// Attach middlewares appropriate for this group.
 	fileserverGroup.Use(m...)
 	// If we're using local storage or proxying s3, we can set a
-	// long max-age on all file requests to reflect that we
-	// never host different files at the same URL (since
+	// long max-age + immutable on all file requests to reflect
+	// that we never host different files at the same URL (since
 	// ULIDs are generated per piece of media), so we can
 	// easily prevent clients having to fetch files repeatedly.
 	//
@@ -45,9 +45,18 @@ func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	// must be set dynamically within the request handler,
 	// based on how long the signed URL has left to live before
 	// it expires. This ensures that clients won't cache expired
-	// links. This is done within fileserver/servefile.go.
+	// links. This is done within fileserver/servefile.go, so we
+	// should not set the middleware here in that case.
+	//
+	// See:
+	//
+	// - https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#avoiding_revalidation
+	// - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#immutable
 	if config.GetStorageBackend() == "local" || config.GetStorageS3Proxy() {
-		fileserverGroup.Use(middleware.CacheControl("private", "max-age=604800")) // 7d
+		fileserverGroup.Use(middleware.CacheControl(middleware.CacheControlConfig{
+			Directives: []string{"private", "max-age=604800", "immutable"},
+			Vary:       []string{"Range"}, // Cache partial ranges separately.
+		}))
 	}
 
 	f.fileserver.Route(fileserverGroup.Handle)
