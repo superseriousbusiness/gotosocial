@@ -25,6 +25,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -108,24 +109,44 @@ func (p *Processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 
 // processCreateStatusFromFederator handles Activity Create and Object Note.
 func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	// Check the federatorMsg for either an already
-	// dereferenced and converted status pinned to
-	// the message, or an AP IRI that we need to deref.
+	// Check the federatorMsg for either an already dereferenced
+	// and converted status pinned to the message, or a forwarded
+	// AP IRI that we still need to deref.
 	var (
-		status *gtsmodel.Status
-		err    error
+		status    *gtsmodel.Status
+		err       error
+		forwarded = federatorMsg.GTSModel == nil
 	)
 
-	if federatorMsg.GTSModel != nil {
+	if forwarded {
+		// Model was not set, deref with IRI.
+		// This will also cause the status to be inserted into the db.
+		status, err = p.statusFromAPIRI(ctx, federatorMsg)
+	} else {
 		// Model is set, use that.
 		status, err = p.statusFromGTSModel(ctx, federatorMsg)
-	} else {
-		// Model is not set, use IRI.
-		status, err = p.statusFromAPIRI(ctx, federatorMsg)
 	}
 
 	if err != nil {
 		return gtserror.Newf("error extracting status from federatorMsg: %w", err)
+	}
+
+	// Before we go whacking this status in our db, ensure
+	// it's actually relevant to the account who received it
+	// in their Inbox, and it's not just a status randomly
+	// blasted at us from somewhere we don't care about.
+
+	if err := p.state.DB.PutStatus(ctx, status); err != nil {
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// The status already exists in the database, which
+			// means we've already processed it and some race
+			// condition means we didn't catch it yet. We can
+			// just return nil here and be done with it.
+			return nil
+		}
+
+		// Real error.
+		return gtserror.Newf("db error inserting status: %w", err)
 	}
 
 	if status.Account == nil || status.Account.IsRemote() {

@@ -21,13 +21,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
-	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -47,14 +47,16 @@ import (
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
-	if log.Level() >= level.DEBUG {
+	if log.Level() >= level.TRACE {
 		i, err := marshalItem(asType)
 		if err != nil {
 			return err
 		}
-		l := log.WithContext(ctx).
-			WithField("create", i)
-		l.Trace("entering Create")
+
+		log.
+			WithContext(ctx).
+			WithField("create", i).
+			Trace("entering Create")
 	}
 
 	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
@@ -116,127 +118,153 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 	CREATE HANDLERS
 */
 
-func (f *federatingDB) activityCreate(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+// activityCreate handles asType Create by checking
+// the Object entries of the Create and calling other
+// handlers as appropriate.
+func (f *federatingDB) activityCreate(
+	ctx context.Context,
+	asType vocab.Type,
+	receivingAccount *gtsmodel.Account,
+	requestingAccount *gtsmodel.Account,
+) error {
 	create, ok := asType.(vocab.ActivityStreamsCreate)
 	if !ok {
-		return errors.New("activityCreate: could not convert type to create")
+		return gtserror.Newf("could not convert asType %T to ActivityStreamsCreate", asType)
 	}
 
-	// create should have an object
-	object := create.GetActivityStreamsObject()
-	if object == nil {
-		return errors.New("Create had no Object")
+	// Create must have an Object.
+	objectProp := create.GetActivityStreamsObject()
+	if objectProp == nil {
+		return gtserror.New("Create had no Object")
 	}
 
-	errs := []string{}
-	// iterate through the object(s) to see what we're meant to be creating
-	for objectIter := object.Begin(); objectIter != object.End(); objectIter = objectIter.Next() {
-		asObjectType := objectIter.GetType()
-		if asObjectType == nil {
-			// currently we can't do anything with just a Create of something that's not an Object with a type
-			// TODO: process a Create with an Object that's just a URI or something
-			errs = append(errs, "object of Create was not a Type")
+	// Iterate through the Object property and process
+	// the first valid Object we can find that is a Statusable.
+	//
+	// todo: https://github.com/superseriousbusiness/gotosocial/issues/1905
+	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
+		object := iter.GetType()
+		if object == nil {
+			// Can't do Create with Object that's just a URI.
+			// Warn log this because it's an AP error.
+			log.Warn(ctx, "Object entry was not a Type")
 			continue
 		}
 
-		// we have a type -- what is it?
-		asObjectTypeName := asObjectType.GetTypeName()
-		switch asObjectTypeName {
-		case ap.ObjectNote:
-			// CREATE A NOTE
-			if err := f.createNote(ctx, objectIter.GetActivityStreamsNote(), receivingAccount, requestingAccount); err != nil {
-				errs = append(errs, err.Error())
-			}
-		default:
-			errs = append(errs, fmt.Sprintf("received an object on a Create that we couldn't handle: %s", asObjectType.GetTypeName()))
+		statusable, ok := object.(ap.Statusable)
+		if !ok {
+			// Can't (currently) Create anything other than a Statusable.
+			log.Debugf(ctx, "Object entry was of (currently) unsupported type %s", object.GetTypeName())
+			continue
 		}
-	}
 
-	if len(errs) != 0 {
-		return fmt.Errorf("activityCreate: one or more errors while processing activity: %s", strings.Join(errs, "; "))
+		return f.createStatusable(ctx, statusable, receivingAccount, requestingAccount)
 	}
 
 	return nil
 }
 
-// createNote handles a Create activity with a Note type.
-func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStreamsNote, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"receivingAccount", receivingAccount.URI},
-			{"requestingAccount", requestingAccount.URI},
-		}...)
+// createStatusable handles a Create activity for a Statusable.
+// This function won't insert anything in the database yet,
+// but will pass the Statusable (if appropriate) through to
+// the processor for further asynchronous processing.
+func (f *federatingDB) createStatusable(
+	ctx context.Context,
+	statusable ap.Statusable,
+	receivingAccount *gtsmodel.Account,
+	requestingAccount *gtsmodel.Account,
+) error {
+	// Statusable must have an attributedTo.
+	attrToProp := statusable.GetActivityStreamsAttributedTo()
+	if attrToProp == nil {
+		return gtserror.Newf("statusable had no attributedTo")
+	}
 
-	// Check if we have a forward.
-	// In other words, was the note posted to our inbox by at least one actor who actually created the note, or are they just forwarding it?
+	// Statusable must have an ID.
+	idProp := statusable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return gtserror.Newf("statusable had no id, or id was not a URI")
+	}
+
+	statusableURI := idProp.GetIRI()
+
+	// Check if we have a forward. In other words, was the
+	// statusable posted to our inbox by at least one actor
+	// who actually created it, or are they forwarding it?
 	forward := true
-
-	// note should have an attributedTo
-	noteAttributedTo := note.GetActivityStreamsAttributedTo()
-	if noteAttributedTo == nil {
-		return errors.New("createNote: note had no attributedTo")
-	}
-
-	// compare the attributedTo(s) with the actor who posted this to our inbox
-	for attributedToIter := noteAttributedTo.Begin(); attributedToIter != noteAttributedTo.End(); attributedToIter = attributedToIter.Next() {
-		if !attributedToIter.IsIRI() {
-			continue
+	for iter := attrToProp.Begin(); iter != attrToProp.End(); iter = iter.Next() {
+		actorURI, err := pub.ToId(iter)
+		if err != nil {
+			return gtserror.Newf("error extracting id from attributedTo entry: %w", err)
 		}
-		iri := attributedToIter.GetIRI()
-		if requestingAccount.URI == iri.String() {
-			// at least one creator of the note, and the actor who posted the note to our inbox, are the same, so it's not a forward
+
+		if requestingAccount.URI == actorURI.String() {
+			// The actor who posted this statusable to our inbox is
+			// (one of) its creator(s), so this is not a forward.
 			forward = false
+			break
 		}
 	}
 
-	// If we do have a forward, we should ignore the content for now and just dereference based on the URL/ID of the note instead, to get the note straight from the horse's mouth
+	// If we do have a forward, we should ignore the content
+	// and instead deref based on the URI of the statusable.
+	//
+	// In other words, don't automatically trust whoever sent
+	// this status to us, but fetch the authentic article from
+	// the server it originated from.
 	if forward {
-		l.Trace("note is a forward")
-		id := note.GetJSONLDId()
-		if !id.IsIRI() {
-			// if the note id isn't an IRI, there's nothing we can do here
-			return nil
-		}
-		// pass the note iri into the processor and have it do the dereferencing instead of doing it here
+		// Pass the statusable URI into the processor worker and
+		// do the rest of the processing asynchronously.
 		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityCreate,
-			APIri:            id.GetIRI(),
+			APIri:            statusableURI,
 			APObjectModel:    nil,
 			GTSModel:         nil,
 			ReceivingAccount: receivingAccount,
 		})
+
 		return nil
 	}
 
-	// if we reach this point, we know it's not a forwarded status, so proceed with processing it as normal
+	// If we reach this point, we know this is not a forwarded
+	// statusable, but came directly from (one of) the account(s)
+	// who created it, so proceed with processing it as normal.
 
-	status, err := f.typeConverter.ASStatusToStatus(ctx, note)
-	if err != nil {
-		return fmt.Errorf("createNote: error converting note to status: %s", err)
+	// Check if we already have a status entry
+	// for this statusable, based on the ID/URI.
+	statusableURIStr := statusableURI.String()
+	status, err := f.state.DB.GetStatusByURI(ctx, statusableURIStr)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error checking existence of status %s: %w", statusableURIStr, err)
 	}
 
-	// id the status based on the time it was created
+	if status != nil {
+		// We already had this status in the
+		// db, no need for further action.
+		return nil
+	}
+
+	// We don't have this in the db, so it's a new status.
+	status, err = f.typeConverter.ASStatusToStatus(ctx, statusable)
+	if err != nil {
+		return gtserror.Newf("error converting statusable to status: %w", err)
+	}
+
+	// ID the new status based on the time it was created.
 	statusID, err := id.NewULIDFromTime(status.CreatedAt)
 	if err != nil {
 		return err
 	}
 	status.ID = statusID
 
-	if err := f.state.DB.PutStatus(ctx, status); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			// the status already exists in the database, which means we've already handled everything else,
-			// so we can just return nil here and be done with it.
-			return nil
-		}
-		// an actual error has happened
-		return fmt.Errorf("createNote: database error inserting status: %s", err)
-	}
-
+	// Do the rest of the processing asynchronously. The processor
+	// will handle inserting/updating + further dereferencing the status.
 	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
-		APObjectModel:    note,
+		APIri:            nil,
+		APObjectModel:    statusable,
 		GTSModel:         status,
 		ReceivingAccount: receivingAccount,
 	})
