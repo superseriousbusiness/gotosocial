@@ -45,7 +45,7 @@ func (a *Auth) Route(r router.Router, m ...gin.HandlerFunc) {
 	var (
 		ccMiddleware = middleware.CacheControl(middleware.CacheControlConfig{
 			Directives: []string{"private", "max-age=120"},
-			Vary:       []string{"Accept-Encoding"},
+			Vary:       []string{"Accept", "Accept-Encoding"},
 		})
 		sessionMiddleware = middleware.Session(a.sessionName, a.routerSession.Auth, a.routerSession.Crypt)
 	)
