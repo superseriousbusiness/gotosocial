@@ -18,7 +18,6 @@
 package cleaner_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -66,8 +65,7 @@ func (suite *CleanerTestSuite) SetupTest() {
 }
 
 func (suite *CleanerTestSuite) TearDownTest() {
-	_ = suite.state.DB.Stop(context.Background())
-	suite.state.DB = nil
+	testrig.StandardDBTeardown(suite.state.DB)
 }
 
 // mapvals extracts a slice of values from the values contained within the map.
