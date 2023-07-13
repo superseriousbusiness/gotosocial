@@ -47,7 +47,9 @@ func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
 	// it expires. This ensures that clients won't cache expired
 	// links. This is done within fileserver/servefile.go.
 	if config.GetStorageBackend() == "local" || config.GetStorageS3Proxy() {
-		fileserverGroup.Use(middleware.CacheControl("private", "max-age=604800")) // 7d
+		fileserverGroup.Use(middleware.CacheControl(middleware.CacheControlConfig{
+			Directives: []string{"private", "max-age=604800"},
+		}))
 	}
 
 	f.fileserver.Route(fileserverGroup.Handle)

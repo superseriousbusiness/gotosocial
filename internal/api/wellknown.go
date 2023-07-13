@@ -40,8 +40,11 @@ func (w *WellKnown) Route(r router.Router, m ...gin.HandlerFunc) {
 	// attach middlewares appropriate for this group
 	wellKnownGroup.Use(m...)
 	wellKnownGroup.Use(
-		// allow .well-known responses to be cached for 2 minutes
-		middleware.CacheControl("public", "max-age=120"),
+		// Allow public cache for 2 minutes.
+		middleware.CacheControl(middleware.CacheControlConfig{
+			Directives: []string{"public", "max-age=120"},
+			Vary:       []string{"Accept-Encoding"},
+		}),
 	)
 
 	w.nodeInfo.Route(wellKnownGroup.Handle)

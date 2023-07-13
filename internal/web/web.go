@@ -91,7 +91,9 @@ func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
 	// can still be served
 	profileGroup := r.AttachGroup(profileGroupPath)
 	profileGroup.Use(mi...)
-	profileGroup.Use(middleware.SignatureCheck(m.isURIBlocked), middleware.CacheControl("no-store"))
+	profileGroup.Use(middleware.SignatureCheck(m.isURIBlocked), middleware.CacheControl(middleware.CacheControlConfig{
+		Directives: []string{"no-store"},
+	}))
 	profileGroup.Handle(http.MethodGet, "", m.profileGETHandler) // use empty path here since it's the base of the group
 	profileGroup.Handle(http.MethodGet, statusPath, m.threadGETHandler)
 

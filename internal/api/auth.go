@@ -43,13 +43,16 @@ func (a *Auth) Route(r router.Router, m ...gin.HandlerFunc) {
 
 	// instantiate + attach shared, non-global middlewares to both of these groups
 	var (
-		cacheControlMiddleware = middleware.CacheControl("private", "max-age=120")
-		sessionMiddleware      = middleware.Session(a.sessionName, a.routerSession.Auth, a.routerSession.Crypt)
+		ccMiddleware = middleware.CacheControl(middleware.CacheControlConfig{
+			Directives: []string{"private", "max-age=120"},
+			Vary:       []string{"Accept-Encoding"},
+		})
+		sessionMiddleware = middleware.Session(a.sessionName, a.routerSession.Auth, a.routerSession.Crypt)
 	)
 	authGroup.Use(m...)
 	oauthGroup.Use(m...)
-	authGroup.Use(cacheControlMiddleware, sessionMiddleware)
-	oauthGroup.Use(cacheControlMiddleware, sessionMiddleware)
+	authGroup.Use(ccMiddleware, sessionMiddleware)
+	oauthGroup.Use(ccMiddleware, sessionMiddleware)
 
 	a.auth.RouteAuth(authGroup.Handle)
 	a.auth.RouteOauth(oauthGroup.Handle)
