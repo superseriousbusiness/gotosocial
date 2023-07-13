@@ -73,7 +73,7 @@ type Account interface {
 	// GetAccountFaves fetches faves/likes created by the target accountID.
 	GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, Error)
 
-	// GetAccountsUsingEmoji ...
+	// GetAccountsUsingEmoji fetches all account models using emoji with given ID stored in their 'emojis' column.
 	GetAccountsUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Account, error)
 
 	// GetAccountStatusesCount is a shortcut for the common action of counting statuses produced by accountID.
