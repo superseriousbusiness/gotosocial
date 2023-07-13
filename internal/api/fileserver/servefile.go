@@ -95,7 +95,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 		// Derive the max-age value from how long the link has left until
 		// it expires.
 		maxAge := int(time.Until(content.URL.Expiry).Seconds())
-		c.Header("Cache-Control", "private,max-age="+strconv.Itoa(maxAge))
+		c.Header("Cache-Control", "private, max-age="+strconv.Itoa(maxAge)+", immutable")
 		c.Redirect(http.StatusFound, content.URL.String())
 		return
 	}
