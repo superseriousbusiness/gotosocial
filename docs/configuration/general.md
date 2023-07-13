@@ -23,10 +23,20 @@ log-level: "info"
 # Default: false
 log-db-queries: false
 
+# Bool. Include the client IP in the emitted log lines
+# Options: [true, false]
+# Default: true
+log-client-ip: true
+
 # String. Application name to use internally.
 # Examples: ["My Application","gotosocial"]
 # Default: "gotosocial"
 application-name: "gotosocial"
+
+# String. The user that will be shown instead of the landing page. if no user is set, the landing page will be shown.
+# Examples: "admin"
+# Default: ""
+landing-page-user: ""
 
 # String. Hostname that this server will be reachable at. Defaults to localhost for local testing,
 # but you should *definitely* change this when running for real, or your server won't work at all.
@@ -44,7 +54,9 @@ host: "localhost"
 #
 # You should also redirect requests at "example.org/.well-known/nodeinfo" in the same way.
 #
-# You should also redirect requests at "example.org/.well-known/host-meta" in the same way. This endpoint is used by a number of clients to discover the API endpoint to use when the host and account domain are different.
+# You should also redirect requests at "example.org/.well-known/host-meta" in the same way. This endpoint
+# is used by a number of clients to discover the API endpoint to use when the host and account domain are
+# different.
 #
 # An empty string (ie., not set) means that the same value as 'host' will be used.
 #

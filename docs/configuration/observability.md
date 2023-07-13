@@ -9,10 +9,6 @@ These settings let you tune and configure certain observability related behaviou
 ##### OBSERVABILITY SETTINGS #####
 ##################################
 
-# Bool. Enable generation/parsing of a request ID for each received HTTP Request.
-# Default: true
-request-id-enabled: true
-
 # String. Header name to use to extract a request or trace ID from. Typically set by a
 # loadbalancer or proxy.
 # Default: "X-Request-Id"

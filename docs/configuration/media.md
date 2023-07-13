@@ -7,7 +7,7 @@
 ##### MEDIA CONFIG #####
 ########################
 
-# Config pertaining to user media uploads (videos, image, image descriptions).
+# Config pertaining to media uploads (videos, image, image descriptions, emoji).
 
 # Int. Maximum allowed image upload size in bytes.
 # Examples: [2097152, 10485760]
@@ -53,6 +53,6 @@ media-emoji-local-max-size: 51200
 # This strikes a good balance between decent interoperability with instances that have
 # higher emoji size limits, and not taking up too much space in storage.
 # Examples: [51200, 102400]
-# Default: 51200
+# Default: 102400
 media-emoji-remote-max-size: 102400
 ```

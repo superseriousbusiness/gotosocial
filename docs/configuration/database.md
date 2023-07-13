@@ -165,6 +165,6 @@ db-sqlite-cache-size: "8MiB"
 # If set to empty string or zero, the sqlite default will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_busy_timeout
 # Examples: ["0s", "1s", "30s", "1m", "5m"]
-# Default: "5s"
-db-sqlite-busy-timeout: "5m"
+# Default: "30m"
+db-sqlite-busy-timeout: "30m"
 ```

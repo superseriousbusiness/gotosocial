@@ -32,7 +32,7 @@ syslog-enabled: false
 
 # String. Protocol to use when directing logs to syslog. Leave empty to connect to local syslog.
 # Options: ["udp", "tcp", ""]
-# Default: "tcp"
+# Default: "udp"
 syslog-protocol: "udp"
 
 # String. Address:port to send syslog logs to. Leave empty to connect to local syslog.
