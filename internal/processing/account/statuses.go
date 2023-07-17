@@ -164,23 +164,20 @@ func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 	}
 
 	var (
-		items          = make([]interface{}, 0, count)
-		nextMaxIDValue string
-	)
+		items = make([]interface{}, 0, count)
 
-	for i, s := range statuses {
 		// Set next value before API converting,
 		// so caller can still page properly.
-		if i == count-1 {
-			nextMaxIDValue = s.ID
-		}
+		nextMaxIDValue = statuses[count-1].ID
+	)
 
+	for _, s := range statuses {
+		// Convert fetched statuses to API statuses.
 		item, err := p.tc.StatusToAPIStatus(ctx, s, nil)
 		if err != nil {
-			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue
 		}
-
 		items = append(items, item)
 	}
 
