@@ -211,7 +211,7 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 		// Delete all entries attached to list.
 		if _, err := tx.NewDelete().
 			Table("list_entries").
-			Where("list_id = ?", id).
+			Where("? = ?", bun.Ident("list_id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -219,7 +219,7 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 		// Delete the list itself.
 		_, err := tx.NewDelete().
 			Table("lists").
-			Where("id = ?", id).
+			Where("? = ?", bun.Ident("id"), id).
 			Exec(ctx)
 		return err
 	})
@@ -366,7 +366,7 @@ func (l *listDB) GetListEntriesForFollowID(ctx context.Context, followID string)
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("entry")).
 		// Select only IDs from table
-		Column("entry.id").
+		ColumnExpr("?", bun.Ident("entry.id")).
 		// Select only entries belonging with given followID.
 		Where("? = ?", bun.Ident("entry.follow_id"), followID).
 		Scan(ctx, &entryIDs); err != nil {
@@ -470,7 +470,7 @@ func (l *listDB) DeleteListEntry(ctx context.Context, id string) error {
 	// Finally delete the list entry.
 	_, err = l.conn.NewDelete().
 		Table("list_entries").
-		Where("id = ?", id).
+		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
 	return err
 }
@@ -482,8 +482,8 @@ func (l *listDB) DeleteListEntriesForFollowID(ctx context.Context, followID stri
 	if err := l.conn.
 		NewSelect().
 		Table("list_entries").
-		Column("id").
-		Where("follow_id = ?", followID).
+		ColumnExpr("?", bun.Ident("id")).
+		Where("? = ?", bun.Ident("follow_id"), followID).
 		Order("id DESC").
 		Scan(ctx, &entryIDs); err != nil {
 		return l.conn.ProcessError(err)
