@@ -82,6 +82,7 @@ func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 		if bookmark.ID < nextMaxIDValue {
 			nextMaxIDValue = bookmark.ID // Lowest ID (for paging down).
 		}
+
 		if bookmark.ID > prevMinIDValue {
 			prevMinIDValue = bookmark.ID // Highest ID (for paging up).
 		}
