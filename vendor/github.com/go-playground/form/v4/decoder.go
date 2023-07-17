@@ -109,7 +109,11 @@ func (d *decoder) parseMapData() {
 					// no need to check for error, it will always pass
 					// as we have done the checking to ensure
 					// the value is a number ahead of time.
-					ke.ivalue, _ = strconv.Atoi(ke.value)
+					var err error
+					ke.ivalue, err = strconv.Atoi(ke.value)
+					if err != nil {
+						ke.ivalue = -1
+					}
 
 					if ke.ivalue > rd.sliceLen {
 						rd.sliceLen = ke.ivalue
