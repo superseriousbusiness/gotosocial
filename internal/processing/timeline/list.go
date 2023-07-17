@@ -142,25 +142,17 @@ func (p *Processor) ListTimelineGet(ctx context.Context, authed *oauth.Auth, lis
 
 	var (
 		items          = make([]interface{}, count)
-		nextMaxIDValue string
-		prevMinIDValue string
+		nextMaxIDValue = statuses[count-1].GetID()
+		prevMinIDValue = statuses[0].GetID()
 	)
 
-	for i, item := range statuses {
-		if i == count-1 {
-			nextMaxIDValue = item.GetID()
-		}
-
-		if i == 0 {
-			prevMinIDValue = item.GetID()
-		}
-
-		items[i] = item
+	for i := range statuses {
+		items[i] = statuses[i]
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
-		Path:           "api/v1/timelines/list/" + listID,
+		Path:           "/api/v1/timelines/list/" + listID,
 		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
