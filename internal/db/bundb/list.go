@@ -183,7 +183,7 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 	// Load list by ID into cache to ensure we can perform
 	// all necessary cache invalidation hooks on removal.
-	_, err := l.GetListEntryByID(
+	_, err := l.GetListByID(
 		// Don't populate the entry;
 		// we only want the list ID.
 		gtscontext.SetBarebones(ctx),
