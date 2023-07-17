@@ -87,7 +87,14 @@ func (p *Processor) GetListAccounts(
 	limit int,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	// Ensure list exists + is owned by requesting account.
-	if _, errWithCode := p.getList(ctx, account.ID, listID); errWithCode != nil {
+	_, errWithCode := p.getList(
+		// Use barebones ctx; no embedded
+		// structs necessary for this call.
+		gtscontext.SetBarebones(ctx),
+		account.ID,
+		listID,
+	)
+	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
@@ -127,18 +134,18 @@ func (p *Processor) GetListAccounts(
 		}
 
 		if err := p.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
-			log.Debugf(ctx, "skipping list entry because of error populating it: %q", err)
+			log.Errorf(ctx, "error populating list entry: %v", err)
 			continue
 		}
 
 		if err := p.state.DB.PopulateFollow(ctx, listEntry.Follow); err != nil {
-			log.Debugf(ctx, "skipping list entry because of error populating follow: %q", err)
+			log.Errorf(ctx, "error populating follow: %v", err)
 			continue
 		}
 
 		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, listEntry.Follow.TargetAccount)
 		if err != nil {
-			log.Debugf(ctx, "skipping list entry because of error converting follow target account: %q", err)
+			log.Errorf(ctx, "error converting to public api account model: %v", err)
 			continue
 		}
 
