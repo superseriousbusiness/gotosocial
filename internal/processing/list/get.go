@@ -112,11 +112,7 @@ func (p *Processor) GetListAccounts(
 		return util.EmptyPageableResponse(), nil
 	}
 
-	var (
-		items          = make([]interface{}, count)
-		nextMaxIDValue string
-		prevMinIDValue string
-	)
+	items := make([]interface{}, 0, count)
 
 	// For each list entry, we want the account it points to.
 	// To get this, we need to first get the follow that the
@@ -125,14 +121,6 @@ func (p *Processor) GetListAccounts(
 	//
 	// We do paging not by account ID, but by list entry ID.
 	for i, listEntry := range listEntries {
-		if i == count-1 {
-			nextMaxIDValue = listEntry.ID
-		}
-
-		if i == 0 {
-			prevMinIDValue = listEntry.ID
-		}
-
 		if err := p.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
 			log.Errorf(ctx, "error populating list entry: %v", err)
 			continue
@@ -155,8 +143,8 @@ func (p *Processor) GetListAccounts(
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
 		Path:           "api/v1/lists/" + listID + "/accounts",
-		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDValue: prevMinIDValue,
+		NextMaxIDValue: listEntries[count-1].ID, // last in list
+		PrevMinIDValue: listEntries[0].ID,       // first in list
 		Limit:          limit,
 	})
 }
