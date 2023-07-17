@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
+	"golang.org/x/exp/slices"
 )
 
 type relationshipDB struct {
@@ -102,59 +103,55 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 }
 
 func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
-	var followIDs []string
-	if err := newSelectFollows(r.db, accountID).
-		Scan(ctx, &followIDs); err != nil {
-		return nil, r.db.ProcessError(err)
+	followIDs, err := r.getAccountFollowIDs(ctx, accountID)
+	if err != nil {
+		return nil, err
 	}
 	return r.GetFollowsByIDs(ctx, followIDs)
 }
 
 func (r *relationshipDB) GetAccountLocalFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
-	var followIDs []string
-	if err := newSelectLocalFollows(r.db, accountID).
-		Scan(ctx, &followIDs); err != nil {
-		return nil, r.db.ProcessError(err)
+	followIDs, err := r.getAccountLocalFollowIDs(ctx, accountID)
+	if err != nil {
+		return nil, err
 	}
 	return r.GetFollowsByIDs(ctx, followIDs)
 }
 
 func (r *relationshipDB) GetAccountFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
-	var followIDs []string
-	if err := newSelectFollowers(r.db, accountID).
-		Scan(ctx, &followIDs); err != nil {
-		return nil, r.db.ProcessError(err)
+	followerIDs, err := r.getAccountFollowerIDs(ctx, accountID)
+	if err != nil {
+		return nil, err
 	}
-	return r.GetFollowsByIDs(ctx, followIDs)
+	return r.GetFollowsByIDs(ctx, followerIDs)
 }
 
 func (r *relationshipDB) GetAccountLocalFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
-	var followIDs []string
-	if err := newSelectLocalFollowers(r.db, accountID).
-		Scan(ctx, &followIDs); err != nil {
-		return nil, r.db.ProcessError(err)
+	followerIDs, err := r.getAccountLocalFollowerIDs(ctx, accountID)
+	if err != nil {
+		return nil, err
 	}
-	return r.GetFollowsByIDs(ctx, followIDs)
+	return r.GetFollowsByIDs(ctx, followerIDs)
 }
 
 func (r *relationshipDB) CountAccountFollows(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollows(r.db, accountID).Count(ctx)
-	return n, r.db.ProcessError(err)
+	followIDs, err := r.getAccountFollowIDs(ctx, accountID)
+	return len(followIDs), r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) CountAccountLocalFollows(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectLocalFollows(r.db, accountID).Count(ctx)
-	return n, r.db.ProcessError(err)
+	followIDs, err := r.getAccountLocalFollowIDs(ctx, accountID)
+	return len(followIDs), r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) CountAccountFollowers(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollowers(r.db, accountID).Count(ctx)
-	return n, r.db.ProcessError(err)
+	followerIDs, err := r.getAccountFollowerIDs(ctx, accountID)
+	return len(followerIDs), r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) CountAccountLocalFollowers(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectLocalFollowers(r.db, accountID).Count(ctx)
-	return n, r.db.ProcessError(err)
+	followerIDs, err := r.getAccountLocalFollowerIDs(ctx, accountID)
+	return len(followerIDs), r.conn.ProcessError(err)
 }
 
 func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, error) {
@@ -185,6 +182,126 @@ func (r *relationshipDB) CountAccountFollowRequesting(ctx context.Context, accou
 	return n, r.db.ProcessError(err)
 }
 
+func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID string) ([]string, error) {
+	// Generate cache key.
+	key := ">" + accountID
+
+	// Look for follow IDs list in cache under this key.
+	followIDs, ok := r.state.Caches.GTS.FollowIDs().Get(key)
+
+	if !ok {
+		// None found, perform database query.
+		if _, err := r.conn.NewSelect().
+			Table("follows").
+			Column("id").
+			Where("? = ?", bun.Ident("account_id"), accountID).
+			OrderExpr("? DESC", bun.Ident("updated_at")).
+			Exec(ctx, &followIDs); err != nil {
+			return nil, r.conn.ProcessError(err)
+		}
+
+		// Store this result in the cache under key.
+		r.state.Caches.GTS.FollowIDs().Set(key, followIDs)
+	}
+
+	// Return clone of result for safety.
+	return slices.Clone(followIDs), nil
+}
+
+func (r *relationshipDB) getAccountLocalFollowIDs(ctx context.Context, accountID string) ([]string, error) {
+	// Generate cache key.
+	key := "l>" + accountID
+
+	// Look for follow IDs list in cache under this key.
+	followIDs, ok := r.state.Caches.GTS.FollowIDs().Get(key)
+
+	if !ok {
+		// None found, perform database query.
+		if _, err := r.conn.NewSelect().
+			Table("follows").
+			Column("id").
+			Where("? = ? AND ? IN (?)",
+				bun.Ident("account_id"),
+				accountID,
+				bun.Ident("target_account_id"),
+				r.conn.NewSelect().
+					Table("accounts").
+					Column("id").
+					Where("? IS NULL", bun.Ident("domain")),
+			).
+			OrderExpr("? DESC", bun.Ident("updated_at")).
+			Exec(ctx, &followIDs); err != nil {
+			return nil, r.conn.ProcessError(err)
+		}
+
+		// Store this result in the cache under key.
+		r.state.Caches.GTS.FollowIDs().Set(key, followIDs)
+	}
+
+	// Return clone of result for safety.
+	return slices.Clone(followIDs), nil
+}
+
+func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID string) ([]string, error) {
+	// Generate cache key.
+	key := "<" + accountID
+
+	// Look for follow IDs list in cache under this key.
+	followerIDs, ok := r.state.Caches.GTS.FollowIDs().Get(key)
+
+	if !ok {
+		// None found, perform database query.
+		if _, err := r.conn.NewSelect().
+			Table("follows").
+			Column("id").
+			Where("? = ?", bun.Ident("target_account_id"), accountID).
+			OrderExpr("? DESC", bun.Ident("updated_at")).
+			Exec(ctx, &followerIDs); err != nil {
+			return nil, r.conn.ProcessError(err)
+		}
+
+		// Store this result in the cache under key.
+		r.state.Caches.GTS.FollowIDs().Set(key, followerIDs)
+	}
+
+	// Return clone of result for safety.
+	return slices.Clone(followerIDs), nil
+}
+
+func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, accountID string) ([]string, error) {
+	// Generate cache key.
+	key := "l<" + accountID
+
+	// Look for follow IDs list in cache under this key.
+	followerIDs, ok := r.state.Caches.GTS.FollowIDs().Get(key)
+
+	if !ok {
+		// None found, perform database query.
+		if _, err := r.conn.NewSelect().
+			Table("follows").
+			Column("id").
+			Where("? = ? AND ? IN (?)",
+				bun.Ident("target_account_id"),
+				accountID,
+				bun.Ident("account_id"),
+				r.conn.NewSelect().
+					Table("accounts").
+					Column("id").
+					Where("? IS NULL", bun.Ident("domain")),
+			).
+			OrderExpr("? DESC", bun.Ident("updated_at")).
+			Exec(ctx, &followerIDs); err != nil {
+			return nil, r.conn.ProcessError(err)
+		}
+
+		// Store this result in the cache under key.
+		r.state.Caches.GTS.FollowIDs().Set(key, followerIDs)
+	}
+
+	// Return clone of result for safety.
+	return slices.Clone(followerIDs), nil
+}
+
 // newSelectFollowRequests returns a new select query for all rows in the follow_requests table with target_account_id = accountID.
 func newSelectFollowRequests(db *WrappedDB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
@@ -200,59 +317,5 @@ func newSelectFollowRequesting(db *WrappedDB, accountID string) *bun.SelectQuery
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
 		Where("? = ?", bun.Ident("target_account_id"), accountID).
-		OrderExpr("? DESC", bun.Ident("updated_at"))
-}
-
-// newSelectFollows returns a new select query for all rows in the follows table with account_id = accountID.
-func newSelectFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
-	return db.NewSelect().
-		Table("follows").
-		Column("id").
-		Where("? = ?", bun.Ident("account_id"), accountID).
-		OrderExpr("? DESC", bun.Ident("updated_at"))
-}
-
-// newSelectLocalFollows returns a new select query for all rows in the follows table with
-// account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
-	return db.NewSelect().
-		Table("follows").
-		Column("id").
-		Where("? = ? AND ? IN (?)",
-			bun.Ident("account_id"),
-			accountID,
-			bun.Ident("target_account_id"),
-			db.NewSelect().
-				Table("accounts").
-				Column("id").
-				Where("? IS NULL", bun.Ident("domain")),
-		).
-		OrderExpr("? DESC", bun.Ident("updated_at"))
-}
-
-// newSelectFollowers returns a new select query for all rows in the follows table with target_account_id = accountID.
-func newSelectFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
-	return db.NewSelect().
-		Table("follows").
-		Column("id").
-		Where("? = ?", bun.Ident("target_account_id"), accountID).
-		OrderExpr("? DESC", bun.Ident("updated_at"))
-}
-
-// newSelectLocalFollowers returns a new select query for all rows in the follows table with
-// target_account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
-	return db.NewSelect().
-		Table("follows").
-		Column("id").
-		Where("? = ? AND ? IN (?)",
-			bun.Ident("target_account_id"),
-			accountID,
-			bun.Ident("account_id"),
-			db.NewSelect().
-				Table("accounts").
-				Column("id").
-				Where("? IS NULL", bun.Ident("domain")),
-		).
 		OrderExpr("? DESC", bun.Ident("updated_at"))
 }

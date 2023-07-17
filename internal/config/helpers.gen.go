@@ -2926,6 +2926,81 @@ func GetCacheGTSFollowSweepFreq() time.Duration { return global.GetCacheGTSFollo
 // SetCacheGTSFollowSweepFreq safely sets the value for global configuration 'Cache.GTS.FollowSweepFreq' field
 func SetCacheGTSFollowSweepFreq(v time.Duration) { global.SetCacheGTSFollowSweepFreq(v) }
 
+// GetCacheGTSFollowListMaxSize safely fetches the Configuration value for state's 'Cache.GTS.FollowListMaxSize' field
+func (st *ConfigState) GetCacheGTSFollowListMaxSize() (v int) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.FollowListMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSFollowListMaxSize safely sets the Configuration value for state's 'Cache.GTS.FollowListMaxSize' field
+func (st *ConfigState) SetCacheGTSFollowListMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.FollowListMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSFollowListMaxSizeFlag returns the flag name for the 'Cache.GTS.FollowListMaxSize' field
+func CacheGTSFollowListMaxSizeFlag() string { return "cache-gts-follow-list-max-size" }
+
+// GetCacheGTSFollowListMaxSize safely fetches the value for global configuration 'Cache.GTS.FollowListMaxSize' field
+func GetCacheGTSFollowListMaxSize() int { return global.GetCacheGTSFollowListMaxSize() }
+
+// SetCacheGTSFollowListMaxSize safely sets the value for global configuration 'Cache.GTS.FollowListMaxSize' field
+func SetCacheGTSFollowListMaxSize(v int) { global.SetCacheGTSFollowListMaxSize(v) }
+
+// GetCacheGTSFollowListTTL safely fetches the Configuration value for state's 'Cache.GTS.FollowListTTL' field
+func (st *ConfigState) GetCacheGTSFollowListTTL() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.FollowListTTL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSFollowListTTL safely sets the Configuration value for state's 'Cache.GTS.FollowListTTL' field
+func (st *ConfigState) SetCacheGTSFollowListTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.FollowListTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSFollowListTTLFlag returns the flag name for the 'Cache.GTS.FollowListTTL' field
+func CacheGTSFollowListTTLFlag() string { return "cache-gts-follow-list-ttl" }
+
+// GetCacheGTSFollowListTTL safely fetches the value for global configuration 'Cache.GTS.FollowListTTL' field
+func GetCacheGTSFollowListTTL() time.Duration { return global.GetCacheGTSFollowListTTL() }
+
+// SetCacheGTSFollowListTTL safely sets the value for global configuration 'Cache.GTS.FollowListTTL' field
+func SetCacheGTSFollowListTTL(v time.Duration) { global.SetCacheGTSFollowListTTL(v) }
+
+// GetCacheGTSFollowListSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.FollowListSweepFreq' field
+func (st *ConfigState) GetCacheGTSFollowListSweepFreq() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.FollowListSweepFreq
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSFollowListSweepFreq safely sets the Configuration value for state's 'Cache.GTS.FollowListSweepFreq' field
+func (st *ConfigState) SetCacheGTSFollowListSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.FollowListSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSFollowListSweepFreqFlag returns the flag name for the 'Cache.GTS.FollowListSweepFreq' field
+func CacheGTSFollowListSweepFreqFlag() string { return "cache-gts-follow-list-sweep-freq" }
+
+// GetCacheGTSFollowListSweepFreq safely fetches the value for global configuration 'Cache.GTS.FollowListSweepFreq' field
+func GetCacheGTSFollowListSweepFreq() time.Duration { return global.GetCacheGTSFollowListSweepFreq() }
+
+// SetCacheGTSFollowListSweepFreq safely sets the value for global configuration 'Cache.GTS.FollowListSweepFreq' field
+func SetCacheGTSFollowListSweepFreq(v time.Duration) { global.SetCacheGTSFollowListSweepFreq(v) }
+
 // GetCacheGTSFollowRequestMaxSize safely fetches the Configuration value for state's 'Cache.GTS.FollowRequestMaxSize' field
 func (st *ConfigState) GetCacheGTSFollowRequestMaxSize() (v int) {
 	st.mutex.RLock()

@@ -148,8 +148,6 @@ func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) er
 }
 
 func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
-	defer r.state.Caches.GTS.Block().Invalidate("ID", id)
-
 	// Load block into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -162,6 +160,9 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 		return err
 	}
 
+	// Drop this now-cached block on return after delete.
+	defer r.state.Caches.GTS.Block().Invalidate("ID", id)
+
 	// Finally delete block from DB.
 	_, err = r.db.NewDelete().
 		Table("blocks").
@@ -171,8 +172,6 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error {
-	defer r.state.Caches.GTS.Block().Invalidate("URI", uri)
-
 	// Load block into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -184,6 +183,9 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error
 		}
 		return err
 	}
+
+	// Drop this now-cached block on return after delete.
+	defer r.state.Caches.GTS.Block().Invalidate("URI", uri)
 
 	// Finally delete block from DB.
 	_, err = r.db.NewDelete().
@@ -211,10 +213,9 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 	}
 
 	defer func() {
-		// Invalidate all IDs on return.
-		for _, id := range blockIDs {
-			r.state.Caches.GTS.Block().Invalidate("ID", id)
-		}
+		// Invalidate all account's incoming / outoing blocks on return.
+		r.state.Caches.GTS.Block().Invalidate("AccountID", accountID)
+		r.state.Caches.GTS.Block().Invalidate("TargetAccountID", accountID)
 	}()
 
 	// Load all blocks into cache, this *really* isn't great

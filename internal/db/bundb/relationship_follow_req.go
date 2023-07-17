@@ -243,8 +243,6 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountI
 }
 
 func (r *relationshipDB) DeleteFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) error {
-	defer r.state.Caches.GTS.FollowRequest().Invalidate("AccountID.TargetAccountID", sourceAccountID, targetAccountID)
-
 	// Load followreq into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -261,6 +259,9 @@ func (r *relationshipDB) DeleteFollowRequest(ctx context.Context, sourceAccountI
 		return err
 	}
 
+	// Drop this now-cached follow request on return after delete.
+	defer r.state.Caches.GTS.FollowRequest().Invalidate("AccountID.TargetAccountID", sourceAccountID, targetAccountID)
+
 	// Finally delete followreq from DB.
 	_, err = r.db.NewDelete().
 		Table("follow_requests").
@@ -270,8 +271,6 @@ func (r *relationshipDB) DeleteFollowRequest(ctx context.Context, sourceAccountI
 }
 
 func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string) error {
-	defer r.state.Caches.GTS.FollowRequest().Invalidate("ID", id)
-
 	// Load followreq into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -284,6 +283,9 @@ func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string)
 		return err
 	}
 
+	// Drop this now-cached follow request on return after delete.
+	defer r.state.Caches.GTS.FollowRequest().Invalidate("ID", id)
+
 	// Finally delete followreq from DB.
 	_, err = r.db.NewDelete().
 		Table("follow_requests").
@@ -293,8 +295,6 @@ func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string)
 }
 
 func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri string) error {
-	defer r.state.Caches.GTS.FollowRequest().Invalidate("URI", uri)
-
 	// Load followreq into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -306,6 +306,9 @@ func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri strin
 		}
 		return err
 	}
+
+	// Drop this now-cached follow request on return after delete.
+	defer r.state.Caches.GTS.FollowRequest().Invalidate("URI", uri)
 
 	// Finally delete followreq from DB.
 	_, err = r.db.NewDelete().
@@ -334,10 +337,9 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 	}
 
 	defer func() {
-		// Invalidate all IDs on return.
-		for _, id := range followReqIDs {
-			r.state.Caches.GTS.FollowRequest().Invalidate("ID", id)
-		}
+		// Invalidate all account's incoming / outoing follow requests on return.
+		r.state.Caches.GTS.FollowRequest().Invalidate("AccountID", accountID)
+		r.state.Caches.GTS.FollowRequest().Invalidate("TargetAccountID", accountID)
 	}()
 
 	// Load all followreqs into cache, this *really* isn't

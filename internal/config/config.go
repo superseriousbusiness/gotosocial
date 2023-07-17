@@ -210,6 +210,10 @@ type GTSCacheConfiguration struct {
 	FollowTTL       time.Duration `name:"follow-ttl"`
 	FollowSweepFreq time.Duration `name:"follow-sweep-freq"`
 
+	FollowListMaxSize   int           `name:"follow-list-max-size"`
+	FollowListTTL       time.Duration `name:"follow-list-ttl"`
+	FollowListSweepFreq time.Duration `name:"follow-list-sweep-freq"`
+
 	FollowRequestMaxSize   int           `name:"follow-request-max-size"`
 	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`
 	FollowRequestSweepFreq time.Duration `name:"follow-request-sweep-freq"`

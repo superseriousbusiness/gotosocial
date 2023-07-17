@@ -108,6 +108,15 @@ func (c *Caches) setuphooks() {
 		// Invalidate follow target account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", follow.TargetAccountID)
 		c.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
+
+		// Invalidate source account's following
+		// lists, and destination's follwer lists.
+		c.GTS.FollowIDs().InvalidateAll(
+			">"+follow.AccountID,
+			"l>"+follow.AccountID,
+			"<"+follow.TargetAccountID,
+			"l<"+follow.TargetAccountID,
+		)
 	})
 
 	c.GTS.FollowRequest().SetInvalidateCallback(func(followReq *gtsmodel.FollowRequest) {

@@ -35,6 +35,7 @@ type GTSCaches struct {
 	emoji         *result.Cache[*gtsmodel.Emoji]
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
 	follow        *result.Cache[*gtsmodel.Follow]
+	followIDs     *ttl.Cache[string, []string]
 	followRequest *result.Cache[*gtsmodel.FollowRequest]
 	instance      *result.Cache[*gtsmodel.Instance]
 	list          *result.Cache[*gtsmodel.List]
@@ -48,7 +49,8 @@ type GTSCaches struct {
 	statusFave    *result.Cache[*gtsmodel.StatusFave]
 	tombstone     *result.Cache[*gtsmodel.Tombstone]
 	user          *result.Cache[*gtsmodel.User]
-	// TODO: move out of GTS caches since not using database models.
+
+	// TODO: move out of GTS caches since unrelated to DB.
 	webfinger *ttl.Cache[string, string]
 }
 
@@ -62,6 +64,7 @@ func (c *GTSCaches) Init() {
 	c.initEmoji()
 	c.initEmojiCategory()
 	c.initFollow()
+	c.initFollowIDs()
 	c.initFollowRequest()
 	c.initInstance()
 	c.initList()
@@ -86,6 +89,12 @@ func (c *GTSCaches) Start() {
 	tryStart(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStart(c.follow, config.GetCacheGTSFollowSweepFreq())
+	tryUntil("starting follow IDs cache", 5, func() bool {
+		if sweep := config.GetCacheGTSFollowListSweepFreq(); sweep > 0 {
+			return c.followIDs.Start(sweep)
+		}
+		return true
+	})
 	tryStart(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
 	tryStart(c.instance, config.GetCacheGTSInstanceSweepFreq())
 	tryStart(c.list, config.GetCacheGTSListSweepFreq())
@@ -115,6 +124,12 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStop(c.follow, config.GetCacheGTSFollowSweepFreq())
+	tryUntil("stopping follow IDs cache", 5, func() bool {
+		if config.GetCacheGTSFollowListSweepFreq() > 0 {
+			return c.followIDs.Stop()
+		}
+		return true
+	})
 	tryStop(c.followRequest, config.GetCacheGTSFollowRequestSweepFreq())
 	tryStop(c.instance, config.GetCacheGTSInstanceSweepFreq())
 	tryStop(c.list, config.GetCacheGTSListSweepFreq())
@@ -128,7 +143,12 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.statusFave, config.GetCacheGTSStatusFaveSweepFreq())
 	tryStop(c.tombstone, config.GetCacheGTSTombstoneSweepFreq())
 	tryStop(c.user, config.GetCacheGTSUserSweepFreq())
-	tryUntil("stopping *gtsmodel.Webfinger cache", 5, c.webfinger.Stop)
+	tryUntil("stopping *gtsmodel.Webfinger cache", 5, func() bool {
+		if config.GetCacheGTSWebfingerSweepFreq() > 0 {
+			return c.webfinger.Stop()
+		}
+		return true
+	})
 }
 
 // Account provides access to the gtsmodel Account database cache.
@@ -164,6 +184,16 @@ func (c *GTSCaches) EmojiCategory() *result.Cache[*gtsmodel.EmojiCategory] {
 // Follow provides access to the gtsmodel Follow database cache.
 func (c *GTSCaches) Follow() *result.Cache[*gtsmodel.Follow] {
 	return c.follow
+}
+
+// FollowIDs provides access to the follower / following IDs database cache.
+// THIS CACHE IS KEYED AS THE FOLLOWING {prefix}{accountID} WHERE PREFIX IS:
+// - '>'  for following IDs
+// - 'l>' for local following IDs
+// - '<'  for follower IDs
+// - 'l<' for local follower IDs
+func (c *GTSCaches) FollowIDs() *ttl.Cache[string, []string] {
+	return c.followIDs
 }
 
 // FollowRequest provides access to the gtsmodel FollowRequest database cache.
@@ -274,6 +304,8 @@ func (c *GTSCaches) initBlock() {
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "AccountID.TargetAccountID"},
+		{Name: "AccountID", Multi: true},
+		{Name: "TargetAccountID", Multi: true},
 	}, func(b1 *gtsmodel.Block) *gtsmodel.Block {
 		b2 := new(gtsmodel.Block)
 		*b2 = *b1
@@ -321,6 +353,8 @@ func (c *GTSCaches) initFollow() {
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "AccountID.TargetAccountID"},
+		{Name: "AccountID", Multi: true},
+		{Name: "TargetAccountID", Multi: true},
 	}, func(f1 *gtsmodel.Follow) *gtsmodel.Follow {
 		f2 := new(gtsmodel.Follow)
 		*f2 = *f1
@@ -329,11 +363,21 @@ func (c *GTSCaches) initFollow() {
 	c.follow.SetTTL(config.GetCacheGTSFollowTTL(), true)
 }
 
+func (c *GTSCaches) initFollowIDs() {
+	c.followIDs = ttl.New[string, []string](
+		0,
+		config.GetCacheGTSFollowListMaxSize(),
+		config.GetCacheGTSFollowListTTL(),
+	)
+}
+
 func (c *GTSCaches) initFollowRequest() {
 	c.followRequest = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "AccountID.TargetAccountID"},
+		{Name: "AccountID", Multi: true},
+		{Name: "TargetAccountID", Multi: true},
 	}, func(f1 *gtsmodel.FollowRequest) *gtsmodel.FollowRequest {
 		f2 := new(gtsmodel.FollowRequest)
 		*f2 = *f1
@@ -502,5 +546,6 @@ func (c *GTSCaches) initWebfinger() {
 	c.webfinger = ttl.New[string, string](
 		0,
 		config.GetCacheGTSWebfingerMaxSize(),
-		config.GetCacheGTSWebfingerTTL())
+		config.GetCacheGTSWebfingerTTL(),
+	)
 }
