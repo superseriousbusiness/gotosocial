@@ -112,7 +112,14 @@ func (p *Processor) GetListAccounts(
 		return util.EmptyPageableResponse(), nil
 	}
 
-	items := make([]interface{}, 0, count)
+	var (
+		items = make([]interface{}, 0, count)
+
+		// Set next + prev values before filtering and API
+		// converting, so caller can still page properly.
+		nextMaxIDValue = listEntries[count-1].ID
+		prevMinIDValue = listEntries[0].ID
+	)
 
 	// For each list entry, we want the account it points to.
 	// To get this, we need to first get the follow that the
@@ -120,7 +127,7 @@ func (p *Processor) GetListAccounts(
 	// from that follow.
 	//
 	// We do paging not by account ID, but by list entry ID.
-	for i, listEntry := range listEntries {
+	for _, listEntry := range listEntries {
 		if err := p.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
 			log.Errorf(ctx, "error populating list entry: %v", err)
 			continue
@@ -133,18 +140,18 @@ func (p *Processor) GetListAccounts(
 
 		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, listEntry.Follow.TargetAccount)
 		if err != nil {
-			log.Errorf(ctx, "error converting to public api account model: %v", err)
+			log.Errorf(ctx, "error converting to public api account: %v", err)
 			continue
 		}
 
-		items[i] = apiAccount
+		items = append(items, apiAccount)
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
-		Path:           "api/v1/lists/" + listID + "/accounts",
-		NextMaxIDValue: listEntries[count-1].ID, // last in list
-		PrevMinIDValue: listEntries[0].ID,       // first in list
+		Path:           "/api/v1/lists/" + listID + "/accounts",
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
 	})
 }

@@ -93,28 +93,21 @@ func (p *Processor) StatusesGet(
 	}
 
 	var (
-		items          = make([]interface{}, 0, count)
-		nextMaxIDValue string
-		prevMinIDValue string
-	)
+		items = make([]interface{}, 0, count)
 
-	for i, s := range filtered {
 		// Set next + prev values before filtering and API
 		// converting, so caller can still page properly.
-		if i == count-1 {
-			nextMaxIDValue = s.ID
-		}
+		nextMaxIDValue = filtered[count-1].ID
+		prevMinIDValue = filtered[0].ID
+	)
 
-		if i == 0 {
-			prevMinIDValue = s.ID
-		}
-
+	for _, s := range filtered {
+		// Convert filtered statuses to API statuses.
 		item, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
 		if err != nil {
-			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue
 		}
-
 		items = append(items, item)
 	}
 
