@@ -93,13 +93,14 @@ func (c *Caches) setuphooks() {
 	})
 
 	c.GTS.EmojiCategory().SetInvalidateCallback(func(category *gtsmodel.EmojiCategory) {
-		// Invalidate entire emoji cache,
-		// as we can't know which emojis
-		// specifically this will effect.
-		c.GTS.Emoji().Clear()
+		// Invalidate any emoji in this category.
+		c.GTS.Emoji().Invalidate("CategoryID", category.ID)
 	})
 
 	c.GTS.Follow().SetInvalidateCallback(func(follow *gtsmodel.Follow) {
+		// Invalidate any related list entries.
+		c.Visibility.Invalidate("FollowID", follow.ID)
+
 		// Invalidate follow origin account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", follow.AccountID)
 		c.Visibility.Invalidate("RequesterID", follow.AccountID)
@@ -120,6 +121,11 @@ func (c *Caches) setuphooks() {
 
 		// Invalidate any cached follow with same ID.
 		c.GTS.Follow().Invalidate("ID", followReq.ID)
+	})
+
+	c.GTS.List().SetInvalidateCallback(func(list *gtsmodel.List) {
+		// Invalidate all cached entries of this list.
+		c.GTS.ListEntry().Invalidate("ListID", list.ID)
 	})
 
 	c.GTS.Status().SetInvalidateCallback(func(status *gtsmodel.Status) {
