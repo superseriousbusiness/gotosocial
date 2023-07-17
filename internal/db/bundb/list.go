@@ -181,9 +181,25 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 }
 
 func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
+	// Load list by ID into cache to ensure we can perform
+	// all necessary cache invalidation hooks on removal.
+	_, err := l.GetListEntryByID(
+		// Don't populate the entry;
+		// we only want the list ID.
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// Already gone.
+			return nil
+		}
+		return err
+	}
+
 	defer func() {
-		// Invalidate all entries for this list ID.
-		l.state.Caches.GTS.ListEntry().Invalidate("ListID", id)
+		// Invalidate this list from cache.
+		l.state.Caches.GTS.List().Invalidate("ID", id)
 
 		// Invalidate this entire list's timeline.
 		if err := l.state.Timelines.List.RemoveTimeline(ctx, id); err != nil {
@@ -425,9 +441,8 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 }
 
 func (l *listDB) DeleteListEntry(ctx context.Context, id string) error {
-	// Load list entry into cache before attempting a delete,
-	// as we need the followID from it in order to trigger
-	// timeline invalidation.
+	// Load list entry into cache to ensure we can perform
+	// all necessary cache invalidation hooks on removal.
 	entry, err := l.GetListEntryByID(
 		// Don't populate the entry;
 		// we only want the list ID.
