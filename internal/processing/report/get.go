@@ -19,6 +19,7 @@ package report
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -64,14 +65,15 @@ func (p *Processor) GetMultiple(
 	limit int,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	reports, err := p.state.DB.GetReports(ctx, resolved, account.ID, targetAccountID, maxID, sinceID, minID, limit)
-	if err != nil {
-		if err == db.ErrNoEntries {
-			return util.EmptyPageableResponse(), nil
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(reports)
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
 	items := make([]interface{}, 0, count)
 	nextMaxIDValue := reports[count-1].ID
 	prevMinIDValue := reports[0].ID
