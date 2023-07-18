@@ -43,25 +43,18 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 	}
 
 	var (
-		items          = make([]interface{}, 0, count)
-		nextMaxIDValue string
-		prevMinIDValue string
-	)
+		items = make([]interface{}, 0, count)
 
-	for i, s := range statuses {
 		// Set next + prev values before filtering and API
 		// converting, so caller can still page properly.
-		if i == count-1 {
-			nextMaxIDValue = s.ID
-		}
+		nextMaxIDValue = statuses[count-1].ID
+		prevMinIDValue = statuses[0].ID
+	)
 
-		if i == 0 {
-			prevMinIDValue = s.ID
-		}
-
+	for _, s := range statuses {
 		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, s)
 		if err != nil {
-			log.Debugf(ctx, "skipping status %s because of an error checking StatusPublicTimelineable: %s", s.ID, err)
+			log.Errorf(ctx, "error checking status visibility: %v", err)
 			continue
 		}
 
@@ -71,7 +64,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Errorf(ctx, "error convert to api status: %v", err)
 			continue
 		}
 
@@ -80,7 +73,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
-		Path:           "api/v1/timelines/public",
+		Path:           "/api/v1/timelines/public",
 		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,

@@ -262,6 +262,7 @@ func (c *GTSCaches) initEmoji() {
 		{Name: "URI"},
 		{Name: "Shortcode.Domain"},
 		{Name: "ImageStaticURL"},
+		{Name: "CategoryID", Multi: true},
 	}, func(e1 *gtsmodel.Emoji) *gtsmodel.Emoji {
 		e2 := new(gtsmodel.Emoji)
 		*e2 = *e1
@@ -338,6 +339,8 @@ func (c *GTSCaches) initList() {
 func (c *GTSCaches) initListEntry() {
 	c.listEntry = result.New([]result.Lookup{
 		{Name: "ID"},
+		{Name: "ListID", Multi: true},
+		{Name: "FollowID", Multi: true},
 	}, func(l1 *gtsmodel.ListEntry) *gtsmodel.ListEntry {
 		l2 := new(gtsmodel.ListEntry)
 		*l2 = *l1

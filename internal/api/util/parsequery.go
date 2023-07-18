@@ -73,7 +73,14 @@ func requiredError(key string) gtserror.WithCode {
 */
 
 func ParseLimit(value string, defaultValue int, max, min int) (int, gtserror.WithCode) {
-	return parseInt(value, defaultValue, max, min, LimitKey)
+	i, err := parseInt(value, defaultValue, max, min, LimitKey)
+	if err != nil {
+		return 0, err
+	} else if i == 0 {
+		// treat 0 as an empty query
+		return defaultValue, nil
+	}
+	return i, nil
 }
 
 func ParseLocal(value string, defaultValue bool) (bool, gtserror.WithCode) {

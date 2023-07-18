@@ -27,7 +27,8 @@ import (
 
 // Delete deletes one list for the given account.
 func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, id string) gtserror.WithCode {
-	list, errWithCode := p.getList(
+	// Ensure list exists + is owned by requesting account.
+	_, errWithCode := p.getList(
 		// Use barebones ctx; no embedded
 		// structs necessary for this call.
 		gtscontext.SetBarebones(ctx),
@@ -38,7 +39,7 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, id st
 		return errWithCode
 	}
 
-	if err := p.state.DB.DeleteListByID(ctx, list.ID); err != nil {
+	if err := p.state.DB.DeleteListByID(ctx, id); err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
 

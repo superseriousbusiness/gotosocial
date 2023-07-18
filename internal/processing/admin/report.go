@@ -54,22 +54,14 @@ func (p *Processor) ReportsGet(
 
 	count := len(reports)
 	items := make([]interface{}, 0, count)
-	nextMaxIDValue := ""
-	prevMinIDValue := ""
-	for i, r := range reports {
+	nextMaxIDValue := reports[count-1].ID
+	prevMinIDValue := reports[0].ID
+
+	for _, r := range reports {
 		item, err := p.tc.ReportToAdminAPIReport(ctx, r, account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting report to api: %s", err))
 		}
-
-		if i == count-1 {
-			nextMaxIDValue = item.ID
-		}
-
-		if i == 0 {
-			prevMinIDValue = item.ID
-		}
-
 		items = append(items, item)
 	}
 

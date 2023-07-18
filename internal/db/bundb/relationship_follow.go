@@ -328,7 +328,8 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 		}
 
 		// Delete each follow from DB.
-		if err := r.deleteFollow(ctx, follow.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		if err := r.deleteFollow(ctx, follow.ID); err != nil &&
+			!errors.Is(err, db.ErrNoEntries) {
 			return err
 		}
 	}

@@ -87,7 +87,14 @@ func (p *Processor) GetListAccounts(
 	limit int,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	// Ensure list exists + is owned by requesting account.
-	if _, errWithCode := p.getList(ctx, account.ID, listID); errWithCode != nil {
+	_, errWithCode := p.getList(
+		// Use barebones ctx; no embedded
+		// structs necessary for this call.
+		gtscontext.SetBarebones(ctx),
+		account.ID,
+		listID,
+	)
+	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
@@ -106,9 +113,12 @@ func (p *Processor) GetListAccounts(
 	}
 
 	var (
-		items          = make([]interface{}, count)
-		nextMaxIDValue string
-		prevMinIDValue string
+		items = make([]interface{}, 0, count)
+
+		// Set next + prev values before filtering and API
+		// converting, so caller can still page properly.
+		nextMaxIDValue = listEntries[count-1].ID
+		prevMinIDValue = listEntries[0].ID
 	)
 
 	// For each list entry, we want the account it points to.
@@ -117,37 +127,29 @@ func (p *Processor) GetListAccounts(
 	// from that follow.
 	//
 	// We do paging not by account ID, but by list entry ID.
-	for i, listEntry := range listEntries {
-		if i == count-1 {
-			nextMaxIDValue = listEntry.ID
-		}
-
-		if i == 0 {
-			prevMinIDValue = listEntry.ID
-		}
-
+	for _, listEntry := range listEntries {
 		if err := p.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
-			log.Debugf(ctx, "skipping list entry because of error populating it: %q", err)
+			log.Errorf(ctx, "error populating list entry: %v", err)
 			continue
 		}
 
 		if err := p.state.DB.PopulateFollow(ctx, listEntry.Follow); err != nil {
-			log.Debugf(ctx, "skipping list entry because of error populating follow: %q", err)
+			log.Errorf(ctx, "error populating follow: %v", err)
 			continue
 		}
 
 		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, listEntry.Follow.TargetAccount)
 		if err != nil {
-			log.Debugf(ctx, "skipping list entry because of error converting follow target account: %q", err)
+			log.Errorf(ctx, "error converting to public api account: %v", err)
 			continue
 		}
 
-		items[i] = apiAccount
+		items = append(items, apiAccount)
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
-		Path:           "api/v1/lists/" + listID + "/accounts",
+		Path:           "/api/v1/lists/" + listID + "/accounts",
 		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,

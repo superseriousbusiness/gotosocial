@@ -46,7 +46,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 	for _, s := range statuses {
 		visible, err := p.filter.StatusVisible(ctx, authed.Account, s)
 		if err != nil {
-			log.Debugf(ctx, "skipping status %s because of an error checking status visibility: %s", s.ID, err)
+			log.Errorf(ctx, "error checking status visibility: %v", err)
 			continue
 		}
 
@@ -56,7 +56,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 
 		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
-			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", s.ID, err)
+			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue
 		}
 
@@ -65,7 +65,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
 		Items:          items,
-		Path:           "api/v1/favourites",
+		Path:           "/api/v1/favourites",
 		NextMaxIDValue: nextMaxID,
 		PrevMinIDValue: prevMinID,
 		Limit:          limit,
