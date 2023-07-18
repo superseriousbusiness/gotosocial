@@ -127,6 +127,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 				// This means we can remove it and skip past it.
 				l.Debugf("db.ErrNoEntries while trying to prepare %s; will remove from timeline", entry.itemID)
 				t.items.data.Remove(e)
+				continue
 			}
 			// We've got a proper db error.
 			return gtserror.Newf("db error while trying to prepare %s: %w", entry.itemID, err)
