@@ -26,12 +26,10 @@ import (
 )
 
 type GTSCaches struct {
-	account     *result.Cache[*gtsmodel.Account]
-	accountNote *result.Cache[*gtsmodel.AccountNote]
-	block       *result.Cache[*gtsmodel.Block]
-	// TODO: maybe should be moved out of here since it's
-	// not actually doing anything with gtsmodel.DomainBlock.
-	domainBlock   *domain.BlockCache
+	account       *result.Cache[*gtsmodel.Account]
+	accountNote   *result.Cache[*gtsmodel.AccountNote]
+	block         *result.Cache[*gtsmodel.Block]
+	blockIDs      *ttl.Cache[string, []string]
 	emoji         *result.Cache[*gtsmodel.Emoji]
 	emojiCategory *result.Cache[*gtsmodel.EmojiCategory]
 	follow        *result.Cache[*gtsmodel.Follow]
@@ -51,7 +49,8 @@ type GTSCaches struct {
 	user          *result.Cache[*gtsmodel.User]
 
 	// TODO: move out of GTS caches since unrelated to DB.
-	webfinger *ttl.Cache[string, string]
+	domainBlock *domain.BlockCache
+	webfinger   *ttl.Cache[string, string]
 }
 
 // Init will initialize all the gtsmodel caches in this collection.
@@ -60,6 +59,7 @@ func (c *GTSCaches) Init() {
 	c.initAccount()
 	c.initAccountNote()
 	c.initBlock()
+	c.initBlockIDs()
 	c.initDomainBlock()
 	c.initEmoji()
 	c.initEmojiCategory()
@@ -86,6 +86,12 @@ func (c *GTSCaches) Start() {
 	tryStart(c.account, config.GetCacheGTSAccountSweepFreq())
 	tryStart(c.accountNote, config.GetCacheGTSAccountNoteSweepFreq())
 	tryStart(c.block, config.GetCacheGTSBlockSweepFreq())
+	tryUntil("starting block IDs cache", 5, func() bool {
+		if sweep := config.GetCacheGTSBlockIDsSweepFreq(); sweep > 0 {
+			return c.blockIDs.Start(sweep)
+		}
+		return true
+	})
 	tryStart(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStart(c.follow, config.GetCacheGTSFollowSweepFreq())
@@ -121,6 +127,12 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.account, config.GetCacheGTSAccountSweepFreq())
 	tryStop(c.accountNote, config.GetCacheGTSAccountNoteSweepFreq())
 	tryStop(c.block, config.GetCacheGTSBlockSweepFreq())
+	tryUntil("stopping block IDs cache", 5, func() bool {
+		if config.GetCacheGTSBlockIDsSweepFreq() > 0 {
+			return c.blockIDs.Stop()
+		}
+		return true
+	})
 	tryStop(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStop(c.follow, config.GetCacheGTSFollowSweepFreq())
@@ -164,6 +176,16 @@ func (c *GTSCaches) AccountNote() *result.Cache[*gtsmodel.AccountNote] {
 // Block provides access to the gtsmodel Block (account) database cache.
 func (c *GTSCaches) Block() *result.Cache[*gtsmodel.Block] {
 	return c.block
+}
+
+// FollowIDs provides access to the blocker / blocking IDs database cache.
+// THIS CACHE IS KEYED AS THE FOLLOWING {prefix}{accountID} WHERE PREFIX IS:
+// - '>'  for blocking IDs
+// - 'l>' for local blocking IDs
+// - '<'  for blocker IDs
+// - 'l<' for local blocker IDs
+func (c *GTSCaches) BlockIDs() *ttl.Cache[string, []string] {
+	return c.blockIDs
 }
 
 // DomainBlock provides access to the domain block database cache.
@@ -313,6 +335,14 @@ func (c *GTSCaches) initBlock() {
 	}, config.GetCacheGTSBlockMaxSize())
 	c.block.SetTTL(config.GetCacheGTSBlockTTL(), true)
 	c.block.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initBlockIDs() {
+	c.blockIDs = ttl.New[string, []string](
+		0,
+		config.GetCacheGTSBlockIDsMaxSize(),
+		config.GetCacheGTSBlockIDsTTL(),
+	)
 }
 
 func (c *GTSCaches) initDomainBlock() {
