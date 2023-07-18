@@ -366,7 +366,7 @@ func (l *listDB) GetListEntriesForFollowID(ctx context.Context, followID string)
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("entry")).
 		// Select only IDs from table
-		ColumnExpr("?", bun.Ident("entry.id")).
+		Column("entry.id").
 		// Select only entries belonging with given followID.
 		Where("? = ?", bun.Ident("entry.follow_id"), followID).
 		Scan(ctx, &entryIDs); err != nil {
@@ -482,7 +482,7 @@ func (l *listDB) DeleteListEntriesForFollowID(ctx context.Context, followID stri
 	if err := l.conn.
 		NewSelect().
 		Table("list_entries").
-		ColumnExpr("?", bun.Ident("id")).
+		Column("id").
 		Where("? = ?", bun.Ident("follow_id"), followID).
 		Order("id DESC").
 		Scan(ctx, &entryIDs); err != nil {
