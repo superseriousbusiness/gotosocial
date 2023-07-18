@@ -104,8 +104,11 @@ type Account interface {
 	// In the case of no statuses, this function will return db.ErrNoEntries.
 	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, error)
 
+<<<<<<< HEAD
 	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, error)
 
+=======
+>>>>>>> 56733a56 (update BlocksGet() function to match newer function paging style)
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
 	//
 	// If webOnly is true, then the time of the last non-reply, non-boost, public status of the account will be returned.

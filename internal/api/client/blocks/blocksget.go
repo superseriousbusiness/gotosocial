@@ -104,18 +104,6 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 		return
 	}
 
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
-	}
-
-	sinceID := ""
-	sinceIDString := c.Query(SinceIDKey)
-	if sinceIDString != "" {
-		sinceID = sinceIDString
-	}
-
 	limit := 20
 	limitString := c.Query(LimitKey)
 	if limitString != "" {
@@ -128,7 +116,13 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 		limit = int(i)
 	}
 
-	resp, errWithCode := m.processor.BlocksGet(c.Request.Context(), authed, maxID, sinceID, limit)
+	resp, errWithCode := m.processor.BlocksGet(
+		c.Request.Context(),
+		authed.Account,
+		c.Query(MaxIDKey),
+		c.Query(SinceIDKey),
+		limit,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -137,5 +131,6 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 	if resp.LinkHeader != "" {
 		c.Header("Link", resp.LinkHeader)
 	}
-	c.JSON(http.StatusOK, resp.Accounts)
+
+	c.JSON(http.StatusOK, resp.Items)
 }

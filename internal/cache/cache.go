@@ -90,6 +90,9 @@ func (c *Caches) setuphooks() {
 		// Invalidate block target account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", block.TargetAccountID)
 		c.Visibility.Invalidate("RequesterID", block.TargetAccountID)
+
+		// Invalidate source account's block lists.
+		c.GTS.BlockIDs().Invalidate(block.AccountID)
 	})
 
 	c.GTS.EmojiCategory().SetInvalidateCallback(func(category *gtsmodel.EmojiCategory) {

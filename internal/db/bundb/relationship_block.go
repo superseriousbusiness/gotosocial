@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -95,6 +96,25 @@ func (r *relationshipDB) GetBlock(ctx context.Context, sourceAccountID string, t
 		sourceAccountID,
 		targetAccountID,
 	)
+}
+
+func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Block, error) {
+	// Preallocate slice of expected length.
+	blocks := make([]*gtsmodel.Block, 0, len(ids))
+
+	for _, id := range ids {
+		// Fetch block model for this ID.
+		block, err := r.GetBlockByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting block %q: %v", id, err)
+			continue
+		}
+
+		// Append to return slice.
+		blocks = append(blocks, block)
+	}
+
+	return blocks, nil
 }
 
 func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Block) error, keyParts ...any) (*gtsmodel.Block, error) {
