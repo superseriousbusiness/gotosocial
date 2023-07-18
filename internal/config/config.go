@@ -194,6 +194,10 @@ type GTSCacheConfiguration struct {
 	BlockTTL       time.Duration `name:"block-ttl"`
 	BlockSweepFreq time.Duration `name:"block-sweep-freq"`
 
+	BlockIDsMaxSize   int           `name:"block-ids-max-size"`
+	BlockIDsTTL       time.Duration `name:"block-ids-ttl"`
+	BlockIDsSweepFreq time.Duration `name:"block-ids-sweep-freq"`
+
 	DomainBlockMaxSize   int           `name:"domain-block-max-size"`
 	DomainBlockTTL       time.Duration `name:"domain-block-ttl"`
 	DomainBlockSweepFreq time.Duration `name:"domain-block-sweep-freq"`
@@ -210,9 +214,9 @@ type GTSCacheConfiguration struct {
 	FollowTTL       time.Duration `name:"follow-ttl"`
 	FollowSweepFreq time.Duration `name:"follow-sweep-freq"`
 
-	FollowListMaxSize   int           `name:"follow-list-max-size"`
-	FollowListTTL       time.Duration `name:"follow-list-ttl"`
-	FollowListSweepFreq time.Duration `name:"follow-list-sweep-freq"`
+	FollowIDsMaxSize   int           `name:"follow-ids-max-size"`
+	FollowIDsTTL       time.Duration `name:"follow-ids-ttl"`
+	FollowIDsSweepFreq time.Duration `name:"follow-ids-sweep-freq"`
 
 	FollowRequestMaxSize   int           `name:"follow-request-max-size"`
 	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`

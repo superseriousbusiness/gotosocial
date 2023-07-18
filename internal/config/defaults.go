@@ -139,6 +139,10 @@ var Defaults = Configuration{
 			BlockTTL:       time.Minute * 30,
 			BlockSweepFreq: time.Minute,
 
+			BlockIDsMaxSize:   500,
+			BlockIDsTTL:       time.Minute * 30,
+			BlockIDsSweepFreq: time.Minute,
+
 			DomainBlockMaxSize:   2000,
 			DomainBlockTTL:       time.Hour * 24,
 			DomainBlockSweepFreq: time.Minute,
@@ -155,9 +159,9 @@ var Defaults = Configuration{
 			FollowTTL:       time.Minute * 30,
 			FollowSweepFreq: time.Minute,
 
-			FollowListMaxSize:   2000,
-			FollowListTTL:       time.Minute * 30,
-			FollowListSweepFreq: time.Minute,
+			FollowIDsMaxSize:   500,
+			FollowIDsTTL:       time.Minute * 30,
+			FollowIDsSweepFreq: time.Minute,
 
 			FollowRequestMaxSize:   2000,
 			FollowRequestTTL:       time.Minute * 30,

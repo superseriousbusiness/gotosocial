@@ -90,7 +90,7 @@ func (c *GTSCaches) Start() {
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStart(c.follow, config.GetCacheGTSFollowSweepFreq())
 	tryUntil("starting follow IDs cache", 5, func() bool {
-		if sweep := config.GetCacheGTSFollowListSweepFreq(); sweep > 0 {
+		if sweep := config.GetCacheGTSFollowIDsSweepFreq(); sweep > 0 {
 			return c.followIDs.Start(sweep)
 		}
 		return true
@@ -125,7 +125,7 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
 	tryStop(c.follow, config.GetCacheGTSFollowSweepFreq())
 	tryUntil("stopping follow IDs cache", 5, func() bool {
-		if config.GetCacheGTSFollowListSweepFreq() > 0 {
+		if config.GetCacheGTSFollowIDsSweepFreq() > 0 {
 			return c.followIDs.Stop()
 		}
 		return true
@@ -366,8 +366,8 @@ func (c *GTSCaches) initFollow() {
 func (c *GTSCaches) initFollowIDs() {
 	c.followIDs = ttl.New[string, []string](
 		0,
-		config.GetCacheGTSFollowListMaxSize(),
-		config.GetCacheGTSFollowListTTL(),
+		config.GetCacheGTSFollowIDsMaxSize(),
+		config.GetCacheGTSFollowIDsTTL(),
 	)
 }
 

@@ -2624,6 +2624,81 @@ func GetCacheGTSBlockSweepFreq() time.Duration { return global.GetCacheGTSBlockS
 // SetCacheGTSBlockSweepFreq safely sets the value for global configuration 'Cache.GTS.BlockSweepFreq' field
 func SetCacheGTSBlockSweepFreq(v time.Duration) { global.SetCacheGTSBlockSweepFreq(v) }
 
+// GetCacheGTSBlockIDsMaxSize safely fetches the Configuration value for state's 'Cache.GTS.BlockIDsMaxSize' field
+func (st *ConfigState) GetCacheGTSBlockIDsMaxSize() (v int) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.BlockIDsMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSBlockIDsMaxSize safely sets the Configuration value for state's 'Cache.GTS.BlockIDsMaxSize' field
+func (st *ConfigState) SetCacheGTSBlockIDsMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.BlockIDsMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSBlockIDsMaxSizeFlag returns the flag name for the 'Cache.GTS.BlockIDsMaxSize' field
+func CacheGTSBlockIDsMaxSizeFlag() string { return "cache-gts-block-ids-max-size" }
+
+// GetCacheGTSBlockIDsMaxSize safely fetches the value for global configuration 'Cache.GTS.BlockIDsMaxSize' field
+func GetCacheGTSBlockIDsMaxSize() int { return global.GetCacheGTSBlockIDsMaxSize() }
+
+// SetCacheGTSBlockIDsMaxSize safely sets the value for global configuration 'Cache.GTS.BlockIDsMaxSize' field
+func SetCacheGTSBlockIDsMaxSize(v int) { global.SetCacheGTSBlockIDsMaxSize(v) }
+
+// GetCacheGTSBlockIDsTTL safely fetches the Configuration value for state's 'Cache.GTS.BlockIDsTTL' field
+func (st *ConfigState) GetCacheGTSBlockIDsTTL() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.BlockIDsTTL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSBlockIDsTTL safely sets the Configuration value for state's 'Cache.GTS.BlockIDsTTL' field
+func (st *ConfigState) SetCacheGTSBlockIDsTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.BlockIDsTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSBlockIDsTTLFlag returns the flag name for the 'Cache.GTS.BlockIDsTTL' field
+func CacheGTSBlockIDsTTLFlag() string { return "cache-gts-block-ids-ttl" }
+
+// GetCacheGTSBlockIDsTTL safely fetches the value for global configuration 'Cache.GTS.BlockIDsTTL' field
+func GetCacheGTSBlockIDsTTL() time.Duration { return global.GetCacheGTSBlockIDsTTL() }
+
+// SetCacheGTSBlockIDsTTL safely sets the value for global configuration 'Cache.GTS.BlockIDsTTL' field
+func SetCacheGTSBlockIDsTTL(v time.Duration) { global.SetCacheGTSBlockIDsTTL(v) }
+
+// GetCacheGTSBlockIDsSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.BlockIDsSweepFreq' field
+func (st *ConfigState) GetCacheGTSBlockIDsSweepFreq() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.BlockIDsSweepFreq
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSBlockIDsSweepFreq safely sets the Configuration value for state's 'Cache.GTS.BlockIDsSweepFreq' field
+func (st *ConfigState) SetCacheGTSBlockIDsSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.BlockIDsSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSBlockIDsSweepFreqFlag returns the flag name for the 'Cache.GTS.BlockIDsSweepFreq' field
+func CacheGTSBlockIDsSweepFreqFlag() string { return "cache-gts-block-ids-sweep-freq" }
+
+// GetCacheGTSBlockIDsSweepFreq safely fetches the value for global configuration 'Cache.GTS.BlockIDsSweepFreq' field
+func GetCacheGTSBlockIDsSweepFreq() time.Duration { return global.GetCacheGTSBlockIDsSweepFreq() }
+
+// SetCacheGTSBlockIDsSweepFreq safely sets the value for global configuration 'Cache.GTS.BlockIDsSweepFreq' field
+func SetCacheGTSBlockIDsSweepFreq(v time.Duration) { global.SetCacheGTSBlockIDsSweepFreq(v) }
+
 // GetCacheGTSDomainBlockMaxSize safely fetches the Configuration value for state's 'Cache.GTS.DomainBlockMaxSize' field
 func (st *ConfigState) GetCacheGTSDomainBlockMaxSize() (v int) {
 	st.mutex.RLock()
@@ -2926,80 +3001,80 @@ func GetCacheGTSFollowSweepFreq() time.Duration { return global.GetCacheGTSFollo
 // SetCacheGTSFollowSweepFreq safely sets the value for global configuration 'Cache.GTS.FollowSweepFreq' field
 func SetCacheGTSFollowSweepFreq(v time.Duration) { global.SetCacheGTSFollowSweepFreq(v) }
 
-// GetCacheGTSFollowListMaxSize safely fetches the Configuration value for state's 'Cache.GTS.FollowListMaxSize' field
-func (st *ConfigState) GetCacheGTSFollowListMaxSize() (v int) {
+// GetCacheGTSFollowIDsMaxSize safely fetches the Configuration value for state's 'Cache.GTS.FollowIDsMaxSize' field
+func (st *ConfigState) GetCacheGTSFollowIDsMaxSize() (v int) {
 	st.mutex.RLock()
-	v = st.config.Cache.GTS.FollowListMaxSize
+	v = st.config.Cache.GTS.FollowIDsMaxSize
 	st.mutex.RUnlock()
 	return
 }
 
-// SetCacheGTSFollowListMaxSize safely sets the Configuration value for state's 'Cache.GTS.FollowListMaxSize' field
-func (st *ConfigState) SetCacheGTSFollowListMaxSize(v int) {
+// SetCacheGTSFollowIDsMaxSize safely sets the Configuration value for state's 'Cache.GTS.FollowIDsMaxSize' field
+func (st *ConfigState) SetCacheGTSFollowIDsMaxSize(v int) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.Cache.GTS.FollowListMaxSize = v
+	st.config.Cache.GTS.FollowIDsMaxSize = v
 	st.reloadToViper()
 }
 
-// CacheGTSFollowListMaxSizeFlag returns the flag name for the 'Cache.GTS.FollowListMaxSize' field
-func CacheGTSFollowListMaxSizeFlag() string { return "cache-gts-follow-list-max-size" }
+// CacheGTSFollowIDsMaxSizeFlag returns the flag name for the 'Cache.GTS.FollowIDsMaxSize' field
+func CacheGTSFollowIDsMaxSizeFlag() string { return "cache-gts-follow-ids-max-size" }
 
-// GetCacheGTSFollowListMaxSize safely fetches the value for global configuration 'Cache.GTS.FollowListMaxSize' field
-func GetCacheGTSFollowListMaxSize() int { return global.GetCacheGTSFollowListMaxSize() }
+// GetCacheGTSFollowIDsMaxSize safely fetches the value for global configuration 'Cache.GTS.FollowIDsMaxSize' field
+func GetCacheGTSFollowIDsMaxSize() int { return global.GetCacheGTSFollowIDsMaxSize() }
 
-// SetCacheGTSFollowListMaxSize safely sets the value for global configuration 'Cache.GTS.FollowListMaxSize' field
-func SetCacheGTSFollowListMaxSize(v int) { global.SetCacheGTSFollowListMaxSize(v) }
+// SetCacheGTSFollowIDsMaxSize safely sets the value for global configuration 'Cache.GTS.FollowIDsMaxSize' field
+func SetCacheGTSFollowIDsMaxSize(v int) { global.SetCacheGTSFollowIDsMaxSize(v) }
 
-// GetCacheGTSFollowListTTL safely fetches the Configuration value for state's 'Cache.GTS.FollowListTTL' field
-func (st *ConfigState) GetCacheGTSFollowListTTL() (v time.Duration) {
+// GetCacheGTSFollowIDsTTL safely fetches the Configuration value for state's 'Cache.GTS.FollowIDsTTL' field
+func (st *ConfigState) GetCacheGTSFollowIDsTTL() (v time.Duration) {
 	st.mutex.RLock()
-	v = st.config.Cache.GTS.FollowListTTL
+	v = st.config.Cache.GTS.FollowIDsTTL
 	st.mutex.RUnlock()
 	return
 }
 
-// SetCacheGTSFollowListTTL safely sets the Configuration value for state's 'Cache.GTS.FollowListTTL' field
-func (st *ConfigState) SetCacheGTSFollowListTTL(v time.Duration) {
+// SetCacheGTSFollowIDsTTL safely sets the Configuration value for state's 'Cache.GTS.FollowIDsTTL' field
+func (st *ConfigState) SetCacheGTSFollowIDsTTL(v time.Duration) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.Cache.GTS.FollowListTTL = v
+	st.config.Cache.GTS.FollowIDsTTL = v
 	st.reloadToViper()
 }
 
-// CacheGTSFollowListTTLFlag returns the flag name for the 'Cache.GTS.FollowListTTL' field
-func CacheGTSFollowListTTLFlag() string { return "cache-gts-follow-list-ttl" }
+// CacheGTSFollowIDsTTLFlag returns the flag name for the 'Cache.GTS.FollowIDsTTL' field
+func CacheGTSFollowIDsTTLFlag() string { return "cache-gts-follow-ids-ttl" }
 
-// GetCacheGTSFollowListTTL safely fetches the value for global configuration 'Cache.GTS.FollowListTTL' field
-func GetCacheGTSFollowListTTL() time.Duration { return global.GetCacheGTSFollowListTTL() }
+// GetCacheGTSFollowIDsTTL safely fetches the value for global configuration 'Cache.GTS.FollowIDsTTL' field
+func GetCacheGTSFollowIDsTTL() time.Duration { return global.GetCacheGTSFollowIDsTTL() }
 
-// SetCacheGTSFollowListTTL safely sets the value for global configuration 'Cache.GTS.FollowListTTL' field
-func SetCacheGTSFollowListTTL(v time.Duration) { global.SetCacheGTSFollowListTTL(v) }
+// SetCacheGTSFollowIDsTTL safely sets the value for global configuration 'Cache.GTS.FollowIDsTTL' field
+func SetCacheGTSFollowIDsTTL(v time.Duration) { global.SetCacheGTSFollowIDsTTL(v) }
 
-// GetCacheGTSFollowListSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.FollowListSweepFreq' field
-func (st *ConfigState) GetCacheGTSFollowListSweepFreq() (v time.Duration) {
+// GetCacheGTSFollowIDsSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.FollowIDsSweepFreq' field
+func (st *ConfigState) GetCacheGTSFollowIDsSweepFreq() (v time.Duration) {
 	st.mutex.RLock()
-	v = st.config.Cache.GTS.FollowListSweepFreq
+	v = st.config.Cache.GTS.FollowIDsSweepFreq
 	st.mutex.RUnlock()
 	return
 }
 
-// SetCacheGTSFollowListSweepFreq safely sets the Configuration value for state's 'Cache.GTS.FollowListSweepFreq' field
-func (st *ConfigState) SetCacheGTSFollowListSweepFreq(v time.Duration) {
+// SetCacheGTSFollowIDsSweepFreq safely sets the Configuration value for state's 'Cache.GTS.FollowIDsSweepFreq' field
+func (st *ConfigState) SetCacheGTSFollowIDsSweepFreq(v time.Duration) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.Cache.GTS.FollowListSweepFreq = v
+	st.config.Cache.GTS.FollowIDsSweepFreq = v
 	st.reloadToViper()
 }
 
-// CacheGTSFollowListSweepFreqFlag returns the flag name for the 'Cache.GTS.FollowListSweepFreq' field
-func CacheGTSFollowListSweepFreqFlag() string { return "cache-gts-follow-list-sweep-freq" }
+// CacheGTSFollowIDsSweepFreqFlag returns the flag name for the 'Cache.GTS.FollowIDsSweepFreq' field
+func CacheGTSFollowIDsSweepFreqFlag() string { return "cache-gts-follow-ids-sweep-freq" }
 
-// GetCacheGTSFollowListSweepFreq safely fetches the value for global configuration 'Cache.GTS.FollowListSweepFreq' field
-func GetCacheGTSFollowListSweepFreq() time.Duration { return global.GetCacheGTSFollowListSweepFreq() }
+// GetCacheGTSFollowIDsSweepFreq safely fetches the value for global configuration 'Cache.GTS.FollowIDsSweepFreq' field
+func GetCacheGTSFollowIDsSweepFreq() time.Duration { return global.GetCacheGTSFollowIDsSweepFreq() }
 
-// SetCacheGTSFollowListSweepFreq safely sets the value for global configuration 'Cache.GTS.FollowListSweepFreq' field
-func SetCacheGTSFollowListSweepFreq(v time.Duration) { global.SetCacheGTSFollowListSweepFreq(v) }
+// SetCacheGTSFollowIDsSweepFreq safely sets the value for global configuration 'Cache.GTS.FollowIDsSweepFreq' field
+func SetCacheGTSFollowIDsSweepFreq(v time.Duration) { global.SetCacheGTSFollowIDsSweepFreq(v) }
 
 // GetCacheGTSFollowRequestMaxSize safely fetches the Configuration value for state's 'Cache.GTS.FollowRequestMaxSize' field
 func (st *ConfigState) GetCacheGTSFollowRequestMaxSize() (v int) {
