@@ -125,6 +125,13 @@ func (c *Caches) setuphooks() {
 	c.GTS.FollowRequest().SetInvalidateCallback(func(followReq *gtsmodel.FollowRequest) {
 		// Invalidate any cached follow with same ID.
 		c.GTS.Follow().Invalidate("ID", followReq.ID)
+
+		// Invalidate source account's followreq
+		// lists, and destinations follow req lists.
+		c.GTS.FollowRequestIDs().InvalidateAll(
+			">"+followReq.AccountID,
+			"<"+followReq.TargetAccountID,
+		)
 	})
 
 	c.GTS.List().SetInvalidateCallback(func(list *gtsmodel.List) {
