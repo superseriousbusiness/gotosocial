@@ -143,10 +143,8 @@ func (c *Caches) setuphooks() {
 		// Invalidate status ID cached visibility.
 		c.Visibility.Invalidate("ItemID", status.ID)
 
-		for _, id := range status.AttachmentIDs {
-			// Invalidate cache for attached media IDs,
-			c.GTS.Media().Invalidate("ID", id)
-		}
+		// Invalidate cache for any attached media.
+		c.GTS.Media().Invalidate("StatusID", status.ID)
 	})
 
 	c.GTS.User().SetInvalidateCallback(func(user *gtsmodel.User) {

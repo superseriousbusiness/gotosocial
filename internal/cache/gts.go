@@ -495,6 +495,7 @@ func (c *GTSCaches) initMarker() {
 func (c *GTSCaches) initMedia() {
 	c.media = result.New([]result.Lookup{
 		{Name: "ID"},
+		{Name: "StatusID", Multi: true},
 	}, func(m1 *gtsmodel.MediaAttachment) *gtsmodel.MediaAttachment {
 		m2 := new(gtsmodel.MediaAttachment)
 		*m2 = *m1
