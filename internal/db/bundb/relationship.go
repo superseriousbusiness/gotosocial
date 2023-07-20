@@ -162,10 +162,7 @@ func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string,
 		}
 
 		return blockIDs, nil
-	}, func(blockIDs []string) []string {
-		// Filter blockIDs to given paging.
-		return page.PageDesc(blockIDs)
-	})
+	}, page.PageDesc)
 	if err != nil {
 		return nil, err
 	}

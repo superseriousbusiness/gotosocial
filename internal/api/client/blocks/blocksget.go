@@ -105,7 +105,7 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit := 20
+	limit := 20 // default
 	limitString := c.Query(LimitKey)
 	if limitString != "" {
 		i, err := strconv.ParseInt(limitString, 10, 32)
