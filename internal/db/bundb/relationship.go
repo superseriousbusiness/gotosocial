@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
@@ -149,7 +150,7 @@ func (r *relationshipDB) GetAccountFollowRequesting(ctx context.Context, account
 	return r.GetFollowRequestsByIDs(ctx, followReqIDs)
 }
 
-func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string, maxID, minID string, limit int) ([]*gtsmodel.Block, error) {
+func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string, page *paging.Pager) ([]*gtsmodel.Block, error) {
 	// Load block IDs from cache with database loader callback.
 	blockIDs, err := r.state.Caches.GTS.BlockIDs().LoadRange(accountID, func() ([]string, error) {
 		var blockIDs []string
@@ -162,8 +163,8 @@ func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string,
 
 		return blockIDs, nil
 	}, func(blockIDs []string) []string {
-		// Filter the block IDs to requested page range.
-		return PageIDs(blockIDs, maxID, minID, limit)
+		// Filter blockIDs to given paging.
+		return page.PageDesc(blockIDs)
 	})
 	if err != nil {
 		return nil, err

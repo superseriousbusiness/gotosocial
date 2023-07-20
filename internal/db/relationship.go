@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Relationship contains functions for getting or modifying the relationship between two accounts.
@@ -166,8 +167,8 @@ type Relationship interface {
 	// CountAccountFollowerRequests returns number of follow requests originating from the given account.
 	CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error)
 
-	// GetAccountBlocks returns all blocks originating from the given account, with given optional paging / limit parameters.
-	GetAccountBlocks(ctx context.Context, accountID string, maxID, minID string, limit int) ([]*gtsmodel.Block, error)
+	// GetAccountBlocks returns all blocks originating from the given account, with given optional paging parameters.
+	GetAccountBlocks(ctx context.Context, accountID string, paging *paging.Pager) ([]*gtsmodel.Block, error)
 
 	// GetNote gets a private note from a source account on a target account, if it exists.
 	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error)

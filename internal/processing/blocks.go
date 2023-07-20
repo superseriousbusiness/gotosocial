@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -39,9 +40,11 @@ func (p *Processor) BlocksGet(
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	blocks, err := p.state.DB.GetAccountBlocks(ctx,
 		requestingAccount.ID,
-		maxID,
-		minID,
-		limit,
+		&paging.Pager{
+			MinID: minID,
+			MaxID: maxID,
+			Limit: limit,
+		},
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
