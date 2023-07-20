@@ -20,6 +20,77 @@ The filesystem location of `/assets` is defined by the [`web-asset-base-dir`](..
 
 ## Configuration
 
+### Apache 2.4
+
+This is intended to behave identical to the nginx section below.
+
+The `Cache-Control` header is manually set to merge the values
+from the configuration and the `expires` directive to avoid
+breakage from having two header lines. `Header set` defaults
+to ` onsuccess`, so it is also not added to error responses.
+
+Assuming your GtS installation is rooted in `/opt/GtS` with a
+`storage` subdirectory, and the webserver has been given access,
+add the following section to the vhost:
+
+```
+	<Directory /opt/GtS/web/assets>
+		Options None
+		AllowOverride None
+		Require all granted
+		ExpiresActive on
+		ExpiresDefault A300
+		Header set Cache-Control "public, max-age=300"
+	</Directory>
+	RewriteRule "^/assets/(.*)$" "/opt/GtS/web/assets/$1" [L]
+
+	<Directory /opt/GtS/storage>
+		Options None
+		AllowOverride None
+		Require all granted
+		ExpiresActive on
+		ExpiresDefault A604800
+		Header set Cache-Control "private, immutable, max-age=604800"
+	</Directory>
+	RewriteCond "/opt/GtS/storage/$1" -f
+	RewriteRule "^/fileserver/(.*)$" "/opt/GtS/storage/$1" [L]
+```
+
+The trick here is that, in an Apache 2-based reverse proxy setup…
+
+```
+	RewriteEngine On
+
+	RewriteCond %{HTTP:Upgrade} websocket [NC]
+	RewriteCond %{HTTP:Connection} upgrade [NC]
+	RewriteRule ^/?(.*) "ws://localhost:8980/$1" [P,L]
+
+	ProxyIOBufferSize 65536
+	ProxyTimeout 120
+
+	ProxyPreserveHost On
+	<Location "/">
+		ProxyPass http://127.0.0.1:8980/
+		ProxyPassReverse http://127.0.0.1:8980/
+	</Location>
+```
+
+… everything is proxied by default, the `RewriteRule` bypasses
+the proxy (by specifying a filesystem path to redirect to) for
+specific URL præficēs and the `RewriteCond` ensures to only
+disable the `/fileserver/` proxy if the file is, indeed, present.
+
+Also run the following commands (assuming a Debian-like setup)
+to enable the modules used:
+
+```
+$ sudo a2enmod expires
+$ sudo a2enmod headers
+$ sudo a2enmod rewrite
+```
+
+Then (after a configtest), restart Apache.
+
 ### nginx
 
 Here's an example of the three location blocks you'll need to add to your existing configuration in nginx:
@@ -47,7 +118,7 @@ server {
   location /fileserver/ {
     alias storage-local-base-path/;
     autoindex off;
-    expires max;
+    expires 1w;
     add_header Cache-Control "private, immutable";
     try_files $uri @fileserver;
   }
@@ -62,9 +133,9 @@ The `/fileserver` location is a bit special. When we fail to fetch the media fro
 The `expires` directive adds the necessary headers to inform the client how long it may cache the resource:
 
 * For assets, which may change on each release, 5 minutes is used in this example
-* For attachments, which should never change once they're created, `max` is used instead setting the cache expiry to the 31st of December 2037.
+* For attachments, which should never change once they're created, we currently use one week
 
-For other options, see the nginx documentation on the [`expires` directive](https://nginx.org/en/docs/http/ngx_http_headers_module.html#expires). 
+For other options, see the nginx documentation on the [`expires` directive](https://nginx.org/en/docs/http/ngx_http_headers_module.html#expires).
 
 Nginx does not add cache headers to 4xx or 5xx response codes so a failure to fetch an asset won't get cached by clients. The `autoindex off` directive tells nginx to not serve a directory listing. This should be the default but it doesn't hurt to be explicit. The added `add_header` lines set additional options for the `Cache-Control` header:
 
