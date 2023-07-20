@@ -26,6 +26,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // BlocksGETHandler swagger:operation GET /api/v1/blocks blocksGet
@@ -119,9 +120,11 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 	resp, errWithCode := m.processor.BlocksGet(
 		c.Request.Context(),
 		authed.Account,
-		c.Query(MaxIDKey),
-		c.Query(SinceIDKey),
-		limit,
+		paging.Pager{
+			SinceID: c.Query(SinceIDKey),
+			MaxID:   c.Query(MaxIDKey),
+			Limit:   limit,
+		},
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

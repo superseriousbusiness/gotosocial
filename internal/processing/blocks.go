@@ -34,17 +34,11 @@ import (
 func (p *Processor) BlocksGet(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
-	maxID string,
-	minID string,
-	limit int,
+	page paging.Pager,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	blocks, err := p.state.DB.GetAccountBlocks(ctx,
 		requestingAccount.ID,
-		&paging.Pager{
-			MinID: minID,
-			MaxID: maxID,
-			Limit: limit,
-		},
+		&page,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -90,6 +84,6 @@ func (p *Processor) BlocksGet(
 		PrevMinIDKey:   "since_id",
 		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDValue: prevMinIDValue,
-		Limit:          limit,
+		Limit:          page.Limit,
 	})
 }
