@@ -478,8 +478,8 @@ media-description-max-chars: 500
 #
 # If this is set to 0, then media from remote instances will be cached indefinitely.
 # Examples: [30, 60, 7, 0]
-# Default: 30
-media-remote-cache-days: 30
+# Default: 7
+media-remote-cache-days: 7
 
 # Int. Max size in bytes of emojis uploaded to this instance via the admin API.
 # The default is the same as the Mastodon size limit for emojis (50kb), which allows
