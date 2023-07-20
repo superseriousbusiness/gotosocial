@@ -26,61 +26,73 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
-// Create processes the given form for creating a new account, returning an oauth token for that account if successful.
-func (p *Processor) Create(ctx context.Context, applicationToken oauth2.TokenInfo, application *gtsmodel.Application, form *apimodel.AccountCreateRequest) (*apimodel.Token, gtserror.WithCode) {
+// Create processes the given form for creating a new account,
+// returning an oauth token for that account if successful.
+//
+// Fields on the form should have already been validated by the
+// caller, before this function is called.
+func (p *Processor) Create(
+	ctx context.Context,
+	appToken oauth2.TokenInfo,
+	app *gtsmodel.Application,
+	form *apimodel.AccountCreateRequest,
+) (*apimodel.Token, gtserror.WithCode) {
 	emailAvailable, err := p.state.DB.IsEmailAvailable(ctx, form.Email)
 	if err != nil {
-		return nil, gtserror.NewErrorBadRequest(err)
+		err := fmt.Errorf("db error checking email availability: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if !emailAvailable {
-		return nil, gtserror.NewErrorConflict(fmt.Errorf("email address %s is not available", form.Email))
+		err := fmt.Errorf("email address %s is not available", form.Email)
+		return nil, gtserror.NewErrorConflict(err, err.Error())
 	}
 
 	usernameAvailable, err := p.state.DB.IsUsernameAvailable(ctx, form.Username)
 	if err != nil {
-		return nil, gtserror.NewErrorBadRequest(err)
+		err := fmt.Errorf("db error checking username availability: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if !usernameAvailable {
-		return nil, gtserror.NewErrorConflict(fmt.Errorf("username %s in use", form.Username))
+		err := fmt.Errorf("username %s is not available", form.Username)
+		return nil, gtserror.NewErrorConflict(err, err.Error())
 	}
 
-	reasonRequired := config.GetAccountsReasonRequired()
-	approvalRequired := config.GetAccountsApprovalRequired()
-
-	// don't store a reason if we don't require one
-	reason := form.Reason
-	if !reasonRequired {
-		reason = ""
+	// Only store reason if one is required.
+	var reason string
+	if config.GetAccountsReasonRequired() {
+		reason = form.Reason
 	}
 
-	log.Trace(ctx, "creating new username and account")
-	user, err := p.state.DB.NewSignup(ctx, form.Username, text.SanitizePlaintext(reason), approvalRequired, form.Email, form.Password, form.IP, form.Locale, application.ID, false, "", false)
+	user, err := p.state.DB.NewSignup(ctx, gtsmodel.NewSignup{
+		Username:    form.Username,
+		Email:       form.Email,
+		Password:    form.Password,
+		Reason:      text.SanitizePlaintext(reason),
+		PreApproved: !config.GetAccountsApprovalRequired(), // Mark as approved if no approval required.
+		SignUpIP:    form.IP,
+		Locale:      form.Locale,
+		AppID:       app.ID,
+	})
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating new signup in the database: %s", err))
+		err := fmt.Errorf("db error creating new signup: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	log.Tracef(ctx, "generating a token for user %s with account %s and application %s", user.ID, user.AccountID, application.ID)
-	accessToken, err := p.oauthServer.GenerateUserAccessToken(ctx, applicationToken, application.ClientSecret, user.ID)
+	// Generate access token *before* doing side effects; we
+	// don't want to process side effects if something borks.
+	accessToken, err := p.oauthServer.GenerateUserAccessToken(ctx, appToken, app.ClientSecret, user.ID)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating new access token for user %s: %s", user.ID, err))
+		err := fmt.Errorf("error creating new access token for user %s: %w", user.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if user.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, user.AccountID)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error getting new account from the database: %s", err))
-		}
-		user.Account = a
-	}
-
-	// there are side effects for creating a new account (sending confirmation emails etc)
-	// so pass a message to the processor so that it can do it asynchronously
+	// There are side effects for creating a new account
+	// (confirmation emails etc), perform these async.
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityCreate,
