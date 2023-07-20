@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Advanced
 
 Advanced settings options are provided for the sake of allowing admins to tune their instance to their liking.

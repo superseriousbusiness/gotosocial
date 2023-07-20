@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 set -e
 
 # "-count 1" = run all tests once, ignoring cache; useful for when we're running tests with different database back to back like this

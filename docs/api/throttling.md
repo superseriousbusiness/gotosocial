@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Request Throttling
 
 GoToSocial uses request throttling to limit the number of open connections to the API of your instance. This is designed to prevent your instance from accidentally being DDOS'd (aka [the hug of death](https://en.wikipedia.org/wiki/Slashdot_effect)) if a post gets boosted or replied to by an account with many thousands of followers.

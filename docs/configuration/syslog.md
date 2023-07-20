@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Syslog
 
 GoToSocial can be configured to mirror logs to [syslog](https://en.wikipedia.org/wiki/Syslog), either via udp/tcp, or a local syslog (eg., `/var/log/syslog`).

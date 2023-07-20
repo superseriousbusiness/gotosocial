@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Backup and Restore
 
 As the GoToSocial database contains the instance as well as all user signing keys it is vital to back it up. If you lose these keys you'll never be able to federate from this domain again. Don't forget to also encrypt your backups in order to keep the data safe at rest.

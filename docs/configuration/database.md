@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Database
 
 GoToSocial stores statuses, accounts, etc, in a database. This can be either [SQLite](https://sqlite.org/index.html) or [Postgres](https://www.postgresql.org/).

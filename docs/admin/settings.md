@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Admin Settings
 
 The GoToSocial Settings interface uses the [admin api routes](https://docs.gotosocial.org/en/latest/api/swagger/#operations-tag-admin) to manage your instance. It's combined with the [User settings](../user_guide/settings.md) and uses the same OAUTH mechanism as normal clients (with scope: admin).

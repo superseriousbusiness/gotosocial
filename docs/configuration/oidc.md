@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # OpenID Connect (OIDC)
 
 GoToSocial supports [OpenID Connect](https://openid.net/connect/), which is an identification protocol built on top of [OAuth 2.0](https://oauth.net/2/), an industry standard protocol for authorization.

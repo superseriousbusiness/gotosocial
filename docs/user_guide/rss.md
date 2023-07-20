@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # RSS
 
 RSS stands for [Really Simple Syndication](https://en.wikipedia.org/wiki/RSS). It's a very well established standard for sharing content on the web. You might recognize the jolly orange RSS logo from your favorite news websites and blogs:

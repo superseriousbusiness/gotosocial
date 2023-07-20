@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
 set -eux
 
 SERVER_URL="http://localhost:8080"

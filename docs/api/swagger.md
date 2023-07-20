@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # API Documentation
 
 GoToSocial uses [go-swagger](https://github.com/go-swagger/go-swagger) to generate a V2 [OpenAPI specification](https://swagger.io/specification/v2/) document from code annotations.

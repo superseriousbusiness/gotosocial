@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+
+SPDX-License-Identifier: AGPL-3.0-only
+-->
+
 # Settings
 
 GoToSocial provides a settings interface where you can update your post settings, add an avatar and header image, write a bio for your account, and so on.

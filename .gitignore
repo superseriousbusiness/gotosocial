@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023 GoToSocial Authors <admin@gotosocial.org>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 # exclude the compiled binary
 /gotosocial
 
