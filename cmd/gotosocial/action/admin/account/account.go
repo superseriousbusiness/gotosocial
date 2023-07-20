@@ -19,7 +19,6 @@ package account
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -28,88 +27,101 @@ import (
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Create creates a new account in the database using the provided flags.
-var Create action.GTSAction = func(ctx context.Context) error {
+func initState(ctx context.Context) (*state.State, error) {
 	var state state.State
 	state.Caches.Init()
+	state.Caches.Start()
 	state.Workers.Start()
 
+	// Set the state DB connection
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
+		return nil, fmt.Errorf("error creating dbConn: %w", err)
 	}
-
-	// Set the state DB connection
 	state.DB = dbConn
 
-	username := config.GetAdminAccountUsername()
-	if username == "" {
-		return errors.New("no username set")
+	return &state, nil
+}
+
+func stopState(ctx context.Context, state *state.State) error {
+	if err := state.DB.Stop(ctx); err != nil {
+		return fmt.Errorf("error stopping dbConn: %w", err)
 	}
+
+	state.Workers.Stop()
+	state.Caches.Stop()
+
+	return nil
+}
+
+// Create creates a new account and user
+// in the database using the provided flags.
+var Create action.GTSAction = func(ctx context.Context) error {
+	state, err := initState(ctx)
+	if err != nil {
+		return err
+	}
+
+	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
-	usernameAvailable, err := dbConn.IsUsernameAvailable(ctx, username)
+	usernameAvailable, err := state.DB.IsUsernameAvailable(ctx, username)
 	if err != nil {
 		return err
 	}
+
 	if !usernameAvailable {
 		return fmt.Errorf("username %s is already in use", username)
 	}
 
 	email := config.GetAdminAccountEmail()
-	if email == "" {
-		return errors.New("no email set")
-	}
 	if err := validate.Email(email); err != nil {
 		return err
 	}
 
-	emailAvailable, err := dbConn.IsEmailAvailable(ctx, email)
+	emailAvailable, err := state.DB.IsEmailAvailable(ctx, email)
 	if err != nil {
 		return err
 	}
+
 	if !emailAvailable {
 		return fmt.Errorf("email address %s is already in use", email)
 	}
 
 	password := config.GetAdminAccountPassword()
-	if password == "" {
-		return errors.New("no password set")
-	}
-	if err := validate.NewPassword(password); err != nil {
+	if err := validate.Password(password); err != nil {
 		return err
 	}
 
-	_, err = dbConn.NewSignup(ctx, username, "", false, email, password, nil, "", "", true, "", false)
-	if err != nil {
+	if _, err := state.DB.NewSignup(ctx, gtsmodel.NewSignup{
+		Username:      username,
+		Email:         email,
+		Password:      password,
+		EmailVerified: true, // Assume cli user wants email marked as verified already.
+		PreApproved:   true, // Assume cli user wants account marked as approved already.
+	}); err != nil {
 		return err
 	}
 
-	return dbConn.Stop(ctx)
+	return stopState(ctx, state)
 }
 
 // List returns all existing local accounts.
 var List action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-	state.Caches.Init()
-	state.Workers.Start()
-
-	dbConn, err := bundb.NewBunDBService(ctx, &state)
+	state, err := initState(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
+		return err
 	}
 
-	// Set the state DB connection
-	state.DB = dbConn
-
-	users, err := dbConn.GetAllUsers(ctx)
+	users, err := state.DB.GetAllUsers(ctx)
 	if err != nil {
 		return err
 	}
@@ -140,218 +152,182 @@ var List action.GTSAction = func(ctx context.Context) error {
 	return nil
 }
 
-// Confirm sets a user to Approved, sets Email to the current UnconfirmedEmail value, and sets ConfirmedAt to now.
+// Confirm sets a user to Approved, sets Email to the current
+// UnconfirmedEmail value, and sets ConfirmedAt to now.
 var Confirm action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-	state.Caches.Init()
-	state.Workers.Start()
-
-	dbConn, err := bundb.NewBunDBService(ctx, &state)
+	state, err := initState(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
+		return err
 	}
-
-	// Set the state DB connection
-	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
-	if username == "" {
-		return errors.New("no username set")
-	}
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
-	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
+	account, err := state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
 
-	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	user, err := state.DB.GetUserByAccountID(ctx, account.ID)
 	if err != nil {
 		return err
 	}
 
-	updatingColumns := []string{"approved", "email", "confirmed_at"}
-	approved := true
-	u.Approved = &approved
-	u.Email = u.UnconfirmedEmail
-	u.ConfirmedAt = time.Now()
-	if err := dbConn.UpdateUser(ctx, u, updatingColumns...); err != nil {
+	user.Approved = func() *bool { a := true; return &a }()
+	user.Email = user.UnconfirmedEmail
+	user.ConfirmedAt = time.Now()
+	if err := state.DB.UpdateUser(
+		ctx, user,
+		"approved", "email", "confirmed_at",
+	); err != nil {
 		return err
 	}
 
-	return dbConn.Stop(ctx)
+	return stopState(ctx, state)
 }
 
-// Promote sets a user to admin.
+// Promote sets admin + moderator flags on a user to true.
 var Promote action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-	state.Caches.Init()
-	state.Workers.Start()
-
-	dbConn, err := bundb.NewBunDBService(ctx, &state)
+	state, err := initState(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
+		return err
 	}
-
-	// Set the state DB connection
-	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
-	if username == "" {
-		return errors.New("no username set")
-	}
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
-	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
+	account, err := state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
 
-	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	user, err := state.DB.GetUserByAccountID(ctx, account.ID)
 	if err != nil {
 		return err
 	}
 
-	admin := true
-	u.Admin = &admin
-	if err := dbConn.UpdateUser(ctx, u, "admin"); err != nil {
+	user.Admin = func() *bool { a := true; return &a }()
+	user.Moderator = func() *bool { a := true; return &a }()
+	if err := state.DB.UpdateUser(
+		ctx, user,
+		"admin", "moderator",
+	); err != nil {
 		return err
 	}
 
-	return dbConn.Stop(ctx)
+	return stopState(ctx, state)
 }
 
-// Demote sets admin on a user to false.
+// Demote sets admin + moderator flags on a user to false.
 var Demote action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-	state.Caches.Init()
-	state.Workers.Start()
-
-	dbConn, err := bundb.NewBunDBService(ctx, &state)
+	state, err := initState(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
+		return err
 	}
-
-	// Set the state DB connection
-	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
-	if username == "" {
-		return errors.New("no username set")
-	}
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
-	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
+	a, err := state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
 
-	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	user, err := state.DB.GetUserByAccountID(ctx, a.ID)
 	if err != nil {
 		return err
 	}
 
-	admin := false
-	u.Admin = &admin
-	if err := dbConn.UpdateUser(ctx, u, "admin"); err != nil {
+	user.Admin = func() *bool { a := false; return &a }()
+	user.Moderator = func() *bool { a := false; return &a }()
+	if err := state.DB.UpdateUser(
+		ctx, user,
+		"admin", "moderator",
+	); err != nil {
 		return err
 	}
 
-	return dbConn.Stop(ctx)
+	return stopState(ctx, state)
 }
 
 // Disable sets Disabled to true on a user.
 var Disable action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-	state.Caches.Init()
-	state.Workers.Start()
-
-	dbConn, err := bundb.NewBunDBService(ctx, &state)
+	state, err := initState(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
+		return err
 	}
-
-	// Set the state DB connection
-	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
-	if username == "" {
-		return errors.New("no username set")
-	}
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
-	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
+	account, err := state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
 
-	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	user, err := state.DB.GetUserByAccountID(ctx, account.ID)
 	if err != nil {
 		return err
 	}
 
-	disabled := true
-	u.Disabled = &disabled
-	if err := dbConn.UpdateUser(ctx, u, "disabled"); err != nil {
+	user.Disabled = func() *bool { d := true; return &d }()
+	if err := state.DB.UpdateUser(
+		ctx, user,
+		"disabled",
+	); err != nil {
 		return err
 	}
 
-	return dbConn.Stop(ctx)
+	return stopState(ctx, state)
 }
 
 // Password sets the password of target account.
 var Password action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-	state.Caches.Init()
-	state.Workers.Start()
-
-	dbConn, err := bundb.NewBunDBService(ctx, &state)
+	state, err := initState(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating dbservice: %s", err)
+		return err
 	}
-
-	// Set the state DB connection
-	state.DB = dbConn
 
 	username := config.GetAdminAccountUsername()
-	if username == "" {
-		return errors.New("no username set")
-	}
 	if err := validate.Username(username); err != nil {
 		return err
 	}
 
 	password := config.GetAdminAccountPassword()
-	if password == "" {
-		return errors.New("no password set")
-	}
-	if err := validate.NewPassword(password); err != nil {
+	if err := validate.Password(password); err != nil {
 		return err
 	}
 
-	a, err := dbConn.GetAccountByUsernameDomain(ctx, username, "")
+	account, err := state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return err
 	}
 
-	u, err := dbConn.GetUserByAccountID(ctx, a.ID)
+	user, err := state.DB.GetUserByAccountID(ctx, account.ID)
 	if err != nil {
 		return err
 	}
 
-	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("error hashing password: %s", err)
 	}
 
-	u.EncryptedPassword = string(pw)
-	return dbConn.UpdateUser(ctx, u, "encrypted_password")
+	user.EncryptedPassword = string(encryptedPassword)
+	if err := state.DB.UpdateUser(
+		ctx, user,
+		"encrypted_password",
+	); err != nil {
+		return err
+	}
+
+	return stopState(ctx, state)
 }
