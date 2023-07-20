@@ -130,6 +130,8 @@ func (c *Caches) setuphooks() {
 		// lists, and destinations follow req lists.
 		c.GTS.FollowRequestIDs().InvalidateAll(
 			">"+followReq.AccountID,
+			"<"+followReq.AccountID,
+			">"+followReq.TargetAccountID,
 			"<"+followReq.TargetAccountID,
 		)
 	})
