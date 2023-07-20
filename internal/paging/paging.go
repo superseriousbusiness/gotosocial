@@ -19,6 +19,8 @@ package paging
 
 import "golang.org/x/exp/slices"
 
+// Pager provides a means of paging serialized IDs,
+// using the terminology of our API endpoint queries.
 type Pager struct {
 	// SinceID will limit the returned
 	// page of IDs to contain from this
