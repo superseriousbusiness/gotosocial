@@ -43,42 +43,42 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 	strongPassword := "3dX5@Zc%mV*W2MBNEy$@"
 	var err error
 
-	err = validate.NewPassword(empty)
+	err = validate.Password(empty)
 	if suite.Error(err) {
-		suite.Equal(errors.New("no password provided"), err)
+		suite.Equal(errors.New("no password provided / provided password was 0 bytes"), err)
 	}
 
-	err = validate.NewPassword(terriblePassword)
+	err = validate.Password(terriblePassword)
 	if suite.Error(err) {
 		suite.Equal(errors.New("password is only 62% strength, try including more special characters, using uppercase letters, using numbers or using a longer password"), err)
 	}
 
-	err = validate.NewPassword(weakPassword)
+	err = validate.Password(weakPassword)
 	if suite.Error(err) {
 		suite.Equal(errors.New("password is only 95% strength, try including more special characters, using numbers or using a longer password"), err)
 	}
 
-	err = validate.NewPassword(shortPassword)
+	err = validate.Password(shortPassword)
 	if suite.Error(err) {
 		suite.Equal(errors.New("password is only 39% strength, try including more special characters or using a longer password"), err)
 	}
 
-	err = validate.NewPassword(specialPassword)
+	err = validate.Password(specialPassword)
 	if suite.Error(err) {
 		suite.Equal(errors.New("password is only 53% strength, try including more special characters or using a longer password"), err)
 	}
 
-	err = validate.NewPassword(longPassword)
+	err = validate.Password(longPassword)
 	if suite.NoError(err) {
 		suite.Equal(nil, err)
 	}
 
-	err = validate.NewPassword(tooLong)
+	err = validate.Password(tooLong)
 	if suite.Error(err) {
-		suite.Equal(errors.New("password should be no more than 256 chars"), err)
+		suite.Equal(errors.New("password should be no more than 72 bytes, provided password was 571 bytes"), err)
 	}
 
-	err = validate.NewPassword(strongPassword)
+	err = validate.Password(strongPassword)
 	if suite.NoError(err) {
 		suite.Equal(nil, err)
 	}

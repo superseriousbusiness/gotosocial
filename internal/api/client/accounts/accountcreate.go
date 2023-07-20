@@ -129,7 +129,7 @@ func validateCreateAccount(form *apimodel.AccountCreateRequest) error {
 		return err
 	}
 
-	if err := validate.NewPassword(form.Password); err != nil {
+	if err := validate.Password(form.Password); err != nil {
 		return err
 	}
 
