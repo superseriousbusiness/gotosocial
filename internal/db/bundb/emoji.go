@@ -126,11 +126,20 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			return err
 		}
 
-		// Select all accounts using this emoji.
-		if _, err := whereLike(tx.NewSelect().
+		// Prepare SELECT accounts query.
+		aq := e.conn.NewSelect().
 			Table("accounts").
-			Column("id"), "emojis", id).
-			Exec(ctx, &accountIDs); err != nil {
+			Column("id")
+
+		// Append a WHERE LIKE clause to the query
+		// that checks the `emoji` column for any
+		// text containing this specific emoji ID.
+		//
+		// (see GetStatusesUsingEmoji() for details.)
+		aq = whereLike(aq, "emojis", id)
+
+		// Select all accounts using this emoji into accountIDss.
+		if _, err := aq.Exec(ctx, &accountIDs); err != nil {
 			return err
 		}
 
@@ -161,11 +170,20 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			}
 		}
 
-		// Select all statuses using this emoji.
-		if _, err := whereLike(tx.NewSelect().
+		// Prepare SELECT statuses query.
+		sq := e.conn.NewSelect().
 			Table("statuses").
-			Column("id"), "emojis", id).
-			Exec(ctx, &statusIDs); err != nil {
+			Column("id")
+
+		// Append a WHERE LIKE clause to the query
+		// that checks the `emoji` column for any
+		// text containing this specific emoji ID.
+		//
+		// (see GetStatusesUsingEmoji() for details.)
+		sq = whereLike(sq, "emojis", id)
+
+		// Select all statuses using this emoji into statusIDs.
+		if _, err := sq.Exec(ctx, &statusIDs); err != nil {
 			return err
 		}
 
