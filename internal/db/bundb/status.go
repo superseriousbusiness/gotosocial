@@ -431,12 +431,29 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 
 func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error) {
 	var statusIDs []string
-	if _, err := whereLike(s.conn.NewSelect().
+
+	// Create SELECT status query.
+	q := s.conn.NewSelect().
 		Table("statuses").
-		Column("id"), "emojis", emojiID).
-		Exec(ctx, &statusIDs); err != nil {
+		Column("id")
+
+	// Append a WHERE LIKE clause to the query
+	// that checks the `emoji` column for any
+	// text containing this specific emoji ID.
+	//
+	// The reason we do this instead of doing a
+	// `WHERE ? IN (emojis)` is that the latter
+	// ends up being much MUCH slower, and the
+	// database stores this ID-array-column as
+	// text anyways, allowing a simple LIKE query.
+	q = whereLike(q, "emojis", emojiID)
+
+	// Execute the query, scanning destination into statusIDs.
+	if _, err := q.Exec(ctx, &statusIDs); err != nil {
 		return nil, s.conn.ProcessError(err)
 	}
+
+	// Convert status IDs into status objects.
 	return s.GetStatusesByIDs(ctx, statusIDs)
 }
 
