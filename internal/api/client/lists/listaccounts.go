@@ -79,8 +79,13 @@ import (
 //	-
 //		name: limit
 //		type: integer
-//		description: Number of accounts to return.
-//		default: 20
+//		description: >-
+//			Number of accounts to return.
+//			If set to 0 explicitly, all accounts in the list will be returned, and pagination headers will not be used.
+//			This is a workaround for Mastodon API peculiarities: https://docs.joinmastodon.org/methods/lists/#query-parameters.
+//		default: 40
+//		minimum: 0
+//		maximum: 80
 //		in: query
 //		required: false
 //
@@ -129,14 +134,31 @@ func (m *Module) ListAccountsGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20, 40, 1)
+	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 40, 80, 0)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
+	var (
+		ctx = c.Request.Context()
+	)
+
+	if limit == 0 {
+		// Return all accounts in the list without pagination.
+		accounts, errWithCode := m.processor.List().GetAllListAccounts(ctx, authed.Account, targetListID)
+		if errWithCode != nil {
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+			return
+		}
+
+		c.JSON(http.StatusOK, accounts)
+		return
+	}
+
+	// Return subset of accounts in the list with pagination.
 	resp, errWithCode := m.processor.List().GetListAccounts(
-		c.Request.Context(),
+		ctx,
 		authed.Account,
 		targetListID,
 		c.Query(MaxIDKey),
