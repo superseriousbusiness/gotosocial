@@ -27,11 +27,12 @@ import (
 const (
 	/* Common keys */
 
-	IDKey    = "id"
-	LimitKey = "limit"
-	LocalKey = "local"
-	MaxIDKey = "max_id"
-	MinIDKey = "min_id"
+	IDKey      = "id"
+	LimitKey   = "limit"
+	LocalKey   = "local"
+	MaxIDKey   = "max_id"
+	SinceIDKey = "since_id"
+	MinIDKey   = "min_id"
 
 	/* Search keys */
 
@@ -76,10 +77,8 @@ func ParseLimit(value string, defaultValue int, max, min int) (int, gtserror.Wit
 	i, err := parseInt(value, defaultValue, max, min, LimitKey)
 	if err != nil {
 		return 0, err
-	} else if i == 0 {
-		// treat 0 as an empty query
-		return defaultValue, nil
 	}
+
 	return i, nil
 }
 
