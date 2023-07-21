@@ -4873,8 +4873,8 @@ paths:
                   in: query
                   name: min_id
                   type: string
-                - default: 20
-                  description: Number of accounts to return.
+                - default: 40
+                  description: 'Number of accounts to return. If set to 0 explicitly, all accounts in the list will be returned, and pagination headers will not be used. This is a workaround for Mastodon API peculiarities: https://docs.joinmastodon.org/methods/lists/#query-parameters.'
                   in: query
                   name: limit
                   type: integer

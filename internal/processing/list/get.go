@@ -75,6 +75,46 @@ func (p *Processor) GetAll(ctx context.Context, account *gtsmodel.Account) ([]*a
 	return apiLists, nil
 }
 
+// GetAllListAccounts returns all accounts that are in the given list,
+// owned by the given account. There's no pagination for this endpoint.
+//
+// See https://docs.joinmastodon.org/methods/lists/#query-parameters:
+//
+//	Limit: Integer. Maximum number of results. Defaults to 40 accounts.
+//	Max 80 accounts. Set to 0 in order to get all accounts without pagination.
+func (p *Processor) GetAllListAccounts(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	listID string,
+) ([]*apimodel.Account, gtserror.WithCode) {
+	// Ensure list exists + is owned by requesting account.
+	_, errWithCode := p.getList(
+		// Use barebones ctx; no embedded
+		// structs necessary for this call.
+		gtscontext.SetBarebones(ctx),
+		account.ID,
+		listID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Get all entries for this list.
+	listEntries, err := p.state.DB.GetListEntries(ctx, listID, "", "", "", 0)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = gtserror.Newf("error getting list entries: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Extract accounts from list entries + add them to response.
+	accounts := make([]*apimodel.Account, 0, len(listEntries))
+	p.accountsFromListEntries(ctx, listEntries, func(acc *apimodel.Account) {
+		accounts = append(accounts, acc)
+	})
+
+	return accounts, nil
+}
+
 // GetListAccounts returns accounts that are in the given list, owned by the given account.
 // The additional parameters can be used for paging.
 func (p *Processor) GetListAccounts(
@@ -121,6 +161,25 @@ func (p *Processor) GetListAccounts(
 		prevMinIDValue = listEntries[0].ID
 	)
 
+	// Extract accounts from list entries + add them to response.
+	p.accountsFromListEntries(ctx, listEntries, func(acc *apimodel.Account) {
+		items = append(items, acc)
+	})
+
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
+		Path:           "/api/v1/lists/" + listID + "/accounts",
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
+		Limit:          limit,
+	})
+}
+
+func (p *Processor) accountsFromListEntries(
+	ctx context.Context,
+	listEntries []*gtsmodel.ListEntry,
+	appendAcc func(*apimodel.Account),
+) {
 	// For each list entry, we want the account it points to.
 	// To get this, we need to first get the follow that the
 	// list entry pertains to, then extract the target account
@@ -144,14 +203,6 @@ func (p *Processor) GetListAccounts(
 			continue
 		}
 
-		items = append(items, apiAccount)
+		appendAcc(apiAccount)
 	}
-
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:          items,
-		Path:           "/api/v1/lists/" + listID + "/accounts",
-		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDValue: prevMinIDValue,
-		Limit:          limit,
-	})
 }
