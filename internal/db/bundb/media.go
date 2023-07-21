@@ -250,7 +250,7 @@ func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time)
 }
 
 func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
-	var attachmentIDs []string
+	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.NewSelect().
 		Table("media_attachments").
@@ -273,7 +273,7 @@ func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) (
 }
 
 func (m *mediaDB) GetRemoteAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
-	var attachmentIDs []string
+	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.NewSelect().
 		Table("media_attachments").
@@ -297,7 +297,7 @@ func (m *mediaDB) GetRemoteAttachments(ctx context.Context, maxID string, limit 
 }
 
 func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
-	var attachmentIDs []string
+	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.
 		NewSelect().
@@ -320,7 +320,7 @@ func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan t
 }
 
 func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
-	var attachmentIDs []string
+	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.NewSelect().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
@@ -348,7 +348,7 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 }
 
 func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
-	attachmentIDs := []string{}
+	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.
 		NewSelect().
