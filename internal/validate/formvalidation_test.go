@@ -45,7 +45,7 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 
 	err = validate.NewPassword(empty)
 	if suite.Error(err) {
-		suite.Equal(errors.New("no password provided"), err)
+		suite.Equal(errors.New("no password provided / provided password was 0 bytes"), err)
 	}
 
 	err = validate.NewPassword(terriblePassword)
@@ -75,7 +75,7 @@ func (suite *ValidationTestSuite) TestCheckPasswordStrength() {
 
 	err = validate.NewPassword(tooLong)
 	if suite.Error(err) {
-		suite.Equal(errors.New("password should be no more than 256 chars"), err)
+		suite.Equal(errors.New("password should be no more than 72 bytes, provided password was 571 bytes"), err)
 	}
 
 	err = validate.NewPassword(strongPassword)

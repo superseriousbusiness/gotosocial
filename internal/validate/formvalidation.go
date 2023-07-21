@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
-	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -32,8 +31,8 @@ import (
 )
 
 const (
-	maximumPasswordLength         = 256
-	minimumPasswordEntropy        = 60 // dictates password strength. See https://github.com/wagslane/go-password-validator
+	maximumPasswordLength         = 72 // 72 bytes is the maximum length afforded by bcrypt. See https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword.
+	minimumPasswordEntropy        = 60 // Heuristic for password strength. See https://github.com/wagslane/go-password-validator.
 	minimumReasonLength           = 40
 	maximumReasonLength           = 500
 	maximumSiteTitleLength        = 40
@@ -47,23 +46,29 @@ const (
 	maximumListTitleLength        = 200
 )
 
-// NewPassword returns an error if the given password is not sufficiently strong, or nil if it's ok.
+// NewPassword returns a helpful error if the given password
+// is too short, too long, or not sufficiently strong.
 func NewPassword(password string) error {
-	if password == "" {
-		return errors.New("no password provided")
-	}
-
-	if len([]rune(password)) > maximumPasswordLength {
-		return fmt.Errorf("password should be no more than %d chars", maximumPasswordLength)
+	// Ensure length is OK first.
+	if pwLen := len(password); pwLen == 0 {
+		return errors.New("no password provided / provided password was 0 bytes")
+	} else if pwLen > maximumPasswordLength {
+		return fmt.Errorf(
+			"password should be no more than %d bytes, provided password was %d bytes",
+			maximumPasswordLength, pwLen,
+		)
 	}
 
 	if err := pwv.Validate(password, minimumPasswordEntropy); err != nil {
-		// Modify error message to include percentage requred entropy the password has
-		percent := int(100 * pwv.GetEntropy(password) / minimumPasswordEntropy)
-		return errors.New(strings.ReplaceAll(
-			err.Error(),
-			"insecure password",
-			fmt.Sprintf("password is only %d%% strength", percent)))
+		// Calculate the percentage of our desired entropy this password fulfils.
+		entropyPercent := int(100 * pwv.GetEntropy(password) / minimumPasswordEntropy)
+
+		// Replace the first 17 bytes (`insecure password`)
+		// of the error string with our own entropy message.
+		entropyMsg := fmt.Sprintf("password is only %d%% strength", entropyPercent)
+		errMsg := entropyMsg + err.Error()[17:]
+
+		return errors.New(errMsg)
 	}
 
 	return nil // password OK
