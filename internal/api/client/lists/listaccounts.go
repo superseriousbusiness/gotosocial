@@ -84,8 +84,8 @@ import (
 //			If set to 0 explicitly, all accounts in the list will be returned, and pagination headers will not be used.
 //			This is a workaround for Mastodon API peculiarities: https://docs.joinmastodon.org/methods/lists/#query-parameters.
 //		default: 40
-//		min: 0
-//		max: 80
+//		minimum: 0
+//		maximum: 80
 //		in: query
 //		required: false
 //
