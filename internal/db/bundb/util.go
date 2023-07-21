@@ -18,9 +18,45 @@
 package bundb
 
 import (
+	"strings"
+
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/uptrace/bun"
 )
+
+// likeEscaper is a thread-safe string replacer which escapes
+// common SQLite + Postgres `LIKE` wildcard chars using the
+// escape character `\`. Initialized as a var in this package
+// so it can be reused.
+var likeEscaper = strings.NewReplacer(
+	`\`, `\\`, // Escape char.
+	`%`, `\%`, // Zero or more char.
+	`_`, `\_`, // Exactly one char.
+)
+
+// whereSubqueryLike appends a WHERE clause to the
+// given SelectQuery, which searches for matches
+// of `search` in the given subQuery using LIKE.
+func whereLike(
+	query *bun.SelectQuery,
+	subject interface{},
+	search string,
+) *bun.SelectQuery {
+	// Escape existing wildcard + escape
+	// chars in the search query string.
+	search = likeEscaper.Replace(search)
+
+	// Add our own wildcards back in; search
+	// zero or more chars around the query.
+	search = `%` + search + `%`
+
+	// Append resulting WHERE
+	// clause to the main query.
+	return query.Where(
+		"(?) LIKE ? ESCAPE ?",
+		subject, search, `\`,
+	)
+}
 
 // updateWhere parses []db.Where and adds it to the given update query.
 func updateWhere(q *bun.UpdateQuery, where []db.Where) {
