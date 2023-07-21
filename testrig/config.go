@@ -77,7 +77,7 @@ var testDefaults = config.Configuration{
 	MediaVideoMaxSize:        41943040, // 40mb
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
-	MediaRemoteCacheDays:     30,
+	MediaRemoteCacheDays:     7,
 	MediaEmojiLocalMaxSize:   51200,  // 50kb
 	MediaEmojiRemoteMaxSize:  102400, // 100kb
 
