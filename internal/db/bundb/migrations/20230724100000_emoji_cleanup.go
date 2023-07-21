@@ -35,7 +35,7 @@ func init() {
 
 			if _, err := tx.NewUpdate().
 				Table("emojis").
-				Where("disabled NOT NULL AND disabled = false").
+				Where("disabled = false").
 				Set("cached = true").
 				Exec(ctx); err != nil {
 				return err
