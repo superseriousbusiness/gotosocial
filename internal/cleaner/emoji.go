@@ -360,6 +360,7 @@ func (e *Emoji) uncacheRemote(ctx context.Context, after time.Time, emoji *gtsmo
 	for _, status := range statuses {
 		if status.FetchedAt.After(after) {
 			l.Debug("skipping due to recently fetched status")
+			return false, nil
 		}
 	}
 
