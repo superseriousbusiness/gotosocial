@@ -2471,7 +2471,8 @@ func testTrailingChecksums() {
 		PO             minio.PutObjectOptions
 	}{
 		// Currently there is no way to override the checksum type.
-		{header: "x-amz-checksum-crc32c",
+		{
+			header:         "x-amz-checksum-crc32c",
 			hasher:         crc32.New(crc32.MakeTable(crc32.Castagnoli)),
 			ChecksumCRC32C: "set",
 			PO: minio.PutObjectOptions{
@@ -2481,7 +2482,8 @@ func testTrailingChecksums() {
 				PartSize:             5 << 20,
 			},
 		},
-		{header: "x-amz-checksum-crc32c",
+		{
+			header:         "x-amz-checksum-crc32c",
 			hasher:         crc32.New(crc32.MakeTable(crc32.Castagnoli)),
 			ChecksumCRC32C: "set",
 			PO: minio.PutObjectOptions{
@@ -2491,7 +2493,8 @@ func testTrailingChecksums() {
 				PartSize:             6_645_654, // Rather arbitrary size
 			},
 		},
-		{header: "x-amz-checksum-crc32c",
+		{
+			header:         "x-amz-checksum-crc32c",
 			hasher:         crc32.New(crc32.MakeTable(crc32.Castagnoli)),
 			ChecksumCRC32C: "set",
 			PO: minio.PutObjectOptions{
@@ -2501,7 +2504,8 @@ func testTrailingChecksums() {
 				PartSize:             5 << 20,
 			},
 		},
-		{header: "x-amz-checksum-crc32c",
+		{
+			header:         "x-amz-checksum-crc32c",
 			hasher:         crc32.New(crc32.MakeTable(crc32.Castagnoli)),
 			ChecksumCRC32C: "set",
 			PO: minio.PutObjectOptions{
