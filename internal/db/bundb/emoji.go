@@ -127,7 +127,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		// Prepare SELECT accounts query.
-		aq := e.conn.NewSelect().
+		aq := tx.NewSelect().
 			Table("accounts").
 			Column("id")
 
@@ -171,7 +171,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 		}
 
 		// Prepare SELECT statuses query.
-		sq := e.conn.NewSelect().
+		sq := tx.NewSelect().
 			Table("statuses").
 			Column("id")
 
