@@ -62,7 +62,7 @@ func (conn *DBConn) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx
 
 func (conn *DBConn) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	err = retryOnBusy(ctx, func() error {
-		result, err = conn.db.ExecContext(ctx, query, args...)
+		result, err = conn.db.DB.ExecContext(ctx, query, args...)
 		err = conn.ProcessError(err)
 		return err
 	})
@@ -71,7 +71,7 @@ func (conn *DBConn) ExecContext(ctx context.Context, query string, args ...any) 
 
 func (conn *DBConn) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
 	err = retryOnBusy(ctx, func() error {
-		rows, err = conn.db.QueryContext(ctx, query, args...)
+		rows, err = conn.db.DB.QueryContext(ctx, query, args...)
 		err = conn.ProcessError(err)
 		return err
 	})
@@ -80,7 +80,7 @@ func (conn *DBConn) QueryContext(ctx context.Context, query string, args ...any)
 
 func (conn *DBConn) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
 	_ = retryOnBusy(ctx, func() error {
-		row = conn.db.QueryRowContext(ctx, query, args...)
+		row = conn.db.DB.QueryRowContext(ctx, query, args...)
 		err := conn.ProcessError(row.Err())
 		return err
 	})
