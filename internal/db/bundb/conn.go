@@ -20,10 +20,10 @@ package bundb
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -237,27 +237,5 @@ func retryOnBusy(ctx context.Context, fn func() error) error {
 		}
 	}
 
-	return fmt.Errorf("%w (waited > %s)", baseBackoff*(1<<maxRetries))
-}
-
-func retryBackoff(ctx context.Context, fn func() error, backoff time.Duration) (bool, error) {
-	// Perform func.
-	err := fn()
-
-	if err != db.ErrBusyTimeout {
-		// May be nil, or may be
-		// some other error, either
-		// way return here.
-		return false, err
-	}
-
-	select {
-	// Context cancelled.
-	case <-ctx.Done():
-
-	// Backoff for some time.
-	case <-time.After(backoff):
-	}
-
-	return true, nil
+	return gtserror.Newf("%w (waited > %s)", db.ErrBusyTimeout, baseBackoff*(1<<maxRetries))
 }
