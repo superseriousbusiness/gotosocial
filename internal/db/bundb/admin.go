@@ -48,7 +48,7 @@ type adminDB struct {
 	state *state.State
 }
 
-func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, db.Error) {
+func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, error) {
 	q := a.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
@@ -58,7 +58,7 @@ func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (boo
 	return a.conn.NotExists(ctx, q)
 }
 
-func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.Error) {
+func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, error) {
 	// parse the domain from the email
 	m, err := mail.ParseAddress(email)
 	if err != nil {
@@ -90,7 +90,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 	return a.conn.NotExists(ctx, q)
 }
 
-func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (*gtsmodel.User, db.Error) {
+func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (*gtsmodel.User, error) {
 	// If something went wrong previously while doing a new
 	// sign up with this username, we might already have an
 	// account, so check first.
@@ -220,7 +220,7 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 	return user, nil
 }
 
-func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
+func (a *adminDB) CreateInstanceAccount(ctx context.Context) error {
 	username := config.GetHost()
 
 	q := a.conn.
@@ -277,7 +277,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {
 	return nil
 }
 
-func (a *adminDB) CreateInstanceInstance(ctx context.Context) db.Error {
+func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 

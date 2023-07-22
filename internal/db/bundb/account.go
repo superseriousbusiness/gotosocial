@@ -562,7 +562,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		// implementation differs between SQLite and Postgres,
 		// so we have to be thorough to cover all eventualities
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			switch a.conn.Dialect().Name() {
+			switch a.conn.db.Dialect().Name() {
 			case dialect.PG:
 				return q.
 					Where("? IS NOT NULL", bun.Ident("status.attachments")).
