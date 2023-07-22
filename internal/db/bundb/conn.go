@@ -208,10 +208,13 @@ func (conn *DBConn) NotExists(ctx context.Context, query *bun.SelectQuery) (bool
 func retryOnBusy(ctx context.Context, fn func() error) error {
 	const (
 		// max no. attempts.
-		maxRetries = 10
+		maxRetries = 16
 
 		// base backoff duration multiplier.
 		baseBackoff = 2 * time.Millisecond
+
+		// maximum backoff duration possible.
+		maxBackoff = baseBackoff * (1 << maxRetries)
 	)
 
 	for i := 0; i < maxRetries; i += 2 {
@@ -237,5 +240,5 @@ func retryOnBusy(ctx context.Context, fn func() error) error {
 		}
 	}
 
-	return gtserror.Newf("%w (waited > %s)", db.ErrBusyTimeout, baseBackoff*(1<<maxRetries))
+	return gtserror.Newf("%w (waited > %s)", db.ErrBusyTimeout, maxBackoff)
 }
