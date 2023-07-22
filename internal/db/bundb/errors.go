@@ -18,11 +18,17 @@
 package bundb
 
 import (
+	"errors"
+
 	"github.com/jackc/pgconn"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
+
+// errBusy is a sentinel error indicating
+// busy database (e.g. retry needed).
+var errBusy = errors.New("busy")
 
 // processPostgresError processes an error, replacing any postgres specific errors with our own error type
 func processPostgresError(err error) error {
@@ -55,6 +61,8 @@ func processSQLiteError(err error) error {
 	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
 		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
+	case sqlite3.SQLITE_BUSY:
+		return errBusy
 	case sqlite3.SQLITE_BUSY_TIMEOUT:
 		return db.ErrBusyTimeout
 	}

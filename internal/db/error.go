@@ -31,6 +31,6 @@ var (
 	ErrAlreadyExists = errors.New("already exists")
 
 	// ErrBusyTimeout is returned if the database connection indicates the connection is too busy
-	// to copmlete the supplied query. This is generally intended to be handled internally by the DB.
+	// to complete the supplied query. This is generally intended to be handled internally by the DB.
 	ErrBusyTimeout = errors.New("busy timeout")
 )

@@ -218,7 +218,7 @@ func retryOnBusy(ctx context.Context, fn func() error) error {
 		// Perform func.
 		err := fn()
 
-		if err != db.ErrBusyTimeout {
+		if err != errBusy {
 			// May be nil, or may be
 			// some other error, either
 			// way return here.
