@@ -31,7 +31,7 @@ import (
 // DBConn wrapps a bun.DB conn to provide SQL-type specific additional functionality
 type DBConn struct {
 	errProc func(error) error // errProc is the SQL-type specific error processor
-	db      *bun.DB           // DB is the underlying bun.DB connection
+	*bun.DB                   // DB is the underlying bun.DB connection
 }
 
 // WrapDBConn wraps a bun DB connection to provide our own error processing dependent on DB dialect.
@@ -47,13 +47,13 @@ func WrapDBConn(dbConn *bun.DB) *DBConn {
 	}
 	return &DBConn{
 		errProc: errProc,
-		db:      dbConn,
+		DB:      dbConn,
 	}
 }
 
 func (conn *DBConn) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx, err error) {
 	err = retryOnBusy(ctx, func() error {
-		tx, err = conn.db.BeginTx(ctx, opts)
+		tx, err = conn.DB.BeginTx(ctx, opts)
 		err = conn.ProcessError(err)
 		return err
 	})
@@ -62,7 +62,7 @@ func (conn *DBConn) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx
 
 func (conn *DBConn) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	err = retryOnBusy(ctx, func() error {
-		result, err = conn.db.DB.ExecContext(ctx, query, args...)
+		result, err = conn.DB.ExecContext(ctx, query, args...)
 		err = conn.ProcessError(err)
 		return err
 	})
@@ -71,7 +71,7 @@ func (conn *DBConn) ExecContext(ctx context.Context, query string, args ...any) 
 
 func (conn *DBConn) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
 	err = retryOnBusy(ctx, func() error {
-		rows, err = conn.db.DB.QueryContext(ctx, query, args...)
+		rows, err = conn.DB.QueryContext(ctx, query, args...)
 		err = conn.ProcessError(err)
 		return err
 	})
@@ -80,7 +80,7 @@ func (conn *DBConn) QueryContext(ctx context.Context, query string, args ...any)
 
 func (conn *DBConn) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
 	_ = retryOnBusy(ctx, func() error {
-		row = conn.db.DB.QueryRowContext(ctx, query, args...)
+		row = conn.DB.QueryRowContext(ctx, query, args...)
 		err := conn.ProcessError(row.Err())
 		return err
 	})
@@ -121,59 +121,59 @@ func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
 }
 
 func (conn *DBConn) NewValues(model interface{}) *bun.ValuesQuery {
-	return bun.NewValuesQuery(conn.db, model).Conn(conn)
+	return bun.NewValuesQuery(conn.DB, model).Conn(conn)
 }
 
 func (conn *DBConn) NewMerge() *bun.MergeQuery {
-	return bun.NewMergeQuery(conn.db).Conn(conn)
+	return bun.NewMergeQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewSelect() *bun.SelectQuery {
-	return bun.NewSelectQuery(conn.db).Conn(conn)
+	return bun.NewSelectQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewInsert() *bun.InsertQuery {
-	return bun.NewInsertQuery(conn.db).Conn(conn)
+	return bun.NewInsertQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewUpdate() *bun.UpdateQuery {
-	return bun.NewUpdateQuery(conn.db).Conn(conn)
+	return bun.NewUpdateQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewDelete() *bun.DeleteQuery {
-	return bun.NewDeleteQuery(conn.db).Conn(conn)
+	return bun.NewDeleteQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewRaw(query string, args ...interface{}) *bun.RawQuery {
-	return bun.NewRawQuery(conn.db, query, args...).Conn(conn)
+	return bun.NewRawQuery(conn.DB, query, args...).Conn(conn)
 }
 
 func (conn *DBConn) NewCreateTable() *bun.CreateTableQuery {
-	return bun.NewCreateTableQuery(conn.db).Conn(conn)
+	return bun.NewCreateTableQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewDropTable() *bun.DropTableQuery {
-	return bun.NewDropTableQuery(conn.db).Conn(conn)
+	return bun.NewDropTableQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewCreateIndex() *bun.CreateIndexQuery {
-	return bun.NewCreateIndexQuery(conn.db).Conn(conn)
+	return bun.NewCreateIndexQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewDropIndex() *bun.DropIndexQuery {
-	return bun.NewDropIndexQuery(conn.db).Conn(conn)
+	return bun.NewDropIndexQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewTruncateTable() *bun.TruncateTableQuery {
-	return bun.NewTruncateTableQuery(conn.db).Conn(conn)
+	return bun.NewTruncateTableQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewAddColumn() *bun.AddColumnQuery {
-	return bun.NewAddColumnQuery(conn.db).Conn(conn)
+	return bun.NewAddColumnQuery(conn.DB).Conn(conn)
 }
 
 func (conn *DBConn) NewDropColumn() *bun.DropColumnQuery {
-	return bun.NewDropColumnQuery(conn.db).Conn(conn)
+	return bun.NewDropColumnQuery(conn.DB).Conn(conn)
 }
 
 // ProcessError processes an error to replace any known values with our own error types,

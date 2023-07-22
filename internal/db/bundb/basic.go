@@ -160,10 +160,10 @@ func (b *basicDB) DropTable(ctx context.Context, i interface{}) error {
 }
 
 func (b *basicDB) IsHealthy(ctx context.Context) error {
-	return b.conn.db.PingContext(ctx)
+	return b.conn.DB.PingContext(ctx)
 }
 
 func (b *basicDB) Stop(ctx context.Context) error {
 	log.Info(ctx, "closing db connection")
-	return b.conn.db.Close()
+	return b.conn.DB.Close()
 }

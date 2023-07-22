@@ -132,9 +132,9 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	}
 
 	// Add database query hooks.
-	conn.db.AddQueryHook(queryHook{})
+	conn.DB.AddQueryHook(queryHook{})
 	if config.GetTracingEnabled() {
-		conn.db.AddQueryHook(tracing.InstrumentBun())
+		conn.DB.AddQueryHook(tracing.InstrumentBun())
 	}
 
 	// execute sqlite pragmas *after* adding database hook;
@@ -148,13 +148,13 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	// table registration is needed for many-to-many, see:
 	// https://bun.uptrace.dev/orm/many-to-many-relation/
 	for _, t := range registerTables {
-		conn.db.RegisterModel(t)
+		conn.DB.RegisterModel(t)
 	}
 
 	// perform any pending database migrations: this includes
 	// the very first 'migration' on startup which just creates
 	// necessary tables
-	if err := doMigration(ctx, conn.db); err != nil {
+	if err := doMigration(ctx, conn.DB); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
@@ -262,7 +262,7 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.db.PingContext(ctx); err != nil {
+	if err := conn.DB.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("postgres ping: %s", err)
 	}
 
@@ -334,7 +334,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	conn := WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.db.PingContext(ctx); err != nil {
+	if err := conn.DB.PingContext(ctx); err != nil {
 		if errWithCode, ok := err.(*sqlite.Error); ok {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
 		}

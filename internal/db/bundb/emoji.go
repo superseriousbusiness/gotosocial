@@ -255,7 +255,7 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 	//		"emojis" AS "emoji"
 	//	ORDER BY
 	//		"shortcode_domain" ASC
-	switch e.conn.db.Dialect().Name() {
+	switch e.conn.Dialect().Name() {
 	case dialect.SQLite:
 		subQuery = subQuery.ColumnExpr("LOWER(? || ? || COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	case dialect.PG:
