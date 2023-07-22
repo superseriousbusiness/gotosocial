@@ -180,7 +180,7 @@ func (conn *DBConn) NewDropColumn() *bun.DropColumnQuery {
 // making it easier to catch specific situations (e.g. no rows, already exists, etc)
 func (conn *DBConn) ProcessError(err error) error {
 	if err == nil {
-		return err
+		return nil
 	}
 	return conn.errProc(err)
 }
