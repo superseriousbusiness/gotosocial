@@ -36,7 +36,7 @@ type mediaDB struct {
 	state *state.State
 }
 
-func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, error) {
 	return m.getAttachment(
 		ctx,
 		"ID",
@@ -68,7 +68,7 @@ func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gts
 	return attachments, nil
 }
 
-func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, error) {
 	return m.state.Caches.GTS.Media().Load(lookup, func() (*gtsmodel.MediaAttachment, error) {
 		var attachment gtsmodel.MediaAttachment
 
@@ -232,7 +232,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	return m.conn.ProcessError(err)
 }
 
-func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {
+func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, error) {
 	q := m.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
@@ -296,7 +296,7 @@ func (m *mediaDB) GetRemoteAttachments(ctx context.Context, maxID string, limit 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.
@@ -319,7 +319,7 @@ func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan t
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.NewSelect().
@@ -347,7 +347,7 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
 	q := m.conn.
@@ -373,7 +373,7 @@ func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan tim
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {
+func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time) (int, error) {
 	q := m.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).

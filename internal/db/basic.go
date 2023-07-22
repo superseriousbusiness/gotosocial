@@ -23,58 +23,58 @@ import "context"
 type Basic interface {
 	// CreateTable creates a table for the given interface.
 	// For implementations that don't use tables, this can just return nil.
-	CreateTable(ctx context.Context, i interface{}) Error
+	CreateTable(ctx context.Context, i interface{}) error
 
 	// CreateAllTables creates *all* tables necessary for the running of GoToSocial.
 	// Because it uses the 'if not exists' parameter it is safe to run against a GtS that's already been initialized.
-	CreateAllTables(ctx context.Context) Error
+	CreateAllTables(ctx context.Context) error
 
 	// DropTable drops the table for the given interface.
 	// For implementations that don't use tables, this can just return nil.
-	DropTable(ctx context.Context, i interface{}) Error
+	DropTable(ctx context.Context, i interface{}) error
 
 	// Stop should stop and close the database connection cleanly, returning an error if this is not possible.
 	// If the database implementation doesn't need to be stopped, this can just return nil.
-	Stop(ctx context.Context) Error
+	Stop(ctx context.Context) error
 
 	// IsHealthy should return nil if the database connection is healthy, or an error if not.
-	IsHealthy(ctx context.Context) Error
+	IsHealthy(ctx context.Context) error
 
 	// GetByID gets one entry by its id. In a database like postgres, this might be the 'id' field of the entry,
 	// for other implementations (for example, in-memory) it might just be the key of a map.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetByID(ctx context.Context, id string, i interface{}) Error
+	GetByID(ctx context.Context, id string, i interface{}) error
 
 	// GetWhere gets one entry where key = value. This is similar to GetByID but allows the caller to specify the
 	// name of the key to select from.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetWhere(ctx context.Context, where []Where, i interface{}) Error
+	GetWhere(ctx context.Context, where []Where, i interface{}) error
 
 	// GetAll will try to get all entries of type i.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
 	// In case of no entries, a 'no entries' error will be returned
-	GetAll(ctx context.Context, i interface{}) Error
+	GetAll(ctx context.Context, i interface{}) error
 
 	// Put simply stores i. It is up to the implementation to figure out how to store it, and using what key.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
-	Put(ctx context.Context, i interface{}) Error
+	Put(ctx context.Context, i interface{}) error
 
 	// UpdateByID updates values of i based on its id.
 	// If any columns are specified, these will be updated exclusively.
 	// Otherwise, the whole model will be updated.
 	// The given interface i will be set to the result of the query, whatever it is. Use a pointer or a slice.
-	UpdateByID(ctx context.Context, i interface{}, id string, columns ...string) Error
+	UpdateByID(ctx context.Context, i interface{}, id string, columns ...string) error
 
 	// UpdateWhere updates column key of interface i with the given value, where the given parameters apply.
-	UpdateWhere(ctx context.Context, where []Where, key string, value interface{}, i interface{}) Error
+	UpdateWhere(ctx context.Context, where []Where, key string, value interface{}, i interface{}) error
 
 	// DeleteByID removes i with id id.
 	// If i didn't exist anyway, then no error should be returned.
-	DeleteByID(ctx context.Context, id string, i interface{}) Error
+	DeleteByID(ctx context.Context, id string, i interface{}) error
 
 	// DeleteWhere deletes i where key = value
 	// If i didn't exist anyway, then no error should be returned.
-	DeleteWhere(ctx context.Context, where []Where, i interface{}) Error
+	DeleteWhere(ctx context.Context, where []Where, i interface{}) error
 }

@@ -34,7 +34,7 @@ type relationshipDB struct {
 	state *state.State
 }
 
-func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {
+func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error) {
 	var rel gtsmodel.Relationship
 	rel.ID = targetAccount
 

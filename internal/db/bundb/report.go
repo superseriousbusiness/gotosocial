@@ -40,7 +40,7 @@ func (r *reportDB) newReportQ(report interface{}) *bun.SelectQuery {
 	return r.conn.NewSelect().Model(report)
 }
 
-func (r *reportDB) GetReportByID(ctx context.Context, id string) (*gtsmodel.Report, db.Error) {
+func (r *reportDB) GetReportByID(ctx context.Context, id string) (*gtsmodel.Report, error) {
 	return r.getReport(
 		ctx,
 		"ID",
@@ -51,7 +51,7 @@ func (r *reportDB) GetReportByID(ctx context.Context, id string) (*gtsmodel.Repo
 	)
 }
 
-func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, db.Error) {
+func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, error) {
 	reportIDs := []string{}
 
 	q := r.conn.
@@ -118,7 +118,7 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 	return reports, nil
 }
 
-func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Report) error, keyParts ...any) (*gtsmodel.Report, db.Error) {
+func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Report) error, keyParts ...any) (*gtsmodel.Report, error) {
 	// Fetch report from database cache with loader callback
 	report, err := r.state.Caches.GTS.Report().Load(lookup, func() (*gtsmodel.Report, error) {
 		var report gtsmodel.Report
@@ -166,14 +166,14 @@ func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*g
 	return report, nil
 }
 
-func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) db.Error {
+func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) error {
 	return r.state.Caches.GTS.Report().Store(report, func() error {
 		_, err := r.conn.NewInsert().Model(report).Exec(ctx)
 		return r.conn.ProcessError(err)
 	})
 }
 
-func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, columns ...string) (*gtsmodel.Report, db.Error) {
+func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, columns ...string) (*gtsmodel.Report, error) {
 	// Update the report's last-updated
 	report.UpdatedAt = time.Now()
 	if len(columns) != 0 {
@@ -193,7 +193,7 @@ func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, co
 	return report, nil
 }
 
-func (r *reportDB) DeleteReportByID(ctx context.Context, id string) db.Error {
+func (r *reportDB) DeleteReportByID(ctx context.Context, id string) error {
 	defer r.state.Caches.GTS.Report().Invalidate("ID", id)
 
 	// Load status into cache before attempting a delete,

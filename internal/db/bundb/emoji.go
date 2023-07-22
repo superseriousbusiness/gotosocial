@@ -38,7 +38,7 @@ type emojiDB struct {
 	state *state.State
 }
 
-func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) db.Error {
+func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) error {
 	return e.state.Caches.GTS.Emoji().Store(emoji, func() error {
 		_, err := e.conn.NewInsert().Model(emoji).Exec(ctx)
 		return e.conn.ProcessError(err)
@@ -64,7 +64,7 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 	})
 }
 
-func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
+func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 	var (
 		accountIDs []string
 		statusIDs  []string
@@ -255,7 +255,7 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 	//		"emojis" AS "emoji"
 	//	ORDER BY
 	//		"shortcode_domain" ASC
-	switch e.conn.Dialect().Name() {
+	switch e.conn.db.Dialect().Name() {
 	case dialect.SQLite:
 		subQuery = subQuery.ColumnExpr("LOWER(? || ? || COALESCE(?, ?)) AS ?", bun.Ident("emoji.shortcode"), "@", bun.Ident("emoji.domain"), "", bun.Ident("shortcode_domain"))
 	case dialect.PG:
@@ -412,7 +412,7 @@ func (e *emojiDB) GetCachedEmojisOlderThan(ctx context.Context, olderThan time.T
 	return e.GetEmojisByIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, error) {
 	emojiIDs := []string{}
 
 	q := e.conn.
@@ -431,7 +431,7 @@ func (e *emojiDB) GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, db.E
 	return e.GetEmojisByIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, error) {
 	return e.getEmoji(
 		ctx,
 		"ID",
@@ -445,7 +445,7 @@ func (e *emojiDB) GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji,
 	)
 }
 
-func (e *emojiDB) GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoji, error) {
 	return e.getEmoji(
 		ctx,
 		"URI",
@@ -459,7 +459,7 @@ func (e *emojiDB) GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoj
 	)
 }
 
-func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, error) {
 	return e.getEmoji(
 		ctx,
 		"Shortcode.Domain",
@@ -483,7 +483,7 @@ func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode strin
 	)
 }
 
-func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, error) {
 	return e.getEmoji(
 		ctx,
 		"ImageStaticURL",
@@ -498,14 +498,14 @@ func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string
 	)
 }
 
-func (e *emojiDB) PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) db.Error {
+func (e *emojiDB) PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) error {
 	return e.state.Caches.GTS.EmojiCategory().Store(emojiCategory, func() error {
 		_, err := e.conn.NewInsert().Model(emojiCategory).Exec(ctx)
 		return e.conn.ProcessError(err)
 	})
 }
 
-func (e *emojiDB) GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCategory, db.Error) {
+func (e *emojiDB) GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCategory, error) {
 	emojiCategoryIDs := []string{}
 
 	q := e.conn.
@@ -521,7 +521,7 @@ func (e *emojiDB) GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCate
 	return e.GetEmojiCategoriesByIDs(ctx, emojiCategoryIDs)
 }
 
-func (e *emojiDB) GetEmojiCategory(ctx context.Context, id string) (*gtsmodel.EmojiCategory, db.Error) {
+func (e *emojiDB) GetEmojiCategory(ctx context.Context, id string) (*gtsmodel.EmojiCategory, error) {
 	return e.getEmojiCategory(
 		ctx,
 		"ID",
@@ -535,7 +535,7 @@ func (e *emojiDB) GetEmojiCategory(ctx context.Context, id string) (*gtsmodel.Em
 	)
 }
 
-func (e *emojiDB) GetEmojiCategoryByName(ctx context.Context, name string) (*gtsmodel.EmojiCategory, db.Error) {
+func (e *emojiDB) GetEmojiCategoryByName(ctx context.Context, name string) (*gtsmodel.EmojiCategory, error) {
 	return e.getEmojiCategory(
 		ctx,
 		"Name",
@@ -549,7 +549,7 @@ func (e *emojiDB) GetEmojiCategoryByName(ctx context.Context, name string) (*gts
 	)
 }
 
-func (e *emojiDB) getEmoji(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Emoji) error, keyParts ...any) (*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) getEmoji(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Emoji) error, keyParts ...any) (*gtsmodel.Emoji, error) {
 	// Fetch emoji from database cache with loader callback
 	emoji, err := e.state.Caches.GTS.Emoji().Load(lookup, func() (*gtsmodel.Emoji, error) {
 		var emoji gtsmodel.Emoji
@@ -580,7 +580,7 @@ func (e *emojiDB) getEmoji(ctx context.Context, lookup string, dbQuery func(*gts
 	return emoji, nil
 }
 
-func (e *emojiDB) GetEmojisByIDs(ctx context.Context, emojiIDs []string) ([]*gtsmodel.Emoji, db.Error) {
+func (e *emojiDB) GetEmojisByIDs(ctx context.Context, emojiIDs []string) ([]*gtsmodel.Emoji, error) {
 	if len(emojiIDs) == 0 {
 		return nil, db.ErrNoEntries
 	}
@@ -600,7 +600,7 @@ func (e *emojiDB) GetEmojisByIDs(ctx context.Context, emojiIDs []string) ([]*gts
 	return emojis, nil
 }
 
-func (e *emojiDB) getEmojiCategory(ctx context.Context, lookup string, dbQuery func(*gtsmodel.EmojiCategory) error, keyParts ...any) (*gtsmodel.EmojiCategory, db.Error) {
+func (e *emojiDB) getEmojiCategory(ctx context.Context, lookup string, dbQuery func(*gtsmodel.EmojiCategory) error, keyParts ...any) (*gtsmodel.EmojiCategory, error) {
 	return e.state.Caches.GTS.EmojiCategory().Load(lookup, func() (*gtsmodel.EmojiCategory, error) {
 		var category gtsmodel.EmojiCategory
 
@@ -613,7 +613,7 @@ func (e *emojiDB) getEmojiCategory(ctx context.Context, lookup string, dbQuery f
 	}, keyParts...)
 }
 
-func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, emojiCategoryIDs []string) ([]*gtsmodel.EmojiCategory, db.Error) {
+func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, emojiCategoryIDs []string) ([]*gtsmodel.EmojiCategory, error) {
 	if len(emojiCategoryIDs) == 0 {
 		return nil, db.ErrNoEntries
 	}

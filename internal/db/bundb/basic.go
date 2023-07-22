@@ -31,12 +31,12 @@ type basicDB struct {
 	conn *DBConn
 }
 
-func (b *basicDB) Put(ctx context.Context, i interface{}) db.Error {
+func (b *basicDB) Put(ctx context.Context, i interface{}) error {
 	_, err := b.conn.NewInsert().Model(i).Exec(ctx)
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) GetByID(ctx context.Context, id string, i interface{}) db.Error {
+func (b *basicDB) GetByID(ctx context.Context, id string, i interface{}) error {
 	q := b.conn.
 		NewSelect().
 		Model(i).
@@ -46,7 +46,7 @@ func (b *basicDB) GetByID(ctx context.Context, id string, i interface{}) db.Erro
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{}) db.Error {
+func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{}) error {
 	if len(where) == 0 {
 		return errors.New("no queries provided")
 	}
@@ -59,7 +59,7 @@ func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{})
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) GetAll(ctx context.Context, i interface{}) db.Error {
+func (b *basicDB) GetAll(ctx context.Context, i interface{}) error {
 	q := b.conn.
 		NewSelect().
 		Model(i)
@@ -68,7 +68,7 @@ func (b *basicDB) GetAll(ctx context.Context, i interface{}) db.Error {
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) DeleteByID(ctx context.Context, id string, i interface{}) db.Error {
+func (b *basicDB) DeleteByID(ctx context.Context, id string, i interface{}) error {
 	q := b.conn.
 		NewDelete().
 		Model(i).
@@ -78,7 +78,7 @@ func (b *basicDB) DeleteByID(ctx context.Context, id string, i interface{}) db.E
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface{}) db.Error {
+func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface{}) error {
 	if len(where) == 0 {
 		return errors.New("no queries provided")
 	}
@@ -93,7 +93,7 @@ func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) UpdateByID(ctx context.Context, i interface{}, id string, columns ...string) db.Error {
+func (b *basicDB) UpdateByID(ctx context.Context, i interface{}, id string, columns ...string) error {
 	q := b.conn.
 		NewUpdate().
 		Model(i).
@@ -104,7 +104,7 @@ func (b *basicDB) UpdateByID(ctx context.Context, i interface{}, id string, colu
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value interface{}, i interface{}) db.Error {
+func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value interface{}, i interface{}) error {
 	q := b.conn.NewUpdate().Model(i)
 
 	updateWhere(q, where)
@@ -115,12 +115,12 @@ func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string,
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) CreateTable(ctx context.Context, i interface{}) db.Error {
+func (b *basicDB) CreateTable(ctx context.Context, i interface{}) error {
 	_, err := b.conn.NewCreateTable().Model(i).IfNotExists().Exec(ctx)
 	return err
 }
 
-func (b *basicDB) CreateAllTables(ctx context.Context) db.Error {
+func (b *basicDB) CreateAllTables(ctx context.Context) error {
 	models := []interface{}{
 		&gtsmodel.Account{},
 		&gtsmodel.Application{},
@@ -154,16 +154,16 @@ func (b *basicDB) CreateAllTables(ctx context.Context) db.Error {
 	return nil
 }
 
-func (b *basicDB) DropTable(ctx context.Context, i interface{}) db.Error {
+func (b *basicDB) DropTable(ctx context.Context, i interface{}) error {
 	_, err := b.conn.NewDropTable().Model(i).IfExists().Exec(ctx)
 	return b.conn.ProcessError(err)
 }
 
-func (b *basicDB) IsHealthy(ctx context.Context) db.Error {
-	return b.conn.PingContext(ctx)
+func (b *basicDB) IsHealthy(ctx context.Context) error {
+	return b.conn.db.PingContext(ctx)
 }
 
-func (b *basicDB) Stop(ctx context.Context) db.Error {
+func (b *basicDB) Stop(ctx context.Context) error {
 	log.Info(ctx, "closing db connection")
-	return b.conn.Close()
+	return b.conn.db.Close()
 }

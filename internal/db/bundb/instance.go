@@ -38,7 +38,7 @@ type instanceDB struct {
 	state *state.State
 }
 
-func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, db.Error) {
+func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, error) {
 	q := i.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
@@ -61,7 +61,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 	return count, nil
 }
 
-func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, db.Error) {
+func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, error) {
 	q := i.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status"))
@@ -83,7 +83,7 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 	return count, nil
 }
 
-func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, db.Error) {
+func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, error) {
 	q := i.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance"))
@@ -106,7 +106,7 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 	return count, nil
 }
 
-func (i *instanceDB) GetInstance(ctx context.Context, domain string) (*gtsmodel.Instance, db.Error) {
+func (i *instanceDB) GetInstance(ctx context.Context, domain string) (*gtsmodel.Instance, error) {
 	// Normalize the domain as punycode
 	var err error
 	domain, err = util.Punify(domain)
@@ -141,7 +141,7 @@ func (i *instanceDB) GetInstanceByID(ctx context.Context, id string) (*gtsmodel.
 	)
 }
 
-func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Instance) error, keyParts ...any) (*gtsmodel.Instance, db.Error) {
+func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Instance) error, keyParts ...any) (*gtsmodel.Instance, error) {
 	// Fetch instance from database cache with loader callback
 	instance, err := i.state.Caches.GTS.Instance().Load(lookup, func() (*gtsmodel.Instance, error) {
 		var instance gtsmodel.Instance
@@ -240,7 +240,7 @@ func (i *instanceDB) UpdateInstance(ctx context.Context, instance *gtsmodel.Inst
 	})
 }
 
-func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, db.Error) {
+func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, error) {
 	instanceIDs := []string{}
 
 	q := i.conn.
@@ -280,7 +280,7 @@ func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool
 	return instances, nil
 }
 
-func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, db.Error) {
+func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, maxID string, limit int) ([]*gtsmodel.Account, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -340,7 +340,7 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 	return accounts, nil
 }
 
-func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]string, db.Error) {
+func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]string, error) {
 	addresses := []string{}
 
 	// Select email addresses of approved, confirmed,

@@ -17,18 +17,20 @@
 
 package db
 
-import "fmt"
-
-// Error denotes a database error.
-type Error error
+import (
+	"database/sql"
+	"errors"
+)
 
 var (
-	// ErrNoEntries is returned when a caller expected an entry for a query, but none was found.
-	ErrNoEntries Error = fmt.Errorf("no entries")
-	// ErrMultipleEntries is returned when a caller expected ONE entry for a query, but multiples were found.
-	ErrMultipleEntries Error = fmt.Errorf("multiple entries")
+	// ErrNoEntries is a direct ptr to sql.ErrNoRows since that is returned regardless
+	// of DB dialect. It is returned when no rows (entries) can be found for a query.
+	ErrNoEntries = sql.ErrNoRows
+
 	// ErrAlreadyExists is returned when a conflict was encountered in the db when doing an insert.
-	ErrAlreadyExists Error = fmt.Errorf("already exists")
-	// ErrUnknown denotes an unknown database error.
-	ErrUnknown Error = fmt.Errorf("unknown error")
+	ErrAlreadyExists = errors.New("already exists")
+
+	// ErrBusyTimeout is returned if the database connection indicates the connection is too busy
+	// to copmlete the supplied query. This is generally intended to be handled internally by the DB.
+	ErrBusyTimeout = errors.New("busy timeout")
 )

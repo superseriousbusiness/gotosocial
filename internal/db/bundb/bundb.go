@@ -132,9 +132,9 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	}
 
 	// Add database query hooks.
-	conn.DB.AddQueryHook(queryHook{})
+	conn.db.AddQueryHook(queryHook{})
 	if config.GetTracingEnabled() {
-		conn.DB.AddQueryHook(tracing.InstrumentBun())
+		conn.db.AddQueryHook(tracing.InstrumentBun())
 	}
 
 	// execute sqlite pragmas *after* adding database hook;
@@ -148,13 +148,13 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	// table registration is needed for many-to-many, see:
 	// https://bun.uptrace.dev/orm/many-to-many-relation/
 	for _, t := range registerTables {
-		conn.RegisterModel(t)
+		conn.db.RegisterModel(t)
 	}
 
 	// perform any pending database migrations: this includes
 	// the very first 'migration' on startup which just creates
 	// necessary tables
-	if err := doMigration(ctx, conn.DB); err != nil {
+	if err := doMigration(ctx, conn.db); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
@@ -262,7 +262,7 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.PingContext(ctx); err != nil {
+	if err := conn.db.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("postgres ping: %s", err)
 	}
 
@@ -334,7 +334,7 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	conn := WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.PingContext(ctx); err != nil {
+	if err := conn.db.PingContext(ctx); err != nil {
 		if errWithCode, ok := err.(*sqlite.Error); ok {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
 		}
@@ -475,12 +475,12 @@ func sqlitePragmas(ctx context.Context, conn *DBConn) error {
 		pk := p[0]
 		pv := p[1]
 
-		if _, err := conn.DB.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
+		if _, err := conn.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
 			return fmt.Errorf("error executing sqlite pragma %s: %w", pk, err)
 		}
 
 		var res string
-		if err := conn.DB.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
+		if err := conn.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
 			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
 		}
 

@@ -35,7 +35,7 @@ type mentionDB struct {
 	state *state.State
 }
 
-func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
+func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, error) {
 	mention, err := m.state.Caches.GTS.Mention().Load("ID", func() (*gtsmodel.Mention, error) {
 		var mention gtsmodel.Mention
 
@@ -84,7 +84,7 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 	return mention, nil
 }
 
-func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, db.Error) {
+func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error) {
 	mentions := make([]*gtsmodel.Mention, 0, len(ids))
 
 	for _, id := range ids {

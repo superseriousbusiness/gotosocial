@@ -47,7 +47,7 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 		Relation("CreatedWithApplication")
 }
 
-func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, error) {
 	return s.getStatus(
 		ctx,
 		"ID",
@@ -76,7 +76,7 @@ func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmo
 	return statuses, nil
 }
 
-func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, error) {
 	return s.getStatus(
 		ctx,
 		"URI",
@@ -87,7 +87,7 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 	)
 }
 
-func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.Status, error) {
 	return s.getStatus(
 		ctx,
 		"URL",
@@ -98,7 +98,7 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 	)
 }
 
-func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Status) error, keyParts ...any) (*gtsmodel.Status, db.Error) {
+func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Status) error, keyParts ...any) (*gtsmodel.Status, error) {
 	// Fetch status from database cache with loader callback
 	status, err := s.state.Caches.GTS.Status().Load(lookup, func() (*gtsmodel.Status, error) {
 		var status gtsmodel.Status
@@ -243,7 +243,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	return errs.Combine()
 }
 
-func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Error {
+func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error {
 	return s.state.Caches.GTS.Status().Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
@@ -306,7 +306,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) db.Er
 	})
 }
 
-func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) db.Error {
+func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) error {
 	status.UpdatedAt = time.Now()
 	if len(columns) > 0 {
 		// If we're updating by column, ensure "updated_at" is included.
@@ -380,7 +380,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 	})
 }
 
-func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
+func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
 	defer s.state.Caches.GTS.Status().Invalidate("ID", id)
 
 	// Load status into cache before attempting a delete,
@@ -457,7 +457,7 @@ func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([
 	return s.GetStatusesByIDs(ctx, statusIDs)
 }
 
-func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, error) {
 	if onlyDirect {
 		// Only want the direct parent, no further than first level
 		parent, err := s.GetStatusByID(ctx, status.InReplyToID)
@@ -485,7 +485,7 @@ func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status
 	return parents, nil
 }
 
-func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error) {
 	foundStatuses := &list.List{}
 	foundStatuses.PushFront(status)
 	s.statusChildren(ctx, status, foundStatuses, onlyDirect, minID)
@@ -554,7 +554,7 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 	}
 }
 
-func (s *statusDB) CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
+func (s *statusDB) CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, error) {
 	return s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
@@ -562,7 +562,7 @@ func (s *statusDB) CountStatusReplies(ctx context.Context, status *gtsmodel.Stat
 		Count(ctx)
 }
 
-func (s *statusDB) CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
+func (s *statusDB) CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, error) {
 	return s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
@@ -570,7 +570,7 @@ func (s *statusDB) CountStatusReblogs(ctx context.Context, status *gtsmodel.Stat
 		Count(ctx)
 }
 
-func (s *statusDB) CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, db.Error) {
+func (s *statusDB) CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, error) {
 	return s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
@@ -578,7 +578,7 @@ func (s *statusDB) CountStatusFaves(ctx context.Context, status *gtsmodel.Status
 		Count(ctx)
 }
 
-func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
 	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
@@ -588,7 +588,7 @@ func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status,
 	return s.conn.Exists(ctx, q)
 }
 
-func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
 	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
@@ -598,7 +598,7 @@ func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Sta
 	return s.conn.Exists(ctx, q)
 }
 
-func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
 	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_mutes"), bun.Ident("status_mute")).
@@ -608,7 +608,7 @@ func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status,
 	return s.conn.Exists(ctx, q)
 }
 
-func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, db.Error) {
+func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
 	q := s.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
@@ -618,7 +618,7 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 	return s.conn.Exists(ctx, q)
 }
 
-func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, error) {
 	reblogs := []*gtsmodel.Status{}
 
 	q := s.

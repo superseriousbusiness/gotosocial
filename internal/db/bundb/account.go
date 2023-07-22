@@ -42,7 +42,7 @@ type accountDB struct {
 	state *state.State
 }
 
-func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"ID",
@@ -77,7 +77,7 @@ func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsm
 	return accounts, nil
 }
 
-func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"URI",
@@ -91,7 +91,7 @@ func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.
 	)
 }
 
-func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"URL",
@@ -105,7 +105,7 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 	)
 }
 
-func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, error) {
 	if domain != "" {
 		// Normalize the domain as punycode
 		var err error
@@ -139,7 +139,7 @@ func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username str
 	)
 }
 
-func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"PublicKeyURI",
@@ -153,7 +153,7 @@ func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmo
 	)
 }
 
-func (a *accountDB) GetAccountByInboxURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByInboxURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"InboxURI",
@@ -167,7 +167,7 @@ func (a *accountDB) GetAccountByInboxURI(ctx context.Context, uri string) (*gtsm
 	)
 }
 
-func (a *accountDB) GetAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"OutboxURI",
@@ -181,7 +181,7 @@ func (a *accountDB) GetAccountByOutboxURI(ctx context.Context, uri string) (*gts
 	)
 }
 
-func (a *accountDB) GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"FollowersURI",
@@ -195,7 +195,7 @@ func (a *accountDB) GetAccountByFollowersURI(ctx context.Context, uri string) (*
 	)
 }
 
-func (a *accountDB) GetAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
 		"FollowingURI",
@@ -209,7 +209,7 @@ func (a *accountDB) GetAccountByFollowingURI(ctx context.Context, uri string) (*
 	)
 }
 
-func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, error) {
 	var username string
 
 	if domain == "" {
@@ -223,7 +223,7 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	return a.GetAccountByUsernameDomain(ctx, username, domain)
 }
 
-func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, db.Error) {
+func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, error) {
 	// Fetch account from database cache with loader callback
 	account, err := a.state.Caches.GTS.Account().Load(lookup, func() (*gtsmodel.Account, error) {
 		var account gtsmodel.Account
@@ -294,7 +294,7 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 	return errs.Combine()
 }
 
-func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) db.Error {
+func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) error {
 	return a.state.Caches.GTS.Account().Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
@@ -317,7 +317,7 @@ func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) d
 	})
 }
 
-func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account, columns ...string) db.Error {
+func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account, columns ...string) error {
 	account.UpdatedAt = time.Now()
 	if len(columns) > 0 {
 		// If we're updating by column, ensure "updated_at" is included.
@@ -362,7 +362,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 	})
 }
 
-func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
+func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
 	defer a.state.Caches.GTS.Account().Invalidate("ID", id)
 
 	// Load account into cache before attempting a delete,
@@ -396,7 +396,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) db.Error {
 	})
 }
 
-func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, db.Error) {
+func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, error) {
 	createdAt := time.Time{}
 
 	q := a.conn.
@@ -421,7 +421,7 @@ func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, 
 	return createdAt, nil
 }
 
-func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) db.Error {
+func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
 	if *mediaAttachment.Avatar && *mediaAttachment.Header {
 		return errors.New("one media attachment cannot be both header and avatar")
 	}
@@ -456,7 +456,7 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 	return nil
 }
 
-func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, db.Error) {
+func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, error) {
 	account, err := a.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return "", err
@@ -493,7 +493,7 @@ func (a *accountDB) GetAccountsUsingEmoji(ctx context.Context, emojiID string) (
 	return a.GetAccountsByIDs(ctx, accountIDs)
 }
 
-func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, db.Error) {
+func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, error) {
 	faves := new([]*gtsmodel.StatusFave)
 
 	if err := a.conn.
@@ -507,7 +507,7 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 	return *faves, nil
 }
 
-func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) (int, db.Error) {
+func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) (int, error) {
 	return a.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
@@ -515,7 +515,7 @@ func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) 
 		Count(ctx)
 }
 
-func (a *accountDB) CountAccountPinned(ctx context.Context, accountID string) (int, db.Error) {
+func (a *accountDB) CountAccountPinned(ctx context.Context, accountID string) (int, error) {
 	return a.conn.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
@@ -524,7 +524,7 @@ func (a *accountDB) CountAccountPinned(ctx context.Context, accountID string) (i
 		Count(ctx)
 }
 
-func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -628,7 +628,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, error) {
 	statusIDs := []string{}
 
 	q := a.conn.
@@ -646,7 +646,7 @@ func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID stri
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -694,7 +694,7 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, db.Error) {
+func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, error) {
 	blocks := []*gtsmodel.Block{}
 
 	fq := a.conn.
@@ -734,7 +734,7 @@ func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxI
 	return accounts, nextMaxID, prevMinID, nil
 }
 
-func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]*gtsmodel.Status, db.Error) {
+func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]*gtsmodel.Status, error) {
 	// Catch case of no statuses early
 	if len(statusIDs) == 0 {
 		return nil, db.ErrNoEntries

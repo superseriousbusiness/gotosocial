@@ -36,7 +36,7 @@ type statusFaveDB struct {
 	state *state.State
 }
 
-func (s *statusFaveDB) GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, db.Error) {
+func (s *statusFaveDB) GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, error) {
 	return s.getStatusFave(
 		ctx,
 		"AccountID.StatusID",
@@ -53,7 +53,7 @@ func (s *statusFaveDB) GetStatusFave(ctx context.Context, accountID string, stat
 	)
 }
 
-func (s *statusFaveDB) GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, db.Error) {
+func (s *statusFaveDB) GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, error) {
 	return s.getStatusFave(
 		ctx,
 		"ID",
@@ -119,7 +119,7 @@ func (s *statusFaveDB) getStatusFave(ctx context.Context, lookup string, dbQuery
 	return fave, nil
 }
 
-func (s *statusFaveDB) GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, db.Error) {
+func (s *statusFaveDB) GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, error) {
 	ids := []string{}
 
 	if err := s.conn.
@@ -188,7 +188,7 @@ func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmo
 	return errs.Combine()
 }
 
-func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) db.Error {
+func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	return s.state.Caches.GTS.StatusFave().Store(fave, func() error {
 		_, err := s.conn.
 			NewInsert().
@@ -198,7 +198,7 @@ func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusF
 	})
 }
 
-func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) db.Error {
+func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) error {
 	defer s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
 
 	// Load fave into cache before attempting a delete,
@@ -221,7 +221,7 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) db.E
 	return s.conn.ProcessError(err)
 }
 
-func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) db.Error {
+func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) error {
 	if targetAccountID == "" && originAccountID == "" {
 		return errors.New("DeleteStatusFaves: one of targetAccountID or originAccountID must be set")
 	}
@@ -270,7 +270,7 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	return s.conn.ProcessError(err)
 }
 
-func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID string) db.Error {
+func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID string) error {
 	// Capture fave IDs in a RETURNING statement.
 	var faveIDs []string
 

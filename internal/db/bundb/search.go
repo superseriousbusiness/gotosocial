@@ -225,7 +225,7 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	// different number of placeholders depending on
 	// following/not following. COALESCE calls ensure
 	// that we're not trying to concatenate null values.
-	d := s.conn.Dialect().Name()
+	d := s.conn.db.Dialect().Name()
 	switch {
 
 	case d == dialect.SQLite && following:
@@ -365,7 +365,7 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 
 	// SQLite and Postgres use different
 	// syntaxes for concatenation.
-	switch s.conn.Dialect().Name() {
+	switch s.conn.db.Dialect().Name() {
 
 	case dialect.SQLite:
 		statusText = statusText.ColumnExpr(

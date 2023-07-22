@@ -28,7 +28,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func (r *relationshipDB) IsBlocked(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, db.Error) {
+func (r *relationshipDB) IsBlocked(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error) {
 	block, err := r.GetBlock(
 		gtscontext.SetBarebones(ctx),
 		sourceAccountID,

@@ -25,7 +25,7 @@ import (
 )
 
 // processPostgresError processes an error, replacing any postgres specific errors with our own error type
-func processPostgresError(err error) db.Error {
+func processPostgresError(err error) error {
 	// Attempt to cast as postgres
 	pgErr, ok := err.(*pgconn.PgError)
 	if !ok {
@@ -37,13 +37,13 @@ func processPostgresError(err error) db.Error {
 	switch pgErr.Code {
 	case "23505" /* unique_violation */ :
 		return db.ErrAlreadyExists
-	default:
-		return err
 	}
+
+	return err
 }
 
 // processSQLiteError processes an error, replacing any sqlite specific errors with our own error type
-func processSQLiteError(err error) db.Error {
+func processSQLiteError(err error) error {
 	// Attempt to cast as sqlite
 	sqliteErr, ok := err.(*sqlite.Error)
 	if !ok {
@@ -55,7 +55,9 @@ func processSQLiteError(err error) db.Error {
 	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
 		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
-	default:
-		return err
+	case sqlite3.SQLITE_BUSY_TIMEOUT:
+		return db.ErrBusyTimeout
 	}
+
+	return err
 }

@@ -94,7 +94,7 @@ func (r *relationshipDB) GetFollowsByIDs(ctx context.Context, ids []string) ([]*
 	return follows, nil
 }
 
-func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, db.Error) {
+func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error) {
 	follow, err := r.GetFollow(
 		gtscontext.SetBarebones(ctx),
 		sourceAccountID,
@@ -106,7 +106,7 @@ func (r *relationshipDB) IsFollowing(ctx context.Context, sourceAccountID string
 	return (follow != nil), nil
 }
 
-func (r *relationshipDB) IsMutualFollowing(ctx context.Context, accountID1 string, accountID2 string) (bool, db.Error) {
+func (r *relationshipDB) IsMutualFollowing(ctx context.Context, accountID1 string, accountID2 string) (bool, error) {
 	// make sure account 1 follows account 2
 	f1, err := r.IsFollowing(ctx,
 		accountID1,

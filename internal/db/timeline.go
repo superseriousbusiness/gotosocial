@@ -28,13 +28,13 @@ type Timeline interface {
 	// GetHomeTimeline returns a slice of statuses from accounts that are followed by the given account id.
 	//
 	// Statuses should be returned in descending order of when they were created (newest first).
-	GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, Error)
+	GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
 	// GetPublicTimeline fetches the account's PUBLIC timeline -- ie., posts and replies that are public.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
 	//
 	// Statuses should be returned in descending order of when they were created (newest first).
-	GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, Error)
+	GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
 
 	// GetFavedTimeline fetches the account's FAVED timeline -- ie., posts and replies that the requesting account has faved.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
@@ -43,7 +43,7 @@ type Timeline interface {
 	// In other words, they'll be returned in descending order of when they were faved by the requesting user, not when they were created.
 	//
 	// Also note the extra return values, which correspond to the nextMaxID and prevMinID for building Link headers.
-	GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, Error)
+	GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, error)
 
 	// GetListTimeline returns a slice of statuses from followed accounts collected within the list with the given listID.
 	// Statuses should be returned in descending order of when they were created (newest first).

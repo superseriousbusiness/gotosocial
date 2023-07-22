@@ -22,7 +22,6 @@ import (
 	"crypto/rand"
 	"io"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
@@ -31,7 +30,7 @@ type sessionDB struct {
 	conn *DBConn
 }
 
-func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
+func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, error) {
 	rss := make([]*gtsmodel.RouterSession, 0, 1)
 
 	// get the first router session in the db or...
@@ -52,7 +51,7 @@ func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db
 	return rss[0], nil
 }
 
-func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
+func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession, error) {
 	buf := make([]byte, 64)
 	auth := buf[:32]
 	crypt := buf[32:64]

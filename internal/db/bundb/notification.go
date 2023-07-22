@@ -35,7 +35,7 @@ type notificationDB struct {
 	state *state.State
 }
 
-func (n *notificationDB) GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, db.Error) {
+func (n *notificationDB) GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, error) {
 	return n.state.Caches.GTS.Notification().Load("ID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
@@ -56,7 +56,7 @@ func (n *notificationDB) GetNotification(
 	targetAccountID string,
 	originAccountID string,
 	statusID string,
-) (*gtsmodel.Notification, db.Error) {
+) (*gtsmodel.Notification, error) {
 	return n.state.Caches.GTS.Notification().Load("NotificationType.TargetAccountID.OriginAccountID.StatusID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
@@ -83,7 +83,7 @@ func (n *notificationDB) GetAccountNotifications(
 	minID string,
 	limit int,
 	excludeTypes []string,
-) ([]*gtsmodel.Notification, db.Error) {
+) ([]*gtsmodel.Notification, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -179,7 +179,7 @@ func (n *notificationDB) PutNotification(ctx context.Context, notif *gtsmodel.No
 	})
 }
 
-func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) db.Error {
+func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) error {
 	defer n.state.Caches.GTS.Notification().Invalidate("ID", id)
 
 	// Load notif into cache before attempting a delete,
@@ -202,7 +202,7 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 	return n.conn.ProcessError(err)
 }
 
-func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) db.Error {
+func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) error {
 	if targetAccountID == "" && originAccountID == "" {
 		return errors.New("DeleteNotifications: one of targetAccountID or originAccountID must be set")
 	}
@@ -255,7 +255,7 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 	return n.conn.ProcessError(err)
 }
 
-func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statusID string) db.Error {
+func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statusID string) error {
 	var notifIDs []string
 
 	q := n.conn.

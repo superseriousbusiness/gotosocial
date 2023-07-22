@@ -93,7 +93,7 @@ func (r *relationshipDB) GetFollowRequestsByIDs(ctx context.Context, ids []strin
 	return followReqs, nil
 }
 
-func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, db.Error) {
+func (r *relationshipDB) IsFollowRequested(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error) {
 	followReq, err := r.GetFollowRequest(
 		gtscontext.SetBarebones(ctx),
 		sourceAccountID,
@@ -175,7 +175,7 @@ func (r *relationshipDB) UpdateFollowRequest(ctx context.Context, followRequest 
 	})
 }
 
-func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Follow, db.Error) {
+func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Follow, error) {
 	// Get original follow request.
 	followReq, err := r.GetFollowRequest(ctx, sourceAccountID, targetAccountID)
 	if err != nil {
@@ -230,7 +230,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 	return follow, nil
 }
 
-func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) db.Error {
+func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) error {
 	// Delete follow request first.
 	if err := r.DeleteFollowRequest(ctx, sourceAccountID, targetAccountID); err != nil {
 		return err
