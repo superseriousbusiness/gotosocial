@@ -51,6 +51,7 @@ func WrapDBConn(dbConn *bun.DB) *DBConn {
 	}
 }
 
+// BeginTx wraps bun.DB.BeginTx() with retry-busy timeout.
 func (conn *DBConn) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx, err error) {
 	err = retryOnBusy(ctx, func() error {
 		tx, err = conn.DB.BeginTx(ctx, opts)
@@ -60,6 +61,7 @@ func (conn *DBConn) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx
 	return
 }
 
+// ExecContext wraps bun.DB.ExecContext() with retry-busy timeout.
 func (conn *DBConn) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	err = retryOnBusy(ctx, func() error {
 		result, err = conn.DB.ExecContext(ctx, query, args...)
@@ -69,6 +71,7 @@ func (conn *DBConn) ExecContext(ctx context.Context, query string, args ...any) 
 	return
 }
 
+// QueryContext wraps bun.DB.QueryContext() with retry-busy timeout.
 func (conn *DBConn) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
 	err = retryOnBusy(ctx, func() error {
 		rows, err = conn.DB.QueryContext(ctx, query, args...)
@@ -78,6 +81,7 @@ func (conn *DBConn) QueryContext(ctx context.Context, query string, args ...any)
 	return
 }
 
+// QueryRowContext wraps bun.DB.QueryRowContext() with retry-busy timeout.
 func (conn *DBConn) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
 	_ = retryOnBusy(ctx, func() error {
 		row = conn.DB.QueryRowContext(ctx, query, args...)
@@ -87,6 +91,7 @@ func (conn *DBConn) QueryRowContext(ctx context.Context, query string, args ...a
 	return
 }
 
+// RunInTx is functionally the same as bun.DB.RunInTx() but with retry-busy timeouts.
 func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
 	// Attempt to start new transaction.
 	tx, err := conn.BeginTx(ctx, nil)
@@ -204,7 +209,7 @@ func (conn *DBConn) NotExists(ctx context.Context, query *bun.SelectQuery) (bool
 	return !exists, err
 }
 
-// retryOnBusy will retry given function on returned db.ErrBusyTimeout.
+// retryOnBusy will retry given function on returned 'errBusy'.
 func retryOnBusy(ctx context.Context, fn func() error) error {
 	const (
 		// max no. attempts.
