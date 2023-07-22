@@ -204,25 +204,6 @@ func (conn *DBConn) NotExists(ctx context.Context, query *bun.SelectQuery) (bool
 	return !exists, err
 }
 
-const maxRetries = 5
-
-var backoffs = []time.Duration{
-	1 * time.Millisecond,
-	2 * time.Millisecond,
-	10 * time.Millisecond,
-	50 * time.Millisecond,
-	1 / 64 * time.Second,
-	1 / 32 * time.Second,
-	1 / 16 * time.Second,
-	1 / 8 * time.Second,
-	1 / 4 * time.Second,
-	1 / 2 * time.Second,
-	1 * time.Second,
-	2 * time.Second,
-	4 * time.Second,
-	8 * time.Second,
-}
-
 // retryOnBusy will retry given function on returned db.ErrBusyTimeout.
 func retryOnBusy(ctx context.Context, fn func() error) error {
 	const (
