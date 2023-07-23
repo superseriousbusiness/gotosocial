@@ -272,50 +272,89 @@ func (m *Module) fetchUserForClaims(ctx context.Context, claims *oidc.Claims, ip
 }
 
 func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, extraInfo *extraInfo, ip net.IP, appID string) (*gtsmodel.User, gtserror.WithCode) {
-	// check if the email address is available for use; if it's not there's nothing we can so
+	// Check if the claimed email address is available for use.
 	emailAvailable, err := m.db.IsEmailAvailable(ctx, claims.Email)
 	if err != nil {
-		return nil, gtserror.NewErrorBadRequest(err)
+		err := gtserror.Newf("db error checking email availability: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
+
 	if !emailAvailable {
-		help := "The email address given to us by your authentication provider already exists in our records and the server administrator has not enabled account migration"
-		return nil, gtserror.NewErrorConflict(fmt.Errorf("email address %s is not available", claims.Email), help)
+		const help = "The email address given to us by your authentication provider already exists in our records and the server administrator has not enabled account migration"
+		err := gtserror.Newf("email address %s is not available", claims.Email)
+		return nil, gtserror.NewErrorConflict(err, help)
 	}
 
-	// check if the user is in any recognised admin groups
-	adminGroups := config.GetOIDCAdminGroups()
-	var admin bool
-LOOP:
-	for _, g := range claims.Groups {
-		for _, ag := range adminGroups {
-			if strings.EqualFold(g, ag) {
-				admin = true
-				break LOOP
-			}
-		}
-	}
-
-	// We still need to set *a* password even if it's not a password the user will end up using, so set something random.
-	// We'll just set two uuids on top of each other, which should be long + random enough to baffle any attempts to crack.
+	// We still need to set something as a password, even
+	// if it's not a password the user will end up using.
 	//
-	// If the user ever wants to log in using gts password rather than oidc flow, they'll have to request a password reset, which is fine
+	// We'll just set two uuids on top of each other, which
+	// should be long + random enough to baffle any attempts
+	// to crack, and which is also, conveniently, 72 bytes,
+	// which is the maximum length that bcrypt can handle.
+	//
+	// If the user ever wants to log in using a password
+	// rather than oidc flow, they'll have to request a
+	// password reset, which is fine.
 	password := uuid.NewString() + uuid.NewString()
 
-	// Since this user is created via oidc, which has been set up by the admin, we can assume that the account is already
-	// implicitly approved, and that the email address has already been verified: otherwise, we end up in situations where
-	// the admin first approves the user in OIDC, and then has to approve them again in GoToSocial, which doesn't make sense.
+	// Since this user is created via OIDC, we can assume
+	// that the account should be preapproved, and the email
+	// address should be considered as verified already,
+	// since the OIDC login was successful.
 	//
-	// In other words, if a user logs in via OIDC, they should be able to use their account straight away.
+	// If we don't assume this, we end up in a situation
+	// where the admin first adds a user to OIDC, then has
+	// to approve them again in GoToSocial when they log in
+	// there for the first time, which doesn't make sense.
 	//
-	// See: https://github.com/superseriousbusiness/gotosocial/issues/357
-	requireApproval := false
-	emailVerified := true
+	// In other words, if a user logs in via OIDC, they
+	// should be able to use their account straight away.
+	var (
+		preApproved   = true
+		emailVerified = true
+	)
 
-	// create the user! this will also create an account and store it in the database so we don't need to do that here
-	user, err := m.db.NewSignup(ctx, extraInfo.Username, "", requireApproval, claims.Email, password, ip, "", appID, emailVerified, claims.Sub, admin)
+	// If one of the claimed groups corresponds to one of
+	// the configured admin OIDC groups, create this user
+	// as an admin.
+	admin := adminGroup(claims.Groups)
+
+	// Create the user! This will also create an account and
+	// store it in the database, so we don't need to do that.
+	user, err := m.db.NewSignup(ctx, gtsmodel.NewSignup{
+		Username:      extraInfo.Username,
+		Email:         claims.Email,
+		Password:      password,
+		SignUpIP:      ip,
+		AppID:         appID,
+		ExternalID:    claims.Sub,
+		PreApproved:   preApproved,
+		EmailVerified: emailVerified,
+		Admin:         admin,
+	})
 	if err != nil {
+		err := gtserror.Newf("db error doing new signup: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return user, nil
+}
+
+// adminGroup returns true if one of the given OIDC
+// groups is equal to at least one admin OIDC group.
+func adminGroup(groups []string) bool {
+	for _, ag := range config.GetOIDCAdminGroups() {
+		for _, g := range groups {
+			if strings.EqualFold(ag, g) {
+				// This is an admin group,
+				// ∴ user is an admin.
+				return true
+			}
+		}
+	}
+
+	// User is in no admin groups,
+	// ∴ user is not an admin.
+	return false
 }

@@ -46,9 +46,9 @@ const (
 	maximumListTitleLength        = 200
 )
 
-// NewPassword returns a helpful error if the given password
+// Password returns a helpful error if the given password
 // is too short, too long, or not sufficiently strong.
-func NewPassword(password string) error {
+func Password(password string) error {
 	// Ensure length is OK first.
 	if pwLen := len(password); pwLen == 0 {
 		return errors.New("no password provided / provided password was 0 bytes")

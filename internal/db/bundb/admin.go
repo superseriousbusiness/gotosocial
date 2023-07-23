@@ -21,8 +21,8 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
+	"errors"
 	"fmt"
-	"net"
 	"net/mail"
 	"strings"
 	"time"
@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -89,106 +90,134 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, db.
 	return a.conn.NotExists(ctx, q)
 }
 
-func (a *adminDB) NewSignup(ctx context.Context, username string, reason string, requireApproval bool, email string, password string, signUpIP net.IP, locale string, appID string, emailVerified bool, externalID string, admin bool) (*gtsmodel.User, db.Error) {
-	key, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
-	if err != nil {
-		log.Errorf(ctx, "error creating new rsa key: %s", err)
+func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (*gtsmodel.User, db.Error) {
+	// If something went wrong previously while doing a new
+	// sign up with this username, we might already have an
+	// account, so check first.
+	account, err := a.state.DB.GetAccountByUsernameDomain(ctx, newSignup.Username, "")
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// Real error occurred.
+		err := gtserror.Newf("error checking for existing account: %w", err)
 		return nil, err
 	}
 
-	// if something went wrong while creating a user, we might already have an account, so check here first...
-	acct := &gtsmodel.Account{}
-	if err := a.conn.
-		NewSelect().
-		Model(acct).
-		Where("? = ?", bun.Ident("account.username"), username).
-		Where("? IS NULL", bun.Ident("account.domain")).
-		Scan(ctx); err != nil {
-		err = a.conn.ProcessError(err)
-		if err != db.ErrNoEntries {
-			log.Errorf(ctx, "error checking for existing account: %s", err)
-			return nil, err
-		}
+	// If we didn't yet have an account
+	// with this username, create one now.
+	if account == nil {
+		uris := uris.GenerateURIsForAccount(newSignup.Username)
 
-		// if we have db.ErrNoEntries, we just don't have an
-		// account yet so create one before we proceed
-		accountURIs := uris.GenerateURIsForAccount(username)
 		accountID, err := id.NewRandomULID()
 		if err != nil {
+			err := gtserror.Newf("error creating new account id: %w", err)
 			return nil, err
 		}
 
-		acct = &gtsmodel.Account{
+		privKey, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
+		if err != nil {
+			err := gtserror.Newf("error creating new rsa private key: %w", err)
+			return nil, err
+		}
+
+		account = &gtsmodel.Account{
 			ID:                    accountID,
-			Username:              username,
-			DisplayName:           username,
-			Reason:                reason,
+			Username:              newSignup.Username,
+			DisplayName:           newSignup.Username,
+			Reason:                newSignup.Reason,
 			Privacy:               gtsmodel.VisibilityDefault,
-			URL:                   accountURIs.UserURL,
-			PrivateKey:            key,
-			PublicKey:             &key.PublicKey,
-			PublicKeyURI:          accountURIs.PublicKeyURI,
+			URI:                   uris.UserURI,
+			URL:                   uris.UserURL,
+			InboxURI:              uris.InboxURI,
+			OutboxURI:             uris.OutboxURI,
+			FollowingURI:          uris.FollowingURI,
+			FollowersURI:          uris.FollowersURI,
+			FeaturedCollectionURI: uris.FeaturedCollectionURI,
 			ActorType:             ap.ActorPerson,
-			URI:                   accountURIs.UserURI,
-			InboxURI:              accountURIs.InboxURI,
-			OutboxURI:             accountURIs.OutboxURI,
-			FollowersURI:          accountURIs.FollowersURI,
-			FollowingURI:          accountURIs.FollowingURI,
-			FeaturedCollectionURI: accountURIs.FeaturedCollectionURI,
+			PrivateKey:            privKey,
+			PublicKey:             &privKey.PublicKey,
+			PublicKeyURI:          uris.PublicKeyURI,
 		}
 
-		// insert the new account!
-		if err := a.state.DB.PutAccount(ctx, acct); err != nil {
+		// Insert the new account!
+		if err := a.state.DB.PutAccount(ctx, account); err != nil {
 			return nil, err
 		}
 	}
 
-	// we either created or already had an account by now,
-	// so proceed with creating a user for that account
-
-	pw, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("error hashing password: %s", err)
+	// Created or already had an account.
+	// Ensure user not already created.
+	user, err := a.state.DB.GetUserByAccountID(ctx, account.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// Real error occurred.
+		err := gtserror.Newf("error checking for existing user: %w", err)
+		return nil, err
 	}
 
+	defer func() {
+		// Pin account to (new)
+		// user before returning.
+		user.Account = account
+	}()
+
+	if user != nil {
+		// Already had a user for this
+		// account, just return that.
+		return user, nil
+	}
+
+	// Had no user for this account, time to create one!
 	newUserID, err := id.NewRandomULID()
 	if err != nil {
+		err := gtserror.Newf("error creating new user id: %w", err)
 		return nil, err
 	}
 
-	// if we don't require moderator approval, just pre-approve the user
-	approved := !requireApproval
-	u := &gtsmodel.User{
+	encryptedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(newSignup.Password),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		err := gtserror.Newf("error hashing password: %w", err)
+		return nil, err
+	}
+
+	user = &gtsmodel.User{
 		ID:                     newUserID,
-		AccountID:              acct.ID,
-		Account:                acct,
-		EncryptedPassword:      string(pw),
-		SignUpIP:               signUpIP.To4(),
-		Locale:                 locale,
-		UnconfirmedEmail:       email,
-		CreatedByApplicationID: appID,
-		Approved:               &approved,
-		ExternalID:             externalID,
+		AccountID:              account.ID,
+		Account:                account,
+		EncryptedPassword:      string(encryptedPassword),
+		SignUpIP:               newSignup.SignUpIP.To4(),
+		Locale:                 newSignup.Locale,
+		UnconfirmedEmail:       newSignup.Email,
+		CreatedByApplicationID: newSignup.AppID,
+		ExternalID:             newSignup.ExternalID,
 	}
 
-	if emailVerified {
-		u.ConfirmedAt = time.Now()
-		u.Email = email
+	if newSignup.EmailVerified {
+		// Mark given email as confirmed.
+		user.ConfirmedAt = time.Now()
+		user.Email = newSignup.Email
 	}
 
-	if admin {
-		admin := true
-		moderator := true
-		u.Admin = &admin
-		u.Moderator = &moderator
+	trueBool := func() *bool { t := true; return &t }
+
+	if newSignup.Admin {
+		// Make new user mod + admin.
+		user.Moderator = trueBool()
+		user.Admin = trueBool()
 	}
 
-	// insert the user!
-	if err := a.state.DB.PutUser(ctx, u); err != nil {
+	if newSignup.PreApproved {
+		// Mark new user as approved.
+		user.Approved = trueBool()
+	}
+
+	// Insert the user!
+	if err := a.state.DB.PutUser(ctx, user); err != nil {
+		err := gtserror.Newf("db error inserting user: %w", err)
 		return nil, err
 	}
 
-	return u, nil
+	return user, nil
 }
 
 func (a *adminDB) CreateInstanceAccount(ctx context.Context) db.Error {

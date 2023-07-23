@@ -54,7 +54,7 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordIncorrectOld() {
 	user := suite.testUsers["local_account_1"]
 
 	errWithCode := suite.user.PasswordChange(context.Background(), user, "ooooopsydoooopsy", "verygoodnewpassword")
-	suite.EqualError(errWithCode, "crypto/bcrypt: hashedPassword is not the hash of the given password")
+	suite.EqualError(errWithCode, "PasswordChange: crypto/bcrypt: hashedPassword is not the hash of the given password")
 	suite.Equal(http.StatusUnauthorized, errWithCode.Code())
 	suite.Equal("Unauthorized: old password was incorrect", errWithCode.Safe())
 

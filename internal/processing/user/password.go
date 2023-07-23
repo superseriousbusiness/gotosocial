@@ -28,22 +28,41 @@ import (
 
 // PasswordChange processes a password change request for the given user.
 func (p *Processor) PasswordChange(ctx context.Context, user *gtsmodel.User, oldPassword string, newPassword string) gtserror.WithCode {
+	// Ensure provided oldPassword is the correct current password.
 	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(oldPassword)); err != nil {
+		err := gtserror.Newf("%w", err)
 		return gtserror.NewErrorUnauthorized(err, "old password was incorrect")
 	}
 
-	if err := validate.NewPassword(newPassword); err != nil {
+	// Ensure new password is strong enough.
+	if err := validate.Password(newPassword); err != nil {
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return gtserror.NewErrorInternalError(err, "error hashing password")
+	// Ensure new password is different from old password.
+	if newPassword == oldPassword {
+		const help = "new password cannot be the same as previous password"
+		err := gtserror.New(help)
+		return gtserror.NewErrorBadRequest(err, help)
 	}
 
-	user.EncryptedPassword = string(newPasswordHash)
+	// Hash the new password.
+	encryptedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(newPassword),
+		bcrypt.DefaultCost,
+	)
+	if err != nil {
+		err := gtserror.Newf("%w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
 
-	if err := p.state.DB.UpdateUser(ctx, user, "encrypted_password"); err != nil {
+	// Set new password on user.
+	user.EncryptedPassword = string(encryptedPassword)
+	if err := p.state.DB.UpdateUser(
+		ctx, user,
+		"encrypted_password",
+	); err != nil {
+		err := gtserror.Newf("db error updating user: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
 
