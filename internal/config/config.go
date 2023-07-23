@@ -80,6 +80,7 @@ type Configuration struct {
 	InstanceExposeSuspendedWeb     bool `name:"instance-expose-suspended-web" usage:"Expose list of suspended instances as webpage on /about/suspended"`
 	InstanceExposePublicTimeline   bool `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
 	InstanceDeliverToSharedInboxes bool `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
+	InstanceInjectMastodonVersion  bool `name:"instance-inject-mastodon-version" usage:"This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection"`
 
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
 	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`

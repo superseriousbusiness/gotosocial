@@ -849,6 +849,31 @@ func GetInstanceDeliverToSharedInboxes() bool { return global.GetInstanceDeliver
 // SetInstanceDeliverToSharedInboxes safely sets the value for global configuration 'InstanceDeliverToSharedInboxes' field
 func SetInstanceDeliverToSharedInboxes(v bool) { global.SetInstanceDeliverToSharedInboxes(v) }
 
+// GetInstanceInjectMastodonVersion safely fetches the Configuration value for state's 'InstanceInjectMastodonVersion' field
+func (st *ConfigState) GetInstanceInjectMastodonVersion() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceInjectMastodonVersion
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceInjectMastodonVersion safely sets the Configuration value for state's 'InstanceInjectMastodonVersion' field
+func (st *ConfigState) SetInstanceInjectMastodonVersion(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceInjectMastodonVersion = v
+	st.reloadToViper()
+}
+
+// InstanceInjectMastodonVersionFlag returns the flag name for the 'InstanceInjectMastodonVersion' field
+func InstanceInjectMastodonVersionFlag() string { return "instance-inject-mastodon-version" }
+
+// GetInstanceInjectMastodonVersion safely fetches the value for global configuration 'InstanceInjectMastodonVersion' field
+func GetInstanceInjectMastodonVersion() bool { return global.GetInstanceInjectMastodonVersion() }
+
+// SetInstanceInjectMastodonVersion safely sets the value for global configuration 'InstanceInjectMastodonVersion' field
+func SetInstanceInjectMastodonVersion(v bool) { global.SetInstanceInjectMastodonVersion(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.RLock()

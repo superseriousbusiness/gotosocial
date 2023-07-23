@@ -26,17 +26,17 @@ require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-fed/httpsig v1.1.0
-	github.com/go-playground/form/v4 v4.2.0
+	github.com/go-playground/form/v4 v4.2.1
 	github.com/go-playground/validator/v10 v10.14.1
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgconn v1.14.0
-	github.com/jackc/pgx/v5 v5.4.1
+	github.com/jackc/pgx/v5 v5.4.2
 	github.com/microcosm-cc/bluemonday v1.0.24
 	github.com/miekg/dns v1.1.55
-	github.com/minio/minio-go/v7 v7.0.59
+	github.com/minio/minio-go/v7 v7.0.60
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/spf13/cobra v1.7.0
@@ -67,7 +67,7 @@ require (
 	golang.org/x/text v0.11.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.23.1
+	modernc.org/sqlite v1.24.0
 	mvdan.cc/xurls/v2 v2.5.0
 )
 

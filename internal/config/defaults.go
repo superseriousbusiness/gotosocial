@@ -71,7 +71,7 @@ var Defaults = Configuration{
 	MediaVideoMaxSize:        40 * bytesize.MiB,
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
-	MediaRemoteCacheDays:     30,
+	MediaRemoteCacheDays:     7,
 	MediaEmojiLocalMaxSize:   50 * bytesize.KiB,
 	MediaEmojiRemoteMaxSize:  100 * bytesize.KiB,
 

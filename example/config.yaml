@@ -400,6 +400,15 @@ instance-expose-public-timeline: false
 # Default: true
 instance-deliver-to-shared-inboxes: true
 
+# Bool. This flag will inject a Mastodon version into the version field that
+# is included in /api/v1/instance. This version is often used by Mastodon clients
+# to do API feature detection. By injecting a Mastodon compatible version, it is
+# possible to cajole those clients to behave correctly with GoToSocial.
+#
+# Options: [true, false]
+# Default: false
+instance-inject-mastodon-version: false
+
 ###########################
 ##### ACCOUNTS CONFIG #####
 ###########################
@@ -478,8 +487,8 @@ media-description-max-chars: 500
 #
 # If this is set to 0, then media from remote instances will be cached indefinitely.
 # Examples: [30, 60, 7, 0]
-# Default: 30
-media-remote-cache-days: 30
+# Default: 7
+media-remote-cache-days: 7
 
 # Int. Max size in bytes of emojis uploaded to this instance via the admin API.
 # The default is the same as the Mastodon size limit for emojis (50kb), which allows
