@@ -43,10 +43,6 @@ func (suite *FingerTestSuite) TestFinger() {
 }
 
 func (suite *FingerTestSuite) TestFingerWithHostMeta() {
-	if os.Getenv("CI") == "true" {
-		suite.T().Skip("this test is flaky on CI for as of yet unknown reasons")
-	}
-
 	wc := suite.state.Caches.GTS.Webfinger()
 	suite.Equal(0, wc.Len(), "expect webfinger cache to be empty")
 
@@ -60,6 +56,10 @@ func (suite *FingerTestSuite) TestFingerWithHostMeta() {
 }
 
 func (suite *FingerTestSuite) TestFingerWithHostMetaCacheStrategy() {
+	if os.Getenv("CI") == "true" {
+		suite.T().Skip("this test is flaky on CI for as of yet unknown reasons")
+	}
+
 	wc := suite.state.Caches.GTS.Webfinger()
 
 	// Reset the sweep frequency so nothing interferes with the test
