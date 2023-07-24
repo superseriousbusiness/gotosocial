@@ -160,22 +160,10 @@ type privateManager interface {
 	// method for the "ActivityStreamsTargetProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeTargetPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsTargetProperty, error)
-	// DeserializeTeamPropertyForgeFed returns the deserialization method for
-	// the "ForgeFedTeamProperty" non-functional property in the
-	// vocabulary "ForgeFed"
-	DeserializeTeamPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTeamProperty, error)
-	// DeserializeTicketsTrackedByPropertyForgeFed returns the deserialization
-	// method for the "ForgeFedTicketsTrackedByProperty" non-functional
-	// property in the vocabulary "ForgeFed"
-	DeserializeTicketsTrackedByPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTicketsTrackedByProperty, error)
 	// DeserializeToPropertyActivityStreams returns the deserialization method
 	// for the "ActivityStreamsToProperty" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeToPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsToProperty, error)
-	// DeserializeTracksTicketsForPropertyForgeFed returns the deserialization
-	// method for the "ForgeFedTracksTicketsForProperty" non-functional
-	// property in the vocabulary "ForgeFed"
-	DeserializeTracksTicketsForPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTracksTicketsForProperty, error)
 	// DeserializeTypePropertyJSONLD returns the deserialization method for
 	// the "JSONLDTypeProperty" non-functional property in the vocabulary
 	// "JSONLD"

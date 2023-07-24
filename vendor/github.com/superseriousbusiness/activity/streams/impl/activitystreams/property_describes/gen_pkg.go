@@ -45,10 +45,6 @@ type privateManager interface {
 	// the "ActivityStreamsBlock" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeBlockActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsBlock, error)
-	// DeserializeBranchForgeFed returns the deserialization method for the
-	// "ForgeFedBranch" non-functional property in the vocabulary
-	// "ForgeFed"
-	DeserializeBranchForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedBranch, error)
 	// DeserializeCollectionActivityStreams returns the deserialization method
 	// for the "ActivityStreamsCollection" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -57,10 +53,6 @@ type privateManager interface {
 	// method for the "ActivityStreamsCollectionPage" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeCollectionPageActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsCollectionPage, error)
-	// DeserializeCommitForgeFed returns the deserialization method for the
-	// "ForgeFedCommit" non-functional property in the vocabulary
-	// "ForgeFed"
-	DeserializeCommitForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedCommit, error)
 	// DeserializeCreateActivityStreams returns the deserialization method for
 	// the "ActivityStreamsCreate" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -181,9 +173,6 @@ type privateManager interface {
 	// the "SchemaPropertyValue" non-functional property in the vocabulary
 	// "Schema"
 	DeserializePropertyValueSchema() func(map[string]interface{}, map[string]string) (vocab.SchemaPropertyValue, error)
-	// DeserializePushForgeFed returns the deserialization method for the
-	// "ForgeFedPush" non-functional property in the vocabulary "ForgeFed"
-	DeserializePushForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedPush, error)
 	// DeserializeQuestionActivityStreams returns the deserialization method
 	// for the "ActivityStreamsQuestion" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -204,10 +193,6 @@ type privateManager interface {
 	// the "ActivityStreamsRemove" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeRemoveActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsRemove, error)
-	// DeserializeRepositoryForgeFed returns the deserialization method for
-	// the "ForgeFedRepository" non-functional property in the vocabulary
-	// "ForgeFed"
-	DeserializeRepositoryForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedRepository, error)
 	// DeserializeServiceActivityStreams returns the deserialization method
 	// for the "ActivityStreamsService" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -220,14 +205,6 @@ type privateManager interface {
 	// method for the "ActivityStreamsTentativeReject" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeTentativeRejectActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsTentativeReject, error)
-	// DeserializeTicketDependencyForgeFed returns the deserialization method
-	// for the "ForgeFedTicketDependency" non-functional property in the
-	// vocabulary "ForgeFed"
-	DeserializeTicketDependencyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTicketDependency, error)
-	// DeserializeTicketForgeFed returns the deserialization method for the
-	// "ForgeFedTicket" non-functional property in the vocabulary
-	// "ForgeFed"
-	DeserializeTicketForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTicket, error)
 	// DeserializeTombstoneActivityStreams returns the deserialization method
 	// for the "ActivityStreamsTombstone" non-functional property in the
 	// vocabulary "ActivityStreams"

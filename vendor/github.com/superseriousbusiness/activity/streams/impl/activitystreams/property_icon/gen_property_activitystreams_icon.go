@@ -16,6 +16,7 @@ import (
 type ActivityStreamsIconPropertyIterator struct {
 	activitystreamsImageMember   vocab.ActivityStreamsImage
 	activitystreamsLinkMember    vocab.ActivityStreamsLink
+	tootHashtagMember            vocab.TootHashtag
 	activitystreamsMentionMember vocab.ActivityStreamsMention
 	unknown                      interface{}
 	iri                          *url.URL
@@ -62,6 +63,12 @@ func deserializeActivityStreamsIconPropertyIterator(i interface{}, aliasMap map[
 				alias:                     alias,
 			}
 			return this, nil
+		} else if v, err := mgr.DeserializeHashtagToot()(m, aliasMap); err == nil {
+			this := &ActivityStreamsIconPropertyIterator{
+				alias:             alias,
+				tootHashtagMember: v,
+			}
+			return this, nil
 		} else if v, err := mgr.DeserializeMentionActivityStreams()(m, aliasMap); err == nil {
 			this := &ActivityStreamsIconPropertyIterator{
 				activitystreamsMentionMember: v,
@@ -104,6 +111,12 @@ func (this ActivityStreamsIconPropertyIterator) GetIRI() *url.URL {
 	return this.iri
 }
 
+// GetTootHashtag returns the value of this property. When IsTootHashtag returns
+// false, GetTootHashtag will return an arbitrary value.
+func (this ActivityStreamsIconPropertyIterator) GetTootHashtag() vocab.TootHashtag {
+	return this.tootHashtagMember
+}
+
 // GetType returns the value in this property as a Type. Returns nil if the value
 // is not an ActivityStreams type, such as an IRI or another value.
 func (this ActivityStreamsIconPropertyIterator) GetType() vocab.Type {
@@ -112,6 +125,9 @@ func (this ActivityStreamsIconPropertyIterator) GetType() vocab.Type {
 	}
 	if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink()
+	}
+	if this.IsTootHashtag() {
+		return this.GetTootHashtag()
 	}
 	if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention()
@@ -124,6 +140,7 @@ func (this ActivityStreamsIconPropertyIterator) GetType() vocab.Type {
 func (this ActivityStreamsIconPropertyIterator) HasAny() bool {
 	return this.IsActivityStreamsImage() ||
 		this.IsActivityStreamsLink() ||
+		this.IsTootHashtag() ||
 		this.IsActivityStreamsMention() ||
 		this.iri != nil
 }
@@ -155,6 +172,13 @@ func (this ActivityStreamsIconPropertyIterator) IsIRI() bool {
 	return this.iri != nil
 }
 
+// IsTootHashtag returns true if this property has a type of "Hashtag". When true,
+// use the GetTootHashtag and SetTootHashtag methods to access and set this
+// property.
+func (this ActivityStreamsIconPropertyIterator) IsTootHashtag() bool {
+	return this.tootHashtagMember != nil
+}
+
 // JSONLDContext returns the JSONLD URIs required in the context string for this
 // property and the specific values that are set. The value in the map is the
 // alias used to import the property's value or values.
@@ -165,6 +189,8 @@ func (this ActivityStreamsIconPropertyIterator) JSONLDContext() map[string]strin
 		child = this.GetActivityStreamsImage().JSONLDContext()
 	} else if this.IsActivityStreamsLink() {
 		child = this.GetActivityStreamsLink().JSONLDContext()
+	} else if this.IsTootHashtag() {
+		child = this.GetTootHashtag().JSONLDContext()
 	} else if this.IsActivityStreamsMention() {
 		child = this.GetActivityStreamsMention().JSONLDContext()
 	}
@@ -189,8 +215,11 @@ func (this ActivityStreamsIconPropertyIterator) KindIndex() int {
 	if this.IsActivityStreamsLink() {
 		return 1
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsTootHashtag() {
 		return 2
+	}
+	if this.IsActivityStreamsMention() {
+		return 3
 	}
 	if this.IsIRI() {
 		return -2
@@ -213,6 +242,8 @@ func (this ActivityStreamsIconPropertyIterator) LessThan(o vocab.ActivityStreams
 		return this.GetActivityStreamsImage().LessThan(o.GetActivityStreamsImage())
 	} else if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink().LessThan(o.GetActivityStreamsLink())
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().LessThan(o.GetTootHashtag())
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().LessThan(o.GetActivityStreamsMention())
 	} else if this.IsIRI() {
@@ -275,6 +306,13 @@ func (this *ActivityStreamsIconPropertyIterator) SetIRI(v *url.URL) {
 	this.iri = v
 }
 
+// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+// afterwards returns true.
+func (this *ActivityStreamsIconPropertyIterator) SetTootHashtag(v vocab.TootHashtag) {
+	this.clear()
+	this.tootHashtagMember = v
+}
+
 // SetType attempts to set the property for the arbitrary type. Returns an error
 // if it is not a valid type to set on this property.
 func (this *ActivityStreamsIconPropertyIterator) SetType(t vocab.Type) error {
@@ -284,6 +322,10 @@ func (this *ActivityStreamsIconPropertyIterator) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsLink); ok {
 		this.SetActivityStreamsLink(v)
+		return nil
+	}
+	if v, ok := t.(vocab.TootHashtag); ok {
+		this.SetTootHashtag(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsMention); ok {
@@ -299,6 +341,7 @@ func (this *ActivityStreamsIconPropertyIterator) SetType(t vocab.Type) error {
 func (this *ActivityStreamsIconPropertyIterator) clear() {
 	this.activitystreamsImageMember = nil
 	this.activitystreamsLinkMember = nil
+	this.tootHashtagMember = nil
 	this.activitystreamsMentionMember = nil
 	this.unknown = nil
 	this.iri = nil
@@ -313,6 +356,8 @@ func (this ActivityStreamsIconPropertyIterator) serialize() (interface{}, error)
 		return this.GetActivityStreamsImage().Serialize()
 	} else if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink().Serialize()
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().Serialize()
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().Serialize()
 	} else if this.IsIRI() {
@@ -416,6 +461,17 @@ func (this *ActivityStreamsIconProperty) AppendIRI(v *url.URL) {
 		iri:    v,
 		myIdx:  this.Len(),
 		parent: this,
+	})
+}
+
+// AppendTootHashtag appends a Hashtag value to the back of a list of the property
+// "icon". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsIconProperty) AppendTootHashtag(v vocab.TootHashtag) {
+	this.properties = append(this.properties, &ActivityStreamsIconPropertyIterator{
+		alias:             this.alias,
+		myIdx:             this.Len(),
+		parent:            this,
+		tootHashtagMember: v,
 	})
 }
 
@@ -532,6 +588,23 @@ func (this *ActivityStreamsIconProperty) InsertIRI(idx int, v *url.URL) {
 	}
 }
 
+// InsertTootHashtag inserts a Hashtag value at the specified index for a property
+// "icon". Existing elements at that index and higher are shifted back once.
+// Invalidates all iterators.
+func (this *ActivityStreamsIconProperty) InsertTootHashtag(idx int, v vocab.TootHashtag) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsIconPropertyIterator{
+		alias:             this.alias,
+		myIdx:             idx,
+		parent:            this,
+		tootHashtagMember: v,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // PrependType prepends an arbitrary type value to the front of a list of the
 // property "icon". Invalidates all iterators. Returns an error if the type is
 // not a valid one to set for this property.
@@ -602,6 +675,10 @@ func (this ActivityStreamsIconProperty) Less(i, j int) bool {
 			rhs := this.properties[j].GetActivityStreamsLink()
 			return lhs.LessThan(rhs)
 		} else if idx1 == 2 {
+			lhs := this.properties[i].GetTootHashtag()
+			rhs := this.properties[j].GetTootHashtag()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 3 {
 			lhs := this.properties[i].GetActivityStreamsMention()
 			rhs := this.properties[j].GetActivityStreamsMention()
 			return lhs.LessThan(rhs)
@@ -693,6 +770,20 @@ func (this *ActivityStreamsIconProperty) PrependIRI(v *url.URL) {
 		iri:    v,
 		myIdx:  0,
 		parent: this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependTootHashtag prepends a Hashtag value to the front of a list of the
+// property "icon". Invalidates all iterators.
+func (this *ActivityStreamsIconProperty) PrependTootHashtag(v vocab.TootHashtag) {
+	this.properties = append([]*ActivityStreamsIconPropertyIterator{{
+		alias:             this.alias,
+		myIdx:             0,
+		parent:            this,
+		tootHashtagMember: v,
 	}}, this.properties...)
 	for i := 1; i < this.Len(); i++ {
 		(this.properties)[i].myIdx = i
@@ -799,6 +890,19 @@ func (this *ActivityStreamsIconProperty) SetIRI(idx int, v *url.URL) {
 		iri:    v,
 		myIdx:  idx,
 		parent: this,
+	}
+}
+
+// SetTootHashtag sets a Hashtag value to be at the specified index for the
+// property "icon". Panics if the index is out of bounds. Invalidates all
+// iterators.
+func (this *ActivityStreamsIconProperty) SetTootHashtag(idx int, v vocab.TootHashtag) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsIconPropertyIterator{
+		alias:             this.alias,
+		myIdx:             idx,
+		parent:            this,
+		tootHashtagMember: v,
 	}
 }
 

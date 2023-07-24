@@ -478,7 +478,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.4.2
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.3.0-gts
+# github.com/superseriousbusiness/activity v1.4.0-gts
 ## explicit; go 1.18
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
@@ -612,31 +612,6 @@ github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_undo
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_update
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_video
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_view
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_assignedto
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_committed
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_committedby
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependants
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependedby
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependencies
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependson
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_description
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_earlyitems
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_filesadded
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_filesmodified
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_filesremoved
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_forks
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_hash
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_isresolved
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_ref
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_team
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_ticketstrackedby
-github.com/superseriousbusiness/activity/streams/impl/forgefed/property_tracksticketsfor
-github.com/superseriousbusiness/activity/streams/impl/forgefed/type_branch
-github.com/superseriousbusiness/activity/streams/impl/forgefed/type_commit
-github.com/superseriousbusiness/activity/streams/impl/forgefed/type_push
-github.com/superseriousbusiness/activity/streams/impl/forgefed/type_repository
-github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticket
-github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticketdependency
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type
 github.com/superseriousbusiness/activity/streams/impl/schema/property_value
@@ -648,6 +623,7 @@ github.com/superseriousbusiness/activity/streams/impl/toot/property_signaturealg
 github.com/superseriousbusiness/activity/streams/impl/toot/property_signaturevalue
 github.com/superseriousbusiness/activity/streams/impl/toot/property_voterscount
 github.com/superseriousbusiness/activity/streams/impl/toot/type_emoji
+github.com/superseriousbusiness/activity/streams/impl/toot/type_hashtag
 github.com/superseriousbusiness/activity/streams/impl/toot/type_identityproof
 github.com/superseriousbusiness/activity/streams/impl/w3idsecurityv1/property_owner
 github.com/superseriousbusiness/activity/streams/impl/w3idsecurityv1/property_publickey

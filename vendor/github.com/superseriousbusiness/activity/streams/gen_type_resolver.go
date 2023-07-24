@@ -46,13 +46,9 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsBlock) error:
 			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedBranch) error:
-			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCollection) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCollectionPage) error:
-			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedCommit) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCreate) error:
 			// Do nothing, this callback has a correct signature.
@@ -73,6 +69,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsFollow) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsGroup) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.TootHashtag) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.TootIdentityProof) error:
 			// Do nothing, this callback has a correct signature.
@@ -122,8 +120,6 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.W3IDSecurityV1PublicKey) error:
 			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedPush) error:
-			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsQuestion) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsRead) error:
@@ -134,17 +130,11 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsRemove) error:
 			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedRepository) error:
-			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsService) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTentativeAccept) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTentativeReject) error:
-			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedTicket) error:
-			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedTicketDependency) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTombstone) error:
 			// Do nothing, this callback has a correct signature.
@@ -254,15 +244,6 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 					return errCannotTypeAssertType
 				}
 			}
-		} else if o.VocabularyURI() == "https://forgefed.peers.community/ns" && o.GetTypeName() == "Branch" {
-			if fn, ok := i.(func(context.Context, vocab.ForgeFedBranch) error); ok {
-				if v, ok := o.(vocab.ForgeFedBranch); ok {
-					return fn(ctx, v)
-				} else {
-					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
-					return errCannotTypeAssertType
-				}
-			}
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Collection" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsCollection) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsCollection); ok {
@@ -275,15 +256,6 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "CollectionPage" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsCollectionPage) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsCollectionPage); ok {
-					return fn(ctx, v)
-				} else {
-					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
-					return errCannotTypeAssertType
-				}
-			}
-		} else if o.VocabularyURI() == "https://forgefed.peers.community/ns" && o.GetTypeName() == "Commit" {
-			if fn, ok := i.(func(context.Context, vocab.ForgeFedCommit) error); ok {
-				if v, ok := o.(vocab.ForgeFedCommit); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -374,6 +346,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Group" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsGroup) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsGroup); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "http://joinmastodon.org/ns" && o.GetTypeName() == "Hashtag" {
+			if fn, ok := i.(func(context.Context, vocab.TootHashtag) error); ok {
+				if v, ok := o.(vocab.TootHashtag); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -596,15 +577,6 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 					return errCannotTypeAssertType
 				}
 			}
-		} else if o.VocabularyURI() == "https://forgefed.peers.community/ns" && o.GetTypeName() == "Push" {
-			if fn, ok := i.(func(context.Context, vocab.ForgeFedPush) error); ok {
-				if v, ok := o.(vocab.ForgeFedPush); ok {
-					return fn(ctx, v)
-				} else {
-					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
-					return errCannotTypeAssertType
-				}
-			}
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Question" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsQuestion) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsQuestion); ok {
@@ -650,15 +622,6 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 					return errCannotTypeAssertType
 				}
 			}
-		} else if o.VocabularyURI() == "https://forgefed.peers.community/ns" && o.GetTypeName() == "Repository" {
-			if fn, ok := i.(func(context.Context, vocab.ForgeFedRepository) error); ok {
-				if v, ok := o.(vocab.ForgeFedRepository); ok {
-					return fn(ctx, v)
-				} else {
-					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
-					return errCannotTypeAssertType
-				}
-			}
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Service" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsService) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsService); ok {
@@ -680,24 +643,6 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "TentativeReject" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsTentativeReject) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsTentativeReject); ok {
-					return fn(ctx, v)
-				} else {
-					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
-					return errCannotTypeAssertType
-				}
-			}
-		} else if o.VocabularyURI() == "https://forgefed.peers.community/ns" && o.GetTypeName() == "Ticket" {
-			if fn, ok := i.(func(context.Context, vocab.ForgeFedTicket) error); ok {
-				if v, ok := o.(vocab.ForgeFedTicket); ok {
-					return fn(ctx, v)
-				} else {
-					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
-					return errCannotTypeAssertType
-				}
-			}
-		} else if o.VocabularyURI() == "https://forgefed.peers.community/ns" && o.GetTypeName() == "TicketDependency" {
-			if fn, ok := i.(func(context.Context, vocab.ForgeFedTicketDependency) error); ok {
-				if v, ok := o.(vocab.ForgeFedTicketDependency); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.

@@ -244,29 +244,6 @@ type ActivityStreamsSubjectProperty interface {
 	// IsActivityStreamsView returns false, GetActivityStreamsView will
 	// return an arbitrary value.
 	GetActivityStreamsView() ActivityStreamsView
-	// GetForgeFedBranch returns the value of this property. When
-	// IsForgeFedBranch returns false, GetForgeFedBranch will return an
-	// arbitrary value.
-	GetForgeFedBranch() ForgeFedBranch
-	// GetForgeFedCommit returns the value of this property. When
-	// IsForgeFedCommit returns false, GetForgeFedCommit will return an
-	// arbitrary value.
-	GetForgeFedCommit() ForgeFedCommit
-	// GetForgeFedPush returns the value of this property. When IsForgeFedPush
-	// returns false, GetForgeFedPush will return an arbitrary value.
-	GetForgeFedPush() ForgeFedPush
-	// GetForgeFedRepository returns the value of this property. When
-	// IsForgeFedRepository returns false, GetForgeFedRepository will
-	// return an arbitrary value.
-	GetForgeFedRepository() ForgeFedRepository
-	// GetForgeFedTicket returns the value of this property. When
-	// IsForgeFedTicket returns false, GetForgeFedTicket will return an
-	// arbitrary value.
-	GetForgeFedTicket() ForgeFedTicket
-	// GetForgeFedTicketDependency returns the value of this property. When
-	// IsForgeFedTicketDependency returns false,
-	// GetForgeFedTicketDependency will return an arbitrary value.
-	GetForgeFedTicketDependency() ForgeFedTicketDependency
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
@@ -277,6 +254,9 @@ type ActivityStreamsSubjectProperty interface {
 	// GetTootEmoji returns the value of this property. When IsTootEmoji
 	// returns false, GetTootEmoji will return an arbitrary value.
 	GetTootEmoji() TootEmoji
+	// GetTootHashtag returns the value of this property. When IsTootHashtag
+	// returns false, GetTootHashtag will return an arbitrary value.
+	GetTootHashtag() TootHashtag
 	// GetTootIdentityProof returns the value of this property. When
 	// IsTootIdentityProof returns false, GetTootIdentityProof will return
 	// an arbitrary value.
@@ -519,31 +499,6 @@ type ActivityStreamsSubjectProperty interface {
 	// "View". When true, use the GetActivityStreamsView and
 	// SetActivityStreamsView methods to access and set this property.
 	IsActivityStreamsView() bool
-	// IsForgeFedBranch returns true if this property has a type of "Branch".
-	// When true, use the GetForgeFedBranch and SetForgeFedBranch methods
-	// to access and set this property.
-	IsForgeFedBranch() bool
-	// IsForgeFedCommit returns true if this property has a type of "Commit".
-	// When true, use the GetForgeFedCommit and SetForgeFedCommit methods
-	// to access and set this property.
-	IsForgeFedCommit() bool
-	// IsForgeFedPush returns true if this property has a type of "Push". When
-	// true, use the GetForgeFedPush and SetForgeFedPush methods to access
-	// and set this property.
-	IsForgeFedPush() bool
-	// IsForgeFedRepository returns true if this property has a type of
-	// "Repository". When true, use the GetForgeFedRepository and
-	// SetForgeFedRepository methods to access and set this property.
-	IsForgeFedRepository() bool
-	// IsForgeFedTicket returns true if this property has a type of "Ticket".
-	// When true, use the GetForgeFedTicket and SetForgeFedTicket methods
-	// to access and set this property.
-	IsForgeFedTicket() bool
-	// IsForgeFedTicketDependency returns true if this property has a type of
-	// "TicketDependency". When true, use the GetForgeFedTicketDependency
-	// and SetForgeFedTicketDependency methods to access and set this
-	// property.
-	IsForgeFedTicketDependency() bool
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
@@ -555,6 +510,10 @@ type ActivityStreamsSubjectProperty interface {
 	// true, use the GetTootEmoji and SetTootEmoji methods to access and
 	// set this property.
 	IsTootEmoji() bool
+	// IsTootHashtag returns true if this property has a type of "Hashtag".
+	// When true, use the GetTootHashtag and SetTootHashtag methods to
+	// access and set this property.
+	IsTootHashtag() bool
 	// IsTootIdentityProof returns true if this property has a type of
 	// "IdentityProof". When true, use the GetTootIdentityProof and
 	// SetTootIdentityProof methods to access and set this property.
@@ -745,24 +704,6 @@ type ActivityStreamsSubjectProperty interface {
 	// SetActivityStreamsView sets the value of this property. Calling
 	// IsActivityStreamsView afterwards returns true.
 	SetActivityStreamsView(v ActivityStreamsView)
-	// SetForgeFedBranch sets the value of this property. Calling
-	// IsForgeFedBranch afterwards returns true.
-	SetForgeFedBranch(v ForgeFedBranch)
-	// SetForgeFedCommit sets the value of this property. Calling
-	// IsForgeFedCommit afterwards returns true.
-	SetForgeFedCommit(v ForgeFedCommit)
-	// SetForgeFedPush sets the value of this property. Calling IsForgeFedPush
-	// afterwards returns true.
-	SetForgeFedPush(v ForgeFedPush)
-	// SetForgeFedRepository sets the value of this property. Calling
-	// IsForgeFedRepository afterwards returns true.
-	SetForgeFedRepository(v ForgeFedRepository)
-	// SetForgeFedTicket sets the value of this property. Calling
-	// IsForgeFedTicket afterwards returns true.
-	SetForgeFedTicket(v ForgeFedTicket)
-	// SetForgeFedTicketDependency sets the value of this property. Calling
-	// IsForgeFedTicketDependency afterwards returns true.
-	SetForgeFedTicketDependency(v ForgeFedTicketDependency)
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
@@ -772,6 +713,9 @@ type ActivityStreamsSubjectProperty interface {
 	// SetTootEmoji sets the value of this property. Calling IsTootEmoji
 	// afterwards returns true.
 	SetTootEmoji(v TootEmoji)
+	// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+	// afterwards returns true.
+	SetTootHashtag(v TootHashtag)
 	// SetTootIdentityProof sets the value of this property. Calling
 	// IsTootIdentityProof afterwards returns true.
 	SetTootIdentityProof(v TootIdentityProof)

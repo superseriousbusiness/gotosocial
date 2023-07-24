@@ -133,31 +133,6 @@ import (
 	typeupdate "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_update"
 	typevideo "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_video"
 	typeview "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_view"
-	propertyassignedto "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_assignedto"
-	propertycommitted "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_committed"
-	propertycommittedby "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_committedby"
-	propertydependants "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependants"
-	propertydependedby "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependedby"
-	propertydependencies "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependencies"
-	propertydependson "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_dependson"
-	propertydescription "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_description"
-	propertyearlyitems "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_earlyitems"
-	propertyfilesadded "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_filesadded"
-	propertyfilesmodified "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_filesmodified"
-	propertyfilesremoved "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_filesremoved"
-	propertyforks "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_forks"
-	propertyhash "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_hash"
-	propertyisresolved "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_isresolved"
-	propertyref "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_ref"
-	propertyteam "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_team"
-	propertyticketstrackedby "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_ticketstrackedby"
-	propertytracksticketsfor "github.com/superseriousbusiness/activity/streams/impl/forgefed/property_tracksticketsfor"
-	typebranch "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_branch"
-	typecommit "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_commit"
-	typepush "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_push"
-	typerepository "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_repository"
-	typeticket "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticket"
-	typeticketdependency "github.com/superseriousbusiness/activity/streams/impl/forgefed/type_ticketdependency"
 	propertyid "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id"
 	propertytype "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type"
 	propertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/property_value"
@@ -169,6 +144,7 @@ import (
 	propertysignaturevalue "github.com/superseriousbusiness/activity/streams/impl/toot/property_signaturevalue"
 	propertyvoterscount "github.com/superseriousbusiness/activity/streams/impl/toot/property_voterscount"
 	typeemoji "github.com/superseriousbusiness/activity/streams/impl/toot/type_emoji"
+	typehashtag "github.com/superseriousbusiness/activity/streams/impl/toot/type_hashtag"
 	typeidentityproof "github.com/superseriousbusiness/activity/streams/impl/toot/type_identityproof"
 	propertyowner "github.com/superseriousbusiness/activity/streams/impl/w3idsecurityv1/property_owner"
 	propertypublickey "github.com/superseriousbusiness/activity/streams/impl/w3idsecurityv1/property_publickey"
@@ -326,19 +302,6 @@ func (this Manager) DeserializeArticleActivityStreams() func(map[string]interfac
 	}
 }
 
-// DeserializeAssignedToPropertyForgeFed returns the deserialization method for
-// the "ForgeFedAssignedToProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeAssignedToPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedAssignedToProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedAssignedToProperty, error) {
-		i, err := propertyassignedto.DeserializeAssignedToProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
 // DeserializeAttachmentPropertyActivityStreams returns the deserialization method
 // for the "ActivityStreamsAttachmentProperty" non-functional property in the
 // vocabulary "ActivityStreams"
@@ -429,18 +392,6 @@ func (this Manager) DeserializeBlurhashPropertyToot() func(map[string]interface{
 	}
 }
 
-// DeserializeBranchForgeFed returns the deserialization method for the
-// "ForgeFedBranch" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeBranchForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedBranch, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedBranch, error) {
-		i, err := typebranch.DeserializeBranch(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
 // DeserializeBtoPropertyActivityStreams returns the deserialization method for
 // the "ActivityStreamsBtoProperty" non-functional property in the vocabulary
 // "ActivityStreams"
@@ -499,44 +450,6 @@ func (this Manager) DeserializeCollectionActivityStreams() func(map[string]inter
 func (this Manager) DeserializeCollectionPageActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsCollectionPage, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsCollectionPage, error) {
 		i, err := typecollectionpage.DeserializeCollectionPage(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeCommitForgeFed returns the deserialization method for the
-// "ForgeFedCommit" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeCommitForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedCommit, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedCommit, error) {
-		i, err := typecommit.DeserializeCommit(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeCommittedByPropertyForgeFed returns the deserialization method for
-// the "ForgeFedCommittedByProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeCommittedByPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedCommittedByProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedCommittedByProperty, error) {
-		i, err := propertycommittedby.DeserializeCommittedByProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeCommittedPropertyForgeFed returns the deserialization method for the
-// "ForgeFedCommittedProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeCommittedPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedCommittedProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedCommittedProperty, error) {
-		i, err := propertycommitted.DeserializeCommittedProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -622,77 +535,12 @@ func (this Manager) DeserializeDeletedPropertyActivityStreams() func(map[string]
 	}
 }
 
-// DeserializeDependantsPropertyForgeFed returns the deserialization method for
-// the "ForgeFedDependantsProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeDependantsPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedDependantsProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedDependantsProperty, error) {
-		i, err := propertydependants.DeserializeDependantsProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeDependedByPropertyForgeFed returns the deserialization method for
-// the "ForgeFedDependedByProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeDependedByPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedDependedByProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedDependedByProperty, error) {
-		i, err := propertydependedby.DeserializeDependedByProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeDependenciesPropertyForgeFed returns the deserialization method for
-// the "ForgeFedDependenciesProperty" non-functional property in the
-// vocabulary "ForgeFed"
-func (this Manager) DeserializeDependenciesPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedDependenciesProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedDependenciesProperty, error) {
-		i, err := propertydependencies.DeserializeDependenciesProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeDependsOnPropertyForgeFed returns the deserialization method for the
-// "ForgeFedDependsOnProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeDependsOnPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedDependsOnProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedDependsOnProperty, error) {
-		i, err := propertydependson.DeserializeDependsOnProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
 // DeserializeDescribesPropertyActivityStreams returns the deserialization method
 // for the "ActivityStreamsDescribesProperty" non-functional property in the
 // vocabulary "ActivityStreams"
 func (this Manager) DeserializeDescribesPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsDescribesProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsDescribesProperty, error) {
 		i, err := propertydescribes.DeserializeDescribesProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeDescriptionPropertyForgeFed returns the deserialization method for
-// the "ForgeFedDescriptionProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeDescriptionPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedDescriptionProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedDescriptionProperty, error) {
-		i, err := propertydescription.DeserializeDescriptionProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -744,19 +592,6 @@ func (this Manager) DeserializeDocumentActivityStreams() func(map[string]interfa
 func (this Manager) DeserializeDurationPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsDurationProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsDurationProperty, error) {
 		i, err := propertyduration.DeserializeDurationProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeEarlyItemsPropertyForgeFed returns the deserialization method for
-// the "ForgeFedEarlyItemsProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeEarlyItemsPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedEarlyItemsProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedEarlyItemsProperty, error) {
-		i, err := propertyearlyitems.DeserializeEarlyItemsProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -840,45 +675,6 @@ func (this Manager) DeserializeFeaturedPropertyToot() func(map[string]interface{
 	}
 }
 
-// DeserializeFilesAddedPropertyForgeFed returns the deserialization method for
-// the "ForgeFedFilesAddedProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeFilesAddedPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedFilesAddedProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedFilesAddedProperty, error) {
-		i, err := propertyfilesadded.DeserializeFilesAddedProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeFilesModifiedPropertyForgeFed returns the deserialization method for
-// the "ForgeFedFilesModifiedProperty" non-functional property in the
-// vocabulary "ForgeFed"
-func (this Manager) DeserializeFilesModifiedPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedFilesModifiedProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedFilesModifiedProperty, error) {
-		i, err := propertyfilesmodified.DeserializeFilesModifiedProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeFilesRemovedPropertyForgeFed returns the deserialization method for
-// the "ForgeFedFilesRemovedProperty" non-functional property in the
-// vocabulary "ForgeFed"
-func (this Manager) DeserializeFilesRemovedPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedFilesRemovedProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedFilesRemovedProperty, error) {
-		i, err := propertyfilesremoved.DeserializeFilesRemovedProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
 // DeserializeFirstPropertyActivityStreams returns the deserialization method for
 // the "ActivityStreamsFirstProperty" non-functional property in the
 // vocabulary "ActivityStreams"
@@ -944,18 +740,6 @@ func (this Manager) DeserializeFollowingPropertyActivityStreams() func(map[strin
 	}
 }
 
-// DeserializeForksPropertyForgeFed returns the deserialization method for the
-// "ForgeFedForksProperty" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeForksPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedForksProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedForksProperty, error) {
-		i, err := propertyforks.DeserializeForksProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
 // DeserializeFormerTypePropertyActivityStreams returns the deserialization method
 // for the "ActivityStreamsFormerTypeProperty" non-functional property in the
 // vocabulary "ActivityStreams"
@@ -995,11 +779,11 @@ func (this Manager) DeserializeGroupActivityStreams() func(map[string]interface{
 	}
 }
 
-// DeserializeHashPropertyForgeFed returns the deserialization method for the
-// "ForgeFedHashProperty" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeHashPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedHashProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedHashProperty, error) {
-		i, err := propertyhash.DeserializeHashProperty(m, aliasMap)
+// DeserializeHashtagToot returns the deserialization method for the "TootHashtag"
+// non-functional property in the vocabulary "Toot"
+func (this Manager) DeserializeHashtagToot() func(map[string]interface{}, map[string]string) (vocab.TootHashtag, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.TootHashtag, error) {
+		i, err := typehashtag.DeserializeHashtag(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1180,19 +964,6 @@ func (this Manager) DeserializeIntransitiveActivityActivityStreams() func(map[st
 func (this Manager) DeserializeInviteActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsInvite, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsInvite, error) {
 		i, err := typeinvite.DeserializeInvite(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeIsResolvedPropertyForgeFed returns the deserialization method for
-// the "ForgeFedIsResolvedProperty" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeIsResolvedPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedIsResolvedProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedIsResolvedProperty, error) {
-		i, err := propertyisresolved.DeserializeIsResolvedProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1759,18 +1530,6 @@ func (this Manager) DeserializePublishedPropertyActivityStreams() func(map[strin
 	}
 }
 
-// DeserializePushForgeFed returns the deserialization method for the
-// "ForgeFedPush" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializePushForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedPush, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedPush, error) {
-		i, err := typepush.DeserializePush(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
 // DeserializeQuestionActivityStreams returns the deserialization method for the
 // "ActivityStreamsQuestion" non-functional property in the vocabulary
 // "ActivityStreams"
@@ -1803,18 +1562,6 @@ func (this Manager) DeserializeRadiusPropertyActivityStreams() func(map[string]i
 func (this Manager) DeserializeReadActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsRead, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsRead, error) {
 		i, err := typeread.DeserializeRead(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeRefPropertyForgeFed returns the deserialization method for the
-// "ForgeFedRefProperty" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeRefPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedRefProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedRefProperty, error) {
-		i, err := propertyref.DeserializeRefProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1893,18 +1640,6 @@ func (this Manager) DeserializeRemoveActivityStreams() func(map[string]interface
 func (this Manager) DeserializeRepliesPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsRepliesProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsRepliesProperty, error) {
 		i, err := propertyreplies.DeserializeRepliesProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeRepositoryForgeFed returns the deserialization method for the
-// "ForgeFedRepository" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeRepositoryForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedRepository, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedRepository, error) {
-		i, err := typerepository.DeserializeRepository(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -2107,18 +1842,6 @@ func (this Manager) DeserializeTargetPropertyActivityStreams() func(map[string]i
 	}
 }
 
-// DeserializeTeamPropertyForgeFed returns the deserialization method for the
-// "ForgeFedTeamProperty" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeTeamPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTeamProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedTeamProperty, error) {
-		i, err := propertyteam.DeserializeTeamProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
 // DeserializeTentativeAcceptActivityStreams returns the deserialization method
 // for the "ActivityStreamsTentativeAccept" non-functional property in the
 // vocabulary "ActivityStreams"
@@ -2138,44 +1861,6 @@ func (this Manager) DeserializeTentativeAcceptActivityStreams() func(map[string]
 func (this Manager) DeserializeTentativeRejectActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsTentativeReject, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsTentativeReject, error) {
 		i, err := typetentativereject.DeserializeTentativeReject(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeTicketDependencyForgeFed returns the deserialization method for the
-// "ForgeFedTicketDependency" non-functional property in the vocabulary
-// "ForgeFed"
-func (this Manager) DeserializeTicketDependencyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTicketDependency, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedTicketDependency, error) {
-		i, err := typeticketdependency.DeserializeTicketDependency(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeTicketForgeFed returns the deserialization method for the
-// "ForgeFedTicket" non-functional property in the vocabulary "ForgeFed"
-func (this Manager) DeserializeTicketForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTicket, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedTicket, error) {
-		i, err := typeticket.DeserializeTicket(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeTicketsTrackedByPropertyForgeFed returns the deserialization method
-// for the "ForgeFedTicketsTrackedByProperty" non-functional property in the
-// vocabulary "ForgeFed"
-func (this Manager) DeserializeTicketsTrackedByPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTicketsTrackedByProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedTicketsTrackedByProperty, error) {
-		i, err := propertyticketstrackedby.DeserializeTicketsTrackedByProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -2215,19 +1900,6 @@ func (this Manager) DeserializeTombstoneActivityStreams() func(map[string]interf
 func (this Manager) DeserializeTotalItemsPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsTotalItemsProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsTotalItemsProperty, error) {
 		i, err := propertytotalitems.DeserializeTotalItemsProperty(m, aliasMap)
-		if i == nil {
-			return nil, err
-		}
-		return i, err
-	}
-}
-
-// DeserializeTracksTicketsForPropertyForgeFed returns the deserialization method
-// for the "ForgeFedTracksTicketsForProperty" non-functional property in the
-// vocabulary "ForgeFed"
-func (this Manager) DeserializeTracksTicketsForPropertyForgeFed() func(map[string]interface{}, map[string]string) (vocab.ForgeFedTracksTicketsForProperty, error) {
-	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ForgeFedTracksTicketsForProperty, error) {
-		i, err := propertytracksticketsfor.DeserializeTracksTicketsForProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

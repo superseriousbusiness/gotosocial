@@ -4,6 +4,7 @@ package streams
 
 import (
 	typeemoji "github.com/superseriousbusiness/activity/streams/impl/toot/type_emoji"
+	typehashtag "github.com/superseriousbusiness/activity/streams/impl/toot/type_hashtag"
 	typeidentityproof "github.com/superseriousbusiness/activity/streams/impl/toot/type_identityproof"
 	vocab "github.com/superseriousbusiness/activity/streams/vocab"
 )
@@ -13,6 +14,13 @@ import (
 // variant instead.
 func TootEmojiIsExtendedBy(other vocab.Type) bool {
 	return typeemoji.EmojiIsExtendedBy(other)
+}
+
+// TootHashtagIsExtendedBy returns true if the other's type extends from Hashtag.
+// Note that it returns false if the types are the same; see the "IsOrExtends"
+// variant instead.
+func TootHashtagIsExtendedBy(other vocab.Type) bool {
+	return typehashtag.HashtagIsExtendedBy(other)
 }
 
 // TootIdentityProofIsExtendedBy returns true if the other's type extends from
