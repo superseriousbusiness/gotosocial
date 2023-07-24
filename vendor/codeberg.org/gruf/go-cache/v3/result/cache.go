@@ -228,11 +228,15 @@ func (c *Cache[Value]) Load(lookup string, load func() (Value, error), keyParts 
 
 		var evict func()
 
-		// Acquire cache lock.
+		// Lock cache.
 		c.cache.Lock()
+
 		defer func() {
+			// Unlock cache.
 			c.cache.Unlock()
+
 			if evict != nil {
+				// Call evict.
 				evict()
 			}
 		}()
@@ -266,20 +270,24 @@ func (c *Cache[Value]) Store(value Value, store func() error) error {
 
 	var evict func()
 
-	// Acquire cache lock.
+	// Lock cache.
 	c.cache.Lock()
+
 	defer func() {
+		// Unlock cache.
 		c.cache.Unlock()
+
 		if evict != nil {
+			// Call evict.
 			evict()
 		}
+
+		// Call invalidate.
+		c.invalid(value)
 	}()
 
 	// Store result in cache.
 	evict = c.store(result)
-
-	// Call invalidate.
-	c.invalid(value)
 
 	return nil
 }
