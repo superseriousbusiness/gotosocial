@@ -5,7 +5,7 @@ go 1.20
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
 	codeberg.org/gruf/go-byteutil v1.1.2
-	codeberg.org/gruf/go-cache/v3 v3.4.1
+	codeberg.org/gruf/go-cache/v3 v3.4.3
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.2.0
 	codeberg.org/gruf/go-fastcopy v1.1.2
