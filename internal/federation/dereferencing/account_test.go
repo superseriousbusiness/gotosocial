@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -175,7 +176,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 		config.GetHost(),
 	)
 	suite.True(gtserror.Unretrievable(err))
-	suite.EqualError(err, "no entries")
+	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(fetchedAccount)
 }
 
@@ -189,7 +190,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 		"localhost:8080",
 	)
 	suite.True(gtserror.Unretrievable(err))
-	suite.EqualError(err, "no entries")
+	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(fetchedAccount)
 }
 
@@ -202,7 +203,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
 	)
 	suite.True(gtserror.Unretrievable(err))
-	suite.EqualError(err, "no entries")
+	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(fetchedAccount)
 }
 
