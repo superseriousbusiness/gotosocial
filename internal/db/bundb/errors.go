@@ -40,7 +40,7 @@ func processPostgresError(err error) error {
 
 	// Handle supplied error code:
 	// (https://www.postgresql.org/docs/10/errcodes-appendix.html)
-	switch pgErr.Code {
+	switch pgErr.Code { //nolint
 	case "23505" /* unique_violation */ :
 		return db.ErrAlreadyExists
 	}
