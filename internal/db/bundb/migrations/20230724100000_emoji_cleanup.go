@@ -26,23 +26,21 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			_, err := tx.ExecContext(ctx, "ALTER TABLE emojis ADD COLUMN cached BOOLEAN DEFAULT false")
+		_, err := db.ExecContext(ctx, "ALTER TABLE emojis ADD COLUMN cached BOOLEAN DEFAULT false")
 
-			if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
-				return err
-			}
+		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+			return err
+		}
 
-			if _, err := tx.NewUpdate().
-				Table("emojis").
-				Where("disabled = false").
-				Set("cached = true").
-				Exec(ctx); err != nil {
-				return err
-			}
+		if _, err := db.NewUpdate().
+			Table("emojis").
+			Where("disabled = false").
+			Set("cached = true").
+			Exec(ctx); err != nil {
+			return err
+		}
 
-			return nil
-		})
+		return nil
 	}
 
 	down := func(ctx context.Context, db *bun.DB) error {
