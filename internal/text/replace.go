@@ -18,23 +18,12 @@
 package text
 
 import (
-	"errors"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"golang.org/x/text/unicode/norm"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
-
-const (
-	maximumHashtagLength = 30
-)
-
-// given a mention or a hashtag string, the methods in this file will attempt to parse it,
-// add it to the database, and render it as HTML. If any of these steps fails, the method
-// will just return the original string and log an error.
 
 // replaceMention takes a string in the form @username@domain.com or @localusername
 func (r *customRenderer) replaceMention(text string) string {
@@ -90,52 +79,44 @@ func (r *customRenderer) replaceMention(text string) string {
 	return b.String()
 }
 
-// replaceMention takes a string in the form #HashedTag, and will normalize it before
-// adding it to the db and turning it into HTML.
+// replaceHashtag takes a string in the form #SomeHashtag, and will normalize
+// it before adding it to the db (or just getting it from the db if it already
+// exists) and turning it into HTML.
 func (r *customRenderer) replaceHashtag(text string) string {
-	// this normalization is specifically to avoid cases where visually-identical
-	// hashtags are stored with different unicode representations (e.g. with combining
-	// diacritics). It allows a tasteful number of combining diacritics to be used,
-	// as long as they can be combined with parent characters to form regular letter
-	// symbols.
-	normalized := norm.NFC.String(text[1:])
-
-	for i, r := range normalized {
-		if i >= maximumHashtagLength || !util.IsPermittedInHashtag(r) {
-			return text
-		}
+	normalized, ok := NormalizeHashtag(text)
+	if !ok {
+		// Not a valid hashtag.
+		return text
 	}
 
-	tag, err := r.f.db.TagStringToTag(r.ctx, normalized, r.accountID)
+	tag, err := r.f.db.GetOrCreateTag(r.ctx, normalized)
 	if err != nil {
 		log.Errorf(r.ctx, "error generating hashtags from status: %s", err)
 		return text
 	}
 
-	// only append if it's not been listed yet
-	listed := false
-	for _, t := range r.result.Tags {
-		if tag.ID == t.ID {
-			listed = true
-			break
-		}
-	}
-	if !listed {
-		err = r.f.db.Put(r.ctx, tag)
-		if err != nil {
-			if !errors.Is(err, db.ErrAlreadyExists) {
-				log.Errorf(r.ctx, "error putting tags in db: %s", err)
-				return text
+	// Append tag to result if not done already.
+	//
+	// This prevents multiple uses of a tag in
+	// the same status generating multiple
+	// entries for the same tag in result.
+	func() {
+		for _, t := range r.result.Tags {
+			if tag.ID == t.ID {
+				// Already appended.
+				return
 			}
 		}
-		r.result.Tags = append(r.result.Tags, tag)
-	}
 
+		// Not appended yet.
+		r.result.Tags = append(r.result.Tags, tag)
+	}()
+
+	// Replace tag with the formatted tag content, eg. `#SomeHashtag` becomes:
+	// `<a href="https://example.org/tags/somehashtag" class="mention hashtag" rel="tag">#<span>SomeHashtag</span></a>`
 	var b strings.Builder
-	// replace the #tag with the formatted tag content
-	// `<a href="tag.URL" class="mention hashtag" rel="tag">#<span>tagAsEntered</span></a>
 	b.WriteString(`<a href="`)
-	b.WriteString(tag.URL)
+	b.WriteString(uris.GenerateURIForTag(normalized))
 	b.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
 	b.WriteString(normalized)
 	b.WriteString(`</span></a>`)

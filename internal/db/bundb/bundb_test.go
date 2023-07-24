@@ -80,5 +80,7 @@ func (suite *BunDBStandardTestSuite) SetupTest() {
 }
 
 func (suite *BunDBStandardTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
+	if suite.db != nil {
+		testrig.StandardDBTeardown(suite.db)
+	}
 }

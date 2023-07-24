@@ -325,6 +325,10 @@ cache:
     status-fave-ttl: "30m"
     status-fave-sweep-freq: "1m"
 
+    tag-max-size: 2000
+    tag-ttl: "30m"
+    tag-sweep-freq: "1m"
+
     tombstone-max-size: 500
     tombstone-ttl: "30m"
     tombstone-sweep-freq: "1m"

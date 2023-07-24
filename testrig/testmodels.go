@@ -1760,26 +1760,20 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 func NewTestTags() map[string]*gtsmodel.Tag {
 	return map[string]*gtsmodel.Tag{
 		"welcome": {
-			ID:                     "01F8MHA1A2NF9MJ3WCCQ3K8BSZ",
-			URL:                    "http://localhost:8080/tags/welcome",
-			Name:                   "welcome",
-			FirstSeenFromAccountID: "",
-			CreatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
-			UpdatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
-			Useable:                TrueBool(),
-			Listable:               TrueBool(),
-			LastStatusAt:           TimeMustParse("2022-05-14T13:21:09+02:00"),
+			ID:        "01F8MHA1A2NF9MJ3WCCQ3K8BSZ",
+			Name:      "welcome",
+			CreatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			Useable:   TrueBool(),
+			Listable:  TrueBool(),
 		},
 		"Hashtag": {
-			ID:                     "01FCT9SGYA71487N8D0S1M638G",
-			URL:                    "http://localhost:8080/tags/Hashtag",
-			Name:                   "Hashtag",
-			FirstSeenFromAccountID: "",
-			CreatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
-			UpdatedAt:              TimeMustParse("2022-05-14T13:21:09+02:00"),
-			Useable:                TrueBool(),
-			Listable:               TrueBool(),
-			LastStatusAt:           TimeMustParse("2022-05-14T13:21:09+02:00"),
+			ID:        "01FCT9SGYA71487N8D0S1M638G",
+			Name:      "hashtag",
+			CreatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-14T13:21:09+02:00"),
+			Useable:   TrueBool(),
+			Listable:  TrueBool(),
 		},
 	}
 }
@@ -2061,6 +2055,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		nil,
 		true,
 		[]vocab.ActivityStreamsMention{},
+		[]vocab.TootHashtag{},
 		nil,
 	)
 	createDmForZork := WrapAPNoteInCreate(
@@ -2084,6 +2079,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 			URLMustParse("http://localhost:8080/users/1happyturtle"),
 			"@1happyturtle@localhost:8080",
 		)},
+		[]vocab.TootHashtag{},
 		nil,
 	)
 	createReplyToTurtle := WrapAPNoteInCreate(
@@ -2105,6 +2101,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		nil,
 		false,
 		[]vocab.ActivityStreamsMention{},
+		[]vocab.TootHashtag{},
 		[]vocab.ActivityStreamsImage{
 			newAPImage(
 				URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpg"),
@@ -2452,6 +2449,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			nil,
 			false,
 			[]vocab.ActivityStreamsMention{},
+			[]vocab.TootHashtag{},
 			[]vocab.ActivityStreamsImage{
 				newAPImage(
 					URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1/attachment1.jpg"),
@@ -2473,6 +2471,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			[]*url.URL{},
 			false,
 			nil,
+			[]vocab.TootHashtag{},
 			nil,
 		),
 		"https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV": NewAPNote(
@@ -2493,6 +2492,28 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 					"@the_mighty_zork@localhost:8080",
 				),
 			},
+			[]vocab.TootHashtag{},
+			nil,
+		),
+		"https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7": NewAPNote(
+			URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7"),
+			URLMustParse("https://unknown-instance.com/users/@brand_new_person/01H641QSRS3TCXSVC10X4GPKW7"),
+			TimeMustParse("2023-04-12T12:13:12+02:00"),
+			"<p>Babe are you okay, you've hardly touched your <a href=\"https://unknown-instance.com/tags/piss\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>piss</span></a></p>",
+			"",
+			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
+			[]*url.URL{
+				URLMustParse(pub.PublicActivityPubIRI),
+			},
+			[]*url.URL{},
+			false,
+			[]vocab.ActivityStreamsMention{},
+			[]vocab.TootHashtag{
+				newAPHashtag(
+					URLMustParse("https://unknown-instance.com/tags/piss"),
+					"#piss",
+				),
+			},
 			nil,
 		),
 		"https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042": NewAPNote(
@@ -2508,6 +2529,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			[]*url.URL{},
 			false,
 			nil,
+			[]vocab.TootHashtag{},
 			[]vocab.ActivityStreamsImage{
 				newAPImage(
 					URLMustParse("https://turnip.farm/attachments/f17843c7-015e-4251-9b5a-91389c49ee57.jpg"),
@@ -2535,6 +2557,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 					"@the_mighty_zork@localhost:8080",
 				),
 			},
+			[]vocab.TootHashtag{},
 			nil,
 		),
 	}
@@ -3318,6 +3341,20 @@ func newAPMention(uri *url.URL, namestring string) vocab.ActivityStreamsMention 
 	return mention
 }
 
+func newAPHashtag(href *url.URL, name string) vocab.TootHashtag {
+	hashtag := streams.NewTootHashtag()
+
+	hrefProp := streams.NewActivityStreamsHrefProperty()
+	hrefProp.SetIRI(href)
+	hashtag.SetActivityStreamsHref(hrefProp)
+
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(name)
+	hashtag.SetActivityStreamsName(nameProp)
+
+	return hashtag
+}
+
 func newAPImage(url *url.URL, mediaType string, imageDescription string, blurhash string) vocab.ActivityStreamsImage {
 	image := streams.NewActivityStreamsImage()
 
@@ -3382,6 +3419,7 @@ func NewAPNote(
 	noteCC []*url.URL,
 	noteSensitive bool,
 	noteMentions []vocab.ActivityStreamsMention,
+	noteTags []vocab.TootHashtag,
 	noteAttachments []vocab.ActivityStreamsImage,
 ) vocab.ActivityStreamsNote {
 	// create the note itself
@@ -3444,12 +3482,19 @@ func NewAPNote(
 		note.SetActivityStreamsCc(cc)
 	}
 
-	// mentions
+	// Tag entries
 	tag := streams.NewActivityStreamsTagProperty()
+
+	// mentions
 	for _, m := range noteMentions {
 		tag.AppendActivityStreamsMention(m)
 	}
 	note.SetActivityStreamsTag(tag)
+
+	// hashtags
+	for _, t := range noteTags {
+		tag.AppendTootHashtag(t)
+	}
 
 	// append any attachments as ActivityStreamsImage
 	if noteAttachments != nil {

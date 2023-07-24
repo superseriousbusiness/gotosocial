@@ -21,13 +21,20 @@ import "time"
 
 // Tag represents a hashtag for gathering public statuses together.
 type Tag struct {
-	ID                     string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt              time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt              time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	URL                    string    `validate:"required,url" bun:",nullzero,notnull"`                                // Href/web address of this tag, eg https://example.org/tags/somehashtag
-	Name                   string    `validate:"required" bun:",unique,nullzero,notnull"`                             // name of this tag -- the tag without the hash part
-	FirstSeenFromAccountID string    `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                         // Which account ID is the first one we saw using this tag?
-	Useable                *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // can our instance users use this tag?
-	Listable               *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // can our instance users look up this tag?
-	LastStatusAt           time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was this tag last used?
+	ID        string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
+	CreatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	Name      string    `validate:"required" bun:",unique,nullzero,notnull"`                             // (lowercase) name of the tag without the hash prefix
+	Useable   *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // Tag is useable on this instance.
+	Listable  *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // Tagged statuses can be listed on this instance.
+
+	// Original URL of a partially-filled-out tag.
+	// This SHOULD NOT be inserted in the database,
+	// cached, or serialized towards a user.
+	//
+	// It is only to be used when parsing a hashtag
+	// from a remote instance, since it may be useful
+	// to dereference latest notes from the given
+	// remote instance every now and then.
+	URL string `validate:"-" bun:"-"`
 }

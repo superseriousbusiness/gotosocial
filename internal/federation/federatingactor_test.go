@@ -50,6 +50,7 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 		false,
 		nil,
 		nil,
+		nil,
 	)
 	testActivity := testrig.WrapAPNoteInCreate(testrig.URLMustParse("http://localhost:8080/whatever_some_create"), testrig.URLMustParse(testAccount.URI), time.Now(), testNote)
 
@@ -95,6 +96,7 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 		[]*url.URL{testrig.URLMustParse(testAccount.FollowersURI)},
 		nil,
 		false,
+		nil,
 		nil,
 		nil,
 	)

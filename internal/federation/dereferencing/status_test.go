@@ -123,6 +123,59 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.False(*m.Silent)
 }
 
+func (suite *StatusTestSuite) TestDereferenceStatusWithTag() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7")
+	status, _, err := suite.dereferencer.GetStatusByURI(context.Background(), fetchingAccount.Username, statusURL)
+	suite.NoError(err)
+	suite.NotNil(status)
+
+	// status values should be set
+	suite.Equal("https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7", status.URI)
+	suite.Equal("https://unknown-instance.com/users/@brand_new_person/01H641QSRS3TCXSVC10X4GPKW7", status.URL)
+	suite.Equal("<p>Babe are you okay, you've hardly touched your <a href=\"https://unknown-instance.com/tags/piss\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>piss</span></a></p>", status.Content)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person", status.AccountURI)
+	suite.False(*status.Local)
+	suite.Empty(status.ContentWarning)
+	suite.Equal(gtsmodel.VisibilityPublic, status.Visibility)
+	suite.Equal(ap.ObjectNote, status.ActivityStreamsType)
+
+	// Ensure tags set + ID'd.
+	suite.Len(status.Tags, 1)
+	suite.Len(status.TagIDs, 1)
+
+	// status should be in the database
+	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)
+	suite.NoError(err)
+	suite.Equal(status.ID, dbStatus.ID)
+	suite.True(*dbStatus.Federated)
+	suite.True(*dbStatus.Boostable)
+	suite.True(*dbStatus.Replyable)
+	suite.True(*dbStatus.Likeable)
+
+	// account should be in the database now too
+	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
+	suite.NoError(err)
+	suite.NotNil(account)
+	suite.True(*account.Discoverable)
+	suite.Equal("https://unknown-instance.com/users/brand_new_person", account.URI)
+	suite.Equal("hey I'm a new person, your instance hasn't seen me yet uwu", account.Note)
+	suite.Equal("Geoff Brando New Personson", account.DisplayName)
+	suite.Equal("brand_new_person", account.Username)
+	suite.NotNil(account.PublicKey)
+	suite.Nil(account.PrivateKey)
+
+	// we should have a tag in the database
+	t := &gtsmodel.Tag{}
+	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "piss"}}, t)
+	suite.NoError(err)
+	suite.NotNil(t)
+
+	// URL should not be populated.
+	suite.Empty("", t.URL)
+}
+
 func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 

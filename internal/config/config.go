@@ -246,6 +246,10 @@ type GTSCacheConfiguration struct {
 	StatusFaveTTL       time.Duration `name:"status-fave-ttl"`
 	StatusFaveSweepFreq time.Duration `name:"status-fave-sweep-freq"`
 
+	TagMaxSize   int           `name:"tag-max-size"`
+	TagTTL       time.Duration `name:"tag-ttl"`
+	TagSweepFreq time.Duration `name:"tag-sweep-freq"`
+
 	TombstoneMaxSize   int           `name:"tombstone-max-size"`
 	TombstoneTTL       time.Duration `name:"tombstone-ttl"`
 	TombstoneSweepFreq time.Duration `name:"tombstone-sweep-freq"`

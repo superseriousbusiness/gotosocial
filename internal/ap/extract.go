@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -529,7 +530,7 @@ func ExtractBlurhash(i WithBlurhash) string {
 
 // ExtractHashtags extracts a slice of minimal gtsmodel.Tags
 // from a WithTag. If an entry in the WithTag is not a hashtag,
-// it will be quietly ignored.
+// or has a name that cannot be normalized, it will be ignored.
 //
 // TODO: find a better heuristic for determining if something
 // is a hashtag or not, since looking for type name "Hashtag"
@@ -562,10 +563,23 @@ func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 			continue
 		}
 
-		tag, err := ExtractHashtag(hashtaggable)
+		tag, err := extractHashtag(hashtaggable)
 		if err != nil {
 			continue
 		}
+
+		// "Normalize" this tag by combining diacritics +
+		// unicode chars. If this returns false, it means
+		// we couldn't normalize it well enough to make it
+		// valid on our instance, so just ignore it.
+		normalized, ok := text.NormalizeHashtag(tag.Name)
+		if !ok {
+			continue
+		}
+
+		// We store tag names lowercased, might
+		// as well change case here already.
+		tag.Name = strings.ToLower(normalized)
 
 		// Only append this tag if we haven't
 		// seen it already, to avoid duplicates
@@ -573,17 +587,15 @@ func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 		if _, set := keys[tag.URL]; !set {
 			keys[tag.URL] = nil // Value doesn't matter.
 			tags = append(tags, tag)
-			tags = append(tags, tag)
-			tags = append(tags, tag)
 		}
 	}
 
 	return tags, nil
 }
 
-// ExtractEmoji extracts a minimal gtsmodel.Tag
-// from the given Hashtaggable.
-func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
+// extractHashtag extracts a minimal gtsmodel.Tag from the given
+// Hashtaggable, without yet doing any normalization on it.
+func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	// Extract href/link for this tag.
 	hrefProp := i.GetActivityStreamsHref()
 	if hrefProp == nil || !hrefProp.IsIRI() {
@@ -599,9 +611,12 @@ func ExtractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	}
 	tagName := strings.TrimPrefix(name, "#")
 
+	yeah := func() *bool { t := true; return &t }
 	return &gtsmodel.Tag{
-		URL:  tagURL,
-		Name: tagName,
+		URL:      tagURL,
+		Name:     tagName,
+		Useable:  yeah(), // Assume true by default.
+		Listable: yeah(), // Assume true by default.
 	}, nil
 }
 

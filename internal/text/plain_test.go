@@ -34,7 +34,7 @@ const (
 	withHTML                   = "<div>blah this should just be html escaped blah</div>"
 	withHTMLExpected           = "<p>&lt;div>blah this should just be html escaped blah&lt;/div></p>"
 	moreComplex                = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText\n\n:rainbow:"
-	moreComplexExpected        = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/Hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text<br><br>:rainbow:</p>"
+	moreComplexExpected        = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text<br><br>:rainbow:</p>"
 )
 
 type PlainTestSuite struct {
@@ -141,7 +141,7 @@ func (suite *PlainTestSuite) TestDeriveMultiple() {
 	assert.Equal(suite.T(), "@foss_satan@fossbros-anonymous.io", f.Mentions[0].NameString)
 
 	assert.Len(suite.T(), f.Tags, 1)
-	assert.Equal(suite.T(), "Hashtag", f.Tags[0].Name)
+	assert.Equal(suite.T(), "hashtag", f.Tags[0].Name)
 
 	assert.Len(suite.T(), f.Emojis, 0)
 }

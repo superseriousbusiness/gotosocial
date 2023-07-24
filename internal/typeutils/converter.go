@@ -158,6 +158,8 @@ type TypeConverter interface {
 	MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error)
 	// EmojiToAS converts a gts emoji into a mastodon ns Emoji, suitable for federation
 	EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.TootEmoji, error)
+	// TagToAS converts a gts model tag into a toot Hashtag, suitable for federation.
+	TagToAS(ctx context.Context, t *gtsmodel.Tag) (vocab.TootHashtag, error)
 	// AttachmentToAS converts a gts model media attachment into an activity streams Attachment, suitable for federation
 	AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error)
 	// FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.

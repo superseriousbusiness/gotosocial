@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -570,8 +571,8 @@ func (c *converter) EmojiCategoryToAPIEmojiCategory(ctx context.Context, categor
 
 func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (apimodel.Tag, error) {
 	return apimodel.Tag{
-		Name: t.Name,
-		URL:  t.URL,
+		Name: strings.ToLower(t.Name),
+		URL:  uris.GenerateURIForTag(t.Name),
 	}, nil
 }
 
@@ -1277,19 +1278,11 @@ func (c *converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 	var errs gtserror.MultiError
 
 	if len(tags) == 0 {
-		// GTS model tags were not populated
+		var err error
 
-		// Preallocate expected GTS slice
-		tags = make([]*gtsmodel.Tag, 0, len(tagIDs))
-
-		// Fetch GTS models for tag IDs
-		for _, id := range tagIDs {
-			tag := new(gtsmodel.Tag)
-			if err := c.db.GetByID(ctx, id, tag); err != nil {
-				errs.Appendf("error fetching tag %s from database: %v", id, err)
-				continue
-			}
-			tags = append(tags, tag)
+		tags, err = c.db.GetTags(ctx, tagIDs)
+		if err != nil {
+			errs.Appendf("error fetching tags from database: %v", err)
 		}
 	}
 

@@ -17,32 +17,24 @@
 
 package db
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Media
-	Mention
-	Notification
-	Relationship
-	Report
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Timeline
-	User
-	Tombstone
+// Tag contains functions for getting/creating tags in the database.
+type Tag interface {
+	// GetTag gets a single tag by ID
+	GetTag(ctx context.Context, id string) (*gtsmodel.Tag, Error)
+
+	// GetTagByName gets a single tag using the given name.
+	GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, Error)
+
+	// GetOrCreateTag returns a tag with the given name,
+	// creating it in the database if it does not yet exist.
+	GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag, Error)
+
+	// GetTags gets multiple tags.
+	GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, Error)
 }
