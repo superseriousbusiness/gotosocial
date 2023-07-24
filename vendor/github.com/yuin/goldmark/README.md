@@ -440,6 +440,9 @@ Extensions
 - [goldmark-pdf](https://github.com/stephenafamo/goldmark-pdf): A PDF renderer that can be passed to `goldmark.WithRenderer()`.
 - [goldmark-hashtag](https://github.com/abhinav/goldmark-hashtag): Adds support for `#hashtag`-based tagging to goldmark.
 - [goldmark-wikilink](https://github.com/abhinav/goldmark-wikilink): Adds support for `[[wiki]]`-style links to goldmark.
+- [goldmark-anchor](https://github.com/abhinav/goldmark-anchor): Adds anchors (permalinks) next to all headers in a document.
+- [goldmark-figure](https://github.com/mangoumbrella/goldmark-figure): Adds support for rendering paragraphs starting with an image to `<figure>` elements.
+- [goldmark-frontmatter](https://github.com/abhinav/goldmark-frontmatter): Adds support for YAML, TOML, and custom front matter to documents.
 - [goldmark-toc](https://github.com/abhinav/goldmark-toc): Adds support for generating tables-of-contents for goldmark documents.
 - [goldmark-mermaid](https://github.com/abhinav/goldmark-mermaid): Adds support for rendering [Mermaid](https://mermaid-js.github.io/mermaid/) diagrams in goldmark documents.
 - [goldmark-pikchr](https://github.com/jchenry/goldmark-pikchr): Adds support for rendering [Pikchr](https://pikchr.org/home/doc/trunk/homepage.md) diagrams in goldmark documents.
@@ -448,6 +451,7 @@ Extensions
 - [goldmark-fences](https://github.com/stefanfritsch/goldmark-fences): Support for pandoc-style [fenced divs](https://pandoc.org/MANUAL.html#divs-and-spans) in goldmark.
 - [goldmark-d2](https://github.com/FurqanSoftware/goldmark-d2): Adds support for [D2](https://d2lang.com/) diagrams.
 - [goldmark-katex](https://github.com/FurqanSoftware/goldmark-katex): Adds support for [KaTeX](https://katex.org/) math and equations.
+- [goldmark-img64](https://github.com/tenkoh/goldmark-img64): Adds support for embedding images into the document as DataURL (base64 encoded).
 
 
 goldmark internal(for extension developers)

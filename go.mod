@@ -52,7 +52,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.14
 	github.com/uptrace/bun/extra/bunotel v1.1.14
 	github.com/wagslane/go-password-validator v0.3.0
-	github.com/yuin/goldmark v1.5.4
+	github.com/yuin/goldmark v1.5.5
 	go.opentelemetry.io/otel v1.16.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.16.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0
