@@ -35,7 +35,7 @@ func (r *relationshipDB) GetFollowRequestByID(ctx context.Context, id string) (*
 		ctx,
 		"ID",
 		func(followReq *gtsmodel.FollowRequest) error {
-			return r.conn.NewSelect().
+			return r.db.NewSelect().
 				Model(followReq).
 				Where("? = ?", bun.Ident("id"), id).
 				Scan(ctx)
@@ -49,7 +49,7 @@ func (r *relationshipDB) GetFollowRequestByURI(ctx context.Context, uri string) 
 		ctx,
 		"URI",
 		func(followReq *gtsmodel.FollowRequest) error {
-			return r.conn.NewSelect().
+			return r.db.NewSelect().
 				Model(followReq).
 				Where("? = ?", bun.Ident("uri"), uri).
 				Scan(ctx)
@@ -63,7 +63,7 @@ func (r *relationshipDB) GetFollowRequest(ctx context.Context, sourceAccountID s
 		ctx,
 		"AccountID.TargetAccountID",
 		func(followReq *gtsmodel.FollowRequest) error {
-			return r.conn.NewSelect().
+			return r.db.NewSelect().
 				Model(followReq).
 				Where("? = ?", bun.Ident("account_id"), sourceAccountID).
 				Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
@@ -112,7 +112,7 @@ func (r *relationshipDB) getFollowRequest(ctx context.Context, lookup string, db
 
 		// Not cached! Perform database query
 		if err := dbQuery(&followReq); err != nil {
-			return nil, r.conn.ProcessError(err)
+			return nil, r.db.ProcessError(err)
 		}
 
 		return &followReq, nil
@@ -150,8 +150,8 @@ func (r *relationshipDB) getFollowRequest(ctx context.Context, lookup string, db
 
 func (r *relationshipDB) PutFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error {
 	return r.state.Caches.GTS.FollowRequest().Store(follow, func() error {
-		_, err := r.conn.NewInsert().Model(follow).Exec(ctx)
-		return r.conn.ProcessError(err)
+		_, err := r.db.NewInsert().Model(follow).Exec(ctx)
+		return r.db.ProcessError(err)
 	})
 }
 
@@ -163,12 +163,12 @@ func (r *relationshipDB) UpdateFollowRequest(ctx context.Context, followRequest 
 	}
 
 	return r.state.Caches.GTS.FollowRequest().Store(followRequest, func() error {
-		if _, err := r.conn.NewUpdate().
+		if _, err := r.db.NewUpdate().
 			Model(followRequest).
 			Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
 			Column(columns...).
 			Exec(ctx); err != nil {
-			return r.conn.ProcessError(err)
+			return r.db.ProcessError(err)
 		}
 
 		return nil
@@ -198,12 +198,12 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 	if err := r.state.Caches.GTS.Follow().Store(follow, func() error {
 		// If the follow already exists, just
 		// replace the URI with the new one.
-		_, err := r.conn.
+		_, err := r.db.
 			NewInsert().
 			Model(follow).
 			On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
 			Exec(ctx)
-		return r.conn.ProcessError(err)
+		return r.db.ProcessError(err)
 	}); err != nil {
 		return nil, err
 	}
@@ -212,12 +212,12 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 	defer r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
 
 	// Delete original follow request.
-	if _, err := r.conn.
+	if _, err := r.db.
 		NewDelete().
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("id"), followReq.ID).
 		Exec(ctx); err != nil {
-		return nil, r.conn.ProcessError(err)
+		return nil, r.db.ProcessError(err)
 	}
 
 	// Delete original follow request notification
@@ -262,11 +262,11 @@ func (r *relationshipDB) DeleteFollowRequest(ctx context.Context, sourceAccountI
 	}
 
 	// Finally delete followreq from DB.
-	_, err = r.conn.NewDelete().
+	_, err = r.db.NewDelete().
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("id"), follow.ID).
 		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string) error {
@@ -285,11 +285,11 @@ func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string)
 	}
 
 	// Finally delete followreq from DB.
-	_, err = r.conn.NewDelete().
+	_, err = r.db.NewDelete().
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri string) error {
@@ -308,18 +308,18 @@ func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri strin
 	}
 
 	// Finally delete followreq from DB.
-	_, err = r.conn.NewDelete().
+	_, err = r.db.NewDelete().
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("uri"), uri).
 		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accountID string) error {
 	var followReqIDs []string
 
 	// Get full list of IDs.
-	if _, err := r.conn.
+	if _, err := r.db.
 		NewSelect().
 		Column("id").
 		Table("follow_requestss").
@@ -330,7 +330,7 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 			accountID,
 		).
 		Exec(ctx, &followReqIDs); err != nil {
-		return r.conn.ProcessError(err)
+		return r.db.ProcessError(err)
 	}
 
 	defer func() {
@@ -351,9 +351,9 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 	}
 
 	// Finally delete all from DB.
-	_, err := r.conn.NewDelete().
+	_, err := r.db.NewDelete().
 		Table("follow_requests").
 		Where("? IN (?)", bun.Ident("id"), bun.In(followReqIDs)).
 		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.db.ProcessError(err)
 }

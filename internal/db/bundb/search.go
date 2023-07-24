@@ -56,7 +56,7 @@ import (
 // This isn't ideal, of course, but at least we could cover the most common use case of
 // a caller paging down through results.
 type searchDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
@@ -89,7 +89,7 @@ func (s *searchDB) SearchForAccounts(
 		frontToBack = true
 	)
 
-	q := s.conn.
+	q := s.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		// Select only IDs from table.
@@ -148,7 +148,7 @@ func (s *searchDB) SearchForAccounts(
 	}
 
 	if err := q.Scan(ctx, &accountIDs); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	if len(accountIDs) == 0 {
@@ -183,7 +183,7 @@ func (s *searchDB) SearchForAccounts(
 // followedAccounts returns a subquery that selects only IDs
 // of accounts that are followed by the given accountID.
 func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
-	return s.conn.
+	return s.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
 		Column("follow.target_account_id").
@@ -196,7 +196,7 @@ func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
 // in the concatenation.
 func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	var (
-		accountText = s.conn.NewSelect()
+		accountText = s.db.NewSelect()
 		query       string
 		args        []interface{}
 	)
@@ -225,7 +225,7 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	// different number of placeholders depending on
 	// following/not following. COALESCE calls ensure
 	// that we're not trying to concatenate null values.
-	d := s.conn.Dialect().Name()
+	d := s.db.Dialect().Name()
 	switch {
 
 	case d == dialect.SQLite && following:
@@ -276,7 +276,7 @@ func (s *searchDB) SearchForStatuses(
 		frontToBack = true
 	)
 
-	q := s.conn.
+	q := s.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
@@ -326,7 +326,7 @@ func (s *searchDB) SearchForStatuses(
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	if len(statusIDs) == 0 {
@@ -361,11 +361,11 @@ func (s *searchDB) SearchForStatuses(
 // statusText returns a subquery that selects a concatenation
 // of status content and content warning as "status_text".
 func (s *searchDB) statusText() *bun.SelectQuery {
-	statusText := s.conn.NewSelect()
+	statusText := s.db.NewSelect()
 
 	// SQLite and Postgres use different
 	// syntaxes for concatenation.
-	switch s.conn.Dialect().Name() {
+	switch s.db.Dialect().Name() {
 
 	case dialect.SQLite:
 		statusText = statusText.ColumnExpr(

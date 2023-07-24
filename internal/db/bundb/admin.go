@@ -44,18 +44,18 @@ import (
 const rsaKeyBits = 2048
 
 type adminDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, error) {
-	q := a.conn.
+	q := a.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("account.id").
 		Where("? = ?", bun.Ident("account.username"), username).
 		Where("? IS NULL", bun.Ident("account.domain"))
-	return a.conn.NotExists(ctx, q)
+	return a.db.NotExists(ctx, q)
 }
 
 func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, error) {
@@ -67,12 +67,12 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, err
 	domain := strings.Split(m.Address, "@")[1] // domain will always be the second part after @
 
 	// check if the email domain is blocked
-	emailDomainBlockedQ := a.conn.
+	emailDomainBlockedQ := a.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("email_domain_blocks"), bun.Ident("email_domain_block")).
 		Column("email_domain_block.id").
 		Where("? = ?", bun.Ident("email_domain_block.domain"), domain)
-	emailDomainBlocked, err := a.conn.Exists(ctx, emailDomainBlockedQ)
+	emailDomainBlocked, err := a.db.Exists(ctx, emailDomainBlockedQ)
 	if err != nil {
 		return false, err
 	}
@@ -81,13 +81,13 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, err
 	}
 
 	// check if this email is associated with a user already
-	q := a.conn.
+	q := a.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
 		Column("user.id").
 		Where("? = ?", bun.Ident("user.email"), email).
 		WhereOr("? = ?", bun.Ident("user.unconfirmed_email"), email)
-	return a.conn.NotExists(ctx, q)
+	return a.db.NotExists(ctx, q)
 }
 
 func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (*gtsmodel.User, error) {
@@ -223,14 +223,14 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 func (a *adminDB) CreateInstanceAccount(ctx context.Context) error {
 	username := config.GetHost()
 
-	q := a.conn.
+	q := a.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("account.id").
 		Where("? = ?", bun.Ident("account.username"), username).
 		Where("? IS NULL", bun.Ident("account.domain"))
 
-	exists, err := a.conn.Exists(ctx, q)
+	exists, err := a.db.Exists(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -282,13 +282,13 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 	host := config.GetHost()
 
 	// check if instance entry already exists
-	q := a.conn.
+	q := a.db.
 		NewSelect().
 		Column("instance.id").
 		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance")).
 		Where("? = ?", bun.Ident("instance.domain"), host)
 
-	exists, err := a.conn.Exists(ctx, q)
+	exists, err := a.db.Exists(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -309,13 +309,13 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 		URI:    fmt.Sprintf("%s://%s", protocol, host),
 	}
 
-	insertQ := a.conn.
+	insertQ := a.db.
 		NewInsert().
 		Model(i)
 
 	_, err = insertQ.Exec(ctx)
 	if err != nil {
-		return a.conn.ProcessError(err)
+		return a.db.ProcessError(err)
 	}
 
 	log.Infof(ctx, "created instance instance %s with id %s", host, i.ID)

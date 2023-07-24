@@ -260,7 +260,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	}
 
 	noCache := &gtsmodel.Account{}
-	err = dbService.GetConn().
+	err = dbService.DB().
 		NewSelect().
 		Model(noCache).
 		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
@@ -288,7 +288,7 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	suite.Empty(updated.EmojiIDs)
 	suite.WithinDuration(time.Now(), updated.UpdatedAt, 5*time.Second)
 
-	err = dbService.GetConn().
+	err = dbService.DB().
 		NewSelect().
 		Model(noCache).
 		Where("? = ?", bun.Ident("account.id"), testAccount.ID).

@@ -27,20 +27,20 @@ import (
 )
 
 type sessionDB struct {
-	conn *DBConn
+	db *WrappedDB
 }
 
 func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, error) {
 	rss := make([]*gtsmodel.RouterSession, 0, 1)
 
 	// get the first router session in the db or...
-	if err := s.conn.
+	if err := s.db.
 		NewSelect().
 		Model(&rss).
 		Limit(1).
 		Order("router_session.id DESC").
 		Scan(ctx); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	// ... create a new one
@@ -66,11 +66,11 @@ func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession,
 		Crypt: crypt,
 	}
 
-	if _, err := s.conn.
+	if _, err := s.db.
 		NewInsert().
 		Model(rs).
 		Exec(ctx); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	return rs, nil

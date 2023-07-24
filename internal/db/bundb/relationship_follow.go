@@ -36,7 +36,7 @@ func (r *relationshipDB) GetFollowByID(ctx context.Context, id string) (*gtsmode
 		ctx,
 		"ID",
 		func(follow *gtsmodel.Follow) error {
-			return r.conn.NewSelect().
+			return r.db.NewSelect().
 				Model(follow).
 				Where("? = ?", bun.Ident("id"), id).
 				Scan(ctx)
@@ -50,7 +50,7 @@ func (r *relationshipDB) GetFollowByURI(ctx context.Context, uri string) (*gtsmo
 		ctx,
 		"URI",
 		func(follow *gtsmodel.Follow) error {
-			return r.conn.NewSelect().
+			return r.db.NewSelect().
 				Model(follow).
 				Where("? = ?", bun.Ident("uri"), uri).
 				Scan(ctx)
@@ -64,7 +64,7 @@ func (r *relationshipDB) GetFollow(ctx context.Context, sourceAccountID string, 
 		ctx,
 		"AccountID.TargetAccountID",
 		func(follow *gtsmodel.Follow) error {
-			return r.conn.NewSelect().
+			return r.db.NewSelect().
 				Model(follow).
 				Where("? = ?", bun.Ident("account_id"), sourceAccountID).
 				Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
@@ -135,7 +135,7 @@ func (r *relationshipDB) getFollow(ctx context.Context, lookup string, dbQuery f
 
 		// Not cached! Perform database query
 		if err := dbQuery(&follow); err != nil {
-			return nil, r.conn.ProcessError(err)
+			return nil, r.db.ProcessError(err)
 		}
 
 		return &follow, nil
@@ -190,8 +190,8 @@ func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Fo
 
 func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	return r.state.Caches.GTS.Follow().Store(follow, func() error {
-		_, err := r.conn.NewInsert().Model(follow).Exec(ctx)
-		return r.conn.ProcessError(err)
+		_, err := r.db.NewInsert().Model(follow).Exec(ctx)
+		return r.db.ProcessError(err)
 	})
 }
 
@@ -203,12 +203,12 @@ func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Foll
 	}
 
 	return r.state.Caches.GTS.Follow().Store(follow, func() error {
-		if _, err := r.conn.NewUpdate().
+		if _, err := r.db.NewUpdate().
 			Model(follow).
 			Where("? = ?", bun.Ident("follow.id"), follow.ID).
 			Column(columns...).
 			Exec(ctx); err != nil {
-			return r.conn.ProcessError(err)
+			return r.db.ProcessError(err)
 		}
 
 		return nil
@@ -217,11 +217,11 @@ func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Foll
 
 func (r *relationshipDB) deleteFollow(ctx context.Context, id string) error {
 	// Delete the follow itself using the given ID.
-	if _, err := r.conn.NewDelete().
+	if _, err := r.db.NewDelete().
 		Table("follows").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx); err != nil {
-		return r.conn.ProcessError(err)
+		return r.db.ProcessError(err)
 	}
 
 	// Delete every list entry that used this followID.
@@ -297,7 +297,7 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 	var followIDs []string
 
 	// Get full list of IDs.
-	if _, err := r.conn.
+	if _, err := r.db.
 		NewSelect().
 		Column("id").
 		Table("follows").
@@ -308,7 +308,7 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 			accountID,
 		).
 		Exec(ctx, &followIDs); err != nil {
-		return r.conn.ProcessError(err)
+		return r.db.ProcessError(err)
 	}
 
 	defer func() {

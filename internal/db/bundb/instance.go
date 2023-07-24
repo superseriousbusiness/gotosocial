@@ -34,12 +34,12 @@ import (
 )
 
 type instanceDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
 func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, error) {
-	q := i.conn.
+	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		Column("account.id").
@@ -56,13 +56,13 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, i.conn.ProcessError(err)
+		return 0, i.db.ProcessError(err)
 	}
 	return count, nil
 }
 
 func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, error) {
-	q := i.conn.
+	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status"))
 
@@ -78,13 +78,13 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, i.conn.ProcessError(err)
+		return 0, i.db.ProcessError(err)
 	}
 	return count, nil
 }
 
 func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, error) {
-	q := i.conn.
+	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance"))
 
@@ -101,7 +101,7 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, i.conn.ProcessError(err)
+		return 0, i.db.ProcessError(err)
 	}
 	return count, nil
 }
@@ -118,7 +118,7 @@ func (i *instanceDB) GetInstance(ctx context.Context, domain string) (*gtsmodel.
 		ctx,
 		"Domain",
 		func(instance *gtsmodel.Instance) error {
-			return i.conn.NewSelect().
+			return i.db.NewSelect().
 				Model(instance).
 				Where("? = ?", bun.Ident("instance.domain"), domain).
 				Scan(ctx)
@@ -132,7 +132,7 @@ func (i *instanceDB) GetInstanceByID(ctx context.Context, id string) (*gtsmodel.
 		ctx,
 		"ID",
 		func(instance *gtsmodel.Instance) error {
-			return i.conn.NewSelect().
+			return i.db.NewSelect().
 				Model(instance).
 				Where("? = ?", bun.Ident("instance.id"), id).
 				Scan(ctx)
@@ -148,7 +148,7 @@ func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery fun
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&instance); err != nil {
-			return nil, i.conn.ProcessError(err)
+			return nil, i.db.ProcessError(err)
 		}
 
 		return &instance, nil
@@ -210,8 +210,8 @@ func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instanc
 	}
 
 	return i.state.Caches.GTS.Instance().Store(instance, func() error {
-		_, err := i.conn.NewInsert().Model(instance).Exec(ctx)
-		return i.conn.ProcessError(err)
+		_, err := i.db.NewInsert().Model(instance).Exec(ctx)
+		return i.db.ProcessError(err)
 	})
 }
 
@@ -230,20 +230,20 @@ func (i *instanceDB) UpdateInstance(ctx context.Context, instance *gtsmodel.Inst
 	}
 
 	return i.state.Caches.GTS.Instance().Store(instance, func() error {
-		_, err := i.conn.
+		_, err := i.db.
 			NewUpdate().
 			Model(instance).
 			Where("? = ?", bun.Ident("instance.id"), instance.ID).
 			Column(columns...).
 			Exec(ctx)
-		return i.conn.ProcessError(err)
+		return i.db.ProcessError(err)
 	})
 }
 
 func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool) ([]*gtsmodel.Instance, error) {
 	instanceIDs := []string{}
 
-	q := i.conn.
+	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance")).
 		// Select just the IDs of each instance.
@@ -256,7 +256,7 @@ func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool
 	}
 
 	if err := q.Scan(ctx, &instanceIDs); err != nil {
-		return nil, i.conn.ProcessError(err)
+		return nil, i.db.ProcessError(err)
 	}
 
 	if len(instanceIDs) == 0 {
@@ -296,7 +296,7 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 	// Make educated guess for slice size
 	accountIDs := make([]string, 0, limit)
 
-	q := i.conn.
+	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
 		// Select just the account ID.
@@ -315,7 +315,7 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 	}
 
 	if err := q.Scan(ctx, &accountIDs); err != nil {
-		return nil, i.conn.ProcessError(err)
+		return nil, i.db.ProcessError(err)
 	}
 
 	// Catch case of no accounts early.
@@ -346,7 +346,7 @@ func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]strin
 	// Select email addresses of approved, confirmed,
 	// and enabled moderators or admins.
 
-	q := i.conn.
+	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
 		Column("user.email").
@@ -361,7 +361,7 @@ func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]strin
 		OrderExpr("? ASC", bun.Ident("user.email"))
 
 	if err := q.Scan(ctx, &addresses); err != nil {
-		return nil, i.conn.ProcessError(err)
+		return nil, i.db.ProcessError(err)
 	}
 
 	if len(addresses) == 0 {

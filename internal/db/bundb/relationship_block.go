@@ -61,7 +61,7 @@ func (r *relationshipDB) GetBlockByID(ctx context.Context, id string) (*gtsmodel
 		ctx,
 		"ID",
 		func(block *gtsmodel.Block) error {
-			return r.conn.NewSelect().Model(block).
+			return r.db.NewSelect().Model(block).
 				Where("? = ?", bun.Ident("block.id"), id).
 				Scan(ctx)
 		},
@@ -74,7 +74,7 @@ func (r *relationshipDB) GetBlockByURI(ctx context.Context, uri string) (*gtsmod
 		ctx,
 		"URI",
 		func(block *gtsmodel.Block) error {
-			return r.conn.NewSelect().Model(block).
+			return r.db.NewSelect().Model(block).
 				Where("? = ?", bun.Ident("block.uri"), uri).
 				Scan(ctx)
 		},
@@ -87,7 +87,7 @@ func (r *relationshipDB) GetBlock(ctx context.Context, sourceAccountID string, t
 		ctx,
 		"AccountID.TargetAccountID",
 		func(block *gtsmodel.Block) error {
-			return r.conn.NewSelect().Model(block).
+			return r.db.NewSelect().Model(block).
 				Where("? = ?", bun.Ident("block.account_id"), sourceAccountID).
 				Where("? = ?", bun.Ident("block.target_account_id"), targetAccountID).
 				Scan(ctx)
@@ -104,7 +104,7 @@ func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery fu
 
 		// Not cached! Perform database query
 		if err := dbQuery(&block); err != nil {
-			return nil, r.conn.ProcessError(err)
+			return nil, r.db.ProcessError(err)
 		}
 
 		return &block, nil
@@ -142,8 +142,8 @@ func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery fu
 
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) error {
 	return r.state.Caches.GTS.Block().Store(block, func() error {
-		_, err := r.conn.NewInsert().Model(block).Exec(ctx)
-		return r.conn.ProcessError(err)
+		_, err := r.db.NewInsert().Model(block).Exec(ctx)
+		return r.db.ProcessError(err)
 	})
 }
 
@@ -163,11 +163,11 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 	}
 
 	// Finally delete block from DB.
-	_, err = r.conn.NewDelete().
+	_, err = r.db.NewDelete().
 		Table("blocks").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error {
@@ -186,18 +186,18 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error
 	}
 
 	// Finally delete block from DB.
-	_, err = r.conn.NewDelete().
+	_, err = r.db.NewDelete().
 		Table("blocks").
 		Where("? = ?", bun.Ident("uri"), uri).
 		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID string) error {
 	var blockIDs []string
 
 	// Get full list of IDs.
-	if err := r.conn.NewSelect().
+	if err := r.db.NewSelect().
 		Column("id").
 		Table("blocks").
 		WhereOr("? = ? OR ? = ?",
@@ -207,7 +207,7 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 			accountID,
 		).
 		Scan(ctx, &blockIDs); err != nil {
-		return r.conn.ProcessError(err)
+		return r.db.ProcessError(err)
 	}
 
 	defer func() {
@@ -228,9 +228,9 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 	}
 
 	// Finally delete all from DB.
-	_, err := r.conn.NewDelete().
+	_, err := r.db.NewDelete().
 		Table("blocks").
 		Where("? IN (?)", bun.Ident("id"), bun.In(blockIDs)).
 		Exec(ctx)
-	return r.conn.ProcessError(err)
+	return r.db.ProcessError(err)
 }

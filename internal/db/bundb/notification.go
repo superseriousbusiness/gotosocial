@@ -31,7 +31,7 @@ import (
 )
 
 type notificationDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
@@ -39,11 +39,11 @@ func (n *notificationDB) GetNotificationByID(ctx context.Context, id string) (*g
 	return n.state.Caches.GTS.Notification().Load("ID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
-		q := n.conn.NewSelect().
+		q := n.db.NewSelect().
 			Model(&notif).
 			Where("? = ?", bun.Ident("notification.id"), id)
 		if err := q.Scan(ctx); err != nil {
-			return nil, n.conn.ProcessError(err)
+			return nil, n.db.ProcessError(err)
 		}
 
 		return &notif, nil
@@ -60,7 +60,7 @@ func (n *notificationDB) GetNotification(
 	return n.state.Caches.GTS.Notification().Load("NotificationType.TargetAccountID.OriginAccountID.StatusID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
-		q := n.conn.NewSelect().
+		q := n.db.NewSelect().
 			Model(&notif).
 			Where("? = ?", bun.Ident("notification_type"), notificationType).
 			Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
@@ -68,7 +68,7 @@ func (n *notificationDB) GetNotification(
 			Where("? = ?", bun.Ident("status_id"), statusID)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, n.conn.ProcessError(err)
+			return nil, n.db.ProcessError(err)
 		}
 
 		return &notif, nil
@@ -95,7 +95,7 @@ func (n *notificationDB) GetAccountNotifications(
 		frontToBack = true
 	)
 
-	q := n.conn.
+	q := n.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
 		Column("notification.id")
@@ -140,7 +140,7 @@ func (n *notificationDB) GetAccountNotifications(
 	}
 
 	if err := q.Scan(ctx, &notifIDs); err != nil {
-		return nil, n.conn.ProcessError(err)
+		return nil, n.db.ProcessError(err)
 	}
 
 	if len(notifIDs) == 0 {
@@ -174,8 +174,8 @@ func (n *notificationDB) GetAccountNotifications(
 
 func (n *notificationDB) PutNotification(ctx context.Context, notif *gtsmodel.Notification) error {
 	return n.state.Caches.GTS.Notification().Store(notif, func() error {
-		_, err := n.conn.NewInsert().Model(notif).Exec(ctx)
-		return n.conn.ProcessError(err)
+		_, err := n.db.NewInsert().Model(notif).Exec(ctx)
+		return n.db.ProcessError(err)
 	})
 }
 
@@ -195,11 +195,11 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 	}
 
 	// Finally delete notif from DB.
-	_, err = n.conn.NewDelete().
+	_, err = n.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
 		Where("? = ?", bun.Ident("notification.id"), id).
 		Exec(ctx)
-	return n.conn.ProcessError(err)
+	return n.db.ProcessError(err)
 }
 
 func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) error {
@@ -209,7 +209,7 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 
 	var notifIDs []string
 
-	q := n.conn.
+	q := n.db.
 		NewSelect().
 		Column("id").
 		Table("notifications")
@@ -227,7 +227,7 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 	}
 
 	if _, err := q.Exec(ctx, &notifIDs); err != nil {
-		return n.conn.ProcessError(err)
+		return n.db.ProcessError(err)
 	}
 
 	defer func() {
@@ -248,24 +248,24 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 	}
 
 	// Finally delete all from DB.
-	_, err := n.conn.NewDelete().
+	_, err := n.db.NewDelete().
 		Table("notifications").
 		Where("? IN (?)", bun.Ident("id"), bun.In(notifIDs)).
 		Exec(ctx)
-	return n.conn.ProcessError(err)
+	return n.db.ProcessError(err)
 }
 
 func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statusID string) error {
 	var notifIDs []string
 
-	q := n.conn.
+	q := n.db.
 		NewSelect().
 		Column("id").
 		Table("notifications").
 		Where("? = ?", bun.Ident("status_id"), statusID)
 
 	if _, err := q.Exec(ctx, &notifIDs); err != nil {
-		return n.conn.ProcessError(err)
+		return n.db.ProcessError(err)
 	}
 
 	defer func() {
@@ -286,9 +286,9 @@ func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statu
 	}
 
 	// Finally delete all from DB.
-	_, err := n.conn.NewDelete().
+	_, err := n.db.NewDelete().
 		Table("notifications").
 		Where("? IN (?)", bun.Ident("id"), bun.In(notifIDs)).
 		Exec(ctx)
-	return n.conn.ProcessError(err)
+	return n.db.ProcessError(err)
 }

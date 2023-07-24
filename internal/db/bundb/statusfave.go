@@ -32,7 +32,7 @@ import (
 )
 
 type statusFaveDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
@@ -41,7 +41,7 @@ func (s *statusFaveDB) GetStatusFave(ctx context.Context, accountID string, stat
 		ctx,
 		"AccountID.StatusID",
 		func(fave *gtsmodel.StatusFave) error {
-			return s.conn.
+			return s.db.
 				NewSelect().
 				Model(fave).
 				Where("? = ?", bun.Ident("account_id"), accountID).
@@ -58,7 +58,7 @@ func (s *statusFaveDB) GetStatusFaveByID(ctx context.Context, id string) (*gtsmo
 		ctx,
 		"ID",
 		func(fave *gtsmodel.StatusFave) error {
-			return s.conn.
+			return s.db.
 				NewSelect().
 				Model(fave).
 				Where("? = ?", bun.Ident("id"), id).
@@ -75,7 +75,7 @@ func (s *statusFaveDB) getStatusFave(ctx context.Context, lookup string, dbQuery
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&fave); err != nil {
-			return nil, s.conn.ProcessError(err)
+			return nil, s.db.ProcessError(err)
 		}
 
 		return &fave, nil
@@ -122,13 +122,13 @@ func (s *statusFaveDB) getStatusFave(ctx context.Context, lookup string, dbQuery
 func (s *statusFaveDB) GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, error) {
 	ids := []string{}
 
-	if err := s.conn.
+	if err := s.db.
 		NewSelect().
 		Table("status_faves").
 		Column("id").
 		Where("? = ?", bun.Ident("status_id"), statusID).
 		Scan(ctx, &ids); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	faves := make([]*gtsmodel.StatusFave, 0, len(ids))
@@ -190,11 +190,11 @@ func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmo
 
 func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	return s.state.Caches.GTS.StatusFave().Store(fave, func() error {
-		_, err := s.conn.
+		_, err := s.db.
 			NewInsert().
 			Model(fave).
 			Exec(ctx)
-		return s.conn.ProcessError(err)
+		return s.db.ProcessError(err)
 	})
 }
 
@@ -214,11 +214,11 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) erro
 	}
 
 	// Finally delete fave from DB.
-	_, err = s.conn.NewDelete().
+	_, err = s.db.NewDelete().
 		Table("status_faves").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
-	return s.conn.ProcessError(err)
+	return s.db.ProcessError(err)
 }
 
 func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) error {
@@ -228,7 +228,7 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 
 	var faveIDs []string
 
-	q := s.conn.
+	q := s.db.
 		NewSelect().
 		Column("id").
 		Table("status_faves")
@@ -242,7 +242,7 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	}
 
 	if _, err := q.Exec(ctx, &faveIDs); err != nil {
-		return s.conn.ProcessError(err)
+		return s.db.ProcessError(err)
 	}
 
 	defer func() {
@@ -263,24 +263,24 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	}
 
 	// Finally delete all from DB.
-	_, err := s.conn.NewDelete().
+	_, err := s.db.NewDelete().
 		Table("status_faves").
 		Where("? IN (?)", bun.Ident("id"), bun.In(faveIDs)).
 		Exec(ctx)
-	return s.conn.ProcessError(err)
+	return s.db.ProcessError(err)
 }
 
 func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID string) error {
 	// Capture fave IDs in a RETURNING statement.
 	var faveIDs []string
 
-	q := s.conn.
+	q := s.db.
 		NewSelect().
 		Column("id").
 		Table("status_faves").
 		Where("? = ?", bun.Ident("status_id"), statusID)
 	if _, err := q.Exec(ctx, &faveIDs); err != nil {
-		return s.conn.ProcessError(err)
+		return s.db.ProcessError(err)
 	}
 
 	defer func() {
@@ -301,9 +301,9 @@ func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID 
 	}
 
 	// Finally delete all from DB.
-	_, err := s.conn.NewDelete().
+	_, err := s.db.NewDelete().
 		Table("status_faves").
 		Where("? IN (?)", bun.Ident("id"), bun.In(faveIDs)).
 		Exec(ctx)
-	return s.conn.ProcessError(err)
+	return s.db.ProcessError(err)
 }

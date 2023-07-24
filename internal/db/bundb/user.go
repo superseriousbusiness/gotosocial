@@ -30,7 +30,7 @@ import (
 )
 
 type userDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
@@ -38,14 +38,14 @@ func (u *userDB) GetUserByID(ctx context.Context, id string) (*gtsmodel.User, er
 	return u.state.Caches.GTS.User().Load("ID", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
-		q := u.conn.
+		q := u.db.
 			NewSelect().
 			Model(&user).
 			Relation("Account").
 			Where("? = ?", bun.Ident("user.id"), id)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, u.conn.ProcessError(err)
+			return nil, u.db.ProcessError(err)
 		}
 
 		return &user, nil
@@ -56,14 +56,14 @@ func (u *userDB) GetUserByAccountID(ctx context.Context, accountID string) (*gts
 	return u.state.Caches.GTS.User().Load("AccountID", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
-		q := u.conn.
+		q := u.db.
 			NewSelect().
 			Model(&user).
 			Relation("Account").
 			Where("? = ?", bun.Ident("user.account_id"), accountID)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, u.conn.ProcessError(err)
+			return nil, u.db.ProcessError(err)
 		}
 
 		return &user, nil
@@ -74,14 +74,14 @@ func (u *userDB) GetUserByEmailAddress(ctx context.Context, emailAddress string)
 	return u.state.Caches.GTS.User().Load("Email", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
-		q := u.conn.
+		q := u.db.
 			NewSelect().
 			Model(&user).
 			Relation("Account").
 			Where("? = ?", bun.Ident("user.email"), emailAddress)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, u.conn.ProcessError(err)
+			return nil, u.db.ProcessError(err)
 		}
 
 		return &user, nil
@@ -92,14 +92,14 @@ func (u *userDB) GetUserByExternalID(ctx context.Context, id string) (*gtsmodel.
 	return u.state.Caches.GTS.User().Load("ExternalID", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
-		q := u.conn.
+		q := u.db.
 			NewSelect().
 			Model(&user).
 			Relation("Account").
 			Where("? = ?", bun.Ident("user.external_id"), id)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, u.conn.ProcessError(err)
+			return nil, u.db.ProcessError(err)
 		}
 
 		return &user, nil
@@ -110,14 +110,14 @@ func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationTok
 	return u.state.Caches.GTS.User().Load("ConfirmationToken", func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
-		q := u.conn.
+		q := u.db.
 			NewSelect().
 			Model(&user).
 			Relation("Account").
 			Where("? = ?", bun.Ident("user.confirmation_token"), confirmationToken)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, u.conn.ProcessError(err)
+			return nil, u.db.ProcessError(err)
 		}
 
 		return &user, nil
@@ -126,13 +126,13 @@ func (u *userDB) GetUserByConfirmationToken(ctx context.Context, confirmationTok
 
 func (u *userDB) GetAllUsers(ctx context.Context) ([]*gtsmodel.User, error) {
 	var users []*gtsmodel.User
-	q := u.conn.
+	q := u.db.
 		NewSelect().
 		Model(&users).
 		Relation("Account")
 
 	if err := q.Scan(ctx); err != nil {
-		return nil, u.conn.ProcessError(err)
+		return nil, u.db.ProcessError(err)
 	}
 
 	return users, nil
@@ -140,11 +140,11 @@ func (u *userDB) GetAllUsers(ctx context.Context) ([]*gtsmodel.User, error) {
 
 func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) error {
 	return u.state.Caches.GTS.User().Store(user, func() error {
-		_, err := u.conn.
+		_, err := u.db.
 			NewInsert().
 			Model(user).
 			Exec(ctx)
-		return u.conn.ProcessError(err)
+		return u.db.ProcessError(err)
 	})
 }
 
@@ -158,13 +158,13 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 	}
 
 	return u.state.Caches.GTS.User().Store(user, func() error {
-		_, err := u.conn.
+		_, err := u.db.
 			NewUpdate().
 			Model(user).
 			Where("? = ?", bun.Ident("user.id"), user.ID).
 			Column(columns...).
 			Exec(ctx)
-		return u.conn.ProcessError(err)
+		return u.db.ProcessError(err)
 	})
 }
 
@@ -184,9 +184,9 @@ func (u *userDB) DeleteUserByID(ctx context.Context, userID string) error {
 	}
 
 	// Finally delete user from DB.
-	_, err = u.conn.NewDelete().
+	_, err = u.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
 		Where("? = ?", bun.Ident("user.id"), userID).
 		Exec(ctx)
-	return u.conn.ProcessError(err)
+	return u.db.ProcessError(err)
 }

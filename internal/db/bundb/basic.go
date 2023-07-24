@@ -28,22 +28,22 @@ import (
 )
 
 type basicDB struct {
-	conn *DBConn
+	db *WrappedDB
 }
 
 func (b *basicDB) Put(ctx context.Context, i interface{}) error {
-	_, err := b.conn.NewInsert().Model(i).Exec(ctx)
-	return b.conn.ProcessError(err)
+	_, err := b.db.NewInsert().Model(i).Exec(ctx)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) GetByID(ctx context.Context, id string, i interface{}) error {
-	q := b.conn.
+	q := b.db.
 		NewSelect().
 		Model(i).
 		Where("id = ?", id)
 
 	err := q.Scan(ctx)
-	return b.conn.ProcessError(err)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{}) error {
@@ -51,31 +51,31 @@ func (b *basicDB) GetWhere(ctx context.Context, where []db.Where, i interface{})
 		return errors.New("no queries provided")
 	}
 
-	q := b.conn.NewSelect().Model(i)
+	q := b.db.NewSelect().Model(i)
 
 	selectWhere(q, where)
 
 	err := q.Scan(ctx)
-	return b.conn.ProcessError(err)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) GetAll(ctx context.Context, i interface{}) error {
-	q := b.conn.
+	q := b.db.
 		NewSelect().
 		Model(i)
 
 	err := q.Scan(ctx)
-	return b.conn.ProcessError(err)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) DeleteByID(ctx context.Context, id string, i interface{}) error {
-	q := b.conn.
+	q := b.db.
 		NewDelete().
 		Model(i).
 		Where("id = ?", id)
 
 	_, err := q.Exec(ctx)
-	return b.conn.ProcessError(err)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface{}) error {
@@ -83,40 +83,40 @@ func (b *basicDB) DeleteWhere(ctx context.Context, where []db.Where, i interface
 		return errors.New("no queries provided")
 	}
 
-	q := b.conn.
+	q := b.db.
 		NewDelete().
 		Model(i)
 
 	deleteWhere(q, where)
 
 	_, err := q.Exec(ctx)
-	return b.conn.ProcessError(err)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) UpdateByID(ctx context.Context, i interface{}, id string, columns ...string) error {
-	q := b.conn.
+	q := b.db.
 		NewUpdate().
 		Model(i).
 		Column(columns...).
 		Where("? = ?", bun.Ident("id"), id)
 
 	_, err := q.Exec(ctx)
-	return b.conn.ProcessError(err)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string, value interface{}, i interface{}) error {
-	q := b.conn.NewUpdate().Model(i)
+	q := b.db.NewUpdate().Model(i)
 
 	updateWhere(q, where)
 
 	q = q.Set("? = ?", bun.Ident(key), value)
 
 	_, err := q.Exec(ctx)
-	return b.conn.ProcessError(err)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) CreateTable(ctx context.Context, i interface{}) error {
-	_, err := b.conn.NewCreateTable().Model(i).IfNotExists().Exec(ctx)
+	_, err := b.db.NewCreateTable().Model(i).IfNotExists().Exec(ctx)
 	return err
 }
 
@@ -155,15 +155,15 @@ func (b *basicDB) CreateAllTables(ctx context.Context) error {
 }
 
 func (b *basicDB) DropTable(ctx context.Context, i interface{}) error {
-	_, err := b.conn.NewDropTable().Model(i).IfExists().Exec(ctx)
-	return b.conn.ProcessError(err)
+	_, err := b.db.NewDropTable().Model(i).IfExists().Exec(ctx)
+	return b.db.ProcessError(err)
 }
 
 func (b *basicDB) IsHealthy(ctx context.Context) error {
-	return b.conn.DB.PingContext(ctx)
+	return b.db.DB.PingContext(ctx)
 }
 
 func (b *basicDB) Stop(ctx context.Context) error {
 	log.Info(ctx, "closing db connection")
-	return b.conn.DB.Close()
+	return b.db.DB.Close()
 }

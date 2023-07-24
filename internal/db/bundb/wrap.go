@@ -28,73 +28,76 @@ import (
 	"github.com/uptrace/bun/dialect"
 )
 
-// DBConn wrapps a bun.DB conn to provide SQL-type specific additional functionality
-type DBConn struct {
-	errProc func(error) error // errProc is the SQL-type specific error processor
-	*bun.DB                   // DB is the underlying bun.DB connection
+// WrappedDB wraps a bun database instance
+// to provide common per-dialect SQL error
+// conversions to common types, and retries
+// on returned busy errors (SQLite only for now).
+type WrappedDB struct {
+	errHook func(error) error
+	*bun.DB // underlying conn
 }
 
-// WrapDBConn wraps a bun DB connection to provide our own error processing dependent on DB dialect.
-func WrapDBConn(dbConn *bun.DB) *DBConn {
+// WrapDB wraps a bun database instance in our own WrappedDB type.
+func WrapDB(db *bun.DB) *WrappedDB {
 	var errProc func(error) error
-	switch dbConn.Dialect().Name() {
+	switch name := db.Dialect().Name(); name {
 	case dialect.PG:
 		errProc = processPostgresError
 	case dialect.SQLite:
 		errProc = processSQLiteError
 	default:
-		panic("unknown dialect name: " + dbConn.Dialect().Name().String())
+		panic("unknown dialect name: " + name.String())
 	}
-	return &DBConn{
-		errProc: errProc,
-		DB:      dbConn,
+	return &WrappedDB{
+		errHook: errProc,
+		DB:      db,
 	}
 }
 
 // BeginTx wraps bun.DB.BeginTx() with retry-busy timeout.
-func (conn *DBConn) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx, err error) {
+func (db *WrappedDB) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx, err error) {
 	err = retryOnBusy(ctx, func() error {
-		tx, err = conn.DB.BeginTx(ctx, opts)
-		err = conn.ProcessError(err)
+		tx, err = db.DB.BeginTx(ctx, opts)
+		err = db.ProcessError(err)
 		return err
 	})
 	return
 }
 
 // ExecContext wraps bun.DB.ExecContext() with retry-busy timeout.
-func (conn *DBConn) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
+func (db *WrappedDB) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	err = retryOnBusy(ctx, func() error {
-		result, err = conn.DB.ExecContext(ctx, query, args...)
-		err = conn.ProcessError(err)
+		result, err = db.DB.ExecContext(ctx, query, args...)
+		err = db.ProcessError(err)
 		return err
 	})
 	return
 }
 
 // QueryContext wraps bun.DB.QueryContext() with retry-busy timeout.
-func (conn *DBConn) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
+func (db *WrappedDB) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
 	err = retryOnBusy(ctx, func() error {
-		rows, err = conn.DB.QueryContext(ctx, query, args...)
-		err = conn.ProcessError(err)
+		rows, err = db.DB.QueryContext(ctx, query, args...)
+		err = db.ProcessError(err)
 		return err
 	})
 	return
 }
 
 // QueryRowContext wraps bun.DB.QueryRowContext() with retry-busy timeout.
-func (conn *DBConn) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
+func (db *WrappedDB) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
 	_ = retryOnBusy(ctx, func() error {
-		row = conn.DB.QueryRowContext(ctx, query, args...)
-		err := conn.ProcessError(row.Err())
+		row = db.DB.QueryRowContext(ctx, query, args...)
+		err := db.ProcessError(row.Err())
 		return err
 	})
 	return
 }
 
 // RunInTx is functionally the same as bun.DB.RunInTx() but with retry-busy timeouts.
-func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
+func (db *WrappedDB) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
 	// Attempt to start new transaction.
-	tx, err := conn.BeginTx(ctx, nil)
+	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -106,92 +109,92 @@ func (conn *DBConn) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
 			// Rollback (with retry-backoff).
 			_ = retryOnBusy(ctx, func() error {
 				err := tx.Rollback()
-				return conn.errProc(err)
+				return db.errHook(err)
 			})
 		}
 	}()
 
 	// Perform supplied transaction
 	if err := fn(tx); err != nil {
-		return conn.errProc(err)
+		return db.errHook(err)
 	}
 
 	// Commit (with retry-backoff).
 	err = retryOnBusy(ctx, func() error {
 		err := tx.Commit()
-		return conn.errProc(err)
+		return db.errHook(err)
 	})
 	done = true
 	return err
 }
 
-func (conn *DBConn) NewValues(model interface{}) *bun.ValuesQuery {
-	return bun.NewValuesQuery(conn.DB, model).Conn(conn)
+func (db *WrappedDB) NewValues(model interface{}) *bun.ValuesQuery {
+	return bun.NewValuesQuery(db.DB, model).Conn(db)
 }
 
-func (conn *DBConn) NewMerge() *bun.MergeQuery {
-	return bun.NewMergeQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewMerge() *bun.MergeQuery {
+	return bun.NewMergeQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewSelect() *bun.SelectQuery {
-	return bun.NewSelectQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewSelect() *bun.SelectQuery {
+	return bun.NewSelectQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewInsert() *bun.InsertQuery {
-	return bun.NewInsertQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewInsert() *bun.InsertQuery {
+	return bun.NewInsertQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewUpdate() *bun.UpdateQuery {
-	return bun.NewUpdateQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewUpdate() *bun.UpdateQuery {
+	return bun.NewUpdateQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewDelete() *bun.DeleteQuery {
-	return bun.NewDeleteQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewDelete() *bun.DeleteQuery {
+	return bun.NewDeleteQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewRaw(query string, args ...interface{}) *bun.RawQuery {
-	return bun.NewRawQuery(conn.DB, query, args...).Conn(conn)
+func (db *WrappedDB) NewRaw(query string, args ...interface{}) *bun.RawQuery {
+	return bun.NewRawQuery(db.DB, query, args...).Conn(db)
 }
 
-func (conn *DBConn) NewCreateTable() *bun.CreateTableQuery {
-	return bun.NewCreateTableQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewCreateTable() *bun.CreateTableQuery {
+	return bun.NewCreateTableQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewDropTable() *bun.DropTableQuery {
-	return bun.NewDropTableQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewDropTable() *bun.DropTableQuery {
+	return bun.NewDropTableQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewCreateIndex() *bun.CreateIndexQuery {
-	return bun.NewCreateIndexQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewCreateIndex() *bun.CreateIndexQuery {
+	return bun.NewCreateIndexQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewDropIndex() *bun.DropIndexQuery {
-	return bun.NewDropIndexQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewDropIndex() *bun.DropIndexQuery {
+	return bun.NewDropIndexQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewTruncateTable() *bun.TruncateTableQuery {
-	return bun.NewTruncateTableQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewTruncateTable() *bun.TruncateTableQuery {
+	return bun.NewTruncateTableQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewAddColumn() *bun.AddColumnQuery {
-	return bun.NewAddColumnQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewAddColumn() *bun.AddColumnQuery {
+	return bun.NewAddColumnQuery(db.DB).Conn(db)
 }
 
-func (conn *DBConn) NewDropColumn() *bun.DropColumnQuery {
-	return bun.NewDropColumnQuery(conn.DB).Conn(conn)
+func (db *WrappedDB) NewDropColumn() *bun.DropColumnQuery {
+	return bun.NewDropColumnQuery(db.DB).Conn(db)
 }
 
 // ProcessError processes an error to replace any known values with our own error types,
 // making it easier to catch specific situations (e.g. no rows, already exists, etc)
-func (conn *DBConn) ProcessError(err error) error {
+func (db *WrappedDB) ProcessError(err error) error {
 	if err == nil {
 		return nil
 	}
-	return conn.errProc(err)
+	return db.errHook(err)
 }
 
 // Exists checks the results of a SelectQuery for the existence of the data in question, masking ErrNoEntries errors
-func (conn *DBConn) Exists(ctx context.Context, query *bun.SelectQuery) (bool, error) {
+func (db *WrappedDB) Exists(ctx context.Context, query *bun.SelectQuery) (bool, error) {
 	exists, err := query.Exists(ctx)
 	switch err {
 	case nil:
@@ -204,8 +207,8 @@ func (conn *DBConn) Exists(ctx context.Context, query *bun.SelectQuery) (bool, e
 }
 
 // NotExists is the functional opposite of conn.Exists()
-func (conn *DBConn) NotExists(ctx context.Context, query *bun.SelectQuery) (bool, error) {
-	exists, err := conn.Exists(ctx, query)
+func (db *WrappedDB) NotExists(ctx context.Context, query *bun.SelectQuery) (bool, error) {
+	exists, err := db.Exists(ctx, query)
 	return !exists, err
 }
 
