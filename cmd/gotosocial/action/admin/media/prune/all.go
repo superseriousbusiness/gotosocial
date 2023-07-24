@@ -50,7 +50,7 @@ var All action.GTSAction = func(ctx context.Context) error {
 
 	// Perform the actual pruning with logging.
 	prune.cleaner.Media().All(ctx, days)
-	prune.cleaner.Emoji().All(ctx)
+	prune.cleaner.Emoji().All(ctx, days)
 
 	// Perform a cleanup of storage (for removed local dirs).
 	if err := prune.storage.Storage.Clean(ctx); err != nil {

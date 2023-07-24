@@ -58,18 +58,18 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 	)
 }
 
-func (s *statusDB) GetStatuses(ctx context.Context, ids []string) ([]*gtsmodel.Status, db.Error) {
+func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error) {
 	statuses := make([]*gtsmodel.Status, 0, len(ids))
 
 	for _, id := range ids {
-		// Attempt fetch from DB
+		// Attempt to fetch status from DB.
 		status, err := s.GetStatusByID(ctx, id)
 		if err != nil {
 			log.Errorf(ctx, "error getting status %q: %v", id, err)
 			continue
 		}
 
-		// Append status
+		// Append status to return slice.
 		statuses = append(statuses, status)
 	}
 
@@ -427,6 +427,34 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) db.Error {
 
 		return nil
 	})
+}
+
+func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error) {
+	var statusIDs []string
+
+	// Create SELECT status query.
+	q := s.conn.NewSelect().
+		Table("statuses").
+		Column("id")
+
+	// Append a WHERE LIKE clause to the query
+	// that checks the `emoji` column for any
+	// text containing this specific emoji ID.
+	//
+	// The reason we do this instead of doing a
+	// `WHERE ? IN (emojis)` is that the latter
+	// ends up being much MUCH slower, and the
+	// database stores this ID-array-column as
+	// text anyways, allowing a simple LIKE query.
+	q = whereLike(q, "emojis", emojiID)
+
+	// Execute the query, scanning destination into statusIDs.
+	if _, err := q.Exec(ctx, &statusIDs); err != nil {
+		return nil, s.conn.ProcessError(err)
+	}
+
+	// Convert status IDs into status objects.
+	return s.GetStatusesByIDs(ctx, statusIDs)
 }
 
 func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, db.Error) {

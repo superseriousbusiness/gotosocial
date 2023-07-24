@@ -58,7 +58,7 @@ func (p *Processor) MediaPrune(ctx context.Context, mediaRemoteCacheDays int) gt
 	go func() {
 		ctx := context.Background()
 		p.cleaner.Media().All(ctx, mediaRemoteCacheDays)
-		p.cleaner.Emoji().All(ctx)
+		p.cleaner.Emoji().All(ctx, mediaRemoteCacheDays)
 	}()
 
 	return nil

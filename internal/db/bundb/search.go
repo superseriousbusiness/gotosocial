@@ -19,7 +19,6 @@ package bundb
 
 import (
 	"context"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -59,40 +58,6 @@ import (
 type searchDB struct {
 	conn  *DBConn
 	state *state.State
-}
-
-// replacer is a thread-safe string replacer which escapes
-// common SQLite + Postgres `LIKE` wildcard chars using the
-// escape character `\`. Initialized as a var in this package
-// so it can be reused.
-var replacer = strings.NewReplacer(
-	`\`, `\\`, // Escape char.
-	`%`, `\%`, // Zero or more char.
-	`_`, `\_`, // Exactly one char.
-)
-
-// whereSubqueryLike appends a WHERE clause to the
-// given SelectQuery q, which searches for matches
-// of searchQuery in the given subQuery using LIKE.
-func whereSubqueryLike(
-	q *bun.SelectQuery,
-	subQuery *bun.SelectQuery,
-	searchQuery string,
-) *bun.SelectQuery {
-	// Escape existing wildcard + escape
-	// chars in the search query string.
-	searchQuery = replacer.Replace(searchQuery)
-
-	// Add our own wildcards back in; search
-	// zero or more chars around the query.
-	searchQuery = `%` + searchQuery + `%`
-
-	// Append resulting WHERE
-	// clause to the main query.
-	return q.Where(
-		"(?) LIKE ? ESCAPE ?",
-		subQuery, searchQuery, `\`,
-	)
 }
 
 // Query example (SQLite):
@@ -167,7 +132,7 @@ func (s *searchDB) SearchForAccounts(
 
 	// Search using LIKE for matches of query
 	// string within accountText subquery.
-	q = whereSubqueryLike(q, accountTextSubq, query)
+	q = whereLike(q, accountTextSubq, query)
 
 	if limit > 0 {
 		// Limit amount of accounts returned.
@@ -345,7 +310,7 @@ func (s *searchDB) SearchForStatuses(
 
 	// Search using LIKE for matches of query
 	// string within statusText subquery.
-	q = whereSubqueryLike(q, statusTextSubq, query)
+	q = whereLike(q, statusTextSubq, query)
 
 	if limit > 0 {
 		// Limit amount of statuses returned.

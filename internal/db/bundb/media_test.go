@@ -38,7 +38,7 @@ func (suite *MediaTestSuite) TestGetAttachmentByID() {
 }
 
 func (suite *MediaTestSuite) TestGetOlder() {
-	attachments, err := suite.db.GetRemoteOlderThan(context.Background(), time.Now(), 20)
+	attachments, err := suite.db.GetCachedAttachmentsOlderThan(context.Background(), time.Now(), 20)
 	suite.NoError(err)
 	suite.Len(attachments, 2)
 }

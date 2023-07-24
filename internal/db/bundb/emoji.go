@@ -126,12 +126,20 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			return err
 		}
 
-		// Select all accounts using this emoji.
-		if _, err := tx.NewSelect().
+		// Prepare SELECT accounts query.
+		aq := tx.NewSelect().
 			Table("accounts").
-			Column("id").
-			Where("? IN (emojis)", id).
-			Exec(ctx, &accountIDs); err != nil {
+			Column("id")
+
+		// Append a WHERE LIKE clause to the query
+		// that checks the `emoji` column for any
+		// text containing this specific emoji ID.
+		//
+		// (see GetStatusesUsingEmoji() for details.)
+		aq = whereLike(aq, "emojis", id)
+
+		// Select all accounts using this emoji into accountIDss.
+		if _, err := aq.Exec(ctx, &accountIDs); err != nil {
 			return err
 		}
 
@@ -162,12 +170,20 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) db.Error {
 			}
 		}
 
-		// Select all statuses using this emoji.
-		if _, err := tx.NewSelect().
+		// Prepare SELECT statuses query.
+		sq := tx.NewSelect().
 			Table("statuses").
-			Column("id").
-			Where("? IN (emojis)", id).
-			Exec(ctx, &statusIDs); err != nil {
+			Column("id")
+
+		// Append a WHERE LIKE clause to the query
+		// that checks the `emoji` column for any
+		// text containing this specific emoji ID.
+		//
+		// (see GetStatusesUsingEmoji() for details.)
+		sq = whereLike(sq, "emojis", id)
+
+		// Select all statuses using this emoji into statusIDs.
+		if _, err := sq.Exec(ctx, &statusIDs); err != nil {
 			return err
 		}
 
@@ -328,7 +344,7 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 }
 
 func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
-	emojiIDs := []string{}
+	var emojiIDs []string
 
 	q := e.conn.NewSelect().
 		Table("emojis").
@@ -336,8 +352,54 @@ func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gt
 		Order("id DESC")
 
 	if maxID != "" {
-		q = q.Where("? < ?", bun.Ident("id"), maxID)
+		q = q.Where("id < ?", maxID)
 	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx, &emojiIDs); err != nil {
+		return nil, e.conn.ProcessError(err)
+	}
+
+	return e.GetEmojisByIDs(ctx, emojiIDs)
+}
+
+func (e *emojiDB) GetRemoteEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
+	var emojiIDs []string
+
+	q := e.conn.NewSelect().
+		Table("emojis").
+		Column("id").
+		Where("domain IS NOT NULL").
+		Order("id DESC")
+
+	if maxID != "" {
+		q = q.Where("id < ?", maxID)
+	}
+
+	if limit != 0 {
+		q = q.Limit(limit)
+	}
+
+	if err := q.Scan(ctx, &emojiIDs); err != nil {
+		return nil, e.conn.ProcessError(err)
+	}
+
+	return e.GetEmojisByIDs(ctx, emojiIDs)
+}
+
+func (e *emojiDB) GetCachedEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error) {
+	var emojiIDs []string
+
+	q := e.conn.NewSelect().
+		Table("emojis").
+		Column("id").
+		Where("cached = true").
+		Where("domain IS NOT NULL").
+		Where("created_at < ?", olderThan).
+		Order("created_at DESC")
 
 	if limit != 0 {
 		q = q.Limit(limit)

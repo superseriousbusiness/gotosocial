@@ -51,7 +51,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// fetch statuses by IDs given in the report form (noop if no statuses given)
-	statuses, err := p.state.DB.GetStatuses(ctx, form.StatusIDs)
+	statuses, err := p.state.DB.GetStatusesByIDs(ctx, form.StatusIDs)
 	if err != nil {
 		err = fmt.Errorf("db error fetching report target statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

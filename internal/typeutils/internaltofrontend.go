@@ -1122,7 +1122,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 
 	statuses := make([]*apimodel.Status, 0, len(r.StatusIDs))
 	if len(r.StatusIDs) != 0 && len(r.Statuses) == 0 {
-		r.Statuses, err = c.db.GetStatuses(ctx, r.StatusIDs)
+		r.Statuses, err = c.db.GetStatusesByIDs(ctx, r.StatusIDs)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting statuses from the db: %w", err)
 		}

@@ -31,16 +31,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // ProcessingEmoji represents an emoji currently processing. It exposes
 // various functions for retrieving data from the process.
 type ProcessingEmoji struct {
-	instAccID string            // instance account ID
 	emoji     *gtsmodel.Emoji   // processing emoji details
-	refresh   bool              // whether this is an existing emoji being refreshed
-	newPathID string            // new emoji path ID to use if refreshed
+	existing  bool              // indicates whether this is an existing emoji ID being refreshed / recached
+	newPathID string            // new emoji path ID to use when being refreshed
 	dataFn    DataFunc          // load-data function, returns media stream
 	done      bool              // done is set when process finishes with non ctx canceled type error
 	proc      runners.Processor // proc helps synchronize only a singular running processing instance
@@ -121,24 +121,9 @@ func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, erro
 			return err
 		}
 
-		if p.refresh {
-			columns := []string{
-				"image_remote_url",
-				"image_static_remote_url",
-				"image_url",
-				"image_static_url",
-				"image_path",
-				"image_static_path",
-				"image_content_type",
-				"image_file_size",
-				"image_static_file_size",
-				"image_updated_at",
-				"shortcode",
-				"uri",
-			}
-
-			// Existing emoji we're refreshing, so only need to update.
-			err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji, columns...)
+		if p.existing {
+			// Existing emoji we're updating, so only update.
+			err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
 			return err
 		}
 
@@ -217,7 +202,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	var pathID string
 
-	if p.refresh {
+	if p.newPathID != "" {
 		// This is a refreshed emoji with a new
 		// path ID that this will be stored under.
 		pathID = p.newPathID
@@ -226,10 +211,13 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		pathID = p.emoji.ID
 	}
 
+	// Determine instance account ID from already generated image static path.
+	instanceAccID := regexes.FilePath.FindStringSubmatch(p.emoji.ImageStaticPath)[1]
+
 	// Calculate emoji file path.
 	p.emoji.ImagePath = fmt.Sprintf(
 		"%s/%s/%s/%s.%s",
-		p.instAccID,
+		instanceAccID,
 		TypeEmoji,
 		SizeOriginal,
 		pathID,
@@ -258,12 +246,13 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			log.Errorf(ctx, "error removing too-large-emoji from storage: %v", err)
 		}
+
 		return gtserror.Newf("calculated emoji size %s greater than max allowed %s", size, maxSize)
 	}
 
 	// Fill in remaining attachment data now it's stored.
 	p.emoji.ImageURL = uris.GenerateURIForAttachment(
-		p.instAccID,
+		instanceAccID,
 		string(TypeEmoji),
 		string(SizeOriginal),
 		pathID,
@@ -271,6 +260,10 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	)
 	p.emoji.ImageContentType = info.MIME.Value
 	p.emoji.ImageFileSize = int(sz)
+	p.emoji.Cached = func() *bool {
+		ok := true
+		return &ok
+	}()
 
 	return nil
 }
@@ -297,6 +290,7 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	// This shouldn't already exist, but we do a check as it's worth logging.
 	if have, _ := p.mgr.state.Storage.Has(ctx, p.emoji.ImageStaticPath); have {
 		log.Warnf(ctx, "static emoji already exists at storage path: %s", p.emoji.ImagePath)
+
 		// Attempt to remove static existing emoji at storage path (might be broken / out-of-date)
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
 			return gtserror.Newf("error removing static emoji from storage: %v", err)

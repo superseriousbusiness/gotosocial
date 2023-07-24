@@ -42,4 +42,5 @@ type Emoji struct {
 	VisibleInPicker        *bool          `validate:"-" bun:",nullzero,notnull,default:true"`                                                      // Is this emoji visible in the admin emoji picker?
 	Category               *EmojiCategory `validate:"-" bun:"rel:belongs-to"`                                                                      // In which emoji category is this emoji visible?
 	CategoryID             string         `validate:"omitempty,ulid" bun:"type:CHAR(26),nullzero"`                                                 // ID of the category this emoji belongs to.
+	Cached                 *bool          `validate:"-" bun:",nullzero,notnull,default:false"`
 }

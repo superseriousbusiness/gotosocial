@@ -97,6 +97,9 @@ func (d *Driver) Has(ctx context.Context, key string) (bool, error) {
 func (d *Driver) WalkKeys(ctx context.Context, walk func(context.Context, string) error) error {
 	return d.Storage.WalkKeys(ctx, storage.WalkKeysOptions{
 		WalkFn: func(ctx context.Context, entry storage.Entry) error {
+			if entry.Key == "store.lock" {
+				return nil // skip this.
+			}
 			return walk(ctx, entry.Key)
 		},
 	})

@@ -96,9 +96,9 @@ func (m *Media) PruneOrphaned(ctx context.Context) (int, error) {
 
 	// All media files in storage will have path fitting: {$account}/{$type}/{$size}/{$id}.{$ext}
 	if err := m.state.Storage.WalkKeys(ctx, func(ctx context.Context, path string) error {
+		// Check for our expected fileserver path format.
 		if !regexes.FilePath.MatchString(path) {
-			// This is not our expected media
-			// path format, skip this one.
+			log.Warn(ctx, "unexpected storage item: %s", path)
 			return nil
 		}
 
@@ -177,10 +177,10 @@ func (m *Media) UncacheRemote(ctx context.Context, olderThan time.Time) (int, er
 	mostRecent := olderThan
 
 	for {
-		// Fetch the next batch of attachments older than last-set time.
-		attachments, err := m.state.DB.GetRemoteOlderThan(ctx, olderThan, selectLimit)
+		// Fetch the next batch of cached attachments older than last-set time.
+		attachments, err := m.state.DB.GetCachedAttachmentsOlderThan(ctx, olderThan, selectLimit)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return total, gtserror.Newf("error getting remote media: %w", err)
+			return total, gtserror.Newf("error getting remote attachments: %w", err)
 		}
 
 		if len(attachments) == 0 {
@@ -220,9 +220,9 @@ func (m *Media) FixCacheStates(ctx context.Context) (int, error) {
 
 	for {
 		// Fetch the next batch of media attachments up to next max ID.
-		attachments, err := m.state.DB.GetAttachments(ctx, maxID, selectLimit)
+		attachments, err := m.state.DB.GetRemoteAttachments(ctx, maxID, selectLimit)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return total, gtserror.Newf("error getting avatars / headers: %w", err)
+			return total, gtserror.Newf("error getting remote attachments: %w", err)
 		}
 
 		if len(attachments) == 0 {
@@ -323,7 +323,7 @@ func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment
 	l := log.WithContext(ctx).
 		WithField("media", media.ID)
 
-		// Check whether we have the required account for media.
+	// Check whether we have the required account for media.
 	account, missing, err := m.getRelatedAccount(ctx, media)
 	if err != nil {
 		return false, err
@@ -367,14 +367,6 @@ func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment
 }
 
 func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachment) (bool, error) {
-	if !*media.Cached {
-		// We ignore uncached media, a
-		// false negative is a much better
-		// situation than a false positive,
-		// re-cache will just overwrite it.
-		return false, nil
-	}
-
 	// Start a log entry for media.
 	l := log.WithContext(ctx).
 		WithField("media", media.ID)
@@ -397,15 +389,33 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 		return false, nil
 	}
 
-	// So we know this a valid cached media entry.
-	// Check that we have the files on disk required....
-	return m.checkFiles(ctx, func() error {
-		l.Debug("uncaching due to missing media")
-		return m.uncache(ctx, media)
-	},
+	// Check whether files exist.
+	exist, err := m.haveFiles(ctx,
 		media.Thumbnail.Path,
 		media.File.Path,
 	)
+	if err != nil {
+		return false, err
+	}
+
+	switch {
+	case *media.Cached && !exist:
+		// Mark as uncached if expected files don't exist.
+		l.Debug("cached=true exists=false => uncaching")
+		return true, m.uncache(ctx, media)
+
+	case !*media.Cached && exist:
+		// Remove files if we don't expect them to exist.
+		l.Debug("cached=false exists=true => deleting")
+		_, err := m.removeFiles(ctx,
+			media.Thumbnail.Path,
+			media.File.Path,
+		)
+		return true, err
+
+	default:
+		return false, nil
+	}
 }
 
 func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmodel.MediaAttachment) (bool, error) {
