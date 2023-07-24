@@ -34,7 +34,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgconn v1.14.1
 	github.com/jackc/pgx/v5 v5.4.2
-	github.com/microcosm-cc/bluemonday v1.0.24
+	github.com/microcosm-cc/bluemonday v1.0.25
 	github.com/miekg/dns v1.1.55
 	github.com/minio/minio-go/v7 v7.0.60
 	github.com/mitchellh/mapstructure v1.5.0
