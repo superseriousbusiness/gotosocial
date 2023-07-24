@@ -34,4 +34,4 @@ GTS_DB_PORT=${DB_PORT} \
 GTS_DB_USER=${DB_USER} \
 GTS_DB_PASSWORD=${DB_PASS} \
 GTS_DB_DATABASE=${DB_NAME} \
-go test ./... -p 1
+go test ./... -p 1 ${@}

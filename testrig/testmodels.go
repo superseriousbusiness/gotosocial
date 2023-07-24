@@ -1161,6 +1161,7 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 			VisibleInPicker:        TrueBool(),
 			CategoryID:             "01GGQ8V4993XK67B2JB396YFB7",
+			Cached:                 FalseBool(),
 		},
 		"yell": {
 			ID:                     "01GD5KP5CQEE1R3X43Y1EHS2CW",
@@ -1183,6 +1184,7 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			URI:                    "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW",
 			VisibleInPicker:        FalseBool(),
 			CategoryID:             "",
+			Cached:                 FalseBool(),
 		},
 	}
 }
