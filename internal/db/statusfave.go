@@ -26,23 +26,23 @@ import (
 type StatusFave interface {
 	// GetStatusFaveByAccountID gets one status fave created by the given
 	// accountID, targeting the given statusID.
-	GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, Error)
+	GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, error)
 
 	// GetStatusFave returns one status fave with the given id.
-	GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, Error)
+	GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, error)
 
 	// GetStatusFaves returns a slice of faves/likes of the given status.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
-	GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, Error)
+	GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, error)
 
 	// PopulateStatusFave ensures that all sub-models of a fave are populated (account, status, etc).
 	PopulateStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) error
 
 	// PutStatusFave inserts the given statusFave into the database.
-	PutStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) Error
+	PutStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) error
 
 	// DeleteStatusFave deletes one status fave with the given id.
-	DeleteStatusFaveByID(ctx context.Context, id string) Error
+	DeleteStatusFaveByID(ctx context.Context, id string) error
 
 	// DeleteStatusFaves mass deletes status faves targeting targetAccountID
 	// and/or originating from originAccountID and/or faving statusID.
@@ -57,10 +57,10 @@ type StatusFave interface {
 	// originate from originAccountID will be deleted.
 	//
 	// At least one parameter must not be an empty string.
-	DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) Error
+	DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) error
 
 	// DeleteStatusFavesForStatus deletes all status faves that target the
 	// given status ID. This is useful when a status has been deleted, and you need
 	// to clean up after it.
-	DeleteStatusFavesForStatus(ctx context.Context, statusID string) Error
+	DeleteStatusFavesForStatus(ctx context.Context, statusID string) error
 }

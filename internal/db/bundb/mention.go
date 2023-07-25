@@ -31,21 +31,21 @@ import (
 )
 
 type mentionDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
-func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, db.Error) {
+func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, error) {
 	mention, err := m.state.Caches.GTS.Mention().Load("ID", func() (*gtsmodel.Mention, error) {
 		var mention gtsmodel.Mention
 
-		q := m.conn.
+		q := m.db.
 			NewSelect().
 			Model(&mention).
 			Where("? = ?", bun.Ident("mention.id"), id)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, m.conn.ProcessError(err)
+			return nil, m.db.ProcessError(err)
 		}
 
 		return &mention, nil
@@ -84,7 +84,7 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 	return mention, nil
 }
 
-func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, db.Error) {
+func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error) {
 	mentions := make([]*gtsmodel.Mention, 0, len(ids))
 
 	for _, id := range ids {
@@ -104,8 +104,8 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 
 func (m *mentionDB) PutMention(ctx context.Context, mention *gtsmodel.Mention) error {
 	return m.state.Caches.GTS.Mention().Store(mention, func() error {
-		_, err := m.conn.NewInsert().Model(mention).Exec(ctx)
-		return m.conn.ProcessError(err)
+		_, err := m.db.NewInsert().Model(mention).Exec(ctx)
+		return m.db.ProcessError(err)
 	})
 }
 
@@ -125,9 +125,9 @@ func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
 	}
 
 	// Finally delete mention from DB.
-	_, err = m.conn.NewDelete().
+	_, err = m.db.NewDelete().
 		Table("mentions").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
-	return m.conn.ProcessError(err)
+	return m.db.ProcessError(err)
 }

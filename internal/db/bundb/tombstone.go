@@ -27,28 +27,28 @@ import (
 )
 
 type tombstoneDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
-func (t *tombstoneDB) GetTombstoneByURI(ctx context.Context, uri string) (*gtsmodel.Tombstone, db.Error) {
+func (t *tombstoneDB) GetTombstoneByURI(ctx context.Context, uri string) (*gtsmodel.Tombstone, error) {
 	return t.state.Caches.GTS.Tombstone().Load("URI", func() (*gtsmodel.Tombstone, error) {
 		var tomb gtsmodel.Tombstone
 
-		q := t.conn.
+		q := t.db.
 			NewSelect().
 			Model(&tomb).
 			Where("? = ?", bun.Ident("tombstone.uri"), uri)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, t.conn.ProcessError(err)
+			return nil, t.db.ProcessError(err)
 		}
 
 		return &tomb, nil
 	}, uri)
 }
 
-func (t *tombstoneDB) TombstoneExistsWithURI(ctx context.Context, uri string) (bool, db.Error) {
+func (t *tombstoneDB) TombstoneExistsWithURI(ctx context.Context, uri string) (bool, error) {
 	tomb, err := t.GetTombstoneByURI(ctx, uri)
 	if err == db.ErrNoEntries {
 		err = nil
@@ -56,23 +56,23 @@ func (t *tombstoneDB) TombstoneExistsWithURI(ctx context.Context, uri string) (b
 	return (tomb != nil), err
 }
 
-func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) db.Error {
+func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) error {
 	return t.state.Caches.GTS.Tombstone().Store(tombstone, func() error {
-		_, err := t.conn.
+		_, err := t.db.
 			NewInsert().
 			Model(tombstone).
 			Exec(ctx)
-		return t.conn.ProcessError(err)
+		return t.db.ProcessError(err)
 	})
 }
 
-func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) db.Error {
+func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) error {
 	defer t.state.Caches.GTS.Tombstone().Invalidate("ID", id)
 
 	// Delete tombstone from DB.
-	_, err := t.conn.NewDelete().
+	_, err := t.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("tombstones"), bun.Ident("tombstone")).
 		Where("? = ?", bun.Ident("tombstone.id"), id).
 		Exec(ctx)
-	return t.conn.ProcessError(err)
+	return t.db.ProcessError(err)
 }

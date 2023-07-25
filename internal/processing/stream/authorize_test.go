@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 type AuthorizeTestSuite struct {
@@ -38,7 +39,7 @@ func (suite *AuthorizeTestSuite) TestAuthorize() {
 	suite.Equal(suite.testAccounts["local_account_2"].ID, account2.ID)
 
 	noAccount, err := suite.streamProcessor.Authorize(context.Background(), "aaaaaaaaaaaaaaaaaaaaa!!")
-	suite.EqualError(err, "could not load access token: no entries")
+	suite.EqualError(err, "could not load access token: "+db.ErrNoEntries.Error())
 	suite.Nil(noAccount)
 }
 

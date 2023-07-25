@@ -33,7 +33,7 @@ import (
 )
 
 type listDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
@@ -46,7 +46,7 @@ func (l *listDB) GetListByID(ctx context.Context, id string) (*gtsmodel.List, er
 		ctx,
 		"ID",
 		func(list *gtsmodel.List) error {
-			return l.conn.NewSelect().
+			return l.db.NewSelect().
 				Model(list).
 				Where("? = ?", bun.Ident("list.id"), id).
 				Scan(ctx)
@@ -61,7 +61,7 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&list); err != nil {
-			return nil, l.conn.ProcessError(err)
+			return nil, l.db.ProcessError(err)
 		}
 
 		return &list, nil
@@ -86,14 +86,14 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 func (l *listDB) GetListsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error) {
 	// Fetch IDs of all lists owned by this account.
 	var listIDs []string
-	if err := l.conn.
+	if err := l.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("lists"), bun.Ident("list")).
 		Column("list.id").
 		Where("? = ?", bun.Ident("list.account_id"), accountID).
 		Order("list.id DESC").
 		Scan(ctx, &listIDs); err != nil {
-		return nil, l.conn.ProcessError(err)
+		return nil, l.db.ProcessError(err)
 	}
 
 	if len(listIDs) == 0 {
@@ -148,8 +148,8 @@ func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 
 func (l *listDB) PutList(ctx context.Context, list *gtsmodel.List) error {
 	return l.state.Caches.GTS.List().Store(list, func() error {
-		_, err := l.conn.NewInsert().Model(list).Exec(ctx)
-		return l.conn.ProcessError(err)
+		_, err := l.db.NewInsert().Model(list).Exec(ctx)
+		return l.db.ProcessError(err)
 	})
 }
 
@@ -171,12 +171,12 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 	}()
 
 	return l.state.Caches.GTS.List().Store(list, func() error {
-		_, err := l.conn.NewUpdate().
+		_, err := l.db.NewUpdate().
 			Model(list).
 			Where("? = ?", bun.Ident("list.id"), list.ID).
 			Column(columns...).
 			Exec(ctx)
-		return l.conn.ProcessError(err)
+		return l.db.ProcessError(err)
 	})
 }
 
@@ -207,7 +207,7 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 		}
 	}()
 
-	return l.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	return l.db.RunInTx(ctx, func(tx bun.Tx) error {
 		// Delete all entries attached to list.
 		if _, err := tx.NewDelete().
 			Table("list_entries").
@@ -234,7 +234,7 @@ func (l *listDB) GetListEntryByID(ctx context.Context, id string) (*gtsmodel.Lis
 		ctx,
 		"ID",
 		func(listEntry *gtsmodel.ListEntry) error {
-			return l.conn.NewSelect().
+			return l.db.NewSelect().
 				Model(listEntry).
 				Where("? = ?", bun.Ident("list_entry.id"), id).
 				Scan(ctx)
@@ -249,7 +249,7 @@ func (l *listDB) getListEntry(ctx context.Context, lookup string, dbQuery func(*
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&listEntry); err != nil {
-			return nil, l.conn.ProcessError(err)
+			return nil, l.db.ProcessError(err)
 		}
 
 		return &listEntry, nil
@@ -289,7 +289,7 @@ func (l *listDB) GetListEntries(ctx context.Context,
 		frontToBack = true
 	)
 
-	q := l.conn.
+	q := l.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("entry")).
 		// Select only IDs from table
@@ -329,7 +329,7 @@ func (l *listDB) GetListEntries(ctx context.Context,
 	}
 
 	if err := q.Scan(ctx, &entryIDs); err != nil {
-		return nil, l.conn.ProcessError(err)
+		return nil, l.db.ProcessError(err)
 	}
 
 	if len(entryIDs) == 0 {
@@ -362,7 +362,7 @@ func (l *listDB) GetListEntries(ctx context.Context,
 func (l *listDB) GetListEntriesForFollowID(ctx context.Context, followID string) ([]*gtsmodel.ListEntry, error) {
 	var entryIDs []string
 
-	if err := l.conn.
+	if err := l.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("entry")).
 		// Select only IDs from table
@@ -370,7 +370,7 @@ func (l *listDB) GetListEntriesForFollowID(ctx context.Context, followID string)
 		// Select only entries belonging with given followID.
 		Where("? = ?", bun.Ident("entry.follow_id"), followID).
 		Scan(ctx, &entryIDs); err != nil {
-		return nil, l.conn.ProcessError(err)
+		return nil, l.db.ProcessError(err)
 	}
 
 	if len(entryIDs) == 0 {
@@ -424,7 +424,7 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 	}()
 
 	// Finally, insert each list entry into the database.
-	return l.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	return l.db.RunInTx(ctx, func(tx bun.Tx) error {
 		for _, entry := range entries {
 			if err := l.state.Caches.GTS.ListEntry().Store(entry, func() error {
 				_, err := tx.
@@ -468,7 +468,7 @@ func (l *listDB) DeleteListEntry(ctx context.Context, id string) error {
 	}()
 
 	// Finally delete the list entry.
-	_, err = l.conn.NewDelete().
+	_, err = l.db.NewDelete().
 		Table("list_entries").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
@@ -479,14 +479,14 @@ func (l *listDB) DeleteListEntriesForFollowID(ctx context.Context, followID stri
 	var entryIDs []string
 
 	// Fetch entry IDs for follow ID.
-	if err := l.conn.
+	if err := l.db.
 		NewSelect().
 		Table("list_entries").
 		Column("id").
 		Where("? = ?", bun.Ident("follow_id"), followID).
 		Order("id DESC").
 		Scan(ctx, &entryIDs); err != nil {
-		return l.conn.ProcessError(err)
+		return l.db.ProcessError(err)
 	}
 
 	for _, id := range entryIDs {

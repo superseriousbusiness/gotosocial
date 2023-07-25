@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 
@@ -48,7 +47,7 @@ const (
 // context for use down the line.
 //
 // In case of an error, the request will be aborted with http code 500.
-func SignatureCheck(uriBlocked func(context.Context, *url.URL) (bool, db.Error)) func(*gin.Context) {
+func SignatureCheck(uriBlocked func(context.Context, *url.URL) (bool, error)) func(*gin.Context) {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 

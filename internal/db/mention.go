@@ -26,10 +26,10 @@ import (
 // Mention contains functions for getting/creating mentions in the database.
 type Mention interface {
 	// GetMention gets a single mention by ID
-	GetMention(ctx context.Context, id string) (*gtsmodel.Mention, Error)
+	GetMention(ctx context.Context, id string) (*gtsmodel.Mention, error)
 
 	// GetMentions gets multiple mentions.
-	GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, Error)
+	GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error)
 
 	// PutMention will insert the given mention into the database.
 	PutMention(ctx context.Context, mention *gtsmodel.Mention) error

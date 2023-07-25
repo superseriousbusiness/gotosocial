@@ -28,21 +28,21 @@ type Notification interface {
 	// GetNotifications returns a slice of notifications that pertain to the given accountID.
 	//
 	// Returned notifications will be ordered ID descending (ie., highest/newest to lowest/oldest).
-	GetAccountNotifications(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, excludeTypes []string) ([]*gtsmodel.Notification, Error)
+	GetAccountNotifications(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, excludeTypes []string) ([]*gtsmodel.Notification, error)
 
 	// GetNotification returns one notification according to its id.
-	GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, Error)
+	GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, error)
 
 	// GetNotification gets one notification according to the provided parameters, if it exists.
 	// Since not all notifications are about a status, statusID can be an empty string.
-	GetNotification(ctx context.Context, notificationType gtsmodel.NotificationType, targetAccountID string, originAccountID string, statusID string) (*gtsmodel.Notification, Error)
+	GetNotification(ctx context.Context, notificationType gtsmodel.NotificationType, targetAccountID string, originAccountID string, statusID string) (*gtsmodel.Notification, error)
 
 	// PutNotification will insert the given notification into the database.
 	PutNotification(ctx context.Context, notif *gtsmodel.Notification) error
 
 	// DeleteNotificationByID deletes one notification according to its id,
 	// and removes that notification from the in-memory cache.
-	DeleteNotificationByID(ctx context.Context, id string) Error
+	DeleteNotificationByID(ctx context.Context, id string) error
 
 	// DeleteNotifications mass deletes notifications targeting targetAccountID
 	// and/or originating from originAccountID.
@@ -57,10 +57,10 @@ type Notification interface {
 	// originate from originAccountID will be deleted.
 	//
 	// At least one parameter must not be an empty string.
-	DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) Error
+	DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) error
 
 	// DeleteNotificationsForStatus deletes all notifications that relate to
 	// the given statusID. This function is useful when a status has been deleted,
 	// and so notifications relating to that status must also be deleted.
-	DeleteNotificationsForStatus(ctx context.Context, statusID string) Error
+	DeleteNotificationsForStatus(ctx context.Context, statusID string) error
 }

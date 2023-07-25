@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -30,20 +29,20 @@ import (
 )
 
 type statusBookmarkDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
-func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*gtsmodel.StatusBookmark, db.Error) {
+func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*gtsmodel.StatusBookmark, error) {
 	bookmark := new(gtsmodel.StatusBookmark)
 
-	err := s.conn.
+	err := s.db.
 		NewSelect().
 		Model(bookmark).
 		Where("? = ?", bun.Ident("status_bookmark.id"), id).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	bookmark.Account, err = s.state.DB.GetAccountByID(ctx, bookmark.AccountID)
@@ -64,10 +63,10 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*g
 	return bookmark, nil
 }
 
-func (s *statusBookmarkDB) GetStatusBookmarkID(ctx context.Context, accountID string, statusID string) (string, db.Error) {
+func (s *statusBookmarkDB) GetStatusBookmarkID(ctx context.Context, accountID string, statusID string) (string, error) {
 	var id string
 
-	q := s.conn.
+	q := s.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Column("status_bookmark.id").
@@ -76,13 +75,13 @@ func (s *statusBookmarkDB) GetStatusBookmarkID(ctx context.Context, accountID st
 		Limit(1)
 
 	if err := q.Scan(ctx, &id); err != nil {
-		return "", s.conn.ProcessError(err)
+		return "", s.db.ProcessError(err)
 	}
 
 	return id, nil
 }
 
-func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, db.Error) {
+func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID string, limit int, maxID string, minID string) ([]*gtsmodel.StatusBookmark, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -91,7 +90,7 @@ func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID str
 	// Guess size of IDs based on limit.
 	ids := make([]string, 0, limit)
 
-	q := s.conn.
+	q := s.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Column("status_bookmark.id").
@@ -115,7 +114,7 @@ func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID str
 	}
 
 	if err := q.Scan(ctx, &ids); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	bookmarks := make([]*gtsmodel.StatusBookmark, 0, len(ids))
@@ -133,26 +132,26 @@ func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID str
 	return bookmarks, nil
 }
 
-func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, statusBookmark *gtsmodel.StatusBookmark) db.Error {
-	_, err := s.conn.
+func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, statusBookmark *gtsmodel.StatusBookmark) error {
+	_, err := s.db.
 		NewInsert().
 		Model(statusBookmark).
 		Exec(ctx)
 
-	return s.conn.ProcessError(err)
+	return s.db.ProcessError(err)
 }
 
-func (s *statusBookmarkDB) DeleteStatusBookmark(ctx context.Context, id string) db.Error {
-	_, err := s.conn.
+func (s *statusBookmarkDB) DeleteStatusBookmark(ctx context.Context, id string) error {
+	_, err := s.db.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Where("? = ?", bun.Ident("status_bookmark.id"), id).
 		Exec(ctx)
 
-	return s.conn.ProcessError(err)
+	return s.db.ProcessError(err)
 }
 
-func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string) db.Error {
+func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string) error {
 	if targetAccountID == "" && originAccountID == "" {
 		return errors.New("DeleteBookmarks: one of targetAccountID or originAccountID must be set")
 	}
@@ -161,7 +160,7 @@ func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAcco
 	// statement (when bookmarks have a cache),
 	// + use the IDs to invalidate cache entries.
 
-	q := s.conn.
+	q := s.db.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark"))
 
@@ -174,24 +173,24 @@ func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAcco
 	}
 
 	if _, err := q.Exec(ctx); err != nil {
-		return s.conn.ProcessError(err)
+		return s.db.ProcessError(err)
 	}
 
 	return nil
 }
 
-func (s *statusBookmarkDB) DeleteStatusBookmarksForStatus(ctx context.Context, statusID string) db.Error {
+func (s *statusBookmarkDB) DeleteStatusBookmarksForStatus(ctx context.Context, statusID string) error {
 	// TODO: Capture bookmark IDs in a RETURNING
 	// statement (when bookmarks have a cache),
 	// + use the IDs to invalidate cache entries.
 
-	q := s.conn.
+	q := s.db.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID)
 
 	if _, err := q.Exec(ctx); err != nil {
-		return s.conn.ProcessError(err)
+		return s.db.ProcessError(err)
 	}
 
 	return nil

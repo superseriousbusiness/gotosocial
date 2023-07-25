@@ -26,21 +26,21 @@ import (
 // User contains functions related to user getting/setting/creation.
 type User interface {
 	// GetAllUsers returns all local user accounts, or an error if something goes wrong.
-	GetAllUsers(ctx context.Context) ([]*gtsmodel.User, Error)
+	GetAllUsers(ctx context.Context) ([]*gtsmodel.User, error)
 	// GetUserByID returns one user with the given ID, or an error if something goes wrong.
-	GetUserByID(ctx context.Context, id string) (*gtsmodel.User, Error)
+	GetUserByID(ctx context.Context, id string) (*gtsmodel.User, error)
 	// GetUserByAccountID returns one user by its account ID, or an error if something goes wrong.
-	GetUserByAccountID(ctx context.Context, accountID string) (*gtsmodel.User, Error)
+	GetUserByAccountID(ctx context.Context, accountID string) (*gtsmodel.User, error)
 	// GetUserByID returns one user with the given email address, or an error if something goes wrong.
-	GetUserByEmailAddress(ctx context.Context, emailAddress string) (*gtsmodel.User, Error)
+	GetUserByEmailAddress(ctx context.Context, emailAddress string) (*gtsmodel.User, error)
 	// GetUserByExternalID returns one user with the given external id, or an error if something goes wrong.
-	GetUserByExternalID(ctx context.Context, id string) (*gtsmodel.User, Error)
+	GetUserByExternalID(ctx context.Context, id string) (*gtsmodel.User, error)
 	// GetUserByConfirmationToken returns one user by its confirmation token, or an error if something goes wrong.
-	GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, Error)
+	GetUserByConfirmationToken(ctx context.Context, confirmationToken string) (*gtsmodel.User, error)
 	// PutUser will attempt to place user in the database
-	PutUser(ctx context.Context, user *gtsmodel.User) Error
+	PutUser(ctx context.Context, user *gtsmodel.User) error
 	// UpdateUser updates one user by its primary key, updating either only the specified columns, or all of them.
-	UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) Error
+	UpdateUser(ctx context.Context, user *gtsmodel.User, columns ...string) error
 	// DeleteUserByID deletes one user by its ID.
-	DeleteUserByID(ctx context.Context, userID string) Error
+	DeleteUserByID(ctx context.Context, userID string) error
 }

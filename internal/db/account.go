@@ -27,67 +27,67 @@ import (
 // Account contains functions related to account getting/setting/creation.
 type Account interface {
 	// GetAccountByID returns one account with the given ID, or an error if something goes wrong.
-	GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, Error)
+	GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, error)
 
 	// GetAccountByURI returns one account with the given URI, or an error if something goes wrong.
-	GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+	GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
 	// GetAccountByURL returns one account with the given URL, or an error if something goes wrong.
-	GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+	GetAccountByURL(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
 	// GetAccountByUsernameDomain returns one account with the given username and domain, or an error if something goes wrong.
-	GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, Error)
+	GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, error)
 
 	// GetAccountByPubkeyID returns one account with the given public key URI (ID), or an error if something goes wrong.
-	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, Error)
+	GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmodel.Account, error)
 
 	// GetAccountByInboxURI returns one account with the given inbox_uri, or an error if something goes wrong.
-	GetAccountByInboxURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+	GetAccountByInboxURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
 	// GetAccountByOutboxURI returns one account with the given outbox_uri, or an error if something goes wrong.
-	GetAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+	GetAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
 	// GetAccountByFollowingURI returns one account with the given following_uri, or an error if something goes wrong.
-	GetAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+	GetAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
 	// GetAccountByFollowersURI returns one account with the given followers_uri, or an error if something goes wrong.
-	GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, Error)
+	GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
 	// PopulateAccount ensures that all sub-models of an account are populated (e.g. avatar, header etc).
 	PopulateAccount(ctx context.Context, account *gtsmodel.Account) error
 
 	// PutAccount puts one account in the database.
-	PutAccount(ctx context.Context, account *gtsmodel.Account) Error
+	PutAccount(ctx context.Context, account *gtsmodel.Account) error
 
 	// UpdateAccount updates one account by ID.
-	UpdateAccount(ctx context.Context, account *gtsmodel.Account, columns ...string) Error
+	UpdateAccount(ctx context.Context, account *gtsmodel.Account, columns ...string) error
 
 	// DeleteAccount deletes one account from the database by its ID.
 	// DO NOT USE THIS WHEN SUSPENDING ACCOUNTS! In that case you should mark the
 	// account as suspended instead, rather than deleting from the db entirely.
-	DeleteAccount(ctx context.Context, id string) Error
+	DeleteAccount(ctx context.Context, id string) error
 
 	// GetAccountCustomCSSByUsername returns the custom css of an account on this instance with the given username.
-	GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, Error)
+	GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, error)
 
 	// GetAccountFaves fetches faves/likes created by the target accountID.
-	GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, Error)
+	GetAccountFaves(ctx context.Context, accountID string) ([]*gtsmodel.StatusFave, error)
 
 	// GetAccountsUsingEmoji fetches all account models using emoji with given ID stored in their 'emojis' column.
 	GetAccountsUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Account, error)
 
 	// GetAccountStatusesCount is a shortcut for the common action of counting statuses produced by accountID.
-	CountAccountStatuses(ctx context.Context, accountID string) (int, Error)
+	CountAccountStatuses(ctx context.Context, accountID string) (int, error)
 
 	// CountAccountPinned returns the total number of pinned statuses owned by account with the given id.
-	CountAccountPinned(ctx context.Context, accountID string) (int, Error)
+	CountAccountPinned(ctx context.Context, accountID string) (int, error)
 
 	// GetAccountStatuses is a shortcut for getting the most recent statuses. accountID is optional, if not provided
 	// then all statuses will be returned. If limit is set to 0, the size of the returned slice will not be limited. This can
 	// be very memory intensive so you probably shouldn't do this!
 	//
 	// In the case of no statuses, this function will return db.ErrNoEntries.
-	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, Error)
+	GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, error)
 
 	// GetAccountPinnedStatuses returns ONLY statuses owned by the give accountID for which a corresponding StatusPin
 	// exists in the database. Statuses which are not pinned will not be returned by this function.
@@ -95,28 +95,28 @@ type Account interface {
 	// Statuses will be returned in the order in which they were pinned, from latest pinned to oldest pinned (descending).
 	//
 	// In the case of no statuses, this function will return db.ErrNoEntries.
-	GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, Error)
+	GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, error)
 
 	// GetAccountWebStatuses is similar to GetAccountStatuses, but it's specifically for returning statuses that
 	// should be visible via the web view of an account. So, only public, federated statuses that aren't boosts
 	// or replies.
 	//
 	// In the case of no statuses, this function will return db.ErrNoEntries.
-	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, Error)
+	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, error)
 
-	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, Error)
+	GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, error)
 
 	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
 	//
 	// If webOnly is true, then the time of the last non-reply, non-boost, public status of the account will be returned.
 	//
 	// The returned time will be zero if account has never posted anything.
-	GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, Error)
+	GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, error)
 
 	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
-	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) Error
+	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error
 
 	// GetInstanceAccount returns the instance account for the given domain.
 	// If domain is empty, this instance account will be returned.
-	GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, Error)
+	GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, error)
 }

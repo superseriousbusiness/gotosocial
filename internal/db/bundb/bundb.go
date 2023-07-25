@@ -79,13 +79,13 @@ type DBService struct {
 	db.Timeline
 	db.User
 	db.Tombstone
-	conn *DBConn
+	db *WrappedDB
 }
 
-// GetConn returns the underlying bun connection.
+// GetDB returns the underlying database connection pool.
 // Should only be used in testing + exceptional circumstance.
-func (dbService *DBService) GetConn() *DBConn {
-	return dbService.conn
+func (dbService *DBService) DB() *WrappedDB {
+	return dbService.db
 }
 
 func doMigration(ctx context.Context, db *bun.DB) error {
@@ -112,18 +112,18 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
-	var conn *DBConn
+	var db *WrappedDB
 	var err error
 	t := strings.ToLower(config.GetDbType())
 
 	switch t {
 	case "postgres":
-		conn, err = pgConn(ctx)
+		db, err = pgConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	case "sqlite":
-		conn, err = sqliteConn(ctx)
+		db, err = sqliteConn(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -132,15 +132,15 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	}
 
 	// Add database query hooks.
-	conn.DB.AddQueryHook(queryHook{})
+	db.AddQueryHook(queryHook{})
 	if config.GetTracingEnabled() {
-		conn.DB.AddQueryHook(tracing.InstrumentBun())
+		db.AddQueryHook(tracing.InstrumentBun())
 	}
 
 	// execute sqlite pragmas *after* adding database hook;
 	// this allows the pragma queries to be logged
 	if t == "sqlite" {
-		if err := sqlitePragmas(ctx, conn); err != nil {
+		if err := sqlitePragmas(ctx, db); err != nil {
 			return nil, err
 		}
 	}
@@ -148,103 +148,103 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	// table registration is needed for many-to-many, see:
 	// https://bun.uptrace.dev/orm/many-to-many-relation/
 	for _, t := range registerTables {
-		conn.RegisterModel(t)
+		db.RegisterModel(t)
 	}
 
 	// perform any pending database migrations: this includes
 	// the very first 'migration' on startup which just creates
 	// necessary tables
-	if err := doMigration(ctx, conn.DB); err != nil {
+	if err := doMigration(ctx, db.DB); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
 	ps := &DBService{
 		Account: &accountDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Admin: &adminDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Basic: &basicDB{
-			conn: conn,
+			db: db,
 		},
 		Domain: &domainDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Emoji: &emojiDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Instance: &instanceDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		List: &listDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Media: &mediaDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Mention: &mentionDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Notification: &notificationDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Relationship: &relationshipDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Report: &reportDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Search: &searchDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Session: &sessionDB{
-			conn: conn,
+			db: db,
 		},
 		Status: &statusDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		StatusBookmark: &statusBookmarkDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		StatusFave: &statusFaveDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Timeline: &timelineDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		User: &userDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Tombstone: &tombstoneDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
-		conn: conn,
+		db: db,
 	}
 
 	// we can confidently return this useable service now
 	return ps, nil
 }
 
-func pgConn(ctx context.Context) (*DBConn, error) {
+func pgConn(ctx context.Context) (*WrappedDB, error) {
 	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
 	if err != nil {
 		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
@@ -259,10 +259,10 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 	sqldb.SetMaxIdleConns(2)                  // assume default 2; if max idle is less than max open, it will be automatically adjusted
 	sqldb.SetConnMaxLifetime(5 * time.Minute) // fine to kill old connections
 
-	conn := WrapDBConn(bun.NewDB(sqldb, pgdialect.New()))
+	conn := WrapDB(bun.NewDB(sqldb, pgdialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.PingContext(ctx); err != nil {
+	if err := conn.DB.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("postgres ping: %s", err)
 	}
 
@@ -270,7 +270,7 @@ func pgConn(ctx context.Context) (*DBConn, error) {
 	return conn, nil
 }
 
-func sqliteConn(ctx context.Context) (*DBConn, error) {
+func sqliteConn(ctx context.Context) (*WrappedDB, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
 	if address == "" {
@@ -326,15 +326,15 @@ func sqliteConn(ctx context.Context) (*DBConn, error) {
 	// Tune db connections for sqlite, see:
 	// - https://bun.uptrace.dev/guide/running-bun-in-production.html#database-sql
 	// - https://www.alexedwards.net/blog/configuring-sqldb
-	sqldb.SetMaxOpenConns(1)    // only 1 connection regardless of multiplier, see https://github.com/superseriousbusiness/gotosocial/issues/1407
-	sqldb.SetMaxIdleConns(1)    // only keep max 1 idle connection around
-	sqldb.SetConnMaxLifetime(0) // don't kill connections due to age
+	sqldb.SetMaxOpenConns(maxOpenConns()) // x number of conns per CPU
+	sqldb.SetMaxIdleConns(1)              // only keep max 1 idle connection around
+	sqldb.SetConnMaxLifetime(0)           // don't kill connections due to age
 
 	// Wrap Bun database conn in our own wrapper
-	conn := WrapDBConn(bun.NewDB(sqldb, sqlitedialect.New()))
+	conn := WrapDB(bun.NewDB(sqldb, sqlitedialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.PingContext(ctx); err != nil {
+	if err := conn.DB.PingContext(ctx); err != nil {
 		if errWithCode, ok := err.(*sqlite.Error); ok {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
 		}
@@ -445,7 +445,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 
 // sqlitePragmas sets desired sqlite pragmas based on configured values, and
 // logs the results of the pragma queries. Errors if something goes wrong.
-func sqlitePragmas(ctx context.Context, conn *DBConn) error {
+func sqlitePragmas(ctx context.Context, db *WrappedDB) error {
 	var pragmas [][]string
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {
 		// Set the user provided SQLite journal mode
@@ -475,12 +475,12 @@ func sqlitePragmas(ctx context.Context, conn *DBConn) error {
 		pk := p[0]
 		pv := p[1]
 
-		if _, err := conn.DB.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
+		if _, err := db.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
 			return fmt.Errorf("error executing sqlite pragma %s: %w", pk, err)
 		}
 
 		var res string
-		if err := conn.DB.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
+		if err := db.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
 			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
 		}
 
@@ -502,7 +502,7 @@ func (dbService *DBService) TagStringToTag(ctx context.Context, t string, origin
 	tag := &gtsmodel.Tag{}
 	// we can use selectorinsert here to create the new tag if it doesn't exist already
 	// inserted will be true if this is a new tag we just created
-	if err := dbService.conn.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil && err != sql.ErrNoRows {
+	if err := dbService.db.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil && err != sql.ErrNoRows {
 		return nil, fmt.Errorf("error getting tag with name %s: %s", t, err)
 	}
 
