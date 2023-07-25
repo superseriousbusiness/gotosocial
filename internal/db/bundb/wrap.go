@@ -214,18 +214,9 @@ func (db *WrappedDB) NotExists(ctx context.Context, query *bun.SelectQuery) (boo
 
 // retryOnBusy will retry given function on returned 'errBusy'.
 func retryOnBusy(ctx context.Context, fn func() error) error {
-	const (
-		// max no. attempts.
-		maxRetries = 16
+	var backoff time.Duration
 
-		// base backoff duration multiplier.
-		baseBackoff = 2 * time.Millisecond
-
-		// maximum backoff duration possible.
-		maxBackoff = baseBackoff * (1 << maxRetries)
-	)
-
-	for i := 0; i < maxRetries; i += 2 {
+	for i := 0; ; i++ {
 		// Perform func.
 		err := fn()
 
@@ -236,8 +227,23 @@ func retryOnBusy(ctx context.Context, fn func() error) error {
 			return err
 		}
 
-		// backoff according to a multiplier of 2^n.
-		backoff := baseBackoff * (1 << (i + 1))
+		// backoff according to a multiplier of 2ms * 2^2n,
+		// up to a maximum possible backoff time of 5 minutes.
+		//
+		// this works out as the following:
+		// 4ms
+		// 16ms
+		// 64ms
+		// 256ms
+		// 1.024s
+		// 4.096s
+		// 16.384s
+		// 1m5.536s
+		// 4m22.144s
+		backoff = 2 * time.Millisecond * (1 << (2*i + 1))
+		if backoff >= 5*time.Minute {
+			break
+		}
 
 		select {
 		// Context cancelled.
@@ -248,5 +254,5 @@ func retryOnBusy(ctx context.Context, fn func() error) error {
 		}
 	}
 
-	return gtserror.Newf("%w (waited > %s)", db.ErrBusyTimeout, maxBackoff)
+	return gtserror.Newf("%w (waited > %s)", db.ErrBusyTimeout, backoff)
 }
