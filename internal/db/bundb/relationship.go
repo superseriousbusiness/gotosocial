@@ -173,32 +173,32 @@ func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string,
 
 func (r *relationshipDB) CountAccountFollows(ctx context.Context, accountID string) (int, error) {
 	followIDs, err := r.getAccountFollowIDs(ctx, accountID)
-	return len(followIDs), r.db.ProcessError(err)
+	return len(followIDs), err
 }
 
 func (r *relationshipDB) CountAccountLocalFollows(ctx context.Context, accountID string) (int, error) {
 	followIDs, err := r.getAccountLocalFollowIDs(ctx, accountID)
-	return len(followIDs), r.db.ProcessError(err)
+	return len(followIDs), err
 }
 
 func (r *relationshipDB) CountAccountFollowers(ctx context.Context, accountID string) (int, error) {
 	followerIDs, err := r.getAccountFollowerIDs(ctx, accountID)
-	return len(followerIDs), r.db.ProcessError(err)
+	return len(followerIDs), err
 }
 
 func (r *relationshipDB) CountAccountLocalFollowers(ctx context.Context, accountID string) (int, error) {
 	followerIDs, err := r.getAccountLocalFollowerIDs(ctx, accountID)
-	return len(followerIDs), r.db.ProcessError(err)
+	return len(followerIDs), err
 }
 
 func (r *relationshipDB) CountAccountFollowRequests(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollowRequests(r.db, accountID).Count(ctx)
-	return n, r.db.ProcessError(err)
+	followReqIDs, err := r.getAccountFollowRequestIDs(ctx, accountID)
+	return len(followReqIDs), err
 }
 
 func (r *relationshipDB) CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollowRequesting(r.db, accountID).Count(ctx)
-	return n, r.db.ProcessError(err)
+	followReqIDs, err := r.getAccountFollowRequestingIDs(ctx, accountID)
+	return len(followReqIDs), err
 }
 
 func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID string) ([]string, error) {
@@ -357,7 +357,7 @@ func newSelectLocalFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
 		OrderExpr("? DESC", bun.Ident("updated_at"))
 }
 
-// newSelectBlocks ...
+// newSelectBlocks returns a new select query for all rows in the blocks table with account_id = accountID.
 func newSelectBlocks(db *WrappedDB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("blocks")).

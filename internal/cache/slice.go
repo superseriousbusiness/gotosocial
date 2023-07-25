@@ -22,12 +22,13 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// SliceCache ...
-type SliceCache[T comparable] struct {
+// SliceCache wraps a ttl.Cache to provide simple loader-callback
+// functions for fetching + caching slices of objects (e.g. IDs).
+type SliceCache[T any] struct {
 	*ttl.Cache[string, []T]
 }
 
-// Load ...
+// Load will attempt to load an existing slice from the cache for the given key, else calling the provided load function and caching the result.
 func (c *SliceCache[T]) Load(key string, load func() ([]T, error)) ([]T, error) {
 	// Look for follow IDs list in cache under this key.
 	data, ok := c.Get(key)
@@ -49,7 +50,7 @@ func (c *SliceCache[T]) Load(key string, load func() ([]T, error)) ([]T, error) 
 	return slices.Clone(data), nil
 }
 
-// LoadRange ...
+// LoadRange is functionally the same as .Load(), but will pass the result through provided reslice function before returning a cloned result.
 func (c *SliceCache[T]) LoadRange(key string, load func() ([]T, error), reslice func([]T) []T) ([]T, error) {
 	// Look for follow IDs list in cache under this key.
 	data, ok := c.Get(key)
