@@ -126,16 +126,12 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			return err
 		}
 
-		// Prepare SELECT accounts query.
-		aq := tx.NewSelect().
-			Table("accounts").
-			Column("id")
-
-		// Append a WHERE LIKE clause to the query
+		// Prepare a SELECT query with a WHERE LIKE
 		// that checks the `emoji` column for any
 		// text containing this specific emoji ID.
 		//
 		// (see GetStatusesUsingEmoji() for details.)
+		aq := tx.NewSelect().Table("accounts").Column("id")
 		aq = whereLike(aq, "emojis", id)
 
 		// Select all accounts using this emoji into accountIDss.
@@ -170,16 +166,12 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			}
 		}
 
-		// Prepare SELECT statuses query.
-		sq := tx.NewSelect().
-			Table("statuses").
-			Column("id")
-
-		// Append a WHERE LIKE clause to the query
+		// Prepare a SELECT query with a WHERE LIKE
 		// that checks the `emoji` column for any
 		// text containing this specific emoji ID.
 		//
 		// (see GetStatusesUsingEmoji() for details.)
+		sq := tx.NewSelect().Table("statuses").Column("id")
 		sq = whereLike(sq, "emojis", id)
 
 		// Select all statuses using this emoji into statusIDs.
