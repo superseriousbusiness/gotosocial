@@ -20,10 +20,10 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -46,7 +46,7 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 		targetAccount,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("GetRelationship: error fetching follow: %w", err)
+		return nil, gtserror.Newf("error fetching follow: %w", err)
 	}
 
 	if follow != nil {
@@ -62,7 +62,7 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 		requestingAccount,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("GetRelationship: error checking followedBy: %w", err)
+		return nil, gtserror.Newf("error checking followedBy: %w", err)
 	}
 
 	// check if requesting has follow requested target
@@ -71,19 +71,19 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 		targetAccount,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("GetRelationship: error checking requested: %w", err)
+		return nil, gtserror.Newf("error checking requested: %w", err)
 	}
 
 	// check if the requesting account is blocking the target account
 	rel.Blocking, err = r.IsBlocked(ctx, requestingAccount, targetAccount)
 	if err != nil {
-		return nil, fmt.Errorf("GetRelationship: error checking blocking: %w", err)
+		return nil, gtserror.Newf("error checking blocking: %w", err)
 	}
 
 	// check if the requesting account is blocked by the target account
 	rel.BlockedBy, err = r.IsBlocked(ctx, targetAccount, requestingAccount)
 	if err != nil {
-		return nil, fmt.Errorf("GetRelationship: error checking blockedBy: %w", err)
+		return nil, gtserror.Newf("error checking blockedBy: %w", err)
 	}
 
 	// retrieve a note by the requesting account on the target account, if there is one
@@ -244,7 +244,7 @@ func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID st
 }
 
 func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, accountID string) ([]string, error) {
-	return r.state.Caches.GTS.FollowIDs().Load("<"+accountID, func() ([]string, error) {
+	return r.state.Caches.GTS.FollowIDs().Load("l<"+accountID, func() ([]string, error) {
 		var followIDs []string
 
 		// Follow IDs not in cache, perform DB query!
