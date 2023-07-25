@@ -208,9 +208,6 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		return nil, err
 	}
 
-	// Invalidate follow request from cache lookups on return.
-	defer r.state.Caches.GTS.FollowRequest().Invalidate("ID", followReq.ID)
-
 	// Delete original follow request.
 	if _, err := r.db.
 		NewDelete().
