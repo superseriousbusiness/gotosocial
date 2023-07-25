@@ -30,11 +30,11 @@ import (
 )
 
 type domainDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
-func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) db.Error {
+func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) error {
 	// Normalize the domain as punycode
 	var err error
 	block.Domain, err = util.Punify(block.Domain)
@@ -43,10 +43,10 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 	}
 
 	// Attempt to store domain block in DB
-	if _, err := d.conn.NewInsert().
+	if _, err := d.db.NewInsert().
 		Model(block).
 		Exec(ctx); err != nil {
-		return d.conn.ProcessError(err)
+		return d.db.ProcessError(err)
 	}
 
 	// Clear the domain block cache (for later reload)
@@ -55,7 +55,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 	return nil
 }
 
-func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, db.Error) {
+func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, error) {
 	// Normalize the domain as punycode
 	domain, err := util.Punify(domain)
 	if err != nil {
@@ -71,12 +71,12 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 	var block gtsmodel.DomainBlock
 
 	// Look for block matching domain in DB
-	q := d.conn.
+	q := d.db.
 		NewSelect().
 		Model(&block).
 		Where("? = ?", bun.Ident("domain_block.domain"), domain)
 	if err := q.Scan(ctx); err != nil {
-		return nil, d.conn.ProcessError(err)
+		return nil, d.db.ProcessError(err)
 	}
 
 	return &block, nil
@@ -85,31 +85,31 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 func (d *domainDB) GetDomainBlocks(ctx context.Context) ([]*gtsmodel.DomainBlock, error) {
 	blocks := []*gtsmodel.DomainBlock{}
 
-	if err := d.conn.
+	if err := d.db.
 		NewSelect().
 		Model(&blocks).
 		Scan(ctx); err != nil {
-		return nil, d.conn.ProcessError(err)
+		return nil, d.db.ProcessError(err)
 	}
 
 	return blocks, nil
 }
 
-func (d *domainDB) GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel.DomainBlock, db.Error) {
+func (d *domainDB) GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel.DomainBlock, error) {
 	var block gtsmodel.DomainBlock
 
-	q := d.conn.
+	q := d.db.
 		NewSelect().
 		Model(&block).
 		Where("? = ?", bun.Ident("domain_block.id"), id)
 	if err := q.Scan(ctx); err != nil {
-		return nil, d.conn.ProcessError(err)
+		return nil, d.db.ProcessError(err)
 	}
 
 	return &block, nil
 }
 
-func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Error {
+func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) error {
 	// Normalize the domain as punycode
 	domain, err := util.Punify(domain)
 	if err != nil {
@@ -117,11 +117,11 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	}
 
 	// Attempt to delete domain block
-	if _, err := d.conn.NewDelete().
+	if _, err := d.db.NewDelete().
 		Model((*gtsmodel.DomainBlock)(nil)).
 		Where("? = ?", bun.Ident("domain_block.domain"), domain).
 		Exec(ctx); err != nil {
-		return d.conn.ProcessError(err)
+		return d.db.ProcessError(err)
 	}
 
 	// Clear the domain block cache (for later reload)
@@ -130,7 +130,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) db.Erro
 	return nil
 }
 
-func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db.Error) {
+func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, error) {
 	// Normalize the domain as punycode
 	domain, err := util.Punify(domain)
 	if err != nil {
@@ -148,18 +148,18 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, db
 		var domains []string
 
 		// Scan list of all blocked domains from DB
-		q := d.conn.NewSelect().
+		q := d.db.NewSelect().
 			Table("domain_blocks").
 			Column("domain")
 		if err := q.Scan(ctx, &domains); err != nil {
-			return nil, d.conn.ProcessError(err)
+			return nil, d.db.ProcessError(err)
 		}
 
 		return domains, nil
 	})
 }
 
-func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (bool, db.Error) {
+func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (bool, error) {
 	for _, domain := range domains {
 		if blocked, err := d.IsDomainBlocked(ctx, domain); err != nil {
 			return false, err
@@ -170,11 +170,11 @@ func (d *domainDB) AreDomainsBlocked(ctx context.Context, domains []string) (boo
 	return false, nil
 }
 
-func (d *domainDB) IsURIBlocked(ctx context.Context, uri *url.URL) (bool, db.Error) {
+func (d *domainDB) IsURIBlocked(ctx context.Context, uri *url.URL) (bool, error) {
 	return d.IsDomainBlocked(ctx, uri.Hostname())
 }
 
-func (d *domainDB) AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, db.Error) {
+func (d *domainDB) AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, error) {
 	for _, uri := range uris {
 		if blocked, err := d.IsDomainBlocked(ctx, uri.Hostname()); err != nil {
 			return false, err

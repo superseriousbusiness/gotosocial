@@ -33,11 +33,11 @@ import (
 )
 
 type timelineDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
-func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -49,7 +49,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		frontToBack = true
 	)
 
-	q := t.conn.
+	q := t.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
@@ -103,7 +103,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 
 	// Subquery to select target (followed) account
 	// IDs from follows owned by given accountID.
-	subQ := t.conn.
+	subQ := t.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
 		Column("follow.target_account_id").
@@ -119,7 +119,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	})
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, t.conn.ProcessError(err)
+		return nil, t.db.ProcessError(err)
 	}
 
 	if len(statusIDs) == 0 {
@@ -151,7 +151,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	return statuses, nil
 }
 
-func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, db.Error) {
+func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -160,7 +160,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 	// Make educated guess for slice size
 	statusIDs := make([]string, 0, limit)
 
-	q := t.conn.
+	q := t.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		Column("status.id").
@@ -202,7 +202,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, t.conn.ProcessError(err)
+		return nil, t.db.ProcessError(err)
 	}
 
 	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
@@ -224,7 +224,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 
 // TODO optimize this query and the logic here, because it's slow as balls -- it takes like a literal second to return with a limit of 20!
 // It might be worth serving it through a timeline instead of raw DB queries, like we do for Home feeds.
-func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, db.Error) {
+func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -233,7 +233,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 	// Make educated guess for slice size
 	faves := make([]*gtsmodel.StatusFave, 0, limit)
 
-	fq := t.conn.
+	fq := t.db.
 		NewSelect().
 		Model(&faves).
 		Where("? = ?", bun.Ident("status_fave.account_id"), accountID).
@@ -253,7 +253,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 
 	err := fq.Scan(ctx)
 	if err != nil {
-		return nil, "", "", t.conn.ProcessError(err)
+		return nil, "", "", t.db.ProcessError(err)
 	}
 
 	if len(faves) == 0 {
@@ -322,7 +322,7 @@ func (t *timelineDB) GetListTimeline(
 	}
 
 	// Select target account IDs from follows.
-	subQ := t.conn.
+	subQ := t.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
 		Column("follow.target_account_id").
@@ -330,7 +330,7 @@ func (t *timelineDB) GetListTimeline(
 
 	// Select only status IDs created
 	// by one of the followed accounts.
-	q := t.conn.
+	q := t.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
@@ -379,7 +379,7 @@ func (t *timelineDB) GetListTimeline(
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, t.conn.ProcessError(err)
+		return nil, t.db.ProcessError(err)
 	}
 
 	if len(statusIDs) == 0 {

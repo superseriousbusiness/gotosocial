@@ -32,16 +32,16 @@ import (
 )
 
 type mediaDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
-func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.MediaAttachment, error) {
 	return m.getAttachment(
 		ctx,
 		"ID",
 		func(attachment *gtsmodel.MediaAttachment) error {
-			return m.conn.NewSelect().
+			return m.db.NewSelect().
 				Model(attachment).
 				Where("? = ?", bun.Ident("media_attachment.id"), id).
 				Scan(ctx)
@@ -68,13 +68,13 @@ func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gts
 	return attachments, nil
 }
 
-func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, error) {
 	return m.state.Caches.GTS.Media().Load(lookup, func() (*gtsmodel.MediaAttachment, error) {
 		var attachment gtsmodel.MediaAttachment
 
 		// Not cached! Perform database query
 		if err := dbQuery(&attachment); err != nil {
-			return nil, m.conn.ProcessError(err)
+			return nil, m.db.ProcessError(err)
 		}
 
 		return &attachment, nil
@@ -83,8 +83,8 @@ func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func
 
 func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error {
 	return m.state.Caches.GTS.Media().Store(media, func() error {
-		_, err := m.conn.NewInsert().Model(media).Exec(ctx)
-		return m.conn.ProcessError(err)
+		_, err := m.db.NewInsert().Model(media).Exec(ctx)
+		return m.db.ProcessError(err)
 	})
 }
 
@@ -96,12 +96,12 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 	}
 
 	return m.state.Caches.GTS.Media().Store(media, func() error {
-		_, err := m.conn.NewUpdate().
+		_, err := m.db.NewUpdate().
 			Model(media).
 			Where("? = ?", bun.Ident("media_attachment.id"), media.ID).
 			Column(columns...).
 			Exec(ctx)
-		return m.conn.ProcessError(err)
+		return m.db.ProcessError(err)
 	})
 }
 
@@ -126,7 +126,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	)
 
 	// Delete media attachment in new transaction.
-	err = m.conn.RunInTx(ctx, func(tx bun.Tx) error {
+	err = m.db.RunInTx(ctx, func(tx bun.Tx) error {
 		if media.AccountID != "" {
 			var account gtsmodel.Account
 
@@ -229,11 +229,11 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 		m.state.Caches.GTS.Status().Invalidate("ID", media.StatusID)
 	}
 
-	return m.conn.ProcessError(err)
+	return m.db.ProcessError(err)
 }
 
-func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {
-	q := m.conn.
+func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, error) {
+	q := m.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
 		Column("media_attachment.id").
@@ -243,7 +243,7 @@ func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time)
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, m.conn.ProcessError(err)
+		return 0, m.db.ProcessError(err)
 	}
 
 	return count, nil
@@ -252,7 +252,7 @@ func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time)
 func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
-	q := m.conn.NewSelect().
+	q := m.db.NewSelect().
 		Table("media_attachments").
 		Column("id").
 		Order("id DESC")
@@ -266,7 +266,7 @@ func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) (
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.conn.ProcessError(err)
+		return nil, m.db.ProcessError(err)
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
@@ -275,7 +275,7 @@ func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) (
 func (m *mediaDB) GetRemoteAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
-	q := m.conn.NewSelect().
+	q := m.db.NewSelect().
 		Table("media_attachments").
 		Column("id").
 		Where("remote_url IS NOT NULL").
@@ -290,16 +290,16 @@ func (m *mediaDB) GetRemoteAttachments(ctx context.Context, maxID string, limit 
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.conn.ProcessError(err)
+		return nil, m.db.ProcessError(err)
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
-	q := m.conn.
+	q := m.db.
 		NewSelect().
 		Table("media_attachments").
 		Column("id").
@@ -313,16 +313,16 @@ func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan t
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.conn.ProcessError(err)
+		return nil, m.db.ProcessError(err)
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
-	q := m.conn.NewSelect().
+	q := m.db.NewSelect().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
 		Column("media_attachment.id").
 		WhereGroup(" AND ", func(innerQ *bun.SelectQuery) *bun.SelectQuery {
@@ -341,16 +341,16 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.conn.ProcessError(err)
+		return nil, m.db.ProcessError(err)
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, db.Error) {
+func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentIDs := make([]string, 0, limit)
 
-	q := m.conn.
+	q := m.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
 		Column("media_attachment.id").
@@ -367,14 +367,14 @@ func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan tim
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.conn.ProcessError(err)
+		return nil, m.db.ProcessError(err)
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time) (int, db.Error) {
-	q := m.conn.
+func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan time.Time) (int, error) {
+	q := m.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("media_attachments"), bun.Ident("media_attachment")).
 		Column("media_attachment.id").
@@ -387,7 +387,7 @@ func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan t
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, m.conn.ProcessError(err)
+		return 0, m.db.ProcessError(err)
 	}
 
 	return count, nil

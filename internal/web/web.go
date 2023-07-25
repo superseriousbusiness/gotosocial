@@ -62,7 +62,7 @@ const (
 type Module struct {
 	processor    *processing.Processor
 	eTagCache    cache.Cache[string, eTagCacheEntry]
-	isURIBlocked func(context.Context, *url.URL) (bool, db.Error)
+	isURIBlocked func(context.Context, *url.URL) (bool, error)
 }
 
 func New(db db.DB, processor *processing.Processor) *Module {

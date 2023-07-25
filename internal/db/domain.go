@@ -27,29 +27,29 @@ import (
 // Domain contains DB functions related to domains and domain blocks.
 type Domain interface {
 	// CreateDomainBlock puts the given instance-level domain block into the database.
-	CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) Error
+	CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) error
 
 	// GetDomainBlock returns one instance-level domain block with the given domain, if it exists.
-	GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, Error)
+	GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, error)
 
 	// GetDomainBlockByID returns one instance-level domain block with the given id, if it exists.
-	GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel.DomainBlock, Error)
+	GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel.DomainBlock, error)
 
 	// GetDomainBlocks returns all instance-level domain blocks currently enforced by this instance.
 	GetDomainBlocks(ctx context.Context) ([]*gtsmodel.DomainBlock, error)
 
 	// DeleteDomainBlock deletes an instance-level domain block with the given domain, if it exists.
-	DeleteDomainBlock(ctx context.Context, domain string) Error
+	DeleteDomainBlock(ctx context.Context, domain string) error
 
 	// IsDomainBlocked checks if an instance-level domain block exists for the given domain string (eg., `example.org`).
-	IsDomainBlocked(ctx context.Context, domain string) (bool, Error)
+	IsDomainBlocked(ctx context.Context, domain string) (bool, error)
 
 	// AreDomainsBlocked checks if an instance-level domain block exists for any of the given domains strings, and returns true if even one is found.
-	AreDomainsBlocked(ctx context.Context, domains []string) (bool, Error)
+	AreDomainsBlocked(ctx context.Context, domains []string) (bool, error)
 
 	// IsURIBlocked checks if an instance-level domain block exists for the `host` in the given URI (eg., `https://example.org/users/whatever`).
-	IsURIBlocked(ctx context.Context, uri *url.URL) (bool, Error)
+	IsURIBlocked(ctx context.Context, uri *url.URL) (bool, error)
 
 	// AreURIsBlocked checks if an instance-level domain block exists for any `host` in the given URI slice, and returns true if even one is found.
-	AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, Error)
+	AreURIsBlocked(ctx context.Context, uris []*url.URL) (bool, error)
 }

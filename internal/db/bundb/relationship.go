@@ -30,11 +30,11 @@ import (
 )
 
 type relationshipDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
-func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, db.Error) {
+func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error) {
 	var rel gtsmodel.Relationship
 	rel.ID = targetAccount
 
@@ -90,91 +90,91 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 
 func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
 	var followIDs []string
-	if err := newSelectFollows(r.conn, accountID).
+	if err := newSelectFollows(r.db, accountID).
 		Scan(ctx, &followIDs); err != nil {
-		return nil, r.conn.ProcessError(err)
+		return nil, r.db.ProcessError(err)
 	}
 	return r.GetFollowsByIDs(ctx, followIDs)
 }
 
 func (r *relationshipDB) GetAccountLocalFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
 	var followIDs []string
-	if err := newSelectLocalFollows(r.conn, accountID).
+	if err := newSelectLocalFollows(r.db, accountID).
 		Scan(ctx, &followIDs); err != nil {
-		return nil, r.conn.ProcessError(err)
+		return nil, r.db.ProcessError(err)
 	}
 	return r.GetFollowsByIDs(ctx, followIDs)
 }
 
 func (r *relationshipDB) GetAccountFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
 	var followIDs []string
-	if err := newSelectFollowers(r.conn, accountID).
+	if err := newSelectFollowers(r.db, accountID).
 		Scan(ctx, &followIDs); err != nil {
-		return nil, r.conn.ProcessError(err)
+		return nil, r.db.ProcessError(err)
 	}
 	return r.GetFollowsByIDs(ctx, followIDs)
 }
 
 func (r *relationshipDB) GetAccountLocalFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
 	var followIDs []string
-	if err := newSelectLocalFollowers(r.conn, accountID).
+	if err := newSelectLocalFollowers(r.db, accountID).
 		Scan(ctx, &followIDs); err != nil {
-		return nil, r.conn.ProcessError(err)
+		return nil, r.db.ProcessError(err)
 	}
 	return r.GetFollowsByIDs(ctx, followIDs)
 }
 
 func (r *relationshipDB) CountAccountFollows(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollows(r.conn, accountID).Count(ctx)
-	return n, r.conn.ProcessError(err)
+	n, err := newSelectFollows(r.db, accountID).Count(ctx)
+	return n, r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) CountAccountLocalFollows(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectLocalFollows(r.conn, accountID).Count(ctx)
-	return n, r.conn.ProcessError(err)
+	n, err := newSelectLocalFollows(r.db, accountID).Count(ctx)
+	return n, r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) CountAccountFollowers(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollowers(r.conn, accountID).Count(ctx)
-	return n, r.conn.ProcessError(err)
+	n, err := newSelectFollowers(r.db, accountID).Count(ctx)
+	return n, r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) CountAccountLocalFollowers(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectLocalFollowers(r.conn, accountID).Count(ctx)
-	return n, r.conn.ProcessError(err)
+	n, err := newSelectLocalFollowers(r.db, accountID).Count(ctx)
+	return n, r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, error) {
 	var followReqIDs []string
-	if err := newSelectFollowRequests(r.conn, accountID).
+	if err := newSelectFollowRequests(r.db, accountID).
 		Scan(ctx, &followReqIDs); err != nil {
-		return nil, r.conn.ProcessError(err)
+		return nil, r.db.ProcessError(err)
 	}
 	return r.GetFollowRequestsByIDs(ctx, followReqIDs)
 }
 
 func (r *relationshipDB) GetAccountFollowRequesting(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, error) {
 	var followReqIDs []string
-	if err := newSelectFollowRequesting(r.conn, accountID).
+	if err := newSelectFollowRequesting(r.db, accountID).
 		Scan(ctx, &followReqIDs); err != nil {
-		return nil, r.conn.ProcessError(err)
+		return nil, r.db.ProcessError(err)
 	}
 	return r.GetFollowRequestsByIDs(ctx, followReqIDs)
 }
 
 func (r *relationshipDB) CountAccountFollowRequests(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollowRequests(r.conn, accountID).Count(ctx)
-	return n, r.conn.ProcessError(err)
+	n, err := newSelectFollowRequests(r.db, accountID).Count(ctx)
+	return n, r.db.ProcessError(err)
 }
 
 func (r *relationshipDB) CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error) {
-	n, err := newSelectFollowRequesting(r.conn, accountID).Count(ctx)
-	return n, r.conn.ProcessError(err)
+	n, err := newSelectFollowRequesting(r.db, accountID).Count(ctx)
+	return n, r.db.ProcessError(err)
 }
 
 // newSelectFollowRequests returns a new select query for all rows in the follow_requests table with target_account_id = accountID.
-func newSelectFollowRequests(conn *DBConn, accountID string) *bun.SelectQuery {
-	return conn.NewSelect().
+func newSelectFollowRequests(db *WrappedDB, accountID string) *bun.SelectQuery {
+	return db.NewSelect().
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
 		Where("? = ?", bun.Ident("target_account_id"), accountID).
@@ -182,8 +182,8 @@ func newSelectFollowRequests(conn *DBConn, accountID string) *bun.SelectQuery {
 }
 
 // newSelectFollowRequesting returns a new select query for all rows in the follow_requests table with account_id = accountID.
-func newSelectFollowRequesting(conn *DBConn, accountID string) *bun.SelectQuery {
-	return conn.NewSelect().
+func newSelectFollowRequesting(db *WrappedDB, accountID string) *bun.SelectQuery {
+	return db.NewSelect().
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
 		Where("? = ?", bun.Ident("target_account_id"), accountID).
@@ -191,8 +191,8 @@ func newSelectFollowRequesting(conn *DBConn, accountID string) *bun.SelectQuery 
 }
 
 // newSelectFollows returns a new select query for all rows in the follows table with account_id = accountID.
-func newSelectFollows(conn *DBConn, accountID string) *bun.SelectQuery {
-	return conn.NewSelect().
+func newSelectFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
+	return db.NewSelect().
 		Table("follows").
 		Column("id").
 		Where("? = ?", bun.Ident("account_id"), accountID).
@@ -201,15 +201,15 @@ func newSelectFollows(conn *DBConn, accountID string) *bun.SelectQuery {
 
 // newSelectLocalFollows returns a new select query for all rows in the follows table with
 // account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollows(conn *DBConn, accountID string) *bun.SelectQuery {
-	return conn.NewSelect().
+func newSelectLocalFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
+	return db.NewSelect().
 		Table("follows").
 		Column("id").
 		Where("? = ? AND ? IN (?)",
 			bun.Ident("account_id"),
 			accountID,
 			bun.Ident("target_account_id"),
-			conn.NewSelect().
+			db.NewSelect().
 				Table("accounts").
 				Column("id").
 				Where("? IS NULL", bun.Ident("domain")),
@@ -218,8 +218,8 @@ func newSelectLocalFollows(conn *DBConn, accountID string) *bun.SelectQuery {
 }
 
 // newSelectFollowers returns a new select query for all rows in the follows table with target_account_id = accountID.
-func newSelectFollowers(conn *DBConn, accountID string) *bun.SelectQuery {
-	return conn.NewSelect().
+func newSelectFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
+	return db.NewSelect().
 		Table("follows").
 		Column("id").
 		Where("? = ?", bun.Ident("target_account_id"), accountID).
@@ -228,15 +228,15 @@ func newSelectFollowers(conn *DBConn, accountID string) *bun.SelectQuery {
 
 // newSelectLocalFollowers returns a new select query for all rows in the follows table with
 // target_account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollowers(conn *DBConn, accountID string) *bun.SelectQuery {
-	return conn.NewSelect().
+func newSelectLocalFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
+	return db.NewSelect().
 		Table("follows").
 		Column("id").
 		Where("? = ? AND ? IN (?)",
 			bun.Ident("target_account_id"),
 			accountID,
 			bun.Ident("account_id"),
-			conn.NewSelect().
+			db.NewSelect().
 				Table("accounts").
 				Column("id").
 				Where("? IS NULL", bun.Ident("domain")),

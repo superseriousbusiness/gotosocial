@@ -232,7 +232,7 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 			return nil, err
 		}
 
-		l.Infof("performing request")
+		l.Info("performing request")
 
 		// Perform the request.
 		rsp, err = c.do(r)

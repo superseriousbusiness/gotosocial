@@ -18,14 +18,20 @@
 package bundb
 
 import (
+	"errors"
+
 	"github.com/jackc/pgconn"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
+// errBusy is a sentinel error indicating
+// busy database (e.g. retry needed).
+var errBusy = errors.New("busy")
+
 // processPostgresError processes an error, replacing any postgres specific errors with our own error type
-func processPostgresError(err error) db.Error {
+func processPostgresError(err error) error {
 	// Attempt to cast as postgres
 	pgErr, ok := err.(*pgconn.PgError)
 	if !ok {
@@ -34,16 +40,16 @@ func processPostgresError(err error) db.Error {
 
 	// Handle supplied error code:
 	// (https://www.postgresql.org/docs/10/errcodes-appendix.html)
-	switch pgErr.Code {
+	switch pgErr.Code { //nolint
 	case "23505" /* unique_violation */ :
 		return db.ErrAlreadyExists
-	default:
-		return err
 	}
+
+	return err
 }
 
 // processSQLiteError processes an error, replacing any sqlite specific errors with our own error type
-func processSQLiteError(err error) db.Error {
+func processSQLiteError(err error) error {
 	// Attempt to cast as sqlite
 	sqliteErr, ok := err.(*sqlite.Error)
 	if !ok {
@@ -55,7 +61,11 @@ func processSQLiteError(err error) db.Error {
 	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
 		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
-	default:
-		return err
+	case sqlite3.SQLITE_BUSY:
+		return errBusy
+	case sqlite3.SQLITE_BUSY_TIMEOUT:
+		return db.ErrBusyTimeout
 	}
+
+	return err
 }

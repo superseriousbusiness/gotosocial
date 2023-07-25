@@ -22,26 +22,25 @@ import (
 	"crypto/rand"
 	"io"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 type sessionDB struct {
-	conn *DBConn
+	db *WrappedDB
 }
 
-func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
+func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, error) {
 	rss := make([]*gtsmodel.RouterSession, 0, 1)
 
 	// get the first router session in the db or...
-	if err := s.conn.
+	if err := s.db.
 		NewSelect().
 		Model(&rss).
 		Limit(1).
 		Order("router_session.id DESC").
 		Scan(ctx); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	// ... create a new one
@@ -52,7 +51,7 @@ func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, db
 	return rss[0], nil
 }
 
-func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession, db.Error) {
+func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession, error) {
 	buf := make([]byte, 64)
 	auth := buf[:32]
 	crypt := buf[32:64]
@@ -67,11 +66,11 @@ func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession,
 		Crypt: crypt,
 	}
 
-	if _, err := s.conn.
+	if _, err := s.db.
 		NewInsert().
 		Model(rs).
 		Exec(ctx); err != nil {
-		return nil, s.conn.ProcessError(err)
+		return nil, s.db.ProcessError(err)
 	}
 
 	return rs, nil

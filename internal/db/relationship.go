@@ -26,7 +26,7 @@ import (
 // Relationship contains functions for getting or modifying the relationship between two accounts.
 type Relationship interface {
 	// IsBlocked checks whether source account has a block in place against target.
-	IsBlocked(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
+	IsBlocked(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error)
 
 	// IsEitherBlocked checks whether there is a block in place between either of account1 and account2.
 	IsEitherBlocked(ctx context.Context, accountID1 string, accountID2 string) (bool, error)
@@ -53,7 +53,7 @@ type Relationship interface {
 	DeleteAccountBlocks(ctx context.Context, accountID string) error
 
 	// GetRelationship retrieves the relationship of the targetAccount to the requestingAccount.
-	GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, Error)
+	GetRelationship(ctx context.Context, requestingAccount string, targetAccount string) (*gtsmodel.Relationship, error)
 
 	// GetFollowByID fetches follow with given ID from the database.
 	GetFollowByID(ctx context.Context, id string) (*gtsmodel.Follow, error)
@@ -77,13 +77,13 @@ type Relationship interface {
 	GetFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, error)
 
 	// IsFollowing returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
-	IsFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
+	IsFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error)
 
 	// IsMutualFollowing returns true if account1 and account2 both follow each other, or an error if something goes wrong while finding out.
-	IsMutualFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
+	IsMutualFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error)
 
 	// IsFollowRequested returns true if sourceAccount has requested to follow target account, or an error if something goes wrong while finding out.
-	IsFollowRequested(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, Error)
+	IsFollowRequested(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error)
 
 	// PutFollow attempts to place the given account follow in the database.
 	PutFollow(ctx context.Context, follow *gtsmodel.Follow) error
@@ -125,10 +125,10 @@ type Relationship interface {
 	// In other words, it should create the follow, and delete the existing follow request.
 	//
 	// It will return the newly created follow for further processing.
-	AcceptFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.Follow, Error)
+	AcceptFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) (*gtsmodel.Follow, error)
 
 	// RejectFollowRequest fetches a follow request from the database, and then deletes it.
-	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) Error
+	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) error
 
 	// GetAccountFollows returns a slice of follows owned by the given accountID.
 	GetAccountFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
