@@ -31,11 +31,11 @@ import (
 )
 
 type tagDB struct {
-	conn  *DBConn
+	conn  *WrappedDB
 	state *state.State
 }
 
-func (m *tagDB) GetTag(ctx context.Context, id string) (*gtsmodel.Tag, db.Error) {
+func (m *tagDB) GetTag(ctx context.Context, id string) (*gtsmodel.Tag, error) {
 	return m.state.Caches.GTS.Tag().Load("ID", func() (*gtsmodel.Tag, error) {
 		var tag gtsmodel.Tag
 
@@ -52,7 +52,7 @@ func (m *tagDB) GetTag(ctx context.Context, id string) (*gtsmodel.Tag, db.Error)
 	}, id)
 }
 
-func (m *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, db.Error) {
+func (m *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, error) {
 	// Normalize 'name' string.
 	name = strings.TrimSpace(name)
 	name = strings.ToLower(name)
@@ -73,7 +73,7 @@ func (m *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, d
 	}, name)
 }
 
-func (m *tagDB) GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag, db.Error) {
+func (m *tagDB) GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag, error) {
 	tag, err := m.GetTagByName(ctx, name)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		// Real error.
@@ -94,7 +94,7 @@ func (m *tagDB) GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag,
 	return tag, m.putTag(ctx, tag)
 }
 
-func (m *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, db.Error) {
+func (m *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error) {
 	tags := make([]*gtsmodel.Tag, 0, len(ids))
 
 	for _, id := range ids {

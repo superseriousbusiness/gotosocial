@@ -26,15 +26,15 @@ import (
 // Tag contains functions for getting/creating tags in the database.
 type Tag interface {
 	// GetTag gets a single tag by ID
-	GetTag(ctx context.Context, id string) (*gtsmodel.Tag, Error)
+	GetTag(ctx context.Context, id string) (*gtsmodel.Tag, error)
 
 	// GetTagByName gets a single tag using the given name.
-	GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, Error)
+	GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, error)
 
 	// GetOrCreateTag returns a tag with the given name,
 	// creating it in the database if it does not yet exist.
-	GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag, Error)
+	GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag, error)
 
 	// GetTags gets multiple tags.
-	GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, Error)
+	GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error)
 }
