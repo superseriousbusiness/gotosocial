@@ -23,20 +23,20 @@ import "golang.org/x/exp/slices"
 // using the terminology of our API endpoint queries.
 type Pager struct {
 	// SinceID will limit the returned
-	// page of IDs to contain from this
+	// page of IDs to contain newer than
 	// since ID (excluding it). Result
 	// will be returned DESCENDING.
 	SinceID string
 
 	// MinID will limit the returned
-	// page of IDs to contain from this
+	// page of IDs to contain newer than
 	// min ID (excluding it). Result
 	// will be returned ASCENDING.
 	MinID string
 
 	// MaxID will limit the returned
-	// page of IDs to contain up to
-	// (excluding) this max ID.
+	// page of IDs to contain older
+	// than (excluding) this max ID.
 	MaxID string
 
 	// Limit will limit the returned
@@ -46,8 +46,9 @@ type Pager struct {
 
 // Page will page the given slice of GoToSocial IDs according
 // to the receiving Pager's SinceID, MinID, MaxID and Limits.
-// NOTE THE INPUT SLICE MUST BE SORTED IN DESCENDING ORDER.
-func (p *Pager) PageDesc(ids []string) []string {
+// NOTE THE INPUT SLICE MUST BE SORTED IN ASCENDING ORDER
+// (I.E. OLDEST ITEMS AT LOWEST INDICES, NEWER AT HIGHER).
+func (p *Pager) PageAsc(ids []string) []string {
 	if p == nil {
 		// no paging.
 		return ids
@@ -137,7 +138,8 @@ func (p *Pager) PageDesc(ids []string) []string {
 // Page will page the given slice of GoToSocial IDs according
 // to the receiving Pager's SinceID, MinID, MaxID and Limits.
 // NOTE THE INPUT SLICE MUST BE SORTED IN ASCENDING ORDER.
-func (p *Pager) PageAsc(ids []string) []string {
+// (I.E. NEWEST ITEMS AT LOWEST INDICES, OLDER AT HIGHER).
+func (p *Pager) PageDesc(ids []string) []string {
 	if p == nil {
 		// no paging.
 		return ids

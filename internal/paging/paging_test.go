@@ -66,7 +66,7 @@ var cases = []Case{
 		Page: (&paging.Pager{
 			MinID: "064Q5D7VG6TPPQ46T09MHJ96FW",
 			MaxID: "064Q5D7VKG5EQ43TYP71B4K6K0",
-		}).PageDesc,
+		}).PageAsc,
 	},
 	{
 		Name: "min_id, max_id and limit set",
@@ -93,7 +93,7 @@ var cases = []Case{
 			MinID: "064Q5D7VG6TPPQ46T09MHJ96FW",
 			MaxID: "064Q5D7VKG5EQ43TYP71B4K6K0",
 			Limit: 5,
-		}).PageDesc,
+		}).PageAsc,
 	},
 	{
 		Name: "min_id, max_id and too-large limit set",
@@ -123,7 +123,7 @@ var cases = []Case{
 			MinID: "064Q5D7VG6TPPQ46T09MHJ96FW",
 			MaxID: "064Q5D7VKG5EQ43TYP71B4K6K0",
 			Limit: 100,
-		}).PageDesc,
+		}).PageAsc,
 	},
 	{
 		Name: "since_id and max_id set",
@@ -152,7 +152,7 @@ var cases = []Case{
 		Page: (&paging.Pager{
 			SinceID: "064Q5D7VG6TPPQ46T09MHJ96FW",
 			MaxID:   "064Q5D7VKG5EQ43TYP71B4K6K0",
-		}).PageDesc,
+		}).PageAsc,
 	},
 }
 
