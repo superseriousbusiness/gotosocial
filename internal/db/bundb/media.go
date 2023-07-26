@@ -176,13 +176,10 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				// Note: this handles not found.
 				//
 				// Attachments changed, update the status.
-				status.AttachmentIDs = updatedIDs
-
-				// Update the status in database.
 				if _, err := tx.NewUpdate().
 					Table("statuses").
 					Where("? = ?", bun.Ident("id"), status.ID).
-					Set("? = ?", bun.Ident("attachment_ids"), status.AttachmentIDs).
+					Set("? = ?", bun.Ident("attachment_ids"), updatedIDs).
 					Exec(ctx); err != nil {
 					return gtserror.Newf("error updating status: %w", err)
 				}
