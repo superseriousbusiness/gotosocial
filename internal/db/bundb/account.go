@@ -694,46 +694,6 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	return a.statusesFromIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetAccountBlocks(ctx context.Context, accountID string, maxID string, sinceID string, limit int) ([]*gtsmodel.Account, string, string, error) {
-	blocks := []*gtsmodel.Block{}
-
-	fq := a.db.
-		NewSelect().
-		Model(&blocks).
-		Where("? = ?", bun.Ident("block.account_id"), accountID).
-		Relation("TargetAccount").
-		Order("block.id DESC")
-
-	if maxID != "" {
-		fq = fq.Where("? < ?", bun.Ident("block.id"), maxID)
-	}
-
-	if sinceID != "" {
-		fq = fq.Where("? > ?", bun.Ident("block.id"), sinceID)
-	}
-
-	if limit > 0 {
-		fq = fq.Limit(limit)
-	}
-
-	if err := fq.Scan(ctx); err != nil {
-		return nil, "", "", a.db.ProcessError(err)
-	}
-
-	if len(blocks) == 0 {
-		return nil, "", "", db.ErrNoEntries
-	}
-
-	accounts := []*gtsmodel.Account{}
-	for _, b := range blocks {
-		accounts = append(accounts, b.TargetAccount)
-	}
-
-	nextMaxID := blocks[len(blocks)-1].ID
-	prevMinID := blocks[0].ID
-	return accounts, nextMaxID, prevMinID, nil
-}
-
 func (a *accountDB) statusesFromIDs(ctx context.Context, statusIDs []string) ([]*gtsmodel.Status, error) {
 	// Catch case of no statuses early
 	if len(statusIDs) == 0 {
