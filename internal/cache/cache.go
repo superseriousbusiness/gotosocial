@@ -167,6 +167,18 @@ func (c *Caches) setuphooks() {
 		c.GTS.ListEntry().Invalidate("ListID", list.ID)
 	})
 
+	c.GTS.Media().SetInvalidateCallback(func(media *gtsmodel.MediaAttachment) {
+		if *media.Avatar || *media.Header {
+			// Invalidate cache of attaching account.
+			c.GTS.Account().Invalidate("ID", media.AccountID)
+		}
+
+		if media.StatusID != "" {
+			// Invalidate cache of attaching status.
+			c.GTS.Status().Invalidate("ID", media.StatusID)
+		}
+	})
+
 	c.GTS.Status().SetInvalidateCallback(func(status *gtsmodel.Status) {
 		// Invalidate status ID cached visibility.
 		c.Visibility.Invalidate("ItemID", status.ID)
