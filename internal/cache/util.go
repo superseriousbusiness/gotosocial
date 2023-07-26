@@ -39,7 +39,9 @@ func ignoreErrors(err error) bool {
 	return !errorsv2.Comparable(
 		err,
 
-		// the only cacheable errs:
+		// the only cacheable errs,
+		// i.e anything permanent
+		// (until invalidation).
 		db.ErrNoEntries,
 		db.ErrAlreadyExists,
 		sql.ErrNoRows,
