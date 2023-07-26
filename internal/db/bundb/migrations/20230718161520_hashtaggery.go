@@ -41,6 +41,25 @@ func init() {
 				}
 			}
 
+			// Index status_to_tags table properly.
+			for index, columns := range map[string][]string{
+				// Index for tag timeline paging.
+				"status_to_tags_tag_timeline_idx": {"tag_id", "status_id"},
+				// These indexes were only implicit
+				// before, make them explicit now.
+				"status_to_tags_tag_id_idx":    {"tag_id"},
+				"status_to_tags_status_id_idx": {"status_id"},
+			} {
+				if _, err := tx.
+					NewCreateIndex().
+					Table("status_to_tags").
+					Index(index).
+					Column(columns...).
+					Exec(ctx); err != nil {
+					return err
+				}
+			}
+
 			return nil
 		})
 	}

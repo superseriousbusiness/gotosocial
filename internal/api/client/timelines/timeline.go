@@ -21,28 +21,16 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 const (
-	// BasePath is the base URI path for serving timelines, minus the 'api' prefix.
-	BasePath = "/v1/timelines"
-	IDKey    = "id"
-	// HomeTimeline is the path for the home timeline
-	HomeTimeline = BasePath + "/home"
-	// PublicTimeline is the path for the public (and public local) timeline
+	BasePath       = "/v1/timelines"
+	HomeTimeline   = BasePath + "/home"
 	PublicTimeline = BasePath + "/public"
-	ListTimeline   = BasePath + "/list/:" + IDKey
-	// MaxIDKey is the url query for setting a max status ID to return
-	MaxIDKey = "max_id"
-	// SinceIDKey is the url query for returning results newer than the given ID
-	SinceIDKey = "since_id"
-	// MinIDKey is the url query for returning results immediately newer than the given ID
-	MinIDKey = "min_id"
-	// LimitKey is for specifying maximum number of results to return.
-	LimitKey = "limit"
-	// LocalKey is for specifying whether only local statuses should be returned
-	LocalKey = "local"
+	ListTimeline   = BasePath + "/list/:" + apiutil.IDKey
+	TagTimeline    = BasePath + "/tag/:" + apiutil.TagNameKey
 )
 
 type Module struct {
@@ -59,4 +47,5 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, HomeTimeline, m.HomeTimelineGETHandler)
 	attachHandler(http.MethodGet, PublicTimeline, m.PublicTimelineGETHandler)
 	attachHandler(http.MethodGet, ListTimeline, m.ListTimelineGETHandler)
+	attachHandler(http.MethodGet, TagTimeline, m.TagTimelineGETHandler)
 }

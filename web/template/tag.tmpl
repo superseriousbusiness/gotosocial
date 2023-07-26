@@ -1,0 +1,51 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{ template "header.tmpl" .}}
+
+<main class="thread">
+	<section class="toots">
+		<div class="col-header">
+			<h2 id="recent" tabindex="-1">Recent Public posts for #{{.tagName}}</h2>
+		</div>
+
+		<section class="thread">
+			{{ if not .statuses }}
+			<div data-nosnippet class="nothinghere">Nothing here!</div>
+			{{ else }}
+			{{ range .statuses }}
+			<article class="toot expanded" id="{{.ID}}">
+				{{ template "status.tmpl" .}}
+			</article>
+			{{ end }}
+			{{ end }}
+		</section>
+
+		<div class="backnextlinks">
+			{{ if .show_back_to_top }}
+			<a href="/tags/{{.tagName}}">Back to top</a>
+			{{ end }}
+			{{ if .statuses_next }}
+			<a href="{{ .statuses_next }}" class="next">Show older</a>
+			{{ end }}
+		</div>
+	</section>
+</main>
+
+{{ template "footer.tmpl" .}}

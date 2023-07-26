@@ -44,6 +44,10 @@ const (
 	SearchResolveKey           = "resolve"
 	SearchTypeKey              = "type"
 
+	/* Tag keys */
+
+	TagNameKey = "tag_name"
+
 	/* Web endpoint keys */
 
 	WebUsernameKey = "username"
@@ -144,6 +148,16 @@ func ParseSearchLookup(value string) (string, gtserror.WithCode) {
 
 func ParseSearchQuery(value string) (string, gtserror.WithCode) {
 	key := SearchQueryKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	return value, nil
+}
+
+func ParseTagName(value string) (string, gtserror.WithCode) {
+	key := TagNameKey
 
 	if value == "" {
 		return "", requiredError(key)
