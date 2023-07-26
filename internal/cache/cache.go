@@ -83,6 +83,7 @@ func (c *Caches) setuphooks() {
 
 		// Invalidate this account's
 		// following / follower lists.
+		// (see FollowIDs() comment for details).
 		c.GTS.FollowIDs().InvalidateAll(
 			">"+account.ID,
 			"l>"+account.ID,
@@ -92,6 +93,7 @@ func (c *Caches) setuphooks() {
 
 		// Invalidate this account's
 		// follow requesting / request lists.
+		// (see FollowRequestIDs() comment for details).
 		c.GTS.FollowRequestIDs().InvalidateAll(
 			">"+account.ID,
 			"<"+account.ID,
@@ -136,6 +138,7 @@ func (c *Caches) setuphooks() {
 
 		// Invalidate source account's following
 		// lists, and destination's follwer lists.
+		// (see FollowIDs() comment for details).
 		c.GTS.FollowIDs().InvalidateAll(
 			">"+follow.AccountID,
 			"l>"+follow.AccountID,
@@ -154,6 +157,7 @@ func (c *Caches) setuphooks() {
 
 		// Invalidate source account's followreq
 		// lists, and destinations follow req lists.
+		// (see FollowRequestIDs() comment for details).
 		c.GTS.FollowRequestIDs().InvalidateAll(
 			">"+followReq.AccountID,
 			"<"+followReq.AccountID,
