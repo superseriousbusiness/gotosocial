@@ -85,6 +85,19 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 		return nil, fmt.Errorf("GetRelationship: error checking blockedBy: %w", err)
 	}
 
+	// retrieve a note by the requesting account on the target account, if there is one
+	note, err := r.GetNote(
+		gtscontext.SetBarebones(ctx),
+		requestingAccount,
+		targetAccount,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, fmt.Errorf("GetRelationship: error fetching note: %w", err)
+	}
+	if note != nil {
+		rel.Note = note.Comment
+	}
+
 	return &rel, nil
 }
 
