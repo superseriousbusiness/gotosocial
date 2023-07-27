@@ -66,7 +66,7 @@ type Sample struct {
 type Chunks []*Chunk
 
 type Chunk struct {
-	DataOffset      uint32
+	DataOffset      uint64
 	SamplesPerChunk uint32
 }
 
@@ -195,6 +195,7 @@ func probeTrak(r io.ReadSeeker, bi *BoxInfo) (*Track, error) {
 		{BoxTypeMdia(), BoxTypeMinf(), BoxTypeStbl(), BoxTypeStsd(), BoxTypeEnca()},
 		{BoxTypeMdia(), BoxTypeMinf(), BoxTypeStbl(), BoxTypeStsd(), BoxTypeEnca(), BoxTypeEsds()},
 		{BoxTypeMdia(), BoxTypeMinf(), BoxTypeStbl(), BoxTypeStco()},
+		{BoxTypeMdia(), BoxTypeMinf(), BoxTypeStbl(), BoxTypeCo64()},
 		{BoxTypeMdia(), BoxTypeMinf(), BoxTypeStbl(), BoxTypeStts()},
 		{BoxTypeMdia(), BoxTypeMinf(), BoxTypeStbl(), BoxTypeCtts()},
 		{BoxTypeMdia(), BoxTypeMinf(), BoxTypeStbl(), BoxTypeStsc()},
@@ -215,6 +216,7 @@ func probeTrak(r io.ReadSeeker, bi *BoxInfo) (*Track, error) {
 	var stsc *Stsc
 	var ctts *Ctts
 	var stsz *Stsz
+	var co64 *Co64
 	for _, bip := range bips {
 		switch bip.Info.Type {
 		case BoxTypeTkhd():
@@ -250,6 +252,8 @@ func probeTrak(r io.ReadSeeker, bi *BoxInfo) (*Track, error) {
 			ctts = bip.Payload.(*Ctts)
 		case BoxTypeStsz():
 			stsz = bip.Payload.(*Stsz)
+		case BoxTypeCo64():
+			co64 = bip.Payload.(*Co64)
 		}
 	}
 
@@ -299,14 +303,21 @@ func probeTrak(r io.ReadSeeker, bi *BoxInfo) (*Track, error) {
 		}
 	}
 
-	if stco == nil {
-		return nil, errors.New("stco box not found")
-	}
 	track.Chunks = make([]*Chunk, 0)
-	for _, offset := range stco.ChunkOffset {
-		track.Chunks = append(track.Chunks, &Chunk{
-			DataOffset: offset,
-		})
+	if stco != nil {
+		for _, offset := range stco.ChunkOffset {
+			track.Chunks = append(track.Chunks, &Chunk{
+				DataOffset: uint64(offset),
+			})
+		}
+	} else if co64 != nil {
+		for _, offset := range co64.ChunkOffset {
+			track.Chunks = append(track.Chunks, &Chunk{
+				DataOffset: offset,
+			})
+		}
+	} else {
+		return nil, errors.New("stco/co64 box not found")
 	}
 
 	if stts == nil {
@@ -572,7 +583,7 @@ func FindIDRFrames(r io.ReadSeeker, trackInfo *TrackInfo) ([]int, error) {
 				continue
 			}
 			for nalOffset := uint32(0); nalOffset+lengthSize+1 <= sample.Size; {
-				if _, err := r.Seek(int64(dataOffset+nalOffset), io.SeekStart); err != nil {
+				if _, err := r.Seek(int64(dataOffset+uint64(nalOffset)), io.SeekStart); err != nil {
 					return nil, err
 				}
 				data := make([]byte, lengthSize+1)
@@ -591,7 +602,7 @@ func FindIDRFrames(r io.ReadSeeker, trackInfo *TrackInfo) ([]int, error) {
 				}
 				nalOffset += lengthSize + length
 			}
-			dataOffset += sample.Size
+			dataOffset += uint64(sample.Size)
 		}
 	}
 	return idxs, nil
