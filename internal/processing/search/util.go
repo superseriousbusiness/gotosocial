@@ -36,6 +36,11 @@ func includeStatuses(queryType string) bool {
 	return queryType == queryTypeAny || queryType == queryTypeStatuses
 }
 
+// return true if given queryType should include hashtags.
+func includeHashtags(queryType string) bool {
+	return queryType == queryTypeAny || queryType == queryTypeHashtags
+}
+
 // packageAccounts is a util function that just
 // converts the given accounts into an apimodel
 // account slice, or errors appropriately.
@@ -111,14 +116,59 @@ func (p *Processor) packageStatuses(
 	return apiStatuses, nil
 }
 
+// packageHashtags is a util function that just
+// converts the given hashtags into an apimodel
+// hashtag slice, or errors appropriately.
+func (p *Processor) packageHashtags(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	tags []*gtsmodel.Tag,
+	v1 bool,
+) ([]any, gtserror.WithCode) {
+	apiTags := make([]any, 0, len(tags))
+
+	var rangeF func(*gtsmodel.Tag)
+	if v1 {
+		// If API version 1, just provide slice of tag names.
+		rangeF = func(tag *gtsmodel.Tag) {
+			apiTags = append(apiTags, tag.Name)
+		}
+	} else {
+		// If API not version 1, provide slice of full tags.
+		rangeF = func(tag *gtsmodel.Tag) {
+			apiTag, err := p.tc.TagToAPITag(ctx, tag, true)
+			if err != nil {
+				log.Debugf(
+					ctx,
+					"skipping tag %s because it couldn't be converted to its api representation: %s",
+					tag.Name, err,
+				)
+				return
+			}
+
+			apiTags = append(apiTags, &apiTag)
+		}
+	}
+
+	for _, tag := range tags {
+		rangeF(tag)
+	}
+
+	return apiTags, nil
+}
+
 // packageSearchResult wraps up the given accounts
 // and statuses into an apimodel SearchResult that
 // can be serialized to an API caller as JSON.
+//
+// Set v1 to 'true' if the search is using v1 of the API.
 func (p *Processor) packageSearchResult(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	accounts []*gtsmodel.Account,
 	statuses []*gtsmodel.Status,
+	tags []*gtsmodel.Tag,
+	v1 bool,
 ) (*apimodel.SearchResult, gtserror.WithCode) {
 	apiAccounts, errWithCode := p.packageAccounts(ctx, requestingAccount, accounts)
 	if errWithCode != nil {
@@ -130,9 +180,14 @@ func (p *Processor) packageSearchResult(
 		return nil, errWithCode
 	}
 
+	apiTags, errWithCode := p.packageHashtags(ctx, requestingAccount, tags, v1)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
 	return &apimodel.SearchResult{
 		Accounts: apiAccounts,
 		Statuses: apiStatuses,
-		Hashtags: make([]*apimodel.Tag, 0),
+		Hashtags: apiTags,
 	}, nil
 }

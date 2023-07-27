@@ -21,16 +21,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 const (
-	IDKey            = "id"                            // IDKey is the key for media attachment IDs
-	APIVersionKey    = "api_version"                   // APIVersionKey is the key for which version of the API to use (v1 or v2)
-	APIv1            = "v1"                            // APIV1 corresponds to version 1 of the api
-	APIv2            = "v2"                            // APIV2 corresponds to version 2 of the api
-	BasePath         = "/:" + APIVersionKey + "/media" // BasePath is the base API path for making media requests through v1 or v2 of the api (for mastodon API compatibility)
-	AttachmentWithID = BasePath + "/:" + IDKey         // BasePathWithID corresponds to a media attachment with the given ID
+	IDKey            = "id"                                    // IDKey is the key for media attachment IDs
+	BasePath         = "/:" + apiutil.APIVersionKey + "/media" // BasePath is the base API path for making media requests through v1 or v2 of the api (for mastodon API compatibility)
+	AttachmentWithID = BasePath + "/:" + IDKey                 // BasePathWithID corresponds to a media attachment with the given ID
 )
 
 type Module struct {

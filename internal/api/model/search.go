@@ -28,6 +28,7 @@ type SearchRequest struct {
 	Resolve           bool
 	Following         bool
 	ExcludeUnreviewed bool
+	APIv1             bool // Set to 'true' if using version 1 of the search API.
 }
 
 // SearchResult models a search result.
@@ -36,5 +37,6 @@ type SearchRequest struct {
 type SearchResult struct {
 	Accounts []*Account `json:"accounts"`
 	Statuses []*Status  `json:"statuses"`
-	Hashtags []*Tag     `json:"hashtags"`
+	// Slice of strings if api v1, slice of tags if api v1.
+	Hashtags []any `json:"hashtags"`
 }

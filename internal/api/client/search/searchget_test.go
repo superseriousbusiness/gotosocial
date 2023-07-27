@@ -47,6 +47,7 @@ type SearchGetTestSuite struct {
 func (suite *SearchGetTestSuite) getSearch(
 	requestingAccount *gtsmodel.Account,
 	token *gtsmodel.Token,
+	apiVersion string,
 	user *gtsmodel.User,
 	maxID *string,
 	minID *string,
@@ -62,11 +63,13 @@ func (suite *SearchGetTestSuite) getSearch(
 	var (
 		recorder   = httptest.NewRecorder()
 		ctx, _     = testrig.CreateGinTestContext(recorder, nil)
-		requestURL = testrig.URLMustParse("/api" + search.BasePathV1)
+		requestURL = testrig.URLMustParse("/api" + search.BasePath)
 		queryParts []string
 	)
 
 	// Put the request together.
+	ctx.AddParam(apiutil.APIVersionKey, apiVersion)
+
 	if maxID != nil {
 		queryParts = append(queryParts, apiutil.MaxIDKey+"="+url.QueryEscape(*maxID))
 	}
@@ -175,6 +178,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByURI() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -218,6 +222,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestring() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -261,6 +266,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringUppercase() 
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -304,6 +310,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoLeadingAt(
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -347,6 +354,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() 
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -385,6 +393,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -426,6 +435,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -467,6 +477,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -510,6 +521,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestringWithDomain() 
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -553,6 +565,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByNamestringRe
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -591,6 +604,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURI() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -634,6 +648,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURL() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -677,6 +692,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByURL() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -715,6 +731,7 @@ func (suite *SearchGetTestSuite) TestSearchStatusByURL() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -758,6 +775,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedDomainURL() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -798,6 +816,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedDomainNamestring() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -838,6 +857,7 @@ func (suite *SearchGetTestSuite) TestSearchAAny() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -878,6 +898,7 @@ func (suite *SearchGetTestSuite) TestSearchAAnyFollowingOnly() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -918,6 +939,7 @@ func (suite *SearchGetTestSuite) TestSearchAStatuses() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -958,6 +980,7 @@ func (suite *SearchGetTestSuite) TestSearchAAccounts() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -998,6 +1021,7 @@ func (suite *SearchGetTestSuite) TestSearchAAccountsLimit1() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -1038,6 +1062,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountByURI() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -1084,6 +1109,7 @@ func (suite *SearchGetTestSuite) TestSearchInstanceAccountFull() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -1130,6 +1156,7 @@ func (suite *SearchGetTestSuite) TestSearchInstanceAccountPartial() {
 	searchResult, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -1170,6 +1197,7 @@ func (suite *SearchGetTestSuite) TestSearchBadQueryType() {
 	_, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -1206,6 +1234,7 @@ func (suite *SearchGetTestSuite) TestSearchEmptyQuery() {
 	_, err := suite.getSearch(
 		requestingAccount,
 		token,
+		apiutil.APIv2,
 		user,
 		maxID,
 		minID,
@@ -1220,6 +1249,170 @@ func (suite *SearchGetTestSuite) TestSearchEmptyQuery() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+}
+
+func (suite *SearchGetTestSuite) TestSearchHashtagV1() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = nil
+		query                      = "#welcome"
+		queryType          *string = func() *string { i := "hashtags"; return &i }()
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = `{"accounts":[],"statuses":[],"hashtags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome","history":[]}]}`
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 1)
+}
+
+func (suite *SearchGetTestSuite) TestSearchHashtagV2() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = nil
+		query                      = "#welcome"
+		queryType          *string = func() *string { i := "hashtags"; return &i }()
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = `{"accounts":[],"statuses":[],"hashtags":["welcome"]}`
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv1,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 1)
+}
+
+func (suite *SearchGetTestSuite) TestSearchHashtagButWithAccountSearch() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = nil
+		query                      = "#welcome"
+		queryType          *string = func() *string { i := "accounts"; return &i }()
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ``
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 0)
+}
+
+func (suite *SearchGetTestSuite) TestSearchNotHashtagButWithTypeHashtag() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = nil
+		query                      = "welco"
+		queryType          *string = func() *string { i := "hashtags"; return &i }()
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ``
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 1)
 }
 
 func TestSearchGetTestSuite(t *testing.T) {

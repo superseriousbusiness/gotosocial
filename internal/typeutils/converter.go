@@ -71,7 +71,8 @@ type TypeConverter interface {
 	// EmojiCategoryToAPIEmojiCategory converts a gts model emoji category into its api (frontend) representation.
 	EmojiCategoryToAPIEmojiCategory(ctx context.Context, category *gtsmodel.EmojiCategory) (*apimodel.EmojiCategory, error)
 	// TagToAPITag converts a gts model tag into its api (frontend) representation for serialization on the API.
-	TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (apimodel.Tag, error)
+	// If stubHistory is set to 'true', then the 'history' field of the tag will be populated with a pointer to an empty slice, for API compatibility reasons.
+	TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistory bool) (apimodel.Tag, error)
 	// StatusToAPIStatus converts a gts model status into its api (frontend) representation for serialization on the API.
 	//
 	// Requesting account can be nil.

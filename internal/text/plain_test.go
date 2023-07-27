@@ -103,7 +103,7 @@ func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
 #111111 thisalsoshouldn'twork#### ##
 
 #alimentación, #saúde, #lävistää, #ö, #네
-#ThisOneIsThirtyOneCharactersLon...  ...ng
+#ThisOneIsOneHundredAndOneCharactersLongWhichIsReallyJustWayWayTooLongDefinitelyLongerThanYouWouldNeed...
 #ThisOneIsThirteyCharactersLong
 `
 

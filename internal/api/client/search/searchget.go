@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// SearchGETHandler swagger:operation GET /api/v1/search searchGet
+// SearchGETHandler swagger:operation GET /api/{api_version}/search searchGet
 //
 // Search for statuses, accounts, or hashtags, on this instance or elsewhere.
 //
@@ -41,6 +41,15 @@ import (
 //	- application/json
 //
 //	parameters:
+//	-
+//		name: api_version
+//		type: string
+//		in: path
+//		description: >-
+//			Version of the API to use. Must be either `v1` or `v2`.
+//			If v1 is used, Hashtag results will be a slice of strings.
+//			If v2 is used, Hashtag results will be a slice of apimodel tags.
+//		required: true
 //	-
 //		name: max_id
 //		type: string
@@ -88,6 +97,7 @@ import (
 //			- `@[username]` -- search for an account with the given username on any domain. Can return multiple results.
 //			- @[username]@[domain]` -- search for a remote account with exact username and domain. Will only ever return 1 result at most.
 //			- `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will only ever return 1 result at most.
+//			- `#[hashtag_name]` -- search for a hashtag with the given hashtag name, or starting with the given hashtag name. Case insensitive. Can return multiple results.
 //			- any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
 //		in: query
 //		required: true
@@ -152,6 +162,15 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) SearchGETHandler(c *gin.Context) {
+	apiVersion, errWithCode := apiutil.ParseAPIVersion(
+		c.Param(apiutil.APIVersionKey),
+		[]string{apiutil.APIv1, apiutil.APIv2}...,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -209,6 +228,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		Resolve:           resolve,
 		Following:         following,
 		ExcludeUnreviewed: excludeUnreviewed,
+		APIv1:             apiVersion == apiutil.APIv1,
 	}
 
 	results, errWithCode := m.processor.Search().Get(c.Request.Context(), authed.Account, searchRequest)

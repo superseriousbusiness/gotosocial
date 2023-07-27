@@ -569,10 +569,18 @@ func (c *converter) EmojiCategoryToAPIEmojiCategory(ctx context.Context, categor
 	}, nil
 }
 
-func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag) (apimodel.Tag, error) {
+func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistory bool) (apimodel.Tag, error) {
 	return apimodel.Tag{
 		Name: strings.ToLower(t.Name),
 		URL:  uris.GenerateURIForTag(t.Name),
+		History: func() *[]any {
+			if !stubHistory {
+				return nil
+			}
+
+			h := make([]any, 0)
+			return &h
+		}(),
 	}, nil
 }
 
@@ -1291,7 +1299,7 @@ func (c *converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 
 	// Convert GTS models to frontend models
 	for _, tag := range tags {
-		apiTag, err := c.TagToAPITag(ctx, tag)
+		apiTag, err := c.TagToAPITag(ctx, tag, false)
 		if err != nil {
 			errs.Appendf("error converting tag %s to api tag: %v", tag.ID, err)
 			continue

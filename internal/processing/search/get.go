@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -108,14 +109,16 @@ func (p *Processor) Get(
 	// supply an offset greater than 0, return nothing as
 	// though there were no additional results.
 	if req.Offset > 0 {
-		return p.packageSearchResult(ctx, account, nil, nil)
+		return p.packageSearchResult(ctx, account, nil, nil, nil, req.APIv1)
 	}
 
 	var (
 		foundStatuses = make([]*gtsmodel.Status, 0, limit)
 		foundAccounts = make([]*gtsmodel.Account, 0, limit)
-		appendStatus  = func(foundStatus *gtsmodel.Status) { foundStatuses = append(foundStatuses, foundStatus) }
-		appendAccount = func(foundAccount *gtsmodel.Account) { foundAccounts = append(foundAccounts, foundAccount) }
+		foundTags     = make([]*gtsmodel.Tag, 0, limit)
+		appendStatus  = func(s *gtsmodel.Status) { foundStatuses = append(foundStatuses, s) }
+		appendAccount = func(a *gtsmodel.Account) { foundAccounts = append(foundAccounts, a) }
+		appendTag     = func(t *gtsmodel.Tag) { foundTags = append(foundTags, t) }
 		keepLooking   bool
 		err           error
 	)
@@ -162,6 +165,8 @@ func (p *Processor) Get(
 				account,
 				foundAccounts,
 				foundStatuses,
+				foundTags,
+				req.APIv1,
 			)
 		}
 	}
@@ -189,6 +194,48 @@ func (p *Processor) Get(
 			account,
 			foundAccounts,
 			foundStatuses,
+			foundTags,
+			req.APIv1,
+		)
+	}
+
+	// If query looks like a hashtag (ie., starts
+	// with '#'), then search for tags.
+	//
+	// Since '#' is a very unique prefix and isn't
+	// shared among account or status searches, we
+	// can save a bit of time by searching for this
+	// now, and bailing quickly if we get no results,
+	// or we're not allowed to include hashtags in
+	// search results.
+	//
+	// We know that none of the subsequent searches
+	// would show any good results either, and those
+	// searches are *much* more expensive.
+	keepLooking, err = p.hashtag(
+		ctx,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		appendTag,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = gtserror.Newf("error searching for hashtag: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if !keepLooking {
+		// Return whatever we have.
+		return p.packageSearchResult(
+			ctx,
+			account,
+			foundAccounts,
+			foundStatuses,
+			foundTags,
+			req.APIv1,
 		)
 	}
 
@@ -218,6 +265,8 @@ func (p *Processor) Get(
 		account,
 		foundAccounts,
 		foundStatuses,
+		foundTags,
+		req.APIv1,
 	)
 }
 
@@ -557,6 +606,80 @@ func (p *Processor) statusByURI(
 
 	err = fmt.Errorf("status %s could not be retrieved locally and we cannot resolve", uriStr)
 	return nil, gtserror.SetUnretrievable(err)
+}
+
+func (p *Processor) hashtag(
+	ctx context.Context,
+	maxID string,
+	minID string,
+	limit int,
+	offset int,
+	query string,
+	queryType string,
+	appendTag func(*gtsmodel.Tag),
+) (bool, error) {
+	if query[0] != '#' {
+		// Query doesn't look like a hashtag,
+		// but if we're being instructed to
+		// look explicitly *only* for hashtags,
+		// let's be generous and assume caller
+		// just left out the hash prefix.
+
+		if queryType != queryTypeHashtags {
+			// Nope, search isn't explicitly
+			// for hashtags, keep looking.
+			return true, nil
+		}
+
+		// Search is explicitly for
+		// tags, let this one through.
+	} else if !includeHashtags(queryType) {
+		// Query looks like a hashtag,
+		// but we're not meant to include
+		// hashtags in the results.
+		//
+		// Indicate to caller they should
+		// stop looking, since they're not
+		// going to get results for this by
+		// looking in any other way.
+		return false, nil
+	}
+
+	// Query looks like a hashtag, and we're allowed
+	// to search for hashtags.
+	//
+	// Ensure this is a valid tag for our instance.
+	normalized, ok := text.NormalizeHashtag(query)
+	if !ok {
+		// Couldn't normalize/not a
+		// valid hashtag after all.
+		// Caller should stop looking.
+		return false, nil
+	}
+
+	// Search for tags starting with the normalized string.
+	tags, err := p.state.DB.SearchForTags(
+		ctx,
+		normalized,
+		maxID,
+		minID,
+		limit,
+		offset,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf(
+			"error checking database for tags using text %s: %w",
+			normalized, err,
+		)
+		return false, err
+	}
+
+	// Return whatever we got.
+	for _, tag := range tags {
+		appendTag(tag)
+	}
+
+	return false, nil
 }
 
 // byText searches in the database for accounts and/or

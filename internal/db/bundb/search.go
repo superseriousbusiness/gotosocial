@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -384,4 +385,102 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 	}
 
 	return statusText
+}
+
+// Query example (SQLite):
+//
+//	SELECT "tag"."id" FROM "tags" AS "tag"
+//	WHERE ("tag"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
+//	AND (("tag"."name") LIKE 'welcome%' ESCAPE '\')
+//	ORDER BY "tag"."id" DESC LIMIT 10
+func (s *searchDB) SearchForTags(
+	ctx context.Context,
+	query string,
+	maxID string,
+	minID string,
+	limit int,
+	offset int,
+) ([]*gtsmodel.Tag, error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	var (
+		tagIDs      = make([]string, 0, limit)
+		frontToBack = true
+	)
+
+	q := s.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("tags"), bun.Ident("tag")).
+		// Select only IDs from table
+		Column("tag.id")
+
+	// Return only items with a LOWER id than maxID.
+	if maxID == "" {
+		maxID = id.Highest
+	}
+	q = q.Where("? < ?", bun.Ident("tag.id"), maxID)
+
+	if minID != "" {
+		// return only tags HIGHER (ie., newer) than minID
+		q = q.Where("? > ?", bun.Ident("tag.id"), minID)
+
+		// page up
+		frontToBack = false
+	}
+
+	// Normalize tag 'name' string.
+	name := strings.TrimSpace(query)
+	name = strings.ToLower(name)
+
+	// Search using LIKE for tags that start with `name`.
+	q = whereStartsWith(q, bun.Ident("tag.name"), name)
+
+	if limit > 0 {
+		// Limit amount of tags returned.
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("tag.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("tag.id ASC")
+	}
+
+	if err := q.Scan(ctx, &tagIDs); err != nil {
+		return nil, s.db.ProcessError(err)
+	}
+
+	if len(tagIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want tags
+	// to be sorted by ID desc, so reverse slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(tagIDs)-1; l < r; l, r = l+1, r-1 {
+			tagIDs[l], tagIDs[r] = tagIDs[r], tagIDs[l]
+		}
+	}
+
+	tags := make([]*gtsmodel.Tag, 0, len(tagIDs))
+	for _, id := range tagIDs {
+		// Fetch tag from db for ID
+		tag, err := s.state.DB.GetTag(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error fetching tag %q: %v", id, err)
+			continue
+		}
+
+		// Append status to slice
+		tags = append(tags, tag)
+	}
+
+	return tags, nil
 }
