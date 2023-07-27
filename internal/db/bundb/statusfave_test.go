@@ -35,7 +35,7 @@ type StatusFaveTestSuite struct {
 func (suite *StatusFaveTestSuite) TestGetStatusFaves() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 
-	faves, err := suite.db.GetStatusFavesForStatus(context.Background(), testStatus.ID)
+	faves, err := suite.db.GetStatusFaves(context.Background(), testStatus.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -51,7 +51,7 @@ func (suite *StatusFaveTestSuite) TestGetStatusFaves() {
 func (suite *StatusFaveTestSuite) TestGetStatusFavesNone() {
 	testStatus := suite.testStatuses["admin_account_status_4"]
 
-	faves, err := suite.db.GetStatusFavesForStatus(context.Background(), testStatus.ID)
+	faves, err := suite.db.GetStatusFaves(context.Background(), testStatus.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

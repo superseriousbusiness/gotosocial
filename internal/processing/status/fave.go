@@ -112,7 +112,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 		return nil, errWithCode
 	}
 
-	statusFaves, err := p.state.DB.GetStatusFavesForStatus(ctx, targetStatus.ID)
+	statusFaves, err := p.state.DB.GetStatusFaves(ctx, targetStatus.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("FavedBy: error seeing who faved status: %s", err))
 	}

@@ -30,10 +30,11 @@ import (
 )
 
 type GTSCaches struct {
-	account          *result.Cache[*gtsmodel.Account]
-	accountNote      *result.Cache[*gtsmodel.AccountNote]
-	block            *result.Cache[*gtsmodel.Block]
-	blockIDs         *SliceCache[string]
+	account     *result.Cache[*gtsmodel.Account]
+	accountNote *result.Cache[*gtsmodel.AccountNote]
+	block       *result.Cache[*gtsmodel.Block]
+	blockIDs    *SliceCache[string]
+	// boostIDs         *SliceCache[string]
 	domainBlock      *domain.BlockCache
 	emoji            *result.Cache[*gtsmodel.Emoji]
 	emojiCategory    *result.Cache[*gtsmodel.EmojiCategory]
@@ -42,18 +43,20 @@ type GTSCaches struct {
 	followRequest    *result.Cache[*gtsmodel.FollowRequest]
 	followRequestIDs *SliceCache[string]
 	instance         *result.Cache[*gtsmodel.Instance]
-	list             *result.Cache[*gtsmodel.List]
-	listEntry        *result.Cache[*gtsmodel.ListEntry]
-	marker           *result.Cache[*gtsmodel.Marker]
-	media            *result.Cache[*gtsmodel.MediaAttachment]
-	mention          *result.Cache[*gtsmodel.Mention]
-	notification     *result.Cache[*gtsmodel.Notification]
-	report           *result.Cache[*gtsmodel.Report]
-	status           *result.Cache[*gtsmodel.Status]
-	statusFave       *result.Cache[*gtsmodel.StatusFave]
-	tag              *result.Cache[*gtsmodel.Tag]
-	tombstone        *result.Cache[*gtsmodel.Tombstone]
-	user             *result.Cache[*gtsmodel.User]
+	// inReplyToIDs     *SliceCache[string]
+	list          *result.Cache[*gtsmodel.List]
+	listEntry     *result.Cache[*gtsmodel.ListEntry]
+	marker        *result.Cache[*gtsmodel.Marker]
+	media         *result.Cache[*gtsmodel.MediaAttachment]
+	mention       *result.Cache[*gtsmodel.Mention]
+	notification  *result.Cache[*gtsmodel.Notification]
+	report        *result.Cache[*gtsmodel.Report]
+	status        *result.Cache[*gtsmodel.Status]
+	statusFave    *result.Cache[*gtsmodel.StatusFave]
+	statusFaveIDs *SliceCache[string]
+	tag           *result.Cache[*gtsmodel.Tag]
+	tombstone     *result.Cache[*gtsmodel.Tombstone]
+	user          *result.Cache[*gtsmodel.User]
 
 	// TODO: move out of GTS caches since unrelated to DB.
 	webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
@@ -66,6 +69,7 @@ func (c *GTSCaches) Init() {
 	c.initAccountNote()
 	c.initBlock()
 	c.initBlockIDs()
+	// c.initBoostIDs()
 	c.initDomainBlock()
 	c.initEmoji()
 	c.initEmojiCategory()
@@ -74,6 +78,7 @@ func (c *GTSCaches) Init() {
 	c.initFollowRequest()
 	c.initFollowRequestIDs()
 	c.initInstance()
+	// c.initInReplyToIDs()
 	c.initList()
 	c.initListEntry()
 	c.initMarker()
@@ -84,6 +89,7 @@ func (c *GTSCaches) Init() {
 	c.initStatus()
 	c.initStatusFave()
 	c.initTag()
+	c.initStatusFaveIDs()
 	c.initTombstone()
 	c.initUser()
 	c.initWebfinger()
@@ -120,6 +126,11 @@ func (c *GTSCaches) Block() *result.Cache[*gtsmodel.Block] {
 func (c *GTSCaches) BlockIDs() *SliceCache[string] {
 	return c.blockIDs
 }
+
+// BoostIDs ...
+// func (c *GTSCaches) BoostIDs() *SliceCache[string] {
+// 	return c.boostIDs
+// }
 
 // DomainBlock provides access to the domain block database cache.
 func (c *GTSCaches) DomainBlock() *domain.BlockCache {
@@ -169,6 +180,11 @@ func (c *GTSCaches) Instance() *result.Cache[*gtsmodel.Instance] {
 	return c.instance
 }
 
+// InReplyToIDs ...
+// func (c *GTSCaches) InReplyToIDs() *SliceCache[string] {
+// 	return c.inReplyToIDs
+// }
+
 // List provides access to the gtsmodel List database cache.
 func (c *GTSCaches) List() *result.Cache[*gtsmodel.List] {
 	return c.list
@@ -217,6 +233,11 @@ func (c *GTSCaches) StatusFave() *result.Cache[*gtsmodel.StatusFave] {
 // Tag provides access to the gtsmodel Tag database cache.
 func (c *GTSCaches) Tag() *result.Cache[*gtsmodel.Tag] {
 	return c.tag
+}
+
+// StatusFaveIDs ...
+func (c *GTSCaches) StatusFaveIDs() *SliceCache[string] {
+	return c.statusFaveIDs
 }
 
 // Tombstone provides access to the gtsmodel Tombstone database cache.
@@ -319,6 +340,14 @@ func (c *GTSCaches) initBlockIDs() {
 		cap,
 	)}
 }
+
+// func (c *GTSCaches) initBoostIDs() {
+// 	c.boostIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+// 		0,
+// 		1000,
+// 		0,
+// 	)}
+// }
 
 func (c *GTSCaches) initDomainBlock() {
 	c.domainBlock = new(domain.BlockCache)
@@ -465,6 +494,14 @@ func (c *GTSCaches) initInstance() {
 
 	c.instance.IgnoreErrors(ignoreErrors)
 }
+
+// func (c *GTSCaches) initInReplyToIDs() {
+// 	c.inReplyToIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+// 		0,
+// 		1000,
+// 		0,
+// 	)}
+// }
 
 func (c *GTSCaches) initList() {
 	// Calculate maximum cache size.
@@ -643,6 +680,7 @@ func (c *GTSCaches) initStatusFave() {
 	c.statusFave = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID.StatusID"},
+		{Name: "StatusID", Multi: true},
 	}, func(f1 *gtsmodel.StatusFave) *gtsmodel.StatusFave {
 		f2 := new(gtsmodel.StatusFave)
 		*f2 = *f1
@@ -671,6 +709,14 @@ func (c *GTSCaches) initTag() {
 	}, cap)
 
 	c.tag.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initStatusFaveIDs() {
+	c.statusFaveIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+		0,
+		1000,
+		0,
+	)}
 }
 
 func (c *GTSCaches) initTombstone() {

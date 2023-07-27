@@ -610,7 +610,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		return nil, fmt.Errorf("error counting reblogs: %w", err)
 	}
 
-	favesCount, err := c.db.CountStatusFaves(ctx, s)
+	favesCount, err := c.db.CountStatusFaves(ctx, s.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting faves: %w", err)
 	}

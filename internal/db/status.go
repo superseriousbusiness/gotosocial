@@ -52,9 +52,6 @@ type Status interface {
 	// CountStatusReblogs returns the amount of reblogs/boosts recorded for a status, or an error if something goes wrong
 	CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, error)
 
-	// CountStatusFaves returns the amount of faves/likes recorded for a status, or an error if something goes wrong
-	CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, error)
-
 	// GetStatuses gets a slice of statuses corresponding to the given status IDs.
 	GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error)
 
@@ -70,9 +67,6 @@ type Status interface {
 	//
 	// If onlyDirect is true, only the immediate children will be returned.
 	GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error)
-
-	// IsStatusFavedBy checks if a given status has been faved by a given account ID
-	IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
 
 	// IsStatusRebloggedBy checks if a given status has been reblogged/boosted by a given account ID
 	IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)

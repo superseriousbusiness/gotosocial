@@ -40,7 +40,7 @@ func (c *converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 	si := &statusInteractions{}
 
 	if requestingAccount != nil {
-		faved, err := c.db.IsStatusFavedBy(ctx, s, requestingAccount.ID)
+		faved, err := c.db.IsStatusFavedBy(ctx, s.ID, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
 		}

@@ -198,6 +198,11 @@ func (c *Caches) setuphooks() {
 		}
 	})
 
+	c.GTS.StatusFave().SetInvalidateCallback(func(fave *gtsmodel.StatusFave) {
+		// Invalidate status fave ID list for this status.
+		c.GTS.StatusFaveIDs().Invalidate(fave.StatusID)
+	})
+
 	c.GTS.User().SetInvalidateCallback(func(user *gtsmodel.User) {
 		// Invalidate local account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", user.AccountID)
