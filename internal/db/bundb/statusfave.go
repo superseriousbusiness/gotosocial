@@ -122,7 +122,7 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 
 func (s *statusFaveDB) IsStatusFavedBy(ctx context.Context, statusID string, accountID string) (bool, error) {
 	fave, err := s.GetStatusFave(ctx, accountID, statusID)
-	if err != nil && errors.Is(err, db.ErrNoEntries) {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return false, err
 	}
 	return (fave != nil), nil
