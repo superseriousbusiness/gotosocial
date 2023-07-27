@@ -18,6 +18,9 @@ type ActivityStreamsUrlPropertyIterator interface {
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
+	// GetTootHashtag returns the value of this property. When IsTootHashtag
+	// returns false, GetTootHashtag will return an arbitrary value.
+	GetTootHashtag() TootHashtag
 	// GetType returns the value in this property as a Type. Returns nil if
 	// the value is not an ActivityStreams type, such as an IRI or another
 	// value.
@@ -39,6 +42,10 @@ type ActivityStreamsUrlPropertyIterator interface {
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
+	// IsTootHashtag returns true if this property has a type of "Hashtag".
+	// When true, use the GetTootHashtag and SetTootHashtag methods to
+	// access and set this property.
+	IsTootHashtag() bool
 	// IsXMLSchemaAnyURI returns true if this property has a type of "anyURI".
 	// When true, use the GetXMLSchemaAnyURI and SetXMLSchemaAnyURI
 	// methods to access and set this property.
@@ -73,6 +80,9 @@ type ActivityStreamsUrlPropertyIterator interface {
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
+	// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+	// afterwards returns true.
+	SetTootHashtag(v TootHashtag)
 	// SetType attempts to set the property for the arbitrary type. Returns an
 	// error if it is not a valid type to set on this property.
 	SetType(t Type) error
@@ -129,6 +139,10 @@ type ActivityStreamsUrlProperty interface {
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "url"
 	AppendIRI(v *url.URL)
+	// AppendTootHashtag appends a Hashtag value to the back of a list of the
+	// property "url". Invalidates iterators that are traversing using
+	// Prev.
+	AppendTootHashtag(v TootHashtag)
 	// PrependType prepends an arbitrary type value to the front of a list of
 	// the property "url". Invalidates iterators that are traversing using
 	// Prev. Returns an error if the type is not a valid one to set for
@@ -163,6 +177,10 @@ type ActivityStreamsUrlProperty interface {
 	// "url". Existing elements at that index and higher are shifted back
 	// once. Invalidates all iterators.
 	InsertIRI(idx int, v *url.URL)
+	// InsertTootHashtag inserts a Hashtag value at the specified index for a
+	// property "url". Existing elements at that index and higher are
+	// shifted back once. Invalidates all iterators.
+	InsertTootHashtag(idx int, v TootHashtag)
 	// PrependType prepends an arbitrary type value to the front of a list of
 	// the property "url". Invalidates all iterators. Returns an error if
 	// the type is not a valid one to set for this property.
@@ -202,6 +220,9 @@ type ActivityStreamsUrlProperty interface {
 	// PrependIRI prepends an IRI value to the front of a list of the property
 	// "url".
 	PrependIRI(v *url.URL)
+	// PrependTootHashtag prepends a Hashtag value to the front of a list of
+	// the property "url". Invalidates all iterators.
+	PrependTootHashtag(v TootHashtag)
 	// PrependType prepends an arbitrary type value to the front of a list of
 	// the property "url". Invalidates all iterators. Returns an error if
 	// the type is not a valid one to set for this property.
@@ -230,6 +251,10 @@ type ActivityStreamsUrlProperty interface {
 	// SetIRI sets an IRI value to be at the specified index for the property
 	// "url". Panics if the index is out of bounds.
 	SetIRI(idx int, v *url.URL)
+	// SetTootHashtag sets a Hashtag value to be at the specified index for
+	// the property "url". Panics if the index is out of bounds.
+	// Invalidates all iterators.
+	SetTootHashtag(idx int, v TootHashtag)
 	// SetType sets an arbitrary type value to the specified index of the
 	// property "url". Invalidates all iterators. Returns an error if the
 	// type is not a valid one to set for this property. Panics if the

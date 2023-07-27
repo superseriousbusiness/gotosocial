@@ -17,6 +17,7 @@ import (
 type ActivityStreamsUrlPropertyIterator struct {
 	xmlschemaAnyURIMember        *url.URL
 	activitystreamsLinkMember    vocab.ActivityStreamsLink
+	tootHashtagMember            vocab.TootHashtag
 	activitystreamsMentionMember vocab.ActivityStreamsMention
 	unknown                      interface{}
 	alias                        string
@@ -41,6 +42,12 @@ func deserializeActivityStreamsUrlPropertyIterator(i interface{}, aliasMap map[s
 			this := &ActivityStreamsUrlPropertyIterator{
 				activitystreamsLinkMember: v,
 				alias:                     alias,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeHashtagToot()(m, aliasMap); err == nil {
+			this := &ActivityStreamsUrlPropertyIterator{
+				alias:             alias,
+				tootHashtagMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializeMentionActivityStreams()(m, aliasMap); err == nil {
@@ -85,11 +92,20 @@ func (this ActivityStreamsUrlPropertyIterator) GetIRI() *url.URL {
 	return this.xmlschemaAnyURIMember
 }
 
+// GetTootHashtag returns the value of this property. When IsTootHashtag returns
+// false, GetTootHashtag will return an arbitrary value.
+func (this ActivityStreamsUrlPropertyIterator) GetTootHashtag() vocab.TootHashtag {
+	return this.tootHashtagMember
+}
+
 // GetType returns the value in this property as a Type. Returns nil if the value
 // is not an ActivityStreams type, such as an IRI or another value.
 func (this ActivityStreamsUrlPropertyIterator) GetType() vocab.Type {
 	if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink()
+	}
+	if this.IsTootHashtag() {
+		return this.GetTootHashtag()
 	}
 	if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention()
@@ -108,6 +124,7 @@ func (this ActivityStreamsUrlPropertyIterator) GetXMLSchemaAnyURI() *url.URL {
 func (this ActivityStreamsUrlPropertyIterator) HasAny() bool {
 	return this.IsXMLSchemaAnyURI() ||
 		this.IsActivityStreamsLink() ||
+		this.IsTootHashtag() ||
 		this.IsActivityStreamsMention()
 }
 
@@ -131,6 +148,13 @@ func (this ActivityStreamsUrlPropertyIterator) IsIRI() bool {
 	return this.xmlschemaAnyURIMember != nil
 }
 
+// IsTootHashtag returns true if this property has a type of "Hashtag". When true,
+// use the GetTootHashtag and SetTootHashtag methods to access and set this
+// property.
+func (this ActivityStreamsUrlPropertyIterator) IsTootHashtag() bool {
+	return this.tootHashtagMember != nil
+}
+
 // IsXMLSchemaAnyURI returns true if this property has a type of "anyURI". When
 // true, use the GetXMLSchemaAnyURI and SetXMLSchemaAnyURI methods to access
 // and set this property.
@@ -146,6 +170,8 @@ func (this ActivityStreamsUrlPropertyIterator) JSONLDContext() map[string]string
 	var child map[string]string
 	if this.IsActivityStreamsLink() {
 		child = this.GetActivityStreamsLink().JSONLDContext()
+	} else if this.IsTootHashtag() {
+		child = this.GetTootHashtag().JSONLDContext()
 	} else if this.IsActivityStreamsMention() {
 		child = this.GetActivityStreamsMention().JSONLDContext()
 	}
@@ -170,8 +196,11 @@ func (this ActivityStreamsUrlPropertyIterator) KindIndex() int {
 	if this.IsActivityStreamsLink() {
 		return 1
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsTootHashtag() {
 		return 2
+	}
+	if this.IsActivityStreamsMention() {
+		return 3
 	}
 	if this.IsIRI() {
 		return -2
@@ -194,6 +223,8 @@ func (this ActivityStreamsUrlPropertyIterator) LessThan(o vocab.ActivityStreamsU
 		return anyuri.LessAnyURI(this.GetXMLSchemaAnyURI(), o.GetXMLSchemaAnyURI())
 	} else if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink().LessThan(o.GetActivityStreamsLink())
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().LessThan(o.GetTootHashtag())
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().LessThan(o.GetActivityStreamsMention())
 	}
@@ -247,11 +278,22 @@ func (this *ActivityStreamsUrlPropertyIterator) SetIRI(v *url.URL) {
 	this.SetXMLSchemaAnyURI(v)
 }
 
+// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+// afterwards returns true.
+func (this *ActivityStreamsUrlPropertyIterator) SetTootHashtag(v vocab.TootHashtag) {
+	this.clear()
+	this.tootHashtagMember = v
+}
+
 // SetType attempts to set the property for the arbitrary type. Returns an error
 // if it is not a valid type to set on this property.
 func (this *ActivityStreamsUrlPropertyIterator) SetType(t vocab.Type) error {
 	if v, ok := t.(vocab.ActivityStreamsLink); ok {
 		this.SetActivityStreamsLink(v)
+		return nil
+	}
+	if v, ok := t.(vocab.TootHashtag); ok {
+		this.SetTootHashtag(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsMention); ok {
@@ -274,6 +316,7 @@ func (this *ActivityStreamsUrlPropertyIterator) SetXMLSchemaAnyURI(v *url.URL) {
 func (this *ActivityStreamsUrlPropertyIterator) clear() {
 	this.xmlschemaAnyURIMember = nil
 	this.activitystreamsLinkMember = nil
+	this.tootHashtagMember = nil
 	this.activitystreamsMentionMember = nil
 	this.unknown = nil
 }
@@ -287,6 +330,8 @@ func (this ActivityStreamsUrlPropertyIterator) serialize() (interface{}, error) 
 		return anyuri.SerializeAnyURI(this.GetXMLSchemaAnyURI())
 	} else if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink().Serialize()
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().Serialize()
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().Serialize()
 	}
@@ -377,6 +422,17 @@ func (this *ActivityStreamsUrlProperty) AppendIRI(v *url.URL) {
 		myIdx:                 this.Len(),
 		parent:                this,
 		xmlschemaAnyURIMember: v,
+	})
+}
+
+// AppendTootHashtag appends a Hashtag value to the back of a list of the property
+// "url". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsUrlProperty) AppendTootHashtag(v vocab.TootHashtag) {
+	this.properties = append(this.properties, &ActivityStreamsUrlPropertyIterator{
+		alias:             this.alias,
+		myIdx:             this.Len(),
+		parent:            this,
+		tootHashtagMember: v,
 	})
 }
 
@@ -487,6 +543,23 @@ func (this *ActivityStreamsUrlProperty) InsertIRI(idx int, v *url.URL) {
 	}
 }
 
+// InsertTootHashtag inserts a Hashtag value at the specified index for a property
+// "url". Existing elements at that index and higher are shifted back once.
+// Invalidates all iterators.
+func (this *ActivityStreamsUrlProperty) InsertTootHashtag(idx int, v vocab.TootHashtag) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsUrlPropertyIterator{
+		alias:             this.alias,
+		myIdx:             idx,
+		parent:            this,
+		tootHashtagMember: v,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // PrependType prepends an arbitrary type value to the front of a list of the
 // property "url". Invalidates all iterators. Returns an error if the type is
 // not a valid one to set for this property.
@@ -574,6 +647,10 @@ func (this ActivityStreamsUrlProperty) Less(i, j int) bool {
 			rhs := this.properties[j].GetActivityStreamsLink()
 			return lhs.LessThan(rhs)
 		} else if idx1 == 2 {
+			lhs := this.properties[i].GetTootHashtag()
+			rhs := this.properties[j].GetTootHashtag()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 3 {
 			lhs := this.properties[i].GetActivityStreamsMention()
 			rhs := this.properties[j].GetActivityStreamsMention()
 			return lhs.LessThan(rhs)
@@ -651,6 +728,20 @@ func (this *ActivityStreamsUrlProperty) PrependIRI(v *url.URL) {
 		myIdx:                 0,
 		parent:                this,
 		xmlschemaAnyURIMember: v,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependTootHashtag prepends a Hashtag value to the front of a list of the
+// property "url". Invalidates all iterators.
+func (this *ActivityStreamsUrlProperty) PrependTootHashtag(v vocab.TootHashtag) {
+	this.properties = append([]*ActivityStreamsUrlPropertyIterator{{
+		alias:             this.alias,
+		myIdx:             0,
+		parent:            this,
+		tootHashtagMember: v,
 	}}, this.properties...)
 	for i := 1; i < this.Len(); i++ {
 		(this.properties)[i].myIdx = i
@@ -758,6 +849,19 @@ func (this *ActivityStreamsUrlProperty) SetIRI(idx int, v *url.URL) {
 		myIdx:                 idx,
 		parent:                this,
 		xmlschemaAnyURIMember: v,
+	}
+}
+
+// SetTootHashtag sets a Hashtag value to be at the specified index for the
+// property "url". Panics if the index is out of bounds. Invalidates all
+// iterators.
+func (this *ActivityStreamsUrlProperty) SetTootHashtag(idx int, v vocab.TootHashtag) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsUrlPropertyIterator{
+		alias:             this.alias,
+		myIdx:             idx,
+		parent:            this,
+		tootHashtagMember: v,
 	}
 }
 

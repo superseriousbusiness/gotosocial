@@ -67,10 +67,7 @@ type ActivityStreamsTombstone struct {
 	ActivityStreamsStartTime    vocab.ActivityStreamsStartTimeProperty
 	ActivityStreamsSummary      vocab.ActivityStreamsSummaryProperty
 	ActivityStreamsTag          vocab.ActivityStreamsTagProperty
-	ForgeFedTeam                vocab.ForgeFedTeamProperty
-	ForgeFedTicketsTrackedBy    vocab.ForgeFedTicketsTrackedByProperty
 	ActivityStreamsTo           vocab.ActivityStreamsToProperty
-	ForgeFedTracksTicketsFor    vocab.ForgeFedTracksTicketsForProperty
 	JSONLDType                  vocab.JSONLDTypeProperty
 	ActivityStreamsUpdated      vocab.ActivityStreamsUpdatedProperty
 	ActivityStreamsUrl          vocab.ActivityStreamsUrlProperty
@@ -287,25 +284,10 @@ func DeserializeTombstone(m map[string]interface{}, aliasMap map[string]string) 
 	} else if p != nil {
 		this.ActivityStreamsTag = p
 	}
-	if p, err := mgr.DeserializeTeamPropertyForgeFed()(m, aliasMap); err != nil {
-		return nil, err
-	} else if p != nil {
-		this.ForgeFedTeam = p
-	}
-	if p, err := mgr.DeserializeTicketsTrackedByPropertyForgeFed()(m, aliasMap); err != nil {
-		return nil, err
-	} else if p != nil {
-		this.ForgeFedTicketsTrackedBy = p
-	}
 	if p, err := mgr.DeserializeToPropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
 		this.ActivityStreamsTo = p
-	}
-	if p, err := mgr.DeserializeTracksTicketsForPropertyForgeFed()(m, aliasMap); err != nil {
-		return nil, err
-	} else if p != nil {
-		this.ForgeFedTracksTicketsFor = p
 	}
 	if p, err := mgr.DeserializeTypePropertyJSONLD()(m, aliasMap); err != nil {
 		return nil, err
@@ -397,13 +379,7 @@ func DeserializeTombstone(m map[string]interface{}, aliasMap map[string]string) 
 			continue
 		} else if k == "tag" {
 			continue
-		} else if k == "team" {
-			continue
-		} else if k == "ticketsTrackedBy" {
-			continue
 		} else if k == "to" {
-			continue
-		} else if k == "tracksTicketsFor" {
 			continue
 		} else if k == "type" {
 			continue
@@ -443,7 +419,7 @@ func NewActivityStreamsTombstone() *ActivityStreamsTombstone {
 // TombstoneIsDisjointWith returns true if the other provided type is disjoint
 // with the Tombstone type.
 func TombstoneIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Link", "Mention"}
+	disjointWith := []string{"Hashtag", "Link", "Mention"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true
@@ -662,23 +638,6 @@ func (this ActivityStreamsTombstone) GetActivityStreamsUrl() vocab.ActivityStrea
 	return this.ActivityStreamsUrl
 }
 
-// GetForgeFedTeam returns the "team" property if it exists, and nil otherwise.
-func (this ActivityStreamsTombstone) GetForgeFedTeam() vocab.ForgeFedTeamProperty {
-	return this.ForgeFedTeam
-}
-
-// GetForgeFedTicketsTrackedBy returns the "ticketsTrackedBy" property if it
-// exists, and nil otherwise.
-func (this ActivityStreamsTombstone) GetForgeFedTicketsTrackedBy() vocab.ForgeFedTicketsTrackedByProperty {
-	return this.ForgeFedTicketsTrackedBy
-}
-
-// GetForgeFedTracksTicketsFor returns the "tracksTicketsFor" property if it
-// exists, and nil otherwise.
-func (this ActivityStreamsTombstone) GetForgeFedTracksTicketsFor() vocab.ForgeFedTracksTicketsForProperty {
-	return this.ForgeFedTracksTicketsFor
-}
-
 // GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 func (this ActivityStreamsTombstone) GetJSONLDId() vocab.JSONLDIdProperty {
 	return this.JSONLDId
@@ -746,10 +705,7 @@ func (this ActivityStreamsTombstone) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.ActivityStreamsStartTime, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsSummary, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsTag, m)
-	m = this.helperJSONLDContext(this.ForgeFedTeam, m)
-	m = this.helperJSONLDContext(this.ForgeFedTicketsTrackedBy, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsTo, m)
-	m = this.helperJSONLDContext(this.ForgeFedTracksTicketsFor, m)
 	m = this.helperJSONLDContext(this.JSONLDType, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsUpdated, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsUrl, m)
@@ -1209,50 +1165,8 @@ func (this ActivityStreamsTombstone) LessThan(o vocab.ActivityStreamsTombstone) 
 		// Anything else is greater than nil
 		return false
 	} // Else: Both are nil
-	// Compare property "team"
-	if lhs, rhs := this.ForgeFedTeam, o.GetForgeFedTeam(); lhs != nil && rhs != nil {
-		if lhs.LessThan(rhs) {
-			return true
-		} else if rhs.LessThan(lhs) {
-			return false
-		}
-	} else if lhs == nil && rhs != nil {
-		// Nil is less than anything else
-		return true
-	} else if rhs != nil && rhs == nil {
-		// Anything else is greater than nil
-		return false
-	} // Else: Both are nil
-	// Compare property "ticketsTrackedBy"
-	if lhs, rhs := this.ForgeFedTicketsTrackedBy, o.GetForgeFedTicketsTrackedBy(); lhs != nil && rhs != nil {
-		if lhs.LessThan(rhs) {
-			return true
-		} else if rhs.LessThan(lhs) {
-			return false
-		}
-	} else if lhs == nil && rhs != nil {
-		// Nil is less than anything else
-		return true
-	} else if rhs != nil && rhs == nil {
-		// Anything else is greater than nil
-		return false
-	} // Else: Both are nil
 	// Compare property "to"
 	if lhs, rhs := this.ActivityStreamsTo, o.GetActivityStreamsTo(); lhs != nil && rhs != nil {
-		if lhs.LessThan(rhs) {
-			return true
-		} else if rhs.LessThan(lhs) {
-			return false
-		}
-	} else if lhs == nil && rhs != nil {
-		// Nil is less than anything else
-		return true
-	} else if rhs != nil && rhs == nil {
-		// Anything else is greater than nil
-		return false
-	} // Else: Both are nil
-	// Compare property "tracksTicketsFor"
-	if lhs, rhs := this.ForgeFedTracksTicketsFor, o.GetForgeFedTracksTicketsFor(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -1586,36 +1500,12 @@ func (this ActivityStreamsTombstone) Serialize() (map[string]interface{}, error)
 			m[this.ActivityStreamsTag.Name()] = i
 		}
 	}
-	// Maybe serialize property "team"
-	if this.ForgeFedTeam != nil {
-		if i, err := this.ForgeFedTeam.Serialize(); err != nil {
-			return nil, err
-		} else if i != nil {
-			m[this.ForgeFedTeam.Name()] = i
-		}
-	}
-	// Maybe serialize property "ticketsTrackedBy"
-	if this.ForgeFedTicketsTrackedBy != nil {
-		if i, err := this.ForgeFedTicketsTrackedBy.Serialize(); err != nil {
-			return nil, err
-		} else if i != nil {
-			m[this.ForgeFedTicketsTrackedBy.Name()] = i
-		}
-	}
 	// Maybe serialize property "to"
 	if this.ActivityStreamsTo != nil {
 		if i, err := this.ActivityStreamsTo.Serialize(); err != nil {
 			return nil, err
 		} else if i != nil {
 			m[this.ActivityStreamsTo.Name()] = i
-		}
-	}
-	// Maybe serialize property "tracksTicketsFor"
-	if this.ForgeFedTracksTicketsFor != nil {
-		if i, err := this.ForgeFedTracksTicketsFor.Serialize(); err != nil {
-			return nil, err
-		} else if i != nil {
-			m[this.ForgeFedTracksTicketsFor.Name()] = i
 		}
 	}
 	// Maybe serialize property "type"
@@ -1824,21 +1714,6 @@ func (this *ActivityStreamsTombstone) SetActivityStreamsUpdated(i vocab.Activity
 // SetActivityStreamsUrl sets the "url" property.
 func (this *ActivityStreamsTombstone) SetActivityStreamsUrl(i vocab.ActivityStreamsUrlProperty) {
 	this.ActivityStreamsUrl = i
-}
-
-// SetForgeFedTeam sets the "team" property.
-func (this *ActivityStreamsTombstone) SetForgeFedTeam(i vocab.ForgeFedTeamProperty) {
-	this.ForgeFedTeam = i
-}
-
-// SetForgeFedTicketsTrackedBy sets the "ticketsTrackedBy" property.
-func (this *ActivityStreamsTombstone) SetForgeFedTicketsTrackedBy(i vocab.ForgeFedTicketsTrackedByProperty) {
-	this.ForgeFedTicketsTrackedBy = i
-}
-
-// SetForgeFedTracksTicketsFor sets the "tracksTicketsFor" property.
-func (this *ActivityStreamsTombstone) SetForgeFedTracksTicketsFor(i vocab.ForgeFedTracksTicketsForProperty) {
-	this.ForgeFedTracksTicketsFor = i
 }
 
 // SetJSONLDId sets the "id" property.

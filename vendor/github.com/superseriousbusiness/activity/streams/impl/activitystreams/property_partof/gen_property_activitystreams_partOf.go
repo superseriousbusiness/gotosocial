@@ -17,6 +17,7 @@ type ActivityStreamsPartOfProperty struct {
 	activitystreamsLinkMember                  vocab.ActivityStreamsLink
 	activitystreamsCollectionMember            vocab.ActivityStreamsCollection
 	activitystreamsCollectionPageMember        vocab.ActivityStreamsCollectionPage
+	tootHashtagMember                          vocab.TootHashtag
 	activitystreamsMentionMember               vocab.ActivityStreamsMention
 	activitystreamsOrderedCollectionMember     vocab.ActivityStreamsOrderedCollection
 	activitystreamsOrderedCollectionPageMember vocab.ActivityStreamsOrderedCollectionPage
@@ -71,6 +72,12 @@ func DeserializePartOfProperty(m map[string]interface{}, aliasMap map[string]str
 					alias:                               alias,
 				}
 				return this, nil
+			} else if v, err := mgr.DeserializeHashtagToot()(m, aliasMap); err == nil {
+				this := &ActivityStreamsPartOfProperty{
+					alias:             alias,
+					tootHashtagMember: v,
+				}
+				return this, nil
 			} else if v, err := mgr.DeserializeMentionActivityStreams()(m, aliasMap); err == nil {
 				this := &ActivityStreamsPartOfProperty{
 					activitystreamsMentionMember: v,
@@ -111,6 +118,7 @@ func (this *ActivityStreamsPartOfProperty) Clear() {
 	this.activitystreamsLinkMember = nil
 	this.activitystreamsCollectionMember = nil
 	this.activitystreamsCollectionPageMember = nil
+	this.tootHashtagMember = nil
 	this.activitystreamsMentionMember = nil
 	this.activitystreamsOrderedCollectionMember = nil
 	this.activitystreamsOrderedCollectionPageMember = nil
@@ -166,6 +174,12 @@ func (this ActivityStreamsPartOfProperty) GetIRI() *url.URL {
 	return this.iri
 }
 
+// GetTootHashtag returns the value of this property. When IsTootHashtag returns
+// false, GetTootHashtag will return an arbitrary value.
+func (this ActivityStreamsPartOfProperty) GetTootHashtag() vocab.TootHashtag {
+	return this.tootHashtagMember
+}
+
 // GetType returns the value in this property as a Type. Returns nil if the value
 // is not an ActivityStreams type, such as an IRI or another value.
 func (this ActivityStreamsPartOfProperty) GetType() vocab.Type {
@@ -177,6 +191,9 @@ func (this ActivityStreamsPartOfProperty) GetType() vocab.Type {
 	}
 	if this.IsActivityStreamsCollectionPage() {
 		return this.GetActivityStreamsCollectionPage()
+	}
+	if this.IsTootHashtag() {
+		return this.GetTootHashtag()
 	}
 	if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention()
@@ -196,6 +213,7 @@ func (this ActivityStreamsPartOfProperty) HasAny() bool {
 	return this.IsActivityStreamsLink() ||
 		this.IsActivityStreamsCollection() ||
 		this.IsActivityStreamsCollectionPage() ||
+		this.IsTootHashtag() ||
 		this.IsActivityStreamsMention() ||
 		this.IsActivityStreamsOrderedCollection() ||
 		this.IsActivityStreamsOrderedCollectionPage() ||
@@ -253,6 +271,13 @@ func (this ActivityStreamsPartOfProperty) IsIRI() bool {
 	return this.iri != nil
 }
 
+// IsTootHashtag returns true if this property has a type of "Hashtag". When true,
+// use the GetTootHashtag and SetTootHashtag methods to access and set this
+// property.
+func (this ActivityStreamsPartOfProperty) IsTootHashtag() bool {
+	return this.tootHashtagMember != nil
+}
+
 // JSONLDContext returns the JSONLD URIs required in the context string for this
 // property and the specific values that are set. The value in the map is the
 // alias used to import the property's value or values.
@@ -265,6 +290,8 @@ func (this ActivityStreamsPartOfProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsCollection().JSONLDContext()
 	} else if this.IsActivityStreamsCollectionPage() {
 		child = this.GetActivityStreamsCollectionPage().JSONLDContext()
+	} else if this.IsTootHashtag() {
+		child = this.GetTootHashtag().JSONLDContext()
 	} else if this.IsActivityStreamsMention() {
 		child = this.GetActivityStreamsMention().JSONLDContext()
 	} else if this.IsActivityStreamsOrderedCollection() {
@@ -296,14 +323,17 @@ func (this ActivityStreamsPartOfProperty) KindIndex() int {
 	if this.IsActivityStreamsCollectionPage() {
 		return 2
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsTootHashtag() {
 		return 3
 	}
-	if this.IsActivityStreamsOrderedCollection() {
+	if this.IsActivityStreamsMention() {
 		return 4
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsOrderedCollection() {
 		return 5
+	}
+	if this.IsActivityStreamsOrderedCollectionPage() {
+		return 6
 	}
 	if this.IsIRI() {
 		return -2
@@ -328,6 +358,8 @@ func (this ActivityStreamsPartOfProperty) LessThan(o vocab.ActivityStreamsPartOf
 		return this.GetActivityStreamsCollection().LessThan(o.GetActivityStreamsCollection())
 	} else if this.IsActivityStreamsCollectionPage() {
 		return this.GetActivityStreamsCollectionPage().LessThan(o.GetActivityStreamsCollectionPage())
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().LessThan(o.GetTootHashtag())
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().LessThan(o.GetActivityStreamsMention())
 	} else if this.IsActivityStreamsOrderedCollection() {
@@ -360,6 +392,8 @@ func (this ActivityStreamsPartOfProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsCollection().Serialize()
 	} else if this.IsActivityStreamsCollectionPage() {
 		return this.GetActivityStreamsCollectionPage().Serialize()
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().Serialize()
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().Serialize()
 	} else if this.IsActivityStreamsOrderedCollection() {
@@ -420,6 +454,13 @@ func (this *ActivityStreamsPartOfProperty) SetIRI(v *url.URL) {
 	this.iri = v
 }
 
+// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+// afterwards returns true.
+func (this *ActivityStreamsPartOfProperty) SetTootHashtag(v vocab.TootHashtag) {
+	this.Clear()
+	this.tootHashtagMember = v
+}
+
 // SetType attempts to set the property for the arbitrary type. Returns an error
 // if it is not a valid type to set on this property.
 func (this *ActivityStreamsPartOfProperty) SetType(t vocab.Type) error {
@@ -433,6 +474,10 @@ func (this *ActivityStreamsPartOfProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsCollectionPage); ok {
 		this.SetActivityStreamsCollectionPage(v)
+		return nil
+	}
+	if v, ok := t.(vocab.TootHashtag); ok {
+		this.SetTootHashtag(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsMention); ok {

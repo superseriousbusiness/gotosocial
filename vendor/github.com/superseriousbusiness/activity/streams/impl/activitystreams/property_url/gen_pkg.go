@@ -9,6 +9,9 @@ var mgr privateManager
 // privateManager abstracts the code-generated manager that provides access to
 // concrete implementations.
 type privateManager interface {
+	// DeserializeHashtagToot returns the deserialization method for the
+	// "TootHashtag" non-functional property in the vocabulary "Toot"
+	DeserializeHashtagToot() func(map[string]interface{}, map[string]string) (vocab.TootHashtag, error)
 	// DeserializeLinkActivityStreams returns the deserialization method for
 	// the "ActivityStreamsLink" non-functional property in the vocabulary
 	// "ActivityStreams"

@@ -49,13 +49,9 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsBlock) error:
 			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedBranch) error:
-			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCollection) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCollectionPage) error:
-			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedCommit) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCreate) error:
 			// Do nothing, this callback has a correct signature.
@@ -76,6 +72,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsFollow) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsGroup) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.TootHashtag) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.TootIdentityProof) error:
 			// Do nothing, this callback has a correct signature.
@@ -125,8 +123,6 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.W3IDSecurityV1PublicKey) error:
 			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedPush) error:
-			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsQuestion) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsRead) error:
@@ -137,17 +133,11 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsRemove) error:
 			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedRepository) error:
-			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsService) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTentativeAccept) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTentativeReject) error:
-			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedTicket) error:
-			// Do nothing, this callback has a correct signature.
-		case func(context.Context, vocab.ForgeFedTicketDependency) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTombstone) error:
 			// Do nothing, this callback has a correct signature.
@@ -239,13 +229,6 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 		}
 		if len(ActivityStreamsAlias) > 0 {
 			ActivityStreamsAlias += ":"
-		}
-		ForgeFedAlias, ok := aliasMap["https://forgefed.peers.community/ns"]
-		if !ok {
-			ForgeFedAlias = aliasMap["http://forgefed.peers.community/ns"]
-		}
-		if len(ForgeFedAlias) > 0 {
-			ForgeFedAlias += ":"
 		}
 		TootAlias, ok := aliasMap["https://joinmastodon.org/ns"]
 		if !ok {
@@ -368,17 +351,6 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 				}
 			}
 			return ErrNoCallbackMatch
-		} else if typeString == ForgeFedAlias+"Branch" {
-			v, err := mgr.DeserializeBranchForgeFed()(m, aliasMap)
-			if err != nil {
-				return err
-			}
-			for _, i := range this.callbacks {
-				if fn, ok := i.(func(context.Context, vocab.ForgeFedBranch) error); ok {
-					return fn(ctx, v)
-				}
-			}
-			return ErrNoCallbackMatch
 		} else if typeString == ActivityStreamsAlias+"Collection" {
 			v, err := mgr.DeserializeCollectionActivityStreams()(m, aliasMap)
 			if err != nil {
@@ -397,17 +369,6 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsCollectionPage) error); ok {
-					return fn(ctx, v)
-				}
-			}
-			return ErrNoCallbackMatch
-		} else if typeString == ForgeFedAlias+"Commit" {
-			v, err := mgr.DeserializeCommitForgeFed()(m, aliasMap)
-			if err != nil {
-				return err
-			}
-			for _, i := range this.callbacks {
-				if fn, ok := i.(func(context.Context, vocab.ForgeFedCommit) error); ok {
 					return fn(ctx, v)
 				}
 			}
@@ -518,6 +479,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsGroup) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == TootAlias+"Hashtag" {
+			v, err := mgr.DeserializeHashtagToot()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.TootHashtag) error); ok {
 					return fn(ctx, v)
 				}
 			}
@@ -786,17 +758,6 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 				}
 			}
 			return ErrNoCallbackMatch
-		} else if typeString == ForgeFedAlias+"Push" {
-			v, err := mgr.DeserializePushForgeFed()(m, aliasMap)
-			if err != nil {
-				return err
-			}
-			for _, i := range this.callbacks {
-				if fn, ok := i.(func(context.Context, vocab.ForgeFedPush) error); ok {
-					return fn(ctx, v)
-				}
-			}
-			return ErrNoCallbackMatch
 		} else if typeString == ActivityStreamsAlias+"Question" {
 			v, err := mgr.DeserializeQuestionActivityStreams()(m, aliasMap)
 			if err != nil {
@@ -852,17 +813,6 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 				}
 			}
 			return ErrNoCallbackMatch
-		} else if typeString == ForgeFedAlias+"Repository" {
-			v, err := mgr.DeserializeRepositoryForgeFed()(m, aliasMap)
-			if err != nil {
-				return err
-			}
-			for _, i := range this.callbacks {
-				if fn, ok := i.(func(context.Context, vocab.ForgeFedRepository) error); ok {
-					return fn(ctx, v)
-				}
-			}
-			return ErrNoCallbackMatch
 		} else if typeString == ActivityStreamsAlias+"Service" {
 			v, err := mgr.DeserializeServiceActivityStreams()(m, aliasMap)
 			if err != nil {
@@ -892,28 +842,6 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsTentativeReject) error); ok {
-					return fn(ctx, v)
-				}
-			}
-			return ErrNoCallbackMatch
-		} else if typeString == ForgeFedAlias+"Ticket" {
-			v, err := mgr.DeserializeTicketForgeFed()(m, aliasMap)
-			if err != nil {
-				return err
-			}
-			for _, i := range this.callbacks {
-				if fn, ok := i.(func(context.Context, vocab.ForgeFedTicket) error); ok {
-					return fn(ctx, v)
-				}
-			}
-			return ErrNoCallbackMatch
-		} else if typeString == ForgeFedAlias+"TicketDependency" {
-			v, err := mgr.DeserializeTicketDependencyForgeFed()(m, aliasMap)
-			if err != nil {
-				return err
-			}
-			for _, i := range this.callbacks {
-				if fn, ok := i.(func(context.Context, vocab.ForgeFedTicketDependency) error); ok {
 					return fn(ctx, v)
 				}
 			}

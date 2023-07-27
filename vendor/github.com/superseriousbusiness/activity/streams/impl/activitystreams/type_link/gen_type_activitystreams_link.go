@@ -199,7 +199,7 @@ func IsOrExtendsLink(other vocab.Type) bool {
 // LinkIsDisjointWith returns true if the other provided type is disjoint with the
 // Link type.
 func LinkIsDisjointWith(other vocab.Type) bool {
-	disjointWith := []string{"Accept", "Activity", "Add", "Announce", "Application", "Arrive", "Article", "Audio", "Block", "Branch", "Collection", "CollectionPage", "Commit", "Create", "Delete", "Dislike", "Document", "Emoji", "Event", "Flag", "Follow", "Group", "IdentityProof", "Ignore", "Image", "IntransitiveActivity", "Invite", "Join", "Leave", "Like", "Listen", "Move", "Note", "Object", "Offer", "OrderedCollection", "OrderedCollectionPage", "OrderedCollectionPage", "Organization", "Page", "Person", "Place", "Profile", "PropertyValue", "Push", "Question", "Read", "Reject", "Relationship", "Remove", "Repository", "Service", "TentativeAccept", "TentativeReject", "Ticket", "TicketDependency", "Tombstone", "Travel", "Undo", "Update", "Video", "View"}
+	disjointWith := []string{"Accept", "Activity", "Add", "Announce", "Application", "Arrive", "Article", "Audio", "Block", "Collection", "CollectionPage", "Create", "Delete", "Dislike", "Document", "Emoji", "Event", "Flag", "Follow", "Group", "IdentityProof", "Ignore", "Image", "IntransitiveActivity", "Invite", "Join", "Leave", "Like", "Listen", "Move", "Note", "Object", "Offer", "OrderedCollection", "OrderedCollectionPage", "OrderedCollectionPage", "Organization", "Page", "Person", "Place", "Profile", "PropertyValue", "Question", "Read", "Reject", "Relationship", "Remove", "Service", "TentativeAccept", "TentativeReject", "Tombstone", "Travel", "Undo", "Update", "Video", "View"}
 	for _, disjoint := range disjointWith {
 		if disjoint == other.GetTypeName() {
 			return true
@@ -212,7 +212,7 @@ func LinkIsDisjointWith(other vocab.Type) bool {
 // type. Note that it returns false if the types are the same; see the
 // "IsOrExtendsLink" variant instead.
 func LinkIsExtendedBy(other vocab.Type) bool {
-	extensions := []string{"Mention"}
+	extensions := []string{"Hashtag", "Mention"}
 	for _, ext := range extensions {
 		if ext == other.GetTypeName() {
 			return true
