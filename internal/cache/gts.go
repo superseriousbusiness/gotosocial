@@ -30,11 +30,11 @@ import (
 )
 
 type GTSCaches struct {
-	account     *result.Cache[*gtsmodel.Account]
-	accountNote *result.Cache[*gtsmodel.AccountNote]
-	block       *result.Cache[*gtsmodel.Block]
-	blockIDs    *SliceCache[string]
-	// boostIDs         *SliceCache[string]
+	account          *result.Cache[*gtsmodel.Account]
+	accountNote      *result.Cache[*gtsmodel.AccountNote]
+	block            *result.Cache[*gtsmodel.Block]
+	blockIDs         *SliceCache[string]
+	boostOfIDs       *SliceCache[string]
 	domainBlock      *domain.BlockCache
 	emoji            *result.Cache[*gtsmodel.Emoji]
 	emojiCategory    *result.Cache[*gtsmodel.EmojiCategory]
@@ -69,7 +69,7 @@ func (c *GTSCaches) Init() {
 	c.initAccountNote()
 	c.initBlock()
 	c.initBlockIDs()
-	// c.initBoostIDs()
+	c.initBoostOfIDs()
 	c.initDomainBlock()
 	c.initEmoji()
 	c.initEmojiCategory()
@@ -128,9 +128,9 @@ func (c *GTSCaches) BlockIDs() *SliceCache[string] {
 }
 
 // BoostIDs ...
-// func (c *GTSCaches) BoostIDs() *SliceCache[string] {
-// 	return c.boostIDs
-// }
+func (c *GTSCaches) BoostOfIDs() *SliceCache[string] {
+	return c.boostOfIDs
+}
 
 // DomainBlock provides access to the domain block database cache.
 func (c *GTSCaches) DomainBlock() *domain.BlockCache {
@@ -341,13 +341,13 @@ func (c *GTSCaches) initBlockIDs() {
 	)}
 }
 
-// func (c *GTSCaches) initBoostIDs() {
-// 	c.boostIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
-// 		0,
-// 		1000,
-// 		0,
-// 	)}
-// }
+func (c *GTSCaches) initBoostOfIDs() {
+	c.boostOfIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+		0,
+		1000,
+		0,
+	)}
+}
 
 func (c *GTSCaches) initDomainBlock() {
 	c.domainBlock = new(domain.BlockCache)

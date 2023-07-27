@@ -46,7 +46,7 @@ func (c *converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 		}
 		si.Faved = faved
 
-		reblogged, err := c.db.IsStatusRebloggedBy(ctx, s, requestingAccount.ID)
+		reblogged, err := c.db.IsStatusBoostedBy(ctx, s.ID, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
 		}

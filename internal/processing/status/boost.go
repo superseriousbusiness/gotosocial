@@ -189,15 +189,15 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	statusReblogs, err := p.state.DB.GetStatusReblogs(ctx, targetStatus)
+	statusBoosts, err := p.state.DB.GetStatusBoosts(ctx, targetStatus.ID)
 	if err != nil {
 		err = fmt.Errorf("BoostedBy: error seeing who boosted status: %s", err)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	// filter account IDs so the user doesn't see accounts they blocked or which blocked them
-	accountIDs := make([]string, 0, len(statusReblogs))
-	for _, s := range statusReblogs {
+	accountIDs := make([]string, 0, len(statusBoosts))
+	for _, s := range statusBoosts {
 		blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, s.AccountID)
 		if err != nil {
 			err = fmt.Errorf("BoostedBy: error checking blocks: %s", err)

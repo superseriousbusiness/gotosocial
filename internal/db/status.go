@@ -46,9 +46,6 @@ type Status interface {
 	// DeleteStatusByID deletes one status from the database.
 	DeleteStatusByID(ctx context.Context, id string) error
 
-	// CountStatusReblogs returns the amount of reblogs/boosts recorded for a status, or an error if something goes wrong
-	CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, error)
-
 	// GetStatuses gets a slice of statuses corresponding to the given status IDs.
 	GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error)
 
@@ -61,6 +58,15 @@ type Status interface {
 	// CountStatusReplies ...
 	CountStatusReplies(ctx context.Context, statusID string) (int, error)
 
+	// GetStatusBoosts ...
+	GetStatusBoosts(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
+
+	// CountStatusBoosts ...
+	CountStatusBoosts(ctx context.Context, statusID string) (int, error)
+
+	// IsStatusBoostedBy ...
+	IsStatusBoostedBy(ctx context.Context, statusID string, accountID string) (bool, error)
+
 	// GetStatusParents gets the parent statuses of a given status.
 	//
 	// If onlyDirect is true, only the immediate parent will be returned.
@@ -71,16 +77,9 @@ type Status interface {
 	// If onlyDirect is true, only the immediate children will be returned.
 	GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error)
 
-	// IsStatusRebloggedBy checks if a given status has been reblogged/boosted by a given account ID
-	IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
-
 	// IsStatusMutedBy checks if a given status has been muted by a given account ID
 	IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
 
 	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
-
-	// GetStatusReblogs returns a slice of statuses that are a boost/reblog of the given status.
-	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
-	GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, error)
 }

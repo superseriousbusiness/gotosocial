@@ -605,7 +605,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		return nil, fmt.Errorf("error counting replies: %w", err)
 	}
 
-	reblogsCount, err := c.db.CountStatusReblogs(ctx, s)
+	reblogsCount, err := c.db.CountStatusBoosts(ctx, s.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting reblogs: %w", err)
 	}

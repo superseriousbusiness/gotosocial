@@ -425,7 +425,7 @@ func (p *Processor) wipeStatus(ctx context.Context, statusToDelete *gtsmodel.Sta
 	}
 
 	// delete all boosts for this status + remove them from timelines
-	if boosts, err := p.state.DB.GetStatusReblogs(ctx, statusToDelete); err == nil {
+	if boosts, err := p.state.DB.GetStatusBoosts(ctx, statusToDelete.ID); err == nil {
 		for _, b := range boosts {
 			if err := p.deleteStatusFromTimelines(ctx, b.ID); err != nil {
 				return err

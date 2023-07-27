@@ -576,40 +576,56 @@ func (s *statusDB) getStatusReplyIDs(ctx context.Context, statusID string) ([]st
 	})
 }
 
-func (s *statusDB) CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, error) {
-	return s.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		Where("? = ?", bun.Ident("status.boost_of_id"), status.ID).
-		Count(ctx)
+func (s *statusDB) GetStatusBoosts(ctx context.Context, statusID string) ([]*gtsmodel.Status, error) {
+	statusIDs, err := s.getStatusBoostIDs(ctx, statusID)
+	if err != nil {
+		return nil, err
+	}
+	return s.GetStatusesByIDs(ctx, statusIDs)
 }
 
-func (s *statusDB) CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, error) {
-	return s.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
-		Where("? = ?", bun.Ident("status_fave.status_id"), status.ID).
-		Count(ctx)
+func (s *statusDB) IsStatusBoostedBy(ctx context.Context, statusID string, accountID string) (bool, error) {
+	// Fetch all boosts for this status ID.
+	boosts, err := s.GetStatusBoosts(
+		gtscontext.SetBarebones(ctx),
+		statusID,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	// Check whether any boosts are by account ID.
+	for _, boost := range boosts {
+		if boost.AccountID == accountID {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
-func (s *statusDB) IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
-	q := s.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_faves"), bun.Ident("status_fave")).
-		Where("? = ?", bun.Ident("status_fave.status_id"), status.ID).
-		Where("? = ?", bun.Ident("status_fave.account_id"), accountID)
-
-	return s.db.Exists(ctx, q)
+func (s *statusDB) CountStatusBoosts(ctx context.Context, statusID string) (int, error) {
+	statusIDs, err := s.getStatusBoostIDs(ctx, statusID)
+	return len(statusIDs), err
 }
 
-func (s *statusDB) IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
-	q := s.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		Where("? = ?", bun.Ident("status.boost_of_id"), status.ID).
-		Where("? = ?", bun.Ident("status.account_id"), accountID)
+func (s *statusDB) getStatusBoostIDs(ctx context.Context, statusID string) ([]string, error) {
+	return s.state.Caches.GTS.BoostOfIDs().Load(statusID, func() ([]string, error) {
+		var statusIDs []string
 
-	return s.db.Exists(ctx, q)
+		// Status reply IDs not in cache, perform DB query!
+		if err := s.db.
+			NewSelect().
+			Table("statuses").
+			Column("id").
+			Where("? = ?", bun.Ident("boost_of_id"), statusID).
+			Order("id DESC").
+			Scan(ctx, &statusIDs); err != nil {
+			return nil, s.db.ProcessError(err)
+		}
+
+		return statusIDs, nil
+	})
 }
 
 func (s *statusDB) IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
@@ -630,17 +646,4 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
 
 	return s.db.Exists(ctx, q)
-}
-
-func (s *statusDB) GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, error) {
-	reblogs := []*gtsmodel.Status{}
-
-	q := s.
-		newStatusQ(&reblogs).
-		Where("? = ?", bun.Ident("status.boost_of_id"), status.ID)
-
-	if err := q.Scan(ctx); err != nil {
-		return nil, s.db.ProcessError(err)
-	}
-	return reblogs, nil
 }
