@@ -604,7 +604,7 @@ func (s *statusDB) IsStatusBoostedBy(ctx context.Context, statusID string, accou
 		statusID,
 		accountID,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return false, err
 	}
 	return (boost != nil), nil
