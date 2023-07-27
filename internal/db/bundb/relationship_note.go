@@ -32,7 +32,7 @@ func (r *relationshipDB) GetNote(ctx context.Context, sourceAccountID string, ta
 		ctx,
 		"AccountID.TargetAccountID",
 		func(note *gtsmodel.AccountNote) error {
-			return r.conn.NewSelect().Model(note).
+			return r.db.NewSelect().Model(note).
 				Where("? = ?", bun.Ident("account_id"), sourceAccountID).
 				Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
 				Scan(ctx)
@@ -49,7 +49,7 @@ func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery fun
 
 		// Not cached! Perform database query
 		if err := dbQuery(&note); err != nil {
-			return nil, r.conn.ProcessError(err)
+			return nil, r.db.ProcessError(err)
 		}
 
 		return &note, nil
@@ -88,12 +88,12 @@ func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery fun
 func (r *relationshipDB) PutNote(ctx context.Context, note *gtsmodel.AccountNote) error {
 	note.UpdatedAt = time.Now()
 	return r.state.Caches.GTS.AccountNote().Store(note, func() error {
-		_, err := r.conn.
+		_, err := r.db.
 			NewInsert().
 			Model(note).
 			On("CONFLICT (?, ?) DO UPDATE", bun.Ident("account_id"), bun.Ident("target_account_id")).
 			Set("? = ?, ? = ?", bun.Ident("updated_at"), note.UpdatedAt, bun.Ident("comment"), note.Comment).
 			Exec(ctx)
-		return r.conn.ProcessError(err)
+		return r.db.ProcessError(err)
 	})
 }
