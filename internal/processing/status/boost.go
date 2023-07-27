@@ -106,47 +106,24 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
 	}
 
-	// check if we actually have a boost for this status
-	var toUnboost bool
-
-	gtsBoost := &gtsmodel.Status{}
-	where := []db.Where{
-		{
-			Key:   "boost_of_id",
-			Value: targetStatusID,
-		},
-		{
-			Key:   "account_id",
-			Value: requestingAccount.ID,
-		},
-	}
-	err = p.state.DB.GetWhere(ctx, where, gtsBoost)
-	if err == nil {
-		// we have a boost
-		toUnboost = true
-	}
-
+	// Check whether the requesting account has boosted the given status ID.
+	boost, err := p.state.DB.GetStatusBoost(ctx, targetStatusID, requestingAccount.ID)
 	if err != nil {
-		// something went wrong in the db finding the boost
-		if err != db.ErrNoEntries {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching existing boost from database: %s", err))
-		}
-		// we just don't have a boost
-		toUnboost = false
+		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error checking status boost %s: %w", targetStatusID, err))
 	}
 
-	if toUnboost {
+	if boost != nil {
 		// pin some stuff onto the boost while we have it out of the db
-		gtsBoost.Account = requestingAccount
-		gtsBoost.BoostOf = targetStatus
-		gtsBoost.BoostOfAccount = targetStatus.Account
-		gtsBoost.BoostOf.Account = targetStatus.Account
+		boost.Account = requestingAccount
+		boost.BoostOf = targetStatus
+		boost.BoostOfAccount = targetStatus.Account
+		boost.BoostOf.Account = targetStatus.Account
 
 		// send it back to the processor for async processing
 		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityUndo,
-			GTSModel:       gtsBoost,
+			GTSModel:       boost,
 			OriginAccount:  requestingAccount,
 			TargetAccount:  targetStatus.Account,
 		})
