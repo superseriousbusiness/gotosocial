@@ -34,6 +34,9 @@ type Status interface {
 	// GetStatusByURL returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, error)
 
+	// GetStatusBoost ...
+	GetStatusBoost(ctx context.Context, boostOfID string, byAccountID string) (*gtsmodel.Status, error)
+
 	// PopulateStatus ensures that all sub-models of a status are populated (e.g. mentions, attachments, etc).
 	PopulateStatus(ctx context.Context, status *gtsmodel.Status) error
 

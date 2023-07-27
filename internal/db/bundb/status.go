@@ -95,6 +95,20 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 	)
 }
 
+func (s *statusDB) GetStatusBoost(ctx context.Context, boostOfID string, byAccountID string) (*gtsmodel.Status, error) {
+	return s.getStatus(
+		ctx,
+		"BoostOfID.AccountID",
+		func(status *gtsmodel.Status) error {
+			return s.newStatusQ(status).
+				Where("boost_of_id = ?", boostOfID).
+				Where("account_id = ?", byAccountID).
+				Scan(ctx)
+		},
+		boostOfID, byAccountID,
+	)
+}
+
 func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Status) error, keyParts ...any) (*gtsmodel.Status, error) {
 	// Fetch status from database cache with loader callback
 	status, err := s.state.Caches.GTS.Status().Load(lookup, func() (*gtsmodel.Status, error) {
@@ -585,23 +599,15 @@ func (s *statusDB) GetStatusBoosts(ctx context.Context, statusID string) ([]*gts
 }
 
 func (s *statusDB) IsStatusBoostedBy(ctx context.Context, statusID string, accountID string) (bool, error) {
-	// Fetch all boosts for this status ID.
-	boosts, err := s.GetStatusBoosts(
+	boost, err := s.GetStatusBoost(
 		gtscontext.SetBarebones(ctx),
 		statusID,
+		accountID,
 	)
 	if err != nil {
 		return false, err
 	}
-
-	// Check whether any boosts are by account ID.
-	for _, boost := range boosts {
-		if boost.AccountID == accountID {
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return (boost != nil), nil
 }
 
 func (s *statusDB) CountStatusBoosts(ctx context.Context, statusID string) (int, error) {

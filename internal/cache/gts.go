@@ -659,6 +659,7 @@ func (c *GTSCaches) initStatus() {
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
+		{Name: "BoostOfID.StatusID"},
 	}, func(s1 *gtsmodel.Status) *gtsmodel.Status {
 		s2 := new(gtsmodel.Status)
 		*s2 = *s1
