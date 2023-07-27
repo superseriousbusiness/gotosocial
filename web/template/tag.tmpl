@@ -20,32 +20,8 @@
 {{ template "header.tmpl" .}}
 
 <main class="thread">
-	<section class="toots">
-		<div class="col-header">
-			<h2 id="recent" tabindex="-1">Recent Public posts for #{{.tagName}}</h2>
-		</div>
-
-		<section class="thread">
-			{{ if not .statuses }}
-			<div data-nosnippet class="nothinghere">Nothing here!</div>
-			{{ else }}
-			{{ range .statuses }}
-			<article class="toot expanded" id="{{.ID}}">
-				{{ template "status.tmpl" .}}
-			</article>
-			{{ end }}
-			{{ end }}
-		</section>
-
-		<div class="backnextlinks">
-			{{ if .show_back_to_top }}
-			<a href="/tags/{{.tagName}}">Back to top</a>
-			{{ end }}
-			{{ if .statuses_next }}
-			<a href="{{ .statuses_next }}" class="next">Show older</a>
-			{{ end }}
-		</div>
-	</section>
+	<h2 id="tag-name" tabindex="-1">#{{.tagName}}</h2>
+	<p>There's nothing here yet!</p>
 </main>
 
 {{ template "footer.tmpl" .}}

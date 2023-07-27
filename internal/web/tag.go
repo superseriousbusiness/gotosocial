@@ -56,33 +56,16 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 		return
 	}
 
-	// We need to change our response slightly if the
-	// profile visitor is paging through statuses.
-	var (
-		maxStatusID = apiutil.ParseMaxID(c.Query(apiutil.MaxIDKey), "")
-		paging      = maxStatusID != ""
-	)
-
-	// Get statuses from maxStatusID onwards (or from top if empty string).
-	statusResp, errWithCode := m.processor.Timeline().WebTagTimelineGet(ctx, tagName, maxStatusID)
-	if errWithCode != nil {
-		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
-		return
-	}
-
 	stylesheets := []string{
 		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
 		distPathPrefix + "/status.css",
+		distPathPrefix + "/tag.css",
 	}
 
 	c.HTML(http.StatusOK, "tag.tmpl", gin.H{
-		"instance":         instance,
-		"ogMeta":           ogBase(instance),
-		"tagName":          tagName,
-		"statuses":         statusResp.Items,
-		"statuses_next":    statusResp.NextLink,
-		"show_back_to_top": paging,
-		"stylesheets":      stylesheets,
-		"javascript":       []string{distPathPrefix + "/frontend.js"},
+		"instance":    instance,
+		"ogMeta":      ogBase(instance),
+		"tagName":     tagName,
+		"stylesheets": stylesheets,
 	})
 }

@@ -34,7 +34,7 @@ import (
 // TagTimelineGet gets a pageable timeline for the given
 // tagName and given paging parameters. It will ensure
 // that each status in the timeline is actually visible
-// to requestingAcct.
+// to requestingAcct before returning it.
 func (p *Processor) TagTimelineGet(
 	ctx context.Context,
 	requestingAcct *gtsmodel.Account,
@@ -68,46 +68,6 @@ func (p *Processor) TagTimelineGet(
 		limit,
 		// Use API URL for tag.
 		"/api/v1/timelines/tag/"+tagName,
-	)
-}
-
-// WebTagTimelineGet is like TagTimelineGet, but specifically
-// for getting a timeline of tagged statuses to serve via the
-// web page for the given tagName. Limit is hardcoded to 20,
-// and no account will be presented for authentication.
-func (p *Processor) WebTagTimelineGet(
-	ctx context.Context,
-	tagName string,
-	maxID string,
-) (*apimodel.PageableResponse, gtserror.WithCode) {
-	const limit = 20
-
-	tag, errWithCode := p.getTag(ctx, tagName)
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
-
-	if tag == nil || !*tag.Useable || !*tag.Listable {
-		// Instead or returning 404 for this, which is
-		// jarring for a user, just return no statuses.
-		return util.EmptyPageableResponse(), nil
-	}
-
-	statuses, err := p.state.DB.GetTagTimeline(ctx, tag.ID, maxID, "", "", limit)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("db error getting statuses: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return p.packageTagResponse(
-		ctx,
-		// Present no account
-		// for visibility checking.
-		nil,
-		statuses,
-		limit,
-		// Use web URL for tag.
-		"/tags/"+tagName,
 	)
 }
 
