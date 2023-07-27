@@ -46,9 +46,6 @@ type Status interface {
 	// DeleteStatusByID deletes one status from the database.
 	DeleteStatusByID(ctx context.Context, id string) error
 
-	// CountStatusReplies returns the amount of replies recorded for a status, or an error if something goes wrong
-	CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, error)
-
 	// CountStatusReblogs returns the amount of reblogs/boosts recorded for a status, or an error if something goes wrong
 	CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, error)
 
@@ -57,6 +54,12 @@ type Status interface {
 
 	// GetStatusesUsingEmoji fetches all status models using emoji with given ID stored in their 'emojis' column.
 	GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error)
+
+	// GetStatusReplies ...
+	GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
+
+	// CountStatusReplies ...
+	CountStatusReplies(ctx context.Context, statusID string) (int, error)
 
 	// GetStatusParents gets the parent statuses of a given status.
 	//

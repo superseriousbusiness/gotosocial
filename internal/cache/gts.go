@@ -43,20 +43,20 @@ type GTSCaches struct {
 	followRequest    *result.Cache[*gtsmodel.FollowRequest]
 	followRequestIDs *SliceCache[string]
 	instance         *result.Cache[*gtsmodel.Instance]
-	// inReplyToIDs     *SliceCache[string]
-	list          *result.Cache[*gtsmodel.List]
-	listEntry     *result.Cache[*gtsmodel.ListEntry]
-	marker        *result.Cache[*gtsmodel.Marker]
-	media         *result.Cache[*gtsmodel.MediaAttachment]
-	mention       *result.Cache[*gtsmodel.Mention]
-	notification  *result.Cache[*gtsmodel.Notification]
-	report        *result.Cache[*gtsmodel.Report]
-	status        *result.Cache[*gtsmodel.Status]
-	statusFave    *result.Cache[*gtsmodel.StatusFave]
-	statusFaveIDs *SliceCache[string]
-	tag           *result.Cache[*gtsmodel.Tag]
-	tombstone     *result.Cache[*gtsmodel.Tombstone]
-	user          *result.Cache[*gtsmodel.User]
+	inReplyToIDs     *SliceCache[string]
+	list             *result.Cache[*gtsmodel.List]
+	listEntry        *result.Cache[*gtsmodel.ListEntry]
+	marker           *result.Cache[*gtsmodel.Marker]
+	media            *result.Cache[*gtsmodel.MediaAttachment]
+	mention          *result.Cache[*gtsmodel.Mention]
+	notification     *result.Cache[*gtsmodel.Notification]
+	report           *result.Cache[*gtsmodel.Report]
+	status           *result.Cache[*gtsmodel.Status]
+	statusFave       *result.Cache[*gtsmodel.StatusFave]
+	statusFaveIDs    *SliceCache[string]
+	tag              *result.Cache[*gtsmodel.Tag]
+	tombstone        *result.Cache[*gtsmodel.Tombstone]
+	user             *result.Cache[*gtsmodel.User]
 
 	// TODO: move out of GTS caches since unrelated to DB.
 	webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
@@ -78,7 +78,7 @@ func (c *GTSCaches) Init() {
 	c.initFollowRequest()
 	c.initFollowRequestIDs()
 	c.initInstance()
-	// c.initInReplyToIDs()
+	c.initInReplyToIDs()
 	c.initList()
 	c.initListEntry()
 	c.initMarker()
@@ -181,9 +181,9 @@ func (c *GTSCaches) Instance() *result.Cache[*gtsmodel.Instance] {
 }
 
 // InReplyToIDs ...
-// func (c *GTSCaches) InReplyToIDs() *SliceCache[string] {
-// 	return c.inReplyToIDs
-// }
+func (c *GTSCaches) InReplyToIDs() *SliceCache[string] {
+	return c.inReplyToIDs
+}
 
 // List provides access to the gtsmodel List database cache.
 func (c *GTSCaches) List() *result.Cache[*gtsmodel.List] {
@@ -495,13 +495,13 @@ func (c *GTSCaches) initInstance() {
 	c.instance.IgnoreErrors(ignoreErrors)
 }
 
-// func (c *GTSCaches) initInReplyToIDs() {
-// 	c.inReplyToIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
-// 		0,
-// 		1000,
-// 		0,
-// 	)}
-// }
+func (c *GTSCaches) initInReplyToIDs() {
+	c.inReplyToIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+		0,
+		1000,
+		0,
+	)}
+}
 
 func (c *GTSCaches) initList() {
 	// Calculate maximum cache size.

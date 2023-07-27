@@ -196,6 +196,16 @@ func (c *Caches) setuphooks() {
 			// c.GTS.Media().Invalidate("StatusID") will not work.
 			c.GTS.Media().Invalidate("ID", id)
 		}
+
+		// if status.BoostOfID != "" {
+		// 	// Invalidate boost ID list of the original status.
+		// 	c.GTS.BoostIDs().Invalidate(status.BoostOfID)
+		// }
+
+		if status.InReplyToID != "" {
+			// Invalidate in reply to ID list of original status.
+			c.GTS.InReplyToIDs().Invalidate(status.InReplyToID)
+		}
 	})
 
 	c.GTS.StatusFave().SetInvalidateCallback(func(fave *gtsmodel.StatusFave) {

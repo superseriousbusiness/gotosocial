@@ -20,7 +20,6 @@ package bundb
 import (
 	"container/list"
 	"context"
-	"database/sql"
 	"errors"
 	"time"
 
@@ -506,25 +505,17 @@ func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Statu
 }
 
 func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
-	var childIDs []string
-
-	q := s.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		Column("status.id").
-		Where("? = ?", bun.Ident("status.in_reply_to_id"), status.ID)
-	if minID != "" {
-		q = q.Where("? > ?", bun.Ident("status.id"), minID)
-	}
-
-	if err := q.Scan(ctx, &childIDs); err != nil {
-		if err != sql.ErrNoRows {
-			log.Errorf(ctx, "error getting children for %q: %v", status.ID, err)
-		}
+	childIDs, err := s.getStatusReplyIDs(ctx, status.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		log.Errorf(ctx, "error getting status %s children: %v", status.ID, err)
 		return
 	}
 
 	for _, id := range childIDs {
+		if id <= minID {
+			continue
+		}
+
 		// Fetch child with ID from database
 		child, err := s.GetStatusByID(ctx, id)
 		if err != nil {
@@ -553,12 +544,36 @@ func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, 
 	}
 }
 
-func (s *statusDB) CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, error) {
-	return s.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		Where("? = ?", bun.Ident("status.in_reply_to_id"), status.ID).
-		Count(ctx)
+func (s *statusDB) GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error) {
+	statusIDs, err := s.getStatusReplyIDs(ctx, statusID)
+	if err != nil {
+		return nil, err
+	}
+	return s.GetStatusesByIDs(ctx, statusIDs)
+}
+
+func (s *statusDB) CountStatusReplies(ctx context.Context, statusID string) (int, error) {
+	statusIDs, err := s.getStatusReplyIDs(ctx, statusID)
+	return len(statusIDs), err
+}
+
+func (s *statusDB) getStatusReplyIDs(ctx context.Context, statusID string) ([]string, error) {
+	return s.state.Caches.GTS.InReplyToIDs().Load(statusID, func() ([]string, error) {
+		var statusIDs []string
+
+		// Status reply IDs not in cache, perform DB query!
+		if err := s.db.
+			NewSelect().
+			Table("statuses").
+			Column("id").
+			Where("? = ?", bun.Ident("in_reply_to_id"), statusID).
+			Order("id DESC").
+			Scan(ctx, &statusIDs); err != nil {
+			return nil, s.db.ProcessError(err)
+		}
+
+		return statusIDs, nil
+	})
 }
 
 func (s *statusDB) CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, error) {
