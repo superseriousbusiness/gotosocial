@@ -1893,6 +1893,18 @@ func NewTestFaves() map[string]*gtsmodel.StatusFave {
 	}
 }
 
+// NewTestAccountNotes returns some account notes for use in testing.
+func NewTestAccountNotes() map[string]*gtsmodel.AccountNote {
+	return map[string]*gtsmodel.AccountNote{
+		"local_account_2_note_on_1": {
+			ID:              "01H53TM628GNC4ZDNRGQGPK8S0",
+			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			TargetAccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Comment:         "extremely average poster",
+		},
+	}
+}
+
 // NewTestNotifications returns some notifications for use in testing.
 func NewTestNotifications() map[string]*gtsmodel.Notification {
 	return map[string]*gtsmodel.Notification{

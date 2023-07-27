@@ -131,6 +131,10 @@ var Defaults = Configuration{
 			AccountTTL:       time.Minute * 30,
 			AccountSweepFreq: time.Minute,
 
+			AccountNoteMaxSize:   1000,
+			AccountNoteTTL:       time.Minute * 30,
+			AccountNoteSweepFreq: time.Minute,
+
 			BlockMaxSize:   1000,
 			BlockTTL:       time.Minute * 30,
 			BlockSweepFreq: time.Minute,

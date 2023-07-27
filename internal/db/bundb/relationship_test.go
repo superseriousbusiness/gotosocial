@@ -912,6 +912,53 @@ func (suite *RelationshipTestSuite) TestUpdateFollow() {
 	suite.True(relationship.Notifying)
 }
 
+func (suite *RelationshipTestSuite) TestGetNote() {
+	ctx := context.Background()
+
+	// Retrieve a fixture note
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+	expectedNote := suite.testAccountNotes["local_account_2_note_on_1"]
+	note, err := suite.db.GetNote(ctx, account2, account1)
+	suite.NoError(err)
+	suite.NotNil(note)
+	suite.Equal(expectedNote.ID, note.ID)
+	suite.Equal(expectedNote.Comment, note.Comment)
+}
+
+func (suite *RelationshipTestSuite) TestPutNote() {
+	ctx := context.Background()
+
+	// put a note in
+	account1 := suite.testAccounts["local_account_1"].ID
+	account2 := suite.testAccounts["local_account_2"].ID
+	err := suite.db.PutNote(ctx, &gtsmodel.AccountNote{
+		ID:              "01H539R2NA0M83JX15Y5RWKE97",
+		AccountID:       account1,
+		TargetAccountID: account2,
+		Comment:         "foo",
+	})
+	suite.NoError(err)
+
+	// make sure the note is in the db
+	note, err := suite.db.GetNote(ctx, account1, account2)
+	suite.NoError(err)
+	suite.NotNil(note)
+	suite.Equal("01H539R2NA0M83JX15Y5RWKE97", note.ID)
+	suite.Equal("foo", note.Comment)
+
+	// update the note
+	note.Comment = "bar"
+	err = suite.db.PutNote(ctx, note)
+	suite.NoError(err)
+
+	// make sure the comment changes
+	note, err = suite.db.GetNote(ctx, account1, account2)
+	suite.NoError(err)
+	suite.NotNil(note)
+	suite.Equal("bar", note.Comment)
+}
+
 func TestRelationshipTestSuite(t *testing.T) {
 	suite.Run(t, new(RelationshipTestSuite))
 }

@@ -186,6 +186,10 @@ type GTSCacheConfiguration struct {
 	AccountTTL       time.Duration `name:"account-ttl"`
 	AccountSweepFreq time.Duration `name:"account-sweep-freq"`
 
+	AccountNoteMaxSize   int           `name:"account-note-max-size"`
+	AccountNoteTTL       time.Duration `name:"account-note-ttl"`
+	AccountNoteSweepFreq time.Duration `name:"account-note-sweep-freq"`
+
 	BlockMaxSize   int           `name:"block-max-size"`
 	BlockTTL       time.Duration `name:"block-ttl"`
 	BlockSweepFreq time.Duration `name:"block-sweep-freq"`

@@ -45,6 +45,7 @@ const (
 	FollowPath        = BasePathWithID + "/follow"
 	ListsPath         = BasePathWithID + "/lists"
 	LookupPath        = BasePath + "/lookup"
+	NotePath          = BasePathWithID + "/note"
 	RelationshipsPath = BasePath + "/relationships"
 	SearchPath        = BasePath + "/search"
 	StatusesPath      = BasePathWithID + "/statuses"
@@ -100,6 +101,9 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// account lists
 	attachHandler(http.MethodGet, ListsPath, m.AccountListsGETHandler)
+
+	// account note
+	attachHandler(http.MethodPost, NotePath, m.AccountNotePOSTHandler)
 
 	// search for accounts
 	attachHandler(http.MethodGet, SearchPath, m.AccountSearchGETHandler)

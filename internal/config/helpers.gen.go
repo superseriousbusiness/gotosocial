@@ -2474,6 +2474,81 @@ func GetCacheGTSAccountSweepFreq() time.Duration { return global.GetCacheGTSAcco
 // SetCacheGTSAccountSweepFreq safely sets the value for global configuration 'Cache.GTS.AccountSweepFreq' field
 func SetCacheGTSAccountSweepFreq(v time.Duration) { global.SetCacheGTSAccountSweepFreq(v) }
 
+// GetCacheGTSAccountNoteMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountNoteMaxSize' field
+func (st *ConfigState) GetCacheGTSAccountNoteMaxSize() (v int) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.AccountNoteMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSAccountNoteMaxSize safely sets the Configuration value for state's 'Cache.GTS.AccountNoteMaxSize' field
+func (st *ConfigState) SetCacheGTSAccountNoteMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.AccountNoteMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSAccountNoteMaxSizeFlag returns the flag name for the 'Cache.GTS.AccountNoteMaxSize' field
+func CacheGTSAccountNoteMaxSizeFlag() string { return "cache-gts-account-note-max-size" }
+
+// GetCacheGTSAccountNoteMaxSize safely fetches the value for global configuration 'Cache.GTS.AccountNoteMaxSize' field
+func GetCacheGTSAccountNoteMaxSize() int { return global.GetCacheGTSAccountNoteMaxSize() }
+
+// SetCacheGTSAccountNoteMaxSize safely sets the value for global configuration 'Cache.GTS.AccountNoteMaxSize' field
+func SetCacheGTSAccountNoteMaxSize(v int) { global.SetCacheGTSAccountNoteMaxSize(v) }
+
+// GetCacheGTSAccountNoteTTL safely fetches the Configuration value for state's 'Cache.GTS.AccountNoteTTL' field
+func (st *ConfigState) GetCacheGTSAccountNoteTTL() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.AccountNoteTTL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSAccountNoteTTL safely sets the Configuration value for state's 'Cache.GTS.AccountNoteTTL' field
+func (st *ConfigState) SetCacheGTSAccountNoteTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.AccountNoteTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSAccountNoteTTLFlag returns the flag name for the 'Cache.GTS.AccountNoteTTL' field
+func CacheGTSAccountNoteTTLFlag() string { return "cache-gts-account-note-ttl" }
+
+// GetCacheGTSAccountNoteTTL safely fetches the value for global configuration 'Cache.GTS.AccountNoteTTL' field
+func GetCacheGTSAccountNoteTTL() time.Duration { return global.GetCacheGTSAccountNoteTTL() }
+
+// SetCacheGTSAccountNoteTTL safely sets the value for global configuration 'Cache.GTS.AccountNoteTTL' field
+func SetCacheGTSAccountNoteTTL(v time.Duration) { global.SetCacheGTSAccountNoteTTL(v) }
+
+// GetCacheGTSAccountNoteSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.AccountNoteSweepFreq' field
+func (st *ConfigState) GetCacheGTSAccountNoteSweepFreq() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.AccountNoteSweepFreq
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSAccountNoteSweepFreq safely sets the Configuration value for state's 'Cache.GTS.AccountNoteSweepFreq' field
+func (st *ConfigState) SetCacheGTSAccountNoteSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.AccountNoteSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSAccountNoteSweepFreqFlag returns the flag name for the 'Cache.GTS.AccountNoteSweepFreq' field
+func CacheGTSAccountNoteSweepFreqFlag() string { return "cache-gts-account-note-sweep-freq" }
+
+// GetCacheGTSAccountNoteSweepFreq safely fetches the value for global configuration 'Cache.GTS.AccountNoteSweepFreq' field
+func GetCacheGTSAccountNoteSweepFreq() time.Duration { return global.GetCacheGTSAccountNoteSweepFreq() }
+
+// SetCacheGTSAccountNoteSweepFreq safely sets the value for global configuration 'Cache.GTS.AccountNoteSweepFreq' field
+func SetCacheGTSAccountNoteSweepFreq(v time.Duration) { global.SetCacheGTSAccountNoteSweepFreq(v) }
+
 // GetCacheGTSBlockMaxSize safely fetches the Configuration value for state's 'Cache.GTS.BlockMaxSize' field
 func (st *ConfigState) GetCacheGTSBlockMaxSize() (v int) {
 	st.mutex.RLock()

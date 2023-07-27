@@ -26,8 +26,9 @@ import (
 )
 
 type GTSCaches struct {
-	account *result.Cache[*gtsmodel.Account]
-	block   *result.Cache[*gtsmodel.Block]
+	account     *result.Cache[*gtsmodel.Account]
+	accountNote *result.Cache[*gtsmodel.AccountNote]
+	block       *result.Cache[*gtsmodel.Block]
 	// TODO: maybe should be moved out of here since it's
 	// not actually doing anything with gtsmodel.DomainBlock.
 	domainBlock   *domain.BlockCache
@@ -54,6 +55,7 @@ type GTSCaches struct {
 // NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
 func (c *GTSCaches) Init() {
 	c.initAccount()
+	c.initAccountNote()
 	c.initBlock()
 	c.initDomainBlock()
 	c.initEmoji()
@@ -77,6 +79,7 @@ func (c *GTSCaches) Init() {
 // Start will attempt to start all of the gtsmodel caches, or panic.
 func (c *GTSCaches) Start() {
 	tryStart(c.account, config.GetCacheGTSAccountSweepFreq())
+	tryStart(c.accountNote, config.GetCacheGTSAccountNoteSweepFreq())
 	tryStart(c.block, config.GetCacheGTSBlockSweepFreq())
 	tryStart(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStart(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
@@ -104,6 +107,7 @@ func (c *GTSCaches) Start() {
 // Stop will attempt to stop all of the gtsmodel caches, or panic.
 func (c *GTSCaches) Stop() {
 	tryStop(c.account, config.GetCacheGTSAccountSweepFreq())
+	tryStop(c.accountNote, config.GetCacheGTSAccountNoteSweepFreq())
 	tryStop(c.block, config.GetCacheGTSBlockSweepFreq())
 	tryStop(c.emoji, config.GetCacheGTSEmojiSweepFreq())
 	tryStop(c.emojiCategory, config.GetCacheGTSEmojiCategorySweepFreq())
@@ -126,6 +130,11 @@ func (c *GTSCaches) Stop() {
 // Account provides access to the gtsmodel Account database cache.
 func (c *GTSCaches) Account() *result.Cache[*gtsmodel.Account] {
 	return c.account
+}
+
+// AccountNote provides access to the gtsmodel Note database cache.
+func (c *GTSCaches) AccountNote() *result.Cache[*gtsmodel.AccountNote] {
+	return c.accountNote
 }
 
 // Block provides access to the gtsmodel Block (account) database cache.
@@ -236,6 +245,19 @@ func (c *GTSCaches) initAccount() {
 	}, config.GetCacheGTSAccountMaxSize())
 	c.account.SetTTL(config.GetCacheGTSAccountTTL(), true)
 	c.account.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initAccountNote() {
+	c.accountNote = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "AccountID.TargetAccountID"},
+	}, func(n1 *gtsmodel.AccountNote) *gtsmodel.AccountNote {
+		n2 := new(gtsmodel.AccountNote)
+		*n2 = *n1
+		return n2
+	}, config.GetCacheGTSAccountNoteMaxSize())
+	c.accountNote.SetTTL(config.GetCacheGTSAccountNoteTTL(), true)
+	c.accountNote.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initBlock() {
