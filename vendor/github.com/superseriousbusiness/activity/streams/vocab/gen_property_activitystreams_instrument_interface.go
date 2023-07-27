@@ -225,29 +225,6 @@ type ActivityStreamsInstrumentPropertyIterator interface {
 	// IsActivityStreamsView returns false, GetActivityStreamsView will
 	// return an arbitrary value.
 	GetActivityStreamsView() ActivityStreamsView
-	// GetForgeFedBranch returns the value of this property. When
-	// IsForgeFedBranch returns false, GetForgeFedBranch will return an
-	// arbitrary value.
-	GetForgeFedBranch() ForgeFedBranch
-	// GetForgeFedCommit returns the value of this property. When
-	// IsForgeFedCommit returns false, GetForgeFedCommit will return an
-	// arbitrary value.
-	GetForgeFedCommit() ForgeFedCommit
-	// GetForgeFedPush returns the value of this property. When IsForgeFedPush
-	// returns false, GetForgeFedPush will return an arbitrary value.
-	GetForgeFedPush() ForgeFedPush
-	// GetForgeFedRepository returns the value of this property. When
-	// IsForgeFedRepository returns false, GetForgeFedRepository will
-	// return an arbitrary value.
-	GetForgeFedRepository() ForgeFedRepository
-	// GetForgeFedTicket returns the value of this property. When
-	// IsForgeFedTicket returns false, GetForgeFedTicket will return an
-	// arbitrary value.
-	GetForgeFedTicket() ForgeFedTicket
-	// GetForgeFedTicketDependency returns the value of this property. When
-	// IsForgeFedTicketDependency returns false,
-	// GetForgeFedTicketDependency will return an arbitrary value.
-	GetForgeFedTicketDependency() ForgeFedTicketDependency
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
@@ -258,6 +235,9 @@ type ActivityStreamsInstrumentPropertyIterator interface {
 	// GetTootEmoji returns the value of this property. When IsTootEmoji
 	// returns false, GetTootEmoji will return an arbitrary value.
 	GetTootEmoji() TootEmoji
+	// GetTootHashtag returns the value of this property. When IsTootHashtag
+	// returns false, GetTootHashtag will return an arbitrary value.
+	GetTootHashtag() TootHashtag
 	// GetTootIdentityProof returns the value of this property. When
 	// IsTootIdentityProof returns false, GetTootIdentityProof will return
 	// an arbitrary value.
@@ -500,31 +480,6 @@ type ActivityStreamsInstrumentPropertyIterator interface {
 	// "View". When true, use the GetActivityStreamsView and
 	// SetActivityStreamsView methods to access and set this property.
 	IsActivityStreamsView() bool
-	// IsForgeFedBranch returns true if this property has a type of "Branch".
-	// When true, use the GetForgeFedBranch and SetForgeFedBranch methods
-	// to access and set this property.
-	IsForgeFedBranch() bool
-	// IsForgeFedCommit returns true if this property has a type of "Commit".
-	// When true, use the GetForgeFedCommit and SetForgeFedCommit methods
-	// to access and set this property.
-	IsForgeFedCommit() bool
-	// IsForgeFedPush returns true if this property has a type of "Push". When
-	// true, use the GetForgeFedPush and SetForgeFedPush methods to access
-	// and set this property.
-	IsForgeFedPush() bool
-	// IsForgeFedRepository returns true if this property has a type of
-	// "Repository". When true, use the GetForgeFedRepository and
-	// SetForgeFedRepository methods to access and set this property.
-	IsForgeFedRepository() bool
-	// IsForgeFedTicket returns true if this property has a type of "Ticket".
-	// When true, use the GetForgeFedTicket and SetForgeFedTicket methods
-	// to access and set this property.
-	IsForgeFedTicket() bool
-	// IsForgeFedTicketDependency returns true if this property has a type of
-	// "TicketDependency". When true, use the GetForgeFedTicketDependency
-	// and SetForgeFedTicketDependency methods to access and set this
-	// property.
-	IsForgeFedTicketDependency() bool
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
@@ -536,6 +491,10 @@ type ActivityStreamsInstrumentPropertyIterator interface {
 	// true, use the GetTootEmoji and SetTootEmoji methods to access and
 	// set this property.
 	IsTootEmoji() bool
+	// IsTootHashtag returns true if this property has a type of "Hashtag".
+	// When true, use the GetTootHashtag and SetTootHashtag methods to
+	// access and set this property.
+	IsTootHashtag() bool
 	// IsTootIdentityProof returns true if this property has a type of
 	// "IdentityProof". When true, use the GetTootIdentityProof and
 	// SetTootIdentityProof methods to access and set this property.
@@ -725,24 +684,6 @@ type ActivityStreamsInstrumentPropertyIterator interface {
 	// SetActivityStreamsView sets the value of this property. Calling
 	// IsActivityStreamsView afterwards returns true.
 	SetActivityStreamsView(v ActivityStreamsView)
-	// SetForgeFedBranch sets the value of this property. Calling
-	// IsForgeFedBranch afterwards returns true.
-	SetForgeFedBranch(v ForgeFedBranch)
-	// SetForgeFedCommit sets the value of this property. Calling
-	// IsForgeFedCommit afterwards returns true.
-	SetForgeFedCommit(v ForgeFedCommit)
-	// SetForgeFedPush sets the value of this property. Calling IsForgeFedPush
-	// afterwards returns true.
-	SetForgeFedPush(v ForgeFedPush)
-	// SetForgeFedRepository sets the value of this property. Calling
-	// IsForgeFedRepository afterwards returns true.
-	SetForgeFedRepository(v ForgeFedRepository)
-	// SetForgeFedTicket sets the value of this property. Calling
-	// IsForgeFedTicket afterwards returns true.
-	SetForgeFedTicket(v ForgeFedTicket)
-	// SetForgeFedTicketDependency sets the value of this property. Calling
-	// IsForgeFedTicketDependency afterwards returns true.
-	SetForgeFedTicketDependency(v ForgeFedTicketDependency)
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
@@ -752,6 +693,9 @@ type ActivityStreamsInstrumentPropertyIterator interface {
 	// SetTootEmoji sets the value of this property. Calling IsTootEmoji
 	// afterwards returns true.
 	SetTootEmoji(v TootEmoji)
+	// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+	// afterwards returns true.
+	SetTootHashtag(v TootHashtag)
 	// SetTootIdentityProof sets the value of this property. Calling
 	// IsTootIdentityProof afterwards returns true.
 	SetTootIdentityProof(v TootIdentityProof)
@@ -995,30 +939,6 @@ type ActivityStreamsInstrumentProperty interface {
 	// the property "instrument". Invalidates iterators that are
 	// traversing using Prev.
 	AppendActivityStreamsView(v ActivityStreamsView)
-	// AppendForgeFedBranch appends a Branch value to the back of a list of
-	// the property "instrument". Invalidates iterators that are
-	// traversing using Prev.
-	AppendForgeFedBranch(v ForgeFedBranch)
-	// AppendForgeFedCommit appends a Commit value to the back of a list of
-	// the property "instrument". Invalidates iterators that are
-	// traversing using Prev.
-	AppendForgeFedCommit(v ForgeFedCommit)
-	// AppendForgeFedPush appends a Push value to the back of a list of the
-	// property "instrument". Invalidates iterators that are traversing
-	// using Prev.
-	AppendForgeFedPush(v ForgeFedPush)
-	// AppendForgeFedRepository appends a Repository value to the back of a
-	// list of the property "instrument". Invalidates iterators that are
-	// traversing using Prev.
-	AppendForgeFedRepository(v ForgeFedRepository)
-	// AppendForgeFedTicket appends a Ticket value to the back of a list of
-	// the property "instrument". Invalidates iterators that are
-	// traversing using Prev.
-	AppendForgeFedTicket(v ForgeFedTicket)
-	// AppendForgeFedTicketDependency appends a TicketDependency value to the
-	// back of a list of the property "instrument". Invalidates iterators
-	// that are traversing using Prev.
-	AppendForgeFedTicketDependency(v ForgeFedTicketDependency)
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "instrument"
 	AppendIRI(v *url.URL)
@@ -1030,6 +950,10 @@ type ActivityStreamsInstrumentProperty interface {
 	// property "instrument". Invalidates iterators that are traversing
 	// using Prev.
 	AppendTootEmoji(v TootEmoji)
+	// AppendTootHashtag appends a Hashtag value to the back of a list of the
+	// property "instrument". Invalidates iterators that are traversing
+	// using Prev.
+	AppendTootHashtag(v TootHashtag)
 	// AppendTootIdentityProof appends a IdentityProof value to the back of a
 	// list of the property "instrument". Invalidates iterators that are
 	// traversing using Prev.
@@ -1279,31 +1203,6 @@ type ActivityStreamsInstrumentProperty interface {
 	// for a property "instrument". Existing elements at that index and
 	// higher are shifted back once. Invalidates all iterators.
 	InsertActivityStreamsView(idx int, v ActivityStreamsView)
-	// InsertForgeFedBranch inserts a Branch value at the specified index for
-	// a property "instrument". Existing elements at that index and higher
-	// are shifted back once. Invalidates all iterators.
-	InsertForgeFedBranch(idx int, v ForgeFedBranch)
-	// InsertForgeFedCommit inserts a Commit value at the specified index for
-	// a property "instrument". Existing elements at that index and higher
-	// are shifted back once. Invalidates all iterators.
-	InsertForgeFedCommit(idx int, v ForgeFedCommit)
-	// InsertForgeFedPush inserts a Push value at the specified index for a
-	// property "instrument". Existing elements at that index and higher
-	// are shifted back once. Invalidates all iterators.
-	InsertForgeFedPush(idx int, v ForgeFedPush)
-	// InsertForgeFedRepository inserts a Repository value at the specified
-	// index for a property "instrument". Existing elements at that index
-	// and higher are shifted back once. Invalidates all iterators.
-	InsertForgeFedRepository(idx int, v ForgeFedRepository)
-	// InsertForgeFedTicket inserts a Ticket value at the specified index for
-	// a property "instrument". Existing elements at that index and higher
-	// are shifted back once. Invalidates all iterators.
-	InsertForgeFedTicket(idx int, v ForgeFedTicket)
-	// InsertForgeFedTicketDependency inserts a TicketDependency value at the
-	// specified index for a property "instrument". Existing elements at
-	// that index and higher are shifted back once. Invalidates all
-	// iterators.
-	InsertForgeFedTicketDependency(idx int, v ForgeFedTicketDependency)
 	// Insert inserts an IRI value at the specified index for a property
 	// "instrument". Existing elements at that index and higher are
 	// shifted back once. Invalidates all iterators.
@@ -1317,6 +1216,10 @@ type ActivityStreamsInstrumentProperty interface {
 	// property "instrument". Existing elements at that index and higher
 	// are shifted back once. Invalidates all iterators.
 	InsertTootEmoji(idx int, v TootEmoji)
+	// InsertTootHashtag inserts a Hashtag value at the specified index for a
+	// property "instrument". Existing elements at that index and higher
+	// are shifted back once. Invalidates all iterators.
+	InsertTootHashtag(idx int, v TootHashtag)
 	// InsertTootIdentityProof inserts a IdentityProof value at the specified
 	// index for a property "instrument". Existing elements at that index
 	// and higher are shifted back once. Invalidates all iterators.
@@ -1520,25 +1423,6 @@ type ActivityStreamsInstrumentProperty interface {
 	// PrependActivityStreamsView prepends a View value to the front of a list
 	// of the property "instrument". Invalidates all iterators.
 	PrependActivityStreamsView(v ActivityStreamsView)
-	// PrependForgeFedBranch prepends a Branch value to the front of a list of
-	// the property "instrument". Invalidates all iterators.
-	PrependForgeFedBranch(v ForgeFedBranch)
-	// PrependForgeFedCommit prepends a Commit value to the front of a list of
-	// the property "instrument". Invalidates all iterators.
-	PrependForgeFedCommit(v ForgeFedCommit)
-	// PrependForgeFedPush prepends a Push value to the front of a list of the
-	// property "instrument". Invalidates all iterators.
-	PrependForgeFedPush(v ForgeFedPush)
-	// PrependForgeFedRepository prepends a Repository value to the front of a
-	// list of the property "instrument". Invalidates all iterators.
-	PrependForgeFedRepository(v ForgeFedRepository)
-	// PrependForgeFedTicket prepends a Ticket value to the front of a list of
-	// the property "instrument". Invalidates all iterators.
-	PrependForgeFedTicket(v ForgeFedTicket)
-	// PrependForgeFedTicketDependency prepends a TicketDependency value to
-	// the front of a list of the property "instrument". Invalidates all
-	// iterators.
-	PrependForgeFedTicketDependency(v ForgeFedTicketDependency)
 	// PrependIRI prepends an IRI value to the front of a list of the property
 	// "instrument".
 	PrependIRI(v *url.URL)
@@ -1548,6 +1432,9 @@ type ActivityStreamsInstrumentProperty interface {
 	// PrependTootEmoji prepends a Emoji value to the front of a list of the
 	// property "instrument". Invalidates all iterators.
 	PrependTootEmoji(v TootEmoji)
+	// PrependTootHashtag prepends a Hashtag value to the front of a list of
+	// the property "instrument". Invalidates all iterators.
+	PrependTootHashtag(v TootHashtag)
 	// PrependTootIdentityProof prepends a IdentityProof value to the front of
 	// a list of the property "instrument". Invalidates all iterators.
 	PrependTootIdentityProof(v TootIdentityProof)
@@ -1781,30 +1668,6 @@ type ActivityStreamsInstrumentProperty interface {
 	// for the property "instrument". Panics if the index is out of
 	// bounds. Invalidates all iterators.
 	SetActivityStreamsView(idx int, v ActivityStreamsView)
-	// SetForgeFedBranch sets a Branch value to be at the specified index for
-	// the property "instrument". Panics if the index is out of bounds.
-	// Invalidates all iterators.
-	SetForgeFedBranch(idx int, v ForgeFedBranch)
-	// SetForgeFedCommit sets a Commit value to be at the specified index for
-	// the property "instrument". Panics if the index is out of bounds.
-	// Invalidates all iterators.
-	SetForgeFedCommit(idx int, v ForgeFedCommit)
-	// SetForgeFedPush sets a Push value to be at the specified index for the
-	// property "instrument". Panics if the index is out of bounds.
-	// Invalidates all iterators.
-	SetForgeFedPush(idx int, v ForgeFedPush)
-	// SetForgeFedRepository sets a Repository value to be at the specified
-	// index for the property "instrument". Panics if the index is out of
-	// bounds. Invalidates all iterators.
-	SetForgeFedRepository(idx int, v ForgeFedRepository)
-	// SetForgeFedTicket sets a Ticket value to be at the specified index for
-	// the property "instrument". Panics if the index is out of bounds.
-	// Invalidates all iterators.
-	SetForgeFedTicket(idx int, v ForgeFedTicket)
-	// SetForgeFedTicketDependency sets a TicketDependency value to be at the
-	// specified index for the property "instrument". Panics if the index
-	// is out of bounds. Invalidates all iterators.
-	SetForgeFedTicketDependency(idx int, v ForgeFedTicketDependency)
 	// SetIRI sets an IRI value to be at the specified index for the property
 	// "instrument". Panics if the index is out of bounds.
 	SetIRI(idx int, v *url.URL)
@@ -1816,6 +1679,10 @@ type ActivityStreamsInstrumentProperty interface {
 	// property "instrument". Panics if the index is out of bounds.
 	// Invalidates all iterators.
 	SetTootEmoji(idx int, v TootEmoji)
+	// SetTootHashtag sets a Hashtag value to be at the specified index for
+	// the property "instrument". Panics if the index is out of bounds.
+	// Invalidates all iterators.
+	SetTootHashtag(idx int, v TootHashtag)
 	// SetTootIdentityProof sets a IdentityProof value to be at the specified
 	// index for the property "instrument". Panics if the index is out of
 	// bounds. Invalidates all iterators.

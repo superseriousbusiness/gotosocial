@@ -16,6 +16,7 @@ import (
 type ActivityStreamsLastProperty struct {
 	activitystreamsCollectionPageMember        vocab.ActivityStreamsCollectionPage
 	activitystreamsLinkMember                  vocab.ActivityStreamsLink
+	tootHashtagMember                          vocab.TootHashtag
 	activitystreamsMentionMember               vocab.ActivityStreamsMention
 	activitystreamsOrderedCollectionPageMember vocab.ActivityStreamsOrderedCollectionPage
 	unknown                                    interface{}
@@ -63,6 +64,12 @@ func DeserializeLastProperty(m map[string]interface{}, aliasMap map[string]strin
 					alias:                     alias,
 				}
 				return this, nil
+			} else if v, err := mgr.DeserializeHashtagToot()(m, aliasMap); err == nil {
+				this := &ActivityStreamsLastProperty{
+					alias:             alias,
+					tootHashtagMember: v,
+				}
+				return this, nil
 			} else if v, err := mgr.DeserializeMentionActivityStreams()(m, aliasMap); err == nil {
 				this := &ActivityStreamsLastProperty{
 					activitystreamsMentionMember: v,
@@ -96,6 +103,7 @@ func NewActivityStreamsLastProperty() *ActivityStreamsLastProperty {
 func (this *ActivityStreamsLastProperty) Clear() {
 	this.activitystreamsCollectionPageMember = nil
 	this.activitystreamsLinkMember = nil
+	this.tootHashtagMember = nil
 	this.activitystreamsMentionMember = nil
 	this.activitystreamsOrderedCollectionPageMember = nil
 	this.unknown = nil
@@ -136,6 +144,12 @@ func (this ActivityStreamsLastProperty) GetIRI() *url.URL {
 	return this.iri
 }
 
+// GetTootHashtag returns the value of this property. When IsTootHashtag returns
+// false, GetTootHashtag will return an arbitrary value.
+func (this ActivityStreamsLastProperty) GetTootHashtag() vocab.TootHashtag {
+	return this.tootHashtagMember
+}
+
 // GetType returns the value in this property as a Type. Returns nil if the value
 // is not an ActivityStreams type, such as an IRI or another value.
 func (this ActivityStreamsLastProperty) GetType() vocab.Type {
@@ -144,6 +158,9 @@ func (this ActivityStreamsLastProperty) GetType() vocab.Type {
 	}
 	if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink()
+	}
+	if this.IsTootHashtag() {
+		return this.GetTootHashtag()
 	}
 	if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention()
@@ -159,6 +176,7 @@ func (this ActivityStreamsLastProperty) GetType() vocab.Type {
 func (this ActivityStreamsLastProperty) HasAny() bool {
 	return this.IsActivityStreamsCollectionPage() ||
 		this.IsActivityStreamsLink() ||
+		this.IsTootHashtag() ||
 		this.IsActivityStreamsMention() ||
 		this.IsActivityStreamsOrderedCollectionPage() ||
 		this.iri != nil
@@ -200,6 +218,13 @@ func (this ActivityStreamsLastProperty) IsIRI() bool {
 	return this.iri != nil
 }
 
+// IsTootHashtag returns true if this property has a type of "Hashtag". When true,
+// use the GetTootHashtag and SetTootHashtag methods to access and set this
+// property.
+func (this ActivityStreamsLastProperty) IsTootHashtag() bool {
+	return this.tootHashtagMember != nil
+}
+
 // JSONLDContext returns the JSONLD URIs required in the context string for this
 // property and the specific values that are set. The value in the map is the
 // alias used to import the property's value or values.
@@ -210,6 +235,8 @@ func (this ActivityStreamsLastProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsCollectionPage().JSONLDContext()
 	} else if this.IsActivityStreamsLink() {
 		child = this.GetActivityStreamsLink().JSONLDContext()
+	} else if this.IsTootHashtag() {
+		child = this.GetTootHashtag().JSONLDContext()
 	} else if this.IsActivityStreamsMention() {
 		child = this.GetActivityStreamsMention().JSONLDContext()
 	} else if this.IsActivityStreamsOrderedCollectionPage() {
@@ -236,11 +263,14 @@ func (this ActivityStreamsLastProperty) KindIndex() int {
 	if this.IsActivityStreamsLink() {
 		return 1
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsTootHashtag() {
 		return 2
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsMention() {
 		return 3
+	}
+	if this.IsActivityStreamsOrderedCollectionPage() {
+		return 4
 	}
 	if this.IsIRI() {
 		return -2
@@ -263,6 +293,8 @@ func (this ActivityStreamsLastProperty) LessThan(o vocab.ActivityStreamsLastProp
 		return this.GetActivityStreamsCollectionPage().LessThan(o.GetActivityStreamsCollectionPage())
 	} else if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink().LessThan(o.GetActivityStreamsLink())
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().LessThan(o.GetTootHashtag())
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().LessThan(o.GetActivityStreamsMention())
 	} else if this.IsActivityStreamsOrderedCollectionPage() {
@@ -291,6 +323,8 @@ func (this ActivityStreamsLastProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsCollectionPage().Serialize()
 	} else if this.IsActivityStreamsLink() {
 		return this.GetActivityStreamsLink().Serialize()
+	} else if this.IsTootHashtag() {
+		return this.GetTootHashtag().Serialize()
 	} else if this.IsActivityStreamsMention() {
 		return this.GetActivityStreamsMention().Serialize()
 	} else if this.IsActivityStreamsOrderedCollectionPage() {
@@ -335,6 +369,13 @@ func (this *ActivityStreamsLastProperty) SetIRI(v *url.URL) {
 	this.iri = v
 }
 
+// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+// afterwards returns true.
+func (this *ActivityStreamsLastProperty) SetTootHashtag(v vocab.TootHashtag) {
+	this.Clear()
+	this.tootHashtagMember = v
+}
+
 // SetType attempts to set the property for the arbitrary type. Returns an error
 // if it is not a valid type to set on this property.
 func (this *ActivityStreamsLastProperty) SetType(t vocab.Type) error {
@@ -344,6 +385,10 @@ func (this *ActivityStreamsLastProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsLink); ok {
 		this.SetActivityStreamsLink(v)
+		return nil
+	}
+	if v, ok := t.(vocab.TootHashtag); ok {
+		this.SetTootHashtag(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsMention); ok {

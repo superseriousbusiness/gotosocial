@@ -134,15 +134,6 @@ type ActivityStreamsOrganization interface {
 	// GetActivityStreamsUrl returns the "url" property if it exists, and nil
 	// otherwise.
 	GetActivityStreamsUrl() ActivityStreamsUrlProperty
-	// GetForgeFedTeam returns the "team" property if it exists, and nil
-	// otherwise.
-	GetForgeFedTeam() ForgeFedTeamProperty
-	// GetForgeFedTicketsTrackedBy returns the "ticketsTrackedBy" property if
-	// it exists, and nil otherwise.
-	GetForgeFedTicketsTrackedBy() ForgeFedTicketsTrackedByProperty
-	// GetForgeFedTracksTicketsFor returns the "tracksTicketsFor" property if
-	// it exists, and nil otherwise.
-	GetForgeFedTracksTicketsFor() ForgeFedTracksTicketsForProperty
 	// GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 	GetJSONLDId() JSONLDIdProperty
 	// GetJSONLDType returns the "type" property if it exists, and nil
@@ -264,12 +255,6 @@ type ActivityStreamsOrganization interface {
 	SetActivityStreamsUpdated(i ActivityStreamsUpdatedProperty)
 	// SetActivityStreamsUrl sets the "url" property.
 	SetActivityStreamsUrl(i ActivityStreamsUrlProperty)
-	// SetForgeFedTeam sets the "team" property.
-	SetForgeFedTeam(i ForgeFedTeamProperty)
-	// SetForgeFedTicketsTrackedBy sets the "ticketsTrackedBy" property.
-	SetForgeFedTicketsTrackedBy(i ForgeFedTicketsTrackedByProperty)
-	// SetForgeFedTracksTicketsFor sets the "tracksTicketsFor" property.
-	SetForgeFedTracksTicketsFor(i ForgeFedTracksTicketsForProperty)
 	// SetJSONLDId sets the "id" property.
 	SetJSONLDId(i JSONLDIdProperty)
 	// SetJSONLDType sets the "type" property.

@@ -50,6 +50,9 @@ type ActivityStreamsFirstProperty interface {
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
+	// GetTootHashtag returns the value of this property. When IsTootHashtag
+	// returns false, GetTootHashtag will return an arbitrary value.
+	GetTootHashtag() TootHashtag
 	// GetType returns the value in this property as a Type. Returns nil if
 	// the value is not an ActivityStreams type, such as an IRI or another
 	// value.
@@ -79,6 +82,10 @@ type ActivityStreamsFirstProperty interface {
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
+	// IsTootHashtag returns true if this property has a type of "Hashtag".
+	// When true, use the GetTootHashtag and SetTootHashtag methods to
+	// access and set this property.
+	IsTootHashtag() bool
 	// JSONLDContext returns the JSONLD URIs required in the context string
 	// for this property and the specific values that are set. The value
 	// in the map is the alias used to import the property's value or
@@ -117,6 +124,9 @@ type ActivityStreamsFirstProperty interface {
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
+	// SetTootHashtag sets the value of this property. Calling IsTootHashtag
+	// afterwards returns true.
+	SetTootHashtag(v TootHashtag)
 	// SetType attempts to set the property for the arbitrary type. Returns an
 	// error if it is not a valid type to set on this property.
 	SetType(t Type) error
