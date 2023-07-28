@@ -54,7 +54,7 @@ EXPECT=$(cat <<"EOF"
             "list-ttl": 1800000000000,
             "marker-max-size": 2000,
             "marker-sweep-freq": 60000000000,
-            "marker-ttl": 1800000000000,
+            "marker-ttl": 21600000000000,
             "media-max-size": 1000,
             "media-sweep-freq": 60000000000,
             "media-ttl": 1800000000000,
