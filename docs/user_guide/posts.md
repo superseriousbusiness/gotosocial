@@ -241,6 +241,26 @@ which will be rendered as:
 
 > hey <span class="h-card"><a href="https://my.instance.org/@local_account_person" class="u-url mention">@<span>local_account_person</span></a></span> you're my neighbour
 
+### Hashtags
+
+You can use one or more hashtags in your post to indicate subject matter, and to allow the post to be grouped together with other posts using the same hashtag in order to aid discoverability of your posts.
+
+Most ActivityPub server implementations like Mastodon and similar only group together **Public** posts by the hashtags they use, but there is no guarantee about that. Generally speaking then, it is better to only use hashtags for Public visibility posts where you want the post to be able to spread more widely than it would otherwise. A good example of this is the `#introduction` hashtag, which tends to be used by new accounts who want to introduce themselves to the fediverse!
+
+Including hashtags in your post works like most other social media software: just add a `#` symbol before the word you want to use as a hashtag.
+
+Some examples:
+
+* `#introduction`
+* `#Mosstodon`
+* `#LichenSubscribe`
+
+Hashtags in GoToSocial are case-insensitive, so it doesn't matter if you use uppercase, lowercase, or a mixture of both when writing your hashtag, it will still count as the same hashtag. For example, `#Introduction` and `#introduction` are treated exactly the same.
+
+For accessibility reasons, it is considerate to use upper camel case when you're writing hashtags. In other words: capitalize the first letter of every word in the hashtag. So rather than writing `#thisisahashtag`, which is difficult to read visually, and difficult for screenreaders to read out loud, consider writing `#ThisIsAHashtag` instead.
+
+You can include as many hashtags as you like within a GoToSocial post, and each hashtag has a length limit of 100 characters.
+
 ## Input Sanitization
 
 In order not to spread scripts, vulnerabilities, and glitchy HTML all over the place, GoToSocial performs the following types of input sanitization:
