@@ -30,7 +30,7 @@ import (
 )
 
 type markerDB struct {
-	conn  *DBConn
+	db    *WrappedDB
 	state *state.State
 }
 
@@ -44,11 +44,11 @@ func (m *markerDB) GetMarker(ctx context.Context, accountID string, name gtsmode
 		func() (*gtsmodel.Marker, error) {
 			var marker gtsmodel.Marker
 
-			if err := m.conn.NewSelect().
+			if err := m.db.NewSelect().
 				Model(&marker).
 				Where("? = ? AND ? = ?", bun.Ident("account_id"), accountID, bun.Ident("name"), name).
 				Scan(ctx); err != nil {
-				return nil, m.conn.ProcessError(err)
+				return nil, m.db.ProcessError(err)
 			}
 
 			return &marker, nil
@@ -76,10 +76,10 @@ func (m *markerDB) UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) er
 
 	return m.state.Caches.GTS.Marker().Store(marker, func() error {
 		if prevMarker == nil {
-			if _, err := m.conn.NewInsert().
+			if _, err := m.db.NewInsert().
 				Model(marker).
 				Exec(ctx); err != nil {
-				return m.conn.ProcessError(err)
+				return m.db.ProcessError(err)
 			}
 			return nil
 		}
@@ -87,26 +87,26 @@ func (m *markerDB) UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) er
 		// Optimistic concurrency control: start a transaction, try to update a row with a previously retrieved version.
 		// If the update in the transaction fails to actually change anything, another update happened concurrently, and
 		// this update should be retried by the caller, which in this case involves sending HTTP 409 to the API client.
-		return m.conn.RunInTx(ctx, func(tx bun.Tx) error {
+		return m.db.RunInTx(ctx, func(tx bun.Tx) error {
 			result, err := tx.NewUpdate().
 				Model(marker).
 				WherePK().
 				Where("? = ?", bun.Ident("version"), prevMarker.Version).
 				Exec(ctx)
 			if err != nil {
-				return m.conn.ProcessError(err)
+				return m.db.ProcessError(err)
 			}
 
 			rowsAffected, err := result.RowsAffected()
 			if err != nil {
-				return m.conn.ProcessError(err)
+				return m.db.ProcessError(err)
 			}
 			if rowsAffected == 0 {
 				// Will trigger a rollback, although there should be no changes to roll back.
 				return db.ErrAlreadyExists
 			} else if rowsAffected > 1 {
 				// This shouldn't happen.
-				return db.ErrUnknown
+				return db.ErrNoEntries
 			}
 
 			return nil

@@ -188,7 +188,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Marker: &markerDB{
-			conn:  conn,
+			db:    db,
 			state: state,
 		},
 		Media: &mediaDB{
