@@ -21,17 +21,17 @@ import "time"
 
 // Marker stores a local account's read position on a given timeline.
 type Marker struct {
-	AccountID  string             `validate:"required,ulid" bun:"type:CHAR(26),pk,unique:markers_account_id_timeline_uniq,notnull,nullzero"` // ID of the local account that owns the marker
-	Timeline   MarkerTimelineName `validate:"oneof=home notifications" bun:",nullzero,notnull,pk,unique:markers_account_id_timeline_uniq"`   // Name of the marked timeline
-	UpdatedAt  time.Time          `validate:"required" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                    // When marker was last updated
-	Version    int                `validate:"required,min=0" bun:",nullzero,notnull,default:0"`                                              // For optimistic concurrency control
-	LastReadID string             `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero"`                                            // Last ID read on this timeline (status ID for home, notification ID for notifications)
+	AccountID  string     `validate:"required,ulid" bun:"type:CHAR(26),pk,unique:markers_account_id_timeline_uniq,notnull,nullzero"` // ID of the local account that owns the marker
+	Name       MarkerName `validate:"oneof=home notifications" bun:",nullzero,notnull,pk,unique:markers_account_id_timeline_uniq"`   // Name of the marked timeline
+	UpdatedAt  time.Time  `validate:"required" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                    // When marker was last updated
+	Version    int        `validate:"required,min=0" bun:",nullzero,notnull,default:0"`                                              // For optimistic concurrency control
+	LastReadID string     `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero"`                                            // Last ID read on this timeline (status ID for home, notification ID for notifications)
 }
 
-// MarkerTimelineName is the name of one of the timelines we can store markers for.
-type MarkerTimelineName string
+// MarkerName is the name of one of the timelines we can store markers for.
+type MarkerName string
 
 const (
-	MarkerTimelineNameHome          MarkerTimelineName = "home"
-	MarkerTimelineNameNotifications MarkerTimelineName = "notifications"
+	MarkerNameHome          MarkerName = "home"
+	MarkerNameNotifications MarkerName = "notifications"
 )

@@ -24,8 +24,8 @@ import (
 )
 
 type Marker interface {
-	// GetMarker gets one marker with the given timeline.
-	GetMarker(ctx context.Context, accountID string, timeline gtsmodel.MarkerTimelineName) (*gtsmodel.Marker, error)
+	// GetMarker gets one marker with the given timeline name.
+	GetMarker(ctx context.Context, accountID string, name gtsmodel.MarkerName) (*gtsmodel.Marker, error)
 
 	// UpdateMarker updates the given marker.
 	UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) error

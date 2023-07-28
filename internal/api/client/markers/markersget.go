@@ -73,12 +73,12 @@ func (m *Module) MarkersGETHandler(c *gin.Context) {
 		return
 	}
 
-	timelines, errWithCode := parseTimelines(c.QueryArray("timeline[]"))
+	names, errWithCode := parseMarkerNames(c.QueryArray("timeline[]"))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 	}
 
-	marker, errWithCode := m.processor.Markers().Get(c.Request.Context(), authed.Account, timelines)
+	marker, errWithCode := m.processor.Markers().Get(c.Request.Context(), authed.Account, names)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -87,22 +87,22 @@ func (m *Module) MarkersGETHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, marker)
 }
 
-// parseTimelines turns a list of strings into a set of valid marker timeline names, or returns an error.
-func parseTimelines(timelineStrings []string) ([]apimodel.MarkerTimelineName, gtserror.WithCode) {
-	timelineSet := make(map[apimodel.MarkerTimelineName]struct{}, apimodel.MarkerTimelineNameNumValues)
-	for _, timelineString := range timelineStrings {
-		if err := validate.MarkerTimelineName(timelineString); err != nil {
+// parseMarkerNames turns a list of strings into a set of valid marker timeline names, or returns an error.
+func parseMarkerNames(nameStrings []string) ([]apimodel.MarkerName, gtserror.WithCode) {
+	nameSet := make(map[apimodel.MarkerName]struct{}, apimodel.MarkerNameNumValues)
+	for _, timelineString := range nameStrings {
+		if err := validate.MarkerName(timelineString); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		timelineSet[apimodel.MarkerTimelineName(timelineString)] = struct{}{}
+		nameSet[apimodel.MarkerName(timelineString)] = struct{}{}
 	}
 
 	i := 0
-	timelines := make([]apimodel.MarkerTimelineName, len(timelineSet))
-	for timeline := range timelineSet {
-		timelines[i] = timeline
+	names := make([]apimodel.MarkerName, len(nameSet))
+	for name := range nameSet {
+		names[i] = name
 		i++
 	}
 
-	return timelines, nil
+	return names, nil
 }

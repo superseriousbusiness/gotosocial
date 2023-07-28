@@ -383,7 +383,7 @@ func (c *GTSCaches) initListEntry() {
 
 func (c *GTSCaches) initMarker() {
 	c.marker = result.New([]result.Lookup{
-		{Name: "AccountID.Timeline"},
+		{Name: "AccountID.Name"},
 	}, func(m1 *gtsmodel.Marker) *gtsmodel.Marker {
 		m2 := new(gtsmodel.Marker)
 		*m2 = *m1

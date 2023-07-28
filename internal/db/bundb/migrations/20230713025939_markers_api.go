@@ -38,7 +38,7 @@ func init() {
 
 			// Add indexes to the Marker table.
 			for index, columns := range map[string][]string{
-				"markers_account_id_timeline_idx": {"account_id", "timeline"},
+				"markers_account_id_name_idx": {"account_id", "name"},
 			} {
 				if _, err := tx.
 					NewCreateIndex().

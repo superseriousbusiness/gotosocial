@@ -84,18 +84,18 @@ func (m *Module) MarkersPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	markers := make([]*gtsmodel.Marker, 0, apimodel.MarkerTimelineNameNumValues)
+	markers := make([]*gtsmodel.Marker, 0, apimodel.MarkerNameNumValues)
 	if homeLastReadID := form.HomeLastReadID(); homeLastReadID != "" {
 		markers = append(markers, &gtsmodel.Marker{
 			AccountID:  authed.Account.ID,
-			Timeline:   gtsmodel.MarkerTimelineNameHome,
+			Name:       gtsmodel.MarkerNameHome,
 			LastReadID: homeLastReadID,
 		})
 	}
 	if notificationsLastReadID := form.NotificationsLastReadID(); notificationsLastReadID != "" {
 		markers = append(markers, &gtsmodel.Marker{
 			AccountID:  authed.Account.ID,
-			Timeline:   gtsmodel.MarkerTimelineNameNotifications,
+			Name:       gtsmodel.MarkerNameNotifications,
 			LastReadID: notificationsLastReadID,
 		})
 	}

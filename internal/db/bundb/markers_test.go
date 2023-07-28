@@ -39,7 +39,7 @@ func (suite *MarkersTestSuite) TestGetExisting() {
 
 	// This account has home and notifications markers set.
 	localAccount1 := suite.testAccounts["local_account_1"]
-	marker, err := suite.db.GetMarker(ctx, localAccount1.ID, gtsmodel.MarkerTimelineNameHome)
+	marker, err := suite.db.GetMarker(ctx, localAccount1.ID, gtsmodel.MarkerNameHome)
 	suite.NoError(err)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -53,7 +53,7 @@ func (suite *MarkersTestSuite) TestGetUnset() {
 
 	// This account has no markers set.
 	localAccount2 := suite.testAccounts["local_account_2"]
-	marker, err := suite.db.GetMarker(ctx, localAccount2.ID, gtsmodel.MarkerTimelineNameHome)
+	marker, err := suite.db.GetMarker(ctx, localAccount2.ID, gtsmodel.MarkerNameHome)
 	// Should not return anything.
 	suite.Nil(marker)
 	suite.ErrorIs(err, db.ErrNoEntries)
@@ -68,7 +68,7 @@ func (suite *MarkersTestSuite) TestUpdateExisting() {
 	prevMarker := suite.testMarkers["local_account_1_notification_marker"]
 	marker := &gtsmodel.Marker{
 		AccountID:  localAccount1.ID,
-		Timeline:   gtsmodel.MarkerTimelineNameNotifications,
+		Name:       gtsmodel.MarkerNameNotifications,
 		LastReadID: "01H57YZECGJ2ZW39H8TJWAH0KY",
 	}
 	err := suite.db.UpdateMarker(ctx, marker)
@@ -81,7 +81,7 @@ func (suite *MarkersTestSuite) TestUpdateExisting() {
 	suite.Greater(marker.Version, prevMarker.Version)
 
 	// Re-fetch it from the DB and confirm that we got the updated version.
-	marker2, err := suite.db.GetMarker(ctx, localAccount1.ID, gtsmodel.MarkerTimelineNameNotifications)
+	marker2, err := suite.db.GetMarker(ctx, localAccount1.ID, gtsmodel.MarkerNameNotifications)
 	suite.NoError(err)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -99,7 +99,7 @@ func (suite *MarkersTestSuite) TestUpdateUnset() {
 	localAccount2 := suite.testAccounts["local_account_2"]
 	marker := &gtsmodel.Marker{
 		AccountID:  localAccount2.ID,
-		Timeline:   gtsmodel.MarkerTimelineNameNotifications,
+		Name:       gtsmodel.MarkerNameNotifications,
 		LastReadID: "01H57ZVGMD348ZJD5WENDZDH9Z",
 	}
 	err := suite.db.UpdateMarker(ctx, marker)
@@ -112,7 +112,7 @@ func (suite *MarkersTestSuite) TestUpdateUnset() {
 	suite.GreaterOrEqual(marker.Version, 0)
 
 	// Re-fetch it from the DB and confirm that we got the updated version.
-	marker2, err := suite.db.GetMarker(ctx, localAccount2.ID, gtsmodel.MarkerTimelineNameNotifications)
+	marker2, err := suite.db.GetMarker(ctx, localAccount2.ID, gtsmodel.MarkerNameNotifications)
 	suite.NoError(err)
 	if err != nil {
 		suite.FailNow(err.Error())

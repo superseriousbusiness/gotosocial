@@ -38,12 +38,12 @@ func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
 	return ""
 }
 
-func APIMarkerTimelineNameToMarkerTimelineName(m apimodel.MarkerTimelineName) gtsmodel.MarkerTimelineName {
+func APIMarkerNameToMarkerName(m apimodel.MarkerName) gtsmodel.MarkerName {
 	switch m {
-	case apimodel.MarkerTimelineNameHome:
-		return gtsmodel.MarkerTimelineNameHome
-	case apimodel.MarkerTimelineNameNotifications:
-		return gtsmodel.MarkerTimelineNameNotifications
+	case apimodel.MarkerNameHome:
+		return gtsmodel.MarkerNameHome
+	case apimodel.MarkerNameNotifications:
+		return gtsmodel.MarkerNameNotifications
 	}
 	return ""
 }

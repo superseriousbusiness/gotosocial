@@ -1174,13 +1174,13 @@ func (c *converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.
 			UpdatedAt:  util.FormatISO8601(marker.UpdatedAt),
 			Version:    marker.Version,
 		}
-		switch apimodel.MarkerTimelineName(marker.Timeline) {
-		case apimodel.MarkerTimelineNameHome:
+		switch apimodel.MarkerName(marker.Name) {
+		case apimodel.MarkerNameHome:
 			apiMarker.Home = apiTimelineMarker
-		case apimodel.MarkerTimelineNameNotifications:
+		case apimodel.MarkerNameNotifications:
 			apiMarker.Notifications = apiTimelineMarker
 		default:
-			return nil, fmt.Errorf("unknown marker timeline name: %s", marker.Timeline)
+			return nil, fmt.Errorf("unknown marker timeline name: %s", marker.Name)
 		}
 	}
 	return apiMarker, nil

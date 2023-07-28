@@ -35,13 +35,13 @@ type TimelineMarker struct {
 	Version int `json:"version"`
 }
 
-// MarkerTimelineName is the name of one of the timelines we can store markers for.
-type MarkerTimelineName string
+// MarkerName is the name of one of the timelines we can store markers for.
+type MarkerName string
 
 const (
-	MarkerTimelineNameHome          MarkerTimelineName = "home"
-	MarkerTimelineNameNotifications MarkerTimelineName = "notifications"
-	MarkerTimelineNameNumValues                        = 2
+	MarkerNameHome          MarkerName = "home"
+	MarkerNameNotifications MarkerName = "notifications"
+	MarkerNameNumValues                = 2
 )
 
 // MarkerPostRequest models a request to update one or more markers.
@@ -49,13 +49,13 @@ const (
 //
 // swagger:ignore
 type MarkerPostRequest struct {
-	Home                        *MarkerPostRequestTimelineMarker `json:"home"`
-	FormHomeLastReadID          string                           `form:"home[last_read_id]"`
-	Notifications               *MarkerPostRequestTimelineMarker `json:"notifications"`
-	FormNotificationsLastReadID string                           `form:"notifications[last_read_id]"`
+	Home                        *MarkerPostRequestMarker `json:"home"`
+	FormHomeLastReadID          string                   `form:"home[last_read_id]"`
+	Notifications               *MarkerPostRequestMarker `json:"notifications"`
+	FormNotificationsLastReadID string                   `form:"notifications[last_read_id]"`
 }
 
-type MarkerPostRequestTimelineMarker struct {
+type MarkerPostRequestMarker struct {
 	// The ID of the most recently viewed entity.
 	LastReadID string `json:"last_read_id"`
 }

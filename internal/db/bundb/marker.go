@@ -38,15 +38,15 @@ type markerDB struct {
 	MARKER FUNCTIONS
 */
 
-func (m *markerDB) GetMarker(ctx context.Context, accountID string, timeline gtsmodel.MarkerTimelineName) (*gtsmodel.Marker, error) {
+func (m *markerDB) GetMarker(ctx context.Context, accountID string, name gtsmodel.MarkerName) (*gtsmodel.Marker, error) {
 	marker, err := m.state.Caches.GTS.Marker().Load(
-		"AccountID.Timeline",
+		"AccountID.Name",
 		func() (*gtsmodel.Marker, error) {
 			var marker gtsmodel.Marker
 
 			if err := m.conn.NewSelect().
 				Model(&marker).
-				Where("? = ? AND ? = ?", bun.Ident("account_id"), accountID, bun.Ident("timeline"), timeline).
+				Where("? = ? AND ? = ?", bun.Ident("account_id"), accountID, bun.Ident("name"), name).
 				Scan(ctx); err != nil {
 				return nil, m.conn.ProcessError(err)
 			}
@@ -54,7 +54,7 @@ func (m *markerDB) GetMarker(ctx context.Context, accountID string, timeline gts
 			return &marker, nil
 		},
 		accountID,
-		timeline,
+		name,
 	)
 	if err != nil {
 		return nil, err // already processed
@@ -64,7 +64,7 @@ func (m *markerDB) GetMarker(ctx context.Context, accountID string, timeline gts
 }
 
 func (m *markerDB) UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) error {
-	prevMarker, err := m.GetMarker(ctx, marker.AccountID, marker.Timeline)
+	prevMarker, err := m.GetMarker(ctx, marker.AccountID, marker.Name)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("UpdateMarker: error fetching previous version of marker: %w", err)
 	}

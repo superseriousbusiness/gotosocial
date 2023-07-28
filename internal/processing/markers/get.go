@@ -31,10 +31,10 @@ import (
 
 // Get returns an API model for the markers of the requested timelines.
 // If a timeline marker hasn't been set yet, it's not included in the response.
-func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, timelines []apimodel.MarkerTimelineName) (*apimodel.Marker, gtserror.WithCode) {
-	markers := make([]*gtsmodel.Marker, 0, len(timelines))
-	for _, timeline := range timelines {
-		marker, err := p.state.DB.GetMarker(ctx, account.ID, typeutils.APIMarkerTimelineNameToMarkerTimelineName(timeline))
+func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, names []apimodel.MarkerName) (*apimodel.Marker, gtserror.WithCode) {
+	markers := make([]*gtsmodel.Marker, 0, len(names))
+	for _, name := range names {
+		marker, err := p.state.DB.GetMarker(ctx, account.ID, typeutils.APIMarkerNameToMarkerName(name))
 		if err != nil {
 			if errors.Is(err, db.ErrNoEntries) {
 				continue

@@ -290,14 +290,14 @@ func ListRepliesPolicy(repliesPolicy gtsmodel.RepliesPolicy) error {
 	}
 }
 
-// MarkerTimelineName checks that the desired marker timeline name is valid.
-func MarkerTimelineName(timeline string) error {
-	if timeline == "" {
+// MarkerName checks that the desired marker timeline name is valid.
+func MarkerName(name string) error {
+	if name == "" {
 		return fmt.Errorf("empty string for marker timeline name not allowed")
 	}
-	switch apimodel.MarkerTimelineName(timeline) {
-	case apimodel.MarkerTimelineNameHome, apimodel.MarkerTimelineNameNotifications:
+	switch apimodel.MarkerName(name) {
+	case apimodel.MarkerNameHome, apimodel.MarkerNameNotifications:
 		return nil
 	}
-	return fmt.Errorf("marker timeline name '%s' was not recognized, valid options are '%s', '%s'", timeline, apimodel.MarkerTimelineNameHome, apimodel.MarkerTimelineNameNotifications)
+	return fmt.Errorf("marker timeline name '%s' was not recognized, valid options are '%s', '%s'", name, apimodel.MarkerNameHome, apimodel.MarkerNameNotifications)
 }
