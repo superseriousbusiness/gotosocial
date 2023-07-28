@@ -37,6 +37,6 @@ type SearchRequest struct {
 type SearchResult struct {
 	Accounts []*Account `json:"accounts"`
 	Statuses []*Status  `json:"statuses"`
-	// Slice of strings if api v1, slice of tags if api v1.
+	// Slice of strings if api v1, slice of tags if api v2.
 	Hashtags []any `json:"hashtags"`
 }

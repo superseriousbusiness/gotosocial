@@ -107,9 +107,9 @@ import (
 //		description: |-
 //			Type of item to return. One of:
 //			- `` -- empty string; return any/all results.
-//			- `accounts` -- return account(s).
-//			- `statuses` -- return status(es).
-//			- `hashtags` -- return hashtag(s).
+//			- `accounts` -- return only account(s).
+//			- `statuses` -- return only status(es).
+//			- `hashtags` -- return only hashtag(s).
 //			If `type` is specified, paging can be performed using max_id and min_id parameters.
 //			If `type` is not specified, see the `offset` parameter for paging.
 //		in: query
@@ -148,9 +148,7 @@ import (
 //			name: search results
 //			description: Results of the search.
 //			schema:
-//				type: array
-//				items:
-//					"$ref": "#/definitions/searchResult"
+//				"$ref": "#/definitions/searchResult"
 //		'400':
 //			description: bad request
 //		'401':
