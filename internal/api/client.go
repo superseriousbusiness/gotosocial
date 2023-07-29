@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/lists"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notifications"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/preferences"
@@ -64,6 +65,7 @@ type Client struct {
 	followRequests *followrequests.Module // api/v1/follow_requests
 	instance       *instance.Module       // api/v1/instance
 	lists          *lists.Module          // api/v1/lists
+	markers        *markers.Module        // api/v1/markers
 	media          *media.Module          // api/v1/media, api/v2/media
 	notifications  *notifications.Module  // api/v1/notifications
 	preferences    *preferences.Module    // api/v1/preferences
@@ -104,6 +106,7 @@ func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	c.followRequests.Route(h)
 	c.instance.Route(h)
 	c.lists.Route(h)
+	c.markers.Route(h)
 	c.media.Route(h)
 	c.notifications.Route(h)
 	c.preferences.Route(h)
@@ -132,6 +135,7 @@ func NewClient(db db.DB, p *processing.Processor) *Client {
 		followRequests: followrequests.New(p),
 		instance:       instance.New(p),
 		lists:          lists.New(p),
+		markers:        markers.New(p),
 		media:          media.New(p),
 		notifications:  notifications.New(p),
 		preferences:    preferences.New(p),

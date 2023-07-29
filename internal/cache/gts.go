@@ -39,6 +39,7 @@ type GTSCaches struct {
 	instance      *result.Cache[*gtsmodel.Instance]
 	list          *result.Cache[*gtsmodel.List]
 	listEntry     *result.Cache[*gtsmodel.ListEntry]
+	marker        *result.Cache[*gtsmodel.Marker]
 	media         *result.Cache[*gtsmodel.MediaAttachment]
 	mention       *result.Cache[*gtsmodel.Mention]
 	notification  *result.Cache[*gtsmodel.Notification]
@@ -66,6 +67,7 @@ func (c *GTSCaches) Init() {
 	c.initInstance()
 	c.initList()
 	c.initListEntry()
+	c.initMarker()
 	c.initMedia()
 	c.initMention()
 	c.initNotification()
@@ -90,6 +92,7 @@ func (c *GTSCaches) Start() {
 	tryStart(c.instance, config.GetCacheGTSInstanceSweepFreq())
 	tryStart(c.list, config.GetCacheGTSListSweepFreq())
 	tryStart(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
+	tryStart(c.marker, config.GetCacheGTSMarkerSweepFreq())
 	tryStart(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStart(c.mention, config.GetCacheGTSMentionSweepFreq())
 	tryStart(c.notification, config.GetCacheGTSNotificationSweepFreq())
@@ -119,6 +122,7 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.instance, config.GetCacheGTSInstanceSweepFreq())
 	tryStop(c.list, config.GetCacheGTSListSweepFreq())
 	tryStop(c.listEntry, config.GetCacheGTSListEntrySweepFreq())
+	tryStop(c.marker, config.GetCacheGTSMarkerSweepFreq())
 	tryStop(c.media, config.GetCacheGTSMediaSweepFreq())
 	tryStop(c.mention, config.GetCacheGTSNotificationSweepFreq())
 	tryStop(c.notification, config.GetCacheGTSNotificationSweepFreq())
@@ -184,6 +188,11 @@ func (c *GTSCaches) List() *result.Cache[*gtsmodel.List] {
 // ListEntry provides access to the gtsmodel ListEntry database cache.
 func (c *GTSCaches) ListEntry() *result.Cache[*gtsmodel.ListEntry] {
 	return c.listEntry
+}
+
+// Marker provides access to the gtsmodel Marker database cache.
+func (c *GTSCaches) Marker() *result.Cache[*gtsmodel.Marker] {
+	return c.marker
 }
 
 // Media provides access to the gtsmodel Media database cache.
@@ -379,6 +388,18 @@ func (c *GTSCaches) initListEntry() {
 	}, config.GetCacheGTSListEntryMaxSize())
 	c.list.SetTTL(config.GetCacheGTSListEntryTTL(), true)
 	c.list.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initMarker() {
+	c.marker = result.New([]result.Lookup{
+		{Name: "AccountID.Name"},
+	}, func(m1 *gtsmodel.Marker) *gtsmodel.Marker {
+		m2 := new(gtsmodel.Marker)
+		*m2 = *m1
+		return m2
+	}, config.GetCacheGTSMarkerMaxSize())
+	c.marker.SetTTL(config.GetCacheGTSMarkerTTL(), true)
+	c.marker.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initMedia() {

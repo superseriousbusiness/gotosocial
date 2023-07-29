@@ -3228,6 +3228,81 @@ func GetCacheGTSListEntrySweepFreq() time.Duration { return global.GetCacheGTSLi
 // SetCacheGTSListEntrySweepFreq safely sets the value for global configuration 'Cache.GTS.ListEntrySweepFreq' field
 func SetCacheGTSListEntrySweepFreq(v time.Duration) { global.SetCacheGTSListEntrySweepFreq(v) }
 
+// GetCacheGTSMarkerMaxSize safely fetches the Configuration value for state's 'Cache.GTS.MarkerMaxSize' field
+func (st *ConfigState) GetCacheGTSMarkerMaxSize() (v int) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.MarkerMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSMarkerMaxSize safely sets the Configuration value for state's 'Cache.GTS.MarkerMaxSize' field
+func (st *ConfigState) SetCacheGTSMarkerMaxSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.MarkerMaxSize = v
+	st.reloadToViper()
+}
+
+// CacheGTSMarkerMaxSizeFlag returns the flag name for the 'Cache.GTS.MarkerMaxSize' field
+func CacheGTSMarkerMaxSizeFlag() string { return "cache-gts-marker-max-size" }
+
+// GetCacheGTSMarkerMaxSize safely fetches the value for global configuration 'Cache.GTS.MarkerMaxSize' field
+func GetCacheGTSMarkerMaxSize() int { return global.GetCacheGTSMarkerMaxSize() }
+
+// SetCacheGTSMarkerMaxSize safely sets the value for global configuration 'Cache.GTS.MarkerMaxSize' field
+func SetCacheGTSMarkerMaxSize(v int) { global.SetCacheGTSMarkerMaxSize(v) }
+
+// GetCacheGTSMarkerTTL safely fetches the Configuration value for state's 'Cache.GTS.MarkerTTL' field
+func (st *ConfigState) GetCacheGTSMarkerTTL() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.MarkerTTL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSMarkerTTL safely sets the Configuration value for state's 'Cache.GTS.MarkerTTL' field
+func (st *ConfigState) SetCacheGTSMarkerTTL(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.MarkerTTL = v
+	st.reloadToViper()
+}
+
+// CacheGTSMarkerTTLFlag returns the flag name for the 'Cache.GTS.MarkerTTL' field
+func CacheGTSMarkerTTLFlag() string { return "cache-gts-marker-ttl" }
+
+// GetCacheGTSMarkerTTL safely fetches the value for global configuration 'Cache.GTS.MarkerTTL' field
+func GetCacheGTSMarkerTTL() time.Duration { return global.GetCacheGTSMarkerTTL() }
+
+// SetCacheGTSMarkerTTL safely sets the value for global configuration 'Cache.GTS.MarkerTTL' field
+func SetCacheGTSMarkerTTL(v time.Duration) { global.SetCacheGTSMarkerTTL(v) }
+
+// GetCacheGTSMarkerSweepFreq safely fetches the Configuration value for state's 'Cache.GTS.MarkerSweepFreq' field
+func (st *ConfigState) GetCacheGTSMarkerSweepFreq() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Cache.GTS.MarkerSweepFreq
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheGTSMarkerSweepFreq safely sets the Configuration value for state's 'Cache.GTS.MarkerSweepFreq' field
+func (st *ConfigState) SetCacheGTSMarkerSweepFreq(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.GTS.MarkerSweepFreq = v
+	st.reloadToViper()
+}
+
+// CacheGTSMarkerSweepFreqFlag returns the flag name for the 'Cache.GTS.MarkerSweepFreq' field
+func CacheGTSMarkerSweepFreqFlag() string { return "cache-gts-marker-sweep-freq" }
+
+// GetCacheGTSMarkerSweepFreq safely fetches the value for global configuration 'Cache.GTS.MarkerSweepFreq' field
+func GetCacheGTSMarkerSweepFreq() time.Duration { return global.GetCacheGTSMarkerSweepFreq() }
+
+// SetCacheGTSMarkerSweepFreq safely sets the value for global configuration 'Cache.GTS.MarkerSweepFreq' field
+func SetCacheGTSMarkerSweepFreq(v time.Duration) { global.SetCacheGTSMarkerSweepFreq(v) }
+
 // GetCacheGTSMediaMaxSize safely fetches the Configuration value for state's 'Cache.GTS.MediaMaxSize' field
 func (st *ConfigState) GetCacheGTSMediaMaxSize() (v int) {
 	st.mutex.RLock()

@@ -15,35 +15,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package markers
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Relationship
-	Report
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Timeline
-	User
-	Tombstone
+const (
+	// BasePath is the base path for serving the markers API, minus the 'api' prefix
+	BasePath = "/v1/markers"
+)
+
+type Module struct {
+	processor *processing.Processor
+}
+
+func New(processor *processing.Processor) *Module {
+	return &Module{
+		processor: processor,
+	}
+}
+
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, BasePath, m.MarkersGETHandler)
+	attachHandler(http.MethodPost, BasePath, m.MarkersPOSTHandler)
 }

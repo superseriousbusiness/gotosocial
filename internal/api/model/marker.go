@@ -20,9 +20,9 @@ package model
 // Marker represents the last read position within a user's timelines.
 type Marker struct {
 	// Information about the user's position in the home timeline.
-	Home *TimelineMarker `json:"home"`
+	Home *TimelineMarker `json:"home,omitempty"`
 	// Information about the user's position in their notifications.
-	Notifications *TimelineMarker `json:"notifications"`
+	Notifications *TimelineMarker `json:"notifications,omitempty"`
 }
 
 // TimelineMarker contains information about a user's progress through a specific timeline.
@@ -32,5 +32,46 @@ type TimelineMarker struct {
 	// The timestamp of when the marker was set (ISO 8601 Datetime)
 	UpdatedAt string `json:"updated_at"`
 	// Used for locking to prevent write conflicts.
-	Version string `json:"version"`
+	Version int `json:"version"`
+}
+
+// MarkerName is the name of one of the timelines we can store markers for.
+type MarkerName string
+
+const (
+	MarkerNameHome          MarkerName = "home"
+	MarkerNameNotifications MarkerName = "notifications"
+	MarkerNameNumValues                = 2
+)
+
+// MarkerPostRequest models a request to update one or more markers.
+// This has two sets of fields to support a goofy nested map structure in both form data and JSON bodies.
+//
+// swagger:ignore
+type MarkerPostRequest struct {
+	Home                        *MarkerPostRequestMarker `json:"home"`
+	FormHomeLastReadID          string                   `form:"home[last_read_id]"`
+	Notifications               *MarkerPostRequestMarker `json:"notifications"`
+	FormNotificationsLastReadID string                   `form:"notifications[last_read_id]"`
+}
+
+type MarkerPostRequestMarker struct {
+	// The ID of the most recently viewed entity.
+	LastReadID string `json:"last_read_id"`
+}
+
+// HomeLastReadID should be used instead of Home or FormHomeLastReadID.
+func (r *MarkerPostRequest) HomeLastReadID() string {
+	if r.Home != nil {
+		return r.Home.LastReadID
+	}
+	return r.FormHomeLastReadID
+}
+
+// NotificationsLastReadID should be used instead of Notifications or FormNotificationsLastReadID.
+func (r *MarkerPostRequest) NotificationsLastReadID() string {
+	if r.Notifications != nil {
+		return r.Notifications.LastReadID
+	}
+	return r.FormNotificationsLastReadID
 }

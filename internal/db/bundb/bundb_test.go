@@ -50,6 +50,7 @@ type BunDBStandardTestSuite struct {
 	testLists        map[string]*gtsmodel.List
 	testListEntries  map[string]*gtsmodel.ListEntry
 	testAccountNotes map[string]*gtsmodel.AccountNote
+	testMarkers      map[string]*gtsmodel.Marker
 }
 
 func (suite *BunDBStandardTestSuite) SetupSuite() {
@@ -70,6 +71,7 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 	suite.testLists = testrig.NewTestLists()
 	suite.testListEntries = testrig.NewTestListEntries()
 	suite.testAccountNotes = testrig.NewTestAccountNotes()
+	suite.testMarkers = testrig.NewTestMarkers()
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {

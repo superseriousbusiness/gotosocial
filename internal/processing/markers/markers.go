@@ -15,35 +15,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package markers
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Relationship
-	Report
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Timeline
-	User
-	Tombstone
+type Processor struct {
+	state *state.State
+	tc    typeutils.TypeConverter
+}
+
+func New(state *state.State, tc typeutils.TypeConverter) Processor {
+	return Processor{
+		state: state,
+		tc:    tc,
+	}
 }

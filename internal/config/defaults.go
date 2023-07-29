@@ -171,6 +171,10 @@ var Defaults = Configuration{
 			ListEntryTTL:       time.Minute * 30,
 			ListEntrySweepFreq: time.Minute,
 
+			MarkerMaxSize:   2000,
+			MarkerTTL:       time.Hour * 6,
+			MarkerSweepFreq: time.Minute,
+
 			MediaMaxSize:   1000,
 			MediaTTL:       time.Minute * 30,
 			MediaSweepFreq: time.Minute,
