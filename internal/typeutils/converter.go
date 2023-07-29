@@ -94,6 +94,8 @@ type TypeConverter interface {
 	ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Report, requestingAccount *gtsmodel.Account) (*apimodel.AdminReport, error)
 	// ListToAPIList converts one gts model list into an api model list, for serving at /api/v1/lists/{id}
 	ListToAPIList(ctx context.Context, l *gtsmodel.List) (*apimodel.List, error)
+	// MarkersToAPIMarker converts several gts model markers into an api marker, for serving at /api/v1/markers
+	MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.Marker) (*apimodel.Marker, error)
 
 	/*
 		INTERNAL (gts) MODEL TO FRONTEND (rss) MODEL

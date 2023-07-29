@@ -4988,6 +4988,72 @@ paths:
             summary: Add one or more accounts to the given list.
             tags:
                 - lists
+    /api/v1/markers:
+        get:
+            description: Get timeline markers by name
+            operationId: markersGet
+            parameters:
+                - description: Timelines to retrieve.
+                  in: query
+                  items:
+                    enum:
+                        - home
+                        - notifications
+                    type: string
+                  name: timeline
+                  type: array
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested markers
+                    schema:
+                        $ref: '#/definitions/markers'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            tags:
+                - markers
+        post:
+            consumes:
+                - multipart/form-data
+            description: Update timeline markers by name
+            operationId: markersPost
+            parameters:
+                - description: Last status ID read on the home timeline.
+                  in: formData
+                  name: home[last_read_id]
+                  type: string
+                - description: Last notification ID read on the notifications timeline.
+                  in: formData
+                  name: notifications[last_read_id]
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested markers
+                    schema:
+                        $ref: '#/definitions/markers'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "409":
+                    description: conflict (when two clients try to update the same timeline at the same time)
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            tags:
+                - markers
     /api/v1/media/{id}:
         get:
             operationId: mediaGet

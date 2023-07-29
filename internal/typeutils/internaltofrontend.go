@@ -1166,6 +1166,26 @@ func (c *converter) ListToAPIList(ctx context.Context, l *gtsmodel.List) (*apimo
 	}, nil
 }
 
+func (c *converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.Marker) (*apimodel.Marker, error) {
+	apiMarker := &apimodel.Marker{}
+	for _, marker := range markers {
+		apiTimelineMarker := &apimodel.TimelineMarker{
+			LastReadID: marker.LastReadID,
+			UpdatedAt:  util.FormatISO8601(marker.UpdatedAt),
+			Version:    marker.Version,
+		}
+		switch apimodel.MarkerName(marker.Name) {
+		case apimodel.MarkerNameHome:
+			apiMarker.Home = apiTimelineMarker
+		case apimodel.MarkerNameNotifications:
+			apiMarker.Notifications = apiTimelineMarker
+		default:
+			return nil, fmt.Errorf("unknown marker timeline name: %s", marker.Name)
+		}
+	}
+	return apiMarker, nil
+}
+
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
 func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]apimodel.Attachment, error) {
 	var errs gtserror.MultiError

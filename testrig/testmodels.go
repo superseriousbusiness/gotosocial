@@ -2007,6 +2007,25 @@ func NewTestListEntries() map[string]*gtsmodel.ListEntry {
 	}
 }
 
+func NewTestMarkers() map[string]*gtsmodel.Marker {
+	return map[string]*gtsmodel.Marker{
+		"local_account_1_home_marker": {
+			AccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Name:       gtsmodel.MarkerNameHome,
+			UpdatedAt:  TimeMustParse("2022-05-14T13:21:09+02:00"),
+			Version:    0,
+			LastReadID: "01F8MH82FYRXD2RC6108DAJ5HB",
+		},
+		"local_account_1_notification_marker": {
+			AccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Name:       gtsmodel.MarkerNameNotifications,
+			UpdatedAt:  TimeMustParse("2022-05-14T13:21:09+02:00"),
+			Version:    4,
+			LastReadID: "01F8Q0ANPTWW10DAKTX7BRPBJP",
+		},
+	}
+}
+
 func NewTestBlocks() map[string]*gtsmodel.Block {
 	return map[string]*gtsmodel.Block{
 		"local_account_2_block_remote_account_1": {

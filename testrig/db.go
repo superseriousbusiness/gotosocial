@@ -41,6 +41,7 @@ var testModels = []interface{}{
 	&gtsmodel.FollowRequest{},
 	&gtsmodel.List{},
 	&gtsmodel.ListEntry{},
+	&gtsmodel.Marker{},
 	&gtsmodel.MediaAttachment{},
 	&gtsmodel.Mention{},
 	&gtsmodel.Status{},
@@ -282,6 +283,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestAccountNotes() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestMarkers() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}

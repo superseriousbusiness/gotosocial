@@ -289,3 +289,15 @@ func ListRepliesPolicy(repliesPolicy gtsmodel.RepliesPolicy) error {
 		return fmt.Errorf("list replies_policy must be either empty or one of 'followed', 'list', 'none'")
 	}
 }
+
+// MarkerName checks that the desired marker timeline name is valid.
+func MarkerName(name string) error {
+	if name == "" {
+		return fmt.Errorf("empty string for marker timeline name not allowed")
+	}
+	switch apimodel.MarkerName(name) {
+	case apimodel.MarkerNameHome, apimodel.MarkerNameNotifications:
+		return nil
+	}
+	return fmt.Errorf("marker timeline name '%s' was not recognized, valid options are '%s', '%s'", name, apimodel.MarkerNameHome, apimodel.MarkerNameNotifications)
+}

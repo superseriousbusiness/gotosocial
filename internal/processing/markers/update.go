@@ -15,35 +15,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package typeutils
+package markers
 
 import (
+	"context"
+	"errors"
+	"fmt"
+
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
-	switch m {
-	case apimodel.VisibilityPublic:
-		return gtsmodel.VisibilityPublic
-	case apimodel.VisibilityUnlisted:
-		return gtsmodel.VisibilityUnlocked
-	case apimodel.VisibilityPrivate:
-		return gtsmodel.VisibilityFollowersOnly
-	case apimodel.VisibilityMutualsOnly:
-		return gtsmodel.VisibilityMutualsOnly
-	case apimodel.VisibilityDirect:
-		return gtsmodel.VisibilityDirect
+// Update updates the given markers and returns an API model for them.
+func (p *Processor) Update(ctx context.Context, markers []*gtsmodel.Marker) (*apimodel.Marker, gtserror.WithCode) {
+	for _, marker := range markers {
+		if err := p.state.DB.UpdateMarker(ctx, marker); err != nil {
+			if errors.Is(err, db.ErrAlreadyExists) {
+				return nil, gtserror.NewErrorConflict(err, "marker updated by another client")
+			}
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
-	return ""
-}
 
-func APIMarkerNameToMarkerName(m apimodel.MarkerName) gtsmodel.MarkerName {
-	switch m {
-	case apimodel.MarkerNameHome:
-		return gtsmodel.MarkerNameHome
-	case apimodel.MarkerNameNotifications:
-		return gtsmodel.MarkerNameNotifications
+	apiMarker, err := p.tc.MarkersToAPIMarker(ctx, markers)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting marker to api: %w", err))
 	}
-	return ""
+
+	return apiMarker, nil
 }
