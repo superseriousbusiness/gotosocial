@@ -93,7 +93,7 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 		targetAccount,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("GetRelationship: error fetching note: %w", err)
+		return nil, gtserror.Newf("error fetching note: %w", err)
 	}
 	if note != nil {
 		rel.Note = note.Comment
