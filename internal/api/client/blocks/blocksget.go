@@ -18,9 +18,7 @@
 package blocks
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -105,16 +103,10 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit := 20 // default
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
+	limit, errWithCode := apiutil.ParseLimit(c.Query(LimitKey), 20, 100, 2)
+	if err != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
 	resp, errWithCode := m.processor.BlocksGet(
