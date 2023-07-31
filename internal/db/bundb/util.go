@@ -59,10 +59,10 @@ func whereLike(
 	)
 }
 
-// whereStartsWith is like whereLike,
+// whereStartsLike is like whereLike,
 // but only searches for strings that
 // START WITH `search`.
-func whereStartsWith(
+func whereStartsLike(
 	query *bun.SelectQuery,
 	subject interface{},
 	search string,

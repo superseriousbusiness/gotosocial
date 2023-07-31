@@ -437,7 +437,7 @@ func (s *searchDB) SearchForTags(
 	name = strings.ToLower(name)
 
 	// Search using LIKE for tags that start with `name`.
-	q = whereStartsWith(q, bun.Ident("tag.name"), name)
+	q = whereStartsLike(q, bun.Ident("tag.name"), name)
 
 	if limit > 0 {
 		// Limit amount of tags returned.
