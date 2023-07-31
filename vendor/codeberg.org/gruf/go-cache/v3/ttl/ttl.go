@@ -479,23 +479,23 @@ func (c *Cache[K, V]) InvalidateAll(keys ...K) (ok bool) {
 	kvs = make([]kv[K, V], 0, len(keys))
 
 	c.locked(func() {
-		for _, key := range keys {
+		for x := range keys {
 			var item *Entry[K, V]
 
 			// Check for item in cache
-			item, ok = c.Cache.Get(key)
+			item, ok = c.Cache.Get(keys[x])
 			if !ok {
-				return
+				continue
 			}
 
 			// Append this old value to slice
 			kvs = append(kvs, kv[K, V]{
-				K: key,
+				K: keys[x],
 				V: item.Value,
 			})
 
 			// Remove from cache map
-			_ = c.Cache.Delete(key)
+			_ = c.Cache.Delete(keys[x])
 
 			// Free entry
 			c.free(item)
@@ -553,6 +553,7 @@ func (c *Cache[K, V]) Cap() (l int) {
 	return
 }
 
+// locked performs given function within mutex lock (NOTE: UNLOCK IS NOT DEFERRED).
 func (c *Cache[K, V]) locked(fn func()) {
 	c.Lock()
 	fn()
