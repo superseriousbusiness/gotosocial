@@ -63,7 +63,6 @@ const (
 	VisibilityTypeStatus  = VisibilityType('s')
 	VisibilityTypeHome    = VisibilityType('h')
 	VisibilityTypePublic  = VisibilityType('p')
-	VisibilityTypeTag     = VisibilityType('t')
 )
 
 // CachedVisibility represents a cached visibility lookup value.

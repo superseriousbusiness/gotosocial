@@ -21,7 +21,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -34,45 +33,6 @@ func (f *Filter) StatusTagTimelineable(
 	requester *gtsmodel.Account,
 	status *gtsmodel.Status,
 ) (bool, error) {
-	const vtype = cache.VisibilityTypeTag
-
-	// By default we assume no auth.
-	requesterID := noauth
-
-	if requester != nil {
-		// Use provided account ID.
-		requesterID = requester.ID
-	}
-
-	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
-		// Visibility not yet cached, perform timeline visibility lookup.
-		visible, err := f.isStatusTagTimelineable(ctx, requester, status)
-		if err != nil {
-			return nil, err
-		}
-
-		// Return visibility value.
-		return &cache.CachedVisibility{
-			ItemID:      status.ID,
-			RequesterID: requesterID,
-			Type:        vtype,
-			Value:       visible,
-		}, nil
-	}, vtype, requesterID, status.ID)
-	if err != nil {
-		if err == cache.SentinelError {
-			// Filter-out our temporary
-			// race-condition error.
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	return visibility.Value, nil
-}
-
-func (f *Filter) isStatusTagTimelineable(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	if status.CreatedAt.After(time.Now().Add(24 * time.Hour)) {
 		// Statuses made over 1 day in the future we don't show...
 		log.Warnf(ctx, "status >24hrs in the future: %+v", status)
