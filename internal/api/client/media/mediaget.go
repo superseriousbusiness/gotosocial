@@ -66,9 +66,11 @@ import (
 //		'500':
 //		   description: internal server error
 func (m *Module) MediaGETHandler(c *gin.Context) {
-	if apiVersion := c.Param(APIVersionKey); apiVersion != APIv1 {
-		err := errors.New("api version must be one v1 for this path")
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGetV1)
+	if _, errWithCode := apiutil.ParseAPIVersion(
+		c.Param(apiutil.APIVersionKey),
+		[]string{apiutil.APIv1, apiutil.APIv2}...,
+	); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

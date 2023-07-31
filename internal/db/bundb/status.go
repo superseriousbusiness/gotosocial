@@ -214,9 +214,16 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
-	// TODO: once we don't fetch using relations.
-	// if !status.TagsPopulated() {
-	// }
+	if !status.TagsPopulated() {
+		// Status tags are out-of-date with IDs, repopulate.
+		status.Tags, err = s.state.DB.GetTags(
+			ctx,
+			status.TagIDs,
+		)
+		if err != nil {
+			errs.Append(fmt.Errorf("error populating status tags: %w", err))
+		}
+	}
 
 	if !status.MentionsPopulated() {
 		// Status mentions are out-of-date with IDs, repopulate.

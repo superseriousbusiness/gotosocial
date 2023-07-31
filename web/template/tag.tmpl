@@ -1,3 +1,4 @@
+{{- /*
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -14,29 +15,13 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
 
-package model
+{{ template "header.tmpl" .}}
 
-// SearchRequest models a search request.
-type SearchRequest struct {
-	MaxID             string
-	MinID             string
-	Limit             int
-	Offset            int
-	Query             string
-	QueryType         string
-	Resolve           bool
-	Following         bool
-	ExcludeUnreviewed bool
-	APIv1             bool // Set to 'true' if using version 1 of the search API.
-}
+<main class="thread">
+	<h2 id="tag-name" tabindex="-1">#{{.tagName}}</h2>
+	<p>There's nothing here yet!</p>
+</main>
 
-// SearchResult models a search result.
-//
-// swagger:model searchResult
-type SearchResult struct {
-	Accounts []*Account `json:"accounts"`
-	Statuses []*Status  `json:"statuses"`
-	// Slice of strings if api v1, slice of tags if api v2.
-	Hashtags []any `json:"hashtags"`
-}
+{{ template "footer.tmpl" .}}

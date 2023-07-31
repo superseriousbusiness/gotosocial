@@ -26,9 +26,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// ListTimelineGETHandler swagger:operation GET /api/v1/timelines/list/{id} listTimeline
+// HomeTimelineGETHandler swagger:operation GET /api/v1/timelines/tag/{tag_name} tagTimeline
 //
-// See statuses/posts from the given list timeline.
+// See public statuses that use the given hashtag (case insensitive).
 //
 // The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
 //
@@ -37,7 +37,7 @@ import (
 // Example:
 //
 // ```
-// <https://example.org/api/v1/timelines/list/01H0W619198FX7J54NF7EH1NG2?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/list/01H0W619198FX7J54NF7EH1NG2?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+// <https://example.org/api/v1/timelines/tag/example?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/tag/example?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
 // ````
 //
 //	---
@@ -48,12 +48,6 @@ import (
 //	- application/json
 //
 //	parameters:
-//	-
-//		name: id
-//		type: string
-//		description: ID of the list
-//		in: path
-//		required: true
 //	-
 //		name: max_id
 //		type: string
@@ -66,14 +60,14 @@ import (
 //		name: since_id
 //		type: string
 //		description: >-
-//			Return only statuses *NEWER* than the given since status ID.
+//			Return only statuses *newer* than the given since status ID.
 //			The status with the specified ID will not be included in the response.
 //		in: query
 //	-
 //		name: min_id
 //		type: string
 //		description: >-
-//			Return only statuses *NEWER* than the given since status ID.
+//			Return only statuses *immediately newer* than the given since status ID.
 //			The status with the specified ID will not be included in the response.
 //		in: query
 //		required: false
@@ -82,12 +76,14 @@ import (
 //		type: integer
 //		description: Number of statuses to return.
 //		default: 20
+//		minimum: 1
+//		maximum: 40
 //		in: query
 //		required: false
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:lists
+//		- read:statuses
 //
 //	responses:
 //		'200':
@@ -105,7 +101,7 @@ import (
 //			description: unauthorized
 //		'400':
 //			description: bad request
-func (m *Module) ListTimelineGETHandler(c *gin.Context) {
+func (m *Module) TagTimelineGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -117,21 +113,22 @@ func (m *Module) ListTimelineGETHandler(c *gin.Context) {
 		return
 	}
 
-	targetListID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-	}
-
 	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 20, 40, 1)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	resp, errWithCode := m.processor.Timeline().ListTimelineGet(
+	tagName, errWithCode := apiutil.ParseTagName(c.Param(apiutil.TagNameKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	resp, errWithCode := m.processor.Timeline().TagTimelineGet(
 		c.Request.Context(),
-		authed,
-		targetListID,
+		authed.Account,
+		tagName,
 		c.Query(apiutil.MaxIDKey),
 		c.Query(apiutil.SinceIDKey),
 		c.Query(apiutil.MinIDKey),

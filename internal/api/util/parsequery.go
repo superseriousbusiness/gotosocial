@@ -20,11 +20,18 @@ package util
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 const (
+	/* API version keys */
+
+	APIVersionKey = "api_version"
+	APIv1         = "v1"
+	APIv2         = "v2"
+
 	/* Common keys */
 
 	IDKey      = "id"
@@ -43,6 +50,10 @@ const (
 	SearchQueryKey             = "q"
 	SearchResolveKey           = "resolve"
 	SearchTypeKey              = "type"
+
+	/* Tag keys */
+
+	TagNameKey = "tag_name"
 
 	/* Web endpoint keys */
 
@@ -122,6 +133,26 @@ func ParseDomainBlockImport(value string, defaultValue bool) (bool, gtserror.Wit
 	Parse functions for *REQUIRED* parameters.
 */
 
+func ParseAPIVersion(value string, availableVersion ...string) (string, gtserror.WithCode) {
+	key := APIVersionKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	for _, av := range availableVersion {
+		if value == av {
+			return value, nil
+		}
+	}
+
+	err := fmt.Errorf(
+		"invalid API version, valid versions for this path are [%s]",
+		strings.Join(availableVersion, ", "),
+	)
+	return "", gtserror.NewErrorBadRequest(err, err.Error())
+}
+
 func ParseID(value string) (string, gtserror.WithCode) {
 	key := IDKey
 
@@ -144,6 +175,16 @@ func ParseSearchLookup(value string) (string, gtserror.WithCode) {
 
 func ParseSearchQuery(value string) (string, gtserror.WithCode) {
 	key := SearchQueryKey
+
+	if value == "" {
+		return "", requiredError(key)
+	}
+
+	return value, nil
+}
+
+func ParseTagName(value string) (string, gtserror.WithCode) {
+	key := TagNameKey
 
 	if value == "" {
 		return "", requiredError(key)

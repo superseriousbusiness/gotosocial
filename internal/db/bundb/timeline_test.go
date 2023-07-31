@@ -272,6 +272,21 @@ func (suite *TimelineTestSuite) TestGetListTimelineMinIDPagingUp() {
 	suite.Equal("01F8MHCP5P2NWYQ416SBA0XSEV", s[len(s)-1].ID)
 }
 
+func (suite *TimelineTestSuite) TestGetTagTimelineNoParams() {
+	var (
+		ctx = context.Background()
+		tag = suite.testTags["welcome"]
+	)
+
+	s, err := suite.db.GetTagTimeline(ctx, tag.ID, "", "", "", 1)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 1)
+	suite.Equal("01F8MH75CBF9JFX4ZAD54N0W0R", s[0].ID)
+}
+
 func TestTimelineTestSuite(t *testing.T) {
 	suite.Run(t, new(TimelineTestSuite))
 }

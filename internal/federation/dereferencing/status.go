@@ -288,7 +288,10 @@ func (d *deref) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
 	}
 
-	// TODO: populateStatusTags()
+	// Ensure the status' tags are populated.
+	if err := d.fetchStatusTags(ctx, requestUser, latestStatus); err != nil {
+		return nil, nil, gtserror.Newf("error populating tags for status %s: %w", uri, err)
+	}
 
 	// Ensure the status' media attachments are populated, passing in existing to check for changes.
 	if err := d.fetchStatusAttachments(ctx, tsport, status, latestStatus); err != nil {
@@ -392,6 +395,55 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 			copy(status.MentionIDs[i:], status.MentionIDs[i+1:])
 			status.Mentions = status.Mentions[:len(status.Mentions)-1]
 			status.MentionIDs = status.MentionIDs[:len(status.MentionIDs)-1]
+			continue
+		}
+		i++
+	}
+
+	return nil
+}
+
+func (d *deref) fetchStatusTags(ctx context.Context, requestUser string, status *gtsmodel.Status) error {
+	// Allocate new slice to take the yet-to-be determined tag IDs.
+	status.TagIDs = make([]string, len(status.Tags))
+
+	for i := range status.Tags {
+		placeholder := status.Tags[i]
+
+		// Look for existing tag with this name first.
+		tag, err := d.state.DB.GetTagByName(ctx, placeholder.Name)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			log.Errorf(ctx, "db error getting tag %s: %v", tag.Name, err)
+			continue
+		}
+
+		// No tag with this name yet, create it.
+		if tag == nil {
+			tag = &gtsmodel.Tag{
+				ID:   id.NewULID(),
+				Name: placeholder.Name,
+			}
+
+			if err := d.state.DB.PutTag(ctx, tag); err != nil {
+				log.Errorf(ctx, "db error putting tag %s: %v", tag.Name, err)
+				continue
+			}
+		}
+
+		// Set the *new* tag and ID.
+		status.Tags[i] = tag
+		status.TagIDs[i] = tag.ID
+	}
+
+	// Remove any tag we couldn't get or create.
+	for i := 0; i < len(status.TagIDs); {
+		if status.TagIDs[i] == "" {
+			// This is a failed tag population, likely due
+			// to some database peculiarity / race condition.
+			copy(status.Tags[i:], status.Tags[i+1:])
+			copy(status.TagIDs[i:], status.TagIDs[i+1:])
+			status.Tags = status.Tags[:len(status.Tags)-1]
+			status.TagIDs = status.TagIDs[:len(status.TagIDs)-1]
 			continue
 		}
 		i++

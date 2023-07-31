@@ -27,4 +27,8 @@ type Tag struct {
 	// Web link to the hashtag.
 	// example: https://example.org/tags/helloworld
 	URL string `json:"url"`
+	// History of this hashtag's usage.
+	// Currently just a stub, if provided will always be an empty array.
+	// example: []
+	History *[]any `json:"history,omitempty"`
 }

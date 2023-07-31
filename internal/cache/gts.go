@@ -47,6 +47,7 @@ type GTSCaches struct {
 	report           *result.Cache[*gtsmodel.Report]
 	status           *result.Cache[*gtsmodel.Status]
 	statusFave       *result.Cache[*gtsmodel.StatusFave]
+	tag              *result.Cache[*gtsmodel.Tag]
 	tombstone        *result.Cache[*gtsmodel.Tombstone]
 	user             *result.Cache[*gtsmodel.User]
 
@@ -78,6 +79,7 @@ func (c *GTSCaches) Init() {
 	c.initReport()
 	c.initStatus()
 	c.initStatusFave()
+	c.initTag()
 	c.initTombstone()
 	c.initUser()
 	c.initWebfinger()
@@ -120,6 +122,7 @@ func (c *GTSCaches) Start() {
 	tryStart(c.report, config.GetCacheGTSReportSweepFreq())
 	tryStart(c.status, config.GetCacheGTSStatusSweepFreq())
 	tryStart(c.statusFave, config.GetCacheGTSStatusFaveSweepFreq())
+	tryStart(c.tag, config.GetCacheGTSTagSweepFreq())
 	tryStart(c.tombstone, config.GetCacheGTSTombstoneSweepFreq())
 	tryStart(c.user, config.GetCacheGTSUserSweepFreq())
 	tryUntil("starting *gtsmodel.Webfinger cache", 5, func() bool {
@@ -167,6 +170,7 @@ func (c *GTSCaches) Stop() {
 	tryStop(c.report, config.GetCacheGTSReportSweepFreq())
 	tryStop(c.status, config.GetCacheGTSStatusSweepFreq())
 	tryStop(c.statusFave, config.GetCacheGTSStatusFaveSweepFreq())
+	tryStop(c.tag, config.GetCacheGTSTagSweepFreq())
 	tryStop(c.tombstone, config.GetCacheGTSTombstoneSweepFreq())
 	tryStop(c.user, config.GetCacheGTSUserSweepFreq())
 	tryUntil("stopping *gtsmodel.Webfinger cache", 5, func() bool {
@@ -288,6 +292,11 @@ func (c *GTSCaches) Status() *result.Cache[*gtsmodel.Status] {
 // StatusFave provides access to the gtsmodel StatusFave database cache.
 func (c *GTSCaches) StatusFave() *result.Cache[*gtsmodel.StatusFave] {
 	return c.statusFave
+}
+
+// Tag provides access to the gtsmodel Tag database cache.
+func (c *GTSCaches) Tag() *result.Cache[*gtsmodel.Tag] {
+	return c.tag
 }
 
 // Tombstone provides access to the gtsmodel Tombstone database cache.
@@ -566,6 +575,19 @@ func (c *GTSCaches) initStatusFave() {
 	}, config.GetCacheGTSStatusFaveMaxSize())
 	c.status.SetTTL(config.GetCacheGTSStatusFaveTTL(), true)
 	c.status.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initTag() {
+	c.tag = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "Name"},
+	}, func(m1 *gtsmodel.Tag) *gtsmodel.Tag {
+		m2 := new(gtsmodel.Tag)
+		*m2 = *m1
+		return m2
+	}, config.GetCacheGTSTagMaxSize())
+	c.tag.SetTTL(config.GetCacheGTSTagTTL(), true)
+	c.tag.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initTombstone() {

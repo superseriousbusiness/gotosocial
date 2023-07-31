@@ -34,9 +34,10 @@ var likeEscaper = strings.NewReplacer(
 	`_`, `\_`, // Exactly one char.
 )
 
-// whereSubqueryLike appends a WHERE clause to the
-// given SelectQuery, which searches for matches
-// of `search` in the given subQuery using LIKE.
+// whereLike appends a WHERE clause to the
+// given SelectQuery, which searches for
+// matches of `search` in the given subQuery
+// using LIKE.
 func whereLike(
 	query *bun.SelectQuery,
 	subject interface{},
@@ -49,6 +50,30 @@ func whereLike(
 	// Add our own wildcards back in; search
 	// zero or more chars around the query.
 	search = `%` + search + `%`
+
+	// Append resulting WHERE
+	// clause to the main query.
+	return query.Where(
+		"(?) LIKE ? ESCAPE ?",
+		subject, search, `\`,
+	)
+}
+
+// whereStartsLike is like whereLike,
+// but only searches for strings that
+// START WITH `search`.
+func whereStartsLike(
+	query *bun.SelectQuery,
+	subject interface{},
+	search string,
+) *bun.SelectQuery {
+	// Escape existing wildcard + escape
+	// chars in the search query string.
+	search = likeEscaper.Replace(search)
+
+	// Add our own wildcards back in; search
+	// zero or more chars after the query.
+	search += `%`
 
 	// Append resulting WHERE
 	// clause to the main query.

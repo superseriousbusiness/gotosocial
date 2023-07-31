@@ -29,4 +29,7 @@ type Search interface {
 
 	// SearchForStatuses uses the given query text to search for statuses created by accountID, or in reply to accountID.
 	SearchForStatuses(ctx context.Context, accountID string, query string, maxID string, minID string, limit int, offset int) ([]*gtsmodel.Status, error)
+
+	// SearchForTags searches for tags that start with the given query text (case insensitive).
+	SearchForTags(ctx context.Context, query string, maxID string, minID string, limit int, offset int) ([]*gtsmodel.Tag, error)
 }

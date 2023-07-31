@@ -380,3 +380,50 @@ While `attachment` is not technically an ordered collection, GoToSocial--again, 
 GoToSocial will also parse PropertyValue fields from remote `actor`s discovered by the GoToSocial instance, to allow them to be displayed to users on the GoToSocial instance.
 
 GoToSocial allows up to 6 `PropertyValue` fields by default, as opposed to Mastodon's default 4.
+
+## Hashtags
+
+GoToSocial users can include hashtags in their posts, which indicate to other instances that that user wishes their post to be grouped together with other posts using the same hashtag, for discovery purposes.
+
+In line with other ActivityPub server implementations, GoToSocial implicitly expects that only public-addressed posts will be grouped by hashtag.
+
+To federate hashtags in and out, GoToSocial uses the widely-adopted [ActivityStreams `Hashtag` type extension](https://www.w3.org/wiki/Activity_Streams_extensions#as:Hashtag_type) in the `tag` property of objects.
+
+Here's what the `tag` property might look like on an outgoing message that uses one custom emoji, and one tag:
+
+```json
+"tag": [
+  {
+    "icon": {
+      "mediaType": "image/png",
+      "type": "Image",
+      "url": "https://example.org/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"
+    },
+    "id": "https://example.org/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
+    "name": ":rainbow:",
+    "type": "Emoji",
+    "updated": "2021-09-20T10:40:37Z"
+  },
+  {
+    "href": "https://example.org/tags/welcome",
+    "name": "#welcome",
+    "type": "Hashtag"
+  }
+]
+```
+
+With just one tag, the `tag` property will be an object rather than an array, which will look like this:
+
+```json
+"tag": {
+  "href": "https://example.org/tags/welcome",
+  "name": "#welcome",
+  "type": "Hashtag"
+}
+```
+
+### Hashtag `href` property
+
+The `href` URL provided by GoToSocial in outgoing tags points to a web URL that serves `text/html`.
+
+GoToSocial makes no guarantees whatsoever about what the content of the given `text/html` will be, and remote servers should not interpret the URL as a canonical ActivityPub ID/URI property. The `href` URL is provided merely as an endpoint which *might* contain more information about the given hashtag.

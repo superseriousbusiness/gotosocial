@@ -403,17 +403,24 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
   },
   "sensitive": false,
   "summary": "",
-  "tag": {
-    "icon": {
-      "mediaType": "image/png",
-      "type": "Image",
-      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"
+  "tag": [
+    {
+      "icon": {
+        "mediaType": "image/png",
+        "type": "Image",
+        "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"
+      },
+      "id": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
+      "name": ":rainbow:",
+      "type": "Emoji",
+      "updated": "2021-09-20T10:40:37Z"
     },
-    "id": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
-    "name": ":rainbow:",
-    "type": "Emoji",
-    "updated": "2021-09-20T10:40:37Z"
-  },
+    {
+      "href": "http://localhost:8080/tags/welcome",
+      "name": "#welcome",
+      "type": "Hashtag"
+    }
+  ],
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"
@@ -463,17 +470,24 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
   },
   "sensitive": false,
   "summary": "",
-  "tag": {
-    "icon": {
-      "mediaType": "image/png",
-      "type": "Image",
-      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"
+  "tag": [
+    {
+      "icon": {
+        "mediaType": "image/png",
+        "type": "Image",
+        "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png"
+      },
+      "id": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
+      "name": ":rainbow:",
+      "type": "Emoji",
+      "updated": "2021-09-20T10:40:37Z"
     },
-    "id": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
-    "name": ":rainbow:",
-    "type": "Emoji",
-    "updated": "2021-09-20T10:40:37Z"
-  },
+    {
+      "href": "http://localhost:8080/tags/welcome",
+      "name": "#welcome",
+      "type": "Hashtag"
+    }
+  ],
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"

@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -33,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // Converts a gts model account into an Activity Streams person type.
@@ -407,7 +409,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	if s.Account == nil {
 		a, err := c.db.GetAccountByID(ctx, s.AccountID)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error retrieving author account from db: %s", err)
+			return nil, gtserror.Newf("error retrieving author account from db: %w", err)
 		}
 		s.Account = a
 	}
@@ -418,7 +420,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	// id
 	statusURI, err := url.Parse(s.URI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.URI, err)
+		return nil, gtserror.Newf("error parsing url %s: %w", s.URI, err)
 	}
 	statusIDProp := streams.NewJSONLDIdProperty()
 	statusIDProp.SetIRI(statusURI)
@@ -436,7 +438,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	if s.InReplyToURI != "" {
 		rURI, err := url.Parse(s.InReplyToURI)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.InReplyToURI, err)
+			return nil, gtserror.Newf("error parsing url %s: %w", s.InReplyToURI, err)
 		}
 
 		inReplyToProp := streams.NewActivityStreamsInReplyToProperty()
@@ -453,7 +455,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	if s.URL != "" {
 		sURL, err := url.Parse(s.URL)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.URL, err)
+			return nil, gtserror.Newf("error parsing url %s: %w", s.URL, err)
 		}
 
 		urlProp := streams.NewActivityStreamsUrlProperty()
@@ -464,7 +466,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	// attributedTo
 	authorAccountURI, err := url.Parse(s.Account.URI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.Account.URI, err)
+		return nil, gtserror.Newf("error parsing url %s: %w", s.Account.URI, err)
 	}
 	attributedToProp := streams.NewActivityStreamsAttributedToProperty()
 	attributedToProp.AppendIRI(authorAccountURI)
@@ -478,13 +480,13 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	if len(s.MentionIDs) > len(mentions) {
 		mentions, err = c.db.GetMentions(ctx, s.MentionIDs)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error getting mentions: %w", err)
+			return nil, gtserror.Newf("error getting mentions: %w", err)
 		}
 	}
 	for _, m := range mentions {
 		asMention, err := c.MentionToAS(ctx, m)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error converting mention to AS mention: %s", err)
+			return nil, gtserror.Newf("error converting mention to AS mention: %w", err)
 		}
 		tagProp.AppendActivityStreamsMention(asMention)
 	}
@@ -496,7 +498,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		for _, emojiID := range s.EmojiIDs {
 			emoji, err := c.db.GetEmojiByID(ctx, emojiID)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error getting emoji %s from database: %s", emojiID, err)
+				return nil, gtserror.Newf("error getting emoji %s from database: %w", emojiID, err)
 			}
 			emojis = append(emojis, emoji)
 		}
@@ -504,25 +506,38 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	for _, emoji := range emojis {
 		asEmoji, err := c.EmojiToAS(ctx, emoji)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error converting emoji to AS emoji: %s", err)
+			return nil, gtserror.Newf("error converting emoji to AS emoji: %w", err)
 		}
 		tagProp.AppendTootEmoji(asEmoji)
 	}
 
 	// tag -- hashtags
-	// TODO
+	hashtags := s.Tags
+	if len(s.TagIDs) > len(hashtags) {
+		hashtags, err = c.db.GetTags(ctx, s.TagIDs)
+		if err != nil {
+			return nil, gtserror.Newf("error getting tags: %w", err)
+		}
+	}
+	for _, ht := range hashtags {
+		asHashtag, err := c.TagToAS(ctx, ht)
+		if err != nil {
+			return nil, gtserror.Newf("error converting tag to AS tag: %w", err)
+		}
+		tagProp.AppendTootHashtag(asHashtag)
+	}
 
 	status.SetActivityStreamsTag(tagProp)
 
 	// parse out some URIs we need here
 	authorFollowersURI, err := url.Parse(s.Account.FollowersURI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", s.Account.FollowersURI, err)
+		return nil, gtserror.Newf("error parsing url %s: %w", s.Account.FollowersURI, err)
 	}
 
 	publicURI, err := url.Parse(pub.PublicActivityPubIRI)
 	if err != nil {
-		return nil, fmt.Errorf("StatusToAS: error parsing url %s: %s", pub.PublicActivityPubIRI, err)
+		return nil, gtserror.Newf("error parsing url %s: %w", pub.PublicActivityPubIRI, err)
 	}
 
 	// to and cc
@@ -534,7 +549,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		for _, m := range mentions {
 			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
+				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
 			}
 			toProp.AppendIRI(iri)
 		}
@@ -546,7 +561,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		for _, m := range mentions {
 			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
+				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
 			}
 			ccProp.AppendIRI(iri)
 		}
@@ -557,7 +572,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		for _, m := range mentions {
 			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
+				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
 			}
 			ccProp.AppendIRI(iri)
 		}
@@ -568,7 +583,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		for _, m := range mentions {
 			iri, err := url.Parse(m.TargetAccount.URI)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error parsing uri %s: %s", m.TargetAccount.URI, err)
+				return nil, gtserror.Newf("error parsing uri %s: %w", m.TargetAccount.URI, err)
 			}
 			ccProp.AppendIRI(iri)
 		}
@@ -592,7 +607,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		for _, attachmentID := range s.AttachmentIDs {
 			attachment, err := c.db.GetAttachmentByID(ctx, attachmentID)
 			if err != nil {
-				return nil, fmt.Errorf("StatusToAS: error getting attachment %s from database: %s", attachmentID, err)
+				return nil, gtserror.Newf("error getting attachment %s from database: %w", attachmentID, err)
 			}
 			attachments = append(attachments, attachment)
 		}
@@ -600,7 +615,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	for _, a := range attachments {
 		doc, err := c.AttachmentToAS(ctx, a)
 		if err != nil {
-			return nil, fmt.Errorf("StatusToAS: error converting attachment: %s", err)
+			return nil, gtserror.Newf("error converting attachment: %w", err)
 		}
 		attachmentProp.AppendActivityStreamsDocument(doc)
 	}
@@ -609,7 +624,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	// replies
 	repliesCollection, err := c.StatusToASRepliesCollection(ctx, s, false)
 	if err != nil {
-		return nil, fmt.Errorf("error creating repliesCollection: %s", err)
+		return nil, fmt.Errorf("error creating repliesCollection: %w", err)
 	}
 
 	repliesProp := streams.NewActivityStreamsRepliesProperty()
@@ -844,6 +859,32 @@ func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab
 	mention.SetActivityStreamsName(nameProp)
 
 	return mention, nil
+}
+
+func (c *converter) TagToAS(ctx context.Context, t *gtsmodel.Tag) (vocab.TootHashtag, error) {
+	// This is probably already lowercase,
+	// but let's err on the safe side.
+	nameLower := strings.ToLower(t.Name)
+	tagURLString := uris.GenerateURIForTag(nameLower)
+
+	// Create the tag.
+	tag := streams.NewTootHashtag()
+
+	// `href` should be the URL of the tag.
+	hrefProp := streams.NewActivityStreamsHrefProperty()
+	tagURL, err := url.Parse(tagURLString)
+	if err != nil {
+		return nil, gtserror.Newf("error parsing url %s: %w", tagURLString, err)
+	}
+	hrefProp.SetIRI(tagURL)
+	tag.SetActivityStreamsHref(hrefProp)
+
+	// `name` should be the name of the tag with the # prefix.
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString("#" + nameLower)
+	tag.SetActivityStreamsName(nameProp)
+
+	return tag, nil
 }
 
 /*

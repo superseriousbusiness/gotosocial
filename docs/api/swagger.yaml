@@ -2003,8 +2003,8 @@ definitions:
                 type: array
                 x-go-name: Accounts
             hashtags:
-                items:
-                    $ref: '#/definitions/tag'
+                description: Slice of strings if api v1, slice of tags if api v2.
+                items: {}
                 type: array
                 x-go-name: Hashtags
             statuses:
@@ -2483,6 +2483,14 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
+            history:
+                description: |-
+                    History of this hashtag's usage.
+                    Currently just a stub, if provided will always be an empty array.
+                example: []
+                items: {}
+                type: array
+                x-go-name: History
             name:
                 description: 'The value of the hashtag after the # sign.'
                 example: helloworld
@@ -2666,6 +2674,98 @@ paths:
             summary: Upload a new media attachment.
             tags:
                 - media
+    /api/{api_version}/search:
+        get:
+            description: If statuses are in the result, they will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+            operationId: searchGet
+            parameters:
+                - description: Version of the API to use. Must be either `v1` or `v2`. If v1 is used, Hashtag results will be a slice of strings. If v2 is used, Hashtag results will be a slice of apimodel tags.
+                  in: path
+                  name: api_version
+                  required: true
+                  type: string
+                - description: Return only items *OLDER* than the given max ID. The item with the specified ID will not be included in the response. Currently only used if 'type' is set to a specific type.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *immediately newer* than the given min ID. The item with the specified ID will not be included in the response. Currently only used if 'type' is set to a specific type.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of each type of item to return.
+                  in: query
+                  maximum: 40
+                  minimum: 1
+                  name: limit
+                  type: integer
+                - default: 0
+                  description: Page number of results to return (starts at 0). This parameter is currently not used, page by selecting a specific query type and using maxID and minID instead.
+                  in: query
+                  maximum: 10
+                  minimum: 0
+                  name: offset
+                  type: integer
+                - description: |-
+                    Query string to search for. This can be in the following forms:
+                    - `@[username]` -- search for an account with the given username on any domain. Can return multiple results.
+                    - @[username]@[domain]` -- search for a remote account with exact username and domain. Will only ever return 1 result at most.
+                    - `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will only ever return 1 result at most.
+                    - `#[hashtag_name]` -- search for a hashtag with the given hashtag name, or starting with the given hashtag name. Case insensitive. Can return multiple results.
+                    - any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
+                  in: query
+                  name: q
+                  required: true
+                  type: string
+                - description: |-
+                    Type of item to return. One of:
+                    - `` -- empty string; return any/all results.
+                    - `accounts` -- return only account(s).
+                    - `statuses` -- return only status(es).
+                    - `hashtags` -- return only hashtag(s).
+                    If `type` is specified, paging can be performed using max_id and min_id parameters.
+                    If `type` is not specified, see the `offset` parameter for paging.
+                  in: query
+                  name: type
+                  type: string
+                - default: false
+                  description: If searching query is for `@[username]@[domain]`, or a URL, allow the GoToSocial instance to resolve the search by making calls to remote instances (webfinger, ActivityPub, etc).
+                  in: query
+                  name: resolve
+                  type: boolean
+                - default: false
+                  description: If search type includes accounts, and search query is an arbitrary string, show only accounts that the requesting account follows. If this is set to `true`, then the GoToSocial instance will enhance the search by also searching within account notes, not just in usernames and display names.
+                  in: query
+                  name: following
+                  type: boolean
+                - default: false
+                  description: If searching for hashtags, exclude those not yet approved by instance admin. Currently this parameter is unused.
+                  in: query
+                  name: exclude_unreviewed
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Results of the search.
+                    schema:
+                        $ref: '#/definitions/searchResult'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:search
+            summary: Search for statuses, accounts, or hashtags, on this instance or elsewhere.
+            tags:
+                - search
     /api/v1/accounts:
         post:
             consumes:
@@ -5474,94 +5574,6 @@ paths:
             summary: Get one report with the given id.
             tags:
                 - reports
-    /api/v1/search:
-        get:
-            description: If statuses are in the result, they will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
-            operationId: searchGet
-            parameters:
-                - description: Return only items *OLDER* than the given max ID. The item with the specified ID will not be included in the response. Currently only used if 'type' is set to a specific type.
-                  in: query
-                  name: max_id
-                  type: string
-                - description: Return only items *immediately newer* than the given min ID. The item with the specified ID will not be included in the response. Currently only used if 'type' is set to a specific type.
-                  in: query
-                  name: min_id
-                  type: string
-                - default: 20
-                  description: Number of each type of item to return.
-                  in: query
-                  maximum: 40
-                  minimum: 1
-                  name: limit
-                  type: integer
-                - default: 0
-                  description: Page number of results to return (starts at 0). This parameter is currently not used, page by selecting a specific query type and using maxID and minID instead.
-                  in: query
-                  maximum: 10
-                  minimum: 0
-                  name: offset
-                  type: integer
-                - description: |-
-                    Query string to search for. This can be in the following forms:
-                    - `@[username]` -- search for an account with the given username on any domain. Can return multiple results.
-                    - @[username]@[domain]` -- search for a remote account with exact username and domain. Will only ever return 1 result at most.
-                    - `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will only ever return 1 result at most.
-                    - any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
-                  in: query
-                  name: q
-                  required: true
-                  type: string
-                - description: |-
-                    Type of item to return. One of:
-                    - `` -- empty string; return any/all results.
-                    - `accounts` -- return account(s).
-                    - `statuses` -- return status(es).
-                    - `hashtags` -- return hashtag(s).
-                    If `type` is specified, paging can be performed using max_id and min_id parameters.
-                    If `type` is not specified, see the `offset` parameter for paging.
-                  in: query
-                  name: type
-                  type: string
-                - default: false
-                  description: If searching query is for `@[username]@[domain]`, or a URL, allow the GoToSocial instance to resolve the search by making calls to remote instances (webfinger, ActivityPub, etc).
-                  in: query
-                  name: resolve
-                  type: boolean
-                - default: false
-                  description: If search type includes accounts, and search query is an arbitrary string, show only accounts that the requesting account follows. If this is set to `true`, then the GoToSocial instance will enhance the search by also searching within account notes, not just in usernames and display names.
-                  in: query
-                  name: following
-                  type: boolean
-                - default: false
-                  description: If searching for hashtags, exclude those not yet approved by instance admin. Currently this parameter is unused.
-                  in: query
-                  name: exclude_unreviewed
-                  type: boolean
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: Results of the search.
-                    schema:
-                        items:
-                            $ref: '#/definitions/searchResult'
-                        type: array
-                "400":
-                    description: bad request
-                "401":
-                    description: unauthorized
-                "404":
-                    description: not found
-                "406":
-                    description: not acceptable
-                "500":
-                    description: internal server error
-            security:
-                - OAuth2 Bearer:
-                    - read:search
-            summary: Search for statuses, accounts, or hashtags, on this instance or elsewhere.
-            tags:
-                - search
     /api/v1/statuses:
         post:
             consumes:
@@ -6411,6 +6423,62 @@ paths:
                 - OAuth2 Bearer:
                     - read:statuses
             summary: See public statuses/posts that your instance is aware of.
+            tags:
+                - timelines
+    /api/v1/timelines/tag/{tag_name}:
+        get:
+            description: |-
+                The statuses will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The returned Link header can be used to generate the previous and next queries when scrolling up or down a timeline.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/timelines/tag/example?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/timelines/tag/example?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+                ````
+            operationId: tagTimeline
+            parameters:
+                - description: Return only statuses *OLDER* than the given max status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only statuses *newer* than the given since status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only statuses *immediately newer* than the given since status ID. The status with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of statuses to return.
+                  in: query
+                  maximum: 40
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of statuses.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/status'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: See public statuses that use the given hashtag (case insensitive).
             tags:
                 - timelines
     /api/v1/user/password_change:

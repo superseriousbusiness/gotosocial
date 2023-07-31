@@ -17,12 +17,6 @@
 
 package db
 
-import (
-	"context"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-)
-
 const (
 	// DBTypePostgres represents an underlying POSTGRES database type.
 	DBTypePostgres string = "POSTGRES"
@@ -48,20 +42,8 @@ type DB interface {
 	Status
 	StatusBookmark
 	StatusFave
+	Tag
 	Timeline
 	User
 	Tombstone
-
-	/*
-		USEFUL CONVERSION FUNCTIONS
-	*/
-
-	// TagStringToTag takes a lowercase tag in the form "somehashtag", which has been
-	// used in a status. It takes the id of the account that wrote the status, and the id of the status itself, and then
-	// returns an *apimodel.Tag corresponding to the given tags. If the tag already exists in database, that tag
-	// will be returned. Otherwise a pointer to a new tag struct will be created and returned.
-	//
-	// Note: this func doesn't/shouldn't do any manipulation of tags in the DB, it's just for checking
-	// if they exist in the db already, and conveniently returning them, or creating new tag structs.
-	TagStringToTag(ctx context.Context, tag string, originAccountID string) (*gtsmodel.Tag, error)
 }

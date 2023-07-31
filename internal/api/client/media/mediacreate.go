@@ -93,10 +93,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
-	apiVersion := c.Param(APIVersionKey)
-	if apiVersion != APIv1 && apiVersion != APIv2 {
-		err := errors.New("api version must be one of v1 or v2 for this path")
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(err, err.Error()), m.processor.InstanceGetV1)
+	apiVersion, errWithCode := apiutil.ParseAPIVersion(
+		c.Param(apiutil.APIVersionKey),
+		[]string{apiutil.APIv1, apiutil.APIv2}...,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -128,7 +130,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if apiVersion == APIv2 {
+	if apiVersion == apiutil.APIv2 {
 		// the mastodon v2 media API specifies that the URL should be null
 		// and that the client should call /api/v1/media/:id to get the URL
 		//

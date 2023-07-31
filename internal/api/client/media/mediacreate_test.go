@@ -32,6 +32,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -169,7 +170,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(apiutil.APIVersionKey, apiutil.APIv1)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -254,7 +255,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v2/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv2)
+	ctx.AddParam(apiutil.APIVersionKey, apiutil.APIv2)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -337,7 +338,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(apiutil.APIVersionKey, apiutil.APIv1)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)
@@ -378,7 +379,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/media", bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(apiutil.APIVersionKey, apiutil.APIv1)
 
 	// do the actual request
 	suite.mediaModule.MediaCreatePOSTHandler(ctx)

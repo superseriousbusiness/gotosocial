@@ -410,3 +410,111 @@ func (t *timelineDB) GetListTimeline(
 
 	return statuses, nil
 }
+
+func (t *timelineDB) GetTagTimeline(
+	ctx context.Context,
+	tagID string,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+) ([]*gtsmodel.Status, error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	var (
+		statusIDs   = make([]string, 0, limit)
+		frontToBack = true
+	)
+
+	q := t.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("status_to_tags"), bun.Ident("status_to_tag")).
+		Column("status_to_tag.status_id").
+		// Join with statuses for filtering.
+		Join(
+			"INNER JOIN ? AS ? ON ? = ?",
+			bun.Ident("statuses"), bun.Ident("status"),
+			bun.Ident("status.id"), bun.Ident("status_to_tag.status_id"),
+		).
+		// Public only.
+		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
+		// This tag only.
+		Where("? = ?", bun.Ident("status_to_tag.tag_id"), tagID)
+
+	if maxID == "" || maxID >= id.Highest {
+		const future = 24 * time.Hour
+
+		var err error
+
+		// don't return statuses more than 24hr in the future
+		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// return only statuses LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("status_to_tag.status_id"), maxID)
+
+	if sinceID != "" {
+		// return only statuses HIGHER (ie., newer) than sinceID
+		q = q.Where("? > ?", bun.Ident("status_to_tag.status_id"), sinceID)
+	}
+
+	if minID != "" {
+		// return only statuses HIGHER (ie., newer) than minID
+		q = q.Where("? > ?", bun.Ident("status_to_tag.status_id"), minID)
+
+		// page up
+		frontToBack = false
+	}
+
+	if limit > 0 {
+		// limit amount of statuses returned
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("status_to_tag.status_id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status_to_tag.status_id ASC")
+	}
+
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, t.db.ProcessError(err)
+	}
+
+	if len(statusIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want statuses
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+		}
+	}
+
+	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
+	for _, id := range statusIDs {
+		// Fetch status from db for ID
+		status, err := t.state.DB.GetStatusByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error fetching status %q: %v", id, err)
+			continue
+		}
+
+		// Append status to slice
+		statuses = append(statuses, status)
+	}
+
+	return statuses, nil
+}

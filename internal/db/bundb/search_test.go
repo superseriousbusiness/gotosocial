@@ -77,6 +77,23 @@ func (suite *SearchTestSuite) TestSearchStatuses() {
 	suite.Len(statuses, 1)
 }
 
+func (suite *SearchTestSuite) TestSearchTags() {
+	// Search with full tag string.
+	tags, err := suite.db.SearchForTags(context.Background(), "welcome", "", "", 10, 0)
+	suite.NoError(err)
+	suite.Len(tags, 1)
+
+	// Search with partial tag string.
+	tags, err = suite.db.SearchForTags(context.Background(), "wel", "", "", 10, 0)
+	suite.NoError(err)
+	suite.Len(tags, 1)
+
+	// Search with end of tag string.
+	tags, err = suite.db.SearchForTags(context.Background(), "come", "", "", 10, 0)
+	suite.NoError(err)
+	suite.Len(tags, 0)
+}
+
 func TestSearchTestSuite(t *testing.T) {
 	suite.Run(t, new(SearchTestSuite))
 }

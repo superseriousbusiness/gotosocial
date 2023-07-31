@@ -20,6 +20,7 @@ package uris
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
@@ -43,6 +44,7 @@ const (
 	ConfirmEmailPath = "confirm_email" // ConfirmEmailPath is used to generate the URI for an email confirmation link
 	FileserverPath   = "fileserver"    // FileserverPath is a path component for serving attachments + media
 	EmojiPath        = "emoji"         // EmojiPath represents the activitypub emoji location
+	TagsPath         = "tags"          // TagsPath represents the activitypub tags location
 )
 
 // UserURIs contains a bunch of UserURIs and URLs for a user, host, account, etc.
@@ -176,6 +178,13 @@ func GenerateURIForEmoji(emojiID string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, EmojiPath, emojiID)
+}
+
+// GenerateURIForTag generates an activitypub uri for a tag.
+func GenerateURIForTag(name string) string {
+	protocol := config.GetProtocol()
+	host := config.GetHost()
+	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, TagsPath, strings.ToLower(name))
 }
 
 // IsUserPath returns true if the given URL path corresponds to eg /users/example_username

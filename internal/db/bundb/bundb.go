@@ -39,7 +39,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
@@ -77,6 +76,7 @@ type DBService struct {
 	db.Status
 	db.StatusBookmark
 	db.StatusFave
+	db.Tag
 	db.Timeline
 	db.User
 	db.Tombstone
@@ -228,6 +228,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		},
 		StatusFave: &statusFaveDB{
 			db:    db,
+			state: state,
+		},
+		Tag: &tagDB{
+			conn:  db,
 			state: state,
 		},
 		Timeline: &timelineDB{
@@ -493,46 +497,4 @@ func sqlitePragmas(ctx context.Context, db *WrappedDB) error {
 	}
 
 	return nil
-}
-
-/*
-	CONVERSION FUNCTIONS
-*/
-
-func (dbService *DBService) TagStringToTag(ctx context.Context, t string, originAccountID string) (*gtsmodel.Tag, error) {
-	protocol := config.GetProtocol()
-	host := config.GetHost()
-	now := time.Now()
-
-	tag := &gtsmodel.Tag{}
-	// we can use selectorinsert here to create the new tag if it doesn't exist already
-	// inserted will be true if this is a new tag we just created
-	if err := dbService.db.NewSelect().Model(tag).Where("LOWER(?) = LOWER(?)", bun.Ident("name"), t).Scan(ctx); err != nil && err != sql.ErrNoRows {
-		return nil, fmt.Errorf("error getting tag with name %s: %s", t, err)
-	}
-
-	if tag.ID == "" {
-		// tag doesn't exist yet so populate it
-		newID, err := id.NewRandomULID()
-		if err != nil {
-			return nil, err
-		}
-		tag.ID = newID
-		tag.URL = protocol + "://" + host + "/tags/" + t
-		tag.Name = t
-		tag.FirstSeenFromAccountID = originAccountID
-		tag.CreatedAt = now
-		tag.UpdatedAt = now
-		useable := true
-		tag.Useable = &useable
-		listable := true
-		tag.Listable = &listable
-	}
-
-	// bail already if the tag isn't useable
-	if !*tag.Useable {
-		return nil, fmt.Errorf("tag %s is not useable", t)
-	}
-	tag.LastStatusAt = now
-	return tag, nil
 }

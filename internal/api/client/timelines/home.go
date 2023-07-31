@@ -133,9 +133,9 @@ func (m *Module) HomeTimelineGETHandler(c *gin.Context) {
 	resp, errWithCode := m.processor.Timeline().HomeTimelineGet(
 		c.Request.Context(),
 		authed,
-		c.Query(MaxIDKey),
-		c.Query(SinceIDKey),
-		c.Query(MinIDKey),
+		c.Query(apiutil.MaxIDKey),
+		c.Query(apiutil.SinceIDKey),
+		c.Query(apiutil.MinIDKey),
 		limit,
 		local,
 	)

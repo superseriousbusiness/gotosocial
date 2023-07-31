@@ -30,6 +30,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	mediamodule "github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -160,7 +161,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(apiutil.APIVersionKey, apiutil.APIv1)
 	ctx.AddParam(mediamodule.IDKey, toUpdate.ID)
 
 	// do the actual request
@@ -221,7 +222,7 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	ctx.Request = httptest.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/api/v1/media/%s", toUpdate.ID), bytes.NewReader(buf.Bytes())) // the endpoint we're hitting
 	ctx.Request.Header.Set("Content-Type", w.FormDataContentType())
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.AddParam(mediamodule.APIVersionKey, mediamodule.APIv1)
+	ctx.AddParam(apiutil.APIVersionKey, apiutil.APIv1)
 	ctx.AddParam(mediamodule.IDKey, toUpdate.ID)
 
 	// do the actual request

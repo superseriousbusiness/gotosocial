@@ -98,7 +98,6 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 	gtsTag := &gtsmodel.Tag{}
 	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
 	suite.NoError(err)
-	suite.Equal(statusReply.Account.ID, gtsTag.FirstSeenFromAccountID)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {

@@ -25,6 +25,7 @@ import (
 
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -37,7 +38,8 @@ import (
 const (
 	confirmEmailPath   = "/" + uris.ConfirmEmailPath
 	profileGroupPath   = "/@:" + usernameKey
-	statusPath         = "/statuses/:" + statusIDKey // leave out the '/@:username' prefix as this will be served within the profile group
+	statusPath         = "/statuses/:" + apiutil.WebStatusIDKey // leave out the '/@:username' prefix as this will be served within the profile group
+	tagsPath           = "/tags/:" + apiutil.TagNameKey
 	customCSSPath      = profileGroupPath + "/custom.css"
 	rssFeedPath        = profileGroupPath + "/feed.rss"
 	assetsPathPrefix   = "/assets"
@@ -49,7 +51,6 @@ const (
 
 	tokenParam  = "token"
 	usernameKey = "username"
-	statusIDKey = "status"
 
 	cacheControlHeader    = "Cache-Control"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 	cacheControlNoCache   = "no-cache"          // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#response_directives
@@ -107,6 +108,7 @@ func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
 	r.AttachHandler(http.MethodGet, aboutPath, m.aboutGETHandler)
 	r.AttachHandler(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
+	r.AttachHandler(http.MethodGet, tagsPath, m.tagGETHandler)
 
 	// Attach redirects from old endpoints to current ones for backwards compatibility
 	r.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })

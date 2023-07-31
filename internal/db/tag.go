@@ -15,28 +15,25 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package db
 
-// SearchRequest models a search request.
-type SearchRequest struct {
-	MaxID             string
-	MinID             string
-	Limit             int
-	Offset            int
-	Query             string
-	QueryType         string
-	Resolve           bool
-	Following         bool
-	ExcludeUnreviewed bool
-	APIv1             bool // Set to 'true' if using version 1 of the search API.
-}
+import (
+	"context"
 
-// SearchResult models a search result.
-//
-// swagger:model searchResult
-type SearchResult struct {
-	Accounts []*Account `json:"accounts"`
-	Statuses []*Status  `json:"statuses"`
-	// Slice of strings if api v1, slice of tags if api v2.
-	Hashtags []any `json:"hashtags"`
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
+
+// Tag contains functions for getting/creating tags in the database.
+type Tag interface {
+	// GetTag gets a single tag by ID
+	GetTag(ctx context.Context, id string) (*gtsmodel.Tag, error)
+
+	// GetTagByName gets a single tag using the given name.
+	GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, error)
+
+	// PutTag inserts the given tag in the database.
+	PutTag(ctx context.Context, tag *gtsmodel.Tag) error
+
+	// GetTags gets multiple tags.
+	GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error)
 }
