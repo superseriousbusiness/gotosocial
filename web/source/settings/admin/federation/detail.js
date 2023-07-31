@@ -38,10 +38,13 @@ module.exports = function InstanceDetail({ baseUrl }) {
 	const { data: blockedInstances = {}, isLoading } = query.useInstanceBlocksQuery();
 
 	let [_match, { domain }] = useRoute(`${baseUrl}/:domain`);
-
-	if (domain == "view") { // from form field submission
+	if (domain == "view") {
+		// Retrieve domain from form field submission.
 		domain = (new URL(document.location)).searchParams.get("domain");
 	}
+
+	// Normalize / decode domain (it may be URL-encoded).
+	domain = decodeURIComponent(domain);
 
 	const existingBlock = React.useMemo(() => {
 		return blockedInstances[domain];
