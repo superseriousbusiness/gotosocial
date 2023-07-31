@@ -19,12 +19,9 @@ package bundb
 
 import (
 	"context"
-	"errors"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
@@ -73,27 +70,6 @@ func (m *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, e
 	}, name)
 }
 
-func (m *tagDB) GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag, error) {
-	tag, err := m.GetTagByName(ctx, name)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		// Real error.
-		return nil, err
-	}
-
-	if tag != nil {
-		// Tag existed, return it.
-		return tag, nil
-	}
-
-	// Tag did not exist, create it.
-	tag = &gtsmodel.Tag{
-		ID:   id.NewULID(),
-		Name: name,
-	}
-
-	return tag, m.putTag(ctx, tag)
-}
-
 func (m *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error) {
 	tags := make([]*gtsmodel.Tag, 0, len(ids))
 
@@ -112,7 +88,7 @@ func (m *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, err
 	return tags, nil
 }
 
-func (m *tagDB) putTag(ctx context.Context, tag *gtsmodel.Tag) error {
+func (m *tagDB) PutTag(ctx context.Context, tag *gtsmodel.Tag) error {
 	// Normalize 'name' string before it enters
 	// the db, without changing tag we were given.
 	//

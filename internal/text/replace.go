@@ -18,9 +18,14 @@
 package text
 
 import (
+	"errors"
 	"strings"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -89,7 +94,7 @@ func (r *customRenderer) replaceHashtag(text string) string {
 		return text
 	}
 
-	tag, err := r.f.db.GetOrCreateTag(r.ctx, normalized)
+	tag, err := r.getOrCreateHashtag(normalized)
 	if err != nil {
 		log.Errorf(r.ctx, "error generating hashtags from status: %s", err)
 		return text
@@ -122,4 +127,35 @@ func (r *customRenderer) replaceHashtag(text string) string {
 	b.WriteString(`</span></a>`)
 
 	return b.String()
+}
+
+func (r *customRenderer) getOrCreateHashtag(name string) (*gtsmodel.Tag, error) {
+	var (
+		tag *gtsmodel.Tag
+		err error
+	)
+
+	// Check if we have a tag with this name already.
+	tag, err = r.f.db.GetTagByName(r.ctx, name)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("db error getting tag %s: %w", name, err)
+	}
+
+	if tag != nil {
+		// We had it!
+		return tag, nil
+	}
+
+	// We didn't have a tag with
+	// this name, create one.
+	tag = &gtsmodel.Tag{
+		ID:   id.NewULID(),
+		Name: name,
+	}
+
+	if err = r.f.db.PutTag(r.ctx, tag); err != nil {
+		return nil, gtserror.Newf("db error putting new tag %s: %w", name, err)
+	}
+
+	return tag, nil
 }

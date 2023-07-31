@@ -31,9 +31,8 @@ type Tag interface {
 	// GetTagByName gets a single tag using the given name.
 	GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, error)
 
-	// GetOrCreateTag returns a tag with the given name,
-	// creating it in the database if it does not yet exist.
-	GetOrCreateTag(ctx context.Context, name string) (*gtsmodel.Tag, error)
+	// PutTag inserts the given tag in the database.
+	PutTag(ctx context.Context, tag *gtsmodel.Tag) error
 
 	// GetTags gets multiple tags.
 	GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error)

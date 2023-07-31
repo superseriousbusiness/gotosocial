@@ -22,6 +22,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 type TagTestSuite struct {
@@ -56,28 +59,7 @@ func (suite *TagTestSuite) TestGetTagByName() {
 	}
 }
 
-func (suite *TagTestSuite) TestGetOrCreateTagExisting() {
-	testTag := suite.testTags["welcome"]
-
-	// Name is normalized when doing
-	// selects from the db, so these
-	// should all yield the same result.
-	for _, name := range []string{
-		"WELCOME",
-		"welcome",
-		"Welcome",
-		"WELCoME ",
-	} {
-		dbTag, err := suite.db.GetOrCreateTag(context.Background(), name)
-		suite.NoError(err)
-		suite.NotNil(dbTag)
-		suite.Equal(testTag.ID, dbTag.ID)
-	}
-}
-
-func (suite *TagTestSuite) TestGetOrCreateTagNew() {
-	var testTagID string
-
+func (suite *TagTestSuite) TestPutTag() {
 	// Name is normalized when doing
 	// inserts to the db, so these
 	// should all yield the same result.
@@ -87,18 +69,20 @@ func (suite *TagTestSuite) TestGetOrCreateTagNew() {
 		"NEWtag",
 		"NEWTAG ",
 	} {
-		dbTag, err := suite.db.GetOrCreateTag(context.Background(), name)
-		suite.NoError(err)
-		suite.NotNil(dbTag)
+		err := suite.db.PutTag(context.Background(), &gtsmodel.Tag{
+			ID:   id.NewULID(),
+			Name: name,
+		})
 		if i == 0 {
-			// This is the first one, so it should
-			// have just been created. Subsequent
-			// test tags should have the same ID.
-			testTagID = dbTag.ID
+			// This is the first one, so it
+			// should have just been created.
+			suite.NoError(err)
 			continue
 		}
 
-		suite.Equal(testTagID, dbTag.ID)
+		// Subsequent inserts should fail
+		// since all these tags are equivalent.
+		suite.ErrorIs(err, db.ErrAlreadyExists)
 	}
 }
 

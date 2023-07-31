@@ -408,15 +408,26 @@ func (d *deref) fetchStatusTags(ctx context.Context, requestUser string, status 
 	status.TagIDs = make([]string, len(status.Tags))
 
 	for i := range status.Tags {
-		// Get or create tag with this name.
-		var (
-			tag = status.Tags[i]
-			err error
-		)
+		placeholder := status.Tags[i]
 
-		if tag, err = d.state.DB.GetOrCreateTag(ctx, tag.Name); err != nil {
-			log.Errorf(ctx, "db error getting or creating tag with name %s: %v", tag.Name, err)
+		// Look for existing tag with this name first.
+		tag, err := d.state.DB.GetTagByName(ctx, placeholder.Name)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			log.Errorf(ctx, "db error getting tag %s: %v", tag.Name, err)
 			continue
+		}
+
+		// No tag with this name yet, create it.
+		if tag == nil {
+			tag = &gtsmodel.Tag{
+				ID:   id.NewULID(),
+				Name: placeholder.Name,
+			}
+
+			if err := d.state.DB.PutTag(ctx, tag); err != nil {
+				log.Errorf(ctx, "db error putting tag %s: %v", tag.Name, err)
+				continue
+			}
 		}
 
 		// Set the *new* tag and ID.
