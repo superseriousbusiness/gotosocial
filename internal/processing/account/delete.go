@@ -20,7 +20,6 @@ package account
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net"
 	"time"
 
@@ -114,38 +113,38 @@ func (p *Processor) DeleteSelf(ctx context.Context, account *gtsmodel.Account) g
 func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *gtsmodel.Account) error {
 	user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
 	if err != nil {
-		return fmt.Errorf("deleteUserAndTokensForAccount: db error getting user: %w", err)
+		return gtserror.Newf("db error getting user: %w", err)
 	}
 
 	tokens := []*gtsmodel.Token{}
 	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "user_id", Value: user.ID}}, &tokens); err != nil {
-		return fmt.Errorf("deleteUserAndTokensForAccount: db error getting tokens: %w", err)
+		return gtserror.Newf("db error getting tokens: %w", err)
 	}
 
 	for _, t := range tokens {
 		// Delete any OAuth clients associated with this token.
 		if err := p.state.DB.DeleteByID(ctx, t.ClientID, &[]*gtsmodel.Client{}); err != nil {
-			return fmt.Errorf("deleteUserAndTokensForAccount: db error deleting client: %w", err)
+			return gtserror.Newf("db error deleting client: %w", err)
 		}
 
 		// Delete any OAuth applications associated with this token.
 		if err := p.state.DB.DeleteWhere(ctx, []db.Where{{Key: "client_id", Value: t.ClientID}}, &[]*gtsmodel.Application{}); err != nil {
-			return fmt.Errorf("deleteUserAndTokensForAccount: db error deleting application: %w", err)
+			return gtserror.Newf("db error deleting application: %w", err)
 		}
 
 		// Delete the token itself.
 		if err := p.state.DB.DeleteByID(ctx, t.ID, t); err != nil {
-			return fmt.Errorf("deleteUserAndTokensForAccount: db error deleting token: %w", err)
+			return gtserror.Newf("db error deleting token: %w", err)
 		}
 	}
 
 	columns, err := stubbifyUser(user)
 	if err != nil {
-		return fmt.Errorf("deleteUserAndTokensForAccount: error stubbifying user: %w", err)
+		return gtserror.Newf("error stubbifying user: %w", err)
 	}
 
 	if err := p.state.DB.UpdateUser(ctx, user, columns...); err != nil {
-		return fmt.Errorf("deleteUserAndTokensForAccount: db error updating user: %w", err)
+		return gtserror.Newf("db error updating user: %w", err)
 	}
 
 	return nil
@@ -160,24 +159,24 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	// Delete follows targeting this account.
 	followedBy, err := p.state.DB.GetAccountFollowers(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("deleteAccountFollows: db error getting follows targeting account %s: %w", account.ID, err)
+		return gtserror.Newf("db error getting follows targeting account %s: %w", account.ID, err)
 	}
 
 	for _, follow := range followedBy {
 		if err := p.state.DB.DeleteFollowByID(ctx, follow.ID); err != nil {
-			return fmt.Errorf("deleteAccountFollows: db error unfollowing account followedBy: %w", err)
+			return gtserror.Newf("db error unfollowing account followedBy: %w", err)
 		}
 	}
 
 	// Delete follow requests targeting this account.
 	followRequestedBy, err := p.state.DB.GetAccountFollowRequests(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("deleteAccountFollows: db error getting follow requests targeting account %s: %w", account.ID, err)
+		return gtserror.Newf("db error getting follow requests targeting account %s: %w", account.ID, err)
 	}
 
 	for _, followRequest := range followRequestedBy {
 		if err := p.state.DB.DeleteFollowRequestByID(ctx, followRequest.ID); err != nil {
-			return fmt.Errorf("deleteAccountFollows: db error unfollowing account followRequestedBy: %w", err)
+			return gtserror.Newf("db error unfollowing account followRequestedBy: %w", err)
 		}
 	}
 
@@ -193,14 +192,14 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	// Delete follows originating from this account.
 	following, err := p.state.DB.GetAccountFollows(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("deleteAccountFollows: db error getting follows owned by account %s: %w", account.ID, err)
+		return gtserror.Newf("db error getting follows owned by account %s: %w", account.ID, err)
 	}
 
 	// For each follow owned by this account, unfollow
 	// and process side effects (noop if remote account).
 	for _, follow := range following {
 		if err := p.state.DB.DeleteFollowByID(ctx, follow.ID); err != nil {
-			return fmt.Errorf("deleteAccountFollows: db error unfollowing account: %w", err)
+			return gtserror.Newf("db error unfollowing account: %w", err)
 		}
 		if msg := unfollowSideEffects(ctx, account, follow); msg != nil {
 			// There was a side effect to process.
@@ -211,14 +210,14 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	// Delete follow requests originating from this account.
 	followRequesting, err := p.state.DB.GetAccountFollowRequesting(ctx, account.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return fmt.Errorf("deleteAccountFollows: db error getting follow requests owned by account %s: %w", account.ID, err)
+		return gtserror.Newf("db error getting follow requests owned by account %s: %w", account.ID, err)
 	}
 
 	// For each follow owned by this account, unfollow
 	// and process side effects (noop if remote account).
 	for _, followRequest := range followRequesting {
 		if err := p.state.DB.DeleteFollowRequestByID(ctx, followRequest.ID); err != nil {
-			return fmt.Errorf("deleteAccountFollows: db error unfollowingRequesting account: %w", err)
+			return gtserror.Newf("db error unfollowingRequesting account: %w", err)
 		}
 
 		// Dummy out a follow so our side effects func
@@ -279,7 +278,7 @@ func (p *Processor) unfollowSideEffectsFunc(deletedAccount *gtsmodel.Account) fu
 
 func (p *Processor) deleteAccountBlocks(ctx context.Context, account *gtsmodel.Account) error {
 	if err := p.state.DB.DeleteAccountBlocks(ctx, account.ID); err != nil {
-		return fmt.Errorf("deleteAccountBlocks: db error deleting account blocks for %s: %w", account.ID, err)
+		return gtserror.Newf("db error deleting account blocks for %s: %w", account.ID, err)
 	}
 	return nil
 }
@@ -333,7 +332,7 @@ statusLoop:
 			// Look for any boosts of this status in DB.
 			boosts, err := p.state.DB.GetStatusReblogs(ctx, status)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return fmt.Errorf("deleteAccountStatuses: error fetching status reblogs for %s: %w", status.ID, err)
+				return gtserror.Newf("error fetching status reblogs for %s: %w", status.ID, err)
 			}
 
 			for _, boost := range boosts {
@@ -347,7 +346,7 @@ statusLoop:
 							log.WithContext(ctx).WithField("boost", boost).Warnf("no account found with id %s for boost %s", boost.AccountID, boost.ID)
 							continue
 						}
-						return fmt.Errorf("deleteAccountStatuses: error fetching boosted status account for %s: %w", boost.AccountID, err)
+						return gtserror.Newf("error fetching boosted status account for %s: %w", boost.AccountID, err)
 					}
 
 					// Set account model
@@ -505,7 +504,7 @@ func stubbifyUser(user *gtsmodel.User) ([]string, error) {
 		return nil, err
 	}
 
-	var never = time.Time{}
+	never := time.Time{}
 
 	user.EncryptedPassword = string(dummyPassword)
 	user.SignUpIP = net.IPv4zero

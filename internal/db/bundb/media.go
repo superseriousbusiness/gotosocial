@@ -106,8 +106,6 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 }
 
 func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
-	defer m.state.Caches.GTS.Media().Invalidate("ID", id)
-
 	// Load media into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -120,10 +118,8 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 		return err
 	}
 
-	var (
-		invalidateAccount bool
-		invalidateStatus  bool
-	)
+	// On return, ensure that media with ID is invalidated.
+	defer m.state.Caches.GTS.Media().Invalidate("ID", id)
 
 	// Delete media attachment in new transaction.
 	err = m.db.RunInTx(ctx, func(tx bun.Tx) error {
@@ -161,9 +157,6 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				if _, err := set(q).Exec(ctx); err != nil {
 					return gtserror.Newf("error updating account: %w", err)
 				}
-
-				// Mark as needing invalidate.
-				invalidateAccount = true
 			}
 		}
 
@@ -178,33 +171,18 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				return gtserror.Newf("error selecting status: %w", err)
 			}
 
-			// Get length of attachments beforehand.
-			before := len(status.AttachmentIDs)
-
-			for i := 0; i < len(status.AttachmentIDs); {
-				if status.AttachmentIDs[i] == id {
-					// Remove this reference to deleted attachment ID.
-					copy(status.AttachmentIDs[i:], status.AttachmentIDs[i+1:])
-					status.AttachmentIDs = status.AttachmentIDs[:len(status.AttachmentIDs)-1]
-					continue
-				}
-				i++
-			}
-
-			if before != len(status.AttachmentIDs) {
-				// Note: this accounts for status not found.
+			if updatedIDs := dropID(status.AttachmentIDs, id); // nocollapse
+			len(updatedIDs) != len(status.AttachmentIDs) {
+				// Note: this handles not found.
 				//
 				// Attachments changed, update the status.
 				if _, err := tx.NewUpdate().
 					Table("statuses").
 					Where("? = ?", bun.Ident("id"), status.ID).
-					Set("? = ?", bun.Ident("attachment_ids"), status.AttachmentIDs).
+					Set("? = ?", bun.Ident("attachment_ids"), updatedIDs).
 					Exec(ctx); err != nil {
 					return gtserror.Newf("error updating status: %w", err)
 				}
-
-				// Mark as needing invalidate.
-				invalidateStatus = true
 			}
 		}
 
@@ -218,16 +196,6 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 
 		return nil
 	})
-
-	if invalidateAccount {
-		// The account for given ID will have been updated in transaction.
-		m.state.Caches.GTS.Account().Invalidate("ID", media.AccountID)
-	}
-
-	if invalidateStatus {
-		// The status for given ID will have been updated in transaction.
-		m.state.Caches.GTS.Status().Invalidate("ID", media.StatusID)
-	}
 
 	return m.db.ProcessError(err)
 }

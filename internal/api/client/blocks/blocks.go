@@ -30,8 +30,10 @@ const (
 
 	// MaxIDKey is the url query for setting a max ID to return
 	MaxIDKey = "max_id"
+
 	// SinceIDKey is the url query for returning results newer than the given ID
 	SinceIDKey = "since_id"
+
 	// LimitKey is for specifying maximum number of results to return.
 	LimitKey = "limit"
 )

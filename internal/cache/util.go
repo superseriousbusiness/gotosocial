@@ -18,28 +18,33 @@
 package cache
 
 import (
-	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
 
 	"codeberg.org/gruf/go-cache/v3/result"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// SentinelError is returned to indicate a non-permanent error return,
-// i.e. a situation in which we do not want a cache a negative result.
+// SentinelError is an error that can be returned and checked against to indicate a non-permanent
+// error return from a cache loader callback, e.g. a temporary situation that will soon be fixed.
 var SentinelError = errors.New("BUG: error should not be returned") //nolint:revive
 
-// ignoreErrors is an error ignoring function capable of being passed to
-// caches, which specifically catches and ignores our sentinel error type.
+// ignoreErrors is an error matching function used to signal which errors
+// the result caches should NOT hold onto. these amount to anything non-permanent.
 func ignoreErrors(err error) bool {
-	return errorsv2.Comparable(
+	return !errorsv2.Comparable(
 		err,
-		SentinelError,
-		context.DeadlineExceeded,
-		context.Canceled,
+
+		// the only cacheable errs,
+		// i.e anything permanent
+		// (until invalidation).
+		db.ErrNoEntries,
+		db.ErrAlreadyExists,
+		sql.ErrNoRows,
 	)
 }
 

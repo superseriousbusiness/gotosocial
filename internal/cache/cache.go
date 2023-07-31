@@ -80,6 +80,27 @@ func (c *Caches) setuphooks() {
 		// Invalidate account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", account.ID)
 		c.Visibility.Invalidate("RequesterID", account.ID)
+
+		// Invalidate this account's
+		// following / follower lists.
+		// (see FollowIDs() comment for details).
+		c.GTS.FollowIDs().InvalidateAll(
+			">"+account.ID,
+			"l>"+account.ID,
+			"<"+account.ID,
+			"l<"+account.ID,
+		)
+
+		// Invalidate this account's
+		// follow requesting / request lists.
+		// (see FollowRequestIDs() comment for details).
+		c.GTS.FollowRequestIDs().InvalidateAll(
+			">"+account.ID,
+			"<"+account.ID,
+		)
+
+		// Invalidate this account's block lists.
+		c.GTS.BlockIDs().Invalidate(account.ID)
 	})
 
 	c.GTS.Block().SetInvalidateCallback(func(block *gtsmodel.Block) {
@@ -90,6 +111,9 @@ func (c *Caches) setuphooks() {
 		// Invalidate block target account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", block.TargetAccountID)
 		c.Visibility.Invalidate("RequesterID", block.TargetAccountID)
+
+		// Invalidate source account's block lists.
+		c.GTS.BlockIDs().Invalidate(block.AccountID)
 	})
 
 	c.GTS.EmojiCategory().SetInvalidateCallback(func(category *gtsmodel.EmojiCategory) {
@@ -98,6 +122,9 @@ func (c *Caches) setuphooks() {
 	})
 
 	c.GTS.Follow().SetInvalidateCallback(func(follow *gtsmodel.Follow) {
+		// Invalidate follow request with this same ID.
+		c.GTS.FollowRequest().Invalidate("ID", follow.ID)
+
 		// Invalidate any related list entries.
 		c.GTS.ListEntry().Invalidate("FollowID", follow.ID)
 
@@ -108,19 +135,35 @@ func (c *Caches) setuphooks() {
 		// Invalidate follow target account ID cached visibility.
 		c.Visibility.Invalidate("ItemID", follow.TargetAccountID)
 		c.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
+
+		// Invalidate source account's following
+		// lists, and destination's follwer lists.
+		// (see FollowIDs() comment for details).
+		c.GTS.FollowIDs().InvalidateAll(
+			">"+follow.AccountID,
+			"l>"+follow.AccountID,
+			"<"+follow.AccountID,
+			"l<"+follow.AccountID,
+			"<"+follow.TargetAccountID,
+			"l<"+follow.TargetAccountID,
+			">"+follow.TargetAccountID,
+			"l>"+follow.TargetAccountID,
+		)
 	})
 
 	c.GTS.FollowRequest().SetInvalidateCallback(func(followReq *gtsmodel.FollowRequest) {
-		// Invalidate follow request origin account ID cached visibility.
-		c.Visibility.Invalidate("ItemID", followReq.AccountID)
-		c.Visibility.Invalidate("RequesterID", followReq.AccountID)
-
-		// Invalidate follow request target account ID cached visibility.
-		c.Visibility.Invalidate("ItemID", followReq.TargetAccountID)
-		c.Visibility.Invalidate("RequesterID", followReq.TargetAccountID)
-
-		// Invalidate any cached follow with same ID.
+		// Invalidate follow with this same ID.
 		c.GTS.Follow().Invalidate("ID", followReq.ID)
+
+		// Invalidate source account's followreq
+		// lists, and destinations follow req lists.
+		// (see FollowRequestIDs() comment for details).
+		c.GTS.FollowRequestIDs().InvalidateAll(
+			">"+followReq.AccountID,
+			"<"+followReq.AccountID,
+			">"+followReq.TargetAccountID,
+			"<"+followReq.TargetAccountID,
+		)
 	})
 
 	c.GTS.List().SetInvalidateCallback(func(list *gtsmodel.List) {
@@ -128,12 +171,29 @@ func (c *Caches) setuphooks() {
 		c.GTS.ListEntry().Invalidate("ListID", list.ID)
 	})
 
+	c.GTS.Media().SetInvalidateCallback(func(media *gtsmodel.MediaAttachment) {
+		if *media.Avatar || *media.Header {
+			// Invalidate cache of attaching account.
+			c.GTS.Account().Invalidate("ID", media.AccountID)
+		}
+
+		if media.StatusID != "" {
+			// Invalidate cache of attaching status.
+			c.GTS.Status().Invalidate("ID", media.StatusID)
+		}
+	})
+
 	c.GTS.Status().SetInvalidateCallback(func(status *gtsmodel.Status) {
 		// Invalidate status ID cached visibility.
 		c.Visibility.Invalidate("ItemID", status.ID)
 
 		for _, id := range status.AttachmentIDs {
-			// Invalidate cache for attached media IDs,
+			// Invalidate each media by the IDs we're aware of.
+			// This must be done as the status table is aware of
+			// the media IDs in use before the media table is
+			// aware of the status ID they are linked to.
+			//
+			// c.GTS.Media().Invalidate("StatusID") will not work.
 			c.GTS.Media().Invalidate("ID", id)
 		}
 	})

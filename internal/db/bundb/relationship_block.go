@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -97,6 +98,25 @@ func (r *relationshipDB) GetBlock(ctx context.Context, sourceAccountID string, t
 	)
 }
 
+func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Block, error) {
+	// Preallocate slice of expected length.
+	blocks := make([]*gtsmodel.Block, 0, len(ids))
+
+	for _, id := range ids {
+		// Fetch block model for this ID.
+		block, err := r.GetBlockByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting block %q: %v", id, err)
+			continue
+		}
+
+		// Append to return slice.
+		blocks = append(blocks, block)
+	}
+
+	return blocks, nil
+}
+
 func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Block) error, keyParts ...any) (*gtsmodel.Block, error) {
 	// Fetch block from cache with loader callback
 	block, err := r.state.Caches.GTS.Block().Load(lookup, func() (*gtsmodel.Block, error) {
@@ -148,8 +168,6 @@ func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) er
 }
 
 func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
-	defer r.state.Caches.GTS.Block().Invalidate("ID", id)
-
 	// Load block into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -162,6 +180,9 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 		return err
 	}
 
+	// Drop this now-cached block on return after delete.
+	defer r.state.Caches.GTS.Block().Invalidate("ID", id)
+
 	// Finally delete block from DB.
 	_, err = r.db.NewDelete().
 		Table("blocks").
@@ -171,8 +192,6 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error {
-	defer r.state.Caches.GTS.Block().Invalidate("URI", uri)
-
 	// Load block into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -184,6 +203,9 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error
 		}
 		return err
 	}
+
+	// Drop this now-cached block on return after delete.
+	defer r.state.Caches.GTS.Block().Invalidate("URI", uri)
 
 	// Finally delete block from DB.
 	_, err = r.db.NewDelete().
@@ -211,10 +233,9 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 	}
 
 	defer func() {
-		// Invalidate all IDs on return.
-		for _, id := range blockIDs {
-			r.state.Caches.GTS.Block().Invalidate("ID", id)
-		}
+		// Invalidate all account's incoming / outoing blocks on return.
+		r.state.Caches.GTS.Block().Invalidate("AccountID", accountID)
+		r.state.Caches.GTS.Block().Invalidate("TargetAccountID", accountID)
 	}()
 
 	// Load all blocks into cache, this *really* isn't great
