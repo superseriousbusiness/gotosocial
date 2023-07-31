@@ -52,7 +52,7 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 
 	tagName, errWithCode := apiutil.ParseTagName(c.Param(apiutil.TagNameKey))
 	if errWithCode != nil {
-		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
