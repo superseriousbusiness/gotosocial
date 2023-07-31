@@ -381,8 +381,6 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 }
 
 func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
-	defer s.state.Caches.GTS.Status().Invalidate("ID", id)
-
 	// Load status into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
 	// callback. This in turn invalidates others.
@@ -396,6 +394,9 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
 		// objects are appropriately deleted.
 		return err
 	}
+
+	// On return ensure status invalidated from cache.
+	defer s.state.Caches.GTS.Status().Invalidate("ID", id)
 
 	return s.db.RunInTx(ctx, func(tx bun.Tx) error {
 		// delete links between this status and any emojis it uses

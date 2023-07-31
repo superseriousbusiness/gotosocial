@@ -18,14 +18,13 @@
 package blocks
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // BlocksGETHandler swagger:operation GET /api/v1/blocks blocksGet
@@ -104,31 +103,21 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 		return
 	}
 
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
+	limit, errWithCode := apiutil.ParseLimit(c.Query(LimitKey), 20, 100, 2)
+	if err != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	sinceID := ""
-	sinceIDString := c.Query(SinceIDKey)
-	if sinceIDString != "" {
-		sinceID = sinceIDString
-	}
-
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
-	}
-
-	resp, errWithCode := m.processor.BlocksGet(c.Request.Context(), authed, maxID, sinceID, limit)
+	resp, errWithCode := m.processor.BlocksGet(
+		c.Request.Context(),
+		authed.Account,
+		paging.Pager{
+			SinceID: c.Query(SinceIDKey),
+			MaxID:   c.Query(MaxIDKey),
+			Limit:   limit,
+		},
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -137,5 +126,6 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 	if resp.LinkHeader != "" {
 		c.Header("Link", resp.LinkHeader)
 	}
-	c.JSON(http.StatusOK, resp.Accounts)
+
+	c.JSON(http.StatusOK, resp.Items)
 }

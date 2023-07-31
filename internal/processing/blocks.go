@@ -19,69 +19,71 @@ package processing
 
 import (
 	"context"
-	"fmt"
-	"net/url"
+	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *Processor) BlocksGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode) {
-	accounts, nextMaxID, prevMinID, err := p.state.DB.GetAccountBlocks(ctx, authed.Account.ID, maxID, sinceID, limit)
-	if err != nil {
-		if err == db.ErrNoEntries {
-			// there are just no entries
-			return &apimodel.BlocksResponse{
-				Accounts: []*apimodel.Account{},
-			}, nil
-		}
-		// there's an actual error
+// BlocksGet ...
+func (p *Processor) BlocksGet(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	page paging.Pager,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
+	blocks, err := p.state.DB.GetAccountBlocks(ctx,
+		requestingAccount.ID,
+		&page,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiAccounts := []*apimodel.Account{}
-	for _, a := range accounts {
-		apiAccount, err := p.tc.AccountToAPIAccountBlocked(ctx, a)
-		if err != nil {
+	// Check for zero length.
+	count := len(blocks)
+	if len(blocks) == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
+	var (
+		items = make([]interface{}, 0, count)
+
+		// Set next + prev values before API converting
+		// so the caller can still page even on error.
+		nextMaxIDValue = blocks[count-1].ID
+		prevMinIDValue = blocks[0].ID
+	)
+
+	for _, block := range blocks {
+		if block.TargetAccount == nil {
+			// All models should be populated at this point.
+			log.Warnf(ctx, "block target account was nil: %v", err)
 			continue
 		}
-		apiAccounts = append(apiAccounts, apiAccount)
-	}
 
-	return p.packageBlocksResponse(apiAccounts, "/api/v1/blocks", nextMaxID, prevMinID, limit)
-}
-
-func (p *Processor) packageBlocksResponse(accounts []*apimodel.Account, path string, nextMaxID string, prevMinID string, limit int) (*apimodel.BlocksResponse, gtserror.WithCode) {
-	resp := &apimodel.BlocksResponse{
-		Accounts: []*apimodel.Account{},
-	}
-	resp.Accounts = accounts
-
-	// prepare the next and previous links
-	if len(accounts) != 0 {
-		protocol := config.GetProtocol()
-		host := config.GetHost()
-
-		nextLink := &url.URL{
-			Scheme:   protocol,
-			Host:     host,
-			Path:     path,
-			RawQuery: fmt.Sprintf("limit=%d&max_id=%s", limit, nextMaxID),
+		// Convert target account to frontend API model.
+		account, err := p.tc.AccountToAPIAccountBlocked(ctx, block.TargetAccount)
+		if err != nil {
+			log.Errorf(ctx, "error converting account to public api account: %v", err)
+			continue
 		}
-		next := fmt.Sprintf("<%s>; rel=\"next\"", nextLink.String())
 
-		prevLink := &url.URL{
-			Scheme:   protocol,
-			Host:     host,
-			Path:     path,
-			RawQuery: fmt.Sprintf("limit=%d&min_id=%s", limit, prevMinID),
-		}
-		prev := fmt.Sprintf("<%s>; rel=\"prev\"", prevLink.String())
-		resp.LinkHeader = fmt.Sprintf("%s, %s", next, prev)
+		// Append target to return items.
+		items = append(items, account)
 	}
 
-	return resp, nil
+	return util.PackagePageableResponse(util.PageableResponseParams{
+		Items:          items,
+		Path:           "/api/v1/blocks",
+		NextMaxIDKey:   "max_id",
+		PrevMinIDKey:   "since_id",
+		NextMaxIDValue: nextMaxIDValue,
+		PrevMinIDValue: prevMinIDValue,
+		Limit:          page.Limit,
+	})
 }

@@ -189,11 +189,10 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 		gtscontext.SetBarebones(ctx),
 		id,
 	)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// Already gone.
-			return nil
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// NOTE: even if db.ErrNoEntries is returned, we
+		// still run the below transaction to ensure related
+		// objects are appropriately deleted.
 		return err
 	}
 
