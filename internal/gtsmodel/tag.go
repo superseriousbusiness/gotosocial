@@ -27,14 +27,4 @@ type Tag struct {
 	Name      string    `validate:"required" bun:",unique,nullzero,notnull"`                             // (lowercase) name of the tag without the hash prefix
 	Useable   *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // Tag is useable on this instance.
 	Listable  *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // Tagged statuses can be listed on this instance.
-
-	// Original URL of a partially-filled-out tag.
-	// This SHOULD NOT be inserted in the database,
-	// cached, or serialized towards a user.
-	//
-	// It is only to be used when parsing a hashtag
-	// from a remote instance, since it may be useful
-	// to dereference latest notes from the given
-	// remote instance every now and then.
-	URL string `validate:"-" bun:"-"`
 }

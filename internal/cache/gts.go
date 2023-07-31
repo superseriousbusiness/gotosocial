@@ -584,10 +584,6 @@ func (c *GTSCaches) initTag() {
 	}, func(m1 *gtsmodel.Tag) *gtsmodel.Tag {
 		m2 := new(gtsmodel.Tag)
 		*m2 = *m1
-
-		// Ensure any temporary URL unset.
-		m2.URL = ""
-
 		return m2
 	}, config.GetCacheGTSTagMaxSize())
 	c.tag.SetTTL(config.GetCacheGTSTagTTL(), true)

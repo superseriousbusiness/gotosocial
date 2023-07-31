@@ -41,25 +41,21 @@ func (suite *ExtractHashtagsTestSuite) TestExtractHashtags1() {
 	}
 
 	hashtagFediverse := hashtags[0]
-	suite.Equal("https://mastodon.social/tags/fediverse", hashtagFediverse.URL)
 	suite.Equal("fediverse", hashtagFediverse.Name)
 	suite.Equal(true, *hashtagFediverse.Useable)
 	suite.Equal(true, *hashtagFediverse.Listable)
 
 	hashtagGoToSocial := hashtags[1]
-	suite.Equal("https://mastodon.social/tags/gotosocial", hashtagGoToSocial.URL)
 	suite.Equal("gotosocial", hashtagGoToSocial.Name)
 	suite.Equal(true, *hashtagGoToSocial.Useable)
 	suite.Equal(true, *hashtagGoToSocial.Listable)
 
 	hashtagGrüvy := hashtags[2]
-	suite.Equal("https://mastodon.social/tags/this_hashtag_will_be_included_correctly", hashtagGrüvy.URL)
 	suite.Equal("grüvy", hashtagGrüvy.Name)
 	suite.Equal(true, *hashtagGrüvy.Useable)
 	suite.Equal(true, *hashtagGrüvy.Listable)
 
 	hashtagAngle := hashtags[3]
-	suite.Equal("https://mastodon.social/tags/this_hashtag_will_be_squashed_into_a_single_character", hashtagAngle.URL)
 	suite.Equal("각", hashtagAngle.Name)
 	suite.Equal(true, *hashtagAngle.Useable)
 	suite.Equal(true, *hashtagAngle.Listable)

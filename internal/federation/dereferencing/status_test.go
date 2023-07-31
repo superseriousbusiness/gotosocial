@@ -171,9 +171,6 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithTag() {
 	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "piss"}}, t)
 	suite.NoError(err)
 	suite.NotNil(t)
-
-	// URL should not be populated.
-	suite.Empty("", t.URL)
 }
 
 func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {

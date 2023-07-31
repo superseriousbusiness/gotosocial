@@ -584,8 +584,8 @@ func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 		// Only append this tag if we haven't
 		// seen it already, to avoid duplicates
 		// in the slice.
-		if _, set := keys[tag.URL]; !set {
-			keys[tag.URL] = nil // Value doesn't matter.
+		if _, set := keys[tag.Name]; !set {
+			keys[tag.Name] = nil // Value doesn't matter.
 			tags = append(tags, tag)
 		}
 	}
@@ -596,13 +596,6 @@ func ExtractHashtags(i WithTag) ([]*gtsmodel.Tag, error) {
 // extractHashtag extracts a minimal gtsmodel.Tag from the given
 // Hashtaggable, without yet doing any normalization on it.
 func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
-	// Extract href/link for this tag.
-	hrefProp := i.GetActivityStreamsHref()
-	if hrefProp == nil || !hrefProp.IsIRI() {
-		return nil, gtserror.New("no href prop")
-	}
-	tagURL := hrefProp.GetIRI().String()
-
 	// Extract name for the tag; trim leading hash
 	// character, so '#example' becomes 'example'.
 	name := ExtractName(i)
@@ -613,7 +606,6 @@ func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 
 	yeah := func() *bool { t := true; return &t }
 	return &gtsmodel.Tag{
-		URL:      tagURL,
 		Name:     tagName,
 		Useable:  yeah(), // Assume true by default.
 		Listable: yeah(), // Assume true by default.
