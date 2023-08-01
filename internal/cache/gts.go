@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type GTSCaches struct {
@@ -315,6 +316,14 @@ func (c *GTSCaches) Webfinger() *ttl.Cache[string, string] {
 }
 
 func (c *GTSCaches) initAccount() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofAccount(), // model in-mem size.
+		config.GetCacheGTSAccountMemRatio(),
+	)
+
+	log.Infof(nil, "Account cache size = %d", cap)
+
 	c.account = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -329,12 +338,20 @@ func (c *GTSCaches) initAccount() {
 		a2 := new(gtsmodel.Account)
 		*a2 = *a1
 		return a2
-	}, config.GetCacheGTSAccountMaxSize())
+	}, cap)
+
 	c.account.SetTTL(config.GetCacheGTSAccountTTL(), true)
 	c.account.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initAccountNote() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofAccountNote(), // model in-mem size.
+		config.GetCacheGTSAccountNoteMemRatio(),
+	)
+	log.Infof(nil, "AccountNote cache size = %d", cap)
+
 	c.accountNote = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID.TargetAccountID"},
@@ -342,12 +359,21 @@ func (c *GTSCaches) initAccountNote() {
 		n2 := new(gtsmodel.AccountNote)
 		*n2 = *n1
 		return n2
-	}, config.GetCacheGTSAccountNoteMaxSize())
+	}, cap)
+
 	c.accountNote.SetTTL(config.GetCacheGTSAccountNoteTTL(), true)
 	c.accountNote.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initBlock() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofBlock(), // model in-mem size.
+		config.GetCacheGTSBlockMemRatio(),
+	)
+
+	log.Infof(nil, "Block cache size = %d", cap)
+
 	c.block = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -358,12 +384,20 @@ func (c *GTSCaches) initBlock() {
 		b2 := new(gtsmodel.Block)
 		*b2 = *b1
 		return b2
-	}, config.GetCacheGTSBlockMaxSize())
+	}, cap)
+
 	c.block.SetTTL(config.GetCacheGTSBlockTTL(), true)
 	c.block.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initBlockIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheGTSBlockIDsMemRatio(),
+	)
+
+	log.Infof(nil, "Block IDs cache size = %d", cap)
+
 	c.blockIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
 		0,
 		config.GetCacheGTSBlockIDsMaxSize(),
@@ -376,6 +410,14 @@ func (c *GTSCaches) initDomainBlock() {
 }
 
 func (c *GTSCaches) initEmoji() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofEmoji(), // model in-mem size.
+		config.GetCacheGTSEmojiMemRatio(),
+	)
+
+	log.Infof(nil, "Emoji cache size = %d", cap)
+
 	c.emoji = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -386,12 +428,21 @@ func (c *GTSCaches) initEmoji() {
 		e2 := new(gtsmodel.Emoji)
 		*e2 = *e1
 		return e2
-	}, config.GetCacheGTSEmojiMaxSize())
+	}, cap)
+
 	c.emoji.SetTTL(config.GetCacheGTSEmojiTTL(), true)
 	c.emoji.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initEmojiCategory() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofEmojiCategory(), // model in-mem size.
+		config.GetCacheGTSEmojiCategoryMemRatio(),
+	)
+
+	log.Infof(nil, "EmojiCategory cache size = %d", cap)
+
 	c.emojiCategory = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "Name"},
@@ -400,11 +451,20 @@ func (c *GTSCaches) initEmojiCategory() {
 		*c2 = *c1
 		return c2
 	}, config.GetCacheGTSEmojiCategoryMaxSize())
+
 	c.emojiCategory.SetTTL(config.GetCacheGTSEmojiCategoryTTL(), true)
 	c.emojiCategory.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initFollow() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofFollow(), // model in-mem size.
+		config.GetCacheGTSFollowMemRatio(),
+	)
+
+	log.Infof(nil, "Follow cache size = %d", cap)
+
 	c.follow = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -415,8 +475,10 @@ func (c *GTSCaches) initFollow() {
 		f2 := new(gtsmodel.Follow)
 		*f2 = *f1
 		return f2
-	}, config.GetCacheGTSFollowMaxSize())
+	}, cap)
+
 	c.follow.SetTTL(config.GetCacheGTSFollowTTL(), true)
+	c.follow.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initFollowIDs() {
@@ -428,6 +490,14 @@ func (c *GTSCaches) initFollowIDs() {
 }
 
 func (c *GTSCaches) initFollowRequest() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofFollowRequest(), // model in-mem size.
+		config.GetCacheGTSFollowRequestMemRatio(),
+	)
+
+	log.Infof(nil, "FollowRequest cache size = %d", cap)
+
 	c.followRequest = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -438,8 +508,10 @@ func (c *GTSCaches) initFollowRequest() {
 		f2 := new(gtsmodel.FollowRequest)
 		*f2 = *f1
 		return f2
-	}, config.GetCacheGTSFollowRequestMaxSize())
+	}, cap)
+
 	c.followRequest.SetTTL(config.GetCacheGTSFollowRequestTTL(), true)
+	c.followRequest.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initFollowRequestIDs() {
@@ -451,6 +523,14 @@ func (c *GTSCaches) initFollowRequestIDs() {
 }
 
 func (c *GTSCaches) initInstance() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofInstance(), // model in-mem size.
+		config.GetCacheGTSInstanceMemRatio(),
+	)
+
+	log.Infof(nil, "Instance cache size = %d", cap)
+
 	c.instance = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "Domain"},
@@ -458,24 +538,42 @@ func (c *GTSCaches) initInstance() {
 		i2 := new(gtsmodel.Instance)
 		*i2 = *i1
 		return i1
-	}, config.GetCacheGTSInstanceMaxSize())
+	}, cap)
+
 	c.instance.SetTTL(config.GetCacheGTSInstanceTTL(), true)
-	c.emojiCategory.IgnoreErrors(ignoreErrors)
+	c.instance.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initList() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofList(), // model in-mem size.
+		config.GetCacheGTSListMemRatio(),
+	)
+
+	log.Infof(nil, "List cache size = %d", cap)
+
 	c.list = result.New([]result.Lookup{
 		{Name: "ID"},
 	}, func(l1 *gtsmodel.List) *gtsmodel.List {
 		l2 := new(gtsmodel.List)
 		*l2 = *l1
 		return l2
-	}, config.GetCacheGTSListMaxSize())
+	}, cap)
+
 	c.list.SetTTL(config.GetCacheGTSListTTL(), true)
 	c.list.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initListEntry() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofListEntry(), // model in-mem size.
+		config.GetCacheGTSListEntryMemRatio(),
+	)
+
+	log.Infof(nil, "ListEntry cache size = %d", cap)
+
 	c.listEntry = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "ListID", Multi: true},
@@ -484,48 +582,84 @@ func (c *GTSCaches) initListEntry() {
 		l2 := new(gtsmodel.ListEntry)
 		*l2 = *l1
 		return l2
-	}, config.GetCacheGTSListEntryMaxSize())
-	c.list.SetTTL(config.GetCacheGTSListEntryTTL(), true)
-	c.list.IgnoreErrors(ignoreErrors)
+	}, cap)
+
+	c.listEntry.SetTTL(config.GetCacheGTSListEntryTTL(), true)
+	c.listEntry.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initMarker() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofMarker(), // model in-mem size.
+		config.GetCacheGTSMarkerMemRatio(),
+	)
+
+	log.Infof(nil, "Marker cache size = %d", cap)
+
 	c.marker = result.New([]result.Lookup{
 		{Name: "AccountID.Name"},
 	}, func(m1 *gtsmodel.Marker) *gtsmodel.Marker {
 		m2 := new(gtsmodel.Marker)
 		*m2 = *m1
 		return m2
-	}, config.GetCacheGTSMarkerMaxSize())
+	}, cap)
+
 	c.marker.SetTTL(config.GetCacheGTSMarkerTTL(), true)
 	c.marker.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initMedia() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofMedia(), // model in-mem size.
+		config.GetCacheGTSMediaMemRatio(),
+	)
+
+	log.Infof(nil, "Media cache size = %d", cap)
+
 	c.media = result.New([]result.Lookup{
 		{Name: "ID"},
 	}, func(m1 *gtsmodel.MediaAttachment) *gtsmodel.MediaAttachment {
 		m2 := new(gtsmodel.MediaAttachment)
 		*m2 = *m1
 		return m2
-	}, config.GetCacheGTSMediaMaxSize())
+	}, cap)
+
 	c.media.SetTTL(config.GetCacheGTSMediaTTL(), true)
 	c.media.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initMention() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofMention(), // model in-mem size.
+		config.GetCacheGTSMentionMemRatio(),
+	)
+
+	log.Infof(nil, "Mention cache size = %d", cap)
+
 	c.mention = result.New([]result.Lookup{
 		{Name: "ID"},
 	}, func(m1 *gtsmodel.Mention) *gtsmodel.Mention {
 		m2 := new(gtsmodel.Mention)
 		*m2 = *m1
 		return m2
-	}, config.GetCacheGTSMentionMaxSize())
+	}, cap)
+
 	c.mention.SetTTL(config.GetCacheGTSMentionTTL(), true)
 	c.mention.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initNotification() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofNotification(), // model in-mem size.
+		config.GetCacheGTSNotificationMemRatio(),
+	)
+
+	log.Infof(nil, "Notification cache size = %d", cap)
+
 	c.notification = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "NotificationType.TargetAccountID.OriginAccountID.StatusID"},
@@ -533,24 +667,42 @@ func (c *GTSCaches) initNotification() {
 		n2 := new(gtsmodel.Notification)
 		*n2 = *n1
 		return n2
-	}, config.GetCacheGTSNotificationMaxSize())
+	}, cap)
+
 	c.notification.SetTTL(config.GetCacheGTSNotificationTTL(), true)
 	c.notification.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initReport() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofReport(), // model in-mem size.
+		config.GetCacheGTSReportMemRatio(),
+	)
+
+	log.Infof(nil, "Report cache size = %d", cap)
+
 	c.report = result.New([]result.Lookup{
 		{Name: "ID"},
 	}, func(r1 *gtsmodel.Report) *gtsmodel.Report {
 		r2 := new(gtsmodel.Report)
 		*r2 = *r1
 		return r2
-	}, config.GetCacheGTSReportMaxSize())
+	}, cap)
+
 	c.report.SetTTL(config.GetCacheGTSReportTTL(), true)
 	c.report.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initStatus() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofStatus(), // model in-mem size.
+		config.GetCacheGTSStatusMemRatio(),
+	)
+
+	log.Infof(nil, "Status cache size = %d", cap)
+
 	c.status = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -559,12 +711,21 @@ func (c *GTSCaches) initStatus() {
 		s2 := new(gtsmodel.Status)
 		*s2 = *s1
 		return s2
-	}, config.GetCacheGTSStatusMaxSize())
+	}, cap)
+
 	c.status.SetTTL(config.GetCacheGTSStatusTTL(), true)
 	c.status.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initStatusFave() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofStatusFave(), // model in-mem size.
+		config.GetCacheGTSStatusFaveMemRatio(),
+	)
+
+	log.Infof(nil, "StatusFave cache size = %d", cap)
+
 	c.statusFave = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID.StatusID"},
@@ -572,12 +733,21 @@ func (c *GTSCaches) initStatusFave() {
 		f2 := new(gtsmodel.StatusFave)
 		*f2 = *f1
 		return f2
-	}, config.GetCacheGTSStatusFaveMaxSize())
-	c.status.SetTTL(config.GetCacheGTSStatusFaveTTL(), true)
-	c.status.IgnoreErrors(ignoreErrors)
+	}, cap)
+
+	c.statusFave.SetTTL(config.GetCacheGTSStatusFaveTTL(), true)
+	c.statusFave.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initTag() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofTag(), // model in-mem size.
+		config.GetCacheGTSTagMemRatio(),
+	)
+
+	log.Infof(nil, "Tag cache size = %d", cap)
+
 	c.tag = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "Name"},
@@ -585,12 +755,21 @@ func (c *GTSCaches) initTag() {
 		m2 := new(gtsmodel.Tag)
 		*m2 = *m1
 		return m2
-	}, config.GetCacheGTSTagMaxSize())
+	}, cap)
+
 	c.tag.SetTTL(config.GetCacheGTSTagTTL(), true)
 	c.tag.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initTombstone() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofTombstone(), // model in-mem size.
+		config.GetCacheGTSTombstoneMemRatio(),
+	)
+
+	log.Infof(nil, "Tombstone cache size = %d", cap)
+
 	c.tombstone = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -598,12 +777,21 @@ func (c *GTSCaches) initTombstone() {
 		t2 := new(gtsmodel.Tombstone)
 		*t2 = *t1
 		return t2
-	}, config.GetCacheGTSTombstoneMaxSize())
+	}, cap)
+
 	c.tombstone.SetTTL(config.GetCacheGTSTombstoneTTL(), true)
 	c.tombstone.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initUser() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofUser(), // model in-mem size.
+		config.GetCacheGTSUserMemRatio(),
+	)
+
+	log.Infof(nil, "User cache size = %d", cap)
+
 	c.user = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID"},
@@ -614,15 +802,24 @@ func (c *GTSCaches) initUser() {
 		u2 := new(gtsmodel.User)
 		*u2 = *u1
 		return u2
-	}, config.GetCacheGTSUserMaxSize())
+	}, cap)
+
 	c.user.SetTTL(config.GetCacheGTSUserTTL(), true)
 	c.user.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initWebfinger() {
+	// Calculate maximum cache size.
+	cap := calculateCacheMax(
+		sizeofURIStr, sizeofURIStr,
+		config.GetCacheGTSWebfingerMemRatio(),
+	)
+
+	log.Infof(nil, "Webfinger cache size = %d", cap)
+
 	c.webfinger = ttl.New[string, string](
 		0,
-		config.GetCacheGTSWebfingerMaxSize(),
+		cap,
 		config.GetCacheGTSWebfingerTTL(),
 	)
 }

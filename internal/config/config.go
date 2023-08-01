@@ -180,24 +180,31 @@ type CacheConfiguration struct {
 	VisibilityMaxSize   int           `name:"visibility-max-size"`
 	VisibilityTTL       time.Duration `name:"visibility-ttl"`
 	VisibilitySweepFreq time.Duration `name:"visibility-sweep-freq"`
+	VisibilityMemRatio  float64       `name:"visibility-mem-ratio"`
+
+	MemoryTarget bytesize.Size `name:"memory-target"`
 }
 
 type GTSCacheConfiguration struct {
 	AccountMaxSize   int           `name:"account-max-size"`
 	AccountTTL       time.Duration `name:"account-ttl"`
 	AccountSweepFreq time.Duration `name:"account-sweep-freq"`
+	AccountMemRatio  float64       `name:"account-mem-ratio"`
 
 	AccountNoteMaxSize   int           `name:"account-note-max-size"`
 	AccountNoteTTL       time.Duration `name:"account-note-ttl"`
 	AccountNoteSweepFreq time.Duration `name:"account-note-sweep-freq"`
+	AccountNoteMemRatio  float64       `name:"account-note-mem-ratio"`
 
 	BlockMaxSize   int           `name:"block-max-size"`
 	BlockTTL       time.Duration `name:"block-ttl"`
 	BlockSweepFreq time.Duration `name:"block-sweep-freq"`
+	BlockMemRatio  float64       `name:"block-mem-ratio"`
 
 	BlockIDsMaxSize   int           `name:"block-ids-max-size"`
 	BlockIDsTTL       time.Duration `name:"block-ids-ttl"`
 	BlockIDsSweepFreq time.Duration `name:"block-ids-sweep-freq"`
+	BlockIDsMemRatio  float64       `name:"block-mem-ratio"`
 
 	DomainBlockMaxSize   int           `name:"domain-block-max-size"`
 	DomainBlockTTL       time.Duration `name:"domain-block-ttl"`
@@ -206,82 +213,102 @@ type GTSCacheConfiguration struct {
 	EmojiMaxSize   int           `name:"emoji-max-size"`
 	EmojiTTL       time.Duration `name:"emoji-ttl"`
 	EmojiSweepFreq time.Duration `name:"emoji-sweep-freq"`
+	EmojiMemRatio  float64       `name:"emoji-mem-ratio"`
 
 	EmojiCategoryMaxSize   int           `name:"emoji-category-max-size"`
 	EmojiCategoryTTL       time.Duration `name:"emoji-category-ttl"`
 	EmojiCategorySweepFreq time.Duration `name:"emoji-category-sweep-freq"`
+	EmojiCategoryMemRatio  float64       `name:"emoji-category-mem-ratio"`
 
 	FollowMaxSize   int           `name:"follow-max-size"`
 	FollowTTL       time.Duration `name:"follow-ttl"`
 	FollowSweepFreq time.Duration `name:"follow-sweep-freq"`
+	FollowMemRatio  float64       `name:"follow-mem-ratio"`
 
 	FollowIDsMaxSize   int           `name:"follow-ids-max-size"`
 	FollowIDsTTL       time.Duration `name:"follow-ids-ttl"`
 	FollowIDsSweepFreq time.Duration `name:"follow-ids-sweep-freq"`
+	FollowIDsMemRatio  float64       `name:"follow-ids-mem-ratio"`
 
 	FollowRequestMaxSize   int           `name:"follow-request-max-size"`
 	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`
 	FollowRequestSweepFreq time.Duration `name:"follow-request-sweep-freq"`
+	FollowRequestMemRatio  float64       `name:"follow-request-mem-ratio"`
 
 	FollowRequestIDsMaxSize   int           `name:"follow-request-ids-max-size"`
 	FollowRequestIDsTTL       time.Duration `name:"follow-request-ids-ttl"`
 	FollowRequestIDsSweepFreq time.Duration `name:"follow-request-ids-sweep-freq"`
+	FollowRequestIDsMemRatio  float64       `name:"follow-request-ids-mem-ratio"`
 
 	InstanceMaxSize   int           `name:"instance-max-size"`
 	InstanceTTL       time.Duration `name:"instance-ttl"`
 	InstanceSweepFreq time.Duration `name:"instance-sweep-freq"`
+	InstanceMemRatio  float64       `name:"instance-mem-ratio"`
 
 	ListMaxSize   int           `name:"list-max-size"`
 	ListTTL       time.Duration `name:"list-ttl"`
 	ListSweepFreq time.Duration `name:"list-sweep-freq"`
+	ListMemRatio  float64       `name:"list-mem-ratio"`
 
 	ListEntryMaxSize   int           `name:"list-entry-max-size"`
 	ListEntryTTL       time.Duration `name:"list-entry-ttl"`
 	ListEntrySweepFreq time.Duration `name:"list-entry-sweep-freq"`
+	ListEntryMemRatio  float64       `name:"list-entry-mem-ratio"`
 
 	MarkerMaxSize   int           `name:"marker-max-size"`
 	MarkerTTL       time.Duration `name:"marker-ttl"`
 	MarkerSweepFreq time.Duration `name:"marker-sweep-freq"`
+	MarkerMemRatio  float64       `name:"marker-mem-ratio"`
 
 	MediaMaxSize   int           `name:"media-max-size"`
 	MediaTTL       time.Duration `name:"media-ttl"`
 	MediaSweepFreq time.Duration `name:"media-sweep-freq"`
+	MediaMemRatio  float64       `name:"media-mem-ratio"`
 
 	MentionMaxSize   int           `name:"mention-max-size"`
 	MentionTTL       time.Duration `name:"mention-ttl"`
 	MentionSweepFreq time.Duration `name:"mention-sweep-freq"`
+	MentionMemRatio  float64       `name:"mention-mem-ratio"`
 
 	NotificationMaxSize   int           `name:"notification-max-size"`
 	NotificationTTL       time.Duration `name:"notification-ttl"`
 	NotificationSweepFreq time.Duration `name:"notification-sweep-freq"`
+	NotificationMemRatio  float64       `name:"notification-mem-ratio"`
 
 	ReportMaxSize   int           `name:"report-max-size"`
 	ReportTTL       time.Duration `name:"report-ttl"`
 	ReportSweepFreq time.Duration `name:"report-sweep-freq"`
+	ReportMemRatio  float64       `name:"report-mem-ratio"`
 
 	StatusMaxSize   int           `name:"status-max-size"`
 	StatusTTL       time.Duration `name:"status-ttl"`
 	StatusSweepFreq time.Duration `name:"status-sweep-freq"`
+	StatusMemRatio  float64       `name:"status-mem-ratio"`
 
 	StatusFaveMaxSize   int           `name:"status-fave-max-size"`
 	StatusFaveTTL       time.Duration `name:"status-fave-ttl"`
 	StatusFaveSweepFreq time.Duration `name:"status-fave-sweep-freq"`
+	StatusFaveMemRatio  float64       `name:"status-fave-mem-ratio"`
 
 	TagMaxSize   int           `name:"tag-max-size"`
 	TagTTL       time.Duration `name:"tag-ttl"`
 	TagSweepFreq time.Duration `name:"tag-sweep-freq"`
+	TagMemRatio  float64       `name:"tag-mem-ratio"`
 
 	TombstoneMaxSize   int           `name:"tombstone-max-size"`
 	TombstoneTTL       time.Duration `name:"tombstone-ttl"`
 	TombstoneSweepFreq time.Duration `name:"tombstone-sweep-freq"`
+	TombstoneMemRatio  float64       `name:"tombstone-mem-ratio"`
 
 	UserMaxSize   int           `name:"user-max-size"`
 	UserTTL       time.Duration `name:"user-ttl"`
 	UserSweepFreq time.Duration `name:"user-sweep-freq"`
+	UserMemRatio  float64       `name:"user-mem-ratio"`
 
 	WebfingerMaxSize   int           `name:"webfinger-max-size"`
 	WebfingerTTL       time.Duration `name:"webfinger-ttl"`
 	WebfingerSweepFreq time.Duration `name:"webfinger-sweep-freq"`
+	WebfingerMemRatio  float64       `name:"webfinger-mem-ratio"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON/TOML/YAML).

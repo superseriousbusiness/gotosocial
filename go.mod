@@ -16,6 +16,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.1
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.2
+	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.2.6
 	github.com/abema/go-mp4 v0.11.0
 	github.com/buckket/go-blurhash v1.1.0

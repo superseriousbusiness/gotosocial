@@ -20,6 +20,7 @@ package cache
 import (
 	"codeberg.org/gruf/go-cache/v3/result"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type VisibilityCache struct {
@@ -29,6 +30,14 @@ type VisibilityCache struct {
 // Init will initialize the visibility cache in this collection.
 // NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
 func (c *VisibilityCache) Init() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofVisibility(), // model in-mem size.
+		config.GetCacheVisibilityMemRatio(),
+	)
+
+	log.Infof(nil, "Visibility cache size = %d", cap)
+
 	c.Cache = result.New([]result.Lookup{
 		{Name: "ItemID", Multi: true},
 		{Name: "RequesterID", Multi: true},
@@ -37,7 +46,8 @@ func (c *VisibilityCache) Init() {
 		v2 := new(CachedVisibility)
 		*v2 = *v1
 		return v2
-	}, config.GetCacheVisibilityMaxSize())
+	}, cap)
+
 	c.Cache.SetTTL(config.GetCacheVisibilityTTL(), true)
 	c.Cache.IgnoreErrors(ignoreErrors)
 }

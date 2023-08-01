@@ -126,7 +126,35 @@ var Defaults = Configuration{
 	AdvancedSenderMultiplier:     2, // 2 senders per CPU
 
 	Cache: CacheConfiguration{
+		MemoryTarget: 200 * bytesize.MiB,
+
+		VisibilityMemRatio: 5,
 		GTS: GTSCacheConfiguration{
+			AccountMemRatio:          5,
+			AccountNoteMemRatio:      3,
+			BlockMemRatio:            3,
+			BlockIDsMemRatio:         3,
+			EmojiMemRatio:            3,
+			EmojiCategoryMemRatio:    1,
+			FollowMemRatio:           4,
+			FollowIDsMemRatio:        4,
+			FollowRequestMemRatio:    2,
+			FollowRequestIDsMemRatio: 2,
+			InstanceMemRatio:         1,
+			ListMemRatio:             3,
+			ListEntryMemRatio:        3,
+			MarkerMemRatio:           3,
+			MediaMemRatio:            4,
+			MentionMemRatio:          5,
+			NotificationMemRatio:     5,
+			ReportMemRatio:           1,
+			StatusMemRatio:           5,
+			StatusFaveMemRatio:       5,
+			TagMemRatio:              3,
+			TombstoneMemRatio:        2,
+			UserMemRatio:             1,
+			WebfingerMemRatio:        2,
+
 			AccountMaxSize:   2000,
 			AccountTTL:       time.Minute * 30,
 			AccountSweepFreq: time.Minute,
