@@ -181,6 +181,7 @@ func New(ctx context.Context) (Router, error) {
 	// create the actual engine here -- this is the core request routing handler for gts
 	engine := gin.New()
 	engine.MaxMultipartMemory = maxMultipartMemory
+	engine.HandleMethodNotAllowed = true
 
 	// set up IP forwarding via x-forward-* headers.
 	trustedProxies := config.GetTrustedProxies()
