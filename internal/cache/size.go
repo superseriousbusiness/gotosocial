@@ -54,7 +54,7 @@ func calculateResultCacheMax(structSz uintptr, ratio float64) int {
 // individual ratio number, and key + value object sizes in memory.
 func calculateCacheMax(keySz, valSz uintptr, ratio float64) int {
 	if ratio < 0 {
-		// Negative values are a secret little trick
+		// Negative ratios are a secret little trick
 		// to manually set the cache capacity sizes.
 		return int(-1 * ratio)
 	}
