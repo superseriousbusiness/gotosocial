@@ -128,8 +128,17 @@ var Defaults = Configuration{
 	Cache: CacheConfiguration{
 		MemoryTarget: 200 * bytesize.MiB,
 
-		AccountMemRatio:          5,
-		AccountNoteMemRatio:      2,
+		// NOTE: these weighted by a totally
+		// assorted mixture of priority, and
+		// manual twiddling to get the generated
+		// cache capacity ratios within normal
+		// amounts dependent on relative sizes.
+		//
+		// when TODO items in the size.go source
+		// file have been addressed, these should
+		// be able to make some more sense :D
+		AccountMemRatio:          20,
+		AccountNoteMemRatio:      1,
 		BlockMemRatio:            3,
 		BlockIDsMemRatio:         3,
 		EmojiMemRatio:            3,
@@ -146,13 +155,13 @@ var Defaults = Configuration{
 		MentionMemRatio:          5,
 		NotificationMemRatio:     5,
 		ReportMemRatio:           1,
-		StatusMemRatio:           5,
+		StatusMemRatio:           20,
 		StatusFaveMemRatio:       5,
 		TagMemRatio:              3,
 		TombstoneMemRatio:        2,
 		UserMemRatio:             1,
-		WebfingerMemRatio:        2,
-		VisibilityMemRatio:       5,
+		WebfingerMemRatio:        0.1,
+		VisibilityMemRatio:       0.25,
 	},
 
 	HTTPClient: HTTPClientConfiguration{
