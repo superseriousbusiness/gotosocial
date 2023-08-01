@@ -13,7 +13,6 @@ services:
       GTS_DB_ADDRESS: /gotosocial/storage/sqlite.db
       GTS_LETSENCRYPT_ENABLED: "false"
       GTS_LETSENCRYPT_EMAIL_ADDRESS: ""
-      #TZ: "UTC"
       ## For reverse proxy setups:
       # GTS_TRUSTED_PROXIES: "172.x.x.x"
     ports:
@@ -24,8 +23,6 @@ services:
       #- "127.0.0.1:8080:8080"
     volumes:
       - ~/gotosocial/data:/gotosocial/storage
-      #- /etc/localtime:/etc/localtime:ro
-      #- /etc/timezone:/etc/timezone:ro
     restart: "always"
 
 networks:
