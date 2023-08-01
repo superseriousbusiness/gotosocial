@@ -48,11 +48,12 @@ func (p *Processor) packageAccounts(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	accounts []*gtsmodel.Account,
+	includeInstanceAccounts bool,
 ) ([]*apimodel.Account, gtserror.WithCode) {
 	apiAccounts := make([]*apimodel.Account, 0, len(accounts))
 
 	for _, account := range accounts {
-		if account.IsInstance() {
+		if !includeInstanceAccounts && account.IsInstance() {
 			// No need to show instance accounts.
 			continue
 		}
@@ -169,8 +170,9 @@ func (p *Processor) packageSearchResult(
 	statuses []*gtsmodel.Status,
 	tags []*gtsmodel.Tag,
 	v1 bool,
+	includeInstanceAccounts bool,
 ) (*apimodel.SearchResult, gtserror.WithCode) {
-	apiAccounts, errWithCode := p.packageAccounts(ctx, requestingAccount, accounts)
+	apiAccounts, errWithCode := p.packageAccounts(ctx, requestingAccount, accounts, includeInstanceAccounts)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}

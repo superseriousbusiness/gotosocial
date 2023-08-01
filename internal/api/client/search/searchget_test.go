@@ -19,6 +19,8 @@ package search_test
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,6 +32,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -1001,7 +1004,7 @@ func (suite *SearchGetTestSuite) TestSearchAAccounts() {
 	suite.Len(searchResult.Hashtags, 0)
 }
 
-func (suite *SearchGetTestSuite) TestSearchAAccountsLimit1() {
+func (suite *SearchGetTestSuite) TestSearchAccountsLimit1() {
 	var (
 		requestingAccount          = suite.testAccounts["local_account_1"]
 		token                      = suite.testTokens["local_account_1"]
@@ -1078,12 +1081,14 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountByURI() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(searchResult.Accounts, 0)
+	// Should be able to get instance
+	// account by exact URI.
+	suite.Len(searchResult.Accounts, 1)
 	suite.Len(searchResult.Statuses, 0)
 	suite.Len(searchResult.Hashtags, 0)
 }
 
-func (suite *SearchGetTestSuite) TestSearchInstanceAccountFull() {
+func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountFull() {
 	// Namestring excludes ':' in usernames, so we
 	// need to fiddle with the instance account a
 	// bit to get it to look like a different domain.
@@ -1125,12 +1130,14 @@ func (suite *SearchGetTestSuite) TestSearchInstanceAccountFull() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(searchResult.Accounts, 0)
+	// Should be able to get instance
+	// account by full namestring.
+	suite.Len(searchResult.Accounts, 1)
 	suite.Len(searchResult.Statuses, 0)
 	suite.Len(searchResult.Hashtags, 0)
 }
 
-func (suite *SearchGetTestSuite) TestSearchInstanceAccountPartial() {
+func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountPartial() {
 	// Namestring excludes ':' in usernames, so we
 	// need to fiddle with the instance account a
 	// bit to get it to look like a different domain.
@@ -1172,6 +1179,131 @@ func (suite *SearchGetTestSuite) TestSearchInstanceAccountPartial() {
 		suite.FailNow(err.Error())
 	}
 
+	// Query was a partial namestring from our
+	// instance, so will return the instance account.
+	suite.Len(searchResult.Accounts, 1)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 0)
+}
+
+func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountEvenMorePartial() {
+	// Namestring excludes ':' in usernames, so we
+	// need to fiddle with the instance account a
+	// bit to get it to look like a different domain.
+	newDomain := "example.org"
+	suite.bodgeLocalInstance(newDomain)
+
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = nil
+		query                      = newDomain
+		queryType          *string = nil
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ""
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Query was just 'example.org' which doesn't
+	// look like a namestring, so search should
+	// fall back to text search and therefore give
+	// 0 results back.
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 0)
+	suite.Len(searchResult.Hashtags, 0)
+}
+
+func (suite *SearchGetTestSuite) TestSearchRemoteInstanceAccountPartial() {
+	// Insert an instance account that's not
+	// from our instance, and try to search
+	// for it with a partial namestring.
+	theirDomain := "example.org"
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	if err := suite.db.PutAccount(context.Background(), &gtsmodel.Account{
+		ID:                    "01H6RWPG8T6DNW6VNXPBCJBH5S",
+		Username:              theirDomain,
+		Domain:                theirDomain,
+		URI:                   "http://" + theirDomain + "/users/" + theirDomain,
+		URL:                   "http://" + theirDomain + "/@" + theirDomain,
+		PublicKeyURI:          "http://" + theirDomain + "/users/" + theirDomain + "#main-key",
+		InboxURI:              "http://" + theirDomain + "/users/" + theirDomain + "/inbox",
+		OutboxURI:             "http://" + theirDomain + "/users/" + theirDomain + "/outbox",
+		FollowersURI:          "http://" + theirDomain + "/users/" + theirDomain + "/followers",
+		FollowingURI:          "http://" + theirDomain + "/users/" + theirDomain + "/following",
+		FeaturedCollectionURI: "http://" + theirDomain + "/users/" + theirDomain + "/collections/featured",
+		ActorType:             ap.ActorPerson,
+		PrivateKey:            key,
+		PublicKey:             &key.PublicKey,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = nil
+		query                      = "@" + theirDomain
+		queryType          *string = nil
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ""
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Search for instance account from
+	// another domain should return 0 results.
 	suite.Len(searchResult.Accounts, 0)
 	suite.Len(searchResult.Statuses, 0)
 	suite.Len(searchResult.Hashtags, 0)

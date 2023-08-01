@@ -70,6 +70,13 @@ func (p *Processor) Get(
 		queryType = strings.TrimSpace(strings.ToLower(req.QueryType)) // Trim trailing/leading whitespace; convert to lowercase.
 		resolve   = req.Resolve
 		following = req.Following
+
+		// Include instance accounts in the first
+		// parts of this search. This will be
+		// changed to 'false' when doing text
+		// search in the database in the latter
+		// parts of this function.
+		includeInstanceAccounts = true
 	)
 
 	// Validate query.
@@ -109,7 +116,12 @@ func (p *Processor) Get(
 	// supply an offset greater than 0, return nothing as
 	// though there were no additional results.
 	if req.Offset > 0 {
-		return p.packageSearchResult(ctx, account, nil, nil, nil, req.APIv1)
+		return p.packageSearchResult(
+			ctx,
+			account,
+			nil, nil, nil, // No results.
+			req.APIv1, includeInstanceAccounts,
+		)
 	}
 
 	var (
@@ -167,6 +179,7 @@ func (p *Processor) Get(
 				foundStatuses,
 				foundTags,
 				req.APIv1,
+				includeInstanceAccounts,
 			)
 		}
 	}
@@ -196,6 +209,7 @@ func (p *Processor) Get(
 			foundStatuses,
 			foundTags,
 			req.APIv1,
+			includeInstanceAccounts,
 		)
 	}
 
@@ -236,11 +250,20 @@ func (p *Processor) Get(
 			foundStatuses,
 			foundTags,
 			req.APIv1,
+			includeInstanceAccounts,
 		)
 	}
 
 	// As a last resort, search for accounts and
 	// statuses using the query as arbitrary text.
+	//
+	// At this point we no longer want to include
+	// instance accounts in the results, since searching
+	// for something like 'mastodon', for example, will
+	// include a million instance/service accounts that
+	// have 'mastodon' in the domain, and therefore in
+	// the username, making the search results useless.
+	includeInstanceAccounts = false
 	if err := p.byText(
 		ctx,
 		account,
@@ -267,6 +290,7 @@ func (p *Processor) Get(
 		foundStatuses,
 		foundTags,
 		req.APIv1,
+		includeInstanceAccounts,
 	)
 }
 

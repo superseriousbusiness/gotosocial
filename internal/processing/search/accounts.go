@@ -49,6 +49,13 @@ func (p *Processor) Accounts(
 	resolve bool,
 	following bool,
 ) ([]*apimodel.Account, gtserror.WithCode) {
+	// Don't include instance accounts in this search.
+	//
+	// We don't want someone to start typing '@mastodon'
+	// and then get a million instance service accounts
+	// in their search results.
+	const includeInstanceAccounts = false
+
 	var (
 		foundAccounts = make([]*gtsmodel.Account, 0, limit)
 		appendAccount = func(foundAccount *gtsmodel.Account) { foundAccounts = append(foundAccounts, foundAccount) }
@@ -83,7 +90,12 @@ func (p *Processor) Accounts(
 	// if caller supplied an offset greater than 0, return
 	// nothing as though there were no additional results.
 	if offset > 0 {
-		return p.packageAccounts(ctx, requestingAccount, foundAccounts)
+		return p.packageAccounts(
+			ctx,
+			requestingAccount,
+			foundAccounts,
+			includeInstanceAccounts,
+		)
 	}
 
 	// Return all accounts we can find that match the
@@ -106,5 +118,10 @@ func (p *Processor) Accounts(
 	}
 
 	// Return whatever we got (if anything).
-	return p.packageAccounts(ctx, requestingAccount, foundAccounts)
+	return p.packageAccounts(
+		ctx,
+		requestingAccount,
+		foundAccounts,
+		includeInstanceAccounts,
+	)
 }
