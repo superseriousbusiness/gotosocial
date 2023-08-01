@@ -60,6 +60,7 @@ func (s *ConfigState) AddGlobalFlags(cmd *cobra.Command) {
 		cmd.PersistentFlags().StringSlice(HTTPClientAllowIPsFlag(), cfg.HTTPClient.AllowIPs, "no usage string")
 		cmd.PersistentFlags().StringSlice(HTTPClientBlockIPsFlag(), cfg.HTTPClient.BlockIPs, "no usage string")
 		cmd.PersistentFlags().Duration(HTTPClientTimeoutFlag(), cfg.HTTPClient.Timeout, "no usage string")
+		cmd.PersistentFlags().Bool(HTTPClientTLSInsecureSkipVerifyFlag(), cfg.HTTPClient.TLSInsecureSkipVerify, "no usage string")
 	})
 }
 

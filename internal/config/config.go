@@ -168,9 +168,10 @@ type Configuration struct {
 }
 
 type HTTPClientConfiguration struct {
-	AllowIPs []string      `name:"allow-ips"`
-	BlockIPs []string      `name:"block-ips"`
-	Timeout  time.Duration `name:"timeout"`
+	AllowIPs              []string      `name:"allow-ips"`
+	BlockIPs              []string      `name:"block-ips"`
+	Timeout               time.Duration `name:"timeout"`
+	TLSInsecureSkipVerify bool          `name:"tls-insecure-skip-verify"`
 }
 
 type CacheConfiguration struct {
