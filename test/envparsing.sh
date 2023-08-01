@@ -18,8 +18,8 @@ EXPECT=$(cat << "EOF"
     "application-name": "gts",
     "bind-address": "127.0.0.1",
     "cache": {
-        "account-mem-ratio": 5,
-        "account-note-mem-ratio": 2,
+        "account-mem-ratio": 20,
+        "account-note-mem-ratio": 1,
         "block-mem-ratio": 3,
         "emoji-category-mem-ratio": 1,
         "emoji-mem-ratio": 3,
@@ -37,12 +37,12 @@ EXPECT=$(cat << "EOF"
         "notification-mem-ratio": 5,
         "report-mem-ratio": 1,
         "status-fave-mem-ratio": 5,
-        "status-mem-ratio": 5,
+        "status-mem-ratio": 20,
         "tag-mem-ratio": 3,
         "tombstone-mem-ratio": 2,
         "user-mem-ratio": 1,
-        "visibility-mem-ratio": 5,
-        "webfinger-mem-ratio": 2
+        "visibility-mem-ratio": 0.25,
+        "webfinger-mem-ratio": 0.1
     },
     "config-path": "internal/config/testdata/test.yaml",
     "db-address": ":memory:",
