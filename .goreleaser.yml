@@ -24,6 +24,8 @@ builds:
       - netgo
       - osusergo
       - static_build
+      - kvformat
+      - timetzdata
     env:
       - CGO_ENABLED=0
     goos:

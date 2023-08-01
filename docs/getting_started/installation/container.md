@@ -51,6 +51,17 @@ If desired, update the GoToSocial Docker image tag to the version of GtS you wan
 
 Change the `GTS_HOST` environment variable to the domain you are running GoToSocial on.
 
+### Server Timezone (optional but recommended)
+
+To ensure that your GoToSocial server displays the correct time on posts and in logs, you can set the timezone of the server by editing the `TZ` environment variable.
+
+1. Remove the `#` before `TZ: UTC` in the environment section.
+2. Change the `UTC` part to your timezone identifier. For a list of these identifiers, see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+
+For example, if you are running your server in Minsk, you would set `TZ: Europe/Minsk`, Japan would be `TZ: Japan`, Dubai would be `TZ: Asia/Dubai`, etc.
+
+If you don't set this, the default `UTC` will be used.
+
 ### User (optional / probably not necessary)
 
 By default, Dockerized GoToSocial runs with Linux user/group `1000:1000`, which is fine in most cases. If you want to run as a different user/group, you should change the `user` field in the docker-compose.yaml accordingly.
