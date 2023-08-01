@@ -2424,6 +2424,31 @@ func GetHTTPClientTLSInsecureSkipVerify() bool { return global.GetHTTPClientTLSI
 // SetHTTPClientTLSInsecureSkipVerify safely sets the value for global configuration 'HTTPClient.TLSInsecureSkipVerify' field
 func SetHTTPClientTLSInsecureSkipVerify(v bool) { global.SetHTTPClientTLSInsecureSkipVerify(v) }
 
+// GetCacheMemoryTarget safely fetches the Configuration value for state's 'Cache.MemoryTarget' field
+func (st *ConfigState) GetCacheMemoryTarget() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.Cache.MemoryTarget
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheMemoryTarget safely sets the Configuration value for state's 'Cache.MemoryTarget' field
+func (st *ConfigState) SetCacheMemoryTarget(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.MemoryTarget = v
+	st.reloadToViper()
+}
+
+// CacheMemoryTargetFlag returns the flag name for the 'Cache.MemoryTarget' field
+func CacheMemoryTargetFlag() string { return "cache-memory-target" }
+
+// GetCacheMemoryTarget safely fetches the value for global configuration 'Cache.MemoryTarget' field
+func GetCacheMemoryTarget() bytesize.Size { return global.GetCacheMemoryTarget() }
+
+// SetCacheMemoryTarget safely sets the value for global configuration 'Cache.MemoryTarget' field
+func SetCacheMemoryTarget(v bytesize.Size) { global.SetCacheMemoryTarget(v) }
+
 // GetCacheGTSAccountTTL safely fetches the Configuration value for state's 'Cache.GTS.AccountTTL' field
 func (st *ConfigState) GetCacheGTSAccountTTL() (v time.Duration) {
 	st.mutex.RLock()
@@ -4236,31 +4261,6 @@ func GetCacheGTSWebfingerMemRatio() float64 { return global.GetCacheGTSWebfinger
 // SetCacheGTSWebfingerMemRatio safely sets the value for global configuration 'Cache.GTS.WebfingerMemRatio' field
 func SetCacheGTSWebfingerMemRatio(v float64) { global.SetCacheGTSWebfingerMemRatio(v) }
 
-// GetCacheVisibilityMaxSize safely fetches the Configuration value for state's 'Cache.VisibilityMaxSize' field
-func (st *ConfigState) GetCacheVisibilityMaxSize() (v int) {
-	st.mutex.RLock()
-	v = st.config.Cache.VisibilityMaxSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetCacheVisibilityMaxSize safely sets the Configuration value for state's 'Cache.VisibilityMaxSize' field
-func (st *ConfigState) SetCacheVisibilityMaxSize(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.Cache.VisibilityMaxSize = v
-	st.reloadToViper()
-}
-
-// CacheVisibilityMaxSizeFlag returns the flag name for the 'Cache.VisibilityMaxSize' field
-func CacheVisibilityMaxSizeFlag() string { return "cache-visibility-max-size" }
-
-// GetCacheVisibilityMaxSize safely fetches the value for global configuration 'Cache.VisibilityMaxSize' field
-func GetCacheVisibilityMaxSize() int { return global.GetCacheVisibilityMaxSize() }
-
-// SetCacheVisibilityMaxSize safely sets the value for global configuration 'Cache.VisibilityMaxSize' field
-func SetCacheVisibilityMaxSize(v int) { global.SetCacheVisibilityMaxSize(v) }
-
 // GetCacheVisibilityTTL safely fetches the Configuration value for state's 'Cache.VisibilityTTL' field
 func (st *ConfigState) GetCacheVisibilityTTL() (v time.Duration) {
 	st.mutex.RLock()
@@ -4335,31 +4335,6 @@ func GetCacheVisibilityMemRatio() float64 { return global.GetCacheVisibilityMemR
 
 // SetCacheVisibilityMemRatio safely sets the value for global configuration 'Cache.VisibilityMemRatio' field
 func SetCacheVisibilityMemRatio(v float64) { global.SetCacheVisibilityMemRatio(v) }
-
-// GetCacheMemoryTarget safely fetches the Configuration value for state's 'Cache.MemoryTarget' field
-func (st *ConfigState) GetCacheMemoryTarget() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.Cache.MemoryTarget
-	st.mutex.RUnlock()
-	return
-}
-
-// SetCacheMemoryTarget safely sets the Configuration value for state's 'Cache.MemoryTarget' field
-func (st *ConfigState) SetCacheMemoryTarget(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.Cache.MemoryTarget = v
-	st.reloadToViper()
-}
-
-// CacheMemoryTargetFlag returns the flag name for the 'Cache.MemoryTarget' field
-func CacheMemoryTargetFlag() string { return "cache-memory-target" }
-
-// GetCacheMemoryTarget safely fetches the value for global configuration 'Cache.MemoryTarget' field
-func GetCacheMemoryTarget() bytesize.Size { return global.GetCacheMemoryTarget() }
-
-// SetCacheMemoryTarget safely sets the value for global configuration 'Cache.MemoryTarget' field
-func SetCacheMemoryTarget(v bytesize.Size) { global.SetCacheMemoryTarget(v) }
 
 // GetAdminAccountUsername safely fetches the Configuration value for state's 'AdminAccountUsername' field
 func (st *ConfigState) GetAdminAccountUsername() (v string) {

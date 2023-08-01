@@ -228,7 +228,6 @@ var Defaults = Configuration{
 			WebfingerSweepFreq: time.Minute * 15,
 		},
 
-		VisibilityMaxSize:   2000,
 		VisibilityTTL:       time.Minute * 30,
 		VisibilitySweepFreq: time.Minute,
 	},

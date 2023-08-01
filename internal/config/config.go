@@ -175,14 +175,13 @@ type HTTPClientConfiguration struct {
 }
 
 type CacheConfiguration struct {
+	MemoryTarget bytesize.Size `name:"memory-target"`
+
 	GTS GTSCacheConfiguration `name:"gts"`
 
-	VisibilityMaxSize   int           `name:"visibility-max-size"`
 	VisibilityTTL       time.Duration `name:"visibility-ttl"`
 	VisibilitySweepFreq time.Duration `name:"visibility-sweep-freq"`
 	VisibilityMemRatio  float64       `name:"visibility-mem-ratio"`
-
-	MemoryTarget bytesize.Size `name:"memory-target"`
 }
 
 type GTSCacheConfiguration struct {
