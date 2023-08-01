@@ -29,8 +29,8 @@ import (
 	"codeberg.org/gruf/go-cache/v3"
 )
 
-func newETagCache() cache.Cache[string, eTagCacheEntry] {
-	eTagCache := cache.New[string, eTagCacheEntry](0, 1000, 0)
+func newETagCache() cache.TTLCache[string, eTagCacheEntry] {
+	eTagCache := cache.NewTTL[string, eTagCacheEntry](0, 1000, 0)
 	eTagCache.SetTTL(time.Hour, false)
 	if !eTagCache.Start(time.Minute) {
 		log.Panic(nil, "could not start eTagCache")

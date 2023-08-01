@@ -50,7 +50,7 @@ type controller struct {
 	fedDB     federatingdb.DB
 	clock     pub.Clock
 	client    httpclient.SigningClient
-	trspCache cache.Cache[string, *transport]
+	trspCache cache.TTLCache[string, *transport]
 	userAgent string
 	senders   int // no. concurrent batch delivery routines.
 }
@@ -76,7 +76,7 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		fedDB:     federatingDB,
 		clock:     clock,
 		client:    client,
-		trspCache: cache.New[string, *transport](0, 100, 0),
+		trspCache: cache.NewTTL[string, *transport](0, 100, 0),
 		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
 		senders:   senders,
 	}

@@ -108,7 +108,7 @@ type Config struct {
 //   - request logging
 type Client struct {
 	client   http.Client
-	badHosts cache.Cache[string, struct{}]
+	badHosts cache.TTLCache[string, struct{}]
 	bodyMax  int64
 }
 
@@ -178,7 +178,7 @@ func New(cfg Config) *Client {
 	}
 
 	// Initiate outgoing bad hosts lookup cache.
-	c.badHosts = cache.New[string, struct{}](0, 1000, 0)
+	c.badHosts = cache.NewTTL[string, struct{}](0, 1000, 0)
 	c.badHosts.SetTTL(time.Hour, false)
 	if !c.badHosts.Start(time.Minute) {
 		log.Panic(nil, "failed to start transport controller cache")
