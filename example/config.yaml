@@ -239,7 +239,6 @@ cache:
   # Default: "200MiB"
   memory-target: "200MiB"
 
-
 ######################
 ##### WEB CONFIG #####
 ######################
