@@ -128,108 +128,31 @@ var Defaults = Configuration{
 	Cache: CacheConfiguration{
 		MemoryTarget: 200 * bytesize.MiB,
 
-		VisibilityMemRatio: 5,
-		GTS: GTSCacheConfiguration{
-			AccountMemRatio:          5,
-			AccountNoteMemRatio:      2,
-			BlockMemRatio:            3,
-			BlockIDsMemRatio:         3,
-			EmojiMemRatio:            3,
-			EmojiCategoryMemRatio:    1,
-			FollowMemRatio:           4,
-			FollowIDsMemRatio:        4,
-			FollowRequestMemRatio:    2,
-			FollowRequestIDsMemRatio: 2,
-			InstanceMemRatio:         1,
-			ListMemRatio:             3,
-			ListEntryMemRatio:        3,
-			MarkerMemRatio:           3,
-			MediaMemRatio:            4,
-			MentionMemRatio:          5,
-			NotificationMemRatio:     5,
-			ReportMemRatio:           1,
-			StatusMemRatio:           5,
-			StatusFaveMemRatio:       5,
-			TagMemRatio:              3,
-			TombstoneMemRatio:        2,
-			UserMemRatio:             1,
-			WebfingerMemRatio:        2,
-
-			AccountTTL:       time.Minute * 30,
-			AccountSweepFreq: time.Minute,
-
-			AccountNoteTTL:       time.Minute * 30,
-			AccountNoteSweepFreq: time.Minute,
-
-			BlockTTL:       time.Minute * 30,
-			BlockSweepFreq: time.Minute,
-
-			BlockIDsTTL:       time.Minute * 30,
-			BlockIDsSweepFreq: time.Minute,
-
-			EmojiTTL:       time.Minute * 30,
-			EmojiSweepFreq: time.Minute,
-
-			EmojiCategoryTTL:       time.Minute * 30,
-			EmojiCategorySweepFreq: time.Minute,
-
-			FollowTTL:       time.Minute * 30,
-			FollowSweepFreq: time.Minute,
-
-			FollowIDsTTL:       time.Minute * 30,
-			FollowIDsSweepFreq: time.Minute,
-
-			FollowRequestTTL:       time.Minute * 30,
-			FollowRequestSweepFreq: time.Minute,
-
-			FollowRequestIDsTTL:       time.Minute * 30,
-			FollowRequestIDsSweepFreq: time.Minute,
-
-			InstanceTTL:       time.Minute * 30,
-			InstanceSweepFreq: time.Minute,
-
-			ListTTL:       time.Minute * 30,
-			ListSweepFreq: time.Minute,
-
-			ListEntryTTL:       time.Minute * 30,
-			ListEntrySweepFreq: time.Minute,
-
-			MarkerTTL:       time.Hour * 6,
-			MarkerSweepFreq: time.Minute,
-
-			MediaTTL:       time.Minute * 30,
-			MediaSweepFreq: time.Minute,
-
-			MentionTTL:       time.Minute * 30,
-			MentionSweepFreq: time.Minute,
-
-			NotificationTTL:       time.Minute * 30,
-			NotificationSweepFreq: time.Minute,
-
-			ReportTTL:       time.Minute * 30,
-			ReportSweepFreq: time.Minute,
-
-			StatusTTL:       time.Minute * 30,
-			StatusSweepFreq: time.Minute,
-
-			StatusFaveTTL:       time.Minute * 30,
-			StatusFaveSweepFreq: time.Minute,
-
-			TagTTL:       time.Minute * 30,
-			TagSweepFreq: time.Minute,
-
-			TombstoneTTL:       time.Minute * 30,
-			TombstoneSweepFreq: time.Minute,
-
-			UserTTL:       time.Minute * 30,
-			UserSweepFreq: time.Minute,
-
-			WebfingerTTL:       time.Hour * 24,
-			WebfingerSweepFreq: time.Minute * 15,
-		},
-
-		VisibilityTTL:       time.Minute * 30,
-		VisibilitySweepFreq: time.Minute,
+		AccountMemRatio:          5,
+		AccountNoteMemRatio:      2,
+		BlockMemRatio:            3,
+		BlockIDsMemRatio:         3,
+		EmojiMemRatio:            3,
+		EmojiCategoryMemRatio:    1,
+		FollowMemRatio:           4,
+		FollowIDsMemRatio:        4,
+		FollowRequestMemRatio:    2,
+		FollowRequestIDsMemRatio: 2,
+		InstanceMemRatio:         1,
+		ListMemRatio:             3,
+		ListEntryMemRatio:        3,
+		MarkerMemRatio:           3,
+		MediaMemRatio:            4,
+		MentionMemRatio:          5,
+		NotificationMemRatio:     5,
+		ReportMemRatio:           1,
+		StatusMemRatio:           5,
+		StatusFaveMemRatio:       5,
+		TagMemRatio:              3,
+		TombstoneMemRatio:        2,
+		UserMemRatio:             1,
+		WebfingerMemRatio:        2,
+		VisibilityMemRatio:       5,
 	},
 
 	HTTPClient: HTTPClientConfiguration{

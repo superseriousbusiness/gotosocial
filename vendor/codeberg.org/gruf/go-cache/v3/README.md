@@ -1,14 +1,14 @@
 # go-cache
 
-Provides access to a simple yet flexible, performant TTL cache via the `Cache{}` interface and `cache.New()`. Under the hood this is returning a `ttl.Cache{}`.
+Provides access to simple, yet flexible, and performant caches (with TTL if required) via the `cache.Cache{}` and `cache.TTLCache{}` interfaces.
+
+## simple
+
+A `cache.Cache{}` implementation with much more of the inner workings exposed. Designed to be used as a base for your own customizations, or used as-is.
 
 ## ttl
 
-A TTL cache implementation with much of the inner workings exposed, designed to be used as a base for your own customizations, or used as-is. Access via the base package `cache.New()` is recommended in the latter case, to prevent accidental use of unsafe methods.
-
-## lookup
-
-`lookup.Cache` is an example of a more complex cache implementation using `ttl.Cache{}` as its underpinning. It provides caching of items under multiple keys.
+A `cache.TTLCache{}` implementation with much more of the inner workings exposed. Designed to be used as a base for your own customizations, or used as-is.
 
 ## result
 

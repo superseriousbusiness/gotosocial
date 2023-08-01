@@ -145,7 +145,7 @@ type structField struct {
 }
 
 // genKey generates a cache key string for given key parts (i.e. serializes them using "go-mangler").
-func (sk structKey) genKey(parts []any) string {
+func (sk *structKey) genKey(parts []any) string {
 	// Check this expected no. key parts.
 	if len(parts) != len(sk.fields) {
 		panic(fmt.Sprintf("incorrect no. key parts provided: want=%d received=%d", len(parts), len(sk.fields)))
@@ -246,10 +246,12 @@ var bufPool = sync.Pool{
 	},
 }
 
+// getBuf ...
 func getBuf() *byteutil.Buffer {
 	return bufPool.Get().(*byteutil.Buffer)
 }
 
+// putBuf ...
 func putBuf(buf *byteutil.Buffer) {
 	if buf.Cap() > int(^uint16(0)) {
 		return // drop large bufs

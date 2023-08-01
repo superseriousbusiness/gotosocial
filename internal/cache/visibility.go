@@ -48,18 +48,15 @@ func (c *VisibilityCache) Init() {
 		return v2
 	}, cap)
 
-	c.Cache.SetTTL(config.GetCacheVisibilityTTL(), true)
 	c.Cache.IgnoreErrors(ignoreErrors)
 }
 
 // Start will attempt to start the visibility cache, or panic.
 func (c *VisibilityCache) Start() {
-	tryStart(c.Cache, config.GetCacheVisibilitySweepFreq())
 }
 
 // Stop will attempt to stop the visibility cache, or panic.
 func (c *VisibilityCache) Stop() {
-	tryStop(c.Cache, config.GetCacheVisibilitySweepFreq())
 }
 
 // VisibilityType represents a visibility lookup type.

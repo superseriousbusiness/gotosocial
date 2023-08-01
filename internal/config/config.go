@@ -175,111 +175,32 @@ type HTTPClientConfiguration struct {
 }
 
 type CacheConfiguration struct {
-	MemoryTarget bytesize.Size `name:"memory-target"`
-
-	GTS GTSCacheConfiguration `name:"gts"`
-
-	VisibilityTTL       time.Duration `name:"visibility-ttl"`
-	VisibilitySweepFreq time.Duration `name:"visibility-sweep-freq"`
-	VisibilityMemRatio  float64       `name:"visibility-mem-ratio"`
-}
-
-type GTSCacheConfiguration struct {
-	AccountTTL       time.Duration `name:"account-ttl"`
-	AccountSweepFreq time.Duration `name:"account-sweep-freq"`
-	AccountMemRatio  float64       `name:"account-mem-ratio"`
-
-	AccountNoteTTL       time.Duration `name:"account-note-ttl"`
-	AccountNoteSweepFreq time.Duration `name:"account-note-sweep-freq"`
-	AccountNoteMemRatio  float64       `name:"account-note-mem-ratio"`
-
-	BlockTTL       time.Duration `name:"block-ttl"`
-	BlockSweepFreq time.Duration `name:"block-sweep-freq"`
-	BlockMemRatio  float64       `name:"block-mem-ratio"`
-
-	BlockIDsTTL       time.Duration `name:"block-ids-ttl"`
-	BlockIDsSweepFreq time.Duration `name:"block-ids-sweep-freq"`
-	BlockIDsMemRatio  float64       `name:"block-mem-ratio"`
-
-	EmojiTTL       time.Duration `name:"emoji-ttl"`
-	EmojiSweepFreq time.Duration `name:"emoji-sweep-freq"`
-	EmojiMemRatio  float64       `name:"emoji-mem-ratio"`
-
-	EmojiCategoryTTL       time.Duration `name:"emoji-category-ttl"`
-	EmojiCategorySweepFreq time.Duration `name:"emoji-category-sweep-freq"`
-	EmojiCategoryMemRatio  float64       `name:"emoji-category-mem-ratio"`
-
-	FollowTTL       time.Duration `name:"follow-ttl"`
-	FollowSweepFreq time.Duration `name:"follow-sweep-freq"`
-	FollowMemRatio  float64       `name:"follow-mem-ratio"`
-
-	FollowIDsTTL       time.Duration `name:"follow-ids-ttl"`
-	FollowIDsSweepFreq time.Duration `name:"follow-ids-sweep-freq"`
-	FollowIDsMemRatio  float64       `name:"follow-ids-mem-ratio"`
-
-	FollowRequestTTL       time.Duration `name:"follow-request-ttl"`
-	FollowRequestSweepFreq time.Duration `name:"follow-request-sweep-freq"`
-	FollowRequestMemRatio  float64       `name:"follow-request-mem-ratio"`
-
-	FollowRequestIDsTTL       time.Duration `name:"follow-request-ids-ttl"`
-	FollowRequestIDsSweepFreq time.Duration `name:"follow-request-ids-sweep-freq"`
-	FollowRequestIDsMemRatio  float64       `name:"follow-request-ids-mem-ratio"`
-
-	InstanceTTL       time.Duration `name:"instance-ttl"`
-	InstanceSweepFreq time.Duration `name:"instance-sweep-freq"`
-	InstanceMemRatio  float64       `name:"instance-mem-ratio"`
-
-	ListTTL       time.Duration `name:"list-ttl"`
-	ListSweepFreq time.Duration `name:"list-sweep-freq"`
-	ListMemRatio  float64       `name:"list-mem-ratio"`
-
-	ListEntryTTL       time.Duration `name:"list-entry-ttl"`
-	ListEntrySweepFreq time.Duration `name:"list-entry-sweep-freq"`
-	ListEntryMemRatio  float64       `name:"list-entry-mem-ratio"`
-
-	MarkerTTL       time.Duration `name:"marker-ttl"`
-	MarkerSweepFreq time.Duration `name:"marker-sweep-freq"`
-	MarkerMemRatio  float64       `name:"marker-mem-ratio"`
-
-	MediaTTL       time.Duration `name:"media-ttl"`
-	MediaSweepFreq time.Duration `name:"media-sweep-freq"`
-	MediaMemRatio  float64       `name:"media-mem-ratio"`
-
-	MentionTTL       time.Duration `name:"mention-ttl"`
-	MentionSweepFreq time.Duration `name:"mention-sweep-freq"`
-	MentionMemRatio  float64       `name:"mention-mem-ratio"`
-
-	NotificationTTL       time.Duration `name:"notification-ttl"`
-	NotificationSweepFreq time.Duration `name:"notification-sweep-freq"`
-	NotificationMemRatio  float64       `name:"notification-mem-ratio"`
-
-	ReportTTL       time.Duration `name:"report-ttl"`
-	ReportSweepFreq time.Duration `name:"report-sweep-freq"`
-	ReportMemRatio  float64       `name:"report-mem-ratio"`
-
-	StatusTTL       time.Duration `name:"status-ttl"`
-	StatusSweepFreq time.Duration `name:"status-sweep-freq"`
-	StatusMemRatio  float64       `name:"status-mem-ratio"`
-
-	StatusFaveTTL       time.Duration `name:"status-fave-ttl"`
-	StatusFaveSweepFreq time.Duration `name:"status-fave-sweep-freq"`
-	StatusFaveMemRatio  float64       `name:"status-fave-mem-ratio"`
-
-	TagTTL       time.Duration `name:"tag-ttl"`
-	TagSweepFreq time.Duration `name:"tag-sweep-freq"`
-	TagMemRatio  float64       `name:"tag-mem-ratio"`
-
-	TombstoneTTL       time.Duration `name:"tombstone-ttl"`
-	TombstoneSweepFreq time.Duration `name:"tombstone-sweep-freq"`
-	TombstoneMemRatio  float64       `name:"tombstone-mem-ratio"`
-
-	UserTTL       time.Duration `name:"user-ttl"`
-	UserSweepFreq time.Duration `name:"user-sweep-freq"`
-	UserMemRatio  float64       `name:"user-mem-ratio"`
-
-	WebfingerTTL       time.Duration `name:"webfinger-ttl"`
-	WebfingerSweepFreq time.Duration `name:"webfinger-sweep-freq"`
-	WebfingerMemRatio  float64       `name:"webfinger-mem-ratio"`
+	MemoryTarget             bytesize.Size `name:"memory-target"`
+	AccountMemRatio          float64       `name:"account-mem-ratio"`
+	AccountNoteMemRatio      float64       `name:"account-note-mem-ratio"`
+	BlockMemRatio            float64       `name:"block-mem-ratio"`
+	BlockIDsMemRatio         float64       `name:"block-mem-ratio"`
+	EmojiMemRatio            float64       `name:"emoji-mem-ratio"`
+	EmojiCategoryMemRatio    float64       `name:"emoji-category-mem-ratio"`
+	FollowMemRatio           float64       `name:"follow-mem-ratio"`
+	FollowIDsMemRatio        float64       `name:"follow-ids-mem-ratio"`
+	FollowRequestMemRatio    float64       `name:"follow-request-mem-ratio"`
+	FollowRequestIDsMemRatio float64       `name:"follow-request-ids-mem-ratio"`
+	InstanceMemRatio         float64       `name:"instance-mem-ratio"`
+	ListMemRatio             float64       `name:"list-mem-ratio"`
+	ListEntryMemRatio        float64       `name:"list-entry-mem-ratio"`
+	MarkerMemRatio           float64       `name:"marker-mem-ratio"`
+	MediaMemRatio            float64       `name:"media-mem-ratio"`
+	MentionMemRatio          float64       `name:"mention-mem-ratio"`
+	NotificationMemRatio     float64       `name:"notification-mem-ratio"`
+	ReportMemRatio           float64       `name:"report-mem-ratio"`
+	StatusMemRatio           float64       `name:"status-mem-ratio"`
+	StatusFaveMemRatio       float64       `name:"status-fave-mem-ratio"`
+	TagMemRatio              float64       `name:"tag-mem-ratio"`
+	TombstoneMemRatio        float64       `name:"tombstone-mem-ratio"`
+	UserMemRatio             float64       `name:"user-mem-ratio"`
+	WebfingerMemRatio        float64       `name:"webfinger-mem-ratio"`
+	VisibilityMemRatio       float64       `name:"visibility-mem-ratio"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON/TOML/YAML).

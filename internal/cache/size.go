@@ -87,11 +87,7 @@ func calculateCacheMax(keySz, valSz uintptr, ratio float64) int {
 	// NOTE: there is further overhead to using these caches as
 	// entries are tracked using a linked list and wrapped within
 	// further structs, but unless necessary going to ignore for now.
-	cap := int(fMaxMem / (fKeySz + fValSz + emptyBucketOverhead))
-
-	// NOTE: max size?
-
-	return cap
+	return int(fMaxMem / (fKeySz + fValSz + emptyBucketOverhead))
 }
 
 // totalOfRatios returns the total of all cache ratios added together.
@@ -101,30 +97,30 @@ func totalOfRatios() float64 {
 	// required to access each config var). fortunately
 	// we only do this on init so fuck it :D
 	return 0 +
-		config.GetCacheGTSAccountMemRatio() +
-		config.GetCacheGTSAccountNoteMemRatio() +
-		config.GetCacheGTSBlockMemRatio() +
-		config.GetCacheGTSBlockIDsMemRatio() +
-		config.GetCacheGTSEmojiMemRatio() +
-		config.GetCacheGTSEmojiCategoryMemRatio() +
-		config.GetCacheGTSFollowMemRatio() +
-		config.GetCacheGTSFollowIDsMemRatio() +
-		config.GetCacheGTSFollowRequestMemRatio() +
-		config.GetCacheGTSFollowRequestIDsMemRatio() +
-		config.GetCacheGTSInstanceMemRatio() +
-		config.GetCacheGTSListMemRatio() +
-		config.GetCacheGTSListEntryMemRatio() +
-		config.GetCacheGTSMarkerMemRatio() +
-		config.GetCacheGTSMediaMemRatio() +
-		config.GetCacheGTSMentionMemRatio() +
-		config.GetCacheGTSNotificationMemRatio() +
-		config.GetCacheGTSReportMemRatio() +
-		config.GetCacheGTSStatusMemRatio() +
-		config.GetCacheGTSStatusFaveMemRatio() +
-		config.GetCacheGTSTagMemRatio() +
-		config.GetCacheGTSTombstoneMemRatio() +
-		config.GetCacheGTSUserMemRatio() +
-		config.GetCacheGTSWebfingerMemRatio() +
+		config.GetCacheAccountMemRatio() +
+		config.GetCacheAccountNoteMemRatio() +
+		config.GetCacheBlockMemRatio() +
+		config.GetCacheBlockIDsMemRatio() +
+		config.GetCacheEmojiMemRatio() +
+		config.GetCacheEmojiCategoryMemRatio() +
+		config.GetCacheFollowMemRatio() +
+		config.GetCacheFollowIDsMemRatio() +
+		config.GetCacheFollowRequestMemRatio() +
+		config.GetCacheFollowRequestIDsMemRatio() +
+		config.GetCacheInstanceMemRatio() +
+		config.GetCacheListMemRatio() +
+		config.GetCacheListEntryMemRatio() +
+		config.GetCacheMarkerMemRatio() +
+		config.GetCacheMediaMemRatio() +
+		config.GetCacheMentionMemRatio() +
+		config.GetCacheNotificationMemRatio() +
+		config.GetCacheReportMemRatio() +
+		config.GetCacheStatusMemRatio() +
+		config.GetCacheStatusFaveMemRatio() +
+		config.GetCacheTagMemRatio() +
+		config.GetCacheTombstoneMemRatio() +
+		config.GetCacheUserMemRatio() +
+		config.GetCacheWebfingerMemRatio() +
 		config.GetCacheVisibilityMemRatio()
 }
 

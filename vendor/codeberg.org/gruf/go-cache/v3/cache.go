@@ -3,25 +3,32 @@ package cache
 import (
 	"time"
 
-	ttlcache "codeberg.org/gruf/go-cache/v3/ttl"
+	"codeberg.org/gruf/go-cache/v3/simple"
+	"codeberg.org/gruf/go-cache/v3/ttl"
 )
 
-// Cache represents a TTL cache with customizable callbacks, it exists here to abstract away the "unsafe" methods in the case that you do not want your own implementation atop ttl.Cache{}.
-type Cache[Key comparable, Value any] interface {
+// TTLCache represents a TTL cache with customizable callbacks, it exists here to abstract away the "unsafe" methods in the case that you do not want your own implementation atop ttl.Cache{}.
+type TTLCache[Key comparable, Value any] interface {
 	// Start will start the cache background eviction routine with given sweep frequency. If already running or a freq <= 0 provided, this is a no-op. This will block until the eviction routine has started.
 	Start(freq time.Duration) bool
 
 	// Stop will stop cache background eviction routine. If not running this is a no-op. This will block until the eviction routine has stopped.
 	Stop() bool
 
+	// SetTTL sets the cache item TTL. Update can be specified to force updates of existing items in the cache, this will simply add the change in TTL to their current expiry time.
+	SetTTL(ttl time.Duration, update bool)
+
+	// implements base cache.
+	Cache[Key, Value]
+}
+
+// Cache represents a cache with customizable callbacks, it exists here to abstract away the "unsafe" methods in the case that you do not want your own implementation atop simple.Cache{}.
+type Cache[Key comparable, Value any] interface {
 	// SetEvictionCallback sets the eviction callback to the provided hook.
 	SetEvictionCallback(hook func(Key, Value))
 
 	// SetInvalidateCallback sets the invalidate callback to the provided hook.
 	SetInvalidateCallback(hook func(Key, Value))
-
-	// SetTTL sets the cache item TTL. Update can be specified to force updates of existing items in the cache, this will simply add the change in TTL to their current expiry time.
-	SetTTL(ttl time.Duration, update bool)
 
 	// Get fetches the value with key from the cache, extending its TTL.
 	Get(key Key) (value Value, ok bool)
@@ -57,7 +64,12 @@ type Cache[Key comparable, Value any] interface {
 	Cap() int
 }
 
-// New returns a new initialized Cache with given initial length, maximum capacity and item TTL.
-func New[K comparable, V any](len, cap int, ttl time.Duration) Cache[K, V] {
-	return ttlcache.New[K, V](len, cap, ttl)
+// New returns a new initialized Cache with given initial length, maximum capacity.
+func New[K comparable, V any](len, cap int) Cache[K, V] {
+	return simple.New[K, V](len, cap)
+}
+
+// NewTTL returns a new initialized TTLCache with given initial length, maximum capacity and TTL duration.
+func NewTTL[K comparable, V any](len, cap int, _ttl time.Duration) TTLCache[K, V] {
+	return ttl.New[K, V](len, cap, _ttl)
 }
