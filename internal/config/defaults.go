@@ -155,103 +155,75 @@ var Defaults = Configuration{
 			UserMemRatio:             1,
 			WebfingerMemRatio:        2,
 
-			AccountMaxSize:   2000,
 			AccountTTL:       time.Minute * 30,
 			AccountSweepFreq: time.Minute,
 
-			AccountNoteMaxSize:   1000,
 			AccountNoteTTL:       time.Minute * 30,
 			AccountNoteSweepFreq: time.Minute,
 
-			BlockMaxSize:   1000,
 			BlockTTL:       time.Minute * 30,
 			BlockSweepFreq: time.Minute,
 
-			BlockIDsMaxSize:   500,
 			BlockIDsTTL:       time.Minute * 30,
 			BlockIDsSweepFreq: time.Minute,
 
-			DomainBlockMaxSize:   2000,
-			DomainBlockTTL:       time.Hour * 24,
-			DomainBlockSweepFreq: time.Minute,
-
-			EmojiMaxSize:   2000,
 			EmojiTTL:       time.Minute * 30,
 			EmojiSweepFreq: time.Minute,
 
-			EmojiCategoryMaxSize:   100,
 			EmojiCategoryTTL:       time.Minute * 30,
 			EmojiCategorySweepFreq: time.Minute,
 
-			FollowMaxSize:   2000,
 			FollowTTL:       time.Minute * 30,
 			FollowSweepFreq: time.Minute,
 
-			FollowIDsMaxSize:   500,
 			FollowIDsTTL:       time.Minute * 30,
 			FollowIDsSweepFreq: time.Minute,
 
-			FollowRequestMaxSize:   2000,
 			FollowRequestTTL:       time.Minute * 30,
 			FollowRequestSweepFreq: time.Minute,
 
-			FollowRequestIDsMaxSize:   500,
 			FollowRequestIDsTTL:       time.Minute * 30,
 			FollowRequestIDsSweepFreq: time.Minute,
 
-			InstanceMaxSize:   2000,
 			InstanceTTL:       time.Minute * 30,
 			InstanceSweepFreq: time.Minute,
 
-			ListMaxSize:   2000,
 			ListTTL:       time.Minute * 30,
 			ListSweepFreq: time.Minute,
 
-			ListEntryMaxSize:   2000,
 			ListEntryTTL:       time.Minute * 30,
 			ListEntrySweepFreq: time.Minute,
 
-			MarkerMaxSize:   2000,
 			MarkerTTL:       time.Hour * 6,
 			MarkerSweepFreq: time.Minute,
 
-			MediaMaxSize:   1000,
 			MediaTTL:       time.Minute * 30,
 			MediaSweepFreq: time.Minute,
 
-			MentionMaxSize:   2000,
 			MentionTTL:       time.Minute * 30,
 			MentionSweepFreq: time.Minute,
 
-			NotificationMaxSize:   1000,
 			NotificationTTL:       time.Minute * 30,
 			NotificationSweepFreq: time.Minute,
 
-			ReportMaxSize:   100,
 			ReportTTL:       time.Minute * 30,
 			ReportSweepFreq: time.Minute,
 
-			StatusMaxSize:   2000,
 			StatusTTL:       time.Minute * 30,
 			StatusSweepFreq: time.Minute,
 
-			StatusFaveMaxSize:   2000,
 			StatusFaveTTL:       time.Minute * 30,
 			StatusFaveSweepFreq: time.Minute,
 
-			TagMaxSize:   2000,
 			TagTTL:       time.Minute * 30,
 			TagSweepFreq: time.Minute,
 
-			TombstoneMaxSize:   500,
 			TombstoneTTL:       time.Minute * 30,
 			TombstoneSweepFreq: time.Minute,
 
-			UserMaxSize:   500,
 			UserTTL:       time.Minute * 30,
 			UserSweepFreq: time.Minute,
 
-			WebfingerMaxSize:   250,
 			WebfingerTTL:       time.Hour * 24,
 			WebfingerSweepFreq: time.Minute * 15,
 		},

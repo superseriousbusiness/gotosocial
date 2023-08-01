@@ -400,7 +400,7 @@ func (c *GTSCaches) initBlockIDs() {
 
 	c.blockIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
 		0,
-		config.GetCacheGTSBlockIDsMaxSize(),
+		cap,
 		config.GetCacheGTSBlockIDsTTL(),
 	)}
 }
@@ -450,7 +450,7 @@ func (c *GTSCaches) initEmojiCategory() {
 		c2 := new(gtsmodel.EmojiCategory)
 		*c2 = *c1
 		return c2
-	}, config.GetCacheGTSEmojiCategoryMaxSize())
+	}, cap)
 
 	c.emojiCategory.SetTTL(config.GetCacheGTSEmojiCategoryTTL(), true)
 	c.emojiCategory.IgnoreErrors(ignoreErrors)
@@ -482,9 +482,16 @@ func (c *GTSCaches) initFollow() {
 }
 
 func (c *GTSCaches) initFollowIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheGTSFollowIDsMemRatio(),
+	)
+
+	log.Infof(nil, "Follow IDs cache size = %d", cap)
+
 	c.followIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
 		0,
-		config.GetCacheGTSFollowIDsMaxSize(),
+		cap,
 		config.GetCacheGTSFollowIDsTTL(),
 	)}
 }
@@ -515,9 +522,16 @@ func (c *GTSCaches) initFollowRequest() {
 }
 
 func (c *GTSCaches) initFollowRequestIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheGTSFollowRequestIDsMemRatio(),
+	)
+
+	log.Infof(nil, "Follow Request IDs cache size = %d", cap)
+
 	c.followRequestIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
 		0,
-		config.GetCacheGTSFollowRequestIDsMaxSize(),
+		cap,
 		config.GetCacheGTSFollowRequestIDsTTL(),
 	)}
 }
