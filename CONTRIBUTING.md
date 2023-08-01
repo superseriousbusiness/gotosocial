@@ -437,17 +437,21 @@ Although this test *is* part of the CI/CD testing process, you probably won't ne
 
 #### Federation
 
-By using the support for loading TLS files from disk it is possible to have two local instances with TLS to allow for (manually) testing federation.
+By using the support for loading TLS files from disk it is possible to have two or more local instances with TLS to allow for (manually) testing federation.
 
 You'll need to set the following configuration options:
-* `GTS_TLS_CERTIFICATE_CHAIN`: poiting to a PEM-encoded certificate chain including the public certificate
-* `GTS_TLS_CERTIFICATE_KEY`: pointing to a PEM-encoded private key
+
+- `GTS_TLS_CERTIFICATE_CHAIN`: poiting to a PEM-encoded certificate chain including the public certificate.
+- `GTS_TLS_CERTIFICATE_KEY`: pointing to a PEM-encoded private key.
 
 Additionally, for the Go HTTP client to recognise certificates issued by a custom CA as valid, you'll need to set one of:
-* `SSL_CERT_FILE`: pointing to the public key of your custom CA
-* `SSL_CERT_DIR`: a `:`-separated list of directories to load CA certificates from
 
-You'll additionally need functioning DNS for your two instance names which you can achieve through entries in `/etc/hosts` or by running a local DNS server like [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html).
+- `SSL_CERT_FILE`: pointing to the public key of your custom CA.
+- `SSL_CERT_DIR`: a `:`-separated list of directories to load CA certificates from.
+
+The above `SSL_CERT` variables work on Unix-like systems only, excluding Mac. See https://pkg.go.dev/crypto/x509#SystemCertPool. If you are running your tests on an architecture that doesn't support setting the above variables, you can instead disable TLS certificate verification for the HTTP client entirely by setting `http-client.tls-insecure-skip-verify` to `true` in the config.yaml file.
+
+You'll additionally need functioning DNS for your two instance names, which you can achieve through entries in `/etc/hosts` or by running a local DNS server like [dnsmasq](https://thekelleys.org.uk/dnsmasq/doc.html).
 
 ### Updating Swagger docs
 

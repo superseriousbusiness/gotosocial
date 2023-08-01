@@ -2399,6 +2399,31 @@ func GetHTTPClientTimeout() time.Duration { return global.GetHTTPClientTimeout()
 // SetHTTPClientTimeout safely sets the value for global configuration 'HTTPClient.Timeout' field
 func SetHTTPClientTimeout(v time.Duration) { global.SetHTTPClientTimeout(v) }
 
+// GetHTTPClientTLSInsecureSkipVerify safely fetches the Configuration value for state's 'HTTPClient.TLSInsecureSkipVerify' field
+func (st *ConfigState) GetHTTPClientTLSInsecureSkipVerify() (v bool) {
+	st.mutex.RLock()
+	v = st.config.HTTPClient.TLSInsecureSkipVerify
+	st.mutex.RUnlock()
+	return
+}
+
+// SetHTTPClientTLSInsecureSkipVerify safely sets the Configuration value for state's 'HTTPClient.TLSInsecureSkipVerify' field
+func (st *ConfigState) SetHTTPClientTLSInsecureSkipVerify(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.HTTPClient.TLSInsecureSkipVerify = v
+	st.reloadToViper()
+}
+
+// HTTPClientTLSInsecureSkipVerifyFlag returns the flag name for the 'HTTPClient.TLSInsecureSkipVerify' field
+func HTTPClientTLSInsecureSkipVerifyFlag() string { return "httpclient-tls-insecure-skip-verify" }
+
+// GetHTTPClientTLSInsecureSkipVerify safely fetches the value for global configuration 'HTTPClient.TLSInsecureSkipVerify' field
+func GetHTTPClientTLSInsecureSkipVerify() bool { return global.GetHTTPClientTLSInsecureSkipVerify() }
+
+// SetHTTPClientTLSInsecureSkipVerify safely sets the value for global configuration 'HTTPClient.TLSInsecureSkipVerify' field
+func SetHTTPClientTLSInsecureSkipVerify(v bool) { global.SetHTTPClientTLSInsecureSkipVerify(v) }
+
 // GetCacheGTSAccountMaxSize safely fetches the Configuration value for state's 'Cache.GTS.AccountMaxSize' field
 func (st *ConfigState) GetCacheGTSAccountMaxSize() (v int) {
 	st.mutex.RLock()

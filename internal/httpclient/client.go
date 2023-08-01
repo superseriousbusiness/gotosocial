@@ -19,6 +19,7 @@ package httpclient
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -86,6 +87,14 @@ type Config struct {
 
 	// BlockRanges blocks outgoing communiciations to given IP nets.
 	BlockRanges []netip.Prefix
+
+	// TLSInsecureSkipVerify can be set to true to
+	// skip validation of remote TLS certificates.
+	//
+	// THIS SHOULD BE USED FOR TESTING ONLY, IF YOU
+	// TURN THIS ON WHILE RUNNING IN PRODUCTION YOU
+	// ARE LEAVING YOUR SERVER WIDE OPEN TO ATTACKS!
+	TLSInsecureSkipVerify bool
 }
 
 // Client wraps an underlying http.Client{} to provide the following:
@@ -139,11 +148,26 @@ func New(cfg Config) *Client {
 	c.client.Timeout = cfg.Timeout
 	c.bodyMax = cfg.MaxBodySize
 
+	// Prepare TLS config for transport.
+	tlsClientConfig := &tls.Config{
+		InsecureSkipVerify: cfg.TLSInsecureSkipVerify, //nolint:gosec
+	}
+
+	if tlsClientConfig.InsecureSkipVerify {
+		// Warn against playing silly buggers.
+		log.Warn(nil, "http-client.tls-insecure-skip-verify was set to TRUE. "+
+			"*****THIS SHOULD BE USED FOR TESTING ONLY, IF YOU TURN THIS ON WHILE "+
+			"RUNNING IN PRODUCTION YOU ARE LEAVING YOUR SERVER WIDE OPEN TO ATTACKS! "+
+			"IF IN DOUBT, STOP YOUR SERVER *NOW* AND ADJUST YOUR CONFIGURATION!*****",
+		)
+	}
+
 	// Set underlying HTTP client roundtripper.
 	c.client.Transport = &http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
 		ForceAttemptHTTP2:     true,
 		DialContext:           d.DialContext,
+		TLSClientConfig:       tlsClientConfig,
 		MaxIdleConns:          cfg.MaxIdleConns,
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,

@@ -880,6 +880,18 @@ http-client:
   allow-ips: []
   block-ips: []
 
+  # Bool. Disable verification of TLS certificates of remote servers.
+  # With this set to 'true', GoToSocial will not error when a remote
+  # server presents an invalid or self-signed certificate.
+  #
+  # THIS SETTING SHOULD BE USED FOR TESTING ONLY! IF YOU TURN THIS
+  # ON WHILE RUNNING IN PRODUCTION YOU ARE LEAVING YOUR SERVER WIDE
+  # OPEN TO MAN IN THE MIDDLE ATTACKS! DO NOT CHANGE THIS SETTING 
+  # UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING AND WHY YOU'RE DOING IT.
+  #
+  # Default: false
+  tls-insecure-skip-verify: false
+
 #############################
 ##### ADVANCED SETTINGS #####
 #############################

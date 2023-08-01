@@ -107,9 +107,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Build HTTP client
 	client := httpclient.New(httpclient.Config{
-		AllowRanges: config.MustParseIPPrefixes(config.GetHTTPClientAllowIPs()),
-		BlockRanges: config.MustParseIPPrefixes(config.GetHTTPClientBlockIPs()),
-		Timeout:     config.GetHTTPClientTimeout(),
+		AllowRanges:           config.MustParseIPPrefixes(config.GetHTTPClientAllowIPs()),
+		BlockRanges:           config.MustParseIPPrefixes(config.GetHTTPClientBlockIPs()),
+		Timeout:               config.GetHTTPClientTimeout(),
+		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
 
 	// Initialize workers.
