@@ -155,7 +155,7 @@ func New(cfg Config) *Client {
 
 	if tlsClientConfig.InsecureSkipVerify {
 		// Warn against playing silly buggers.
-		log.Warn(nil, "tlsClientConfig.InsecureSkipVerify was set to TRUE. "+
+		log.Warn(nil, "http-client.tls-insecure-skip-verify was set to TRUE. "+
 			"*****THIS SHOULD BE USED FOR TESTING ONLY, IF YOU TURN THIS ON WHILE "+
 			"RUNNING IN PRODUCTION YOU ARE LEAVING YOUR SERVER WIDE OPEN TO ATTACKS! "+
 			"IF IN DOUBT, STOP YOUR SERVER *NOW* AND ADJUST YOUR CONFIGURATION!*****",
