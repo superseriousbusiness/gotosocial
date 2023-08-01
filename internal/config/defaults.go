@@ -131,7 +131,7 @@ var Defaults = Configuration{
 		VisibilityMemRatio: 5,
 		GTS: GTSCacheConfiguration{
 			AccountMemRatio:          5,
-			AccountNoteMemRatio:      3,
+			AccountNoteMemRatio:      2,
 			BlockMemRatio:            3,
 			BlockIDsMemRatio:         3,
 			EmojiMemRatio:            3,
