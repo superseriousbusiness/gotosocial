@@ -137,12 +137,12 @@ var Defaults = Configuration{
 		// when TODO items in the size.go source
 		// file have been addressed, these should
 		// be able to make some more sense :D
-		AccountMemRatio:          20,
-		AccountNoteMemRatio:      1,
+		AccountMemRatio:          18,
+		AccountNoteMemRatio:      0.1,
 		BlockMemRatio:            3,
 		BlockIDsMemRatio:         3,
 		EmojiMemRatio:            3,
-		EmojiCategoryMemRatio:    1,
+		EmojiCategoryMemRatio:    0.1,
 		FollowMemRatio:           4,
 		FollowIDsMemRatio:        4,
 		FollowRequestMemRatio:    2,
@@ -150,18 +150,18 @@ var Defaults = Configuration{
 		InstanceMemRatio:         1,
 		ListMemRatio:             3,
 		ListEntryMemRatio:        3,
-		MarkerMemRatio:           3,
+		MarkerMemRatio:           0.5,
 		MediaMemRatio:            4,
 		MentionMemRatio:          5,
 		NotificationMemRatio:     5,
 		ReportMemRatio:           1,
-		StatusMemRatio:           20,
+		StatusMemRatio:           18,
 		StatusFaveMemRatio:       5,
 		TagMemRatio:              3,
 		TombstoneMemRatio:        2,
-		UserMemRatio:             1,
+		UserMemRatio:             0.1,
 		WebfingerMemRatio:        0.1,
-		VisibilityMemRatio:       0.25,
+		VisibilityMemRatio:       2,
 	},
 
 	HTTPClient: HTTPClientConfiguration{
