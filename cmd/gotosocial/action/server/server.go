@@ -119,9 +119,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Workers.Start()
 	defer state.Workers.Stop()
 
-	// Add a task to the scheduler to regularly sweep caches.
-	job := sched.NewJob(state.Caches.Sweep).Every(time.Minute)
-	state.Workers.Scheduler.Schedule(job)
+	// Add a task to the scheduler to sweep caches.
+	// Frequency = 1 * minute
+	// Threshold = 80% capacity
+	sweep := func(time.Time) { state.Caches.Sweep(80) }
+	job := sched.NewJob(sweep).Every(time.Minute)
+	_ = state.Workers.Scheduler.Schedule(job)
 
 	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(&state)

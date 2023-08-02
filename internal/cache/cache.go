@@ -20,6 +20,7 @@ package cache
 import (
 	"time"
 
+	"codeberg.org/gruf/go-sched"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -207,8 +208,13 @@ func (c *Caches) setuphooks() {
 	})
 }
 
-func (c *Caches) Sweep(_ time.Time) {
-	const threshold = 80.0
+// Sweep will sweep all the available caches to ensure none
+// are above threshold percent full to their total capacity.
+//
+// This helps with cache performance, as a full cache will
+// require an eviction on every single write, which adds
+// significant overhead to all cache writes.
+func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Account().Trim(threshold)
 	c.GTS.AccountNote().Trim(threshold)
 	c.GTS.Block().Trim(threshold)
@@ -233,4 +239,11 @@ func (c *Caches) Sweep(_ time.Time) {
 	c.GTS.Tombstone().Trim(threshold)
 	c.GTS.User().Trim(threshold)
 	c.Visibility.Trim(threshold)
+}
+
+// SweepJob returns a new scheduler job that sweeps up-to threshold this cache every 'every'.
+func (c *Caches) SweepJob(threshold float64, every time.Duration) *sched.Job {
+	return sched.NewJob(func(_ time.Time) {
+		c.Sweep(threshold)
+	}).Every(every)
 }
