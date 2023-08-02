@@ -18,6 +18,9 @@
 package cache
 
 import (
+	"time"
+
+	"codeberg.org/gruf/go-runners"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -34,6 +37,8 @@ type Caches struct {
 	// Visibility provides access to the item visibility cache.
 	// (used by the visibility filter).
 	Visibility VisibilityCache
+
+	sweeper runners.Service
 
 	// prevent pass-by-value.
 	_ nocopy
@@ -203,4 +208,32 @@ func (c *Caches) setuphooks() {
 		c.Visibility.Invalidate("ItemID", user.AccountID)
 		c.Visibility.Invalidate("RequesterID", user.AccountID)
 	})
+}
+
+func (c *Caches) Sweep(_ time.Time) {
+	const threshold = 80.0
+	c.GTS.Account().Trim(threshold)
+	c.GTS.AccountNote().Trim(threshold)
+	c.GTS.Block().Trim(threshold)
+	c.GTS.BlockIDs().Trim(threshold)
+	c.GTS.Emoji().Trim(threshold)
+	c.GTS.EmojiCategory().Trim(threshold)
+	c.GTS.Follow().Trim(threshold)
+	c.GTS.FollowIDs().Trim(threshold)
+	c.GTS.FollowRequest().Trim(threshold)
+	c.GTS.FollowRequestIDs().Trim(threshold)
+	c.GTS.Instance().Trim(threshold)
+	c.GTS.List().Trim(threshold)
+	c.GTS.ListEntry().Trim(threshold)
+	c.GTS.Marker().Trim(threshold)
+	c.GTS.Media().Trim(threshold)
+	c.GTS.Mention().Trim(threshold)
+	c.GTS.Notification().Trim(threshold)
+	c.GTS.Report().Trim(threshold)
+	c.GTS.Status().Trim(threshold)
+	c.GTS.StatusFave().Trim(threshold)
+	c.GTS.Tag().Trim(threshold)
+	c.GTS.Tombstone().Trim(threshold)
+	c.GTS.User().Trim(threshold)
+	c.Visibility.Trim(threshold)
 }

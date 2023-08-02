@@ -365,19 +365,20 @@ func (c *Cache[K, V]) InvalidateAll(keys ...K) (ok bool) {
 			k := items[x].Key.(K)
 			v := items[x].Value.(V)
 			invalid(k, v)
-		}
-	}
 
-	for x := range items {
-		// Free entries.
-		putEntry(items[x])
+			// Free this entry.
+			putEntry(items[x])
+		}
 	}
 
 	return
 }
 
 // Clear: implements cache.Cache's Clear().
-func (c *Cache[K, V]) Clear() {
+func (c *Cache[K, V]) Clear() { c.Trim(100) }
+
+// Trim will truncate the cache to ensure it stays within given percentage of total capacity.
+func (c *Cache[K, V]) Trim(perc float64) {
 	var (
 		// deleted items
 		items []*Entry
@@ -387,11 +388,18 @@ func (c *Cache[K, V]) Clear() {
 	)
 
 	c.locked(func() {
+		// Calculate number of cache items to truncate.
+		max := (perc / 100) * float64(c.Cache.Cap())
+		diff := c.Cache.Len() - int(max)
+		if diff <= 0 {
+			return
+		}
+
 		// Set hook func ptr.
 		invalid = c.Invalid
 
-		// Truncate the entire cache length.
-		items = c.truncate(c.Cache.Len(), invalid)
+		// Truncate by calculated length.
+		items = c.truncate(diff, invalid)
 	})
 
 	if invalid != nil {
@@ -400,12 +408,10 @@ func (c *Cache[K, V]) Clear() {
 			k := items[x].Key.(K)
 			v := items[x].Value.(V)
 			invalid(k, v)
-		}
-	}
 
-	for x := range items {
-		// Free entries.
-		putEntry(items[x])
+			// Free this entry.
+			putEntry(items[x])
+		}
 	}
 }
 

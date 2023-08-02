@@ -343,8 +343,13 @@ func (c *Cache[T]) Invalidate(lookup string, keyParts ...any) {
 	c.cache.InvalidateAll(pkeys...)
 }
 
-// Clear empties the cache, calling the invalidate callback.
-func (c *Cache[T]) Clear() { c.cache.Clear() }
+// Clear empties the cache, calling the invalidate callback where necessary.
+func (c *Cache[T]) Clear() { c.Trim(100) }
+
+// Trim ensures the cache stays within percentage of total capacity, truncating where necessary.
+func (c *Cache[T]) Trim(perc float64) {
+	c.cache.Trim(perc)
+}
 
 // store will cache this result under all of its required cache keys.
 func (c *Cache[T]) store(res *result) (evict func()) {
