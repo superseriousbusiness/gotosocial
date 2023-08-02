@@ -106,76 +106,25 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 	}
 
 	return e.db.RunInTx(ctx, func(tx bun.Tx) error {
-		// delete links between this emoji and any statuses that use it
-		// TODO: remove when we delete this table
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("status_to_emojis"), bun.Ident("status_to_emoji")).
-			Where("? = ?", bun.Ident("status_to_emoji.emoji_id"), id).
-			Exec(ctx); err != nil {
+		// Delete relational links between this emoji
+		// and any statuses using it, returning the
+		// status IDs so we can later update them.
+		if _, err := tx.NewDelete().
+			Table("status_to_emojis").
+			Where("? = ?", bun.Ident("emoji_id"), id).
+			Returning("status_id").
+			Exec(ctx, &statusIDs); err != nil {
 			return err
 		}
 
-		// delete links between this emoji and any accounts that use it
-		// TODO: remove when we delete this table
-		if _, err := tx.
-			NewDelete().
-			TableExpr("? AS ?", bun.Ident("account_to_emojis"), bun.Ident("account_to_emoji")).
-			Where("? = ?", bun.Ident("account_to_emoji.emoji_id"), id).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		// Prepare a SELECT query with a WHERE LIKE
-		// that checks the `emoji` column for any
-		// text containing this specific emoji ID.
-		//
-		// (see GetStatusesUsingEmoji() for details.)
-		aq := tx.NewSelect().Table("accounts").Column("id")
-		aq = whereLike(aq, "emojis", id)
-
-		// Select all accounts using this emoji into accountIDss.
-		if _, err := aq.Exec(ctx, &accountIDs); err != nil {
-			return err
-		}
-
-		for _, id := range accountIDs {
-			var emojiIDs []string
-
-			// Select account with ID.
-			if _, err := tx.NewSelect().
-				Table("accounts").
-				Column("emojis").
-				Where("id = ?", id).
-				Exec(ctx); err != nil &&
-				err != sql.ErrNoRows {
-				return err
-			}
-
-			// Drop ID from account emojis.
-			emojiIDs = dropID(emojiIDs, id)
-
-			// Update account emoji IDs.
-			if _, err := tx.NewUpdate().
-				Table("accounts").
-				Where("id = ?", id).
-				Set("emojis = ?", emojiIDs).
-				Exec(ctx); err != nil &&
-				err != sql.ErrNoRows {
-				return err
-			}
-		}
-
-		// Prepare a SELECT query with a WHERE LIKE
-		// that checks the `emoji` column for any
-		// text containing this specific emoji ID.
-		//
-		// (see GetStatusesUsingEmoji() for details.)
-		sq := tx.NewSelect().Table("statuses").Column("id")
-		sq = whereLike(sq, "emojis", id)
-
-		// Select all statuses using this emoji into statusIDs.
-		if _, err := sq.Exec(ctx, &statusIDs); err != nil {
+		// Delete relational links between this emoji
+		// and any accounts using it, returning the
+		// account IDs so we can later update them.
+		if _, err := tx.NewDelete().
+			Table("account_to_emojis").
+			Where("? = ?", bun.Ident("emoji_id"), id).
+			Returning("account_id").
+			Exec(ctx, &accountIDs); err != nil {
 			return err
 		}
 
@@ -186,7 +135,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			if _, err := tx.NewSelect().
 				Table("statuses").
 				Column("emojis").
-				Where("id = ?", id).
+				Where("? = ?", bun.Ident("id"), id).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
@@ -198,7 +147,34 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			// Update status emoji IDs.
 			if _, err := tx.NewUpdate().
 				Table("statuses").
-				Where("id = ?", id).
+				Where("? = ?", bun.Ident("id"), id).
+				Set("emojis = ?", emojiIDs).
+				Exec(ctx); err != nil &&
+				err != sql.ErrNoRows {
+				return err
+			}
+		}
+
+		for _, id := range accountIDs {
+			var emojiIDs []string
+
+			// Select account with ID.
+			if _, err := tx.NewSelect().
+				Table("accounts").
+				Column("emojis").
+				Where("? = ?", bun.Ident("id"), id).
+				Exec(ctx); err != nil &&
+				err != sql.ErrNoRows {
+				return err
+			}
+
+			// Drop ID from account emojis.
+			emojiIDs = dropID(emojiIDs, id)
+
+			// Update account emoji IDs.
+			if _, err := tx.NewUpdate().
+				Table("accounts").
+				Where("? = ?", bun.Ident("id"), id).
 				Set("emojis = ?", emojiIDs).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
@@ -209,7 +185,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 		// Delete emoji from database.
 		if _, err := tx.NewDelete().
 			Table("emojis").
-			Where("id = ?", id).
+			Where("? = ?", bun.Ident("id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
