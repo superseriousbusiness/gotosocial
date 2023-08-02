@@ -44,6 +44,13 @@ func (p *Processor) Lookup(
 	requestingAccount *gtsmodel.Account,
 	query string,
 ) (*apimodel.Account, gtserror.WithCode) {
+	// Include instance accounts in this search.
+	//
+	// Lookup is for one specific account so we
+	// can't return loads of instance accounts by
+	// accident.
+	const includeInstanceAccounts = true
+
 	// Validate query.
 	query = strings.TrimSpace(query)
 	if query == "" {
@@ -96,7 +103,12 @@ func (p *Processor) Lookup(
 	// using the packageAccounts function to return it. This
 	// may cause the account to be filtered out if it's not
 	// visible to the caller, so anticipate this.
-	accounts, errWithCode := p.packageAccounts(ctx, requestingAccount, []*gtsmodel.Account{account})
+	accounts, errWithCode := p.packageAccounts(
+		ctx,
+		requestingAccount,
+		[]*gtsmodel.Account{account},
+		includeInstanceAccounts,
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}

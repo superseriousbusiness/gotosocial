@@ -19,10 +19,10 @@ package visibility
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -66,7 +66,7 @@ func (f *Filter) isAccountVisibleTo(ctx context.Context, requester *gtsmodel.Acc
 	// Check whether target account is visible to anyone.
 	visible, err := f.isAccountVisible(ctx, account)
 	if err != nil {
-		return false, fmt.Errorf("isAccountVisibleTo: error checking account %s visibility: %w", account.ID, err)
+		return false, gtserror.Newf("error checking account %s visibility: %w", account.ID, err)
 	}
 
 	if !visible {
@@ -83,7 +83,7 @@ func (f *Filter) isAccountVisibleTo(ctx context.Context, requester *gtsmodel.Acc
 	// If requester is not visible, they cannot *see* either.
 	visible, err = f.isAccountVisible(ctx, requester)
 	if err != nil {
-		return false, fmt.Errorf("isAccountVisibleTo: error checking account %s visibility: %w", account.ID, err)
+		return false, gtserror.Newf("error checking account %s visibility: %w", account.ID, err)
 	}
 
 	if !visible {
@@ -97,7 +97,7 @@ func (f *Filter) isAccountVisibleTo(ctx context.Context, requester *gtsmodel.Acc
 		account.ID,
 	)
 	if err != nil {
-		return false, fmt.Errorf("isAccountVisibleTo: error checking account blocks: %w", err)
+		return false, gtserror.Newf("error checking account blocks: %w", err)
 	}
 
 	if blocked {
@@ -121,6 +121,7 @@ func (f *Filter) isAccountVisible(ctx context.Context, account *gtsmodel.Account
 		// Fetch the local user model for this account.
 		user, err := f.state.DB.GetUserByAccountID(ctx, account.ID)
 		if err != nil {
+			err := gtserror.Newf("db error getting user for account %s: %w", account.ID, err)
 			return false, err
 		}
 
