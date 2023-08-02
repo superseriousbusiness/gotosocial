@@ -468,24 +468,13 @@ func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username 
 func (a *accountDB) GetAccountsUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Account, error) {
 	var accountIDs []string
 
-	// Create SELECT account query.
-	q := a.db.NewSelect().
-		Table("accounts").
-		Column("id")
-
-	// Append a WHERE LIKE clause to the query
-	// that checks the `emoji` column for any
-	// text containing this specific emoji ID.
-	//
-	// The reason we do this instead of doing a
-	// `WHERE ? IN (emojis)` is that the latter
-	// ends up being much MUCH slower, and the
-	// database stores this ID-array-column as
-	// text anyways, allowing a simple LIKE query.
-	q = whereLike(q, "emojis", emojiID)
-
-	// Execute the query, scanning destination into accountIDs.
-	if _, err := q.Exec(ctx, &accountIDs); err != nil {
+	// SELECT all accounts using this emoji,
+	// using a relational table for improved perf.
+	if _, err := a.db.NewSelect().
+		Table("accounts_to_emoji").
+		Column("id").
+		Where("? = ?", bun.Ident("emoji_id"), emojiID).
+		Exec(ctx, &accountIDs); err != nil {
 		return nil, a.db.ProcessError(err)
 	}
 
