@@ -18,9 +18,6 @@
 package cache
 
 import (
-	"time"
-
-	"codeberg.org/gruf/go-sched"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -239,11 +236,4 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Tombstone().Trim(threshold)
 	c.GTS.User().Trim(threshold)
 	c.Visibility.Trim(threshold)
-}
-
-// SweepJob returns a new scheduler job that sweeps up-to threshold this cache every 'every'.
-func (c *Caches) SweepJob(threshold float64, every time.Duration) *sched.Job {
-	return sched.NewJob(func(_ time.Time) {
-		c.Sweep(threshold)
-	}).Every(every)
 }
