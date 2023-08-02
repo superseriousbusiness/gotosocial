@@ -43,7 +43,6 @@ func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
 	return s.db.
 		NewSelect().
 		Model(status).
-		Relation("Tags").
 		Relation("CreatedWithApplication")
 }
 
