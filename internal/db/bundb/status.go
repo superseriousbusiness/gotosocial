@@ -442,7 +442,7 @@ func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([
 	// SELECT all statuses using this emoji,
 	// using a relational table for improved perf.
 	if _, err := s.db.NewSelect().
-		Table("statuses_to_emoji").
+		Table("status_to_emojis").
 		Column("id").
 		Where("? = ?", bun.Ident("emoji_id"), emojiID).
 		Exec(ctx, &statusIDs); err != nil {
