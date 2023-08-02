@@ -20,7 +20,6 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -255,7 +254,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Account) error {
 	var (
 		err  error
-		errs = make(gtserror.MultiError, 0, 3)
+		errs = gtserror.NewMultiError(3)
 	)
 
 	if account.AvatarMediaAttachment == nil && account.AvatarMediaAttachmentID != "" {
@@ -265,7 +264,7 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 			account.AvatarMediaAttachmentID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating account avatar: %w", err))
+			errs.Appendf("error populating account avatar: %w", err)
 		}
 	}
 
@@ -276,7 +275,7 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 			account.HeaderMediaAttachmentID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating account header: %w", err))
+			errs.Appendf("error populating account header: %w", err)
 		}
 	}
 
@@ -287,11 +286,15 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 			account.EmojiIDs,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating account emojis: %w", err))
+			errs.Appendf("error populating account emojis: %w", err)
 		}
 	}
 
-	return errs.Combine()
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) error {

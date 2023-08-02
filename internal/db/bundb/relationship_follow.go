@@ -160,7 +160,7 @@ func (r *relationshipDB) getFollow(ctx context.Context, lookup string, dbQuery f
 func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	var (
 		err  error
-		errs = make(gtserror.MultiError, 0, 2)
+		errs = gtserror.NewMultiError(2)
 	)
 
 	if follow.Account == nil {
@@ -170,7 +170,7 @@ func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Fo
 			follow.AccountID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating follow account: %w", err))
+			errs.Appendf("error populating follow account: %w", err)
 		}
 	}
 
@@ -181,11 +181,15 @@ func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Fo
 			follow.TargetAccountID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating follow target account: %w", err))
+			errs.Appendf("error populating follow target account: %w", err)
 		}
 	}
 
-	return errs.Combine()
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow) error {

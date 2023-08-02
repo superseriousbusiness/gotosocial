@@ -20,7 +20,6 @@ package processing
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -42,13 +41,13 @@ import (
 func (p *Processor) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Ensure status fully populated; including account, mentions, etc.
 	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
-		return fmt.Errorf("timelineAndNotifyStatus: error populating status with id %s: %w", status.ID, err)
+		return gtserror.Newf("error populating status with id %s: %w", status.ID, err)
 	}
 
 	// Get local followers of the account that posted the status.
 	follows, err := p.state.DB.GetAccountLocalFollowers(ctx, status.AccountID)
 	if err != nil {
-		return fmt.Errorf("timelineAndNotifyStatus: error getting local followers for account id %s: %w", status.AccountID, err)
+		return gtserror.Newf("error getting local followers for account id %s: %w", status.AccountID, err)
 	}
 
 	// If the poster is also local, add a fake entry for them
@@ -66,12 +65,12 @@ func (p *Processor) timelineAndNotifyStatus(ctx context.Context, status *gtsmode
 	// This will also handle notifying any followers with notify
 	// set to true on their follow.
 	if err := p.timelineAndNotifyStatusForFollowers(ctx, status, follows); err != nil {
-		return fmt.Errorf("timelineAndNotifyStatus: error timelining status %s for followers: %w", status.ID, err)
+		return gtserror.Newf("error timelining status %s for followers: %w", status.ID, err)
 	}
 
 	// Notify each local account that's mentioned by this status.
 	if err := p.notifyStatusMentions(ctx, status); err != nil {
-		return fmt.Errorf("timelineAndNotifyStatus: error notifying status mentions for status %s: %w", status.ID, err)
+		return gtserror.Newf("error notifying status mentions for status %s: %w", status.ID, err)
 	}
 
 	return nil
@@ -79,7 +78,7 @@ func (p *Processor) timelineAndNotifyStatus(ctx context.Context, status *gtsmode
 
 func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, status *gtsmodel.Status, follows []*gtsmodel.Follow) error {
 	var (
-		errs  = make(gtserror.MultiError, 0, len(follows))
+		errs  = gtserror.NewMultiError(len(follows))
 		boost = status.BoostOfID != ""
 		reply = status.InReplyToURI != ""
 	)
@@ -100,7 +99,7 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 			follow.ID,
 		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error list timelining status: %w", err))
+			errs.Appendf("error list timelining status: %w", err)
 			continue
 		}
 
@@ -113,7 +112,7 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 				status,
 				stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
 			); err != nil {
-				errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error list timelining status: %w", err))
+				errs.Appendf("error list timelining status: %w", err)
 				continue
 			}
 		}
@@ -128,7 +127,7 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 			status,
 			stream.TimelineHome,
 		); err != nil {
-			errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error home timelining status: %w", err))
+			errs.Appendf("error home timelining status: %w", err)
 			continue
 		} else if !timelined {
 			// Status wasn't added to home tomeline,
@@ -162,11 +161,15 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(ctx context.Context, sta
 			status.AccountID,
 			status.ID,
 		); err != nil {
-			errs.Append(fmt.Errorf("timelineAndNotifyStatusForFollowers: error notifying account %s about new status: %w", follow.AccountID, err))
+			errs.Appendf("error notifying account %s about new status: %w", follow.AccountID, err)
 		}
 	}
 
-	return errs.Combine()
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 // timelineStatus uses the provided ingest function to put the given
@@ -185,7 +188,7 @@ func (p *Processor) timelineStatus(
 	// Make sure the status is timelineable.
 	// This works for both home and list timelines.
 	if timelineable, err := p.filter.StatusHomeTimelineable(ctx, account, status); err != nil {
-		err = fmt.Errorf("timelineStatusForAccount: error getting timelineability for status for timeline with id %s: %w", account.ID, err)
+		err = gtserror.Newf("error getting timelineability for status for timeline with id %s: %w", account.ID, err)
 		return false, err
 	} else if !timelineable {
 		// Nothing to do.
@@ -194,7 +197,7 @@ func (p *Processor) timelineStatus(
 
 	// Ingest status into given timeline using provided function.
 	if inserted, err := ingest(ctx, timelineID, status); err != nil {
-		err = fmt.Errorf("timelineStatusForAccount: error ingesting status %s: %w", status.ID, err)
+		err = gtserror.Newf("error ingesting status %s: %w", status.ID, err)
 		return false, err
 	} else if !inserted {
 		// Nothing more to do.
@@ -204,12 +207,12 @@ func (p *Processor) timelineStatus(
 	// The status was inserted so stream it to the user.
 	apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, account)
 	if err != nil {
-		err = fmt.Errorf("timelineStatusForAccount: error converting status %s to frontend representation: %w", status.ID, err)
+		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return true, err
 	}
 
 	if err := p.stream.Update(apiStatus, account, []string{streamType}); err != nil {
-		err = fmt.Errorf("timelineStatusForAccount: error streaming update for status %s: %w", status.ID, err)
+		err = gtserror.Newf("error streaming update for status %s: %w", status.ID, err)
 		return true, err
 	}
 
@@ -217,7 +220,7 @@ func (p *Processor) timelineStatus(
 }
 
 func (p *Processor) notifyStatusMentions(ctx context.Context, status *gtsmodel.Status) error {
-	errs := make(gtserror.MultiError, 0, len(status.Mentions))
+	errs := gtserror.NewMultiError(len(status.Mentions))
 
 	for _, m := range status.Mentions {
 		if err := p.notify(
@@ -231,7 +234,11 @@ func (p *Processor) notifyStatusMentions(ctx context.Context, status *gtsmodel.S
 		}
 	}
 
-	return errs.Combine()
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (p *Processor) notifyFollowRequest(ctx context.Context, followRequest *gtsmodel.FollowRequest) error {
@@ -255,13 +262,13 @@ func (p *Processor) notifyFollow(ctx context.Context, follow *gtsmodel.Follow, t
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		// Proper error while checking.
-		return fmt.Errorf("notifyFollow: db error checking for previous follow request notification: %w", err)
+		return gtserror.Newf("db error checking for previous follow request notification: %w", err)
 	}
 
 	if prevNotif != nil {
 		// Previous notification existed, delete.
 		if err := p.state.DB.DeleteNotificationByID(ctx, prevNotif.ID); err != nil {
-			return fmt.Errorf("notifyFollow: db error removing previous follow request notification %s: %w", prevNotif.ID, err)
+			return gtserror.Newf("db error removing previous follow request notification %s: %w", prevNotif.ID, err)
 		}
 	}
 
@@ -319,7 +326,7 @@ func (p *Processor) notify(
 ) error {
 	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
-		return fmt.Errorf("notify: error getting target account %s: %w", targetAccountID, err)
+		return gtserror.Newf("error getting target account %s: %w", targetAccountID, err)
 	}
 
 	if !targetAccount.IsLocal() {
@@ -340,7 +347,7 @@ func (p *Processor) notify(
 		return nil
 	} else if !errors.Is(err, db.ErrNoEntries) {
 		// Real error.
-		return fmt.Errorf("notify: error checking existence of notification: %w", err)
+		return gtserror.Newf("error checking existence of notification: %w", err)
 	}
 
 	// Notification doesn't yet exist, so
@@ -354,17 +361,17 @@ func (p *Processor) notify(
 	}
 
 	if err := p.state.DB.PutNotification(ctx, notif); err != nil {
-		return fmt.Errorf("notify: error putting notification in database: %w", err)
+		return gtserror.Newf("error putting notification in database: %w", err)
 	}
 
 	// Stream notification to the user.
 	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
 	if err != nil {
-		return fmt.Errorf("notify: error converting notification to api representation: %w", err)
+		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
 
 	if err := p.stream.Notify(apiNotif, targetAccount); err != nil {
-		return fmt.Errorf("notify: error streaming notification to account: %w", err)
+		return gtserror.Newf("error streaming notification to account: %w", err)
 	}
 
 	return nil
@@ -479,7 +486,7 @@ func (p *Processor) invalidateStatusFromTimelines(ctx context.Context, statusID 
 func (p *Processor) emailReport(ctx context.Context, report *gtsmodel.Report) error {
 	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
 	if err != nil {
-		return fmt.Errorf("emailReport: error getting instance: %w", err)
+		return gtserror.Newf("error getting instance: %w", err)
 	}
 
 	toAddresses, err := p.state.DB.GetInstanceModeratorAddresses(ctx)
@@ -488,20 +495,20 @@ func (p *Processor) emailReport(ctx context.Context, report *gtsmodel.Report) er
 			// No registered moderator addresses.
 			return nil
 		}
-		return fmt.Errorf("emailReport: error getting instance moderator addresses: %w", err)
+		return gtserror.Newf("error getting instance moderator addresses: %w", err)
 	}
 
 	if report.Account == nil {
 		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
 		if err != nil {
-			return fmt.Errorf("emailReport: error getting report account: %w", err)
+			return gtserror.Newf("error getting report account: %w", err)
 		}
 	}
 
 	if report.TargetAccount == nil {
 		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
 		if err != nil {
-			return fmt.Errorf("emailReport: error getting report target account: %w", err)
+			return gtserror.Newf("error getting report target account: %w", err)
 		}
 	}
 
@@ -514,7 +521,7 @@ func (p *Processor) emailReport(ctx context.Context, report *gtsmodel.Report) er
 	}
 
 	if err := p.emailSender.SendNewReportEmail(toAddresses, reportData); err != nil {
-		return fmt.Errorf("emailReport: error emailing instance moderators: %w", err)
+		return gtserror.Newf("error emailing instance moderators: %w", err)
 	}
 
 	return nil
@@ -523,7 +530,7 @@ func (p *Processor) emailReport(ctx context.Context, report *gtsmodel.Report) er
 func (p *Processor) emailReportClosed(ctx context.Context, report *gtsmodel.Report) error {
 	user, err := p.state.DB.GetUserByAccountID(ctx, report.Account.ID)
 	if err != nil {
-		return fmt.Errorf("emailReportClosed: db error getting user: %w", err)
+		return gtserror.Newf("db error getting user: %w", err)
 	}
 
 	if user.ConfirmedAt.IsZero() || !*user.Approved || *user.Disabled || user.Email == "" {
@@ -537,20 +544,20 @@ func (p *Processor) emailReportClosed(ctx context.Context, report *gtsmodel.Repo
 
 	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
 	if err != nil {
-		return fmt.Errorf("emailReportClosed: db error getting instance: %w", err)
+		return gtserror.Newf("db error getting instance: %w", err)
 	}
 
 	if report.Account == nil {
 		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
 		if err != nil {
-			return fmt.Errorf("emailReportClosed: error getting report account: %w", err)
+			return gtserror.Newf("error getting report account: %w", err)
 		}
 	}
 
 	if report.TargetAccount == nil {
 		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
 		if err != nil {
-			return fmt.Errorf("emailReportClosed: error getting report target account: %w", err)
+			return gtserror.Newf("error getting report target account: %w", err)
 		}
 	}
 

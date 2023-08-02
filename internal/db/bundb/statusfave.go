@@ -149,7 +149,7 @@ func (s *statusFaveDB) GetStatusFavesForStatus(ctx context.Context, statusID str
 func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) error {
 	var (
 		err  error
-		errs = make(gtserror.MultiError, 0, 3)
+		errs = gtserror.NewMultiError(3)
 	)
 
 	if statusFave.Account == nil {
@@ -159,7 +159,7 @@ func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmo
 			statusFave.AccountID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating status fave author: %w", err))
+			errs.Appendf("error populating status fave author: %w", err)
 		}
 	}
 
@@ -170,7 +170,7 @@ func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmo
 			statusFave.TargetAccountID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating status fave target account: %w", err))
+			errs.Appendf("error populating status fave target account: %w", err)
 		}
 	}
 
@@ -181,11 +181,15 @@ func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmo
 			statusFave.StatusID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating status fave status: %w", err))
+			errs.Appendf("error populating status fave status: %w", err)
 		}
 	}
 
-	return errs.Combine()
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) error {

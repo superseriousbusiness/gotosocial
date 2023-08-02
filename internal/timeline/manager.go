@@ -190,18 +190,18 @@ func (m *manager) GetOldestIndexedID(ctx context.Context, timelineID string) str
 }
 
 func (m *manager) WipeItemFromAllTimelines(ctx context.Context, itemID string) error {
-	errors := gtserror.MultiError{}
+	errs := new(gtserror.MultiError)
 
 	m.timelines.Range(func(_ any, v any) bool {
 		if _, err := v.(Timeline).Remove(ctx, itemID); err != nil {
-			errors.Append(err)
+			errs.Append(err)
 		}
 
 		return true // always continue range
 	})
 
-	if len(errors) > 0 {
-		return gtserror.Newf("error(s) wiping status %s: %w", itemID, errors.Combine())
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("error(s) wiping status %s: %w", itemID, errs.Combine())
 	}
 
 	return nil
@@ -213,21 +213,21 @@ func (m *manager) WipeItemsFromAccountID(ctx context.Context, timelineID string,
 }
 
 func (m *manager) UnprepareItemFromAllTimelines(ctx context.Context, itemID string) error {
-	errors := gtserror.MultiError{}
+	errs := new(gtserror.MultiError)
 
 	// Work through all timelines held by this
 	// manager, and call Unprepare for each.
 	m.timelines.Range(func(_ any, v any) bool {
 		// nolint:forcetypeassert
 		if err := v.(Timeline).Unprepare(ctx, itemID); err != nil {
-			errors.Append(err)
+			errs.Append(err)
 		}
 
 		return true // always continue range
 	})
 
-	if len(errors) > 0 {
-		return gtserror.Newf("error(s) unpreparing status %s: %w", itemID, errors.Combine())
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("error(s) unpreparing status %s: %w", itemID, errs.Combine())
 	}
 
 	return nil

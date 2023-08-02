@@ -19,7 +19,6 @@ package reports_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -77,17 +76,17 @@ func (suite *ReportCreateTestSuite) createReport(expectedHTTPStatus int, expecte
 		return nil, err
 	}
 
-	errs := gtserror.MultiError{}
+	errs := gtserror.NewMultiError(2)
 
 	// check code + body
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
-		errs = append(errs, fmt.Sprintf("expected %d got %d", expectedHTTPStatus, resultCode))
+		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
 	}
 
 	// if we got an expected body, return early
 	if expectedBody != "" {
 		if string(b) != expectedBody {
-			errs = append(errs, fmt.Sprintf("expected %s got %s", expectedBody, string(b)))
+			errs.Appendf("expected %s got %s", expectedBody, string(b))
 		}
 		return nil, errs.Combine()
 	}

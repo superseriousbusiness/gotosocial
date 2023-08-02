@@ -173,7 +173,7 @@ func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery fun
 func (i *instanceDB) populateInstance(ctx context.Context, instance *gtsmodel.Instance) error {
 	var (
 		err  error
-		errs = make(gtserror.MultiError, 0, 2)
+		errs = gtserror.NewMultiError(2)
 	)
 
 	if instance.DomainBlockID != "" && instance.DomainBlock == nil {
@@ -183,7 +183,7 @@ func (i *instanceDB) populateInstance(ctx context.Context, instance *gtsmodel.In
 			instance.Domain,
 		)
 		if err != nil {
-			errs.Append(gtserror.Newf("error populating instance domain block: %w", err))
+			errs.Appendf("error populating instance domain block: %w", err)
 		}
 	}
 
@@ -194,11 +194,15 @@ func (i *instanceDB) populateInstance(ctx context.Context, instance *gtsmodel.In
 			instance.ContactAccountID,
 		)
 		if err != nil {
-			errs.Append(gtserror.Newf("error populating instance contact account: %w", err))
+			errs.Appendf("error populating instance contact account: %w", err)
 		}
 	}
 
-	return errs.Combine()
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instance) error {
