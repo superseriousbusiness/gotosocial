@@ -22,6 +22,7 @@ import (
 	"time"
 	"unsafe"
 
+	"codeberg.org/gruf/go-cache/v3/simple"
 	"github.com/DmitriyVTitov/size"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -60,11 +61,32 @@ func calculateSliceCacheMax(ratio float64) int {
 // calculateResultCacheMax calculates the maximum cache capacity for a result
 // cache's individual ratio number, and the size of the struct model in memory.
 func calculateResultCacheMax(structSz uintptr, ratio float64) int {
-	// TODO: result caches carry some level of extra memory overhead
-	// in that they have hashmaps for every possible lookup type,
-	// (though limited in size as it's only ever map[string]int64),
-	// this should (roughly) be taken into account during calculation.
-	return calculateCacheMax(sizeofResultKey, structSz, ratio)
+	// Estimate a worse-case scenario of extra lookup hash maps,
+	// where lookups are the no. "keys" each result can be found under
+	const lookups = 10
+
+	// Calculate the extra cache lookup map overheads.
+	totalLookupKeySz := uintptr(lookups) * sizeofResultKey
+	totalLookupValSz := uintptr(lookups) * unsafe.Sizeof(uint64(0))
+
+	// Primary cache sizes.
+	pkeySz := unsafe.Sizeof(uint64(0))
+	pvalSz := structSz
+
+	// The result cache wraps each struct result in a wrapping
+	// struct with further information, and possible error. This
+	// also needs to be taken into account when calculating value.
+	const resultValueOverhead = unsafe.Sizeof(&struct {
+		_ []any
+		_ any
+		_ error
+	}{})
+
+	return calculateCacheMax(
+		pkeySz+totalLookupKeySz,
+		pvalSz+totalLookupValSz+resultValueOverhead,
+		ratio,
+	)
 }
 
 // calculateCacheMax calculates the maximum cache capacity for a cache's
@@ -78,6 +100,13 @@ func calculateCacheMax(keySz, valSz uintptr, ratio float64) int {
 
 	// see: https://golang.org/src/runtime/map.go
 	const emptyBucketOverhead = 10.79
+
+	// This takes into account (roughly) that the underlying simple cache library wraps
+	// elements within a simple.Entry{}, and the ordered map wraps each in a linked list elem.
+	const cacheElemOverhead = unsafe.Sizeof(simple.Entry{}) + unsafe.Sizeof(struct {
+		key, value interface{}
+		next, prev uintptr
+	}{})
 
 	// The inputted memory ratio does not take into account the
 	// total of all ratios, so divide it here to get perc. ratio.
@@ -99,12 +128,8 @@ func calculateCacheMax(keySz, valSz uintptr, ratio float64) int {
 	fValSz := float64(valSz)
 
 	// Calculated using the internal cache map size:
-	// ((keysz + valsz) * len) + (len * bucketOverhead) = memsz
-	//
-	// NOTE: there is further overhead to using these caches as
-	// entries are tracked using a linked list and wrapped within
-	// further structs, but unless necessary going to ignore for now.
-	return int(fMaxMem / (fKeySz + fValSz + emptyBucketOverhead))
+	// (($keysz + $valsz) * $len) + ($len * $allOverheads) = $memSz
+	return int(fMaxMem / (fKeySz + fValSz + emptyBucketOverhead + float64(cacheElemOverhead)))
 }
 
 // totalOfRatios returns the total of all cache ratios added together.
