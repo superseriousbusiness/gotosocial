@@ -20,7 +20,6 @@ package cache
 import (
 	"time"
 
-	"codeberg.org/gruf/go-runners"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -37,8 +36,6 @@ type Caches struct {
 	// Visibility provides access to the item visibility cache.
 	// (used by the visibility filter).
 	Visibility VisibilityCache
-
-	sweeper runners.Service
 
 	// prevent pass-by-value.
 	_ nocopy
