@@ -117,7 +117,7 @@ func (l *listDB) GetListsForAccountID(ctx context.Context, accountID string) ([]
 func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 	var (
 		err  error
-		errs = make(gtserror.MultiError, 0, 2)
+		errs = gtserror.NewMultiError(2)
 	)
 
 	if list.Account == nil {
@@ -127,7 +127,7 @@ func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 			list.AccountID,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating list account: %w", err))
+			errs.Appendf("error populating list account: %w", err)
 		}
 	}
 
@@ -139,11 +139,15 @@ func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 			"", "", "", 0,
 		)
 		if err != nil {
-			errs.Append(fmt.Errorf("error populating list entries: %w", err))
+			errs.Appendf("error populating list entries: %w", err)
 		}
 	}
 
-	return errs.Combine()
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (l *listDB) PutList(ctx context.Context, list *gtsmodel.List) error {

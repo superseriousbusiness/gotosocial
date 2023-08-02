@@ -19,7 +19,6 @@ package accounts_test
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -99,16 +98,16 @@ func (suite *AccountSearchTestSuite) getSearch(
 		suite.FailNow(err.Error())
 	}
 
-	errs := gtserror.MultiError{}
+	errs := gtserror.NewMultiError(2)
 
 	// Check expected code + body.
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
-		errs = append(errs, fmt.Sprintf("expected %d got %d", expectedHTTPStatus, resultCode))
+		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
 	}
 
 	// If we got an expected body, return early.
 	if expectedBody != "" && string(b) != expectedBody {
-		errs = append(errs, fmt.Sprintf("expected %s got %s", expectedBody, string(b)))
+		errs.Appendf("expected %s got %s", expectedBody, string(b))
 	}
 
 	if err := errs.Combine(); err != nil {

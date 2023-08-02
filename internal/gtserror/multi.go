@@ -20,25 +20,48 @@ package gtserror
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
-// MultiError allows encapsulating multiple errors under a singular instance,
-// which is useful when you only want to log on errors, not return early / bubble up.
-type MultiError []string
-
-func (e *MultiError) Append(err error) {
-	*e = append(*e, err.Error())
+// MultiError allows encapsulating multiple
+// errors under a singular instance, which
+// is useful when you only want to log on
+// errors, not return early / bubble up.
+type MultiError struct {
+	e []error
 }
 
-func (e *MultiError) Appendf(format string, args ...any) {
-	*e = append(*e, fmt.Sprintf(format, args...))
-}
-
-// Combine converts this multiError to a singular error instance, returning nil if empty.
-func (e MultiError) Combine() error {
-	if len(e) == 0 {
-		return nil
+// NewMultiError returns a *MultiError with
+// the capacity of its underlying error slice
+// set to the provided value.
+//
+// This capacity can be exceeded if necessary,
+// but it saves a teeny tiny bit of memory if
+// callers set it correctly.
+//
+// If you don't know in advance what the capacity
+// must be, just use new(MultiError) instead.
+func NewMultiError(capacity int) *MultiError {
+	return &MultiError{
+		e: make([]error, 0, capacity),
 	}
-	return errors.New(`"` + strings.Join(e, `","`) + `"`)
+}
+
+// Append the given error to the MultiError.
+func (m *MultiError) Append(err error) {
+	m.e = append(m.e, err)
+}
+
+// Append the given format string to the MultiError.
+//
+// It is valid to use %w in the format string
+// to wrap any other errors.
+func (m *MultiError) Appendf(format string, args ...any) {
+	m.e = append(m.e, fmt.Errorf(format, args...))
+}
+
+// Combine the MultiError into a single error.
+//
+// Unwrap will work on the returned error as expected.
+func (m MultiError) Combine() error {
+	return errors.Join(m.e...)
 }

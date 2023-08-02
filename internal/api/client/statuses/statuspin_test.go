@@ -20,7 +20,6 @@ package statuses_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -74,20 +73,20 @@ func (suite *StatusPinTestSuite) createPin(
 		return nil, err
 	}
 
-	errs := gtserror.MultiError{}
+	errs := gtserror.NewMultiError(2)
 
-	// check code + body
+	// Check expected code + body.
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
-		errs = append(errs, fmt.Sprintf("expected %d got %d", expectedHTTPStatus, resultCode))
+		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
 	}
 
-	// if we got an expected body, return early
+	// If we got an expected body, return early.
 	if expectedBody != "" && string(b) != expectedBody {
-		errs = append(errs, fmt.Sprintf("expected %s got %s", expectedBody, string(b)))
+		errs.Appendf("expected %s got %s", expectedBody, string(b))
 	}
 
-	if len(errs) > 0 {
-		return nil, errs.Combine()
+	if err := errs.Combine(); err != nil {
+		suite.FailNow("", "%v (body %s)", err, string(b))
 	}
 
 	resp := &apimodel.Status{}

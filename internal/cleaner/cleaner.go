@@ -83,19 +83,23 @@ func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error)
 		return len(files), nil
 	}
 
-	var errs gtserror.MultiError
+	var (
+		errs     gtserror.MultiError
+		errCount int
+	)
 
 	for _, path := range files {
 		// Remove each provided storage path.
 		log.Debugf(ctx, "removing file: %s", path)
 		err := c.state.Storage.Delete(ctx, path)
 		if err != nil && !errors.Is(err, storage.ErrNotFound) {
-			errs.Appendf("error removing %s: %v", path, err)
+			errs.Appendf("error removing %s: %w", path, err)
+			errCount++
 		}
 	}
 
 	// Calculate no. files removed.
-	diff := len(files) - len(errs)
+	diff := len(files) - errCount
 
 	// Wrap the combined error slice.
 	if err := errs.Combine(); err != nil {
