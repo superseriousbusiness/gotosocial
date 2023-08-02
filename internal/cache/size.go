@@ -32,9 +32,22 @@ import (
 
 const (
 	// example data values.
-	exampleID        = id.Highest
-	exampleURI       = "https://social.bbc/users/ItsMePrinceCharlesInit"
-	exampleText      = "oh no me nan's gone and done it\n\nshe fuckin killed the king\n\nnan what have you done\n\nno nan put down the knife, don't go after the landlords next!\n\nyou'll make society more equitable for all if you're not careful!"
+	exampleID   = id.Highest
+	exampleURI  = "https://social.bbc/users/ItsMePrinceCharlesInit"
+	exampleText = `
+oh no me nan's gone and done it :shocked:
+	
+she fuckin killed the king :regicide:
+
+nan what have you done :shocked:
+
+no nan put down the knife, don't go after the landlords next! :knife:
+
+you'll make society more equitable for all if you're not careful! :hammer_sickle:
+
+#JustNanProblems #WhatWillSheDoNext #MaybeItWasntSuchABadThingAfterAll
+`
+
 	exampleTextSmall = "Small problem lads, me nan's gone on a bit of a rampage"
 	exampleUsername  = "@SexHaver1969"
 
