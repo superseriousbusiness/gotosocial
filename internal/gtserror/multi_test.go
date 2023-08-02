@@ -19,7 +19,6 @@ package gtserror
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -27,14 +26,39 @@ import (
 
 func TestMultiError(t *testing.T) {
 	errs := MultiError{
-		
+		e: []error{
+			db.ErrNoEntries,
+			errors.New("oopsie woopsie we did a fucky wucky etc"),
+		},
+	}
+	errs.Appendf("appended + wrapped error: %w", db.ErrAlreadyExists)
+
+	err := errs.Combine()
+
+	if !errors.Is(err, db.ErrNoEntries) {
+		t.Error("should be db.ErrNoEntries")
 	}
 
-	for _, err := range []error{
-		db.ErrNoEntries,
-		errors.New("oopsie woopsie we did a fucky wucky etc"),
-		fmt.Errorf("wrapped error: %w", db.ErrAlreadyExists),
-	} {
-		errs.Append(err)
+	if !errors.Is(err, db.ErrAlreadyExists) {
+		t.Error("should be db.ErrAlreadyExists")
+	}
+
+	if errors.Is(err, db.ErrBusyTimeout) {
+		t.Error("should not be db.ErrBusyTimeout")
+	}
+
+	errString := err.Error()
+	expected := `sql: no rows in result set
+oopsie woopsie we did a fucky wucky etc
+appended + wrapped error: already exists`
+	if errString != expected {
+		t.Errorf("errString '%s' should be '%s'", errString, expected)
+	}
+}
+
+func TestMultiErrorEmpty(t *testing.T) {
+	err := new(MultiError).Combine()
+	if err != nil {
+		t.Errorf("should be nil")
 	}
 }
