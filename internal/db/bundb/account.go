@@ -472,7 +472,7 @@ func (a *accountDB) GetAccountsUsingEmoji(ctx context.Context, emojiID string) (
 	// using a relational table for improved perf.
 	if _, err := a.db.NewSelect().
 		Table("account_to_emojis").
-		Column("id").
+		Column("account_id").
 		Where("? = ?", bun.Ident("emoji_id"), emojiID).
 		Exec(ctx, &accountIDs); err != nil {
 		return nil, a.db.ProcessError(err)
