@@ -12,6 +12,9 @@ import (
 )
 
 type result struct {
+	// Result primary key
+	PKey int64
+
 	// keys accessible under
 	Keys cacheKeys
 
@@ -108,7 +111,7 @@ func (c *Cache[T]) SetEvictionCallback(hook func(T)) {
 		c.cache.Unlock()
 
 		if res.Error != nil {
-			// Skip error hooks
+			// Skip value hooks
 			return
 		}
 
@@ -136,7 +139,7 @@ func (c *Cache[T]) SetInvalidateCallback(hook func(T)) {
 		c.cache.Unlock()
 
 		if res.Error != nil {
-			// Skip error hooks
+			// Skip value hooks
 			return
 		}
 
@@ -358,21 +361,16 @@ func (c *Cache[T]) Invalidate(lookup string, keyParts ...any) {
 func (c *Cache[T]) Clear() { c.Trim(100) }
 
 // Trim ensures the cache stays within percentage of total capacity, truncating where necessary.
-func (c *Cache[T]) Trim(perc float64) {
-	c.cache.Trim(perc)
-}
+func (c *Cache[T]) Trim(perc float64) { c.cache.Trim(perc) }
 
 // store will cache this result under all of its required cache keys.
 func (c *Cache[T]) store(res *result) (evict func()) {
-	var toEvict []struct {
-		pkey int64
-		res  *result
-	}
+	var toEvict []*result
 
 	// Get primary key
-	pnext := c.next
+	res.PKey = c.next
 	c.next++
-	if pnext > c.next {
+	if res.PKey > c.next {
 		panic("cache primary key overflow")
 	}
 
@@ -384,25 +382,19 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 			for _, conflict := range pkeys {
 				// Get the overlapping result with this key.
 				entry, _ := c.cache.Cache.Get(conflict)
-				res := entry.Value.(*result)
+				confRes := entry.Value.(*result)
 
 				// From conflicting entry, drop this key, this
 				// will prevent eviction cleanup key confusion.
-				res.Keys.drop(key.info.name)
+				confRes.Keys.drop(key.info.name)
 
 				if len(res.Keys) == 0 {
 					// We just over-wrote the only lookup key for
 					// this value, so we drop its primary key too.
 					c.cache.Cache.Delete(conflict)
 
-					// Add to later evictions slice.
-					toEvict = append(toEvict, struct {
-						pkey int64
-						res  *result
-					}{
-						pkey: conflict,
-						res:  res,
-					})
+					// Add finished result to evict queue.
+					toEvict = append(toEvict, confRes)
 				}
 			}
 
@@ -411,22 +403,16 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 		}
 
 		// Store primary key lookup.
-		pkeys = append(pkeys, pnext)
+		pkeys = append(pkeys, res.PKey)
 		key.info.pkeys[key.key] = pkeys
 	}
 
 	// Store main entry under primary key, catch evicted.
-	c.cache.Cache.SetWithHook(pnext, &simple.Entry{
-		Key:   pnext,
+	c.cache.Cache.SetWithHook(res.PKey, &simple.Entry{
+		Key:   res.PKey,
 		Value: res,
-	}, func(pkey int64, item *simple.Entry) {
-		toEvict = append(toEvict, struct {
-			pkey int64
-			res  *result
-		}{
-			pkey: pkey,
-			res:  item.Value.(*result),
-		})
+	}, func(_ int64, item *simple.Entry) {
+		toEvict = append(toEvict, item.Value.(*result))
 	})
 
 	if len(toEvict) == 0 {
@@ -435,9 +421,9 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 	}
 
 	return func() {
-		for _, evict := range toEvict {
+		for _, res := range toEvict {
 			// Call evict hook on each entry.
-			c.cache.Evict(evict.pkey, evict.res)
+			c.cache.Evict(res.PKey, res)
 		}
 	}
 }
