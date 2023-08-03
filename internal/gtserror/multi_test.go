@@ -15,22 +15,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package gtserror
+package gtserror_test
 
 import (
 	"errors"
 	"testing"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func TestMultiError(t *testing.T) {
-	errs := MultiError{
-		e: []error{
-			db.ErrNoEntries,
-			errors.New("oopsie woopsie we did a fucky wucky etc"),
-		},
-	}
+	errs := gtserror.MultiError([]error{
+		db.ErrNoEntries,
+		errors.New("oopsie woopsie we did a fucky wucky etc"),
+	})
+
 	errs.Appendf("appended + wrapped error: %w", db.ErrAlreadyExists)
 
 	err := errs.Combine()
@@ -50,14 +50,14 @@ func TestMultiError(t *testing.T) {
 	errString := err.Error()
 	expected := `sql: no rows in result set
 oopsie woopsie we did a fucky wucky etc
-appended + wrapped error: already exists`
+TestMultiError: appended + wrapped error: already exists`
 	if errString != expected {
 		t.Errorf("errString '%s' should be '%s'", errString, expected)
 	}
 }
 
 func TestMultiErrorEmpty(t *testing.T) {
-	err := new(MultiError).Combine()
+	err := new(gtserror.MultiError).Combine()
 	if err != nil {
 		t.Errorf("should be nil")
 	}

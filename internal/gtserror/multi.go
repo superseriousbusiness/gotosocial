@@ -25,9 +25,7 @@ import (
 // errors under a singular instance, which
 // is useful when you only want to log on
 // errors, not return early / bubble up.
-type MultiError struct {
-	e []error
-}
+type MultiError []error
 
 // NewMultiError returns a *MultiError with
 // the capacity of its underlying error slice
@@ -39,15 +37,13 @@ type MultiError struct {
 //
 // If you don't know in advance what the capacity
 // must be, just use new(MultiError) instead.
-func NewMultiError(capacity int) *MultiError {
-	return &MultiError{
-		e: make([]error, 0, capacity),
-	}
+func NewMultiError(capacity int) MultiError {
+	return make([]error, 0, capacity)
 }
 
 // Append the given error to the MultiError.
 func (m *MultiError) Append(err error) {
-	m.e = append(m.e, err)
+	(*m) = append((*m), err)
 }
 
 // Append the given format string to the MultiError.
@@ -56,12 +52,12 @@ func (m *MultiError) Append(err error) {
 // to wrap any other errors.
 func (m *MultiError) Appendf(format string, args ...any) {
 	err := newfAt(3, format, args...)
-	m.e = append(m.e, err)
+	(*m) = append((*m), err)
 }
 
 // Combine the MultiError into a single error.
 //
 // Unwrap will work on the returned error as expected.
 func (m MultiError) Combine() error {
-	return errors.Join(m.e...)
+	return errors.Join(m...)
 }
