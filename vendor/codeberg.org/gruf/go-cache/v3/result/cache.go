@@ -2,6 +2,8 @@ package result
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"reflect"
 	_ "unsafe"
 
@@ -18,6 +20,15 @@ type result struct {
 
 	// cached error
 	Error error
+}
+
+// getResultValue is a safe way of casting and fetching result value.
+func getResultValue[T any](res *result) T {
+	v, ok := res.Value.(T)
+	if !ok {
+		fmt.Fprintf(os.Stderr, "!! BUG: unexpected value type in result: %T\n", res.Value)
+	}
+	return v
 }
 
 // Lookup represents a struct object lookup method in the cache.
@@ -101,8 +112,8 @@ func (c *Cache[T]) SetEvictionCallback(hook func(T)) {
 			return
 		}
 
-		// Free and call hook.
-		v := res.Value.(T)
+		// Free result and call hook.
+		v := getResultValue[T](res)
 		putResult(res)
 		hook(v)
 	})
@@ -129,8 +140,8 @@ func (c *Cache[T]) SetInvalidateCallback(hook func(T)) {
 			return
 		}
 
-		// Free and call hook.
-		v := res.Value.(T)
+		// Free result and call hook.
+		v := getResultValue[T](res)
 		putResult(res)
 		hook(v)
 	})
@@ -247,7 +258,7 @@ func (c *Cache[T]) Load(lookup string, load func() (T, error), keyParts ...any) 
 	}
 
 	// Return a copy of value from cache
-	return c.copy(res.Value.(T)), nil
+	return c.copy(getResultValue[T](res)), nil
 }
 
 // Store will call the given store function, and on success store the value in the cache as a positive result.
@@ -353,6 +364,11 @@ func (c *Cache[T]) Trim(perc float64) {
 
 // store will cache this result under all of its required cache keys.
 func (c *Cache[T]) store(res *result) (evict func()) {
+	var toEvict []struct {
+		pkey int64
+		res  *result
+	}
+
 	// Get primary key
 	pnext := c.next
 	c.next++
@@ -378,6 +394,15 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 					// We just over-wrote the only lookup key for
 					// this value, so we drop its primary key too.
 					c.cache.Cache.Delete(conflict)
+
+					// Add to later evictions slice.
+					toEvict = append(toEvict, struct {
+						pkey int64
+						res  *result
+					}{
+						pkey: conflict,
+						res:  res,
+					})
 				}
 			}
 
@@ -390,30 +415,29 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 		key.info.pkeys[key.key] = pkeys
 	}
 
-	var (
-		evk int64
-		evr *result
-	)
-
 	// Store main entry under primary key, catch evicted.
 	c.cache.Cache.SetWithHook(pnext, &simple.Entry{
 		Key:   pnext,
 		Value: res,
-	}, func(_ int64, item *simple.Entry) {
-		evk = item.Key.(int64)
-		evr = item.Value.(*result)
+	}, func(pkey int64, item *simple.Entry) {
+		toEvict = append(toEvict, struct {
+			pkey int64
+			res  *result
+		}{
+			pkey: pkey,
+			res:  item.Value.(*result),
+		})
 	})
 
-	if evk == 0 {
+	if len(toEvict) == 0 {
 		// none evicted.
 		return nil
 	}
 
 	return func() {
-		// Call user evict hook.
-		c.cache.Evict(evk, evr)
-
-		// Release result.
-		putResult(evr)
+		for _, evict := range toEvict {
+			// Call evict hook on each entry.
+			c.cache.Evict(evict.pkey, evict.res)
+		}
 	}
 }
