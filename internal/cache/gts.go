@@ -342,10 +342,9 @@ func (c *GTSCaches) initBlockIDs() {
 }
 
 func (c *GTSCaches) initBoostOfIDs() {
-	c.boostOfIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+	c.boostOfIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
 		1000,
-		0,
 	)}
 }
 
@@ -496,10 +495,9 @@ func (c *GTSCaches) initInstance() {
 }
 
 func (c *GTSCaches) initInReplyToIDs() {
-	c.inReplyToIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+	c.inReplyToIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
 		1000,
-		0,
 	)}
 }
 
@@ -713,10 +711,9 @@ func (c *GTSCaches) initTag() {
 }
 
 func (c *GTSCaches) initStatusFaveIDs() {
-	c.statusFaveIDs = &SliceCache[string]{Cache: ttl.New[string, []string](
+	c.statusFaveIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
 		1000,
-		0,
 	)}
 }
 
