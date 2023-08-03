@@ -342,9 +342,16 @@ func (c *GTSCaches) initBlockIDs() {
 }
 
 func (c *GTSCaches) initBoostOfIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheBoostOfIDsMemRatio(),
+	)
+
+	log.Infof(nil, "BoostofIDs cache size = %d", cap)
+
 	c.boostOfIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
-		1000,
+		cap,
 	)}
 }
 
@@ -473,6 +480,20 @@ func (c *GTSCaches) initFollowRequestIDs() {
 	)}
 }
 
+func (c *GTSCaches) initInReplyToIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheInReplyToIDsMemRatio(),
+	)
+
+	log.Infof(nil, "InReplyTo IDs cache size = %d", cap)
+
+	c.inReplyToIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
+}
+
 func (c *GTSCaches) initInstance() {
 	// Calculate maximum cache size.
 	cap := calculateResultCacheMax(
@@ -492,13 +513,6 @@ func (c *GTSCaches) initInstance() {
 	}, cap)
 
 	c.instance.IgnoreErrors(ignoreErrors)
-}
-
-func (c *GTSCaches) initInReplyToIDs() {
-	c.inReplyToIDs = &SliceCache[string]{Cache: simple.New[string, []string](
-		0,
-		1000,
-	)}
 }
 
 func (c *GTSCaches) initList() {
@@ -689,6 +703,20 @@ func (c *GTSCaches) initStatusFave() {
 	c.statusFave.IgnoreErrors(ignoreErrors)
 }
 
+func (c *GTSCaches) initStatusFaveIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheStatusFaveIDsMemRatio(),
+	)
+
+	log.Infof(nil, "StatusFave IDs cache size = %d", cap)
+
+	c.statusFaveIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
+}
+
 func (c *GTSCaches) initTag() {
 	// Calculate maximum cache size.
 	cap := calculateResultCacheMax(
@@ -708,13 +736,6 @@ func (c *GTSCaches) initTag() {
 	}, cap)
 
 	c.tag.IgnoreErrors(ignoreErrors)
-}
-
-func (c *GTSCaches) initStatusFaveIDs() {
-	c.statusFaveIDs = &SliceCache[string]{Cache: simple.New[string, []string](
-		0,
-		1000,
-	)}
 }
 
 func (c *GTSCaches) initTombstone() {

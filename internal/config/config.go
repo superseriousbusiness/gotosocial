@@ -180,12 +180,14 @@ type CacheConfiguration struct {
 	AccountNoteMemRatio      float64       `name:"account-note-mem-ratio"`
 	BlockMemRatio            float64       `name:"block-mem-ratio"`
 	BlockIDsMemRatio         float64       `name:"block-mem-ratio"`
+	BoostOfIDsMemRatio       float64       `name:"boost-of-ids-mem-ratio"`
 	EmojiMemRatio            float64       `name:"emoji-mem-ratio"`
 	EmojiCategoryMemRatio    float64       `name:"emoji-category-mem-ratio"`
 	FollowMemRatio           float64       `name:"follow-mem-ratio"`
 	FollowIDsMemRatio        float64       `name:"follow-ids-mem-ratio"`
 	FollowRequestMemRatio    float64       `name:"follow-request-mem-ratio"`
 	FollowRequestIDsMemRatio float64       `name:"follow-request-ids-mem-ratio"`
+	InReplyToIDsMemRatio     float64       `name:"in-reply-to-ids-mem-ratio"`
 	InstanceMemRatio         float64       `name:"instance-mem-ratio"`
 	ListMemRatio             float64       `name:"list-mem-ratio"`
 	ListEntryMemRatio        float64       `name:"list-entry-mem-ratio"`
@@ -196,6 +198,7 @@ type CacheConfiguration struct {
 	ReportMemRatio           float64       `name:"report-mem-ratio"`
 	StatusMemRatio           float64       `name:"status-mem-ratio"`
 	StatusFaveMemRatio       float64       `name:"status-fave-mem-ratio"`
+	StatusFaveIDsMemRatio    float64       `name:"status-fave-ids-mem-ratio"`
 	TagMemRatio              float64       `name:"tag-mem-ratio"`
 	TombstoneMemRatio        float64       `name:"tombstone-mem-ratio"`
 	UserMemRatio             float64       `name:"user-mem-ratio"`
