@@ -231,111 +231,13 @@ db-sqlite-cache-size: "8MiB"
 db-sqlite-busy-timeout: "30m"
 
 cache:
-  # Cache configuration options:
-  #
-  # max-size   = maximum cached objects count
-  # ttl        = cached object lifetime
-  # sweep-freq = frequency to look for stale cache objects
-  #              (zero will disable cache sweeping)
-
-  #############################
-  #### VISIBILITY CACHES ######
-  #############################
-  #
-  # Configure Status and account
-  # visibility cache.
-
-  visibility-max-size: 2000
-  visibility-ttl: "30m"
-  visibility-sweep-freq: "1m"
-
-  gts:
-    ###########################
-    #### DATABASE CACHES ######
-    ###########################
-    #
-    # Configure GTS database
-    # model caches.
-
-    account-max-size: 2000
-    account-ttl: "30m"
-    account-sweep-freq: "1m"
-
-    block-max-size: 1000
-    block-ttl: "30m"
-    block-sweep-freq: "1m"
-
-    domain-block-max-size: 2000
-    domain-block-ttl: "24h"
-    domain-block-sweep-freq: "1m"
-
-    emoji-max-size: 2000
-    emoji-ttl: "30m"
-    emoji-sweep-freq: "1m"
-
-    emoji-category-max-size: 100
-    emoji-category-ttl: "30m"
-    emoji-category-sweep-freq: "1m"
-
-    follow-max-size: 2000
-    follow-ttl: "30m"
-    follow-sweep-freq: "1m"
-
-    follow-request-max-size: 2000
-    follow-request-ttl: "30m"
-    follow-request-sweep-freq: "1m"
-
-    instance-max-size: 2000
-    instance-ttl: "30m"
-    instance-sweep-freq: "1m"
-
-    list-max-size: 2000
-    list-ttl: "30m"
-    list-sweep-freq: "1m"
-
-    list-entry-max-size: 2000
-    list-entry-ttl: "30m"
-    list-entry-sweep-freq: "1m"
-
-    media-max-size: 1000
-    media-ttl: "30m"
-    media-sweep-freq: "1m"
-
-    mention-max-size: 2000
-    mention-ttl: "30m"
-    mention-sweep-freq: "1m"
-
-    notification-max-size: 1000
-    notification-ttl: "30m"
-    notification-sweep-freq: "1m"
-
-    report-max-size: 100
-    report-ttl: "30m"
-    report-sweep-freq: "1m"
-
-    status-max-size: 2000
-    status-ttl: "30m"
-    status-sweep-freq: "1m"
-
-    status-fave-max-size: 2000
-    status-fave-ttl: "30m"
-    status-fave-sweep-freq: "1m"
-
-    tag-max-size: 2000
-    tag-ttl: "30m"
-    tag-sweep-freq: "1m"
-
-    tombstone-max-size: 500
-    tombstone-ttl: "30m"
-    tombstone-sweep-freq: "1m"
-
-    user-max-size: 500
-    user-ttl: "30m"
-    user-sweep-freq: "1m"
-
-    webfinger-max-size: 250
-    webfinger-ttl: "24h"
-    webfinger-sweep-freq: "15m"
+  # cache.memory-target sets a target limit that
+  # the application will try to keep it's caches
+  # within. This is based on estimated sizes of
+  # in-memory objects, and so NOT AT ALL EXACT.
+  # Examples: ["100MiB", "200MiB", "500MiB", "1GiB"]
+  # Default: "200MiB"
+  memory-target: "200MiB"
 
 ######################
 ##### WEB CONFIG #####

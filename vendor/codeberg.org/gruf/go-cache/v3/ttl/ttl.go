@@ -15,7 +15,7 @@ type Entry[Key comparable, Value any] struct {
 	Expiry uint64
 }
 
-// Cache is the underlying Cache implementation, providing both the base Cache interface and unsafe access to underlying map to allow flexibility in building your own.
+// Cache is the underlying TTLCache implementation, providing both the base Cache interface and unsafe access to underlying map to allow flexibility in building your own.
 type Cache[Key comparable, Value any] struct {
 	// TTL is the cache item TTL.
 	TTL time.Duration

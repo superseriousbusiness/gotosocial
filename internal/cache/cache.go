@@ -204,3 +204,36 @@ func (c *Caches) setuphooks() {
 		c.Visibility.Invalidate("RequesterID", user.AccountID)
 	})
 }
+
+// Sweep will sweep all the available caches to ensure none
+// are above threshold percent full to their total capacity.
+//
+// This helps with cache performance, as a full cache will
+// require an eviction on every single write, which adds
+// significant overhead to all cache writes.
+func (c *Caches) Sweep(threshold float64) {
+	c.GTS.Account().Trim(threshold)
+	c.GTS.AccountNote().Trim(threshold)
+	c.GTS.Block().Trim(threshold)
+	c.GTS.BlockIDs().Trim(threshold)
+	c.GTS.Emoji().Trim(threshold)
+	c.GTS.EmojiCategory().Trim(threshold)
+	c.GTS.Follow().Trim(threshold)
+	c.GTS.FollowIDs().Trim(threshold)
+	c.GTS.FollowRequest().Trim(threshold)
+	c.GTS.FollowRequestIDs().Trim(threshold)
+	c.GTS.Instance().Trim(threshold)
+	c.GTS.List().Trim(threshold)
+	c.GTS.ListEntry().Trim(threshold)
+	c.GTS.Marker().Trim(threshold)
+	c.GTS.Media().Trim(threshold)
+	c.GTS.Mention().Trim(threshold)
+	c.GTS.Notification().Trim(threshold)
+	c.GTS.Report().Trim(threshold)
+	c.GTS.Status().Trim(threshold)
+	c.GTS.StatusFave().Trim(threshold)
+	c.GTS.Tag().Trim(threshold)
+	c.GTS.Tombstone().Trim(threshold)
+	c.GTS.User().Trim(threshold)
+	c.Visibility.Trim(threshold)
+}

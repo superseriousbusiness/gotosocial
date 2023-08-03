@@ -126,111 +126,50 @@ var Defaults = Configuration{
 	AdvancedSenderMultiplier:     2, // 2 senders per CPU
 
 	Cache: CacheConfiguration{
-		GTS: GTSCacheConfiguration{
-			AccountMaxSize:   2000,
-			AccountTTL:       time.Minute * 30,
-			AccountSweepFreq: time.Minute,
+		// Rough memory target that the total
+		// size of all State.Caches will attempt
+		// to remain with. Emphasis on *rough*.
+		MemoryTarget: 200 * bytesize.MiB,
 
-			AccountNoteMaxSize:   1000,
-			AccountNoteTTL:       time.Minute * 30,
-			AccountNoteSweepFreq: time.Minute,
-
-			BlockMaxSize:   1000,
-			BlockTTL:       time.Minute * 30,
-			BlockSweepFreq: time.Minute,
-
-			BlockIDsMaxSize:   500,
-			BlockIDsTTL:       time.Minute * 30,
-			BlockIDsSweepFreq: time.Minute,
-
-			DomainBlockMaxSize:   2000,
-			DomainBlockTTL:       time.Hour * 24,
-			DomainBlockSweepFreq: time.Minute,
-
-			EmojiMaxSize:   2000,
-			EmojiTTL:       time.Minute * 30,
-			EmojiSweepFreq: time.Minute,
-
-			EmojiCategoryMaxSize:   100,
-			EmojiCategoryTTL:       time.Minute * 30,
-			EmojiCategorySweepFreq: time.Minute,
-
-			FollowMaxSize:   2000,
-			FollowTTL:       time.Minute * 30,
-			FollowSweepFreq: time.Minute,
-
-			FollowIDsMaxSize:   500,
-			FollowIDsTTL:       time.Minute * 30,
-			FollowIDsSweepFreq: time.Minute,
-
-			FollowRequestMaxSize:   2000,
-			FollowRequestTTL:       time.Minute * 30,
-			FollowRequestSweepFreq: time.Minute,
-
-			FollowRequestIDsMaxSize:   500,
-			FollowRequestIDsTTL:       time.Minute * 30,
-			FollowRequestIDsSweepFreq: time.Minute,
-
-			InstanceMaxSize:   2000,
-			InstanceTTL:       time.Minute * 30,
-			InstanceSweepFreq: time.Minute,
-
-			ListMaxSize:   2000,
-			ListTTL:       time.Minute * 30,
-			ListSweepFreq: time.Minute,
-
-			ListEntryMaxSize:   2000,
-			ListEntryTTL:       time.Minute * 30,
-			ListEntrySweepFreq: time.Minute,
-
-			MarkerMaxSize:   2000,
-			MarkerTTL:       time.Hour * 6,
-			MarkerSweepFreq: time.Minute,
-
-			MediaMaxSize:   1000,
-			MediaTTL:       time.Minute * 30,
-			MediaSweepFreq: time.Minute,
-
-			MentionMaxSize:   2000,
-			MentionTTL:       time.Minute * 30,
-			MentionSweepFreq: time.Minute,
-
-			NotificationMaxSize:   1000,
-			NotificationTTL:       time.Minute * 30,
-			NotificationSweepFreq: time.Minute,
-
-			ReportMaxSize:   100,
-			ReportTTL:       time.Minute * 30,
-			ReportSweepFreq: time.Minute,
-
-			StatusMaxSize:   2000,
-			StatusTTL:       time.Minute * 30,
-			StatusSweepFreq: time.Minute,
-
-			StatusFaveMaxSize:   2000,
-			StatusFaveTTL:       time.Minute * 30,
-			StatusFaveSweepFreq: time.Minute,
-
-			TagMaxSize:   2000,
-			TagTTL:       time.Minute * 30,
-			TagSweepFreq: time.Minute,
-
-			TombstoneMaxSize:   500,
-			TombstoneTTL:       time.Minute * 30,
-			TombstoneSweepFreq: time.Minute,
-
-			UserMaxSize:   500,
-			UserTTL:       time.Minute * 30,
-			UserSweepFreq: time.Minute,
-
-			WebfingerMaxSize:   250,
-			WebfingerTTL:       time.Hour * 24,
-			WebfingerSweepFreq: time.Minute * 15,
-		},
-
-		VisibilityMaxSize:   2000,
-		VisibilityTTL:       time.Minute * 30,
-		VisibilitySweepFreq: time.Minute,
+		// These ratios signal what percentage
+		// of the available cache target memory
+		// is allocated to each object type's
+		// cache.
+		//
+		// These are weighted by a totally
+		// assorted mixture of priority, and
+		// manual twiddling to get the generated
+		// cache capacity ratios within normal
+		// amounts dependent size of the models.
+		//
+		// when TODO items in the size.go source
+		// file have been addressed, these should
+		// be able to make some more sense :D
+		AccountMemRatio:          18,
+		AccountNoteMemRatio:      0.1,
+		BlockMemRatio:            3,
+		BlockIDsMemRatio:         3,
+		EmojiMemRatio:            3,
+		EmojiCategoryMemRatio:    0.1,
+		FollowMemRatio:           4,
+		FollowIDsMemRatio:        4,
+		FollowRequestMemRatio:    2,
+		FollowRequestIDsMemRatio: 2,
+		InstanceMemRatio:         1,
+		ListMemRatio:             3,
+		ListEntryMemRatio:        3,
+		MarkerMemRatio:           0.5,
+		MediaMemRatio:            4,
+		MentionMemRatio:          5,
+		NotificationMemRatio:     5,
+		ReportMemRatio:           1,
+		StatusMemRatio:           18,
+		StatusFaveMemRatio:       5,
+		TagMemRatio:              3,
+		TombstoneMemRatio:        2,
+		UserMemRatio:             0.1,
+		WebfingerMemRatio:        0.1,
+		VisibilityMemRatio:       2,
 	},
 
 	HTTPClient: HTTPClientConfiguration{

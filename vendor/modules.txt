@@ -13,10 +13,11 @@ codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.1.2
 ## explicit; go 1.16
 codeberg.org/gruf/go-byteutil
-# codeberg.org/gruf/go-cache/v3 v3.4.4
+# codeberg.org/gruf/go-cache/v3 v3.5.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-cache/v3
 codeberg.org/gruf/go-cache/v3/result
+codeberg.org/gruf/go-cache/v3/simple
 codeberg.org/gruf/go-cache/v3/ttl
 # codeberg.org/gruf/go-debug v1.3.0
 ## explicit; go 1.16
@@ -69,6 +70,9 @@ codeberg.org/gruf/go-sched
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
+# github.com/DmitriyVTitov/size v1.5.0
+## explicit; go 1.14
+github.com/DmitriyVTitov/size
 # github.com/KimMachineGun/automemlimit v0.2.6
 ## explicit; go 1.19
 github.com/KimMachineGun/automemlimit

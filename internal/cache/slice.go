@@ -18,14 +18,14 @@
 package cache
 
 import (
-	"codeberg.org/gruf/go-cache/v3/ttl"
+	"codeberg.org/gruf/go-cache/v3/simple"
 	"golang.org/x/exp/slices"
 )
 
 // SliceCache wraps a ttl.Cache to provide simple loader-callback
 // functions for fetching + caching slices of objects (e.g. IDs).
 type SliceCache[T any] struct {
-	*ttl.Cache[string, []T]
+	*simple.Cache[string, []T]
 }
 
 // Load will attempt to load an existing slice from the cache for the given key, else calling the provided load function and caching the result.

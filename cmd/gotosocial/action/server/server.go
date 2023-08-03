@@ -25,7 +25,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	"codeberg.org/gruf/go-sched"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -116,6 +118,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Initialize workers.
 	state.Workers.Start()
 	defer state.Workers.Stop()
+
+	// Add a task to the scheduler to sweep caches.
+	// Frequency = 1 * minute
+	// Threshold = 80% capacity
+	sweep := func(time.Time) { state.Caches.Sweep(80) }
+	job := sched.NewJob(sweep).Every(time.Minute)
+	_ = state.Workers.Scheduler.Schedule(job)
 
 	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(&state)
