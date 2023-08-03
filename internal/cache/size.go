@@ -90,6 +90,7 @@ func calculateResultCacheMax(structSz uintptr, ratio float64) int {
 	// struct with further information, and possible error. This
 	// also needs to be taken into account when calculating value.
 	const resultValueOverhead = unsafe.Sizeof(&struct {
+		_ int64
 		_ []any
 		_ any
 		_ error
