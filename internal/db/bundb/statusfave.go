@@ -213,7 +213,6 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) erro
 	// Perform DELETE on status fave,
 	// returning the status ID it was for.
 	if _, err := s.db.NewDelete().
-		Returning("status_id").
 		Table("status_faves").
 		Where("id = ?", id).
 		Returning("status_id").
