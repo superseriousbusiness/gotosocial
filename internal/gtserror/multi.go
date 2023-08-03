@@ -19,7 +19,6 @@ package gtserror
 
 import (
 	"errors"
-	"fmt"
 )
 
 // MultiError allows encapsulating multiple
@@ -56,7 +55,8 @@ func (m *MultiError) Append(err error) {
 // It is valid to use %w in the format string
 // to wrap any other errors.
 func (m *MultiError) Appendf(format string, args ...any) {
-	m.e = append(m.e, fmt.Errorf(format, args...))
+	err := newfAt(3, format, args...)
+	m.e = append(m.e, err)
 }
 
 // Combine the MultiError into a single error.
