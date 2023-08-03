@@ -210,15 +210,14 @@ func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusF
 func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) error {
 	var statusID string
 
-	// Prepare DELETE query returning
-	// the status ID this fave was for.
-	q := s.db.NewDelete().
+	// Perform DELETE on status fave,
+	// returning the status ID it was for.
+	if _, err := s.db.NewDelete().
 		Returning("status_id").
 		Table("status_faves").
-		Where("id = ?", id)
-
-	// Execute query, store favourited status ID.
-	if _, err := q.Exec(ctx, &statusID); err != nil {
+		Where("id = ?", id).
+		Returning("status_id").
+		Exec(ctx, &statusID); err != nil {
 		return s.db.ProcessError(err)
 	}
 
@@ -243,8 +242,8 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	// Prepare DELETE query returning
 	// the deleted faves for status IDs.
 	q := s.db.NewDelete().
-		Returning("status_id").
-		Table("status_faves")
+		Table("status_faves").
+		Returning("status_id")
 
 	if targetAccountID != "" {
 		q = q.Where("? = ?", bun.Ident("target_account_id"), targetAccountID)
