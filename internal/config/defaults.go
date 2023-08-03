@@ -126,13 +126,21 @@ var Defaults = Configuration{
 	AdvancedSenderMultiplier:     2, // 2 senders per CPU
 
 	Cache: CacheConfiguration{
+		// Rough memory target that the total
+		// size of all State.Caches will attempt
+		// to remain with. Emphasis on *rough*.
 		MemoryTarget: 200 * bytesize.MiB,
 
-		// NOTE: these weighted by a totally
+		// These ratios signal what percentage
+		// of the available cache target memory
+		// is allocated to each object type's
+		// cache.
+		//
+		// These are weighted by a totally
 		// assorted mixture of priority, and
 		// manual twiddling to get the generated
 		// cache capacity ratios within normal
-		// amounts dependent on relative sizes.
+		// amounts dependent size of the models.
 		//
 		// when TODO items in the size.go source
 		// file have been addressed, these should
