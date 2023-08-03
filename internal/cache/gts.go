@@ -127,7 +127,7 @@ func (c *GTSCaches) BlockIDs() *SliceCache[string] {
 	return c.blockIDs
 }
 
-// BoostIDs ...
+// BoostOfIDs provides access to the boost of IDs list database cache.
 func (c *GTSCaches) BoostOfIDs() *SliceCache[string] {
 	return c.boostOfIDs
 }
@@ -180,7 +180,7 @@ func (c *GTSCaches) Instance() *result.Cache[*gtsmodel.Instance] {
 	return c.instance
 }
 
-// InReplyToIDs ...
+// InReplyToIDs provides access to the status in reply to IDs list database cache.
 func (c *GTSCaches) InReplyToIDs() *SliceCache[string] {
 	return c.inReplyToIDs
 }
@@ -235,7 +235,7 @@ func (c *GTSCaches) Tag() *result.Cache[*gtsmodel.Tag] {
 	return c.tag
 }
 
-// StatusFaveIDs ...
+// StatusFaveIDs provides access to the status fave IDs list database cache.
 func (c *GTSCaches) StatusFaveIDs() *SliceCache[string] {
 	return c.statusFaveIDs
 }

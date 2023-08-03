@@ -34,7 +34,7 @@ type Status interface {
 	// GetStatusByURL returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, error)
 
-	// GetStatusBoost ...
+	// GetStatusBoost fetches the status whose boost_of_id column refers to boostOfID, authored by given account ID.
 	GetStatusBoost(ctx context.Context, boostOfID string, byAccountID string) (*gtsmodel.Status, error)
 
 	// PopulateStatus ensures that all sub-models of a status are populated (e.g. mentions, attachments, etc).
@@ -55,19 +55,19 @@ type Status interface {
 	// GetStatusesUsingEmoji fetches all status models using emoji with given ID stored in their 'emojis' column.
 	GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error)
 
-	// GetStatusReplies ...
+	// GetStatusReplies returns the *direct* (i.e. in_reply_to_id column) replies to this status ID.
 	GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
 
-	// CountStatusReplies ...
+	// CountStatusReplies returns the number of stored *direct* (i.e. in_reply_to_id column) replies to this status ID.
 	CountStatusReplies(ctx context.Context, statusID string) (int, error)
 
-	// GetStatusBoosts ...
+	// GetStatusBoosts returns all statuses whose boost_of_id column refer to given status ID.
 	GetStatusBoosts(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
 
-	// CountStatusBoosts ...
+	// CountStatusBoosts returns the number of stored boosts for status ID.
 	CountStatusBoosts(ctx context.Context, statusID string) (int, error)
 
-	// IsStatusBoostedBy ...
+	// IsStatusBoostedBy checks whether the given status ID is boosted by account ID.
 	IsStatusBoostedBy(ctx context.Context, statusID string, accountID string) (bool, error)
 
 	// GetStatusParents gets the parent statuses of a given status.
