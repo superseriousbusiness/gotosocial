@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -217,12 +218,17 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) erro
 		Where("id = ?", id).
 		Returning("status_id").
 		Exec(ctx, &statusID); err != nil {
+		if err == sql.ErrNoRows {
+			// Not an issue, only due
+			// to us doing a RETURNING.
+			err = nil
+		}
 		return s.db.ProcessError(err)
 	}
 
 	if statusID != "" {
 		// Invalidate any cached status faves for this status.
-		s.state.Caches.GTS.StatusFave().Invalidate("ID", statusID)
+		s.state.Caches.GTS.StatusFave().Invalidate("ID", id)
 
 		// Invalidate any cached status fave IDs for this status.
 		s.state.Caches.GTS.StatusFaveIDs().Invalidate(statusID)
@@ -254,11 +260,18 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 
 	// Execute query, store favourited status IDs.
 	if _, err := q.Exec(ctx, &statusIDs); err != nil {
+		if err == sql.ErrNoRows {
+			// Not an issue, only due
+			// to us doing a RETURNING.
+			err = nil
+		}
 		return s.db.ProcessError(err)
 	}
 
 	// Collate (deduplicating) status IDs.
-	statusIDs = collate(func(i int) string { return statusIDs[i] }, len(statusIDs))
+	statusIDs = collate(func(i int) string {
+		return statusIDs[i]
+	}, len(statusIDs))
 
 	for _, id := range statusIDs {
 		// Invalidate any cached status faves for this status.
