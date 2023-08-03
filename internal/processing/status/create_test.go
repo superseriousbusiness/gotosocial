@@ -208,6 +208,74 @@ func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 	suite.Nil(apiStatus)
 }
 
+func (suite *StatusCreateTestSuite) TestProcessLanguageWithScriptPart() {
+	ctx := context.Background()
+
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
+			Status:      "你好世界", // hello world
+			MediaIDs:    []string{},
+			Poll:        nil,
+			InReplyToID: "",
+			Sensitive:   false,
+			SpoilerText: "",
+			Visibility:  apimodel.VisibilityPublic,
+			ScheduledAt: "",
+			Language:    "zh-Hans",
+			ContentType: apimodel.StatusContentTypePlain,
+		},
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
+			Federated: nil,
+			Boostable: nil,
+			Replyable: nil,
+			Likeable:  nil,
+		},
+	}
+
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(err)
+	suite.NotNil(apiStatus)
+
+	suite.Equal("zh-Hans", *apiStatus.Language)
+}
+
+func (suite *StatusCreateTestSuite) TestProcessLanguageWithNoncanonicalLanguageTag() {
+	ctx := context.Background()
+
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
+			Status:      "hello world",
+			MediaIDs:    []string{},
+			Poll:        nil,
+			InReplyToID: "",
+			Sensitive:   false,
+			SpoilerText: "",
+			Visibility:  apimodel.VisibilityPublic,
+			ScheduledAt: "",
+			Language:    "en-us",
+			ContentType: apimodel.StatusContentTypePlain,
+		},
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
+			Federated: nil,
+			Boostable: nil,
+			Replyable: nil,
+			Likeable:  nil,
+		},
+	}
+
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(err)
+	suite.NotNil(apiStatus)
+
+	suite.Equal("en-US", *apiStatus.Language)
+}
+
 func TestStatusCreateTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusCreateTestSuite))
 }

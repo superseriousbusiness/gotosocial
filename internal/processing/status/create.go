@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/validate/normalize"
 )
 
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
@@ -55,7 +56,6 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		ContentWarning:           text.SanitizePlaintext(form.SpoilerText),
 		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                &sensitive,
-		Language:                 form.Language,
 		CreatedWithApplicationID: application.ID,
 		Text:                     form.Status,
 	}
@@ -266,7 +266,7 @@ func processVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateF
 
 func processLanguage(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
 	if form.Language != "" {
-		status.Language = form.Language
+		status.Language = normalize.Language(form.Language)
 	} else {
 		status.Language = accountDefaultLanguage
 	}

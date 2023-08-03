@@ -168,6 +168,9 @@ func (suite *ValidationTestSuite) TestValidateLanguage() {
 	englishUS := "en-us"
 	dutch := "nl"
 	german := "de"
+	chinese := "zh"
+	chineseSimplified := "zh-Hans"
+	chineseTraditional := "zh-Hant"
 	var err error
 
 	err = validate.Language(empty)
@@ -201,8 +204,8 @@ func (suite *ValidationTestSuite) TestValidateLanguage() {
 	}
 
 	err = validate.Language(englishUS)
-	if suite.Error(err) {
-		suite.Equal(errors.New("language: tag is not well-formed"), err)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
 	}
 
 	err = validate.Language(dutch)
@@ -211,6 +214,21 @@ func (suite *ValidationTestSuite) TestValidateLanguage() {
 	}
 
 	err = validate.Language(german)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
+	}
+
+	err = validate.Language(chinese)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
+	}
+
+	err = validate.Language(chineseSimplified)
+	if suite.NoError(err) {
+		suite.Equal(nil, err)
+	}
+
+	err = validate.Language(chineseTraditional)
 	if suite.NoError(err) {
 		suite.Equal(nil, err)
 	}

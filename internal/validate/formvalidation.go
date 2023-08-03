@@ -99,13 +99,16 @@ func Email(email string) error {
 	return err
 }
 
-// Language checks that the given language string is a 2- or 3-letter ISO 639 code.
-// Returns an error if the language cannot be parsed. See: https://pkg.go.dev/golang.org/x/text/language
+// Language checks that the given language string is a valid, if not necessarily canonical, BCP 47 language tag.
+// Returns an error if the language cannot be parsed.
+// Does not return an error if the language is not in the canonical tag format.
+// See: https://pkg.go.dev/golang.org/x/text/language
+// See: [internal/validate/normalize.Language]
 func Language(lang string) error {
 	if lang == "" {
 		return errors.New("no language provided")
 	}
-	_, err := language.ParseBase(lang)
+	_, err := language.Parse(lang)
 	return err
 }
 

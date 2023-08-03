@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/superseriousbusiness/gotosocial/internal/validate/normalize"
 )
 
 func (p *Processor) selectNoteFormatter(contentType string) text.FormatFunc {
@@ -225,7 +226,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			if err := validate.Language(*form.Source.Language); err != nil {
 				return nil, gtserror.NewErrorBadRequest(err)
 			}
-			account.Language = *form.Source.Language
+			account.Language = normalize.Language(*form.Source.Language)
 		}
 
 		if form.Source.Sensitive != nil {

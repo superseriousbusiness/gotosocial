@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/validate/normalize"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
@@ -75,7 +76,7 @@ func (p *Processor) Create(
 		Reason:      text.SanitizePlaintext(reason),
 		PreApproved: !config.GetAccountsApprovalRequired(), // Mark as approved if no approval required.
 		SignUpIP:    form.IP,
-		Locale:      form.Locale,
+		Locale:      normalize.Language(form.Locale),
 		AppID:       app.ID,
 	})
 	if err != nil {
