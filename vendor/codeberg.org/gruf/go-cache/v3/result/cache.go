@@ -11,28 +11,7 @@ import (
 	"codeberg.org/gruf/go-errors/v2"
 )
 
-type result struct {
-	// Result primary key
-	PKey int64
-
-	// keys accessible under
-	Keys cacheKeys
-
-	// cached value
-	Value any
-
-	// cached error
-	Error error
-}
-
-// getResultValue is a safe way of casting and fetching result value.
-func getResultValue[T any](res *result) T {
-	v, ok := res.Value.(T)
-	if !ok {
-		fmt.Fprintf(os.Stderr, "!! BUG: unexpected value type in result: %T\n", res.Value)
-	}
-	return v
-}
+var ErrUnsupportedZero = errors.New("")
 
 // Lookup represents a struct object lookup method in the cache.
 type Lookup struct {
@@ -426,4 +405,27 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 			c.cache.Evict(res.PKey, res)
 		}
 	}
+}
+
+type result struct {
+	// Result primary key
+	PKey int64
+
+	// keys accessible under
+	Keys cacheKeys
+
+	// cached value
+	Value any
+
+	// cached error
+	Error error
+}
+
+// getResultValue is a safe way of casting and fetching result value.
+func getResultValue[T any](res *result) T {
+	v, ok := res.Value.(T)
+	if !ok {
+		fmt.Fprintf(os.Stderr, "!! BUG: unexpected value type in result: %T\n", res.Value)
+	}
+	return v
 }

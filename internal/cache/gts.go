@@ -268,7 +268,7 @@ func (c *GTSCaches) initAccount() {
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
-		{Name: "Username.Domain"},
+		{Name: "Username.Domain", AllowZero: true},
 		{Name: "PublicKeyURI"},
 		{Name: "InboxURI"},
 		{Name: "OutboxURI"},
@@ -371,7 +371,7 @@ func (c *GTSCaches) initEmoji() {
 	c.emoji = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
-		{Name: "Shortcode.Domain"},
+		{Name: "Shortcode.Domain", AllowZero: true},
 		{Name: "ImageStaticURL"},
 		{Name: "CategoryID", Multi: true},
 	}, func(e1 *gtsmodel.Emoji) *gtsmodel.Emoji {
