@@ -47,6 +47,12 @@ func (s *statusFaveDB) GetStatusFave(ctx context.Context, accountID string, stat
 				Model(fave).
 				Where("? = ?", bun.Ident("account_id"), accountID).
 				Where("? = ?", bun.Ident("status_id"), statusID).
+
+				// Our old code actually allowed a status to
+				// be faved multiple times by the same author,
+				// so limit our query + order to fetch latest.
+				Order("id DESC"). // our IDs are timestamped
+				Limit(1).
 				Scan(ctx)
 		},
 		accountID,
