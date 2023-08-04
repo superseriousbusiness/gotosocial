@@ -615,7 +615,7 @@ func (s *statusDB) getStatusBoostIDs(ctx context.Context, statusID string) ([]st
 	return s.state.Caches.GTS.BoostOfIDs().Load(statusID, func() ([]string, error) {
 		var statusIDs []string
 
-		// Status reply IDs not in cache, perform DB query!
+		// Status boost IDs not in cache, perform DB query!
 		if err := s.db.
 			NewSelect().
 			Table("statuses").
