@@ -101,13 +101,13 @@ func (s *statusDB) GetStatusBoost(ctx context.Context, boostOfID string, byAccou
 		"BoostOfID.AccountID",
 		func(status *gtsmodel.Status) error {
 			return s.newStatusQ(status).
-				Where("boost_of_id = ?", boostOfID).
-				Where("account_id = ?", byAccountID).
+				Where("status.boost_of_id = ?", boostOfID).
+				Where("status.account_id = ?", byAccountID).
 
 				// Our old code actually allowed a status to
 				// be boosted multiple times by the same author,
 				// so limit our query + order to fetch latest.
-				Order("id DESC"). // our IDs are timestamped
+				Order("status.id DESC"). // our IDs are timestamped
 				Limit(1).
 				Scan(ctx)
 		},
