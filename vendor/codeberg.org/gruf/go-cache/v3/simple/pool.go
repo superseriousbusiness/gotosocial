@@ -6,8 +6,8 @@ import "sync"
 // objects, regardless of cache type.
 var entryPool sync.Pool
 
-// getEntry fetches an Entry from pool, or allocates new.
-func getEntry() *Entry {
+// GetEntry fetches an Entry from pool, or allocates new.
+func GetEntry() *Entry {
 	v := entryPool.Get()
 	if v == nil {
 		return new(Entry)
@@ -15,8 +15,8 @@ func getEntry() *Entry {
 	return v.(*Entry)
 }
 
-// putEntry replaces an Entry in the pool.
-func putEntry(e *Entry) {
+// PutEntry replaces an Entry in the pool.
+func PutEntry(e *Entry) {
 	e.Key = nil
 	e.Value = nil
 	entryPool.Put(e)

@@ -34,6 +34,9 @@ type Status interface {
 	// GetStatusByURL returns one status from the database, with no rel fields populated, only their linking ID / URIs
 	GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, error)
 
+	// GetStatusBoost fetches the status whose boost_of_id column refers to boostOfID, authored by given account ID.
+	GetStatusBoost(ctx context.Context, boostOfID string, byAccountID string) (*gtsmodel.Status, error)
+
 	// PopulateStatus ensures that all sub-models of a status are populated (e.g. mentions, attachments, etc).
 	PopulateStatus(ctx context.Context, status *gtsmodel.Status) error
 
@@ -46,20 +49,26 @@ type Status interface {
 	// DeleteStatusByID deletes one status from the database.
 	DeleteStatusByID(ctx context.Context, id string) error
 
-	// CountStatusReplies returns the amount of replies recorded for a status, or an error if something goes wrong
-	CountStatusReplies(ctx context.Context, status *gtsmodel.Status) (int, error)
-
-	// CountStatusReblogs returns the amount of reblogs/boosts recorded for a status, or an error if something goes wrong
-	CountStatusReblogs(ctx context.Context, status *gtsmodel.Status) (int, error)
-
-	// CountStatusFaves returns the amount of faves/likes recorded for a status, or an error if something goes wrong
-	CountStatusFaves(ctx context.Context, status *gtsmodel.Status) (int, error)
-
 	// GetStatuses gets a slice of statuses corresponding to the given status IDs.
 	GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error)
 
 	// GetStatusesUsingEmoji fetches all status models using emoji with given ID stored in their 'emojis' column.
 	GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error)
+
+	// GetStatusReplies returns the *direct* (i.e. in_reply_to_id column) replies to this status ID.
+	GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
+
+	// CountStatusReplies returns the number of stored *direct* (i.e. in_reply_to_id column) replies to this status ID.
+	CountStatusReplies(ctx context.Context, statusID string) (int, error)
+
+	// GetStatusBoosts returns all statuses whose boost_of_id column refer to given status ID.
+	GetStatusBoosts(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
+
+	// CountStatusBoosts returns the number of stored boosts for status ID.
+	CountStatusBoosts(ctx context.Context, statusID string) (int, error)
+
+	// IsStatusBoostedBy checks whether the given status ID is boosted by account ID.
+	IsStatusBoostedBy(ctx context.Context, statusID string, accountID string) (bool, error)
 
 	// GetStatusParents gets the parent statuses of a given status.
 	//
@@ -71,19 +80,9 @@ type Status interface {
 	// If onlyDirect is true, only the immediate children will be returned.
 	GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error)
 
-	// IsStatusFavedBy checks if a given status has been faved by a given account ID
-	IsStatusFavedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
-
-	// IsStatusRebloggedBy checks if a given status has been reblogged/boosted by a given account ID
-	IsStatusRebloggedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
-
 	// IsStatusMutedBy checks if a given status has been muted by a given account ID
 	IsStatusMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
 
 	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
-
-	// GetStatusReblogs returns a slice of statuses that are a boost/reblog of the given status.
-	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
-	GetStatusReblogs(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, error)
 }

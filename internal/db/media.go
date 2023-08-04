@@ -41,10 +41,10 @@ type Media interface {
 	// DeleteAttachment deletes the attachment with given ID from the database.
 	DeleteAttachment(ctx context.Context, id string) error
 
-	// GetAttachments ...
+	// GetAttachments fetches media attachments up to a given max ID, and at most limit.
 	GetAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error)
 
-	// GetRemoteAttachments ...
+	// GetRemoteAttachments fetches media attachments with a non-empty domain, up to a given max ID, and at most limit.
 	GetRemoteAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error)
 
 	// GetCachedAttachmentsOlderThan gets limit n remote attachments (including avatars and headers) older than

@@ -24,16 +24,15 @@ import (
 )
 
 type StatusFave interface {
-	// GetStatusFaveByAccountID gets one status fave created by the given
-	// accountID, targeting the given statusID.
+	// GetStatusFaveByAccountID gets one status fave created by the given accountID, targeting the given statusID.
 	GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, error)
 
 	// GetStatusFave returns one status fave with the given id.
 	GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, error)
 
-	// GetStatusFaves returns a slice of faves/likes of the given status.
+	// GetStatusFaves returns a slice of faves/likes of the status with given ID.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
-	GetStatusFavesForStatus(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, error)
+	GetStatusFaves(ctx context.Context, statusID string) ([]*gtsmodel.StatusFave, error)
 
 	// PopulateStatusFave ensures that all sub-models of a fave are populated (account, status, etc).
 	PopulateStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) error
@@ -59,8 +58,13 @@ type StatusFave interface {
 	// At least one parameter must not be an empty string.
 	DeleteStatusFaves(ctx context.Context, targetAccountID string, originAccountID string) error
 
-	// DeleteStatusFavesForStatus deletes all status faves that target the
-	// given status ID. This is useful when a status has been deleted, and you need
-	// to clean up after it.
+	// DeleteStatusFavesForStatus deletes all status faves that target the given status ID.
+	// This is useful when a status has been deleted, and you need to clean up after it.
 	DeleteStatusFavesForStatus(ctx context.Context, statusID string) error
+
+	// CountStatusFaves returns the number of status favourites registered for status with ID.
+	CountStatusFaves(ctx context.Context, statusID string) (int, error)
+
+	// IsStatusFavedBy returns whether the status with ID has been favourited by account with ID.
+	IsStatusFavedBy(ctx context.Context, statusID string, accountID string) (bool, error)
 }

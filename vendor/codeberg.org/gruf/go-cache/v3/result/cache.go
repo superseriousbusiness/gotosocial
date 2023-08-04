@@ -11,28 +11,7 @@ import (
 	"codeberg.org/gruf/go-errors/v2"
 )
 
-type result struct {
-	// Result primary key
-	PKey int64
-
-	// keys accessible under
-	Keys cacheKeys
-
-	// cached value
-	Value any
-
-	// cached error
-	Error error
-}
-
-// getResultValue is a safe way of casting and fetching result value.
-func getResultValue[T any](res *result) T {
-	v, ok := res.Value.(T)
-	if !ok {
-		fmt.Fprintf(os.Stderr, "!! BUG: unexpected value type in result: %T\n", res.Value)
-	}
-	return v
-}
+var ErrUnsupportedZero = errors.New("")
 
 // Lookup represents a struct object lookup method in the cache.
 type Lookup struct {
@@ -255,13 +234,15 @@ func (c *Cache[T]) Load(lookup string, load func() (T, error), keyParts ...any) 
 		evict = c.store(res)
 	}
 
-	// Catch and return error
-	if res.Error != nil {
-		return zero, res.Error
+	// Catch and return cached error
+	if err := res.Error; err != nil {
+		return zero, err
 	}
 
-	// Return a copy of value from cache
-	return c.copy(getResultValue[T](res)), nil
+	// Copy value from cached result.
+	v := c.copy(getResultValue[T](res))
+
+	return v, nil
 }
 
 // Store will call the given store function, and on success store the value in the cache as a positive result.
@@ -332,11 +313,13 @@ func (c *Cache[T]) Has(lookup string, keyParts ...any) bool {
 		}
 	}
 
+	// Check for result AND non-error result.
+	ok := (res != nil && res.Error == nil)
+
 	// Done with lock
 	c.cache.Unlock()
 
-	// Check for result AND non-error result.
-	return (res != nil && res.Error == nil)
+	return ok
 }
 
 // Invalidate will invalidate any result from the cache found under given lookup and key parts.
@@ -407,13 +390,18 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 		key.info.pkeys[key.key] = pkeys
 	}
 
+	// Acquire new cache entry.
+	entry := simple.GetEntry()
+	entry.Key = res.PKey
+	entry.Value = res
+
+	evictFn := func(_ int64, entry *simple.Entry) {
+		// on evict during set, store evicted result.
+		toEvict = append(toEvict, entry.Value.(*result))
+	}
+
 	// Store main entry under primary key, catch evicted.
-	c.cache.Cache.SetWithHook(res.PKey, &simple.Entry{
-		Key:   res.PKey,
-		Value: res,
-	}, func(_ int64, item *simple.Entry) {
-		toEvict = append(toEvict, item.Value.(*result))
-	})
+	c.cache.Cache.SetWithHook(res.PKey, entry, evictFn)
 
 	if len(toEvict) == 0 {
 		// none evicted.
@@ -421,9 +409,35 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 	}
 
 	return func() {
-		for _, res := range toEvict {
+		for i := range toEvict {
+			// Rescope result.
+			res := toEvict[i]
+
 			// Call evict hook on each entry.
 			c.cache.Evict(res.PKey, res)
 		}
 	}
+}
+
+type result struct {
+	// Result primary key
+	PKey int64
+
+	// keys accessible under
+	Keys cacheKeys
+
+	// cached value
+	Value any
+
+	// cached error
+	Error error
+}
+
+// getResultValue is a safe way of casting and fetching result value.
+func getResultValue[T any](res *result) T {
+	v, ok := res.Value.(T)
+	if !ok {
+		fmt.Fprintf(os.Stderr, "!! BUG: unexpected value type in result: %T\n", res.Value)
+	}
+	return v
 }

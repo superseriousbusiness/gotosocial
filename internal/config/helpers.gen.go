@@ -2549,6 +2549,31 @@ func GetCacheBlockIDsMemRatio() float64 { return global.GetCacheBlockIDsMemRatio
 // SetCacheBlockIDsMemRatio safely sets the value for global configuration 'Cache.BlockIDsMemRatio' field
 func SetCacheBlockIDsMemRatio(v float64) { global.SetCacheBlockIDsMemRatio(v) }
 
+// GetCacheBoostOfIDsMemRatio safely fetches the Configuration value for state's 'Cache.BoostOfIDsMemRatio' field
+func (st *ConfigState) GetCacheBoostOfIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.BoostOfIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheBoostOfIDsMemRatio safely sets the Configuration value for state's 'Cache.BoostOfIDsMemRatio' field
+func (st *ConfigState) SetCacheBoostOfIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.BoostOfIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheBoostOfIDsMemRatioFlag returns the flag name for the 'Cache.BoostOfIDsMemRatio' field
+func CacheBoostOfIDsMemRatioFlag() string { return "cache-boost-of-ids-mem-ratio" }
+
+// GetCacheBoostOfIDsMemRatio safely fetches the value for global configuration 'Cache.BoostOfIDsMemRatio' field
+func GetCacheBoostOfIDsMemRatio() float64 { return global.GetCacheBoostOfIDsMemRatio() }
+
+// SetCacheBoostOfIDsMemRatio safely sets the value for global configuration 'Cache.BoostOfIDsMemRatio' field
+func SetCacheBoostOfIDsMemRatio(v float64) { global.SetCacheBoostOfIDsMemRatio(v) }
+
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field
 func (st *ConfigState) GetCacheEmojiMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -2698,6 +2723,31 @@ func GetCacheFollowRequestIDsMemRatio() float64 { return global.GetCacheFollowRe
 
 // SetCacheFollowRequestIDsMemRatio safely sets the value for global configuration 'Cache.FollowRequestIDsMemRatio' field
 func SetCacheFollowRequestIDsMemRatio(v float64) { global.SetCacheFollowRequestIDsMemRatio(v) }
+
+// GetCacheInReplyToIDsMemRatio safely fetches the Configuration value for state's 'Cache.InReplyToIDsMemRatio' field
+func (st *ConfigState) GetCacheInReplyToIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.InReplyToIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheInReplyToIDsMemRatio safely sets the Configuration value for state's 'Cache.InReplyToIDsMemRatio' field
+func (st *ConfigState) SetCacheInReplyToIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.InReplyToIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheInReplyToIDsMemRatioFlag returns the flag name for the 'Cache.InReplyToIDsMemRatio' field
+func CacheInReplyToIDsMemRatioFlag() string { return "cache-in-reply-to-ids-mem-ratio" }
+
+// GetCacheInReplyToIDsMemRatio safely fetches the value for global configuration 'Cache.InReplyToIDsMemRatio' field
+func GetCacheInReplyToIDsMemRatio() float64 { return global.GetCacheInReplyToIDsMemRatio() }
+
+// SetCacheInReplyToIDsMemRatio safely sets the value for global configuration 'Cache.InReplyToIDsMemRatio' field
+func SetCacheInReplyToIDsMemRatio(v float64) { global.SetCacheInReplyToIDsMemRatio(v) }
 
 // GetCacheInstanceMemRatio safely fetches the Configuration value for state's 'Cache.InstanceMemRatio' field
 func (st *ConfigState) GetCacheInstanceMemRatio() (v float64) {
@@ -2948,6 +2998,31 @@ func GetCacheStatusFaveMemRatio() float64 { return global.GetCacheStatusFaveMemR
 
 // SetCacheStatusFaveMemRatio safely sets the value for global configuration 'Cache.StatusFaveMemRatio' field
 func SetCacheStatusFaveMemRatio(v float64) { global.SetCacheStatusFaveMemRatio(v) }
+
+// GetCacheStatusFaveIDsMemRatio safely fetches the Configuration value for state's 'Cache.StatusFaveIDsMemRatio' field
+func (st *ConfigState) GetCacheStatusFaveIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.StatusFaveIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheStatusFaveIDsMemRatio safely sets the Configuration value for state's 'Cache.StatusFaveIDsMemRatio' field
+func (st *ConfigState) SetCacheStatusFaveIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.StatusFaveIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheStatusFaveIDsMemRatioFlag returns the flag name for the 'Cache.StatusFaveIDsMemRatio' field
+func CacheStatusFaveIDsMemRatioFlag() string { return "cache-status-fave-ids-mem-ratio" }
+
+// GetCacheStatusFaveIDsMemRatio safely fetches the value for global configuration 'Cache.StatusFaveIDsMemRatio' field
+func GetCacheStatusFaveIDsMemRatio() float64 { return global.GetCacheStatusFaveIDsMemRatio() }
+
+// SetCacheStatusFaveIDsMemRatio safely sets the value for global configuration 'Cache.StatusFaveIDsMemRatio' field
+func SetCacheStatusFaveIDsMemRatio(v float64) { global.SetCacheStatusFaveIDsMemRatio(v) }
 
 // GetCacheTagMemRatio safely fetches the Configuration value for state's 'Cache.TagMemRatio' field
 func (st *ConfigState) GetCacheTagMemRatio() (v float64) {

@@ -47,26 +47,31 @@ func (sk structKeys) generate(a any) []cacheKey {
 	buf := getBuf()
 	defer putBuf(buf)
 
+outer:
 	for i := range sk {
 		// Reset buffer
-		buf.B = buf.B[:0]
+		buf.Reset()
 
 		// Append each field value to buffer.
 		for _, field := range sk[i].fields {
 			fv := v.Field(field.index)
 			fi := fv.Interface()
-			buf.B = field.mangle(buf.B, fi)
+
+			// Mangle this key part into buffer.
+			ok := field.manglePart(buf, fi)
+
+			if !ok {
+				// don't generate keys
+				// for zero value parts.
+				continue outer
+			}
+
+			// Append part separator.
 			buf.B = append(buf.B, '.')
 		}
 
 		// Drop last '.'
 		buf.Truncate(1)
-
-		// Don't generate keys for zero values
-		if allowZero := sk[i].zero == ""; // nocollapse
-		!allowZero && buf.String() == sk[i].zero {
-			continue
-		}
 
 		// Append new cached key to slice
 		keys = append(keys, cacheKey{
@@ -114,14 +119,6 @@ type structKey struct {
 	// period ('.') separated struct field names.
 	name string
 
-	// zero is the possible zero value for this key.
-	// if set, this will _always_ be non-empty, as
-	// the mangled cache key will never be empty.
-	//
-	// i.e. zero = ""  --> allow zero value keys
-	//      zero != "" --> don't allow zero value keys
-	zero string
-
 	// unique determines whether this structKey supports
 	// multiple or just the singular unique result.
 	unique bool
@@ -135,47 +132,10 @@ type structKey struct {
 	pkeys map[string][]int64
 }
 
-type structField struct {
-	// index is the reflect index of this struct field.
-	index int
-
-	// mangle is the mangler function for
-	// serializing values of this struct field.
-	mangle mangler.Mangler
-}
-
-// genKey generates a cache key string for given key parts (i.e. serializes them using "go-mangler").
-func (sk *structKey) genKey(parts []any) string {
-	// Check this expected no. key parts.
-	if len(parts) != len(sk.fields) {
-		panic(fmt.Sprintf("incorrect no. key parts provided: want=%d received=%d", len(parts), len(sk.fields)))
-	}
-
-	// Acquire byte buffer
-	buf := getBuf()
-	defer putBuf(buf)
-	buf.Reset()
-
-	// Encode each key part
-	for i, part := range parts {
-		buf.B = sk.fields[i].mangle(buf.B, part)
-		buf.B = append(buf.B, '.')
-	}
-
-	// Drop last '.'
-	buf.Truncate(1)
-
-	// Return string copy
-	return string(buf.B)
-}
-
 // newStructKey will generate a structKey{} information object for user-given lookup
 // key information, and the receiving generic paramter's type information. Panics on error.
 func newStructKey(lk Lookup, t reflect.Type) structKey {
-	var (
-		sk    structKey
-		zeros []any
-	)
+	var sk structKey
 
 	// Set the lookup name
 	sk.name = lk.Name
@@ -183,9 +143,6 @@ func newStructKey(lk Lookup, t reflect.Type) structKey {
 	// Split dot-separated lookup to get
 	// the individual struct field names
 	names := strings.Split(lk.Name, ".")
-	if len(names) == 0 {
-		panic("no key fields specified")
-	}
 
 	// Allocate the mangler and field indices slice.
 	sk.fields = make([]structField, len(names))
@@ -213,14 +170,10 @@ func newStructKey(lk Lookup, t reflect.Type) structKey {
 		sk.fields[i].mangle = mangler.Get(ft.Type)
 
 		if !lk.AllowZero {
-			// Append the zero value interface
-			zeros = append(zeros, v.Interface())
+			// Append the mangled zero value interface
+			zero := sk.fields[i].mangle(nil, v.Interface())
+			sk.fields[i].zero = string(zero)
 		}
-	}
-
-	if len(zeros) > 0 {
-		// Generate zero value string
-		sk.zero = sk.genKey(zeros)
 	}
 
 	// Set unique lookup flag.
@@ -230,6 +183,68 @@ func newStructKey(lk Lookup, t reflect.Type) structKey {
 	sk.pkeys = make(map[string][]int64)
 
 	return sk
+}
+
+// genKey generates a cache key string for given key parts (i.e. serializes them using "go-mangler").
+func (sk *structKey) genKey(parts []any) string {
+	// Check this expected no. key parts.
+	if len(parts) != len(sk.fields) {
+		panic(fmt.Sprintf("incorrect no. key parts provided: want=%d received=%d", len(parts), len(sk.fields)))
+	}
+
+	// Acquire byte buffer
+	buf := getBuf()
+	defer putBuf(buf)
+	buf.Reset()
+
+	for i, part := range parts {
+		// Mangle this key part into buffer.
+		// specifically ignoring whether this
+		// is returning a zero value key part.
+		_ = sk.fields[i].manglePart(buf, part)
+
+		// Append part separator.
+		buf.B = append(buf.B, '.')
+	}
+
+	// Drop last '.'
+	buf.Truncate(1)
+
+	// Return string copy
+	return string(buf.B)
+}
+
+type structField struct {
+	// index is the reflect index of this struct field.
+	index int
+
+	// zero is the possible zero value for this
+	// key part. if set, this will _always_ be
+	// non-empty due to how the mangler works.
+	//
+	// i.e. zero = ""  --> allow zero value keys
+	//      zero != "" --> don't allow zero value keys
+	zero string
+
+	// mangle is the mangler function for
+	// serializing values of this struct field.
+	mangle mangler.Mangler
+}
+
+// manglePart ...
+func (field *structField) manglePart(buf *byteutil.Buffer, part any) bool {
+	// Start of part bytes.
+	start := len(buf.B)
+
+	// Mangle this key part into buffer.
+	buf.B = field.mangle(buf.B, part)
+
+	// End of part bytes.
+	end := len(buf.B)
+
+	// Return whether this is zero value.
+	return (field.zero == "" ||
+		string(buf.B[start:end]) != field.zero)
 }
 
 // isExported checks whether function name is exported.
@@ -246,12 +261,12 @@ var bufPool = sync.Pool{
 	},
 }
 
-// getBuf ...
+// getBuf acquires a byte buffer from memory pool.
 func getBuf() *byteutil.Buffer {
 	return bufPool.Get().(*byteutil.Buffer)
 }
 
-// putBuf ...
+// putBuf replaces a byte buffer back in memory pool.
 func putBuf(buf *byteutil.Buffer) {
 	if buf.Cap() > int(^uint16(0)) {
 		return // drop large bufs

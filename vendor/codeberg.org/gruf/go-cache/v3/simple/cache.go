@@ -102,7 +102,7 @@ func (c *Cache[K, V]) Add(key K, value V) bool {
 		}
 
 		// Alloc new entry.
-		new := getEntry()
+		new := GetEntry()
 		new.Key = key
 		new.Value = value
 
@@ -111,7 +111,7 @@ func (c *Cache[K, V]) Add(key K, value V) bool {
 			evcK = item.Key.(K)
 			evcV = item.Value.(V)
 			ev = true
-			putEntry(item)
+			PutEntry(item)
 		})
 
 		// Set hook func ptr.
@@ -161,7 +161,7 @@ func (c *Cache[K, V]) Set(key K, value V) {
 			item.Value = value
 		} else {
 			// Alloc new entry.
-			new := getEntry()
+			new := GetEntry()
 			new.Key = key
 			new.Value = value
 
@@ -170,7 +170,7 @@ func (c *Cache[K, V]) Set(key K, value V) {
 				evcK = item.Key.(K)
 				evcV = item.Value.(V)
 				ev = true
-				putEntry(item)
+				PutEntry(item)
 			})
 		}
 
@@ -311,7 +311,7 @@ func (c *Cache[K, V]) Invalidate(key K) (ok bool) {
 		_ = c.Cache.Delete(key)
 
 		// Free entry
-		putEntry(item)
+		PutEntry(item)
 
 		// Set hook func ptrs.
 		invalid = c.Invalid
@@ -367,7 +367,7 @@ func (c *Cache[K, V]) InvalidateAll(keys ...K) (ok bool) {
 			invalid(k, v)
 
 			// Free this entry.
-			putEntry(items[x])
+			PutEntry(items[x])
 		}
 	}
 
@@ -410,7 +410,7 @@ func (c *Cache[K, V]) Trim(perc float64) {
 			invalid(k, v)
 
 			// Free this entry.
-			putEntry(items[x])
+			PutEntry(items[x])
 		}
 	}
 }
@@ -438,7 +438,7 @@ func (c *Cache[K, V]) locked(fn func()) {
 func (c *Cache[K, V]) truncate(sz int, hook func(K, V)) []*Entry {
 	if hook == nil {
 		// No hook to execute, simply release all truncated entries.
-		c.Cache.Truncate(sz, func(_ K, item *Entry) { putEntry(item) })
+		c.Cache.Truncate(sz, func(_ K, item *Entry) { PutEntry(item) })
 		return nil
 	}
 

@@ -330,7 +330,7 @@ statusLoop:
 			})
 
 			// Look for any boosts of this status in DB.
-			boosts, err := p.state.DB.GetStatusReblogs(ctx, status)
+			boosts, err := p.state.DB.GetStatusBoosts(ctx, status.ID)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
 				return gtserror.Newf("error fetching status reblogs for %s: %w", status.ID, err)
 			}

@@ -34,6 +34,7 @@ type GTSCaches struct {
 	accountNote      *result.Cache[*gtsmodel.AccountNote]
 	block            *result.Cache[*gtsmodel.Block]
 	blockIDs         *SliceCache[string]
+	boostOfIDs       *SliceCache[string]
 	domainBlock      *domain.BlockCache
 	emoji            *result.Cache[*gtsmodel.Emoji]
 	emojiCategory    *result.Cache[*gtsmodel.EmojiCategory]
@@ -42,6 +43,7 @@ type GTSCaches struct {
 	followRequest    *result.Cache[*gtsmodel.FollowRequest]
 	followRequestIDs *SliceCache[string]
 	instance         *result.Cache[*gtsmodel.Instance]
+	inReplyToIDs     *SliceCache[string]
 	list             *result.Cache[*gtsmodel.List]
 	listEntry        *result.Cache[*gtsmodel.ListEntry]
 	marker           *result.Cache[*gtsmodel.Marker]
@@ -51,6 +53,7 @@ type GTSCaches struct {
 	report           *result.Cache[*gtsmodel.Report]
 	status           *result.Cache[*gtsmodel.Status]
 	statusFave       *result.Cache[*gtsmodel.StatusFave]
+	statusFaveIDs    *SliceCache[string]
 	tag              *result.Cache[*gtsmodel.Tag]
 	tombstone        *result.Cache[*gtsmodel.Tombstone]
 	user             *result.Cache[*gtsmodel.User]
@@ -66,6 +69,7 @@ func (c *GTSCaches) Init() {
 	c.initAccountNote()
 	c.initBlock()
 	c.initBlockIDs()
+	c.initBoostOfIDs()
 	c.initDomainBlock()
 	c.initEmoji()
 	c.initEmojiCategory()
@@ -73,6 +77,7 @@ func (c *GTSCaches) Init() {
 	c.initFollowIDs()
 	c.initFollowRequest()
 	c.initFollowRequestIDs()
+	c.initInReplyToIDs()
 	c.initInstance()
 	c.initList()
 	c.initListEntry()
@@ -84,6 +89,7 @@ func (c *GTSCaches) Init() {
 	c.initStatus()
 	c.initStatusFave()
 	c.initTag()
+	c.initStatusFaveIDs()
 	c.initTombstone()
 	c.initUser()
 	c.initWebfinger()
@@ -119,6 +125,11 @@ func (c *GTSCaches) Block() *result.Cache[*gtsmodel.Block] {
 // FollowIDs provides access to the block IDs database cache.
 func (c *GTSCaches) BlockIDs() *SliceCache[string] {
 	return c.blockIDs
+}
+
+// BoostOfIDs provides access to the boost of IDs list database cache.
+func (c *GTSCaches) BoostOfIDs() *SliceCache[string] {
+	return c.boostOfIDs
 }
 
 // DomainBlock provides access to the domain block database cache.
@@ -167,6 +178,11 @@ func (c *GTSCaches) FollowRequestIDs() *SliceCache[string] {
 // Instance provides access to the gtsmodel Instance database cache.
 func (c *GTSCaches) Instance() *result.Cache[*gtsmodel.Instance] {
 	return c.instance
+}
+
+// InReplyToIDs provides access to the status in reply to IDs list database cache.
+func (c *GTSCaches) InReplyToIDs() *SliceCache[string] {
+	return c.inReplyToIDs
 }
 
 // List provides access to the gtsmodel List database cache.
@@ -219,6 +235,11 @@ func (c *GTSCaches) Tag() *result.Cache[*gtsmodel.Tag] {
 	return c.tag
 }
 
+// StatusFaveIDs provides access to the status fave IDs list database cache.
+func (c *GTSCaches) StatusFaveIDs() *SliceCache[string] {
+	return c.statusFaveIDs
+}
+
 // Tombstone provides access to the gtsmodel Tombstone database cache.
 func (c *GTSCaches) Tombstone() *result.Cache[*gtsmodel.Tombstone] {
 	return c.tombstone
@@ -247,7 +268,7 @@ func (c *GTSCaches) initAccount() {
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
-		{Name: "Username.Domain"},
+		{Name: "Username.Domain", AllowZero: true /* domain can be zero i.e. "" */},
 		{Name: "PublicKeyURI"},
 		{Name: "InboxURI"},
 		{Name: "OutboxURI"},
@@ -320,6 +341,20 @@ func (c *GTSCaches) initBlockIDs() {
 	)}
 }
 
+func (c *GTSCaches) initBoostOfIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheBoostOfIDsMemRatio(),
+	)
+
+	log.Infof(nil, "BoostofIDs cache size = %d", cap)
+
+	c.boostOfIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
+}
+
 func (c *GTSCaches) initDomainBlock() {
 	c.domainBlock = new(domain.BlockCache)
 }
@@ -336,7 +371,7 @@ func (c *GTSCaches) initEmoji() {
 	c.emoji = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
-		{Name: "Shortcode.Domain"},
+		{Name: "Shortcode.Domain", AllowZero: true /* domain can be zero i.e. "" */},
 		{Name: "ImageStaticURL"},
 		{Name: "CategoryID", Multi: true},
 	}, func(e1 *gtsmodel.Emoji) *gtsmodel.Emoji {
@@ -440,6 +475,20 @@ func (c *GTSCaches) initFollowRequestIDs() {
 	log.Infof(nil, "Follow Request IDs cache size = %d", cap)
 
 	c.followRequestIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
+}
+
+func (c *GTSCaches) initInReplyToIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheInReplyToIDsMemRatio(),
+	)
+
+	log.Infof(nil, "InReplyTo IDs cache size = %d", cap)
+
+	c.inReplyToIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
 		cap,
 	)}
@@ -622,6 +671,7 @@ func (c *GTSCaches) initStatus() {
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
+		{Name: "BoostOfID.AccountID"},
 	}, func(s1 *gtsmodel.Status) *gtsmodel.Status {
 		s2 := new(gtsmodel.Status)
 		*s2 = *s1
@@ -643,6 +693,7 @@ func (c *GTSCaches) initStatusFave() {
 	c.statusFave = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID.StatusID"},
+		{Name: "StatusID", Multi: true},
 	}, func(f1 *gtsmodel.StatusFave) *gtsmodel.StatusFave {
 		f2 := new(gtsmodel.StatusFave)
 		*f2 = *f1
@@ -650,6 +701,20 @@ func (c *GTSCaches) initStatusFave() {
 	}, cap)
 
 	c.statusFave.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initStatusFaveIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheStatusFaveIDsMemRatio(),
+	)
+
+	log.Infof(nil, "StatusFave IDs cache size = %d", cap)
+
+	c.statusFaveIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
 }
 
 func (c *GTSCaches) initTag() {
