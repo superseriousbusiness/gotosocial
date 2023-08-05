@@ -21,10 +21,10 @@ import "time"
 
 // Tag represents a hashtag for gathering public statuses together.
 type Tag struct {
-	ID        string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Name      string    `validate:"required" bun:",unique,nullzero,notnull"`                             // (lowercase) name of the tag without the hash prefix
-	Useable   *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // Tag is useable on this instance.
-	Listable  *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // Tagged statuses can be listed on this instance.
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	Name      string    `bun:",unique,nullzero,notnull"`                                    // (lowercase) name of the tag without the hash prefix
+	Useable   *bool     `bun:",nullzero,notnull,default:true"`                              // Tag is useable on this instance.
+	Listable  *bool     `bun:",nullzero,notnull,default:true"`                              // Tagged statuses can be listed on this instance.
 }

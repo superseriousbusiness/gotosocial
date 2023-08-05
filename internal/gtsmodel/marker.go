@@ -21,11 +21,11 @@ import "time"
 
 // Marker stores a local account's read position on a given timeline.
 type Marker struct {
-	AccountID  string     `validate:"required,ulid" bun:"type:CHAR(26),pk,unique:markers_account_id_timeline_uniq,notnull,nullzero"` // ID of the local account that owns the marker
-	Name       MarkerName `validate:"oneof=home notifications" bun:",nullzero,notnull,pk,unique:markers_account_id_timeline_uniq"`   // Name of the marked timeline
-	UpdatedAt  time.Time  `validate:"required" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                    // When marker was last updated
-	Version    int        `validate:"required,min=0" bun:",nullzero,notnull,default:0"`                                              // For optimistic concurrency control
-	LastReadID string     `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero"`                                            // Last ID read on this timeline (status ID for home, notification ID for notifications)
+	AccountID  string     `bun:"type:CHAR(26),pk,unique:markers_account_id_timeline_uniq,notnull,nullzero"` // ID of the local account that owns the marker
+	Name       MarkerName `bun:",nullzero,notnull,pk,unique:markers_account_id_timeline_uniq"`              // Name of the marked timeline
+	UpdatedAt  time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`               // When marker was last updated
+	Version    int        `bun:",nullzero,notnull,default:0"`                                               // For optimistic concurrency control
+	LastReadID string     `bun:"type:CHAR(26),notnull,nullzero"`                                            // Last ID read on this timeline (status ID for home, notification ID for notifications)
 }
 
 // MarkerName is the name of one of the timelines we can store markers for.

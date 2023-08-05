@@ -21,12 +21,12 @@ import "time"
 
 // AccountNote stores a private note from a local account related to any account.
 type AccountNote struct {
-	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                              // id of this item in the database
-	CreatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                       // when was item created
-	UpdatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                       // when was item last updated
-	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),unique:account_notes_account_id_target_account_id_uniq,notnull,nullzero"` // ID of the local account that created the note
-	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                                                                    // Account corresponding to accountID
-	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),unique:account_notes_account_id_target_account_id_uniq,notnull,nullzero"` // Who is the target of this note?
-	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                                                                    // Account corresponding to targetAccountID
-	Comment         string    `validate:"-" bun:""`                                                                                                  // The text of the note.
+	ID              string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                              // id of this item in the database
+	CreatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                           // when was item created
+	UpdatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                           // when was item last updated
+	AccountID       string    `bun:"type:CHAR(26),unique:account_notes_account_id_target_account_id_uniq,notnull,nullzero"` // ID of the local account that created the note
+	Account         *Account  `bun:"rel:belongs-to"`                                                                        // Account corresponding to accountID
+	TargetAccountID string    `bun:"type:CHAR(26),unique:account_notes_account_id_target_account_id_uniq,notnull,nullzero"` // Who is the target of this note?
+	TargetAccount   *Account  `bun:"rel:belongs-to"`                                                                        // Account corresponding to targetAccountID
+	Comment         string    `bun:""`                                                                                      // The text of the note.
 }

@@ -21,9 +21,9 @@ import "time"
 
 // RouterSession is used to store and retrieve settings for a router session.
 type RouterSession struct {
-	ID        string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Auth      []byte    `validate:"required,len=32" bun:"type:bytea,notnull,nullzero"`
-	Crypt     []byte    `validate:"required,len=32" bun:"type:bytea,notnull,nullzero"`
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	Auth      []byte    `bun:"type:bytea,notnull,nullzero"`
+	Crypt     []byte    `bun:"type:bytea,notnull,nullzero"`
 }
