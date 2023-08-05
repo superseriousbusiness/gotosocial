@@ -17,6 +17,7 @@ func getResult() *result {
 
 // putResult replaces a result in the pool.
 func putResult(r *result) {
+	r.PKey = 0
 	r.Keys = nil
 	r.Value = nil
 	r.Error = nil
