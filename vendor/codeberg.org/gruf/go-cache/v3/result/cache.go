@@ -91,6 +91,7 @@ func (c *Cache[T]) SetEvictionCallback(hook func(T)) {
 
 		if res.Error != nil {
 			// Skip value hooks
+			putResult(res)
 			return
 		}
 
@@ -119,6 +120,7 @@ func (c *Cache[T]) SetInvalidateCallback(hook func(T)) {
 
 		if res.Error != nil {
 			// Skip value hooks
+			putResult(res)
 			return
 		}
 
@@ -147,10 +149,8 @@ func (c *Cache[T]) IgnoreErrors(ignore func(error) bool) {
 
 // Load will attempt to load an existing result from the cacche for the given lookup and key parts, else calling the provided load function and caching the result.
 func (c *Cache[T]) Load(lookup string, load func() (T, error), keyParts ...any) (T, error) {
-	var (
-		zero T
-		res  *result
-	)
+	var zero T
+	var res *result
 
 	// Get lookup key info by name.
 	keyInfo := c.lookups.get(lookup)
@@ -164,12 +164,11 @@ func (c *Cache[T]) Load(lookup string, load func() (T, error), keyParts ...any) 
 	// Acquire cache lock
 	c.cache.Lock()
 
-	// Look for primary cache key
-	pkeys := keyInfo.pkeys[ckey]
-
-	if len(pkeys) > 0 {
+	// Look for primary key for cache key (only accept len=1)
+	if pkeys := keyInfo.pkeys[ckey]; len(pkeys) == 1 {
 		// Fetch the result for primary key
 		entry, ok := c.cache.Cache.Get(pkeys[0])
+
 		if ok {
 			// Since the invalidation / eviction hooks acquire a mutex
 			// lock separately, and only at this point are the pkeys
@@ -298,12 +297,11 @@ func (c *Cache[T]) Has(lookup string, keyParts ...any) bool {
 	// Acquire cache lock
 	c.cache.Lock()
 
-	// Look for primary key for cache key
-	pkeys := keyInfo.pkeys[ckey]
-
-	if len(pkeys) > 0 {
+	// Look for primary key for cache key (only accept len=1)
+	if pkeys := keyInfo.pkeys[ckey]; len(pkeys) == 1 {
 		// Fetch the result for primary key
 		entry, ok := c.cache.Cache.Get(pkeys[0])
+
 		if ok {
 			// Since the invalidation / eviction hooks acquire a mutex
 			// lock separately, and only at this point are the pkeys
@@ -364,17 +362,25 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 		if key.info.unique && len(pkeys) > 0 {
 			for _, conflict := range pkeys {
 				// Get the overlapping result with this key.
-				entry, _ := c.cache.Cache.Get(conflict)
-				confRes := entry.Value.(*result)
+				entry, ok := c.cache.Cache.Get(conflict)
+
+				if !ok {
+					// Since the invalidation / eviction hooks acquire a mutex
+					// lock separately, and only at this point are the pkeys
+					// updated, there is a chance that a primary key may return
+					// no matching entry. Hence we have to check for it here.
+					continue
+				}
 
 				// From conflicting entry, drop this key, this
 				// will prevent eviction cleanup key confusion.
+				confRes := entry.Value.(*result)
 				confRes.Keys.drop(key.info.name)
 
 				if len(res.Keys) == 0 {
 					// We just over-wrote the only lookup key for
 					// this value, so we drop its primary key too.
-					c.cache.Cache.Delete(conflict)
+					_ = c.cache.Cache.Delete(conflict)
 
 					// Add finished result to evict queue.
 					toEvict = append(toEvict, confRes)
