@@ -34,10 +34,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
-	"github.com/superseriousbusiness/gotosocial/internal/validate/normalize"
 )
 
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
+//
+// Precondition: the form's fields should have already been validated and normalized by the caller.
 func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
 	accountURIs := uris.GenerateURIsForAccount(account.Username)
 	thisStatusID := id.NewULID()
@@ -266,7 +267,7 @@ func processVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateF
 
 func processLanguage(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
 	if form.Language != "" {
-		status.Language = normalize.Language(form.Language)
+		status.Language = form.Language
 	} else {
 		status.Language = accountDefaultLanguage
 	}

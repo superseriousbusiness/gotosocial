@@ -159,78 +159,39 @@ func (suite *ValidationTestSuite) TestValidateEmail() {
 }
 
 func (suite *ValidationTestSuite) TestValidateLanguage() {
-	empty := ""
-	notALanguage := "this isn't a language at all!"
-	english := "en"
-	capitalEnglish := "EN"
-	arabic3Letters := "ara"
-	mixedCapsEnglish := "eN"
-	englishUS := "en-us"
-	dutch := "nl"
-	german := "de"
-	chinese := "zh"
-	chineseSimplified := "zh-Hans"
-	chineseTraditional := "zh-Hant"
-	var err error
-
-	err = validate.Language(empty)
-	if suite.Error(err) {
-		suite.Equal(errors.New("no language provided"), err)
+	testCases := []struct {
+		name, input, expected, err string
+	}{
+		{name: "empty", err: "no language provided"},
+		{name: "notALanguage", input: "this isn't a language at all!", err: "language: tag is not well-formed"},
+		{name: "english", input: "en", expected: "en"},
+		// Should be all lowercase
+		{name: "capitalEnglish", input: "EN", expected: "en"},
+		// Overlong, should be in ISO 639-1 format
+		{name: "arabic3Letters", input: "ara", expected: "ar"},
+		// Should be all lowercase
+		{name: "mixedCapsEnglish", input: "eN", expected: "en"},
+		// Region should be capitalized
+		{name: "englishUS", input: "en-us", expected: "en-US"},
+		{name: "dutch", input: "nl", expected: "nl"},
+		{name: "german", input: "de", expected: "de"},
+		{name: "chinese", input: "zh", expected: "zh"},
+		{name: "chineseSimplified", input: "zh-Hans", expected: "zh-Hans"},
+		{name: "chineseTraditional", input: "zh-Hant", expected: "zh-Hant"},
 	}
 
-	err = validate.Language(notALanguage)
-	if suite.Error(err) {
-		suite.Equal(errors.New("language: tag is not well-formed"), err)
-	}
-
-	err = validate.Language(english)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(capitalEnglish)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(arabic3Letters)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(mixedCapsEnglish)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(englishUS)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(dutch)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(german)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(chinese)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(chineseSimplified)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
-	}
-
-	err = validate.Language(chineseTraditional)
-	if suite.NoError(err) {
-		suite.Equal(nil, err)
+	for _, testCase := range testCases {
+		testCase := testCase
+		suite.Run(testCase.name, func() {
+			actual, actualErr := validate.Language(testCase.input)
+			if testCase.err == "" {
+				suite.Equal(testCase.expected, actual)
+				suite.NoError(actualErr)
+			} else {
+				suite.Empty(actual)
+				suite.EqualError(actualErr, testCase.err)
+			}
+		})
 	}
 }
 

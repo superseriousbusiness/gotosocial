@@ -28,15 +28,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/validate/normalize"
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // Create processes the given form for creating a new account,
 // returning an oauth token for that account if successful.
 //
-// Fields on the form should have already been validated by the
-// caller, before this function is called.
+// Precondition: the form's fields should have already been validated and normalized by the caller.
 func (p *Processor) Create(
 	ctx context.Context,
 	appToken oauth2.TokenInfo,
@@ -76,7 +74,7 @@ func (p *Processor) Create(
 		Reason:      text.SanitizePlaintext(reason),
 		PreApproved: !config.GetAccountsApprovalRequired(), // Mark as approved if no approval required.
 		SignUpIP:    form.IP,
-		Locale:      normalize.Language(form.Locale),
+		Locale:      form.Locale,
 		AppID:       app.ID,
 	})
 	if err != nil {

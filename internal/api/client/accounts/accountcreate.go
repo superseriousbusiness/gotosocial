@@ -87,7 +87,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if err := validateCreateAccount(form); err != nil {
+	if err := validateNormalizeCreateAccount(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -110,9 +110,10 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, ti)
 }
 
-// validateCreateAccount checks through all the necessary prerequisites for creating a new account,
+// validateNormalizeCreateAccount checks through all the necessary prerequisites for creating a new account,
 // according to the provided account create request. If the account isn't eligible, an error will be returned.
-func validateCreateAccount(form *apimodel.AccountCreateRequest) error {
+// Side effect: normalizes the provided language tag for the user's locale.
+func validateNormalizeCreateAccount(form *apimodel.AccountCreateRequest) error {
 	if form == nil {
 		return errors.New("form was nil")
 	}
@@ -137,9 +138,11 @@ func validateCreateAccount(form *apimodel.AccountCreateRequest) error {
 		return errors.New("agreement to terms and conditions not given")
 	}
 
-	if err := validate.Language(form.Locale); err != nil {
+	locale, err := validate.Language(form.Locale)
+	if err != nil {
 		return err
 	}
+	form.Locale = locale
 
 	return validate.SignUpReason(form.Reason, config.GetAccountsReasonRequired())
 }

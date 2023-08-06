@@ -100,16 +100,19 @@ func Email(email string) error {
 }
 
 // Language checks that the given language string is a valid, if not necessarily canonical, BCP 47 language tag.
+// Returns a canonicalized version of the tag if the language can be parsed.
 // Returns an error if the language cannot be parsed.
-// Does not return an error if the language is not in the canonical tag format.
 // See: https://pkg.go.dev/golang.org/x/text/language
 // See: [internal/validate/normalize.Language]
-func Language(lang string) error {
+func Language(lang string) (string, error) {
 	if lang == "" {
-		return errors.New("no language provided")
+		return "", errors.New("no language provided")
 	}
-	_, err := language.Parse(lang)
-	return err
+	parsed, err := language.Parse(lang)
+	if err != nil {
+		return "", err
+	}
+	return parsed.String(), err
 }
 
 // SignUpReason checks that a sufficient reason is given for a server signup request
