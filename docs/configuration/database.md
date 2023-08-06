@@ -37,7 +37,7 @@ Then you should have already created database `gotosocial` in Postgres, and give
 The psql commands to do this will look something like:
 
 ```psql
-create database gotosocial with locale C.UTF-8 template template0;
+create database gotosocial with locale 'C.UTF-8' template template0;
 create user gotosocial with password 'some_really_good_password';
 grant all privileges on database gotosocial to gotosocial;
 ```
