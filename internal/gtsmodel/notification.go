@@ -21,17 +21,17 @@ import "time"
 
 // Notification models an alert/notification sent to an account about something like a reblog, like, new follow request, etc.
 type Notification struct {
-	ID               string           `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                                                                                                                    // id of this item in the database
-	CreatedAt        time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                                                                                                             // when was item created
-	UpdatedAt        time.Time        `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                                                                                                             // when was item last updated
-	NotificationType NotificationType `validate:"oneof=follow follow_request mention reblog favourite poll status" bun:",nullzero,notnull"`                                                                                                        // Type of this notification
-	TargetAccountID  string           `validate:"ulid" bun:"type:CHAR(26),nullzero,notnull"`                                                                                                                                                       // ID of the account targeted by the notification (ie., who will receive the notification?)
-	TargetAccount    *Account         `validate:"-" bun:"-"`                                                                                                                                                                                       // Account corresponding to TargetAccountID. Can be nil, always check first + select using ID if necessary.
-	OriginAccountID  string           `validate:"ulid" bun:"type:CHAR(26),nullzero,notnull"`                                                                                                                                                       // ID of the account that performed the action that created the notification.
-	OriginAccount    *Account         `validate:"-" bun:"-"`                                                                                                                                                                                       // Account corresponding to OriginAccountID. Can be nil, always check first + select using ID if necessary.
-	StatusID         string           `validate:"required_if=NotificationType mention,required_if=NotificationType reblog,required_if=NotificationType favourite,required_if=NotificationType status,omitempty,ulid" bun:"type:CHAR(26),nullzero"` // If the notification pertains to a status, what is the database ID of that status?
-	Status           *Status          `validate:"-" bun:"-"`                                                                                                                                                                                       // Status corresponding to StatusID. Can be nil, always check first + select using ID if necessary.
-	Read             *bool            `validate:"-" bun:",nullzero,notnull,default:false"`                                                                                                                                                         // Notification has been seen/read
+	ID               string           `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt        time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt        time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	NotificationType NotificationType `bun:",nullzero,notnull"`                                           // Type of this notification
+	TargetAccountID  string           `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the account targeted by the notification (ie., who will receive the notification?)
+	TargetAccount    *Account         `bun:"-"`                                                           // Account corresponding to TargetAccountID. Can be nil, always check first + select using ID if necessary.
+	OriginAccountID  string           `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the account that performed the action that created the notification.
+	OriginAccount    *Account         `bun:"-"`                                                           // Account corresponding to OriginAccountID. Can be nil, always check first + select using ID if necessary.
+	StatusID         string           `bun:"type:CHAR(26),nullzero"`                                      // If the notification pertains to a status, what is the database ID of that status?
+	Status           *Status          `bun:"-"`                                                           // Status corresponding to StatusID. Can be nil, always check first + select using ID if necessary.
+	Read             *bool            `bun:",nullzero,notnull,default:false"`                             // Notification has been seen/read
 }
 
 // NotificationType describes the reason/type of this notification.

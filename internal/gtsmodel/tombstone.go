@@ -29,9 +29,9 @@ import (
 // It's useful in cases where a remote account has been deleted, and we don't want to keep trying to process
 // subsequent activities from that account, or deletes which target it.
 type Tombstone struct {
-	ID        string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Domain    string    `validate:"omitempty,fqdn" bun:",nullzero,notnull"`                              // Domain of the Object/Actor.
-	URI       string    `validate:"required,url" bun:",nullzero,notnull,unique"`                         // ActivityPub URI for this Object/Actor.
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	Domain    string    `bun:",nullzero,notnull"`                                           // Domain of the Object/Actor.
+	URI       string    `bun:",nullzero,notnull,unique"`                                    // ActivityPub URI for this Object/Actor.
 }

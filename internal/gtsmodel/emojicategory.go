@@ -21,8 +21,8 @@ import "time"
 
 // EmojiCategory represents a grouping of custom emojis.
 type EmojiCategory struct {
-	ID        string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Name      string    `validate:"required" bun:",nullzero,notnull,unique"`                             // name of this category
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	Name      string    `bun:",nullzero,notnull,unique"`                                    // name of this category
 }

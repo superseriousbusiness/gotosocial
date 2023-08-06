@@ -25,47 +25,47 @@ import (
 
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {
-	ID                       string             `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                              // id of this item in the database
-	CreatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item created
-	UpdatedAt                time.Time          `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                       // when was item last updated
-	FetchedAt                time.Time          `validate:"required_with=!Local" bun:"type:timestamptz,nullzero"`                                      // when was item (remote) last fetched.
-	PinnedAt                 time.Time          `validate:"-" bun:"type:timestamptz,nullzero"`                                                         // Status was pinned by owning account at this time.
-	URI                      string             `validate:"required,url" bun:",unique,nullzero,notnull"`                                               // activitypub URI of this status
-	URL                      string             `validate:"url" bun:",nullzero"`                                                                       // web url for viewing this status
-	Content                  string             `validate:"-" bun:""`                                                                                  // content of this status; likely html-formatted but not guaranteed
-	AttachmentIDs            []string           `validate:"dive,ulid" bun:"attachments,array"`                                                         // Database IDs of any media attachments associated with this status
-	Attachments              []*MediaAttachment `validate:"-" bun:"attached_media,rel:has-many"`                                                       // Attachments corresponding to attachmentIDs
-	TagIDs                   []string           `validate:"dive,ulid" bun:"tags,array"`                                                                // Database IDs of any tags used in this status
-	Tags                     []*Tag             `validate:"-" bun:"attached_tags,m2m:status_to_tags"`                                                  // Tags corresponding to tagIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
-	MentionIDs               []string           `validate:"dive,ulid" bun:"mentions,array"`                                                            // Database IDs of any mentions in this status
-	Mentions                 []*Mention         `validate:"-" bun:"attached_mentions,rel:has-many"`                                                    // Mentions corresponding to mentionIDs
-	EmojiIDs                 []string           `validate:"dive,ulid" bun:"emojis,array"`                                                              // Database IDs of any emojis used in this status
-	Emojis                   []*Emoji           `validate:"-" bun:"attached_emojis,m2m:status_to_emojis"`                                              // Emojis corresponding to emojiIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
-	Local                    *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // is this status from a local account?
-	AccountID                string             `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                                        // which account posted this status?
-	Account                  *Account           `validate:"-" bun:"rel:belongs-to"`                                                                    // account corresponding to accountID
-	AccountURI               string             `validate:"required,url" bun:",nullzero,notnull"`                                                      // activitypub uri of the owner of this status
-	InReplyToID              string             `validate:"required_with=InReplyToURI InReplyToAccountID,omitempty,ulid" bun:"type:CHAR(26),nullzero"` // id of the status this status replies to
-	InReplyToURI             string             `validate:"required_with=InReplyToID InReplyToAccountID,omitempty,url" bun:",nullzero"`                // activitypub uri of the status this status is a reply to
-	InReplyToAccountID       string             `validate:"required_with=InReplyToID InReplyToURI,omitempty,ulid" bun:"type:CHAR(26),nullzero"`        // id of the account that this status replies to
-	InReplyTo                *Status            `validate:"-" bun:"-"`                                                                                 // status corresponding to inReplyToID
-	InReplyToAccount         *Account           `validate:"-" bun:"rel:belongs-to"`                                                                    // account corresponding to inReplyToAccountID
-	BoostOfID                string             `validate:"required_with=BoostOfAccountID,omitempty,ulid" bun:"type:CHAR(26),nullzero"`                // id of the status this status is a boost of
-	BoostOfAccountID         string             `validate:"required_with=BoostOfID,omitempty,ulid" bun:"type:CHAR(26),nullzero"`                       // id of the account that owns the boosted status
-	BoostOf                  *Status            `validate:"-" bun:"-"`                                                                                 // status that corresponds to boostOfID
-	BoostOfAccount           *Account           `validate:"-" bun:"rel:belongs-to"`                                                                    // account that corresponds to boostOfAccountID
-	ContentWarning           string             `validate:"-" bun:",nullzero"`                                                                         // cw string for this status
-	Visibility               Visibility         `validate:"oneof=public unlocked followers_only mutuals_only direct" bun:",nullzero,notnull"`          // visibility entry for this status
-	Sensitive                *bool              `validate:"-" bun:",nullzero,notnull,default:false"`                                                   // mark the status as sensitive?
-	Language                 string             `validate:"-" bun:",nullzero"`                                                                         // what language is this status written in?
-	CreatedWithApplicationID string             `validate:"required_if=Local true,omitempty,ulid" bun:"type:CHAR(26),nullzero"`                        // Which application was used to create this status?
-	CreatedWithApplication   *Application       `validate:"-" bun:"rel:belongs-to"`                                                                    // application corresponding to createdWithApplicationID
-	ActivityStreamsType      string             `validate:"required" bun:",nullzero,notnull"`                                                          // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
-	Text                     string             `validate:"-" bun:""`                                                                                  // Original text of the status without formatting
-	Federated                *bool              `validate:"-" bun:",notnull"`                                                                          // This status will be federated beyond the local timeline(s)
-	Boostable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be boosted/reblogged
-	Replyable                *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be replied to
-	Likeable                 *bool              `validate:"-" bun:",notnull"`                                                                          // This status can be liked/faved
+	ID                       string             `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt                time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt                time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	FetchedAt                time.Time          `bun:"type:timestamptz,nullzero"`                                   // when was item (remote) last fetched.
+	PinnedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   // Status was pinned by owning account at this time.
+	URI                      string             `bun:",unique,nullzero,notnull"`                                    // activitypub URI of this status
+	URL                      string             `bun:",nullzero"`                                                   // web url for viewing this status
+	Content                  string             `bun:""`                                                            // content of this status; likely html-formatted but not guaranteed
+	AttachmentIDs            []string           `bun:"attachments,array"`                                           // Database IDs of any media attachments associated with this status
+	Attachments              []*MediaAttachment `bun:"attached_media,rel:has-many"`                                 // Attachments corresponding to attachmentIDs
+	TagIDs                   []string           `bun:"tags,array"`                                                  // Database IDs of any tags used in this status
+	Tags                     []*Tag             `bun:"attached_tags,m2m:status_to_tags"`                            // Tags corresponding to tagIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
+	MentionIDs               []string           `bun:"mentions,array"`                                              // Database IDs of any mentions in this status
+	Mentions                 []*Mention         `bun:"attached_mentions,rel:has-many"`                              // Mentions corresponding to mentionIDs
+	EmojiIDs                 []string           `bun:"emojis,array"`                                                // Database IDs of any emojis used in this status
+	Emojis                   []*Emoji           `bun:"attached_emojis,m2m:status_to_emojis"`                        // Emojis corresponding to emojiIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
+	Local                    *bool              `bun:",nullzero,notnull,default:false"`                             // is this status from a local account?
+	AccountID                string             `bun:"type:CHAR(26),nullzero,notnull"`                              // which account posted this status?
+	Account                  *Account           `bun:"rel:belongs-to"`                                              // account corresponding to accountID
+	AccountURI               string             `bun:",nullzero,notnull"`                                           // activitypub uri of the owner of this status
+	InReplyToID              string             `bun:"type:CHAR(26),nullzero"`                                      // id of the status this status replies to
+	InReplyToURI             string             `bun:",nullzero"`                                                   // activitypub uri of the status this status is a reply to
+	InReplyToAccountID       string             `bun:"type:CHAR(26),nullzero"`                                      // id of the account that this status replies to
+	InReplyTo                *Status            `bun:"-"`                                                           // status corresponding to inReplyToID
+	InReplyToAccount         *Account           `bun:"rel:belongs-to"`                                              // account corresponding to inReplyToAccountID
+	BoostOfID                string             `bun:"type:CHAR(26),nullzero"`                                      // id of the status this status is a boost of
+	BoostOfAccountID         string             `bun:"type:CHAR(26),nullzero"`                                      // id of the account that owns the boosted status
+	BoostOf                  *Status            `bun:"-"`                                                           // status that corresponds to boostOfID
+	BoostOfAccount           *Account           `bun:"rel:belongs-to"`                                              // account that corresponds to boostOfAccountID
+	ContentWarning           string             `bun:",nullzero"`                                                   // cw string for this status
+	Visibility               Visibility         `bun:",nullzero,notnull"`                                           // visibility entry for this status
+	Sensitive                *bool              `bun:",nullzero,notnull,default:false"`                             // mark the status as sensitive?
+	Language                 string             `bun:",nullzero"`                                                   // what language is this status written in?
+	CreatedWithApplicationID string             `bun:"type:CHAR(26),nullzero"`                                      // Which application was used to create this status?
+	CreatedWithApplication   *Application       `bun:"rel:belongs-to"`                                              // application corresponding to createdWithApplicationID
+	ActivityStreamsType      string             `bun:",nullzero,notnull"`                                           // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
+	Text                     string             `bun:""`                                                            // Original text of the status without formatting
+	Federated                *bool              `bun:",notnull"`                                                    // This status will be federated beyond the local timeline(s)
+	Boostable                *bool              `bun:",notnull"`                                                    // This status can be boosted/reblogged
+	Replyable                *bool              `bun:",notnull"`                                                    // This status can be replied to
+	Likeable                 *bool              `bun:",notnull"`                                                    // This status can be liked/faved
 }
 
 // GetID implements timeline.Timelineable{}.
@@ -252,18 +252,18 @@ func (s *Status) MentionsAccount(id string) bool {
 
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
-	StatusID string  `validate:"ulid,required" bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`
-	Status   *Status `validate:"-" bun:"rel:belongs-to"`
-	TagID    string  `validate:"ulid,required" bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`
-	Tag      *Tag    `validate:"-" bun:"rel:belongs-to"`
+	StatusID string  `bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`
+	Status   *Status `bun:"rel:belongs-to"`
+	TagID    string  `bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`
+	Tag      *Tag    `bun:"rel:belongs-to"`
 }
 
 // StatusToEmoji is an intermediate struct to facilitate the many2many relationship between a status and one or more emojis.
 type StatusToEmoji struct {
-	StatusID string  `validate:"ulid,required" bun:"type:CHAR(26),unique:statusemoji,nullzero,notnull"`
-	Status   *Status `validate:"-" bun:"rel:belongs-to"`
-	EmojiID  string  `validate:"ulid,required" bun:"type:CHAR(26),unique:statusemoji,nullzero,notnull"`
-	Emoji    *Emoji  `validate:"-" bun:"rel:belongs-to"`
+	StatusID string  `bun:"type:CHAR(26),unique:statusemoji,nullzero,notnull"`
+	Status   *Status `bun:"rel:belongs-to"`
+	EmojiID  string  `bun:"type:CHAR(26),unique:statusemoji,nullzero,notnull"`
+	Emoji    *Emoji  `bun:"rel:belongs-to"`
 }
 
 // Visibility represents the visibility granularity of a status.

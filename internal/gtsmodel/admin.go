@@ -24,17 +24,17 @@ import (
 
 // AdminAccountAction models an action taken by an instance administrator on an account.
 type AdminAccountAction struct {
-	ID              string          `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt       time.Time       `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt       time.Time       `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	AccountID       string          `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero"`                  // Who performed this admin action.
-	Account         *Account        `validate:"-" bun:"rel:has-one"`                                                 // Account corresponding to accountID
-	TargetAccountID string          `validate:"required,ulid" bun:"type:CHAR(26),notnull,nullzero"`                  // Who is the target of this action
-	TargetAccount   *Account        `validate:"-" bun:"rel:has-one"`                                                 // Account corresponding to targetAccountID
-	Text            string          `validate:"-" bun:""`                                                            // text explaining why this action was taken
-	Type            AdminActionType `validate:"oneof=disable silence suspend" bun:",nullzero,notnull"`               // type of action that was taken
-	SendEmail       bool            `validate:"-" bun:""`                                                            // should an email be sent to the account owner to explain what happened
-	ReportID        string          `validate:",omitempty,ulid" bun:"type:CHAR(26),nullzero"`                        // id of a report connected to this action, if it exists
+	ID              string          `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt       time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt       time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	AccountID       string          `bun:"type:CHAR(26),notnull,nullzero"`                              // Who performed this admin action.
+	Account         *Account        `bun:"rel:has-one"`                                                 // Account corresponding to accountID
+	TargetAccountID string          `bun:"type:CHAR(26),notnull,nullzero"`                              // Who is the target of this action
+	TargetAccount   *Account        `bun:"rel:has-one"`                                                 // Account corresponding to targetAccountID
+	Text            string          `bun:""`                                                            // text explaining why this action was taken
+	Type            AdminActionType `bun:",nullzero,notnull"`                                           // type of action that was taken
+	SendEmail       bool            `bun:""`                                                            // should an email be sent to the account owner to explain what happened
+	ReportID        string          `bun:"type:CHAR(26),nullzero"`                                      // id of a report connected to this action, if it exists
 }
 
 // AdminActionType describes a type of action taken on an entity by an admin

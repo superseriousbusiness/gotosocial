@@ -21,14 +21,14 @@ import "time"
 
 // Follow represents one account following another, and the metadata around that follow.
 type Follow struct {
-	ID              string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt       time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	URI             string    `validate:"required,url" bun:",notnull,nullzero,unique"`                         // ActivityPub uri of this follow.
-	AccountID       string    `validate:"required,ulid" bun:"type:CHAR(26),unique:srctarget,notnull,nullzero"` // Who does this follow originate from?
-	Account         *Account  `validate:"-" bun:"rel:belongs-to"`                                              // Account corresponding to accountID
-	TargetAccountID string    `validate:"required,ulid" bun:"type:CHAR(26),unique:srctarget,notnull,nullzero"` // Who is the target of this follow ?
-	TargetAccount   *Account  `validate:"-" bun:"rel:belongs-to"`                                              // Account corresponding to targetAccountID
-	ShowReblogs     *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                              // Does this follow also want to see reblogs and not just posts?
-	Notify          *bool     `validate:"-" bun:",nullzero,notnull,default:false"`                             // does the following account want to be notified when the followed account posts?
+	ID              string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	URI             string    `bun:",notnull,nullzero,unique"`                                    // ActivityPub uri of this follow.
+	AccountID       string    `bun:"type:CHAR(26),unique:srctarget,notnull,nullzero"`             // Who does this follow originate from?
+	Account         *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to accountID
+	TargetAccountID string    `bun:"type:CHAR(26),unique:srctarget,notnull,nullzero"`             // Who is the target of this follow ?
+	TargetAccount   *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to targetAccountID
+	ShowReblogs     *bool     `bun:",nullzero,notnull,default:true"`                              // Does this follow also want to see reblogs and not just posts?
+	Notify          *bool     `bun:",nullzero,notnull,default:false"`                             // does the following account want to be notified when the followed account posts?
 }

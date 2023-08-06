@@ -26,20 +26,20 @@ import "time"
 // or another instance, OR a report that was created remotely (on another instance)
 // about a user on this instance, and received via the federated (s2s) API.
 type Report struct {
-	ID                     string    `validate:"required,ulid" bun:"type:CHAR(26),pk,nullzero,notnull,unique"`        // id of this item in the database
-	CreatedAt              time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt              time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	URI                    string    `validate:"required,url" bun:",unique,nullzero,notnull"`                         // activitypub URI of this report
-	AccountID              string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // which account created this report
-	Account                *Account  `validate:"-" bun:"-"`                                                           // account corresponding to AccountID
-	TargetAccountID        string    `validate:"required,ulid" bun:"type:CHAR(26),nullzero,notnull"`                  // which account is targeted by this report
-	TargetAccount          *Account  `validate:"-" bun:"-"`                                                           // account corresponding to TargetAccountID
-	Comment                string    `validate:"-" bun:",nullzero"`                                                   // comment / explanation for this report, by the reporter
-	StatusIDs              []string  `validate:"dive,ulid" bun:"statuses,array"`                                      // database IDs of any statuses referenced by this report
-	Statuses               []*Status `validate:"-" bun:"-"`                                                           // statuses corresponding to StatusIDs
-	Forwarded              *bool     `validate:"-" bun:",nullzero,notnull,default:false"`                             // flag to indicate report should be forwarded to remote instance
-	ActionTaken            string    `validate:"-" bun:",nullzero"`                                                   // string description of what action was taken in response to this report
-	ActionTakenAt          time.Time `validate:"-" bun:"type:timestamptz,nullzero"`                                   // time at which action was taken, if any
-	ActionTakenByAccountID string    `validate:",omitempty,ulid" bun:"type:CHAR(26),nullzero"`                        // database ID of account which took action, if any
-	ActionTakenByAccount   *Account  `validate:"-" bun:"-"`                                                           // account corresponding to ActionTakenByID, if any
+	ID                     string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt              time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt              time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	URI                    string    `bun:",unique,nullzero,notnull"`                                    // activitypub URI of this report
+	AccountID              string    `bun:"type:CHAR(26),nullzero,notnull"`                              // which account created this report
+	Account                *Account  `bun:"-"`                                                           // account corresponding to AccountID
+	TargetAccountID        string    `bun:"type:CHAR(26),nullzero,notnull"`                              // which account is targeted by this report
+	TargetAccount          *Account  `bun:"-"`                                                           // account corresponding to TargetAccountID
+	Comment                string    `bun:",nullzero"`                                                   // comment / explanation for this report, by the reporter
+	StatusIDs              []string  `bun:"statuses,array"`                                              // database IDs of any statuses referenced by this report
+	Statuses               []*Status `bun:"-"`                                                           // statuses corresponding to StatusIDs
+	Forwarded              *bool     `bun:",nullzero,notnull,default:false"`                             // flag to indicate report should be forwarded to remote instance
+	ActionTaken            string    `bun:",nullzero"`                                                   // string description of what action was taken in response to this report
+	ActionTakenAt          time.Time `bun:"type:timestamptz,nullzero"`                                   // time at which action was taken, if any
+	ActionTakenByAccountID string    `bun:"type:CHAR(26),nullzero"`                                      // database ID of account which took action, if any
+	ActionTakenByAccount   *Account  `bun:"-"`                                                           // account corresponding to ActionTakenByID, if any
 }
