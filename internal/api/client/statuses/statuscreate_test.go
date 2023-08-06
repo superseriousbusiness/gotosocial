@@ -391,6 +391,42 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	suite.Equal(statusResponse.ID, gtsAttachment.StatusID)
 }
 
+// Post a new status with a language tag that is not in canonical format
+func (suite *StatusCreateTestSuite) TestPostNewStatusWithNoncanonicalLanguageTag() {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Request.Form = url.Values{
+		"status":   {"English? what's English? i speak American"},
+		"language": {"en-us"},
+	}
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
+
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	statusReply := &apimodel.Status{}
+	err = json.Unmarshal(b, statusReply)
+	suite.NoError(err)
+
+	suite.Equal("<p>English? what's English? i speak American</p>", statusReply.Content)
+	suite.NotNil(statusReply.Language)
+	suite.Equal("en-US", *statusReply.Language)
+}
+
 func TestStatusCreateTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusCreateTestSuite))
 }
