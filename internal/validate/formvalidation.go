@@ -103,7 +103,6 @@ func Email(email string) error {
 // Returns a canonicalized version of the tag if the language can be parsed.
 // Returns an error if the language cannot be parsed.
 // See: https://pkg.go.dev/golang.org/x/text/language
-// See: [internal/validate/normalize.Language]
 func Language(lang string) (string, error) {
 	if lang == "" {
 		return "", errors.New("no language provided")
