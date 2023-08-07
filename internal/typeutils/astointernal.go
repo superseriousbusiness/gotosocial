@@ -283,7 +283,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	//
 	// Hashtags for later dereferencing.
 	if hashtags, err := ap.ExtractHashtags(statusable); err != nil {
-		l.Infof("error extracting hashtags: %q", err)
+		l.Warnf("error extracting hashtags: %v", err)
 	} else {
 		status.Tags = hashtags
 	}
@@ -292,7 +292,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	//
 	// Custom emojis for later dereferencing.
 	if emojis, err := ap.ExtractEmojis(statusable); err != nil {
-		l.Infof("error extracting emojis: %q", err)
+		l.Warnf("error extracting emojis: %v", err)
 	} else {
 		status.Emojis = emojis
 	}
@@ -301,7 +301,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	//
 	// Mentions of other accounts for later dereferencing.
 	if mentions, err := ap.ExtractMentions(statusable); err != nil {
-		l.Infof("error extracting mentions: %q", err)
+		l.Warnf("error extracting mentions: %v", err)
 	} else {
 		status.Mentions = mentions
 	}
@@ -322,7 +322,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// db defaults, will fall back to now if not set.
 	published, err := ap.ExtractPublished(statusable)
 	if err != nil {
-		l.Infof("error extracting published: %q", err)
+		l.Warnf("error extracting published: %v", err)
 	} else {
 		status.CreatedAt = published
 		status.UpdatedAt = published
