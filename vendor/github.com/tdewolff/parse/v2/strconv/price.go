@@ -20,14 +20,14 @@ func AppendPrice(b []byte, price int64, dec bool, milSeparator byte, decSeparato
 	// rounding
 	if !dec {
 		firstDec := (price / 10) % 10
-		if firstDec >= 5 {
+		if 5 <= firstDec {
 			price += 100
 		}
 	}
 
 	// calculate size
 	n := LenInt(price) - 2
-	if n > 0 {
+	if 0 < n {
 		n += (n - 1) / 3 // mil separator
 	} else {
 		n = 1
@@ -38,7 +38,7 @@ func AppendPrice(b []byte, price int64, dec bool, milSeparator byte, decSeparato
 
 	// resize byte slice
 	i := len(b)
-	if i+n > cap(b) {
+	if cap(b) < i+n {
 		b = append(b, make([]byte, n)...)
 	} else {
 		b = b[:i+n]
@@ -66,7 +66,7 @@ func AppendPrice(b []byte, price int64, dec bool, milSeparator byte, decSeparato
 
 	// print integer-part
 	j := 0
-	for price > 0 {
+	for 0 < price {
 		if j == 3 {
 			b[i] = milSeparator
 			i--

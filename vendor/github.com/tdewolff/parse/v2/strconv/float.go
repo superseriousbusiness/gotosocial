@@ -25,9 +25,9 @@ func ParseFloat(b []byte) (float64, int) {
 	n := uint64(0)
 	for ; i < len(b); i++ {
 		c := b[i]
-		if c >= '0' && c <= '9' {
+		if '0' <= c && c <= '9' {
 			if trunk == -1 {
-				if n > math.MaxUint64/10 {
+				if math.MaxUint64/10 < n {
 					trunk = i
 				} else {
 					n *= 10
@@ -62,7 +62,7 @@ func ParseFloat(b []byte) (float64, int) {
 	if i < len(b) && (b[i] == 'e' || b[i] == 'E') {
 		startExp := i
 		i++
-		if e, expLen := ParseInt(b[i:]); expLen > 0 {
+		if e, expLen := ParseInt(b[i:]); 0 < expLen {
 			expExp = e
 			i += expLen
 		} else {
@@ -74,17 +74,17 @@ func ParseFloat(b []byte) (float64, int) {
 	// copied from strconv/atof.go
 	if exp == 0 {
 		return f, i
-	} else if exp > 0 && exp <= 15+22 { // int * 10^k
+	} else if 0 < exp && exp <= 15+22 { // int * 10^k
 		// If exponent is big but number of digits is not,
 		// can move a few zeros into the integer part.
-		if exp > 22 {
+		if 22 < exp {
 			f *= float64pow10[exp-22]
 			exp = 22
 		}
-		if f <= 1e15 && f >= -1e15 {
+		if -1e15 <= f && f <= 1e15 {
 			return f * float64pow10[exp], i
 		}
-	} else if exp < 0 && exp >= -22 { // int / 10^k
+	} else if -22 <= exp && exp < 0 { // int / 10^k
 		return f / float64pow10[-exp], i
 	}
 	f *= math.Pow10(int(-mantExp))
@@ -135,7 +135,7 @@ func AppendFloat(b []byte, f float64, prec int) ([]byte, bool) {
 	// expLen is zero for positive exponents, because positive exponents are determined later on in the big conversion loop
 	exp := 0
 	expLen := 0
-	if mantExp > 0 {
+	if 0 < mantExp {
 		// positive exponent is determined in the loop below
 		// but if we initially decreased the exponent to fit in an integer, we can't set the new exponent in the loop alone,
 		// since the number of zeros at the end determines the positive exponent in the loop, and we just artificially lost zeros
@@ -156,7 +156,7 @@ func AppendFloat(b []byte, f float64, prec int) ([]byte, bool) {
 	if neg {
 		maxLen++
 	}
-	if i+maxLen > cap(b) {
+	if cap(b) < i+maxLen {
 		b = append(b, make([]byte, maxLen)...)
 	} else {
 		b = b[:i+maxLen]
@@ -175,17 +175,17 @@ func AppendFloat(b []byte, f float64, prec int) ([]byte, bool) {
 	last := i + mantLen      // right-most position of digit that is non-zero + dot
 	dot := last - prec - exp // position of dot
 	j := last
-	for mant > 0 {
+	for 0 < mant {
 		if j == dot {
 			b[j] = '.'
 			j--
 		}
 		newMant := mant / 10
 		digit := mant - 10*newMant
-		if zero && digit > 0 {
+		if zero && 0 < digit {
 			// first non-zero digit, if we are still behind the dot we can trim the end to this position
 			// otherwise trim to the dot (including the dot)
-			if j > dot {
+			if dot < j {
 				i = j + 1
 				// decrease negative exponent further to get rid of dot
 				if exp < 0 {
@@ -209,9 +209,9 @@ func AppendFloat(b []byte, f float64, prec int) ([]byte, bool) {
 		mant = newMant
 	}
 
-	if j > dot {
+	if dot < j {
 		// extra zeros behind the dot
-		for j > dot {
+		for dot < j {
 			b[j] = '0'
 			j--
 		}
@@ -244,7 +244,7 @@ func AppendFloat(b []byte, f float64, prec int) ([]byte, bool) {
 			}
 			i += LenInt(int64(exp))
 			j := i
-			for exp > 0 {
+			for 0 < exp {
 				newExp := exp / 10
 				digit := exp - 10*newExp
 				j--

@@ -79,7 +79,7 @@ Minifiers or bindings to minifiers exist in almost all programming languages. So
 This minifier proves to be that fast and extensive minifier that can handle HTML and any other filetype it may contain (CSS, JS, ...). It is usually orders of magnitude faster than existing minifiers.
 
 ## Installation
-Make sure you have [Git](https://git-scm.com/) and [Go](https://golang.org/dl/) (1.13 or higher) installed, run
+Make sure you have [Git](https://git-scm.com/) and [Go](https://golang.org/dl/) (1.18 or higher) installed, run
 ```
 mkdir Project
 cd Project

@@ -129,7 +129,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 					var params map[string]string
 					if rawTagHash == Iframe {
 						mimetype = htmlMimeBytes
-					} else if len(rawTagMediatype) > 0 {
+					} else if 0 < len(rawTagMediatype) {
 						mimetype, params = parse.Mediatype(rawTagMediatype)
 					} else if rawTagHash == Script {
 						mimetype = jsMimeBytes
@@ -169,20 +169,15 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 							t.Data = t.Data[:len(t.Data)-1]
 							omitSpace = false
 							break
-						} else if next.TokenType == html.TextToken {
-							// this only happens when a comment, doctype or phrasing end tag (only for !o.KeepWhitespace) was in between
-							// remove if the text token starts with a whitespace
-							if len(next.Data) > 0 && parse.IsWhitespace(next.Data[0]) {
-								t.Data = t.Data[:len(t.Data)-1]
-								omitSpace = false
-							}
+						} else if next.TokenType == html.TextToken && !parse.IsAllWhitespace(next.Data) {
+							// stop looking when text encountered
 							break
 						} else if next.TokenType == html.StartTagToken || next.TokenType == html.EndTagToken {
 							if o.KeepWhitespace {
 								break
 							}
-							// remove when followed up by a block tag
-							if next.Traits&nonPhrasingTag != 0 {
+							// remove when followed by a block tag
+							if next.Traits&blockTag != 0 {
 								t.Data = t.Data[:len(t.Data)-1]
 								omitSpace = false
 								break
@@ -271,14 +266,14 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 					}
 				}
 
-				if t.Traits&nonPhrasingTag != 0 {
-					omitSpace = true // omit spaces after block elements
-				} else if o.KeepWhitespace || t.Traits&objectTag != 0 {
-					omitSpace = false
-				}
-
 				if !omitEndTag {
-					if len(t.Data) > 3+len(t.Text) {
+					if o.KeepWhitespace || t.Traits&objectTag != 0 {
+						omitSpace = false
+					} else if t.Traits&blockTag != 0 {
+						omitSpace = true // omit spaces after block elements
+					}
+
+					if 3+len(t.Text) < len(t.Data) {
 						t.Data[2+len(t.Text)] = '>'
 						t.Data = t.Data[:3+len(t.Text)]
 					}
@@ -296,7 +291,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 
 			if o.KeepWhitespace || t.Traits&objectTag != 0 {
 				omitSpace = false
-			} else if t.Traits&nonPhrasingTag != 0 {
+			} else if t.Traits&blockTag != 0 {
 				omitSpace = true // omit spaces after block elements
 			}
 
@@ -327,7 +322,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 								for i := 0; i < len(content.AttrVal); i++ {
 									if content.AttrVal[i] == '=' && i+2 < len(content.AttrVal) {
 										i++
-										if n := parse.Number(content.AttrVal[i:]); n > 0 {
+										if n := parse.Number(content.AttrVal[i:]); 0 < n {
 											minNum := minify.Number(content.AttrVal[i:i+n], -1)
 											if len(minNum) < n {
 												copy(content.AttrVal[i:i+len(minNum)], minNum)
@@ -434,10 +429,10 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 							if len(val) == 0 {
 								continue
 							}
-						} else if len(attr.Text) > 2 && attr.Text[0] == 'o' && attr.Text[1] == 'n' {
+						} else if 2 < len(attr.Text) && attr.Text[0] == 'o' && attr.Text[1] == 'n' {
 							// JS minifier for attribute inline code
 							val = parse.TrimWhitespace(val)
-							if len(val) >= 11 && parse.EqualFold(val[:11], jsSchemeBytes) {
+							if 11 <= len(val) && parse.EqualFold(val[:11], jsSchemeBytes) {
 								val = val[11:]
 							}
 							attrMinifyBuffer.Reset()
@@ -475,7 +470,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 
 					w.Write(spaceBytes)
 					w.Write(attr.Text)
-					if len(val) > 0 && attr.Traits&booleanAttr == 0 {
+					if 0 < len(val) && attr.Traits&booleanAttr == 0 {
 						w.Write(isBytes)
 
 						// use double quotes for RDFa attributes
@@ -504,7 +499,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 			}
 
 			// keep space after phrasing tags (<i>, <span>, ...) FontAwesome etc.
-			if t.TokenType == html.StartTagToken && t.Traits&nonPhrasingTag == 0 {
+			if t.TokenType == html.StartTagToken && t.Traits == normalTag {
 				if next := tb.Peek(0); next.Hash == t.Hash && next.TokenType == html.EndTagToken {
 					omitSpace = false
 				}
