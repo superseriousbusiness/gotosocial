@@ -206,6 +206,20 @@ func (f *federatingDB) createStatusable(
 		}
 	}
 
+	// Check if we already have a status entry
+	// for this statusable, based on the ID/URI.
+	statusableURIStr := statusableURI.String()
+	status, err := f.state.DB.GetStatusByURI(ctx, statusableURIStr)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error checking existence of status %s: %w", statusableURIStr, err)
+	}
+
+	if status != nil {
+		// We already had this status in the
+		// db, no need for further action.
+		return nil
+	}
+
 	// If we do have a forward, we should ignore the content
 	// and instead deref based on the URI of the statusable.
 	//
@@ -223,32 +237,32 @@ func (f *federatingDB) createStatusable(
 			GTSModel:         nil,
 			ReceivingAccount: receivingAccount,
 		})
-
 		return nil
 	}
 
-	// If we reach this point, we know this is not a forwarded
-	// statusable, but came directly from (one of) the account(s)
-	// who created it, so proceed with processing it as normal.
-
-	// Check if we already have a status entry
-	// for this statusable, based on the ID/URI.
-	statusableURIStr := statusableURI.String()
-	status, err := f.state.DB.GetStatusByURI(ctx, statusableURIStr)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return gtserror.Newf("db error checking existence of status %s: %w", statusableURIStr, err)
-	}
-
-	if status != nil {
-		// We already had this status in the
-		// db, no need for further action.
-		return nil
-	}
-
-	// We don't have this in the db, so it's a new status.
+	// This is a non-forwarded status we can trust the requester on,
+	// convert this provided statusable data to a useable gtsmodel status.
 	status, err = f.typeConverter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return gtserror.Newf("error converting statusable to status: %w", err)
+	}
+
+	// Check whether we should accept this new status.
+	accept, err := f.shouldAcceptStatusable(ctx,
+		receivingAccount,
+		requestingAccount,
+		status,
+	)
+	if err != nil {
+		return gtserror.Newf("error checking status acceptibility: %w", err)
+	}
+
+	if !accept {
+		// This is a status sent with no relation to receiver, i.e.
+		// - receiving account does not follow requesting account
+		// - received status does not mention receiving account
+		err := errors.New("unacceptable receiving account")
+		return gtserror.NewErrorForbidden(err)
 	}
 
 	// ID the new status based on the time it was created.
@@ -270,6 +284,26 @@ func (f *federatingDB) createStatusable(
 	})
 
 	return nil
+}
+
+func (f *federatingDB) shouldAcceptStatusable(ctx context.Context, receiver *gtsmodel.Account, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	// Check whether status mentions the receiver,
+	// this is the quickest check so perform it first.
+	for _, mention := range status.Mentions {
+		if mention.TargetAccountURI == receiver.URI {
+			return true, nil
+		}
+	}
+
+	// Check whether receiving account follows the requesting account.
+	follows, err := f.state.DB.IsFollowing(ctx, receiver.ID, requester.ID)
+	if err != nil {
+		return false, gtserror.Newf("error checking follow status: %w", err)
+	}
+
+	// Status will only be acceptable
+	// if receiver follows requester.
+	return follows, nil
 }
 
 /*
