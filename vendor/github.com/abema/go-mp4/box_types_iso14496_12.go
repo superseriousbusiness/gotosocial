@@ -1,14 +1,12 @@
 package mp4
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
 
 	"github.com/abema/go-mp4/bitio"
 	"github.com/abema/go-mp4/util"
-	"github.com/google/uuid"
 )
 
 /*************************** btrt ****************************/
@@ -468,129 +466,6 @@ func (*Emsg) GetType() BoxType {
 	return BoxTypeEmsg()
 }
 
-/*************************** esds ****************************/
-
-// https://developer.apple.com/library/content/documentation/QuickTime/QTFF/QTFFChap3/qtff3.html
-
-func BoxTypeEsds() BoxType { return StrToBoxType("esds") }
-
-func init() {
-	AddBoxDef(&Esds{}, 0)
-}
-
-const (
-	ESDescrTag            = 0x03
-	DecoderConfigDescrTag = 0x04
-	DecSpecificInfoTag    = 0x05
-	SLConfigDescrTag      = 0x06
-)
-
-// Esds is ES descripter box
-type Esds struct {
-	FullBox     `mp4:"0,extend"`
-	Descriptors []Descriptor `mp4:"1,array"`
-}
-
-// GetType returns the BoxType
-func (*Esds) GetType() BoxType {
-	return BoxTypeEsds()
-}
-
-type Descriptor struct {
-	BaseCustomFieldObject
-	Tag                     int8                     `mp4:"0,size=8"` // must be 0x03
-	Size                    uint32                   `mp4:"1,varint"`
-	ESDescriptor            *ESDescriptor            `mp4:"2,extend,opt=dynamic"`
-	DecoderConfigDescriptor *DecoderConfigDescriptor `mp4:"3,extend,opt=dynamic"`
-	Data                    []byte                   `mp4:"4,size=8,opt=dynamic,len=dynamic"`
-}
-
-// GetFieldLength returns length of dynamic field
-func (ds *Descriptor) GetFieldLength(name string, ctx Context) uint {
-	switch name {
-	case "Data":
-		return uint(ds.Size)
-	}
-	panic(fmt.Errorf("invalid name of dynamic-length field: boxType=esds fieldName=%s", name))
-}
-
-func (ds *Descriptor) IsOptFieldEnabled(name string, ctx Context) bool {
-	switch ds.Tag {
-	case ESDescrTag:
-		return name == "ESDescriptor"
-	case DecoderConfigDescrTag:
-		return name == "DecoderConfigDescriptor"
-	default:
-		return name == "Data"
-	}
-}
-
-// StringifyField returns field value as string
-func (ds *Descriptor) StringifyField(name string, indent string, depth int, ctx Context) (string, bool) {
-	switch name {
-	case "Tag":
-		switch ds.Tag {
-		case ESDescrTag:
-			return "ESDescr", true
-		case DecoderConfigDescrTag:
-			return "DecoderConfigDescr", true
-		case DecSpecificInfoTag:
-			return "DecSpecificInfo", true
-		case SLConfigDescrTag:
-			return "SLConfigDescr", true
-		default:
-			return "", false
-		}
-	default:
-		return "", false
-	}
-}
-
-type ESDescriptor struct {
-	BaseCustomFieldObject
-	ESID                 uint16 `mp4:"0,size=16"`
-	StreamDependenceFlag bool   `mp4:"1,size=1"`
-	UrlFlag              bool   `mp4:"2,size=1"`
-	OcrStreamFlag        bool   `mp4:"3,size=1"`
-	StreamPriority       int8   `mp4:"4,size=5"`
-	DependsOnESID        uint16 `mp4:"5,size=16,opt=dynamic"`
-	URLLength            uint8  `mp4:"6,size=8,opt=dynamic"`
-	URLString            []byte `mp4:"7,size=8,len=dynamic,opt=dynamic,string"`
-	OCRESID              uint16 `mp4:"8,size=16,opt=dynamic"`
-}
-
-func (esds *ESDescriptor) GetFieldLength(name string, ctx Context) uint {
-	switch name {
-	case "URLString":
-		return uint(esds.URLLength)
-	}
-	panic(fmt.Errorf("invalid name of dynamic-length field: boxType=ESDescriptor fieldName=%s", name))
-}
-
-func (esds *ESDescriptor) IsOptFieldEnabled(name string, ctx Context) bool {
-	switch name {
-	case "DependsOnESID":
-		return esds.StreamDependenceFlag
-	case "URLLength", "URLString":
-		return esds.UrlFlag
-	case "OCRESID":
-		return esds.OcrStreamFlag
-	default:
-		return false
-	}
-}
-
-type DecoderConfigDescriptor struct {
-	BaseCustomFieldObject
-	ObjectTypeIndication byte   `mp4:"0,size=8"`
-	StreamType           int8   `mp4:"1,size=6"`
-	UpStream             bool   `mp4:"2,size=1"`
-	Reserved             bool   `mp4:"3,size=1"`
-	BufferSizeDB         uint32 `mp4:"4,size=24"`
-	MaxBitrate           uint32 `mp4:"5,size=32"`
-	AvgBitrate           uint32 `mp4:"6,size=32"`
-}
-
 /*************************** fiel ****************************/
 
 func BoxTypeFiel() BoxType { return StrToBoxType("fiel") }
@@ -863,171 +738,6 @@ func (hvcc HvcC) GetFieldLength(name string, ctx Context) uint {
 		return uint(hvcc.NumOfNaluArrays)
 	}
 	return 0
-}
-
-/*************************** ilst ****************************/
-
-func BoxTypeIlst() BoxType { return StrToBoxType("ilst") }
-func BoxTypeData() BoxType { return StrToBoxType("data") }
-
-var ilstMetaBoxTypes = []BoxType{
-	StrToBoxType("----"),
-	StrToBoxType("aART"),
-	StrToBoxType("akID"),
-	StrToBoxType("apID"),
-	StrToBoxType("atID"),
-	StrToBoxType("cmID"),
-	StrToBoxType("cnID"),
-	StrToBoxType("covr"),
-	StrToBoxType("cpil"),
-	StrToBoxType("cprt"),
-	StrToBoxType("desc"),
-	StrToBoxType("disk"),
-	StrToBoxType("egid"),
-	StrToBoxType("geID"),
-	StrToBoxType("gnre"),
-	StrToBoxType("pcst"),
-	StrToBoxType("pgap"),
-	StrToBoxType("plID"),
-	StrToBoxType("purd"),
-	StrToBoxType("purl"),
-	StrToBoxType("rtng"),
-	StrToBoxType("sfID"),
-	StrToBoxType("soaa"),
-	StrToBoxType("soal"),
-	StrToBoxType("soar"),
-	StrToBoxType("soco"),
-	StrToBoxType("sonm"),
-	StrToBoxType("sosn"),
-	StrToBoxType("stik"),
-	StrToBoxType("tmpo"),
-	StrToBoxType("trkn"),
-	StrToBoxType("tven"),
-	StrToBoxType("tves"),
-	StrToBoxType("tvnn"),
-	StrToBoxType("tvsh"),
-	StrToBoxType("tvsn"),
-	{0xA9, 'A', 'R', 'T'},
-	{0xA9, 'a', 'l', 'b'},
-	{0xA9, 'c', 'm', 't'},
-	{0xA9, 'c', 'o', 'm'},
-	{0xA9, 'd', 'a', 'y'},
-	{0xA9, 'g', 'e', 'n'},
-	{0xA9, 'g', 'r', 'p'},
-	{0xA9, 'n', 'a', 'm'},
-	{0xA9, 't', 'o', 'o'},
-	{0xA9, 'w', 'r', 't'},
-}
-
-func IsIlstMetaBoxType(boxType BoxType) bool {
-	for _, bt := range ilstMetaBoxTypes {
-		if boxType == bt {
-			return true
-		}
-	}
-	return false
-}
-
-func init() {
-	AddBoxDef(&Ilst{})
-	AddBoxDefEx(&Data{}, isUnderIlstMeta)
-	for _, bt := range ilstMetaBoxTypes {
-		AddAnyTypeBoxDefEx(&IlstMetaContainer{}, bt, isIlstMetaContainer)
-	}
-	AddAnyTypeBoxDefEx(&StringData{}, StrToBoxType("mean"), isUnderIlstFreeFormat)
-	AddAnyTypeBoxDefEx(&StringData{}, StrToBoxType("name"), isUnderIlstFreeFormat)
-}
-
-type Ilst struct {
-	Box
-}
-
-// GetType returns the BoxType
-func (*Ilst) GetType() BoxType {
-	return BoxTypeIlst()
-}
-
-type IlstMetaContainer struct {
-	AnyTypeBox
-}
-
-func isIlstMetaContainer(ctx Context) bool {
-	return ctx.UnderIlst && !ctx.UnderIlstMeta
-}
-
-const (
-	DataTypeBinary             = 0
-	DataTypeStringUTF8         = 1
-	DataTypeStringUTF16        = 2
-	DataTypeStringMac          = 3
-	DataTypeStringJPEG         = 14
-	DataTypeSignedIntBigEndian = 21
-	DataTypeFloat32BigEndian   = 22
-	DataTypeFloat64BigEndian   = 23
-)
-
-type Data struct {
-	Box
-	DataType uint32 `mp4:"0,size=32"`
-	DataLang uint32 `mp4:"1,size=32"`
-	Data     []byte `mp4:"2,size=8"`
-}
-
-// GetType returns the BoxType
-func (*Data) GetType() BoxType {
-	return BoxTypeData()
-}
-
-func isUnderIlstMeta(ctx Context) bool {
-	return ctx.UnderIlstMeta
-}
-
-// StringifyField returns field value as string
-func (data *Data) StringifyField(name string, indent string, depth int, ctx Context) (string, bool) {
-	switch name {
-	case "DataType":
-		switch data.DataType {
-		case DataTypeBinary:
-			return "BINARY", true
-		case DataTypeStringUTF8:
-			return "UTF8", true
-		case DataTypeStringUTF16:
-			return "UTF16", true
-		case DataTypeStringMac:
-			return "MAC_STR", true
-		case DataTypeStringJPEG:
-			return "JPEG", true
-		case DataTypeSignedIntBigEndian:
-			return "INT", true
-		case DataTypeFloat32BigEndian:
-			return "FLOAT32", true
-		case DataTypeFloat64BigEndian:
-			return "FLOAT64", true
-		}
-	case "Data":
-		switch data.DataType {
-		case DataTypeStringUTF8:
-			return fmt.Sprintf("\"%s\"", util.EscapeUnprintables(string(data.Data))), true
-		}
-	}
-	return "", false
-}
-
-type StringData struct {
-	AnyTypeBox
-	Data []byte `mp4:"0,size=8"`
-}
-
-// StringifyField returns field value as string
-func (sd *StringData) StringifyField(name string, indent string, depth int, ctx Context) (string, bool) {
-	if name == "Data" {
-		return fmt.Sprintf("\"%s\"", util.EscapeUnprintables(string(sd.Data))), true
-	}
-	return "", false
-}
-
-func isUnderIlstFreeFormat(ctx Context) bool {
-	return ctx.UnderIlstFreeMeta
 }
 
 /*************************** mdat ****************************/
@@ -1408,64 +1118,6 @@ func (mvhd *Mvhd) GetRateInt() int16 {
 	return int16(mvhd.Rate >> 16)
 }
 
-/*************************** pssh ****************************/
-
-func BoxTypePssh() BoxType { return StrToBoxType("pssh") }
-
-func init() {
-	AddBoxDef(&Pssh{}, 0, 1)
-}
-
-// Pssh is ISOBMFF pssh box type
-type Pssh struct {
-	FullBox  `mp4:"0,extend"`
-	SystemID [16]byte  `mp4:"1,size=8,uuid"`
-	KIDCount uint32    `mp4:"2,size=32,nver=0"`
-	KIDs     []PsshKID `mp4:"3,nver=0,len=dynamic,size=128"`
-	DataSize int32     `mp4:"4,size=32"`
-	Data     []byte    `mp4:"5,size=8,len=dynamic"`
-}
-
-type PsshKID struct {
-	KID [16]byte `mp4:"0,size=8,uuid"`
-}
-
-// GetFieldLength returns length of dynamic field
-func (pssh *Pssh) GetFieldLength(name string, ctx Context) uint {
-	switch name {
-	case "KIDs":
-		return uint(pssh.KIDCount)
-	case "Data":
-		return uint(pssh.DataSize)
-	}
-	panic(fmt.Errorf("invalid name of dynamic-length field: boxType=pssh fieldName=%s", name))
-}
-
-// StringifyField returns field value as string
-func (pssh *Pssh) StringifyField(name string, indent string, depth int, ctx Context) (string, bool) {
-	switch name {
-	case "KIDs":
-		buf := bytes.NewBuffer(nil)
-		buf.WriteString("[")
-		for i, e := range pssh.KIDs {
-			if i != 0 {
-				buf.WriteString(", ")
-			}
-			buf.WriteString(uuid.UUID(e.KID).String())
-		}
-		buf.WriteString("]")
-		return buf.String(), true
-
-	default:
-		return "", false
-	}
-}
-
-// GetType returns the BoxType
-func (*Pssh) GetType() BoxType {
-	return BoxTypePssh()
-}
-
 /*************************** saio ****************************/
 
 func BoxTypeSaio() BoxType { return StrToBoxType("saio") }
@@ -1608,7 +1260,7 @@ type AudioSampleEntry struct {
 	SampleSize    uint16    `mp4:"4,size=16,opt=dynamic"`
 	PreDefined    uint16    `mp4:"5,size=16,opt=dynamic"`
 	Reserved2     uint16    `mp4:"6,size=16,opt=dynamic,const=0"`
-	SampleRate    uint32    `mp4:"7,size=32,opt=dynamic"`
+	SampleRate    uint32    `mp4:"7,size=32,opt=dynamic"` // fixed-point 16.16
 	QuickTimeData []byte    `mp4:"8,size=8,opt=dynamic,len=dynamic"`
 }
 
@@ -1633,6 +1285,24 @@ func (ase *AudioSampleEntry) GetFieldLength(name string, ctx Context) uint {
 		}
 	}
 	return 0
+}
+
+// StringifyField returns field value as string
+func (ase *AudioSampleEntry) StringifyField(name string, indent string, depth int, ctx Context) (string, bool) {
+	switch name {
+	case "SampleRate":
+		return util.FormatUnsignedFixedFloat1616(ase.SampleRate), true
+	default:
+		return "", false
+	}
+}
+
+func (ase *AudioSampleEntry) GetSampleRate() float64 {
+	return float64(ase.SampleRate) / (1 << 16)
+}
+
+func (ase *AudioSampleEntry) GetSampleRateInt() uint16 {
+	return uint16(ase.SampleRate >> 16)
 }
 
 const (
@@ -2307,48 +1977,6 @@ func (*Styp) GetType() BoxType {
 	return BoxTypeStyp()
 }
 
-/*************************** tenc ****************************/
-
-func BoxTypeTenc() BoxType { return StrToBoxType("tenc") }
-
-func init() {
-	AddBoxDef(&Tenc{}, 0, 1)
-}
-
-// Tenc is ISOBMFF tenc box type
-type Tenc struct {
-	FullBox                `mp4:"0,extend"`
-	Reserved               uint8    `mp4:"1,size=8,dec"`
-	DefaultCryptByteBlock  uint8    `mp4:"2,size=4,dec"` // always 0 on version 0
-	DefaultSkipByteBlock   uint8    `mp4:"3,size=4,dec"` // always 0 on version 0
-	DefaultIsProtected     uint8    `mp4:"4,size=8,dec"`
-	DefaultPerSampleIVSize uint8    `mp4:"5,size=8,dec"`
-	DefaultKID             [16]byte `mp4:"6,size=8,uuid"`
-	DefaultConstantIVSize  uint8    `mp4:"7,size=8,opt=dynamic,dec"`
-	DefaultConstantIV      []byte   `mp4:"8,size=8,opt=dynamic,len=dynamic"`
-}
-
-func (tenc *Tenc) IsOptFieldEnabled(name string, ctx Context) bool {
-	switch name {
-	case "DefaultConstantIVSize", "DefaultConstantIV":
-		return tenc.DefaultIsProtected == 1 && tenc.DefaultPerSampleIVSize == 0
-	}
-	return false
-}
-
-func (tenc *Tenc) GetFieldLength(name string, ctx Context) uint {
-	switch name {
-	case "DefaultConstantIV":
-		return uint(tenc.DefaultConstantIVSize)
-	}
-	panic(fmt.Errorf("invalid name of dynamic-length field: boxType=tenc fieldName=%s", name))
-}
-
-// GetType returns the BoxType
-func (*Tenc) GetType() BoxType {
-	return BoxTypeTenc()
-}
-
 /*************************** tfdt ****************************/
 
 func BoxTypeTfdt() BoxType { return StrToBoxType("tfdt") }
@@ -2769,20 +2397,8 @@ func (trun *Trun) GetSampleCompositionTimeOffset(index int) int64 {
 
 func BoxTypeUdta() BoxType { return StrToBoxType("udta") }
 
-var udta3GppMetaBoxTypes = []BoxType{
-	StrToBoxType("titl"),
-	StrToBoxType("dscp"),
-	StrToBoxType("cprt"),
-	StrToBoxType("perf"),
-	StrToBoxType("auth"),
-	StrToBoxType("gnre"),
-}
-
 func init() {
 	AddBoxDef(&Udta{})
-	for _, bt := range udta3GppMetaBoxTypes {
-		AddAnyTypeBoxDefEx(&Udta3GppString{}, bt, isUnderUdta, 0)
-	}
 }
 
 // Udta is ISOBMFF udta box type
@@ -2793,14 +2409,6 @@ type Udta struct {
 // GetType returns the BoxType
 func (*Udta) GetType() BoxType {
 	return BoxTypeUdta()
-}
-
-type Udta3GppString struct {
-	AnyTypeBox
-	FullBox  `mp4:"0,extend"`
-	Pad      bool    `mp4:"1,size=1,hidden"`
-	Language [3]byte `mp4:"2,size=5,iso639-2"` // ISO-639-2/T language code
-	Data     []byte  `mp4:"3,size=8,string"`
 }
 
 func isUnderUdta(ctx Context) bool {
