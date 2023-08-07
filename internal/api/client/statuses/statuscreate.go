@@ -98,7 +98,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	// }
 	// form.Status += "\n\nsent from " + user + "'s iphone\n"
 
-	if err := validateCreateStatus(form); err != nil {
+	if err := validateNormalizeCreateStatus(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -112,7 +112,9 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, apiStatus)
 }
 
-func validateCreateStatus(form *apimodel.AdvancedStatusCreateForm) error {
+// validateNormalizeCreateStatus checks the form for disallowed combinations of attachments and overlength inputs.
+// Side effect: normalizes the post's language tag.
+func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) error {
 	hasStatus := form.Status != ""
 	hasMedia := len(form.MediaIDs) != 0
 	hasPoll := form.Poll != nil
@@ -162,9 +164,11 @@ func validateCreateStatus(form *apimodel.AdvancedStatusCreateForm) error {
 	}
 
 	if form.Language != "" {
-		if err := validate.Language(form.Language); err != nil {
+		language, err := validate.Language(form.Language)
+		if err != nil {
 			return err
 		}
+		form.Language = language
 	}
 
 	return nil

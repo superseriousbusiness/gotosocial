@@ -37,6 +37,8 @@ import (
 )
 
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
+//
+// Precondition: the form's fields should have already been validated and normalized by the caller.
 func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
 	accountURIs := uris.GenerateURIsForAccount(account.Username)
 	thisStatusID := id.NewULID()
@@ -55,7 +57,6 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		ContentWarning:           text.SanitizePlaintext(form.SpoilerText),
 		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                &sensitive,
-		Language:                 form.Language,
 		CreatedWithApplicationID: application.ID,
 		Text:                     form.Status,
 	}

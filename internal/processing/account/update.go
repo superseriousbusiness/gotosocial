@@ -222,10 +222,11 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 	if form.Source != nil {
 		if form.Source.Language != nil {
-			if err := validate.Language(*form.Source.Language); err != nil {
+			language, err := validate.Language(*form.Source.Language)
+			if err != nil {
 				return nil, gtserror.NewErrorBadRequest(err)
 			}
-			account.Language = *form.Source.Language
+			account.Language = language
 		}
 
 		if form.Source.Sensitive != nil {

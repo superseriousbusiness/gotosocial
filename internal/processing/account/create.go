@@ -34,8 +34,7 @@ import (
 // Create processes the given form for creating a new account,
 // returning an oauth token for that account if successful.
 //
-// Fields on the form should have already been validated by the
-// caller, before this function is called.
+// Precondition: the form's fields should have already been validated and normalized by the caller.
 func (p *Processor) Create(
 	ctx context.Context,
 	appToken oauth2.TokenInfo,
