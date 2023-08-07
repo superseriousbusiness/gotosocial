@@ -91,13 +91,13 @@ For a detailed view on what's implemented and what's not, and progress made towa
 
 The Mastodon API has become the de facto standard for client communication with federated servers, so GoToSocial has implemented and extended the API with custom functionality.
 
-In short, this means full support for modern, beautiful apps like [Tusky](https://tusky.app/) and [Semaphore](https://semaphore.social/).
+Though most apps that implement the Mastodon API should work, GoToSocial works reliably with beautiful apps like:
 
-Tusky                                                        |  Semaphore
-:-----------------------------------------------------------:|:------------------------------------------------------------------:
-![An image of GoToSocial in Tusky](./docs/assets/tusky.png)  | ![An image of GoToSocial in Semaphore](./docs/assets/semaphore.png)
+* [Tusky](https://tusky.app/) for Android
+* [Semaphore](https://semaphore.social/) in the browser
+* [Feditext](https://fedi.software/@Feditext) (beta) on iOS, iPadOS and macOS
 
-If you're used to using Mastodon with Tusky or Semaphore, you'll find using GoToSocial a breeze.
+If you've used Mastodon with any of these apps before, you'll find using GoToSocial a breeze.
 
 ### Granular post settings
 
