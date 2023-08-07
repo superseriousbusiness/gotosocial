@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -427,10 +428,8 @@ func (p *Processor) deleteAccountPeripheral(ctx context.Context, account *gtsmod
 // names of all columns that are updated by it.
 func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 	var (
-		falseBool = func() *bool { b := false; return &b }
-		trueBool  = func() *bool { b := true; return &b }
-		now       = time.Now()
-		never     = time.Time{}
+		now   = time.Now()
+		never = time.Time{}
 	)
 
 	account.FetchedAt = never
@@ -444,17 +443,17 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 	account.Fields = nil
 	account.Note = ""
 	account.NoteRaw = ""
-	account.Memorial = falseBool()
+	account.Memorial = util.Ptr(false)
 	account.AlsoKnownAs = ""
 	account.MovedToAccountID = ""
 	account.Reason = ""
-	account.Discoverable = falseBool()
+	account.Discoverable = util.Ptr(false)
 	account.StatusContentType = ""
 	account.CustomCSS = ""
 	account.SuspendedAt = now
 	account.SuspensionOrigin = origin
-	account.HideCollections = trueBool()
-	account.EnableRSS = falseBool()
+	account.HideCollections = util.Ptr(true)
+	account.EnableRSS = util.Ptr(false)
 
 	return []string{
 		"fetched_at",

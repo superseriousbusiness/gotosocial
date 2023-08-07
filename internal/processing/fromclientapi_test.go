@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -63,20 +64,20 @@ func (suite *FromClientAPITestSuite) TestProcessStreamNewStatus() {
 		EmojiIDs:                 []string{},
 		CreatedAt:                testrig.TimeMustParse("2021-10-20T11:36:45Z"),
 		UpdatedAt:                testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		Local:                    testrig.TrueBool(),
+		Local:                    util.Ptr(true),
 		AccountURI:               "http://localhost:8080/users/admin",
 		AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 		InReplyToID:              "",
 		BoostOfID:                "",
 		ContentWarning:           "",
 		Visibility:               gtsmodel.VisibilityFollowersOnly,
-		Sensitive:                testrig.FalseBool(),
+		Sensitive:                util.Ptr(false),
 		Language:                 "en",
 		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-		Federated:                testrig.FalseBool(),
-		Boostable:                testrig.TrueBool(),
-		Replyable:                testrig.TrueBool(),
-		Likeable:                 testrig.TrueBool(),
+		Federated:                util.Ptr(false),
+		Boostable:                util.Ptr(true),
+		Replyable:                util.Ptr(true),
+		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 
@@ -189,7 +190,7 @@ func (suite *FromClientAPITestSuite) TestProcessNewStatusWithNotification() {
 	// that receiving account wants notifs when posting account posts.
 	follow := &gtsmodel.Follow{}
 	*follow = *suite.testFollows["local_account_1_admin_account"]
-	follow.Notify = testrig.TrueBool()
+	follow.Notify = util.Ptr(true)
 	if err := suite.db.UpdateFollow(ctx, follow); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -206,20 +207,20 @@ func (suite *FromClientAPITestSuite) TestProcessNewStatusWithNotification() {
 		EmojiIDs:                 []string{},
 		CreatedAt:                testrig.TimeMustParse("2021-10-20T11:36:45Z"),
 		UpdatedAt:                testrig.TimeMustParse("2021-10-20T11:36:45Z"),
-		Local:                    testrig.TrueBool(),
+		Local:                    util.Ptr(true),
 		AccountURI:               "http://localhost:8080/users/admin",
 		AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 		InReplyToID:              "",
 		BoostOfID:                "",
 		ContentWarning:           "",
 		Visibility:               gtsmodel.VisibilityFollowersOnly,
-		Sensitive:                testrig.FalseBool(),
+		Sensitive:                util.Ptr(false),
 		Language:                 "en",
 		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-		Federated:                testrig.FalseBool(),
-		Boostable:                testrig.TrueBool(),
-		Replyable:                testrig.TrueBool(),
-		Likeable:                 testrig.TrueBool(),
+		Federated:                util.Ptr(false),
+		Boostable:                util.Ptr(true),
+		Replyable:                util.Ptr(true),
+		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 

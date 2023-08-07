@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type RelationshipTestSuite struct {
@@ -892,7 +892,7 @@ func (suite *RelationshipTestSuite) TestUpdateFollow() {
 	follow := &gtsmodel.Follow{}
 	*follow = *suite.testFollows["local_account_1_admin_account"]
 
-	follow.Notify = testrig.TrueBool()
+	follow.Notify = util.Ptr(true)
 	if err := suite.db.UpdateFollow(ctx, follow, "notify"); err != nil {
 		suite.FailNow(err.Error())
 	}

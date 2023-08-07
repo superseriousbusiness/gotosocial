@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type InstanceTestSuite struct {
@@ -103,7 +103,7 @@ func (suite *InstanceTestSuite) TestGetInstanceModeratorAddressesZorkAsModerator
 	// Promote zork to moderator role.
 	testUser := &gtsmodel.User{}
 	*testUser = *suite.testUsers["local_account_1"]
-	testUser.Moderator = testrig.TrueBool()
+	testUser.Moderator = util.Ptr(true)
 	if err := suite.db.UpdateUser(context.Background(), testUser, "moderator"); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -117,8 +117,8 @@ func (suite *InstanceTestSuite) TestGetInstanceModeratorAddressesNoAdmin() {
 	// Demote admin from admin + moderator roles.
 	testUser := &gtsmodel.User{}
 	*testUser = *suite.testUsers["admin_account"]
-	testUser.Admin = testrig.FalseBool()
-	testUser.Moderator = testrig.FalseBool()
+	testUser.Admin = util.Ptr(false)
+	testUser.Moderator = util.Ptr(false)
 	if err := suite.db.UpdateUser(context.Background(), testUser, "admin", "moderator"); err != nil {
 		suite.FailNow(err.Error())
 	}

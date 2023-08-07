@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -165,14 +166,14 @@ func (suite *StatusPinTestSuite) TestPinStatusTooManyPins() {
 			PinnedAt:            time.Now(),
 			URL:                 "stub " + strconv.Itoa(i),
 			URI:                 "stub " + strconv.Itoa(i),
-			Local:               testrig.TrueBool(),
+			Local:               util.Ptr(true),
 			AccountID:           testAccount.ID,
 			AccountURI:          testAccount.URI,
 			Visibility:          gtsmodel.VisibilityPublic,
-			Federated:           testrig.TrueBool(),
-			Boostable:           testrig.TrueBool(),
-			Replyable:           testrig.TrueBool(),
-			Likeable:            testrig.TrueBool(),
+			Federated:           util.Ptr(true),
+			Boostable:           util.Ptr(true),
+			Replyable:           util.Ptr(true),
+			Likeable:            util.Ptr(true),
 			ActivityStreamsType: ap.ObjectNote,
 		}
 		if err := suite.db.PutStatus(ctx, status); err != nil {

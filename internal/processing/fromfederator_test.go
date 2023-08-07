@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -110,10 +111,10 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 		InReplyToAccountID:  repliedAccount.ID,
 		Visibility:          gtsmodel.VisibilityUnlocked,
 		ActivityStreamsType: ap.ObjectNote,
-		Federated:           testrig.TrueBool(),
-		Boostable:           testrig.TrueBool(),
-		Replyable:           testrig.TrueBool(),
-		Likeable:            testrig.FalseBool(),
+		Federated:           util.Ptr(true),
+		Boostable:           util.Ptr(true),
+		Replyable:           util.Ptr(true),
+		Likeable:            util.Ptr(false),
 	}
 
 	wssStream, errWithCode := suite.processor.Stream().Open(context.Background(), repliedAccount, stream.TimelineHome)
@@ -317,9 +318,9 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 		UpdatedAt:       time.Now().Add(-1 * time.Hour),
 		AccountID:       deletedAccount.ID,
 		TargetAccountID: receivingAccount.ID,
-		ShowReblogs:     testrig.TrueBool(),
+		ShowReblogs:     util.Ptr(true),
 		URI:             fmt.Sprintf("%s/follows/01FGRY72ASHBSET64353DPHK9T", deletedAccount.URI),
-		Notify:          testrig.FalseBool(),
+		Notify:          util.Ptr(false),
 	}
 	err := suite.db.Put(ctx, zorkFollowSatan)
 	suite.NoError(err)
@@ -330,9 +331,9 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 		UpdatedAt:       time.Now().Add(-1 * time.Hour),
 		AccountID:       receivingAccount.ID,
 		TargetAccountID: deletedAccount.ID,
-		ShowReblogs:     testrig.TrueBool(),
+		ShowReblogs:     util.Ptr(true),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", receivingAccount.URI),
-		Notify:          testrig.FalseBool(),
+		Notify:          util.Ptr(false),
 	}
 	err = suite.db.Put(ctx, satanFollowZork)
 	suite.NoError(err)
@@ -405,9 +406,9 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
-		ShowReblogs:     testrig.TrueBool(),
+		ShowReblogs:     util.Ptr(true),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
-		Notify:          testrig.FalseBool(),
+		Notify:          util.Ptr(false),
 	}
 
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)
@@ -462,9 +463,9 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 		Account:         originAccount,
 		TargetAccountID: targetAccount.ID,
 		TargetAccount:   targetAccount,
-		ShowReblogs:     testrig.TrueBool(),
+		ShowReblogs:     util.Ptr(true),
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", originAccount.URI),
-		Notify:          testrig.FalseBool(),
+		Notify:          util.Ptr(false),
 	}
 
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)

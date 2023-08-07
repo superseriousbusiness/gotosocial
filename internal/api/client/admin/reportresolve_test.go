@@ -138,7 +138,7 @@ func (suite *ReportResolveTestSuite) TestReportResolve2() {
 	testToken := suite.testTokens["admin_account"]
 	testUser := suite.testUsers["admin_account"]
 	testReportID := suite.testReports["local_account_2_report_remote_account_1"].ID
-	var actionTakenComment *string = testrig.StringPtr("no action was taken, this is a frivolous report you boob")
+	var actionTakenComment *string = util.Ptr("no action was taken, this is a frivolous report you boob")
 
 	report, err := suite.resolveReport(testAccount, testToken, testUser, testReportID, http.StatusOK, "", actionTakenComment)
 	suite.NoError(err)

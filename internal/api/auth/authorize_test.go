@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/auth"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type AuthAuthorizeTestSuite struct {
@@ -51,8 +51,8 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) []string {
 				user.ConfirmedAt = time.Now()
 				user.Email = user.UnconfirmedEmail
-				user.Approved = testrig.TrueBool()
-				user.Disabled = testrig.TrueBool()
+				user.Approved = util.Ptr(true)
+				user.Disabled = util.Ptr(true)
 				return []string{"confirmed_at", "email", "approved", "disabled"}
 			},
 			expectedStatusCode:     http.StatusSeeOther,
@@ -63,8 +63,8 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 			mutateUserAccount: func(user *gtsmodel.User, account *gtsmodel.Account) []string {
 				user.ConfirmedAt = time.Now()
 				user.Email = user.UnconfirmedEmail
-				user.Approved = testrig.TrueBool()
-				user.Disabled = testrig.FalseBool()
+				user.Approved = util.Ptr(true)
+				user.Disabled = util.Ptr(false)
 				account.SuspendedAt = time.Now()
 				return []string{"confirmed_at", "email", "approved", "disabled"}
 			},

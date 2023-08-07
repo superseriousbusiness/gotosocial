@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -231,7 +232,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
 		Domain:             "omg.just.the.worst.org.ever",
 		CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
 		PublicComment:      "just absolutely the worst, wowza",
-		Obfuscate:          testrig.TrueBool(),
+		Obfuscate:          util.Ptr(true),
 	})
 	suite.NoError(err)
 
