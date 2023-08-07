@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type TimelineTestSuite struct {
@@ -52,20 +52,20 @@ func getFutureStatus() *gtsmodel.Status {
 		EmojiIDs:                 []string{},
 		CreatedAt:                theDistantFuture,
 		UpdatedAt:                theDistantFuture,
-		Local:                    testrig.TrueBool(),
+		Local:                    util.Ptr(true),
 		AccountURI:               "http://localhost:8080/users/admin",
 		AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 		InReplyToID:              "",
 		BoostOfID:                "",
 		ContentWarning:           "",
 		Visibility:               gtsmodel.VisibilityPublic,
-		Sensitive:                testrig.FalseBool(),
+		Sensitive:                util.Ptr(false),
 		Language:                 "en",
 		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
-		Federated:                testrig.TrueBool(),
-		Boostable:                testrig.TrueBool(),
-		Replyable:                testrig.TrueBool(),
-		Likeable:                 testrig.TrueBool(),
+		Federated:                util.Ptr(true),
+		Boostable:                util.Ptr(true),
+		Replyable:                util.Ptr(true),
+		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 }

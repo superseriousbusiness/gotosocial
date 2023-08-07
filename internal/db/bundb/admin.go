@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -198,17 +199,15 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 		user.Email = newSignup.Email
 	}
 
-	trueBool := func() *bool { t := true; return &t }
-
 	if newSignup.Admin {
 		// Make new user mod + admin.
-		user.Moderator = trueBool()
-		user.Admin = trueBool()
+		user.Moderator = util.Ptr(true)
+		user.Admin = util.Ptr(true)
 	}
 
 	if newSignup.PreApproved {
 		// Mark new user as approved.
-		user.Approved = trueBool()
+		user.Approved = util.Ptr(true)
 	}
 
 	// Insert the user!

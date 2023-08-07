@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
@@ -396,11 +397,10 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// TODO: a lot of work to be done here -- a new type
 	// needs to be created for this in go-fed/activity.
 	// Until this is implemented, assume all true.
-	var trueBool = func() *bool { b := true; return &b }
-	status.Federated = trueBool()
-	status.Boostable = trueBool()
-	status.Replyable = trueBool()
-	status.Likeable = trueBool()
+	status.Federated = util.Ptr(true)
+	status.Boostable = util.Ptr(true)
+	status.Replyable = util.Ptr(true)
+	status.Likeable = util.Ptr(true)
 
 	// status.Sensitive
 	status.Sensitive = func() *bool {

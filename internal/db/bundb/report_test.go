@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -88,7 +89,7 @@ func (suite *ReportTestSuite) TestPutReport() {
 		TargetAccountID: "01F8MH5ZK5VRH73AKHQM6Y9VNX",
 		Comment:         "another report",
 		StatusIDs:       []string{"01FVW7JHQFSFK166WWKR8CBA6M"},
-		Forwarded:       testrig.TrueBool(),
+		Forwarded:       util.Ptr(true),
 	}
 
 	err := suite.db.PutReport(ctx, report)

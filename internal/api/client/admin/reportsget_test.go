@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -963,7 +964,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetResolvedTargetAccount() {
 	testAccount := suite.testAccounts["admin_account"]
 	testToken := suite.testTokens["admin_account"]
 	testUser := suite.testUsers["admin_account"]
-	resolved := testrig.FalseBool()
+	resolved := util.Ptr(false)
 	targetAccount := suite.testAccounts["local_account_2"]
 
 	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, "", resolved, "", targetAccount.ID, "", "", "", 20)

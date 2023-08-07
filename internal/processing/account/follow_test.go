@@ -23,7 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type FollowTestSuite struct {
@@ -40,10 +40,9 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeBoth() {
 	//	UPDATE "follows" AS "follow" SET "show_reblogs" = FALSE, "notify" = TRUE, "updated_at" = '2023-04-09 11:42:39.424705+00:00' WHERE ("follow"."id" = '01F8PY8RHWRQZV038T4E8T9YK8')
 	relationship, err := suite.accountProcessor.FollowCreate(ctx, requestingAccount, &apimodel.AccountFollowRequest{
 		ID:      targetAccount.ID,
-		Reblogs: testrig.FalseBool(),
-		Notify:  testrig.TrueBool(),
+		Reblogs: util.Ptr(false),
+		Notify:  util.Ptr(true),
 	})
-
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -62,9 +61,8 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNotifyIgnoreReblogs(
 	//	UPDATE "follows" AS "follow" SET "notify" = TRUE, "updated_at" = '2023-04-09 11:40:33.827858+00:00' WHERE ("follow"."id" = '01F8PY8RHWRQZV038T4E8T9YK8')
 	relationship, err := suite.accountProcessor.FollowCreate(ctx, requestingAccount, &apimodel.AccountFollowRequest{
 		ID:     targetAccount.ID,
-		Notify: testrig.TrueBool(),
+		Notify: util.Ptr(true),
 	})
-
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -83,10 +81,9 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNotifySetReblogs() {
 	//	UPDATE "follows" AS "follow" SET "notify" = TRUE, "updated_at" = '2023-04-09 11:40:33.827858+00:00' WHERE ("follow"."id" = '01F8PY8RHWRQZV038T4E8T9YK8')
 	relationship, err := suite.accountProcessor.FollowCreate(ctx, requestingAccount, &apimodel.AccountFollowRequest{
 		ID:      targetAccount.ID,
-		Notify:  testrig.TrueBool(),
-		Reblogs: testrig.TrueBool(),
+		Notify:  util.Ptr(true),
+		Reblogs: util.Ptr(true),
 	})
-
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -104,10 +101,9 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNothing() {
 	// Trace logs should show no update query.
 	relationship, err := suite.accountProcessor.FollowCreate(ctx, requestingAccount, &apimodel.AccountFollowRequest{
 		ID:      targetAccount.ID,
-		Notify:  testrig.FalseBool(),
-		Reblogs: testrig.TrueBool(),
+		Notify:  util.Ptr(false),
+		Reblogs: util.Ptr(true),
 	})
-
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -126,7 +122,6 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowSetNothing() {
 	relationship, err := suite.accountProcessor.FollowCreate(ctx, requestingAccount, &apimodel.AccountFollowRequest{
 		ID: targetAccount.ID,
 	})
-
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

@@ -28,6 +28,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -68,7 +69,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	testAttachment.Cached = testrig.FalseBool()
+	testAttachment.Cached = util.Ptr(false)
 	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
@@ -120,7 +121,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
-	testAttachment.Cached = testrig.FalseBool()
+	testAttachment.Cached = util.Ptr(false)
 	err := suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)
@@ -177,7 +178,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	suite.NoError(err)
 
 	// uncache the file from local
-	testAttachment.Cached = testrig.FalseBool()
+	testAttachment.Cached = util.Ptr(false)
 	err = suite.db.UpdateByID(ctx, testAttachment, testAttachment.ID, "cached")
 	suite.NoError(err)
 	err = suite.storage.Delete(ctx, testAttachment.File.Path)

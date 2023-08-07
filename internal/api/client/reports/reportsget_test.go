@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -197,7 +198,7 @@ func (suite *ReportsGetTestSuite) TestGetReports4() {
 	testAccount := suite.testAccounts["local_account_2"]
 	testToken := suite.testTokens["local_account_2"]
 	testUser := suite.testUsers["local_account_2"]
-	resolved := testrig.FalseBool()
+	resolved := util.Ptr(false)
 
 	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
 	suite.NoError(err)
@@ -252,7 +253,7 @@ func (suite *ReportsGetTestSuite) TestGetReports5() {
 	testAccount := suite.testAccounts["local_account_1"]
 	testToken := suite.testTokens["local_account_1"]
 	testUser := suite.testUsers["local_account_1"]
-	resolved := testrig.TrueBool()
+	resolved := util.Ptr(true)
 
 	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "", "", "", "", 20)
 	suite.NoError(err)
@@ -323,7 +324,7 @@ func (suite *ReportsGetTestSuite) TestGetReports7() {
 	testAccount := suite.testAccounts["local_account_2"]
 	testToken := suite.testTokens["local_account_2"]
 	testUser := suite.testUsers["local_account_2"]
-	resolved := testrig.FalseBool()
+	resolved := util.Ptr(false)
 
 	reports, link, err := suite.getReports(testAccount, testToken, testUser, http.StatusOK, resolved, "01F8MH5ZK5VRH73AKHQM6Y9VNX", "", "", "", 20)
 	suite.NoError(err)
