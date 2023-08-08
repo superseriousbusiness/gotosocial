@@ -27,29 +27,43 @@ const (
 	robotsPath          = "/robots.txt"
 	robotsMetaAllowSome = "nofollow, noarchive, nositelinkssearchbox, max-image-preview:standard" // https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag#robotsmeta
 	robotsTxt           = `# GoToSocial robots.txt -- to edit, see internal/web/robots.go
-# more info @ https://developers.google.com/search/docs/crawling-indexing/robots/intro
+# More info @ https://developers.google.com/search/docs/crawling-indexing/robots/intro
+
+# Before we commence, a giant fuck you to ChatGPT in particular.
+# https://platform.openai.com/docs/gptbot
+User-agent: GPTBot
+Disallow: /
+
+# Rules for everything else.
 User-agent: *
 Crawl-delay: 500
-# api stuff
+
+# API endpoints.
 Disallow: /api/
-# auth/login stuff
+
+# Auth/login endpoints.
 Disallow: /auth/
 Disallow: /oauth/
 Disallow: /check_your_email
 Disallow: /wait_for_approval
 Disallow: /account_disabled
-# well known stuff
+
+# Well-known endpoints.
 Disallow: /.well-known/
-# files
+
+# Fileserver/media.
 Disallow: /fileserver/
-# s2s AP stuff
+
+# Fedi S2S API endpoints.
 Disallow: /users/
 Disallow: /emoji/
-# panels
+
+# Settings panels.
 Disallow: /admin
 Disallow: /user
 Disallow: /settings/
-# domain blocklist
+
+# Domain blocklist.
 Disallow: /about/suspended`
 )
 
