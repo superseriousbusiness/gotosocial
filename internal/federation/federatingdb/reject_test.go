@@ -52,7 +52,7 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	err := suite.db.Put(ctx, fr)
 	suite.NoError(err)
 
-	asFollow, err := suite.tc.FollowToAS(ctx, suite.tc.FollowRequestToFollow(ctx, fr), followingAccount, followedAccount)
+	asFollow, err := suite.tc.FollowToAS(ctx, suite.tc.FollowRequestToFollow(ctx, fr))
 	suite.NoError(err)
 
 	rejectingAccountURI := testrig.URLMustParse(followedAccount.URI)
