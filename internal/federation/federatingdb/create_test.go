@@ -54,7 +54,7 @@ func (suite *CreateTestSuite) TestCreateNote() {
 
 	// status should have some expected values
 	suite.Equal(requestingAccount.ID, status.AccountID)
-	suite.Equal("hey zork here's a new private note for you", status.Content)
+	suite.Equal("@the_mighty_zork@localhost:8080 hey zork here's a new private note for you", status.Content)
 
 	// status should be in the database
 	_, err = suite.db.GetStatusByID(context.Background(), status.ID)
