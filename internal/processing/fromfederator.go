@@ -131,11 +131,6 @@ func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federa
 		return gtserror.Newf("error extracting status from federatorMsg: %w", err)
 	}
 
-	// Before we go whacking this status in our db, ensure
-	// it's actually relevant to the account who received it
-	// in their Inbox, and it's not just a status randomly
-	// blasted at us from somewhere we don't care about.
-
 	if err := p.state.DB.PutStatus(ctx, status); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			// The status already exists in the database, which
