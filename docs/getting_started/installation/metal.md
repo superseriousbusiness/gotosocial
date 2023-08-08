@@ -78,7 +78,7 @@ You can use the GoToSocial binary to also create and promote your user account. 
 
 ## Login
 
-You should now be able to log in to your instance using the email address and password of the account you just created. We recommend using [Semaphore](https://semaphore.social) or [Tusky](https://tusky.app) for this.
+You should now be able to log in to your instance using the email address and password of the account you just created.
 
 ## (Optional) Enable the systemd service
 
