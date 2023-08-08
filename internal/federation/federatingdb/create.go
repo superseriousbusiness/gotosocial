@@ -135,7 +135,7 @@ func (f *federatingDB) activityCreate(
 	// Create must have an Object.
 	objectProp := create.GetActivityStreamsObject()
 	if objectProp == nil {
-		return gtserror.New("Create had no Object")
+		return gtserror.New("create had no Object")
 	}
 
 	// Iterate through the Object property and process
