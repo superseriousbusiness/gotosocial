@@ -32,8 +32,8 @@ type FromClientAPI struct {
 	TargetAccount  *gtsmodel.Account
 }
 
-// FromFederator wraps a message that travels from the federator into the processor.
-type FromFederator struct {
+// FromFediAPI wraps a message that travels from the federating API into the processor.
+type FromFediAPI struct {
 	APObjectType     string
 	APActivityType   string
 	APIri            *url.URL

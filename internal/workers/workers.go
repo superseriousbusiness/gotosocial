@@ -43,7 +43,7 @@ type Workers struct {
 	// these are pointers to Processor{}.Enqueue___() msg functions.
 	// This prevents dependency cycling as Processor depends on Workers.
 	EnqueueClientAPI func(context.Context, ...messages.FromClientAPI)
-	EnqueueFederator func(context.Context, ...messages.FromFederator)
+	EnqueueFediAPI   func(context.Context, ...messages.FromFediAPI)
 
 	// Media manager worker pools.
 	Media runners.WorkerPool

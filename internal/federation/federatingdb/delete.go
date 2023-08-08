@@ -49,7 +49,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	// so we have to try a few different things...
 	if s, err := f.state.DB.GetStatusByURI(ctx, id.String()); err == nil && requestingAccount.ID == s.AccountID {
 		l.Debugf("uri is for STATUS with id: %s", s.ID)
-		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityDelete,
 			GTSModel:         s,
@@ -59,7 +59,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 
 	if a, err := f.state.DB.GetAccountByURI(ctx, id.String()); err == nil && requestingAccount.ID == a.ID {
 		l.Debugf("uri is for ACCOUNT with id %s", a.ID)
-		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 			APObjectType:     ap.ObjectProfile,
 			APActivityType:   ap.ActivityDelete,
 			GTSModel:         a,

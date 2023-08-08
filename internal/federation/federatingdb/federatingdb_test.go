@@ -36,7 +36,7 @@ type FederatingDBTestSuite struct {
 	suite.Suite
 	db            db.DB
 	tc            typeutils.TypeConverter
-	fromFederator chan messages.FromFederator
+	fromFederator chan messages.FromFediAPI
 	federatingDB  federatingdb.DB
 	state         state.State
 
@@ -69,8 +69,8 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)
 
-	suite.fromFederator = make(chan messages.FromFederator, 10)
-	suite.state.Workers.EnqueueFederator = func(ctx context.Context, msgs ...messages.FromFederator) {
+	suite.fromFederator = make(chan messages.FromFediAPI, 10)
+	suite.state.Workers.EnqueueFediAPI = func(ctx context.Context, msgs ...messages.FromFediAPI) {
 		for _, msg := range msgs {
 			suite.fromFederator <- msg
 		}

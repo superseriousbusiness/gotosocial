@@ -103,7 +103,7 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 		return fmt.Errorf("activityBlock: database error inserting block: %s", err)
 	}
 
-	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ActivityBlock,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         block,
@@ -198,7 +198,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 			return nil
 		}
 		// pass the note iri into the processor and have it do the dereferencing instead of doing it here
-		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityCreate,
 			APIri:            id.GetIRI(),
@@ -233,7 +233,7 @@ func (f *federatingDB) createNote(ctx context.Context, note vocab.ActivityStream
 		return fmt.Errorf("createNote: database error inserting status: %s", err)
 	}
 
-	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
 		APObjectModel:    note,
@@ -265,7 +265,7 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 		return fmt.Errorf("activityFollow: database error inserting follow request: %s", err)
 	}
 
-	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ActivityFollow,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         followRequest,
@@ -302,7 +302,7 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 		return fmt.Errorf("activityLike: database error inserting fave: %w", err)
 	}
 
-	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ActivityLike,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         fave,
@@ -333,7 +333,7 @@ func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, rece
 		return fmt.Errorf("activityFlag: database error inserting report: %w", err)
 	}
 
-	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ActivityFlag,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         report,
