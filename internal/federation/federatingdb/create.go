@@ -138,27 +138,31 @@ func (f *federatingDB) activityCreate(
 		return gtserror.New("create had no Object")
 	}
 
-	// Iterate through the Object property and process
-	// the first valid Object we can find that is a Statusable.
-	//
+	// Iterate through the Object property and process FIRST provided statusable.
 	// todo: https://github.com/superseriousbusiness/gotosocial/issues/1905
 	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
 		object := iter.GetType()
 		if object == nil {
 			// Can't do Create with Object that's just a URI.
 			// Warn log this because it's an AP error.
-			log.Warn(ctx, "Object entry was not a Type")
+			log.Warn(ctx, "object entry was not a type: %[1]T%[1]+v", iter)
 			continue
 		}
 
+		// Ensure given object type is a statusable.
 		statusable, ok := object.(ap.Statusable)
 		if !ok {
-			// Can't (currently) Create anything other than a Statusable.
-			log.Debugf(ctx, "Object entry was of (currently) unsupported type %s", object.GetTypeName())
+			// Can't (currently) Create anything other than a Statusable. ([1] is a format arg index)
+			log.Debugf(ctx, "object entry type (currently) unsupported: %[1]T%[1]+v", object)
 			continue
 		}
 
-		return f.createStatusable(ctx, statusable, receivingAccount, requestingAccount)
+		// Handle creation of statusable.
+		return f.createStatusable(ctx,
+			statusable,
+			receivingAccount,
+			requestingAccount,
+		)
 	}
 
 	return nil
@@ -215,8 +219,8 @@ func (f *federatingDB) createStatusable(
 	}
 
 	if status != nil {
-		// We already had this status in the
-		// db, no need for further action.
+		// We already had this status in the db, no need for further action.
+		log.Trace(ctx, "status already exists: %s", statusableURIStr)
 		return nil
 	}
 
@@ -261,8 +265,10 @@ func (f *federatingDB) createStatusable(
 		// This is a status sent with no relation to receiver, i.e.
 		// - receiving account does not follow requesting account
 		// - received status does not mention receiving account
-		err := errors.New("unacceptable receiving account")
-		return gtserror.NewErrorForbidden(err)
+		//
+		// We just pretend that all is fine (dog with cuppa, flames everywhere)
+		log.Trace(ctx, "status failed acceptability check")
+		return nil
 	}
 
 	// ID the new status based on the time it was created.
