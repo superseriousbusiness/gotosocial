@@ -20,7 +20,6 @@ package workers
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -105,7 +104,6 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(
 
 		if !timelineable {
 			// Nothing to do.
-			fmt.Printf("\n\n\nNOT TIMELINEABLE\n\n\n")
 			continue
 		}
 
