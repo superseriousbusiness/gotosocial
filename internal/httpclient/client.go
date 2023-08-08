@@ -247,8 +247,8 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 
 		// Rewind body reader and content-length if set.
 		if rc, ok := r.Body.(*byteutil.ReadNopCloser); ok {
+			rc.Rewind() // set len AFTER rewind
 			r.ContentLength = int64(rc.Len())
-			rc.Rewind()
 		}
 
 		// Sign the outgoing request.
