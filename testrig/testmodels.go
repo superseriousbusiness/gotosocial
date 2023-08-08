@@ -2055,13 +2055,16 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan/statuses/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		URLMustParse("http://fossbros-anonymous.io/@foss_satan/5424b153-4553-4f30-9358-7b92f7cd42f6"),
 		TimeMustParse("2022-07-13T12:13:12+02:00"),
-		"hey zork here's a new private note for you",
+		"@the_mighty_zork@localhost:8080 hey zork here's a new private note for you",
 		"new note for zork",
 		URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 		[]*url.URL{URLMustParse("http://localhost:8080/users/the_mighty_zork")},
 		nil,
 		true,
-		[]vocab.ActivityStreamsMention{},
+		[]vocab.ActivityStreamsMention{newAPMention(
+			URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+			"@the_mighty_zork@localhost:8080",
+		)},
 		[]vocab.TootHashtag{},
 		nil,
 	)
