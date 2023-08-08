@@ -231,8 +231,8 @@ func (f *federatingDB) createStatusable(
 	// this status to us, but fetch the authentic article from
 	// the server it originated from.
 	if forward {
-		// Pass the statusable URI into the processor worker and
-		// do the rest of the processing asynchronously.
+		// Pass the statusable URI (APIri) into the processor worker
+		// and do the rest of the processing asynchronously.
 		f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityCreate,
@@ -272,11 +272,22 @@ func (f *federatingDB) createStatusable(
 	}
 
 	// ID the new status based on the time it was created.
-	statusID, err := id.NewULIDFromTime(status.CreatedAt)
+	status.ID, err = id.NewULIDFromTime(status.CreatedAt)
 	if err != nil {
 		return err
 	}
-	status.ID = statusID
+
+	// Put this newly parsed status in the database.
+	if err := f.state.DB.PutStatus(ctx, status); err != nil {
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// The status already exists in the database, which
+			// means we've already processed it and some race
+			// condition means we didn't catch it yet. We can
+			// just return nil here and be done with it.
+			return nil
+		}
+		return gtserror.Newf("db error inserting status: %w", err)
+	}
 
 	// Do the rest of the processing asynchronously. The processor
 	// will handle inserting/updating + further dereferencing the status.
