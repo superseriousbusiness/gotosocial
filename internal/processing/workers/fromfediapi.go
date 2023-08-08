@@ -126,20 +126,23 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 }
 
 func (p *Processor) fAPICreateStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
-	// Check the message for either an already
-	// dereferenced and converted status, or an
-	// ActivityPub IRI that we need to deref.
 	var (
 		status *gtsmodel.Status
 		err    error
+
+		// Check the federatorMsg for either an already dereferenced
+		// and converted status pinned to the message, or a forwarded
+		// AP IRI that we still need to deref.
+		forwarded = (fMsg.GTSModel == nil)
 	)
 
-	if fMsg.GTSModel != nil {
-		// Model is set, use that.
-		status, err = p.statusFromGTSModel(ctx, fMsg)
-	} else {
-		// Model is not set, use IRI.
+	if forwarded {
+		// Model was not set, deref with IRI.
+		// This will also cause the status to be inserted into the db.
 		status, err = p.statusFromAPIRI(ctx, fMsg)
+	} else {
+		// Model is set, ensure we have the most up-to-date model.
+		status, err = p.statusFromGTSModel(ctx, fMsg)
 	}
 
 	if err != nil {
