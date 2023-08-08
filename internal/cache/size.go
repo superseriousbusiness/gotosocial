@@ -155,6 +155,7 @@ func totalOfRatios() float64 {
 	return 0 +
 		config.GetCacheAccountMemRatio() +
 		config.GetCacheAccountNoteMemRatio() +
+		config.GetCacheApplicationMemRatio() +
 		config.GetCacheBlockMemRatio() +
 		config.GetCacheBlockIDsMemRatio() +
 		config.GetCacheBoostOfIDsMemRatio() +
@@ -217,7 +218,7 @@ func sizeofAccount() uintptr {
 		SilencedAt:              time.Now(),
 		SuspendedAt:             time.Now(),
 		HideCollections:         func() *bool { ok := true; return &ok }(),
-		SuspensionOrigin:        "",
+		SuspensionOrigin:        exampleID,
 		EnableRSS:               func() *bool { ok := true; return &ok }(),
 	}))
 }
@@ -228,6 +229,20 @@ func sizeofAccountNote() uintptr {
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
 		Comment:         exampleTextSmall,
+	}))
+}
+
+func sizeofApplication() uintptr {
+	return uintptr(size.Of(&gtsmodel.Application{
+		ID:           exampleID,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+		Name:         exampleUsername,
+		Website:      exampleURI,
+		RedirectURI:  exampleURI,
+		ClientID:     exampleID,
+		ClientSecret: exampleID,
+		Scopes:       exampleTextSmall,
 	}))
 }
 
@@ -500,5 +515,31 @@ func sizeofVisibility() uintptr {
 }
 
 func sizeofUser() uintptr {
-	return uintptr(size.Of(&gtsmodel.User{}))
+	return uintptr(size.Of(&gtsmodel.User{
+		ID:                     exampleID,
+		CreatedAt:              time.Now(),
+		UpdatedAt:              time.Now(),
+		Email:                  exampleURI,
+		AccountID:              exampleID,
+		EncryptedPassword:      exampleTextSmall,
+		CurrentSignInAt:        time.Now(),
+		LastSignInAt:           time.Now(),
+		InviteID:               exampleID,
+		ChosenLanguages:        []string{"en", "fr", "jp"},
+		FilteredLanguages:      []string{"en", "fr", "jp"},
+		Locale:                 "en",
+		CreatedByApplicationID: exampleID,
+		LastEmailedAt:          time.Now(),
+		ConfirmationToken:      exampleTextSmall,
+		ConfirmationSentAt:     time.Now(),
+		ConfirmedAt:            time.Now(),
+		UnconfirmedEmail:       exampleURI,
+		Moderator:              func() *bool { ok := true; return &ok }(),
+		Admin:                  func() *bool { ok := true; return &ok }(),
+		Disabled:               func() *bool { ok := true; return &ok }(),
+		Approved:               func() *bool { ok := true; return &ok }(),
+		ResetPasswordToken:     exampleTextSmall,
+		ResetPasswordSentAt:    time.Now(),
+		ExternalID:             exampleID,
+	}))
 }

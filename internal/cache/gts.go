@@ -32,6 +32,7 @@ import (
 type GTSCaches struct {
 	account          *result.Cache[*gtsmodel.Account]
 	accountNote      *result.Cache[*gtsmodel.AccountNote]
+	application      *result.Cache[*gtsmodel.Application]
 	block            *result.Cache[*gtsmodel.Block]
 	blockIDs         *SliceCache[string]
 	boostOfIDs       *SliceCache[string]
@@ -67,6 +68,7 @@ type GTSCaches struct {
 func (c *GTSCaches) Init() {
 	c.initAccount()
 	c.initAccountNote()
+	c.initApplication()
 	c.initBlock()
 	c.initBlockIDs()
 	c.initBoostOfIDs()
@@ -115,6 +117,11 @@ func (c *GTSCaches) Account() *result.Cache[*gtsmodel.Account] {
 // AccountNote provides access to the gtsmodel Note database cache.
 func (c *GTSCaches) AccountNote() *result.Cache[*gtsmodel.AccountNote] {
 	return c.accountNote
+}
+
+// Application provides access to the gtsmodel Application database cache.
+func (c *GTSCaches) Application() *result.Cache[*gtsmodel.Application] {
+	return c.application
 }
 
 // Block provides access to the gtsmodel Block (account) database cache.
@@ -301,6 +308,26 @@ func (c *GTSCaches) initAccountNote() {
 	}, cap)
 
 	c.accountNote.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initApplication() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofApplication(), // model in-mem size.
+		config.GetCacheApplicationMemRatio(),
+	)
+	log.Info(nil, "Application cache size = %d", cap)
+
+	c.application = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "ClientID"},
+	}, func(a1 *gtsmodel.Application) *gtsmodel.Application {
+		a2 := new(gtsmodel.Application)
+		*a2 = *a1
+		return a2
+	}, cap)
+
+	c.application.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initBlock() {
