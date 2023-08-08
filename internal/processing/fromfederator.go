@@ -108,20 +108,23 @@ func (p *Processor) ProcessFromFederator(ctx context.Context, federatorMsg messa
 
 // processCreateStatusFromFederator handles Activity Create and Object Note.
 func (p *Processor) processCreateStatusFromFederator(ctx context.Context, federatorMsg messages.FromFederator) error {
-	// Check the federatorMsg for either an already
-	// dereferenced and converted status pinned to
-	// the message, or an AP IRI that we need to deref.
 	var (
 		status *gtsmodel.Status
 		err    error
+
+		// Check the federatorMsg for either an already dereferenced
+		// and converted status pinned to the message, or a forwarded
+		// AP IRI that we still need to deref.
+		forwarded = (federatorMsg.GTSModel == nil)
 	)
 
-	if federatorMsg.GTSModel != nil {
-		// Model is set, use that.
-		status, err = p.statusFromGTSModel(ctx, federatorMsg)
-	} else {
-		// Model is not set, use IRI.
+	if forwarded {
+		// Model was not set, deref with IRI.
+		// This will also cause the status to be inserted into the db.
 		status, err = p.statusFromAPIRI(ctx, federatorMsg)
+	} else {
+		// Model is set, ensure we have the most up-to-date model.
+		status, err = p.statusFromGTSModel(ctx, federatorMsg)
 	}
 
 	if err != nil {

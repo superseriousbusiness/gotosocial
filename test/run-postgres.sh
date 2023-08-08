@@ -2,6 +2,11 @@
 
 set -e
 
+# Ensure test args are set.
+ARGS=${@}; [ -z "$ARGS" ] && \
+ARGS='./...'
+
+# Database config.
 DB_NAME='postgres'
 DB_USER='postgres'
 DB_PASS='postgres'
@@ -34,4 +39,4 @@ GTS_DB_PORT=${DB_PORT} \
 GTS_DB_USER=${DB_USER} \
 GTS_DB_PASSWORD=${DB_PASS} \
 GTS_DB_DATABASE=${DB_NAME} \
-go test ./... -p 1 ${@}
+go test ./... -p 1 ${ARGS}
