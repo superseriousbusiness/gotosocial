@@ -20,10 +20,10 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
@@ -139,25 +139,46 @@ func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery fu
 		return block, nil
 	}
 
-	// Set the block source account
-	block.Account, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		block.AccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting block source account: %w", err)
-	}
-
-	// Set the block target account
-	block.TargetAccount, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		block.TargetAccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting block target account: %w", err)
+	if err := r.state.DB.PopulateBlock(ctx, block); err != nil {
+		return nil, err
 	}
 
 	return block, nil
+}
+
+func (r *relationshipDB) PopulateBlock(ctx context.Context, block *gtsmodel.Block) error {
+	var (
+		err  error
+		errs = gtserror.NewMultiError(2)
+	)
+
+	if block.Account == nil {
+		// Block origin account is not set, fetch from database.
+		block.Account, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			block.AccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating block account: %w", err)
+		}
+	}
+
+	if block.TargetAccount == nil {
+		// Block target account is not set, fetch from database.
+		block.TargetAccount, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			block.TargetAccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating block target account: %w", err)
+		}
+	}
+
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) error {

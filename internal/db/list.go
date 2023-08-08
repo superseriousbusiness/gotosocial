@@ -64,4 +64,7 @@ type List interface {
 
 	// DeleteListEntryForFollowID deletes all list entries with the given followID.
 	DeleteListEntriesForFollowID(ctx context.Context, followID string) error
+
+	// ListIncludesAccount returns true if the given listID includes the given accountID.
+	ListIncludesAccount(ctx context.Context, listID string, accountID string) (bool, error)
 }

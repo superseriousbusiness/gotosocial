@@ -20,11 +20,11 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -135,35 +135,74 @@ func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*g
 		return nil, err
 	}
 
-	// Set the report author account
-	report.Account, err = r.state.DB.GetAccountByID(ctx, report.AccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting report account: %w", err)
+	if gtscontext.Barebones(ctx) {
+		// Only a barebones model was requested.
+		return report, nil
 	}
 
-	// Set the report target account
-	report.TargetAccount, err = r.state.DB.GetAccountByID(ctx, report.TargetAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting report target account: %w", err)
-	}
-
-	if len(report.StatusIDs) > 0 {
-		// Fetch reported statuses
-		report.Statuses, err = r.state.DB.GetStatusesByIDs(ctx, report.StatusIDs)
-		if err != nil {
-			return nil, fmt.Errorf("error getting status mentions: %w", err)
-		}
-	}
-
-	if report.ActionTakenByAccountID != "" {
-		// Set the report action taken by account
-		report.ActionTakenByAccount, err = r.state.DB.GetAccountByID(ctx, report.ActionTakenByAccountID)
-		if err != nil {
-			return nil, fmt.Errorf("error getting report action taken by account: %w", err)
-		}
+	if err := r.state.DB.PopulateReport(ctx, report); err != nil {
+		return nil, err
 	}
 
 	return report, nil
+}
+
+func (r *reportDB) PopulateReport(ctx context.Context, report *gtsmodel.Report) error {
+	var (
+		err  error
+		errs = gtserror.NewMultiError(4)
+	)
+
+	if report.Account == nil {
+		// Report account is not set, fetch from the database.
+		report.Account, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			report.AccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating report account: %w", err)
+		}
+	}
+
+	if report.TargetAccount == nil {
+		// Report target account is not set, fetch from the database.
+		report.TargetAccount, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			report.TargetAccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating report target account: %w", err)
+		}
+	}
+
+	if l := len(report.StatusIDs); l > 0 && l != len(report.Statuses) {
+		// Report target statuses not set, fetch from the database.
+		report.Statuses, err = r.state.DB.GetStatusesByIDs(
+			gtscontext.SetBarebones(ctx),
+			report.StatusIDs,
+		)
+		if err != nil {
+			errs.Appendf("error populating report statuses: %w", err)
+		}
+	}
+
+	if report.ActionTakenByAccountID != "" &&
+		report.ActionTakenByAccount == nil {
+		// Report action account is not set, fetch from the database.
+		report.ActionTakenByAccount, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			report.ActionTakenByAccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating report action taken by account: %w", err)
+		}
+	}
+
+	if err := errs.Combine(); err != nil {
+		return gtserror.Newf("%w", err)
+	}
+
+	return nil
 }
 
 func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) error {

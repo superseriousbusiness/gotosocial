@@ -310,6 +310,27 @@ func (suite *ListTestSuite) TestDeleteListEntriesForFollowID() {
 	suite.checkList(testList, dbList)
 }
 
+func (suite *ListTestSuite) TestListIncludesAccount() {
+	ctx := context.Background()
+	testList, _ := suite.testStructs()
+
+	for accountID, expected := range map[string]bool{
+		suite.testAccounts["admin_account"].ID:   true,
+		suite.testAccounts["local_account_1"].ID: false,
+		suite.testAccounts["local_account_2"].ID: true,
+		"01H7074GEZJ56J5C86PFB0V2CT":             false,
+	} {
+		includes, err := suite.db.ListIncludesAccount(ctx, testList.ID, accountID)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		if includes != expected {
+			suite.FailNow("", "expected %t for accountID %s got %t", expected, accountID, includes)
+		}
+	}
+}
+
 func TestListTestSuite(t *testing.T) {
 	suite.Run(t, new(ListTestSuite))
 }

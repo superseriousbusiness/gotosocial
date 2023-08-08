@@ -502,6 +502,22 @@ func (l *listDB) DeleteListEntriesForFollowID(ctx context.Context, followID stri
 	return nil
 }
 
+func (l *listDB) ListIncludesAccount(ctx context.Context, listID string, accountID string) (bool, error) {
+	exists, err := l.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("list_entries"), bun.Ident("list_entry")).
+		Join(
+			"JOIN ? AS ? ON ? = ?",
+			bun.Ident("follows"), bun.Ident("follow"),
+			bun.Ident("list_entry.follow_id"), bun.Ident("follow.id"),
+		).
+		Where("? = ?", bun.Ident("list_entry.list_id"), listID).
+		Where("? = ?", bun.Ident("follow.target_account_id"), accountID).
+		Exists(ctx)
+
+	return exists, l.db.ProcessError(err)
+}
+
 // collate will collect the values of type T from an expected slice of length 'len',
 // passing the expected index to each call of 'get' and deduplicating the end result.
 func collate[T comparable](get func(int) T, len int) []T {
