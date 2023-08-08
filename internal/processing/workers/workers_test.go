@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package processing_test
+package workers_test
 
 import (
 	"context"
@@ -37,7 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type ProcessingStandardTestSuite struct {
+type WorkersTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db                  db.DB
@@ -66,11 +66,12 @@ type ProcessingStandardTestSuite struct {
 	testBlocks       map[string]*gtsmodel.Block
 	testActivities   map[string]testrig.ActivityWithSignature
 	testLists        map[string]*gtsmodel.List
+	testListEntries  map[string]*gtsmodel.ListEntry
 
 	processor *processing.Processor
 }
 
-func (suite *ProcessingStandardTestSuite) SetupSuite() {
+func (suite *WorkersTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -90,9 +91,10 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 	}
 	suite.testBlocks = testrig.NewTestBlocks()
 	suite.testLists = testrig.NewTestLists()
+	suite.testListEntries = testrig.NewTestListEntries()
 }
 
-func (suite *ProcessingStandardTestSuite) SetupTest() {
+func (suite *WorkersTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)
 
@@ -112,7 +114,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 		suite.typeconverter,
 	)
 
-	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../../testrig/media")
 	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
 	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
 
@@ -120,23 +122,23 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
+	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
 	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
 	suite.state.Workers.EnqueueClientAPI = suite.processor.Workers().EnqueueClientAPI
 	suite.state.Workers.EnqueueFediAPI = suite.processor.Workers().EnqueueFediAPI
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
-	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")
+	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }
 
-func (suite *ProcessingStandardTestSuite) TearDownTest() {
+func (suite *WorkersTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 	testrig.StopWorkers(&suite.state)
 }
 
-func (suite *ProcessingStandardTestSuite) openStreams(ctx context.Context, account *gtsmodel.Account, listIDs []string) map[string]*stream.Stream {
+func (suite *WorkersTestSuite) openStreams(ctx context.Context, account *gtsmodel.Account, listIDs []string) map[string]*stream.Stream {
 	streams := make(map[string]*stream.Stream)
 
 	for _, streamType := range []string{
