@@ -186,7 +186,7 @@ func (s *surface) listTimelineStatusForFollow(
 		follow.ID,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("error list timelining status: %w", err)
+		errs.Appendf("error getting list entries: %w", err)
 		return
 	}
 
@@ -214,7 +214,8 @@ func (s *surface) listTimelineStatusForFollow(
 			status,
 			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
 		); err != nil {
-			errs.Appendf("error list timelining status: %w", err)
+			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
+			// implicit continue
 		}
 	}
 }
