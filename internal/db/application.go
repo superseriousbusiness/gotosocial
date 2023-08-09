@@ -24,15 +24,15 @@ import (
 )
 
 type Application interface {
-	// GetApplicationByID ...
+	// GetApplicationByID fetches the application from the database with corresponding ID value.
 	GetApplicationByID(ctx context.Context, id string) (*gtsmodel.Application, error)
 
-	// GetApplicationByClientID ...
+	// GetApplicationByClientID fetches the application from the database with corresponding client_id value.
 	GetApplicationByClientID(ctx context.Context, clientID string) (*gtsmodel.Application, error)
 
-	// PutApplication ...
+	// PutApplication places the new application in the database, erroring on non-unique ID or client_id.
 	PutApplication(ctx context.Context, app *gtsmodel.Application) error
 
-	// DeleteApplicationByClientID ...
+	// DeleteApplicationByClientID deletes the application with corresponding client_id value from the database.
 	DeleteApplicationByClientID(ctx context.Context, clientID string) error
 }
