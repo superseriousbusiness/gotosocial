@@ -46,12 +46,6 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 	}...)
 	l.Trace("beginning account delete process")
 
-	if account.IsLocal() {
-		if err := p.deleteUserAndTokensForAccount(ctx, account); err != nil {
-			return gtserror.NewErrorInternalError(err)
-		}
-	}
-
 	if err := p.deleteAccountFollows(ctx, account); err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
@@ -70,6 +64,14 @@ func (p *Processor) Delete(ctx context.Context, account *gtsmodel.Account, origi
 
 	if err := p.deleteAccountPeripheral(ctx, account); err != nil {
 		return gtserror.NewErrorInternalError(err)
+	}
+
+	if account.IsLocal() {
+		// we tokens, applications and clients for account as one of the last
+		// stages during deletion, as other database models rely on these.
+		if err := p.deleteUserAndTokensForAccount(ctx, account); err != nil {
+			return gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	// To prevent the account being created again,
@@ -305,7 +307,17 @@ func (p *Processor) deleteAccountStatuses(ctx context.Context, account *gtsmodel
 statusLoop:
 	for {
 		// Page through account's statuses.
-		statuses, err = p.state.DB.GetAccountStatuses(ctx, account.ID, deleteSelectLimit, false, false, maxID, "", false, false)
+		statuses, err = p.state.DB.GetAccountStatuses(
+			ctx,
+			account.ID,
+			deleteSelectLimit,
+			false,
+			false,
+			maxID,
+			"",
+			false,
+			false,
+		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			// Make sure we don't have a real error.
 			return err
