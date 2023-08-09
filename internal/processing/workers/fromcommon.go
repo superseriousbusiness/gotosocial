@@ -178,11 +178,7 @@ func (p *Processor) timelineAndNotifyStatusForFollowers(
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 // listTimelineStatusForFollow puts the given status

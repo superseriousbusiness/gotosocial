@@ -174,11 +174,7 @@ func (r *relationshipDB) PopulateBlock(ctx context.Context, block *gtsmodel.Bloc
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) error {

@@ -198,11 +198,7 @@ func (r *reportDB) PopulateReport(ctx context.Context, report *gtsmodel.Report) 
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) error {

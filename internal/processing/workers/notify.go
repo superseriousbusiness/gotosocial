@@ -48,11 +48,7 @@ func (p *Processor) notifyMentions(
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 // notifyFollowRequest notifies the target of the given

@@ -143,11 +143,7 @@ func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 func (l *listDB) PutList(ctx context.Context, list *gtsmodel.List) error {
