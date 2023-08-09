@@ -47,7 +47,8 @@ func New(
 	stream stream.Processor,
 	user user.Processor,
 ) Processor {
-	// Init surface wrapper struct.
+	// Init surface logic
+	// wrapper struct.
 	surface := &surface{
 		state:       state,
 		tc:          tc,
@@ -56,14 +57,16 @@ func New(
 		emailSender: emailSender,
 	}
 
-	// Init federate wrapper struct.
+	// Init federate logic
+	// wrapper struct.
 	federate := &federate{
-		state: state,
-		tc:    tc,
-		send:  federator.FederatingActor().Send,
+		Federator: federator,
+		state:     state,
+		tc:        tc,
 	}
 
-	// Init shared wipe status util func.
+	// Init shared logic wipe
+	// status util func.
 	wipeStatus := wipeStatusF(
 		state,
 		media,
@@ -81,7 +84,6 @@ func New(
 			account:    account,
 		},
 		fediAPI: &fediAPI{
-			Federator:  federator,
 			state:      state,
 			surface:    surface,
 			federate:   federate,

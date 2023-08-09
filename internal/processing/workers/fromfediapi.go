@@ -24,7 +24,6 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -38,7 +37,6 @@ import (
 // specifically for messages originating
 // from the federation/ActivityPub API.
 type fediAPI struct {
-	federation.Federator
 	state      *state.State
 	surface    *surface
 	federate   *federate
@@ -173,7 +171,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		}
 
 		// Ensure that account for this status has been deref'd.
-		status.Account, _, err = p.GetAccountByURI(
+		status.Account, _, err = p.federate.GetAccountByURI(
 			ctx,
 			fMsg.ReceivingAccount.Username,
 			accountURI,
@@ -185,7 +183,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 
 	// Ensure status ancestors dereferenced. We need at least the
 	// immediate parent (if present) to ascertain timelineability.
-	if err := p.DereferenceStatusAncestors(
+	if err := p.federate.DereferenceStatusAncestors(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		status,
@@ -222,7 +220,7 @@ func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFedi
 	// Call refresh on status to update
 	// it (deref remote) if necessary.
 	var err error
-	status, _, err = p.RefreshStatus(
+	status, _, err = p.federate.RefreshStatus(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		status,
@@ -249,7 +247,7 @@ func (p *fediAPI) statusFromAPIRI(ctx context.Context, fMsg messages.FromFediAPI
 
 	// Get the status + ensure we have
 	// the most up-to-date version.
-	status, _, err := p.GetStatusByURI(
+	status, _, err := p.federate.GetStatusByURI(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		fMsg.APIri,
@@ -324,7 +322,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 	}
 
 	// Dereference status that this status boosts.
-	if err := p.DereferenceAnnounce(
+	if err := p.federate.DereferenceAnnounce(
 		ctx,
 		status,
 		fMsg.ReceivingAccount.Username,
@@ -346,7 +344,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 
 	// Ensure boosted status ancestors dereferenced. We need at least
 	// the immediate parent (if present) to ascertain timelineability.
-	if err := p.DereferenceStatusAncestors(ctx,
+	if err := p.federate.DereferenceStatusAncestors(ctx,
 		fMsg.ReceivingAccount.Username,
 		status.BoostOf,
 	); err != nil {
@@ -490,7 +488,7 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) 
 	}
 
 	// Fetch up-to-date bio, avatar, header, etc.
-	_, _, err := p.RefreshAccount(
+	_, _, err := p.federate.RefreshAccount(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		account,

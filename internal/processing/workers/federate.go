@@ -24,7 +24,7 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -35,14 +35,11 @@ import (
 // something out via ActivityPub in response
 // to message processing.
 type federate struct {
+	// Embed federator to give access
+	// to send and retrieve functions.
+	federation.Federator
 	state *state.State
 	tc    typeutils.TypeConverter
-
-	// send matches the signature of the
-	// go-fed FederatingActor's Send function.
-	// It can be used for sending the given
-	// activity via the given outbox URI.
-	send func(context.Context, *url.URL, vocab.Type) (pub.Activity, error)
 }
 
 // parseURI is a cheeky little
@@ -111,7 +108,7 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 	delete.SetActivityStreamsCc(deleteCC)
 
 	// Send the Delete via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, delete,
 	); err != nil {
 		return gtserror.Newf(
@@ -160,7 +157,7 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 	}
 
 	// Send the Create via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, create,
 	); err != nil {
 		return gtserror.Newf(
@@ -203,7 +200,7 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 	}
 
 	// Send the Delete via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, delete,
 	); err != nil {
 		return gtserror.Newf(
@@ -240,7 +237,7 @@ func (f *federate) Follow(ctx context.Context, follow *gtsmodel.Follow) error {
 	}
 
 	// Send the Follow via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, asFollow,
 	); err != nil {
 		return gtserror.Newf(
@@ -304,7 +301,7 @@ func (f *federate) UndoFollow(ctx context.Context, follow *gtsmodel.Follow) erro
 	undo.SetActivityStreamsTo(undoTo)
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -368,7 +365,7 @@ func (f *federate) UndoLike(ctx context.Context, fave *gtsmodel.StatusFave) erro
 	undo.SetActivityStreamsTo(undoTo)
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -433,7 +430,7 @@ func (f *federate) UndoAnnounce(ctx context.Context, boost *gtsmodel.Status) err
 	undo.SetActivityStreamsCc(asAnnounce.GetActivityStreamsCc())
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -511,7 +508,7 @@ func (f *federate) AcceptFollow(ctx context.Context, follow *gtsmodel.Follow) er
 	accept.SetActivityStreamsTo(acceptTo)
 
 	// Send the Accept via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, accept,
 	); err != nil {
 		return gtserror.Newf(
@@ -589,7 +586,7 @@ func (f *federate) RejectFollow(ctx context.Context, follow *gtsmodel.Follow) er
 	reject.SetActivityStreamsTo(rejectTo)
 
 	// Send the Reject via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, reject,
 	); err != nil {
 		return gtserror.Newf(
@@ -626,7 +623,7 @@ func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	}
 
 	// Send the Like via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, like,
 	); err != nil {
 		return gtserror.Newf(
@@ -668,7 +665,7 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	}
 
 	// Send the Announce via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, announce,
 	); err != nil {
 		return gtserror.Newf(
@@ -705,7 +702,7 @@ func (f *federate) UpdateAccount(ctx context.Context, account *gtsmodel.Account)
 	}
 
 	// Send the Update via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, update,
 	); err != nil {
 		return gtserror.Newf(
@@ -742,7 +739,7 @@ func (f *federate) Block(ctx context.Context, block *gtsmodel.Block) error {
 	}
 
 	// Send the Block via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, asBlock,
 	); err != nil {
 		return gtserror.Newf(
@@ -806,7 +803,7 @@ func (f *federate) UndoBlock(ctx context.Context, block *gtsmodel.Block) error {
 	undo.SetActivityStreamsTo(undoTo)
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -868,7 +865,7 @@ func (f *federate) Flag(ctx context.Context, report *gtsmodel.Report) error {
 	flag.SetActivityStreamsBto(bTo)
 
 	// Send the Flag via the Actor's outbox.
-	if _, err := f.send(
+	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, flag,
 	); err != nil {
 		return gtserror.Newf(
