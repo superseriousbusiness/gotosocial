@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -82,6 +83,40 @@ func (suite *ApplicationTestSuite) TestGetApplicationBy() {
 			// Check received application data.
 			if !isEqual(*checkApp, *app) {
 				t.Errorf("application does not contain expected data: %+v", checkApp)
+				continue
+			}
+		}
+	}
+}
+
+func (suite *ApplicationTestSuite) TestDeleteApplicationBy() {
+	t := suite.T()
+
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	for _, app := range suite.testApplications {
+		for lookup, dbfunc := range map[string]func() error{
+			"client_id": func() error {
+				return suite.db.DeleteApplicationByClientID(ctx, app.ClientID)
+			},
+		} {
+			// Clear database caches.
+			suite.state.Caches.Init()
+
+			t.Logf("checking database lookup %q", lookup)
+
+			// Perform database function.
+			err := dbfunc()
+			if err != nil {
+				t.Errorf("error encountered for database lookup %q: %v", lookup, err)
+				continue
+			}
+
+			// Ensure this application has been deleted and cache cleared.
+			if _, err := suite.db.GetApplicationByID(ctx, app.ID); err != db.ErrNoEntries {
+				t.Errorf("application does not appear to have been deleted %q: %v", lookup, err)
 				continue
 			}
 		}
