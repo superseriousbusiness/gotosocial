@@ -197,11 +197,7 @@ func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmo
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) error {

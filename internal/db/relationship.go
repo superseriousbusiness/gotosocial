@@ -41,6 +41,9 @@ type Relationship interface {
 	// GetBlock returns the block from account1 targeting account2, if it exists, or an error if it doesn't.
 	GetBlock(ctx context.Context, account1 string, account2 string) (*gtsmodel.Block, error)
 
+	// PopulateBlock populates the struct pointers on the given block.
+	PopulateBlock(ctx context.Context, block *gtsmodel.Block) error
+
 	// PutBlock attempts to place the given account block in the database.
 	PutBlock(ctx context.Context, block *gtsmodel.Block) error
 
@@ -76,6 +79,9 @@ type Relationship interface {
 
 	// GetFollowRequest retrieves a follow request if it exists between source and target accounts.
 	GetFollowRequest(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.FollowRequest, error)
+
+	// PopulateFollowRequest populates the struct pointers on the given follow request.
+	PopulateFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error
 
 	// IsFollowing returns true if sourceAccount follows target account, or an error if something goes wrong while finding out.
 	IsFollowing(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error)

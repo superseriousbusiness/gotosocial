@@ -24,6 +24,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -97,33 +98,17 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 	}
 
 	var (
-		next      *gtsmodel.Status
+		next      = status
 		oneAuthor = true // Assume one author until proven otherwise.
 		included  bool
 		converstn bool
 	)
 
-	for next = status; next.InReplyToURI != ""; {
-		// Fetch next parent to lookup.
-		parentID := next.InReplyToID
-		if parentID == "" {
-			log.Warnf(ctx, "status not yet deref'd: %s", next.InReplyToURI)
-			return false, cache.SentinelError
-		}
-
-		// Get the next parent in the chain from DB.
-		next, err = f.state.DB.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			parentID,
-		)
-		if err != nil {
-			return false, fmt.Errorf("isStatusHomeTimelineable: error getting status parent %s: %w", parentID, err)
-		}
-
+	for {
 		// Populate account mention objects before account mention checks.
 		next.Mentions, err = f.state.DB.GetMentions(ctx, next.MentionIDs)
 		if err != nil {
-			return false, fmt.Errorf("isStatusHomeTimelineable: error populating status parent %s mentions: %w", parentID, err)
+			return false, gtserror.Newf("error populating status %s mentions: %w", next.ID, err)
 		}
 
 		if (next.AccountID == owner.ID) ||
@@ -139,7 +124,7 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		// is it between accounts on owner timeline that they follow?
 		converstn, err = f.isVisibleConversation(ctx, owner, next)
 		if err != nil {
-			return false, fmt.Errorf("isStatusHomeTimelineable: error checking conversation visibility: %w", err)
+			return false, gtserror.Newf("error checking conversation visibility: %w", err)
 		}
 
 		if converstn {
@@ -151,6 +136,26 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		if oneAuthor {
 			// Check if this continues to be a single-author thread.
 			oneAuthor = (next.AccountID == status.AccountID)
+		}
+
+		if next.InReplyToURI == "" {
+			// Reached the top of the thread.
+			break
+		}
+
+		// Fetch next parent in thread.
+		parentID := next.InReplyToID
+		if parentID == "" {
+			log.Warnf(ctx, "status not yet deref'd: %s", next.InReplyToURI)
+			return false, cache.SentinelError
+		}
+
+		next, err = f.state.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			parentID,
+		)
+		if err != nil {
+			return false, gtserror.Newf("error getting status parent %s: %w", parentID, err)
 		}
 	}
 
@@ -177,7 +182,7 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		status.AccountID,
 	)
 	if err != nil {
-		return false, fmt.Errorf("isStatusHomeTimelineable: error checking follow %s->%s: %w", owner.ID, status.AccountID, err)
+		return false, gtserror.Newf("error checking follow %s->%s: %w", owner.ID, status.AccountID, err)
 	}
 
 	if !follow {

@@ -774,10 +774,14 @@ func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 	return delete, nil
 }
 
-func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error) {
-	// parse out the various URIs we need for this
-	// origin account (who's doing the follow)
-	originAccountURI, err := url.Parse(originAccount.URI)
+func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow) (vocab.ActivityStreamsFollow, error) {
+	if err := c.db.PopulateFollow(ctx, f); err != nil {
+		return nil, gtserror.Newf("error populating follow: %w", err)
+	}
+
+	// Parse out the various URIs we need for this
+	// origin account (who's doing the follow).
+	originAccountURI, err := url.Parse(f.Account.URI)
 	if err != nil {
 		return nil, fmt.Errorf("followtoasfollow: error parsing origin account uri: %s", err)
 	}
@@ -785,7 +789,7 @@ func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAc
 	originActor.AppendIRI(originAccountURI)
 
 	// target account (who's being followed)
-	targetAccountURI, err := url.Parse(targetAccount.URI)
+	targetAccountURI, err := url.Parse(f.TargetAccount.URI)
 	if err != nil {
 		return nil, fmt.Errorf("followtoasfollow: error parsing target account uri: %s", err)
 	}

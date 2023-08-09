@@ -21,14 +21,32 @@ import (
 	"net/http"
 )
 
-// New returns a new error, prepended with caller function name if gtserror.Caller is enabled.
+// New returns a new error, prepended with caller
+// function name if gtserror.Caller is enabled.
 func New(msg string) error {
 	return newAt(3, msg)
 }
 
-// Newf returns a new formatted error, prepended with caller function name if gtserror.Caller is enabled.
+// Newf returns a new formatted error, prepended with
+// caller function name if gtserror.Caller is enabled.
 func Newf(msgf string, args ...any) error {
 	return newfAt(3, msgf, args...)
+}
+
+// NewfAt returns a new formatted error with the given
+// calldepth+1, useful when you want to wrap an error
+// from within an anonymous function or utility function,
+// but preserve the name in the error of the wrapping
+// function that did the calling.
+//
+// Provide calldepth 2 to prepend only the name of the
+// current containing function, 3 to prepend the name
+// of the function containing *that* function, and so on.
+//
+// This function is just exposed for dry-dick optimization
+// purposes. Most callers should just call Newf instead.
+func NewfAt(calldepth int, msgf string, args ...any) error {
+	return newfAt(calldepth+1, msgf, args...)
 }
 
 // NewResponseError crafts an error from provided HTTP response

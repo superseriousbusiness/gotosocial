@@ -185,11 +185,7 @@ func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Fo
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow) error {

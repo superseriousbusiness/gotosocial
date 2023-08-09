@@ -198,11 +198,7 @@ func (i *instanceDB) populateInstance(ctx context.Context, instance *gtsmodel.In
 		}
 	}
 
-	if err := errs.Combine(); err != nil {
-		return gtserror.Newf("%w", err)
-	}
-
-	return nil
+	return errs.Combine()
 }
 
 func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instance) error {

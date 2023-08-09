@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package processing_test
+package workers_test
 
 import (
 	"context"
@@ -36,12 +36,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type FromFederatorTestSuite struct {
-	ProcessingStandardTestSuite
+type FromFediAPITestSuite struct {
+	WorkersTestSuite
 }
 
 // remote_account_1 boosts the first status of local_account_1
-func (suite *FromFederatorTestSuite) TestProcessFederationAnnounce() {
+func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	boostedStatus := suite.testStatuses["local_account_1_status_1"]
 	boostingAccount := suite.testAccounts["remote_account_1"]
 	announceStatus := &gtsmodel.Status{}
@@ -56,7 +56,7 @@ func (suite *FromFederatorTestSuite) TestProcessFederationAnnounce() {
 	announceStatus.Account = boostingAccount
 	announceStatus.Visibility = boostedStatus.Visibility
 
-	err := suite.processor.ProcessFromFederator(context.Background(), messages.FromFederator{
+	err := suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
 		APObjectType:     ap.ActivityAnnounce,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         announceStatus,
@@ -87,7 +87,7 @@ func (suite *FromFederatorTestSuite) TestProcessFederationAnnounce() {
 	suite.False(*notif.Read)
 }
 
-func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
+func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	repliedAccount := suite.testAccounts["local_account_1"]
 	repliedStatus := suite.testStatuses["local_account_1_status_1"]
 	replyingAccount := suite.testAccounts["remote_account_1"]
@@ -128,7 +128,7 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	err = suite.db.PutStatus(context.Background(), replyingStatus)
 	suite.NoError(err)
 
-	err = suite.processor.ProcessFromFederator(context.Background(), messages.FromFederator{
+	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         replyingStatus,
@@ -173,7 +173,7 @@ func (suite *FromFederatorTestSuite) TestProcessReplyMention() {
 	suite.Equal(replyingAccount.ID, notifStreamed.Account.ID)
 }
 
-func (suite *FromFederatorTestSuite) TestProcessFave() {
+func (suite *FromFediAPITestSuite) TestProcessFave() {
 	favedAccount := suite.testAccounts["local_account_1"]
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
@@ -197,7 +197,7 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 	err := suite.db.Put(context.Background(), fave)
 	suite.NoError(err)
 
-	err = suite.processor.ProcessFromFederator(context.Background(), messages.FromFederator{
+	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
 		APObjectType:     ap.ActivityLike,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         fave,
@@ -245,7 +245,7 @@ func (suite *FromFederatorTestSuite) TestProcessFave() {
 //
 // This tests for an issue we were seeing where Misskey sends out faves to inboxes of people that don't own
 // the fave, but just follow the actor who received the fave.
-func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccount() {
+func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount() {
 	receivingAccount := suite.testAccounts["local_account_2"]
 	favedAccount := suite.testAccounts["local_account_1"]
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
@@ -270,7 +270,7 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 	err := suite.db.Put(context.Background(), fave)
 	suite.NoError(err)
 
-	err = suite.processor.ProcessFromFederator(context.Background(), messages.FromFederator{
+	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
 		APObjectType:     ap.ActivityLike,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         fave,
@@ -304,7 +304,7 @@ func (suite *FromFederatorTestSuite) TestProcessFaveWithDifferentReceivingAccoun
 	suite.Empty(wssStream.Messages)
 }
 
-func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
+func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 	ctx := context.Background()
 
 	deletedAccount := suite.testAccounts["remote_account_1"]
@@ -339,7 +339,7 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.NoError(err)
 
 	// now they are mufos!
-	err = suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+	err = suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ObjectProfile,
 		APActivityType:   ap.ActivityDelete,
 		GTSModel:         deletedAccount,
@@ -386,7 +386,7 @@ func (suite *FromFederatorTestSuite) TestProcessAccountDelete() {
 	suite.Equal(dbAccount.ID, dbAccount.SuspensionOrigin)
 }
 
-func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
+func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	ctx := context.Background()
 
 	originAccount := suite.testAccounts["remote_account_1"]
@@ -414,7 +414,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)
 	suite.NoError(err)
 
-	err = suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+	err = suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ActivityFollow,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         satanFollowRequestTurtle,
@@ -443,7 +443,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestLocked() {
 	suite.Empty(suite.httpClient.SentMessages)
 }
 
-func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
+func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 	ctx := context.Background()
 
 	originAccount := suite.testAccounts["remote_account_1"]
@@ -471,7 +471,7 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 	err := suite.db.Put(ctx, satanFollowRequestTurtle)
 	suite.NoError(err)
 
-	err = suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+	err = suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ActivityFollow,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         satanFollowRequestTurtle,
@@ -539,13 +539,13 @@ func (suite *FromFederatorTestSuite) TestProcessFollowRequestUnlocked() {
 }
 
 // TestCreateStatusFromIRI checks if a forwarded status can be dereferenced by the processor.
-func (suite *FromFederatorTestSuite) TestCreateStatusFromIRI() {
+func (suite *FromFediAPITestSuite) TestCreateStatusFromIRI() {
 	ctx := context.Background()
 
 	receivingAccount := suite.testAccounts["local_account_1"]
 	statusCreator := suite.testAccounts["remote_account_2"]
 
-	err := suite.processor.ProcessFromFederator(ctx, messages.FromFederator{
+	err := suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         nil, // gtsmodel is nil because this is a forwarded status -- we want to dereference it using the iri
@@ -561,5 +561,5 @@ func (suite *FromFederatorTestSuite) TestCreateStatusFromIRI() {
 }
 
 func TestFromFederatorTestSuite(t *testing.T) {
-	suite.Run(t, &FromFederatorTestSuite{})
+	suite.Run(t, &FromFediAPITestSuite{})
 }

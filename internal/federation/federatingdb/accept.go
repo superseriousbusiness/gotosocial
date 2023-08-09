@@ -72,7 +72,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					return err
 				}
 
-				f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+				f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 					APObjectType:     ap.ActivityFollow,
 					APActivityType:   ap.ActivityAccept,
 					GTSModel:         follow,
@@ -107,7 +107,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				return err
 			}
 
-			f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+			f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 				APObjectType:     ap.ActivityFollow,
 				APActivityType:   ap.ActivityAccept,
 				GTSModel:         follow,

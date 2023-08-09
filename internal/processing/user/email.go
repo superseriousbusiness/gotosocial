@@ -23,66 +23,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 var oneWeek = 168 * time.Hour
-
-// EmailSendConfirmation sends an email address confirmation request email to the given user.
-func (p *Processor) EmailSendConfirmation(ctx context.Context, user *gtsmodel.User, username string) error {
-	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
-		// user has already confirmed this email address, so there's nothing to do
-		return nil
-	}
-
-	// We need a token and a link for the user to click on.
-	// We'll use a uuid as our token since it's basically impossible to guess.
-	// From the uuid package we use (which uses crypto/rand under the hood):
-	//      Randomly generated UUIDs have 122 random bits.  One's annual risk of being
-	//      hit by a meteorite is estimated to be one chance in 17 billion, that
-	//      means the probability is about 0.00000000006 (6 × 10−11),
-	//      equivalent to the odds of creating a few tens of trillions of UUIDs in a
-	//      year and having one duplicate.
-	confirmationToken := uuid.NewString()
-	confirmationLink := uris.GenerateURIForEmailConfirm(confirmationToken)
-
-	// pull our instance entry from the database so we can greet the user nicely in the email
-	instance := &gtsmodel.Instance{}
-	host := config.GetHost()
-	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "domain", Value: host}}, instance); err != nil {
-		return fmt.Errorf("SendConfirmEmail: error getting instance: %s", err)
-	}
-
-	// assemble the email contents and send the email
-	confirmData := email.ConfirmData{
-		Username:     username,
-		InstanceURL:  instance.URI,
-		InstanceName: instance.Title,
-		ConfirmLink:  confirmationLink,
-	}
-	if err := p.emailSender.SendConfirmEmail(user.UnconfirmedEmail, confirmData); err != nil {
-		return fmt.Errorf("SendConfirmEmail: error sending to email address %s belonging to user %s: %s", user.UnconfirmedEmail, username, err)
-	}
-
-	// email sent, now we need to update the user entry with the token we just sent them
-	updatingColumns := []string{"confirmation_sent_at", "confirmation_token", "last_emailed_at", "updated_at"}
-	user.ConfirmationSentAt = time.Now()
-	user.ConfirmationToken = confirmationToken
-	user.LastEmailedAt = time.Now()
-	user.UpdatedAt = time.Now()
-
-	if err := p.state.DB.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
-		return fmt.Errorf("SendConfirmEmail: error updating user entry after email sent: %s", err)
-	}
-
-	return nil
-}
 
 // EmailConfirm processes an email confirmation request, usually initiated as a result of clicking on a link
 // in a 'confirm your email address' type email.

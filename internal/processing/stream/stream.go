@@ -28,13 +28,14 @@ import (
 type Processor struct {
 	state       *state.State
 	oauthServer oauth.Server
-	streamMap   sync.Map
+	streamMap   *sync.Map
 }
 
 func New(state *state.State, oauthServer oauth.Server) Processor {
 	return Processor{
 		state:       state,
 		oauthServer: oauthServer,
+		streamMap:   &sync.Map{},
 	}
 }
 

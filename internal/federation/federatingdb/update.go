@@ -93,7 +93,7 @@ func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gts
 	// was delivered along with the Update, for further asynchronous
 	// updating of eg., avatar/header, emojis, etc. The actual db
 	// inserts/updates will take place there.
-	f.state.Workers.EnqueueFederator(ctx, messages.FromFederator{
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ObjectProfile,
 		APActivityType:   ap.ActivityUpdate,
 		GTSModel:         requestingAcct,

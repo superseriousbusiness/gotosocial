@@ -156,7 +156,7 @@ type TypeConverter interface {
 	// URI of the status as object, and addressing the Delete appropriately.
 	StatusToASDelete(ctx context.Context, status *gtsmodel.Status) (vocab.ActivityStreamsDelete, error)
 	// FollowToASFollow converts a gts model Follow into an activity streams Follow, suitable for federation
-	FollowToAS(ctx context.Context, f *gtsmodel.Follow, originAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) (vocab.ActivityStreamsFollow, error)
+	FollowToAS(ctx context.Context, f *gtsmodel.Follow) (vocab.ActivityStreamsFollow, error)
 	// MentionToAS converts a gts model mention into an activity streams Mention, suitable for federation
 	MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error)
 	// EmojiToAS converts a gts emoji into a mastodon ns Emoji, suitable for federation

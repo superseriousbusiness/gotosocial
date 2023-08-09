@@ -15,20 +15,26 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package testrig
+package workers
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-// NewTestProcessor returns a Processor suitable for testing purposes
-func NewTestProcessor(state *state.State, federator federation.Federator, emailSender email.Sender, mediaManager *media.Manager) *processing.Processor {
-	p := processing.NewProcessor(NewTestTypeConverter(state.DB), federator, NewTestOauthServer(state.DB), mediaManager, state, emailSender)
-	state.Workers.EnqueueClientAPI = p.Workers().EnqueueClientAPI
-	state.Workers.EnqueueFediAPI = p.Workers().EnqueueFediAPI
-	return p
+// surface wraps functions for 'surfacing' the result
+// of processing a message, eg:
+//   - timelining a status
+//   - removing a status from timelines
+//   - sending a notification to a user
+//   - sending an email
+type surface struct {
+	state       *state.State
+	tc          typeutils.TypeConverter
+	stream      *stream.Processor
+	filter      *visibility.Filter
+	emailSender email.Sender
 }

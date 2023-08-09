@@ -20,11 +20,11 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
@@ -127,25 +127,42 @@ func (r *relationshipDB) getFollowRequest(ctx context.Context, lookup string, db
 		return followReq, nil
 	}
 
-	// Set the follow request source account
-	followReq.Account, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		followReq.AccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting follow request source account: %w", err)
-	}
-
-	// Set the follow request target account
-	followReq.TargetAccount, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		followReq.TargetAccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting follow request target account: %w", err)
+	if err := r.state.DB.PopulateFollowRequest(ctx, followReq); err != nil {
+		return nil, err
 	}
 
 	return followReq, nil
+}
+
+func (r *relationshipDB) PopulateFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error {
+	var (
+		err  error
+		errs = gtserror.NewMultiError(2)
+	)
+
+	if follow.Account == nil {
+		// Follow account is not set, fetch from the database.
+		follow.Account, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			follow.AccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating follow request account: %w", err)
+		}
+	}
+
+	if follow.TargetAccount == nil {
+		// Follow target account is not set, fetch from the database.
+		follow.TargetAccount, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			follow.TargetAccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating follow target request account: %w", err)
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (r *relationshipDB) PutFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error {

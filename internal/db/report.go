@@ -27,17 +27,24 @@ import (
 type Report interface {
 	// GetReportByID gets one report by its db id
 	GetReportByID(ctx context.Context, id string) (*gtsmodel.Report, error)
+
 	// GetReports gets limit n reports using the given parameters.
 	// Parameters that are empty / zero are ignored.
 	GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, error)
+
+	// PopulateReport populates the struct pointers on the given report.
+	PopulateReport(ctx context.Context, report *gtsmodel.Report) error
+
 	// PutReport puts the given report in the database.
 	PutReport(ctx context.Context, report *gtsmodel.Report) error
+
 	// UpdateReport updates one report by its db id.
 	// The given columns will be updated; if no columns are
 	// provided, then all columns will be updated.
 	// updated_at will also be updated, no need to pass this
 	// as a specific column.
 	UpdateReport(ctx context.Context, report *gtsmodel.Report, columns ...string) (*gtsmodel.Report, error)
+
 	// DeleteReportByID deletes report with the given id.
 	DeleteReportByID(ctx context.Context, id string) error
 }
