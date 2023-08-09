@@ -119,6 +119,7 @@ func (m *manager) Start() error {
 	// hasn't been accessed in the last hour.
 	go func() {
 		for now := range time.NewTicker(1 * time.Hour).C {
+			now := now // rescope
 			// Define the range function inside here,
 			// so that we can use the 'now' returned
 			// by the ticker, instead of having to call
