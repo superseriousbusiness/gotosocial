@@ -257,8 +257,8 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
-	if status.CreatedWithApplication == nil {
-		// Populate the status' CreatedWithApplication.
+	if status.CreatedWithApplication == nil && status.CreatedWithApplicationID != "" {
+		// Populate the status' expected CreatedWithApplication
 		status.CreatedWithApplication, err = s.state.DB.GetApplicationByID(
 			ctx, // these are already barebones
 			status.CreatedWithApplicationID,
