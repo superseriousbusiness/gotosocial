@@ -43,7 +43,7 @@ type clientAPI struct {
 	surface    *surface
 	federate   *federate
 	wipeStatus wipeStatus
-	account    account.Processor
+	account    *account.Processor
 }
 
 func (p *Processor) EnqueueClientAPI(ctx context.Context, msgs ...messages.FromClientAPI) {

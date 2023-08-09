@@ -34,7 +34,7 @@ import (
 type surface struct {
 	state       *state.State
 	tc          typeutils.TypeConverter
-	stream      stream.Processor
+	stream      *stream.Processor
 	filter      *visibility.Filter
 	emailSender email.Sender
 }

@@ -150,7 +150,6 @@ func NewProcessor(
 	accountProcessor := account.New(state, tc, mediaManager, oauthServer, federator, filter, parseMentionFunc)
 	mediaProcessor := media.New(state, tc, mediaManager, federator.TransportController())
 	streamProcessor := stream.New(state, oauthServer)
-	userProcessor := user.New(state, emailSender)
 
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
@@ -165,7 +164,7 @@ func NewProcessor(
 	processor.search = search.New(state, federator, tc, filter)
 	processor.status = status.New(state, federator, tc, filter, parseMentionFunc)
 	processor.stream = streamProcessor
-	processor.user = userProcessor
+	processor.user = user.New(state, emailSender)
 
 	// Workers processor handles asynchronous
 	// worker jobs; instantiate it separately
@@ -176,10 +175,9 @@ func NewProcessor(
 		tc,
 		filter,
 		emailSender,
-		accountProcessor,
-		mediaProcessor,
-		streamProcessor,
-		userProcessor,
+		&accountProcessor,
+		&mediaProcessor,
+		&streamProcessor,
 	)
 
 	return processor

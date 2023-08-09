@@ -23,7 +23,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
@@ -42,10 +41,9 @@ func New(
 	tc typeutils.TypeConverter,
 	filter *visibility.Filter,
 	emailSender email.Sender,
-	account account.Processor,
-	media media.Processor,
-	stream stream.Processor,
-	user user.Processor,
+	account *account.Processor,
+	media *media.Processor,
+	stream *stream.Processor,
 ) Processor {
 	// Init surface logic
 	// wrapper struct.

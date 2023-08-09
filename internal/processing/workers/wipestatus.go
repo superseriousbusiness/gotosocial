@@ -32,7 +32,7 @@ import (
 type wipeStatus func(context.Context, *gtsmodel.Status, bool) error
 
 // wipeStatusF returns a wipeStatus util function.
-func wipeStatusF(state *state.State, media media.Processor, surface *surface) wipeStatus {
+func wipeStatusF(state *state.State, media *media.Processor, surface *surface) wipeStatus {
 	return func(
 		ctx context.Context,
 		statusToDelete *gtsmodel.Status,

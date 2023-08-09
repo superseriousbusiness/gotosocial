@@ -41,7 +41,7 @@ type fediAPI struct {
 	surface    *surface
 	federate   *federate
 	wipeStatus wipeStatus
-	account    account.Processor
+	account    *account.Processor
 }
 
 func (p *Processor) EnqueueFediAPI(ctx context.Context, msgs ...messages.FromFediAPI) {
