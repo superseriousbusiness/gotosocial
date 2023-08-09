@@ -46,18 +46,8 @@ func (s *surface) emailReportOpened(ctx context.Context, report *gtsmodel.Report
 		return gtserror.Newf("error getting instance moderator addresses: %w", err)
 	}
 
-	if report.Account == nil {
-		report.Account, err = s.state.DB.GetAccountByID(ctx, report.AccountID)
-		if err != nil {
-			return gtserror.Newf("error getting report account: %w", err)
-		}
-	}
-
-	if report.TargetAccount == nil {
-		report.TargetAccount, err = s.state.DB.GetAccountByID(ctx, report.TargetAccountID)
-		if err != nil {
-			return gtserror.Newf("error getting report target account: %w", err)
-		}
+	if err := s.state.DB.PopulateReport(ctx, report); err != nil {
+		return gtserror.Newf("error populating report: %w", err)
 	}
 
 	reportData := email.NewReportData{
@@ -98,18 +88,8 @@ func (s *surface) emailReportClosed(ctx context.Context, report *gtsmodel.Report
 		return gtserror.Newf("db error getting instance: %w", err)
 	}
 
-	if report.Account == nil {
-		report.Account, err = s.state.DB.GetAccountByID(ctx, report.AccountID)
-		if err != nil {
-			return gtserror.Newf("error getting report account: %w", err)
-		}
-	}
-
-	if report.TargetAccount == nil {
-		report.TargetAccount, err = s.state.DB.GetAccountByID(ctx, report.TargetAccountID)
-		if err != nil {
-			return gtserror.Newf("error getting report target account: %w", err)
-		}
+	if err := s.state.DB.PopulateReport(ctx, report); err != nil {
+		return gtserror.Newf("error populating report: %w", err)
 	}
 
 	reportClosedData := email.ReportClosedData{
