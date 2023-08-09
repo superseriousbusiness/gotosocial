@@ -19,7 +19,6 @@ package workers
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/pub"
@@ -44,10 +43,25 @@ type federate struct {
 
 // parseURI is a cheeky little
 // shortcut to wrap parsing errors.
+//
+// The returned err will be prepended
+// with the name of the function that
+// called this function, so it can be
+// returned without further wrapping.
 func parseURI(s string) (*url.URL, error) {
+	const (
+		// Provides enough calldepth to
+		// prepend the name of whatever
+		// function called *this* one,
+		// so that they don't have to
+		// wrap the error themselves.
+		calldepth = 3
+		errFmt    = "error parsing uri %s: %w"
+	)
+
 	uri, err := url.Parse(s)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing uri %s: %w", s, err)
+		return nil, gtserror.NewfAt(calldepth, errFmt, s, err)
 	}
 
 	return uri, err
@@ -63,22 +77,22 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	actorIRI, err := parseURI(account.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	followersIRI, err := parseURI(account.FollowersURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	publicIRI, err := parseURI(pub.PublicActivityPubIRI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Create a new delete.
@@ -141,7 +155,7 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(status.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Convert status to an ActivityStreams
@@ -190,7 +204,7 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(status.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Wrap the status URI in a Delete activity.
@@ -227,7 +241,7 @@ func (f *federate) Follow(ctx context.Context, follow *gtsmodel.Follow) error {
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(follow.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Convert follow to ActivityStreams Follow.
@@ -264,12 +278,12 @@ func (f *federate) UndoFollow(ctx context.Context, follow *gtsmodel.Follow) erro
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(follow.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	targetAccountIRI, err := parseURI(follow.TargetAccount.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Recreate the ActivityStreams Follow.
@@ -328,12 +342,12 @@ func (f *federate) UndoLike(ctx context.Context, fave *gtsmodel.StatusFave) erro
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(fave.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	targetAccountIRI, err := parseURI(fave.TargetAccount.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Recreate the ActivityStreams Like.
@@ -392,7 +406,7 @@ func (f *federate) UndoAnnounce(ctx context.Context, boost *gtsmodel.Status) err
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(boost.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Recreate the ActivityStreams Announce.
@@ -465,17 +479,17 @@ func (f *federate) AcceptFollow(ctx context.Context, follow *gtsmodel.Follow) er
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(follow.TargetAccount.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	acceptingAccountIRI, err := parseURI(follow.TargetAccount.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	requestingAccountIRI, err := parseURI(follow.Account.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Recreate the ActivityStreams Follow.
@@ -543,17 +557,17 @@ func (f *federate) RejectFollow(ctx context.Context, follow *gtsmodel.Follow) er
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(follow.TargetAccount.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	rejectingAccountIRI, err := parseURI(follow.TargetAccount.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	requestingAccountIRI, err := parseURI(follow.Account.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Recreate the ActivityStreams Follow.
@@ -613,7 +627,7 @@ func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(fave.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Create the ActivityStreams Like.
@@ -650,7 +664,7 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(boost.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Create the ActivityStreams Announce.
@@ -686,7 +700,7 @@ func (f *federate) UpdateAccount(ctx context.Context, account *gtsmodel.Account)
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Convert account to ActivityStreams Person.
@@ -729,7 +743,7 @@ func (f *federate) Block(ctx context.Context, block *gtsmodel.Block) error {
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(block.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Convert block to ActivityStreams Block.
@@ -766,12 +780,12 @@ func (f *federate) UndoBlock(ctx context.Context, block *gtsmodel.Block) error {
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(block.Account.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	targetAccountIRI, err := parseURI(block.TargetAccount.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Convert block to ActivityStreams Block.
@@ -838,12 +852,12 @@ func (f *federate) Flag(ctx context.Context, report *gtsmodel.Report) error {
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(instanceAcct.OutboxURI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	targetAccountIRI, err := parseURI(report.TargetAccount.URI)
 	if err != nil {
-		return gtserror.Newf("%w", err)
+		return err
 	}
 
 	// Convert report to ActivityStreams Flag.
