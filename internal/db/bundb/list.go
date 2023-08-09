@@ -429,6 +429,7 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 	// Finally, insert each list entry into the database.
 	return l.db.RunInTx(ctx, func(tx bun.Tx) error {
 		for _, entry := range entries {
+			entry := entry // rescope
 			if err := l.state.Caches.GTS.ListEntry().Store(entry, func() error {
 				_, err := tx.
 					NewInsert().
