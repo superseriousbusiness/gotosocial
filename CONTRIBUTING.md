@@ -61,7 +61,7 @@ We tend to prioritize feature requests related to accessibility, fedi interopera
 
 We welcome pull requests from new and existing contributors, with the following provisos:
 
-- You have read and agree to our Code of Conduct.
+- You have read and agree to our [Code of Conduct](./CODE_OF_CONDUCT.md).
 - The pull request addresses an existing issue or bug (please link to the relevant issue in your pull request), or is related to documentation.
 - If your pull request introduces significant new code paths, you are willing to do some maintenance work on those code paths, and address bugs. We do not appreciate drive-by pull requests that introduce a significant maintenance burden!
 - The pull request is of decent quality. We are a small team and unfortunately we don't have a lot of time to help shepherd pull requests, or help with basic coding questions. If you're unsure, don't bite off more than you can chew: start with a small feature or bugfix for your first PR, and work your way up.
