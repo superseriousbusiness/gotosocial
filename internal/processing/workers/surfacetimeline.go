@@ -194,7 +194,8 @@ func (s *surface) listTimelineStatusForFollow(
 	for _, listEntry := range listEntries {
 		eligible, err := s.listEligible(ctx, listEntry, status)
 		if err != nil {
-			errs.Append(err)
+			errs.Appendf("error checking list eligibility: %w", err)
+			continue
 		}
 
 		if !eligible {
