@@ -17,34 +17,22 @@
 
 package db
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Relationship
-	Report
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Timeline
-	User
-	Tombstone
+type Application interface {
+	// GetApplicationByID ...
+	GetApplicationByID(ctx context.Context, id string) (*gtsmodel.Application, error)
+
+	// GetApplicationByClientID ...
+	GetApplicationByClientID(ctx context.Context, clientID string) (*gtsmodel.Application, error)
+
+	// PutApplication ...
+	PutApplication(ctx context.Context, app *gtsmodel.Application) error
+
+	// DeleteApplicationByClientID ...
+	DeleteApplicationByClientID(ctx context.Context, clientID string) error
 }

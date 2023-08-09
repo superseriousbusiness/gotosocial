@@ -316,7 +316,7 @@ func (c *GTSCaches) initApplication() {
 		sizeofApplication(), // model in-mem size.
 		config.GetCacheApplicationMemRatio(),
 	)
-	log.Info(nil, "Application cache size = %d", cap)
+	log.Infof(nil, "Application cache size = %d", cap)
 
 	c.application = result.New([]result.Lookup{
 		{Name: "ID"},

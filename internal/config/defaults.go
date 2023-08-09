@@ -147,6 +147,7 @@ var Defaults = Configuration{
 		// be able to make some more sense :D
 		AccountMemRatio:          18,
 		AccountNoteMemRatio:      0.1,
+		ApplicationMemRatio:      0.1,
 		BlockMemRatio:            3,
 		BlockIDsMemRatio:         3,
 		BoostOfIDsMemRatio:       3,
@@ -170,7 +171,7 @@ var Defaults = Configuration{
 		StatusFaveIDsMemRatio:    3,
 		TagMemRatio:              3,
 		TombstoneMemRatio:        2,
-		UserMemRatio:             0.1,
+		UserMemRatio:             0.25,
 		WebfingerMemRatio:        0.1,
 		VisibilityMemRatio:       2,
 	},

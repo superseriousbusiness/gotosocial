@@ -22,7 +22,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/oauth2/v4"
@@ -125,8 +124,8 @@ func TokenCheck(dbConn db.DB, validateBearerToken func(r *http.Request) (oauth2.
 			log.Tracef(ctx, "authenticated client %s with bearer token, scope is %s", clientID, ti.GetScope())
 
 			// fetch app for this token
-			app := &gtsmodel.Application{}
-			if err := dbConn.GetWhere(ctx, []db.Where{{Key: "client_id", Value: clientID}}, app); err != nil {
+			app, err := dbConn.GetApplicationByClientID(ctx, clientID)
+			if err != nil {
 				if err != db.ErrNoEntries {
 					log.Errorf(ctx, "database error looking for application with clientID %s: %s", clientID, err)
 					return
@@ -134,6 +133,7 @@ func TokenCheck(dbConn db.DB, validateBearerToken func(r *http.Request) (oauth2.
 				log.Warnf(ctx, "no app found for client %s", clientID)
 				return
 			}
+
 			c.Set(oauth.SessionAuthorizedApplication, app)
 		}
 	}

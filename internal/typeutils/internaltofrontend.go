@@ -699,8 +699,8 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	}
 
 	if appID := s.CreatedWithApplicationID; appID != "" {
-		app := &gtsmodel.Application{}
-		if err := c.db.GetByID(ctx, appID, app); err != nil {
+		app, err := c.db.GetApplicationByID(ctx, appID)
+		if err != nil {
 			return nil, fmt.Errorf("error getting application %s: %w", appID, err)
 		}
 
