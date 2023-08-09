@@ -19,7 +19,6 @@ package user_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -28,36 +27,6 @@ import (
 
 type EmailConfirmTestSuite struct {
 	UserStandardTestSuite
-}
-
-func (suite *EmailConfirmTestSuite) TestSendConfirmEmail() {
-	user := suite.testUsers["local_account_1"]
-
-	// set a bunch of stuff on the user as though zork hasn't been confirmed (perish the thought)
-	user.UnconfirmedEmail = "some.email@example.org"
-	user.Email = ""
-	user.ConfirmedAt = time.Time{}
-	user.ConfirmationSentAt = time.Time{}
-	user.ConfirmationToken = ""
-
-	err := suite.user.EmailSendConfirmation(context.Background(), user, "the_mighty_zork")
-	suite.NoError(err)
-
-	// zork should have an email now
-	suite.Len(suite.sentEmails, 1)
-	email, ok := suite.sentEmails["some.email@example.org"]
-	suite.True(ok)
-
-	// a token should be set on zork
-	token := user.ConfirmationToken
-	suite.NotEmpty(token)
-
-	// email should contain the token
-	emailShould := fmt.Sprintf("To: some.email@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\n\r\nHello the_mighty_zork!\r\n\r\nYou are receiving this mail because you've requested an account on http://localhost:8080.\r\n\r\nWe just need to confirm that this is your email address. To confirm your email, paste the following in your browser's address bar:\r\n\r\nhttp://localhost:8080/confirm_email?token=%s\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of http://localhost:8080\r\n\r\n", token)
-	suite.Equal(emailShould, email)
-
-	// confirmationSentAt should be recent
-	suite.WithinDuration(time.Now(), user.ConfirmationSentAt, 1*time.Minute)
 }
 
 func (suite *EmailConfirmTestSuite) TestConfirmEmail() {

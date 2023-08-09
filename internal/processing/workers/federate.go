@@ -24,9 +24,26 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
+
+// federate wraps functions for federating
+// something out via ActivityPub in response
+// to message processing.
+type federate struct {
+	state *state.State
+	tc    typeutils.TypeConverter
+
+	// send matches the signature of the
+	// go-fed FederatingActor's Send function.
+	// It can be used for sending the given
+	// activity via the given outbox URI.
+	send func(context.Context, *url.URL, vocab.Type) (pub.Activity, error)
+}
 
 // parseURI is a cheeky little
 // shortcut to wrap parsing errors.
@@ -39,7 +56,7 @@ func parseURI(s string) (*url.URL, error) {
 	return uri, err
 }
 
-func (p *Processor) federateDeleteAccount(ctx context.Context, account *gtsmodel.Account) error {
+func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account) error {
 	// Do nothing if it's not our
 	// account that's been deleted.
 	if !account.IsLocal() {
@@ -94,7 +111,7 @@ func (p *Processor) federateDeleteAccount(ctx context.Context, account *gtsmodel
 	delete.SetActivityStreamsCc(deleteCC)
 
 	// Send the Delete via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, delete,
 	); err != nil {
 		return gtserror.Newf(
@@ -106,7 +123,7 @@ func (p *Processor) federateDeleteAccount(ctx context.Context, account *gtsmodel
 	return nil
 }
 
-func (p *Processor) federateCreateStatus(ctx context.Context, status *gtsmodel.Status) error {
+func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Do nothing if the status
 	// shouldn't be federated.
 	if !*status.Federated {
@@ -120,7 +137,7 @@ func (p *Processor) federateCreateStatus(ctx context.Context, status *gtsmodel.S
 	}
 
 	// Populate model.
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error populating status: %w", err)
 	}
 
@@ -132,18 +149,18 @@ func (p *Processor) federateCreateStatus(ctx context.Context, status *gtsmodel.S
 
 	// Convert status to an ActivityStreams
 	// Note, wrapped in a Create activity.
-	asStatus, err := p.tc.StatusToAS(ctx, status)
+	asStatus, err := f.tc.StatusToAS(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error converting status to AS: %w", err)
 	}
 
-	create, err := p.tc.WrapNoteInCreate(asStatus, false)
+	create, err := f.tc.WrapNoteInCreate(asStatus, false)
 	if err != nil {
 		return gtserror.Newf("error wrapping status in create: %w", err)
 	}
 
 	// Send the Create via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, create,
 	); err != nil {
 		return gtserror.Newf(
@@ -155,7 +172,7 @@ func (p *Processor) federateCreateStatus(ctx context.Context, status *gtsmodel.S
 	return nil
 }
 
-func (p *Processor) federateDeleteStatus(ctx context.Context, status *gtsmodel.Status) error {
+func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Do nothing if the status
 	// shouldn't be federated.
 	if !*status.Federated {
@@ -169,7 +186,7 @@ func (p *Processor) federateDeleteStatus(ctx context.Context, status *gtsmodel.S
 	}
 
 	// Populate model.
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error populating status: %w", err)
 	}
 
@@ -180,13 +197,13 @@ func (p *Processor) federateDeleteStatus(ctx context.Context, status *gtsmodel.S
 	}
 
 	// Wrap the status URI in a Delete activity.
-	delete, err := p.tc.StatusToASDelete(ctx, status)
+	delete, err := f.tc.StatusToASDelete(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error creating Delete: %w", err)
 	}
 
 	// Send the Delete via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, delete,
 	); err != nil {
 		return gtserror.Newf(
@@ -198,9 +215,9 @@ func (p *Processor) federateDeleteStatus(ctx context.Context, status *gtsmodel.S
 	return nil
 }
 
-func (p *Processor) federateFollow(ctx context.Context, follow *gtsmodel.Follow) error {
+func (f *federate) Follow(ctx context.Context, follow *gtsmodel.Follow) error {
 	// Populate model.
-	if err := p.state.DB.PopulateFollow(ctx, follow); err != nil {
+	if err := f.state.DB.PopulateFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error populating follow: %w", err)
 	}
 
@@ -217,13 +234,13 @@ func (p *Processor) federateFollow(ctx context.Context, follow *gtsmodel.Follow)
 	}
 
 	// Convert follow to ActivityStreams Follow.
-	asFollow, err := p.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.tc.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %s", err)
 	}
 
 	// Send the Follow via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, asFollow,
 	); err != nil {
 		return gtserror.Newf(
@@ -235,9 +252,9 @@ func (p *Processor) federateFollow(ctx context.Context, follow *gtsmodel.Follow)
 	return nil
 }
 
-func (p *Processor) federateUndoFollow(ctx context.Context, follow *gtsmodel.Follow) error {
+func (f *federate) UndoFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	// Populate model.
-	if err := p.state.DB.PopulateFollow(ctx, follow); err != nil {
+	if err := f.state.DB.PopulateFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error populating follow: %w", err)
 	}
 
@@ -259,7 +276,7 @@ func (p *Processor) federateUndoFollow(ctx context.Context, follow *gtsmodel.Fol
 	}
 
 	// Recreate the ActivityStreams Follow.
-	asFollow, err := p.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.tc.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %w", err)
 	}
@@ -287,7 +304,7 @@ func (p *Processor) federateUndoFollow(ctx context.Context, follow *gtsmodel.Fol
 	undo.SetActivityStreamsTo(undoTo)
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -299,9 +316,9 @@ func (p *Processor) federateUndoFollow(ctx context.Context, follow *gtsmodel.Fol
 	return nil
 }
 
-func (p *Processor) federateUndoLike(ctx context.Context, fave *gtsmodel.StatusFave) error {
+func (f *federate) UndoLike(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	// Populate model.
-	if err := p.state.DB.PopulateStatusFave(ctx, fave); err != nil {
+	if err := f.state.DB.PopulateStatusFave(ctx, fave); err != nil {
 		return gtserror.Newf("error populating fave: %w", err)
 	}
 
@@ -323,7 +340,7 @@ func (p *Processor) federateUndoLike(ctx context.Context, fave *gtsmodel.StatusF
 	}
 
 	// Recreate the ActivityStreams Like.
-	like, err := p.tc.FaveToAS(ctx, fave)
+	like, err := f.tc.FaveToAS(ctx, fave)
 	if err != nil {
 		return gtserror.Newf("error converting fave to AS: %w", err)
 	}
@@ -351,7 +368,7 @@ func (p *Processor) federateUndoLike(ctx context.Context, fave *gtsmodel.StatusF
 	undo.SetActivityStreamsTo(undoTo)
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -363,9 +380,9 @@ func (p *Processor) federateUndoLike(ctx context.Context, fave *gtsmodel.StatusF
 	return nil
 }
 
-func (p *Processor) federateUndoAnnounce(ctx context.Context, boost *gtsmodel.Status) error {
+func (f *federate) UndoAnnounce(ctx context.Context, boost *gtsmodel.Status) error {
 	// Populate model.
-	if err := p.state.DB.PopulateStatus(ctx, boost); err != nil {
+	if err := f.state.DB.PopulateStatus(ctx, boost); err != nil {
 		return gtserror.Newf("error populating status: %w", err)
 	}
 
@@ -382,7 +399,7 @@ func (p *Processor) federateUndoAnnounce(ctx context.Context, boost *gtsmodel.St
 	}
 
 	// Recreate the ActivityStreams Announce.
-	asAnnounce, err := p.tc.BoostToAS(
+	asAnnounce, err := f.tc.BoostToAS(
 		ctx,
 		boost,
 		boost.Account,
@@ -416,7 +433,7 @@ func (p *Processor) federateUndoAnnounce(ctx context.Context, boost *gtsmodel.St
 	undo.SetActivityStreamsCc(asAnnounce.GetActivityStreamsCc())
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -428,9 +445,9 @@ func (p *Processor) federateUndoAnnounce(ctx context.Context, boost *gtsmodel.St
 	return nil
 }
 
-func (p *Processor) federateAcceptFollow(ctx context.Context, follow *gtsmodel.Follow) error {
+func (f *federate) AcceptFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	// Populate model.
-	if err := p.state.DB.PopulateFollow(ctx, follow); err != nil {
+	if err := f.state.DB.PopulateFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error populating follow: %w", err)
 	}
 
@@ -465,7 +482,7 @@ func (p *Processor) federateAcceptFollow(ctx context.Context, follow *gtsmodel.F
 	}
 
 	// Recreate the ActivityStreams Follow.
-	asFollow, err := p.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.tc.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %w", err)
 	}
@@ -494,7 +511,7 @@ func (p *Processor) federateAcceptFollow(ctx context.Context, follow *gtsmodel.F
 	accept.SetActivityStreamsTo(acceptTo)
 
 	// Send the Accept via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, accept,
 	); err != nil {
 		return gtserror.Newf(
@@ -506,9 +523,9 @@ func (p *Processor) federateAcceptFollow(ctx context.Context, follow *gtsmodel.F
 	return nil
 }
 
-func (p *Processor) federateRejectFollow(ctx context.Context, follow *gtsmodel.Follow) error {
+func (f *federate) RejectFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	// Ensure follow populated before proceeding.
-	if err := p.state.DB.PopulateFollow(ctx, follow); err != nil {
+	if err := f.state.DB.PopulateFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error populating follow: %w", err)
 	}
 
@@ -543,7 +560,7 @@ func (p *Processor) federateRejectFollow(ctx context.Context, follow *gtsmodel.F
 	}
 
 	// Recreate the ActivityStreams Follow.
-	asFollow, err := p.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.tc.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %w", err)
 	}
@@ -572,7 +589,7 @@ func (p *Processor) federateRejectFollow(ctx context.Context, follow *gtsmodel.F
 	reject.SetActivityStreamsTo(rejectTo)
 
 	// Send the Reject via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, reject,
 	); err != nil {
 		return gtserror.Newf(
@@ -584,9 +601,9 @@ func (p *Processor) federateRejectFollow(ctx context.Context, follow *gtsmodel.F
 	return nil
 }
 
-func (p *Processor) federateLike(ctx context.Context, fave *gtsmodel.StatusFave) error {
+func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	// Populate model.
-	if err := p.state.DB.PopulateStatusFave(ctx, fave); err != nil {
+	if err := f.state.DB.PopulateStatusFave(ctx, fave); err != nil {
 		return gtserror.Newf("error populating fave: %w", err)
 	}
 
@@ -603,13 +620,13 @@ func (p *Processor) federateLike(ctx context.Context, fave *gtsmodel.StatusFave)
 	}
 
 	// Create the ActivityStreams Like.
-	like, err := p.tc.FaveToAS(ctx, fave)
+	like, err := f.tc.FaveToAS(ctx, fave)
 	if err != nil {
 		return gtserror.Newf("error converting fave to AS Like: %w", err)
 	}
 
 	// Send the Like via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, like,
 	); err != nil {
 		return gtserror.Newf(
@@ -621,9 +638,9 @@ func (p *Processor) federateLike(ctx context.Context, fave *gtsmodel.StatusFave)
 	return nil
 }
 
-func (p *Processor) federateAnnounce(ctx context.Context, boost *gtsmodel.Status) error {
+func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	// Populate model.
-	if err := p.state.DB.PopulateStatus(ctx, boost); err != nil {
+	if err := f.state.DB.PopulateStatus(ctx, boost); err != nil {
 		return gtserror.Newf("error populating status: %w", err)
 	}
 
@@ -640,7 +657,7 @@ func (p *Processor) federateAnnounce(ctx context.Context, boost *gtsmodel.Status
 	}
 
 	// Create the ActivityStreams Announce.
-	announce, err := p.tc.BoostToAS(
+	announce, err := f.tc.BoostToAS(
 		ctx,
 		boost,
 		boost.Account,
@@ -651,7 +668,7 @@ func (p *Processor) federateAnnounce(ctx context.Context, boost *gtsmodel.Status
 	}
 
 	// Send the Announce via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, announce,
 	); err != nil {
 		return gtserror.Newf(
@@ -663,9 +680,9 @@ func (p *Processor) federateAnnounce(ctx context.Context, boost *gtsmodel.Status
 	return nil
 }
 
-func (p *Processor) federateUpdateAccount(ctx context.Context, account *gtsmodel.Account) error {
+func (f *federate) UpdateAccount(ctx context.Context, account *gtsmodel.Account) error {
 	// Populate model.
-	if err := p.state.DB.PopulateAccount(ctx, account); err != nil {
+	if err := f.state.DB.PopulateAccount(ctx, account); err != nil {
 		return gtserror.Newf("error populating account: %w", err)
 	}
 
@@ -676,19 +693,19 @@ func (p *Processor) federateUpdateAccount(ctx context.Context, account *gtsmodel
 	}
 
 	// Convert account to ActivityStreams Person.
-	person, err := p.tc.AccountToAS(ctx, account)
+	person, err := f.tc.AccountToAS(ctx, account)
 	if err != nil {
 		return gtserror.Newf("error converting account to Person: %w", err)
 	}
 
 	// Use ActivityStreams Person as Object of Update.
-	update, err := p.tc.WrapPersonInUpdate(person, account)
+	update, err := f.tc.WrapPersonInUpdate(person, account)
 	if err != nil {
 		return gtserror.Newf("error wrapping Person in Update: %w", err)
 	}
 
 	// Send the Update via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, update,
 	); err != nil {
 		return gtserror.Newf(
@@ -700,9 +717,9 @@ func (p *Processor) federateUpdateAccount(ctx context.Context, account *gtsmodel
 	return nil
 }
 
-func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) error {
+func (f *federate) Block(ctx context.Context, block *gtsmodel.Block) error {
 	// Populate model.
-	if err := p.state.DB.PopulateBlock(ctx, block); err != nil {
+	if err := f.state.DB.PopulateBlock(ctx, block); err != nil {
 		return gtserror.Newf("error populating block: %w", err)
 	}
 
@@ -719,13 +736,13 @@ func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 	}
 
 	// Convert block to ActivityStreams Block.
-	asBlock, err := p.tc.BlockToAS(ctx, block)
+	asBlock, err := f.tc.BlockToAS(ctx, block)
 	if err != nil {
 		return gtserror.Newf("error converting block to AS: %w", err)
 	}
 
 	// Send the Block via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, asBlock,
 	); err != nil {
 		return gtserror.Newf(
@@ -737,9 +754,9 @@ func (p *Processor) federateBlock(ctx context.Context, block *gtsmodel.Block) er
 	return nil
 }
 
-func (p *Processor) federateUndoBlock(ctx context.Context, block *gtsmodel.Block) error {
+func (f *federate) UndoBlock(ctx context.Context, block *gtsmodel.Block) error {
 	// Populate model.
-	if err := p.state.DB.PopulateBlock(ctx, block); err != nil {
+	if err := f.state.DB.PopulateBlock(ctx, block); err != nil {
 		return gtserror.Newf("error populating block: %w", err)
 	}
 
@@ -761,7 +778,7 @@ func (p *Processor) federateUndoBlock(ctx context.Context, block *gtsmodel.Block
 	}
 
 	// Convert block to ActivityStreams Block.
-	asBlock, err := p.tc.BlockToAS(ctx, block)
+	asBlock, err := f.tc.BlockToAS(ctx, block)
 	if err != nil {
 		return gtserror.Newf("error converting block to AS: %w", err)
 	}
@@ -789,7 +806,7 @@ func (p *Processor) federateUndoBlock(ctx context.Context, block *gtsmodel.Block
 	undo.SetActivityStreamsTo(undoTo)
 
 	// Send the Undo via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, undo,
 	); err != nil {
 		return gtserror.Newf(
@@ -801,9 +818,9 @@ func (p *Processor) federateUndoBlock(ctx context.Context, block *gtsmodel.Block
 	return nil
 }
 
-func (p *Processor) federateFlag(ctx context.Context, report *gtsmodel.Report) error {
+func (f *federate) Flag(ctx context.Context, report *gtsmodel.Report) error {
 	// Populate model.
-	if err := p.state.DB.PopulateReport(ctx, report); err != nil {
+	if err := f.state.DB.PopulateReport(ctx, report); err != nil {
 		return gtserror.Newf("error populating report: %w", err)
 	}
 
@@ -816,7 +833,7 @@ func (p *Processor) federateFlag(ctx context.Context, report *gtsmodel.Report) e
 	// Get our instance account from the db:
 	// to anonymize the report, we'll deliver
 	// using the outbox of the instance account.
-	instanceAcct, err := p.state.DB.GetInstanceAccount(ctx, "")
+	instanceAcct, err := f.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return gtserror.Newf("error getting instance account: %w", err)
 	}
@@ -833,7 +850,7 @@ func (p *Processor) federateFlag(ctx context.Context, report *gtsmodel.Report) e
 	}
 
 	// Convert report to ActivityStreams Flag.
-	flag, err := p.tc.ReportToASFlag(ctx, report)
+	flag, err := f.tc.ReportToASFlag(ctx, report)
 	if err != nil {
 		return gtserror.Newf("error converting report to AS: %w", err)
 	}
@@ -851,7 +868,7 @@ func (p *Processor) federateFlag(ctx context.Context, report *gtsmodel.Report) e
 	flag.SetActivityStreamsBto(bTo)
 
 	// Send the Flag via the Actor's outbox.
-	if _, err := p.federator.FederatingActor().Send(
+	if _, err := f.send(
 		ctx, outboxIRI, flag,
 	); err != nil {
 		return gtserror.Newf(

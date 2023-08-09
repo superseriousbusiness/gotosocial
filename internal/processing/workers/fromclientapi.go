@@ -29,11 +29,26 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
+
+// clientAPI wraps processing functions
+// specifically for messages originating
+// from the client/REST API.
+type clientAPI struct {
+	state      *state.State
+	tc         typeutils.TypeConverter
+	surface    *surface
+	federate   *federate
+	wipeStatus wipeStatus
+	account    account.Processor
+}
 
 func (p *Processor) EnqueueClientAPI(ctx context.Context, msgs ...messages.FromClientAPI) {
 	log.Trace(ctx, "enqueuing")
-	_ = p.state.Workers.ClientAPI.MustEnqueueCtx(ctx, func(ctx context.Context) {
+	_ = p.workers.ClientAPI.MustEnqueueCtx(ctx, func(ctx context.Context) {
 		for _, msg := range msgs {
 			log.Trace(ctx, "processing: %+v", msg)
 			if err := p.ProcessFromClientAPI(ctx, msg); err != nil {
@@ -69,27 +84,27 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 
 		// CREATE PROFILE/ACCOUNT
 		case ap.ObjectProfile, ap.ActorPerson:
-			return p.cAPICreateAccount(ctx, cMsg)
+			return p.clientAPI.CreateAccount(ctx, cMsg)
 
 		// CREATE NOTE/STATUS
 		case ap.ObjectNote:
-			return p.cAPICreateStatus(ctx, cMsg)
+			return p.clientAPI.CreateStatus(ctx, cMsg)
 
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
-			return p.cAPICreateFollowReq(ctx, cMsg)
+			return p.clientAPI.CreateFollowReq(ctx, cMsg)
 
 		// CREATE LIKE/FAVE
 		case ap.ActivityLike:
-			return p.cAPICreateLike(ctx, cMsg)
+			return p.clientAPI.CreateLike(ctx, cMsg)
 
 		// CREATE ANNOUNCE/BOOST
 		case ap.ActivityAnnounce:
-			return p.cAPICreateAnnounce(ctx, cMsg)
+			return p.clientAPI.CreateAnnounce(ctx, cMsg)
 
 		// CREATE BLOCK
 		case ap.ActivityBlock:
-			return p.cAPICreateBlock(ctx, cMsg)
+			return p.clientAPI.CreateBlock(ctx, cMsg)
 		}
 
 	// UPDATE SOMETHING
@@ -98,11 +113,11 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 
 		// UPDATE PROFILE/ACCOUNT
 		case ap.ObjectProfile, ap.ActorPerson:
-			return p.cAPIUpdateAccount(ctx, cMsg)
+			return p.clientAPI.UpdateAccount(ctx, cMsg)
 
 		// UPDATE A FLAG/REPORT (mark as resolved/closed)
 		case ap.ActivityFlag:
-			return p.cAPIUpdateReport(ctx, cMsg)
+			return p.clientAPI.UpdateReport(ctx, cMsg)
 		}
 
 	// ACCEPT SOMETHING
@@ -111,7 +126,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 
 		// ACCEPT FOLLOW (request)
 		case ap.ActivityFollow:
-			return p.cAPIAcceptFollow(ctx, cMsg)
+			return p.clientAPI.AcceptFollow(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -120,7 +135,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 
 		// REJECT FOLLOW (request)
 		case ap.ActivityFollow:
-			return p.cAPIRejectFollowRequest(ctx, cMsg)
+			return p.clientAPI.RejectFollowRequest(ctx, cMsg)
 		}
 
 	// UNDO SOMETHING
@@ -129,19 +144,19 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 
 		// UNDO FOLLOW (request)
 		case ap.ActivityFollow:
-			return p.cAPIUndoFollow(ctx, cMsg)
+			return p.clientAPI.UndoFollow(ctx, cMsg)
 
 		// UNDO BLOCK
 		case ap.ActivityBlock:
-			return p.cAPIUndoBlock(ctx, cMsg)
+			return p.clientAPI.UndoBlock(ctx, cMsg)
 
 		// UNDO LIKE/FAVE
 		case ap.ActivityLike:
-			return p.cAPIUndoFave(ctx, cMsg)
+			return p.clientAPI.UndoFave(ctx, cMsg)
 
 		// UNDO ANNOUNCE/BOOST
 		case ap.ActivityAnnounce:
-			return p.cAPIUndoAnnounce(ctx, cMsg)
+			return p.clientAPI.UndoAnnounce(ctx, cMsg)
 		}
 
 	// DELETE SOMETHING
@@ -150,11 +165,11 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 
 		// DELETE NOTE/STATUS
 		case ap.ObjectNote:
-			return p.cAPIDeleteStatus(ctx, cMsg)
+			return p.clientAPI.DeleteStatus(ctx, cMsg)
 
 		// DELETE PROFILE/ACCOUNT
 		case ap.ObjectProfile, ap.ActorPerson:
-			return p.cAPIDeleteAccount(ctx, cMsg)
+			return p.clientAPI.DeleteAccount(ctx, cMsg)
 		}
 
 	// FLAG/REPORT SOMETHING
@@ -163,14 +178,14 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 
 		// FLAG/REPORT A PROFILE
 		case ap.ObjectProfile:
-			return p.cAPIReportAccount(ctx, cMsg)
+			return p.clientAPI.ReportAccount(ctx, cMsg)
 		}
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPICreateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) CreateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
 	account, ok := cMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Account", cMsg.GTSModel)
@@ -182,47 +197,47 @@ func (p *Processor) cAPICreateAccount(ctx context.Context, cMsg messages.FromCli
 		return gtserror.Newf("db error getting user for account id %s: %w", account.ID, err)
 	}
 
-	if err := p.user.EmailSendConfirmation(ctx, user, account.Username); err != nil {
+	if err := p.surface.emailPleaseConfirm(ctx, user, account.Username); err != nil {
 		return gtserror.Newf("error emailing %s: %w", account.Username, err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPICreateStatus(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAPI) error {
 	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
 	}
 
-	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining status: %w", err)
 	}
 
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
-	if err := p.federateCreateStatus(ctx, status); err != nil {
+	if err := p.federate.CreateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error federating status: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPICreateFollowReq(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClientAPI) error {
 	followRequest, ok := cMsg.GTSModel.(*gtsmodel.FollowRequest)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", cMsg.GTSModel)
 	}
 
-	if err := p.notifyFollowRequest(ctx, followRequest); err != nil {
+	if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
 		return gtserror.Newf("error notifying follow request: %w", err)
 	}
 
-	if err := p.federateFollow(
+	if err := p.federate.Follow(
 		ctx,
 		p.tc.FollowRequestToFollow(ctx, followRequest),
 	); err != nil {
@@ -232,55 +247,55 @@ func (p *Processor) cAPICreateFollowReq(ctx context.Context, cMsg messages.FromC
 	return nil
 }
 
-func (p *Processor) cAPICreateLike(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) CreateLike(ctx context.Context, cMsg messages.FromClientAPI) error {
 	fave, ok := cMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", cMsg.GTSModel)
 	}
 
-	if err := p.notifyFave(ctx, fave); err != nil {
+	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		return gtserror.Newf("error notifying fave: %w", err)
 	}
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.invalidateStatusFromTimelines(ctx, fave.StatusID)
+	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
 
-	if err := p.federateLike(ctx, fave); err != nil {
+	if err := p.federate.Like(ctx, fave); err != nil {
 		return gtserror.Newf("error federating like: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPICreateAnnounce(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg messages.FromClientAPI) error {
 	boost, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
 	}
 
 	// Timeline and notify the boost wrapper status.
-	if err := p.timelineAndNotifyStatus(ctx, boost); err != nil {
+	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
 		return gtserror.Newf("error timelining boost: %w", err)
 	}
 
 	// Notify the boost target account.
-	if err := p.notifyAnnounce(ctx, boost); err != nil {
+	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
 		return gtserror.Newf("error notifying boost: %w", err)
 	}
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
 
-	if err := p.federateAnnounce(ctx, boost); err != nil {
+	if err := p.federate.Announce(ctx, boost); err != nil {
 		return gtserror.Newf("error federating announce: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPICreateBlock(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) CreateBlock(ctx context.Context, cMsg messages.FromClientAPI) error {
 	block, ok := cMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
@@ -307,27 +322,27 @@ func (p *Processor) cAPICreateBlock(ctx context.Context, cMsg messages.FromClien
 	// TODO: same with notifications?
 	// TODO: same with bookmarks?
 
-	if err := p.federateBlock(ctx, block); err != nil {
+	if err := p.federate.Block(ctx, block); err != nil {
 		return gtserror.Newf("error federating block: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIUpdateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) UpdateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
 	account, ok := cMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Account", cMsg.GTSModel)
 	}
 
-	if err := p.federateUpdateAccount(ctx, account); err != nil {
+	if err := p.federate.UpdateAccount(ctx, account); err != nil {
 		return gtserror.Newf("error federating account update: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIUpdateReport(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) UpdateReport(ctx context.Context, cMsg messages.FromClientAPI) error {
 	report, ok := cMsg.GTSModel.(*gtsmodel.Report)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Report", cMsg.GTSModel)
@@ -339,37 +354,37 @@ func (p *Processor) cAPIUpdateReport(ctx context.Context, cMsg messages.FromClie
 		return nil
 	}
 
-	if err := p.emailReportClosed(ctx, report); err != nil {
+	if err := p.surface.emailReportClosed(ctx, report); err != nil {
 		return gtserror.Newf("error sending report closed email: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIAcceptFollow(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) AcceptFollow(ctx context.Context, cMsg messages.FromClientAPI) error {
 	follow, ok := cMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Follow", cMsg.GTSModel)
 	}
 
-	if err := p.notifyFollow(ctx, follow); err != nil {
+	if err := p.surface.notifyFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error notifying follow: %w", err)
 	}
 
-	if err := p.federateAcceptFollow(ctx, follow); err != nil {
+	if err := p.federate.AcceptFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error federating follow request accept: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIRejectFollowRequest(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) RejectFollowRequest(ctx context.Context, cMsg messages.FromClientAPI) error {
 	followReq, ok := cMsg.GTSModel.(*gtsmodel.FollowRequest)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", cMsg.GTSModel)
 	}
 
-	if err := p.federateRejectFollow(
+	if err := p.federate.RejectFollow(
 		ctx,
 		p.tc.FollowRequestToFollow(ctx, followReq),
 	); err != nil {
@@ -379,33 +394,33 @@ func (p *Processor) cAPIRejectFollowRequest(ctx context.Context, cMsg messages.F
 	return nil
 }
 
-func (p *Processor) cAPIUndoFollow(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) UndoFollow(ctx context.Context, cMsg messages.FromClientAPI) error {
 	follow, ok := cMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Follow", cMsg.GTSModel)
 	}
 
-	if err := p.federateUndoFollow(ctx, follow); err != nil {
+	if err := p.federate.UndoFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error federating undo follow: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIUndoBlock(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) UndoBlock(ctx context.Context, cMsg messages.FromClientAPI) error {
 	block, ok := cMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
 	}
 
-	if err := p.federateUndoBlock(ctx, block); err != nil {
+	if err := p.federate.UndoBlock(ctx, block); err != nil {
 		return gtserror.Newf("error federating undo block: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIUndoFave(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) UndoFave(ctx context.Context, cMsg messages.FromClientAPI) error {
 	statusFave, ok := cMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", cMsg.GTSModel)
@@ -413,16 +428,16 @@ func (p *Processor) cAPIUndoFave(ctx context.Context, cMsg messages.FromClientAP
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
+	p.surface.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
 
-	if err := p.federateUndoLike(ctx, statusFave); err != nil {
+	if err := p.federate.UndoLike(ctx, statusFave); err != nil {
 		return gtserror.Newf("error federating undo like: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIUndoAnnounce(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg messages.FromClientAPI) error {
 	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
@@ -432,22 +447,22 @@ func (p *Processor) cAPIUndoAnnounce(ctx context.Context, cMsg messages.FromClie
 		return gtserror.Newf("db error deleting status: %w", err)
 	}
 
-	if err := p.deleteStatusFromTimelines(ctx, status.ID); err != nil {
+	if err := p.surface.deleteStatusFromTimelines(ctx, status.ID); err != nil {
 		return gtserror.Newf("error removing status from timelines: %w", err)
 	}
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.invalidateStatusFromTimelines(ctx, status.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
 
-	if err := p.federateUndoAnnounce(ctx, status); err != nil {
+	if err := p.federate.UndoAnnounce(ctx, status); err != nil {
 		return gtserror.Newf("error federating undo announce: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIDeleteStatus(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg messages.FromClientAPI) error {
 	// Don't delete attachments, just unattach them:
 	// this request comes from the client API and the
 	// poster may want to use attachments again later.
@@ -473,17 +488,17 @@ func (p *Processor) cAPIDeleteStatus(ctx context.Context, cMsg messages.FromClie
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
-	if err := p.federateDeleteStatus(ctx, status); err != nil {
+	if err := p.federate.DeleteStatus(ctx, status); err != nil {
 		return gtserror.Newf("error federating status delete: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) cAPIDeleteAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) DeleteAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
 	// The originID of the delete, one of:
 	//   - ID of a domain block, for which
 	//     this account delete is a side effect.
@@ -500,7 +515,7 @@ func (p *Processor) cAPIDeleteAccount(ctx context.Context, cMsg messages.FromCli
 		originID = cMsg.OriginAccount.ID
 	}
 
-	if err := p.federateDeleteAccount(ctx, cMsg.TargetAccount); err != nil {
+	if err := p.federate.DeleteAccount(ctx, cMsg.TargetAccount); err != nil {
 		return gtserror.Newf("error federating account delete: %w", err)
 	}
 
@@ -511,7 +526,7 @@ func (p *Processor) cAPIDeleteAccount(ctx context.Context, cMsg messages.FromCli
 	return nil
 }
 
-func (p *Processor) cAPIReportAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
 	report, ok := cMsg.GTSModel.(*gtsmodel.Report)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Report", cMsg.GTSModel)
@@ -520,12 +535,12 @@ func (p *Processor) cAPIReportAccount(ctx context.Context, cMsg messages.FromCli
 	// Federate this report to the
 	// remote instance if desired.
 	if *report.Forwarded {
-		if err := p.federateFlag(ctx, report); err != nil {
+		if err := p.federate.Flag(ctx, report); err != nil {
 			return gtserror.Newf("error federating report: %w", err)
 		}
 	}
 
-	if err := p.emailReportOpened(ctx, report); err != nil {
+	if err := p.surface.emailReportOpened(ctx, report); err != nil {
 		return gtserror.Newf("error sending report opened email: %w", err)
 	}
 

@@ -20,21 +20,24 @@ package workers
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *Processor) emailReportOpened(ctx context.Context, report *gtsmodel.Report) error {
-	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+func (s *surface) emailReportOpened(ctx context.Context, report *gtsmodel.Report) error {
+	instance, err := s.state.DB.GetInstance(ctx, config.GetHost())
 	if err != nil {
 		return gtserror.Newf("error getting instance: %w", err)
 	}
 
-	toAddresses, err := p.state.DB.GetInstanceModeratorAddresses(ctx)
+	toAddresses, err := s.state.DB.GetInstanceModeratorAddresses(ctx)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			// No registered moderator addresses.
@@ -44,14 +47,14 @@ func (p *Processor) emailReportOpened(ctx context.Context, report *gtsmodel.Repo
 	}
 
 	if report.Account == nil {
-		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
+		report.Account, err = s.state.DB.GetAccountByID(ctx, report.AccountID)
 		if err != nil {
 			return gtserror.Newf("error getting report account: %w", err)
 		}
 	}
 
 	if report.TargetAccount == nil {
-		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
+		report.TargetAccount, err = s.state.DB.GetAccountByID(ctx, report.TargetAccountID)
 		if err != nil {
 			return gtserror.Newf("error getting report target account: %w", err)
 		}
@@ -65,20 +68,23 @@ func (p *Processor) emailReportOpened(ctx context.Context, report *gtsmodel.Repo
 		ReportTargetDomain: report.TargetAccount.Domain,
 	}
 
-	if err := p.emailSender.SendNewReportEmail(toAddresses, reportData); err != nil {
+	if err := s.emailSender.SendNewReportEmail(toAddresses, reportData); err != nil {
 		return gtserror.Newf("error emailing instance moderators: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) emailReportClosed(ctx context.Context, report *gtsmodel.Report) error {
-	user, err := p.state.DB.GetUserByAccountID(ctx, report.Account.ID)
+func (s *surface) emailReportClosed(ctx context.Context, report *gtsmodel.Report) error {
+	user, err := s.state.DB.GetUserByAccountID(ctx, report.Account.ID)
 	if err != nil {
 		return gtserror.Newf("db error getting user: %w", err)
 	}
 
-	if user.ConfirmedAt.IsZero() || !*user.Approved || *user.Disabled || user.Email == "" {
+	if user.ConfirmedAt.IsZero() ||
+		!*user.Approved ||
+		*user.Disabled ||
+		user.Email == "" {
 		// Only email users who:
 		// - are confirmed
 		// - are approved
@@ -87,20 +93,20 @@ func (p *Processor) emailReportClosed(ctx context.Context, report *gtsmodel.Repo
 		return nil
 	}
 
-	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
+	instance, err := s.state.DB.GetInstance(ctx, config.GetHost())
 	if err != nil {
 		return gtserror.Newf("db error getting instance: %w", err)
 	}
 
 	if report.Account == nil {
-		report.Account, err = p.state.DB.GetAccountByID(ctx, report.AccountID)
+		report.Account, err = s.state.DB.GetAccountByID(ctx, report.AccountID)
 		if err != nil {
 			return gtserror.Newf("error getting report account: %w", err)
 		}
 	}
 
 	if report.TargetAccount == nil {
-		report.TargetAccount, err = p.state.DB.GetAccountByID(ctx, report.TargetAccountID)
+		report.TargetAccount, err = s.state.DB.GetAccountByID(ctx, report.TargetAccountID)
 		if err != nil {
 			return gtserror.Newf("error getting report target account: %w", err)
 		}
@@ -115,5 +121,60 @@ func (p *Processor) emailReportClosed(ctx context.Context, report *gtsmodel.Repo
 		ActionTakenComment:   report.ActionTaken,
 	}
 
-	return p.emailSender.SendReportClosedEmail(user.Email, reportClosedData)
+	return s.emailSender.SendReportClosedEmail(user.Email, reportClosedData)
+}
+
+func (s *surface) emailPleaseConfirm(ctx context.Context, user *gtsmodel.User, username string) error {
+	if user.UnconfirmedEmail == "" ||
+		user.UnconfirmedEmail == user.Email {
+		// User has already confirmed this
+		// email address; nothing to do.
+		return nil
+	}
+
+	instance, err := s.state.DB.GetInstance(ctx, config.GetHost())
+	if err != nil {
+		return gtserror.Newf("db error getting instance: %w", err)
+	}
+
+	// We need a token and a link for the
+	// user to click on. We'll use a uuid
+	// as our token since it's secure enough
+	// for this purpose.
+	var (
+		confirmToken = uuid.NewString()
+		confirmLink  = uris.GenerateURIForEmailConfirm(confirmToken)
+	)
+
+	// Assemble email contents and send the email.
+	if err := s.emailSender.SendConfirmEmail(
+		user.UnconfirmedEmail,
+		email.ConfirmData{
+			Username:     username,
+			InstanceURL:  instance.URI,
+			InstanceName: instance.Title,
+			ConfirmLink:  confirmLink,
+		},
+	); err != nil {
+		return err
+	}
+
+	// Email sent, update the user entry
+	// with the new confirmation token.
+	now := time.Now()
+	user.ConfirmationToken = confirmToken
+	user.ConfirmationSentAt = now
+	user.LastEmailedAt = now
+
+	if err := s.state.DB.UpdateUser(
+		ctx,
+		user,
+		"confirmation_token",
+		"confirmation_sent_at",
+		"last_emailed_at",
+	); err != nil {
+		return gtserror.Newf("error updating user entry after email sent: %w", err)
+	}
+
+	return nil
 }

@@ -27,19 +27,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/workers"
 )
 
 type Processor struct {
-	state       *state.State
-	federator   federation.Federator
-	tc          typeutils.TypeConverter
-	filter      *visibility.Filter
-	emailSender email.Sender
-
-	account account.Processor
-	media   media.Processor
-	stream  stream.Processor
-	user    user.Processor
+	workers   workers.Workers
+	clientAPI *clientAPI
+	fediAPI   *fediAPI
 }
 
 func New(
@@ -53,16 +47,46 @@ func New(
 	stream stream.Processor,
 	user user.Processor,
 ) Processor {
-	return Processor{
+	// Init surface wrapper struct.
+	surface := &surface{
 		state:       state,
-		federator:   federator,
 		tc:          tc,
+		stream:      stream,
 		filter:      filter,
 		emailSender: emailSender,
+	}
 
-		account: account,
-		media:   media,
-		stream:  stream,
-		user:    user,
+	// Init federate wrapper struct.
+	federate := &federate{
+		state: state,
+		tc:    tc,
+		send:  federator.FederatingActor().Send,
+	}
+
+	// Init shared wipe status util func.
+	wipeStatus := wipeStatusF(
+		state,
+		media,
+		surface,
+	)
+
+	return Processor{
+		workers: state.Workers,
+		clientAPI: &clientAPI{
+			state:      state,
+			tc:         tc,
+			surface:    surface,
+			federate:   federate,
+			wipeStatus: wipeStatus,
+			account:    account,
+		},
+		fediAPI: &fediAPI{
+			state:      state,
+			surface:    surface,
+			federator:  federator,
+			federate:   federate,
+			wipeStatus: wipeStatus,
+			account:    account,
+		},
 	}
 }

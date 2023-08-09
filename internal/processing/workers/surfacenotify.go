@@ -30,14 +30,14 @@ import (
 
 // notifyMentions notifies each targeted account in
 // the given mentions that they have a new mention.
-func (p *Processor) notifyMentions(
+func (s *surface) notifyMentions(
 	ctx context.Context,
 	mentions []*gtsmodel.Mention,
 ) error {
 	var errs = gtserror.NewMultiError(len(mentions))
 
 	for _, mention := range mentions {
-		if err := p.notify(
+		if err := s.notify(
 			ctx,
 			gtsmodel.NotificationMention,
 			mention.TargetAccountID,
@@ -53,11 +53,11 @@ func (p *Processor) notifyMentions(
 
 // notifyFollowRequest notifies the target of the given
 // follow request that they have a new follow request.
-func (p *Processor) notifyFollowRequest(
+func (s *surface) notifyFollowRequest(
 	ctx context.Context,
 	followRequest *gtsmodel.FollowRequest,
 ) error {
-	return p.notify(
+	return s.notify(
 		ctx,
 		gtsmodel.NotificationFollowRequest,
 		followRequest.TargetAccountID,
@@ -70,12 +70,12 @@ func (p *Processor) notifyFollowRequest(
 // they have a new follow. It will also remove any previous
 // notification of a follow request, essentially replacing
 // that notification.
-func (p *Processor) notifyFollow(
+func (s *surface) notifyFollow(
 	ctx context.Context,
 	follow *gtsmodel.Follow,
 ) error {
 	// Check if previous follow req notif exists.
-	prevNotif, err := p.state.DB.GetNotification(
+	prevNotif, err := s.state.DB.GetNotification(
 		gtscontext.SetBarebones(ctx),
 		gtsmodel.NotificationFollowRequest,
 		follow.TargetAccountID,
@@ -88,13 +88,13 @@ func (p *Processor) notifyFollow(
 
 	if prevNotif != nil {
 		// Previous notif existed, delete it.
-		if err := p.state.DB.DeleteNotificationByID(ctx, prevNotif.ID); err != nil {
+		if err := s.state.DB.DeleteNotificationByID(ctx, prevNotif.ID); err != nil {
 			return gtserror.Newf("db error removing previous follow request notification %s: %w", prevNotif.ID, err)
 		}
 	}
 
 	// Now notify the follow itself.
-	return p.notify(
+	return s.notify(
 		ctx,
 		gtsmodel.NotificationFollow,
 		follow.TargetAccountID,
@@ -105,7 +105,7 @@ func (p *Processor) notifyFollow(
 
 // notifyFave notifies the target of the given
 // fave that their status has been liked/faved.
-func (p *Processor) notifyFave(
+func (s *surface) notifyFave(
 	ctx context.Context,
 	fave *gtsmodel.StatusFave,
 ) error {
@@ -114,7 +114,7 @@ func (p *Processor) notifyFave(
 		return nil
 	}
 
-	return p.notify(
+	return s.notify(
 		ctx,
 		gtsmodel.NotificationFave,
 		fave.TargetAccountID,
@@ -125,7 +125,7 @@ func (p *Processor) notifyFave(
 
 // notifyAnnounce notifies the status boost target
 // account that their status has been boosted.
-func (p *Processor) notifyAnnounce(
+func (s *surface) notifyAnnounce(
 	ctx context.Context,
 	status *gtsmodel.Status,
 ) error {
@@ -139,7 +139,7 @@ func (p *Processor) notifyAnnounce(
 		return nil
 	}
 
-	return p.notify(
+	return s.notify(
 		ctx,
 		gtsmodel.NotificationReblog,
 		status.BoostOfAccountID,
@@ -159,14 +159,14 @@ func (p *Processor) notifyAnnounce(
 //
 // targetAccountID and originAccountID must be
 // set, but statusID can be an empty string.
-func (p *Processor) notify(
+func (s *surface) notify(
 	ctx context.Context,
 	notificationType gtsmodel.NotificationType,
 	targetAccountID string,
 	originAccountID string,
 	statusID string,
 ) error {
-	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
+	targetAccount, err := s.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		return gtserror.Newf("error getting target account %s: %w", targetAccountID, err)
 	}
@@ -178,7 +178,7 @@ func (p *Processor) notify(
 
 	// Make sure a notification doesn't
 	// already exist with these params.
-	if _, err := p.state.DB.GetNotification(
+	if _, err := s.state.DB.GetNotification(
 		gtscontext.SetBarebones(ctx),
 		notificationType,
 		targetAccountID,
@@ -203,17 +203,17 @@ func (p *Processor) notify(
 		StatusID:         statusID,
 	}
 
-	if err := p.state.DB.PutNotification(ctx, notif); err != nil {
+	if err := s.state.DB.PutNotification(ctx, notif); err != nil {
 		return gtserror.Newf("error putting notification in database: %w", err)
 	}
 
 	// Stream notification to the user.
-	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
+	apiNotif, err := s.tc.NotificationToAPINotification(ctx, notif)
 	if err != nil {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
 
-	if err := p.stream.Notify(apiNotif, targetAccount); err != nil {
+	if err := s.stream.Notify(apiNotif, targetAccount); err != nil {
 		return gtserror.Newf("error streaming notification to account: %w", err)
 	}
 

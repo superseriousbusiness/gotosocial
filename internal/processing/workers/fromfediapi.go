@@ -24,16 +24,31 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
+
+// fediAPI wraps processing functions
+// specifically for messages originating
+// from the federation/ActivityPub API.
+type fediAPI struct {
+	state      *state.State
+	surface    *surface
+	federator  federation.Federator
+	federate   *federate
+	wipeStatus wipeStatus
+	account    account.Processor
+}
 
 func (p *Processor) EnqueueFediAPI(ctx context.Context, msgs ...messages.FromFediAPI) {
 	log.Trace(ctx, "enqueuing")
-	_ = p.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+	_ = p.workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
 		for _, msg := range msgs {
 			log.Trace(ctx, "processing: %+v", msg)
 			if err := p.ProcessFromFediAPI(ctx, msg); err != nil {
@@ -76,27 +91,27 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 
 		// CREATE NOTE/STATUS
 		case ap.ObjectNote:
-			return p.fAPICreateStatus(ctx, fMsg)
+			return p.fediAPI.CreateStatus(ctx, fMsg)
 
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
-			return p.fAPICreateFollowReq(ctx, fMsg)
+			return p.fediAPI.CreateFollowReq(ctx, fMsg)
 
 		// CREATE LIKE/FAVE
 		case ap.ActivityLike:
-			return p.fAPICreateLike(ctx, fMsg)
+			return p.fediAPI.CreateLike(ctx, fMsg)
 
 		// CREATE ANNOUNCE/BOOST
 		case ap.ActivityAnnounce:
-			return p.fAPICreateAnnounce(ctx, fMsg)
+			return p.fediAPI.CreateAnnounce(ctx, fMsg)
 
 		// CREATE BLOCK
 		case ap.ActivityBlock:
-			return p.fAPICreateBlock(ctx, fMsg)
+			return p.fediAPI.CreateBlock(ctx, fMsg)
 
 		// CREATE FLAG/REPORT
 		case ap.ActivityFlag:
-			return p.fAPICreateFlag(ctx, fMsg)
+			return p.fediAPI.CreateFlag(ctx, fMsg)
 		}
 
 	// UPDATE SOMETHING
@@ -105,7 +120,7 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 
 		// UPDATE PROFILE/ACCOUNT
 		case ap.ObjectProfile:
-			return p.fAPIUpdateAccount(ctx, fMsg)
+			return p.fediAPI.UpdateAccount(ctx, fMsg)
 		}
 
 	// DELETE SOMETHING
@@ -114,18 +129,18 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 
 		// DELETE NOTE/STATUS
 		case ap.ObjectNote:
-			return p.fAPIDeleteStatus(ctx, fMsg)
+			return p.fediAPI.DeleteStatus(ctx, fMsg)
 
 		// DELETE PROFILE/ACCOUNT
 		case ap.ObjectProfile:
-			return p.fAPIDeleteAccount(ctx, fMsg)
+			return p.fediAPI.DeleteAccount(ctx, fMsg)
 		}
 	}
 
 	return nil
 }
 
-func (p *Processor) fAPICreateStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
 	var (
 		status *gtsmodel.Status
 		err    error
@@ -181,17 +196,17 @@ func (p *Processor) fAPICreateStatus(ctx context.Context, fMsg messages.FromFedi
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
-	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining status: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) statusFromGTSModel(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
+func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
 	// There should be a status pinned to the message:
 	// we've already checked to ensure this is not nil.
 	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
@@ -221,7 +236,7 @@ func (p *Processor) statusFromGTSModel(ctx context.Context, fMsg messages.FromFe
 	return status, nil
 }
 
-func (p *Processor) statusFromAPIRI(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
+func (p *fediAPI) statusFromAPIRI(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
 	// There should be a status IRI pinned to
 	// the federatorMsg for us to dereference.
 	if fMsg.APIri == nil {
@@ -246,7 +261,7 @@ func (p *Processor) statusFromAPIRI(ctx context.Context, fMsg messages.FromFediA
 	return status, nil
 }
 
-func (p *Processor) fAPICreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI) error {
 	followRequest, ok := fMsg.GTSModel.(*gtsmodel.FollowRequest)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", fMsg.GTSModel)
@@ -255,7 +270,7 @@ func (p *Processor) fAPICreateFollowReq(ctx context.Context, fMsg messages.FromF
 	if *followRequest.TargetAccount.Locked {
 		// Account on our instance is locked:
 		// just notify the follow request.
-		if err := p.notifyFollowRequest(ctx, followRequest); err != nil {
+		if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
 			return gtserror.Newf("error notifying follow request: %w", err)
 		}
 
@@ -274,35 +289,35 @@ func (p *Processor) fAPICreateFollowReq(ctx context.Context, fMsg messages.FromF
 		return gtserror.Newf("error accepting follow request: %w", err)
 	}
 
-	if err := p.federateAcceptFollow(ctx, follow); err != nil {
+	if err := p.federate.AcceptFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error federating accept follow request: %w", err)
 	}
 
-	if err := p.notifyFollow(ctx, follow); err != nil {
+	if err := p.surface.notifyFollow(ctx, follow); err != nil {
 		return gtserror.Newf("error notifying follow: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) fAPICreateLike(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) CreateLike(ctx context.Context, fMsg messages.FromFediAPI) error {
 	fave, ok := fMsg.GTSModel.(*gtsmodel.StatusFave)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", fMsg.GTSModel)
 	}
 
-	if err := p.notifyFave(ctx, fave); err != nil {
+	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		return gtserror.Newf("error notifying fave: %w", err)
 	}
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.invalidateStatusFromTimelines(ctx, fave.StatusID)
+	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
 
 	return nil
 }
 
-func (p *Processor) fAPICreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI) error {
 	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
@@ -339,22 +354,22 @@ func (p *Processor) fAPICreateAnnounce(ctx context.Context, fMsg messages.FromFe
 	}
 
 	// Timeline and notify the announce.
-	if err := p.timelineAndNotifyStatus(ctx, status); err != nil {
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining status: %w", err)
 	}
 
-	if err := p.notifyAnnounce(ctx, status); err != nil {
+	if err := p.surface.notifyAnnounce(ctx, status); err != nil {
 		return gtserror.Newf("error notifying status: %w", err)
 	}
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.invalidateStatusFromTimelines(ctx, status.ID)
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil
 }
 
-func (p *Processor) fAPICreateBlock(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) error {
 	block, ok := fMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", fMsg.GTSModel)
@@ -445,7 +460,7 @@ func (p *Processor) fAPICreateBlock(ctx context.Context, fMsg messages.FromFediA
 	return nil
 }
 
-func (p *Processor) fAPICreateFlag(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) CreateFlag(ctx context.Context, fMsg messages.FromFediAPI) error {
 	incomingReport, ok := fMsg.GTSModel.(*gtsmodel.Report)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Report", fMsg.GTSModel)
@@ -454,14 +469,14 @@ func (p *Processor) fAPICreateFlag(ctx context.Context, fMsg messages.FromFediAP
 	// TODO: handle additional side effects of flag creation:
 	// - notify admins by dm / notification
 
-	if err := p.emailReportOpened(ctx, incomingReport); err != nil {
+	if err := p.surface.emailReportOpened(ctx, incomingReport); err != nil {
 		return gtserror.Newf("error sending report opened email: %w", err)
 	}
 
 	return nil
 }
 
-func (p *Processor) fAPIUpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) error {
 	// Parse the old/existing account model.
 	account, ok := fMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
@@ -489,7 +504,7 @@ func (p *Processor) fAPIUpdateAccount(ctx context.Context, fMsg messages.FromFed
 	return nil
 }
 
-func (p *Processor) fAPIDeleteStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
 	// Delete attachments from this status, since this request
 	// comes from the federating API, and there's no way the
 	// poster can do a delete + redraft for it on our instance.
@@ -507,13 +522,13 @@ func (p *Processor) fAPIDeleteStatus(ctx context.Context, fMsg messages.FromFedi
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
 	return nil
 }
 
-func (p *Processor) fAPIDeleteAccount(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) DeleteAccount(ctx context.Context, fMsg messages.FromFediAPI) error {
 	account, ok := fMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Account", fMsg.GTSModel)
