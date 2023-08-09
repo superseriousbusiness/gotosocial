@@ -31,7 +31,7 @@ import (
 )
 
 type Processor struct {
-	workers   workers.Workers
+	workers   *workers.Workers
 	clientAPI *clientAPI
 	fediAPI   *fediAPI
 }
@@ -71,7 +71,7 @@ func New(
 	)
 
 	return Processor{
-		workers: state.Workers,
+		workers: &state.Workers,
 		clientAPI: &clientAPI{
 			state:      state,
 			tc:         tc,
@@ -81,9 +81,9 @@ func New(
 			account:    account,
 		},
 		fediAPI: &fediAPI{
+			Federator:  federator,
 			state:      state,
 			surface:    surface,
-			federator:  federator,
 			federate:   federate,
 			wipeStatus: wipeStatus,
 			account:    account,
