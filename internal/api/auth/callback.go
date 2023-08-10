@@ -107,8 +107,8 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		return
 	}
 
-	app := &gtsmodel.Application{}
-	if err := m.db.GetWhere(c.Request.Context(), []db.Where{{Key: sessionClientID, Value: clientID}}, app); err != nil {
+	app, err := m.db.GetApplicationByClientID(c.Request.Context(), sessionClientID)
+	if err != nil {
 		m.clearSession(s)
 		safe := fmt.Sprintf("application for %s %s could not be retrieved", sessionClientID, clientID)
 		var errWithCode gtserror.WithCode

@@ -60,6 +60,7 @@ var registerTables = []interface{}{
 type DBService struct {
 	db.Account
 	db.Admin
+	db.Application
 	db.Basic
 	db.Domain
 	db.Emoji
@@ -165,6 +166,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Admin: &adminDB{
+			db:    db,
+			state: state,
+		},
+		Application: &applicationDB{
 			db:    db,
 			state: state,
 		},

@@ -26,6 +26,7 @@ const (
 type DB interface {
 	Account
 	Admin
+	Application
 	Basic
 	Domain
 	Emoji

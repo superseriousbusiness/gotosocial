@@ -37,19 +37,12 @@ type statusDB struct {
 	state *state.State
 }
 
-func (s *statusDB) newStatusQ(status interface{}) *bun.SelectQuery {
-	return s.db.
-		NewSelect().
-		Model(status).
-		Relation("CreatedWithApplication")
-}
-
 func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, error) {
 	return s.getStatus(
 		ctx,
 		"ID",
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("? = ?", bun.Ident("status.id"), id).Scan(ctx)
+			return s.db.NewSelect().Model(status).Where("? = ?", bun.Ident("status.id"), id).Scan(ctx)
 		},
 		id,
 	)
@@ -78,7 +71,7 @@ func (s *statusDB) GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.St
 		ctx,
 		"URI",
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("? = ?", bun.Ident("status.uri"), uri).Scan(ctx)
+			return s.db.NewSelect().Model(status).Where("? = ?", bun.Ident("status.uri"), uri).Scan(ctx)
 		},
 		uri,
 	)
@@ -89,7 +82,7 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 		ctx,
 		"URL",
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).Where("? = ?", bun.Ident("status.url"), url).Scan(ctx)
+			return s.db.NewSelect().Model(status).Where("? = ?", bun.Ident("status.url"), url).Scan(ctx)
 		},
 		url,
 	)
@@ -100,7 +93,7 @@ func (s *statusDB) GetStatusBoost(ctx context.Context, boostOfID string, byAccou
 		ctx,
 		"BoostOfID.AccountID",
 		func(status *gtsmodel.Status) error {
-			return s.newStatusQ(status).
+			return s.db.NewSelect().Model(status).
 				Where("status.boost_of_id = ?", boostOfID).
 				Where("status.account_id = ?", byAccountID).
 
@@ -261,6 +254,17 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		)
 		if err != nil {
 			errs.Appendf("error populating status emojis: %w", err)
+		}
+	}
+
+	if status.CreatedWithApplicationID != "" && status.CreatedWithApplication == nil {
+		// Populate the status' expected CreatedWithApplication (not always set).
+		status.CreatedWithApplication, err = s.state.DB.GetApplicationByID(
+			ctx, // these are already barebones
+			status.CreatedWithApplicationID,
+		)
+		if err != nil {
+			errs.Appendf("error populating status application: %w", err)
 		}
 	}
 
