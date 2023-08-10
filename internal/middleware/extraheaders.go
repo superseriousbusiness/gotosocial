@@ -17,10 +17,17 @@
 
 package middleware
 
-import "github.com/gin-gonic/gin"
+import (
+	"codeberg.org/gruf/go-debug"
+	"github.com/gin-gonic/gin"
+)
 
 // ExtraHeaders returns a new gin middleware which adds various extra headers to the response.
 func ExtraHeaders() gin.HandlerFunc {
+	policy := "default-src 'self'"
+	if debug.DEBUG {
+		policy += " localhost:*"
+	}
 	return func(c *gin.Context) {
 		// Inform all callers which server implementation this is.
 		c.Header("Server", "gotosocial")
@@ -32,5 +39,7 @@ func ExtraHeaders() gin.HandlerFunc {
 		//
 		// See: https://github.com/patcg-individual-drafts/topics
 		c.Header("Permissions-Policy", "browsing-topics=()")
+		// Inform the browser we only load CSS/JS/media from the same domain
+		c.Header("Content-Security-Policy", policy)
 	}
 }
