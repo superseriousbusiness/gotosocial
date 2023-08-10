@@ -20,6 +20,7 @@ EXPECT=$(cat << "EOF"
     "cache": {
         "account-mem-ratio": 18,
         "account-note-mem-ratio": 0.1,
+        "application-mem-ratio": 0.1,
         "block-mem-ratio": 3,
         "boost-of-ids-mem-ratio": 3,
         "emoji-category-mem-ratio": 0.1,
@@ -43,7 +44,7 @@ EXPECT=$(cat << "EOF"
         "status-mem-ratio": 18,
         "tag-mem-ratio": 3,
         "tombstone-mem-ratio": 2,
-        "user-mem-ratio": 0.1,
+        "user-mem-ratio": 0.25,
         "visibility-mem-ratio": 2,
         "webfinger-mem-ratio": 0.1
     },
