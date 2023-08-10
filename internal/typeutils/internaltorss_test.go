@@ -19,9 +19,13 @@ package typeutils_test
 
 import (
 	"context"
+	"encoding/xml"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type InternalToRSSTestSuite struct {
@@ -78,6 +82,63 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem2() {
 	suite.Equal("image/jpeg", item.Enclosure.Type)
 	suite.Equal("http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg", item.Enclosure.Url)
 	suite.Equal("hello world! #welcome ! first post on the instance <img src=\"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png\" title=\":rainbow:\" alt=\":rainbow:\" class=\"emoji\"/> !", item.Content)
+}
+
+func (suite *InternalToRSSTestSuite) TestStatusToRSSItem3() {
+	account := suite.testAccounts["admin_account"]
+	s := &gtsmodel.Status{
+		ID:                  "01H7G0VW1ACBZTRHN6RSA4JWVH",
+		URI:                 "http://localhost:8080/users/admin/statuses/01H7G0VW1ACBZTRHN6RSA4JWVH",
+		URL:                 "http://localhost:8080/@admin/statuses/01H7G0VW1ACBZTRHN6RSA4JWVH",
+		ContentWarning:      "这是简体中文帖子的一些示例内容。\n\n我希望我能读到这个，因为与无聊的旧 ASCII 相比，这些字符绝对漂亮。 不幸的是，我是一个愚蠢的西方人。\n\n无论如何，无论是谁读到这篇文章，你今天过得怎么样？ 希望你过得愉快！ 如果您有一段时间没有这样做，请从椅子上站起来，喝一杯水，并将您的眼睛集中在远处的物体上，而不是电脑屏幕上！",
+		Content:             "这是另一段，只是为了确保这篇文章足够长。 通过前肢上长而弯曲的爪子的数量可以轻松识别不同的树懒类别。 顾名思义，二趾树懒的前肢上有两个爪子，而三趾树懒的四个肢上都有三个爪子。 二趾树懒也比三趾树懒稍大，并且都属于不同的分类科。 美洲共有六种树懒，主要分布在中美洲和南美洲的热带雨林中。\n\n\n\n\t霍夫曼二趾树懒 (Choloepus hoffmanni)\n\n\t林奈二趾树懒 (Choloepus didactylus)\n\n\t侏儒三趾树懒 (Bradypus pygmaeus)\n\n\t鬃三趾树懒 (Bradypus torquatus)\n\n\t棕喉树懒 (Bradypus variegatus)\n\n\t浅喉树懒 (Bradypus tridactylus)\n\n\n\n目前，有 4 种树懒被 IUCN 濒危物种红色名录列为最不受关注的物种。 鬃毛三趾树懒很脆弱，而侏儒三趾树懒则极度濒危，树懒物种面临最大的灭绝风险。",
+		Local:               util.Ptr(true),
+		AccountURI:          account.URI,
+		AccountID:           account.ID,
+		Visibility:          gtsmodel.VisibilityDefault,
+		ActivityStreamsType: ap.ObjectNote,
+		Federated:           util.Ptr(true),
+		Boostable:           util.Ptr(true),
+		Replyable:           util.Ptr(true),
+		Likeable:            util.Ptr(true),
+	}
+	item, err := suite.typeconverter.StatusToRSSItem(context.Background(), s)
+	suite.NoError(err)
+
+	data, err := xml.MarshalIndent(item, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`<Item>
+  <Title>这是简体中文帖子的一些示例内容。&#xA;&#xA;我希望我能读到这个，因为与无聊的旧 ASCII 相比，这些字符绝对漂亮。 不幸的是，我是一个愚蠢的西方人。&#xA;&#xA;无论如何，无论是谁读到这篇文章，你今天过得怎么样？ 希望你过得愉快！ 如果您有一段时间没有这样做，请从椅...</Title>
+  <Link>
+    <Href>http://localhost:8080/@admin/statuses/01H7G0VW1ACBZTRHN6RSA4JWVH</Href>
+    <Rel></Rel>
+    <Type></Type>
+    <Length></Length>
+  </Link>
+  <Source>
+    <Href>http://localhost:8080/@admin/feed.rss</Href>
+    <Rel></Rel>
+    <Type></Type>
+    <Length></Length>
+  </Source>
+  <Author>
+    <Name>@admin@localhost:8080</Name>
+    <Email></Email>
+  </Author>
+  <Description>@admin@localhost:8080 made a new post</Description>
+  <Id>http://localhost:8080/@admin/statuses/01H7G0VW1ACBZTRHN6RSA4JWVH</Id>
+  <Updated>0001-01-01T00:00:00Z</Updated>
+  <Created>0001-01-01T00:00:00Z</Created>
+  <Enclosure>
+    <Url></Url>
+    <Length></Length>
+    <Type></Type>
+  </Enclosure>
+  <Content>这是另一段，只是为了确保这篇文章足够长。 通过前肢上长而弯曲的爪子的数量可以轻松识别不同的树懒类别。 顾名思义，二趾树懒的前肢上有两个爪子，而三趾树懒的四个肢上都有三个爪子。 二趾树懒也比三趾树懒稍大，并且都属于不同的分类科。 美洲共有六种树懒，主要分布在中美洲和南美洲的热带雨林中。&#xA;&#xA;&#xA;&#xA;&#x9;霍夫曼二趾树懒 (Choloepus hoffmanni)&#xA;&#xA;&#x9;林奈二趾树懒 (Choloepus didactylus)&#xA;&#xA;&#x9;侏儒三趾树懒 (Bradypus pygmaeus)&#xA;&#xA;&#x9;鬃三趾树懒 (Bradypus torquatus)&#xA;&#xA;&#x9;棕喉树懒 (Bradypus variegatus)&#xA;&#xA;&#x9;浅喉树懒 (Bradypus tridactylus)&#xA;&#xA;&#xA;&#xA;目前，有 4 种树懒被 IUCN 濒危物种红色名录列为最不受关注的物种。 鬃毛三趾树懒很脆弱，而侏儒三趾树懒则极度濒危，树懒物种面临最大的灭绝风险。</Content>
+</Item>`, string(data))
 }
 
 func TestInternalToRSSTestSuite(t *testing.T) {

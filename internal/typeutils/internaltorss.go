@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	rssMaxTitleChars       = 128
-	rssDescriptionMaxChars = 256
+	rssTitleMaxRunes       = 128
+	rssDescriptionMaxRunes = 256
 )
 
 func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error) {
@@ -43,9 +43,9 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	// example: Venice Film Festival Tries to Quit Sinking
 	var title string
 	if s.ContentWarning != "" {
-		title = trimTo(s.ContentWarning, rssMaxTitleChars)
+		title = trimTo(s.ContentWarning, rssTitleMaxRunes)
 	} else {
-		title = trimTo(s.Text, rssMaxTitleChars)
+		title = trimTo(s.Text, rssTitleMaxRunes)
 	}
 
 	// Link -- The URL of the item.
@@ -97,7 +97,7 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 		descriptionBuilder.WriteString("\"")
 	}
 
-	description := trimTo(descriptionBuilder.String(), rssDescriptionMaxChars)
+	description := trimTo(descriptionBuilder.String(), rssDescriptionMaxRunes)
 
 	// ID -- A string that uniquely identifies the item.
 	// example: http://inessential.com/2002/09/01.php#a2
@@ -167,10 +167,26 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	}, nil
 }
 
+// trimTo trims the given `in` string to
+// the length `to`, measured in runes.
+//
+// The reason for using runes is to avoid
+// cutting off UTF-8 characters in the
+// middle, and generating garbled bytes.
+//
+// If trimming was necessary, the returned
+// string will be suffixed with ellipsis
+// (`...`) to indicate omission.
 func trimTo(in string, to int) string {
-	if len(in) <= to {
+	var (
+		runes    = []rune(in)
+		runesLen = len(runes)
+	)
+
+	if runesLen <= to {
+		// Fine as-is.
 		return in
 	}
 
-	return in[:to-3] + "..."
+	return string(runes[:to-3]) + "..."
 }
