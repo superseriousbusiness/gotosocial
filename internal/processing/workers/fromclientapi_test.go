@@ -94,7 +94,10 @@ func (suite *FromClientAPITestSuite) newStatus(
 
 	if boostOfStatus != nil {
 		// Status is a boost.
-
+		newStatus.Content = ""
+		newStatus.BoostOfAccountID = boostOfStatus.AccountID
+		newStatus.BoostOfID = boostOfStatus.ID
+		newStatus.Visibility = boostOfStatus.Visibility
 	}
 
 	// Put the status in the db, to mimic what would
@@ -516,6 +519,120 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 		true,
 		statusJSON,
 		stream.EventTypeUpdate,
+	)
+
+	// Check message NOT in list stream.
+	suite.checkStreamed(
+		listStream,
+		false,
+		"",
+		"",
+	)
+}
+
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+		testList         = suite.testLists["local_account_1_list_1"]
+		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		homeStream       = streams[stream.TimelineHome]
+		listStream       = streams[stream.TimelineList+":"+testList.ID]
+
+		// Admin account boosts a post by turtle.
+		status = suite.newStatus(
+			ctx,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			suite.testStatuses["local_account_2_status_1"],
+		)
+		statusJSON = suite.statusJSON(
+			ctx,
+			status,
+			receivingAccount,
+		)
+	)
+
+	// Process the new status.
+	if err := suite.processor.Workers().ProcessFromClientAPI(
+		ctx,
+		messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			OriginAccount:  postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check message in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		statusJSON,
+		stream.EventTypeUpdate,
+	)
+
+	// Check message in list stream.
+	suite.checkStreamed(
+		listStream,
+		true,
+		statusJSON,
+		stream.EventTypeUpdate,
+	)
+}
+
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+		testList         = suite.testLists["local_account_1_list_1"]
+		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		homeStream       = streams[stream.TimelineHome]
+		listStream       = streams[stream.TimelineList+":"+testList.ID]
+
+		// Admin account boosts a post by turtle.
+		status = suite.newStatus(
+			ctx,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			suite.testStatuses["local_account_2_status_1"],
+		)
+	)
+
+	// Update zork's follow of admin
+	// to not show boosts in timeline.
+	follow := new(gtsmodel.Follow)
+	*follow = *suite.testFollows["local_account_1_admin_account"]
+	follow.ShowReblogs = util.Ptr(false)
+	if err := suite.db.UpdateFollow(ctx, follow, "show_reblogs"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := suite.processor.Workers().ProcessFromClientAPI(
+		ctx,
+		messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			OriginAccount:  postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check message NOT in home stream.
+	suite.checkStreamed(
+		homeStream,
+		false,
+		"",
+		"",
 	)
 
 	// Check message NOT in list stream.
