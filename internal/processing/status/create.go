@@ -54,7 +54,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, appli
 		Local:                    &local,
 		AccountID:                account.ID,
 		AccountURI:               account.URI,
-		ContentWarning:           text.SanitizePlaintext(form.SpoilerText),
+		ContentWarning:           text.SanitizeToPlaintext(form.SpoilerText),
 		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                &sensitive,
 		CreatedWithApplicationID: application.ID,

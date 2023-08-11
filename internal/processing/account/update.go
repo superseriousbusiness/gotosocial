@@ -67,7 +67,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 
 		// Parse new display name (always from plaintext).
-		account.DisplayName = text.SanitizePlaintext(displayName)
+		account.DisplayName = text.SanitizeToPlaintext(displayName)
 
 		// If display name has changed, account emojis may have also changed.
 		emojisChanged = true
@@ -110,8 +110,8 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 			// Sanitize raw field values.
 			fieldRaw := &gtsmodel.Field{
-				Name:  text.SanitizePlaintext(name),
-				Value: text.SanitizePlaintext(value),
+				Name:  text.SanitizeToPlaintext(name),
+				Value: text.SanitizeToPlaintext(value),
 			}
 			fieldsRaw = append(fieldsRaw, fieldRaw)
 		}
@@ -255,7 +255,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err := validate.CustomCSS(customCSS); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		account.CustomCSS = text.SanitizePlaintext(customCSS)
+		account.CustomCSS = text.SanitizeToPlaintext(customCSS)
 	}
 
 	if form.EnableRSS != nil {

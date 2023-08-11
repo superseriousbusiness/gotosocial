@@ -65,13 +65,10 @@ func (f *formatter) fromPlain(
 	result.HTML = htmlContentBytes.String()
 
 	// Clean anything dangerous out of resulting HTML.
-	result.HTML = SanitizeHTML(result.HTML)
+	result.HTML = SanitizeToHTML(result.HTML)
 
 	// Shrink ray!
-	var err error
-	if result.HTML, err = m.String("text/html", result.HTML); err != nil {
-		log.Errorf(ctx, "error minifying HTML: %s", err)
-	}
+	result.HTML = MinifyHTML(result.HTML)
 
 	return result
 }

@@ -47,7 +47,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 	var updatingColumns []string
 
 	if form.Description != nil {
-		attachment.Description = text.SanitizePlaintext(*form.Description)
+		attachment.Description = text.SanitizeToPlaintext(*form.Description)
 		updatingColumns = append(updatingColumns, "description")
 	}
 

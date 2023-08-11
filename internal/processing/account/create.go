@@ -71,7 +71,7 @@ func (p *Processor) Create(
 		Username:    form.Username,
 		Email:       form.Email,
 		Password:    form.Password,
-		Reason:      text.SanitizePlaintext(reason),
+		Reason:      text.SanitizeToPlaintext(reason),
 		PreApproved: !config.GetAccountsApprovalRequired(), // Mark as approved if no approval required.
 		SignUpIP:    form.IP,
 		Locale:      form.Locale,
