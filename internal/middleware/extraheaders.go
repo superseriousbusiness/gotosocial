@@ -70,6 +70,9 @@ func BuildContentSecurityPolicy() string {
 		return policy
 	}
 
+	// S3 is on and in non-proxy mode, so we need to add the S3 host to
+	// the policy to allow images and video to be pulled from there too.
+
 	// If secure is false,
 	// use 'http' scheme.
 	scheme := "https"
@@ -77,11 +80,8 @@ func BuildContentSecurityPolicy() string {
 		scheme = "http"
 	}
 
-	// Construct a secured endpoint URL.
+	// Construct endpoint URL.
 	s3EndpointURLStr := scheme + "://" + s3Endpoint
-
-	// S3 is on and in non-proxy mode, so we need to add the S3 host to
-	// the policy to allow images and video to be pulled from there too.
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/img-src
 	policy += "; image-src " + s3EndpointURLStr
