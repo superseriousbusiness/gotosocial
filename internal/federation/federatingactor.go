@@ -27,6 +27,7 @@ import (
 	"net/url"
 	"strings"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -223,14 +224,21 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// is in the database.
 		//
 		// Since our `Exists()` function currently *always*
-		// returns false, it will *always* attempt to insert
-		// the Activity. Therefore, we ignore AlreadyExists
-		// errors.
+		// returns false, it will *always* attempt to parse
+		// out and insert the Activity, trying to fetch other
+		// items from the DB in the process, which may or may
+		// not exist yet. Therefore, we should expect some
+		// errors coming from this function, and only warn log
+		// on certain ones.
 		//
 		// This check may be removed when the `Exists()` func
 		// is updated, and/or federating callbacks are handled
 		// properly.
-		if !errors.Is(err, db.ErrAlreadyExists) {
+		if !errorsv2.Comparable(
+			err,
+			db.ErrAlreadyExists,
+			db.ErrNoEntries,
+		) {
 			// Failed inbox forwarding is not a show-stopper,
 			// and doesn't even necessarily denote a real error.
 			l.Warnf("error calling sideEffectActor.InboxForwarding: %q", err)
