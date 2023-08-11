@@ -28,6 +28,7 @@ func TestBuildContentSecurityPolicy(t *testing.T) {
 	type cspTest struct {
 		s3Endpoint string
 		s3Proxy    bool
+		s3Secure   bool
 		expected   string
 		actual     string
 	}
@@ -36,51 +37,61 @@ func TestBuildContentSecurityPolicy(t *testing.T) {
 		{
 			s3Endpoint: "",
 			s3Proxy:    false,
+			s3Secure:   false,
 			expected:   "default-src 'self'",
 		},
 		{
-			s3Endpoint: "https://some-bucket-provider.com",
+			s3Endpoint: "some-bucket-provider.com",
 			s3Proxy:    false,
+			s3Secure:   true,
 			expected:   "default-src 'self'; image-src https://some-bucket-provider.com; media-src https://some-bucket-provider.com",
 		},
 		{
-			s3Endpoint: "https://some-bucket-provider.com:6969",
+			s3Endpoint: "some-bucket-provider.com:6969",
 			s3Proxy:    false,
+			s3Secure:   true,
 			expected:   "default-src 'self'; image-src https://some-bucket-provider.com:6969; media-src https://some-bucket-provider.com:6969",
 		},
 		{
 			s3Endpoint: "some-bucket-provider.com:6969",
 			s3Proxy:    false,
-			expected:   "default-src 'self'; image-src some-bucket-provider.com:6969; media-src some-bucket-provider.com:6969",
+			s3Secure:   false,
+			expected:   "default-src 'self'; image-src http://some-bucket-provider.com:6969; media-src http://some-bucket-provider.com:6969",
 		},
 		{
 			s3Endpoint: "s3.nl-ams.scw.cloud",
 			s3Proxy:    false,
-			expected:   "default-src 'self'; image-src s3.nl-ams.scw.cloud; media-src s3.nl-ams.scw.cloud",
+			s3Secure:   true,
+			expected:   "default-src 'self'; image-src https://s3.nl-ams.scw.cloud; media-src https://s3.nl-ams.scw.cloud",
 		},
 		{
-			s3Endpoint: "https://some-bucket-provider.com",
+			s3Endpoint: "some-bucket-provider.com",
 			s3Proxy:    true,
-			expected:   "default-src 'self'",
-		},
-		{
-			s3Endpoint: "https://some-bucket-provider.com:6969",
-			s3Proxy:    true,
+			s3Secure:   true,
 			expected:   "default-src 'self'",
 		},
 		{
 			s3Endpoint: "some-bucket-provider.com:6969",
 			s3Proxy:    true,
+			s3Secure:   true,
+			expected:   "default-src 'self'",
+		},
+		{
+			s3Endpoint: "some-bucket-provider.com:6969",
+			s3Proxy:    true,
+			s3Secure:   true,
 			expected:   "default-src 'self'",
 		},
 		{
 			s3Endpoint: "s3.nl-ams.scw.cloud",
 			s3Proxy:    true,
+			s3Secure:   true,
 			expected:   "default-src 'self'",
 		},
 	} {
 		config.SetStorageS3Endpoint(test.s3Endpoint)
 		config.SetStorageS3Proxy(test.s3Proxy)
+		config.SetStorageS3UseSSL(test.s3Secure)
 
 		csp := middleware.BuildContentSecurityPolicy()
 		if csp != test.expected {
