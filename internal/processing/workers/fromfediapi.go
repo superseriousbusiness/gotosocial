@@ -265,6 +265,10 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", fMsg.GTSModel)
 	}
 
+	if err := p.state.DB.PopulateFollowRequest(ctx, followRequest); err != nil {
+		return gtserror.Newf("error populating follow request: %w", err)
+	}
+
 	if *followRequest.TargetAccount.Locked {
 		// Account on our instance is locked:
 		// just notify the follow request.
