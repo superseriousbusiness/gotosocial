@@ -25,44 +25,167 @@ import (
 	"github.com/microcosm-cc/bluemonday"
 )
 
-// '[A]llows a broad selection of HTML elements and attributes that are safe for user generated content.
-// Note that this policy does not allow iframes, object, embed, styles, script, etc.
-// An example usage scenario would be blog post bodies where a variety of formatting is expected along with the potential for TABLEs and IMGs.'
-//
-// Source: https://github.com/microcosm-cc/bluemonday#usage
-var regular *bluemonday.Policy = bluemonday.UGCPolicy().
-	RequireNoReferrerOnLinks(true).
-	RequireNoFollowOnLinks(false).              // remove the global default which adds rel="nofollow" to all links including local relative
-	RequireNoFollowOnFullyQualifiedLinks(true). // add rel="nofollow" on all external links
-	RequireCrossOriginAnonymous(true).
-	AddTargetBlankToFullyQualifiedLinks(true).
-	AllowAttrs("class", "href", "rel").OnElements("a").
-	AllowAttrs("class").OnElements("span").
-	AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code").
-	SkipElementsContent("code", "pre")
+// Regular HTML policy is an adapted version of the default
+// bluemonday UGC policy, with some tweaks of our own.
+// See: https://github.com/microcosm-cc/bluemonday#usage
+var regular *bluemonday.Policy = func() *bluemonday.Policy {
+	p := bluemonday.NewPolicy()
 
-// '[C]an be thought of as equivalent to stripping all HTML elements and their attributes as it has nothing on its allowlist.
-// An example usage scenario would be blog post titles where HTML tags are not expected at all
-// and if they are then the elements and the content of the elements should be stripped. This is a very strict policy.'
+	// AllowStandardAttributes will enable "id", "title" and
+	// the language specific attributes "dir" and "lang" on
+	// all elements that are allowed
+	p.AllowStandardAttributes()
+
+	/*
+		LAYOUT AND FORMATTING
+	*/
+
+	// "aside" is permitted and takes no attributes.
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/aside
+	p.AllowElements("article", "aside")
+
+	// "details" is permitted, including the "open" attribute
+	// which can either be blank or the value "open".
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/details
+	p.AllowAttrs("open").Matching(regexp.MustCompile(`(?i)^(|open)$`)).OnElements("details")
+
+	// "section" is permitted and takes no attributes.
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/section
+	p.AllowElements("section")
+
+	// "summary" is permitted and takes no attributes.
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/summary
+	p.AllowElements("summary")
+
+	// "h1" through "h6" are permitted and take no attributes.
+	p.AllowElements("h1", "h2", "h3", "h4", "h5", "h6")
+
+	// "hgroup" is permitted and takes no attributes.
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/hgroup
+	p.AllowElements("hgroup")
+
+	// "blockquote" is permitted, including the "cite"
+	// attribute which must be a standard URL.
+	p.AllowAttrs("cite").OnElements("blockquote")
+
+	// "br" "div" "hr" "p" "span" "wbr" are permitted and take no attributes
+	p.AllowElements("br", "div", "hr", "p", "span", "wbr")
+
+	// The following are all inline phrasing elements:
+	p.AllowElements("abbr", "acronym", "cite", "code", "dfn", "em",
+		"figcaption", "mark", "s", "samp", "strong", "sub", "sup", "var")
+
+	// "q" is permitted and "cite" is a URL and handled by URL policies
+	p.AllowAttrs("cite").OnElements("q")
+
+	// "time" is permitted
+	p.AllowAttrs("datetime").Matching(bluemonday.ISO8601).OnElements("time")
+
+	// Block and inline elements that impart no
+	// semantic meaning but style the document.
+	// Underlines, italics, bold, strikethrough etc.
+	p.AllowElements("b", "i", "pre", "small", "strike", "tt", "u")
+
+	// "del" "ins" are permitted
+	p.AllowAttrs("cite").Matching(bluemonday.Paragraph).OnElements("del", "ins")
+	p.AllowAttrs("datetime").Matching(bluemonday.ISO8601).OnElements("del", "ins")
+
+	// Enable ordered, unordered, and definition lists.
+	p.AllowLists()
+
+	// Class needed on span for mentions, which look like this when assembled:
+	// `<span class="h-card"><a href="https://example.org/users/targetAccount" class="u-url mention">@<span>someusername</span></a></span>`
+	p.AllowAttrs("class").OnElements("span")
+
+	/*
+		LANGUAGE FORMATTING
+	*/
+
+	// "bdi" "bdo" are permitted on "dir".
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/dir
+	p.AllowAttrs("dir").Matching(bluemonday.Direction).OnElements("bdi", "bdo")
+
+	// "rp" "rt" "ruby" are permitted. See:
+	// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rp
+	// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/rt
+	// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/ruby
+	p.AllowElements("rp", "rt", "ruby")
+
+	/*
+		CODE BLOCKS
+	*/
+
+	// Permit language tags for code elements.
+	p.AllowAttrs("class").Matching(regexp.MustCompile("^language-[a-zA-Z0-9]+$")).OnElements("code")
+
+	// Don't sanitize HTML inside code blocks.
+	p.SkipElementsContent("code", "pre")
+
+	/*
+		LINKS AND LINK SAFETY.
+	*/
+
+	// Permit hyperlinks.
+	p.AllowAttrs("class", "href", "rel").OnElements("a")
+
+	// URLs must be parseable by net/url.Parse().
+	p.RequireParseableURLs(true)
+
+	// Most common URL schemes only.
+	p.AllowURLSchemes("mailto", "http", "https")
+
+	// Force rel="noreferrer".
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer
+	p.RequireNoReferrerOnLinks(true)
+
+	// Add rel="nofollow" on all fully qualified (not relative) links.
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel#nofollow
+	p.RequireNoFollowOnFullyQualifiedLinks(true)
+
+	// Force crossorigin="anonymous"
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/crossorigin#anonymous
+	p.RequireCrossOriginAnonymous(true)
+
+	// Force target="_blank".
+	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#target
+	p.AddTargetBlankToFullyQualifiedLinks(true)
+
+	return p
+}()
+
+// '[C]an be thought of as equivalent to stripping all HTML
+// elements and their attributes as it has nothing on its allowlist.
+// An example usage scenario would be blog post titles where HTML
+// tags are not expected at all and if they are then the elements
+// and the content of the elements should be stripped. This is a
+// very strict policy.'
 //
 // Source: https://github.com/microcosm-cc/bluemonday#usage
 var strict *bluemonday.Policy = bluemonday.StrictPolicy()
 
-// removeHTML strictly removes *all* recognized HTML elements from the given string.
+// removeHTML strictly removes *all* recognized
+// HTML elements from the given string.
 func removeHTML(in string) string {
 	return strict.Sanitize(in)
 }
 
-// SanitizeHTML sanitizes risky html elements from the given string, allowing only safe ones through.
-func SanitizeHTML(in string) string {
+// SanitizeToHTML sanitizes only risky html elements
+// from the given string, allowing safe ones through.
+func SanitizeToHTML(in string) string {
 	return regular.Sanitize(in)
 }
 
-// SanitizePlaintext runs text through basic sanitization. This removes
-// any html elements that were in the string, and returns clean plaintext.
-func SanitizePlaintext(in string) string {
+// SanitizeToPlaintext runs text through basic sanitization.
+// This removes any html elements that were in the string,
+// and returns clean plaintext.
+func SanitizeToPlaintext(in string) string {
+	// Unescape first to catch any tricky critters.
 	content := html.UnescapeString(in)
+
+	// Remove all detected HTML.
 	content = removeHTML(content)
+
+	// Unescape again to return plaintext.
 	content = html.UnescapeString(content)
 	return strings.TrimSpace(content)
 }

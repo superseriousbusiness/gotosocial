@@ -67,8 +67,8 @@ func (p *Processor) DomainBlockCreate(
 			ID:                 id.NewULID(),
 			Domain:             domain,
 			CreatedByAccountID: account.ID,
-			PrivateComment:     text.SanitizePlaintext(privateComment),
-			PublicComment:      text.SanitizePlaintext(publicComment),
+			PrivateComment:     text.SanitizeToPlaintext(privateComment),
+			PublicComment:      text.SanitizeToPlaintext(publicComment),
 			Obfuscate:          &obfuscate,
 			SubscriptionID:     subscriptionID,
 		}

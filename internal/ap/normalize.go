@@ -20,6 +20,7 @@ package ap
 import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 /*
@@ -126,7 +127,8 @@ func NormalizeIncomingActivityObject(activity pub.Activity, rawJSON map[string]i
 }
 
 // NormalizeIncomingContent replaces the Content of the given item
-// with the raw 'content' value from the raw json object map.
+// with the sanitized version of the raw 'content' value from the
+// raw json object map.
 //
 // noop if there was no content in the json object map or the
 // content was not a plain string.
@@ -145,6 +147,14 @@ func NormalizeIncomingContent(item WithSetContent, rawJSON map[string]interface{
 		return
 	}
 
+	// Content should be HTML encoded by default:
+	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-content
+	//
+	// TODO: sanitize differently based on mediaType.
+	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-mediatype
+	content = text.SanitizeToHTML(content)
+	content = text.MinifyHTML(content)
+
 	// Set normalized content property from the raw string;
 	// this replaces any existing content property on the item.
 	contentProp := streams.NewActivityStreamsContentProperty()
@@ -154,7 +164,8 @@ func NormalizeIncomingContent(item WithSetContent, rawJSON map[string]interface{
 
 // NormalizeIncomingAttachments normalizes all attachments (if any) of the given
 // item, replacing the 'name' (aka content warning) field of each attachment
-// with the raw 'name' value from the raw json object map.
+// with the raw 'name' value from the raw json object map, and doing sanitization
+// on the result.
 //
 // noop if there are no attachments; noop if attachment is not a format
 // we can understand.
@@ -212,7 +223,8 @@ func NormalizeIncomingAttachments(item WithAttachment, rawJSON map[string]interf
 }
 
 // NormalizeIncomingSummary replaces the Summary of the given item
-// with the raw 'summary' value from the raw json object map.
+// with the sanitized version of the raw 'summary' value from the
+// raw json object map.
 //
 // noop if there was no summary in the json object map or the
 // summary was not a plain string.
@@ -228,6 +240,11 @@ func NormalizeIncomingSummary(item WithSetSummary, rawJSON map[string]interface{
 		// Not interested in non-string summary.
 		return
 	}
+
+	// Summary should be HTML encoded:
+	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-summary
+	summary = text.SanitizeToHTML(summary)
+	summary = text.MinifyHTML(summary)
 
 	// Set normalized summary property from the raw string; this
 	// will replace any existing summary property on the item.
@@ -253,6 +270,13 @@ func NormalizeIncomingName(item WithSetName, rawJSON map[string]interface{}) {
 		// Not interested in non-string name.
 		return
 	}
+
+	// Name *must not* include any HTML markup:
+	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-name
+	//
+	// todo: We probably want to update this to allow
+	// *escaped* HTML markup, but for now just nuke it.
+	name = text.SanitizeToPlaintext(name)
 
 	// Set normalized name property from the raw string; this
 	// will replace any existing name property on the item.

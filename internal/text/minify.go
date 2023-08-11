@@ -18,6 +18,7 @@
 package text
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/tdewolff/minify/v2"
 	"github.com/tdewolff/minify/v2/html"
 )
@@ -31,3 +32,23 @@ var m = func() *minify.M {
 	})
 	return m
 }()
+
+// MinifyHTML minifies the given string
+// under the assumption that it's HTML.
+//
+// If input is not HTML encoded, this
+// function will try to do minimization
+// anyway, but this may produce unexpected
+// results.
+//
+// If an error occurs during minimization,
+// it will be logged and the original string
+// returned unmodified.
+func MinifyHTML(in string) string {
+	out, err := m.String("text/html", in)
+	if err != nil {
+		log.Error(nil, err)
+	}
+
+	return out
+}

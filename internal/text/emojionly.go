@@ -61,13 +61,10 @@ func (f *formatter) FromPlainEmojiOnly(ctx context.Context, pmf gtsmodel.ParseMe
 	result.HTML = htmlContentBytes.String()
 
 	// clean anything dangerous out of the HTML
-	result.HTML = SanitizeHTML(result.HTML)
+	result.HTML = SanitizeToHTML(result.HTML)
 
 	// shrink ray
-	result.HTML, err = m.String("text/html", result.HTML)
-	if err != nil {
-		log.Errorf(ctx, "error minifying HTML: %s", err)
-	}
+	result.HTML = MinifyHTML(result.HTML)
 
 	return result
 }

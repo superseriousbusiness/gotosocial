@@ -146,7 +146,7 @@ func (suite *NormalizeTestSuite) getStatusableWithMultipleAttachments() (vocab.A
 			"type": "Document",
 			"mediaType": "image/jpeg",
 			"url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg",
-			"name": "danger: #cute but will claw you :("
+			"name": "image of a cat &amp; there's a note saying: &lt;danger: #cute but will claw you :(&gt;"
 		  }
 		]
 	  }`)
@@ -192,7 +192,7 @@ func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
 	)
 
 	ap.NormalizeIncomingActivityObject(create, map[string]interface{}{"object": rawNote})
-	suite.Equal(`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" data-tag="twittermigration" href="https://example.org/tag/twittermigration" rel="tag ugc">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night&#39;s spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`, ap.ExtractContent(note))
+	suite.Equal(`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" href="https://example.org/tag/twittermigration" rel="tag ugc nofollow noreferrer noopener" target="_blank">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night's spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`, ap.ExtractContent(note))
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment() {
@@ -224,7 +224,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
   "@context": "https://www.w3.org/ns/activitystreams",
   "attachment": {
     "mediaType": "image/jpeg",
-    "name": "DESCRIPTION: here's \u003c\u003ca\u003e\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+    "name": "DESCRIPTION: here's \u003c\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
     "type": "Document",
     "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
   },
@@ -265,7 +265,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
   "@context": "https://www.w3.org/ns/activitystreams",
   "attachment": {
     "mediaType": "image/jpeg",
-    "name": "DESCRIPTION: here's \u003c\u003ca\u003e\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+    "name": "DESCRIPTION: here's \u003c\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
     "type": "Document",
     "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
   },
@@ -304,7 +304,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttac
     },
     {
       "mediaType": "image/jpeg",
-      "name": "danger: #cute%20but%20will%20claw%20you%20:(",
+      "name": "image of a cat \u0026amp; there's a note saying: \u0026lt;danger: #cute but will claw you :(\u0026gt;",
       "type": "Document",
       "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
     }
@@ -326,7 +326,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttac
   "attachment": [
     {
       "mediaType": "image/jpeg",
-      "name": "DESCRIPTION: here's \u003c\u003ca\u003e\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+      "name": "DESCRIPTION: here's \u003c\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
       "type": "Document",
       "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
     },
@@ -343,7 +343,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsMultipleAttac
     },
     {
       "mediaType": "image/jpeg",
-      "name": "danger: #cute but will claw you :(",
+      "name": "image of a cat \u0026 there's a note saying:",
       "type": "Document",
       "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
     }
@@ -380,7 +380,7 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableSummary() {
 	suite.Equal(`warning: #WEIRD%20%23SUMMARY%20;;;;a;;a;asv%20%20%20%20khop8273987(*%5E&%5E)`, ap.ExtractSummary(statusable))
 
 	ap.NormalizeIncomingSummary(statusable, rawAccount)
-	suite.Equal(`warning: #WEIRD #SUMMARY ;;;;a;;a;asv    khop8273987(*^&^)`, ap.ExtractSummary(statusable))
+	suite.Equal(`warning: #WEIRD #SUMMARY ;;;;a;;a;asv khop8273987(*^&^)`, ap.ExtractSummary(statusable))
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeStatusableName() {
