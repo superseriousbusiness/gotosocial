@@ -107,7 +107,7 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		return
 	}
 
-	app, err := m.db.GetApplicationByClientID(c.Request.Context(), sessionClientID)
+	app, err := m.db.GetApplicationByClientID(c.Request.Context(), clientID)
 	if err != nil {
 		m.clearSession(s)
 		safe := fmt.Sprintf("application for %s %s could not be retrieved", sessionClientID, clientID)
