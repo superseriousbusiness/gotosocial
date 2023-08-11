@@ -84,10 +84,10 @@ func BuildContentSecurityPolicy() string {
 	s3EndpointURLStr := scheme + "://" + s3Endpoint
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/img-src
-	policy += "; image-src " + s3EndpointURLStr
+	policy += "; img-src 'self' " + s3EndpointURLStr
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/media-src
-	policy += "; media-src " + s3EndpointURLStr
+	policy += "; media-src 'self' " + s3EndpointURLStr
 
 	return policy
 }
