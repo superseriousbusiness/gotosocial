@@ -83,6 +83,10 @@ func BuildContentSecurityPolicy() string {
 	// Construct endpoint URL.
 	s3EndpointURLStr := scheme + "://" + s3Endpoint
 
+	// When object storage is in use in non-proxied mode, GtS still serves some
+	// assets itself like the logo, so keep 'self' in there. That should also
+	// handle any redirects from the fileserver to object storage.
+
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/img-src
 	policy += "; img-src 'self' " + s3EndpointURLStr
 
