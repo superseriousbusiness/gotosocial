@@ -54,8 +54,10 @@ func BuildContentSecurityPolicy() string {
 		// Debug is enabled, allow
 		// serving things from localhost
 		// as well (regardless of port).
-		policy += " localhost:*"
+		policy += " localhost:* ws://localhost:*"
 	}
+
+	policy += "; img-src 'self' blob:; object-src 'none'"
 
 	s3Endpoint := config.GetStorageS3Endpoint()
 	if s3Endpoint == "" {
