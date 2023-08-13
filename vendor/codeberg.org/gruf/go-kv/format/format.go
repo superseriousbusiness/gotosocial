@@ -316,7 +316,9 @@ func (f format) AppendStringSafe(s string) {
 		f.Buffer.B = strconv.AppendQuote(f.Buffer.B, s)
 	} else if ContainsDoubleQuote(s) {
 		// Contains double quotes, needs escaping
+		f.Buffer.B = append(f.Buffer.B, '"')
 		f.Buffer.B = AppendEscape(f.Buffer.B, s)
+		f.Buffer.B = append(f.Buffer.B, '"')
 	} else if len(s) == 0 || ContainsSpaceOrTab(s) {
 		// Contains space / empty, needs quotes
 		f.Buffer.B = append(f.Buffer.B, '"')
