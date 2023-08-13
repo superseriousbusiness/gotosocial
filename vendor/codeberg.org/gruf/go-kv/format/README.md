@@ -2,4 +2,3 @@ String formatting package using Rust-style formatting directives, geared specifc
 
 Generally more visually friendly than `"fmt"` and performance is much improved.
 
-![benchmarks](https://codeberg.org/gruf/go-kv/raw/main/format/benchmark.png)
