@@ -29,7 +29,7 @@ func IsSafeASCII(str string) bool {
 	return true
 }
 
-// ContainsSpaceOrTab checks if "s" contains space or tabs.
+// ContainsSpaceOrTab checks if "s" contains space or tabs. EXPECTS ASCII.
 func ContainsSpaceOrTab(s string) bool {
 	if i := strings.IndexByte(s, ' '); i >= 0 {
 		return true // note using indexbyte as it is ASM.
@@ -39,31 +39,26 @@ func ContainsSpaceOrTab(s string) bool {
 	return false
 }
 
-// ContainsDoubleQuote checks if "s" contains a double quote.
+// ContainsDoubleQuote checks if "s" contains a double quote. EXPECTS ASCII.
 func ContainsDoubleQuote(s string) bool {
 	return (strings.IndexByte(s, '"') >= 0)
 }
 
-// AppendEscape will append 's' to 'dst' and escape any double quotes.
+// AppendEscape will append 's' to 'dst' and escape any double quotes. EXPECTS ASCII.
 func AppendEscape(dst []byte, str string) []byte {
-	var delim bool
 	for i := range str {
-		if str[i] == '\\' && !delim {
-			// Set delim flag
-			delim = true
-			continue
-		} else if str[i] == '"' && !delim {
-			// Append escaped double quote
-			dst = append(dst, `\"`...)
-			continue
-		} else if delim {
-			// Append skipped slash
-			dst = append(dst, `\`...)
-			delim = false
-		}
+		switch str[i] {
+		case '\\':
+			// Append delimited '\'
+			dst = append(dst, '\\', '\\')
 
-		// Append char as-is
-		dst = append(dst, str[i])
+		case '"':
+			// Append delimited '"'
+			dst = append(dst, '\\', '"')
+		default:
+			// Append char as-is
+			dst = append(dst, str[i])
+		}
 	}
 	return dst
 }
