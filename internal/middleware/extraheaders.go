@@ -54,19 +54,16 @@ func BuildContentSecurityPolicy() string {
 		// Debug is enabled, allow
 		// serving things from localhost
 		// as well (regardless of port).
-		policy += " localhost:*"
+		policy += " localhost:* ws://localhost:*"
 	}
+
+	// Disallow object-src as recommended https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/object-src
+	policy += "; object-src 'none'"
 
 	s3Endpoint := config.GetStorageS3Endpoint()
-	if s3Endpoint == "" {
-		// S3 not configured,
-		// default policy is OK.
-		return policy
-	}
-
-	if config.GetStorageS3Proxy() {
-		// S3 is configured in proxy
-		// mode, default policy is OK.
+	if s3Endpoint == "" || config.GetStorageS3Proxy() {
+		// S3 not configured or in proxy mode, just allow images from self and blob:
+		policy += "; img-src 'self' blob:"
 		return policy
 	}
 
@@ -88,7 +85,7 @@ func BuildContentSecurityPolicy() string {
 	// handle any redirects from the fileserver to object storage.
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/img-src
-	policy += "; img-src 'self' " + s3EndpointURLStr
+	policy += "; img-src 'self' blob: " + s3EndpointURLStr
 
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/media-src
 	policy += "; media-src 'self' " + s3EndpointURLStr
