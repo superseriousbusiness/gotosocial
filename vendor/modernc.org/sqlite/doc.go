@@ -94,6 +94,8 @@
 //
 // # Changelog
 //
+// 2023-08-03 v1.25.0: enable SQLITE_ENABLE_DBSTAT_VTAB.
+//
 // 2023-07-11 v1.24.0:
 //
 // Add (*conn).{Serialize,Deserialize,NewBackup,NewRestore} methods, add Backup type.
