@@ -66,6 +66,22 @@ you'll make society more equitable for all if you're not careful! :hammer_sickle
 	sizeofResultKey = 2 * sizeofIDStr
 )
 
+var (
+	// Example time calculated at ~ 14th August, 2023. Because if
+	// we use `time.Now()` in our structs below, it populates
+	// them with locale data which throws-off size calculations.
+	//
+	// This is because the locale data is (relatively) very large
+	// in-memory, but it's global "singletons" ptr'd to by the time
+	// structs, so inconsequential to our calculated cache size.
+	// Unfortunately the size.Of() function is not aware of this!
+	exampleTime = time.Time{}.Add(1692010328 * time.Second)
+
+	// stop trying to collapse this var
+	// block, gofmt, you motherfucker.
+	_ = interface{}(nil)
+)
+
 // calculateSliceCacheMax calculates the maximum capacity for a slice cache with given individual ratio.
 func calculateSliceCacheMax(ratio float64) int {
 	return calculateCacheMax(sizeofIDStr, sizeofIDSlice, ratio)
@@ -89,12 +105,12 @@ func calculateResultCacheMax(structSz uintptr, ratio float64) int {
 	// The result cache wraps each struct result in a wrapping
 	// struct with further information, and possible error. This
 	// also needs to be taken into account when calculating value.
-	const resultValueOverhead = unsafe.Sizeof(&struct {
+	resultValueOverhead := uintptr(size.Of(&struct {
 		_ int64
 		_ []any
 		_ any
 		_ error
-	}{})
+	}{}))
 
 	return calculateCacheMax(
 		pkeySz+totalLookupKeySz,
@@ -194,9 +210,9 @@ func sizeofAccount() uintptr {
 		Note:                    exampleText,
 		NoteRaw:                 exampleText,
 		Memorial:                func() *bool { ok := false; return &ok }(),
-		CreatedAt:               time.Now(),
-		UpdatedAt:               time.Now(),
-		FetchedAt:               time.Now(),
+		CreatedAt:               exampleTime,
+		UpdatedAt:               exampleTime,
+		FetchedAt:               exampleTime,
 		Bot:                     func() *bool { ok := true; return &ok }(),
 		Locked:                  func() *bool { ok := true; return &ok }(),
 		Discoverable:            func() *bool { ok := false; return &ok }(),
@@ -214,9 +230,9 @@ func sizeofAccount() uintptr {
 		PrivateKey:              &rsa.PrivateKey{},
 		PublicKey:               &rsa.PublicKey{},
 		PublicKeyURI:            exampleURI,
-		SensitizedAt:            time.Time{},
-		SilencedAt:              time.Now(),
-		SuspendedAt:             time.Now(),
+		SensitizedAt:            exampleTime,
+		SilencedAt:              exampleTime,
+		SuspendedAt:             exampleTime,
 		HideCollections:         func() *bool { ok := true; return &ok }(),
 		SuspensionOrigin:        exampleID,
 		EnableRSS:               func() *bool { ok := true; return &ok }(),
@@ -235,8 +251,8 @@ func sizeofAccountNote() uintptr {
 func sizeofApplication() uintptr {
 	return uintptr(size.Of(&gtsmodel.Application{
 		ID:           exampleID,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		CreatedAt:    exampleTime,
+		UpdatedAt:    exampleTime,
 		Name:         exampleUsername,
 		Website:      exampleURI,
 		RedirectURI:  exampleURI,
@@ -249,8 +265,8 @@ func sizeofApplication() uintptr {
 func sizeofBlock() uintptr {
 	return uintptr(size.Of(&gtsmodel.Block{
 		ID:              exampleID,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:       exampleTime,
+		UpdatedAt:       exampleTime,
 		URI:             exampleURI,
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
@@ -262,8 +278,8 @@ func sizeofEmoji() uintptr {
 		ID:                     exampleID,
 		Shortcode:              exampleTextSmall,
 		Domain:                 exampleURI,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now(),
+		CreatedAt:              exampleTime,
+		UpdatedAt:              exampleTime,
 		ImageRemoteURL:         exampleURI,
 		ImageStaticRemoteURL:   exampleURI,
 		ImageURL:               exampleURI,
@@ -272,7 +288,7 @@ func sizeofEmoji() uintptr {
 		ImageStaticPath:        exampleURI,
 		ImageContentType:       "image/png",
 		ImageStaticContentType: "image/png",
-		ImageUpdatedAt:         time.Now(),
+		ImageUpdatedAt:         exampleTime,
 		Disabled:               func() *bool { ok := false; return &ok }(),
 		URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 		VisibleInPicker:        func() *bool { ok := true; return &ok }(),
@@ -285,16 +301,16 @@ func sizeofEmojiCategory() uintptr {
 	return uintptr(size.Of(&gtsmodel.EmojiCategory{
 		ID:        exampleID,
 		Name:      exampleUsername,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
 	}))
 }
 
 func sizeofFollow() uintptr {
 	return uintptr(size.Of(&gtsmodel.Follow{
 		ID:              exampleID,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:       exampleTime,
+		UpdatedAt:       exampleTime,
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
 		ShowReblogs:     func() *bool { ok := true; return &ok }(),
@@ -306,8 +322,8 @@ func sizeofFollow() uintptr {
 func sizeofFollowRequest() uintptr {
 	return uintptr(size.Of(&gtsmodel.FollowRequest{
 		ID:              exampleID,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:       exampleTime,
+		UpdatedAt:       exampleTime,
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
 		ShowReblogs:     func() *bool { ok := true; return &ok }(),
@@ -319,8 +335,8 @@ func sizeofFollowRequest() uintptr {
 func sizeofInstance() uintptr {
 	return uintptr(size.Of(&gtsmodel.Instance{
 		ID:                     exampleID,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now(),
+		CreatedAt:              exampleTime,
+		UpdatedAt:              exampleTime,
 		Domain:                 exampleURI,
 		URI:                    exampleURI,
 		Title:                  exampleTextSmall,
@@ -335,8 +351,8 @@ func sizeofInstance() uintptr {
 func sizeofList() uintptr {
 	return uintptr(size.Of(&gtsmodel.List{
 		ID:            exampleID,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		CreatedAt:     exampleTime,
+		UpdatedAt:     exampleTime,
 		Title:         exampleTextSmall,
 		AccountID:     exampleID,
 		RepliesPolicy: gtsmodel.RepliesPolicyFollowed,
@@ -346,8 +362,8 @@ func sizeofList() uintptr {
 func sizeofListEntry() uintptr {
 	return uintptr(size.Of(&gtsmodel.ListEntry{
 		ID:        exampleID,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
 		ListID:    exampleID,
 		FollowID:  exampleID,
 	}))
@@ -357,7 +373,7 @@ func sizeofMarker() uintptr {
 	return uintptr(size.Of(&gtsmodel.Marker{
 		AccountID:  exampleID,
 		Name:       gtsmodel.MarkerNameHome,
-		UpdatedAt:  time.Now(),
+		UpdatedAt:  exampleTime,
 		Version:    0,
 		LastReadID: exampleID,
 	}))
@@ -369,8 +385,8 @@ func sizeofMedia() uintptr {
 		StatusID:          exampleID,
 		URL:               exampleURI,
 		RemoteURL:         exampleURI,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
+		CreatedAt:         exampleTime,
+		UpdatedAt:         exampleTime,
 		Type:              gtsmodel.FileTypeImage,
 		AccountID:         exampleID,
 		Description:       exampleText,
@@ -379,12 +395,12 @@ func sizeofMedia() uintptr {
 		File: gtsmodel.File{
 			Path:        exampleURI,
 			ContentType: "image/jpeg",
-			UpdatedAt:   time.Now(),
+			UpdatedAt:   exampleTime,
 		},
 		Thumbnail: gtsmodel.Thumbnail{
 			Path:        exampleURI,
 			ContentType: "image/jpeg",
-			UpdatedAt:   time.Now(),
+			UpdatedAt:   exampleTime,
 			URL:         exampleURI,
 			RemoteURL:   exampleURI,
 		},
@@ -398,8 +414,8 @@ func sizeofMention() uintptr {
 	return uintptr(size.Of(&gtsmodel.Mention{
 		ID:               exampleURI,
 		StatusID:         exampleURI,
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
+		CreatedAt:        exampleTime,
+		UpdatedAt:        exampleTime,
 		OriginAccountID:  exampleURI,
 		OriginAccountURI: exampleURI,
 		TargetAccountID:  exampleID,
@@ -413,7 +429,7 @@ func sizeofNotification() uintptr {
 	return uintptr(size.Of(&gtsmodel.Notification{
 		ID:               exampleID,
 		NotificationType: gtsmodel.NotificationFave,
-		CreatedAt:        time.Now(),
+		CreatedAt:        exampleTime,
 		TargetAccountID:  exampleID,
 		OriginAccountID:  exampleID,
 		StatusID:         exampleID,
@@ -424,8 +440,8 @@ func sizeofNotification() uintptr {
 func sizeofReport() uintptr {
 	return uintptr(size.Of(&gtsmodel.Report{
 		ID:                     exampleID,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now(),
+		CreatedAt:              exampleTime,
+		UpdatedAt:              exampleTime,
 		URI:                    exampleURI,
 		AccountID:              exampleID,
 		TargetAccountID:        exampleID,
@@ -433,7 +449,7 @@ func sizeofReport() uintptr {
 		StatusIDs:              []string{exampleID, exampleID, exampleID},
 		Forwarded:              func() *bool { ok := true; return &ok }(),
 		ActionTaken:            exampleText,
-		ActionTakenAt:          time.Now(),
+		ActionTakenAt:          exampleTime,
 		ActionTakenByAccountID: exampleID,
 	}))
 }
@@ -449,9 +465,9 @@ func sizeofStatus() uintptr {
 		TagIDs:                   []string{exampleID, exampleID, exampleID},
 		MentionIDs:               []string{},
 		EmojiIDs:                 []string{exampleID, exampleID, exampleID},
-		CreatedAt:                time.Now(),
-		UpdatedAt:                time.Now(),
-		FetchedAt:                time.Now(),
+		CreatedAt:                exampleTime,
+		UpdatedAt:                exampleTime,
+		FetchedAt:                exampleTime,
 		Local:                    func() *bool { ok := false; return &ok }(),
 		AccountURI:               exampleURI,
 		AccountID:                exampleID,
@@ -476,7 +492,7 @@ func sizeofStatus() uintptr {
 func sizeofStatusFave() uintptr {
 	return uintptr(size.Of(&gtsmodel.StatusFave{
 		ID:              exampleID,
-		CreatedAt:       time.Now(),
+		CreatedAt:       exampleTime,
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
 		StatusID:        exampleID,
@@ -488,8 +504,8 @@ func sizeofTag() uintptr {
 	return uintptr(size.Of(&gtsmodel.Tag{
 		ID:        exampleID,
 		Name:      exampleUsername,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
 		Useable:   func() *bool { ok := true; return &ok }(),
 		Listable:  func() *bool { ok := true; return &ok }(),
 	}))
@@ -498,8 +514,8 @@ func sizeofTag() uintptr {
 func sizeofTombstone() uintptr {
 	return uintptr(size.Of(&gtsmodel.Tombstone{
 		ID:        exampleID,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
 		Domain:    exampleUsername,
 		URI:       exampleURI,
 	}))
@@ -517,29 +533,29 @@ func sizeofVisibility() uintptr {
 func sizeofUser() uintptr {
 	return uintptr(size.Of(&gtsmodel.User{
 		ID:                     exampleID,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now(),
+		CreatedAt:              exampleTime,
+		UpdatedAt:              exampleTime,
 		Email:                  exampleURI,
 		AccountID:              exampleID,
 		EncryptedPassword:      exampleTextSmall,
-		CurrentSignInAt:        time.Now(),
-		LastSignInAt:           time.Now(),
+		CurrentSignInAt:        exampleTime,
+		LastSignInAt:           exampleTime,
 		InviteID:               exampleID,
 		ChosenLanguages:        []string{"en", "fr", "jp"},
 		FilteredLanguages:      []string{"en", "fr", "jp"},
 		Locale:                 "en",
 		CreatedByApplicationID: exampleID,
-		LastEmailedAt:          time.Now(),
+		LastEmailedAt:          exampleTime,
 		ConfirmationToken:      exampleTextSmall,
-		ConfirmationSentAt:     time.Now(),
-		ConfirmedAt:            time.Now(),
+		ConfirmationSentAt:     exampleTime,
+		ConfirmedAt:            exampleTime,
 		UnconfirmedEmail:       exampleURI,
 		Moderator:              func() *bool { ok := true; return &ok }(),
 		Admin:                  func() *bool { ok := true; return &ok }(),
 		Disabled:               func() *bool { ok := true; return &ok }(),
 		Approved:               func() *bool { ok := true; return &ok }(),
 		ResetPasswordToken:     exampleTextSmall,
-		ResetPasswordSentAt:    time.Now(),
+		ResetPasswordSentAt:    exampleTime,
 		ExternalID:             exampleID,
 	}))
 }

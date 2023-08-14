@@ -236,8 +236,8 @@ cache:
   # within. This is based on estimated sizes of
   # in-memory objects, and so NOT AT ALL EXACT.
   # Examples: ["100MiB", "200MiB", "500MiB", "1GiB"]
-  # Default: "200MiB"
-  memory-target: "200MiB"
+  # Default: "100MiB"
+  memory-target: "100MiB"
 
 ######################
 ##### WEB CONFIG #####
