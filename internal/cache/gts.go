@@ -269,7 +269,7 @@ func (c *GTSCaches) initAccount() {
 		config.GetCacheAccountMemRatio(),
 	)
 
-	log.Infof(nil, "Account cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.account = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -296,7 +296,8 @@ func (c *GTSCaches) initAccountNote() {
 		sizeofAccountNote(), // model in-mem size.
 		config.GetCacheAccountNoteMemRatio(),
 	)
-	log.Infof(nil, "AccountNote cache size = %d", cap)
+
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.accountNote = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -316,7 +317,8 @@ func (c *GTSCaches) initApplication() {
 		sizeofApplication(), // model in-mem size.
 		config.GetCacheApplicationMemRatio(),
 	)
-	log.Infof(nil, "Application cache size = %d", cap)
+
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.application = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -337,7 +339,7 @@ func (c *GTSCaches) initBlock() {
 		config.GetCacheBlockMemRatio(),
 	)
 
-	log.Infof(nil, "Block cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.block = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -360,7 +362,7 @@ func (c *GTSCaches) initBlockIDs() {
 		config.GetCacheBlockIDsMemRatio(),
 	)
 
-	log.Infof(nil, "Block IDs cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.blockIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
@@ -374,7 +376,7 @@ func (c *GTSCaches) initBoostOfIDs() {
 		config.GetCacheBoostOfIDsMemRatio(),
 	)
 
-	log.Infof(nil, "BoostofIDs cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.boostOfIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
@@ -393,7 +395,7 @@ func (c *GTSCaches) initEmoji() {
 		config.GetCacheEmojiMemRatio(),
 	)
 
-	log.Infof(nil, "Emoji cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.emoji = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -417,7 +419,7 @@ func (c *GTSCaches) initEmojiCategory() {
 		config.GetCacheEmojiCategoryMemRatio(),
 	)
 
-	log.Infof(nil, "EmojiCategory cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.emojiCategory = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -438,7 +440,7 @@ func (c *GTSCaches) initFollow() {
 		config.GetCacheFollowMemRatio(),
 	)
 
-	log.Infof(nil, "Follow cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.follow = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -461,7 +463,7 @@ func (c *GTSCaches) initFollowIDs() {
 		config.GetCacheFollowIDsMemRatio(),
 	)
 
-	log.Infof(nil, "Follow IDs cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.followIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
@@ -476,7 +478,7 @@ func (c *GTSCaches) initFollowRequest() {
 		config.GetCacheFollowRequestMemRatio(),
 	)
 
-	log.Infof(nil, "FollowRequest cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.followRequest = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -499,7 +501,7 @@ func (c *GTSCaches) initFollowRequestIDs() {
 		config.GetCacheFollowRequestIDsMemRatio(),
 	)
 
-	log.Infof(nil, "Follow Request IDs cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.followRequestIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
@@ -513,7 +515,7 @@ func (c *GTSCaches) initInReplyToIDs() {
 		config.GetCacheInReplyToIDsMemRatio(),
 	)
 
-	log.Infof(nil, "InReplyTo IDs cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.inReplyToIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
@@ -528,7 +530,7 @@ func (c *GTSCaches) initInstance() {
 		config.GetCacheInstanceMemRatio(),
 	)
 
-	log.Infof(nil, "Instance cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.instance = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -549,7 +551,7 @@ func (c *GTSCaches) initList() {
 		config.GetCacheListMemRatio(),
 	)
 
-	log.Infof(nil, "List cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.list = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -569,7 +571,7 @@ func (c *GTSCaches) initListEntry() {
 		config.GetCacheListEntryMemRatio(),
 	)
 
-	log.Infof(nil, "ListEntry cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.listEntry = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -591,7 +593,7 @@ func (c *GTSCaches) initMarker() {
 		config.GetCacheMarkerMemRatio(),
 	)
 
-	log.Infof(nil, "Marker cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.marker = result.New([]result.Lookup{
 		{Name: "AccountID.Name"},
@@ -611,7 +613,7 @@ func (c *GTSCaches) initMedia() {
 		config.GetCacheMediaMemRatio(),
 	)
 
-	log.Infof(nil, "Media cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.media = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -631,7 +633,7 @@ func (c *GTSCaches) initMention() {
 		config.GetCacheMentionMemRatio(),
 	)
 
-	log.Infof(nil, "Mention cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.mention = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -651,7 +653,7 @@ func (c *GTSCaches) initNotification() {
 		config.GetCacheNotificationMemRatio(),
 	)
 
-	log.Infof(nil, "Notification cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.notification = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -672,7 +674,7 @@ func (c *GTSCaches) initReport() {
 		config.GetCacheReportMemRatio(),
 	)
 
-	log.Infof(nil, "Report cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.report = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -692,7 +694,7 @@ func (c *GTSCaches) initStatus() {
 		config.GetCacheStatusMemRatio(),
 	)
 
-	log.Infof(nil, "Status cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.status = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -715,7 +717,7 @@ func (c *GTSCaches) initStatusFave() {
 		config.GetCacheStatusFaveMemRatio(),
 	)
 
-	log.Infof(nil, "StatusFave cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.statusFave = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -736,7 +738,7 @@ func (c *GTSCaches) initStatusFaveIDs() {
 		config.GetCacheStatusFaveIDsMemRatio(),
 	)
 
-	log.Infof(nil, "StatusFave IDs cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.statusFaveIDs = &SliceCache[string]{Cache: simple.New[string, []string](
 		0,
@@ -751,7 +753,7 @@ func (c *GTSCaches) initTag() {
 		config.GetCacheTagMemRatio(),
 	)
 
-	log.Infof(nil, "Tag cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.tag = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -772,7 +774,7 @@ func (c *GTSCaches) initTombstone() {
 		config.GetCacheTombstoneMemRatio(),
 	)
 
-	log.Infof(nil, "Tombstone cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.tombstone = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -793,7 +795,7 @@ func (c *GTSCaches) initUser() {
 		config.GetCacheUserMemRatio(),
 	)
 
-	log.Infof(nil, "User cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.user = result.New([]result.Lookup{
 		{Name: "ID"},
@@ -817,7 +819,7 @@ func (c *GTSCaches) initWebfinger() {
 		config.GetCacheWebfingerMemRatio(),
 	)
 
-	log.Infof(nil, "Webfinger cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	c.webfinger = ttl.New[string, string](
 		0,
