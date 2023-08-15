@@ -146,3 +146,11 @@ type InstanceConfigurationEmojis struct {
 	// example: 51200
 	EmojiSizeLimit int `json:"emoji_size_limit"`
 }
+
+// InstanceRule models a single instance rule.
+//
+// swagger:model instanceRule
+type InstanceRule struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
+}

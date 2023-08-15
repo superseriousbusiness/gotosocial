@@ -62,9 +62,8 @@ type InstanceV2 struct {
 	Registrations InstanceV2Registrations `json:"registrations"`
 	//  Hints related to contacting a representative of the instance.
 	Contact InstanceV2Contact `json:"contact"`
-	// An itemized list of rules for this website.
-	// Currently not implemented (will always be empty array).
-	Rules []interface{} `json:"rules"`
+	// An itemized list of rules for this instance.
+	Rules []InstanceRule `json:"rules"`
 }
 
 // Usage data for this instance.
