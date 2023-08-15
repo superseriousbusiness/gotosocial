@@ -39,8 +39,8 @@ var (
 	base32enc = base32.NewEncoding("0123456789abcdefghjkmnpqrstvwxyz").WithPadding(-1)
 )
 
-// generateID generates a new ID string.
-func generateID() string {
+// NewRequestID generates a new request ID string.
+func NewRequestID() string {
 	// 0:8  = timestamp
 	// 8:12 = entropy
 	//
@@ -69,12 +69,10 @@ func AddRequestID(header string) gin.HandlerFunc {
 		// Have we found anything?
 		if id == "" {
 			// Generate new ID.
-			//
-			// 0:8  = timestamp
-			// 8:12 = entropy
-			id = generateID()
-			// Set the request ID in the req header in case we pass the request along
-			// to another service
+			id = NewRequestID()
+
+			// Set the request ID in the req header in case
+			// we pass the request along to another service.
 			c.Request.Header.Set(header, id)
 		}
 
