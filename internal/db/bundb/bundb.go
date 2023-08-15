@@ -72,6 +72,7 @@ type DBService struct {
 	db.Notification
 	db.Relationship
 	db.Report
+	db.Rule
 	db.Search
 	db.Session
 	db.Status
@@ -213,6 +214,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Report: &reportDB{
+			db:    db,
+			state: state,
+		},
+		Rule: &ruleDB{
 			db:    db,
 			state: state,
 		},

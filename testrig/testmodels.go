@@ -2039,6 +2039,30 @@ func NewTestReports() map[string]*gtsmodel.Report {
 	}
 }
 
+func NewTestRules() map[string]*gtsmodel.Rule {
+	return map[string]*gtsmodel.Rule{
+		"rule1": {
+			ID:        "01GP3AWY4CRDVRNZKW0TEAMB51",
+			CreatedAt: TimeMustParse("2022-05-14T12:20:03+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-14T12:20:03+02:00"),
+			Text:      "Be gay",
+		},
+		"deleted_rule": {
+			ID:        "01GP3DFY9XQ1TJMZT5BGAZPXX2",
+			CreatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			Text:      "Deleted",
+			Deleted:   util.Ptr(true),
+		},
+		"rule2": {
+			ID:        "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+			CreatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			Text:      "Do crime",
+		},
+	}
+}
+
 // ActivityWithSignature wraps a pub.Activity along with its signature headers, for testing.
 type ActivityWithSignature struct {
 	Activity        pub.Activity

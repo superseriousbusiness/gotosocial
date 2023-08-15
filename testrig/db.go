@@ -61,6 +61,7 @@ var testModels = []interface{}{
 	&gtsmodel.EmojiCategory{},
 	&gtsmodel.Tombstone{},
 	&gtsmodel.Report{},
+	&gtsmodel.Rule{},
 	&gtsmodel.AccountNote{},
 }
 
@@ -155,6 +156,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestReports() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestRules() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}
