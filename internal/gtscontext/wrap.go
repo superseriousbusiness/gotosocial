@@ -15,26 +15,41 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package workers
+package gtscontext
 
 import (
 	"context"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"time"
 )
 
-// copyContextValues copies across context values from provided src to
-// dst context, to ensure worker contexts have required IDs (etc) set.
-func copyContextValues(dst, src context.Context) context.Context {
-	// Look for an existing request ID.
-	id := gtscontext.RequestID(src)
-
-	if id == "" {
-		// New ID string needs generating.
-		id = middleware.NewRequestID()
+// WithValues wraps 'ctx' to use its deadline, done channel and error, but use value store of 'values'.
+func WithValues(ctx context.Context, values context.Context) context.Context {
+	if ctx == nil {
+		panic("nil base context")
 	}
+	return &wrapContext{
+		base: ctx,
+		vals: values,
+	}
+}
 
-	// Wrap dst context with extracted values.
-	return gtscontext.SetRequestID(dst, id)
+type wrapContext struct {
+	base context.Context
+	vals context.Context
+}
+
+func (ctx *wrapContext) Deadline() (deadline time.Time, ok bool) {
+	return ctx.base.Deadline()
+}
+
+func (ctx *wrapContext) Done() <-chan struct{} {
+	return ctx.base.Done()
+}
+
+func (ctx *wrapContext) Err() error {
+	return ctx.base.Err()
+}
+
+func (ctx *wrapContext) Value(key any) any {
+	return ctx.vals.Value(key)
 }

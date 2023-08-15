@@ -25,6 +25,7 @@ import (
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -49,7 +50,7 @@ type clientAPI struct {
 func (p *Processor) EnqueueClientAPI(cctx context.Context, msgs ...messages.FromClientAPI) {
 	_ = p.workers.ClientAPI.MustEnqueueCtx(cctx, func(wctx context.Context) {
 		// Copy caller ctx values to worker's.
-		wctx = copyContextValues(wctx, cctx)
+		wctx = gtscontext.WithValues(wctx, cctx)
 
 		// Process worker messages.
 		for _, msg := range msgs {

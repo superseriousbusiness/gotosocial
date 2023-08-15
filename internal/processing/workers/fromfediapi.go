@@ -24,6 +24,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -47,7 +48,7 @@ type fediAPI struct {
 func (p *Processor) EnqueueFediAPI(cctx context.Context, msgs ...messages.FromFediAPI) {
 	_ = p.workers.Federator.MustEnqueueCtx(cctx, func(wctx context.Context) {
 		// Copy caller ctx values to worker's.
-		wctx = copyContextValues(wctx, cctx)
+		wctx = gtscontext.WithValues(wctx, cctx)
 
 		// Process worker messages.
 		for _, msg := range msgs {
