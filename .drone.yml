@@ -104,7 +104,7 @@ steps:
       
       # Login to Docker, push Docker image snapshots + manifests.
       - /go/dockerlogin.sh
-      - docker push superseriousbusiness/gotosocial:snapshot-armv6 && 
+      - docker push superseriousbusiness/gotosocial:snapshot-armv6
       - docker push superseriousbusiness/gotosocial:snapshot-armv7
       - docker push superseriousbusiness/gotosocial:snapshot-arm64v8
       - docker push superseriousbusiness/gotosocial:snapshot-amd64
@@ -194,6 +194,6 @@ steps:
 
 ---
 kind: signature
-hmac: e821e247781090c24d5c103b0568ecd030c167457432af209c3f44cd0bd68028
+hmac: 74653d67ed44ceefb7e19d6125d4a457e6308b5ef627df6325d72a0cc7d7cc0a
 
 ...

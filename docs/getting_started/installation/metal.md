@@ -38,8 +38,8 @@ tar -xzf gotosocial_0.5.2_linux_amd64.tar.gz
 
 This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
 
-!!! note
-    NOT RECOMMENDED: If you want to use a snapshot build of GoToSocial based on whatever code is currently on main, you can download recent binary .tar.gz files from https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots (keyed by commit hash). Only do this if you know what you're doing, otherwise just take a stable release.
+!!! danger
+    If you prefer to use a snapshot build of GoToSocial based on whatever code is currently on main, you can download recent binary .tar.gz files from https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots (keyed by commit hash). Only do this if you know what you're doing, otherwise just take a stable release.
 
 ## Edit Configuration File
 
