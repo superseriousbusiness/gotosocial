@@ -24,6 +24,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -44,13 +45,15 @@ type fediAPI struct {
 	account    *account.Processor
 }
 
-func (p *Processor) EnqueueFediAPI(ctx context.Context, msgs ...messages.FromFediAPI) {
-	log.Trace(ctx, "enqueuing")
-	_ = p.workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+func (p *Processor) EnqueueFediAPI(cctx context.Context, msgs ...messages.FromFediAPI) {
+	_ = p.workers.Federator.MustEnqueueCtx(cctx, func(wctx context.Context) {
+		// Copy caller ctx values to worker's.
+		wctx = gtscontext.WithValues(wctx, cctx)
+
+		// Process worker messages.
 		for _, msg := range msgs {
-			log.Trace(ctx, "processing: %+v", msg)
-			if err := p.ProcessFromFediAPI(ctx, msg); err != nil {
-				log.Errorf(ctx, "error processing fedi API message: %v", err)
+			if err := p.ProcessFromFediAPI(wctx, msg); err != nil {
+				log.Errorf(wctx, "error processing fedi API message: %v", err)
 			}
 		}
 	})

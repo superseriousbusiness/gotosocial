@@ -25,6 +25,7 @@ import (
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -46,13 +47,15 @@ type clientAPI struct {
 	account    *account.Processor
 }
 
-func (p *Processor) EnqueueClientAPI(ctx context.Context, msgs ...messages.FromClientAPI) {
-	log.Trace(ctx, "enqueuing")
-	_ = p.workers.ClientAPI.MustEnqueueCtx(ctx, func(ctx context.Context) {
+func (p *Processor) EnqueueClientAPI(cctx context.Context, msgs ...messages.FromClientAPI) {
+	_ = p.workers.ClientAPI.MustEnqueueCtx(cctx, func(wctx context.Context) {
+		// Copy caller ctx values to worker's.
+		wctx = gtscontext.WithValues(wctx, cctx)
+
+		// Process worker messages.
 		for _, msg := range msgs {
-			log.Trace(ctx, "processing: %+v", msg)
-			if err := p.ProcessFromClientAPI(ctx, msg); err != nil {
-				log.Errorf(ctx, "error processing client API message: %v", err)
+			if err := p.ProcessFromClientAPI(wctx, msg); err != nil {
+				log.Errorf(wctx, "error processing client API message: %v", err)
 			}
 		}
 	})
