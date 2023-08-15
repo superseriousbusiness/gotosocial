@@ -221,7 +221,7 @@ We package our stable releases for both binary builds and Docker containers, so 
 
 Check our [releases page](https://github.com/superseriousbusiness/gotosocial/releases) and our [getting started](https://docs.gotosocial.org/en/latest/getting_started/) documentation.
 
-The Docker image `superseriousbusiness/gotosocial:latest` will always correspond to the latest stable release.
+The Docker image `superseriousbusiness/gotosocial:latest` will always correspond to the latest stable release. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag. Alternatively, run `docker pull superseriousbusiness/gotosocial:latest` manually just before use.
 
 ### Snapshots
 
@@ -231,7 +231,7 @@ Please be warned that you do so at your own risk! We try to keep main working pr
 
 #### Docker
 
-To run from main using Docker, use the `snapshot` Docker tag. The Docker image `superseriousbusiness/gotosocial:snapshot` will always correspond to the latest commit on main. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag.
+To run from main using Docker, use the `snapshot` Docker tag. The Docker image `superseriousbusiness/gotosocial:snapshot` will always correspond to the latest commit on main. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag. Alternatively, run `docker pull superseriousbusiness/gotosocial:snapshot` manually just before use.
 
 #### Binary release .tar.gz
 
