@@ -3,6 +3,7 @@
 GoToSocial can be installed in a number of different ways. We publish official binary releases as well as container images. A number of third-party packages are maintained by different distributions and some people have created additional deployment tooling to make it easy to deploy GoToSocial yourself.
 
 ## Binary releases
+
 We publish binary builds for Linux to [our GitHub project](https://github.com/superseriousbusiness/gotosocial/releases):
 
 * 32-bit Intel/AMD (i386/x86)
@@ -19,6 +20,12 @@ For FreeBSD we publish:
 We also publish container images [on the Docker Hub](https://hub.docker.com/r/superseriousbusiness/gotosocial).
 
 Containers are released for the same Linux platforms as our binary releases, with the exception of 32-bit Intel/AMD.
+
+## Snapshots
+
+We publish snapshot binary builds and Docker images of whatever is currently on main.
+
+We always recommend using a stable release instead, but if you want to live on the edge (at your own risk!) then see the [snapshots](https://github.com/superseriousbusiness/gotosocial#snapshots) section on our GitHub repo for more information.
 
 ## Third-party
 

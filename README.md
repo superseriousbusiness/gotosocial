@@ -40,6 +40,11 @@ Here's a screenshot of the instance landing page!
   - [Federation Issues](#federation-issues)
 - [Contributing](#contributing)
 - [Building](#building)
+- [Releases](#releases)
+  - [Stable](#stable)
+  - [Snapshots](#snapshots)
+    - [Docker](#docker)
+    - [Binary release .tar.gz](#binary-release-targz)
 - [Contact](#contact)
 - [Credits](#credits)
   - [Libraries](#libraries)
@@ -207,6 +212,32 @@ You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the iss
 ## Building
 
 Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+
+## Releases
+
+### Stable
+
+We package our stable releases for both binary builds and Docker containers, so that you don't have to build from source yourself.
+
+Check our [releases page](https://github.com/superseriousbusiness/gotosocial/releases) and our [getting started](https://docs.gotosocial.org/en/latest/getting_started/) documentation.
+
+The Docker image `superseriousbusiness/gotosocial:latest` will always correspond to the latest stable release.
+
+### Snapshots
+
+We also make snapshot builds every time something is merged into the main branch, so you can run from whatever code is on main if you wish.
+
+Please be warned that you do so at your own risk! We try to keep main working properly, but we make absolutely no guarantees. Take a stable release instead if you're unsure.
+
+#### Docker
+
+To run from main using Docker, use the `snapshot` Docker tag. The Docker image `superseriousbusiness/gotosocial:snapshot` will always correspond to the latest commit on main.
+
+#### Binary release .tar.gz
+
+To run from main using a binary release, download the appropriate .tar.gz file for your architecture from our [self-hosted Minio S3 repository](https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots).
+
+Snapshot binary releases in the S3 bucket are keyed by Github commit hash. To get the latest one, sort by Last Modified, or check out the list of commits [here](https://github.com/superseriousbusiness/gotosocial/commits/main), copy the SHA of the latest one, and paste it in the Minio console filter. Snapshot binary releases are expired after 28 days, to keep our hosting costs down.
 
 ## Contact
 
