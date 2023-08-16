@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // RulesGet returns all rules stored on this instance.
@@ -95,4 +96,26 @@ func (p *Processor) RuleUpdate(ctx context.Context, id string, form *apimodel.In
 	}
 
 	return updatedRule, nil
+}
+
+// RuleDelete deletes an existing rule.
+func (p *Processor) RuleDelete(ctx context.Context, id string) (*gtsmodel.Rule, gtserror.WithCode) {
+	rule, err := p.state.DB.GetRuleByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			err = fmt.Errorf("RuleUpdate: no rule with id %s found in the db", id)
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		err := fmt.Errorf("RuleUpdate: db error: %s", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	rule.Deleted = util.Ptr(true)
+	deletedRule, err := p.state.DB.UpdateRule(ctx, rule)
+
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return deletedRule, nil
 }

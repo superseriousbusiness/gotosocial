@@ -120,26 +120,3 @@ func (r *ruleDB) UpdateRule(ctx context.Context, rule *gtsmodel.Rule) (*gtsmodel
 
 	return rule, nil
 }
-
-// func (r *ruleDB) DeleteRuleByID(ctx context.Context, id string) error {
-// 	defer r.state.Caches.GTS.Rule().Invalidate("ID", id)
-
-// 	// Load status into cache before attempting a delete,
-// 	// as we need it cached in order to trigger the invalidate
-// 	// callback. This in turn invalidates others.
-// 	_, err := r.GetRuleByID(gtscontext.SetBarebones(ctx), id)
-// 	if err != nil {
-// 		if errors.Is(err, db.ErrNoEntries) {
-// 			// not an issue.
-// 			err = nil
-// 		}
-// 		return err
-// 	}
-
-// 	// Finally delete rule from DB.
-// 	_, err = r.db.NewDelete().
-// 		TableExpr("? AS ?", bun.Ident("rules"), bun.Ident("rule")).
-// 		Where("? = ?", bun.Ident("rule.id"), id).
-// 		Exec(ctx)
-// 	return r.db.ProcessError(err)
-// }
