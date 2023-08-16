@@ -77,7 +77,7 @@ github.com/DmitriyVTitov/size
 ## explicit; go 1.19
 github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
-# github.com/abema/go-mp4 v0.12.0
+# github.com/abema/go-mp4 v0.13.0
 ## explicit; go 1.14
 github.com/abema/go-mp4
 github.com/abema/go-mp4/bitio
