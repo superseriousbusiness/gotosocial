@@ -19,7 +19,6 @@ package media_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -107,7 +106,7 @@ func (suite *MediaUpdateTestSuite) SetupSuite() {
 }
 
 func (suite *MediaUpdateTestSuite) TearDownSuite() {
-	if err := suite.db.Stop(context.Background()); err != nil {
+	if err := suite.db.Close(); err != nil {
 		log.Panicf(nil, "error closing db connection: %s", err)
 	}
 	testrig.StopWorkers(&suite.state)

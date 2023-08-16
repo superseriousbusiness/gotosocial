@@ -57,7 +57,7 @@ import (
 // This isn't ideal, of course, but at least we could cover the most common use case of
 // a caller paging down through results.
 type searchDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -149,7 +149,7 @@ func (s *searchDB) SearchForAccounts(
 	}
 
 	if err := q.Scan(ctx, &accountIDs); err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(accountIDs) == 0 {
@@ -327,7 +327,7 @@ func (s *searchDB) SearchForStatuses(
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(statusIDs) == 0 {
@@ -453,7 +453,7 @@ func (s *searchDB) SearchForTags(
 	}
 
 	if err := q.Scan(ctx, &tagIDs); err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(tagIDs) == 0 {

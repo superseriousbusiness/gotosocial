@@ -112,7 +112,7 @@ func (r *relationshipDB) getFollowRequest(ctx context.Context, lookup string, db
 
 		// Not cached! Perform database query
 		if err := dbQuery(&followReq); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &followReq, nil
@@ -168,7 +168,7 @@ func (r *relationshipDB) PopulateFollowRequest(ctx context.Context, follow *gtsm
 func (r *relationshipDB) PutFollowRequest(ctx context.Context, follow *gtsmodel.FollowRequest) error {
 	return r.state.Caches.GTS.FollowRequest().Store(follow, func() error {
 		_, err := r.db.NewInsert().Model(follow).Exec(ctx)
-		return r.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -185,7 +185,7 @@ func (r *relationshipDB) UpdateFollowRequest(ctx context.Context, followRequest 
 			Where("? = ?", bun.Ident("follow_request.id"), followRequest.ID).
 			Column(columns...).
 			Exec(ctx); err != nil {
-			return r.db.ProcessError(err)
+			return err
 		}
 
 		return nil
@@ -220,7 +220,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 			Model(follow).
 			On("CONFLICT (?,?) DO UPDATE set ? = ?", bun.Ident("account_id"), bun.Ident("target_account_id"), bun.Ident("uri"), follow.URI).
 			Exec(ctx)
-		return r.db.ProcessError(err)
+		return err
 	}); err != nil {
 		return nil, err
 	}
@@ -231,7 +231,7 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("id"), followReq.ID).
 		Exec(ctx); err != nil {
-		return nil, r.db.ProcessError(err)
+		return nil, err
 	}
 
 	// Delete original follow request notification
@@ -281,7 +281,7 @@ func (r *relationshipDB) DeleteFollowRequest(ctx context.Context, sourceAccountI
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("id"), follow.ID).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }
 
 func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string) error {
@@ -305,7 +305,7 @@ func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string)
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }
 
 func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri string) error {
@@ -329,7 +329,7 @@ func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri strin
 		Table("follow_requests").
 		Where("? = ?", bun.Ident("uri"), uri).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }
 
 func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accountID string) error {
@@ -347,7 +347,7 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 			accountID,
 		).
 		Exec(ctx, &followReqIDs); err != nil {
-		return r.db.ProcessError(err)
+		return err
 	}
 
 	defer func() {
@@ -371,5 +371,5 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 		Table("follow_requests").
 		Where("? IN (?)", bun.Ident("id"), bun.In(followReqIDs)).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }

@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
@@ -49,15 +50,11 @@ func initState(ctx context.Context) (*state.State, error) {
 	return &state, nil
 }
 
-func stopState(ctx context.Context, state *state.State) error {
-	if err := state.DB.Stop(ctx); err != nil {
-		return fmt.Errorf("error stopping dbConn: %w", err)
-	}
-
+func stopState(state *state.State) error {
+	err := state.DB.Close()
 	state.Workers.Stop()
 	state.Caches.Stop()
-
-	return nil
+	return err
 }
 
 // Create creates a new account and user
@@ -67,6 +64,13 @@ var Create action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -111,7 +115,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	return stopState(ctx, state)
+	return nil
 }
 
 // List returns all existing local accounts.
@@ -160,6 +164,13 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
+
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
 		return err
@@ -185,7 +196,7 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	return stopState(ctx, state)
+	return nil
 }
 
 // Promote sets admin + moderator flags on a user to true.
@@ -194,6 +205,13 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -219,7 +237,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	return stopState(ctx, state)
+	return nil
 }
 
 // Demote sets admin + moderator flags on a user to false.
@@ -228,6 +246,13 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -253,7 +278,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	return stopState(ctx, state)
+	return nil
 }
 
 // Disable sets Disabled to true on a user.
@@ -262,6 +287,13 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -286,7 +318,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	return stopState(ctx, state)
+	return nil
 }
 
 // Password sets the password of target account.
@@ -295,6 +327,13 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -329,5 +368,5 @@ var Password action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	return stopState(ctx, state)
+	return nil
 }

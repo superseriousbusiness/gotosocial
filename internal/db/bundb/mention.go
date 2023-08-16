@@ -31,7 +31,7 @@ import (
 )
 
 type mentionDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -45,7 +45,7 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 			Where("? = ?", bun.Ident("mention.id"), id)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, m.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &mention, nil
@@ -105,7 +105,7 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 func (m *mentionDB) PutMention(ctx context.Context, mention *gtsmodel.Mention) error {
 	return m.state.Caches.GTS.Mention().Store(mention, func() error {
 		_, err := m.db.NewInsert().Model(mention).Exec(ctx)
-		return m.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -129,5 +129,5 @@ func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
 		Table("mentions").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
-	return m.db.ProcessError(err)
+	return err
 }

@@ -33,7 +33,7 @@ import (
 )
 
 type statusDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -115,7 +115,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&status); err != nil {
-			return nil, s.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &status, nil
@@ -287,7 +287,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
 					Exec(ctx); err != nil {
-					err = s.db.ProcessError(err)
+					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -304,7 +304,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
 					Exec(ctx); err != nil {
-					err = s.db.ProcessError(err)
+					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -320,7 +320,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 					Model(a).
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
-					err = s.db.ProcessError(err)
+					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -356,7 +356,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
 					Exec(ctx); err != nil {
-					err = s.db.ProcessError(err)
+					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -373,7 +373,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
 					Exec(ctx); err != nil {
-					err = s.db.ProcessError(err)
+					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -389,7 +389,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 					Model(a).
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
-					err = s.db.ProcessError(err)
+					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -468,7 +468,7 @@ func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([
 		Column("status_id").
 		Where("? = ?", bun.Ident("emoji_id"), emojiID).
 		Exec(ctx, &statusIDs); err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	// Convert status IDs into status objects.
@@ -589,7 +589,7 @@ func (s *statusDB) getStatusReplyIDs(ctx context.Context, statusID string) ([]st
 			Where("? = ?", bun.Ident("in_reply_to_id"), statusID).
 			Order("id DESC").
 			Scan(ctx, &statusIDs); err != nil {
-			return nil, s.db.ProcessError(err)
+			return nil, err
 		}
 
 		return statusIDs, nil
@@ -633,7 +633,7 @@ func (s *statusDB) getStatusBoostIDs(ctx context.Context, statusID string) ([]st
 			Where("? = ?", bun.Ident("boost_of_id"), statusID).
 			Order("id DESC").
 			Scan(ctx, &statusIDs); err != nil {
-			return nil, s.db.ProcessError(err)
+			return nil, err
 		}
 
 		return statusIDs, nil

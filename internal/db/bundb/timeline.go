@@ -33,7 +33,7 @@ import (
 )
 
 type timelineDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -119,7 +119,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	})
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, t.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(statusIDs) == 0 {
@@ -202,7 +202,7 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, t.db.ProcessError(err)
+		return nil, err
 	}
 
 	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
@@ -253,7 +253,7 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 
 	err := fq.Scan(ctx)
 	if err != nil {
-		return nil, "", "", t.db.ProcessError(err)
+		return nil, "", "", err
 	}
 
 	if len(faves) == 0 {
@@ -379,7 +379,7 @@ func (t *timelineDB) GetListTimeline(
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, t.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(statusIDs) == 0 {
@@ -487,7 +487,7 @@ func (t *timelineDB) GetTagTimeline(
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, t.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(statusIDs) == 0 {

@@ -30,7 +30,7 @@ import (
 )
 
 type domainDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -46,7 +46,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 	if _, err := d.db.NewInsert().
 		Model(block).
 		Exec(ctx); err != nil {
-		return d.db.ProcessError(err)
+		return err
 	}
 
 	// Clear the domain block cache (for later reload)
@@ -76,7 +76,7 @@ func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel
 		Model(&block).
 		Where("? = ?", bun.Ident("domain_block.domain"), domain)
 	if err := q.Scan(ctx); err != nil {
-		return nil, d.db.ProcessError(err)
+		return nil, err
 	}
 
 	return &block, nil
@@ -89,7 +89,7 @@ func (d *domainDB) GetDomainBlocks(ctx context.Context) ([]*gtsmodel.DomainBlock
 		NewSelect().
 		Model(&blocks).
 		Scan(ctx); err != nil {
-		return nil, d.db.ProcessError(err)
+		return nil, err
 	}
 
 	return blocks, nil
@@ -103,7 +103,7 @@ func (d *domainDB) GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel
 		Model(&block).
 		Where("? = ?", bun.Ident("domain_block.id"), id)
 	if err := q.Scan(ctx); err != nil {
-		return nil, d.db.ProcessError(err)
+		return nil, err
 	}
 
 	return &block, nil
@@ -121,7 +121,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) error {
 		Model((*gtsmodel.DomainBlock)(nil)).
 		Where("? = ?", bun.Ident("domain_block.domain"), domain).
 		Exec(ctx); err != nil {
-		return d.db.ProcessError(err)
+		return err
 	}
 
 	// Clear the domain block cache (for later reload)
@@ -152,7 +152,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, er
 			Table("domain_blocks").
 			Column("domain")
 		if err := q.Scan(ctx, &domains); err != nil {
-			return nil, d.db.ProcessError(err)
+			return nil, err
 		}
 
 		return domains, nil

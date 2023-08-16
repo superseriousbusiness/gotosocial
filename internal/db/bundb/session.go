@@ -27,7 +27,7 @@ import (
 )
 
 type sessionDB struct {
-	db *WrappedDB
+	db *DB
 }
 
 func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, error) {
@@ -40,7 +40,7 @@ func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, er
 		Limit(1).
 		Order("router_session.id DESC").
 		Scan(ctx); err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	// ... create a new one
@@ -70,7 +70,7 @@ func (s *sessionDB) createSession(ctx context.Context) (*gtsmodel.RouterSession,
 		NewInsert().
 		Model(rs).
 		Exec(ctx); err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	return rs, nil

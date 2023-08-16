@@ -29,7 +29,7 @@ import (
 )
 
 type statusBookmarkDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -42,7 +42,7 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*g
 		Where("? = ?", bun.Ident("status_bookmark.id"), id).
 		Scan(ctx)
 	if err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	bookmark.Account, err = s.state.DB.GetAccountByID(ctx, bookmark.AccountID)
@@ -75,7 +75,7 @@ func (s *statusBookmarkDB) GetStatusBookmarkID(ctx context.Context, accountID st
 		Limit(1)
 
 	if err := q.Scan(ctx, &id); err != nil {
-		return "", s.db.ProcessError(err)
+		return "", err
 	}
 
 	return id, nil
@@ -114,7 +114,7 @@ func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID str
 	}
 
 	if err := q.Scan(ctx, &ids); err != nil {
-		return nil, s.db.ProcessError(err)
+		return nil, err
 	}
 
 	bookmarks := make([]*gtsmodel.StatusBookmark, 0, len(ids))
@@ -138,7 +138,7 @@ func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, statusBookmark
 		Model(statusBookmark).
 		Exec(ctx)
 
-	return s.db.ProcessError(err)
+	return err
 }
 
 func (s *statusBookmarkDB) DeleteStatusBookmark(ctx context.Context, id string) error {
@@ -148,7 +148,7 @@ func (s *statusBookmarkDB) DeleteStatusBookmark(ctx context.Context, id string) 
 		Where("? = ?", bun.Ident("status_bookmark.id"), id).
 		Exec(ctx)
 
-	return s.db.ProcessError(err)
+	return err
 }
 
 func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string) error {
@@ -173,7 +173,7 @@ func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAcco
 	}
 
 	if _, err := q.Exec(ctx); err != nil {
-		return s.db.ProcessError(err)
+		return err
 	}
 
 	return nil
@@ -190,7 +190,7 @@ func (s *statusBookmarkDB) DeleteStatusBookmarksForStatus(ctx context.Context, s
 		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID)
 
 	if _, err := q.Exec(ctx); err != nil {
-		return s.db.ProcessError(err)
+		return err
 	}
 
 	return nil

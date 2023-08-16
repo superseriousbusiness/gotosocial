@@ -34,14 +34,14 @@ import (
 )
 
 type emojiDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
 func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) error {
 	return e.state.Caches.GTS.Emoji().Store(emoji, func() error {
 		_, err := e.db.NewInsert().Model(emoji).Exec(ctx)
-		return e.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -60,7 +60,7 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 			Where("? = ?", bun.Ident("emoji.id"), emoji.ID).
 			Column(columns...).
 			Exec(ctx)
-		return e.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -294,7 +294,7 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 		Column("subquery.emoji_ids").
 		TableExpr("(?) AS ?", subQuery, bun.Ident("subquery")).
 		Scan(ctx, &emojiIDs); err != nil {
-		return nil, e.db.ProcessError(err)
+		return nil, err
 	}
 
 	if order == "DESC" {
@@ -328,7 +328,7 @@ func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gt
 	}
 
 	if err := q.Scan(ctx, &emojiIDs); err != nil {
-		return nil, e.db.ProcessError(err)
+		return nil, err
 	}
 
 	return e.GetEmojisByIDs(ctx, emojiIDs)
@@ -352,7 +352,7 @@ func (e *emojiDB) GetRemoteEmojis(ctx context.Context, maxID string, limit int) 
 	}
 
 	if err := q.Scan(ctx, &emojiIDs); err != nil {
-		return nil, e.db.ProcessError(err)
+		return nil, err
 	}
 
 	return e.GetEmojisByIDs(ctx, emojiIDs)
@@ -374,7 +374,7 @@ func (e *emojiDB) GetCachedEmojisOlderThan(ctx context.Context, olderThan time.T
 	}
 
 	if err := q.Scan(ctx, &emojiIDs); err != nil {
-		return nil, e.db.ProcessError(err)
+		return nil, err
 	}
 
 	return e.GetEmojisByIDs(ctx, emojiIDs)
@@ -393,7 +393,7 @@ func (e *emojiDB) GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, erro
 		Order("emoji.shortcode ASC")
 
 	if err := q.Scan(ctx, &emojiIDs); err != nil {
-		return nil, e.db.ProcessError(err)
+		return nil, err
 	}
 
 	return e.GetEmojisByIDs(ctx, emojiIDs)
@@ -469,7 +469,7 @@ func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string
 func (e *emojiDB) PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) error {
 	return e.state.Caches.GTS.EmojiCategory().Store(emojiCategory, func() error {
 		_, err := e.db.NewInsert().Model(emojiCategory).Exec(ctx)
-		return e.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -483,7 +483,7 @@ func (e *emojiDB) GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCate
 		Order("emoji_category.name ASC")
 
 	if err := q.Scan(ctx, &emojiCategoryIDs); err != nil {
-		return nil, e.db.ProcessError(err)
+		return nil, err
 	}
 
 	return e.GetEmojiCategoriesByIDs(ctx, emojiCategoryIDs)
@@ -524,7 +524,7 @@ func (e *emojiDB) getEmoji(ctx context.Context, lookup string, dbQuery func(*gts
 
 		// Not cached! Perform database query
 		if err := dbQuery(&emoji); err != nil {
-			return nil, e.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &emoji, nil
@@ -574,7 +574,7 @@ func (e *emojiDB) getEmojiCategory(ctx context.Context, lookup string, dbQuery f
 
 		// Not cached! Perform database query
 		if err := dbQuery(&category); err != nil {
-			return nil, e.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &category, nil

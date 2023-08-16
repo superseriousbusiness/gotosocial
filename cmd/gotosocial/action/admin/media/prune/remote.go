@@ -37,7 +37,7 @@ var Remote action.GTSAction = func(ctx context.Context) error {
 
 	defer func() {
 		// Ensure pruner gets shutdown on exit.
-		if err := prune.shutdown(ctx); err != nil {
+		if err := prune.shutdown(); err != nil {
 			log.Error(ctx, err)
 		}
 	}()

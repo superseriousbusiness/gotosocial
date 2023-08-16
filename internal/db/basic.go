@@ -35,7 +35,7 @@ type Basic interface {
 
 	// Stop should stop and close the database connection cleanly, returning an error if this is not possible.
 	// If the database implementation doesn't need to be stopped, this can just return nil.
-	Stop(ctx context.Context) error
+	Close() error
 
 	// IsHealthy should return nil if the database connection is healthy, or an error if not.
 	IsHealthy(ctx context.Context) error

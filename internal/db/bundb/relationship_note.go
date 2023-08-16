@@ -49,7 +49,7 @@ func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery fun
 
 		// Not cached! Perform database query
 		if err := dbQuery(&note); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &note, nil
@@ -94,6 +94,6 @@ func (r *relationshipDB) PutNote(ctx context.Context, note *gtsmodel.AccountNote
 			On("CONFLICT (?, ?) DO UPDATE", bun.Ident("account_id"), bun.Ident("target_account_id")).
 			Set("? = ?, ? = ?", bun.Ident("updated_at"), note.UpdatedAt, bun.Ident("comment"), note.Comment).
 			Exec(ctx)
-		return r.db.ProcessError(err)
+		return err
 	})
 }

@@ -37,7 +37,7 @@ import (
 )
 
 type accountDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -229,7 +229,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 
 		// Not cached! Perform database query
 		if err := dbQuery(&account); err != nil {
-			return nil, a.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &account, nil
@@ -415,7 +415,7 @@ func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, 
 	}
 
 	if err := q.Scan(ctx, &createdAt); err != nil {
-		return time.Time{}, a.db.ProcessError(err)
+		return time.Time{}, err
 	}
 	return createdAt, nil
 }
@@ -440,7 +440,7 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 		NewInsert().
 		Model(mediaAttachment).
 		Exec(ctx); err != nil {
-		return a.db.ProcessError(err)
+		return err
 	}
 
 	if _, err := a.db.
@@ -449,7 +449,7 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 		Set("? = ?", column, mediaAttachment.ID).
 		Where("? = ?", bun.Ident("account.id"), accountID).
 		Exec(ctx); err != nil {
-		return a.db.ProcessError(err)
+		return err
 	}
 
 	return nil
@@ -474,7 +474,7 @@ func (a *accountDB) GetAccountsUsingEmoji(ctx context.Context, emojiID string) (
 		Column("account_id").
 		Where("? = ?", bun.Ident("emoji_id"), emojiID).
 		Exec(ctx, &accountIDs); err != nil {
-		return nil, a.db.ProcessError(err)
+		return nil, err
 	}
 
 	// Convert account IDs into account objects.
@@ -489,7 +489,7 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 		Model(faves).
 		Where("? = ?", bun.Ident("status_fave.account_id"), accountID).
 		Scan(ctx); err != nil {
-		return nil, a.db.ProcessError(err)
+		return nil, err
 	}
 
 	return *faves, nil
@@ -601,7 +601,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, a.db.ProcessError(err)
+		return nil, err
 	}
 
 	// If we're paging up, we still want statuses
@@ -628,7 +628,7 @@ func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID stri
 		Order("status.pinned_at DESC")
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, a.db.ProcessError(err)
+		return nil, err
 	}
 
 	return a.statusesFromIDs(ctx, statusIDs)
@@ -676,7 +676,7 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	q = q.Order("status.id DESC")
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, a.db.ProcessError(err)
+		return nil, err
 	}
 
 	return a.statusesFromIDs(ctx, statusIDs)
