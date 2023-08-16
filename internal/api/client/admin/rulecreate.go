@@ -18,10 +18,16 @@
 package admin
 
 import (
+	"errors"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// RuleCreatePOSTHandler swagger:operation POST /api/v1/admin/instance/rules ruleCreate
+// RulePOSTHandler swagger:operation POST /api/v1/admin/instance/rules ruleCreate
 //
 // Create a new instance rule.
 //
@@ -52,7 +58,7 @@ import (
 //		'200':
 //			description: The newly-created instance rule.
 //			schema:
-//				"$ref": "#/definitions/rule"
+//				"$ref": "#/definitions/instanceRule"
 //		'400':
 //			description: bad request
 //		'401':
@@ -65,7 +71,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) RuleCreatePOSTHandler(c *gin.Context) {
+func (m *Module) RulePOSTHandler(c *gin.Context) {
 	// authed, err := oauth.Authed(c, true, true, true, true)
 	// if err != nil {
 	// 	apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -78,22 +84,35 @@ func (m *Module) RuleCreatePOSTHandler(c *gin.Context) {
 	// 	return
 	// }
 
-	// if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-	// 	apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-	// 	return
-	// }
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
 
-	// form := &apimodel.EmojiCreateRequest{}
-	// if err := c.ShouldBind(form); err != nil {
-	// 	apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-	// 	return
-	// }
+	form := &apimodel.InstanceRuleCreateRequest{}
+	if err := c.ShouldBind(form); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
 
-	// apiRule, errWithCode := m.processor.Admin().RuleCreate(c.Request.Context(), authed.Account, authed.User, form)
-	// if errWithCode != nil {
-	// 	apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-	// 	return
-	// }
+	if err := validateCreateRule(form); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
 
-	// c.JSON(http.StatusOK, apiRule)
+	apiRule, errWithCode := m.processor.Admin().RuleCreate(c.Request.Context(), form)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.JSON(http.StatusOK, apiRule)
+}
+
+func validateCreateRule(form *apimodel.InstanceRuleCreateRequest) error {
+	if form.Text == "" {
+		return errors.New("Instance rule text is empty")
+	}
+
+	return nil
 }

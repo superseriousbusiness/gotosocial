@@ -19,11 +19,15 @@ package bundb
 
 import (
 	"context"
+	"errors"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 type ruleDB struct {
@@ -62,96 +66,40 @@ func (r *ruleDB) GetRules(ctx context.Context) ([]gtsmodel.Rule, error) {
 	return rules, nil
 }
 
-// func (r *ruleDB) getRule(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Rule) error, keyParts ...any) (*gtsmodel.Rule, error) {
+func (r *ruleDB) PutRule(ctx context.Context, rule *gtsmodel.Rule) error {
+	if r.db.Dialect().Name() == dialect.SQLite {
+		// sqlite does not support bun's autoincrement, so we need to set rule.Order ourselves
 
-// 	// Fetch rule from database cache with loader callback
-// 	rule, err := r.state.Caches.GTS.Rule().Load(lookup, func() (*gtsmodel.Rule, error) {
-// 		var rule gtsmodel.Rule
+		var lastRule gtsmodel.Rule
 
-// 		// Not cached! Perform database query
-// 		if err := dbQuery(&rule); err != nil {
-// 			return nil, r.db.ProcessError(err)
-// 		}
+		q := r.db.
+			NewSelect().
+			Model(rule).
+			Order("rule.order DESC").
+			Limit(1)
 
-// 		return &rule, nil
-// 	}, keyParts...)
-// 	if err != nil {
-// 		// error already processed
-// 		return nil, err
-// 	}
+		if err := q.Scan(ctx, &lastRule); err != nil {
+			dbErr := r.db.ProcessError(err)
 
-// 	if gtscontext.Barebones(ctx) {
-// 		// Only a barebones model was requested.
-// 		return rule, nil
-// 	}
+			if errors.Is(dbErr, db.ErrNoEntries) {
+				rule.Order = 0
+			} else {
+				return dbErr
+			}
+		} else {
+			rule.Order = lastRule.Order + 1
+		}
+	}
 
-// 	if err := r.state.DB.PopulateRule(ctx, rule); err != nil {
-// 		return nil, err
-// 	}
+	if _, err := r.db.NewInsert().Model(rule).Exec(ctx); err != nil {
+		return r.db.ProcessError(err)
+	}
 
-// 	return rule, nil
-// }
+	// invalidate cached local instance response, so it gets updated with the new rules
+	r.state.Caches.GTS.Instance().Invalidate("Domain", config.GetHost())
 
-// func (r *ruleDB) PopulateRule(ctx context.Context, rule *gtsmodel.Rule) error {
-// 	var (
-// 		err  error
-// 		errs = gtserror.NewMultiError(4)
-// 	)
-
-// 	if rule.Account == nil {
-// 		// Rule account is not set, fetch from the database.
-// 		rule.Account, err = r.state.DB.GetAccountByID(
-// 			gtscontext.SetBarebones(ctx),
-// 			rule.AccountID,
-// 		)
-// 		if err != nil {
-// 			errs.Appendf("error populating rule account: %w", err)
-// 		}
-// 	}
-
-// 	if rule.TargetAccount == nil {
-// 		// Rule target account is not set, fetch from the database.
-// 		rule.TargetAccount, err = r.state.DB.GetAccountByID(
-// 			gtscontext.SetBarebones(ctx),
-// 			rule.TargetAccountID,
-// 		)
-// 		if err != nil {
-// 			errs.Appendf("error populating rule target account: %w", err)
-// 		}
-// 	}
-
-// 	if l := len(rule.StatusIDs); l > 0 && l != len(rule.Statuses) {
-// 		// Rule target statuses not set, fetch from the database.
-// 		rule.Statuses, err = r.state.DB.GetStatusesByIDs(
-// 			gtscontext.SetBarebones(ctx),
-// 			rule.StatusIDs,
-// 		)
-// 		if err != nil {
-// 			errs.Appendf("error populating rule statuses: %w", err)
-// 		}
-// 	}
-
-// 	if rule.ActionTakenByAccountID != "" &&
-// 		rule.ActionTakenByAccount == nil {
-// 		// Rule action account is not set, fetch from the database.
-// 		rule.ActionTakenByAccount, err = r.state.DB.GetAccountByID(
-// 			gtscontext.SetBarebones(ctx),
-// 			rule.ActionTakenByAccountID,
-// 		)
-// 		if err != nil {
-// 			errs.Appendf("error populating rule action taken by account: %w", err)
-// 		}
-// 	}
-
-// 	return errs.Combine()
-// }
-
-// func (r *ruleDB) PutRule(ctx context.Context, rule *gtsmodel.Rule) error {
-// 	return r.state.Caches.GTS.Rule().Store(rule, func() error {
-// 		_, err := r.db.NewInsert().Model(rule).Exec(ctx)
-// 		return r.db.ProcessError(err)
-// 	})
-// }
+	return nil
+}
 
 // func (r *ruleDB) UpdateRule(ctx context.Context, rule *gtsmodel.Rule, columns ...string) (*gtsmodel.Rule, error) {
 // 	// Update the rule's last-updated

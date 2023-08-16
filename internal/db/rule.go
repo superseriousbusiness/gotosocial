@@ -31,11 +31,8 @@ type Rule interface {
 	// GetRules gets all rules.
 	GetRules(ctx context.Context) ([]gtsmodel.Rule, error)
 
-	// // // PopulateRule populates the struct pointers on the given rule.
-	// // PopulateRule(ctx context.Context, rule *gtsmodel.Rule) error
-
-	// // PutRule puts the given rule in the database.
-	// PutRule(ctx context.Context, rule *gtsmodel.Rule) error
+	// PutRule puts the given rule in the database.
+	PutRule(ctx context.Context, rule *gtsmodel.Rule) error
 
 	// // UpdateRule updates one rule by its db id.
 	// // The given columns will be updated; if no columns are

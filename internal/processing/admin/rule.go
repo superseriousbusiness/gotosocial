@@ -19,10 +19,13 @@ package admin
 
 import (
 	"context"
+	"fmt"
 
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
 // RulesGet returns all rules stored on this instance.
@@ -45,6 +48,25 @@ func (p *Processor) RuleGet(ctx context.Context, id string) (*gtsmodel.Rule, gts
 		if err == db.ErrNoEntries {
 			return nil, gtserror.NewErrorNotFound(err)
 		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return rule, nil
+}
+
+// RuleCreate adds a new rule to the instance.
+func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleCreateRequest) (*gtsmodel.Rule, gtserror.WithCode) {
+	ruleID, err := id.NewRandomULID()
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new instance rule: %s", err), "error creating rule ID")
+	}
+
+	rule := &gtsmodel.Rule{
+		ID:   ruleID,
+		Text: form.Text,
+	}
+
+	if err = p.state.DB.PutRule(ctx, rule); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
