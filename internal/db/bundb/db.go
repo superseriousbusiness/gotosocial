@@ -101,7 +101,6 @@ func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx, err 
 // ExecContext wraps bun.DB.ExecContext() with retry-busy timeout.
 func (db *DB) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	bundb := db.bun // use underlying *bun.DB interface for their query formatting
-	// note: not using rawdb's implementation, so no double query hook firing
 	err = retryOnBusy(ctx, func() error {
 		result, err = bundb.ExecContext(ctx, query, args...)
 		err = db.raw.errHook(err)
@@ -113,7 +112,6 @@ func (db *DB) ExecContext(ctx context.Context, query string, args ...any) (resul
 // QueryContext wraps bun.DB.ExecContext() with retry-busy timeout.
 func (db *DB) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
 	bundb := db.bun // use underlying *bun.DB interface for their query formatting
-	// note: not using rawdb's implementation, so no double query hook firing
 	err = retryOnBusy(ctx, func() error {
 		rows, err = bundb.QueryContext(ctx, query, args...)
 		err = db.raw.errHook(err)
@@ -125,7 +123,6 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...any) (rows
 // QueryRowContext wraps bun.DB.ExecContext() with retry-busy timeout.
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
 	bundb := db.bun // use underlying *bun.DB interface for their query formatting
-	// note: not using rawdb's implementation, so no double query hook firing
 	_ = retryOnBusy(ctx, func() error {
 		row = bundb.QueryRowContext(ctx, query, args...)
 		err := db.raw.errHook(row.Err())
@@ -169,58 +166,86 @@ func (db *DB) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
 }
 
 func (db *DB) NewValues(model interface{}) *bun.ValuesQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewValuesQuery(db.bun, model).Conn(&db.raw)
 }
 
 func (db *DB) NewMerge() *bun.MergeQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewMergeQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewSelect() *bun.SelectQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewSelectQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewInsert() *bun.InsertQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewInsertQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewUpdate() *bun.UpdateQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewUpdateQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewDelete() *bun.DeleteQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewDeleteQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewRaw(query string, args ...interface{}) *bun.RawQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewRawQuery(db.bun, query, args...).Conn(&db.raw)
 }
 
 func (db *DB) NewCreateTable() *bun.CreateTableQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewCreateTableQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewDropTable() *bun.DropTableQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewDropTableQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewCreateIndex() *bun.CreateIndexQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewCreateIndexQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewDropIndex() *bun.DropIndexQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewDropIndexQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewTruncateTable() *bun.TruncateTableQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewTruncateTableQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewAddColumn() *bun.AddColumnQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewAddColumnQuery(db.bun).Conn(&db.raw)
 }
 
 func (db *DB) NewDropColumn() *bun.DropColumnQuery {
+	// note: passing in rawdb as conn iface so no double query-hook
+	// firing when passed through the bun.DB.Query___() functions.
 	return bun.NewDropColumnQuery(db.bun).Conn(&db.raw)
 }
 
