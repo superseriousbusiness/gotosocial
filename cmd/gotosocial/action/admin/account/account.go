@@ -105,17 +105,14 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	if _, err := state.DB.NewSignup(ctx, gtsmodel.NewSignup{ //nolint:revive
+	_, err = state.DB.NewSignup(ctx, gtsmodel.NewSignup{
 		Username:      username,
 		Email:         email,
 		Password:      password,
 		EmailVerified: true, // Assume cli user wants email marked as verified already.
 		PreApproved:   true, // Assume cli user wants account marked as approved already.
-	}); err != nil {
-		return err
-	}
-
-	return nil
+	})
+	return err
 }
 
 // List returns all existing local accounts.
@@ -188,14 +185,10 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 	user.Approved = func() *bool { a := true; return &a }()
 	user.Email = user.UnconfirmedEmail
 	user.ConfirmedAt = time.Now()
-	if err := state.DB.UpdateUser( //nolint:revive
+	return state.DB.UpdateUser(
 		ctx, user,
 		"approved", "email", "confirmed_at",
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
 
 // Promote sets admin + moderator flags on a user to true.
@@ -229,14 +222,10 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 
 	user.Admin = func() *bool { a := true; return &a }()
 	user.Moderator = func() *bool { a := true; return &a }()
-	if err := state.DB.UpdateUser( //nolint:revive
+	return state.DB.UpdateUser(
 		ctx, user,
 		"admin", "moderator",
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
 
 // Demote sets admin + moderator flags on a user to false.
@@ -270,14 +259,10 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 
 	user.Admin = func() *bool { a := false; return &a }()
 	user.Moderator = func() *bool { a := false; return &a }()
-	if err := state.DB.UpdateUser( //nolint:revive
+	return state.DB.UpdateUser(
 		ctx, user,
 		"admin", "moderator",
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
 
 // Disable sets Disabled to true on a user.
@@ -310,14 +295,10 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	}
 
 	user.Disabled = func() *bool { d := true; return &d }()
-	if err := state.DB.UpdateUser( //nolint:revive
+	return state.DB.UpdateUser(
 		ctx, user,
 		"disabled",
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
 
 // Password sets the password of target account.
@@ -360,12 +341,8 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	}
 
 	user.EncryptedPassword = string(encryptedPassword)
-	if err := state.DB.UpdateUser( //nolint:revive
+	return state.DB.UpdateUser(
 		ctx, user,
 		"encrypted_password",
-	); err != nil {
-		return err
-	}
-
-	return nil
+	)
 }
