@@ -19,11 +19,13 @@ package admin
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // RuleGETHandler swagger:operation GET /api/v1/admin/rules/{id} adminRuleGet
@@ -66,22 +68,22 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) RuleGETHandler(c *gin.Context) {
-	// authed, err := oauth.Authed(c, true, true, true, true)
-	// if err != nil {
-	// 	apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-	// 	return
-	// }
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
 
-	// if !*authed.User.Admin {
-	// 	err := fmt.Errorf("user %s not an admin", authed.User.ID)
-	// 	apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
-	// 	return
-	// }
+	if !*authed.User.Admin {
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
 
-	// if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-	// 	apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-	// 	return
-	// }
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
 
 	ruleID := c.Param(IDKey)
 	if ruleID == "" {
