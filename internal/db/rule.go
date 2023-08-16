@@ -34,12 +34,8 @@ type Rule interface {
 	// PutRule puts the given rule in the database.
 	PutRule(ctx context.Context, rule *gtsmodel.Rule) error
 
-	// // UpdateRule updates one rule by its db id.
-	// // The given columns will be updated; if no columns are
-	// // provided, then all columns will be updated.
-	// // updated_at will also be updated, no need to pass this
-	// // as a specific column.
-	// UpdateRule(ctx context.Context, rule *gtsmodel.Rule, columns ...string) (*gtsmodel.Rule, error)
+	// UpdateRule updates one rule by its db id.
+	UpdateRule(ctx context.Context, rule *gtsmodel.Rule) (*gtsmodel.Rule, error)
 
 	// // DeleteRuleByID marks the rule with given id as deleted.
 	// DeleteRuleByID(ctx context.Context, id string) error

@@ -102,4 +102,5 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, InstanceRulesPath, m.RulesGETHandler)
 	attachHandler(http.MethodGet, InstanceRulesPathWithID, m.RuleGETHandler)
 	attachHandler(http.MethodPost, InstanceRulesPath, m.RulePOSTHandler)
+	attachHandler(http.MethodPatch, InstanceRulesPathWithID, m.RulePATCHHandler)
 }

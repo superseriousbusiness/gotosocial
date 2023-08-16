@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -41,7 +42,8 @@ func (r *ruleDB) GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, er
 	q := r.db.
 		NewSelect().
 		Model(&rule).
-		Where("? = ?", bun.Ident("rule.id"), bun.Ident(id))
+		Where("? = ?", bun.Ident("rule.id"), bun.Ident(id)).
+		Where("? = ?", bun.Ident("rule.deleted"), util.Ptr(false))
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, r.db.ProcessError(err)
@@ -56,7 +58,7 @@ func (r *ruleDB) GetRules(ctx context.Context) ([]gtsmodel.Rule, error) {
 	q := r.db.
 		NewSelect().
 		Model(&rules).
-		Where("? IS ?", bun.Ident("rule.deleted"), util.Ptr(false)).
+		Where("? = ?", bun.Ident("rule.deleted"), util.Ptr(false)).
 		Order("rule.order ASC")
 
 	if err := q.Scan(ctx); err != nil {
@@ -101,25 +103,23 @@ func (r *ruleDB) PutRule(ctx context.Context, rule *gtsmodel.Rule) error {
 	return nil
 }
 
-// func (r *ruleDB) UpdateRule(ctx context.Context, rule *gtsmodel.Rule, columns ...string) (*gtsmodel.Rule, error) {
-// 	// Update the rule's last-updated
-// 	rule.UpdatedAt = time.Now()
-// 	if len(columns) != 0 {
-// 		columns = append(columns, "updated_at")
-// 	}
+func (r *ruleDB) UpdateRule(ctx context.Context, rule *gtsmodel.Rule) (*gtsmodel.Rule, error) {
+	// Update the rule's last-updated
+	rule.UpdatedAt = time.Now()
 
-// 	if _, err := r.db.
-// 		NewUpdate().
-// 		Model(rule).
-// 		Where("? = ?", bun.Ident("rule.id"), rule.ID).
-// 		Column(columns...).
-// 		Exec(ctx); err != nil {
-// 		return nil, r.db.ProcessError(err)
-// 	}
+	if _, err := r.db.
+		NewUpdate().
+		Model(rule).
+		WherePK().
+		Exec(ctx); err != nil {
+		return nil, r.db.ProcessError(err)
+	}
 
-// 	r.state.Caches.GTS.Rule().Invalidate("ID", rule.ID)
-// 	return rule, nil
-// }
+	// invalidate cached local instance response, so it gets updated with the new rules
+	r.state.Caches.GTS.Instance().Invalidate("Domain", config.GetHost())
+
+	return rule, nil
+}
 
 // func (r *ruleDB) DeleteRuleByID(ctx context.Context, id string) error {
 // 	defer r.state.Caches.GTS.Rule().Invalidate("ID", id)

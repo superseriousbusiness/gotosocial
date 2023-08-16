@@ -19,6 +19,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -71,4 +72,27 @@ func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleC
 	}
 
 	return rule, nil
+}
+
+// RuleUpdate updates text for an existing rule.
+func (p *Processor) RuleUpdate(ctx context.Context, id string, form *apimodel.InstanceRuleCreateRequest) (*gtsmodel.Rule, gtserror.WithCode) {
+	rule, err := p.state.DB.GetRuleByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			err = fmt.Errorf("RuleUpdate: no rule with id %s found in the db", id)
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		err := fmt.Errorf("RuleUpdate: db error: %s", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	rule.Text = form.Text
+
+	updatedRule, err := p.state.DB.UpdateRule(ctx, rule)
+
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return updatedRule, nil
 }
