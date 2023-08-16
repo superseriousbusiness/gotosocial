@@ -637,16 +637,6 @@ func Xsetrlimit(t *TLS, resource int32, rlim uintptr) int32 {
 	return Xsetrlimit64(t, resource, rlim)
 }
 
-// int setrlimit(int resource, const struct rlimit *rlim);
-func Xsetrlimit64(t *TLS, resource int32, rlim uintptr) int32 {
-	if _, _, err := unix.Syscall(unix.SYS_SETRLIMIT, uintptr(resource), uintptr(rlim), 0); err != 0 {
-		t.setErrno(err)
-		return -1
-	}
-
-	return 0
-}
-
 // uid_t getuid(void);
 func Xgetuid(t *TLS) types.Uid_t {
 	return types.Uid_t(os.Getuid())
