@@ -33,7 +33,7 @@ type Basic interface {
 	// For implementations that don't use tables, this can just return nil.
 	DropTable(ctx context.Context, i interface{}) error
 
-	// Stop should stop and close the database connection cleanly, returning an error if this is not possible.
+	// Close should stop and close the database connection cleanly, returning an error if this is not possible.
 	// If the database implementation doesn't need to be stopped, this can just return nil.
 	Close() error
 
