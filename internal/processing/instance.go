@@ -142,7 +142,7 @@ func (p *Processor) InstanceGetRules(ctx context.Context) ([]apimodel.InstanceRu
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
-	return p.tc.InstanceRulesToAPIRules(ctx, i.Rules), nil
+	return p.tc.InstanceRulesToAPIRules(i.Rules), nil
 }
 
 func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {

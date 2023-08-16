@@ -31,31 +31,31 @@ type ruleDB struct {
 	state *state.State
 }
 
-func (r *ruleDB) newRuleQ(rule interface{}) *bun.SelectQuery {
-	return r.db.NewSelect().Model(rule)
-}
+func (r *ruleDB) GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, error) {
+	var rule gtsmodel.Rule
 
-// func (r *ruleDB) GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, error) {
-// 	return r.getRule(
-// 		ctx,
-// 		"ID",
-// 		func(rule *gtsmodel.Rule) error {
-// 			return r.newRuleQ(rule).Where("? = ?", bun.Ident("rule.id"), id).Scan(ctx)
-// 		},
-// 		id,
-// 	)
-// }
+	q := r.db.
+		NewSelect().
+		Model(&rule).
+		Where("? = ?", bun.Ident("rule.id"), bun.Ident(id))
+
+	if err := q.Scan(ctx); err != nil {
+		return nil, r.db.ProcessError(err)
+	}
+
+	return &rule, nil
+}
 
 func (r *ruleDB) GetRules(ctx context.Context) ([]gtsmodel.Rule, error) {
 	rules := make([]gtsmodel.Rule, 0)
 
 	q := r.db.
 		NewSelect().
-		Model(new(gtsmodel.Rule)).
+		Model(&rules).
 		Where("? IS ?", bun.Ident("rule.deleted"), util.Ptr(false)).
 		Order("rule.order ASC")
 
-	if err := q.Scan(ctx, &rules); err != nil {
+	if err := q.Scan(ctx); err != nil {
 		return nil, r.db.ProcessError(err)
 	}
 

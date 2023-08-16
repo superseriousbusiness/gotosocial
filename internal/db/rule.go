@@ -26,7 +26,7 @@ import (
 // Rule handles getting/creation/deletion/updating of instance rules.
 type Rule interface {
 	// GetRuleByID gets one rule by its db id.
-	// GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, error)
+	GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, error)
 
 	// GetRules gets all rules.
 	GetRules(ctx context.Context) ([]gtsmodel.Rule, error)

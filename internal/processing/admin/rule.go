@@ -20,6 +20,7 @@ package admin
 import (
 	"context"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -37,20 +38,15 @@ func (p *Processor) RulesGet(
 	return rules, nil
 }
 
-// // RuleGet returns one rule, with the given ID.
-// func (p *Processor) RuleGet(ctx context.Context, account *gtsmodel.Account, id string) (*apimodel.InstanceRule, gtserror.WithCode) {
-// 	rule, err := p.state.DB.GetRuleByID(ctx, id)
-// 	if err != nil {
-// 		if err == db.ErrNoEntries {
-// 			return nil, gtserror.NewErrorNotFound(err)
-// 		}
-// 		return nil, gtserror.NewErrorInternalError(err)
-// 	}
+// RuleGet returns one rule, with the given ID.
+func (p *Processor) RuleGet(ctx context.Context, id string) (*gtsmodel.Rule, gtserror.WithCode) {
+	rule, err := p.state.DB.GetRuleByID(ctx, id)
+	if err != nil {
+		if err == db.ErrNoEntries {
+			return nil, gtserror.NewErrorNotFound(err)
+		}
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 
-// 	apimodelRule, err := p.tc.RuleToAdminAPIRule(ctx, rule, account)
-// 	if err != nil {
-// 		return nil, gtserror.NewErrorInternalError(err)
-// 	}
-
-// 	return apimodelRule, nil
-// }
+	return rule, nil
+}
