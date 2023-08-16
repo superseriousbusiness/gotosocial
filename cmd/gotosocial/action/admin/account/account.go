@@ -105,7 +105,7 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	if _, err := state.DB.NewSignup(ctx, gtsmodel.NewSignup{
+	if _, err := state.DB.NewSignup(ctx, gtsmodel.NewSignup{ //nolint:revive
 		Username:      username,
 		Email:         email,
 		Password:      password,
@@ -152,8 +152,7 @@ var List action.GTSAction = func(ctx context.Context) error {
 	for _, u := range users {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", u.Account.Username, u.AccountID, fmtBool(u.Approved), fmtBool(u.Admin), fmtBool(u.Moderator), fmtDate(u.Account.SuspendedAt), fmtDate(u.ConfirmedAt))
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 // Confirm sets a user to Approved, sets Email to the current
@@ -189,7 +188,7 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 	user.Approved = func() *bool { a := true; return &a }()
 	user.Email = user.UnconfirmedEmail
 	user.ConfirmedAt = time.Now()
-	if err := state.DB.UpdateUser(
+	if err := state.DB.UpdateUser( //nolint:revive
 		ctx, user,
 		"approved", "email", "confirmed_at",
 	); err != nil {
@@ -230,7 +229,7 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 
 	user.Admin = func() *bool { a := true; return &a }()
 	user.Moderator = func() *bool { a := true; return &a }()
-	if err := state.DB.UpdateUser(
+	if err := state.DB.UpdateUser( //nolint:revive
 		ctx, user,
 		"admin", "moderator",
 	); err != nil {
@@ -271,7 +270,7 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 
 	user.Admin = func() *bool { a := false; return &a }()
 	user.Moderator = func() *bool { a := false; return &a }()
-	if err := state.DB.UpdateUser(
+	if err := state.DB.UpdateUser( //nolint:revive
 		ctx, user,
 		"admin", "moderator",
 	); err != nil {
@@ -311,7 +310,7 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	}
 
 	user.Disabled = func() *bool { d := true; return &d }()
-	if err := state.DB.UpdateUser(
+	if err := state.DB.UpdateUser( //nolint:revive
 		ctx, user,
 		"disabled",
 	); err != nil {
@@ -361,7 +360,7 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	}
 
 	user.EncryptedPassword = string(encryptedPassword)
-	if err := state.DB.UpdateUser(
+	if err := state.DB.UpdateUser( //nolint:revive
 		ctx, user,
 		"encrypted_password",
 	); err != nil {

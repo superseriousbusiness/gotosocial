@@ -287,7 +287,6 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
 					Exec(ctx); err != nil {
-					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -304,7 +303,6 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
 					Exec(ctx); err != nil {
-					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -320,7 +318,6 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 					Model(a).
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
-					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -356,7 +353,6 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("emoji_id")).
 					Exec(ctx); err != nil {
-					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -373,7 +369,6 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 					}).
 					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("status_id"), bun.Ident("tag_id")).
 					Exec(ctx); err != nil {
-					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
@@ -389,7 +384,6 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 					Model(a).
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
-					err = err
 					if !errors.Is(err, db.ErrAlreadyExists) {
 						return err
 					}
