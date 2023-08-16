@@ -15,21 +15,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package admin
+package instance
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// rulesGETHandler swagger:operation GET /api/v1/admin/rules rules
+// instanceRulesGETHandler swagger:operation GET /api/v1/instance/rules rules
 //
-// View instance rules, with IDs.
+// View instance rules (public).
 //
 // The rules will be returned in order (sorted by Order ascending).
 //
@@ -37,16 +35,12 @@ import (
 //
 //	---
 //	tags:
-//	- admin
+//	- instance
 //
 //	produces:
 //	- application/json
 //
 //	parameters:
-//
-//	security:
-//	- OAuth2 Bearer:
-//		- admin
 //
 //	responses:
 //		'200':
@@ -57,33 +51,19 @@ import (
 //					"$ref": "#/definitions/instanceRule"
 //		'400':
 //			description: bad request
-//		'401':
-//			description: unauthorized
 //		'404':
 //			description: not found
 //		'406':
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) RulesGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if !*authed.User.Admin {
-		err := fmt.Errorf("user %s not an admin", authed.User.ID)
-		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
+func (m *Module) InstanceRulesGETHandler(c *gin.Context) {
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	resp, errWithCode := m.processor.Admin().RulesGet(c.Request.Context())
+	resp, errWithCode := m.processor.InstanceGetRules(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

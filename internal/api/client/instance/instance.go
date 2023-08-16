@@ -28,6 +28,7 @@ const (
 	InstanceInformationPathV1 = "/v1/instance"
 	InstanceInformationPathV2 = "/v2/instance"
 	InstancePeersPath         = InstanceInformationPathV1 + "/peers"
+	InstanceRulesPath         = InstanceInformationPathV1 + "/rules"
 	PeersFilterKey            = "filter" // PeersFilterKey is used to provide filters to /api/v1/instance/peers
 )
 
@@ -47,4 +48,6 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	attachHandler(http.MethodPatch, InstanceInformationPathV1, m.InstanceUpdatePATCHHandler)
 	attachHandler(http.MethodGet, InstancePeersPath, m.InstancePeersGETHandler)
+
+	attachHandler(http.MethodGet, InstanceRulesPath, m.InstanceRulesGETHandler)
 }

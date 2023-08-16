@@ -738,12 +738,12 @@ func (c *converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 	return ""
 }
 
-func (c *converter) RulesToAPIRules(ctx context.Context, r []gtsmodel.Rule) []apimodel.InstanceRule {
+func (c *converter) InstanceRulesToAPIRules(ctx context.Context, r []gtsmodel.Rule) []apimodel.InstanceRule {
 	rules := make([]apimodel.InstanceRule, len(r))
 
 	for i, v := range r {
 		rules[i] = apimodel.InstanceRule{
-			ID:   strconv.Itoa(i),
+			ID:   v.ID,
 			Text: v.Text,
 		}
 	}
@@ -765,7 +765,7 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		ApprovalRequired: config.GetAccountsApprovalRequired(),
 		InvitesEnabled:   false, // todo: not supported yet
 		MaxTootChars:     uint(config.GetStatusesMaxChars()),
-		Rules:            c.RulesToAPIRules(ctx, i.Rules),
+		Rules:            c.InstanceRulesToAPIRules(ctx, i.Rules),
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {
@@ -868,7 +868,7 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		Description:   i.Description,
 		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
 		Languages:     []string{},                 // todo: not implemented
-		Rules:         c.RulesToAPIRules(ctx, i.Rules),
+		Rules:         c.InstanceRulesToAPIRules(ctx, i.Rules),
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {

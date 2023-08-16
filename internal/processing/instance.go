@@ -136,6 +136,15 @@ func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 	return domains, nil
 }
 
+func (p *Processor) InstanceGetRules(ctx context.Context) ([]apimodel.InstanceRule, gtserror.WithCode) {
+	i, err := p.getThisInstance(ctx)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
+	}
+
+	return p.tc.InstanceRulesToAPIRules(ctx, i.Rules), nil
+}
+
 func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
 	// fetch the instance entry from the db for processing
 	host := config.GetHost()
