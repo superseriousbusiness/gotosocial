@@ -37,6 +37,8 @@ type Report struct {
 	Comment                string    `bun:",nullzero"`                                                   // comment / explanation for this report, by the reporter
 	StatusIDs              []string  `bun:"statuses,array"`                                              // database IDs of any statuses referenced by this report
 	Statuses               []*Status `bun:"-"`                                                           // statuses corresponding to StatusIDs
+	RuleIDs                []string  `bun:"rules,array"`                                                 // database IDs of any rules referenced by this report
+	Rules                  []*Rule   `bun:"-"`                                                           // rules corresponding to RuleIDs
 	Forwarded              *bool     `bun:",nullzero,notnull,default:false"`                             // flag to indicate report should be forwarded to remote instance
 	ActionTaken            string    `bun:",nullzero"`                                                   // string description of what action was taken in response to this report
 	ActionTakenAt          time.Time `bun:"type:timestamptz,nullzero"`                                   // time at which action was taken, if any

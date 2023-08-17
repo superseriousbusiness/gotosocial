@@ -118,8 +118,8 @@ type AdminReport struct {
 	// Will be empty if no status IDs were submitted with the report.
 	Statuses []*Status `json:"statuses"`
 	// Array of rule IDs that were submitted along with this report.
-	// NOT IMPLEMENTED, will always be empty array.
-	Rules []interface{} `json:"rule_ids"`
+	// Will be empty if no rule IDs were submitted with the report.
+	Rules []*InstanceRule `json:"rules"`
 	// If an action was taken, what comment was made by the admin on the taken action?
 	// Will be null if not set / no action yet taken.
 	// example: Account was suspended.

@@ -2021,6 +2021,7 @@ func NewTestReports() map[string]*gtsmodel.Report {
 			Comment:         "dark souls sucks, please yeet this nerd",
 			StatusIDs:       []string{"01FVW7JHQFSFK166WWKR8CBA6M"},
 			Forwarded:       util.Ptr(true),
+			RuleIDs:         []string{"01GP3AWY4CRDVRNZKW0TEAMB51", "01GP3DFY9XQ1TJMZT5BGAZPXX3"},
 		},
 		"remote_account_1_report_local_account_2": {
 			ID:                     "01GP3DFY9XQ1TJMZT5BGAZPXX7",

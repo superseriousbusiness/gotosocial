@@ -1065,7 +1065,7 @@ func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (
 		Comment:     r.Comment,
 		Forwarded:   *r.Forwarded,
 		StatusIDs:   r.StatusIDs,
-		RuleIDs:     []int{}, // todo: not supported yet
+		RuleIDs:     r.RuleIDs,
 	}
 
 	if !r.ActionTakenAt.IsZero() {
@@ -1158,6 +1158,20 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 		statuses = append(statuses, status)
 	}
 
+	rules := make([]*apimodel.InstanceRule, 0, len(r.RuleIDs))
+	if len(r.RuleIDs) != 0 && len(r.Rules) == 0 {
+		r.Rules, err = c.db.GetRulesByIDs(ctx, r.RuleIDs)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting rules from the db: %w", err)
+		}
+	}
+	for _, v := range r.Rules {
+		rules = append(rules, &apimodel.InstanceRule{
+			ID:   v.ID,
+			Text: v.Text,
+		})
+	}
+
 	if ac := r.ActionTaken; ac != "" {
 		actionTakenComment = &ac
 	}
@@ -1177,7 +1191,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 		ActionTakenByAccount: actionTakenByAccount,
 		ActionTakenComment:   actionTakenComment,
 		Statuses:             statuses,
-		Rules:                []interface{}{}, // not implemented
+		Rules:                rules,
 	}, nil
 }
 

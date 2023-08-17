@@ -54,8 +54,8 @@ type Report struct {
 	StatusIDs []string `json:"status_ids"`
 	// Array of rule IDs that were submitted along with this report.
 	// Will be empty if no rule IDs were submitted.
-	// example: [1, 2]
-	RuleIDs []int `json:"rule_ids"`
+	// example: ["01GPBN5YDY6JKBWE44H7YQBDCQ","01GPBN65PDWSBPWVDD0SQCFFY3"]
+	RuleIDs []string `json:"rule_ids"`
 	// Account that was reported.
 	TargetAccount *Account `json:"target_account"`
 }
@@ -89,8 +89,7 @@ type ReportCreateRequest struct {
 	// in: formData
 	Category string `form:"category" json:"category" xml:"category"`
 	// IDs of rules on this instance which have been broken according to the reporter.
-	// This is currently not supported, provided only for API compatibility.
-	// example: [1, 2, 3]
+	// example: ["01GPBN5YDY6JKBWE44H7YQBDCQ","01GPBN65PDWSBPWVDD0SQCFFY3"]
 	// in: formData
-	RuleIDs []int `form:"rule_ids[]" json:"rule_ids" xml:"rule_ids"`
+	RuleIDs []string `form:"rule_ids[]" json:"rule_ids" xml:"rule_ids"`
 }

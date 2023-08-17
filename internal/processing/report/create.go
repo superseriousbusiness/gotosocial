@@ -64,6 +64,13 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
+	// fetch rules by IDs given in the report form (noop if no rules given)
+	rules, err := p.state.DB.GetRulesByIDs(ctx, form.RuleIDs)
+	if err != nil {
+		err = fmt.Errorf("db error fetching report target rules: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	reportID := id.NewULID()
 	report := &gtsmodel.Report{
 		ID:              reportID,
@@ -75,6 +82,8 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		Comment:         form.Comment,
 		StatusIDs:       form.StatusIDs,
 		Statuses:        statuses,
+		RuleIDs:         form.RuleIDs,
+		Rules:           rules,
 		Forwarded:       &form.Forward,
 	}
 

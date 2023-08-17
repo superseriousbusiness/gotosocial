@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
@@ -50,6 +51,24 @@ func (r *ruleDB) GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, er
 	}
 
 	return &rule, nil
+}
+
+func (r *ruleDB) GetRulesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Rule, error) {
+	rules := make([]*gtsmodel.Rule, 0, len(ids))
+
+	for _, id := range ids {
+		// Attempt to fetch status from DB.
+		rule, err := r.GetRuleByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting rule %q: %v", id, err)
+			continue
+		}
+
+		// Append status to return slice.
+		rules = append(rules, rule)
+	}
+
+	return rules, nil
 }
 
 func (r *ruleDB) GetRules(ctx context.Context) ([]gtsmodel.Rule, error) {
