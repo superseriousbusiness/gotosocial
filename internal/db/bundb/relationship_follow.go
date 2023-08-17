@@ -135,7 +135,7 @@ func (r *relationshipDB) getFollow(ctx context.Context, lookup string, dbQuery f
 
 		// Not cached! Perform database query
 		if err := dbQuery(&follow); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &follow, nil
@@ -191,7 +191,7 @@ func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Fo
 func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow) error {
 	return r.state.Caches.GTS.Follow().Store(follow, func() error {
 		_, err := r.db.NewInsert().Model(follow).Exec(ctx)
-		return r.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -208,7 +208,7 @@ func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Foll
 			Where("? = ?", bun.Ident("follow.id"), follow.ID).
 			Column(columns...).
 			Exec(ctx); err != nil {
-			return r.db.ProcessError(err)
+			return err
 		}
 
 		return nil
@@ -221,7 +221,7 @@ func (r *relationshipDB) deleteFollow(ctx context.Context, id string) error {
 		Table("follows").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx); err != nil {
-		return r.db.ProcessError(err)
+		return err
 	}
 
 	// Delete every list entry that used this followID.
@@ -311,7 +311,7 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 			accountID,
 		).
 		Exec(ctx, &followIDs); err != nil {
-		return r.db.ProcessError(err)
+		return err
 	}
 
 	defer func() {

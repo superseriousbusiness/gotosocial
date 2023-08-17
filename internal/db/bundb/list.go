@@ -33,7 +33,7 @@ import (
 )
 
 type listDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -61,7 +61,7 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&list); err != nil {
-			return nil, l.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &list, nil
@@ -93,7 +93,7 @@ func (l *listDB) GetListsForAccountID(ctx context.Context, accountID string) ([]
 		Where("? = ?", bun.Ident("list.account_id"), accountID).
 		Order("list.id DESC").
 		Scan(ctx, &listIDs); err != nil {
-		return nil, l.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(listIDs) == 0 {
@@ -149,7 +149,7 @@ func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 func (l *listDB) PutList(ctx context.Context, list *gtsmodel.List) error {
 	return l.state.Caches.GTS.List().Store(list, func() error {
 		_, err := l.db.NewInsert().Model(list).Exec(ctx)
-		return l.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -176,7 +176,7 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 			Where("? = ?", bun.Ident("list.id"), list.ID).
 			Column(columns...).
 			Exec(ctx)
-		return l.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -248,7 +248,7 @@ func (l *listDB) getListEntry(ctx context.Context, lookup string, dbQuery func(*
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&listEntry); err != nil {
-			return nil, l.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &listEntry, nil
@@ -328,7 +328,7 @@ func (l *listDB) GetListEntries(ctx context.Context,
 	}
 
 	if err := q.Scan(ctx, &entryIDs); err != nil {
-		return nil, l.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(entryIDs) == 0 {
@@ -369,7 +369,7 @@ func (l *listDB) GetListEntriesForFollowID(ctx context.Context, followID string)
 		// Select only entries belonging with given followID.
 		Where("? = ?", bun.Ident("entry.follow_id"), followID).
 		Scan(ctx, &entryIDs); err != nil {
-		return nil, l.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(entryIDs) == 0 {
@@ -486,7 +486,7 @@ func (l *listDB) DeleteListEntriesForFollowID(ctx context.Context, followID stri
 		Where("? = ?", bun.Ident("follow_id"), followID).
 		Order("id DESC").
 		Scan(ctx, &entryIDs); err != nil {
-		return l.db.ProcessError(err)
+		return err
 	}
 
 	for _, id := range entryIDs {
@@ -512,7 +512,7 @@ func (l *listDB) ListIncludesAccount(ctx context.Context, listID string, account
 		Where("? = ?", bun.Ident("follow.target_account_id"), accountID).
 		Exists(ctx)
 
-	return exists, l.db.ProcessError(err)
+	return exists, err
 }
 
 // collate will collect the values of type T from an expected slice of length 'len',

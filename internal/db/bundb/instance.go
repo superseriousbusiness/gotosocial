@@ -34,7 +34,7 @@ import (
 )
 
 type instanceDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -56,7 +56,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, i.db.ProcessError(err)
+		return 0, err
 	}
 	return count, nil
 }
@@ -78,7 +78,7 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, i.db.ProcessError(err)
+		return 0, err
 	}
 	return count, nil
 }
@@ -101,7 +101,7 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, i.db.ProcessError(err)
+		return 0, err
 	}
 	return count, nil
 }
@@ -148,7 +148,7 @@ func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery fun
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&instance); err != nil {
-			return nil, i.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &instance, nil
@@ -211,7 +211,7 @@ func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instanc
 
 	return i.state.Caches.GTS.Instance().Store(instance, func() error {
 		_, err := i.db.NewInsert().Model(instance).Exec(ctx)
-		return i.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -236,7 +236,7 @@ func (i *instanceDB) UpdateInstance(ctx context.Context, instance *gtsmodel.Inst
 			Where("? = ?", bun.Ident("instance.id"), instance.ID).
 			Column(columns...).
 			Exec(ctx)
-		return i.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -256,7 +256,7 @@ func (i *instanceDB) GetInstancePeers(ctx context.Context, includeSuspended bool
 	}
 
 	if err := q.Scan(ctx, &instanceIDs); err != nil {
-		return nil, i.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(instanceIDs) == 0 {
@@ -315,7 +315,7 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 	}
 
 	if err := q.Scan(ctx, &accountIDs); err != nil {
-		return nil, i.db.ProcessError(err)
+		return nil, err
 	}
 
 	// Catch case of no accounts early.
@@ -361,7 +361,7 @@ func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]strin
 		OrderExpr("? ASC", bun.Ident("user.email"))
 
 	if err := q.Scan(ctx, &addresses); err != nil {
-		return nil, i.db.ProcessError(err)
+		return nil, err
 	}
 
 	if len(addresses) == 0 {

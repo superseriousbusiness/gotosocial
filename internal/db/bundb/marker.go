@@ -30,7 +30,7 @@ import (
 )
 
 type markerDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -48,7 +48,7 @@ func (m *markerDB) GetMarker(ctx context.Context, accountID string, name gtsmode
 				Model(&marker).
 				Where("? = ? AND ? = ?", bun.Ident("account_id"), accountID, bun.Ident("name"), name).
 				Scan(ctx); err != nil {
-				return nil, m.db.ProcessError(err)
+				return nil, err
 			}
 
 			return &marker, nil
@@ -79,7 +79,7 @@ func (m *markerDB) UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) er
 			if _, err := m.db.NewInsert().
 				Model(marker).
 				Exec(ctx); err != nil {
-				return m.db.ProcessError(err)
+				return err
 			}
 			return nil
 		}
@@ -94,12 +94,12 @@ func (m *markerDB) UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) er
 				Where("? = ?", bun.Ident("version"), prevMarker.Version).
 				Exec(ctx)
 			if err != nil {
-				return m.db.ProcessError(err)
+				return err
 			}
 
 			rowsAffected, err := result.RowsAffected()
 			if err != nil {
-				return m.db.ProcessError(err)
+				return err
 			}
 			if rowsAffected == 0 {
 				// Will trigger a rollback, although there should be no changes to roll back.

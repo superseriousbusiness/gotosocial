@@ -32,7 +32,7 @@ import (
 )
 
 type reportDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -94,7 +94,7 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 	}
 
 	if err := q.Scan(ctx, &reportIDs); err != nil {
-		return nil, r.db.ProcessError(err)
+		return nil, err
 	}
 
 	// Catch case of no reports early
@@ -125,7 +125,7 @@ func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*g
 
 		// Not cached! Perform database query
 		if err := dbQuery(&report); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &report, nil
@@ -204,7 +204,7 @@ func (r *reportDB) PopulateReport(ctx context.Context, report *gtsmodel.Report) 
 func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) error {
 	return r.state.Caches.GTS.Report().Store(report, func() error {
 		_, err := r.db.NewInsert().Model(report).Exec(ctx)
-		return r.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -221,7 +221,7 @@ func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, co
 		Where("? = ?", bun.Ident("report.id"), report.ID).
 		Column(columns...).
 		Exec(ctx); err != nil {
-		return nil, r.db.ProcessError(err)
+		return nil, err
 	}
 
 	r.state.Caches.GTS.Report().Invalidate("ID", report.ID)
@@ -248,5 +248,5 @@ func (r *reportDB) DeleteReportByID(ctx context.Context, id string) error {
 		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
 		Where("? = ?", bun.Ident("report.id"), id).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }

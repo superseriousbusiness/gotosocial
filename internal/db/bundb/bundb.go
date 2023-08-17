@@ -81,12 +81,12 @@ type DBService struct {
 	db.Timeline
 	db.User
 	db.Tombstone
-	db *WrappedDB
+	db *DB
 }
 
 // GetDB returns the underlying database connection pool.
 // Should only be used in testing + exceptional circumstance.
-func (dbService *DBService) DB() *WrappedDB {
+func (dbService *DBService) DB() *DB {
 	return dbService.db
 }
 
@@ -114,7 +114,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
-	var db *WrappedDB
+	var db *DB
 	var err error
 	t := strings.ToLower(config.GetDbType())
 
@@ -156,7 +156,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	// perform any pending database migrations: this includes
 	// the very first 'migration' on startup which just creates
 	// necessary tables
-	if err := doMigration(ctx, db.DB); err != nil {
+	if err := doMigration(ctx, db.bun); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
 
@@ -258,7 +258,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	return ps, nil
 }
 
-func pgConn(ctx context.Context) (*WrappedDB, error) {
+func pgConn(ctx context.Context) (*DB, error) {
 	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
 	if err != nil {
 		return nil, fmt.Errorf("could not create bundb postgres options: %s", err)
@@ -273,18 +273,18 @@ func pgConn(ctx context.Context) (*WrappedDB, error) {
 	sqldb.SetMaxIdleConns(2)                  // assume default 2; if max idle is less than max open, it will be automatically adjusted
 	sqldb.SetConnMaxLifetime(5 * time.Minute) // fine to kill old connections
 
-	conn := WrapDB(bun.NewDB(sqldb, pgdialect.New()))
+	db := WrapDB(bun.NewDB(sqldb, pgdialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.DB.PingContext(ctx); err != nil {
+	if err := db.PingContext(ctx); err != nil {
 		return nil, fmt.Errorf("postgres ping: %s", err)
 	}
 
 	log.Info(ctx, "connected to POSTGRES database")
-	return conn, nil
+	return db, nil
 }
 
-func sqliteConn(ctx context.Context) (*WrappedDB, error) {
+func sqliteConn(ctx context.Context) (*DB, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
 	if address == "" {
@@ -345,10 +345,10 @@ func sqliteConn(ctx context.Context) (*WrappedDB, error) {
 	sqldb.SetConnMaxLifetime(0)           // don't kill connections due to age
 
 	// Wrap Bun database conn in our own wrapper
-	conn := WrapDB(bun.NewDB(sqldb, sqlitedialect.New()))
+	db := WrapDB(bun.NewDB(sqldb, sqlitedialect.New()))
 
 	// ping to check the db is there and listening
-	if err := conn.DB.PingContext(ctx); err != nil {
+	if err := db.PingContext(ctx); err != nil {
 		if errWithCode, ok := err.(*sqlite.Error); ok {
 			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
 		}
@@ -356,7 +356,7 @@ func sqliteConn(ctx context.Context) (*WrappedDB, error) {
 	}
 	log.Infof(ctx, "connected to SQLITE database with address %s", address)
 
-	return conn, nil
+	return db, nil
 }
 
 /*
@@ -459,7 +459,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 
 // sqlitePragmas sets desired sqlite pragmas based on configured values, and
 // logs the results of the pragma queries. Errors if something goes wrong.
-func sqlitePragmas(ctx context.Context, db *WrappedDB) error {
+func sqlitePragmas(ctx context.Context, db *DB) error {
 	var pragmas [][]string
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {
 		// Set the user provided SQLite journal mode

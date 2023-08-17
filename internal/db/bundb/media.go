@@ -32,7 +32,7 @@ import (
 )
 
 type mediaDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -74,7 +74,7 @@ func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func
 
 		// Not cached! Perform database query
 		if err := dbQuery(&attachment); err != nil {
-			return nil, m.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &attachment, nil
@@ -84,7 +84,7 @@ func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func
 func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error {
 	return m.state.Caches.GTS.Media().Store(media, func() error {
 		_, err := m.db.NewInsert().Model(media).Exec(ctx)
-		return m.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -101,7 +101,7 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 			Where("? = ?", bun.Ident("media_attachment.id"), media.ID).
 			Column(columns...).
 			Exec(ctx)
-		return m.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -197,7 +197,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 		return nil
 	})
 
-	return m.db.ProcessError(err)
+	return err
 }
 
 func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time) (int, error) {
@@ -211,7 +211,7 @@ func (m *mediaDB) CountRemoteOlderThan(ctx context.Context, olderThan time.Time)
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, m.db.ProcessError(err)
+		return 0, err
 	}
 
 	return count, nil
@@ -234,7 +234,7 @@ func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) (
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.db.ProcessError(err)
+		return nil, err
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
@@ -258,7 +258,7 @@ func (m *mediaDB) GetRemoteAttachments(ctx context.Context, maxID string, limit 
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.db.ProcessError(err)
+		return nil, err
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
@@ -281,7 +281,7 @@ func (m *mediaDB) GetCachedAttachmentsOlderThan(ctx context.Context, olderThan t
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.db.ProcessError(err)
+		return nil, err
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
@@ -309,7 +309,7 @@ func (m *mediaDB) GetAvatarsAndHeaders(ctx context.Context, maxID string, limit 
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.db.ProcessError(err)
+		return nil, err
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
@@ -335,7 +335,7 @@ func (m *mediaDB) GetLocalUnattachedOlderThan(ctx context.Context, olderThan tim
 	}
 
 	if err := q.Scan(ctx, &attachmentIDs); err != nil {
-		return nil, m.db.ProcessError(err)
+		return nil, err
 	}
 
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
@@ -355,7 +355,7 @@ func (m *mediaDB) CountLocalUnattachedOlderThan(ctx context.Context, olderThan t
 
 	count, err := q.Count(ctx)
 	if err != nil {
-		return 0, m.db.ProcessError(err)
+		return 0, err
 	}
 
 	return count, nil

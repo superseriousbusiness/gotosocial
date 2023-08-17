@@ -27,7 +27,7 @@ import (
 )
 
 type tombstoneDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -41,7 +41,7 @@ func (t *tombstoneDB) GetTombstoneByURI(ctx context.Context, uri string) (*gtsmo
 			Where("? = ?", bun.Ident("tombstone.uri"), uri)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, t.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &tomb, nil
@@ -62,7 +62,7 @@ func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tomb
 			NewInsert().
 			Model(tombstone).
 			Exec(ctx)
-		return t.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -74,5 +74,5 @@ func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) error {
 		TableExpr("? AS ?", bun.Ident("tombstones"), bun.Ident("tombstone")).
 		Where("? = ?", bun.Ident("tombstone.id"), id).
 		Exec(ctx)
-	return t.db.ProcessError(err)
+	return err
 }
