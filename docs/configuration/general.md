@@ -28,6 +28,11 @@ log-db-queries: false
 # Default: true
 log-client-ip: true
 
+# Bool. Include a timestamp in the emitted log lines
+# Options: [true, false]
+# Default: true
+log-timestamp: true
+
 # String. Application name to use internally.
 # Examples: ["My Application","gotosocial"]
 # Default: "gotosocial"
