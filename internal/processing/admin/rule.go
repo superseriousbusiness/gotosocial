@@ -33,18 +33,24 @@ import (
 // RulesGet returns all rules stored on this instance.
 func (p *Processor) RulesGet(
 	ctx context.Context,
-) ([]gtsmodel.Rule, gtserror.WithCode) {
+) ([]*apimodel.AdminInstanceRule, gtserror.WithCode) {
 	rules, err := p.state.DB.GetRules(ctx)
 
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return rules, nil
+	apiRules := make([]*apimodel.AdminInstanceRule, len(rules))
+
+	for i := range rules {
+		apiRules[i] = p.tc.InstanceRuleToAdminAPIRule(&rules[i])
+	}
+
+	return apiRules, nil
 }
 
 // RuleGet returns one rule, with the given ID.
-func (p *Processor) RuleGet(ctx context.Context, id string) (*gtsmodel.Rule, gtserror.WithCode) {
+func (p *Processor) RuleGet(ctx context.Context, id string) (*apimodel.AdminInstanceRule, gtserror.WithCode) {
 	rule, err := p.state.DB.GetRuleByID(ctx, id)
 	if err != nil {
 		if err == db.ErrNoEntries {
@@ -53,11 +59,11 @@ func (p *Processor) RuleGet(ctx context.Context, id string) (*gtsmodel.Rule, gts
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return rule, nil
+	return p.tc.InstanceRuleToAdminAPIRule(rule), nil
 }
 
 // RuleCreate adds a new rule to the instance.
-func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleCreateRequest) (*gtsmodel.Rule, gtserror.WithCode) {
+func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleCreateRequest) (*apimodel.AdminInstanceRule, gtserror.WithCode) {
 	ruleID, err := id.NewRandomULID()
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new instance rule: %s", err), "error creating rule ID")
@@ -72,11 +78,11 @@ func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleC
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return rule, nil
+	return p.tc.InstanceRuleToAdminAPIRule(rule), nil
 }
 
 // RuleUpdate updates text for an existing rule.
-func (p *Processor) RuleUpdate(ctx context.Context, id string, form *apimodel.InstanceRuleCreateRequest) (*gtsmodel.Rule, gtserror.WithCode) {
+func (p *Processor) RuleUpdate(ctx context.Context, id string, form *apimodel.InstanceRuleCreateRequest) (*apimodel.AdminInstanceRule, gtserror.WithCode) {
 	rule, err := p.state.DB.GetRuleByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
@@ -95,11 +101,11 @@ func (p *Processor) RuleUpdate(ctx context.Context, id string, form *apimodel.In
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return updatedRule, nil
+	return p.tc.InstanceRuleToAdminAPIRule(updatedRule), nil
 }
 
 // RuleDelete deletes an existing rule.
-func (p *Processor) RuleDelete(ctx context.Context, id string) (*gtsmodel.Rule, gtserror.WithCode) {
+func (p *Processor) RuleDelete(ctx context.Context, id string) (*apimodel.AdminInstanceRule, gtserror.WithCode) {
 	rule, err := p.state.DB.GetRuleByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
@@ -117,5 +123,5 @@ func (p *Processor) RuleDelete(ctx context.Context, id string) (*gtsmodel.Rule, 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return deletedRule, nil
+	return p.tc.InstanceRuleToAdminAPIRule(deletedRule), nil
 }

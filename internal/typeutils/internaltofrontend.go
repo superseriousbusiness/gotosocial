@@ -738,17 +738,30 @@ func (c *converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 	return ""
 }
 
+func (c *converter) InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule {
+	return apimodel.InstanceRule{
+		ID:   r.ID,
+		Text: r.Text,
+	}
+}
+
 func (c *converter) InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.InstanceRule {
 	rules := make([]apimodel.InstanceRule, len(r))
 
 	for i, v := range r {
-		rules[i] = apimodel.InstanceRule{
-			ID:   v.ID,
-			Text: v.Text,
-		}
+		rules[i] = c.InstanceRuleToAPIRule(v)
 	}
 
 	return rules
+}
+
+func (c *converter) InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.AdminInstanceRule {
+	return &apimodel.AdminInstanceRule{
+		ID:        r.ID,
+		CreatedAt: util.FormatISO8601(r.CreatedAt),
+		UpdatedAt: util.FormatISO8601(r.UpdatedAt),
+		Text:      r.Text,
+	}
 }
 
 func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error) {

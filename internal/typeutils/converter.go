@@ -85,6 +85,8 @@ type TypeConverter interface {
 	InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV2, error)
 	// InstanceRulesToAPIRules converts all local instance rules into their api equivalent for serving at /api/v1/instance/rules
 	InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.InstanceRule
+	// InstanceRuleToAdminAPIRule converts a local instance rule into its api equivalent for serving at /api/v1/admin/instance/rules/:id
+	InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.AdminInstanceRule
 	// RelationshipToAPIRelationship converts a gts relationship into its api equivalent for serving in various places
 	RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*apimodel.Relationship, error)
 	// NotificationToAPINotification converts a gts notification into a api notification

@@ -189,3 +189,10 @@ type AdminSendTestEmailRequest struct {
 	// Email address to send the test email to.
 	Email string `form:"email" json:"email" xml:"email"`
 }
+
+type AdminInstanceRule struct {
+	ID        string `json:"id"`         // id of this item in the database
+	CreatedAt string `json:"created_at"` // when was item created
+	UpdatedAt string `json:"updated_at"` // when was item last updated
+	Text      string `json:"text"`       // text content of the rule
+}
