@@ -52,5 +52,5 @@ var Export action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	return dbConn.Stop(ctx)
+	return dbConn.Close()
 }

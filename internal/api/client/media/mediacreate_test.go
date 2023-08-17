@@ -110,7 +110,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 }
 
 func (suite *MediaCreateTestSuite) TearDownSuite() {
-	if err := suite.db.Stop(context.Background()); err != nil {
+	if err := suite.db.Close(); err != nil {
 		log.Panicf(nil, "error closing db connection: %s", err)
 	}
 	testrig.StopWorkers(&suite.state)

@@ -33,7 +33,7 @@ import (
 )
 
 type statusFaveDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -82,7 +82,7 @@ func (s *statusFaveDB) getStatusFave(ctx context.Context, lookup string, dbQuery
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&fave); err != nil {
-			return nil, s.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &fave, nil
@@ -151,7 +151,7 @@ func (s *statusFaveDB) getStatusFaveIDs(ctx context.Context, statusID string) ([
 			Column("id").
 			Where("? = ?", bun.Ident("status_id"), statusID).
 			Scan(ctx, &faveIDs); err != nil {
-			return nil, s.db.ProcessError(err)
+			return nil, err
 		}
 
 		return faveIDs, nil
@@ -206,7 +206,7 @@ func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusF
 			NewInsert().
 			Model(fave).
 			Exec(ctx)
-		return s.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -225,7 +225,7 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) erro
 			// to us doing a RETURNING.
 			err = nil
 		}
-		return s.db.ProcessError(err)
+		return err
 	}
 
 	if statusID != "" {
@@ -267,7 +267,7 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 			// to us doing a RETURNING.
 			err = nil
 		}
-		return s.db.ProcessError(err)
+		return err
 	}
 
 	// Collate (deduplicating) status IDs.
@@ -292,7 +292,7 @@ func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID 
 		Table("status_faves").
 		Where("status_id = ?", statusID).
 		Exec(ctx); err != nil {
-		return s.db.ProcessError(err)
+		return err
 	}
 
 	// Invalidate any cached status faves for this status.

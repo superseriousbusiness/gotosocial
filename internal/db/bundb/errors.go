@@ -32,6 +32,11 @@ var errBusy = errors.New("busy")
 
 // processPostgresError processes an error, replacing any postgres specific errors with our own error type
 func processPostgresError(err error) error {
+	// Catch nil errs.
+	if err == nil {
+		return nil
+	}
+
 	// Attempt to cast as postgres
 	pgErr, ok := err.(*pgconn.PgError)
 	if !ok {
@@ -50,6 +55,11 @@ func processPostgresError(err error) error {
 
 // processSQLiteError processes an error, replacing any sqlite specific errors with our own error type
 func processSQLiteError(err error) error {
+	// Catch nil errs.
+	if err == nil {
+		return nil
+	}
+
 	// Attempt to cast as sqlite
 	sqliteErr, ok := err.(*sqlite.Error)
 	if !ok {

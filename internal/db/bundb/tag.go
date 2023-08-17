@@ -28,7 +28,7 @@ import (
 )
 
 type tagDB struct {
-	conn  *WrappedDB
+	conn  *DB
 	state *state.State
 }
 
@@ -42,7 +42,7 @@ func (m *tagDB) GetTag(ctx context.Context, id string) (*gtsmodel.Tag, error) {
 			Where("? = ?", bun.Ident("tag.id"), id)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, m.conn.ProcessError(err)
+			return nil, err
 		}
 
 		return &tag, nil
@@ -63,7 +63,7 @@ func (m *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, e
 			Where("? = ?", bun.Ident("tag.name"), name)
 
 		if err := q.Scan(ctx); err != nil {
-			return nil, m.conn.ProcessError(err)
+			return nil, err
 		}
 
 		return &tag, nil
@@ -103,7 +103,7 @@ func (m *tagDB) PutTag(ctx context.Context, tag *gtsmodel.Tag) error {
 	// Insert the copy.
 	if err := m.state.Caches.GTS.Tag().Store(t2, func() error {
 		_, err := m.conn.NewInsert().Model(t2).Exec(ctx)
-		return m.conn.ProcessError(err)
+		return err
 	}); err != nil {
 		return err // err already processed
 	}

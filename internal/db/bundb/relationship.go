@@ -31,7 +31,7 @@ import (
 )
 
 type relationshipDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -158,7 +158,7 @@ func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string,
 		// Block IDs not in cache, perform DB query!
 		q := newSelectBlocks(r.db, accountID)
 		if _, err := q.Exec(ctx, &blockIDs); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return blockIDs, nil
@@ -208,7 +208,7 @@ func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID stri
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectFollows(r.db, accountID)
 		if _, err := q.Exec(ctx, &followIDs); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return followIDs, nil
@@ -222,7 +222,7 @@ func (r *relationshipDB) getAccountLocalFollowIDs(ctx context.Context, accountID
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectLocalFollows(r.db, accountID)
 		if _, err := q.Exec(ctx, &followIDs); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return followIDs, nil
@@ -236,7 +236,7 @@ func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID st
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectFollowers(r.db, accountID)
 		if _, err := q.Exec(ctx, &followIDs); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return followIDs, nil
@@ -250,7 +250,7 @@ func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, account
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectLocalFollowers(r.db, accountID)
 		if _, err := q.Exec(ctx, &followIDs); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return followIDs, nil
@@ -264,7 +264,7 @@ func (r *relationshipDB) getAccountFollowRequestIDs(ctx context.Context, account
 		// Follow request IDs not in cache, perform DB query!
 		q := newSelectFollowRequests(r.db, accountID)
 		if _, err := q.Exec(ctx, &followReqIDs); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return followReqIDs, nil
@@ -278,7 +278,7 @@ func (r *relationshipDB) getAccountFollowRequestingIDs(ctx context.Context, acco
 		// Follow request IDs not in cache, perform DB query!
 		q := newSelectFollowRequesting(r.db, accountID)
 		if _, err := q.Exec(ctx, &followReqIDs); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return followReqIDs, nil
@@ -286,7 +286,7 @@ func (r *relationshipDB) getAccountFollowRequestingIDs(ctx context.Context, acco
 }
 
 // newSelectFollowRequests returns a new select query for all rows in the follow_requests table with target_account_id = accountID.
-func newSelectFollowRequests(db *WrappedDB, accountID string) *bun.SelectQuery {
+func newSelectFollowRequests(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
@@ -295,7 +295,7 @@ func newSelectFollowRequests(db *WrappedDB, accountID string) *bun.SelectQuery {
 }
 
 // newSelectFollowRequesting returns a new select query for all rows in the follow_requests table with account_id = accountID.
-func newSelectFollowRequesting(db *WrappedDB, accountID string) *bun.SelectQuery {
+func newSelectFollowRequesting(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
@@ -304,7 +304,7 @@ func newSelectFollowRequesting(db *WrappedDB, accountID string) *bun.SelectQuery
 }
 
 // newSelectFollows returns a new select query for all rows in the follows table with account_id = accountID.
-func newSelectFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
+func newSelectFollows(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -314,7 +314,7 @@ func newSelectFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
 
 // newSelectLocalFollows returns a new select query for all rows in the follows table with
 // account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
+func newSelectLocalFollows(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -331,7 +331,7 @@ func newSelectLocalFollows(db *WrappedDB, accountID string) *bun.SelectQuery {
 }
 
 // newSelectFollowers returns a new select query for all rows in the follows table with target_account_id = accountID.
-func newSelectFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
+func newSelectFollowers(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -341,7 +341,7 @@ func newSelectFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
 
 // newSelectLocalFollowers returns a new select query for all rows in the follows table with
 // target_account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
+func newSelectLocalFollowers(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -358,7 +358,7 @@ func newSelectLocalFollowers(db *WrappedDB, accountID string) *bun.SelectQuery {
 }
 
 // newSelectBlocks returns a new select query for all rows in the blocks table with account_id = accountID.
-func newSelectBlocks(db *WrappedDB, accountID string) *bun.SelectQuery {
+func newSelectBlocks(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("blocks")).
 		ColumnExpr("?", bun.Ident("?")).

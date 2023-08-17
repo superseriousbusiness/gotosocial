@@ -26,7 +26,7 @@ import (
 )
 
 type applicationDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -58,7 +58,7 @@ func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQue
 
 		// Not cached! Perform database query.
 		if err := dbQuery(&app); err != nil {
-			return nil, a.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &app, nil
@@ -68,7 +68,7 @@ func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQue
 func (a *applicationDB) PutApplication(ctx context.Context, app *gtsmodel.Application) error {
 	return a.state.Caches.GTS.Application().Store(app, func() error {
 		_, err := a.db.NewInsert().Model(app).Exec(ctx)
-		return a.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -78,7 +78,7 @@ func (a *applicationDB) DeleteApplicationByClientID(ctx context.Context, clientI
 		Table("applications").
 		Where("? = ?", bun.Ident("client_id"), clientID).
 		Exec(ctx); err != nil {
-		return a.db.ProcessError(err)
+		return err
 	}
 
 	// NOTE about further side effects:

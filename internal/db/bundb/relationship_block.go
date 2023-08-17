@@ -124,7 +124,7 @@ func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery fu
 
 		// Not cached! Perform database query
 		if err := dbQuery(&block); err != nil {
-			return nil, r.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &block, nil
@@ -180,7 +180,7 @@ func (r *relationshipDB) PopulateBlock(ctx context.Context, block *gtsmodel.Bloc
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) error {
 	return r.state.Caches.GTS.Block().Store(block, func() error {
 		_, err := r.db.NewInsert().Model(block).Exec(ctx)
-		return r.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -205,7 +205,7 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 		Table("blocks").
 		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error {
@@ -229,7 +229,7 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error
 		Table("blocks").
 		Where("? = ?", bun.Ident("uri"), uri).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }
 
 func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID string) error {
@@ -246,7 +246,7 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 			accountID,
 		).
 		Scan(ctx, &blockIDs); err != nil {
-		return r.db.ProcessError(err)
+		return err
 	}
 
 	defer func() {
@@ -270,5 +270,5 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 		Table("blocks").
 		Where("? IN (?)", bun.Ident("id"), bun.In(blockIDs)).
 		Exec(ctx)
-	return r.db.ProcessError(err)
+	return err
 }

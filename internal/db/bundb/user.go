@@ -31,7 +31,7 @@ import (
 )
 
 type userDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -121,7 +121,7 @@ func (u *userDB) getUser(ctx context.Context, lookup string, dbQuery func(*gtsmo
 
 		// Not cached! perform database query.
 		if err := dbQuery(&user); err != nil {
-			return nil, u.db.ProcessError(err)
+			return nil, err
 		}
 
 		return &user, nil
@@ -150,7 +150,7 @@ func (u *userDB) GetAllUsers(ctx context.Context) ([]*gtsmodel.User, error) {
 		Table("users").
 		Column("id").
 		Scan(ctx, &userIDs); err != nil {
-		return nil, u.db.ProcessError(err)
+		return nil, err
 	}
 
 	// Transform user IDs into user slice.
@@ -163,7 +163,7 @@ func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) error {
 			NewInsert().
 			Model(user).
 			Exec(ctx)
-		return u.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -183,7 +183,7 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 			Where("? = ?", bun.Ident("user.id"), user.ID).
 			Column(columns...).
 			Exec(ctx)
-		return u.db.ProcessError(err)
+		return err
 	})
 }
 
@@ -207,5 +207,5 @@ func (u *userDB) DeleteUserByID(ctx context.Context, userID string) error {
 		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
 		Where("? = ?", bun.Ident("user.id"), userID).
 		Exec(ctx)
-	return u.db.ProcessError(err)
+	return err
 }

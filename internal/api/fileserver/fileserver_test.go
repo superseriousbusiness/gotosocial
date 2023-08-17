@@ -18,8 +18,6 @@
 package fileserver_test
 
 import (
-	"context"
-
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -111,7 +109,7 @@ func (suite *FileserverTestSuite) SetupTest() {
 }
 
 func (suite *FileserverTestSuite) TearDownSuite() {
-	if err := suite.db.Stop(context.Background()); err != nil {
+	if err := suite.db.Close(); err != nil {
 		log.Panicf(nil, "error closing db connection: %s", err)
 	}
 	testrig.StopWorkers(&suite.state)

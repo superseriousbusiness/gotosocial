@@ -45,7 +45,7 @@ import (
 const rsaKeyBits = 2048
 
 type adminDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -314,7 +314,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 
 	_, err = insertQ.Exec(ctx)
 	if err != nil {
-		return a.db.ProcessError(err)
+		return err
 	}
 
 	log.Infof(ctx, "created instance instance %s with id %s", host, i.ID)

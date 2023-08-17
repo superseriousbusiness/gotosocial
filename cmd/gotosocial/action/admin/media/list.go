@@ -95,12 +95,11 @@ func setupList(ctx context.Context) (*list, error) {
 	}, nil
 }
 
-func (l *list) shutdown(ctx context.Context) error {
+func (l *list) shutdown() error {
 	l.out.Flush()
-	err := l.dbService.Stop(ctx)
+	err := l.dbService.Close()
 	l.state.Workers.Stop()
 	l.state.Caches.Stop()
-
 	return err
 }
 
@@ -112,7 +111,7 @@ var ListLocal action.GTSAction = func(ctx context.Context) error {
 
 	defer func() {
 		// Ensure lister gets shutdown on exit.
-		if err := list.shutdown(ctx); err != nil {
+		if err := list.shutdown(); err != nil {
 			log.Error(ctx, err)
 		}
 	}()
@@ -144,7 +143,7 @@ var ListRemote action.GTSAction = func(ctx context.Context) error {
 
 	defer func() {
 		// Ensure lister gets shutdown on exit.
-		if err := list.shutdown(ctx); err != nil {
+		if err := list.shutdown(); err != nil {
 			log.Error(ctx, err)
 		}
 	}()

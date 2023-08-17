@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
@@ -49,15 +50,11 @@ func initState(ctx context.Context) (*state.State, error) {
 	return &state, nil
 }
 
-func stopState(ctx context.Context, state *state.State) error {
-	if err := state.DB.Stop(ctx); err != nil {
-		return fmt.Errorf("error stopping dbConn: %w", err)
-	}
-
+func stopState(state *state.State) error {
+	err := state.DB.Close()
 	state.Workers.Stop()
 	state.Caches.Stop()
-
-	return nil
+	return err
 }
 
 // Create creates a new account and user
@@ -67,6 +64,13 @@ var Create action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -101,17 +105,14 @@ var Create action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	if _, err := state.DB.NewSignup(ctx, gtsmodel.NewSignup{
+	_, err = state.DB.NewSignup(ctx, gtsmodel.NewSignup{
 		Username:      username,
 		Email:         email,
 		Password:      password,
 		EmailVerified: true, // Assume cli user wants email marked as verified already.
 		PreApproved:   true, // Assume cli user wants account marked as approved already.
-	}); err != nil {
-		return err
-	}
-
-	return stopState(ctx, state)
+	})
+	return err
 }
 
 // List returns all existing local accounts.
@@ -148,8 +149,7 @@ var List action.GTSAction = func(ctx context.Context) error {
 	for _, u := range users {
 		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", u.Account.Username, u.AccountID, fmtBool(u.Approved), fmtBool(u.Admin), fmtBool(u.Moderator), fmtDate(u.Account.SuspendedAt), fmtDate(u.ConfirmedAt))
 	}
-	w.Flush()
-	return nil
+	return w.Flush()
 }
 
 // Confirm sets a user to Approved, sets Email to the current
@@ -159,6 +159,13 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -178,14 +185,10 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 	user.Approved = func() *bool { a := true; return &a }()
 	user.Email = user.UnconfirmedEmail
 	user.ConfirmedAt = time.Now()
-	if err := state.DB.UpdateUser(
+	return state.DB.UpdateUser(
 		ctx, user,
 		"approved", "email", "confirmed_at",
-	); err != nil {
-		return err
-	}
-
-	return stopState(ctx, state)
+	)
 }
 
 // Promote sets admin + moderator flags on a user to true.
@@ -194,6 +197,13 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -212,14 +222,10 @@ var Promote action.GTSAction = func(ctx context.Context) error {
 
 	user.Admin = func() *bool { a := true; return &a }()
 	user.Moderator = func() *bool { a := true; return &a }()
-	if err := state.DB.UpdateUser(
+	return state.DB.UpdateUser(
 		ctx, user,
 		"admin", "moderator",
-	); err != nil {
-		return err
-	}
-
-	return stopState(ctx, state)
+	)
 }
 
 // Demote sets admin + moderator flags on a user to false.
@@ -228,6 +234,13 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -246,14 +259,10 @@ var Demote action.GTSAction = func(ctx context.Context) error {
 
 	user.Admin = func() *bool { a := false; return &a }()
 	user.Moderator = func() *bool { a := false; return &a }()
-	if err := state.DB.UpdateUser(
+	return state.DB.UpdateUser(
 		ctx, user,
 		"admin", "moderator",
-	); err != nil {
-		return err
-	}
-
-	return stopState(ctx, state)
+	)
 }
 
 // Disable sets Disabled to true on a user.
@@ -262,6 +271,13 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -279,14 +295,10 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 	}
 
 	user.Disabled = func() *bool { d := true; return &d }()
-	if err := state.DB.UpdateUser(
+	return state.DB.UpdateUser(
 		ctx, user,
 		"disabled",
-	); err != nil {
-		return err
-	}
-
-	return stopState(ctx, state)
+	)
 }
 
 // Password sets the password of target account.
@@ -295,6 +307,13 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
 
 	username := config.GetAdminAccountUsername()
 	if err := validate.Username(username); err != nil {
@@ -322,12 +341,8 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	}
 
 	user.EncryptedPassword = string(encryptedPassword)
-	if err := state.DB.UpdateUser(
+	return state.DB.UpdateUser(
 		ctx, user,
 		"encrypted_password",
-	); err != nil {
-		return err
-	}
-
-	return stopState(ctx, state)
+	)
 }
