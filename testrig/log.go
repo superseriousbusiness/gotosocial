@@ -26,6 +26,7 @@ import (
 
 // InitTestLog sets the global logger to trace level for logging
 func InitTestLog() {
+	log.SetTimestamp(config.GetLogTimestamp())
 	// Set the global log level from configuration
 	if err := log.ParseLevel(config.GetLogLevel()); err != nil {
 		log.Panicf(nil, "error parsing log level: %v", err)

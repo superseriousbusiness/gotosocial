@@ -85,6 +85,7 @@ EXPECT=$(cat << "EOF"
     "log-client-ip": false,
     "log-db-queries": true,
     "log-level": "info",
+    "log-timestamp": false,
     "media-description-max-chars": 5000,
     "media-description-min-chars": 69,
     "media-emoji-local-max-size": 420,
@@ -154,6 +155,7 @@ EOF
 # Set all the environment variables to 
 # ensure that these are parsed without panic
 OUTPUT=$(GTS_LOG_LEVEL='info' \
+GTS_LOG_TIMESTAMP=false \
 GTS_LOG_DB_QUERIES=true \
 GTS_LOG_CLIENT_IP=false \
 GTS_APPLICATION_NAME=gts \

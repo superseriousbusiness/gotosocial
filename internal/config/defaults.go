@@ -28,6 +28,7 @@ import (
 // if you use this, you will still need to set Host, and, if desired, ConfigPath.
 var Defaults = Configuration{
 	LogLevel:        "info",
+	LogTimestamp:    true,
 	LogDbQueries:    false,
 	ApplicationName: "gotosocial",
 	LandingPageUser: "",

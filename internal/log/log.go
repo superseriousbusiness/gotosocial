@@ -44,6 +44,9 @@ var (
 	// timefmt is the logging time format used.
 	timefmt = "02/01/2006 15:04:05.000"
 
+	// timestmp indicates if log lines will include a timestamp.
+	timestmp atomic.Bool
+
 	// ctxhooks allows modifying log content based on context.
 	ctxhooks []func(context.Context, []kv.Field) []kv.Field
 )
@@ -61,6 +64,16 @@ func Level() level.LEVEL {
 // SetLevel sets the max logging level.
 func SetLevel(lvl level.LEVEL) {
 	loglvl.Store(uint32(lvl))
+}
+
+// Timestamp returns whether the timestamp is included in log output
+func Timestamp() bool {
+	return timestmp.Load()
+}
+
+// SetTimestamp configures if the timestamp should be included in log output
+func SetTimestamp(b bool) {
+	timestmp.Store(b)
 }
 
 // New starts a new log entry.
@@ -164,10 +177,12 @@ func printf(depth int, fields []kv.Field, s string, a ...interface{}) {
 	// Acquire buffer
 	buf := getBuf()
 
-	// Append formatted timestamp
-	buf.B = append(buf.B, `timestamp="`...)
-	buf.B = time.Now().AppendFormat(buf.B, timefmt)
-	buf.B = append(buf.B, `" `...)
+	if Timestamp() {
+		// Append formatted timestamp
+		buf.B = append(buf.B, `timestamp="`...)
+		buf.B = time.Now().AppendFormat(buf.B, timefmt)
+		buf.B = append(buf.B, `" `...)
+	}
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)
@@ -217,10 +232,12 @@ func logf(ctx context.Context, depth int, lvl level.LEVEL, fields []kv.Field, s 
 	// Acquire buffer
 	buf := getBuf()
 
-	// Append formatted timestamp
-	buf.B = append(buf.B, `timestamp="`...)
-	buf.B = time.Now().AppendFormat(buf.B, timefmt)
-	buf.B = append(buf.B, `" `...)
+	if Timestamp() {
+		// Append formatted timestamp
+		buf.B = append(buf.B, `timestamp="`...)
+		buf.B = time.Now().AppendFormat(buf.B, timefmt)
+		buf.B = append(buf.B, `" `...)
+	}
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)

@@ -45,6 +45,7 @@ func fieldtag(field, tag string) string {
 // `go run ./internal/config/gen/ -out ./internal/config/helpers.gen.go`
 type Configuration struct {
 	LogLevel        string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
+	LogTimestamp    bool     `name:"log-timestamp" usage:"Include timestamp in log output"`
 	LogDbQueries    bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
 	LogClientIP     bool     `name:"log-client-ip" usage:"Include the client IP in logs"`
 	ApplicationName string   `name:"application-name" usage:"Name of the application, used in various places internally"`
