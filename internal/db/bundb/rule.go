@@ -43,7 +43,7 @@ func (r *ruleDB) GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, er
 	q := r.db.
 		NewSelect().
 		Model(&rule).
-		Where("? = ?", bun.Ident("rule.id"), bun.Ident(id)).
+		Where("? = ?", bun.Ident("rule.id"), id).
 		Where("? = ?", bun.Ident("rule.deleted"), util.Ptr(false))
 
 	if err := q.Scan(ctx); err != nil {
