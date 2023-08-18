@@ -29,7 +29,7 @@ const { useBaseUrl } = require("../../lib/navigation/util");
 const { useValue, useTextInput } = require("../../lib/form");
 const useFormSubmit = require("../../lib/form/submit");
 
-const { TextInput } = require("../../components/form/inputs");
+const { TextArea } = require("../../components/form/inputs");
 const MutationButton = require("../../components/form/mutation-button");
 
 module.exports = function InstanceRulesData({ baseUrl }) {
@@ -78,7 +78,7 @@ function InstanceRuleList({ rules }) {
 						<InstanceRule key={rule.id} rule={rule} />
 					))}
 				</ol>
-				<TextInput
+				<TextArea
 					field={newRule}
 					label="New instance rule"
 				/>
@@ -139,7 +139,7 @@ function InstanceRuleForm({ rule }) {
 	return (
 		<div className="rule-detail">
 			<form onSubmit={submitForm}>
-				<TextInput
+				<TextArea
 					field={form.rule}
 				/>
 
