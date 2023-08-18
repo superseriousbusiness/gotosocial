@@ -23,10 +23,7 @@ const {
 	replaceCacheOnMutation,
 	removeFromCacheOnMutation,
 	domainListToObject,
-	idListToObject,
-	appendCacheOnMutation,
-	editCacheOnMutation,
-	updateCacheOnMutation
+	idListToObject
 } = require("../lib");
 const base = require("../base");
 
