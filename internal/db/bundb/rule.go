@@ -33,7 +33,7 @@ import (
 )
 
 type ruleDB struct {
-	db    *WrappedDB
+	db    *DB
 	state *state.State
 }
 
@@ -47,7 +47,7 @@ func (r *ruleDB) GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, er
 		Where("? = ?", bun.Ident("rule.deleted"), util.Ptr(false))
 
 	if err := q.Scan(ctx); err != nil {
-		return nil, r.db.ProcessError(err)
+		return nil, err
 	}
 
 	return &rule, nil
@@ -81,7 +81,7 @@ func (r *ruleDB) GetRules(ctx context.Context) ([]gtsmodel.Rule, error) {
 		Order("rule.order ASC")
 
 	if err := q.Scan(ctx); err != nil {
-		return nil, r.db.ProcessError(err)
+		return nil, err
 	}
 
 	return rules, nil
@@ -100,7 +100,7 @@ func (r *ruleDB) PutRule(ctx context.Context, rule *gtsmodel.Rule) error {
 			Limit(1)
 
 		if err := q.Scan(ctx, &lastRule); err != nil {
-			dbErr := r.db.ProcessError(err)
+			dbErr := err
 
 			if errors.Is(dbErr, db.ErrNoEntries) {
 				rule.Order = 0
@@ -113,7 +113,7 @@ func (r *ruleDB) PutRule(ctx context.Context, rule *gtsmodel.Rule) error {
 	}
 
 	if _, err := r.db.NewInsert().Model(rule).Exec(ctx); err != nil {
-		return r.db.ProcessError(err)
+		return err
 	}
 
 	// invalidate cached local instance response, so it gets updated with the new rules
@@ -131,7 +131,7 @@ func (r *ruleDB) UpdateRule(ctx context.Context, rule *gtsmodel.Rule) (*gtsmodel
 		Model(rule).
 		WherePK().
 		Exec(ctx); err != nil {
-		return nil, r.db.ProcessError(err)
+		return nil, err
 	}
 
 	// invalidate cached local instance response, so it gets updated with the new rules
