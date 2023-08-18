@@ -141,22 +141,29 @@ function DomainBlockForm({ defaultDomain, block = {}, baseUrl }) {
 				{...disabledForm}
 			/>
 
-			<MutationButton
-				label="Suspend"
-				result={addResult}
-				{...disabledForm}
-			/>
-
-			{
-				isExistingBlock &&
+			<div className="action-buttons row">
 				<MutationButton
-					type="button"
-					onClick={() => removeBlock(block.id)}
-					label="Remove"
-					result={removeResult}
-					className="button danger"
+					label="Suspend"
+					result={addResult}
+					showError={false}
+					{...disabledForm}
 				/>
-			}
+
+				{
+					isExistingBlock &&
+					<MutationButton
+						type="button"
+						onClick={() => removeBlock(block.id)}
+						label="Remove"
+						result={removeResult}
+						className="button danger"
+						showError={false}
+					/>
+				}
+			</div>
+
+			{addResult.error && <Error error={addResult.error} />}
+			{removeResult.error && <Error error={removeResult.error} />}
 
 		</form>
 	);

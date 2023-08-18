@@ -21,23 +21,23 @@
 
 const React = require("react");
 
-const query = require("../lib/query");
+const query = require("../../lib/query");
 
 const {
 	useTextInput,
 	useFileInput
-} = require("../lib/form");
+} = require("../../lib/form");
 
-const useFormSubmit = require("../lib/form/submit");
+const useFormSubmit = require("../../lib/form/submit");
 
 const {
 	TextInput,
 	TextArea,
 	FileInput
-} = require("../components/form/inputs");
+} = require("../../components/form/inputs");
 
-const FormWithData = require("../lib/form/form-with-data");
-const MutationButton = require("../components/form/mutation-button");
+const FormWithData = require("../../lib/form/form-with-data");
+const MutationButton = require("../../components/form/mutation-button");
 
 module.exports = function AdminSettings() {
 	return (

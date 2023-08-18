@@ -22,7 +22,11 @@
 const {
 	replaceCacheOnMutation,
 	removeFromCacheOnMutation,
-	domainListToObject
+	domainListToObject,
+	idListToObject,
+	appendCacheOnMutation,
+	editCacheOnMutation,
+	updateCacheOnMutation
 } = require("../lib");
 const base = require("../base");
 
@@ -103,6 +107,51 @@ const endpoints = (build) => ({
 		transformResponse: (res) => {
 			return res.accounts ?? [];
 		}
+	}),
+	instanceRules: build.query({
+		query: () => ({
+			url: `/api/v1/admin/instance/rules`
+		}),
+		transformResponse: idListToObject
+	}),
+	addInstanceRule: build.mutation({
+		query: (formData) => ({
+			method: "POST",
+			url: `/api/v1/admin/instance/rules`,
+			asForm: true,
+			body: formData,
+			discardEmpty: true
+		}),
+		transformResponse: (data) => {
+			return {
+				[data.id]: data
+			};
+		},
+		...replaceCacheOnMutation("instanceRules")
+	}),
+	updateInstanceRule: build.mutation({
+		query: ({ id, ...edit }) => ({
+			method: "PATCH",
+			url: `/api/v1/admin/instance/rules/${id}`,
+			asForm: true,
+			body: edit,
+			discardEmpty: true
+		}),
+		transformResponse: (data) => {
+			return {
+				[data.id]: data
+			};
+		},
+		...replaceCacheOnMutation("instanceRules")
+	}),
+	deleteInstanceRule: build.mutation({
+		query: (id) => ({
+			method: "DELETE",
+			url: `/api/v1/admin/instance/rules/${id}`
+		}),
+		...removeFromCacheOnMutation("instanceRules", {
+			findKey: (_draft, rule) => rule.id
+		})
 	}),
 	...require("./import-export")(build),
 	...require("./custom-emoji")(build),

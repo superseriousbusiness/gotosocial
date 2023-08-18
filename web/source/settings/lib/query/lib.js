@@ -37,6 +37,13 @@ module.exports = {
 			(_) => Object.fromEntries(_)
 		]);
 	},
+	idListToObject: (data) => {
+		// Turn flat Array into Object keyed by entry id field
+		return syncpipe(data, [
+			(_) => _.map((entry) => [entry.id, entry]),
+			(_) => Object.fromEntries(_)
+		]);
+	},
 	replaceCacheOnMutation: makeCacheMutation((draft, newData) => {
 		Object.assign(draft, newData);
 	}),
