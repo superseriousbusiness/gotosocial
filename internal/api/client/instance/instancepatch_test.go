@@ -161,10 +161,16 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
     }
   },
   "max_toot_chars": 5000,
-  "rule_ids": [
-    "01GP3AWY4CRDVRNZKW0TEAMB51",
-    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
-  ],
+  "rules": [
+    {
+      "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+      "text": "Be gay"
+    },
+    {
+      "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+      "text": "Do crime"
+    }
+  ]
 }`, dst.String())
 }
 
@@ -269,10 +275,16 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
     }
   },
   "max_toot_chars": 5000,
-  "rule_ids": [
-    "01GP3AWY4CRDVRNZKW0TEAMB51",
-    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
-  ],
+  "rules": [
+    {
+      "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+      "text": "Be gay"
+    },
+    {
+      "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+      "text": "Do crime"
+    }
+  ]
 }`, dst.String())
 }
 
@@ -377,10 +389,16 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
     }
   },
   "max_toot_chars": 5000,
-  "rule_ids": [
-    "01GP3AWY4CRDVRNZKW0TEAMB51",
-    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
-  ],
+  "rules": [
+    {
+      "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+      "text": "Be gay"
+    },
+    {
+      "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+      "text": "Do crime"
+    }
+  ]
 }`, dst.String())
 }
 
@@ -536,10 +554,16 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
     }
   },
   "max_toot_chars": 5000,
-  "rule_ids": [
-    "01GP3AWY4CRDVRNZKW0TEAMB51",
-    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
-  ],
+  "rules": [
+    {
+      "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+      "text": "Be gay"
+    },
+    {
+      "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+      "text": "Do crime"
+    }
+  ]
 }`, dst.String())
 }
 
@@ -668,10 +692,16 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
     }
   },
   "max_toot_chars": 5000,
-  "rule_ids": [
-    "01GP3AWY4CRDVRNZKW0TEAMB51",
-    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
-  ],
+  "rules": [
+    {
+      "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+      "text": "Be gay"
+    },
+    {
+      "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+      "text": "Do crime"
+    }
+  ]
 }`, dst.String())
 
 	// extra bonus: check the v2 model thumbnail after the patch
@@ -811,10 +841,16 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
     }
   },
   "max_toot_chars": 5000,
-  "rule_ids": [
-    "01GP3AWY4CRDVRNZKW0TEAMB51",
-    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
-  ],
+  "rules": [
+    {
+      "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+      "text": "Be gay"
+    },
+    {
+      "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+      "text": "Do crime"
+    }
+  ]
 }`, dst.String())
 }
 
