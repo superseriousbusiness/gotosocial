@@ -29,12 +29,12 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			if db.Dialect().Name() == dialect.SQLite { // sqlite does not have an array type
-				_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? VARCHAR", bun.Ident("reports"), bun.Ident("rule_ids"))
+				_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? VARCHAR", bun.Ident("reports"), bun.Ident("rules"))
 				if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
 					return err
 				}
 			} else {
-				_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? VARCHAR[]", bun.Ident("reports"), bun.Ident("rule_ids"))
+				_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? VARCHAR[]", bun.Ident("reports"), bun.Ident("rules"))
 				if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
 					return err
 				}
