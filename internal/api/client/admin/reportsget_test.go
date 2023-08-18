@@ -952,7 +952,16 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "poll": null
       }
     ],
-    "rule_ids": [],
+    "rules": [
+      {
+        "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+        "text": "Be gay"
+      },
+      {
+        "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+        "text": "Do crime"
+      }
+    ],
     "action_taken_comment": null
   }
 ]`, string(b))

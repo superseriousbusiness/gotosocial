@@ -160,7 +160,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
       "name": "admin"
     }
   },
-  "max_toot_chars": 5000
+  "max_toot_chars": 5000,
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
 }`, dst.String())
 }
 
@@ -264,7 +268,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
       "name": "admin"
     }
   },
-  "max_toot_chars": 5000
+  "max_toot_chars": 5000,
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
 }`, dst.String())
 }
 
@@ -368,7 +376,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
       "name": "admin"
     }
   },
-  "max_toot_chars": 5000
+  "max_toot_chars": 5000,
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
 }`, dst.String())
 }
 
@@ -523,7 +535,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
       "name": "admin"
     }
   },
-  "max_toot_chars": 5000
+  "max_toot_chars": 5000,
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
 }`, dst.String())
 }
 
@@ -651,7 +667,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
       "name": "admin"
     }
   },
-  "max_toot_chars": 5000
+  "max_toot_chars": 5000,
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
 }`, dst.String())
 
 	// extra bonus: check the v2 model thumbnail after the patch
@@ -790,7 +810,11 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
       "name": "admin"
     }
   },
-  "max_toot_chars": 5000
+  "max_toot_chars": 5000,
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
 }`, dst.String())
 }
 

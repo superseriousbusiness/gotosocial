@@ -108,7 +108,10 @@ func (suite *ReportGetTestSuite) TestGetReport1() {
   "status_ids": [
     "01FVW7JHQFSFK166WWKR8CBA6M"
   ],
-  "rule_ids": [],
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
   "target_account": {
     "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
     "username": "foss_satan",

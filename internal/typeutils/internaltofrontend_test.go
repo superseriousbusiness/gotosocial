@@ -603,6 +603,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
 	b, err := json.MarshalIndent(instance, "", "  ")
 	suite.NoError(err)
 
+	// FIXME: "rules" is empty from the database, because it's not fetched through db.GetInstance
 	suite.Equal(`{
   "uri": "http://localhost:8080",
   "account_domain": "localhost:8080",
@@ -689,7 +690,8 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
       "name": "admin"
     }
   },
-  "max_toot_chars": 5000
+  "max_toot_chars": 5000,
+  "rules": []
 }`, string(b))
 }
 
@@ -887,7 +889,10 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
   "status_ids": [
     "01FVW7JHQFSFK166WWKR8CBA6M"
   ],
-  "rule_ids": [],
+  "rule_ids": [
+    "01GP3AWY4CRDVRNZKW0TEAMB51",
+    "01GP3DFY9XQ1TJMZT5BGAZPXX3"
+  ],
   "target_account": {
     "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
     "username": "foss_satan",
@@ -1177,7 +1182,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
   "statuses": [],
-  "rule_ids": [],
+  "rules": [],
   "action_taken_comment": "user was warned not to be a turtle anymore"
 }`, string(b))
 }
@@ -1380,7 +1385,16 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "poll": null
     }
   ],
-  "rule_ids": [],
+  "rules": [
+    {
+      "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+      "text": "Be gay"
+    },
+    {
+      "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+      "text": "Do crime"
+    }
+  ],
   "action_taken_comment": null
 }`, string(b))
 }
@@ -1603,7 +1617,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
   "statuses": [],
-  "rule_ids": [],
+  "rules": [],
   "action_taken_comment": "user was warned not to be a turtle anymore"
 }`, string(b))
 }

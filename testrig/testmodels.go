@@ -2032,6 +2032,7 @@ func NewTestReports() map[string]*gtsmodel.Report {
 			TargetAccountID:        "01F8MH5NBDF2MV7CTC4Q5128HF",
 			Comment:                "this is a turtle, not a person, therefore should not be a poster",
 			StatusIDs:              []string{},
+			RuleIDs:                []string{},
 			Forwarded:              util.Ptr(true),
 			ActionTaken:            "user was warned not to be a turtle anymore",
 			ActionTakenAt:          TimeMustParse("2022-05-15T17:01:56+02:00"),
