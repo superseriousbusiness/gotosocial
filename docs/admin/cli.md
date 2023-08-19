@@ -255,17 +255,29 @@ Example:
 gotosocial admin import --path example.json --config-path config.yaml
 ```
 
-### gotosocial admin media list-local
+### gotosocial admin media list attachment local
 
-This command can be used to list local media. Local media is media that belongs to posts by users with an account on the instance.
+This command can be used to list local attachment. Local attachement is attachment that belongs to posts by users with an account on the instance.
 
 The output will be a list of files. The list can be used to drive your backups.
 
-### gotosocial admin media list-remote
+### gotosocial admin media list attachment remote
 
-This is the corollary to list-local, but instead lists media from remote instances. Remote media belongs to other instances, but was attached to a post we received over federation and have potentially cached locally.
+This is the corollary to list attachment local, but instead lists attachment from remote instances. Remote attachment belongs to other instances, but was attached to a post we received over federation and have potentially cached locally.
 
-The output will be a list of URLs to retrieve the original content from. GoToSocial automatically retrieves remote media when it needs it, so you should never need to do so yourself.
+The output will be a list of URLs to retrieve the original content from. GoToSocial automatically retrieves remote attachment when it needs it, so you should never need to do so yourself.
+
+### gotosocial admin media list emojis local
+
+This command can be used to list local emojis. Local emojis are emojis that are configured on this instance.
+
+The output will be a list of files. The list can be used to drive your backups.
+
+### gotosocial admin media list emojis remote
+
+This is the corollary to list emojis local, but instead lists emojis from remote instances. Remote emojis are configured on other instances, but was used in a post we received over federation and have potentially cached locally.
+
+The output will be a list of URLs to retrieve the original content from. GoToSocial automatically retrieves remote emojis when it needs it, so you should never need to do so yourself.
 
 ### gotosocial admin media prune orphaned
 

@@ -178,29 +178,80 @@ func adminCommands() *cobra.Command {
 		ADMIN MEDIA LIST COMMANDS
 	*/
 
-	adminMediaListLocalCmd := &cobra.Command{
-		Use:   "list-local",
-		Short: "admin command to list media on local storage",
+	adminMediaListCmd := &cobra.Command{
+		Use:   "list",
+		Short: "admin commands to list media",
+	}
+
+	/*
+		ADMIN MEDIA LIST ATTACHMENT COMMANDS
+	*/
+
+	adminMediaListAttachmentCmd := &cobra.Command{
+		Use:   "attachment",
+		Short: "admin commands to list attachment",
+	}
+
+	adminMediaListAttachmentLocalCmd := &cobra.Command{
+		Use:   "local",
+		Short: "admin command to list attachment on local storage",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), media.ListLocal)
+			return run(cmd.Context(), media.ListLocalAttachment)
 		},
 	}
 
-	adminMediaListRemoteCmd := &cobra.Command{
-		Use:   "list-remote",
-		Short: "admin command to list remote media cached on this instance",
+	adminMediaListAttachmentRemoteCmd := &cobra.Command{
+		Use:   "remote",
+		Short: "admin command to list remote attachment cached on this instance",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return preRun(preRunArgs{cmd: cmd})
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), media.ListRemote)
+			return run(cmd.Context(), media.ListRemoteAttachment)
 		},
 	}
 
-	adminMediaCmd.AddCommand(adminMediaListLocalCmd, adminMediaListRemoteCmd)
+	adminMediaListAttachmentCmd.AddCommand(adminMediaListAttachmentLocalCmd, adminMediaListAttachmentRemoteCmd)
+
+	/*
+		ADMIN MEDIA LIST EMOJIS COMMANDS
+	*/
+
+	adminMediaListEmojisCmd := &cobra.Command{
+		Use:   "emojis",
+		Short: "admin commands to list emojis",
+	}
+
+	adminMediaListEmojisLocalCmd := &cobra.Command{
+		Use:   "local",
+		Short: "admin command to list emojis on local storage",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), media.ListLocalEmojis)
+		},
+	}
+
+	adminMediaListEmojisRemoteCmd := &cobra.Command{
+		Use:   "remote",
+		Short: "admin command to list remote emojis cached on this instance",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), media.ListRemoteEmojis)
+		},
+	}
+
+	adminMediaListEmojisCmd.AddCommand(adminMediaListEmojisLocalCmd, adminMediaListEmojisRemoteCmd)
+
+	adminMediaListCmd.AddCommand(adminMediaListAttachmentCmd, adminMediaListEmojisCmd)
+
+	adminMediaCmd.AddCommand(adminMediaListCmd)
 
 	/*
 		ADMIN MEDIA PRUNE COMMANDS
