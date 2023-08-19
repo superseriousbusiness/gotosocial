@@ -20,80 +20,53 @@ package middleware_test
 import (
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 )
 
 func TestBuildContentSecurityPolicy(t *testing.T) {
 	type cspTest struct {
-		s3Endpoint string
-		s3Proxy    bool
-		s3Secure   bool
-		expected   string
-		actual     string
+		extraURLs []string
+		expected  string
 	}
 
 	for _, test := range []cspTest{
 		{
-			s3Endpoint: "",
-			s3Proxy:    false,
-			s3Secure:   false,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob:",
+			extraURLs: nil,
+			expected:  "default-src 'self'; object-src 'none'; img-src 'self' blob:; media-src 'self'",
 		},
 		{
-			s3Endpoint: "some-bucket-provider.com",
-			s3Proxy:    false,
-			s3Secure:   true,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com; media-src 'self' https://some-bucket-provider.com",
+			extraURLs: []string{
+				"https://some-bucket-provider.com",
+			},
+			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com; media-src 'self' https://some-bucket-provider.com",
 		},
 		{
-			s3Endpoint: "some-bucket-provider.com:6969",
-			s3Proxy:    false,
-			s3Secure:   true,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com:6969; media-src 'self' https://some-bucket-provider.com:6969",
+			extraURLs: []string{
+				"https://some-bucket-provider.com:6969",
+			},
+			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com:6969; media-src 'self' https://some-bucket-provider.com:6969",
 		},
 		{
-			s3Endpoint: "some-bucket-provider.com:6969",
-			s3Proxy:    false,
-			s3Secure:   false,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob: http://some-bucket-provider.com:6969; media-src 'self' http://some-bucket-provider.com:6969",
+			extraURLs: []string{
+				"http://some-bucket-provider.com:6969",
+			},
+			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: http://some-bucket-provider.com:6969; media-src 'self' http://some-bucket-provider.com:6969",
 		},
 		{
-			s3Endpoint: "s3.nl-ams.scw.cloud",
-			s3Proxy:    false,
-			s3Secure:   true,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob: https://s3.nl-ams.scw.cloud; media-src 'self' https://s3.nl-ams.scw.cloud",
+			extraURLs: []string{
+				"https://s3.nl-ams.scw.cloud",
+			},
+			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://s3.nl-ams.scw.cloud; media-src 'self' https://s3.nl-ams.scw.cloud",
 		},
 		{
-			s3Endpoint: "some-bucket-provider.com",
-			s3Proxy:    true,
-			s3Secure:   true,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob:",
-		},
-		{
-			s3Endpoint: "some-bucket-provider.com:6969",
-			s3Proxy:    true,
-			s3Secure:   true,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob:",
-		},
-		{
-			s3Endpoint: "some-bucket-provider.com:6969",
-			s3Proxy:    true,
-			s3Secure:   true,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob:",
-		},
-		{
-			s3Endpoint: "s3.nl-ams.scw.cloud",
-			s3Proxy:    true,
-			s3Secure:   true,
-			expected:   "default-src 'self'; object-src 'none'; img-src 'self' blob:",
+			extraURLs: []string{
+				"https://s3.nl-ams.scw.cloud",
+				"https://s3.somewhere.else.example.org",
+			},
+			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://s3.nl-ams.scw.cloud https://s3.somewhere.else.example.org; media-src 'self' https://s3.nl-ams.scw.cloud https://s3.somewhere.else.example.org",
 		},
 	} {
-		config.SetStorageS3Endpoint(test.s3Endpoint)
-		config.SetStorageS3Proxy(test.s3Proxy)
-		config.SetStorageS3UseSSL(test.s3Secure)
-
-		csp := middleware.BuildContentSecurityPolicy()
+		csp := middleware.BuildContentSecurityPolicy(test.extraURLs...)
 		if csp != test.expected {
 			t.Logf("expected '%s', got '%s'", test.expected, csp)
 			t.Fail()
