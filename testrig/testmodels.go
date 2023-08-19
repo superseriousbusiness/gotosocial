@@ -2021,6 +2021,7 @@ func NewTestReports() map[string]*gtsmodel.Report {
 			Comment:         "dark souls sucks, please yeet this nerd",
 			StatusIDs:       []string{"01FVW7JHQFSFK166WWKR8CBA6M"},
 			Forwarded:       util.Ptr(true),
+			RuleIDs:         []string{"01GP3AWY4CRDVRNZKW0TEAMB51", "01GP3DFY9XQ1TJMZT5BGAZPXX3"},
 		},
 		"remote_account_1_report_local_account_2": {
 			ID:                     "01GP3DFY9XQ1TJMZT5BGAZPXX7",
@@ -2031,10 +2032,40 @@ func NewTestReports() map[string]*gtsmodel.Report {
 			TargetAccountID:        "01F8MH5NBDF2MV7CTC4Q5128HF",
 			Comment:                "this is a turtle, not a person, therefore should not be a poster",
 			StatusIDs:              []string{},
+			RuleIDs:                []string{},
 			Forwarded:              util.Ptr(true),
 			ActionTaken:            "user was warned not to be a turtle anymore",
 			ActionTakenAt:          TimeMustParse("2022-05-15T17:01:56+02:00"),
 			ActionTakenByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
+		},
+	}
+}
+
+func NewTestRules() map[string]*gtsmodel.Rule {
+	return map[string]*gtsmodel.Rule{
+		"rule1": {
+			ID:        "01GP3AWY4CRDVRNZKW0TEAMB51",
+			CreatedAt: TimeMustParse("2022-05-14T12:20:03+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-14T12:20:03+02:00"),
+			Text:      "Be gay",
+			Deleted:   util.Ptr(false),
+			Order:     util.Ptr(uint(0)),
+		},
+		"deleted_rule": {
+			ID:        "01GP3DFY9XQ1TJMZT5BGAZPXX2",
+			CreatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			Text:      "Deleted",
+			Deleted:   util.Ptr(true),
+			Order:     util.Ptr(uint(1)),
+		},
+		"rule2": {
+			ID:        "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+			CreatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			UpdatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
+			Text:      "Do crime",
+			Deleted:   util.Ptr(false),
+			Order:     util.Ptr(uint(2)),
 		},
 	}
 }

@@ -25,22 +25,24 @@ import (
 )
 
 const (
-	BasePath               = "/v1/admin"
-	EmojiPath              = BasePath + "/custom_emojis"
-	EmojiPathWithID        = EmojiPath + "/:" + IDKey
-	EmojiCategoriesPath    = EmojiPath + "/categories"
-	DomainBlocksPath       = BasePath + "/domain_blocks"
-	DomainBlocksPathWithID = DomainBlocksPath + "/:" + IDKey
-	AccountsPath           = BasePath + "/accounts"
-	AccountsPathWithID     = AccountsPath + "/:" + IDKey
-	AccountsActionPath     = AccountsPathWithID + "/action"
-	MediaCleanupPath       = BasePath + "/media_cleanup"
-	MediaRefetchPath       = BasePath + "/media_refetch"
-	ReportsPath            = BasePath + "/reports"
-	ReportsPathWithID      = ReportsPath + "/:" + IDKey
-	ReportsResolvePath     = ReportsPathWithID + "/resolve"
-	EmailPath              = BasePath + "/email"
-	EmailTestPath          = EmailPath + "/test"
+	BasePath                = "/v1/admin"
+	EmojiPath               = BasePath + "/custom_emojis"
+	EmojiPathWithID         = EmojiPath + "/:" + IDKey
+	EmojiCategoriesPath     = EmojiPath + "/categories"
+	DomainBlocksPath        = BasePath + "/domain_blocks"
+	DomainBlocksPathWithID  = DomainBlocksPath + "/:" + IDKey
+	AccountsPath            = BasePath + "/accounts"
+	AccountsPathWithID      = AccountsPath + "/:" + IDKey
+	AccountsActionPath      = AccountsPathWithID + "/action"
+	MediaCleanupPath        = BasePath + "/media_cleanup"
+	MediaRefetchPath        = BasePath + "/media_refetch"
+	ReportsPath             = BasePath + "/reports"
+	ReportsPathWithID       = ReportsPath + "/:" + IDKey
+	ReportsResolvePath      = ReportsPathWithID + "/resolve"
+	EmailPath               = BasePath + "/email"
+	EmailTestPath           = EmailPath + "/test"
+	InstanceRulesPath       = BasePath + "/instance/rules"
+	InstanceRulesPathWithID = InstanceRulesPath + "/:" + IDKey
 
 	IDKey                 = "id"
 	FilterQueryKey        = "filter"
@@ -95,4 +97,11 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// email stuff
 	attachHandler(http.MethodPost, EmailTestPath, m.EmailTestPOSTHandler)
+
+	// instance rules stuff
+	attachHandler(http.MethodGet, InstanceRulesPath, m.RulesGETHandler)
+	attachHandler(http.MethodGet, InstanceRulesPathWithID, m.RuleGETHandler)
+	attachHandler(http.MethodPost, InstanceRulesPath, m.RulePOSTHandler)
+	attachHandler(http.MethodPatch, InstanceRulesPathWithID, m.RulePATCHHandler)
+	attachHandler(http.MethodDelete, InstanceRulesPathWithID, m.RuleDELETEHandler)
 }

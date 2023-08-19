@@ -26,7 +26,7 @@
 		</div>
 
 		<div>
-			<h2>Admin Contact</h2>
+			<h2 id="contact">Admin Contact</h2>
 			{{if .instance.ContactAccount}}
 			<a href="{{.instance.ContactAccount.URL}}" class="account-card">
 				<img class="avatar" src="{{.instance.ContactAccount.Avatar}}" alt="" />
@@ -42,7 +42,16 @@
 		</div>
 
 		<div>
-			<h2>Features</h2>
+			<h2 id="rules">Rules</h2>
+			<ol>
+				{{range .instance.Rules}}
+				<li>{{.Text}}</li>
+				{{end}}
+			</ol>
+		</div>
+
+		<div>
+			<h2 id="features">Features</h2>
 			<ul>
 				<li>
 					Registration is
@@ -68,8 +77,9 @@
 				</li>
 			</ul>
 		</div>
+
 		<div>
-			<h2>Moderated servers</h2>
+			<h2 id="moderated-servers">Moderated servers</h2>
 			<p>
 				ActivityPub instances exchange (federate) data with other servers, including accounts and toots.
 				This can be prevented for specific domains by suspending them. None of their content is stored,
@@ -83,12 +93,12 @@
 		</div>
 
 		<div>
-			<h2>Instance Statistics</h2>
-				<ul>
-					<li>Users: <span class="count">{{.instance.Stats.user_count}}</span></li>
-					<li>Posts: <span class="count">{{.instance.Stats.status_count}}</span></li>
-					<li>Federates with: <span class="count">{{.instance.Stats.domain_count}}</span> instances</li>
-				</ul>
+			<h2 id="stats">Instance Statistics</h2>
+			<ul>
+				<li>Users: <span class="count">{{.instance.Stats.user_count}}</span></li>
+				<li>Posts: <span class="count">{{.instance.Stats.status_count}}</span></li>
+				<li>Federates with: <span class="count">{{.instance.Stats.domain_count}}</span> instances</li>
+			</ul>
 		</div>
 	</section>
 </main>

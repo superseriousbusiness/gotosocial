@@ -51,17 +51,13 @@ func (suite *ReportCreateTestSuite) createReport(expectedHTTPStatus int, expecte
 	// create the request
 	ctx.Request = httptest.NewRequest(http.MethodPost, config.GetProtocol()+"://"+config.GetHost()+"/api/"+reports.BasePath, nil)
 	ctx.Request.Header.Set("accept", "application/json")
-	ruleIDs := make([]string, 0, len(form.RuleIDs))
-	for _, r := range form.RuleIDs {
-		ruleIDs = append(ruleIDs, strconv.Itoa(r))
-	}
 	ctx.Request.Form = url.Values{
 		"account_id":   {form.AccountID},
 		"status_ids[]": form.StatusIDs,
 		"comment":      {form.Comment},
 		"forward":      {strconv.FormatBool(form.Forward)},
 		"category":     {form.Category},
-		"rule_ids[]":   ruleIDs,
+		"rule_ids[]":   form.RuleIDs,
 	}
 
 	// trigger the handler

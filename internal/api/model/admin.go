@@ -117,9 +117,9 @@ type AdminReport struct {
 	// Array of  statuses that were submitted along with this report.
 	// Will be empty if no status IDs were submitted with the report.
 	Statuses []*Status `json:"statuses"`
-	// Array of rule IDs that were submitted along with this report.
-	// NOT IMPLEMENTED, will always be empty array.
-	Rules []interface{} `json:"rule_ids"`
+	// Array of rules that were broken according to this report.
+	// Will be empty if no rule IDs were submitted with the report.
+	Rules []*InstanceRule `json:"rules"`
 	// If an action was taken, what comment was made by the admin on the taken action?
 	// Will be null if not set / no action yet taken.
 	// example: Account was suspended.
@@ -188,4 +188,11 @@ type MediaCleanupRequest struct {
 type AdminSendTestEmailRequest struct {
 	// Email address to send the test email to.
 	Email string `form:"email" json:"email" xml:"email"`
+}
+
+type AdminInstanceRule struct {
+	ID        string `json:"id"`         // id of this item in the database
+	CreatedAt string `json:"created_at"` // when was item created
+	UpdatedAt string `json:"updated_at"` // when was item last updated
+	Text      string `json:"text"`       // text content of the rule
 }

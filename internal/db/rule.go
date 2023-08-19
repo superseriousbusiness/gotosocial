@@ -17,35 +17,26 @@
 
 package db
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Timeline
-	User
-	Tombstone
+// Rule handles getting/creation/deletion/updating of instance rules.
+type Rule interface {
+	// GetRuleByID gets one rule by its db id.
+	GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, error)
+
+	// GetRulesByIDs gets multiple rules by their db idd.
+	GetRulesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Rule, error)
+
+	// GetRules gets all active (not deleted) rules.
+	GetActiveRules(ctx context.Context) ([]gtsmodel.Rule, error)
+
+	// PutRule puts the given rule in the database.
+	PutRule(ctx context.Context, rule *gtsmodel.Rule) error
+
+	// UpdateRule updates one rule by its db id.
+	UpdateRule(ctx context.Context, rule *gtsmodel.Rule) (*gtsmodel.Rule, error)
 }

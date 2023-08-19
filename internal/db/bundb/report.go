@@ -186,6 +186,19 @@ func (r *reportDB) PopulateReport(ctx context.Context, report *gtsmodel.Report) 
 		}
 	}
 
+	if l := len(report.RuleIDs); l > 0 && l != len(report.Rules) {
+		// Report target rules not set, fetch from the database.
+
+		for _, v := range report.RuleIDs {
+			rule, err := r.state.DB.GetRuleByID(ctx, v)
+			if err != nil {
+				errs.Appendf("error populating report rules: %w", err)
+			} else {
+				report.Rules = append(report.Rules, rule)
+			}
+		}
+	}
+
 	if report.ActionTakenByAccountID != "" &&
 		report.ActionTakenByAccount == nil {
 		// Report action account is not set, fetch from the database.

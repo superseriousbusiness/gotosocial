@@ -335,7 +335,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
     "statuses": [],
-    "rule_ids": [],
+    "rules": [],
     "action_taken_comment": "user was warned not to be a turtle anymore"
   },
   {
@@ -528,7 +528,16 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "poll": null
       }
     ],
-    "rule_ids": [],
+    "rules": [
+      {
+        "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+        "text": "Be gay"
+      },
+      {
+        "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+        "text": "Do crime"
+      }
+    ],
     "action_taken_comment": null
   }
 ]`, string(b))
@@ -740,7 +749,16 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "poll": null
       }
     ],
-    "rule_ids": [],
+    "rules": [
+      {
+        "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+        "text": "Be gay"
+      },
+      {
+        "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+        "text": "Do crime"
+      }
+    ],
     "action_taken_comment": null
   }
 ]`, string(b))
@@ -952,7 +970,16 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "poll": null
       }
     ],
-    "rule_ids": [],
+    "rules": [
+      {
+        "id": "01GP3AWY4CRDVRNZKW0TEAMB51",
+        "text": "Be gay"
+      },
+      {
+        "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
+        "text": "Do crime"
+      }
+    ],
     "action_taken_comment": null
   }
 ]`, string(b))

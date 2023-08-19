@@ -738,6 +738,32 @@ func (c *converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 	return ""
 }
 
+func (c *converter) InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule {
+	return apimodel.InstanceRule{
+		ID:   r.ID,
+		Text: r.Text,
+	}
+}
+
+func (c *converter) InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.InstanceRule {
+	rules := make([]apimodel.InstanceRule, len(r))
+
+	for i, v := range r {
+		rules[i] = c.InstanceRuleToAPIRule(v)
+	}
+
+	return rules
+}
+
+func (c *converter) InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.AdminInstanceRule {
+	return &apimodel.AdminInstanceRule{
+		ID:        r.ID,
+		CreatedAt: util.FormatISO8601(r.CreatedAt),
+		UpdatedAt: util.FormatISO8601(r.UpdatedAt),
+		Text:      r.Text,
+	}
+}
+
 func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error) {
 	instance := &apimodel.InstanceV1{
 		URI:              i.URI,
@@ -752,6 +778,7 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		ApprovalRequired: config.GetAccountsApprovalRequired(),
 		InvitesEnabled:   false, // todo: not supported yet
 		MaxTootChars:     uint(config.GetStatusesMaxChars()),
+		Rules:            c.InstanceRulesToAPIRules(i.Rules),
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {
@@ -854,7 +881,7 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		Description:   i.Description,
 		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
 		Languages:     []string{},                 // todo: not implemented
-		Rules:         []interface{}{},            // todo: not implemented
+		Rules:         c.InstanceRulesToAPIRules(i.Rules),
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {
@@ -1051,7 +1078,7 @@ func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (
 		Comment:     r.Comment,
 		Forwarded:   *r.Forwarded,
 		StatusIDs:   r.StatusIDs,
-		RuleIDs:     []int{}, // todo: not supported yet
+		RuleIDs:     r.RuleIDs,
 	}
 
 	if !r.ActionTakenAt.IsZero() {
@@ -1144,6 +1171,20 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 		statuses = append(statuses, status)
 	}
 
+	rules := make([]*apimodel.InstanceRule, 0, len(r.RuleIDs))
+	if len(r.RuleIDs) != 0 && len(r.Rules) == 0 {
+		r.Rules, err = c.db.GetRulesByIDs(ctx, r.RuleIDs)
+		if err != nil {
+			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting rules from the db: %w", err)
+		}
+	}
+	for _, v := range r.Rules {
+		rules = append(rules, &apimodel.InstanceRule{
+			ID:   v.ID,
+			Text: v.Text,
+		})
+	}
+
 	if ac := r.ActionTaken; ac != "" {
 		actionTakenComment = &ac
 	}
@@ -1163,7 +1204,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 		ActionTakenByAccount: actionTakenByAccount,
 		ActionTakenComment:   actionTakenComment,
 		Statuses:             statuses,
-		Rules:                []interface{}{}, // not implemented
+		Rules:                rules,
 	}, nil
 }
 

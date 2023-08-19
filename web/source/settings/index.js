@@ -60,7 +60,10 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 			Item("Local", { icon: "fa-home", wildcard: true }, require("./admin/emoji/local")),
 			Item("Remote", { icon: "fa-cloud" }, require("./admin/emoji/remote"))
 		]),
-		Item("Settings", { icon: "fa-sliders" }, require("./admin/settings"))
+		Menu("Settings", { icon: "fa-sliders" }, [
+			Item("Settings", { icon: "fa-sliders", url: "" }, require("./admin/settings")),
+			Item("Rules", { icon: "fa-dot-circle-o", wildcard: true }, require("./admin/settings/rules"))
+		])
 	])
 ]);
 

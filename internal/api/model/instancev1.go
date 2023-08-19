@@ -88,6 +88,8 @@ type InstanceV1 struct {
 	//
 	// example: 5000
 	MaxTootChars uint `json:"max_toot_chars"`
+	// An itemized list of rules for this instance.
+	Rules []InstanceRule `json:"rules"`
 }
 
 // InstanceV1URLs models instance-relevant URLs for client application consumption.

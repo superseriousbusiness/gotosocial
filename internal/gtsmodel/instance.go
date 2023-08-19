@@ -39,4 +39,5 @@ type Instance struct {
 	ContactAccount         *Account     `bun:"rel:belongs-to"`                                              // account corresponding to contactAccountID
 	Reputation             int64        `bun:",notnull,default:0"`                                          // Reputation score of this instance
 	Version                string       `bun:",nullzero"`                                                   // Version of the software used on this instance
+	Rules                  []Rule       `bun:"-"`                                                           // List of instance rules
 }

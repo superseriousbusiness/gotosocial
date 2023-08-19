@@ -542,6 +542,57 @@ label {
 	}
 }
 
+.instance-rules {
+	list-style-position: inside;
+	margin: 0;
+	padding: 0;
+
+	a.rule {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		align-items: center;
+		color: $fg;
+		text-decoration: none;
+		background: $toot-bg;
+		padding: 1rem;
+		margin: 0.5rem 0;
+		border-radius: $br;
+		line-height: 2rem;
+		position: relative;
+
+		&:hover {
+			color: $fg-accent;
+
+			.edit-icon {
+				display: inline;
+			}
+		}
+
+		.edit-icon {
+			display: none;
+			font-size: 1rem;
+			line-height: 1.5rem;
+		}
+
+		li {
+			font-size: 1.75rem;
+			padding: 0;
+			margin: 0;
+
+			h2 {
+				margin: 0;
+				margin-top: 0 !important;
+				display: inline-block;
+				font-size: 1.5rem;
+			}
+		}
+
+		span {
+			color: $fg-reduced;
+		}
+	}
+}
+
 @media screen and (max-width: 30rem) {
 	.domain-blocklist .entry {
 		grid-template-columns: 1fr;
