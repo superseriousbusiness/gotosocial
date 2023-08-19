@@ -25,6 +25,6 @@ type Rule struct {
 	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
 	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	Text      string    `bun:",nullzero"`                                                   // text content of the rule
-	Order     int64     `bun:",autoincrement"`                                              // rule ordering
-	Deleted   *bool     `bun:",default:false"`                                              // has this rule been deleted, still kept in database for reference in historic reports
+	Order     *uint     `bun:",nullzero,notnull,unique"`                                    // rule ordering, index from 0
+	Deleted   *bool     `bun:",nullzero,notnull,default:false"`                             // has this rule been deleted, still kept in database for reference in historic reports
 }

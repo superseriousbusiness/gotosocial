@@ -2048,7 +2048,8 @@ func NewTestRules() map[string]*gtsmodel.Rule {
 			CreatedAt: TimeMustParse("2022-05-14T12:20:03+02:00"),
 			UpdatedAt: TimeMustParse("2022-05-14T12:20:03+02:00"),
 			Text:      "Be gay",
-			Order:     0,
+			Deleted:   util.Ptr(false),
+			Order:     util.Ptr(uint(0)),
 		},
 		"deleted_rule": {
 			ID:        "01GP3DFY9XQ1TJMZT5BGAZPXX2",
@@ -2056,14 +2057,15 @@ func NewTestRules() map[string]*gtsmodel.Rule {
 			UpdatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
 			Text:      "Deleted",
 			Deleted:   util.Ptr(true),
-			Order:     1,
+			Order:     util.Ptr(uint(1)),
 		},
 		"rule2": {
 			ID:        "01GP3DFY9XQ1TJMZT5BGAZPXX3",
 			CreatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
 			UpdatedAt: TimeMustParse("2022-05-15T16:20:12+02:00"),
 			Text:      "Do crime",
-			Order:     2,
+			Deleted:   util.Ptr(false),
+			Order:     util.Ptr(uint(2)),
 		},
 	}
 }

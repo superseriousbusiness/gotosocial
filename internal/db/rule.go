@@ -31,15 +31,12 @@ type Rule interface {
 	// GetRulesByIDs gets multiple rules by their db idd.
 	GetRulesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Rule, error)
 
-	// GetRules gets all rules.
-	GetRules(ctx context.Context) ([]gtsmodel.Rule, error)
+	// GetRules gets all active (not deleted) rules.
+	GetActiveRules(ctx context.Context) ([]gtsmodel.Rule, error)
 
 	// PutRule puts the given rule in the database.
 	PutRule(ctx context.Context, rule *gtsmodel.Rule) error
 
 	// UpdateRule updates one rule by its db id.
 	UpdateRule(ctx context.Context, rule *gtsmodel.Rule) (*gtsmodel.Rule, error)
-
-	// // DeleteRuleByID marks the rule with given id as deleted.
-	// DeleteRuleByID(ctx context.Context, id string) error
 }

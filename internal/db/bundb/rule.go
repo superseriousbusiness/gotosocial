@@ -29,7 +29,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect"
 )
 
 type ruleDB struct {
@@ -43,8 +42,7 @@ func (r *ruleDB) GetRuleByID(ctx context.Context, id string) (*gtsmodel.Rule, er
 	q := r.db.
 		NewSelect().
 		Model(&rule).
-		Where("? = ?", bun.Ident("rule.id"), id).
-		Where("? = ?", bun.Ident("rule.deleted"), util.Ptr(false))
+		Where("? = ?", bun.Ident("rule.id"), id)
 
 	if err := q.Scan(ctx); err != nil {
 		return nil, err
@@ -71,13 +69,14 @@ func (r *ruleDB) GetRulesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.R
 	return rules, nil
 }
 
-func (r *ruleDB) GetRules(ctx context.Context) ([]gtsmodel.Rule, error) {
+func (r *ruleDB) GetActiveRules(ctx context.Context) ([]gtsmodel.Rule, error) {
 	rules := make([]gtsmodel.Rule, 0)
 
 	q := r.db.
 		NewSelect().
 		Model(&rules).
-		Where("? = ?", bun.Ident("rule.deleted"), util.Ptr(false)).
+		// Ignore deleted (ie., inactive) rules.
+		Where("? = ?", bun.Ident("rule.deleted"), false).
 		Order("rule.order ASC")
 
 	if err := q.Scan(ctx); err != nil {
@@ -88,31 +87,40 @@ func (r *ruleDB) GetRules(ctx context.Context) ([]gtsmodel.Rule, error) {
 }
 
 func (r *ruleDB) PutRule(ctx context.Context, rule *gtsmodel.Rule) error {
-	if r.db.Dialect().Name() == dialect.SQLite {
-		// sqlite does not support bun's autoincrement, so we need to set rule.Order ourselves
+	var lastRuleOrder uint
 
-		var lastRule gtsmodel.Rule
+	// Select highest existing rule order.
+	err := r.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("rules"), bun.Ident("rule")).
+		Column("rule.order").
+		Order("rule.order DESC").
+		Limit(1).
+		Scan(ctx, &lastRuleOrder)
 
-		q := r.db.
-			NewSelect().
-			Model(rule).
-			Order("rule.order DESC").
-			Limit(1)
+	switch {
+	case errors.Is(err, db.ErrNoEntries):
+		// No rules set yet, index from 0.
+		rule.Order = util.Ptr(uint(0))
 
-		if err := q.Scan(ctx, &lastRule); err != nil {
-			dbErr := err
+	case err != nil:
+		// Real db error.
+		return err
 
-			if errors.Is(dbErr, db.ErrNoEntries) {
-				rule.Order = 0
-			} else {
-				return dbErr
-			}
-		} else {
-			rule.Order = lastRule.Order + 1
-		}
+	default:
+		// No error means previous rule(s)
+		// existed. New rule order should
+		// be 1 higher than previous rule.
+		rule.Order = func() *uint {
+			o := lastRuleOrder + 1
+			return &o
+		}()
 	}
 
-	if _, err := r.db.NewInsert().Model(rule).Exec(ctx); err != nil {
+	if _, err := r.db.
+		NewInsert().
+		Model(rule).
+		Exec(ctx); err != nil {
 		return err
 	}
 

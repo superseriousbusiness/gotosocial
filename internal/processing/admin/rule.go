@@ -34,7 +34,7 @@ import (
 func (p *Processor) RulesGet(
 	ctx context.Context,
 ) ([]*apimodel.AdminInstanceRule, gtserror.WithCode) {
-	rules, err := p.state.DB.GetRules(ctx)
+	rules, err := p.state.DB.GetActiveRules(ctx)
 
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)

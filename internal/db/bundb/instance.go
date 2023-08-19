@@ -153,7 +153,7 @@ func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery fun
 
 		if instance.Domain == config.GetHost() {
 			// also populate Rules
-			rules, err := i.state.DB.GetRules(ctx)
+			rules, err := i.state.DB.GetActiveRules(ctx)
 			if err != nil {
 				log.Error(ctx, err)
 			} else {
