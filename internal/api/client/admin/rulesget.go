@@ -33,8 +33,6 @@ import (
 //
 // The rules will be returned in order (sorted by Order ascending).
 //
-// ````
-//
 //	---
 //	tags:
 //	- admin

@@ -117,7 +117,7 @@ type AdminReport struct {
 	// Array of  statuses that were submitted along with this report.
 	// Will be empty if no status IDs were submitted with the report.
 	Statuses []*Status `json:"statuses"`
-	// Array of rule IDs that were submitted along with this report.
+	// Array of rules that were broken according to this report.
 	// Will be empty if no rule IDs were submitted with the report.
 	Rules []*InstanceRule `json:"rules"`
 	// If an action was taken, what comment was made by the admin on the taken action?
