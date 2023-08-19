@@ -11,6 +11,7 @@ EXPECT=$(cat << "EOF"
     "accounts-reason-required": false,
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
+    "advanced-csp-extra-uris": [],
     "advanced-rate-limit-requests": 6969,
     "advanced-sender-multiplier": -1,
     "advanced-throttling-multiplier": -1,
