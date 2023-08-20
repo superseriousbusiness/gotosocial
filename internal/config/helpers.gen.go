@@ -2324,6 +2324,31 @@ func GetAdvancedSenderMultiplier() int { return global.GetAdvancedSenderMultipli
 // SetAdvancedSenderMultiplier safely sets the value for global configuration 'AdvancedSenderMultiplier' field
 func SetAdvancedSenderMultiplier(v int) { global.SetAdvancedSenderMultiplier(v) }
 
+// GetAdvancedCSPExtraURIs safely fetches the Configuration value for state's 'AdvancedCSPExtraURIs' field
+func (st *ConfigState) GetAdvancedCSPExtraURIs() (v []string) {
+	st.mutex.RLock()
+	v = st.config.AdvancedCSPExtraURIs
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAdvancedCSPExtraURIs safely sets the Configuration value for state's 'AdvancedCSPExtraURIs' field
+func (st *ConfigState) SetAdvancedCSPExtraURIs(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedCSPExtraURIs = v
+	st.reloadToViper()
+}
+
+// AdvancedCSPExtraURIsFlag returns the flag name for the 'AdvancedCSPExtraURIs' field
+func AdvancedCSPExtraURIsFlag() string { return "advanced-csp-extra-uris" }
+
+// GetAdvancedCSPExtraURIs safely fetches the value for global configuration 'AdvancedCSPExtraURIs' field
+func GetAdvancedCSPExtraURIs() []string { return global.GetAdvancedCSPExtraURIs() }
+
+// SetAdvancedCSPExtraURIs safely sets the value for global configuration 'AdvancedCSPExtraURIs' field
+func SetAdvancedCSPExtraURIs(v []string) { global.SetAdvancedCSPExtraURIs(v) }
+
 // GetHTTPClientAllowIPs safely fetches the Configuration value for state's 'HTTPClient.AllowIPs' field
 func (st *ConfigState) GetHTTPClientAllowIPs() (v []string) {
 	st.mutex.RLock()
