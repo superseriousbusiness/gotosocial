@@ -124,6 +124,7 @@ var Defaults = Configuration{
 	AdvancedThrottlingMultiplier: 8,   // 8 open requests per CPU
 	AdvancedThrottlingRetryAfter: time.Second * 30,
 	AdvancedSenderMultiplier:     2, // 2 senders per CPU
+	AdvancedCSPExtraURIs:         []string{},
 
 	Cache: CacheConfiguration{
 		// Rough memory target that the total
