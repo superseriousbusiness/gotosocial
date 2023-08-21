@@ -323,8 +323,8 @@ func (m *Media) pruneUnused(ctx context.Context, media *gtsmodel.MediaAttachment
 	l := log.WithContext(ctx).
 		WithField("media", media.ID)
 
-	// Check whether we have the required account for media.
-	account, missing, err := m.getRelatedAccount(ctx, media)
+	// Check whether we have the account that owns the media.
+	account, missing, err := m.getOwningAccount(ctx, media)
 	if err != nil {
 		return false, err
 	} else if missing {
@@ -371,8 +371,8 @@ func (m *Media) fixCacheState(ctx context.Context, media *gtsmodel.MediaAttachme
 	l := log.WithContext(ctx).
 		WithField("media", media.ID)
 
-	// Check whether we have the required account for media.
-	_, missingAccount, err := m.getRelatedAccount(ctx, media)
+	// Check whether we have the account that owns the media.
+	_, missingAccount, err := m.getOwningAccount(ctx, media)
 	if err != nil {
 		return false, err
 	} else if missingAccount {
@@ -428,32 +428,42 @@ func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmo
 	l := log.WithContext(ctx).
 		WithField("media", media.ID)
 
-	// Check whether we have the required account for media.
-	account, missing, err := m.getRelatedAccount(ctx, media)
-	if err != nil {
-		return false, err
-	} else if missing {
-		l.Debug("skipping due to missing account")
-		return false, nil
-	}
+	// There are two possibilities here:
+	//
+	//   1. Media is an avatar or header; we should uncache
+	//      it if we haven't seen the account recently.
+	//   2. Media is attached to a status; we should uncache
+	//      it if we haven't seen the status recently.
+	if *media.Avatar || *media.Header {
+		// Check whether we have the account that owns the media.
+		account, missing, err := m.getOwningAccount(ctx, media)
+		if err != nil {
+			return false, err
+		} else if missing {
+			// PruneUnused will take care of this case.
+			l.Debug("skipping due to missing account")
+			return false, nil
+		}
 
-	if account != nil && account.FetchedAt.After(after) {
-		l.Debug("skipping due to recently fetched account")
-		return false, nil
-	}
+		if account != nil && account.FetchedAt.After(after) {
+			l.Debug("skipping due to recently fetched account")
+			return false, nil
+		}
+	} else {
+		// Check whether we have the status that media is attached to.
+		status, missing, err := m.getRelatedStatus(ctx, media)
+		if err != nil {
+			return false, err
+		} else if missing {
+			// PruneUnused will take care of this case.
+			l.Debug("skipping due to missing status")
+			return false, nil
+		}
 
-	// Check whether we have the required status for media.
-	status, missing, err := m.getRelatedStatus(ctx, media)
-	if err != nil {
-		return false, err
-	} else if missing {
-		l.Debug("skipping due to missing status")
-		return false, nil
-	}
-
-	if status != nil && status.FetchedAt.After(after) {
-		l.Debug("skipping due to recently fetched status")
-		return false, nil
+		if status != nil && status.FetchedAt.After(after) {
+			l.Debug("skipping due to recently fetched status")
+			return false, nil
+		}
 	}
 
 	// This media is too old, uncache it.
@@ -461,13 +471,13 @@ func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmo
 	return true, m.uncache(ctx, media)
 }
 
-func (m *Media) getRelatedAccount(ctx context.Context, media *gtsmodel.MediaAttachment) (*gtsmodel.Account, bool, error) {
+func (m *Media) getOwningAccount(ctx context.Context, media *gtsmodel.MediaAttachment) (*gtsmodel.Account, bool, error) {
 	if media.AccountID == "" {
 		// no related account.
 		return nil, false, nil
 	}
 
-	// Load the account related to this media.
+	// Load the account that owns this media.
 	account, err := m.state.DB.GetAccountByID(
 		gtscontext.SetBarebones(ctx),
 		media.AccountID,
