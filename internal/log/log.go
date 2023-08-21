@@ -74,7 +74,7 @@ func SetTimeFormat(format string) {
 		timefmt = format
 		return
 	}
-	timefmt = "timestamp=\"" + format + "\" "
+	timefmt = `timestamp="` + format + `" `
 }
 
 // New starts a new log entry.
