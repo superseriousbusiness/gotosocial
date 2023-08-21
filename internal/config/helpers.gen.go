@@ -49,30 +49,30 @@ func GetLogLevel() string { return global.GetLogLevel() }
 // SetLogLevel safely sets the value for global configuration 'LogLevel' field
 func SetLogLevel(v string) { global.SetLogLevel(v) }
 
-// GetLogTimestamp safely fetches the Configuration value for state's 'LogTimestamp' field
-func (st *ConfigState) GetLogTimestamp() (v bool) {
+// GetLogTimestampFormat safely fetches the Configuration value for state's 'LogTimestampFormat' field
+func (st *ConfigState) GetLogTimestampFormat() (v string) {
 	st.mutex.RLock()
-	v = st.config.LogTimestamp
+	v = st.config.LogTimestampFormat
 	st.mutex.RUnlock()
 	return
 }
 
-// SetLogTimestamp safely sets the Configuration value for state's 'LogTimestamp' field
-func (st *ConfigState) SetLogTimestamp(v bool) {
+// SetLogTimestampFormat safely sets the Configuration value for state's 'LogTimestampFormat' field
+func (st *ConfigState) SetLogTimestampFormat(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.LogTimestamp = v
+	st.config.LogTimestampFormat = v
 	st.reloadToViper()
 }
 
-// LogTimestampFlag returns the flag name for the 'LogTimestamp' field
-func LogTimestampFlag() string { return "log-timestamp" }
+// LogTimestampFormatFlag returns the flag name for the 'LogTimestampFormat' field
+func LogTimestampFormatFlag() string { return "log-timestamp-format" }
 
-// GetLogTimestamp safely fetches the value for global configuration 'LogTimestamp' field
-func GetLogTimestamp() bool { return global.GetLogTimestamp() }
+// GetLogTimestampFormat safely fetches the value for global configuration 'LogTimestampFormat' field
+func GetLogTimestampFormat() string { return global.GetLogTimestampFormat() }
 
-// SetLogTimestamp safely sets the value for global configuration 'LogTimestamp' field
-func SetLogTimestamp(v bool) { global.SetLogTimestamp(v) }
+// SetLogTimestampFormat safely sets the value for global configuration 'LogTimestampFormat' field
+func SetLogTimestampFormat(v string) { global.SetLogTimestampFormat(v) }
 
 // GetLogDbQueries safely fetches the Configuration value for state's 'LogDbQueries' field
 func (st *ConfigState) GetLogDbQueries() (v bool) {
