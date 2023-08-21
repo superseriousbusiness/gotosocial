@@ -23,7 +23,6 @@ import (
 	"log/syslog"
 	"os"
 	"strings"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -33,7 +32,7 @@ import (
 
 var (
 	// loglvl is the currently set logging level.
-	loglvl atomic.Uint32
+	loglvl level.LEVEL
 
 	// lvlstrs is the lookup table of log levels to strings.
 	lvlstrs = level.Default()
@@ -41,8 +40,9 @@ var (
 	// syslog output, only set if enabled.
 	sysout *syslog.Writer
 
-	// timefmt is the logging time format used.
-	timefmt = "02/01/2006 15:04:05.000"
+	// timefmt is the logging time format used, which includes
+	// the full field and required quoting
+	timefmt = `timestamp="02/01/2006 15:04:05.000" `
 
 	// ctxhooks allows modifying log content based on context.
 	ctxhooks []func(context.Context, []kv.Field) []kv.Field
@@ -55,12 +55,26 @@ func Hook(hook func(ctx context.Context, kvs []kv.Field) []kv.Field) {
 
 // Level returns the currently set log level.
 func Level() level.LEVEL {
-	return level.LEVEL(loglvl.Load())
+	return loglvl
 }
 
 // SetLevel sets the max logging level.
 func SetLevel(lvl level.LEVEL) {
-	loglvl.Store(uint32(lvl))
+	loglvl = lvl
+}
+
+// TimeFormat returns the currently-set timestamp format.
+func TimeFormat() string {
+	return timefmt
+}
+
+// SetTimeFormat sets the timestamp format to the given string.
+func SetTimeFormat(format string) {
+	if format == "" {
+		timefmt = format
+		return
+	}
+	timefmt = `timestamp="` + format + `" `
 }
 
 // New starts a new log entry.
@@ -164,10 +178,8 @@ func printf(depth int, fields []kv.Field, s string, a ...interface{}) {
 	// Acquire buffer
 	buf := getBuf()
 
-	// Append formatted timestamp
-	buf.B = append(buf.B, `timestamp="`...)
+	// Append formatted timestamp according to `timefmt`
 	buf.B = time.Now().AppendFormat(buf.B, timefmt)
-	buf.B = append(buf.B, `" `...)
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)
@@ -217,10 +229,8 @@ func logf(ctx context.Context, depth int, lvl level.LEVEL, fields []kv.Field, s 
 	// Acquire buffer
 	buf := getBuf()
 
-	// Append formatted timestamp
-	buf.B = append(buf.B, `timestamp="`...)
+	// Append formatted timestamp according to `timefmt`
 	buf.B = time.Now().AppendFormat(buf.B, timefmt)
-	buf.B = append(buf.B, `" `...)
 
 	// Append formatted caller func
 	buf.B = append(buf.B, `func=`...)

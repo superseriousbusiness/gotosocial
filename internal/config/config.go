@@ -44,19 +44,20 @@ func fieldtag(field, tag string) string {
 // will need to regenerate the global Getter/Setter helpers by running:
 // `go run ./internal/config/gen/ -out ./internal/config/helpers.gen.go`
 type Configuration struct {
-	LogLevel        string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
-	LogDbQueries    bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
-	LogClientIP     bool     `name:"log-client-ip" usage:"Include the client IP in logs"`
-	ApplicationName string   `name:"application-name" usage:"Name of the application, used in various places internally"`
-	LandingPageUser string   `name:"landing-page-user" usage:"the user that should be shown on the instance's landing page"`
-	ConfigPath      string   `name:"config-path" usage:"Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments"`
-	Host            string   `name:"host" usage:"Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!"`
-	AccountDomain   string   `name:"account-domain" usage:"Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!"`
-	Protocol        string   `name:"protocol" usage:"Protocol to use for the REST api of the server (only use http if you are debugging or behind a reverse proxy!)"`
-	BindAddress     string   `name:"bind-address" usage:"Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces."`
-	Port            int      `name:"port" usage:"Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine."`
-	TrustedProxies  []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
-	SoftwareVersion string   `name:"software-version" usage:""`
+	LogLevel           string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
+	LogTimestampFormat string   `name:"log-timestamp-format" usage:"Format to use for the log timestamp, as supported by Go's time.Layout"`
+	LogDbQueries       bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
+	LogClientIP        bool     `name:"log-client-ip" usage:"Include the client IP in logs"`
+	ApplicationName    string   `name:"application-name" usage:"Name of the application, used in various places internally"`
+	LandingPageUser    string   `name:"landing-page-user" usage:"the user that should be shown on the instance's landing page"`
+	ConfigPath         string   `name:"config-path" usage:"Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments"`
+	Host               string   `name:"host" usage:"Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!"`
+	AccountDomain      string   `name:"account-domain" usage:"Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!"`
+	Protocol           string   `name:"protocol" usage:"Protocol to use for the REST api of the server (only use http if you are debugging or behind a reverse proxy!)"`
+	BindAddress        string   `name:"bind-address" usage:"Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces."`
+	Port               int      `name:"port" usage:"Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine."`
+	TrustedProxies     []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
+	SoftwareVersion    string   `name:"software-version" usage:""`
 
 	DbType                   string        `name:"db-type" usage:"Database type: eg., postgres"`
 	DbAddress                string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`

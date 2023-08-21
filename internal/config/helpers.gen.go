@@ -49,6 +49,31 @@ func GetLogLevel() string { return global.GetLogLevel() }
 // SetLogLevel safely sets the value for global configuration 'LogLevel' field
 func SetLogLevel(v string) { global.SetLogLevel(v) }
 
+// GetLogTimestampFormat safely fetches the Configuration value for state's 'LogTimestampFormat' field
+func (st *ConfigState) GetLogTimestampFormat() (v string) {
+	st.mutex.RLock()
+	v = st.config.LogTimestampFormat
+	st.mutex.RUnlock()
+	return
+}
+
+// SetLogTimestampFormat safely sets the Configuration value for state's 'LogTimestampFormat' field
+func (st *ConfigState) SetLogTimestampFormat(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.LogTimestampFormat = v
+	st.reloadToViper()
+}
+
+// LogTimestampFormatFlag returns the flag name for the 'LogTimestampFormat' field
+func LogTimestampFormatFlag() string { return "log-timestamp-format" }
+
+// GetLogTimestampFormat safely fetches the value for global configuration 'LogTimestampFormat' field
+func GetLogTimestampFormat() string { return global.GetLogTimestampFormat() }
+
+// SetLogTimestampFormat safely sets the value for global configuration 'LogTimestampFormat' field
+func SetLogTimestampFormat(v string) { global.SetLogTimestampFormat(v) }
+
 // GetLogDbQueries safely fetches the Configuration value for state's 'LogDbQueries' field
 func (st *ConfigState) GetLogDbQueries() (v bool) {
 	st.mutex.RLock()

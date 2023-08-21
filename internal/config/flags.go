@@ -38,6 +38,7 @@ func (s *ConfigState) AddGlobalFlags(cmd *cobra.Command) {
 		cmd.PersistentFlags().String(AccountDomainFlag(), cfg.AccountDomain, fieldtag("AccountDomain", "usage"))
 		cmd.PersistentFlags().String(ProtocolFlag(), cfg.Protocol, fieldtag("Protocol", "usage"))
 		cmd.PersistentFlags().String(LogLevelFlag(), cfg.LogLevel, fieldtag("LogLevel", "usage"))
+		cmd.PersistentFlags().String(LogTimestampFormatFlag(), cfg.LogTimestampFormat, fieldtag("LogTimestampFormat", "usage"))
 		cmd.PersistentFlags().Bool(LogDbQueriesFlag(), cfg.LogDbQueries, fieldtag("LogDbQueries", "usage"))
 		cmd.PersistentFlags().String(ConfigPathFlag(), cfg.ConfigPath, fieldtag("ConfigPath", "usage"))
 
