@@ -18,7 +18,9 @@ func AppendQuoteString(buf *byteutil.Buffer, str string) {
 
 	case len(str) == 1:
 		// Append quote single byte.
-		appendQuoteByte(buf, str[0])
+		buf.B = append(buf.B, '\'')
+		buf.B = append(buf.B, format.Byte2Str(str[0])...)
+		buf.B = append(buf.B, '\'')
 		return
 
 	case len(str) > format.SingleTermLine || !format.IsSafeASCII(str):
@@ -63,7 +65,9 @@ func AppendQuoteValue(buf *byteutil.Buffer, str string) {
 
 	case len(str) == 1:
 		// Append quote single byte.
-		appendQuoteByte(buf, str[0])
+		buf.B = append(buf.B, '\'')
+		buf.B = append(buf.B, format.Byte2Str(str[0])...)
+		buf.B = append(buf.B, '\'')
 		return
 
 	case len(str) > format.SingleTermLine || !format.IsSafeASCII(str):
@@ -113,35 +117,6 @@ func AppendQuoteValue(buf *byteutil.Buffer, str string) {
 	// literally anything else: append as-is.
 	buf.B = append(buf.B, str...)
 	return
-}
-
-// appendEscapeByte will append byte to buffer, quoting and escaping where necessary.
-func appendQuoteByte(buf *byteutil.Buffer, c byte) {
-	switch c {
-	// Double quote space.
-	case ' ':
-		buf.B = append(buf.B, '"', c, '"')
-
-	// Escape + double quote.
-	case '\a':
-		buf.B = append(buf.B, '"', '\\', 'a', '"')
-	case '\b':
-		buf.B = append(buf.B, '"', '\\', 'b', '"')
-	case '\f':
-		buf.B = append(buf.B, '"', '\\', 'f', '"')
-	case '\n':
-		buf.B = append(buf.B, '"', '\\', 'n', '"')
-	case '\r':
-		buf.B = append(buf.B, '"', '\\', 'r', '"')
-	case '\t':
-		buf.B = append(buf.B, '"', '\\', 't', '"')
-	case '\v':
-		buf.B = append(buf.B, '"', '\\', 'v', '"')
-
-	// Append as-is.
-	default:
-		buf.B = append(buf.B, c)
-	}
 }
 
 // isQuoted checks if string is single or double quoted.

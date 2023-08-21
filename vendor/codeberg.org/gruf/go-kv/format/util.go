@@ -80,7 +80,7 @@ func Byte2Str(c byte) string {
 		return `\t`
 	case '\v':
 		return `\v`
-	case '\'':
+	case '\\':
 		return `\\`
 	default:
 		if c < ' ' {
