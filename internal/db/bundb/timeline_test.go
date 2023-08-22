@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -154,6 +155,38 @@ func (suite *TimelineTestSuite) TestGetHomeTimeline() {
 	}
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, 16)
+}
+
+func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
+	var (
+		ctx            = context.Background()
+		viewingAccount = suite.testAccounts["local_account_1"]
+	)
+
+	// Remove all of viewingAccount's follows.
+	follows, err := suite.state.DB.GetAccountFollows(
+		gtscontext.SetBarebones(ctx),
+		viewingAccount.ID,
+	)
+
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	for _, f := range follows {
+		if err := suite.state.DB.DeleteFollowByID(ctx, f.ID); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	// Query should work fine; though far
+	// fewer statuses will be returned ofc.
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
