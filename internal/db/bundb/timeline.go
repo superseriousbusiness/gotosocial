@@ -19,11 +19,13 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -101,22 +103,39 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		q = q.Order("status.id ASC")
 	}
 
-	// Subquery to select target (followed) account
-	// IDs from follows owned by given accountID.
-	subQ := t.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
-		Column("follow.target_account_id").
-		Where("? = ?", bun.Ident("follow.account_id"), accountID)
+	// As this is the home timeline, it should be
+	// populated by statuses from accounts followed
+	// by accountID, and posts from accountID itself.
+	//
+	// So, begin by seeing who accountID follows.
+	// It should be a little cheaper to do this in
+	// a separate query like this, rather than using
+	// a join, since followIDs are cached in memory.
+	follows, err := t.state.DB.GetAccountFollows(
+		gtscontext.SetBarebones(ctx),
+		accountID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("db error getting follows for account %s: %w", accountID, err)
+	}
 
-	// Use the subquery in a WhereGroup here to specify that we want EITHER
-	// - statuses posted by accountID itself OR
-	// - statuses posted by accounts that accountID follows
-	q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.
-			Where("? = ?", bun.Ident("status.account_id"), accountID).
-			WhereOr("? IN (?)", bun.Ident("status.account_id"), subQ)
-	})
+	// Extract just the accountID from each follow.
+	targetAccountIDs := make([]string, len(follows)+1)
+	for i, f := range follows {
+		targetAccountIDs[i] = f.TargetAccountID
+	}
+
+	// Add accountID itself as a pseudo follow so that
+	// accountID can see its own posts in the timeline.
+	targetAccountIDs[len(targetAccountIDs)-1] = accountID
+
+	// Select only statuses authored by
+	// accounts with IDs in the slice.
+	q = q.Where(
+		"? IN (?)",
+		bun.Ident("status.account_id"),
+		bun.In(targetAccountIDs),
+	)
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, err
