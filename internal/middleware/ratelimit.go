@@ -114,7 +114,7 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 
 			// Set error on gin context so it'll
 			// be picked up by logging middleware.
-			c.Error(errWithCode)
+			c.Error(errWithCode) //nolint:errcheck
 
 			// Bail with 500.
 			c.AbortWithStatusJSON(
