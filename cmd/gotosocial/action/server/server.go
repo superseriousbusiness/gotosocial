@@ -266,10 +266,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// create required middleware
 	// rate limiting
-	limit := config.GetAdvancedRateLimitRequests()
-	clLimit := middleware.RateLimit(limit)  // client api
-	s2sLimit := middleware.RateLimit(limit) // server-to-server (AP)
-	fsLimit := middleware.RateLimit(limit)  // fileserver / web templates
+	rlLimit := config.GetAdvancedRateLimitRequests()
+	rlExceptions := config.GetAdvancedRateLimitExceptions()
+	clLimit := middleware.RateLimit(rlLimit, rlExceptions)  // client api
+	s2sLimit := middleware.RateLimit(rlLimit, rlExceptions) // server-to-server (AP)
+	fsLimit := middleware.RateLimit(rlLimit, rlExceptions)  // fileserver / web templates
 
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()

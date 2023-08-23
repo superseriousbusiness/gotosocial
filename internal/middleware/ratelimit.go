@@ -20,12 +20,10 @@ package middleware
 import (
 	"net"
 	"net/http"
-	"net/netip"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -35,19 +33,20 @@ import (
 
 const rateLimitPeriod = 5 * time.Minute
 
-// RateLimit returns a gin middleware that will automatically rate limit caller (by IP address),
-// and enrich the response header with the following headers:
+// RateLimit returns a gin middleware that will automatically rate
+// limit caller (by IP address), and enrich the response header with
+// the following headers:
 //
-//   - `X-Ratelimit-Limit`     - maximum number of requests allowed per time period (fixed).
-//   - `X-Ratelimit-Remaining` - number of remaining requests that can still be performed.
+//   - `X-Ratelimit-Limit`     - max requests allowed per time period (fixed).
+//   - `X-Ratelimit-Remaining` - requests remaining for this IP before reset.
 //   - `X-Ratelimit-Reset`     - ISO8601 timestamp when the rate limit will reset.
 //
-// If `X-Ratelimit-Limit` is exceeded, the request is aborted and an HTTP 429 TooManyRequests
-// status is returned.
+// If `X-Ratelimit-Limit` is exceeded, the request is aborted and an
+// HTTP 429 TooManyRequests status is returned.
 //
-// If the config AdvancedRateLimitRequests value is <= 0, then a noop handler will be returned,
-// which performs no rate limiting.
-func RateLimit(limit int) gin.HandlerFunc {
+// If the config AdvancedRateLimitRequests value is <= 0, then a noop
+// handler will be returned, which performs no rate limiting.
+func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 	if limit <= 0 {
 		// Rate limiting is disabled.
 		// Return noop middleware.
@@ -62,29 +61,26 @@ func RateLimit(limit int) gin.HandlerFunc {
 		},
 	)
 
-	var (
-		exceptionsStrs  = config.GetAdvancedRateLimitExceptions()
-		exceptionsLen   = len(exceptionsStrs)
-		checkExceptions = (exceptionsLen != 0)
-		exceptions      []netip.Prefix
-	)
-
-	if checkExceptions {
-		// Parse rate limit exception CIDRs, if set.
-		exceptions = make([]netip.Prefix, len(exceptionsStrs))
-		for i, e := range exceptionsStrs {
-			p, err := netip.ParsePrefix(e)
-			if err != nil {
-				log.Panicf(nil, "could not parse rate limit exception %s as netip.Prefix: %q", e, err)
-			}
-
-			exceptions[i] = p
+	// Parse rate limit exceptions into CIDRs.
+	exceptionCIDRs := make([]*net.IPNet, len(exceptions))
+	for i, e := range exceptions {
+		_, p, err := net.ParseCIDR(e)
+		if err != nil {
+			log.Panicf(nil, "could not parse rate limit exception %s as *net.IPNet: %q", e, err)
 		}
+
+		exceptionCIDRs[i] = p
 	}
 
 	// It's prettymuch impossible to effectively
 	// rate limit the immense IPv6 address space
 	// unless we mask some of the bytes.
+	//
+	// This mask is pretty coarse, and puts IPv6
+	// blocking on more or less the same footing
+	// as IPv4 blocking in terms of how likely it
+	// is to prevent abuse while still allowing
+	// legit users access to the service.
 	ipv6Mask := net.CIDRMask(64, 128)
 
 	return func(c *gin.Context) {
@@ -93,25 +89,21 @@ func RateLimit(limit int) gin.HandlerFunc {
 		// proxies and trusted proxies setting.
 		clientIP := net.ParseIP(c.ClientIP())
 
-		if checkExceptions {
-			// Check if this IP is exempted
-			// from being rate limited.
-			for _, exception := range exceptions {
-				if exception.Contains(clientIP) {
-					// Allow the request
-					// to continue.
-					c.Next()
-					return
-				}
+		// Check if this IP is exempt from rate
+		// limits and skip further checks if so.
+		for _, cidr := range exceptionCIDRs {
+			if cidr.Contains(clientIP) {
+				c.Next()
+				return
 			}
 		}
 
-		// If clientIP is IPv6, mask it.
+		// Mask only IPv6 IPs (see above).
 		if len(clientIP) == net.IPv6len {
 			clientIP = clientIP.Mask(ipv6Mask)
 		}
 
-		// Fetch rate limit info for this clientIP.
+		// Fetch rate limit info for this (masked) clientIP.
 		context, err := limiter.Get(c, clientIP.String())
 		if err != nil {
 			// Since we use an in-memory cache now,
