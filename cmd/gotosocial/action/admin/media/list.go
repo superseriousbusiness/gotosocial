@@ -20,6 +20,7 @@ package media
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -34,11 +35,13 @@ import (
 )
 
 type list struct {
-	dbService db.DB
-	state     *state.State
-	maxID     string
-	limit     int
-	out       *bufio.Writer
+	dbService  db.DB
+	state      *state.State
+	maxID      string
+	limit      int
+	localOnly  bool
+	remoteOnly bool
+	out        *bufio.Writer
 }
 
 // Get a list of attachment using a custom filter
@@ -106,7 +109,19 @@ func (l *list) GetAllEmojisPaths(ctx context.Context, filter func(*gtsmodel.Emoj
 }
 
 func setupList(ctx context.Context) (*list, error) {
-	var state state.State
+	var (
+		localOnly  = config.GetAdminMediaListLocalOnly()
+		remoteOnly = config.GetAdminMediaListRemoteOnly()
+		state      state.State
+	)
+
+	// Validate flags.
+	if localOnly && remoteOnly {
+		return nil, errors.New(
+			"local-only and remote-only flags cannot be true at the same time; " +
+				"choose one or the other, or set neither to list all media",
+		)
+	}
 
 	state.Caches.Init()
 	state.Caches.Start()
@@ -120,11 +135,13 @@ func setupList(ctx context.Context) (*list, error) {
 	state.DB = dbService
 
 	return &list{
-		dbService: dbService,
-		state:     &state,
-		limit:     200,
-		maxID:     "",
-		out:       bufio.NewWriter(os.Stdout),
+		dbService:  dbService,
+		state:      &state,
+		limit:      200,
+		maxID:      "",
+		localOnly:  localOnly,
+		remoteOnly: remoteOnly,
+		out:        bufio.NewWriter(os.Stdout),
 	}, nil
 }
 
@@ -136,8 +153,8 @@ func (l *list) shutdown() error {
 	return err
 }
 
-// Get local attachements
-var ListLocalAttachment action.GTSAction = func(ctx context.Context) error {
+// ListAttachments lists local, remote, or all attachment paths.
+var ListAttachments action.GTSAction = func(ctx context.Context) error {
 	list, err := setupList(ctx)
 	if err != nil {
 		return err
@@ -150,15 +167,41 @@ var ListLocalAttachment action.GTSAction = func(ctx context.Context) error {
 		}
 	}()
 
-	mediaPath := config.GetStorageLocalBasePath()
-	attachments, err := list.GetAllAttachmentPaths(
-		ctx,
-		func(m *gtsmodel.MediaAttachment) string {
+	var (
+		mediaPath = config.GetStorageLocalBasePath()
+		filter    func(*gtsmodel.MediaAttachment) string
+	)
+
+	switch {
+	case list.localOnly:
+		filter = func(m *gtsmodel.MediaAttachment) string {
+			if m.RemoteURL != "" {
+				// Remote, not
+				// interested.
+				return ""
+			}
+
+			return path.Join(mediaPath, m.File.Path)
+		}
+
+	case list.remoteOnly:
+		filter = func(m *gtsmodel.MediaAttachment) string {
 			if m.RemoteURL == "" {
-				return path.Join(mediaPath, m.File.Path)
+				// Local, not
+				// interested.
+				return ""
 			}
-			return ""
-		})
+
+			return path.Join(mediaPath, m.File.Path)
+		}
+
+	default:
+		filter = func(m *gtsmodel.MediaAttachment) string {
+			return path.Join(mediaPath, m.File.Path)
+		}
+	}
+
+	attachments, err := list.GetAllAttachmentPaths(ctx, filter)
 	if err != nil {
 		return err
 	}
@@ -169,8 +212,8 @@ var ListLocalAttachment action.GTSAction = func(ctx context.Context) error {
 	return nil
 }
 
-// Get remote attachements
-var ListRemoteAttachment action.GTSAction = func(ctx context.Context) error {
+// ListEmojis lists local, remote, or all emoji filepaths.
+var ListEmojis action.GTSAction = func(ctx context.Context) error {
 	list, err := setupList(ctx)
 	if err != nil {
 		return err
@@ -183,73 +226,41 @@ var ListRemoteAttachment action.GTSAction = func(ctx context.Context) error {
 		}
 	}()
 
-	attachments, err := list.GetAllAttachmentPaths(
-		ctx,
-		func(m *gtsmodel.MediaAttachment) string {
-			return m.RemoteURL
-		})
-	if err != nil {
-		return err
-	}
+	var (
+		mediaPath = config.GetStorageLocalBasePath()
+		filter    func(*gtsmodel.Emoji) string
+	)
 
-	for _, a := range attachments {
-		_, _ = list.out.WriteString(a + "\n")
-	}
-	return nil
-}
+	switch {
+	case list.localOnly:
+		filter = func(e *gtsmodel.Emoji) string {
+			if e.ImageRemoteURL != "" {
+				// Remote, not
+				// interested.
+				return ""
+			}
 
-// Get local emojis
-var ListLocalEmojis action.GTSAction = func(ctx context.Context) error {
-	list, err := setupList(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		// Ensure lister gets shutdown on exit.
-		if err := list.shutdown(); err != nil {
-			log.Error(ctx, err)
+			return path.Join(mediaPath, e.ImagePath)
 		}
-	}()
 
-	mediaPath := config.GetStorageLocalBasePath()
-	emojis, err := list.GetAllEmojisPaths(
-		ctx,
-		func(e *gtsmodel.Emoji) string {
+	case list.remoteOnly:
+		filter = func(e *gtsmodel.Emoji) string {
 			if e.ImageRemoteURL == "" {
-				return path.Join(mediaPath, e.ImagePath)
+				// Local, not
+				// interested.
+				return ""
 			}
-			return ""
-		})
-	if err != nil {
-		return err
-	}
 
-	for _, e := range emojis {
-		_, _ = list.out.WriteString(e + "\n")
-	}
-	return nil
-}
-
-// Get remote emojis
-var ListRemoteEmojis action.GTSAction = func(ctx context.Context) error {
-	list, err := setupList(ctx)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		// Ensure lister gets shutdown on exit.
-		if err := list.shutdown(); err != nil {
-			log.Error(ctx, err)
+			return path.Join(mediaPath, e.ImagePath)
 		}
-	}()
 
-	emojis, err := list.GetAllEmojisPaths(
-		ctx,
-		func(e *gtsmodel.Emoji) string {
-			return e.ImageRemoteURL
-		})
+	default:
+		filter = func(e *gtsmodel.Emoji) string {
+			return path.Join(mediaPath, e.ImagePath)
+		}
+	}
+
+	emojis, err := list.GetAllEmojisPaths(ctx, filter)
 	if err != nil {
 		return err
 	}

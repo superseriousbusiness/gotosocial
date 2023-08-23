@@ -161,11 +161,13 @@ type Configuration struct {
 	Cache CacheConfiguration `name:"cache"`
 
 	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
-	AdminAccountUsername  string `name:"username" usage:"the username to create/delete/etc"`
-	AdminAccountEmail     string `name:"email" usage:"the email address of this account"`
-	AdminAccountPassword  string `name:"password" usage:"the password to set for this account"`
-	AdminTransPath        string `name:"path" usage:"the path of the file to import from/export to"`
-	AdminMediaPruneDryRun bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
+	AdminAccountUsername     string `name:"username" usage:"the username to create/delete/etc"`
+	AdminAccountEmail        string `name:"email" usage:"the email address of this account"`
+	AdminAccountPassword     string `name:"password" usage:"the password to set for this account"`
+	AdminTransPath           string `name:"path" usage:"the path of the file to import from/export to"`
+	AdminMediaPruneDryRun    bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
+	AdminMediaListLocalOnly  bool   `name:"local-only" usage:"list only local attachments/emojis; if specified then remote-only cannot also be true"`
+	AdminMediaListRemoteOnly bool   `name:"remote-only" usage:"list only remote attachments/emojis; if specified then local-only cannot also be true"`
 
 	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'."`
 }

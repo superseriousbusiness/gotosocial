@@ -255,29 +255,73 @@ Example:
 gotosocial admin import --path example.json --config-path config.yaml
 ```
 
-### gotosocial admin media list attachment local
+### gotosocial admin media list-attachments
 
-This command can be used to list local attachment. Local attachement is attachment that belongs to posts by users with an account on the instance.
+Can be used to list the storage paths of local, remote, or all media attachments on your instance (including headers and avatars).
 
-The output will be a list of files. The list can be used to drive your backups.
+`local-only` and `remote-only` can be used as filters; they cannot both be set at once.
 
-### gotosocial admin media list attachment remote
+If neither `local-only` or `remote-only` are set, all media attachments on your instance will be listed.
 
-This is the corollary to list attachment local, but instead lists attachment from remote instances. Remote attachment belongs to other instances, but was attached to a post we received over federation and have potentially cached locally.
+You may want to run this with `GTS_LOG_LEVEL` set to `warn` or `error`, otherwise it will log a lot of info messages you probably don't need.
 
-The output will be a list of URLs to retrieve the original content from. GoToSocial automatically retrieves remote attachment when it needs it, so you should never need to do so yourself.
+`gotosocial admin media list-attachments --help`:
 
-### gotosocial admin media list emojis local
+```text
+list local, remote, or all attachments
 
-This command can be used to list local emojis. Local emojis are emojis that are configured on this instance.
+Usage:
+  gotosocial admin media list-attachments [flags]
 
-The output will be a list of files. The list can be used to drive your backups.
+Flags:
+  -h, --help          help for list-attachments
+      --local-only    list only local attachments/emojis; if specified then remote-only cannot also be true
+      --remote-only   list only remote attachments/emojis; if specified then local-only cannot also be true
+```
 
-### gotosocial admin media list emojis remote
+Example output:
 
-This is the corollary to list emojis local, but instead lists emojis from remote instances. Remote emojis are configured on other instances, but was used in a post we received over federation and have potentially cached locally.
+```text
+/gotosocial/062G5WYKY35KKD12EMSM3F8PJ8/attachment/original/01PFPMWK2FF0D9WMHEJHR07C3R.jpg
+/gotosocial/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg
+/gotosocial/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg
+/gotosocial/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpg
+/gotosocial/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH7TDVANYKWVE8VVKFPJTJ.gif
+/gotosocial/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg
+/gotosocial/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH58A357CV5K7R7TJMSH6S.jpg
+/gotosocial/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.gif
+```
 
-The output will be a list of URLs to retrieve the original content from. GoToSocial automatically retrieves remote emojis when it needs it, so you should never need to do so yourself.
+### gotosocial admin media list-emojis
+
+Can be used to list the storage paths of local, remote, or all emojis on your instance.
+
+`local-only` and `remote-only` can be used as filters; they cannot both be set at once.
+
+If neither `local-only` or `remote-only` are set, all emojis on your instance will be listed.
+
+You may want to run this with `GTS_LOG_LEVEL` set to `warn` or `error`, otherwise it will log a lot of info messages you probably don't need.
+
+`gotosocial admin media list-emojis --help`:
+
+```text
+list local, remote, or all emojis
+
+Usage:
+  gotosocial admin media list-emojis [flags]
+
+Flags:
+  -h, --help          help for list-emojis
+      --local-only    list only local attachments/emojis; if specified then remote-only cannot also be true
+      --remote-only   list only remote attachments/emojis; if specified then local-only cannot also be true
+```
+
+Example output:
+
+```text
+/gotosocial/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01GD5KP5CQEE1R3X43Y1EHS2CW.png
+/gotosocial/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png
+```
 
 ### gotosocial admin media prune orphaned
 
