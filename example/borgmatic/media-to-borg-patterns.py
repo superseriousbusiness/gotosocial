@@ -7,12 +7,16 @@ import sys
 def main():
 	cli = argparse.ArgumentParser(
 		prog="media-to-borg-patterns",
-		description="""Generate Borg patterns to backup media files belonging to
+		description="""Generate Borg patterns to backup media and emoji files belonging to
 		this instance. You can pass the output to Borg or Borgmatic as a patterns file.
-		For example: gotosocial admin media list-local | media-to-borg-patterns
+		
+		For example: gotosocial admin media list-attachments --local-only | media-to-borg-patterns
 		<storage-local-base-path>. You can pass a second argument, the destination file, to
 		write the patterns in. If it's ommitted the patterns will be emitted on stdout
 		instead and you can redirect the output to a file yourself.
+
+		For emojis, use gotosocial admin media list-emojis --local-only | media-to-borg-patterns
+		instead.
 		""",
 		epilog="Be gay, do backups. Trans rights!"
 	)
