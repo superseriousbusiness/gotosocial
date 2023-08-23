@@ -871,6 +871,9 @@ advanced-rate-limit-requests: 300
 # might inadvertently make rate limiting useless if you set too
 # wide a range. If in doubt, be too restrictive rather than too
 # lenient, and adjust as you go.
+#
+# Example: ["192.168.0.0/16"]
+# Default: []
 advanced-rate-limit-exceptions: []
 
 # Int. Amount of open requests to permit per CPU, per router grouping, before applying http
