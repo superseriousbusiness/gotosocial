@@ -204,6 +204,29 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		middleware.ExtraHeaders(),
 	}...)
 
+	// Instantiate Content-Security-Policy
+	// middleware, with extra URIs.
+	cspExtraURIs := make([]string, 0)
+
+	// Probe storage to check if extra URI is needed in CSP.
+	// Error here means something is wrong with storage.
+	storageCSPUri, err := state.Storage.ProbeCSPUri(ctx)
+	if err != nil {
+		return fmt.Errorf("error deriving Content-Security-Policy uri from storage: %w", err)
+	}
+
+	// storageCSPUri may be empty string if
+	// not S3-backed storage; check for this.
+	if storageCSPUri != "" {
+		cspExtraURIs = append(cspExtraURIs, storageCSPUri)
+	}
+
+	// Add any extra CSP URIs from config.
+	cspExtraURIs = append(cspExtraURIs, config.GetAdvancedCSPExtraURIs()...)
+
+	// Add CSP to middlewares.
+	middlewares = append(middlewares, middleware.ContentSecurityPolicy(cspExtraURIs...))
+
 	// attach global middlewares which are used for every request
 	router.AttachGlobalMiddleware(middlewares...)
 
@@ -243,10 +266,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// create required middleware
 	// rate limiting
-	limit := config.GetAdvancedRateLimitRequests()
-	clLimit := middleware.RateLimit(limit)  // client api
-	s2sLimit := middleware.RateLimit(limit) // server-to-server (AP)
-	fsLimit := middleware.RateLimit(limit)  // fileserver / web templates
+	rlLimit := config.GetAdvancedRateLimitRequests()
+	rlExceptions := config.GetAdvancedRateLimitExceptions()
+	clLimit := middleware.RateLimit(rlLimit, rlExceptions)  // client api
+	s2sLimit := middleware.RateLimit(rlLimit, rlExceptions) // server-to-server (AP)
+	fsLimit := middleware.RateLimit(rlLimit, rlExceptions)  // fileserver / web templates
 
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()

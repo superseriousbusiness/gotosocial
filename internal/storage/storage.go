@@ -32,6 +32,8 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
@@ -143,6 +145,61 @@ func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
 
 	d.PresignedCache.Set(key, psu)
 	return &psu
+}
+
+// ProbeCSPUri returns a URI string that can be added
+// to a content-security-policy to allow requests to
+// endpoints served by this driver.
+//
+// If the driver is not backed by non-proxying S3,
+// this will return an empty string and no error.
+//
+// Otherwise, this function probes for a CSP URI by
+// doing the following:
+//
+//  1. Create a temporary file in the S3 bucket.
+//  2. Generate a pre-signed URL for that file.
+//  3. Extract '[scheme]://[host]' from the URL.
+//  4. Remove the temporary file.
+//  5. Return the '[scheme]://[host]' string.
+func (d *Driver) ProbeCSPUri(ctx context.Context) (string, error) {
+	// Check whether S3 without proxying
+	// is enabled. If it's not, there's
+	// no need to add anything to the CSP.
+	s3, ok := d.Storage.(*storage.S3Storage)
+	if !ok || d.Proxy {
+		return "", nil
+	}
+
+	const cspKey = "gotosocial-csp-probe"
+
+	// Create an empty file in S3 storage.
+	if _, err := d.Put(ctx, cspKey, make([]byte, 0)); err != nil {
+		return "", gtserror.Newf("error putting file in bucket at key %s: %w", cspKey, err)
+	}
+
+	// Try to clean up file whatever happens.
+	defer func() {
+		if err := d.Delete(ctx, cspKey); err != nil {
+			log.Warnf(ctx, "error deleting file from bucket at key %s (%v); "+
+				"you may want to remove this file manually from your S3 bucket", cspKey, err)
+		}
+	}()
+
+	// Get a presigned URL for that empty file.
+	u, err := s3.Client().PresignedGetObject(ctx, d.Bucket, cspKey, 1*time.Second, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Create a stripped version of the presigned
+	// URL that includes only the host and scheme.
+	uStripped := &url.URL{
+		Scheme: u.Scheme,
+		Host:   u.Host,
+	}
+
+	return uStripped.String(), nil
 }
 
 func AutoConfig() (*Driver, error) {

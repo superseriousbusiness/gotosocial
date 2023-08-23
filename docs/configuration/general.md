@@ -28,6 +28,17 @@ log-db-queries: false
 # Default: true
 log-client-ip: true
 
+# String. Format to use for the timestamp in log lines.
+# If set to the empty string, the timestamp will be
+# ommitted from the logs entirely.
+#
+# The format must be compatible with Go's time.Layout, as
+# documented on https://pkg.go.dev/time#pkg-constants.
+#
+# Examples: [true, false]
+# Default: "02/01/2006 15:04:05.000"
+log-timestamp-format: "02/01/2006 15:04:05.000"
+
 # String. Application name to use internally.
 # Examples: ["My Application","gotosocial"]
 # Default: "gotosocial"

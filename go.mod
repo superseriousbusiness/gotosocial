@@ -10,7 +10,7 @@ require (
 	codeberg.org/gruf/go-errors/v2 v2.2.0
 	codeberg.org/gruf/go-fastcopy v1.1.2
 	codeberg.org/gruf/go-iotools v0.0.0-20230601182242-d933b07dcbef
-	codeberg.org/gruf/go-kv v1.6.3
+	codeberg.org/gruf/go-kv v1.6.4
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.1.5
 	codeberg.org/gruf/go-runners v1.6.1
@@ -36,7 +36,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.3
 	github.com/microcosm-cc/bluemonday v1.0.25
 	github.com/miekg/dns v1.1.55
-	github.com/minio/minio-go/v7 v7.0.61
+	github.com/minio/minio-go/v7 v7.0.62
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/spf13/cobra v1.7.0
@@ -52,7 +52,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.14
 	github.com/uptrace/bun/extra/bunotel v1.1.14
 	github.com/wagslane/go-password-validator v0.3.0
-	github.com/yuin/goldmark v1.5.5
+	github.com/yuin/goldmark v1.5.6
 	go.opentelemetry.io/otel v1.16.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.16.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.16.0

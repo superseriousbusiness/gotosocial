@@ -71,6 +71,22 @@ func (suite *SyslogTestSuite) TestSyslog() {
 	suite.Regexp(regexp.MustCompile(`timestamp=.* func=.* level=INFO msg="this is a test of the emergency broadcast system!"`), entry["content"])
 }
 
+func (suite *SyslogTestSuite) TestSyslogDisableTimestamp() {
+	// Get the current format.
+	timefmt := log.TimeFormat()
+
+	// Set an empty timestamp.
+	log.SetTimeFormat("")
+
+	// Set old timestamp on return.
+	defer log.SetTimeFormat(timefmt)
+
+	log.Info(nil, "this is a test of the emergency broadcast system!")
+
+	entry := <-suite.syslogChannel
+	suite.Regexp(regexp.MustCompile(`func=.* level=INFO msg="this is a test of the emergency broadcast system!"`), entry["content"])
+}
+
 func (suite *SyslogTestSuite) TestSyslogLongMessage() {
 	log.Warn(nil, longMessage)
 

@@ -27,17 +27,18 @@ import (
 // Defaults contains a populated Configuration with reasonable defaults. Note that
 // if you use this, you will still need to set Host, and, if desired, ConfigPath.
 var Defaults = Configuration{
-	LogLevel:        "info",
-	LogDbQueries:    false,
-	ApplicationName: "gotosocial",
-	LandingPageUser: "",
-	ConfigPath:      "",
-	Host:            "",
-	AccountDomain:   "",
-	Protocol:        "https",
-	BindAddress:     "0.0.0.0",
-	Port:            8080,
-	TrustedProxies:  []string{"127.0.0.1/32", "::1"}, // localhost
+	LogLevel:           "info",
+	LogTimestampFormat: "02/01/2006 15:04:05.000",
+	LogDbQueries:       false,
+	ApplicationName:    "gotosocial",
+	LandingPageUser:    "",
+	ConfigPath:         "",
+	Host:               "",
+	AccountDomain:      "",
+	Protocol:           "https",
+	BindAddress:        "0.0.0.0",
+	Port:               8080,
+	TrustedProxies:     []string{"127.0.0.1/32", "::1"}, // localhost
 
 	DbType:                   "postgres",
 	DbAddress:                "",
@@ -121,9 +122,11 @@ var Defaults = Configuration{
 
 	AdvancedCookiesSamesite:      "lax",
 	AdvancedRateLimitRequests:    300, // 1 per second per 5 minutes
-	AdvancedThrottlingMultiplier: 8,   // 8 open requests per CPU
+	AdvancedRateLimitExceptions:  []string{},
+	AdvancedThrottlingMultiplier: 8, // 8 open requests per CPU
 	AdvancedThrottlingRetryAfter: time.Second * 30,
 	AdvancedSenderMultiplier:     2, // 2 senders per CPU
+	AdvancedCSPExtraURIs:         []string{},
 
 	Cache: CacheConfiguration{
 		// Rough memory target that the total

@@ -11,6 +11,11 @@ EXPECT=$(cat << "EOF"
     "accounts-reason-required": false,
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
+    "advanced-csp-extra-uris": [],
+    "advanced-rate-limit-exceptions": [
+        "192.0.2.0/24",
+        "127.0.0.1/32"
+    ],
     "advanced-rate-limit-requests": 6969,
     "advanced-sender-multiplier": -1,
     "advanced-throttling-multiplier": -1,
@@ -85,6 +90,7 @@ EXPECT=$(cat << "EOF"
     "log-client-ip": false,
     "log-db-queries": true,
     "log-level": "info",
+    "log-timestamp-format": "banana",
     "media-description-max-chars": 5000,
     "media-description-min-chars": 69,
     "media-emoji-local-max-size": 420,
@@ -154,6 +160,7 @@ EOF
 # Set all the environment variables to 
 # ensure that these are parsed without panic
 OUTPUT=$(GTS_LOG_LEVEL='info' \
+GTS_LOG_TIMESTAMP_FORMAT="banana" \
 GTS_LOG_DB_QUERIES=true \
 GTS_LOG_CLIENT_IP=false \
 GTS_APPLICATION_NAME=gts \
@@ -234,6 +241,7 @@ GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
 GTS_TRACING_ENDPOINT='localhost:4317' \
 GTS_ADVANCED_COOKIES_SAMESITE='strict' \
+GTS_ADVANCED_RATE_LIMIT_EXCEPTIONS="192.0.2.0/24,127.0.0.1/32" \
 GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \
 GTS_ADVANCED_SENDER_MULTIPLIER=-1 \
 GTS_ADVANCED_THROTTLING_MULTIPLIER=-1 \

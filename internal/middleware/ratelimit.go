@@ -20,47 +20,136 @@ package middleware
 import (
 	"net"
 	"net/http"
+	"net/netip"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/ulule/limiter/v3"
-	limitergin "github.com/ulule/limiter/v3/drivers/middleware/gin"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
 const rateLimitPeriod = 5 * time.Minute
 
-// RateLimit returns a gin middleware that will automatically rate limit caller (by IP address),
-// and enrich the response header with the following headers:
+// RateLimit returns a gin middleware that will automatically rate
+// limit caller (by IP address), and enrich the response header with
+// the following headers:
 //
-//   - `x-ratelimit-limit`     - maximum number of requests allowed per time period (fixed).
-//   - `x-ratelimit-remaining` - number of remaining requests that can still be performed.
-//   - `x-ratelimit-reset`     - unix timestamp when the rate limit will reset.
+//   - `X-Ratelimit-Limit`     - max requests allowed per time period (fixed).
+//   - `X-Ratelimit-Remaining` - requests remaining for this IP before reset.
+//   - `X-Ratelimit-Reset`     - ISO8601 timestamp when the rate limit will reset.
 //
-// If `x-ratelimit-limit` is exceeded, the request is aborted and an HTTP 429 TooManyRequests
-// status is returned.
+// If `X-Ratelimit-Limit` is exceeded, the request is aborted and an
+// HTTP 429 TooManyRequests status is returned.
 //
-// If the config AdvancedRateLimitRequests value is <= 0, then a noop handler will be returned,
-// which performs no rate limiting.
-func RateLimit(limit int) gin.HandlerFunc {
+// If the config AdvancedRateLimitRequests value is <= 0, then a noop
+// handler will be returned, which performs no rate limiting.
+func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 	if limit <= 0 {
-		// use noop middleware if ratelimiting is disabled
+		// Rate limiting is disabled.
+		// Return noop middleware.
 		return func(ctx *gin.Context) {}
 	}
 
 	limiter := limiter.New(
 		memory.NewStore(),
-		limiter.Rate{Period: rateLimitPeriod, Limit: int64(limit)},
-		limiter.WithIPv6Mask(net.CIDRMask(64, 128)), // apply /64 mask to IPv6 addresses
+		limiter.Rate{
+			Period: rateLimitPeriod,
+			Limit:  int64(limit),
+		},
 	)
 
-	// use custom rate limit reached error
-	handler := func(c *gin.Context) {
-		c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "rate limit reached"})
+	// Convert exceptions IP ranges into prefixes.
+	exceptPrefs := make([]netip.Prefix, len(exceptions))
+	for i, str := range exceptions {
+		exceptPrefs[i] = netip.MustParsePrefix(str)
 	}
 
-	return limitergin.NewMiddleware(
-		limiter,
-		limitergin.WithLimitReachedHandler(handler),
-	)
+	// It's prettymuch impossible to effectively
+	// rate limit the immense IPv6 address space
+	// unless we mask some of the bytes.
+	//
+	// This mask is pretty coarse, and puts IPv6
+	// blocking on more or less the same footing
+	// as IPv4 blocking in terms of how likely it
+	// is to prevent abuse while still allowing
+	// legit users access to the service.
+	ipv6Mask := net.CIDRMask(64, 128)
+
+	return func(c *gin.Context) {
+		// Use Gin's heuristic for determining
+		// clientIP, which accounts for reverse
+		// proxies and trusted proxies setting.
+		clientIP := netip.MustParseAddr(c.ClientIP())
+
+		// Check if this IP is exempt from rate
+		// limits and skip further checks if so.
+		for _, prefix := range exceptPrefs {
+			if prefix.Contains(clientIP) {
+				c.Next()
+				return
+			}
+		}
+
+		if clientIP.Is6() {
+			// Convert to "net" package IP for mask.
+			asIP := net.IP(clientIP.AsSlice())
+
+			// Apply coarse IPv6 mask.
+			asIP = asIP.Mask(ipv6Mask)
+
+			// Convert back to netip.Addr from net.IP.
+			clientIP, _ = netip.AddrFromSlice(asIP)
+		}
+
+		// Fetch rate limit info for this (masked) clientIP.
+		context, err := limiter.Get(c, clientIP.String())
+		if err != nil {
+			// Since we use an in-memory cache now,
+			// it's actually impossible for this to
+			// error, but handle it nicely anyway in
+			// case we switch implementation in future.
+			errWithCode := gtserror.NewErrorInternalError(err)
+
+			// Set error on gin context so it'll
+			// be picked up by logging middleware.
+			c.Error(errWithCode) //nolint:errcheck
+
+			// Bail with 500.
+			c.AbortWithStatusJSON(
+				errWithCode.Code(),
+				gin.H{"error": errWithCode.Safe()},
+			)
+			return
+		}
+
+		// Provide reset in same format used by
+		// Mastodon. There's no real standard as
+		// to what format X-RateLimit-Reset SHOULD
+		// use, but since most clients interacting
+		// with us will expect the Mastodon version,
+		// it makes sense to take this.
+		resetT := time.Unix(context.Reset, 0)
+		reset := util.FormatISO8601(resetT)
+
+		c.Header("X-RateLimit-Limit", strconv.FormatInt(context.Limit, 10))
+		c.Header("X-RateLimit-Remaining", strconv.FormatInt(context.Remaining, 10))
+		c.Header("X-RateLimit-Reset", reset)
+
+		if context.Reached {
+			// Return JSON error message for
+			// consistency with other endpoints.
+			c.AbortWithStatusJSON(
+				http.StatusTooManyRequests,
+				gin.H{"error": "rate limit reached"},
+			)
+			return
+		}
+
+		// Allow the request
+		// to continue.
+		c.Next()
+	}
 }
