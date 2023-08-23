@@ -108,7 +108,7 @@ Disadvantages:
 
 Regardless of whether you're using PostgreSQL or SQLite as your GoToSocial database, it's possible to simply back up the database files directly by using something like [rclone](https://rclone.org/), or following best practices for [backing up Postgres data](https://www.postgresql.org/docs/15/backup.html) or [SQLite data](https://sqlite.org/backup.html).
 
-Use the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local) to get a list of media files you need to safeguard.
+Use the GoToSocial CLI's media [`list-attachments`](cli.md#gotosocial-admin-media-list-attachments) and [`list-emojis`](cli.md#gotosocial-admin-media-list-emojis) commands to get a list of media files you need to safeguard.
 
 Advantages:
 
@@ -178,7 +178,7 @@ hooks:
 
 For PostgreSQL, you'll want to use `postgresql_databases` instead.
 
-The file mentioned in `patterns_from` can be created by transforming the output from the [GoToSocial CLI](cli.md#gotosocial-admin-media-list-local). In order to generate the right patterns you can use the [`media-to-borg-patterns.py`](https://github.com/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) script. How Borg patterns work is explained in [their documentation](https://man.archlinux.org/man/borg-patterns.1).
+The file mentioned in `patterns_from` can be created by transforming the output from the GoToSocial CLI media [`list-attachments`](cli.md#gotosocial-admin-media-list-attachments) and [`list-emojis`](cli.md#gotosocial-admin-media-list-emojis) commands. In order to generate the right patterns you can use the [`media-to-borg-patterns.py`](https://github.com/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) script. How Borg patterns work is explained in [their documentation](https://man.archlinux.org/man/borg-patterns.1).
 
 You'll need to put that file on your GoToSocial instance and make sure the file is executable. It requires Python 3 which you will already have if you have Borg and Borgmatic installed. It only depends on the Python standard library.
 
@@ -186,7 +186,7 @@ You'll need to put that file on your GoToSocial instance and make sure the file 
     For this to work reliably, you should ensure that the [storage-local-base-path](../configuration/storage.md) in your GoToSocial configuration uses an absolute path. Otherwise you'll have to tweak the paths yourself.
 
 ```sh
-$ gotosocial admin media list-local | \
+$ gotosocial admin media list-attachments --local-only | \
     /path/to/media-to-borg-patterns.py \
     <storage-local-base-path>
 ```
@@ -210,7 +210,7 @@ If you're running Borgmatic as a systemd service, you can [create a drop-in](htt
 
 ```ini
 [Service]
-ExecStartPre=/path/to/gotosocial admin media list-local | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
+ExecStartPre=/path/to/gotosocial admin media list-attachments --local-only | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
 ```
 
 Documentation that's good to review:
