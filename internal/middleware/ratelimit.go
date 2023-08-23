@@ -20,12 +20,12 @@ package middleware
 import (
 	"net"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
@@ -61,15 +61,10 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 		},
 	)
 
-	// Parse rate limit exceptions into CIDRs.
-	exceptionCIDRs := make([]*net.IPNet, len(exceptions))
-	for i, e := range exceptions {
-		_, p, err := net.ParseCIDR(e)
-		if err != nil {
-			log.Panicf(nil, "could not parse rate limit exception %s as *net.IPNet: %q", e, err)
-		}
-
-		exceptionCIDRs[i] = p
+	// Convert exceptions IP ranges into prefixes.
+	exceptPrefs := make([]netip.Prefix, len(exceptions))
+	for i, str := range exceptions {
+		exceptPrefs[i] = netip.MustParsePrefix(str)
 	}
 
 	// It's prettymuch impossible to effectively
@@ -87,20 +82,26 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 		// Use Gin's heuristic for determining
 		// clientIP, which accounts for reverse
 		// proxies and trusted proxies setting.
-		clientIP := net.ParseIP(c.ClientIP())
+		clientIP := netip.MustParseAddr(c.ClientIP())
 
 		// Check if this IP is exempt from rate
 		// limits and skip further checks if so.
-		for _, cidr := range exceptionCIDRs {
-			if cidr.Contains(clientIP) {
+		for _, prefix := range exceptPrefs {
+			if prefix.Contains(clientIP) {
 				c.Next()
 				return
 			}
 		}
 
-		// Mask only IPv6 IPs (see above).
-		if len(clientIP) == net.IPv6len {
-			clientIP = clientIP.Mask(ipv6Mask)
+		if clientIP.Is6() {
+			// Convert to "net" package IP for mask.
+			asIP := net.IP(clientIP.AsSlice())
+
+			// Apply coarse IPv6 mask.
+			asIP = asIP.Mask(ipv6Mask)
+
+			// Convert back to netip.Addr from net.IP.
+			clientIP, _ = netip.AddrFromSlice(asIP)
 		}
 
 		// Fetch rate limit info for this (masked) clientIP.
