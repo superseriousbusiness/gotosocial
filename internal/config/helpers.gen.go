@@ -2274,6 +2274,31 @@ func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequ
 // SetAdvancedRateLimitRequests safely sets the value for global configuration 'AdvancedRateLimitRequests' field
 func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
 
+// GetAdvancedRateLimitExceptions safely fetches the Configuration value for state's 'AdvancedRateLimitExceptions' field
+func (st *ConfigState) GetAdvancedRateLimitExceptions() (v []string) {
+	st.mutex.RLock()
+	v = st.config.AdvancedRateLimitExceptions
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAdvancedRateLimitExceptions safely sets the Configuration value for state's 'AdvancedRateLimitExceptions' field
+func (st *ConfigState) SetAdvancedRateLimitExceptions(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedRateLimitExceptions = v
+	st.reloadToViper()
+}
+
+// AdvancedRateLimitExceptionsFlag returns the flag name for the 'AdvancedRateLimitExceptions' field
+func AdvancedRateLimitExceptionsFlag() string { return "advanced-rate-limit-exceptions" }
+
+// GetAdvancedRateLimitExceptions safely fetches the value for global configuration 'AdvancedRateLimitExceptions' field
+func GetAdvancedRateLimitExceptions() []string { return global.GetAdvancedRateLimitExceptions() }
+
+// SetAdvancedRateLimitExceptions safely sets the value for global configuration 'AdvancedRateLimitExceptions' field
+func SetAdvancedRateLimitExceptions(v []string) { global.SetAdvancedRateLimitExceptions(v) }
+
 // GetAdvancedThrottlingMultiplier safely fetches the Configuration value for state's 'AdvancedThrottlingMultiplier' field
 func (st *ConfigState) GetAdvancedThrottlingMultiplier() (v int) {
 	st.mutex.RLock()

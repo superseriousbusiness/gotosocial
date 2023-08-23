@@ -52,6 +52,34 @@ advanced-cookies-samesite: "lax"
 # Default: 300
 advanced-rate-limit-requests: 300
 
+# Array of string. CIDRs to except from rate limit restrictions.
+# Any IPs inside the CIDR range(s) will not have rate limiting
+# applied on their requests, and rate limit headers will not be
+# set for those requests.
+#
+# This can be useful in the following example cases (and probably
+# a bunch of others as well):
+#
+# 1. You've set up an automated service that uses the API, and
+#    it keeps getting rate limited, even though you trust it's
+#    not abusing the instance.
+#
+# 2. You live with multiple people who use the same instance,
+#    and you're all using the same router/NAT, so you all have
+#    the same IP address, and you keep rate limiting each other.
+#
+# 3. You mostly use your own home internet to access your instance,
+#    and you want to exempt your home internet from rate limiting.
+#
+# You should be careful when adjusting this setting, since you
+# might inadvertently make rate limiting useless if you set too
+# wide a range. If in doubt, be too restrictive rather than too
+# lenient, and adjust as you go.
+#
+# Example: ["192.168.0.0/16"]
+# Default: []
+advanced-rate-limit-exceptions: []
+
 # Int. Amount of open requests to permit per CPU, per router grouping, before applying http
 # request throttling. Any requests beyond the calculated limit are held in a backlog queue for
 # up to 30 seconds before either being processed or timing out. Requests that don't fit in the backlog

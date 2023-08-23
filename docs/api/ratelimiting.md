@@ -16,7 +16,7 @@ Every response will include the current status of the rate limit with the follow
 
 - `X-Ratelimit-Limit`: maximum number of requests allowed per time period.
 - `X-Ratelimit-Remaining`: number of remaining requests that can still be performed within.
-- `X-Ratelimit-Reset`: unix timestamp indicating when the rate limit will reset.
+- `X-Ratelimit-Reset`: ISO8601 timestamp indicating when the rate limit will reset.
 
 In case the rate limit is exceeded, an [HTTP 429 Too Many Requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429) error is returned to the caller.
 
@@ -35,3 +35,7 @@ If you don't have an HTTP proxy, then it's likely caused by NAT. In this case yo
 ### Can I configure the rate limit? Can I just turn it off?
 
 Yes! Set `advanced-rate-limit-requests: 0` in the config.
+
+### Can I exclude one or more IP addresses from rate limiting, but leave the rest in place?
+
+Yes! Set `advanced-rate-limit-exceptions` in the config.
