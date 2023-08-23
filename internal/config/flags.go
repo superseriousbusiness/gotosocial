@@ -203,6 +203,17 @@ func AddAdminTrans(cmd *cobra.Command) {
 	}
 }
 
+// AddAdminMediaList attaches flags pertaining to media list commands.
+func AddAdminMediaList(cmd *cobra.Command) {
+	localOnly := AdminMediaListLocalOnlyFlag()
+	localOnlyUsage := fieldtag("AdminMediaListLocalOnly", "usage")
+	cmd.Flags().Bool(localOnly, false, localOnlyUsage)
+
+	remoteOnly := AdminMediaListRemoteOnlyFlag()
+	remoteOnlyUsage := fieldtag("AdminMediaListRemoteOnly", "usage")
+	cmd.Flags().Bool(remoteOnly, false, remoteOnlyUsage)
+}
+
 // AddAdminMediaPrune attaches flags pertaining to media storage prune commands.
 func AddAdminMediaPrune(cmd *cobra.Command) {
 	name := AdminMediaPruneDryRunFlag()
