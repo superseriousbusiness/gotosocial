@@ -152,33 +152,38 @@ main {
 		}
 
 		.content {
+			word-break: break-word;
+			line-height: 1.6rem;
+
 			h1 {
 				margin: 0;
 				font-size: 1.8rem;
+				line-height: initial;
 			}
 
 			h2 {
 				margin: 0;
 				font-size: 1.6rem;
+				line-height: initial;
 			}
 
 			h3 {
 				margin: 0;
 				font-size: 1.4rem;
+				line-height: initial;
 			}
 
 			h4 {
 				margin: 0;
 				font-size: 1.2rem;
+				line-height: initial;
 			}
 
 			h5 {
 				margin: 0;
 				font-size: 1rem;
+				line-height: initial;
 			}
-
-			word-break: break-word;
-			line-height: initial;
 
 			blockquote {
 				padding: 0.5rem 0 0.5rem 0.5rem;
