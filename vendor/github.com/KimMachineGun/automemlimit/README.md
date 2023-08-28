@@ -32,6 +32,11 @@ package main
 import "github.com/KimMachineGun/automemlimit/memlimit"
 
 func init() {
+	memlimit.SetGoMemLimitWithOpts(
+		memlimit.WithRatio(0.9),
+		memlimit.WithEnv(),
+		memlimit.WithProvider(memlimit.FromCgroup),
+	)
 	memlimit.SetGoMemLimitWithEnv()
 	memlimit.SetGoMemLimit(0.9)
 	memlimit.SetGoMemLimitWithProvider(memlimit.Limit(1024*1024), 0.9)
