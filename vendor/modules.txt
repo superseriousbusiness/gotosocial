@@ -73,7 +73,7 @@ codeberg.org/gruf/go-store/v2/util
 # github.com/DmitriyVTitov/size v1.5.0
 ## explicit; go 1.14
 github.com/DmitriyVTitov/size
-# github.com/KimMachineGun/automemlimit v0.2.6
+# github.com/KimMachineGun/automemlimit v0.3.0
 ## explicit; go 1.19
 github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
@@ -697,7 +697,6 @@ github.com/ugorji/go/codec
 # github.com/ulule/limiter/v3 v3.11.2
 ## explicit; go 1.17
 github.com/ulule/limiter/v3
-github.com/ulule/limiter/v3/drivers/middleware/gin
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
 # github.com/uptrace/bun v1.1.14
