@@ -176,9 +176,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Create the processor using all the other services we've created so far.
 	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &state, emailSender)
 
-	// Set state client / federator worker enqueue functions
+	// Set state client / federator asynchronous worker enqueue functions
 	state.Workers.EnqueueClientAPI = processor.Workers().EnqueueClientAPI
 	state.Workers.EnqueueFediAPI = processor.Workers().EnqueueFediAPI
+
+	// Set state client / federator synchronous processing functions.
+	state.Workers.ProcessFromClientAPI = processor.Workers().ProcessFromClientAPI
+	state.Workers.ProcessFromFediAPI = processor.Workers().ProcessFromFediAPI
 
 	/*
 		HTTP router initialization
