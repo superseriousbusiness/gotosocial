@@ -29,36 +29,59 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *Processor) AccountAction(ctx context.Context, account *gtsmodel.Account, form *apimodel.AdminAccountActionRequest) gtserror.WithCode {
-	targetAccount, err := p.state.DB.GetAccountByID(ctx, form.TargetAccountID)
+func (p *Processor) AccountAction(
+	ctx context.Context,
+	adminAcct *gtsmodel.Account,
+	request *apimodel.AdminActionRequest,
+) gtserror.WithCode {
+	targetAccount, err := p.state.DB.GetAccountByID(ctx, request.TargetID)
 	if err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	adminAction := &gtsmodel.AdminAccountAction{
-		ID:              id.NewULID(),
-		AccountID:       account.ID,
-		TargetAccountID: targetAccount.ID,
-		Text:            form.Text,
-	}
+	actionType := gtsmodel.AdminActionType(request.Type)
 
-	switch form.Type {
-	case string(gtsmodel.AdminActionSuspend):
-		adminAction.Type = gtsmodel.AdminActionSuspend
-		// pass the account delete through the client api channel for processing
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	var cMsg messages.FromClientAPI
+
+	switch actionType {
+	case gtsmodel.AdminActionSuspend:
+		cMsg = messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityDelete,
-			OriginAccount:  account,
+			OriginAccount:  adminAcct,
 			TargetAccount:  targetAccount,
-		})
+		}
+
 	default:
-		return gtserror.NewErrorBadRequest(fmt.Errorf("admin action type %s is not supported for this endpoint", form.Type))
+		supportedTypes := [1]gtsmodel.AdminActionType{
+			gtsmodel.AdminActionSuspend,
+		}
+
+		err := fmt.Errorf(
+			"admin action type %s is not supported for this endpoint, "+
+				"currently supported types are: %q",
+			request.Type, supportedTypes)
+
+		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	if err := p.state.DB.Put(ctx, adminAction); err != nil {
-		return gtserror.NewErrorInternalError(err)
-	}
+	return p.Actions.Run(
+		ctx,
+		&gtsmodel.AdminAction{
+			ID:             id.NewULID(),
+			TargetCategory: gtsmodel.AdminActionCategoryAccount,
+			TargetID:       targetAccount.ID,
+			Target:         targetAccount,
+			Type:           actionType,
+			AccountID:      adminAcct.ID,
+			Text:           request.Text,
+		},
+		func(ctx context.Context) gtserror.MultiError {
+			if err := p.state.Workers.ProcessFromClientAPI(ctx, cMsg); err != nil {
+				return gtserror.MultiError{err}
+			}
 
-	return nil
+			return nil
+		},
+	)
 }

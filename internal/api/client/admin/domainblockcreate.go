@@ -159,7 +159,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 
 	if !importing {
 		// Single domain block creation.
-		domainBlock, errWithCode := m.processor.Admin().DomainBlockCreate(
+		domainBlock, _, errWithCode := m.processor.Admin().DomainBlockCreate(
 			c.Request.Context(),
 			authed.Account,
 			form.Domain,

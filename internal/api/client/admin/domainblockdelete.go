@@ -93,7 +93,7 @@ func (m *Module) DomainBlockDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	domainBlock, errWithCode := m.processor.Admin().DomainBlockDelete(c.Request.Context(), authed.Account, domainBlockID)
+	domainBlock, _, errWithCode := m.processor.Admin().DomainBlockDelete(c.Request.Context(), authed.Account, domainBlockID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
