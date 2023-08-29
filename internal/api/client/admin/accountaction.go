@@ -94,7 +94,7 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	form := &apimodel.AdminAccountActionRequest{}
+	form := &apimodel.AdminActionRequest{}
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -112,7 +112,7 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
-	form.TargetAccountID = targetAcctID
+	form.TargetID = targetAcctID
 
 	if errWithCode := m.processor.Admin().AccountAction(c.Request.Context(), authed.Account, form); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

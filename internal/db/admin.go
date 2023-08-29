@@ -49,4 +49,23 @@ type Admin interface {
 	// Ie., if the instance is hosted at 'example.org' the instance will have a domain of 'example.org'.
 	// This is needed for things like serving instance information through /api/v1/instance
 	CreateInstanceInstance(ctx context.Context) error
+
+	/*
+		ACTION FUNCS
+	*/
+
+	// GetAdminAction returns the admin action with the given ID.
+	GetAdminAction(ctx context.Context, id string) (*gtsmodel.AdminAction, error)
+
+	// GetAdminActions gets all admin actions from the database.
+	GetAdminActions(ctx context.Context) ([]*gtsmodel.AdminAction, error)
+
+	// PutAdminAction puts one admin action in the database.
+	PutAdminAction(ctx context.Context, action *gtsmodel.AdminAction) error
+
+	// UpdateAdminAction updates one admin action by its ID.
+	UpdateAdminAction(ctx context.Context, action *gtsmodel.AdminAction, columns ...string) error
+
+	// DeleteAdminAction deletes admin action with the given ID.
+	DeleteAdminAction(ctx context.Context, id string) error
 }
