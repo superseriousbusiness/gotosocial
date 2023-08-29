@@ -20,6 +20,7 @@ package admin
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -33,6 +34,10 @@ type Processor struct {
 	mediaManager        *media.Manager
 	transportController transport.Controller
 	emailSender         email.Sender
+
+	// admin Actions currently
+	// undergoing processing
+	Actions *Actions
 }
 
 // New returns a new admin processor.
@@ -44,5 +49,10 @@ func New(state *state.State, tc typeutils.TypeConverter, mediaManager *media.Man
 		mediaManager:        mediaManager,
 		transportController: transportController,
 		emailSender:         emailSender,
+
+		Actions: &Actions{
+			r:     make(map[string]*gtsmodel.AdminAction),
+			state: state,
+		},
 	}
 }
