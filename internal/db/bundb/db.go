@@ -21,6 +21,7 @@ import (
 	"context"
 	"database/sql"
 	"time"
+	"unsafe"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -87,18 +88,7 @@ func (db *DB) PingContext(ctx context.Context) error { return db.bun.PingContext
 // Close is a direct call-through to bun.DB.Close().
 func (db *DB) Close() error { return db.bun.Close() }
 
-// BeginTx wraps bun.DB.BeginTx() with retry-busy timeout.
-func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx bun.Tx, err error) {
-	bundb := db.bun // use *bun.DB interface to return bun.Tx type
-	err = retryOnBusy(ctx, func() error {
-		tx, err = bundb.BeginTx(ctx, opts)
-		err = db.raw.errHook(err)
-		return err
-	})
-	return
-}
-
-// ExecContext wraps bun.DB.ExecContext() with retry-busy timeout.
+// ExecContext wraps bun.DB.ExecContext() with retry-busy timeout and our own error processing.
 func (db *DB) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	bundb := db.bun // use underlying *bun.DB interface for their query formatting
 	err = retryOnBusy(ctx, func() error {
@@ -109,7 +99,7 @@ func (db *DB) ExecContext(ctx context.Context, query string, args ...any) (resul
 	return
 }
 
-// QueryContext wraps bun.DB.ExecContext() with retry-busy timeout.
+// QueryContext wraps bun.DB.ExecContext() with retry-busy timeout and our own error processing.
 func (db *DB) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
 	bundb := db.bun // use underlying *bun.DB interface for their query formatting
 	err = retryOnBusy(ctx, func() error {
@@ -120,19 +110,34 @@ func (db *DB) QueryContext(ctx context.Context, query string, args ...any) (rows
 	return
 }
 
-// QueryRowContext wraps bun.DB.ExecContext() with retry-busy timeout.
+// QueryRowContext wraps bun.DB.ExecContext() with retry-busy timeout and our own error processing.
 func (db *DB) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
 	bundb := db.bun // use underlying *bun.DB interface for their query formatting
 	_ = retryOnBusy(ctx, func() error {
 		row = bundb.QueryRowContext(ctx, query, args...)
 		err := db.raw.errHook(row.Err())
+		updateRowError(row, err) // set new error
+		return err
+	})
+	return
+}
+
+// BeginTx wraps bun.DB.BeginTx() with retry-busy timeout and our own error processing.
+func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx Tx, err error) {
+	tx = Tx{db: db} // create wrapping tx type with our db ref
+	bundb := db.bun // use *bun.DB interface to return bun.Tx type
+	err = retryOnBusy(ctx, func() error {
+		var btx bun.Tx
+		btx, err = bundb.BeginTx(ctx, opts)
+		err = db.raw.errHook(err)
+		tx.tx = &btx // set bun tx ref
 		return err
 	})
 	return
 }
 
 // RunInTx is functionally the same as bun.DB.RunInTx() but with retry-busy timeouts.
-func (db *DB) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
+func (db *DB) RunInTx(ctx context.Context, fn func(Tx) error) error {
 	// Attempt to start new transaction.
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -144,10 +149,7 @@ func (db *DB) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
 	defer func() {
 		if !done {
 			// Rollback (with retry-backoff).
-			_ = retryOnBusy(ctx, func() error {
-				err := tx.Rollback()
-				return db.raw.errHook(err)
-			})
+			_ = retryOnBusy(ctx, tx.Rollback)
 		}
 	}()
 
@@ -157,10 +159,7 @@ func (db *DB) RunInTx(ctx context.Context, fn func(bun.Tx) error) error {
 	}
 
 	// Commit (with retry-backoff).
-	err = retryOnBusy(ctx, func() error {
-		err := tx.Commit()
-		return db.raw.errHook(err)
-	})
+	err = retryOnBusy(ctx, tx.Commit)
 	done = true
 	return err
 }
@@ -306,6 +305,120 @@ func (db *rawdb) QueryRowContext(ctx context.Context, query string, args ...any)
 		return err
 	})
 	return
+}
+
+// Tx wraps a bun.Tx to add
+// our own error processing
+// through the rawdb.errHook.
+type Tx struct {
+	tx *bun.Tx
+	db *DB
+}
+
+// ExecContext wraps bun.Tx.ExecContext() with our own error processing.
+func (tx Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	res, err := tx.tx.ExecContext(ctx, query, args...)
+	err = tx.db.raw.errHook(err)
+	return res, err
+}
+
+// QueryContext wraps bun.Tx.QueryContext() with our own error processing.
+func (tx Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	rows, err := tx.tx.QueryContext(ctx, query, args...)
+	err = tx.db.raw.errHook(err)
+	return rows, err
+}
+
+// QueryRowContext wraps bun.Tx.QueryRowContext() with our own error processing.
+func (tx Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	row := tx.tx.QueryRowContext(ctx, query, args...)
+	err := tx.db.raw.errHook(row.Err())
+	updateRowError(row, err) // set new error
+	return row
+}
+
+// Commit wraps bun.Tx.Commit() with our own error processing.
+func (tx Tx) Commit() error {
+	err := tx.tx.Commit()
+	err = tx.db.raw.errHook(err)
+	return err
+}
+
+// Rollback wraps bun.Tx.Rollback() with our own error processing.
+func (tx Tx) Rollback() error {
+	err := tx.tx.Rollback()
+	err = tx.db.raw.errHook(err)
+	return err
+}
+
+// Dialect is a direct call-through to bun.DB.Dialect().
+func (tx Tx) Dialect() schema.Dialect {
+	return tx.db.bun.Dialect()
+}
+
+func (tx Tx) NewValues(model interface{}) *bun.ValuesQuery {
+	return bun.NewValuesQuery(tx.db.bun, model).Conn(tx)
+}
+
+func (tx Tx) NewMerge() *bun.MergeQuery {
+	return bun.NewMergeQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewSelect() *bun.SelectQuery {
+	return bun.NewSelectQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewInsert() *bun.InsertQuery {
+	return bun.NewInsertQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewUpdate() *bun.UpdateQuery {
+	return bun.NewUpdateQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewDelete() *bun.DeleteQuery {
+	return bun.NewDeleteQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewRaw(query string, args ...interface{}) *bun.RawQuery {
+	return bun.NewRawQuery(tx.db.bun, query, args...).Conn(tx)
+}
+
+func (tx Tx) NewCreateTable() *bun.CreateTableQuery {
+	return bun.NewCreateTableQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewDropTable() *bun.DropTableQuery {
+	return bun.NewDropTableQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewCreateIndex() *bun.CreateIndexQuery {
+	return bun.NewCreateIndexQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewDropIndex() *bun.DropIndexQuery {
+	return bun.NewDropIndexQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewTruncateTable() *bun.TruncateTableQuery {
+	return bun.NewTruncateTableQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewAddColumn() *bun.AddColumnQuery {
+	return bun.NewAddColumnQuery(tx.db.bun).Conn(tx)
+}
+
+func (tx Tx) NewDropColumn() *bun.DropColumnQuery {
+	return bun.NewDropColumnQuery(tx.db.bun).Conn(tx)
+}
+
+// updateRowError updates an sql.Row's internal error field using the unsafe package.
+func updateRowError(sqlrow *sql.Row, err error) {
+	type row struct {
+		err  error
+		rows *sql.Rows
+	}
+	(*row)(unsafe.Pointer(sqlrow)).err = err
 }
 
 // retryOnBusy will retry given function on returned 'errBusy'.
