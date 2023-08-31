@@ -117,6 +117,15 @@ func InstrumentGin() gin.HandlerFunc {
 	)
 	propagator := otel.GetTextMapPropagator()
 	return func(c *gin.Context) {
+		spanName := c.FullPath()
+		// Do not trace a request if it didn't match a route. This doesn't omit
+		// all 404s as a request matching /:user for a user that doesn't exist
+		// still matches the route
+		if spanName == "" {
+			c.Next()
+			return
+		}
+
 		c.Set(tracerKey, tracer)
 		savedCtx := c.Request.Context()
 		defer func() {
@@ -127,13 +136,9 @@ func InstrumentGin() gin.HandlerFunc {
 			oteltrace.WithAttributes(httpconv.ServerRequest(config.GetHost(), c.Request)...),
 			oteltrace.WithSpanKind(oteltrace.SpanKindServer),
 		}
-		spanName := c.FullPath()
-		if spanName == "" {
-			spanName = fmt.Sprintf("HTTP %s route not found", c.Request.Method)
-		} else {
-			rAttr := semconv.HTTPRoute(spanName)
-			opts = append(opts, oteltrace.WithAttributes(rAttr))
-		}
+
+		rAttr := semconv.HTTPRoute(spanName)
+		opts = append(opts, oteltrace.WithAttributes(rAttr))
 		id := gtscontext.RequestID(c.Request.Context())
 		if id != "" {
 			opts = append(opts, oteltrace.WithAttributes(attribute.String("requestID", id)))
