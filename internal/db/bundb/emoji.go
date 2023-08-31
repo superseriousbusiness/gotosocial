@@ -105,7 +105,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	return e.db.RunInTx(ctx, func(tx bun.Tx) error {
+	return e.db.RunInTx(ctx, func(tx Tx) error {
 		// Delete relational links between this emoji
 		// and any statuses using it, returning the
 		// status IDs so we can later update them.

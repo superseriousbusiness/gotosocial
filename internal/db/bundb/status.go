@@ -276,7 +276,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
-		return s.db.RunInTx(ctx, func(tx bun.Tx) error {
+		return s.db.RunInTx(ctx, func(tx Tx) error {
 			// create links between this status and any emojis it uses
 			for _, i := range status.EmojiIDs {
 				if _, err := tx.
@@ -342,7 +342,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
-		return s.db.RunInTx(ctx, func(tx bun.Tx) error {
+		return s.db.RunInTx(ctx, func(tx Tx) error {
 			// create links between this status and any emojis it uses
 			for _, i := range status.EmojiIDs {
 				if _, err := tx.
@@ -420,7 +420,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
 	// On return ensure status invalidated from cache.
 	defer s.state.Caches.GTS.Status().Invalidate("ID", id)
 
-	return s.db.RunInTx(ctx, func(tx bun.Tx) error {
+	return s.db.RunInTx(ctx, func(tx Tx) error {
 		// delete links between this status and any emojis it uses
 		if _, err := tx.
 			NewDelete().
