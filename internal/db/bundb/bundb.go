@@ -25,6 +25,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"runtime"
 	"strconv"
@@ -420,17 +421,20 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	return cfg, nil
 }
 
+// buildSQLiteAddress will build an SQLite address string from given config input,
+// appending user defined SQLite connection preferences (e.g. cache_size, journal_mode etc).
 func buildSQLiteAddress(addr string) string {
 	// Drop anything fancy from DB address
 	addr = strings.Split(addr, "?")[0]       // drop any provided query strings
 	addr = strings.TrimPrefix(addr, "file:") // we'll prepend this later ourselves
 
 	// build our own SQLite preferences
-	prefs := []string{
-		// use immediate transaction lock mode to fail quickly if tx can't lock
-		// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
-		"_txlock=immediate",
-	}
+	// as a series of URL encoded values
+	prefs := make(url.Values)
+
+	// use immediate transaction lock mode to fail quickly if tx can't lock
+	// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
+	prefs.Add("_txlock", "immediate")
 
 	if addr == ":memory:" {
 		log.Warn(nil, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
@@ -440,27 +444,26 @@ func buildSQLiteAddress(addr string) string {
 		addr = uuid.NewString()
 
 		// in-mem-specific preferences
-		prefs = append(prefs, []string{
-			"mode=memory",  // indicate in-memory mode using query
-			"cache=shared", // shared cache so that tests don't fail
-		}...)
+		// (shared cache so that tests don't fail)
+		prefs.Add("mode", "memory")
+		prefs.Add("cache", "shared")
 	}
 
 	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
 		// Set the user provided SQLite busy timeout
 		// NOTE: MUST BE SET BEFORE THE JOURNAL MODE.
 		t := strconv.FormatInt(timeout.Milliseconds(), 10)
-		prefs = append(prefs, "busy_timeout="+t)
+		prefs.Add("busy_timeout", t)
 	}
 
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {
 		// Set the user provided SQLite journal mode.
-		prefs = append(prefs, "journal_mode="+mode)
+		prefs.Add("journal_mode", mode)
 	}
 
 	if mode := config.GetDbSqliteSynchronous(); mode != "" {
 		// Set the user provided SQLite synchronous mode.
-		prefs = append(prefs, "synchronous="+mode)
+		prefs.Add("synchronous", mode)
 	}
 
 	if size := config.GetDbSqliteCacheSize(); size > 0 {
@@ -469,13 +472,13 @@ func buildSQLiteAddress(addr string) string {
 		// that we're giving kibibytes rather than num pages.
 		// https://www.sqlite.org/pragma.html#pragma_cache_size
 		s := "-" + strconv.FormatUint(uint64(size/bytesize.KiB), 10)
-		prefs = append(prefs, "cache_size="+s)
+		prefs.Add("cache_size", s)
 	}
 
 	var b strings.Builder
 	b.WriteString("file:")
 	b.WriteString(addr)
 	b.WriteString("?")
-	b.WriteString(strings.Join(prefs, "&"))
+	b.WriteString(prefs.Encode())
 	return b.String()
 }
