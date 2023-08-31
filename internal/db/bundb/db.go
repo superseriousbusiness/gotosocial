@@ -67,7 +67,7 @@ func WrapDB(db *bun.DB) *DB {
 	return &DB{
 		raw: rawdb{
 			errHook: errProc,
-			DB:      db.DB,
+			db:      db.DB,
 		},
 		bun: db,
 	}
@@ -115,24 +115,30 @@ func (db *DB) QueryRowContext(ctx context.Context, query string, args ...any) (r
 	bundb := db.bun // use underlying *bun.DB interface for their query formatting
 	_ = retryOnBusy(ctx, func() error {
 		row = bundb.QueryRowContext(ctx, query, args...)
-		err := db.raw.errHook(row.Err())
-		updateRowError(row, err) // set new error
-		return err
+		if err := db.raw.errHook(row.Err()); err != nil {
+			updateRowError(row, err) // set new error
+		}
+		return row.Err()
 	})
 	return
 }
 
 // BeginTx wraps bun.DB.BeginTx() with retry-busy timeout and our own error processing.
 func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (tx Tx, err error) {
-	tx = Tx{db: db} // create wrapping tx type with our db ref
-	bundb := db.bun // use *bun.DB interface to return bun.Tx type
+	var buntx bun.Tx // captured bun.Tx
+	bundb := db.bun  // use *bun.DB interface to return bun.Tx type
+
 	err = retryOnBusy(ctx, func() error {
-		var btx bun.Tx
-		btx, err = bundb.BeginTx(ctx, opts)
+		buntx, err = bundb.BeginTx(ctx, opts)
 		err = db.raw.errHook(err)
-		tx.tx = &btx // set bun tx ref
 		return err
 	})
+
+	if err == nil {
+		// Wrap bun.Tx in our type.
+		tx = wrapTx(db, &buntx)
+	}
+
 	return
 }
 
@@ -148,18 +154,18 @@ func (db *DB) RunInTx(ctx context.Context, fn func(Tx) error) error {
 
 	defer func() {
 		if !done {
-			// Rollback (with retry-backoff).
-			_ = retryOnBusy(ctx, tx.Rollback)
+			// Rollback tx.
+			_ = tx.Rollback()
 		}
 	}()
 
 	// Perform supplied transaction
 	if err := fn(tx); err != nil {
-		return db.raw.errHook(err)
+		return err
 	}
 
-	// Commit (with retry-backoff).
-	err = retryOnBusy(ctx, tx.Commit)
+	// Commit tx.
+	err = tx.Commit()
 	done = true
 	return err
 }
@@ -274,142 +280,240 @@ type rawdb struct {
 
 	// embedded raw
 	// db interface
-	*sql.DB
+	db *sql.DB
 }
 
-// ExecContext wraps sql.DB.ExecContext() with retry-busy timeout.
+// ExecContext wraps sql.DB.ExecContext() with retry-busy timeout and our own error processing.
 func (db *rawdb) ExecContext(ctx context.Context, query string, args ...any) (result sql.Result, err error) {
 	err = retryOnBusy(ctx, func() error {
-		result, err = db.DB.ExecContext(ctx, query, args...)
+		result, err = db.db.ExecContext(ctx, query, args...)
 		err = db.errHook(err)
 		return err
 	})
 	return
 }
 
-// QueryContext wraps sql.DB.QueryContext() with retry-busy timeout.
+// QueryContext wraps sql.DB.QueryContext() with retry-busy timeout and our own error processing.
 func (db *rawdb) QueryContext(ctx context.Context, query string, args ...any) (rows *sql.Rows, err error) {
 	err = retryOnBusy(ctx, func() error {
-		rows, err = db.DB.QueryContext(ctx, query, args...)
+		rows, err = db.db.QueryContext(ctx, query, args...)
 		err = db.errHook(err)
 		return err
 	})
 	return
 }
 
-// QueryRowContext wraps sql.DB.QueryRowContext() with retry-busy timeout.
+// QueryRowContext wraps sql.DB.QueryRowContext() with retry-busy timeout and our own error processing.
 func (db *rawdb) QueryRowContext(ctx context.Context, query string, args ...any) (row *sql.Row) {
 	_ = retryOnBusy(ctx, func() error {
-		row = db.DB.QueryRowContext(ctx, query, args...)
+		row = db.db.QueryRowContext(ctx, query, args...)
 		err := db.errHook(row.Err())
 		return err
 	})
 	return
 }
 
-// Tx wraps a bun.Tx to add
-// our own error processing
-// through the rawdb.errHook.
+// Tx wraps a bun transaction instance
+// to provide common per-dialect SQL error
+// conversions to common types, and retries
+// on busy commit/rollback (SQLite only).
 type Tx struct {
-	tx *bun.Tx
-	db *DB
+	// our own wrapped Tx type
+	// kept separate to the *bun.Tx
+	// type to be passed into query
+	// builders as bun.IConn iface
+	// (this prevents double firing
+	// bun query hooks).
+	//
+	// also holds per-dialect
+	// error hook function.
+	raw rawtx
+
+	// bun Tx interface we use
+	// for dialects, and improved
+	// struct marshal/unmarshaling.
+	bun *bun.Tx
 }
 
-// ExecContext wraps bun.Tx.ExecContext() with our own error processing.
+// wrapTx wraps a given bun.Tx in our own wrapping Tx type.
+func wrapTx(db *DB, tx *bun.Tx) Tx {
+	return Tx{
+		raw: rawtx{
+			errHook: db.raw.errHook,
+			tx:      tx.Tx,
+		},
+		bun: tx,
+	}
+}
+
+// ExecContext wraps bun.Tx.ExecContext() with our own error processing, WITHOUT retry-busy timeouts (as will be mid-transaction).
 func (tx Tx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	res, err := tx.tx.ExecContext(ctx, query, args...)
-	err = tx.db.raw.errHook(err)
+	buntx := tx.bun // use underlying *bun.Tx interface for their query formatting
+	res, err := buntx.ExecContext(ctx, query, args...)
+	err = tx.raw.errHook(err)
 	return res, err
 }
 
-// QueryContext wraps bun.Tx.QueryContext() with our own error processing.
+// QueryContext wraps bun.Tx.QueryContext() with our own error processing, WITHOUT retry-busy timeouts (as will be mid-transaction).
 func (tx Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	rows, err := tx.tx.QueryContext(ctx, query, args...)
-	err = tx.db.raw.errHook(err)
+	buntx := tx.bun // use underlying *bun.Tx interface for their query formatting
+	rows, err := buntx.QueryContext(ctx, query, args...)
+	err = tx.raw.errHook(err)
 	return rows, err
 }
 
-// QueryRowContext wraps bun.Tx.QueryRowContext() with our own error processing.
+// QueryRowContext wraps bun.Tx.QueryRowContext() with our own error processing, WITHOUT retry-busy timeouts (as will be mid-transaction).
 func (tx Tx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	row := tx.tx.QueryRowContext(ctx, query, args...)
-	err := tx.db.raw.errHook(row.Err())
-	updateRowError(row, err) // set new error
+	buntx := tx.bun // use underlying *bun.Tx interface for their query formatting
+	row := buntx.QueryRowContext(ctx, query, args...)
+	if err := tx.raw.errHook(row.Err()); err != nil {
+		updateRowError(row, err) // set new error
+	}
 	return row
 }
 
-// Commit wraps bun.Tx.Commit() with our own error processing.
-func (tx Tx) Commit() error {
-	err := tx.tx.Commit()
-	err = tx.db.raw.errHook(err)
-	return err
+// Commit wraps bun.Tx.Commit() with retry-busy timeout and our own error processing.
+func (tx Tx) Commit() (err error) {
+	buntx := tx.bun // use *bun.Tx interface
+	err = retryOnBusy(context.TODO(), func() error {
+		err = buntx.Commit()
+		err = tx.raw.errHook(err)
+		return err
+	})
+	return
 }
 
-// Rollback wraps bun.Tx.Rollback() with our own error processing.
-func (tx Tx) Rollback() error {
-	err := tx.tx.Rollback()
-	err = tx.db.raw.errHook(err)
-	return err
+// Rollback wraps bun.Tx.Rollback() with retry-busy timeout and our own error processing.
+func (tx Tx) Rollback() (err error) {
+	buntx := tx.bun // use *bun.Tx interface
+	err = retryOnBusy(context.TODO(), func() error {
+		err = buntx.Rollback()
+		err = tx.raw.errHook(err)
+		return err
+	})
+	return
 }
 
 // Dialect is a direct call-through to bun.DB.Dialect().
 func (tx Tx) Dialect() schema.Dialect {
-	return tx.db.bun.Dialect()
+	return tx.bun.Dialect()
 }
 
 func (tx Tx) NewValues(model interface{}) *bun.ValuesQuery {
-	return bun.NewValuesQuery(tx.db.bun, model).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewValues(model).Conn(&tx.raw)
 }
 
 func (tx Tx) NewMerge() *bun.MergeQuery {
-	return bun.NewMergeQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewMerge().Conn(&tx.raw)
 }
 
 func (tx Tx) NewSelect() *bun.SelectQuery {
-	return bun.NewSelectQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewSelect().Conn(&tx.raw)
 }
 
 func (tx Tx) NewInsert() *bun.InsertQuery {
-	return bun.NewInsertQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewInsert().Conn(&tx.raw)
 }
 
 func (tx Tx) NewUpdate() *bun.UpdateQuery {
-	return bun.NewUpdateQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewUpdate().Conn(&tx.raw)
 }
 
 func (tx Tx) NewDelete() *bun.DeleteQuery {
-	return bun.NewDeleteQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewDelete().Conn(&tx.raw)
 }
 
 func (tx Tx) NewRaw(query string, args ...interface{}) *bun.RawQuery {
-	return bun.NewRawQuery(tx.db.bun, query, args...).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewRaw(query, args...).Conn(&tx.raw)
 }
 
 func (tx Tx) NewCreateTable() *bun.CreateTableQuery {
-	return bun.NewCreateTableQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewCreateTable().Conn(&tx.raw)
 }
 
 func (tx Tx) NewDropTable() *bun.DropTableQuery {
-	return bun.NewDropTableQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewDropTable().Conn(&tx.raw)
 }
 
 func (tx Tx) NewCreateIndex() *bun.CreateIndexQuery {
-	return bun.NewCreateIndexQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewCreateIndex().Conn(&tx.raw)
 }
 
 func (tx Tx) NewDropIndex() *bun.DropIndexQuery {
-	return bun.NewDropIndexQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewDropIndex().Conn(&tx.raw)
 }
 
 func (tx Tx) NewTruncateTable() *bun.TruncateTableQuery {
-	return bun.NewTruncateTableQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewTruncateTable().Conn(&tx.raw)
 }
 
 func (tx Tx) NewAddColumn() *bun.AddColumnQuery {
-	return bun.NewAddColumnQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewAddColumn().Conn(&tx.raw)
 }
 
 func (tx Tx) NewDropColumn() *bun.DropColumnQuery {
-	return bun.NewDropColumnQuery(tx.db.bun).Conn(tx)
+	// note: passing in rawtx as conn iface so no double query-hook
+	// firing when passed through the bun.Tx.Query___() functions.
+	return tx.bun.NewDropColumn().Conn(&tx.raw)
+}
+
+type rawtx struct {
+	// dialect specific error
+	// processing function hook.
+	errHook func(error) error
+
+	// embedded raw
+	// tx interface
+	tx *sql.Tx
+}
+
+// ExecContext wraps sql.Tx.ExecContext() with our own error processing, WITHOUT retry-busy timeouts (as will be mid-transaction).
+func (tx *rawtx) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
+	res, err := tx.tx.ExecContext(ctx, query, args...)
+	err = tx.errHook(err)
+	return res, err
+}
+
+// QueryContext wraps sql.Tx.QueryContext() with our own error processing, WITHOUT retry-busy timeouts (as will be mid-transaction).
+func (tx *rawtx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
+	rows, err := tx.tx.QueryContext(ctx, query, args...)
+	err = tx.errHook(err)
+	return rows, err
+}
+
+// QueryRowContext wraps sql.Tx.QueryRowContext() with our own error processing, WITHOUT retry-busy timeouts (as will be mid-transaction).
+func (tx *rawtx) QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row {
+	row := tx.tx.QueryRowContext(ctx, query, args...)
+	if err := tx.errHook(row.Err()); err != nil {
+		updateRowError(row, err) // set new error
+	}
+	return row
 }
 
 // updateRowError updates an sql.Row's internal error field using the unsafe package.
@@ -418,6 +522,13 @@ func updateRowError(sqlrow *sql.Row, err error) {
 		err  error
 		rows *sql.Rows
 	}
+
+	// compile-time check to ensure sql.Row not changed.
+	if unsafe.Sizeof(row{}) != unsafe.Sizeof(sql.Row{}) {
+		panic("sql.Row has changed definition")
+	}
+
+	// this code is awful and i must be shamed for this.
 	(*row)(unsafe.Pointer(sqlrow)).err = err
 }
 
