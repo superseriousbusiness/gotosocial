@@ -341,9 +341,8 @@ func (p *Processor) domainBlockSideEffects(
 		if err := p.state.DB.UpdateInstance(ctx, instance, columns...); err != nil {
 			errs.Appendf("db error updating instance: %w", err)
 			return errs
-		} else {
-			l.Debug("instance entry updated")
 		}
+		l.Debug("instance entry updated")
 	}
 
 	// For each account that belongs to this domain,
@@ -410,9 +409,8 @@ func (p *Processor) domainUnblockSideEffects(
 		); err != nil {
 			errs.Appendf("db error updating instance: %w", err)
 			return errs
-		} else {
-			l.Debug("instance entry updated")
 		}
+		l.Debug("instance entry updated")
 	}
 
 	// Unsuspend all accounts whose suspension origin was this domain block.
