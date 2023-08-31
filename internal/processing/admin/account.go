@@ -33,27 +33,21 @@ func (p *Processor) AccountAction(
 	ctx context.Context,
 	adminAcct *gtsmodel.Account,
 	request *apimodel.AdminActionRequest,
-) gtserror.WithCode {
+) (string, gtserror.WithCode) {
 	targetAccount, err := p.state.DB.GetAccountByID(ctx, request.TargetID)
 	if err != nil {
-		return gtserror.NewErrorInternalError(err)
+		err := gtserror.Newf("db error getting target account: %w", err)
+		return "", gtserror.NewErrorInternalError(err)
 	}
 
-	actionType := gtsmodel.AdminActionType(request.Type)
-
-	var cMsg messages.FromClientAPI
-
-	switch actionType {
+	switch gtsmodel.AdminActionType(request.Type) {
 	case gtsmodel.AdminActionSuspend:
-		cMsg = messages.FromClientAPI{
-			APObjectType:   ap.ActorPerson,
-			APActivityType: ap.ActivityDelete,
-			OriginAccount:  adminAcct,
-			TargetAccount:  targetAccount,
-		}
+		return p.accountActionSuspend(ctx, adminAcct, targetAccount, request.Text)
 
 	default:
-		supportedTypes := [1]gtsmodel.AdminActionType{
+		// TODO: add more types to this slice when adding
+		//       more types to the switch statement above.
+		supportedTypes := []gtsmodel.AdminActionType{
 			gtsmodel.AdminActionSuspend,
 		}
 
@@ -62,26 +56,47 @@ func (p *Processor) AccountAction(
 				"currently supported types are: %q",
 			request.Type, supportedTypes)
 
-		return gtserror.NewErrorBadRequest(err, err.Error())
+		return "", gtserror.NewErrorBadRequest(err, err.Error())
 	}
+}
 
-	return p.Actions.Run(
+func (p *Processor) accountActionSuspend(
+	ctx context.Context,
+	adminAcct *gtsmodel.Account,
+	targetAcct *gtsmodel.Account,
+	text string,
+) (string, gtserror.WithCode) {
+	actionID := id.NewULID()
+
+	errWithCode := p.Actions.Run(
 		ctx,
 		&gtsmodel.AdminAction{
-			ID:             id.NewULID(),
+			ID:             actionID,
 			TargetCategory: gtsmodel.AdminActionCategoryAccount,
-			TargetID:       targetAccount.ID,
-			Target:         targetAccount,
-			Type:           actionType,
+			TargetID:       targetAcct.ID,
+			Target:         targetAcct,
+			Type:           gtsmodel.AdminActionSuspend,
 			AccountID:      adminAcct.ID,
-			Text:           request.Text,
+			Text:           text,
 		},
 		func(ctx context.Context) gtserror.MultiError {
-			if err := p.state.Workers.ProcessFromClientAPI(ctx, cMsg); err != nil {
-				return gtserror.MultiError{err}
+			if err := p.state.Workers.ProcessFromClientAPI(
+				ctx,
+				messages.FromClientAPI{
+					APObjectType:   ap.ActorPerson,
+					APActivityType: ap.ActivityDelete,
+					OriginAccount:  adminAcct,
+					TargetAccount:  targetAcct,
+				},
+			); err != nil {
+				errs := gtserror.NewMultiError(1)
+				errs.Append(err)
+				return errs
 			}
 
 			return nil
 		},
 	)
+
+	return actionID, errWithCode
 }

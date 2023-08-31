@@ -79,6 +79,11 @@ import (
 //			description: not found
 //		'406':
 //			description: not acceptable
+//		'409':
+//			description: >-
+//				Conflict: There is already an admin action running that conflicts with this action.
+//				Check the error message in the response body for more information. This is a temporary
+//				error; it should be possible to process this action if you try again in a bit.
 //		'500':
 //			description: internal server error
 func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
@@ -114,7 +119,7 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 	}
 	form.TargetID = targetAcctID
 
-	if errWithCode := m.processor.Admin().AccountAction(c.Request.Context(), authed.Account, form); errWithCode != nil {
+	if _, errWithCode := m.processor.Admin().AccountAction(c.Request.Context(), authed.Account, form); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

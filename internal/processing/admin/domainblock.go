@@ -44,6 +44,9 @@ import (
 // and then processes side effects of that block (deleting accounts, media, etc).
 //
 // If a domain block already exists for the domain, side effects will be retried.
+//
+// Return values for this function are the (new) domain block, the ID of the admin
+// action resulting from this call, and/or an error if something goes wrong.
 func (p *Processor) DomainBlockCreate(
 	ctx context.Context,
 	adminAcct *gtsmodel.Account,
@@ -111,6 +114,9 @@ func (p *Processor) DomainBlockCreate(
 
 // DomainBlockDelete removes one domain block with the given ID,
 // and processes side effects of removing the block asynchronously.
+//
+// Return values for this function are the deleted domain block, the ID of the admin
+// action resulting from this call, and/or an error if something goes wrong.
 func (p *Processor) DomainBlockDelete(
 	ctx context.Context,
 	adminAcct *gtsmodel.Account,
