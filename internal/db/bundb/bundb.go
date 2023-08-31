@@ -140,14 +140,6 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		db.AddQueryHook(tracing.InstrumentBun())
 	}
 
-	// execute sqlite pragmas *after* adding database hook;
-	// this allows the pragma queries to be logged
-	if t == "sqlite" {
-		if err := sqlitePragmas(ctx, db); err != nil {
-			return nil, err
-		}
-	}
-
 	// table registration is needed for many-to-many, see:
 	// https://bun.uptrace.dev/orm/many-to-many-relation/
 	for _, t := range registerTables {
@@ -296,42 +288,8 @@ func sqliteConn(ctx context.Context) (*DB, error) {
 		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
 	}
 
-	// Drop anything fancy from DB address
-	address = strings.Split(address, "?")[0]       // drop any provided query strings
-	address = strings.TrimPrefix(address, "file:") // we'll prepend this later ourselves
-
-	// build our own SQLite preferences
-	prefs := []string{
-		// use immediate transaction lock mode to fail quickly if tx can't lock
-		// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
-		"_txlock=immediate",
-	}
-
-	if address == ":memory:" {
-		log.Warn(ctx, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
-
-		// Use random name for in-memory instead of ':memory:', so
-		// multiple in-mem databases can be created without conflict.
-		address = uuid.NewString()
-
-		// in-mem-specific preferences
-		prefs = append(prefs, []string{
-			"mode=memory",  // indicate in-memory mode using query
-			"cache=shared", // shared cache so that tests don't fail
-		}...)
-	}
-
-	// rebuild address string with our derived preferences
-	address = "file:" + address
-	for i, q := range prefs {
-		var prefix string
-		if i == 0 {
-			prefix = "?"
-		} else {
-			prefix = "&"
-		}
-		address += prefix + q
-	}
+	// Build SQLite connection address with prefs.
+	address = buildSQLiteAddress(address)
 
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite", address)
@@ -462,18 +420,47 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	return cfg, nil
 }
 
-// sqlitePragmas sets desired sqlite pragmas based on configured values, and
-// logs the results of the pragma queries. Errors if something goes wrong.
-func sqlitePragmas(ctx context.Context, db *DB) error {
-	var pragmas [][]string
+func buildSQLiteAddress(addr string) string {
+	// Drop anything fancy from DB address
+	addr = strings.Split(addr, "?")[0]       // drop any provided query strings
+	addr = strings.TrimPrefix(addr, "file:") // we'll prepend this later ourselves
+
+	// build our own SQLite preferences
+	prefs := []string{
+		// use immediate transaction lock mode to fail quickly if tx can't lock
+		// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
+		"_txlock=immediate",
+	}
+
+	if addr == ":memory:" {
+		log.Warn(nil, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
+
+		// Use random name for in-memory instead of ':memory:', so
+		// multiple in-mem databases can be created without conflict.
+		addr = uuid.NewString()
+
+		// in-mem-specific preferences
+		prefs = append(prefs, []string{
+			"mode=memory",  // indicate in-memory mode using query
+			"cache=shared", // shared cache so that tests don't fail
+		}...)
+	}
+
+	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
+		// Set the user provided SQLite busy timeout
+		// NOTE: MUST BE SET BEFORE THE JOURNAL MODE.
+		t := strconv.FormatInt(timeout.Milliseconds(), 10)
+		prefs = append(prefs, "busy_timeout="+t)
+	}
+
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {
-		// Set the user provided SQLite journal mode
-		pragmas = append(pragmas, []string{"journal_mode", mode})
+		// Set the user provided SQLite journal mode.
+		prefs = append(prefs, "journal_mode="+mode)
 	}
 
 	if mode := config.GetDbSqliteSynchronous(); mode != "" {
-		// Set the user provided SQLite synchronous mode
-		pragmas = append(pragmas, []string{"synchronous", mode})
+		// Set the user provided SQLite synchronous mode.
+		prefs = append(prefs, "synchronous="+mode)
 	}
 
 	if size := config.GetDbSqliteCacheSize(); size > 0 {
@@ -482,29 +469,13 @@ func sqlitePragmas(ctx context.Context, db *DB) error {
 		// that we're giving kibibytes rather than num pages.
 		// https://www.sqlite.org/pragma.html#pragma_cache_size
 		s := "-" + strconv.FormatUint(uint64(size/bytesize.KiB), 10)
-		pragmas = append(pragmas, []string{"cache_size", s})
+		prefs = append(prefs, "cache_size="+s)
 	}
 
-	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
-		t := strconv.FormatInt(timeout.Milliseconds(), 10)
-		pragmas = append(pragmas, []string{"busy_timeout", t})
-	}
-
-	for _, p := range pragmas {
-		pk := p[0]
-		pv := p[1]
-
-		if _, err := db.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
-			return fmt.Errorf("error executing sqlite pragma %s: %w", pk, err)
-		}
-
-		var res string
-		if err := db.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
-			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
-		}
-
-		log.Infof(ctx, "sqlite pragma %s set to %s", pk, res)
-	}
-
-	return nil
+	var b strings.Builder
+	b.WriteString("file:")
+	b.WriteString(addr)
+	b.WriteString("?")
+	b.WriteString(strings.Join(prefs, "&"))
+	return b.String()
 }
