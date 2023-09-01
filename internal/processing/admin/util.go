@@ -76,13 +76,13 @@ func stubbifyInstance(instance *gtsmodel.Instance, domainBlockID string) []strin
 	}
 }
 
-// rangeAccounts iterates through all accounts originating
-// from the given domain, and calls the provided range
-// function on each account.
+// rangeDomainAccounts iterates through all accounts
+// originating from the given domain, and calls the
+// provided range function on each account.
 //
-// If an error is returned while selecting accounts, the
-// loop will stop and return the error.
-func (p *Processor) rangeAccounts(
+// If an error is returned while selecting accounts,
+// the loop will stop and return the error.
+func (p *Processor) rangeDomainAccounts(
 	ctx context.Context,
 	domain string,
 	rangeF func(*gtsmodel.Account),

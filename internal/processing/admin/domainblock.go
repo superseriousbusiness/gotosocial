@@ -354,7 +354,7 @@ func (p *Processor) domainBlockSideEffects(
 	// For each account that belongs to this domain,
 	// process an account delete message to remove
 	// that account's posts, media, etc.
-	if err := p.rangeAccounts(ctx, block.Domain, func(account *gtsmodel.Account) {
+	if err := p.rangeDomainAccounts(ctx, block.Domain, func(account *gtsmodel.Account) {
 		cMsg := messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityDelete,
@@ -420,7 +420,7 @@ func (p *Processor) domainUnblockSideEffects(
 	}
 
 	// Unsuspend all accounts whose suspension origin was this domain block.
-	if err := p.rangeAccounts(ctx, block.Domain, func(account *gtsmodel.Account) {
+	if err := p.rangeDomainAccounts(ctx, block.Domain, func(account *gtsmodel.Account) {
 		if account.SuspensionOrigin == "" || account.SuspendedAt.IsZero() {
 			// Account wasn't suspended, nothing to do.
 			return
