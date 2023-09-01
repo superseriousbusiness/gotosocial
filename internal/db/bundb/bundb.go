@@ -28,7 +28,6 @@ import (
 	"net/url"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -449,30 +448,28 @@ func buildSQLiteAddress(addr string) string {
 		prefs.Add("cache", "shared")
 	}
 
-	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
+	if dur := config.GetDbSqliteBusyTimeout(); dur > 0 {
 		// Set the user provided SQLite busy timeout
 		// NOTE: MUST BE SET BEFORE THE JOURNAL MODE.
-		t := strconv.FormatInt(timeout.Milliseconds(), 10)
-		prefs.Add("busy_timeout", t)
+		prefs.Add("_pragma", fmt.Sprintf("busy_timeout(%d)", dur.Milliseconds()))
 	}
 
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {
 		// Set the user provided SQLite journal mode.
-		prefs.Add("journal_mode", mode)
+		prefs.Add("_pragma", fmt.Sprintf("journal_mode(%s)", mode))
 	}
 
 	if mode := config.GetDbSqliteSynchronous(); mode != "" {
 		// Set the user provided SQLite synchronous mode.
-		prefs.Add("synchronous", mode)
+		prefs.Add("_pragma", fmt.Sprintf("synchronous(%s)", mode))
 	}
 
-	if size := config.GetDbSqliteCacheSize(); size > 0 {
+	if sz := config.GetDbSqliteCacheSize(); sz > 0 {
 		// Set the user provided SQLite cache size (in kibibytes)
 		// Prepend a '-' character to this to indicate to sqlite
 		// that we're giving kibibytes rather than num pages.
 		// https://www.sqlite.org/pragma.html#pragma_cache_size
-		s := "-" + strconv.FormatUint(uint64(size/bytesize.KiB), 10)
-		prefs.Add("cache_size", s)
+		prefs.Add("_pragma", fmt.Sprintf("cache_size(-%d)", uint64(sz/bytesize.KiB)))
 	}
 
 	var b strings.Builder
