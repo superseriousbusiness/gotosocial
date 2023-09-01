@@ -436,7 +436,7 @@ func buildSQLiteAddress(addr string) string {
 	//   through to the transpiled C code.
 	//
 	// - The SQLite shim we interface with adds support for setting ANY of the
-	//   configuration options via query arguments, though using a special `_pragma`
+	//   configuration options via query arguments, through using a special `_pragma`
 	//   query key that specifies SQLite PRAGMAs to set upon opening each connection.
 	//   As such you will see below that most config is set with the `_pragma` key.
 	//
