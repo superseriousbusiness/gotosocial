@@ -25,9 +25,9 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -138,14 +138,6 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	db.AddQueryHook(queryHook{})
 	if config.GetTracingEnabled() {
 		db.AddQueryHook(tracing.InstrumentBun())
-	}
-
-	// execute sqlite pragmas *after* adding database hook;
-	// this allows the pragma queries to be logged
-	if t == "sqlite" {
-		if err := sqlitePragmas(ctx, db); err != nil {
-			return nil, err
-		}
 	}
 
 	// table registration is needed for many-to-many, see:
@@ -296,42 +288,8 @@ func sqliteConn(ctx context.Context) (*DB, error) {
 		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
 	}
 
-	// Drop anything fancy from DB address
-	address = strings.Split(address, "?")[0]       // drop any provided query strings
-	address = strings.TrimPrefix(address, "file:") // we'll prepend this later ourselves
-
-	// build our own SQLite preferences
-	prefs := []string{
-		// use immediate transaction lock mode to fail quickly if tx can't lock
-		// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
-		"_txlock=immediate",
-	}
-
-	if address == ":memory:" {
-		log.Warn(ctx, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
-
-		// Use random name for in-memory instead of ':memory:', so
-		// multiple in-mem databases can be created without conflict.
-		address = uuid.NewString()
-
-		// in-mem-specific preferences
-		prefs = append(prefs, []string{
-			"mode=memory",  // indicate in-memory mode using query
-			"cache=shared", // shared cache so that tests don't fail
-		}...)
-	}
-
-	// rebuild address string with our derived preferences
-	address = "file:" + address
-	for i, q := range prefs {
-		var prefix string
-		if i == 0 {
-			prefix = "?"
-		} else {
-			prefix = "&"
-		}
-		address += prefix + q
-	}
+	// Build SQLite connection address with prefs.
+	address = buildSQLiteAddress(address)
 
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite", address)
@@ -462,49 +420,107 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	return cfg, nil
 }
 
-// sqlitePragmas sets desired sqlite pragmas based on configured values, and
-// logs the results of the pragma queries. Errors if something goes wrong.
-func sqlitePragmas(ctx context.Context, db *DB) error {
-	var pragmas [][]string
+// buildSQLiteAddress will build an SQLite address string from given config input,
+// appending user defined SQLite connection preferences (e.g. cache_size, journal_mode etc).
+func buildSQLiteAddress(addr string) string {
+	// Notes on SQLite preferences:
+	//
+	// - SQLite by itself supports setting a subset of its configuration options
+	//   via URI query arguments in the connection. Namely `mode` and `cache`.
+	//   This is the same situation for the directly transpiled C->Go code in
+	//   modernc.org/sqlite, i.e. modernc.org/sqlite/lib, NOT the Go SQL driver.
+	//
+	// - `modernc.org/sqlite` has a "shim" around it to allow the directly
+	//   transpiled C code to be usable with a more native Go API. This is in
+	//   the form of a `database/sql/driver.Driver{}` implementation that calls
+	//   through to the transpiled C code.
+	//
+	// - The SQLite shim we interface with adds support for setting ANY of the
+	//   configuration options via query arguments, through using a special `_pragma`
+	//   query key that specifies SQLite PRAGMAs to set upon opening each connection.
+	//   As such you will see below that most config is set with the `_pragma` key.
+	//
+	// - As for why we're setting these PRAGMAs by connection string instead of
+	//   directly executing the PRAGMAs ourselves? That's to ensure that all of
+	//   configuration options are set across _all_ of our SQLite connections, given
+	//   that we are a multi-threaded (not directly in a C way) application and that
+	//   each connection is a separate SQLite instance opening the same database.
+	//   And the `database/sql` package provides transparent connection pooling.
+	//   Some data is shared between connections, for example the `journal_mode`
+	//   as that is set in a bit of the file header, but to be sure with the other
+	//   settings we just add them all to the connection URI string.
+	//
+	// - We specifically set the `busy_timeout` PRAGMA before the `journal_mode`.
+	//   When Write-Ahead-Logging (WAL) is enabled, in order to handle the issues
+	//   that may arise between separate concurrent read/write threads racing for
+	//   the same database file (and write-ahead log), SQLite will sometimes return
+	//   an `SQLITE_BUSY` error code, which indicates that the query was aborted
+	//   due to a data race and must be retried. The `busy_timeout` PRAGMA configures
+	//   a function handler that SQLite can use internally to handle these data races,
+	//   in that it will attempt to retry the query until the `busy_timeout` time is
+	//   reached. And for whatever reason (:shrug:) SQLite is very particular about
+	//   setting this BEFORE the `journal_mode` is set, otherwise you can end up
+	//   running into more of these `SQLITE_BUSY` return codes than you might expect.
+	//
+	// - One final thing (I promise!): `SQLITE_BUSY` is only handled by the internal
+	//   `busy_timeout` handler in the case that a data race occurs contending for
+	//  table locks. THERE ARE STILL OTHER SITUATIONS IN WHICH THIS MAY BE RETURNED!
+	//  As such, we use our wrapping DB{} and Tx{} types (in "db.go") which make use
+	//  of our own retry-busy handler.
+
+	// Drop anything fancy from DB address
+	addr = strings.Split(addr, "?")[0]       // drop any provided query strings
+	addr = strings.TrimPrefix(addr, "file:") // we'll prepend this later ourselves
+
+	// build our own SQLite preferences
+	// as a series of URL encoded values
+	prefs := make(url.Values)
+
+	// use immediate transaction lock mode to fail quickly if tx can't lock
+	// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
+	prefs.Add("_txlock", "immediate")
+
+	if addr == ":memory:" {
+		log.Warn(nil, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
+
+		// Use random name for in-memory instead of ':memory:', so
+		// multiple in-mem databases can be created without conflict.
+		addr = uuid.NewString()
+
+		// in-mem-specific preferences
+		// (shared cache so that tests don't fail)
+		prefs.Add("mode", "memory")
+		prefs.Add("cache", "shared")
+	}
+
+	if dur := config.GetDbSqliteBusyTimeout(); dur > 0 {
+		// Set the user provided SQLite busy timeout
+		// NOTE: MUST BE SET BEFORE THE JOURNAL MODE.
+		prefs.Add("_pragma", fmt.Sprintf("busy_timeout(%d)", dur.Milliseconds()))
+	}
+
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {
-		// Set the user provided SQLite journal mode
-		pragmas = append(pragmas, []string{"journal_mode", mode})
+		// Set the user provided SQLite journal mode.
+		prefs.Add("_pragma", fmt.Sprintf("journal_mode(%s)", mode))
 	}
 
 	if mode := config.GetDbSqliteSynchronous(); mode != "" {
-		// Set the user provided SQLite synchronous mode
-		pragmas = append(pragmas, []string{"synchronous", mode})
+		// Set the user provided SQLite synchronous mode.
+		prefs.Add("_pragma", fmt.Sprintf("synchronous(%s)", mode))
 	}
 
-	if size := config.GetDbSqliteCacheSize(); size > 0 {
+	if sz := config.GetDbSqliteCacheSize(); sz > 0 {
 		// Set the user provided SQLite cache size (in kibibytes)
 		// Prepend a '-' character to this to indicate to sqlite
 		// that we're giving kibibytes rather than num pages.
 		// https://www.sqlite.org/pragma.html#pragma_cache_size
-		s := "-" + strconv.FormatUint(uint64(size/bytesize.KiB), 10)
-		pragmas = append(pragmas, []string{"cache_size", s})
+		prefs.Add("_pragma", fmt.Sprintf("cache_size(-%d)", uint64(sz/bytesize.KiB)))
 	}
 
-	if timeout := config.GetDbSqliteBusyTimeout(); timeout > 0 {
-		t := strconv.FormatInt(timeout.Milliseconds(), 10)
-		pragmas = append(pragmas, []string{"busy_timeout", t})
-	}
-
-	for _, p := range pragmas {
-		pk := p[0]
-		pv := p[1]
-
-		if _, err := db.ExecContext(ctx, "PRAGMA ?=?", bun.Ident(pk), bun.Safe(pv)); err != nil {
-			return fmt.Errorf("error executing sqlite pragma %s: %w", pk, err)
-		}
-
-		var res string
-		if err := db.NewRaw("PRAGMA ?", bun.Ident(pk)).Scan(ctx, &res); err != nil {
-			return fmt.Errorf("error scanning sqlite pragma %s: %w", pv, err)
-		}
-
-		log.Infof(ctx, "sqlite pragma %s set to %s", pk, res)
-	}
-
-	return nil
+	var b strings.Builder
+	b.WriteString("file:")
+	b.WriteString(addr)
+	b.WriteString("?")
+	b.WriteString(prefs.Encode())
+	return b.String()
 }
