@@ -158,7 +158,7 @@ func (p *Processor) DomainBlockDelete(
 	if errWithCode := p.Actions.Run(
 		ctx,
 		&gtsmodel.AdminAction{
-			ID:             id.NewULID(),
+			ID:             actionID,
 			TargetCategory: gtsmodel.AdminActionCategoryDomain,
 			TargetID:       domainBlockC.Domain,
 			Type:           gtsmodel.AdminActionUnsuspend,
