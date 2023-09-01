@@ -445,6 +445,7 @@ func buildSQLiteAddress(addr string) string {
 	//   configuration options are set across _all_ of our SQLite connections, given
 	//   that we are a multi-threaded (not directly in a C way) application and that
 	//   each connection is a separate SQLite instance opening the same database.
+	//   And the `database/sql` package provides transparent connection pooling.
 	//   Some data is shared between connections, for example the `journal_mode`
 	//   as that is set in a bit of the file header, but to be sure with the other
 	//   settings we just add them all to the connection URI string.
