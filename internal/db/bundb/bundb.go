@@ -423,6 +423,50 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 // buildSQLiteAddress will build an SQLite address string from given config input,
 // appending user defined SQLite connection preferences (e.g. cache_size, journal_mode etc).
 func buildSQLiteAddress(addr string) string {
+	// Notes on SQLite preferences:
+	//
+	// - SQLite by itself supports setting a subset of its configuration options
+	//   via URI query arguments in the connection. Namely `mode` and `cache`.
+	//   This is the same situation for the directly transpiled C->Go code in
+	//   modernc.org/sqlite, i.e. modernc.org/sqlite/lib, NOT the Go SQL driver.
+	//
+	// - `modernc.org/sqlite` has a "shim" around it to allow the directly
+	//   transpiled C code to be usable with a more native Go API. This is in
+	//   the form of a `database/sql/driver.Driver{}` implementation that calls
+	//   through to the transpiled C code.
+	//
+	// - The SQLite shim we interface with adds support for setting ANY of the
+	//   configuration options via query arguments, though using a special `_pragma`
+	//   query key that specifies SQLite PRAGMAs to set upon opening each connection.
+	//   As such you will see below that most config is set with the `_pragma` key.
+	//
+	// - As for why we're setting these PRAGMAs by connection string instead of
+	//   directly executing the PRAGMAs ourselves? That's to ensure that all of
+	//   configuration options are set across _all_ of our SQLite connections, given
+	//   that we are a multi-threaded (not directly in a C way) application and that
+	//   each connection is a separate SQLite instance opening the same database.
+	//   Some data is shared between connections, for example the `journal_mode`
+	//   as that is set in a bit of the file header, but to be sure with the other
+	//   settings we just add them all to the connection URI string.
+	//
+	// - We specifically set the `busy_timeout` PRAGMA before the `journal_mode`.
+	//   When Write-Ahead-Logging (WAL) is enabled, in order to handle the issues
+	//   that may arise between separate concurrent read/write threads racing for
+	//   the same database file (and write-ahead log), SQLite will sometimes return
+	//   an `SQLITE_BUSY` error code, which indicates that the query was aborted
+	//   due to a data race and must be retried. The `busy_timeout` PRAGMA configures
+	//   a function handler that SQLite can use internally to handle these data races,
+	//   in that it will attempt to retry the query until the `busy_timeout` time is
+	//   reached. And for whatever reason (:shrug:) SQLite is very particular about
+	//   setting this BEFORE the `journal_mode` is set, otherwise you can end up
+	//   running into more of these `SQLITE_BUSY` return codes than you might expect.
+	//
+	// - One final thing (I promise!): `SQLITE_BUSY` is only handled by the internal
+	//   `busy_timeout` handler in the case that a data race occurs contending for
+	//  table locks. THERE ARE STILL OTHER SITUATIONS IN WHICH THIS MAY BE RETURNED!
+	//  As such, we use our wrapping DB{} and Tx{} types (in "db.go") which make use
+	//  of our own retry-busy handler.
+
 	// Drop anything fancy from DB address
 	addr = strings.Split(addr, "?")[0]       // drop any provided query strings
 	addr = strings.TrimPrefix(addr, "file:") // we'll prepend this later ourselves
