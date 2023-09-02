@@ -18,8 +18,6 @@
 package admin_test
 
 import (
-	"context"
-
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -28,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -51,6 +50,7 @@ type AdminStandardTestSuite struct {
 	federator           federation.Federator
 	emailSender         email.Sender
 	sentEmails          map[string]string
+	processor           *processing.Processor
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -63,7 +63,7 @@ type AdminStandardTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 
 	// module being tested
-	adminProcessor admin.Processor
+	adminProcessor *admin.Processor
 }
 
 func (suite *AdminStandardTestSuite) SetupSuite() {
@@ -99,19 +99,23 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
-	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.state.Workers.EnqueueClientAPI = func(ctx context.Context, msgs ...messages.FromClientAPI) {
-		for _, msg := range msgs {
-			suite.fromClientAPIChan <- msg
-		}
-	}
-
 	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 
-	suite.adminProcessor = admin.New(&suite.state, suite.tc, suite.mediaManager, suite.transportController, suite.emailSender)
+	suite.processor = processing.NewProcessor(
+		suite.tc,
+		suite.federator,
+		suite.oauthServer,
+		suite.mediaManager,
+		&suite.state,
+		suite.emailSender,
+	)
+
+	suite.state.Workers.ProcessFromClientAPI = suite.processor.Workers().ProcessFromClientAPI
+	suite.adminProcessor = suite.processor.Admin()
+
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }
