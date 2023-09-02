@@ -77,7 +77,7 @@ func init() {
 					UpdatedAt:      oldAction.UpdatedAt,
 					TargetCategory: gtsmodel.AdminActionCategoryAccount,
 					TargetID:       oldAction.TargetAccountID,
-					Type:           gtsmodel.AdminActionType(oldAction.Type),
+					Type:           gtsmodel.NewAdminActionType(string(oldAction.Type)),
 					AccountID:      oldAction.AccountID,
 					Text:           oldAction.Text,
 					SendEmail:      util.Ptr(oldAction.SendEmail),

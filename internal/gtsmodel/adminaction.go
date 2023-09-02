@@ -24,27 +24,93 @@ import (
 
 // AdminActionCategory describes the category
 // of entity that this admin action targets.
-type AdminActionCategory string
+type AdminActionCategory uint8
+
+// Only ever add new action categories to the *END* of the list
+// below, DO NOT insert them before/between other entries!
 
 const (
-	AdminActionCategoryAccount AdminActionCategory = "account"
-	AdminActionCategoryDomain  AdminActionCategory = "domain"
+	AdminActionCategoryUnknown AdminActionCategory = iota
+	AdminActionCategoryAccount
+	AdminActionCategoryDomain
 )
+
+func (c AdminActionCategory) String() string {
+	switch c {
+	case AdminActionCategoryAccount:
+		return "account"
+	case AdminActionCategoryDomain:
+		return "domain"
+	default:
+		return "unknown"
+	}
+}
+
+func NewAdminActionCategory(in string) AdminActionCategory {
+	switch in {
+	case "account":
+		return AdminActionCategoryAccount
+	case "domain":
+		return AdminActionCategoryDomain
+	default:
+		return AdminActionCategoryUnknown
+	}
+}
 
 // AdminActionType describes a type of
 // action taken on an entity by an admin.
-type AdminActionType string
+type AdminActionType uint8
+
+// Only ever add new action types to the *END* of the list
+// below, DO NOT insert them before/between other entries!
 
 const (
-	AdminActionDisable  AdminActionType = "disable"
-	AdminActionReenable AdminActionType = "reenable"
-
-	AdminActionSilence   AdminActionType = "silence"
-	AdminActionUnsilence AdminActionType = "unsilence"
-
-	AdminActionSuspend   AdminActionType = "suspend"
-	AdminActionUnsuspend AdminActionType = "unsuspend"
+	AdminActionUnknown AdminActionType = iota
+	AdminActionDisable
+	AdminActionReenable
+	AdminActionSilence
+	AdminActionUnsilence
+	AdminActionSuspend
+	AdminActionUnsuspend
 )
+
+func (t AdminActionType) String() string {
+	switch t {
+	case AdminActionDisable:
+		return "disable"
+	case AdminActionReenable:
+		return "reenable"
+	case AdminActionSilence:
+		return "silence"
+	case AdminActionUnsilence:
+		return "unsilence"
+	case AdminActionSuspend:
+		return "suspend"
+	case AdminActionUnsuspend:
+		return "unsuspend"
+	default:
+		return "unknown"
+	}
+}
+
+func NewAdminActionType(in string) AdminActionType {
+	switch in {
+	case "disable":
+		return AdminActionDisable
+	case "reenable":
+		return AdminActionReenable
+	case "silence":
+		return AdminActionSilence
+	case "unsilence":
+		return AdminActionUnsilence
+	case "suspend":
+		return AdminActionSuspend
+	case "unsuspend":
+		return AdminActionUnsuspend
+	default:
+		return AdminActionUnknown
+	}
+}
 
 // AdminAction models an action taken by an instance administrator towards an account, domain, etc.
 type AdminAction struct {

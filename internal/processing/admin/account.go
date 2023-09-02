@@ -34,21 +34,21 @@ func (p *Processor) AccountAction(
 	adminAcct *gtsmodel.Account,
 	request *apimodel.AdminActionRequest,
 ) (string, gtserror.WithCode) {
-	targetAccount, err := p.state.DB.GetAccountByID(ctx, request.TargetID)
+	targetAcct, err := p.state.DB.GetAccountByID(ctx, request.TargetID)
 	if err != nil {
 		err := gtserror.Newf("db error getting target account: %w", err)
 		return "", gtserror.NewErrorInternalError(err)
 	}
 
-	switch gtsmodel.AdminActionType(request.Type) {
+	switch gtsmodel.NewAdminActionType(request.Type) {
 	case gtsmodel.AdminActionSuspend:
-		return p.accountActionSuspend(ctx, adminAcct, targetAccount, request.Text)
+		return p.accountActionSuspend(ctx, adminAcct, targetAcct, request.Text)
 
 	default:
 		// TODO: add more types to this slice when adding
 		//       more types to the switch statement above.
-		supportedTypes := []gtsmodel.AdminActionType{
-			gtsmodel.AdminActionSuspend,
+		supportedTypes := []string{
+			gtsmodel.AdminActionSuspend.String(),
 		}
 
 		err := fmt.Errorf(
