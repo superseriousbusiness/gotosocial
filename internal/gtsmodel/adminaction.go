@@ -139,7 +139,7 @@ type AdminAction struct {
 // either this or the other action.
 func (a *AdminAction) Key() string {
 	return path.Join(
-		string(a.TargetCategory),
+		a.TargetCategory.String(),
 		a.TargetID,
 	)
 }
