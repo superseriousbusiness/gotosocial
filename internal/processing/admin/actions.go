@@ -64,24 +64,24 @@ func (a *Actions) Run(
 	action *gtsmodel.AdminAction,
 	f func(context.Context) gtserror.MultiError,
 ) gtserror.WithCode {
-	key := action.Key()
+	actionKey := action.Key()
 
-	// Check if an action with
-	// this key is already running.
+	// LOCK THE MAP HERE, since we're
+	// going to do some operations on it.
 	a.m.Lock()
-	running, ok := a.r[key]
-	a.m.Unlock()
 
+	// Bail if an action with
+	// this key is already running.
+	running, ok := a.r[actionKey]
 	if ok {
+		a.m.Unlock()
 		return errActionConflict(running)
 	}
 
 	// Action with this key not
-	// yet running, lock it in.
-	a.m.Lock()
-
+	// yet running, create it.
 	if err := a.state.DB.PutAdminAction(ctx, action); err != nil {
-		err = gtserror.Newf("db error putting admin action %s: %w", key, err)
+		err = gtserror.Newf("db error putting admin action %s: %w", actionKey, err)
 
 		// Don't store in map
 		// if there's an error.
@@ -91,7 +91,10 @@ func (a *Actions) Run(
 
 	// Action was inserted,
 	// store in map.
-	a.r[key] = action
+	a.r[actionKey] = action
+
+	// UNLOCK THE MAP HERE, since
+	// we're done modifying it for now.
 	a.m.Unlock()
 
 	// Do the rest of the work asynchronously.
@@ -107,14 +110,14 @@ func (a *Actions) Run(
 		// Action is no longer running:
 		// remove from running map.
 		a.m.Lock()
-		delete(a.r, key)
+		delete(a.r, actionKey)
 		a.m.Unlock()
 
 		// Mark as completed in the db,
 		// storing errors for later review.
 		action.CompletedAt = time.Now()
 		if err := a.state.DB.UpdateAdminAction(ctx, action, "completed_at", "errors"); err != nil {
-			log.Errorf(ctx, "db error marking action %s as completed: %q", key, err)
+			log.Errorf(ctx, "db error marking action %s as completed: %q", actionKey, err)
 		}
 	})
 
