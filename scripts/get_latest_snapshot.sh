@@ -21,7 +21,7 @@ GITHUB_BRANCH="main"
 GITHUB_ENDPOINT="https://${GITHUB_API_HOST}/repos/${GITHUB_ORG}/${GITHUB_REPO}/commits/${GITHUB_BRANCH}"
 
 echo "fetching latest hash from endpoint '${GITHUB_ENDPOINT}'"
-LATEST_HASH="$(curl -s "${GITHUB_ENDPOINT}" | jq -r .sha)"
+LATEST_HASH="$(curl --silent --fail --retry 5 --retry-max-time 180 --max-time 30 "${GITHUB_ENDPOINT}" | jq -r .sha)"
 echo "got latest hash = ${LATEST_HASH}"
 
 MINIO_HOST="s3.superseriousbusiness.org"
