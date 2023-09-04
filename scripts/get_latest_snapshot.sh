@@ -29,5 +29,5 @@ MINIO_BUCKET="gotosocial-snapshots"
 MINIO_ENDPOINT="https://${MINIO_HOST}/${MINIO_BUCKET}/${LATEST_HASH}/${GTS_FILENAME}"
 
 echo "fetching latest snapshot tar.gz from endpoint '${MINIO_ENDPOINT}'"
-wget --no-verbose -O "./${GTS_FILENAME}" "${MINIO_ENDPOINT}"
+curl --silent --fail --retry 5 --retry-max-time 600 --max-time 1800 "${MINIO_ENDPOINT}" --output "./${GTS_FILENAME}"
 echo "got latest snapshot!"
