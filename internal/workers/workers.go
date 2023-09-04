@@ -45,6 +45,19 @@ type Workers struct {
 	EnqueueClientAPI func(context.Context, ...messages.FromClientAPI)
 	EnqueueFediAPI   func(context.Context, ...messages.FromFediAPI)
 
+	// Blocking processing functions for clientAPI / federator.
+	// These are pointers to Processor{}.Process___() msg functions.
+	// This prevents dependency cycling as Processor depends on Workers.
+	//
+	// Rather than queueing messages for asynchronous processing, these
+	// functions will process immediately and in a blocking manner, and
+	// will not use up a worker slot.
+	//
+	// As such, you should only call them in special cases where something
+	// synchronous needs to happen before you can do something else.
+	ProcessFromClientAPI func(context.Context, messages.FromClientAPI) error
+	ProcessFromFediAPI   func(context.Context, messages.FromFediAPI) error
+
 	// Media manager worker pools.
 	Media runners.WorkerPool
 

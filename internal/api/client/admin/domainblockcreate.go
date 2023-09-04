@@ -119,6 +119,11 @@ import (
 //			description: not found
 //		'406':
 //			description: not acceptable
+//		'409':
+//			description: >-
+//				Conflict: There is already an admin action running that conflicts with this action.
+//				Check the error message in the response body for more information. This is a temporary
+//				error; it should be possible to process this action if you try again in a bit.
 //		'500':
 //			description: internal server error
 func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
@@ -159,7 +164,7 @@ func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
 
 	if !importing {
 		// Single domain block creation.
-		domainBlock, errWithCode := m.processor.Admin().DomainBlockCreate(
+		domainBlock, _, errWithCode := m.processor.Admin().DomainBlockCreate(
 			c.Request.Context(),
 			authed.Account,
 			form.Domain,

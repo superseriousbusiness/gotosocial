@@ -57,3 +57,23 @@ type User struct {
 	ResetPasswordSentAt    time.Time    `bun:"type:timestamptz,nullzero"`                                   // When did we email the user their reset-password email?
 	ExternalID             string       `bun:",nullzero,unique"`                                            // If the login for the user is managed externally (e.g OIDC), we need to keep a stable reference to the external object (e.g OIDC sub claim)
 }
+
+// NewSignup models parameters for the creation
+// of a new user + account on this instance.
+//
+// Aside from username, email, and password, it is
+// fine to use zero values on fields of this struct.
+type NewSignup struct {
+	Username string // Username of the new account.
+	Email    string // Email address of the user.
+	Password string // Plaintext (not yet hashed) password for the user.
+
+	Reason        string // Reason given by the user when submitting a sign up request (optional).
+	PreApproved   bool   // Mark the new user/account as preapproved (optional)
+	SignUpIP      net.IP // IP address from which the sign up request occurred (optional).
+	Locale        string // Locale code for the new account/user (optional).
+	AppID         string // ID of the application used to create this account (optional).
+	EmailVerified bool   // Mark submitted email address as already verified (optional).
+	ExternalID    string // ID of this user in external OIDC system (optional).
+	Admin         bool   // Mark new user as an admin user (optional).
+}

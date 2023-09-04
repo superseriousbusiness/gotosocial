@@ -320,3 +320,69 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 	log.Infof(ctx, "created instance instance %s with id %s", host, i.ID)
 	return nil
 }
+
+/*
+	ACTION FUNCS
+*/
+
+func (a *adminDB) GetAdminAction(ctx context.Context, id string) (*gtsmodel.AdminAction, error) {
+	action := new(gtsmodel.AdminAction)
+
+	if err := a.db.
+		NewSelect().
+		Model(action).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return action, nil
+}
+
+func (a *adminDB) GetAdminActions(ctx context.Context) ([]*gtsmodel.AdminAction, error) {
+	actions := make([]*gtsmodel.AdminAction, 0)
+
+	if err := a.db.
+		NewSelect().
+		Model(&actions).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return actions, nil
+}
+
+func (a *adminDB) PutAdminAction(ctx context.Context, action *gtsmodel.AdminAction) error {
+	_, err := a.db.
+		NewInsert().
+		Model(action).
+		Exec(ctx)
+
+	return err
+}
+
+func (a *adminDB) UpdateAdminAction(ctx context.Context, action *gtsmodel.AdminAction, columns ...string) error {
+	// Update the action's last-updated
+	action.UpdatedAt = time.Now()
+	if len(columns) != 0 {
+		columns = append(columns, "updated_at")
+	}
+
+	_, err := a.db.
+		NewUpdate().
+		Model(action).
+		Where("? = ?", bun.Ident("admin_action.id"), action.ID).
+		Column(columns...).
+		Exec(ctx)
+
+	return err
+}
+
+func (a *adminDB) DeleteAdminAction(ctx context.Context, id string) error {
+	_, err := a.db.
+		NewDelete().
+		TableExpr("? AS ?", bun.Ident("admin_actions"), bun.Ident("admin_action")).
+		Where("? = ?", bun.Ident("admin_action"), id).
+		Exec(ctx)
+
+	return err
+}
