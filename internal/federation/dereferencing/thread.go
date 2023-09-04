@@ -158,10 +158,9 @@ func (d *deref) DereferenceStatusAncestors(
 
 		// Parent URI is valid, try to get it.
 		// getStatusByURI guards against the following conditions:
-		//
+		//   - refetching recently fetched statuses (recursion!)
 		//   - remote domain is blocked (will return unretrievable)
-		//   - domain is local (will try to return something, or
-		//     return unretrievable).
+		//   - any http type error for a new status returns unretrievable
 		parent, _, err := d.getStatusByURI(ctx, username, inReplyToURI)
 		if err == nil {
 			// We successfully fetched the parent.
