@@ -6,7 +6,7 @@ set -eu
 # the latest snapshot build of GoToSocial from
 # the Minio S3 bucket.
 #
-# Requires curl, jq, and wget.
+# Requires curl and jq.
 #
 # Change the variables below for your particular
 # platform and architecture (default linux amd64). 
