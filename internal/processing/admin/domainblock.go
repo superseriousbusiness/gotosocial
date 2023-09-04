@@ -87,7 +87,7 @@ func (p *Processor) DomainBlockCreate(
 
 	// Process domain block side
 	// effects asynchronously.
-	if errWithCode := p.Actions.Run(
+	if errWithCode := p.actions.Run(
 		ctx,
 		&gtsmodel.AdminAction{
 			ID:             actionID,
@@ -155,7 +155,7 @@ func (p *Processor) DomainBlockDelete(
 
 	// Process domain unblock side
 	// effects asynchronously.
-	if errWithCode := p.Actions.Run(
+	if errWithCode := p.actions.Run(
 		ctx,
 		&gtsmodel.AdminAction{
 			ID:             actionID,

@@ -37,7 +37,11 @@ type Processor struct {
 
 	// admin Actions currently
 	// undergoing processing
-	Actions *Actions
+	actions *Actions
+}
+
+func (p *Processor) Actions() *Actions {
+	return p.actions
 }
 
 // New returns a new admin processor.
@@ -50,7 +54,7 @@ func New(state *state.State, tc typeutils.TypeConverter, mediaManager *media.Man
 		transportController: transportController,
 		emailSender:         emailSender,
 
-		Actions: &Actions{
+		actions: &Actions{
 			r:     make(map[string]*gtsmodel.AdminAction),
 			state: state,
 		},

@@ -55,7 +55,7 @@ func (suite *DomainBlockTestSuite) TestCreateDomainBlock() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions.TotalRunning() == 0
+		return suite.adminProcessor.Actions().TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}

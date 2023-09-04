@@ -61,7 +61,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 	key2 := action2.Key()
 	suite.Equal("account/01H90S1CXQ97J9625C5YBXZWGT", key2)
 
-	errWithCode := suite.adminProcessor.Actions.Run(
+	errWithCode := suite.adminProcessor.Actions().Run(
 		ctx,
 		action1,
 		func(ctx context.Context) gtserror.MultiError {
@@ -74,7 +74,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// While first action is sleeping, try to
 	// process another with the same key.
-	errWithCode = suite.adminProcessor.Actions.Run(
+	errWithCode = suite.adminProcessor.Actions().Run(
 		ctx,
 		action2,
 		func(ctx context.Context) gtserror.MultiError {
@@ -90,13 +90,13 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions.TotalRunning() == 0
+		return suite.adminProcessor.Actions().TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
 
 	// Try again.
-	errWithCode = suite.adminProcessor.Actions.Run(
+	errWithCode = suite.adminProcessor.Actions().Run(
 		ctx,
 		action2,
 		func(ctx context.Context) gtserror.MultiError {
@@ -107,7 +107,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions.TotalRunning() == 0
+		return suite.adminProcessor.Actions().TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
@@ -125,7 +125,7 @@ func (suite *ActionsTestSuite) TestActionWithErrors() {
 		AccountID:      "01H90S1ZZXP4N74H4A9RVW1MRP",
 	}
 
-	errWithCode := suite.adminProcessor.Actions.Run(
+	errWithCode := suite.adminProcessor.Actions().Run(
 		ctx,
 		action,
 		func(ctx context.Context) gtserror.MultiError {
@@ -140,7 +140,7 @@ func (suite *ActionsTestSuite) TestActionWithErrors() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions.TotalRunning() == 0
+		return suite.adminProcessor.Actions().TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
