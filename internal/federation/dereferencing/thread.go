@@ -354,7 +354,11 @@ stackLoop:
 				}
 
 				if statusable == nil {
-					// already up-to-date.
+					// A nil statusable return from
+					// getStatusByURI() indicates a
+					// remote status that was already
+					// dereferenced recently (so no
+					// need to go through descendents).
 					continue itemLoop
 				}
 
