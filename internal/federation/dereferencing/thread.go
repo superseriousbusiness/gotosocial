@@ -344,7 +344,7 @@ stackLoop:
 				// getStatusByURI guards against the following conditions:
 				//   - refetching recently fetched statuses (recursion!)
 				//   - remote domain is blocked (will return unretrievable)
-				//   - domain is local (unretrievable = not found / blocked)
+				//   - any http type error for a new status returns unretrievable
 				status, statusable, err := d.getStatusByURI(ctx, username, itemIRI)
 				if err != nil {
 					if !gtserror.Unretrievable(err) {
