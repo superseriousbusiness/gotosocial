@@ -98,7 +98,7 @@ func (p *Processor) DomainBlockCreate(
 			Text:           domainBlock.PrivateComment,
 		},
 		func(ctx context.Context) gtserror.MultiError {
-			return p.domainBlockSideEffects(ctx, adminAcct, domainBlock)
+			return p.domainBlockSideEffects(ctx, domainBlock)
 		},
 	); errWithCode != nil {
 		return nil, actionID, errWithCode
@@ -165,7 +165,7 @@ func (p *Processor) DomainBlockDelete(
 			AccountID:      adminAcct.ID,
 		},
 		func(ctx context.Context) gtserror.MultiError {
-			return p.domainUnblockSideEffects(ctx, adminAcct, domainBlock)
+			return p.domainUnblockSideEffects(ctx, domainBlock)
 		},
 	); errWithCode != nil {
 		return nil, actionID, errWithCode
@@ -321,7 +321,6 @@ func (p *Processor) DomainBlockGet(ctx context.Context, id string, export bool) 
 // there are many accounts present on the given domain.
 func (p *Processor) domainBlockSideEffects(
 	ctx context.Context,
-	adminAcct *gtsmodel.Account,
 	block *gtsmodel.DomainBlock,
 ) gtserror.MultiError {
 	l := log.
@@ -384,7 +383,6 @@ func (p *Processor) domainBlockSideEffects(
 // there are many accounts present on the given domain.
 func (p *Processor) domainUnblockSideEffects(
 	ctx context.Context,
-	adminAcct *gtsmodel.Account,
 	block *gtsmodel.DomainBlock,
 ) gtserror.MultiError {
 	l := log.
