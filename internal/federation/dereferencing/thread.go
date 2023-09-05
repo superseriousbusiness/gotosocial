@@ -446,15 +446,14 @@ func getAttachedStatusCollection(status ap.Statusable) (page ap.CollectionPageab
 		return nil, ""
 	}
 
-	// Get the JSONLD ID of collection
-	pageID := page.GetJSONLDId()
-	if pageID == nil {
-		// MUST have an ID.
+	if pageID := page.GetJSONLDId(); pageID != nil {
+		// By default use collection JSONLD ID
+		return page, pageID.Get().String()
+	} else if statusID := status.GetJSONLDId(); statusID != nil {
+		// Else, if possible use status JSONLD ID
+		return page, statusID.Get().String()
+	} else {
+		// MUST have some kind of ID
 		return nil, ""
 	}
-
-	// Assemble the ID URI string.
-	uri = pageID.Get().String()
-
-	return
 }
