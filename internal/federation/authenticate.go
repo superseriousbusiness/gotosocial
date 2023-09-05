@@ -45,6 +45,12 @@ var (
 	}
 )
 
+type PubKeyResponse struct {
+	PubKey    *rsa.PublicKey
+	NewPubKey *rsa.PublicKey
+	OwnerURI  *url.URL
+}
+
 // AuthenticateFederatedRequest authenticates any kind of incoming federated
 // request from a remote server. This includes things like GET requests for
 // dereferencing our users or statuses etc, and POST requests for delivering
@@ -102,10 +108,9 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	// so now we need to validate the signature.
 
 	var (
-		pubKeyIDStr          = pubKeyID.String()
-		requestingAccountURI *url.URL
-		pubKey               interface{}
-		errWithCode          gtserror.WithCode
+		pubKeyIDStr    = pubKeyID.String()
+		pubKeyResponse *PubKeyResponse
+		errWithCode    gtserror.WithCode
 	)
 
 	l := log.
@@ -117,10 +122,10 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 
 	if pubKeyID.Host == config.GetHost() {
 		l.Trace("public key is ours, no dereference needed")
-		requestingAccountURI, pubKey, errWithCode = f.derefDBOnly(ctx, pubKeyIDStr)
+		pubKeyResponse, errWithCode = f.derefDBOnly(ctx, pubKeyIDStr)
 	} else {
 		l.Trace("public key is not ours, checking if we need to dereference")
-		requestingAccountURI, pubKey, errWithCode = f.deref(ctx, requestedUsername, pubKeyIDStr, pubKeyID)
+		pubKeyResponse, errWithCode = f.deref(ctx, requestedUsername, pubKeyIDStr, pubKeyID)
 	}
 
 	if errWithCode != nil {
@@ -142,7 +147,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		err := verifier.Verify(pubKey, algo)
 		if err == nil {
 			l.Tracef("authentication PASSED with %s", algo)
-			return requestingAccountURI, nil
+			return pubKeyResponse.OwnerURI, nil
 		}
 
 		l.Tracef("authentication NOT PASSED with %s: %q", algo, err)
@@ -162,20 +167,23 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 func (f *federator) derefDBOnly(
 	ctx context.Context,
 	pubKeyIDStr string,
-) (*url.URL, interface{}, gtserror.WithCode) {
+) (*PubKeyResponse, gtserror.WithCode) {
 	reqAcct, err := f.db.GetAccountByPubkeyID(ctx, pubKeyIDStr)
 	if err != nil {
 		err = gtserror.Newf("db error getting account with pubKeyID %s: %w", pubKeyIDStr, err)
-		return nil, nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	reqAcctURI, err := url.Parse(reqAcct.URI)
 	if err != nil {
 		err = gtserror.Newf("error parsing account uri with pubKeyID %s: %w", pubKeyIDStr, err)
-		return nil, nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return reqAcctURI, reqAcct.PublicKey, nil
+	return &PubKeyResponse{
+		PubKey:   reqAcct.PublicKey,
+		OwnerURI: reqAcctURI,
+	}, nil
 }
 
 // deref tries to dereference the given public key by first
@@ -186,7 +194,7 @@ func (f *federator) deref(
 	requestedUsername string,
 	pubKeyIDStr string,
 	pubKeyID *url.URL,
-) (*url.URL, interface{}, gtserror.WithCode) {
+) (*PubKeyResponse, gtserror.WithCode) {
 	l := log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
@@ -196,10 +204,10 @@ func (f *federator) deref(
 
 	// Try a database only deref first. We may already
 	// have the requesting account cached locally.
-	reqAcctURI, pubKey, errWithCode := f.derefDBOnly(ctx, pubKeyIDStr)
+	pubkeyResponse, errWithCode := f.derefDBOnly(ctx, pubKeyIDStr)
 	if errWithCode == nil {
 		l.Trace("public key cached, no dereference needed")
-		return reqAcctURI, pubKey, nil
+		return pubkeyResponse, nil
 	}
 
 	l.Trace("public key not cached, trying dereference")
