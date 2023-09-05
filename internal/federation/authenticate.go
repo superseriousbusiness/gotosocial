@@ -76,7 +76,7 @@ type PubKeyResponse struct {
 // Also note that this function *does not* dereference the remote account that
 // the signature key is associated with. Other functions should use the returned
 // URL to dereference the remote account, if required.
-func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*url.URL, gtserror.WithCode) {
+func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*PubKeyResponse, gtserror.WithCode) {
 	// Thanks to the signature check middleware,
 	// we should already have an http signature
 	// verifier set on the context. If we don't,
@@ -132,25 +132,28 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		return nil, errWithCode
 	}
 
-	// Ensure public key now defined.
-	if pubKey == nil {
-		err := gtserror.New("public key was nil")
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
 	// Try to authenticate using permitted algorithms in
-	// order of most -> least common. Return OK as soon
-	// as one passes.
-	for _, algo := range signingAlgorithms {
-		l.Tracef("trying %s", algo)
-
-		err := verifier.Verify(pubKey, algo)
-		if err == nil {
-			l.Tracef("authentication PASSED with %s", algo)
-			return pubKeyResponse.OwnerURI, nil
+	// order of most -> least common, checking each defined
+	// pubKey for this Actor. Return OK as soon as one passes.
+	for _, pubKey := range []*rsa.PublicKey{
+		pubKeyResponse.NewPubKey,
+		pubKeyResponse.PubKey,
+	} {
+		if pubKey == nil {
+			continue
 		}
 
-		l.Tracef("authentication NOT PASSED with %s: %q", algo, err)
+		for _, algo := range signingAlgorithms {
+			l.Tracef("trying %s", algo)
+
+			err := verifier.Verify(pubKey, algo)
+			if err == nil {
+				l.Tracef("authentication PASSED with %s", algo)
+				return pubKeyResponse, nil
+			}
+
+			l.Tracef("authentication NOT PASSED with %s: %q", algo, err)
+		}
 	}
 
 	// At this point no algorithms passed.
@@ -179,7 +182,7 @@ func (f *federator) derefDBOnly(
 		err = gtserror.Newf("error parsing account uri with pubKeyID %s: %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-
+aaaaaaaa
 	return &PubKeyResponse{
 		PubKey:   reqAcct.PublicKey,
 		OwnerURI: reqAcctURI,
@@ -218,28 +221,31 @@ func (f *federator) deref(
 	gone, err := f.CheckGone(ctx, pubKeyID)
 	if err != nil {
 		err := gtserror.Newf("error checking for tombstone for %s: %w", pubKeyIDStr, err)
-		return nil, nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if gone {
 		err := gtserror.Newf("account with public key %s is gone", pubKeyIDStr)
-		return nil, nil, gtserror.NewErrorGone(err)
+		return nil, gtserror.NewErrorGone(err)
 	}
 
 	// Make an http call to get the pubkey.
 	pubKeyBytes, errWithCode := f.callForPubKey(ctx, requestedUsername, pubKeyID)
 	if errWithCode != nil {
-		return nil, nil, errWithCode
+		return nil, errWithCode
 	}
 
 	// Extract the key and the owner from the response.
 	pubKey, pubKeyOwner, err := parsePubKeyBytes(ctx, pubKeyBytes, pubKeyID)
 	if err != nil {
 		err := fmt.Errorf("error parsing public key %s: %w", pubKeyID, err)
-		return nil, nil, gtserror.NewErrorUnauthorized(err)
+		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
-	return pubKeyOwner, pubKey, nil
+	return &PubKeyResponse{
+		PubKey:   pubKey,
+		OwnerURI: pubKeyOwner,
+	}, nil
 }
 
 // callForPubKey handles the nitty gritty of actually

@@ -48,7 +48,7 @@ func (p *Processor) authenticate(ctx context.Context, requestedUsername string) 
 
 	// Ensure request signed, and use signature URI to
 	// get requesting account, dereferencing if necessary.
-	requestingAccountURI, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+	pubKeyResponse, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, nil, errWithCode
 	}
@@ -56,10 +56,10 @@ func (p *Processor) authenticate(ctx context.Context, requestedUsername string) 
 	requestingAccount, _, err := p.federator.GetAccountByURI(
 		gtscontext.SetFastFail(ctx),
 		requestedUsername,
-		requestingAccountURI,
+		pubKeyResponse.OwnerURI,
 	)
 	if err != nil {
-		err = gtserror.Newf("error getting account %s: %w", requestingAccountURI, err)
+		err = gtserror.Newf("error getting account %s: %w", pubKeyResponse.OwnerURI, err)
 		return nil, nil, gtserror.NewErrorUnauthorized(err)
 	}
 

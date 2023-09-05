@@ -209,7 +209,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	}
 
 	// Check who's trying to deliver to us by inspecting the http signature.
-	pubKeyOwner, errWithCode := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
+	pubKeyResponse, errWithCode := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
 	if errWithCode != nil {
 		switch errWithCode.Code() {
 		case http.StatusUnauthorized, http.StatusForbidden, http.StatusBadRequest:
@@ -232,12 +232,14 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
+	pubKeyOwnerURI := pubKeyResponse.OwnerURI
+
 	// Authentication has passed, check if we need to create a
 	// new instance entry for the Host of the requesting account.
-	if _, err := f.db.GetInstance(ctx, pubKeyOwner.Host); err != nil {
+	if _, err := f.db.GetInstance(ctx, pubKeyOwnerURI.Host); err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// There's been an actual error.
-			err = gtserror.Newf("error getting instance %s: %w", pubKeyOwner.Host, err)
+			err = gtserror.Newf("error getting instance %s: %w", pubKeyOwnerURI.Host, err)
 			return ctx, false, err
 		}
 
@@ -247,17 +249,17 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			gtscontext.SetFastFail(ctx),
 			username,
 			&url.URL{
-				Scheme: pubKeyOwner.Scheme,
-				Host:   pubKeyOwner.Host,
+				Scheme: pubKeyOwnerURI.Scheme,
+				Host:   pubKeyOwnerURI.Host,
 			},
 		)
 		if err != nil {
-			err = gtserror.Newf("error dereferencing instance %s: %w", pubKeyOwner.Host, err)
+			err = gtserror.Newf("error dereferencing instance %s: %w", pubKeyOwnerURI.Host, err)
 			return nil, false, err
 		}
 
 		if err := f.db.PutInstance(ctx, instance); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
-			err = gtserror.Newf("error inserting instance entry for %s: %w", pubKeyOwner.Host, err)
+			err = gtserror.Newf("error inserting instance entry for %s: %w", pubKeyOwnerURI.Host, err)
 			return nil, false, err
 		}
 	}
@@ -268,7 +270,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	requestingAccount, _, err := f.GetAccountByURI(
 		gtscontext.SetFastFail(ctx),
 		username,
-		pubKeyOwner,
+		pubKeyOwnerURI,
 	)
 	if err != nil {
 		if gtserror.StatusCode(err) == http.StatusGone {
@@ -282,7 +284,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			return ctx, false, nil
 		}
 
-		err = gtserror.Newf("couldn't get requesting account %s: %w", pubKeyOwner, err)
+		err = gtserror.Newf("couldn't get requesting account %s: %w", pubKeyResponse, err)
 		return nil, false, err
 	}
 
