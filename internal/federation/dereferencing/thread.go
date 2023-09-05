@@ -421,7 +421,7 @@ stackLoop:
 
 // getAttachedStatusCollection is a small utility function to fetch the first page
 // of an attached activity streams collection from a provided statusable object .
-func getAttachedStatusCollection(status ap.Statusable) (Page ap.CollectionPageable, URI string) { //nolint:gocritic
+func getAttachedStatusCollection(status ap.Statusable) (page ap.CollectionPageable, uri string) { //nolint:gocritic
 	// Look for an attached status replies (as collection)
 	replies := status.GetActivityStreamsReplies()
 	if replies == nil {
@@ -441,7 +441,7 @@ func getAttachedStatusCollection(status ap.Statusable) (Page ap.CollectionPageab
 	}
 
 	// Return the first activity stream collection page
-	page := first.GetActivityStreamsCollectionPage()
+	page = first.GetActivityStreamsCollectionPage()
 	if page == nil {
 		return nil, ""
 	}
@@ -453,5 +453,8 @@ func getAttachedStatusCollection(status ap.Statusable) (Page ap.CollectionPageab
 		return nil, ""
 	}
 
-	return page, pageID.Get().String()
+	// Assemble the ID URI string.
+	uri = pageID.Get().String()
+
+	return
 }
