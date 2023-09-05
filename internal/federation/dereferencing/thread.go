@@ -268,11 +268,14 @@ func (d *deref) DereferenceStatusDescendants(ctx context.Context, username strin
 		// popped from into 'current' when that child's tree
 		// of further descendants is exhausted.
 		stack = []*frame{
-			{
-				// Starting input is first frame
-				page:    getAttachedStatusCollection(parent),
-				pageURI: statusIRIStr,
-			},
+			func() *frame {
+				// Start input frame is built from the first input.
+				page, pageURI := getAttachedStatusCollection(parent)
+				if page == nil {
+					return nil
+				}
+				return &frame{page: page, pageURI: pageURI}
+			}(),
 		}
 
 		// popStack will remove and return the top frame
@@ -344,7 +347,7 @@ stackLoop:
 				//   - refetching recently fetched statuses (recursion!)
 				//   - remote domain is blocked (will return unretrievable)
 				//   - any http type error for a new status returns unretrievable
-				status, statusable, err := d.getStatusByURI(ctx, username, itemIRI)
+				_, statusable, err := d.getStatusByURI(ctx, username, itemIRI)
 				if err != nil {
 					if !gtserror.Unretrievable(err) {
 						l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
@@ -361,15 +364,15 @@ stackLoop:
 					continue itemLoop
 				}
 
-				// Extract any attached collection from status.
-				page := getAttachedStatusCollection(statusable)
+				// Extract any attached collection + URI from status.
+				page, pageURI := getAttachedStatusCollection(statusable)
 				if page == nil {
 					continue itemLoop
 				}
 
 				// Put current and next frame at top of stack
 				stack = append(stack, current, &frame{
-					pageURI: status.URI,
+					pageURI: pageURI,
 					page:    page,
 				})
 
@@ -418,25 +421,37 @@ stackLoop:
 
 // getAttachedStatusCollection is a small utility function to fetch the first page
 // of an attached activity streams collection from a provided statusable object .
-func getAttachedStatusCollection(status ap.Statusable) ap.CollectionPageable {
+func getAttachedStatusCollection(status ap.Statusable) (Page ap.CollectionPageable, URI string) { //nolint:gocritic
 	// Look for an attached status replies (as collection)
 	replies := status.GetActivityStreamsReplies()
 	if replies == nil {
-		return nil
+		return nil, ""
 	}
 
 	// Get the status replies collection
 	collection := replies.GetActivityStreamsCollection()
 	if collection == nil {
-		return nil
+		return nil, ""
 	}
 
 	// Get the "first" property of the replies collection
 	first := collection.GetActivityStreamsFirst()
 	if first == nil {
-		return nil
+		return nil, ""
 	}
 
 	// Return the first activity stream collection page
-	return first.GetActivityStreamsCollectionPage()
+	page := first.GetActivityStreamsCollectionPage()
+	if page == nil {
+		return nil, ""
+	}
+
+	// Get the JSONLD ID of collection
+	pageID := page.GetJSONLDId()
+	if pageID == nil {
+		// MUST have an ID.
+		return nil, ""
+	}
+
+	return page, pageID.Get().String()
 }
