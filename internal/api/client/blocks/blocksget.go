@@ -103,8 +103,8 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit, errWithCode := apiutil.ParseLimit(c.Query(LimitKey), 20, 100, 2)
-	if err != nil {
+	page, errWithCode := paging.ParseIDPage(c, 20)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
@@ -112,11 +112,7 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 	resp, errWithCode := m.processor.BlocksGet(
 		c.Request.Context(),
 		authed.Account,
-		paging.Pager{
-			SinceID: c.Query(SinceIDKey),
-			MaxID:   c.Query(MaxIDKey),
-			Limit:   limit,
-		},
+		page,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

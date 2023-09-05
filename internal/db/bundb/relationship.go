@@ -150,7 +150,7 @@ func (r *relationshipDB) GetAccountFollowRequesting(ctx context.Context, account
 	return r.GetFollowRequestsByIDs(ctx, followReqIDs)
 }
 
-func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string, page *paging.Pager) ([]*gtsmodel.Block, error) {
+func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string, page *paging.Page[string]) ([]*gtsmodel.Block, error) {
 	// Load block IDs from cache with database loader callback.
 	blockIDs, err := r.state.Caches.GTS.BlockIDs().LoadRange(accountID, func() ([]string, error) {
 		var blockIDs []string

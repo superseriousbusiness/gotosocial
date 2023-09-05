@@ -63,9 +63,9 @@ var cases = []Case{
 			"064Q5D7VJYFBYSAH86KDBKZ6AC",
 			"064Q5D7VK8H7WMJS399SHEPCB0",
 		},
-		Page: (&paging.Pager{
-			MinID: "064Q5D7VG6TPPQ46T09MHJ96FW",
-			MaxID: "064Q5D7VKG5EQ43TYP71B4K6K0",
+		Page: (&paging.Page[string]{
+			Min: paging.MinID("064Q5D7VG6TPPQ46T09MHJ96FW", ""),
+			Max: paging.MaxID("064Q5D7VKG5EQ43TYP71B4K6K0"),
 		}).PageAsc,
 	},
 	{
@@ -89,9 +89,9 @@ var cases = []Case{
 			"064Q5D7VJ073XG9ZTWHA2KHN10",
 			"064Q5D7VJADJTPA3GW8WAX10TW",
 		},
-		Page: (&paging.Pager{
-			MinID: "064Q5D7VG6TPPQ46T09MHJ96FW",
-			MaxID: "064Q5D7VKG5EQ43TYP71B4K6K0",
+		Page: (&paging.Page[string]{
+			Min:   paging.MinID("064Q5D7VG6TPPQ46T09MHJ96FW", ""),
+			Max:   paging.MaxID("064Q5D7VKG5EQ43TYP71B4K6K0"),
 			Limit: 5,
 		}).PageAsc,
 	},
@@ -119,9 +119,9 @@ var cases = []Case{
 			"064Q5D7VJYFBYSAH86KDBKZ6AC",
 			"064Q5D7VK8H7WMJS399SHEPCB0",
 		},
-		Page: (&paging.Pager{
-			MinID: "064Q5D7VG6TPPQ46T09MHJ96FW",
-			MaxID: "064Q5D7VKG5EQ43TYP71B4K6K0",
+		Page: (&paging.Page[string]{
+			Min:   paging.MinID("064Q5D7VG6TPPQ46T09MHJ96FW", ""),
+			Max:   paging.MaxID("064Q5D7VKG5EQ43TYP71B4K6K0"),
 			Limit: 100,
 		}).PageAsc,
 	},
@@ -149,9 +149,9 @@ var cases = []Case{
 			"064Q5D7VH5F0JXG6W5NCQ3JCWW",
 			"064Q5D7VGPTC4NK5T070VYSSF8",
 		},
-		Page: (&paging.Pager{
-			SinceID: "064Q5D7VG6TPPQ46T09MHJ96FW",
-			MaxID:   "064Q5D7VKG5EQ43TYP71B4K6K0",
+		Page: (&paging.Page[string]{
+			Min: paging.MinID("", "064Q5D7VG6TPPQ46T09MHJ96FW"),
+			Max: paging.MaxID("064Q5D7VKG5EQ43TYP71B4K6K0"),
 		}).PageAsc,
 	},
 }
