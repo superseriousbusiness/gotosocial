@@ -133,7 +133,7 @@ type Configuration struct {
 	TracingEnabled           bool   `name:"tracing-enabled" usage:"Enable OTLP Tracing"`
 	TracingTransport         string `name:"tracing-transport" usage:"grpc or jaeger"`
 	TracingEndpoint          string `name:"tracing-endpoint" usage:"Endpoint of your trace collector. Eg., 'localhost:4317' for gRPC, 'http://localhost:14268/api/traces' for jaeger"`
-	TracingInsecureTransport bool   `name:"tracing-insecure" usage:"Disable HTTPS for the gRPC transport protocol"`
+	TracingInsecureTransport bool   `name:"tracing-insecure-transport" usage:"Disable HTTPS for the gRPC transport protocol"`
 
 	SMTPHost               string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort               int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
