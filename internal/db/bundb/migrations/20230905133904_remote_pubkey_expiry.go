@@ -26,7 +26,7 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? BOOLEAN", bun.Ident("accounts"), bun.Ident("public_key_expired"))
+		_, err := db.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? TIMESTAMPTZ", bun.Ident("accounts"), bun.Ident("public_key_expires_at"))
 		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
 			return err
 		}

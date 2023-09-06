@@ -75,7 +75,7 @@ type Account struct {
 	PrivateKey              *rsa.PrivateKey  `bun:""`                               // Privatekey for signing activitypub requests, will only be defined for local accounts
 	PublicKey               *rsa.PublicKey   `bun:",notnull"`                       // Publickey for authorizing signed activitypub requests, will be defined for both local and remote accounts
 	PublicKeyURI            string           `bun:",nullzero,notnull,unique"`       // Web-reachable location of this account's public key
-	PublicKeyExpired        *bool            `bun:",nullzero"`                      // PublicKey has been expired/rotated, and should be fetched again. Only ever set for remote accounts.
+	PublicKeyExpiresAt      time.Time        `bun:"type:timestamptz,nullzero"`      // PublicKey will expire/has expired at given time, and should be fetched again as appropriate. Only ever set for remote accounts.
 	SensitizedAt            time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account set to have all its media shown as sensitive?
 	SilencedAt              time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account silenced (eg., statuses only visible to followers, not public)?
 	SuspendedAt             time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)

@@ -25,14 +25,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -46,16 +49,44 @@ var (
 )
 
 type PubKeyResponse struct {
-	PubKey    *rsa.PublicKey
-	NewPubKey *rsa.PublicKey
-	OwnerURI  *url.URL
+	// CachedPubKey is the public key found in the db
+	// for the Actor whose request we're now authenticating.
+	CachedPubKey *rsa.PublicKey
+
+	// FetchedPubKey is an up-to-date public key fetched
+	// from the remote instance. Will be set in cases
+	// where EITHER we hadn't seen the Actor before whose
+	// request we're now authenticating, OR a CachedPubKey
+	// was found in our database, but was expired.
+	FetchedPubKey *rsa.PublicKey
+
+	// PubKeyExpired will be `true` if a public key was
+	// found for this account in our database, but the
+	// key was past its expiry date.
+	PubKeyExpired bool
+
+	// OwnerURI is the ActivityPub id of the owner of
+	// the public key used to sign the request we're
+	// now authenticating.
+	OwnerURI *url.URL
+
+	// Owner is the account corresponding to OwnerURI.
+	//
+	// Owner will only be defined if the account who
+	// owns the public key was already cached in the
+	// database when we received the request we're now
+	// authenticating (ie., we've seen it before).
+	//
+	// If it's not defined, callers should use OwnerURI
+	// to go and dereference it.
+	Owner *gtsmodel.Account
 }
 
 // AuthenticateFederatedRequest authenticates any kind of incoming federated
 // request from a remote server. This includes things like GET requests for
 // dereferencing our users or statuses etc, and POST requests for delivering
-// new Activities. The function returns the URL of the owner of the public key
-// used in the requesting http signature.
+// new Activities. The function returns details of the public key(s) used to
+// authenticate the requesting http signature.
 //
 // 'Authenticate' in this case is defined as making sure that the http request
 // is actually signed by whoever claims to have signed it, by fetching the public
@@ -109,6 +140,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 
 	var (
 		pubKeyIDStr    = pubKeyID.String()
+		local          = (pubKeyID.Host == config.GetHost())
 		pubKeyResponse *PubKeyResponse
 		errWithCode    gtserror.WithCode
 	)
@@ -120,24 +152,33 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 			{"pubKeyID", pubKeyIDStr},
 		}...)
 
-	if pubKeyID.Host == config.GetHost() {
-		l.Trace("public key is ours, no dereference needed")
-		pubKeyResponse, errWithCode = f.derefDBOnly(ctx, pubKeyIDStr)
+	if local {
+		l.Trace("public key is local, no dereference needed")
+		pubKeyResponse, errWithCode = f.derefPubKeyDBOnly(ctx, pubKeyIDStr)
 	} else {
-		l.Trace("public key is not ours, checking if we need to dereference")
-		pubKeyResponse, errWithCode = f.deref(ctx, requestedUsername, pubKeyIDStr, pubKeyID)
+		l.Trace("public key is remote, checking if we need to dereference")
+		pubKeyResponse, errWithCode = f.derefPubKey(ctx, requestedUsername, pubKeyIDStr, pubKeyID)
 	}
 
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
+	if local && pubKeyResponse == nil {
+		// We signed this request, apparently, but
+		// local lookup didn't find anything. This
+		// is an almost impossible error condition!
+		err := gtserror.Newf("local public key %s could not be found; "+
+			"has the account been manually removed from the db?", pubKeyIDStr)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	// Try to authenticate using permitted algorithms in
 	// order of most -> least common, checking each defined
 	// pubKey for this Actor. Return OK as soon as one passes.
-	for _, pubKey := range []*rsa.PublicKey{
-		pubKeyResponse.NewPubKey,
-		pubKeyResponse.PubKey,
+	for _, pubKey := range [2]*rsa.PublicKey{
+		pubKeyResponse.FetchedPubKey,
+		pubKeyResponse.CachedPubKey,
 	} {
 		if pubKey == nil {
 			continue
@@ -165,34 +206,48 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	return nil, gtserror.NewErrorUnauthorized(err, err.Error())
 }
 
-// derefDBOnly tries to dereference the given public
-// key using only entries already in the database.
-func (f *federator) derefDBOnly(
+// derefPubKeyDBOnly tries to dereference the given
+// pubKey using only entries already in the database.
+//
+// In case of a db or URL error, will return the error.
+//
+// In case an entry for the pubKey owner just doesn't
+// exist in the db (yet), will return nil, nil.
+func (f *federator) derefPubKeyDBOnly(
 	ctx context.Context,
 	pubKeyIDStr string,
 ) (*PubKeyResponse, gtserror.WithCode) {
-	reqAcct, err := f.db.GetAccountByPubkeyID(ctx, pubKeyIDStr)
+	ownerAcct, err := f.db.GetAccountByPubkeyID(ctx, pubKeyIDStr)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// We don't have this
+			// account stored (yet).
+			return nil, nil
+		}
+
 		err = gtserror.Newf("db error getting account with pubKeyID %s: %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	reqAcctURI, err := url.Parse(reqAcct.URI)
+	ownerURI, err := url.Parse(ownerAcct.URI)
 	if err != nil {
 		err = gtserror.Newf("error parsing account uri with pubKeyID %s: %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-aaaaaaaa
+
 	return &PubKeyResponse{
-		PubKey:   reqAcct.PublicKey,
-		OwnerURI: reqAcctURI,
+		CachedPubKey:  ownerAcct.PublicKey,
+		PubKeyExpired: time.Now().After(ownerAcct.PublicKeyExpiresAt),
+		OwnerURI:      ownerURI,
+		Owner:         ownerAcct,
 	}, nil
 }
 
-// deref tries to dereference the given public key by first
-// checking in the database, and then (if no entries found)
-// calling the remote pub key URI and extracting the key.
-func (f *federator) deref(
+// derefPubKey tries to dereference the given public key by first
+// checking in the database, and then (if no entry found, or entry
+// found but pubKey expired) calling the remote pub key URI and
+// extracting the key.
+func (f *federator) derefPubKey(
 	ctx context.Context,
 	requestedUsername string,
 	pubKeyIDStr string,
@@ -207,29 +262,43 @@ func (f *federator) deref(
 
 	// Try a database only deref first. We may already
 	// have the requesting account cached locally.
-	pubkeyResponse, errWithCode := f.derefDBOnly(ctx, pubKeyIDStr)
-	if errWithCode == nil {
-		l.Trace("public key cached, no dereference needed")
-		return pubkeyResponse, nil
+	pubKeyResponse, errWithCode := f.derefPubKeyDBOnly(ctx, pubKeyIDStr)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	l.Trace("public key not cached, trying dereference")
+	if pubKeyResponse != nil && !pubKeyResponse.PubKeyExpired {
+		l.Trace("public key cached and up to date, no dereference needed")
+		return pubKeyResponse, nil
+	}
+
+	expired := (pubKeyResponse != nil && pubKeyResponse.PubKeyExpired)
+	if expired {
+		// This is fairly rare and it may be helpful for
+		// admins to see what's going on, so log at info.
+		l.Infof(
+			"public key was cached, but expired at %s, trying dereference of new public key",
+			pubKeyResponse.Owner.PublicKeyExpiresAt,
+		)
+	} else {
+		l.Trace("public key was not cached, trying dereference of public key")
+	}
 
 	// If we've tried to get this account before and we
 	// now have a tombstone for it (ie., it's been deleted
 	// from remote), don't try to dereference it again.
 	gone, err := f.CheckGone(ctx, pubKeyID)
 	if err != nil {
-		err := gtserror.Newf("error checking for tombstone for %s: %w", pubKeyIDStr, err)
+		err := gtserror.Newf("error checking for tombstone (%s): %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if gone {
-		err := gtserror.Newf("account with public key %s is gone", pubKeyIDStr)
+		err := gtserror.Newf("account with public key is gone (%s)", pubKeyIDStr)
 		return nil, gtserror.NewErrorGone(err)
 	}
 
-	// Make an http call to get the pubkey.
+	// Make an http call to get the (refreshed) pubkey.
 	pubKeyBytes, errWithCode := f.callForPubKey(ctx, requestedUsername, pubKeyID)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -238,14 +307,42 @@ func (f *federator) deref(
 	// Extract the key and the owner from the response.
 	pubKey, pubKeyOwner, err := parsePubKeyBytes(ctx, pubKeyBytes, pubKeyID)
 	if err != nil {
-		err := fmt.Errorf("error parsing public key %s: %w", pubKeyID, err)
+		err := fmt.Errorf("error parsing public key (%s): %w", pubKeyID, err)
 		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
-	return &PubKeyResponse{
-		PubKey:   pubKey,
-		OwnerURI: pubKeyOwner,
-	}, nil
+	if !expired {
+		// PubKeyResponse was nil before because
+		// we had nothing cached; return the key
+		// we just fetched, and nothing else.
+		return &PubKeyResponse{
+			FetchedPubKey: pubKey,
+			OwnerURI:      pubKeyOwner,
+		}, nil
+	}
+
+	// If key was expired, that means we already
+	// had an owner stored for it locally. Since
+	// we now successfully refreshed the pub key,
+	// we should update the account to reflect that.
+	ownerAcct := pubKeyResponse.Owner
+	ownerAcct.PublicKey = pubKeyResponse.FetchedPubKey
+	ownerAcct.PublicKeyExpiresAt = time.Time{}
+
+	l.Info("obtained a new public key to replace expired key, caching now")
+	if err := f.db.UpdateAccount(
+		ctx,
+		ownerAcct,
+		"public_key",
+		"public_key_expires_at",
+	); err != nil {
+		err := gtserror.Newf("db error updating account with refreshed public key (%s): %w", pubKeyIDStr, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Return both new and cached (now expired) keys.
+	pubKeyResponse.FetchedPubKey = pubKey
+	return pubKeyResponse, nil
 }
 
 // callForPubKey handles the nitty gritty of actually
