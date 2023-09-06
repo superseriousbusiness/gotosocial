@@ -284,7 +284,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			return ctx, false, nil
 		}
 
-		err = gtserror.Newf("couldn't get requesting account %s: %w", pubKeyResponse, err)
+		err = gtserror.Newf("couldn't get requesting account %s: %w", pubKeyOwnerURI, err)
 		return nil, false, err
 	}
 

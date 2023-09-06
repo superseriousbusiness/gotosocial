@@ -236,10 +236,13 @@ func (f *federator) derefPubKeyDBOnly(
 	}
 
 	return &PubKeyResponse{
-		CachedPubKey:  ownerAcct.PublicKey,
-		PubKeyExpired: time.Now().After(ownerAcct.PublicKeyExpiresAt),
-		OwnerURI:      ownerURI,
-		Owner:         ownerAcct,
+		CachedPubKey: ownerAcct.PublicKey,
+		PubKeyExpired: func() bool {
+			return !ownerAcct.PublicKeyExpiresAt.IsZero() &&
+				ownerAcct.PublicKeyExpiresAt.Before(time.Now())
+		}(),
+		OwnerURI: ownerURI,
+		Owner:    ownerAcct,
 	}, nil
 }
 
@@ -321,6 +324,9 @@ func (f *federator) derefPubKey(
 		}, nil
 	}
 
+	// Add newly-fetched key to response.
+	pubKeyResponse.FetchedPubKey = pubKey
+
 	// If key was expired, that means we already
 	// had an owner stored for it locally. Since
 	// we now successfully refreshed the pub key,
@@ -329,7 +335,9 @@ func (f *federator) derefPubKey(
 	ownerAcct.PublicKey = pubKeyResponse.FetchedPubKey
 	ownerAcct.PublicKeyExpiresAt = time.Time{}
 
-	l.Info("obtained a new public key to replace expired key, caching now")
+	l.Info("obtained a new public key to replace expired key, caching now; " +
+		"authorization for this request will be attempted with both old and new keys")
+
 	if err := f.db.UpdateAccount(
 		ctx,
 		ownerAcct,
@@ -340,8 +348,9 @@ func (f *federator) derefPubKey(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Return both new and cached (now expired) keys.
-	pubKeyResponse.FetchedPubKey = pubKey
+	// Return both new and cached (now
+	// expired) keys, authentication
+	// will be attempted with both.
 	return pubKeyResponse, nil
 }
 

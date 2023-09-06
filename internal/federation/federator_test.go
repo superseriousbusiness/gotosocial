@@ -18,6 +18,8 @@
 package federation_test
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/suite"
 
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -71,7 +73,14 @@ func (suite *FederatorStandardTestSuite) SetupTest() {
 		suite.typeconverter,
 	)
 
-	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
+	// Ensure it's possible to deref
+	// main key of foss satan.
+	fossSatanPerson, err := suite.typeconverter.AccountToAS(context.Background(), suite.testAccounts["remote_account_1"])
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media", fossSatanPerson)
 	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
 	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
 
