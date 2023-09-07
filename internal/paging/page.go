@@ -145,32 +145,13 @@ func (p *Page) Page(in []string) []string {
 		}
 
 		if len(in) > 1 {
-			var (
-				// Output slice must
-				// ALWAYS be descending.
-
-				// Start at front.
-				i = 0
-
-				// Start at back.
-				j = len(in) - 1
-			)
-
 			// Clone input before
 			// any modifications.
 			in = slices.Clone(in)
 
-			for i < j {
-				// Swap i,j index values in slice.
-				in[i], in[j] = in[j], in[i]
-
-				// incr + decr,
-				// looping until
-				// they meet in
-				// the middle.
-				i++
-				j--
-			}
+			// Output slice must
+			// ALWAYS be descending.
+			in = Reverse(in)
 		}
 	}
 

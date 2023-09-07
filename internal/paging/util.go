@@ -17,6 +17,31 @@
 
 package paging
 
+// Reverse will reverse the given input slice.
+func Reverse(in []string) []string {
+	var (
+		// Start at front.
+		i = 0
+
+		// Start at back.
+		j = len(in) - 1
+	)
+
+	for i < j {
+		// Swap i,j index values in slice.
+		in[i], in[j] = in[j], in[i]
+
+		// incr + decr,
+		// looping until
+		// they meet in
+		// the middle.
+		i++
+		j--
+	}
+
+	return in
+}
+
 // zero is a shorthand to check a generic value is its zero value.
 func zero[T comparable](t T) bool {
 	var z T
