@@ -61,7 +61,7 @@ func (p *Page) GetLimit() int {
 	return p.Limit
 }
 
-// GetOrder is a small helper function to return page ordering (checking for nil page).
+// GetOrder is a small helper function to return page sort ordering (checking for nil page).
 func (p *Page) GetOrder() Order {
 	if p == nil {
 		return 0
@@ -96,111 +96,81 @@ func (p *Page) order() Order {
 	}
 }
 
-// PageAsc will page the given slice of input according
+// Page will page the given slice of input according
 // to the receiving Page's minimum, maximum and limit.
-// NOTE THE INPUT SLICE MUST BE SORTED IN ASCENDING ORDER
-// (I.E. OLDEST ITEMS AT LOWEST INDICES, NEWER AT HIGHER).
-func (p *Page) PageAsc(in []string) []string {
+// NOTE: input slice MUST be sorted according to the order is
+// expected to be paged in, i.e. it is currently sorted
+// according to Page.Order(). Sorted data isn't always according
+// to string inequalities so this CANNOT be checked here.
+func (p *Page) Page(in []string) []string {
 	if p == nil {
 		// no paging.
 		return in
 	}
 
-	// Look for min boundary in input, reslice
-	// from (but not including) minimum value.
-	if minIdx := p.Min.Find(in); minIdx != -1 {
-		in = in[minIdx+1:]
-	}
+	if o := p.order(); !o.Ascending() {
+		// Default sort is descending,
+		// catching all cases when NOT
+		// ascending (even zero value).
+		//
+		// NOTE: sorted data does not always
+		// occur according to string ineqs
+		// so we unfortunately cannot check.
 
-	// Look for max boundary in input, reslice
-	// up-to (but not including) maximum value.
-	if maxIdx := p.Max.Find(in); maxIdx != -1 {
-		in = in[:maxIdx]
-	}
-
-	// Check if either require descending order,
-	// bearing in mind that 'in' is ascending.
-	if p.order().Descending() && len(in) > 1 {
-		var (
-			// Start at front.
-			i = 0
-
-			// Start at back.
-			j = len(in) - 1
-		)
-
-		// Clone input before
-		// any modifications.
-		in = slices.Clone(in)
-
-		for i < j {
-			// Swap i,j index values in slice.
-			in[i], in[j] = in[j], in[i]
-
-			// incr + decr,
-			// looping until
-			// they meet in
-			// the middle.
-			i++
-			j--
+		if maxIdx := p.Max.Find(in); maxIdx != -1 {
+			// Reslice skipping up to max.
+			in = in[maxIdx+1:]
 		}
-	}
 
-	if p.Limit > 0 && p.Limit < len(in) {
-		// Reslice input to limit.
-		in = in[:p.Limit]
-	}
+		if minIdx := p.Min.Find(in); minIdx != -1 {
+			// Reslice stripping past min.
+			in = in[:minIdx]
+		}
+	} else {
+		// Sort type is ascending, input
+		// data is assumed to be ascending.
+		//
+		// NOTE: sorted data does not always
+		// occur according to string ineqs
+		// so we unfortunately cannot check.
 
-	return in
-}
+		if minIdx := p.Min.Find(in); minIdx != -1 {
+			// Reslice skipping up to min.
+			in = in[minIdx+1:]
+		}
 
-// PageDesc will page the given slice of input according
-// to the receiving Page's minimum, maximum and limit.
-// NOTE THE INPUT SLICE MUST BE SORTED IN ASCENDING ORDER.
-// (I.E. NEWEST ITEMS AT LOWEST INDICES, OLDER AT HIGHER).
-func (p *Page) PageDesc(in []string) []string {
-	if p == nil {
-		// no paging.
-		return in
-	}
+		if maxIdx := p.Max.Find(in); maxIdx != -1 {
+			// Reslice stripping past max.
+			in = in[:maxIdx]
+		}
 
-	// Look for max boundary in input, reslice
-	// from (but not including) maximum value.
-	if maxIdx := p.Max.Find(in); maxIdx != -1 {
-		in = in[maxIdx+1:]
-	}
+		if len(in) > 1 {
+			var (
+				// Output slice must
+				// ALWAYS be descending.
 
-	// Look for min boundary in input, reslice
-	// up-to (but not including) minimum value.
-	if minIdx := p.Min.Find(in); minIdx != -1 {
-		in = in[:minIdx]
-	}
+				// Start at front.
+				i = 0
 
-	// Check if either require ascending order,
-	// bearing in mind that 'in' is descending.
-	if p.order().Ascending() && len(in) > 1 {
-		var (
-			// Start at front.
-			i = 0
+				// Start at back.
+				j = len(in) - 1
+			)
 
-			// Start at back.
-			j = len(in) - 1
-		)
+			// Clone input before
+			// any modifications.
+			in = slices.Clone(in)
 
-		// Clone input before
-		// any modifications.
-		in = slices.Clone(in)
+			for i < j {
+				// Swap i,j index values in slice.
+				in[i], in[j] = in[j], in[i]
 
-		for i < j {
-			// Swap i,j index values in slice.
-			in[i], in[j] = in[j], in[i]
-
-			// incr + decr,
-			// looping until
-			// they meet in
-			// the middle.
-			i++
-			j--
+				// incr + decr,
+				// looping until
+				// they meet in
+				// the middle.
+				i++
+				j--
+			}
 		}
 	}
 

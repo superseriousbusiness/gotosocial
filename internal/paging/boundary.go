@@ -96,7 +96,7 @@ func MaxShortcodeDomain(max string) Boundary {
 type Boundary struct {
 	Name  string // i.e. query key
 	Value string
-	Order Order
+	Order Order // NOTE: see Order type for explanation
 }
 
 // new creates a new Boundary with the same ordering and name
