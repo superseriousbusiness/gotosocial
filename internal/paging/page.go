@@ -289,11 +289,14 @@ func (p *Page[T]) ToLink(proto, host, path string, queryParams []string) string 
 		queryParams = append(queryParams, param)
 	}
 
+	// Join collected params into query str.
+	query := strings.Join(queryParams, "&")
+
 	// Build URL string.
 	return (&url.URL{
 		Scheme:   proto,
 		Host:     host,
 		Path:     path,
-		RawQuery: strings.Join(queryParams, "&"),
+		RawQuery: query,
 	}).String()
 }
