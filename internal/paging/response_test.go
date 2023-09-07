@@ -32,7 +32,7 @@ type PagingSuite struct {
 func (suite *PagingSuite) TestPagingStandard() {
 	config.SetHost("example.org")
 
-	params := paging.ResponseParams[string]{
+	params := paging.ResponseParams{
 		Items: make([]interface{}, 10, 10),
 		Path:  "/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses",
 		Next:  nextPage("01H11KA1DM2VH3747YDE7FV5HN", 10),
@@ -50,7 +50,7 @@ func (suite *PagingSuite) TestPagingStandard() {
 func (suite *PagingSuite) TestPagingNoLimit() {
 	config.SetHost("example.org")
 
-	params := paging.ResponseParams[string]{
+	params := paging.ResponseParams{
 		Items: make([]interface{}, 10, 10),
 		Path:  "/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses",
 		Next:  nextPage("01H11KA1DM2VH3747YDE7FV5HN", 0),
@@ -68,7 +68,7 @@ func (suite *PagingSuite) TestPagingNoLimit() {
 func (suite *PagingSuite) TestPagingNoNextID() {
 	config.SetHost("example.org")
 
-	params := paging.ResponseParams[string]{
+	params := paging.ResponseParams{
 		Items: make([]interface{}, 10, 10),
 		Path:  "/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses",
 		Prev:  prevPage("01H11KBBVRRDYYC5KEPME1NP5R", 10),
@@ -85,7 +85,7 @@ func (suite *PagingSuite) TestPagingNoNextID() {
 func (suite *PagingSuite) TestPagingNoPrevID() {
 	config.SetHost("example.org")
 
-	params := paging.ResponseParams[string]{
+	params := paging.ResponseParams{
 		Items: make([]interface{}, 10, 10),
 		Path:  "/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses",
 		Next:  nextPage("01H11KA1DM2VH3747YDE7FV5HN", 10),
@@ -102,7 +102,7 @@ func (suite *PagingSuite) TestPagingNoPrevID() {
 func (suite *PagingSuite) TestPagingNoItems() {
 	config.SetHost("example.org")
 
-	params := paging.ResponseParams[string]{
+	params := paging.ResponseParams{
 		Next: nextPage("01H11KA1DM2VH3747YDE7FV5HN", 10),
 		Prev: prevPage("01H11KBBVRRDYYC5KEPME1NP5R", 10),
 	}
@@ -119,15 +119,15 @@ func TestPagingSuite(t *testing.T) {
 	suite.Run(t, &PagingSuite{})
 }
 
-func nextPage(id string, limit int) *paging.Page[string] {
-	return &paging.Page[string]{
+func nextPage(id string, limit int) *paging.Page {
+	return &paging.Page{
 		Max:   paging.MaxID(id),
 		Limit: limit,
 	}
 }
 
-func prevPage(id string, limit int) *paging.Page[string] {
-	return &paging.Page[string]{
+func prevPage(id string, limit int) *paging.Page {
+	return &paging.Page{
 		Min:   paging.MinID(id, ""),
 		Limit: limit,
 	}

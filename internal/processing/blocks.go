@@ -34,7 +34,7 @@ import (
 func (p *Processor) BlocksGet(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
-	page *paging.Page[string],
+	page *paging.Page,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	blocks, err := p.state.DB.GetAccountBlocks(ctx,
 		requestingAccount.ID,
@@ -77,7 +77,7 @@ func (p *Processor) BlocksGet(
 		items = append(items, account)
 	}
 
-	return paging.PackageResponse(paging.ResponseParams[string]{
+	return paging.PackageResponse(paging.ResponseParams{
 		Items: items,
 		Path:  "/api/v1/blocks",
 		Next:  page.Next(nextMaxIDValue),

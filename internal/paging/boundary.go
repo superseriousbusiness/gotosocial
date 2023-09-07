@@ -17,15 +17,13 @@
 
 package paging
 
-import "fmt"
-
 // MinID returns an ID boundary with given min ID value,
 // using either the `since_id`,"DESC" name,ordering or
 // `min_id`,"ASC" name,ordering depending on which is set.
-func MinID(minID, sinceID string) Boundary[string] {
+func MinID(minID, sinceID string) Boundary {
 	switch {
 	case minID != "":
-		return Boundary[string]{
+		return Boundary{
 			Name:  "min_id",
 			Value: minID,
 
@@ -36,7 +34,7 @@ func MinID(minID, sinceID string) Boundary[string] {
 		}
 	default:
 		// default min is `since_id`
-		return Boundary[string]{
+		return Boundary{
 			Name:  "since_id",
 			Value: sinceID,
 
@@ -50,8 +48,8 @@ func MinID(minID, sinceID string) Boundary[string] {
 
 // MaxID returns an ID boundary with given max
 // ID value, and the "max_id" query key set.
-func MaxID(maxID string) Boundary[string] {
-	return Boundary[string]{
+func MaxID(maxID string) Boundary {
+	return Boundary{
 		Name:  "max_id",
 		Value: maxID,
 
@@ -64,8 +62,8 @@ func MaxID(maxID string) Boundary[string] {
 
 // MinShortcodeDomain returns a boundary with the given minimum emoji
 // shortcode@domain, and the "min_shortcode_domain" query key set.
-func MinShortcodeDomain(min string) Boundary[string] {
-	return Boundary[string]{
+func MinShortcodeDomain(min string) Boundary {
+	return Boundary{
 		Name:  "min_shortcode_domain",
 		Value: min,
 
@@ -78,8 +76,8 @@ func MinShortcodeDomain(min string) Boundary[string] {
 
 // MaxShortcodeDomain returns a boundary with the given maximum emoji
 // shortcode@domain, and the "max_shortcode_domain" query key set.
-func MaxShortcodeDomain(max string) Boundary[string] {
-	return Boundary[string]{
+func MaxShortcodeDomain(max string) Boundary {
+	return Boundary{
 		Name:  "max_shortcode_domain",
 		Value: max,
 
@@ -91,16 +89,16 @@ func MaxShortcodeDomain(max string) Boundary[string] {
 }
 
 // Boundary represents the upper or lower limit in a page slice.
-type Boundary[T comparable] struct {
+type Boundary struct {
 	Name  string // i.e. query key
-	Value T
+	Value string
 	Order Order
 }
 
 // new creates a new Boundary with the same ordering and name
 // as the original (receiving), but with the new provided value.
-func (b Boundary[T]) new(value T) Boundary[T] {
-	return Boundary[T]{
+func (b Boundary) new(value string) Boundary {
+	return Boundary{
 		Name:  b.Name,
 		Value: value,
 		Order: b.Order,
@@ -108,7 +106,7 @@ func (b Boundary[T]) new(value T) Boundary[T] {
 }
 
 // Find finds the boundary's set value in input slice, or returns -1.
-func (b Boundary[T]) Find(in []T) int {
+func (b Boundary) Find(in []string) int {
 	if zero(b.Value) {
 		return -1
 	}
@@ -121,13 +119,13 @@ func (b Boundary[T]) Find(in []T) int {
 }
 
 // Query returns this boundary as assembled query key=value pair.
-func (b Boundary[T]) Query() string {
+func (b Boundary) Query() string {
 	switch {
 	case zero(b.Value):
 		return ""
 	case b.Name == "":
 		panic("value without boundary name")
 	default:
-		return fmt.Sprintf("%s=%v", b.Name, b.Value)
+		return b.Name + "=" + b.Value
 	}
 }

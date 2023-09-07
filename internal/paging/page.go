@@ -25,12 +25,12 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type Page[T comparable] struct {
+type Page struct {
 	// Min is the Page's lower limit value.
-	Min Boundary[T]
+	Min Boundary
 
 	// Max is this Page's upper limit value.
-	Max Boundary[T]
+	Max Boundary
 
 	// Limit will limit the returned
 	// page of items to at most 'limit'.
@@ -38,25 +38,23 @@ type Page[T comparable] struct {
 }
 
 // GetMin is a small helper function to return minimum boundary value (checking for nil page).
-func (p *Page[T]) GetMin() T {
+func (p *Page) GetMin() string {
 	if p == nil {
-		var zero T
-		return zero
+		return ""
 	}
 	return p.Min.Value
 }
 
 // GetMax is a small helper function to return maximum boundary value (checking for nil page).
-func (p *Page[T]) GetMax() T {
+func (p *Page) GetMax() string {
 	if p == nil {
-		var zero T
-		return zero
+		return ""
 	}
 	return p.Max.Value
 }
 
 // GetLimit is a small helper function to return limit (checking for nil page and unusable limit).
-func (p *Page[T]) GetLimit() int {
+func (p *Page) GetLimit() int {
 	if p == nil || p.Limit < 0 {
 		return 0
 	}
@@ -64,14 +62,14 @@ func (p *Page[T]) GetLimit() int {
 }
 
 // GetOrder is a small helper function to return page ordering (checking for nil page).
-func (p *Page[T]) GetOrder() Order {
+func (p *Page) GetOrder() Order {
 	if p == nil {
 		return 0
 	}
 	return p.order()
 }
 
-func (p *Page[T]) order() Order {
+func (p *Page) order() Order {
 	var (
 		// Check if min/max values set.
 		minValue = zero(p.Min.Value)
@@ -102,7 +100,7 @@ func (p *Page[T]) order() Order {
 // to the receiving Page's minimum, maximum and limit.
 // NOTE THE INPUT SLICE MUST BE SORTED IN ASCENDING ORDER
 // (I.E. OLDEST ITEMS AT LOWEST INDICES, NEWER AT HIGHER).
-func (p *Page[T]) PageAsc(in []T) []T {
+func (p *Page) PageAsc(in []string) []string {
 	if p == nil {
 		// no paging.
 		return in
@@ -160,7 +158,7 @@ func (p *Page[T]) PageAsc(in []T) []T {
 // to the receiving Page's minimum, maximum and limit.
 // NOTE THE INPUT SLICE MUST BE SORTED IN ASCENDING ORDER.
 // (I.E. NEWEST ITEMS AT LOWEST INDICES, OLDER AT HIGHER).
-func (p *Page[T]) PageDesc(in []T) []T {
+func (p *Page) PageDesc(in []string) []string {
 	if p == nil {
 		// no paging.
 		return in
@@ -216,14 +214,14 @@ func (p *Page[T]) PageDesc(in []T) []T {
 
 // Next creates a new instance for the next returnable page, using
 // given max value. This preserves original limit and max key name.
-func (p *Page[T]) Next(max T) *Page[T] {
-	if p == nil || zero(max) {
+func (p *Page) Next(max string) *Page {
+	if p == nil || max == "" {
 		// no paging.
 		return nil
 	}
 
 	// Create new page.
-	p2 := new(Page[T])
+	p2 := new(Page)
 
 	// Set original limit.
 	p2.Limit = p.Limit
@@ -236,14 +234,14 @@ func (p *Page[T]) Next(max T) *Page[T] {
 
 // Prev creates a new instance for the prev returnable page, using
 // given min value. This preserves original limit and min key name.
-func (p *Page[T]) Prev(min T) *Page[T] {
-	if p == nil || zero(min) {
+func (p *Page) Prev(min string) *Page {
+	if p == nil || min == "" {
 		// no paging.
 		return nil
 	}
 
 	// Create new page.
-	p2 := new(Page[T])
+	p2 := new(Page)
 
 	// Set original limit.
 	p2.Limit = p.Limit
@@ -256,7 +254,7 @@ func (p *Page[T]) Prev(min T) *Page[T] {
 
 // ToLink builds a URL link for given endpoint information and extra query parameters,
 // appending this Page's minimum / maximum boundaries and available limit (if any).
-func (p *Page[T]) ToLink(proto, host, path string, queryParams []string) string {
+func (p *Page) ToLink(proto, host, path string, queryParams []string) string {
 	if p == nil {
 		// no paging.
 		return ""
