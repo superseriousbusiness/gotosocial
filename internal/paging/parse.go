@@ -24,9 +24,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// ParseIDPage parses an ID Page from a request context, returning BadRequest on error parsing,
-// and a nil page if no request parameters are set couplied with defaultlimit=0. i.e. setting a
-// defaultlimit value will enforce paging for the endpoint upon which this request is incoming from.
+// ParseIDPage parses an ID Page from a request context, returning BadRequest on error parsing.
+// The min, max and default parameters define the page size limit minimum, maximum and default
+// value, where a non-zero default will enforce paging for the endpoint on which this is called.
+// While conversely, a zero default limit will not enforce paging, returning a nil page value.
 func ParseIDPage(c *gin.Context, min, max, _default int) (*Page, gtserror.WithCode) {
 	// Extract request query params.
 	sinceID := c.Query("since_id")
@@ -56,8 +57,9 @@ func ParseIDPage(c *gin.Context, min, max, _default int) (*Page, gtserror.WithCo
 }
 
 // ParseShortcodeDomainPage parses an emoji shortcode domain Page from a request context, returning BadRequest
-// on error parsing, and a nil page if no request parameters are set couplied with defaultlimit=0. i.e. setting
-// a defaultlimit value will enforce paging for the endpoint upon which this request is incoming from.
+// on error parsing. The min, max and default parameters define the page size limit minimum, maximum and default
+// value where a non-zero default will enforce paging for the endpoint on which this is called. While conversely,
+// a zero default limit will not enforce paging, returning a nil page value.
 func ParseShortcodeDomainPage(c *gin.Context, min, max, _default int) (*Page, gtserror.WithCode) {
 	// Extract request query parameters.
 	minShortcode := c.Query("min_shortcode_domain")
