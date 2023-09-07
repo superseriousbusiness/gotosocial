@@ -78,7 +78,7 @@ var cases = []Case{
 	CreateCase("minID and maxID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
 		slices.SortFunc(ids, func(a, b string) bool {
-			return b < a
+			return a > b // i.e. largest at lowest idx
 		})
 
 		// Select random indices in slice.
@@ -104,7 +104,7 @@ var cases = []Case{
 	CreateCase("minID, maxID and limit set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
 		slices.SortFunc(ids, func(a, b string) bool {
-			return b < a
+			return a > b // i.e. largest at lowest idx
 		})
 
 		// Select random parameters in slice.
@@ -137,7 +137,7 @@ var cases = []Case{
 	CreateCase("minID, maxID and too-large limit set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
 		slices.SortFunc(ids, func(a, b string) bool {
-			return b < a
+			return a > b // i.e. largest at lowest idx
 		})
 
 		// Select random parameters in slice.
@@ -164,7 +164,7 @@ var cases = []Case{
 	CreateCase("sinceID and maxID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted descending for since_id
 		slices.SortFunc(ids, func(a, b string) bool {
-			return a < b
+			return a < b // i.e. smallest at lowest idx
 		})
 
 		// Select random indices in slice.
@@ -187,9 +187,9 @@ var cases = []Case{
 		}, expect
 	}),
 	CreateCase("maxID set", func(ids []string) ([]string, *paging.Page, []string) {
-		// Ensure input slice sorted descending for since_id
+		// Ensure input slice sorted descending for max_id
 		slices.SortFunc(ids, func(a, b string) bool {
-			return a < b
+			return a < b // i.e. smallest at lowest idx
 		})
 
 		// Select random indices in slice.
@@ -231,7 +231,7 @@ var cases = []Case{
 	CreateCase("minID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
 		slices.SortFunc(ids, func(a, b string) bool {
-			return b < a
+			return a > b // i.e. largest at lowest idx
 		})
 
 		// Select random indices in slice.
