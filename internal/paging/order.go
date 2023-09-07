@@ -20,12 +20,10 @@ package paging
 // Order represents the order an input
 // page should be sorted and paged in.
 //
-// NOTE: this does not effect the order
-// of returned API results, which must
-// always be descending order.
-//
-// Damn you Mastodon API for this
-// horrible inconsistent behaviour.
+// NOTE: this does not effect the order of returned
+// API results, which must always be in descending
+// order. This behaviour is confusing, but we adopt
+// it to stay inline with Mastodon API expectations.
 type Order int
 
 const (
