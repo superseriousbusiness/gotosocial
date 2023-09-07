@@ -21,15 +21,35 @@ package paging
 // using either the `since_id`,"DESC" name,ordering or
 // `min_id`,"ASC" name,ordering depending on which is set.
 func MinID(minID, sinceID string) Boundary {
+	/*
+
+				Paging with `since_id` vs `min_id`:
+
+					 limit = 4       limit = 4
+					+----------+    +----------+
+		  max_id--> |xxxxxxxxxx|    |          | <-- max_id
+					+----------+    +----------+
+					|xxxxxxxxxx|    |          |
+					+----------+    +----------+
+					|xxxxxxxxxx|    |          |
+					+----------+    +----------+
+					|xxxxxxxxxx|    |xxxxxxxxxx|
+					+----------+    +----------+
+					|          |    |xxxxxxxxxx|
+					+----------+    +----------+
+					|          |    |xxxxxxxxxx|
+					+----------+    +----------+
+		since_id--> |          |    |xxxxxxxxxx| <-- min_id
+					+----------+    +----------+
+					|          |    |          |
+					+----------+    +----------+
+
+	*/
 	switch {
 	case minID != "":
 		return Boundary{
 			Name:  "min_id",
 			Value: minID,
-
-			// with "min_id", return
-			// as ascending order items,
-			// i.e. oldest at lowest idx
 			Order: OrderAscending,
 		}
 	default:
@@ -37,10 +57,6 @@ func MinID(minID, sinceID string) Boundary {
 		return Boundary{
 			Name:  "since_id",
 			Value: sinceID,
-
-			// with "since_id", return
-			// as descending order items,
-			// i.e. newest at lowest idx
 			Order: OrderDescending,
 		}
 	}

@@ -17,7 +17,12 @@
 
 package paging
 
-// Order represents a paging ordering.
+// Order represents the order an input
+// page should be sorted and paged in.
+//
+// NOTE: this does not effect the order
+// of returned API results, which must
+// always be descending order.
 type Order int
 
 const (
@@ -26,12 +31,12 @@ const (
 	OrderAscending
 )
 
-// Ascending returns whether this order is ascending.
+// Ascending returns whether this Order is ascending.
 func (i Order) Ascending() bool {
 	return i == OrderAscending
 }
 
-// Descending returns whether this order is descending.
+// Descending returns whether this Order is descending.
 func (i Order) Descending() bool {
 	return i == OrderDescending
 }
