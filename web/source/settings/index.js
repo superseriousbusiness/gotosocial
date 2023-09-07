@@ -56,7 +56,7 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		permissions: ["admin"]
 	}, [
 		Menu("Actions", { icon: "fa-bolt" }, [
-			Item("Media", { icon: "fa-recycle" }, require("./admin/actions/media")),
+			Item("Media", { icon: "fa-photo" }, require("./admin/actions/media")),
 			Item("Keys", { icon: "fa-key-modern" }, require("./admin/actions/keys")),
 		]),
 		Menu("Custom Emoji", { icon: "fa-smile-o" }, [
