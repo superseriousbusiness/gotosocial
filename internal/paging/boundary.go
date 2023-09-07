@@ -23,26 +23,26 @@ package paging
 func MinID(minID, sinceID string) Boundary {
 	/*
 
-				Paging with `since_id` vs `min_id`:
+	           Paging with `since_id` vs `min_id`:
 
-					 limit = 4       limit = 4
-					+----------+    +----------+
-		  max_id--> |xxxxxxxxxx|    |          | <-- max_id
-					+----------+    +----------+
-					|xxxxxxxxxx|    |          |
-					+----------+    +----------+
-					|xxxxxxxxxx|    |          |
-					+----------+    +----------+
-					|xxxxxxxxxx|    |xxxxxxxxxx|
-					+----------+    +----------+
-					|          |    |xxxxxxxxxx|
-					+----------+    +----------+
-					|          |    |xxxxxxxxxx|
-					+----------+    +----------+
-		since_id--> |          |    |xxxxxxxxxx| <-- min_id
-					+----------+    +----------+
-					|          |    |          |
-					+----------+    +----------+
+	                limit = 4       limit = 4
+	               +----------+    +----------+
+	     max_id--> |xxxxxxxxxx|    |          | <-- max_id
+	               +----------+    +----------+
+	               |xxxxxxxxxx|    |          |
+	               +----------+    +----------+
+	               |xxxxxxxxxx|    |          |
+	               +----------+    +----------+
+	               |xxxxxxxxxx|    |xxxxxxxxxx|
+	               +----------+    +----------+
+	               |          |    |xxxxxxxxxx|
+	               +----------+    +----------+
+	               |          |    |xxxxxxxxxx|
+	               +----------+    +----------+
+	   since_id--> |          |    |xxxxxxxxxx| <-- min_id
+	               +----------+    +----------+
+	               |          |    |          |
+	               +----------+    +----------+
 
 	*/
 	switch {
