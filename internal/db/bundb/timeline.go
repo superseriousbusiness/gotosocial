@@ -114,6 +114,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	follows, err := t.state.DB.GetAccountFollows(
 		gtscontext.SetBarebones(ctx),
 		accountID,
+		nil, // select all
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.Newf("db error getting follows for account %s: %w", accountID, err)

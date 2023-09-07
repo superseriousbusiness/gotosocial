@@ -38,7 +38,7 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
-	follows, err := f.state.DB.GetAccountFollows(ctx, acct.ID)
+	follows, err := f.state.DB.GetAccountFollows(ctx, acct.ID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Following: db error getting following for account id %s: %w", acct.ID, err)
 	}

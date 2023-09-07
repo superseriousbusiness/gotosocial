@@ -160,7 +160,7 @@ func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *
 //   - Follow requests created by account.
 func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.Account) error {
 	// Delete follows targeting this account.
-	followedBy, err := p.state.DB.GetAccountFollowers(ctx, account.ID)
+	followedBy, err := p.state.DB.GetAccountFollowers(ctx, account.ID, nil)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error getting follows targeting account %s: %w", account.ID, err)
 	}
@@ -172,7 +172,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	}
 
 	// Delete follow requests targeting this account.
-	followRequestedBy, err := p.state.DB.GetAccountFollowRequests(ctx, account.ID)
+	followRequestedBy, err := p.state.DB.GetAccountFollowRequests(ctx, account.ID, nil)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error getting follow requests targeting account %s: %w", account.ID, err)
 	}
@@ -193,7 +193,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	)
 
 	// Delete follows originating from this account.
-	following, err := p.state.DB.GetAccountFollows(ctx, account.ID)
+	following, err := p.state.DB.GetAccountFollows(ctx, account.ID, nil)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error getting follows owned by account %s: %w", account.ID, err)
 	}
@@ -211,7 +211,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 	}
 
 	// Delete follow requests originating from this account.
-	followRequesting, err := p.state.DB.GetAccountFollowRequesting(ctx, account.ID)
+	followRequesting, err := p.state.DB.GetAccountFollowRequesting(ctx, account.ID, nil)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error getting follow requests owned by account %s: %w", account.ID, err)
 	}

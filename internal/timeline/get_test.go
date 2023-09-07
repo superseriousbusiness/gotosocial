@@ -66,6 +66,7 @@ func (suite *GetTestSuite) emptyAccountFollows(ctx context.Context, accountID st
 	follows, err := suite.state.DB.GetAccountFollows(
 		gtscontext.SetBarebones(ctx),
 		accountID,
+		nil, // select all
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -82,6 +83,7 @@ func (suite *GetTestSuite) emptyAccountFollows(ctx context.Context, accountID st
 	follows, err = suite.state.DB.GetAccountFollows(
 		gtscontext.SetBarebones(ctx),
 		accountID,
+		nil, // select all
 	)
 	if err != nil {
 		suite.FailNow(err.Error())

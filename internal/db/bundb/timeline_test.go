@@ -167,8 +167,8 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 	follows, err := suite.state.DB.GetAccountFollows(
 		gtscontext.SetBarebones(ctx),
 		viewingAccount.ID,
+		nil, // select all
 	)
-
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

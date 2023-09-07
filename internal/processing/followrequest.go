@@ -31,7 +31,7 @@ import (
 )
 
 func (p *Processor) FollowRequestsGet(ctx context.Context, auth *oauth.Auth) ([]apimodel.Account, gtserror.WithCode) {
-	followRequests, err := p.state.DB.GetAccountFollowRequests(ctx, auth.Account.ID)
+	followRequests, err := p.state.DB.GetAccountFollowRequests(ctx, auth.Account.ID, nil)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

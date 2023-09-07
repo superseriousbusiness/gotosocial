@@ -39,7 +39,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	follows, err := p.state.DB.GetAccountFollowers(ctx, targetAccountID)
+	follows, err := p.state.DB.GetAccountFollowers(ctx, targetAccountID, nil)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("FollowersGet: db error getting followers: %w", err)
@@ -61,7 +61,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	follows, err := p.state.DB.GetAccountFollows(ctx, targetAccountID)
+	follows, err := p.state.DB.GetAccountFollows(ctx, targetAccountID, nil)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("FollowingGet: db error getting followers: %w", err)
