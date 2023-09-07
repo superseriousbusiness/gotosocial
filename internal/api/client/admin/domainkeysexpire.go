@@ -136,9 +136,7 @@ func (m *Module) DomainKeysExpirePOSTHandler(c *gin.Context) {
 }
 
 func validateDomainKeysExpire(form *apimodel.DomainKeysExpireRequest) error {
-	// Normalize domain.
-	form.Domain = strings.ToLower(strings.TrimSpace(form.Domain))
-
+	form.Domain = strings.TrimSpace(form.Domain)
 	if form.Domain == "" {
 		return errors.New("no domain given")
 	}
