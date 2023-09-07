@@ -23,6 +23,9 @@ package paging
 // NOTE: this does not effect the order
 // of returned API results, which must
 // always be descending order.
+//
+// Damn you Mastodon API for this
+// horrible inconsistent behaviour.
 type Order int
 
 const (
