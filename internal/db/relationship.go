@@ -174,7 +174,7 @@ type Relationship interface {
 	CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error)
 
 	// GetAccountBlocks returns all blocks originating from the given account, with given optional paging parameters.
-	GetAccountBlocks(ctx context.Context, accountID string, paging *paging.Pager) ([]*gtsmodel.Block, error)
+	GetAccountBlocks(ctx context.Context, accountID string, paging *paging.Page) ([]*gtsmodel.Block, error)
 
 	// GetNote gets a private note from a source account on a target account, if it exists.
 	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error)

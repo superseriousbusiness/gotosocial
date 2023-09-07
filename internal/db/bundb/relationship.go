@@ -150,9 +150,9 @@ func (r *relationshipDB) GetAccountFollowRequesting(ctx context.Context, account
 	return r.GetFollowRequestsByIDs(ctx, followReqIDs)
 }
 
-func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string, page *paging.Pager) ([]*gtsmodel.Block, error) {
+func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Block, error) {
 	// Load block IDs from cache with database loader callback.
-	blockIDs, err := r.state.Caches.GTS.BlockIDs().LoadRange(accountID, func() ([]string, error) {
+	blockIDs, err := r.state.Caches.GTS.BlockIDs().Load(accountID, func() ([]string, error) {
 		var blockIDs []string
 
 		// Block IDs not in cache, perform DB query!
@@ -162,10 +162,21 @@ func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string,
 		}
 
 		return blockIDs, nil
-	}, page.PageDesc)
+	})
 	if err != nil {
 		return nil, err
 	}
+
+	// Our cached / selected block IDs are
+	// ALWAYS stored in descending order.
+	// Depending on the paging requested
+	// this may be an unexpected order.
+	if !page.GetOrder().Ascending() {
+		blockIDs = paging.Reverse(blockIDs)
+	}
+
+	// Page the resulting block IDs.
+	blockIDs = page.Page(blockIDs)
 
 	// Convert these IDs to full block objects.
 	return r.GetBlocksByIDs(ctx, blockIDs)

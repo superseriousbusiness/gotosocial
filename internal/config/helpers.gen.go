@@ -1991,7 +1991,7 @@ func (st *ConfigState) SetTracingInsecureTransport(v bool) {
 }
 
 // TracingInsecureTransportFlag returns the flag name for the 'TracingInsecureTransport' field
-func TracingInsecureTransportFlag() string { return "tracing-insecure" }
+func TracingInsecureTransportFlag() string { return "tracing-insecure-transport" }
 
 // GetTracingInsecureTransport safely fetches the value for global configuration 'TracingInsecureTransport' field
 func GetTracingInsecureTransport() bool { return global.GetTracingInsecureTransport() }
