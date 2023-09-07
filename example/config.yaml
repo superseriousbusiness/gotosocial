@@ -730,10 +730,9 @@ tracing-enabled: false
 # Default: "grpc"
 tracing-transport: "grpc"
 
-# String. Endpoint of the trace ingester. When using the gRPC based transport, the
-# endpoint is usually a single address/port combination. For the HTTP transport,
-# include the scheme, such as "http://".
-# Examples: ["localhost:4317", "http://localhost:4318"]
+# String. Endpoint of the trace ingester. When using the gRPC or HTTP based transports,
+# provide the endpoint as a single address/port combination without a protocol scheme.
+# Examples: ["localhost:4317"]
 # Default: ""
 tracing-endpoint: ""
 
