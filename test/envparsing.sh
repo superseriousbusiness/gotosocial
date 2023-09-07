@@ -146,7 +146,7 @@ EXPECT=$(cat << "EOF"
     "tls-certificate-key": "",
     "tracing-enabled": false,
     "tracing-endpoint": "localhost:4317",
-    "tracing-insecure": false,
+    "tracing-insecure-transport": true,
     "tracing-transport": "grpc",
     "trusted-proxies": [
         "127.0.0.1/32",
@@ -242,6 +242,7 @@ GTS_SYSLOG_ENABLED=true \
 GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
 GTS_TRACING_ENDPOINT='localhost:4317' \
+GTS_TRACING_INSECURE_TRANSPORT=true \
 GTS_ADVANCED_COOKIES_SAMESITE='strict' \
 GTS_ADVANCED_RATE_LIMIT_EXCEPTIONS="192.0.2.0/24,127.0.0.1/32" \
 GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \

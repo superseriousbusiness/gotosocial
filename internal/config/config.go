@@ -131,9 +131,9 @@ type Configuration struct {
 	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
 	TracingEnabled           bool   `name:"tracing-enabled" usage:"Enable OTLP Tracing"`
-	TracingTransport         string `name:"tracing-transport" usage:"grpc or jaeger"`
-	TracingEndpoint          string `name:"tracing-endpoint" usage:"Endpoint of your trace collector. Eg., 'localhost:4317' for gRPC, 'http://localhost:14268/api/traces' for jaeger"`
-	TracingInsecureTransport bool   `name:"tracing-insecure" usage:"Disable HTTPS for the gRPC transport protocol"`
+	TracingTransport         string `name:"tracing-transport" usage:"grpc or http"`
+	TracingEndpoint          string `name:"tracing-endpoint" usage:"Endpoint of your trace collector. Eg., 'localhost:4317' for gRPC, 'localhost:4318' for http"`
+	TracingInsecureTransport bool   `name:"tracing-insecure-transport" usage:"Disable TLS for the gRPC or HTTP transport protocol"`
 
 	SMTPHost               string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort               int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
