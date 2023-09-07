@@ -27,14 +27,14 @@ import (
 // ParseIDPage parses an ID Page from a request context, returning BadRequest on error parsing,
 // and a nil page if no request parameters are set couplied with defaultlimit=0. i.e. setting a
 // defaultlimit value will enforce paging for the endpoint upon which this request is incoming from.
-func ParseIDPage(c *gin.Context, defaultlimit int) (*Page[string], gtserror.WithCode) {
+func ParseIDPage(c *gin.Context, min, max, _default int) (*Page[string], gtserror.WithCode) {
 	// Extract request query params.
 	sinceID := c.Query("since_id")
 	minID := c.Query("min_id")
 	maxID := c.Query("max_id")
 
 	// Extract request limit parameter.
-	limit, errWithCode := ParseLimit(c, defaultlimit)
+	limit, errWithCode := ParseLimit(c, min, max, _default)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -58,19 +58,19 @@ func ParseIDPage(c *gin.Context, defaultlimit int) (*Page[string], gtserror.With
 // ParseShortcodeDomainPage parses an emoji shortcode domain Page from a request context, returning BadRequest
 // on error parsing, and a nil page if no request parameters are set couplied with defaultlimit=0. i.e. setting
 // a defaultlimit value will enforce paging for the endpoint upon which this request is incoming from.
-func ParseShortcodeDomainPage(c *gin.Context, defaultlimit int) (*Page[string], gtserror.WithCode) {
-	// Extract request query params.
-	min := c.Query("min_shortcode_domain")
-	max := c.Query("max_shortcode_domain")
+func ParseShortcodeDomainPage(c *gin.Context, min, max, _default int) (*Page[string], gtserror.WithCode) {
+	// Extract request query parameters.
+	minShortcode := c.Query("min_shortcode_domain")
+	maxShortcode := c.Query("max_shortcode_domain")
 
 	// Extract request limit parameter.
-	limit, errWithCode := ParseLimit(c, defaultlimit)
+	limit, errWithCode := ParseLimit(c, min, max, _default)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if min == "" &&
-		max == "" &&
+	if minShortcode == "" &&
+		maxShortcode == "" &&
 		limit == 0 {
 		// No ID paging params provided, and no default
 		// limit value which indicates paging not enforced.
@@ -78,16 +78,14 @@ func ParseShortcodeDomainPage(c *gin.Context, defaultlimit int) (*Page[string], 
 	}
 
 	return &Page[string]{
-		Min:   MinShortcodeDomain(min),
-		Max:   MaxShortcodeDomain(max),
+		Min:   MinShortcodeDomain(minShortcode),
+		Max:   MaxShortcodeDomain(maxShortcode),
 		Limit: limit,
 	}, nil
 }
 
 // ParseLimit parses the limit query parameter from a request context, returning BadRequest on error parsing and _default if zero limit given.
-func ParseLimit(c *gin.Context, _default int) (int, gtserror.WithCode) {
-	const min, max = 2, 100
-
+func ParseLimit(c *gin.Context, min, max, _default int) (int, gtserror.WithCode) {
 	// Get limit query param.
 	str := c.Query("limit")
 
