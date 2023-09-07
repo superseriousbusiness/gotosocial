@@ -68,10 +68,6 @@ func MaxID(maxID string) Boundary {
 	return Boundary{
 		Name:  "max_id",
 		Value: maxID,
-
-		// by default uses descending,
-		// but min boundary order always
-		// overrides max boundary order
 		Order: OrderDescending,
 	}
 }
@@ -82,10 +78,6 @@ func MinShortcodeDomain(min string) Boundary {
 	return Boundary{
 		Name:  "min_shortcode_domain",
 		Value: min,
-
-		// with "min_shortcode_domain",
-		// return as ascending order items,
-		// i.e. oldest at lowest idx
 		Order: OrderAscending,
 	}
 }
@@ -96,10 +88,6 @@ func MaxShortcodeDomain(max string) Boundary {
 	return Boundary{
 		Name:  "max_shortcode_domain",
 		Value: max,
-
-		// by default uses descending,
-		// but min boundary order always
-		// overrides max boundary order
 		Order: OrderDescending,
 	}
 }
