@@ -49,28 +49,3 @@ func (c *SliceCache[T]) Load(key string, load func() ([]T, error)) ([]T, error) 
 	// Return data clone for safety.
 	return slices.Clone(data), nil
 }
-
-// LoadRange is functionally the same as .Load(), but will pass the result through provided reslice function before returning a cloned result.
-func (c *SliceCache[T]) LoadRange(key string, load func() ([]T, error), reslice func([]T) []T) ([]T, error) {
-	// Look for follow IDs list in cache under this key.
-	data, ok := c.Get(key)
-
-	if !ok {
-		var err error
-
-		// Not cached, load!
-		data, err = load()
-		if err != nil {
-			return nil, err
-		}
-
-		// Store the data.
-		c.Set(key, data)
-	}
-
-	// Reslice to range.
-	slice := reslice(data)
-
-	// Return range clone for safety.
-	return slices.Clone(slice), nil
-}
