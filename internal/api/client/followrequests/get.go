@@ -82,11 +82,15 @@ func (m *Module) FollowRequestGETHandler(c *gin.Context) {
 		return
 	}
 
-	accts, errWithCode := m.processor.Account().FollowRequestsGet(c.Request.Context(), authed.Account, nil)
+	resp, errWithCode := m.processor.Account().FollowRequestsGet(c.Request.Context(), authed.Account, nil)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.JSON(http.StatusOK, accts)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+
+	c.JSON(http.StatusOK, resp.Items)
 }

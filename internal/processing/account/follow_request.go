@@ -104,7 +104,7 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, requestingAccount *gt
 	}
 
 	// Get a filtered slice of public API account models.
-	items, _, _ := p.c.GetVisibleAPIAccountsPaged(ctx,
+	items := p.c.GetVisibleAPIAccountsPaged(ctx,
 		requestingAccount,
 		getIdx,
 		len(followRequests),

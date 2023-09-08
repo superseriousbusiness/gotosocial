@@ -143,23 +143,23 @@ func (p *Processor) GetVisibleAPIStatuses(
 	return p.getVisibleAPIStatuses(ctx, 3, requester, next, length)
 }
 
-// GetVisibleAPIStatusesPaged is functionally equivalent to GetVisibleAPIStatuses(), except that
-// the minID and maxID are returned along with a converted slice of statuses as interface{}.
+// GetVisibleAPIStatusesPaged is functionally equivalent to GetVisibleAPIStatuses(),
+// except the statuses are returned as a converted slice of statuses as interface{}.
 func (p *Processor) GetVisibleAPIStatusesPaged(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	next func(int) *gtsmodel.Status,
 	length int,
-) (items []interface{}, minID, maxID string) {
+) []interface{} {
 	statuses := p.getVisibleAPIStatuses(ctx, 3, requester, next, length)
 	if len(statuses) == 0 {
-		return nil, "", ""
+		return nil
 	}
-	items = make([]interface{}, len(statuses))
+	items := make([]interface{}, len(statuses))
 	for i, status := range statuses {
 		items[i] = status
 	}
-	return items, statuses[0].ID, statuses[len(statuses)-1].ID
+	return items
 }
 
 func (p *Processor) getVisibleAPIStatuses(

@@ -87,11 +87,15 @@ func (m *Module) AccountFollowersGETHandler(c *gin.Context) {
 		return
 	}
 
-	followers, errWithCode := m.processor.Account().FollowersGet(c.Request.Context(), authed.Account, targetAcctID, nil)
+	resp, errWithCode := m.processor.Account().FollowersGet(c.Request.Context(), authed.Account, targetAcctID, nil)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.JSON(http.StatusOK, followers)
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+
+	c.JSON(http.StatusOK, resp.Items)
 }

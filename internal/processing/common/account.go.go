@@ -169,23 +169,23 @@ func (p *Processor) GetVisibleAPIAccounts(
 	return p.getVisibleAPIAccounts(ctx, 3, requester, next, length)
 }
 
-// GetVisibleAPIAccountsPaged is functionally equivalent to GetVisibleAPIAccounts(), except that
-// the minID and maxID are returned along with a converted slice of accounts as interface{}.
+// GetVisibleAPIAccountsPaged is functionally equivalent to GetVisibleAPIAccounts(),
+// except the accounts are returned as a converted slice of accounts as interface{}.
 func (p *Processor) GetVisibleAPIAccountsPaged(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	next func(int) *gtsmodel.Account,
 	length int,
-) (items []interface{}, minID, maxID string) {
+) []interface{} {
 	accounts := p.getVisibleAPIAccounts(ctx, 3, requester, next, length)
 	if len(accounts) == 0 {
-		return nil, "", ""
+		return nil
 	}
-	items = make([]interface{}, len(accounts))
+	items := make([]interface{}, len(accounts))
 	for i, account := range accounts {
 		items[i] = account
 	}
-	return items, accounts[0].ID, accounts[len(accounts)-1].ID
+	return items
 }
 
 func (p *Processor) getVisibleAPIAccounts(

@@ -59,7 +59,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// Get a filtered slice of public API account models.
-	items, _, _ := p.c.GetVisibleAPIAccountsPaged(ctx,
+	items := p.c.GetVisibleAPIAccountsPaged(ctx,
 		requestingAccount,
 		getIdx,
 		len(follows),
@@ -105,7 +105,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// Get a filtered slice of public API account models.
-	items, _, _ := p.c.GetVisibleAPIAccountsPaged(ctx,
+	items := p.c.GetVisibleAPIAccountsPaged(ctx,
 		requestingAccount,
 		getIdx,
 		len(follows),

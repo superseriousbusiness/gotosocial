@@ -48,6 +48,7 @@ type Processor struct {
 
 // New returns a new account processor.
 func New(
+	common *common.Processor,
 	state *state.State,
 	tc typeutils.TypeConverter,
 	mediaManager *media.Manager,
@@ -57,6 +58,7 @@ func New(
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {
 	return Processor{
+		c:            common,
 		state:        state,
 		tc:           tc,
 		mediaManager: mediaManager,
