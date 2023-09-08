@@ -90,6 +90,9 @@ func ParseShortcodeDomainPage(c *gin.Context, min, max, _default int) (*Page, gt
 func ParseLimit(c *gin.Context, min, max, _default int) (int, gtserror.WithCode) {
 	// Get limit query param.
 	str := c.Query("limit")
+	if str == "" {
+		return _default, nil
+	}
 
 	// Attempt to parse limit int.
 	i, err := strconv.Atoi(str)
