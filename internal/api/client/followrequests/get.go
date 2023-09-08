@@ -82,7 +82,7 @@ func (m *Module) FollowRequestGETHandler(c *gin.Context) {
 		return
 	}
 
-	accts, errWithCode := m.processor.FollowRequestsGet(c.Request.Context(), authed)
+	accts, errWithCode := m.processor.Account().FollowRequestsGet(c.Request.Context(), authed.Account, nil)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

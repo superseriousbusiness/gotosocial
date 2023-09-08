@@ -113,7 +113,7 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.BlocksGet(
+	resp, errWithCode := m.processor.Account().BlocksGet(
 		c.Request.Context(),
 		authed.Account,
 		page,
