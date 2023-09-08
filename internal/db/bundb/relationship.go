@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -290,29 +289,6 @@ func (r *relationshipDB) getAccountBlockIDs(ctx context.Context, accountID strin
 
 		return blockIDs, nil
 	})
-}
-
-// loadPagedIDs loads a page of IDs from given SliceCache by `key`, resorting to `load` function if required. Uses `page` to sort + page resulting IDs.
-// NOTE: IDs returned from `cache` / `load` MUST be in descending order, otherwise paging will not work correctly / return things out of order.
-func loadPagedIDs(cache *cache.SliceCache[string], key string, page *paging.Page, load func() ([]string, error)) ([]string, error) {
-	// Check cache for IDs, else load.
-	ids, err := cache.Load(key, load)
-	if err != nil {
-		return nil, err
-	}
-
-	// Our cached / selected bIDs are
-	// ALWAYS stored in descending order.
-	// Depending on the paging requested
-	// this may be an unexpected order.
-	if !page.GetOrder().Ascending() {
-		ids = paging.Reverse(ids)
-	}
-
-	// Page the resulting IDs.
-	ids = page.Page(ids)
-
-	return ids, nil
 }
 
 // newSelectFollowRequests returns a new select query for all rows in the follow_requests table with target_account_id = accountID.

@@ -20,7 +20,9 @@ package bundb
 import (
 	"strings"
 
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/uptrace/bun"
 )
 
@@ -81,6 +83,29 @@ func whereStartsLike(
 		"(?) LIKE ? ESCAPE ?",
 		subject, search, `\`,
 	)
+}
+
+// loadPagedIDs loads a page of IDs from given SliceCache by `key`, resorting to `load` function if required. Uses `page` to sort + page resulting IDs.
+// NOTE: IDs returned from `cache` / `load` MUST be in descending order, otherwise paging will not work correctly / return things out of order.
+func loadPagedIDs(cache *cache.SliceCache[string], key string, page *paging.Page, load func() ([]string, error)) ([]string, error) {
+	// Check cache for IDs, else load.
+	ids, err := cache.Load(key, load)
+	if err != nil {
+		return nil, err
+	}
+
+	// Our cached / selected bIDs are
+	// ALWAYS stored in descending order.
+	// Depending on the paging requested
+	// this may be an unexpected order.
+	if !page.GetOrder().Ascending() {
+		ids = paging.Reverse(ids)
+	}
+
+	// Page the resulting IDs.
+	ids = page.Page(ids)
+
+	return ids, nil
 }
 
 // updateWhere parses []db.Where and adds it to the given update query.
