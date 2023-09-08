@@ -84,9 +84,9 @@ func (m *Module) FollowRequestGETHandler(c *gin.Context) {
 	}
 
 	page, errWithCode := paging.ParseIDPage(c,
-		1,   // min limit
-		100, // max limit
-		40,  // default limit
+		1,  // min limit
+		80, // max limit
+		40, // default limit
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
