@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
@@ -94,24 +93,22 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, requestingAccount *gt
 		return paging.EmptyResponse(), nil
 	}
 
-	var (
-		items = make([]interface{}, 0, count)
+	// Set next + prev values before filtering and API
+	// converting, so caller can still page properly.
+	nextMaxIDValue := followRequests[count-1].ID
+	prevMinIDValue := followRequests[0].ID
 
-		// Set next + prev values before filtering and API
-		// converting, so caller can still page properly.
-		nextMaxIDValue = followRequests[count-1].ID
-		prevMinIDValue = followRequests[0].ID
-	)
-
-	// Convert database account models to API account models.
-	for _, followRequest := range followRequests {
-		apiAcct, err := p.tc.AccountToAPIAccountPublic(ctx, followRequest.Account)
-		if err != nil {
-			log.Errorf(ctx, "error convering to public api account: %v", err)
-			continue
-		}
-		items = append(items, apiAcct)
+	// Func to fetch follow source at index.
+	getIdx := func(i int) *gtsmodel.Account {
+		return followRequests[i].Account
 	}
+
+	// Get a filtered slice of public API account models.
+	items, _, _ := p.c.GetVisibleAPIAccountsPaged(ctx,
+		requestingAccount,
+		getIdx,
+		len(followRequests),
+	)
 
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: items,

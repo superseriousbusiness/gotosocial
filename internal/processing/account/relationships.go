@@ -47,13 +47,18 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 		return paging.EmptyResponse(), nil
 	}
 
+	// Set next + prev values before filtering and API
+	// converting, so caller can still page properly.
+	nextMaxIDValue := follows[count-1].ID
+	prevMinIDValue := follows[0].ID
+
 	// Func to fetch follow source at index.
 	getIdx := func(i int) *gtsmodel.Account {
 		return follows[i].Account
 	}
 
-	// Get a filtered slice of frontend public API account models.
-	items, minID, maxID := p.c.GetVisibleAPIAccountsPaged(ctx,
+	// Get a filtered slice of public API account models.
+	items, _, _ := p.c.GetVisibleAPIAccountsPaged(ctx,
 		requestingAccount,
 		getIdx,
 		len(follows),
@@ -62,8 +67,8 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: items,
 		Path:  "/api/v1/accounts/" + targetAccountID + "/followers",
-		Next:  page.Next(maxID),
-		Prev:  page.Prev(minID),
+		Next:  page.Next(nextMaxIDValue),
+		Prev:  page.Prev(prevMinIDValue),
 	}), nil
 }
 
@@ -87,13 +92,18 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 		return paging.EmptyResponse(), nil
 	}
 
-	// Func to fetch follow target at index.
+	// Set next + prev values before filtering and API
+	// converting, so caller can still page properly.
+	nextMaxIDValue := follows[count-1].ID
+	prevMinIDValue := follows[0].ID
+
+	// Func to fetch follow source at index.
 	getIdx := func(i int) *gtsmodel.Account {
-		return follows[i].TargetAccount
+		return follows[i].Account
 	}
 
-	// Get a filtered slice of frontend public API account models.
-	items, minID, maxID := p.c.GetVisibleAPIAccountsPaged(ctx,
+	// Get a filtered slice of public API account models.
+	items, _, _ := p.c.GetVisibleAPIAccountsPaged(ctx,
 		requestingAccount,
 		getIdx,
 		len(follows),
@@ -102,8 +112,8 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: items,
 		Path:  "/api/v1/accounts/" + targetAccountID + "/following",
-		Next:  page.Next(maxID),
-		Prev:  page.Prev(minID),
+		Next:  page.Next(nextMaxIDValue),
+		Prev:  page.Prev(prevMinIDValue),
 	}), nil
 }
 
