@@ -101,7 +101,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 
 	// Func to fetch follow source at index.
 	getIdx := func(i int) *gtsmodel.Account {
-		return follows[i].Account
+		return follows[i].TargetAccount
 	}
 
 	// Get a filtered slice of public API account models.
