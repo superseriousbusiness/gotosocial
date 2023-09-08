@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -194,8 +195,7 @@ func (r *relationshipDB) CountAccountBlocks(ctx context.Context, accountID strin
 }
 
 func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	// Load follow IDs from cache with database loader callback.
-	followIDs, err := r.state.Caches.GTS.FollowIDs().Load(">"+accountID, func() ([]string, error) {
+	return loadPagedIDs(r.state.Caches.GTS.FollowIDs(), ">"+accountID, page, func() ([]string, error) {
 		var followIDs []string
 
 		// Follow IDs not in cache, perform DB query!
@@ -206,22 +206,6 @@ func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID stri
 
 		return followIDs, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Our cached / selected follow IDs are
-	// ALWAYS stored in descending order.
-	// Depending on the paging requested
-	// this may be an unexpected order.
-	if !page.GetOrder().Ascending() {
-		followIDs = paging.Reverse(followIDs)
-	}
-
-	// Page the resulting block IDs.
-	followIDs = page.Page(followIDs)
-
-	return followIDs, nil
 }
 
 func (r *relationshipDB) getAccountLocalFollowIDs(ctx context.Context, accountID string) ([]string, error) {
@@ -239,8 +223,7 @@ func (r *relationshipDB) getAccountLocalFollowIDs(ctx context.Context, accountID
 }
 
 func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	// Load follow IDs from cache with database loader callback.
-	followIDs, err := r.state.Caches.GTS.FollowIDs().Load("<"+accountID, func() ([]string, error) {
+	return loadPagedIDs(r.state.Caches.GTS.FollowIDs(), "<"+accountID, page, func() ([]string, error) {
 		var followIDs []string
 
 		// Follow IDs not in cache, perform DB query!
@@ -251,22 +234,6 @@ func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID st
 
 		return followIDs, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Our cached / selected follow IDs are
-	// ALWAYS stored in descending order.
-	// Depending on the paging requested
-	// this may be an unexpected order.
-	if !page.GetOrder().Ascending() {
-		followIDs = paging.Reverse(followIDs)
-	}
-
-	// Page the resulting block IDs.
-	followIDs = page.Page(followIDs)
-
-	return followIDs, nil
 }
 
 func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, accountID string) ([]string, error) {
@@ -284,8 +251,7 @@ func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, account
 }
 
 func (r *relationshipDB) getAccountFollowRequestIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	// Load follow request IDs from cache with database loader callback.
-	followReqIDs, err := r.state.Caches.GTS.FollowRequestIDs().Load(">"+accountID, func() ([]string, error) {
+	return loadPagedIDs(r.state.Caches.GTS.FollowRequestIDs(), ">"+accountID, page, func() ([]string, error) {
 		var followReqIDs []string
 
 		// Follow request IDs not in cache, perform DB query!
@@ -296,27 +262,10 @@ func (r *relationshipDB) getAccountFollowRequestIDs(ctx context.Context, account
 
 		return followReqIDs, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Our cached / selected follow request
-	// IDs are ALWAYS stored in descending
-	// order. Depending on the paging requested
-	// this may be an unexpected order.
-	if !page.GetOrder().Ascending() {
-		followReqIDs = paging.Reverse(followReqIDs)
-	}
-
-	// Page the resulting follow request IDs.
-	followReqIDs = page.Page(followReqIDs)
-
-	return followReqIDs, nil
 }
 
 func (r *relationshipDB) getAccountFollowRequestingIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	// Load follow request IDs from cache with database loader callback.
-	followReqIDs, err := r.state.Caches.GTS.FollowRequestIDs().Load("<"+accountID, func() ([]string, error) {
+	return loadPagedIDs(r.state.Caches.GTS.FollowRequestIDs(), "<"+accountID, page, func() ([]string, error) {
 		var followReqIDs []string
 
 		// Follow request IDs not in cache, perform DB query!
@@ -327,27 +276,10 @@ func (r *relationshipDB) getAccountFollowRequestingIDs(ctx context.Context, acco
 
 		return followReqIDs, nil
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Our cached / selected follow request
-	// IDs are ALWAYS stored in descending
-	// order. Depending on the paging requested
-	// this may be an unexpected order.
-	if !page.GetOrder().Ascending() {
-		followReqIDs = paging.Reverse(followReqIDs)
-	}
-
-	// Page the resulting follow request IDs.
-	followReqIDs = page.Page(followReqIDs)
-
-	return followReqIDs, nil
 }
 
 func (r *relationshipDB) getAccountBlockIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	// Load block IDs from cache with database loader callback.
-	blockIDs, err := r.state.Caches.GTS.BlockIDs().Load(accountID, func() ([]string, error) {
+	return loadPagedIDs(r.state.Caches.GTS.BlockIDs(), accountID, page, func() ([]string, error) {
 		var blockIDs []string
 
 		// Block IDs not in cache, perform DB query!
@@ -358,22 +290,29 @@ func (r *relationshipDB) getAccountBlockIDs(ctx context.Context, accountID strin
 
 		return blockIDs, nil
 	})
+}
+
+// loadPagedIDs loads a page of IDs from given SliceCache by `key`, resorting to `load` function if required. Uses `page` to sort + page resulting IDs.
+// NOTE: IDs returned from `cache` / `load` MUST be in descending order, otherwise paging will not work correctly / return things out of order.
+func loadPagedIDs(cache *cache.SliceCache[string], key string, page *paging.Page, load func() ([]string, error)) ([]string, error) {
+	// Check cache for IDs, else load.
+	ids, err := cache.Load(key, load)
 	if err != nil {
 		return nil, err
 	}
 
-	// Our cached / selected block IDs are
+	// Our cached / selected bIDs are
 	// ALWAYS stored in descending order.
 	// Depending on the paging requested
 	// this may be an unexpected order.
 	if !page.GetOrder().Ascending() {
-		blockIDs = paging.Reverse(blockIDs)
+		ids = paging.Reverse(ids)
 	}
 
-	// Page the resulting block IDs.
-	blockIDs = page.Page(blockIDs)
+	// Page the resulting IDs.
+	ids = page.Page(ids)
 
-	return blockIDs, nil
+	return ids, nil
 }
 
 // newSelectFollowRequests returns a new select query for all rows in the follow_requests table with target_account_id = accountID.
