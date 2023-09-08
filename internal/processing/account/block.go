@@ -28,8 +28,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // BlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
@@ -126,6 +129,61 @@ func (p *Processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel
 	})
 
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
+}
+
+// BlocksGet ...
+func (p *Processor) BlocksGet(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	page *paging.Page,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
+	blocks, err := p.state.DB.GetAccountBlocks(ctx,
+		requestingAccount.ID,
+		page,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Check for zero length.
+	count := len(blocks)
+	if len(blocks) == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
+	var (
+		items = make([]interface{}, 0, count)
+
+		// Set next + prev values before API converting
+		// so the caller can still page even on error.
+		nextMaxIDValue = blocks[count-1].ID
+		prevMinIDValue = blocks[0].ID
+	)
+
+	for _, block := range blocks {
+		if block.TargetAccount == nil {
+			// All models should be populated at this point.
+			log.Warnf(ctx, "block target account was nil: %v", err)
+			continue
+		}
+
+		// Convert target account to frontend API model.
+		account, err := p.tc.AccountToAPIAccountBlocked(ctx, block.TargetAccount)
+		if err != nil {
+			log.Errorf(ctx, "error converting account to public api account: %v", err)
+			continue
+		}
+
+		// Append target to return items.
+		items = append(items, account)
+	}
+
+	return paging.PackageResponse(paging.ResponseParams{
+		Items: items,
+		Path:  "/api/v1/blocks",
+		Next:  page.Next(nextMaxIDValue),
+		Prev:  page.Prev(prevMinIDValue),
+	}), nil
 }
 
 func (p *Processor) getBlockTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*gtsmodel.Account, *gtsmodel.Block, gtserror.WithCode) {
