@@ -145,7 +145,7 @@ func (p *Processor) BlocksGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Check for zero length.
+	// Check for empty response.
 	count := len(blocks)
 	if len(blocks) == 0 {
 		return util.EmptyPageableResponse(), nil

@@ -42,6 +42,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Check for empty response.
 	count := len(follows)
 	if count == 0 {
 		return paging.EmptyResponse(), nil
@@ -87,6 +88,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmode
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Check for empty response.
 	count := len(follows)
 	if count == 0 {
 		return paging.EmptyResponse(), nil
