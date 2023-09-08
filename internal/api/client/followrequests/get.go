@@ -24,6 +24,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // FollowRequestGETHandler swagger:operation GET /api/v1/follow_requests getFollowRequests
@@ -82,7 +83,17 @@ func (m *Module) FollowRequestGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Account().FollowRequestsGet(c.Request.Context(), authed.Account, nil)
+	page, errWithCode := paging.ParseIDPage(c,
+		1,   // min limit
+		100, // max limit
+		40,  // default limit
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	resp, errWithCode := m.processor.Account().FollowRequestsGet(c.Request.Context(), authed.Account, page)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
