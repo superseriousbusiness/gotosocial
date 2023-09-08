@@ -1,0 +1,238 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package common
+
+import (
+	"context"
+	"errors"
+
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+)
+
+// GetTargetAccountBy fetches the target account with db load function, given the authorized (or, nil) requester's
+// account. This returns an approprate gtserror.WithCode accounting (ha) for not found and visibility to requester.
+func (p *Processor) GetTargetAccountBy(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	getTargetFromDB func() (*gtsmodel.Account, error),
+) (
+	account *gtsmodel.Account,
+	visible bool,
+	errWithCode gtserror.WithCode,
+) {
+	// Fetch the target account from db.
+	target, err := getTargetFromDB()
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, false, gtserror.NewErrorInternalError(err)
+	}
+
+	if target == nil {
+		// DB loader could not find account in database.
+		err := errors.New("target account not found")
+		return nil, false, gtserror.NewErrorNotFound(err)
+	}
+
+	// Check whether target account is visible to requesting account.
+	visible, err = p.filter.AccountVisible(ctx, requester, target)
+	if err != nil {
+		return nil, false, gtserror.NewErrorInternalError(err)
+	}
+
+	if requester != nil && visible {
+		// Ensure the account is up-to-date.
+		p.federator.RefreshAccountAsync(ctx,
+			requester.Username,
+			target,
+			nil,
+			false,
+		)
+	}
+
+	return target, visible, nil
+}
+
+// GetTargetAccountByID is a call-through to GetTargetAccountBy() using the db GetAccountByID() function.
+func (p *Processor) GetTargetAccountByID(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	targetID string,
+) (
+	account *gtsmodel.Account,
+	visible bool,
+	errWithCode gtserror.WithCode,
+) {
+	return p.GetTargetAccountBy(ctx, requester, func() (*gtsmodel.Account, error) {
+		return p.state.DB.GetAccountByID(ctx, targetID)
+	})
+}
+
+// GetVisibleTargetAccount calls GetTargetAccountByID(),
+// but converts a non-visible result to not-found error.
+func (p *Processor) GetVisibleTargetAccount(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	targetID string,
+) (
+	account *gtsmodel.Account,
+	errWithCode gtserror.WithCode,
+) {
+	// Fetch the target account by ID from the database.
+	target, visible, errWithCode := p.GetTargetAccountByID(ctx,
+		requester,
+		targetID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	if !visible {
+		// Pretend account doesn't exist if not visible.
+		err := errors.New("target account not found")
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	return target, nil
+}
+
+// GetAPIAccount fetches the appropriate API account model depending on whether requester = target.
+func (p *Processor) GetAPIAccount(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	target *gtsmodel.Account,
+) (
+	apiAcc *apimodel.Account,
+	errWithCode gtserror.WithCode,
+) {
+	var err error
+
+	if requester != nil && requester.ID == target.ID {
+		// Only return sensitive account model _if_ requester = target.
+		apiAcc, err = p.converter.AccountToAPIAccountSensitive(ctx, target)
+	} else {
+		// Else, fall back to returning the public account model.
+		apiAcc, err = p.converter.AccountToAPIAccountPublic(ctx, target)
+	}
+
+	if err != nil {
+		err := gtserror.Newf("error converting account: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return apiAcc, nil
+}
+
+// GetAPIAccountBlocked fetches the limited "blocked" account model for given target.
+func (p *Processor) GetAPIAccountBlocked(
+	ctx context.Context,
+	targetAcc *gtsmodel.Account,
+) (
+	apiAcc *apimodel.Account,
+	errWithCode gtserror.WithCode,
+) {
+	apiAccount, err := p.converter.AccountToAPIAccountBlocked(ctx, targetAcc)
+	if err != nil {
+		err = gtserror.Newf("error converting account: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	return apiAccount, nil
+}
+
+// GetVisibleAPIAccounts converts an array of gtsmodel.Accounts (inputted by next function) into
+// public API model accounts, checking first for visibility. Please note that all errors will be
+// logged at ERROR level, but will not be returned. Callers are likely to run into show-stopping
+// errors in the lead-up to this function, whereas calling this should not be a show-stopper.
+func (p *Processor) GetVisibleAPIAccounts(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	next func(int) *gtsmodel.Account,
+	length int,
+) []*apimodel.Account {
+	return p.getVisibleAPIAccounts(ctx, 3, requester, next, length)
+}
+
+// GetVisibleAPIAccountsPaged is functionally equivalent to GetVisibleAPIAccounts(), except that
+// the minID and maxID are returned along with a converted slice of accounts as interface{}.
+func (p *Processor) GetVisibleAPIAccountsPaged(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	next func(int) *gtsmodel.Account,
+	length int,
+) (items []interface{}, minID, maxID string) {
+	accounts := p.getVisibleAPIAccounts(ctx, 3, requester, next, length)
+	if len(accounts) == 0 {
+		return nil, "", ""
+	}
+	items = make([]interface{}, len(accounts))
+	for i, account := range accounts {
+		items[i] = account
+	}
+	return items, accounts[0].ID, accounts[len(accounts)-1].ID
+}
+
+func (p *Processor) getVisibleAPIAccounts(
+	ctx context.Context,
+	calldepth int, // used to skip wrapping func above these's names
+	requester *gtsmodel.Account,
+	next func(int) *gtsmodel.Account,
+	length int,
+) []*apimodel.Account {
+	// Start new log entry with
+	// the above calling func's name.
+	l := log.
+		WithContext(ctx).
+		WithField("caller", log.Caller(calldepth+1))
+
+	// Preallocate slice according to expected length.
+	accounts := make([]*apimodel.Account, 0, length)
+
+	for i := 0; i < length; i++ {
+		// Get next account.
+		account := next(i)
+		if account == nil {
+			continue
+		}
+
+		// Check whether this account is visible to requesting account.
+		visible, err := p.filter.AccountVisible(ctx, requester, account)
+		if err != nil {
+			l.Errorf("error checking account visibility: %v", err)
+			continue
+		}
+
+		if !visible {
+			// Not visible to requester.
+			continue
+		}
+
+		// Convert the account to a public API model representation.
+		apiAcc, err := p.converter.AccountToAPIAccountPublic(ctx, account)
+		if err != nil {
+			l.Errorf("error converting account: %v", err)
+			continue
+		}
+
+		// Append API model to return slice.
+		accounts = append(accounts, apiAcc)
+	}
+
+	return accounts
+}
