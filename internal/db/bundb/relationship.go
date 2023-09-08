@@ -367,7 +367,7 @@ func newSelectLocalFollowers(db *DB, accountID string) *bun.SelectQuery {
 func newSelectBlocks(db *DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("blocks")).
-		ColumnExpr("?", bun.Ident("?")).
+		ColumnExpr("?", bun.Ident("id")).
 		Where("? = ?", bun.Ident("account_id"), accountID).
 		OrderExpr("? DESC", bun.Ident("id"))
 }
