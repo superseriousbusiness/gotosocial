@@ -46,6 +46,36 @@ import (
 //		description: Account ID.
 //		in: path
 //		required: true
+//	-
+//		name: max_id
+//		type: string
+//		description: >-
+//			Return only following accounts *OLDER* than the given max ID.
+//			The following account with the specified ID will not be included in the response.
+//		in: query
+//		required: false
+//	-
+//		name: since_id
+//		type: string
+//		description: >-
+//			Return only following accounts *NEWER* than the given since ID.
+//			The following account with the specified ID will not be included in the response.
+//		in: query
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only following accounts *IMMEDIATELY NEWER* than the given min ID.
+//			The following account with the specified ID will not be included in the response.
+//		in: query
+//		required: false
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of following accounts to return.
+//		default: 40
+//		in: query
+//		required: false
 //
 //	security:
 //	- OAuth2 Bearer:
