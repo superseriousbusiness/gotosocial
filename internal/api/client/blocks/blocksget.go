@@ -47,25 +47,35 @@ import (
 //
 //	parameters:
 //	-
-//		name: limit
-//		type: integer
-//		description: Number of blocks to return.
-//		default: 20
-//		in: query
-//	-
 //		name: max_id
 //		type: string
 //		description: >-
-//			Return only blocks *OLDER* than the given block ID.
-//			The block with the specified ID will not be included in the response.
+//			Return only blocked accounts *OLDER* than the given max ID.
+//			The blocked account with the specified ID will not be included in the response.
 //		in: query
+//		required: false
 //	-
 //		name: since_id
 //		type: string
 //		description: >-
-//		  Return only blocks *NEWER* than the given block ID.
-//		  The block with the specified ID will not be included in the response.
+//			Return only blocked accounts *NEWER* than the given since ID.
+//			The blocked account with the specified ID will not be included in the response.
 //		in: query
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only blocked accounts *IMMEDIATELY NEWER* than the given min ID.
+//			The blocked account with the specified ID will not be included in the response.
+//		in: query
+//		required: false
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of blocked accounts to return.
+//		default: 40
+//		in: query
+//		required: false
 //
 //	security:
 //	- OAuth2 Bearer:

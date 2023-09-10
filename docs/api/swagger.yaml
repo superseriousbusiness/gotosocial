@@ -4640,19 +4640,23 @@ paths:
                 ````
             operationId: blocksGet
             parameters:
-                - default: 20
-                  description: Number of blocks to return.
-                  in: query
-                  name: limit
-                  type: integer
-                - description: Return only blocks *OLDER* than the given block ID. The block with the specified ID will not be included in the response.
+                - description: Return only blocked accounts *OLDER* than the given max ID. The blocked account with the specified ID will not be included in the response.
                   in: query
                   name: max_id
                   type: string
-                - description: Return only blocks *NEWER* than the given block ID. The block with the specified ID will not be included in the response.
+                - description: Return only blocked accounts *NEWER* than the given since ID. The blocked account with the specified ID will not be included in the response.
                   in: query
                   name: since_id
                   type: string
+                - description: Return only blocked accounts *IMMEDIATELY NEWER* than the given min ID. The blocked account with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of blocked accounts to return.
+                  in: query
+                  name: limit
+                  type: integer
             produces:
                 - application/json
             responses:
