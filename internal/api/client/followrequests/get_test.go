@@ -35,7 +35,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/tomnomnom/linkheader"
 )
 
@@ -125,8 +124,8 @@ func (suite *GetTestSuite) TestGetPaged() {
 		// Ensure no follow request already exists.
 		_ = suite.db.DeleteFollowRequest(
 			context.Background(),
-			requestingAccount.ID,
 			targetAccount.ID,
+			requestingAccount.ID,
 		)
 
 		// Convert now to timestamp.
@@ -174,7 +173,6 @@ func (suite *GetTestSuite) TestGetPaged() {
 
 		// Update request query to add paging.
 		ctx.Request.URL.RawQuery = nextQuery
-		log.Printf("NEXT QUERY: %s", nextQuery)
 		nextQuery = "" // reset
 
 		// call the handler
@@ -205,7 +203,7 @@ func (suite *GetTestSuite) TestGetPaged() {
 			// This indicates we've been served less accounts than 'limit'
 			// but we haven't reached the end of our expected targetAccounts.
 			suite.T().Errorf("incorrect number of returned accounts: page=%d accounts=%+v", i, accounts)
-			break
+			expectLen = len(accounts) // ensures no panic and can at least check account order
 		}
 
 		// Take a slice of expected accounts,
@@ -222,7 +220,7 @@ func (suite *GetTestSuite) TestGetPaged() {
 
 		// Parse response link header values.
 		links := linkheader.ParseMultiple(recorder.Header().Values("Link"))
-		nextLinks := links.FilterByRel("next")
+		nextLinks := links.FilterByRel("prev")
 		if len(nextLinks) != 1 && len(targetAccounts) > 0 {
 			suite.T().Error("no next link provided with more remaining accounts")
 			break
