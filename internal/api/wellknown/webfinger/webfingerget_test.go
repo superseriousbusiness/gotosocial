@@ -61,7 +61,7 @@ func (suite *WebfingerGetTestSuite) finger(requestPath string) string {
 	// Result should always use the
 	// webfinger content-type.
 	if ct := result.Header.Get("content-type"); ct != string(apiutil.AppJRDJSON) {
-		suite.FailNow("", "expected: content type %s, got %s: %s", apiutil.AppJRDJSON, ct)
+		suite.FailNow("", "expected content type %s, got %s", apiutil.AppJRDJSON, ct)
 	}
 
 	b, err := io.ReadAll(result.Body)
