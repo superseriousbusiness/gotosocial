@@ -100,37 +100,30 @@ func (suite *NamestringSuite) TestExtractWebfingerPartsFromURI() {
 	}
 }
 
-func (suite *NamestringSuite) TestExtractNamestringParts1() {
-	namestring := "@stonerkitty.monster@stonerkitty.monster"
-	username, host, err := util.ExtractNamestringParts(namestring)
-	suite.NoError(err)
+func (suite *NamestringSuite) TestExtractNamestring() {
+	tests := []struct {
+		in, username, host, err string
+	}{
+		{in: "@stonerkitty.monster@stonerkitty.monster", username: "stonerkitty.monster", host: "stonerkitty.monster"},
+		{in: "@stonerkitty.monster", username: "stonerkitty.monster"},
+		{in: "@someone@somewhere", username: "someone", host: "somewhere"},
+		{in: "", err: "couldn't match mention "},
+	}
 
-	suite.Equal("stonerkitty.monster", username)
-	suite.Equal("stonerkitty.monster", host)
-}
-
-func (suite *NamestringSuite) TestExtractNamestringParts2() {
-	namestring := "@stonerkitty.monster"
-	username, host, err := util.ExtractNamestringParts(namestring)
-	suite.NoError(err)
-
-	suite.Equal("stonerkitty.monster", username)
-	suite.Empty(host)
-}
-
-func (suite *NamestringSuite) TestExtractNamestringParts3() {
-	namestring := "@someone@somewhere"
-	username, host, err := util.ExtractNamestringParts(namestring)
-	suite.NoError(err)
-
-	suite.Equal("someone", username)
-	suite.Equal("somewhere", host)
-}
-
-func (suite *NamestringSuite) TestExtractNamestringParts4() {
-	namestring := ""
-	_, _, err := util.ExtractNamestringParts(namestring)
-	suite.EqualError(err, "couldn't match mention ")
+	for _, tt := range tests {
+		tt := tt
+		suite.Run(tt.in, func() {
+			suite.T().Parallel()
+			username, host, err := util.ExtractNamestringParts(tt.in)
+			if tt.err != "" {
+				suite.EqualError(err, tt.err)
+			} else {
+				suite.NoError(err)
+				suite.Equal(tt.username, username)
+				suite.Equal(tt.host, host)
+			}
+		})
+	}
 }
 
 func TestNamestringSuite(t *testing.T) {
