@@ -3056,6 +3056,23 @@ paths:
                   name: id
                   required: true
                   type: string
+                - description: Return only follower accounts *OLDER* than the given max ID. The follower account with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only follower accounts *NEWER* than the given since ID. The follower account with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only follower accounts *IMMEDIATELY NEWER* than the given min ID. The follower account with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of follower accounts to return.
+                  in: query
+                  name: limit
+                  type: integer
             produces:
                 - application/json
             responses:
@@ -3090,6 +3107,23 @@ paths:
                   name: id
                   required: true
                   type: string
+                - description: Return only following accounts *OLDER* than the given max ID. The following account with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only following accounts *NEWER* than the given since ID. The following account with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only following accounts *IMMEDIATELY NEWER* than the given min ID. The following account with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of following accounts to return.
+                  in: query
+                  name: limit
+                  type: integer
             produces:
                 - application/json
             responses:
@@ -4787,8 +4821,20 @@ paths:
             description: Accounts will be sorted in order of follow request date descending (newest first).
             operationId: getFollowRequests
             parameters:
+                - description: Return only follow requesting accounts *OLDER* than the given max ID. The follow requester with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only follow requesting accounts *NEWER* than the given since ID. The follow requester with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only follow requesting accounts *IMMEDIATELY NEWER* than the given min ID. The follow requester with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
                 - default: 40
-                  description: Number of accounts to return.
+                  description: Number of follow requesting accounts to return.
                   in: query
                   name: limit
                   type: integer
