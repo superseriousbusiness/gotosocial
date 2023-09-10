@@ -32,6 +32,13 @@ import (
 //
 // See followers of account with given id.
 //
+// The next and previous queries can be parsed from the returned Link header.
+// Example:
+//
+// ```
+// <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+// ````
+//
 //	---
 //	tags:
 //	- accounts
@@ -52,6 +59,7 @@ import (
 //		description: >-
 //			Return only follower accounts *OLDER* than the given max ID.
 //			The follower account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal follow, NOT any of the returned accounts.
 //		in: query
 //		required: false
 //	-
@@ -60,13 +68,16 @@ import (
 //		description: >-
 //			Return only follower accounts *NEWER* than the given since ID.
 //			The follower account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal follow, NOT any of the returned accounts.
 //		in: query
+//		required: false
 //	-
 //		name: min_id
 //		type: string
 //		description: >-
 //			Return only follower accounts *IMMEDIATELY NEWER* than the given min ID.
 //			The follower account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal follow, NOT any of the returned accounts.
 //		in: query
 //		required: false
 //	-

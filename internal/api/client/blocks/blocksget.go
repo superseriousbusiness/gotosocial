@@ -52,6 +52,7 @@ import (
 //		description: >-
 //			Return only blocked accounts *OLDER* than the given max ID.
 //			The blocked account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal block, NOT any of the returned accounts.
 //		in: query
 //		required: false
 //	-
@@ -60,6 +61,7 @@ import (
 //		description: >-
 //			Return only blocked accounts *NEWER* than the given since ID.
 //			The blocked account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal block, NOT any of the returned accounts.
 //		in: query
 //	-
 //		name: min_id
@@ -67,6 +69,7 @@ import (
 //		description: >-
 //			Return only blocked accounts *IMMEDIATELY NEWER* than the given min ID.
 //			The blocked account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal block, NOT any of the returned accounts.
 //		in: query
 //		required: false
 //	-

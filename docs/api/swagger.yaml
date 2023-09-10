@@ -3049,6 +3049,13 @@ paths:
                 - accounts
     /api/v1/accounts/{id}/followers:
         get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
             operationId: accountFollowers
             parameters:
                 - description: Account ID.
@@ -3056,15 +3063,15 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: Return only follower accounts *OLDER* than the given max ID. The follower account with the specified ID will not be included in the response.
+                - description: 'Return only follower accounts *OLDER* than the given max ID. The follower account with the specified ID will not be included in the response. NOTE: the ID is of the internal follow, NOT any of the returned accounts.'
                   in: query
                   name: max_id
                   type: string
-                - description: Return only follower accounts *NEWER* than the given since ID. The follower account with the specified ID will not be included in the response.
+                - description: 'Return only follower accounts *NEWER* than the given since ID. The follower account with the specified ID will not be included in the response. NOTE: the ID is of the internal follow, NOT any of the returned accounts.'
                   in: query
                   name: since_id
                   type: string
-                - description: Return only follower accounts *IMMEDIATELY NEWER* than the given min ID. The follower account with the specified ID will not be included in the response.
+                - description: 'Return only follower accounts *IMMEDIATELY NEWER* than the given min ID. The follower account with the specified ID will not be included in the response. NOTE: the ID is of the internal follow, NOT any of the returned accounts.'
                   in: query
                   name: min_id
                   type: string
@@ -3100,6 +3107,13 @@ paths:
                 - accounts
     /api/v1/accounts/{id}/following:
         get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
             operationId: accountFollowing
             parameters:
                 - description: Account ID.
@@ -3107,15 +3121,15 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: Return only following accounts *OLDER* than the given max ID. The following account with the specified ID will not be included in the response.
+                - description: 'Return only following accounts *OLDER* than the given max ID. The following account with the specified ID will not be included in the response. NOTE: the ID is of the internal follow, NOT any of the returned accounts.'
                   in: query
                   name: max_id
                   type: string
-                - description: Return only following accounts *NEWER* than the given since ID. The following account with the specified ID will not be included in the response.
+                - description: 'Return only following accounts *NEWER* than the given since ID. The following account with the specified ID will not be included in the response. NOTE: the ID is of the internal follow, NOT any of the returned accounts.'
                   in: query
                   name: since_id
                   type: string
-                - description: Return only following accounts *IMMEDIATELY NEWER* than the given min ID. The following account with the specified ID will not be included in the response.
+                - description: 'Return only following accounts *IMMEDIATELY NEWER* than the given min ID. The following account with the specified ID will not be included in the response. NOTE: the ID is of the internal follow, NOT any of the returned accounts.'
                   in: query
                   name: min_id
                   type: string
@@ -4640,15 +4654,15 @@ paths:
                 ````
             operationId: blocksGet
             parameters:
-                - description: Return only blocked accounts *OLDER* than the given max ID. The blocked account with the specified ID will not be included in the response.
+                - description: 'Return only blocked accounts *OLDER* than the given max ID. The blocked account with the specified ID will not be included in the response. NOTE: the ID is of the internal block, NOT any of the returned accounts.'
                   in: query
                   name: max_id
                   type: string
-                - description: Return only blocked accounts *NEWER* than the given since ID. The blocked account with the specified ID will not be included in the response.
+                - description: 'Return only blocked accounts *NEWER* than the given since ID. The blocked account with the specified ID will not be included in the response. NOTE: the ID is of the internal block, NOT any of the returned accounts.'
                   in: query
                   name: since_id
                   type: string
-                - description: Return only blocked accounts *IMMEDIATELY NEWER* than the given min ID. The blocked account with the specified ID will not be included in the response.
+                - description: 'Return only blocked accounts *IMMEDIATELY NEWER* than the given min ID. The blocked account with the specified ID will not be included in the response. NOTE: the ID is of the internal block, NOT any of the returned accounts.'
                   in: query
                   name: min_id
                   type: string
@@ -4822,18 +4836,24 @@ paths:
                 - featured_tags
     /api/v1/follow_requests:
         get:
-            description: Accounts will be sorted in order of follow request date descending (newest first).
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/follow_requests?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/follow_requests?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
             operationId: getFollowRequests
             parameters:
-                - description: Return only follow requesting accounts *OLDER* than the given max ID. The follow requester with the specified ID will not be included in the response.
+                - description: 'Return only follow requesting accounts *OLDER* than the given max ID. The follow requester with the specified ID will not be included in the response. NOTE: the ID is of the internal follow request, NOT any of the returned accounts.'
                   in: query
                   name: max_id
                   type: string
-                - description: Return only follow requesting accounts *NEWER* than the given since ID. The follow requester with the specified ID will not be included in the response.
+                - description: 'Return only follow requesting accounts *NEWER* than the given since ID. The follow requester with the specified ID will not be included in the response. NOTE: the ID is of the internal follow request, NOT any of the returned accounts.'
                   in: query
                   name: since_id
                   type: string
-                - description: Return only follow requesting accounts *IMMEDIATELY NEWER* than the given min ID. The follow requester with the specified ID will not be included in the response.
+                - description: 'Return only follow requesting accounts *IMMEDIATELY NEWER* than the given min ID. The follow requester with the specified ID will not be included in the response. NOTE: the ID is of the internal follow request, NOT any of the returned accounts.'
                   in: query
                   name: min_id
                   type: string
