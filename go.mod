@@ -45,12 +45,12 @@ require (
 	github.com/superseriousbusiness/activity v1.4.0-gts
 	github.com/superseriousbusiness/exif-terminator v0.5.0
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
-	github.com/tdewolff/minify/v2 v2.12.8
+	github.com/tdewolff/minify/v2 v2.12.9
 	github.com/ulule/limiter/v3 v3.11.2
-	github.com/uptrace/bun v1.1.14
-	github.com/uptrace/bun/dialect/pgdialect v1.1.14
-	github.com/uptrace/bun/dialect/sqlitedialect v1.1.14
-	github.com/uptrace/bun/extra/bunotel v1.1.14
+	github.com/uptrace/bun v1.1.15
+	github.com/uptrace/bun/dialect/pgdialect v1.1.15
+	github.com/uptrace/bun/dialect/sqlitedialect v1.1.15
+	github.com/uptrace/bun/extra/bunotel v1.1.15
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.5.6
 	go.opentelemetry.io/otel v1.17.0
@@ -59,10 +59,10 @@ require (
 	go.opentelemetry.io/otel/sdk v1.17.0
 	go.opentelemetry.io/otel/trace v1.17.0
 	go.uber.org/automaxprocs v1.5.3
-	golang.org/x/crypto v0.12.0
+	golang.org/x/crypto v0.13.0
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 	golang.org/x/image v0.12.0
-	golang.org/x/net v0.14.0
+	golang.org/x/net v0.15.0
 	golang.org/x/oauth2 v0.11.0
 	golang.org/x/text v0.13.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
@@ -152,11 +152,11 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe // indirect
-	github.com/tdewolff/parse/v2 v2.6.7 // indirect
+	github.com/tdewolff/parse/v2 v2.6.8 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.1 // indirect
+	github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.17.0 // indirect
@@ -164,7 +164,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
