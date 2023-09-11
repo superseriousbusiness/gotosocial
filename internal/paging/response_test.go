@@ -128,7 +128,7 @@ func nextPage(id string, limit int) *paging.Page {
 
 func prevPage(id string, limit int) *paging.Page {
 	return &paging.Page{
-		Min:   paging.MinID(id, ""),
+		Min:   paging.MinID(id),
 		Limit: limit,
 	}
 }

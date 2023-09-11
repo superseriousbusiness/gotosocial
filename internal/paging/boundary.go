@@ -17,10 +17,10 @@
 
 package paging
 
-// MinID returns an ID boundary with given min ID value,
+// EitherMinID returns an ID boundary with given min ID value,
 // using either the `since_id`,"DESC" name,ordering or
 // `min_id`,"ASC" name,ordering depending on which is set.
-func MinID(minID, sinceID string) Boundary {
+func EitherMinID(minID, sinceID string) Boundary {
 	/*
 
 	           Paging with `since_id` vs `min_id`:
@@ -47,18 +47,28 @@ func MinID(minID, sinceID string) Boundary {
 	*/
 	switch {
 	case minID != "":
-		return Boundary{
-			Name:  "min_id",
-			Value: minID,
-			Order: OrderAscending,
-		}
+		return MinID(minID)
 	default:
 		// default min is `since_id`
-		return Boundary{
-			Name:  "since_id",
-			Value: sinceID,
-			Order: OrderDescending,
-		}
+		return SinceID(sinceID)
+	}
+}
+
+// SinceID ...
+func SinceID(sinceID string) Boundary {
+	return Boundary{
+		Name:  "since_id",
+		Value: sinceID,
+		Order: OrderDescending,
+	}
+}
+
+// MinID ...
+func MinID(minID string) Boundary {
+	return Boundary{
+		Name:  "min_id",
+		Value: minID,
+		Order: OrderAscending,
 	}
 }
 
@@ -111,7 +121,7 @@ func (b Boundary) new(value string) Boundary {
 
 // Find finds the boundary's set value in input slice, or returns -1.
 func (b Boundary) Find(in []string) int {
-	if zero(b.Value) {
+	if b.Value == "" {
 		return -1
 	}
 	for i := range in {
@@ -120,16 +130,4 @@ func (b Boundary) Find(in []string) int {
 		}
 	}
 	return -1
-}
-
-// Query returns this boundary as assembled query key=value pair.
-func (b Boundary) Query() string {
-	switch {
-	case zero(b.Value):
-		return ""
-	case b.Name == "":
-		panic("value without boundary name")
-	default:
-		return b.Name + "=" + b.Value
-	}
 }

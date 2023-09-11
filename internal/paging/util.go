@@ -41,9 +41,3 @@ func Reverse(in []string) []string {
 
 	return in
 }
-
-// zero is a shorthand to check a generic value is its zero value.
-func zero[T comparable](t T) bool {
-	var z T
-	return t == z
-}

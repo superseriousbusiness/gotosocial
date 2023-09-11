@@ -151,14 +151,7 @@ func (p *Processor) BlocksGet(
 		return util.EmptyPageableResponse(), nil
 	}
 
-	var (
-		items = make([]interface{}, 0, count)
-
-		// Set next + prev values before API converting
-		// so the caller can still page even on error.
-		nextMaxIDValue = blocks[count-1].ID
-		prevMinIDValue = blocks[0].ID
-	)
+	items := make([]interface{}, 0, count)
 
 	for _, block := range blocks {
 		// Convert target account to frontend API model. (target will never be nil)
@@ -172,11 +165,16 @@ func (p *Processor) BlocksGet(
 		items = append(items, account)
 	}
 
+	// Get the lowest and highest
+	// ID values, used for paging.
+	lo := blocks[count-1].ID
+	hi := blocks[0].ID
+
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: items,
 		Path:  "/api/v1/blocks",
-		Next:  page.Next(nextMaxIDValue),
-		Prev:  page.Prev(prevMinIDValue),
+		Next:  page.Next(lo, hi),
+		Prev:  page.Prev(lo, hi),
 	}), nil
 }
 

@@ -27,10 +27,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
-	"github.com/oklog/ulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -107,40 +107,41 @@ func (suite *GetTestSuite) TestGet() {
 ]`, dst.String())
 }
 
-func (suite *GetTestSuite) TestGetPagedNextLimit2() { suite.testGetPaged(2, "next") }
-func (suite *GetTestSuite) TestGetPagedNextLimit4() { suite.testGetPaged(4, "next") }
-func (suite *GetTestSuite) TestGetPagedNextLimit6() { suite.testGetPaged(6, "next") }
+func (suite *GetTestSuite) TestGetPageBackwardLimit2() {
+	suite.testGetPage(2, "backward")
+}
 
-func (suite *GetTestSuite) TestGetPagedPrevLimit2() { suite.testGetPaged(2, "prev") }
-func (suite *GetTestSuite) TestGetPagedPrevLimit4() { suite.testGetPaged(4, "prev") }
-func (suite *GetTestSuite) TestGetPagedPrevLimit6() { suite.testGetPaged(6, "prev") }
+func (suite *GetTestSuite) TestGetPageBackwardLimit4() {
+	suite.testGetPage(4, "backward")
+}
 
-func (suite *GetTestSuite) testGetPaged(limit int, ref string) {
+func (suite *GetTestSuite) TestGetPageBackwardLimit6() {
+	suite.testGetPage(6, "backward")
+}
+
+func (suite *GetTestSuite) TestGetPageForwardLimit2() {
+	suite.testGetPage(2, "forward")
+}
+
+func (suite *GetTestSuite) TestGetPageForwardLimit4() {
+	suite.testGetPage(4, "forward")
+}
+
+func (suite *GetTestSuite) TestGetPageForwardLimit6() {
+	suite.testGetPage(6, "forward")
+}
+
+func (suite *GetTestSuite) testGetPage(limit int, direction string) {
 	ctx := context.Background()
 
 	// The authed local account we are going to use for HTTP requests
 	requestingAccount := suite.testAccounts["local_account_1"]
+	suite.clearAccountRelations(requestingAccount.ID)
 
-	// Esnure no account blocks exist between accounts.
-	_ = suite.db.DeleteAccountBlocks(
-		context.Background(),
-		requestingAccount.ID,
-	)
+	// Get current time.
+	now := time.Now()
 
-	// Ensure no account follows exist between accounts.
-	_ = suite.db.DeleteAccountFollows(
-		context.Background(),
-		requestingAccount.ID,
-	)
-
-	// Ensure no account follow_requests exist between accounts.
-	_ = suite.db.DeleteAccountFollowRequests(
-		context.Background(),
-		requestingAccount.ID,
-	)
-
-	// Use iterable now time as constant (no syscalls)
-	now, _ := time.Parse("01/02/2006", "01/02/2006")
+	var i int
 
 	for _, targetAccount := range suite.testAccounts {
 		if targetAccount.ID == requestingAccount.ID {
@@ -148,18 +149,16 @@ func (suite *GetTestSuite) testGetPaged(limit int, ref string) {
 			continue
 		}
 
-		// Convert now to timestamp.
-		ts := ulid.Timestamp(now)
-
-		// Create anew ulid for now.
-		u := ulid.MustNew(ts, randRd)
+		// Get next simple ID.
+		id := strconv.Itoa(i)
+		i++
 
 		// put a follow request in the database
 		err := suite.db.PutFollowRequest(ctx, &gtsmodel.FollowRequest{
-			ID:              u.String(),
+			ID:              id,
 			CreatedAt:       now,
 			UpdatedAt:       now,
-			URI:             fmt.Sprintf("%s/follow/%s", targetAccount.URI, u.String()),
+			URI:             fmt.Sprintf("%s/follow/%s", targetAccount.URI, id),
 			AccountID:       targetAccount.ID,
 			TargetAccountID: requestingAccount.ID,
 		})
@@ -174,16 +173,34 @@ func (suite *GetTestSuite) testGetPaged(limit int, ref string) {
 	suite.NoError(err)
 	expectAccounts := apiRsp.Items // interfaced{} account slice
 
-	// Set the start query, only need to set limit fow now.
-	nextQuery := fmt.Sprintf("limit=%d", limit)
+	// Iteratively set
+	// link query string.
+	var query string
+
+	switch direction {
+	case "backward":
+		// Set the starting query to page backward from newest.
+		acc := expectAccounts[0].(*model.Account)
+		newest, _ := suite.db.GetFollowRequest(ctx, acc.ID, requestingAccount.ID)
+		expectAccounts = expectAccounts[1:]
+		query = fmt.Sprintf("limit=%d&max_id=%s", limit, newest.ID)
+
+	case "forward":
+		// Set the starting query to page forward from the oldest.
+		acc := expectAccounts[len(expectAccounts)-1].(*model.Account)
+		oldest, _ := suite.db.GetFollowRequest(ctx, acc.ID, requestingAccount.ID)
+		expectAccounts = expectAccounts[:len(expectAccounts)-1]
+		query = fmt.Sprintf("limit=%d&min_id=%s", limit, oldest.ID)
+	}
 
 	for p := 0; ; p++ {
 		// Prepare new request for endpoint
 		recorder := httptest.NewRecorder()
 		ctx := suite.newContext(recorder, http.MethodGet, []byte{}, "/api/v1/follow_requests", "")
-		ctx.Request.URL.RawQuery = nextQuery // setting provided next query value
+		ctx.Request.URL.RawQuery = query // setting provided next query value
 
 		// call the handler and check for valid response code.
+		suite.T().Logf("direction=%q page=%d query=%q", direction, p, query)
 		suite.followRequestModule.FollowRequestGETHandler(ctx)
 		suite.Equal(http.StatusOK, recorder.Code)
 
@@ -196,16 +213,63 @@ func (suite *GetTestSuite) testGetPaged(limit int, ref string) {
 		suite.NoError(err)
 		_ = result.Body.Close()
 
-		for i := 0; i < len(accounts); i++ {
-			iface := expectAccounts[0]
+		var (
+
+			// start provides the starting index for loop in accounts.
+			start func([]*model.Account) int
+
+			// iter performs the loop iter step with index.
+			iter func(int) int
+
+			// check performs the loop conditional check against index and accounts.
+			check func(int, []*model.Account) bool
+
+			// expect pulls the next account to check against from expectAccounts.
+			expect func([]interface{}) interface{}
+
+			// trunc drops the last checked account from expectAccounts.
+			trunc func([]interface{}) []interface{}
+		)
+
+		switch direction {
+		case "backward":
+			// When paging backwards (DESC) we:
+			// - iter from end of received accounts
+			// - iterate backward through received accounts
+			// - stop when we reach last index of received accounts
+			// - compare each received with the first index of expected accounts
+			// - after each compare, drop the first index of expected accounts
+			start = func([]*model.Account) int { return 0 }
+			iter = func(i int) int { return i + 1 }
+			check = func(idx int, i []*model.Account) bool { return idx < len(i) }
+			expect = func(i []interface{}) interface{} { return i[0] }
+			trunc = func(i []interface{}) []interface{} { return i[1:] }
+
+		case "forward":
+			// When paging forwards (ASC) we:
+			// - iter from end of received accounts
+			// - iterate backward through received accounts
+			// - stop when we reach first index of received accounts
+			// - compare each received with the last index of expected accounts
+			// - after each compare, drop the last index of expected accounts
+			start = func(i []*model.Account) int { return len(i) - 1 }
+			iter = func(i int) int { return i - 1 }
+			check = func(idx int, i []*model.Account) bool { return idx >= 0 }
+			expect = func(i []interface{}) interface{} { return i[len(i)-1] }
+			trunc = func(i []interface{}) []interface{} { return i[:len(i)-1] }
+		}
+
+		for i := start(accounts); check(i, accounts); i = iter(i) {
+			// Get next expected account.
+			iface := expect(expectAccounts)
 
 			// Check that expected account matches received.
 			expectAccID := iface.(*model.Account).ID
 			receivdAccID := accounts[i].ID
 			suite.Equal(expectAccID, receivdAccID, "unexpected account at position in response on page=%d", p)
 
-			// Drop checked account from expected.
-			expectAccounts = expectAccounts[1:]
+			// Drop checked from expected accounts.
+			expectAccounts = trunc(expectAccounts)
 		}
 
 		if len(expectAccounts) == 0 {
@@ -214,7 +278,8 @@ func (suite *GetTestSuite) testGetPaged(limit int, ref string) {
 		}
 
 		// Parse response link header values.
-		links := linkheader.ParseMultiple(recorder.Header().Values("Link"))
+		values := result.Header.Values("Link")
+		links := linkheader.ParseMultiple(values)
 		filteredLinks := links.FilterByRel("next")
 		suite.NotEmpty(filteredLinks, "no next link provided with more remaining accounts on page=%d", p)
 
@@ -226,8 +291,28 @@ func (suite *GetTestSuite) testGetPaged(limit int, ref string) {
 		suite.NoError(err)
 
 		// Set next raw query value.
-		nextQuery = uri.RawQuery
+		query = uri.RawQuery
 	}
+}
+
+func (suite *GetTestSuite) clearAccountRelations(id string) {
+	// Esnure no account blocks exist between accounts.
+	_ = suite.db.DeleteAccountBlocks(
+		context.Background(),
+		id,
+	)
+
+	// Ensure no account follows exist between accounts.
+	_ = suite.db.DeleteAccountFollows(
+		context.Background(),
+		id,
+	)
+
+	// Ensure no account follow_requests exist between accounts.
+	_ = suite.db.DeleteAccountFollowRequests(
+		context.Background(),
+		id,
+	)
 }
 
 func TestGetTestSuite(t *testing.T) {

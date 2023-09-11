@@ -93,10 +93,10 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, requestingAccount *gt
 		return paging.EmptyResponse(), nil
 	}
 
-	// Set next + prev values before filtering and API
-	// converting, so caller can still page properly.
-	nextMaxIDValue := followRequests[count-1].ID
-	prevMinIDValue := followRequests[0].ID
+	// Get the lowest and highest
+	// ID values, used for paging.
+	lo := followRequests[count-1].ID
+	hi := followRequests[0].ID
 
 	// Func to fetch follow source at index.
 	getIdx := func(i int) *gtsmodel.Account {
@@ -113,7 +113,7 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, requestingAccount *gt
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: items,
 		Path:  "/api/v1/follow_requests",
-		Next:  page.Next(nextMaxIDValue),
-		Prev:  page.Next(prevMinIDValue),
+		Next:  page.Next(lo, hi),
+		Prev:  page.Prev(lo, hi),
 	}), nil
 }
