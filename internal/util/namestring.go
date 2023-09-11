@@ -79,12 +79,8 @@ func ExtractWebfingerParts(webfinger string) (username, host string, err error) 
 		return "", "", fmt.Errorf("unsupported scheme: %s for resource: %s", u.Scheme, orig)
 	}
 
-	userDomain := strings.Split(
-		strings.TrimPrefix(
-			u.Opaque,
-			"@",
-		),
-		"@")
+	stripped := strings.TrimPrefix(u.Opaque, "@")
+	userDomain := strings.Split(stripped, "@")
 	if len(userDomain) != 2 {
 		return "", "", fmt.Errorf("failed to extract user and domain from: %s", orig)
 	}
