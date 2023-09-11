@@ -130,6 +130,17 @@ func (a *Account) EmojisPopulated() bool {
 	return true
 }
 
+// PubKeyExpired returns true if the account's public key
+// has been marked as expired, and the expiry time has passed.
+func (a *Account) PubKeyExpired() bool {
+	if a == nil {
+		return false
+	}
+
+	return !a.PublicKeyExpiresAt.IsZero() &&
+		a.PublicKeyExpiresAt.Before(time.Now())
+}
+
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.
 type AccountToEmoji struct {
 	AccountID string   `bun:"type:CHAR(26),unique:accountemoji,nullzero,notnull"`

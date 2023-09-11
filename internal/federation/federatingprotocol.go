@@ -209,7 +209,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 	}
 
 	// Check who's trying to deliver to us by inspecting the http signature.
-	pubKeyResponse, errWithCode := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
+	pubKeyAuth, errWithCode := f.AuthenticateFederatedRequest(ctx, receivingAccount.Username)
 	if errWithCode != nil {
 		switch errWithCode.Code() {
 		case http.StatusUnauthorized, http.StatusForbidden, http.StatusBadRequest:
@@ -232,7 +232,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	pubKeyOwnerURI := pubKeyResponse.OwnerURI
+	pubKeyOwnerURI := pubKeyAuth.OwnerURI
 
 	// Authentication has passed, check if we need to create a
 	// new instance entry for the Host of the requesting account.

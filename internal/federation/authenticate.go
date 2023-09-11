@@ -48,9 +48,14 @@ var (
 	}
 )
 
-type PubKeyResponse struct {
+// PubKeyAuth models authorization information for a remote
+// Actor making a signed HTTP request to this GtS instance
+// using a public key.
+type PubKeyAuth struct {
 	// CachedPubKey is the public key found in the db
 	// for the Actor whose request we're now authenticating.
+	// Will be set only in cases where we had the Owner
+	// of the key stored in the database already.
 	CachedPubKey *rsa.PublicKey
 
 	// FetchedPubKey is an up-to-date public key fetched
@@ -60,14 +65,11 @@ type PubKeyResponse struct {
 	// was found in our database, but was expired.
 	FetchedPubKey *rsa.PublicKey
 
-	// PubKeyExpired will be `true` if a public key was
-	// found for this account in our database, but the
-	// key was past its expiry date.
-	PubKeyExpired bool
-
 	// OwnerURI is the ActivityPub id of the owner of
 	// the public key used to sign the request we're
-	// now authenticating.
+	// now authenticating. This will always be set
+	// even if Owner isn't, so that callers can use
+	// this URI to go fetch the Owner from remote.
 	OwnerURI *url.URL
 
 	// Owner is the account corresponding to OwnerURI.
@@ -107,7 +109,7 @@ type PubKeyResponse struct {
 // Also note that this function *does not* dereference the remote account that
 // the signature key is associated with. Other functions should use the returned
 // URL to dereference the remote account, if required.
-func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*PubKeyResponse, gtserror.WithCode) {
+func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*PubKeyAuth, gtserror.WithCode) {
 	// Thanks to the signature check middleware,
 	// we should already have an http signature
 	// verifier set on the context. If we don't,
@@ -139,10 +141,10 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	// so now we need to validate the signature.
 
 	var (
-		pubKeyIDStr    = pubKeyID.String()
-		local          = (pubKeyID.Host == config.GetHost())
-		pubKeyResponse *PubKeyResponse
-		errWithCode    gtserror.WithCode
+		pubKeyIDStr = pubKeyID.String()
+		local       = (pubKeyID.Host == config.GetHost())
+		pubKeyAuth  *PubKeyAuth
+		errWithCode gtserror.WithCode
 	)
 
 	l := log.
@@ -154,17 +156,17 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 
 	if local {
 		l.Trace("public key is local, no dereference needed")
-		pubKeyResponse, errWithCode = f.derefPubKeyDBOnly(ctx, pubKeyIDStr)
+		pubKeyAuth, errWithCode = f.derefPubKeyDBOnly(ctx, pubKeyIDStr)
 	} else {
 		l.Trace("public key is remote, checking if we need to dereference")
-		pubKeyResponse, errWithCode = f.derefPubKey(ctx, requestedUsername, pubKeyIDStr, pubKeyID)
+		pubKeyAuth, errWithCode = f.derefPubKey(ctx, requestedUsername, pubKeyIDStr, pubKeyID)
 	}
 
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if local && pubKeyResponse == nil {
+	if local && pubKeyAuth == nil {
 		// We signed this request, apparently, but
 		// local lookup didn't find anything. This
 		// is an almost impossible error condition!
@@ -177,8 +179,8 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 	// order of most -> least common, checking each defined
 	// pubKey for this Actor. Return OK as soon as one passes.
 	for _, pubKey := range [2]*rsa.PublicKey{
-		pubKeyResponse.FetchedPubKey,
-		pubKeyResponse.CachedPubKey,
+		pubKeyAuth.FetchedPubKey,
+		pubKeyAuth.CachedPubKey,
 	} {
 		if pubKey == nil {
 			continue
@@ -190,7 +192,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 			err := verifier.Verify(pubKey, algo)
 			if err == nil {
 				l.Tracef("authentication PASSED with %s", algo)
-				return pubKeyResponse, nil
+				return pubKeyAuth, nil
 			}
 
 			l.Tracef("authentication NOT PASSED with %s: %q", algo, err)
@@ -216,8 +218,8 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 func (f *federator) derefPubKeyDBOnly(
 	ctx context.Context,
 	pubKeyIDStr string,
-) (*PubKeyResponse, gtserror.WithCode) {
-	ownerAcct, err := f.db.GetAccountByPubkeyID(ctx, pubKeyIDStr)
+) (*PubKeyAuth, gtserror.WithCode) {
+	owner, err := f.db.GetAccountByPubkeyID(ctx, pubKeyIDStr)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			// We don't have this
@@ -229,20 +231,16 @@ func (f *federator) derefPubKeyDBOnly(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	ownerURI, err := url.Parse(ownerAcct.URI)
+	ownerURI, err := url.Parse(owner.URI)
 	if err != nil {
 		err = gtserror.Newf("error parsing account uri with pubKeyID %s: %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return &PubKeyResponse{
-		CachedPubKey: ownerAcct.PublicKey,
-		PubKeyExpired: func() bool {
-			return !ownerAcct.PublicKeyExpiresAt.IsZero() &&
-				ownerAcct.PublicKeyExpiresAt.Before(time.Now())
-		}(),
-		OwnerURI: ownerURI,
-		Owner:    ownerAcct,
+	return &PubKeyAuth{
+		CachedPubKey: owner.PublicKey,
+		OwnerURI:     ownerURI,
+		Owner:        owner,
 	}, nil
 }
 
@@ -255,7 +253,7 @@ func (f *federator) derefPubKey(
 	requestedUsername string,
 	pubKeyIDStr string,
 	pubKeyID *url.URL,
-) (*PubKeyResponse, gtserror.WithCode) {
+) (*PubKeyAuth, gtserror.WithCode) {
 	l := log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
@@ -265,26 +263,34 @@ func (f *federator) derefPubKey(
 
 	// Try a database only deref first. We may already
 	// have the requesting account cached locally.
-	pubKeyResponse, errWithCode := f.derefPubKeyDBOnly(ctx, pubKeyIDStr)
+	pubKeyAuth, errWithCode := f.derefPubKeyDBOnly(ctx, pubKeyIDStr)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if pubKeyResponse != nil && !pubKeyResponse.PubKeyExpired {
-		l.Trace("public key cached and up to date, no dereference needed")
-		return pubKeyResponse, nil
-	}
+	var (
+		// Just haven't seen this
+		// Actor + their pubkey yet.
+		uncached = (pubKeyAuth == nil)
 
-	expired := (pubKeyResponse != nil && pubKeyResponse.PubKeyExpired)
-	if expired {
+		// Have seen this Actor + their
+		// pubkey but latter is now expired.
+		expired = (!uncached && pubKeyAuth.Owner.PubKeyExpired())
+	)
+
+	switch {
+	case uncached:
+		l.Trace("public key was not cached, trying dereference of public key")
+	case !expired:
+		l.Trace("public key cached and up to date, no dereference needed")
+		return pubKeyAuth, nil
+	case expired:
 		// This is fairly rare and it may be helpful for
 		// admins to see what's going on, so log at info.
 		l.Infof(
 			"public key was cached, but expired at %s, trying dereference of new public key",
-			pubKeyResponse.Owner.PublicKeyExpiresAt,
+			pubKeyAuth.Owner.PublicKeyExpiresAt,
 		)
-	} else {
-		l.Trace("public key was not cached, trying dereference of public key")
 	}
 
 	// If we've tried to get this account before and we
@@ -318,21 +324,21 @@ func (f *federator) derefPubKey(
 		// PubKeyResponse was nil before because
 		// we had nothing cached; return the key
 		// we just fetched, and nothing else.
-		return &PubKeyResponse{
+		return &PubKeyAuth{
 			FetchedPubKey: pubKey,
 			OwnerURI:      pubKeyOwner,
 		}, nil
 	}
 
 	// Add newly-fetched key to response.
-	pubKeyResponse.FetchedPubKey = pubKey
+	pubKeyAuth.FetchedPubKey = pubKey
 
 	// If key was expired, that means we already
 	// had an owner stored for it locally. Since
 	// we now successfully refreshed the pub key,
 	// we should update the account to reflect that.
-	ownerAcct := pubKeyResponse.Owner
-	ownerAcct.PublicKey = pubKeyResponse.FetchedPubKey
+	ownerAcct := pubKeyAuth.Owner
+	ownerAcct.PublicKey = pubKeyAuth.FetchedPubKey
 	ownerAcct.PublicKeyExpiresAt = time.Time{}
 
 	l.Info("obtained a new public key to replace expired key, caching now; " +
@@ -351,7 +357,7 @@ func (f *federator) derefPubKey(
 	// Return both new and cached (now
 	// expired) keys, authentication
 	// will be attempted with both.
-	return pubKeyResponse, nil
+	return pubKeyAuth, nil
 }
 
 // callForPubKey handles the nitty gritty of actually

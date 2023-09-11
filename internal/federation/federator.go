@@ -48,7 +48,7 @@ type Federator interface {
 	// If the request does not pass authentication, or there's a domain block, nil, false, nil will be returned.
 	//
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
-	AuthenticateFederatedRequest(ctx context.Context, username string) (*PubKeyResponse, gtserror.WithCode)
+	AuthenticateFederatedRequest(ctx context.Context, username string) (*PubKeyAuth, gtserror.WithCode)
 
 	pub.CommonBehavior
 	pub.FederatingProtocol
