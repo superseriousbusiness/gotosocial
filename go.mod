@@ -47,7 +47,7 @@ require (
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.12.9
 	github.com/ulule/limiter/v3 v3.11.2
-	github.com/uptrace/bun v1.1.14
+	github.com/uptrace/bun v1.1.15
 	github.com/uptrace/bun/dialect/pgdialect v1.1.14
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.14
 	github.com/uptrace/bun/extra/bunotel v1.1.14
