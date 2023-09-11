@@ -108,25 +108,7 @@ func (p *Page) Page(in []string) []string {
 		return in
 	}
 
-	if o := p.order(); !o.Ascending() {
-		// Default sort is descending,
-		// catching all cases when NOT
-		// ascending (even zero value).
-		//
-		// NOTE: sorted data does not always
-		// occur according to string ineqs
-		// so we unfortunately cannot check.
-
-		if maxIdx := p.Max.Find(in); maxIdx != -1 {
-			// Reslice skipping up to max.
-			in = in[maxIdx+1:]
-		}
-
-		if minIdx := p.Min.Find(in); minIdx != -1 {
-			// Reslice stripping past min.
-			in = in[:minIdx]
-		}
-	} else {
+	if p.order().Ascending() {
 		// Sort type is ascending, input
 		// data is assumed to be ascending.
 		//
@@ -152,6 +134,24 @@ func (p *Page) Page(in []string) []string {
 			// Output slice must
 			// ALWAYS be descending.
 			in = Reverse(in)
+		}
+	} else {
+		// Default sort is descending,
+		// catching all cases when NOT
+		// ascending (even zero value).
+		//
+		// NOTE: sorted data does not always
+		// occur according to string ineqs
+		// so we unfortunately cannot check.
+
+		if maxIdx := p.Max.Find(in); maxIdx != -1 {
+			// Reslice skipping up to max.
+			in = in[maxIdx+1:]
+		}
+
+		if minIdx := p.Min.Find(in); minIdx != -1 {
+			// Reslice stripping past min.
+			in = in[:minIdx]
 		}
 	}
 

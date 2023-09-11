@@ -94,11 +94,11 @@ func loadPagedIDs(cache *cache.SliceCache[string], key string, page *paging.Page
 		return nil, err
 	}
 
-	// Our cached / selected bIDs are
-	// ALWAYS stored in descending order.
+	// Our cached / selected IDs are
+	// ALWAYS fetched in descending order.
 	// Depending on the paging requested
 	// this may be an unexpected order.
-	if !page.GetOrder().Ascending() {
+	if page.GetOrder().Ascending() {
 		ids = paging.Reverse(ids)
 	}
 

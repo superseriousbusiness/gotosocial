@@ -107,10 +107,37 @@ func (suite *GetTestSuite) TestGet() {
 ]`, dst.String())
 }
 
-func (suite *GetTestSuite) TestGetPaged() {
-	var targetAccounts []*gtsmodel.Account
+func (suite *GetTestSuite) TestGetPagedNextLimit2() { suite.testGetPaged(2, "next") }
+func (suite *GetTestSuite) TestGetPagedNextLimit4() { suite.testGetPaged(4, "next") }
+func (suite *GetTestSuite) TestGetPagedNextLimit6() { suite.testGetPaged(6, "next") }
 
+func (suite *GetTestSuite) TestGetPagedPrevLimit2() { suite.testGetPaged(2, "prev") }
+func (suite *GetTestSuite) TestGetPagedPrevLimit4() { suite.testGetPaged(4, "prev") }
+func (suite *GetTestSuite) TestGetPagedPrevLimit6() { suite.testGetPaged(6, "prev") }
+
+func (suite *GetTestSuite) testGetPaged(limit int, ref string) {
+	ctx := context.Background()
+
+	// The authed local account we are going to use for HTTP requests
 	requestingAccount := suite.testAccounts["local_account_1"]
+
+	// Esnure no account blocks exist between accounts.
+	_ = suite.db.DeleteAccountBlocks(
+		context.Background(),
+		requestingAccount.ID,
+	)
+
+	// Ensure no account follows exist between accounts.
+	_ = suite.db.DeleteAccountFollows(
+		context.Background(),
+		requestingAccount.ID,
+	)
+
+	// Ensure no account follow_requests exist between accounts.
+	_ = suite.db.DeleteAccountFollowRequests(
+		context.Background(),
+		requestingAccount.ID,
+	)
 
 	// Use iterable now time as constant (no syscalls)
 	now, _ := time.Parse("01/02/2006", "01/02/2006")
@@ -121,123 +148,85 @@ func (suite *GetTestSuite) TestGetPaged() {
 			continue
 		}
 
-		// Ensure no follow request already exists.
-		_ = suite.db.DeleteFollowRequest(
-			context.Background(),
-			targetAccount.ID,
-			requestingAccount.ID,
-		)
-
 		// Convert now to timestamp.
-		t := ulid.Timestamp(now)
+		ts := ulid.Timestamp(now)
 
 		// Create anew ulid for now.
-		u := ulid.MustNew(t, randRd)
+		u := ulid.MustNew(ts, randRd)
 
 		// put a follow request in the database
-		fr := &gtsmodel.FollowRequest{
+		err := suite.db.PutFollowRequest(ctx, &gtsmodel.FollowRequest{
 			ID:              u.String(),
 			CreatedAt:       now,
 			UpdatedAt:       now,
 			URI:             fmt.Sprintf("%s/follow/%s", targetAccount.URI, u.String()),
 			AccountID:       targetAccount.ID,
 			TargetAccountID: requestingAccount.ID,
-		}
-		err := suite.db.Put(context.Background(), fr)
+		})
 		suite.NoError(err)
-
-		// Add target to account slice
-		targetAccounts = append(targetAccounts, targetAccount)
 
 		// Bump now by 1 second.
 		now = now.Add(time.Second)
 	}
 
-	const limit = 2
+	// Get _ALL_ follow requests we expect to see without any paging (this filters invisible).
+	apiRsp, err := suite.processor.Account().FollowRequestsGet(ctx, requestingAccount, nil)
+	suite.NoError(err)
+	expectAccounts := apiRsp.Items // interfaced{} account slice
 
-	// How many rounds of pages to check.
-	rounds := len(targetAccounts) / limit
+	// Set the start query, only need to set limit fow now.
+	nextQuery := fmt.Sprintf("limit=%d", limit)
 
-	// NOTE:
-	// we order our follow request account IDs by the age of
-	// the follow request, so the order of targetAccounts should
-	// be the same order we get them from the API endpoint.
-	//
-	// Further NOTE:
-	// we don't actually bother setting maxID in this test.
-	nextQuery := fmt.Sprintf("limit=%d", limit) // starting value
-
-	for i := 0; i < rounds; i++ {
+	for p := 0; ; p++ {
+		// Prepare new request for endpoint
 		recorder := httptest.NewRecorder()
 		ctx := suite.newContext(recorder, http.MethodGet, []byte{}, "/api/v1/follow_requests", "")
+		ctx.Request.URL.RawQuery = nextQuery // setting provided next query value
 
-		// Update request query to add paging.
-		ctx.Request.URL.RawQuery = nextQuery
-		nextQuery = "" // reset
-
-		// call the handler
+		// call the handler and check for valid response code.
 		suite.followRequestModule.FollowRequestGETHandler(ctx)
-
-		// 1. we should have OK because our request was valid
 		suite.Equal(http.StatusOK, recorder.Code)
 
-		// 2. we should have no error message in the result body
-		result := recorder.Result()
-		defer result.Body.Close()
-
-		var accounts []model.Account
+		var accounts []*model.Account
 
 		// Decode response body into API account models
+		result := recorder.Result()
 		dec := json.NewDecoder(result.Body)
 		err := dec.Decode(&accounts)
 		suite.NoError(err)
 		_ = result.Body.Close()
 
-		// Expected number of accounts returned.
-		expectLen := limit
-		if expectLen > len(targetAccounts) {
-			expectLen = len(targetAccounts)
+		for i := 0; i < len(accounts); i++ {
+			iface := expectAccounts[0]
+
+			// Check that expected account matches received.
+			expectAccID := iface.(*model.Account).ID
+			receivdAccID := accounts[i].ID
+			suite.Equal(expectAccID, receivdAccID, "unexpected account at position in response on page=%d", p)
+
+			// Drop checked account from expected.
+			expectAccounts = expectAccounts[1:]
 		}
 
-		if len(accounts) != expectLen {
-			// This indicates we've been served less accounts than 'limit'
-			// but we haven't reached the end of our expected targetAccounts.
-			suite.T().Errorf("incorrect number of returned accounts: page=%d accounts=%+v", i, accounts)
-			expectLen = len(accounts) // ensures no panic and can at least check account order
-		}
-
-		// Take a slice of expected accounts,
-		// drop these now from targetAccounts.
-		expect := targetAccounts[:expectLen]
-		targetAccounts = targetAccounts[expectLen:]
-
-		for j := range expect {
-			if expect[j].ID != accounts[j].ID {
-				suite.T().Errorf("unexpected account at position in paged response: page=%d accounts=%+v", i, accounts)
-				break
-			}
+		if len(expectAccounts) == 0 {
+			// Reached end.
+			break
 		}
 
 		// Parse response link header values.
 		links := linkheader.ParseMultiple(recorder.Header().Values("Link"))
-		nextLinks := links.FilterByRel("prev")
-		if len(nextLinks) != 1 && len(targetAccounts) > 0 {
-			suite.T().Error("no next link provided with more remaining accounts")
-			break
-		}
+		filteredLinks := links.FilterByRel("next")
+		suite.NotEmpty(filteredLinks, "no next link provided with more remaining accounts on page=%d", p)
 
-		// A next link header was set.
-		nextLink := nextLinks[0]
+		// A ref link header was set.
+		link := filteredLinks[0]
 
-		// Parse URI from next URI string.
-		nextURI, err := url.Parse(nextLink.URL)
-		if err != nil {
-			suite.T().Errorf("invalid returned link header next uri: %v", err)
-			break
-		}
+		// Parse URI from URI string.
+		uri, err := url.Parse(link.URL)
+		suite.NoError(err)
 
 		// Set next raw query value.
-		nextQuery = nextURI.RawQuery
+		nextQuery = uri.RawQuery
 	}
 }
 

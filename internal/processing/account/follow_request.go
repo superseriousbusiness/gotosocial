@@ -107,7 +107,7 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, requestingAccount *gt
 	items := p.c.GetVisibleAPIAccountsPaged(ctx,
 		requestingAccount,
 		getIdx,
-		len(followRequests),
+		count,
 	)
 
 	return paging.PackageResponse(paging.ResponseParams{
