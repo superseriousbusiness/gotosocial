@@ -143,6 +143,45 @@ func (suite *WebfingerGetTestSuite) TestFingerUser() {
 }`, resp)
 }
 
+func (suite *WebfingerGetTestSuite) TestFingerUserActorURI() {
+	targetAccount := suite.testAccounts["local_account_1"]
+	host := config.GetHost()
+
+	tests := []struct {
+		resource string
+	}{
+		{resource: fmt.Sprintf("https://%s/@%s", host, targetAccount.Username)},
+		{resource: fmt.Sprintf("https://%s/users/%s", host, targetAccount.Username)},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		suite.Run(tt.resource, func() {
+			requestPath := fmt.Sprintf("/%s?resource=%s", webfinger.WebfingerBasePath, tt.resource)
+			resp := suite.finger(requestPath)
+			suite.Equal(`{
+  "subject": "acct:the_mighty_zork@localhost:8080",
+  "aliases": [
+    "http://localhost:8080/users/the_mighty_zork",
+    "http://localhost:8080/@the_mighty_zork"
+  ],
+  "links": [
+    {
+      "rel": "http://webfinger.net/rel/profile-page",
+      "type": "text/html",
+      "href": "http://localhost:8080/@the_mighty_zork"
+    },
+    {
+      "rel": "self",
+      "type": "application/activity+json",
+      "href": "http://localhost:8080/users/the_mighty_zork"
+    }
+  ]
+}`, resp)
+		})
+	}
+}
+
 func (suite *WebfingerGetTestSuite) TestFingerUserWithDifferentAccountDomainByHost() {
 	targetAccount := suite.funkifyAccountDomain("gts.example.org", "example.org")
 	requestPath := fmt.Sprintf("/%s?resource=acct:%s@%s", webfinger.WebfingerBasePath, targetAccount.Username, config.GetHost())

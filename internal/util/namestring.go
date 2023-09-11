@@ -19,6 +19,7 @@ package util
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
@@ -40,19 +41,83 @@ func ExtractNamestringParts(mention string) (username, host string, err error) {
 	}
 }
 
-// ExtractWebfingerParts returns username test_user and
-// domain example.org from a string like acct:test_user@example.org,
-// or acct:@test_user@example.org.
+// ExtractWebfingerParts returns the username and domain from either an
+// account query or an actor URI.
 //
-// If nothing is extracted, it will return an error.
+// All implementations in the wild generate webfinger account resource
+// queries with the "acct" scheme and without a leading "@"" on the username.
+// This is also the format the "subject" in a webfinger response adheres to.
+//
+// Despite this fact, we're being permissive about a single leading @. This
+// makes a query for acct:user@domain.tld and acct:@user@domain.tld
+// equivalent. But a query for acct:@@user@domain.tld will have its username
+// returned with the @ prefix.
+//
+// We also permit a resource of user@domain.tld or @user@domain.tld, without
+// a scheme. In that case it gets interpreted as if it was using the "acct"
+// scheme.
+//
+// When parsing fails, an error is returned.
 func ExtractWebfingerParts(webfinger string) (username, host string, err error) {
-	// remove the acct: prefix if it's present
-	webfinger = strings.TrimPrefix(webfinger, "acct:")
+	orig := webfinger
 
-	// prepend an @ if necessary
-	if webfinger[0] != '@' {
-		webfinger = "@" + webfinger
+	u, oerr := url.ParseRequestURI(webfinger)
+	if oerr != nil {
+		// Most likely reason for failing to parse is if the "acct" scheme was
+		// missing but a :port was included. So try an extra time with the scheme.
+		u, err = url.ParseRequestURI("acct:" + webfinger)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to parse %s with acct sheme: %w", orig, oerr)
+		}
 	}
 
-	return ExtractNamestringParts(webfinger)
+	if u.Scheme == "http" || u.Scheme == "https" {
+		return ExtractWebfingerPartsFromURI(u)
+	}
+
+	if u.Scheme != "acct" {
+		return "", "", fmt.Errorf("unsupported scheme: %s for resource: %s", u.Scheme, orig)
+	}
+
+	stripped := strings.TrimPrefix(u.Opaque, "@")
+	userDomain := strings.Split(stripped, "@")
+	if len(userDomain) != 2 {
+		return "", "", fmt.Errorf("failed to extract user and domain from: %s", orig)
+	}
+	return userDomain[0], userDomain[1], nil
+}
+
+// ExtractWebfingerPartsFromURI returns the user and domain extracted from
+// the passed in URI. The URI should be an actor URI.
+//
+// The domain returned is the hostname, and the user will be extracted
+// from either /@test_user or /users/test_user. These two paths match the
+// "aliasses" we include in our webfinger response and are also present in
+// our "links".
+//
+// Like with ExtractWebfingerParts, we're being permissive about a single
+// leading @.
+//
+// Errors are returned in case we end up with an empty domain or username.
+func ExtractWebfingerPartsFromURI(uri *url.URL) (username, host string, err error) {
+	host = uri.Host
+	if host == "" {
+		return "", "", fmt.Errorf("failed to extract domain from: %s", uri)
+	}
+
+	// strip any leading slashes
+	path := strings.TrimLeft(uri.Path, "/")
+	segs := strings.Split(path, "/")
+	if segs[0] == "users" {
+		username = segs[1]
+	} else {
+		username = segs[0]
+	}
+
+	username = strings.TrimPrefix(username, "@")
+	if username == "" {
+		return "", "", fmt.Errorf("failed to extract username from: %s", uri)
+	}
+
+	return
 }
