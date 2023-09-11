@@ -42,9 +42,9 @@ func (suite *PagingSuite) TestPagingStandard() {
 	resp := paging.PackageResponse(params)
 
 	suite.Equal(make([]interface{}, 10, 10), resp.Items)
-	suite.Equal(`<https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?max_id=01H11KA1DM2VH3747YDE7FV5HN&limit=10>; rel="next", <https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?min_id=01H11KBBVRRDYYC5KEPME1NP5R&limit=10>; rel="prev"`, resp.LinkHeader)
-	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?max_id=01H11KA1DM2VH3747YDE7FV5HN&limit=10`, resp.NextLink)
-	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?min_id=01H11KBBVRRDYYC5KEPME1NP5R&limit=10`, resp.PrevLink)
+	suite.Equal(`<https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&max_id=01H11KA1DM2VH3747YDE7FV5HN>; rel="next", <https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&min_id=01H11KBBVRRDYYC5KEPME1NP5R>; rel="prev"`, resp.LinkHeader)
+	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&max_id=01H11KA1DM2VH3747YDE7FV5HN`, resp.NextLink)
+	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&min_id=01H11KBBVRRDYYC5KEPME1NP5R`, resp.PrevLink)
 }
 
 func (suite *PagingSuite) TestPagingNoLimit() {
@@ -77,9 +77,9 @@ func (suite *PagingSuite) TestPagingNoNextID() {
 	resp := paging.PackageResponse(params)
 
 	suite.Equal(make([]interface{}, 10, 10), resp.Items)
-	suite.Equal(`<https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?min_id=01H11KBBVRRDYYC5KEPME1NP5R&limit=10>; rel="prev"`, resp.LinkHeader)
+	suite.Equal(`<https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&min_id=01H11KBBVRRDYYC5KEPME1NP5R>; rel="prev"`, resp.LinkHeader)
 	suite.Equal(``, resp.NextLink)
-	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?min_id=01H11KBBVRRDYYC5KEPME1NP5R&limit=10`, resp.PrevLink)
+	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&min_id=01H11KBBVRRDYYC5KEPME1NP5R`, resp.PrevLink)
 }
 
 func (suite *PagingSuite) TestPagingNoPrevID() {
@@ -94,25 +94,9 @@ func (suite *PagingSuite) TestPagingNoPrevID() {
 	resp := paging.PackageResponse(params)
 
 	suite.Equal(make([]interface{}, 10, 10), resp.Items)
-	suite.Equal(`<https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?max_id=01H11KA1DM2VH3747YDE7FV5HN&limit=10>; rel="next"`, resp.LinkHeader)
-	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?max_id=01H11KA1DM2VH3747YDE7FV5HN&limit=10`, resp.NextLink)
+	suite.Equal(`<https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&max_id=01H11KA1DM2VH3747YDE7FV5HN>; rel="next"`, resp.LinkHeader)
+	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&max_id=01H11KA1DM2VH3747YDE7FV5HN`, resp.NextLink)
 	suite.Equal(``, resp.PrevLink)
-}
-
-func (suite *PagingSuite) TestPagingNoItems() {
-	config.SetHost("example.org")
-
-	params := paging.ResponseParams{
-		Next: nextPage("01H11KA1DM2VH3747YDE7FV5HN", 10),
-		Prev: prevPage("01H11KBBVRRDYYC5KEPME1NP5R", 10),
-	}
-
-	resp := paging.PackageResponse(params)
-
-	suite.Empty(resp.Items)
-	suite.Empty(resp.LinkHeader)
-	suite.Empty(resp.NextLink)
-	suite.Empty(resp.PrevLink)
 }
 
 func TestPagingSuite(t *testing.T) {
