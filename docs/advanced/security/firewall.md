@@ -82,3 +82,9 @@ Both SSHGuard and fail2ban ship with "backends" that can target iptables and nft
 * [ArchWiki](https://wiki.archlinux.org/title/sshguard) on sshguard
 * [FreeBSD manual](https://man.freebsd.org/cgi/man.cgi?query=sshguard&sektion=8&manpath=FreeBSD+13.2-RELEASE+and+Ports) for sshguard
 * [SSHGuard setup](https://manpages.ubuntu.com/manpages/lunar/en/man7/sshguard-setup.7.html) manual for Ubuntu
+
+For fail2ban, you can use the following regex, which triggers fail2ban on failed logins and not another 'Unauthorized' errors (API for example):
+
+```regex
+statusCode=401 path=/auth/sign_in clientIP=<HOST> .* msg=\"Unauthorized:
+```
