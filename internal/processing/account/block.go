@@ -28,8 +28,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // BlockCreate handles the creation of a block from requestingAccount to targetAccountID, either remote or local.
@@ -126,6 +129,53 @@ func (p *Processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel
 	})
 
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
+}
+
+// BlocksGet ...
+func (p *Processor) BlocksGet(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	page *paging.Page,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
+	blocks, err := p.state.DB.GetAccountBlocks(ctx,
+		requestingAccount.ID,
+		page,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Check for empty response.
+	count := len(blocks)
+	if len(blocks) == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
+	items := make([]interface{}, 0, count)
+
+	for _, block := range blocks {
+		// Convert target account to frontend API model. (target will never be nil)
+		account, err := p.tc.AccountToAPIAccountBlocked(ctx, block.TargetAccount)
+		if err != nil {
+			log.Errorf(ctx, "error converting account to public api account: %v", err)
+			continue
+		}
+
+		// Append target to return items.
+		items = append(items, account)
+	}
+
+	// Get the lowest and highest
+	// ID values, used for paging.
+	lo := blocks[count-1].ID
+	hi := blocks[0].ID
+
+	return paging.PackageResponse(paging.ResponseParams{
+		Items: items,
+		Path:  "/api/v1/blocks",
+		Next:  page.Next(lo, hi),
+		Prev:  page.Prev(lo, hi),
+	}), nil
 }
 
 func (p *Processor) getBlockTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*gtsmodel.Account, *gtsmodel.Block, gtserror.WithCode) {

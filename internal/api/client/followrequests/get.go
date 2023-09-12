@@ -24,12 +24,19 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // FollowRequestGETHandler swagger:operation GET /api/v1/follow_requests getFollowRequests
 //
 // Get an array of accounts that have requested to follow you.
-// Accounts will be sorted in order of follow request date descending (newest first).
+//
+// The next and previous queries can be parsed from the returned Link header.
+// Example:
+//
+// ```
+// <https://example.org/api/v1/follow_requests?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/follow_requests?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+// ````
 //
 //	---
 //	tags:
@@ -40,11 +47,41 @@ import (
 //
 //	parameters:
 //	-
+//		name: max_id
+//		type: string
+//		description: >-
+//			Return only follow requesting accounts *OLDER* than the given max ID.
+//			The follow requester with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal follow request, NOT any of the returned accounts.
+//		in: query
+//		required: false
+//	-
+//		name: since_id
+//		type: string
+//		description: >-
+//			Return only follow requesting accounts *NEWER* than the given since ID.
+//			The follow requester with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal follow request, NOT any of the returned accounts.
+//		in: query
+//		required: false
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only follow requesting accounts *IMMEDIATELY NEWER* than the given min ID.
+//			The follow requester with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal follow request, NOT any of the returned accounts.
+//		in: query
+//		required: false
+//	-
 //		name: limit
 //		type: integer
-//		description: Number of accounts to return.
+//		description: Number of follow requesting accounts to return.
 //		default: 40
+//		minimum: 1
+//		maximum: 80
 //		in: query
+//		required: false
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -82,11 +119,25 @@ func (m *Module) FollowRequestGETHandler(c *gin.Context) {
 		return
 	}
 
-	accts, errWithCode := m.processor.FollowRequestsGet(c.Request.Context(), authed)
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		80, // max limit
+		40, // default limit
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.JSON(http.StatusOK, accts)
+	resp, errWithCode := m.processor.Account().FollowRequestsGet(c.Request.Context(), authed.Account, page)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+
+	c.JSON(http.StatusOK, resp.Items)
 }

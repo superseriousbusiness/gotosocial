@@ -138,10 +138,25 @@ type Relationship interface {
 	RejectFollowRequest(ctx context.Context, originAccountID string, targetAccountID string) error
 
 	// GetAccountFollows returns a slice of follows owned by the given accountID.
-	GetAccountFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+	GetAccountFollows(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Follow, error)
 
 	// GetAccountLocalFollows returns a slice of follows owned by the given accountID, only including follows from this instance.
 	GetAccountLocalFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// GetAccountFollowers fetches follows that target given accountID.
+	GetAccountFollowers(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Follow, error)
+
+	// GetAccountLocalFollowers fetches follows that target given accountID, only including follows from this instance.
+	GetAccountLocalFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// GetAccountFollowRequests returns all follow requests targeting the given account.
+	GetAccountFollowRequests(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.FollowRequest, error)
+
+	// GetAccountFollowRequesting returns all follow requests originating from the given account.
+	GetAccountFollowRequesting(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.FollowRequest, error)
+
+	// GetAccountBlocks returns all blocks originating from the given account, with given optional paging parameters.
+	GetAccountBlocks(ctx context.Context, accountID string, paging *paging.Page) ([]*gtsmodel.Block, error)
 
 	// CountAccountFollows returns the amount of accounts that the given accountID is following.
 	CountAccountFollows(ctx context.Context, accountID string) (int, error)
@@ -149,23 +164,11 @@ type Relationship interface {
 	// CountAccountLocalFollows returns the amount of accounts that the given accountID is following, only including follows from this instance.
 	CountAccountLocalFollows(ctx context.Context, accountID string) (int, error)
 
-	// GetAccountFollowers fetches follows that target given accountID.
-	GetAccountFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
-
-	// GetAccountLocalFollowers fetches follows that target given accountID, only including follows from this instance.
-	GetAccountLocalFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
-
 	// CountAccountFollowers returns the amounts that the given ID is followed by.
 	CountAccountFollowers(ctx context.Context, accountID string) (int, error)
 
 	// CountAccountLocalFollowers returns the amounts that the given ID is followed by, only including follows from this instance.
 	CountAccountLocalFollowers(ctx context.Context, accountID string) (int, error)
-
-	// GetAccountFollowRequests returns all follow requests targeting the given account.
-	GetAccountFollowRequests(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, error)
-
-	// GetAccountFollowRequesting returns all follow requests originating from the given account.
-	GetAccountFollowRequesting(ctx context.Context, accountID string) ([]*gtsmodel.FollowRequest, error)
 
 	// CountAccountFollowRequests returns number of follow requests targeting the given account.
 	CountAccountFollowRequests(ctx context.Context, accountID string) (int, error)
@@ -173,8 +176,8 @@ type Relationship interface {
 	// CountAccountFollowerRequests returns number of follow requests originating from the given account.
 	CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error)
 
-	// GetAccountBlocks returns all blocks originating from the given account, with given optional paging parameters.
-	GetAccountBlocks(ctx context.Context, accountID string, paging *paging.Page) ([]*gtsmodel.Block, error)
+	// CountAccountBlocks ...
+	CountAccountBlocks(ctx context.Context, accountID string) (int, error)
 
 	// GetNote gets a private note from a source account on a target account, if it exists.
 	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error)

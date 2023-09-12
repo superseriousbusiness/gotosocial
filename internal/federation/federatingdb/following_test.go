@@ -47,8 +47,8 @@ func (suite *FollowingTestSuite) TestGetFollowing() {
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
   "items": [
-    "http://localhost:8080/users/admin",
-    "http://localhost:8080/users/1happyturtle"
+    "http://localhost:8080/users/1happyturtle",
+    "http://localhost:8080/users/admin"
   ],
   "type": "Collection"
 }`, string(fJson))

@@ -753,14 +753,14 @@ func (suite *RelationshipTestSuite) TestGetAccountFollowRequests() {
 		suite.FailNow(err.Error())
 	}
 
-	followRequests, err := suite.db.GetAccountFollowRequests(ctx, targetAccount.ID)
+	followRequests, err := suite.db.GetAccountFollowRequests(ctx, targetAccount.ID, nil)
 	suite.NoError(err)
 	suite.Len(followRequests, 1)
 }
 
 func (suite *RelationshipTestSuite) TestGetAccountFollows() {
 	account := suite.testAccounts["local_account_1"]
-	follows, err := suite.db.GetAccountFollows(context.Background(), account.ID)
+	follows, err := suite.db.GetAccountFollows(context.Background(), account.ID, nil)
 	suite.NoError(err)
 	suite.Len(follows, 2)
 }
@@ -781,7 +781,7 @@ func (suite *RelationshipTestSuite) TestCountAccountFollows() {
 
 func (suite *RelationshipTestSuite) TestGetAccountFollowers() {
 	account := suite.testAccounts["local_account_1"]
-	follows, err := suite.db.GetAccountFollowers(context.Background(), account.ID)
+	follows, err := suite.db.GetAccountFollowers(context.Background(), account.ID, nil)
 	suite.NoError(err)
 	suite.Len(follows, 2)
 }

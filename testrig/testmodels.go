@@ -364,6 +364,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:             time.Time{},
 			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
+			EnableRSS:               util.Ptr(false),
 		},
 		"admin_account": {
 			ID:                      "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -539,6 +540,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:           time.Time{},
 			HideCollections:       util.Ptr(false),
 			SuspensionOrigin:      "",
+			EnableRSS:             util.Ptr(false),
 		},
 		"remote_account_2": {
 			ID:                    "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -575,6 +577,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspendedAt:           time.Time{},
 			HideCollections:       util.Ptr(false),
 			SuspensionOrigin:      "",
+			EnableRSS:             util.Ptr(false),
 		},
 		"remote_account_3": {
 			ID:                      "062G5WYKY35KKD12EMSM3F8PJ8",
@@ -612,6 +615,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
 			HeaderMediaAttachmentID: "01PFPMWK2FF0D9WMHEJHR07C3R",
+			EnableRSS:               util.Ptr(false),
 		},
 		"remote_account_4": {
 			ID:                      "07GZRBAEMBNKGZ8Z9VSKSXKR98",

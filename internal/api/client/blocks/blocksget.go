@@ -47,25 +47,40 @@ import (
 //
 //	parameters:
 //	-
-//		name: limit
-//		type: integer
-//		description: Number of blocks to return.
-//		default: 20
-//		in: query
-//	-
 //		name: max_id
 //		type: string
 //		description: >-
-//			Return only blocks *OLDER* than the given block ID.
-//			The block with the specified ID will not be included in the response.
+//			Return only blocked accounts *OLDER* than the given max ID.
+//			The blocked account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal block, NOT any of the returned accounts.
 //		in: query
+//		required: false
 //	-
 //		name: since_id
 //		type: string
 //		description: >-
-//		  Return only blocks *NEWER* than the given block ID.
-//		  The block with the specified ID will not be included in the response.
+//			Return only blocked accounts *NEWER* than the given since ID.
+//			The blocked account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal block, NOT any of the returned accounts.
 //		in: query
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only blocked accounts *IMMEDIATELY NEWER* than the given min ID.
+//			The blocked account with the specified ID will not be included in the response.
+//			NOTE: the ID is of the internal block, NOT any of the returned accounts.
+//		in: query
+//		required: false
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of blocked accounts to return.
+//		default: 40
+//		minimum: 1
+//		maximum: 80
+//		in: query
+//		required: false
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -104,16 +119,16 @@ func (m *Module) BlocksGETHandler(c *gin.Context) {
 	}
 
 	page, errWithCode := paging.ParseIDPage(c,
-		1,   // min limit
-		100, // max limit
-		20,  // default limit
+		1,  // min limit
+		80, // max limit
+		40, // default limit
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	resp, errWithCode := m.processor.BlocksGet(
+	resp, errWithCode := m.processor.Account().BlocksGet(
 		c.Request.Context(),
 		authed.Account,
 		page,

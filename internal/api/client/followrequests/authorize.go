@@ -87,7 +87,7 @@ func (m *Module) FollowRequestAuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	relationship, errWithCode := m.processor.FollowRequestAccept(c.Request.Context(), authed, originAccountID)
+	relationship, errWithCode := m.processor.Account().FollowRequestAccept(c.Request.Context(), authed.Account, originAccountID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

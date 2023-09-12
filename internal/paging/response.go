@@ -18,6 +18,7 @@
 package paging
 
 import (
+	"net/url"
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -35,18 +36,13 @@ type ResponseParams struct {
 	Path  string        // path to use for next/prev queries in the link header
 	Next  *Page         // page details for the next page
 	Prev  *Page         // page details for the previous page
-	Query []string      // any extra query parameters to provide in the link header, should be in the format 'example=value'
+	Query url.Values    // any extra query parameters to provide in the link header, should be in the format 'example=value'
 }
 
 // PackageResponse is a convenience function for returning
 // a bunch of pageable items (notifications, statuses, etc), as well
 // as a Link header to inform callers of where to find next/prev items.
 func PackageResponse(params ResponseParams) *apimodel.PageableResponse {
-	if len(params.Items) == 0 {
-		// No items to page through.
-		return EmptyResponse()
-	}
-
 	var (
 		// Extract paging params.
 		nextPg = params.Next

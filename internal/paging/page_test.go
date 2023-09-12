@@ -97,7 +97,7 @@ var cases = []Case{
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
-			Min: paging.MinID(minID, ""),
+			Min: paging.MinID(minID),
 			Max: paging.MaxID(maxID),
 		}, expect
 	}),
@@ -129,7 +129,7 @@ var cases = []Case{
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
-			Min:   paging.MinID(minID, ""),
+			Min:   paging.MinID(minID),
 			Max:   paging.MaxID(maxID),
 			Limit: limit,
 		}, expect
@@ -156,7 +156,7 @@ var cases = []Case{
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
-			Min:   paging.MinID(minID, ""),
+			Min:   paging.MinID(minID),
 			Max:   paging.MaxID(maxID),
 			Limit: len(ids) * 2,
 		}, expect
@@ -182,7 +182,7 @@ var cases = []Case{
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
-			Min: paging.MinID("", sinceID),
+			Min: paging.SinceID(sinceID),
 			Max: paging.MaxID(maxID),
 		}, expect
 	}),
@@ -225,7 +225,7 @@ var cases = []Case{
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
-			Min: paging.MinID("", sinceID),
+			Min: paging.SinceID(sinceID),
 		}, expect
 	}),
 	CreateCase("minID set", func(ids []string) ([]string, *paging.Page, []string) {
@@ -247,7 +247,7 @@ var cases = []Case{
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
-			Min: paging.MinID(minID, ""),
+			Min: paging.MinID(minID),
 		}, expect
 	}),
 }

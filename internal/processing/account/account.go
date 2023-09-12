@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -32,6 +33,9 @@ import (
 //
 // It also contains logic for actions towards accounts such as following, blocking, seeing follows, etc.
 type Processor struct {
+	// common processor logic
+	c *common.Processor
+
 	state        *state.State
 	tc           typeutils.TypeConverter
 	mediaManager *media.Manager
@@ -44,6 +48,7 @@ type Processor struct {
 
 // New returns a new account processor.
 func New(
+	common *common.Processor,
 	state *state.State,
 	tc typeutils.TypeConverter,
 	mediaManager *media.Manager,
@@ -53,6 +58,7 @@ func New(
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {
 	return Processor{
+		c:            common,
 		state:        state,
 		tc:           tc,
 		mediaManager: mediaManager,

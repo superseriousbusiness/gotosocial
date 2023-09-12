@@ -20,7 +20,6 @@ package paging
 import (
 	"net/url"
 	"strconv"
-	"strings"
 
 	"golang.org/x/exp/slices"
 )
@@ -70,26 +69,10 @@ func (p *Page) GetOrder() Order {
 }
 
 func (p *Page) order() Order {
-	var (
-		// Check if min/max values set.
-		minValue = zero(p.Min.Value)
-		maxValue = zero(p.Max.Value)
-
-		// Check if min/max orders set.
-		minOrder = (p.Min.Order != 0)
-		maxOrder = (p.Max.Order != 0)
-	)
-
 	switch {
-	// Boundaries with a value AND order set
-	// take priority. Min always comes first.
-	case minValue && minOrder:
+	case p.Min.Order != 0:
 		return p.Min.Order
-	case maxValue && maxOrder:
-		return p.Max.Order
-	case minOrder:
-		return p.Min.Order
-	case maxOrder:
+	case p.Max.Order != 0:
 		return p.Max.Order
 	default:
 		return 0
@@ -108,31 +91,9 @@ func (p *Page) Page(in []string) []string {
 		return in
 	}
 
-	if o := p.order(); !o.Ascending() {
-		// Default sort is descending,
-		// catching all cases when NOT
-		// ascending (even zero value).
-		//
-		// NOTE: sorted data does not always
-		// occur according to string ineqs
-		// so we unfortunately cannot check.
-
-		if maxIdx := p.Max.Find(in); maxIdx != -1 {
-			// Reslice skipping up to max.
-			in = in[maxIdx+1:]
-		}
-
-		if minIdx := p.Min.Find(in); minIdx != -1 {
-			// Reslice stripping past min.
-			in = in[:minIdx]
-		}
-	} else {
+	if p.order().Ascending() {
 		// Sort type is ascending, input
 		// data is assumed to be ascending.
-		//
-		// NOTE: sorted data does not always
-		// occur according to string ineqs
-		// so we unfortunately cannot check.
 
 		if minIdx := p.Min.Find(in); minIdx != -1 {
 			// Reslice skipping up to min.
@@ -144,6 +105,11 @@ func (p *Page) Page(in []string) []string {
 			in = in[:maxIdx]
 		}
 
+		if p.Limit > 0 && p.Limit < len(in) {
+			// Reslice input to limit.
+			in = in[:p.Limit]
+		}
+
 		if len(in) > 1 {
 			// Clone input before
 			// any modifications.
@@ -153,11 +119,25 @@ func (p *Page) Page(in []string) []string {
 			// ALWAYS be descending.
 			in = Reverse(in)
 		}
-	}
+	} else {
+		// Default sort is descending,
+		// catching all cases when NOT
+		// ascending (even zero value).
 
-	if p.Limit > 0 && p.Limit < len(in) {
-		// Reslice input to limit.
-		in = in[:p.Limit]
+		if maxIdx := p.Max.Find(in); maxIdx != -1 {
+			// Reslice skipping up to max.
+			in = in[maxIdx+1:]
+		}
+
+		if minIdx := p.Min.Find(in); minIdx != -1 {
+			// Reslice stripping past min.
+			in = in[:minIdx]
+		}
+
+		if p.Limit > 0 && p.Limit < len(in) {
+			// Reslice input to limit.
+			in = in[:p.Limit]
+		}
 	}
 
 	return in
@@ -165,8 +145,8 @@ func (p *Page) Page(in []string) []string {
 
 // Next creates a new instance for the next returnable page, using
 // given max value. This preserves original limit and max key name.
-func (p *Page) Next(max string) *Page {
-	if p == nil || max == "" {
+func (p *Page) Next(lo, hi string) *Page {
+	if p == nil || lo == "" || hi == "" {
 		// no paging.
 		return nil
 	}
@@ -177,16 +157,27 @@ func (p *Page) Next(max string) *Page {
 	// Set original limit.
 	p2.Limit = p.Limit
 
-	// Create new from old.
-	p2.Max = p.Max.new(max)
+	if p.order().Ascending() {
+		// When ascending, next page
+		// needs to start with min at
+		// the next highest value.
+		p2.Min = p.Min.new(hi)
+		p2.Max = p.Max.new("")
+	} else {
+		// When descending, next page
+		// needs to start with max at
+		// the next lowest value.
+		p2.Min = p.Min.new("")
+		p2.Max = p.Max.new(lo)
+	}
 
 	return p2
 }
 
 // Prev creates a new instance for the prev returnable page, using
 // given min value. This preserves original limit and min key name.
-func (p *Page) Prev(min string) *Page {
-	if p == nil || min == "" {
+func (p *Page) Prev(lo, hi string) *Page {
+	if p == nil || lo == "" || hi == "" {
 		// no paging.
 		return nil
 	}
@@ -197,55 +188,56 @@ func (p *Page) Prev(min string) *Page {
 	// Set original limit.
 	p2.Limit = p.Limit
 
-	// Create new from old.
-	p2.Min = p.Min.new(min)
+	if p.order().Ascending() {
+		// When ascending, prev page
+		// needs to start with max at
+		// the next lowest value.
+		p2.Min = p.Min.new("")
+		p2.Max = p.Max.new(lo)
+	} else {
+		// When descending, next page
+		// needs to start with max at
+		// the next lowest value.
+		p2.Min = p.Min.new(hi)
+		p2.Max = p.Max.new("")
+	}
 
 	return p2
 }
 
 // ToLink builds a URL link for given endpoint information and extra query parameters,
 // appending this Page's minimum / maximum boundaries and available limit (if any).
-func (p *Page) ToLink(proto, host, path string, queryParams []string) string {
+func (p *Page) ToLink(proto, host, path string, queryParams url.Values) string {
 	if p == nil {
 		// no paging.
 		return ""
 	}
 
-	// Check length before
-	// adding boundary params.
-	old := len(queryParams)
+	if queryParams == nil {
+		// Allocate new query parameters.
+		queryParams = make(url.Values)
+	}
 
-	if minParam := p.Min.Query(); minParam != "" {
+	if p.Min.Value != "" {
 		// A page-minimum query parameter is available.
-		queryParams = append(queryParams, minParam)
+		queryParams.Add(p.Min.Name, p.Min.Value)
 	}
 
-	if maxParam := p.Max.Query(); maxParam != "" {
+	if p.Max.Value != "" {
 		// A page-maximum query parameter is available.
-		queryParams = append(queryParams, maxParam)
-	}
-
-	if len(queryParams) == old {
-		// No page boundaries.
-		return ""
+		queryParams.Add(p.Max.Name, p.Max.Value)
 	}
 
 	if p.Limit > 0 {
-		// Build limit key-value query parameter.
-		param := "limit=" + strconv.Itoa(p.Limit)
-
-		// Append `limit=$value` query parameter.
-		queryParams = append(queryParams, param)
+		// A page limit query parameter is available.
+		queryParams.Add("limit", strconv.Itoa(p.Limit))
 	}
-
-	// Join collected params into query str.
-	query := strings.Join(queryParams, "&")
 
 	// Build URL string.
 	return (&url.URL{
 		Scheme:   proto,
 		Host:     host,
 		Path:     path,
-		RawQuery: query,
+		RawQuery: queryParams.Encode(),
 	}).String()
 }
