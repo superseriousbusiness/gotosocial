@@ -124,19 +124,18 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Prepared activitypub object to
-	// be serialized below. Handled separately
-	// depending on whether paging is enabled.
 	var obj vocab.Type
+
+	// Start building AS collection params.
+	var params ap.CollectionParams
+	params.ID = collectionID
+	params.Total = total
 
 	if page == nil {
 		// i.e. paging disabled, the simplest case.
-
-		// Just build collection object from total and ID.
-		obj = ap.NewASOrderedCollection(ap.CollectionParams{
-			ID:    collectionID,
-			Total: total,
-		})
+		//
+		// Just build collection object from params.
+		obj = ap.NewASOrderedCollection(params)
 	} else {
 		// i.e. paging enabled
 
@@ -152,35 +151,37 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 		lo := followers[len(followers)-1].ID
 		hi := followers[0].ID
 
-		// Build AS collection page object from this page of followers.
-		obj = ap.NewASOrderedCollectionPage(ap.CollectionPageParams{
-			// The containing page's collection details.
-			CollectionParams: ap.CollectionParams{
-				ID:    collectionID,
-				Total: len(followers),
-			},
+		// Start building AS collection page params.
+		var pageParams ap.CollectionPageParams
+		pageParams.CollectionParams = params
 
-			Current: page,
-			Next:    page.Next(lo, hi),
-			Prev:    page.Next(lo, hi),
+		// Current page details.
+		pageParams.Current = page
+		pageParams.Count = len(followers)
 
-			Count: len(followers),
-			Append: func(i int, itemsProp ap.ItemsPropertyBuilder) {
-				// Get follower URI at index.
-				follow := followers[i]
-				accURI := follow.Account.URI
+		// Set linked next/prev parameters.
+		pageParams.Next = page.Next(lo, hi)
+		pageParams.Prev = page.Prev(lo, hi)
 
-				// Parse URL object from URI.
-				iri, err := url.Parse(accURI)
-				if err != nil {
-					log.Errorf(ctx, "error parsing account uri %s: %v", accURI, err)
-					return
-				}
+		// Set the collection item property builder function.
+		pageParams.Append = func(i int, itemsProp ap.ItemsPropertyBuilder) {
+			// Get follower URI at index.
+			follow := followers[i]
+			accURI := follow.Account.URI
 
-				// Add to item property.
-				itemsProp.AppendIRI(iri)
-			},
-		})
+			// Parse URL object from URI.
+			iri, err := url.Parse(accURI)
+			if err != nil {
+				log.Errorf(ctx, "error parsing account uri %s: %v", accURI, err)
+				return
+			}
+
+			// Add to item property.
+			itemsProp.AppendIRI(iri)
+		}
+
+		// Build AS collection page object from params.
+		obj = ap.NewASOrderedCollectionPage(pageParams)
 	}
 
 	// Serialized the prepared object.
