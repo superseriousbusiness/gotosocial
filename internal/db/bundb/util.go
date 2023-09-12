@@ -85,18 +85,18 @@ func whereStartsLike(
 	)
 }
 
-// loadPagedIDs loads a page of IDs from given SliceCache by `key`, resorting to `load` function if required. Uses `page` to sort + page resulting IDs.
-// NOTE: IDs returned from `cache` / `load` MUST be in descending order, otherwise paging will not work correctly / return things out of order.
-func loadPagedIDs(cache *cache.SliceCache[string], key string, page *paging.Page, load func() ([]string, error)) ([]string, error) {
+// loadPagedIDs loads a page of IDs from given SliceCache by `key`, resorting to `loadDESC` if required. Uses `page` to sort + page resulting IDs.
+// NOTE: IDs returned from `cache` / `loadDESC` MUST be in descending order, otherwise paging will not work correctly / return things out of order.
+func loadPagedIDs(cache *cache.SliceCache[string], key string, page *paging.Page, loadDESC func() ([]string, error)) ([]string, error) {
 	// Check cache for IDs, else load.
-	ids, err := cache.Load(key, load)
+	ids, err := cache.Load(key, loadDESC)
 	if err != nil {
 		return nil, err
 	}
 
-	// Our cached / selected IDs are
-	// ALWAYS fetched in descending order.
-	// Depending on the paging requested
+	// Our cached / selected IDs are ALWAYS
+	// fetched from `loadDESC` in descending
+	// order. Depending on the paging requested
 	// this may be an unexpected order.
 	if page.GetOrder().Ascending() {
 		ids = paging.Reverse(ids)
