@@ -132,12 +132,29 @@ type ItemsPropertyBuilder interface {
 	// functions here as you require them for building pages.
 }
 
-func NewASOrderedCollection(params CollectionParams) vocab.ActivityStreamsCollection {
+// NewASCollection ...
+func NewASCollection(params CollectionParams) vocab.ActivityStreamsCollection {
 	collection := streams.NewActivityStreamsCollection()
 	buildCollection(collection, params, 40)
 	return collection
 }
 
+// NewASCollectionPage ...
+func NewASCollectionPage(params CollectionPageParams) vocab.ActivityStreamsCollectionPage {
+	collectionPage := streams.NewActivityStreamsCollectionPage()
+	itemsProp := streams.NewActivityStreamsItemsProperty()
+	buildCollectionPage(collectionPage, itemsProp, collectionPage.SetActivityStreamsItems, params)
+	return collectionPage
+}
+
+// NewASOrderedCollection ...
+func NewASOrderedCollection(params CollectionParams) vocab.ActivityStreamsOrderedCollection {
+	collection := streams.NewActivityStreamsOrderedCollection()
+	buildCollection(collection, params, 40)
+	return collection
+}
+
+// NewASOrderedCollectionPage ...
 func NewASOrderedCollectionPage(params CollectionPageParams) vocab.ActivityStreamsOrderedCollectionPage {
 	collectionPage := streams.NewActivityStreamsOrderedCollectionPage()
 	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
