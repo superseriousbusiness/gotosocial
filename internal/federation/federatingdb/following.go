@@ -22,7 +22,6 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -38,15 +37,13 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
-	follows, err := f.state.DB.GetAccountFollows(
-		ctx,
-		acct.ID,
-		gtscontext.Page(ctx), // paging params are stored in ctx
-	)
+	// Fetch follows for account from database.
+	follows, err := f.state.DB.GetAccountFollows(ctx, acct.ID, nil)
 	if err != nil {
 		return nil, gtserror.Newf("db error getting following for account id %s: %w", acct.ID, err)
 	}
 
+	// Convert the follows to a slice of account URIs.
 	iris := make([]*url.URL, 0, len(follows))
 	for _, follow := range follows {
 		u, err := url.Parse(follow.TargetAccount.URI)

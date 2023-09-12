@@ -23,7 +23,6 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -39,11 +38,8 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
-	// Extract page params from ctx.
-	page := gtscontext.Page(ctx)
-
-	// Fetch followers for account from database (paged, if provided)
-	follows, err := f.state.DB.GetAccountFollowers(ctx, acct.ID, page)
+	// Fetch followers for account from database.
+	follows, err := f.state.DB.GetAccountFollowers(ctx, acct.ID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Followers: db error getting followers for account id %s: %s", acct.ID, err)
 	}
@@ -56,14 +52,6 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 			return nil, gtserror.Newf("invalid account uri: %v", err)
 		}
 		iris = append(iris, u)
-	}
-
-	// Collect the account URIs into an AS collection.
-	collection, err := f.collectIRIs(ctx, iris)
-
-	if err == nil {
-		// Before returning add paging parameters.
-		
 	}
 
 	return f.collectIRIs(ctx, iris)
