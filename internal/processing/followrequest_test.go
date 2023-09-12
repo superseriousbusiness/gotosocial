@@ -36,7 +36,10 @@ type FollowRequestTestSuite struct {
 }
 
 func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
+	// The authed local account we are going to use for HTTP requests
 	requestingAccount := suite.testAccounts["local_account_1"]
+
+	// The remote account whose follow request we are accepting
 	targetAccount := suite.testAccounts["remote_account_2"]
 
 	// put a follow request in the database
