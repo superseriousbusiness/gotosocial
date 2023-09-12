@@ -20,14 +20,14 @@ package fedi
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
@@ -110,21 +110,83 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 		return nil, errWithCode
 	}
 
-	requestedAccountURI, err := url.Parse(requestedAccount.URI)
+	// Parse the collection ID object from account's followers URI.
+	collectionID, err := url.Parse(requestedAccount.FollowersURI)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
+		err := gtserror.Newf("error parsing account followers uri %s: %v", requestedAccount.FollowersURI, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	requestedFollowers, err := p.federator.FederatingDB().Followers(
-		gtscontext.SetPage(ctx, page), // store paging parameters in the ctx
-		requestedAccountURI,
-	)
+	// Calculate total number of followers available for account.
+	total, err := p.state.DB.CountAccountFollowers(ctx, requestedAccount.ID)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching followers for uri %s: %s", requestedAccountURI.String(), err))
+		err := gtserror.Newf("error counting followers: %v", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	data, err := ap.Serialize(requestedFollowers)
+	// Prepared activitypub object to
+	// be serialized below. Handled separately
+	// depending on whether paging is enabled.
+	var obj vocab.Type
+
+	if page == nil {
+		// i.e. paging disabled, the simplest case.
+
+		// Just build collection object from total and ID.
+		obj = ap.NewASOrderedCollection(ap.CollectionParams{
+			ID:    collectionID,
+			Total: total,
+		})
+	} else {
+		// i.e. paging enabled
+
+		// Get the request page of full follower objects with attached accounts.
+		followers, err := p.state.DB.GetAccountFollowers(ctx, requestedAccount.ID, page)
+		if err != nil {
+			err := gtserror.Newf("error getting followers: %v", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// Get the lowest and highest
+		// ID values, used for paging.
+		lo := followers[len(followers)-1].ID
+		hi := followers[0].ID
+
+		// Build AS collection page object from this page of followers.
+		obj = ap.NewASOrderedCollectionPage(ap.CollectionPageParams{
+			// The containing page's collection details.
+			CollectionParams: ap.CollectionParams{
+				ID:    collectionID,
+				Total: len(followers),
+			},
+
+			Current: page,
+			Next:    page.Next(lo, hi),
+			Prev:    page.Next(lo, hi),
+
+			Count: len(followers),
+			Append: func(i int, itemsProp ap.ItemsPropertyBuilder) {
+				// Get follower URI at index.
+				follow := followers[i]
+				accURI := follow.Account.URI
+
+				// Parse URL object from URI.
+				iri, err := url.Parse(accURI)
+				if err != nil {
+					log.Errorf(ctx, "error parsing account uri %s: %v", accURI, err)
+					return
+				}
+
+				// Add to item property.
+				itemsProp.AppendIRI(iri)
+			},
+		})
+	}
+
+	// Serialized the prepared object.
+	data, err := ap.Serialize(obj)
 	if err != nil {
+		err := gtserror.Newf("error serializing: %v", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -139,21 +201,83 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 		return nil, errWithCode
 	}
 
-	requestedAccountURI, err := url.Parse(requestedAccount.URI)
+	// Parse the collection ID object from account's following URI.
+	collectionID, err := url.Parse(requestedAccount.FollowingURI)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
+		err := gtserror.Newf("error parsing account following uri %s: %v", requestedAccount.FollowingURI, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	requestedFollowing, err := p.federator.FederatingDB().Following(
-		gtscontext.SetPage(ctx, page), // store paging parameters in the ctx
-		requestedAccountURI,
-	)
+	// Calculate total number of following available for account.
+	total, err := p.state.DB.CountAccountFollows(ctx, requestedAccount.ID)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching following for uri %s: %s", requestedAccountURI.String(), err))
+		err := gtserror.Newf("error counting follows: %v", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	data, err := ap.Serialize(requestedFollowing)
+	// Prepared activitypub object to
+	// be serialized below. Handled separately
+	// depending on whether paging is enabled.
+	var obj vocab.Type
+
+	if page == nil {
+		// i.e. paging disabled, the simplest case.
+
+		// Just build collection object from total and ID.
+		obj = ap.NewASOrderedCollection(ap.CollectionParams{
+			ID:    collectionID,
+			Total: total,
+		})
+	} else {
+		// i.e. paging enabled
+
+		// Get the request page of full follower objects with attached accounts.
+		follows, err := p.state.DB.GetAccountFollows(ctx, requestedAccount.ID, page)
+		if err != nil {
+			err := gtserror.Newf("error getting follows: %v", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// Get the lowest and highest
+		// ID values, used for paging.
+		lo := follows[len(follows)-1].ID
+		hi := follows[0].ID
+
+		// Build AS collection page object from this page of followers.
+		obj = ap.NewASOrderedCollectionPage(ap.CollectionPageParams{
+			// The containing page's collection details.
+			CollectionParams: ap.CollectionParams{
+				ID:    collectionID,
+				Total: total,
+			},
+
+			Current: page,
+			Next:    page.Next(lo, hi),
+			Prev:    page.Next(lo, hi),
+
+			Count: len(follows),
+			Append: func(i int, itemsProp ap.ItemsPropertyBuilder) {
+				// Get follower URI at index.
+				follow := follows[i]
+				accURI := follow.Account.URI
+
+				// Parse URL object from URI.
+				iri, err := url.Parse(accURI)
+				if err != nil {
+					log.Errorf(ctx, "error parsing account uri %s: %v", accURI, err)
+					return
+				}
+
+				// Add to item property.
+				itemsProp.AppendIRI(iri)
+			},
+		})
+	}
+
+	// Serialized the prepared object.
+	data, err := ap.Serialize(obj)
 	if err != nil {
+		err := gtserror.Newf("error serializing: %v", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

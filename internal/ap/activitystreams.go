@@ -17,6 +17,15 @@
 
 package ap
 
+import (
+	"net/url"
+	"strconv"
+
+	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
+)
+
 // https://www.w3.org/TR/activitystreams-vocabulary
 const (
 	ActivityAccept          = "Accept"          // ActivityStreamsAccept https://www.w3.org/TR/activitystreams-vocabulary/#dfn-accept
@@ -77,3 +86,168 @@ const (
 	// and https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tag
 	TagHashtag = "Hashtag"
 )
+
+type CollectionParams struct {
+	// Containing collection
+	// ID (i.e. NOT the page).
+	ID *url.URL
+
+	// Total no. items.
+	Total int
+}
+
+type CollectionPageParams struct {
+	// containing collection.
+	CollectionParams
+
+	// Paging details.
+	Current *paging.Page
+	Next    *paging.Page
+	Prev    *paging.Page
+	Query   url.Values
+
+	// Item appender for each item at index.
+	Append func(int, ItemsPropertyBuilder)
+	Count  int
+}
+
+type CollectionBuilder interface {
+	SetJSONLDId(vocab.JSONLDIdProperty)
+	SetActivityStreamsFirst(vocab.ActivityStreamsFirstProperty)
+	SetActivityStreamsTotalItems(i vocab.ActivityStreamsTotalItemsProperty)
+}
+
+type CollectionPageBuilder interface {
+	SetJSONLDId(vocab.JSONLDIdProperty)
+	SetActivityStreamsPartOf(vocab.ActivityStreamsPartOfProperty)
+	SetActivityStreamsNext(vocab.ActivityStreamsNextProperty)
+	SetActivityStreamsPrev(vocab.ActivityStreamsPrevProperty)
+	SetActivityStreamsTotalItems(i vocab.ActivityStreamsTotalItemsProperty)
+}
+
+type ItemsPropertyBuilder interface {
+	AppendIRI(*url.URL)
+
+	// NOTE: add more of the items-property-like interface
+	// functions here as you require them for building pages.
+}
+
+func NewASOrderedCollection(params CollectionParams) vocab.ActivityStreamsCollection {
+	collection := streams.NewActivityStreamsCollection()
+	buildCollection(collection, params, 40)
+	return collection
+}
+
+func NewASOrderedCollectionPage(params CollectionPageParams) vocab.ActivityStreamsOrderedCollectionPage {
+	collectionPage := streams.NewActivityStreamsOrderedCollectionPage()
+	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
+	buildCollectionPage(collectionPage, itemsProp, collectionPage.SetActivityStreamsOrderedItems, params)
+	return collectionPage
+}
+
+func buildCollection[C CollectionBuilder](collection C, params CollectionParams, pageLimit int) {
+	// Add the collection ID property.
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(params.ID)
+	collection.SetJSONLDId(idProp)
+
+	// Add the collection totalItems count property.
+	totalItems := streams.NewActivityStreamsTotalItemsProperty()
+	totalItems.Set(params.Total)
+	collection.SetActivityStreamsTotalItems(totalItems)
+
+	// Clone the collection ID page
+	// to add first page query data.
+	firstIRI := new(url.URL)
+	*firstIRI = *params.ID
+
+	// Note that simply adding a limit signals to our
+	// endpoint to use paging (which will start at beginning).
+	limit := "limit=" + strconv.Itoa(pageLimit)
+	firstIRI.RawQuery = appendQuery(firstIRI.RawQuery, limit)
+
+	// Add the collection first IRI property.
+	first := streams.NewActivityStreamsFirstProperty()
+	first.SetIRI(firstIRI)
+	collection.SetActivityStreamsFirst(first)
+}
+
+func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collectionPage C, itemsProp I, setItems func(I), params CollectionPageParams) {
+	// Add the partOf property for its containing collection ID.
+	partOfProp := streams.NewActivityStreamsPartOfProperty()
+	partOfProp.SetIRI(params.ID)
+	collectionPage.SetActivityStreamsPartOf(partOfProp)
+
+	// Build the current page link IRI.
+	currentIRI := params.Current.ToLinkURL(
+		params.ID.Scheme,
+		params.ID.Host,
+		params.ID.Path,
+		params.Query,
+	)
+
+	// Add the collection ID property for
+	// the *current* collection page params.
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(currentIRI)
+	collectionPage.SetJSONLDId(idProp)
+
+	// Build the next page link IRI.
+	nextIRI := params.Next.ToLinkURL(
+		params.ID.Scheme,
+		params.ID.Host,
+		params.ID.Path,
+		params.Query,
+	)
+
+	if nextIRI != nil {
+		// Add the collection next property for the next page.
+		nextProp := streams.NewActivityStreamsNextProperty()
+		nextProp.SetIRI(nextIRI)
+		collectionPage.SetActivityStreamsNext(nextProp)
+	}
+
+	// Build the prevocab.page link IRI.
+	prevIRI := params.Prev.ToLinkURL(
+		params.ID.Scheme,
+		params.ID.Host,
+		params.ID.Path,
+		params.Query,
+	)
+
+	if prevIRI != nil {
+		// Add the collection prevocab.property for the prevocab.page.
+		prevProp := streams.NewActivityStreamsPrevProperty()
+		prevProp.SetIRI(prevIRI)
+		collectionPage.SetActivityStreamsPrev(prevProp)
+	}
+
+	// Add the collection totalItems count property.
+	totalItems := streams.NewActivityStreamsTotalItemsProperty()
+	totalItems.Set(params.Total)
+	collectionPage.SetActivityStreamsTotalItems(totalItems)
+
+	if params.Append == nil {
+		// nil check outside the for loop.
+		panic("nil params.Append function")
+	}
+
+	// Append each of the items to the provided
+	// pre-allocated items property builder type.
+	for i := 0; i < params.Count; i++ {
+		params.Append(i, itemsProp)
+	}
+
+	// Set the collection
+	// page items property.
+	setItems(itemsProp)
+}
+
+// appendQuery appends part to an existing raw
+// query with ampersand, else just returning part.
+func appendQuery(raw, part string) string {
+	if raw != "" {
+		return raw + "&" + part
+	}
+	return part
+}
