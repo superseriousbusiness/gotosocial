@@ -111,12 +111,20 @@ type CollectionPageParams struct {
 	Count  int
 }
 
+// CollectionPage is a simplified interface type
+// that can be fulfilled by either of (where required):
+// vocab.ActivityStreamsCollection
+// vocab.ActivityStreamsOrderedCollection
 type CollectionBuilder interface {
 	SetJSONLDId(vocab.JSONLDIdProperty)
 	SetActivityStreamsFirst(vocab.ActivityStreamsFirstProperty)
 	SetActivityStreamsTotalItems(i vocab.ActivityStreamsTotalItemsProperty)
 }
 
+// CollectionPageBuilder is a simplified interface type
+// that can be fulfilled by either of (where required):
+// vocab.ActivityStreamsCollectionPage
+// vocab.ActivityStreamsOrderedCollectionPage
 type CollectionPageBuilder interface {
 	SetJSONLDId(vocab.JSONLDIdProperty)
 	SetActivityStreamsPartOf(vocab.ActivityStreamsPartOfProperty)
@@ -125,6 +133,10 @@ type CollectionPageBuilder interface {
 	SetActivityStreamsTotalItems(i vocab.ActivityStreamsTotalItemsProperty)
 }
 
+// ItemsPropertyBuilder is a simplified interface type
+// that can be fulfilled by either of (where required):
+// vocab.ActivityStreamsItemsProperty
+// vocab.ActivityStreamsOrderedItemsProperty
 type ItemsPropertyBuilder interface {
 	AppendIRI(*url.URL)
 
@@ -132,14 +144,14 @@ type ItemsPropertyBuilder interface {
 	// functions here as you require them for building pages.
 }
 
-// NewASCollection ...
+// NewASCollection builds and returns a new ActivityStreams Collection from given parameters.
 func NewASCollection(params CollectionParams) vocab.ActivityStreamsCollection {
 	collection := streams.NewActivityStreamsCollection()
 	buildCollection(collection, params, 40)
 	return collection
 }
 
-// NewASCollectionPage ...
+// NewASCollectionPage builds and returns a new ActivityStreams CollectionPage from given parameters (including item property appending function).
 func NewASCollectionPage(params CollectionPageParams) vocab.ActivityStreamsCollectionPage {
 	collectionPage := streams.NewActivityStreamsCollectionPage()
 	itemsProp := streams.NewActivityStreamsItemsProperty()
@@ -147,14 +159,14 @@ func NewASCollectionPage(params CollectionPageParams) vocab.ActivityStreamsColle
 	return collectionPage
 }
 
-// NewASOrderedCollection ...
+// NewASOrderedCollection builds and returns a new ActivityStreams OrderedCollection from given parameters.
 func NewASOrderedCollection(params CollectionParams) vocab.ActivityStreamsOrderedCollection {
 	collection := streams.NewActivityStreamsOrderedCollection()
 	buildCollection(collection, params, 40)
 	return collection
 }
 
-// NewASOrderedCollectionPage ...
+// NewASOrderedCollectionPage builds and returns a new ActivityStreams OrderedCollectionPage from given parameters (including item property appending function).
 func NewASOrderedCollectionPage(params CollectionPageParams) vocab.ActivityStreamsOrderedCollectionPage {
 	collectionPage := streams.NewActivityStreamsOrderedCollectionPage()
 	itemsProp := streams.NewActivityStreamsOrderedItemsProperty()
