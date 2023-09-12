@@ -19,7 +19,6 @@ package federation
 
 import (
 	"context"
-	"net/url"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -49,7 +48,7 @@ type Federator interface {
 	// If the request does not pass authentication, or there's a domain block, nil, false, nil will be returned.
 	//
 	// If something goes wrong during authentication, nil, false, and an error will be returned.
-	AuthenticateFederatedRequest(ctx context.Context, username string) (*url.URL, gtserror.WithCode)
+	AuthenticateFederatedRequest(ctx context.Context, username string) (*PubKeyAuth, gtserror.WithCode)
 
 	pub.CommonBehavior
 	pub.FederatingProtocol

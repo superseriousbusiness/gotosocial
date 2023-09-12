@@ -55,7 +55,10 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		defaultUrl: "/settings/admin/settings",
 		permissions: ["admin"]
 	}, [
-		Item("Actions", { icon: "fa-bolt" }, require("./admin/actions")),
+		Menu("Actions", { icon: "fa-bolt" }, [
+			Item("Media", { icon: "fa-photo" }, require("./admin/actions/media")),
+			Item("Keys", { icon: "fa-key-modern" }, require("./admin/actions/keys")),
+		]),
 		Menu("Custom Emoji", { icon: "fa-smile-o" }, [
 			Item("Local", { icon: "fa-home", wildcard: true }, require("./admin/emoji/local")),
 			Item("Remote", { icon: "fa-cloud" }, require("./admin/emoji/remote"))
@@ -63,7 +66,7 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		Menu("Settings", { icon: "fa-sliders" }, [
 			Item("Settings", { icon: "fa-sliders", url: "" }, require("./admin/settings")),
 			Item("Rules", { icon: "fa-dot-circle-o", wildcard: true }, require("./admin/settings/rules"))
-		])
+		]),
 	])
 ]);
 

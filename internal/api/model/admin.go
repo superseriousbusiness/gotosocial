@@ -178,6 +178,17 @@ type AdminActionRequest struct {
 	TargetID string `form:"-" json:"-" xml:"-"`
 }
 
+// AdminActionResponse models the server
+// response to an admin action.
+//
+// swagger:model adminActionResponse
+type AdminActionResponse struct {
+	// Internal ID of the action.
+	//
+	// example: 01H9QG6TZ9W5P0402VFRVM17TH
+	ActionID string `json:"action_id"`
+}
+
 // MediaCleanupRequest models admin media cleanup parameters
 //
 // swagger:parameters mediaCleanup

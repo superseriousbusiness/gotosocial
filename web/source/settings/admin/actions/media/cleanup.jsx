@@ -21,42 +21,39 @@
 
 const React = require("react");
 
-const query = require("../lib/query");
+const query = require("../../../lib/query");
 
-const { useTextInput } = require("../lib/form");
-const { TextInput } = require("../components/form/inputs");
+const { useTextInput } = require("../../../lib/form");
+const { TextInput } = require("../../../components/form/inputs");
 
-const MutationButton = require("../components/form/mutation-button");
+const MutationButton = require("../../../components/form/mutation-button");
 
-module.exports = function AdminActionPanel() {
+module.exports = function Cleanup({}) {
 	const daysField = useTextInput("days", { defaultValue: 30 });
 
 	const [mediaCleanup, mediaCleanupResult] = query.useMediaCleanupMutation();
 
-	function submitMediaCleanup(e) {
+	function submitCleanup(e) {
 		e.preventDefault();
 		mediaCleanup(daysField.value);
 	}
-
+    
 	return (
-		<>
-			<h1>Admin Actions</h1>
-			<form onSubmit={submitMediaCleanup}>
-				<h2>Media cleanup</h2>
-				<p>
+		<form onSubmit={submitCleanup}>
+			<h2>Cleanup</h2>
+			<p>
 					Clean up remote media older than the specified number of days.
 					If the remote instance is still online they will be refetched when needed.
 					Also cleans up unused headers and avatars from the media cache.
-				</p>
-				<TextInput
-					field={daysField}
-					label="Days"
-					type="number"
-					min="0"
-					placeholder="30"
-				/>
-				<MutationButton label="Remove old media" result={mediaCleanupResult} />
-			</form>
-		</>
+			</p>
+			<TextInput
+				field={daysField}
+				label="Days"
+				type="number"
+				min="0"
+				placeholder="30"
+			/>
+			<MutationButton label="Remove old media" result={mediaCleanupResult} />
+		</form>
 	);
 };

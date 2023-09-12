@@ -66,7 +66,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 	// If the request is not on a public key path, we want to
 	// try to authenticate it before we serve any data, so that
 	// we can serve a more complete profile.
-	requestingAccountURI, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+	pubKeyAuth, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode // likely 401
 	}
@@ -89,7 +89,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 	// Instead, we end up in an 'I'll show you mine if you show me
 	// yours' situation, where we sort of agree to reveal each
 	// other's profiles at the same time.
-	if p.federator.Handshaking(requestedUsername, requestingAccountURI) {
+	if p.federator.Handshaking(requestedUsername, pubKeyAuth.OwnerURI) {
 		return data(person)
 	}
 
@@ -98,10 +98,11 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 	requestingAccount, _, err := p.federator.GetAccountByURI(
 		// On a hot path so fail quickly.
 		gtscontext.SetFastFail(ctx),
-		requestedUsername, requestingAccountURI,
+		requestedUsername,
+		pubKeyAuth.OwnerURI,
 	)
 	if err != nil {
-		err := gtserror.Newf("error getting account %s: %w", requestingAccountURI, err)
+		err := gtserror.Newf("error getting account %s: %w", pubKeyAuth.OwnerURI, err)
 		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 

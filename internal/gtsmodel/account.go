@@ -72,9 +72,10 @@ type Account struct {
 	FollowersURI            string           `bun:",nullzero,unique"`               // URI for getting the followers list of this account
 	FeaturedCollectionURI   string           `bun:",nullzero,unique"`               // URL for getting the featured collection list of this account
 	ActorType               string           `bun:",nullzero,notnull"`              // What type of activitypub actor is this account?
-	PrivateKey              *rsa.PrivateKey  `bun:""`                               // Privatekey for validating activitypub requests, will only be defined for local accounts
-	PublicKey               *rsa.PublicKey   `bun:",notnull"`                       // Publickey for encoding activitypub requests, will be defined for both local and remote accounts
+	PrivateKey              *rsa.PrivateKey  `bun:""`                               // Privatekey for signing activitypub requests, will only be defined for local accounts
+	PublicKey               *rsa.PublicKey   `bun:",notnull"`                       // Publickey for authorizing signed activitypub requests, will be defined for both local and remote accounts
 	PublicKeyURI            string           `bun:",nullzero,notnull,unique"`       // Web-reachable location of this account's public key
+	PublicKeyExpiresAt      time.Time        `bun:"type:timestamptz,nullzero"`      // PublicKey will expire/has expired at given time, and should be fetched again as appropriate. Only ever set for remote accounts.
 	SensitizedAt            time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account set to have all its media shown as sensitive?
 	SilencedAt              time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account silenced (eg., statuses only visible to followers, not public)?
 	SuspendedAt             time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
@@ -127,6 +128,17 @@ func (a *Account) EmojisPopulated() bool {
 	}
 
 	return true
+}
+
+// PubKeyExpired returns true if the account's public key
+// has been marked as expired, and the expiry time has passed.
+func (a *Account) PubKeyExpired() bool {
+	if a == nil {
+		return false
+	}
+
+	return !a.PublicKeyExpiresAt.IsZero() &&
+		a.PublicKeyExpiresAt.Before(time.Now())
 }
 
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.

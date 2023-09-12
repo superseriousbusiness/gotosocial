@@ -257,6 +257,33 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 	suite.Equal(http.StatusOK, code)
 }
 
+func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInboxKeyExpired() {
+	var (
+		ctx              = context.Background()
+		activity         = suite.testActivities["dm_for_zork"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+	)
+
+	// Update remote account to mark key as expired.
+	remoteAcct := &gtsmodel.Account{}
+	*remoteAcct = *suite.testAccounts["remote_account_1"]
+	remoteAcct.PublicKeyExpiresAt = testrig.TimeMustParse("2022-06-10T15:22:08Z")
+	if err := suite.state.DB.UpdateAccount(ctx, remoteAcct, "public_key_expires_at"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	ctx, authed, resp, code := suite.authenticatePostInbox(
+		ctx,
+		receivingAccount,
+		activity,
+	)
+
+	suite.NotNil(gtscontext.RequestingAccount(ctx))
+	suite.True(authed)
+	suite.Equal([]byte{}, resp)
+	suite.Equal(http.StatusOK, code)
+}
+
 func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGoneWithTombstone() {
 	var (
 		activity         = suite.testActivities["delete_https://somewhere.mysterious/users/rest_in_piss#main-key"]

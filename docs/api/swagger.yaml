@@ -445,6 +445,19 @@ definitions:
         type: object
         x-go-name: AdminAccountInfo
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    adminActionResponse:
+        description: |-
+            AdminActionResponse models the server
+            response to an admin action.
+        properties:
+            action_id:
+                description: Internal ID of the action.
+                example: 01H9QG6TZ9W5P0402VFRVM17TH
+                type: string
+                x-go-name: ActionID
+        type: object
+        x-go-name: AdminActionResponse
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     adminEmoji:
         properties:
             category:
@@ -1017,6 +1030,16 @@ definitions:
         title: DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_blocks to create a new block.
         type: object
         x-go-name: DomainBlockCreateRequest
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    domainKeysExpireRequest:
+        properties:
+            domain:
+                description: hostname/domain to expire keys for.
+                type: string
+                x-go-name: Domain
+        title: DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_keys_expire to expire a domain's public keys.
+        type: object
+        x-go-name: DomainKeysExpireRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
@@ -4101,6 +4124,56 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: View domain block with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/domain_keys_expire:
+        post:
+            consumes:
+                - multipart/form-data
+            description: |-
+                This is useful in cases where the remote domain has had to rotate their keys for whatever
+                reason (security issue, data leak, routine safety procedure, etc), and your instance can no
+                longer communicate with theirs properly using cached keys. A key marked as expired in this way
+                will be lazily refetched next time a request is made to your instance signed by the owner of that
+                key, so no further action should be required in order to reestablish communication with that domain.
+
+                This endpoint is explicitly not for rotating your *own* keys, it only works for remote instances.
+
+                Using this endpoint to expire keys for a domain that hasn't rotated all of their keys is not
+                harmful and won't break federation, but it is pointless and will cause unnecessary requests to
+                be performed.
+            operationId: domainKeysExpire
+            parameters:
+                - description: Domain to expire keys for.
+                  example: example.org
+                  in: formData
+                  name: domain
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "202":
+                    description: Request accepted and will be processed. Check the logs for progress / errors.
+                    schema:
+                        $ref: '#/definitions/adminActionResponse'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: 'Conflict: There is already an admin action running that conflicts with this action. Check the error message in the response body for more information. This is a temporary error; it should be possible to process this action if you try again in a bit.'
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Force expiry of cached public keys for all accounts on the given domain stored in your database.
             tags:
                 - admin
     /api/v1/admin/email/test:

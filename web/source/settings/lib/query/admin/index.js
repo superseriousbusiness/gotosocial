@@ -47,6 +47,15 @@ const endpoints = (build) => ({
 			}
 		})
 	}),
+	instanceKeysExpire: build.mutation({
+		query: (domain) => ({
+			method: "POST",
+			url: `/api/v1/admin/domain_keys_expire`,
+			params: {
+				domain: domain
+			}
+		})
+	}),
 	instanceBlocks: build.query({
 		query: () => ({
 			url: `/api/v1/admin/domain_blocks`
