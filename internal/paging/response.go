@@ -25,12 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
-// KV represents a query key-value pair.
-type KV struct {
-	K string
-	V string
-}
-
 // ResponseParams models the parameters to pass to PageableResponse.
 //
 // The given items will be provided in the paged response.
