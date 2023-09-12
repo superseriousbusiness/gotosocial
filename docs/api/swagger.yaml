@@ -3078,6 +3078,8 @@ paths:
                 - default: 40
                   description: Number of follower accounts to return.
                   in: query
+                  maximum: 80
+                  minimum: 1
                   name: limit
                   type: integer
             produces:
@@ -3136,6 +3138,8 @@ paths:
                 - default: 40
                   description: Number of following accounts to return.
                   in: query
+                  maximum: 80
+                  minimum: 1
                   name: limit
                   type: integer
             produces:
@@ -4669,6 +4673,8 @@ paths:
                 - default: 40
                   description: Number of blocked accounts to return.
                   in: query
+                  maximum: 80
+                  minimum: 1
                   name: limit
                   type: integer
             produces:
@@ -4860,6 +4866,8 @@ paths:
                 - default: 40
                   description: Number of follow requesting accounts to return.
                   in: query
+                  maximum: 80
+                  minimum: 1
                   name: limit
                   type: integer
             produces:

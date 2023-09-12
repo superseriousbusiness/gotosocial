@@ -85,6 +85,8 @@ import (
 //		type: integer
 //		description: Number of following accounts to return.
 //		default: 40
+//		minimum: 1
+//		maximum: 80
 //		in: query
 //		required: false
 //
