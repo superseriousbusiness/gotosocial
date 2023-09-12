@@ -19,11 +19,11 @@ package federatingdb
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // Following obtains the Following Collection for an actor with the
@@ -38,23 +38,20 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
-	follows, err := f.state.DB.GetAccountFollows(ctx, acct.ID, nil)
+	follows, err := f.state.DB.GetAccountFollows(
+		ctx,
+		acct.ID,
+		gtscontext.Page(ctx), // paging params are stored in ctx
+	)
 	if err != nil {
-		return nil, fmt.Errorf("Following: db error getting following for account id %s: %w", acct.ID, err)
+		return nil, gtserror.Newf("db error getting following for account id %s: %w", acct.ID, err)
 	}
 
 	iris := make([]*url.URL, 0, len(follows))
 	for _, follow := range follows {
-		if follow.TargetAccount == nil {
-			// Follow target account no longer exists,
-			// for some reason. Skip this one.
-			log.WithContext(ctx).WithField("follow", follow).Warnf("follow missing target account %s", follow.TargetAccountID)
-			continue
-		}
-
 		u, err := url.Parse(follow.TargetAccount.URI)
 		if err != nil {
-			return nil, err
+			return nil, gtserror.Newf("invalid account uri: %v", err)
 		}
 		iris = append(iris, u)
 	}

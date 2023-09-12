@@ -26,7 +26,9 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // InboxPost handles POST requests to a user's inbox for new activitypub messages.
@@ -102,7 +104,7 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 
 // FollowersGet handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string) (interface{}, gtserror.WithCode) {
+func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, page *paging.Page) (interface{}, gtserror.WithCode) {
 	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -113,7 +115,10 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string) 
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
 	}
 
-	requestedFollowers, err := p.federator.FederatingDB().Followers(ctx, requestedAccountURI)
+	requestedFollowers, err := p.federator.FederatingDB().Followers(
+		gtscontext.SetPage(ctx, page), // store paging parameters in the ctx
+		requestedAccountURI,
+	)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching followers for uri %s: %s", requestedAccountURI.String(), err))
 	}
@@ -128,7 +133,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string) 
 
 // FollowingGet handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string) (interface{}, gtserror.WithCode) {
+func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, page *paging.Page) (interface{}, gtserror.WithCode) {
 	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -139,7 +144,10 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string) 
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error parsing url %s: %s", requestedAccount.URI, err))
 	}
 
-	requestedFollowing, err := p.federator.FederatingDB().Following(ctx, requestedAccountURI)
+	requestedFollowing, err := p.federator.FederatingDB().Following(
+		gtscontext.SetPage(ctx, page), // store paging parameters in the ctx
+		requestedAccountURI,
+	)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error fetching following for uri %s: %s", requestedAccountURI.String(), err))
 	}

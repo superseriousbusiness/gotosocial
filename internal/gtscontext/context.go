@@ -23,6 +23,7 @@ import (
 
 	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // package private context key type.
@@ -42,7 +43,19 @@ const (
 	httpSigKey
 	httpSigPubKeyIDKey
 	dryRunKey
+	pageKey
 )
+
+// Page ...
+func Page(ctx context.Context) *paging.Page {
+	page, _ := ctx.Value(pageKey).(*paging.Page)
+	return page
+}
+
+// SetPage ...
+func SetPage(ctx context.Context, page *paging.Page) context.Context {
+	return context.WithValue(ctx, pageKey, page)
+}
 
 // DryRun returns whether the "dryrun" context key has been set. This can be
 // used to indicate to functions, (that support it), that only a dry-run of

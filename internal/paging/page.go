@@ -205,12 +205,21 @@ func (p *Page) Prev(lo, hi string) *Page {
 	return p2
 }
 
+// ToLink performs ToLinkURL() and calls .String() on the resulting URL.
+func (p *Page) ToLink(proto, host, path string, queryParams url.Values) string {
+	u := p.ToLinkURL(proto, host, path, queryParams)
+	if u == nil {
+		return ""
+	}
+	return u.String()
+}
+
 // ToLink builds a URL link for given endpoint information and extra query parameters,
 // appending this Page's minimum / maximum boundaries and available limit (if any).
-func (p *Page) ToLink(proto, host, path string, queryParams url.Values) string {
+func (p *Page) ToLinkURL(proto, host, path string, queryParams url.Values) *url.URL {
 	if p == nil {
 		// no paging.
-		return ""
+		return nil
 	}
 
 	if queryParams == nil {
@@ -234,10 +243,10 @@ func (p *Page) ToLink(proto, host, path string, queryParams url.Values) string {
 	}
 
 	// Build URL string.
-	return (&url.URL{
+	return &url.URL{
 		Scheme:   proto,
 		Host:     host,
 		Path:     path,
 		RawQuery: queryParams.Encode(),
-	}).String()
+	}
 }
