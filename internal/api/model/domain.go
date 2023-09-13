@@ -37,46 +37,53 @@ type Domain struct {
 	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
 }
 
-// DomainBlock represents a block on one domain
+// DomainPermission represents a permission applied to one domain (explicit block/allow).
 //
-// swagger:model domainBlock
-type DomainBlock struct {
+// swagger:model domainPermission
+type DomainPermission struct {
 	Domain
-	// The ID of the domain block.
+	// The ID of the domain permission entry.
 	// example: 01FBW21XJA09XYX51KV5JVBW0F
 	// readonly: true
 	ID string `json:"id,omitempty"`
-	// Obfuscate the domain name when serving this domain block publicly.
-	// A useful anti-harassment tool.
+	// Obfuscate the domain name when serving this domain permission entry publicly.
 	// example: false
 	Obfuscate bool `json:"obfuscate,omitempty"`
-	// Private comment for this block, visible to our instance admins only.
+	// Private comment for this permission entry, visible to this instance's admins only.
 	// example: they are poopoo
 	PrivateComment string `json:"private_comment,omitempty"`
-	// The ID of the subscription that created/caused this domain block.
+	// If applicable, the ID of the subscription that caused this domain permission entry to be created.
 	// example: 01FBW25TF5J67JW3HFHZCSD23K
 	SubscriptionID string `json:"subscription_id,omitempty"`
-	// ID of the account that created this domain block.
+	// ID of the account that created this domain permission entry.
 	// example: 01FBW2758ZB6PBR200YPDDJK4C
 	CreatedBy string `json:"created_by,omitempty"`
-	// Time at which this block was created (ISO 8601 Datetime).
+	// Time at which the permission entry was created (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at,omitempty"`
 }
 
-// DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_blocks to create a new block.
+// DomainPermissionRequest is the form submitted as a POST to create a new domain permission entry (allow/block).
 //
-// swagger:model domainBlockCreateRequest
-type DomainBlockCreateRequest struct {
-	// A list of domains to block. Only used if import=true is specified.
+// swagger:model domainPermissionCreateRequest
+type DomainPermissionRequest struct {
+	// A list of domains for which this permission request should apply.
+	// Only used if import=true is specified.
 	Domains *multipart.FileHeader `form:"domains" json:"domains" xml:"domains"`
-	// hostname/domain to block
+	// A single domain for which this permission request should apply.
+	// Only used if import=true is NOT specified or if import=false.
+	// example: example.org
 	Domain string `form:"domain" json:"domain" xml:"domain"`
-	// whether the domain should be obfuscated when being displayed publicly
+	// Obfuscate the domain name when displaying this permission entry publicly.
+	// Ie., instead of 'example.org' show something like 'e**mpl*.or*'.
+	// example: false
 	Obfuscate bool `form:"obfuscate" json:"obfuscate" xml:"obfuscate"`
-	// private comment for other admins on why the domain was blocked
+	// Private comment for other admins on why this permission entry was created.
+	// example: don't like 'em!!!!
 	PrivateComment string `form:"private_comment" json:"private_comment" xml:"private_comment"`
-	// public comment on the reason for the domain block
+	// Public comment on why this permission entry was created.
+	// Will be visible to requesters at /api/v1/instance/peers if this endpoint is exposed.
+	// example: foss dorks 😫
 	PublicComment string `form:"public_comment" json:"public_comment" xml:"public_comment"`
 }
 

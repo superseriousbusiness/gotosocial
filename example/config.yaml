@@ -272,6 +272,12 @@ web-asset-base-dir: "./web/assets/"
 
 # Config pertaining to instance federation settings, pages to hide/expose, etc.
 
+# String. Federation mode to use for this instance.
+# TODO: describe each option
+# Options: ["blocklist", "allowlist"]
+# Default: "blocklist"
+instance-federation-mode: "blocklist"
+
 # Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=open in order
 # to see a list of instances that this instance 'peers' with. Even if set to 'false', then authenticated
 # users (members of the instance) will still be able to query the endpoint.

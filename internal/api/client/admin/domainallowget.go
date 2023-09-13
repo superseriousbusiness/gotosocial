@@ -22,9 +22,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DomainBlockGETHandler swagger:operation GET /api/v1/admin/domain_blocks/{id} domainBlockGet
+// DomainAllowGETHandler swagger:operation GET /api/v1/admin/domain_allows/{id} domainAllowGet
 //
-// View domain block with the given ID.
+// View domain allow with the given ID.
 //
 //	---
 //	tags:
@@ -37,7 +37,7 @@ import (
 //	-
 //		name: id
 //		type: string
-//		description: The id of the domain block.
+//		description: The id of the domain allow.
 //		in: path
 //		required: true
 //
@@ -47,7 +47,7 @@ import (
 //
 //	responses:
 //		'200':
-//			description: The requested domain block.
+//			description: The requested domain allow.
 //			schema:
 //				"$ref": "#/definitions/domainPermission"
 //		'400':
@@ -62,6 +62,6 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) DomainBlockGETHandler(c *gin.Context) {
-	m.getDomainPermission(c, gtsmodel.DomainPermissionBlock)
+func (m *Module) DomainAllowGETHandler(c *gin.Context) {
+	m.getDomainPermission(c, gtsmodel.DomainPermissionAllow)
 }

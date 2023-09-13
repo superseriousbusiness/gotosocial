@@ -22,9 +22,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DomainBlockGETHandler swagger:operation GET /api/v1/admin/domain_blocks/{id} domainBlockGet
+// DomainAllowDELETEHandler swagger:operation DELETE /api/v1/admin/domain_allows/{id} domainAllowDelete
 //
-// View domain block with the given ID.
+// Delete domain allow with the given ID.
 //
 //	---
 //	tags:
@@ -37,7 +37,7 @@ import (
 //	-
 //		name: id
 //		type: string
-//		description: The id of the domain block.
+//		description: The id of the domain allow.
 //		in: path
 //		required: true
 //
@@ -47,7 +47,7 @@ import (
 //
 //	responses:
 //		'200':
-//			description: The requested domain block.
+//			description: The domain allow that was just deleted.
 //			schema:
 //				"$ref": "#/definitions/domainPermission"
 //		'400':
@@ -60,8 +60,13 @@ import (
 //			description: not found
 //		'406':
 //			description: not acceptable
+//		'409':
+//			description: >-
+//				Conflict: There is already an admin action running that conflicts with this action.
+//				Check the error message in the response body for more information. This is a temporary
+//				error; it should be possible to process this action if you try again in a bit.
 //		'500':
 //			description: internal server error
-func (m *Module) DomainBlockGETHandler(c *gin.Context) {
-	m.getDomainPermission(c, gtsmodel.DomainPermissionBlock)
+func (m *Module) DomainAllowDELETEHandler(c *gin.Context) {
+	m.deleteDomainPermission(c, gtsmodel.DomainPermissionAllow)
 }

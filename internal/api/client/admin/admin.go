@@ -31,6 +31,8 @@ const (
 	EmojiCategoriesPath     = EmojiPath + "/categories"
 	DomainBlocksPath        = BasePath + "/domain_blocks"
 	DomainBlocksPathWithID  = DomainBlocksPath + "/:" + IDKey
+	DomainAllowsPath        = BasePath + "/domain_allows"
+	DomainAllowsPathWithID  = DomainAllowsPath + "/:" + IDKey
 	DomainKeysExpirePath    = BasePath + "/domain_keys_expire"
 	AccountsPath            = BasePath + "/accounts"
 	AccountsPathWithID      = AccountsPath + "/:" + IDKey
@@ -83,6 +85,12 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	attachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
 	attachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
+
+	// domain allow stuff
+	attachHandler(http.MethodPost, DomainAllowsPath, m.DomainAllowsPOSTHandler)
+	attachHandler(http.MethodGet, DomainAllowsPath, m.DomainAllowsGETHandler)
+	attachHandler(http.MethodGet, DomainAllowsPathWithID, m.DomainAllowGETHandler)
+	attachHandler(http.MethodDelete, DomainAllowsPathWithID, m.DomainAllowDELETEHandler)
 
 	// domain maintenance stuff
 	attachHandler(http.MethodPost, DomainKeysExpirePath, m.DomainKeysExpirePOSTHandler)

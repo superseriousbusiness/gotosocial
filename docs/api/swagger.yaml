@@ -947,16 +947,25 @@ definitions:
         type: object
         x-go-name: Domain
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    domainBlock:
-        description: DomainBlock represents a block on one domain
+    domainKeysExpireRequest:
+        properties:
+            domain:
+                description: hostname/domain to expire keys for.
+                type: string
+                x-go-name: Domain
+        title: DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_keys_expire to expire a domain's public keys.
+        type: object
+        x-go-name: DomainKeysExpireRequest
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    domainPermission:
         properties:
             created_at:
-                description: Time at which this block was created (ISO 8601 Datetime).
+                description: Time at which the permission entry was created (ISO 8601 Datetime).
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: CreatedAt
             created_by:
-                description: ID of the account that created this domain block.
+                description: ID of the account that created this domain permission entry.
                 example: 01FBW2758ZB6PBR200YPDDJK4C
                 type: string
                 x-go-name: CreatedBy
@@ -966,20 +975,18 @@ definitions:
                 type: string
                 x-go-name: Domain
             id:
-                description: The ID of the domain block.
+                description: The ID of the domain permission entry.
                 example: 01FBW21XJA09XYX51KV5JVBW0F
                 readOnly: true
                 type: string
                 x-go-name: ID
             obfuscate:
-                description: |-
-                    Obfuscate the domain name when serving this domain block publicly.
-                    A useful anti-harassment tool.
+                description: Obfuscate the domain name when serving this domain permission entry publicly.
                 example: false
                 type: boolean
                 x-go-name: Obfuscate
             private_comment:
-                description: Private comment for this block, visible to our instance admins only.
+                description: Private comment for this permission entry, visible to this instance's admins only.
                 example: they are poopoo
                 type: string
                 x-go-name: PrivateComment
@@ -994,7 +1001,7 @@ definitions:
                 type: string
                 x-go-name: SilencedAt
             subscription_id:
-                description: The ID of the subscription that created/caused this domain block.
+                description: If applicable, the ID of the subscription that caused this domain permission entry to be created.
                 example: 01FBW25TF5J67JW3HFHZCSD23K
                 type: string
                 x-go-name: SubscriptionID
@@ -1003,43 +1010,46 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: SuspendedAt
+        title: DomainPermission represents a permission applied to one domain (explicit block/allow).
         type: object
-        x-go-name: DomainBlock
+        x-go-name: DomainPermission
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    domainBlockCreateRequest:
+    domainPermissionCreateRequest:
         properties:
             domain:
-                description: hostname/domain to block
+                description: |-
+                    A single domain for which this permission request should apply.
+                    Only used if import=true is NOT specified or if import=false.
+                example: example.org
                 type: string
                 x-go-name: Domain
             domains:
-                description: A list of domains to block. Only used if import=true is specified.
+                description: |-
+                    A list of domains for which this permission request should apply.
+                    Only used if import=true is specified.
                 x-go-name: Domains
             obfuscate:
-                description: whether the domain should be obfuscated when being displayed publicly
+                description: |-
+                    Obfuscate the domain name when displaying this permission entry publicly.
+                    Ie., instead of 'example.org' show something like 'e**mpl*.or*'.
+                example: false
                 type: boolean
                 x-go-name: Obfuscate
             private_comment:
-                description: private comment for other admins on why the domain was blocked
+                description: Private comment for other admins on why this permission entry was created.
+                example: don't like 'em!!!!
                 type: string
                 x-go-name: PrivateComment
             public_comment:
-                description: public comment on the reason for the domain block
+                description: |-
+                    Public comment on why this permission entry was created.
+                    Will be visible to requesters at /api/v1/instance/peers if this endpoint is exposed.
+                example: "foss dorks \U0001F62B"
                 type: string
                 x-go-name: PublicComment
-        title: DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_blocks to create a new block.
+        title: DomainPermissionRequest is the form submitted as a POST to create a new domain permission entry (allow/block).
         type: object
-        x-go-name: DomainBlockCreateRequest
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    domainKeysExpireRequest:
-        properties:
-            domain:
-                description: hostname/domain to expire keys for.
-                type: string
-                x-go-name: Domain
-        title: DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_keys_expire to expire a domain's public keys.
-        type: object
-        x-go-name: DomainKeysExpireRequest
+        x-go-name: DomainPermissionRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
@@ -4011,6 +4021,173 @@ paths:
             summary: Get a list of existing emoji categories.
             tags:
                 - admin
+    /api/v1/admin/domain_allows:
+        get:
+            operationId: domainAllowsGet
+            parameters:
+                - description: If set to `true`, then each entry in the returned list of domain allows will only consist of the fields `domain` and `public_comment`. This is perfect for when you want to save and share a list of all the domains you have allowed on your instance, so that someone else can easily import them, but you don't want them to see the database IDs of your allows, or private comments etc.
+                  in: query
+                  name: export
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: All domain allows currently in place.
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermission'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View all domain allows currently in place.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+            description: |-
+                You have two options when using this endpoint: either you can set `import` to `true` and
+                upload a file containing multiple domain allows, JSON-formatted, or you can leave import as
+                `false`, and just add one domain allow.
+
+                The format of the json file should be something like: `[{"domain":"example.org"},{"domain":"whatever.com","public_comment":"they smell"}]`
+            operationId: domainAllowCreate
+            parameters:
+                - default: false
+                  description: Signal that a list of domain allows is being imported as a file. If set to `true`, then 'domains' must be present as a JSON-formatted file. If set to `false`, then `domains` will be ignored, and `domain` must be present.
+                  in: query
+                  name: import
+                  type: boolean
+                - description: JSON-formatted list of domain allows to import. This is only used if `import` is set to `true`.
+                  in: formData
+                  name: domains
+                  type: file
+                - description: Single domain to allow. Used only if `import` is not `true`.
+                  in: formData
+                  name: domain
+                  type: string
+                - description: Obfuscate the name of the domain when serving it publicly. Eg., `example.org` becomes something like `ex***e.org`. Used only if `import` is not `true`.
+                  in: formData
+                  name: obfuscate
+                  type: boolean
+                - description: Public comment about this domain allow. This will be displayed alongside the domain allow if you choose to share allows. Used only if `import` is not `true`.
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: Private comment about this domain allow. Will only be shown to other admins, so this is a useful way of internally keeping track of why a certain domain ended up allowed. Used only if `import` is not `true`.
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain allow, if `import` != `true`. If a list has been imported, then an `array` of newly created domain allows will be returned instead.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: 'Conflict: There is already an admin action running that conflicts with this action. Check the error message in the response body for more information. This is a temporary error; it should be possible to process this action if you try again in a bit.'
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create one or more domain allows, from a string or a file.
+            tags:
+                - admin
+    /api/v1/admin/domain_allows/{id}:
+        delete:
+            operationId: domainAllowDelete
+            parameters:
+                - description: The id of the domain allow.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The domain allow that was just deleted.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: 'Conflict: There is already an admin action running that conflicts with this action. Check the error message in the response body for more information. This is a temporary error; it should be possible to process this action if you try again in a bit.'
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Delete domain allow with the given ID.
+            tags:
+                - admin
+        get:
+            operationId: domainAllowGet
+            parameters:
+                - description: The id of the domain allow.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested domain allow.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View domain allow with the given ID.
+            tags:
+                - admin
     /api/v1/admin/domain_blocks:
         get:
             operationId: domainBlocksGet
@@ -4026,7 +4203,7 @@ paths:
                     description: All domain blocks currently in place.
                     schema:
                         items:
-                            $ref: '#/definitions/domainBlock'
+                            $ref: '#/definitions/domainPermission'
                         type: array
                 "400":
                     description: bad request
@@ -4088,7 +4265,7 @@ paths:
                 "200":
                     description: The newly created domain block, if `import` != `true`. If a list has been imported, then an `array` of newly created domain blocks will be returned instead.
                     schema:
-                        $ref: '#/definitions/domainBlock'
+                        $ref: '#/definitions/domainPermission'
                 "400":
                     description: bad request
                 "401":
@@ -4124,7 +4301,7 @@ paths:
                 "200":
                     description: The domain block that was just deleted.
                     schema:
-                        $ref: '#/definitions/domainBlock'
+                        $ref: '#/definitions/domainPermission'
                 "400":
                     description: bad request
                 "401":
@@ -4159,7 +4336,7 @@ paths:
                 "200":
                     description: The requested domain block.
                     schema:
-                        $ref: '#/definitions/domainBlock'
+                        $ref: '#/definitions/domainPermission'
                 "400":
                     description: bad request
                 "401":

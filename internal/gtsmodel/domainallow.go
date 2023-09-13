@@ -19,60 +19,60 @@ package gtsmodel
 
 import "time"
 
-// DomainBlock represents a federation block against a particular domain
-type DomainBlock struct {
+// DomainAllow represents a federation allow towards a particular domain.
+type DomainAllow struct {
 	ID                 string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt          time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
 	UpdatedAt          time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Domain             string    `bun:",nullzero,notnull"`                                           // domain to block. Eg. 'whatever.com'
-	CreatedByAccountID string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this block
+	Domain             string    `bun:",nullzero,notnull"`                                           // domain to allow. Eg. 'whatever.com'
+	CreatedByAccountID string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this allow
 	CreatedByAccount   *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to createdByAccountID
-	PrivateComment     string    `bun:""`                                                            // Private comment on this block, viewable to admins
-	PublicComment      string    `bun:""`                                                            // Public comment on this block, viewable (optionally) by everyone
+	PrivateComment     string    `bun:""`                                                            // Private comment on this allow, viewable to admins
+	PublicComment      string    `bun:""`                                                            // Public comment on this allow, viewable (optionally) by everyone
 	Obfuscate          *bool     `bun:",nullzero,notnull,default:false"`                             // whether the domain name should appear obfuscated when displaying it publicly
-	SubscriptionID     string    `bun:"type:CHAR(26),nullzero"`                                      // if this block was created through a subscription, what's the subscription ID?
+	SubscriptionID     string    `bun:"type:CHAR(26),nullzero"`                                      // if this allow was created through a subscription, what's the subscription ID?
 }
 
-func (d *DomainBlock) GetID() string {
+func (d *DomainAllow) GetID() string {
 	return d.ID
 }
 
-func (d *DomainBlock) GetCreatedAt() time.Time {
+func (d *DomainAllow) GetCreatedAt() time.Time {
 	return d.CreatedAt
 }
 
-func (d *DomainBlock) GetUpdatedAt() time.Time {
+func (d *DomainAllow) GetUpdatedAt() time.Time {
 	return d.UpdatedAt
 }
 
-func (d *DomainBlock) GetDomain() string {
+func (d *DomainAllow) GetDomain() string {
 	return d.Domain
 }
 
-func (d *DomainBlock) GetCreatedByAccountID() string {
+func (d *DomainAllow) GetCreatedByAccountID() string {
 	return d.CreatedByAccountID
 }
 
-func (d *DomainBlock) GetCreatedByAccount() *Account {
+func (d *DomainAllow) GetCreatedByAccount() *Account {
 	return d.CreatedByAccount
 }
 
-func (d *DomainBlock) GetPrivateComment() string {
+func (d *DomainAllow) GetPrivateComment() string {
 	return d.PrivateComment
 }
 
-func (d *DomainBlock) GetPublicComment() string {
+func (d *DomainAllow) GetPublicComment() string {
 	return d.PublicComment
 }
 
-func (d *DomainBlock) GetObfuscate() *bool {
+func (d *DomainAllow) GetObfuscate() *bool {
 	return d.Obfuscate
 }
 
-func (d *DomainBlock) GetSubscriptionID() string {
+func (d *DomainAllow) GetSubscriptionID() string {
 	return d.SubscriptionID
 }
 
-func (d *DomainBlock) GetType() DomainPermissionType {
-	return DomainPermissionBlock
+func (d *DomainAllow) GetType() DomainPermissionType {
+	return DomainPermissionAllow
 }

@@ -749,6 +749,31 @@ func GetWebAssetBaseDir() string { return global.GetWebAssetBaseDir() }
 // SetWebAssetBaseDir safely sets the value for global configuration 'WebAssetBaseDir' field
 func SetWebAssetBaseDir(v string) { global.SetWebAssetBaseDir(v) }
 
+// GetInstanceFederationMode safely fetches the Configuration value for state's 'InstanceFederationMode' field
+func (st *ConfigState) GetInstanceFederationMode() (v string) {
+	st.mutex.RLock()
+	v = st.config.InstanceFederationMode
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceFederationMode safely sets the Configuration value for state's 'InstanceFederationMode' field
+func (st *ConfigState) SetInstanceFederationMode(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceFederationMode = v
+	st.reloadToViper()
+}
+
+// InstanceFederationModeFlag returns the flag name for the 'InstanceFederationMode' field
+func InstanceFederationModeFlag() string { return "instance-federation-mode" }
+
+// GetInstanceFederationMode safely fetches the value for global configuration 'InstanceFederationMode' field
+func GetInstanceFederationMode() string { return global.GetInstanceFederationMode() }
+
+// SetInstanceFederationMode safely sets the value for global configuration 'InstanceFederationMode' field
+func SetInstanceFederationMode(v string) { global.SetInstanceFederationMode(v) }
+
 // GetInstanceExposePeers safely fetches the Configuration value for state's 'InstanceExposePeers' field
 func (st *ConfigState) GetInstanceExposePeers() (v bool) {
 	st.mutex.RLock()

@@ -1041,32 +1041,39 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 	}, nil
 }
 
-func (c *converter) DomainBlockToAPIDomainBlock(ctx context.Context, b *gtsmodel.DomainBlock, export bool) (*apimodel.DomainBlock, error) {
+func (c *converter) DomainPermToAPIDomainPerm(
+	ctx context.Context,
+	d gtsmodel.DomainPermission,
+	export bool,
+) (*apimodel.DomainPermission, error) {
 	// Domain may be in Punycode,
 	// de-punify it just in case.
-	d, err := util.DePunify(b.Domain)
+	domain, err := util.DePunify(d.GetDomain())
 	if err != nil {
-		return nil, fmt.Errorf("DomainBlockToAPIDomainBlock: error de-punifying domain %s: %w", b.Domain, err)
+		return nil, gtserror.Newf("error de-punifying domain %s: %w", d.GetDomain(), err)
 	}
 
-	domainBlock := &apimodel.DomainBlock{
+	domainPerm := &apimodel.DomainPermission{
 		Domain: apimodel.Domain{
-			Domain:        d,
-			PublicComment: b.PublicComment,
+			Domain:        domain,
+			PublicComment: d.GetPublicComment(),
 		},
 	}
 
-	// if we're exporting a domain block, return it with minimal information attached
-	if !export {
-		domainBlock.ID = b.ID
-		domainBlock.Obfuscate = *b.Obfuscate
-		domainBlock.PrivateComment = b.PrivateComment
-		domainBlock.SubscriptionID = b.SubscriptionID
-		domainBlock.CreatedBy = b.CreatedByAccountID
-		domainBlock.CreatedAt = util.FormatISO8601(b.CreatedAt)
+	// If we're exporting, provide
+	// only bare minimum detail.
+	if export {
+		return domainPerm, nil
 	}
 
-	return domainBlock, nil
+	domainPerm.ID = d.GetID()
+	domainPerm.Obfuscate = *d.GetObfuscate()
+	domainPerm.PrivateComment = d.GetPrivateComment()
+	domainPerm.SubscriptionID = d.GetSubscriptionID()
+	domainPerm.CreatedBy = d.GetCreatedByAccountID()
+	domainPerm.CreatedAt = util.FormatISO8601(d.GetCreatedAt())
+
+	return domainPerm, nil
 }
 
 func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error) {

@@ -55,6 +55,59 @@ func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	suite.WithinDuration(time.Now(), domainBlock.CreatedAt, 10*time.Second)
 }
 
+func (suite *DomainTestSuite) TestIsDomainBlockedWithAllow() {
+	ctx := context.Background()
+
+	domainBlock := &gtsmodel.DomainBlock{
+		ID:                 "01G204214Y9TNJEBX39C7G88SW",
+		Domain:             "some.bad.apples",
+		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+		CreatedByAccount:   suite.testAccounts["admin_account"],
+	}
+
+	// no domain block exists for the given domain yet
+	blocked, err := suite.db.IsDomainBlocked(ctx, domainBlock.Domain)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.False(blocked)
+
+	// Block this domain.
+	if err := suite.db.CreateDomainBlock(ctx, domainBlock); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// domain block now exists
+	blocked, err = suite.db.IsDomainBlocked(ctx, domainBlock.Domain)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.True(blocked)
+	suite.WithinDuration(time.Now(), domainBlock.CreatedAt, 10*time.Second)
+
+	// Explicitly allow this domain.
+	domainAllow := &gtsmodel.DomainAllow{
+		ID:                 "01H8KY9MJQFWE712EG3VN02Y3J",
+		Domain:             "some.bad.apples",
+		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+		CreatedByAccount:   suite.testAccounts["admin_account"],
+	}
+
+	if err := suite.db.CreateDomainAllow(ctx, domainAllow); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Domain allow now exists
+	blocked, err = suite.db.IsDomainBlocked(ctx, domainBlock.Domain)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.False(blocked)
+}
+
 func (suite *DomainTestSuite) TestIsDomainBlockedWildcard() {
 	ctx := context.Background()
 

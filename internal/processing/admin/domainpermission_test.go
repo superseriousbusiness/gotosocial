@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -40,8 +41,9 @@ func (suite *DomainBlockTestSuite) TestCreateDomainBlock() {
 		subscriptionID = ""
 	)
 
-	apiBlock, actionID, errWithCode := suite.adminProcessor.DomainBlockCreate(
+	apiBlock, actionID, errWithCode := suite.adminProcessor.DomainPermissionCreate(
 		ctx,
+		gtsmodel.DomainPermissionBlock,
 		adminAcct,
 		domain,
 		obfuscate,
