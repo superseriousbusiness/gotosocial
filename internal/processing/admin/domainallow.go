@@ -19,10 +19,16 @@ package admin
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 func (p *Processor) createDomainAllow(
@@ -34,16 +40,100 @@ func (p *Processor) createDomainAllow(
 	privateComment string,
 	subscriptionID string,
 ) (*apimodel.DomainPermission, string, gtserror.WithCode) {
-	// TODO
-	return nil, "", nil
+	// Check if an allow already exists for this domain.
+	domainAllow, err := p.state.DB.GetDomainAllow(ctx, domain)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// Something went wrong in the DB.
+		err = gtserror.Newf("db error getting domain allow %s: %w", domain, err)
+		return nil, "", gtserror.NewErrorInternalError(err)
+	}
+
+	if domainAllow == nil {
+		// No allow exists yet, create it.
+		domainAllow = &gtsmodel.DomainAllow{
+			ID:                 id.NewULID(),
+			Domain:             domain,
+			CreatedByAccountID: adminAcct.ID,
+			PrivateComment:     text.SanitizeToPlaintext(privateComment),
+			PublicComment:      text.SanitizeToPlaintext(publicComment),
+			Obfuscate:          &obfuscate,
+			SubscriptionID:     subscriptionID,
+		}
+
+		// Insert the new allow into the database.
+		if err := p.state.DB.CreateDomainAllow(ctx, domainAllow); err != nil {
+			err = gtserror.Newf("db error putting domain allow %s: %w", domain, err)
+			return nil, "", gtserror.NewErrorInternalError(err)
+		}
+	}
+
+	actionID := id.NewULID()
+
+	// Process domain allow side
+	// effects asynchronously.
+	if errWithCode := p.actions.Run(
+		ctx,
+		&gtsmodel.AdminAction{
+			ID:             actionID,
+			TargetCategory: gtsmodel.AdminActionCategoryDomain,
+			TargetID:       domain,
+			Type:           gtsmodel.AdminActionSuspend,
+			AccountID:      adminAcct.ID,
+			Text:           domainAllow.PrivateComment,
+		},
+		func(ctx context.Context) gtserror.MultiError {
+			return p.domainAllowSideEffects(ctx, domainAllow)
+		},
+	); errWithCode != nil {
+		return nil, actionID, errWithCode
+	}
+
+	apiDomainAllow, errWithCode := p.apiDomainPerm(ctx, domainAllow, false)
+	if errWithCode != nil {
+		return nil, actionID, errWithCode
+	}
+
+	return apiDomainAllow, actionID, nil
 }
 
 func (p *Processor) domainAllowSideEffects(
 	ctx context.Context,
 	allow *gtsmodel.DomainAllow,
 ) gtserror.MultiError {
-	// TODO
-	return nil
+	if config.GetInstanceFederationMode() == config.InstanceFederationModeAllowlist {
+		// We're running in allowlist mode,
+		// so there's nothing to do here.
+		return nil
+	}
+
+	// We're running in blocklist mode or
+	// some similar mode which necessitates
+	// domain allow side effects if a block
+	// was in place when the allow was created.
+	// So, check if there's a block.
+	block, err := p.state.DB.GetDomainBlock(ctx, allow.Domain)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		errs := gtserror.NewMultiError(1)
+		errs.Appendf("db error getting domain block %s: %w", allow.Domain, err)
+		return errs
+	}
+
+	if block == nil {
+		// No block,
+		// no problem!
+		return nil
+	}
+
+	// There was a block, but the new allow
+	// takes precedence. To account for this,
+	// just run side effects as though the
+	// domain was being unblocked, while
+	// leaving the existing block in place.
+	//
+	// Any accounts that were suspended by
+	// the block will be unsuspended and be
+	// able to interact with the instance again.
+	return p.domainUnblockSideEffects(ctx, block)
 }
 
 func (p *Processor) deleteDomainAllow(
@@ -51,8 +141,56 @@ func (p *Processor) deleteDomainAllow(
 	adminAcct *gtsmodel.Account,
 	domainAllowID string,
 ) (*apimodel.DomainPermission, string, gtserror.WithCode) {
-	// TODO
-	return nil, "", nil
+	domainAllow, err := p.state.DB.GetDomainAllowByID(ctx, domainAllowID)
+	if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real error.
+			err = gtserror.Newf("db error getting domain allow: %w", err)
+			return nil, "", gtserror.NewErrorInternalError(err)
+		}
+
+		// There are just no entries for this ID.
+		err = fmt.Errorf("no domain allow entry exists with ID %s", domainAllowID)
+		return nil, "", gtserror.NewErrorNotFound(err, err.Error())
+	}
+
+	// Prepare the domain allow to return, *before* the deletion goes through.
+	apiDomainAllow, errWithCode := p.apiDomainPerm(ctx, domainAllow, false)
+	if errWithCode != nil {
+		return nil, "", errWithCode
+	}
+
+	// Copy value of the domain allow.
+	domainAllowC := new(gtsmodel.DomainAllow)
+	*domainAllowC = *domainAllow
+
+	// Delete the original domain allow.
+	if err := p.state.DB.DeleteDomainAllow(ctx, domainAllow.Domain); err != nil {
+		err = gtserror.Newf("db error deleting domain allow: %w", err)
+		return nil, "", gtserror.NewErrorInternalError(err)
+	}
+
+	actionID := id.NewULID()
+
+	// Process domain unallow side
+	// effects asynchronously.
+	if errWithCode := p.actions.Run(
+		ctx,
+		&gtsmodel.AdminAction{
+			ID:             actionID,
+			TargetCategory: gtsmodel.AdminActionCategoryDomain,
+			TargetID:       domainAllowC.Domain,
+			Type:           gtsmodel.AdminActionUnsuspend,
+			AccountID:      adminAcct.ID,
+		},
+		func(ctx context.Context) gtserror.MultiError {
+			return p.domainUnallowSideEffects(ctx, domainAllow)
+		},
+	); errWithCode != nil {
+		return nil, actionID, errWithCode
+	}
+
+	return apiDomainAllow, actionID, nil
 }
 
 func (p *Processor) domainUnallowSideEffects(

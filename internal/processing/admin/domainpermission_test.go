@@ -41,7 +41,7 @@ func (suite *DomainBlockTestSuite) TestCreateDomainBlock() {
 		subscriptionID = ""
 	)
 
-	apiBlock, actionID, errWithCode := suite.adminProcessor.DomainPermissionCreate(
+	apiPerm, actionID, errWithCode := suite.adminProcessor.DomainPermissionCreate(
 		ctx,
 		gtsmodel.DomainPermissionBlock,
 		adminAcct,
@@ -52,7 +52,50 @@ func (suite *DomainBlockTestSuite) TestCreateDomainBlock() {
 		subscriptionID,
 	)
 	suite.NoError(errWithCode)
-	suite.NotNil(apiBlock)
+	suite.NotNil(apiPerm)
+	suite.NotEmpty(actionID)
+
+	// Wait for action to finish.
+	if !testrig.WaitFor(func() bool {
+		return suite.adminProcessor.Actions().TotalRunning() == 0
+	}) {
+		suite.FailNow("timed out waiting for admin action(s) to finish")
+	}
+
+	// Ensure action marked as
+	// completed in the database.
+	adminAction, err := suite.db.GetAdminAction(ctx, actionID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.NotZero(adminAction.CompletedAt)
+	suite.Empty(adminAction.Errors)
+}
+
+func (suite *DomainBlockTestSuite) TestCreateDomainAllow() {
+	var (
+		ctx            = context.Background()
+		adminAcct      = suite.testAccounts["admin_account"]
+		domain         = "pandoras-box.open"
+		obfuscate      = false
+		publicComment  = ""
+		privateComment = ""
+		subscriptionID = ""
+	)
+
+	apiPerm, actionID, errWithCode := suite.adminProcessor.DomainPermissionCreate(
+		ctx,
+		gtsmodel.DomainPermissionAllow,
+		adminAcct,
+		domain,
+		obfuscate,
+		publicComment,
+		privateComment,
+		subscriptionID,
+	)
+	suite.NoError(errWithCode)
+	suite.NotNil(apiPerm)
 	suite.NotEmpty(actionID)
 
 	// Wait for action to finish.
