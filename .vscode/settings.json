@@ -3,9 +3,11 @@
 	"go.lintFlags": [
 	  "--fast"
 	],
-	"go.vetFlags": [
-		"-composites=false ."
-	],
+	"gopls": {
+		"analyses": {
+			"composites": false
+		},
+	},
 	"eslint.workingDirectories": ["web/source"],
 	"eslint.lintTask.enable": true,
 	"eslint.lintTask.options": "${workspaceFolder}/web/source"

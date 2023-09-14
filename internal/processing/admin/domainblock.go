@@ -86,6 +86,15 @@ func (p *Processor) createDomainBlock(
 			Text:           domainBlock.PrivateComment,
 		},
 		func(ctx context.Context) gtserror.MultiError {
+			// Log start + finish.
+			l := log.WithFields(kv.Fields{
+				{"domain", domain},
+				{"actionID", actionID},
+			}...).WithContext(ctx)
+
+			l.Info("processing domain block side effects")
+			defer func() { l.Info("finished processing domain block side effects") }()
+
 			return p.domainBlockSideEffects(ctx, domainBlock)
 		},
 	); errWithCode != nil {
@@ -111,13 +120,6 @@ func (p *Processor) domainBlockSideEffects(
 	ctx context.Context,
 	block *gtsmodel.DomainBlock,
 ) gtserror.MultiError {
-	l := log.
-		WithContext(ctx).
-		WithFields(kv.Fields{
-			{"domain", block.Domain},
-		}...)
-	l.Debug("processing domain block side effects")
-
 	var errs gtserror.MultiError
 
 	// If we have an instance entry for this domain,
@@ -135,7 +137,6 @@ func (p *Processor) domainBlockSideEffects(
 			errs.Appendf("db error updating instance: %w", err)
 			return errs
 		}
-		l.Debug("instance entry updated")
 	}
 
 	// For each account that belongs to this domain,
@@ -208,6 +209,15 @@ func (p *Processor) deleteDomainBlock(
 			AccountID:      adminAcct.ID,
 		},
 		func(ctx context.Context) gtserror.MultiError {
+			// Log start + finish.
+			l := log.WithFields(kv.Fields{
+				{"domain", domainBlockC.Domain},
+				{"actionID", actionID},
+			}...).WithContext(ctx)
+
+			l.Info("processing domain unblock side effects")
+			defer func() { l.Info("finished processing domain unblock side effects") }()
+
 			return p.domainUnblockSideEffects(ctx, domainBlock)
 		},
 	); errWithCode != nil {
@@ -230,13 +240,6 @@ func (p *Processor) domainUnblockSideEffects(
 	ctx context.Context,
 	block *gtsmodel.DomainBlock,
 ) gtserror.MultiError {
-	l := log.
-		WithContext(ctx).
-		WithFields(kv.Fields{
-			{"domain", block.Domain},
-		}...)
-	l.Debug("processing domain unblock side effects")
-
 	var errs gtserror.MultiError
 
 	// Update instance entry for this domain, if we have it.
@@ -259,7 +262,6 @@ func (p *Processor) domainUnblockSideEffects(
 			errs.Appendf("db error updating instance: %w", err)
 			return errs
 		}
-		l.Debug("instance entry updated")
 	}
 
 	// Unsuspend all accounts whose suspension origin was this domain block.
