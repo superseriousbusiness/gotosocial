@@ -279,7 +279,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, er
 
 	// Calculate if blocked
 	// based on federation mode.
-	switch d.instanceFederationMode {
+	switch mode := d.instanceFederationMode; mode {
 
 	case config.InstanceFederationModeBlocklist:
 		// Blocklist/default mode: explicit allow
@@ -300,7 +300,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, er
 	default:
 		// This should never happen but account
 		// for it anyway to make the code tidier.
-		return false, gtserror.Newf("unrecognized federation mode: %s", d.instanceFederationMode)
+		return false, gtserror.Newf("unrecognized federation mode: %s", mode)
 	}
 }
 
