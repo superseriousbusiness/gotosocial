@@ -21,11 +21,10 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
-
-	"github.com/google/go-cmp/cmp"
 )
 
 func TestASCollection(t *testing.T) {
@@ -56,10 +55,8 @@ func TestASCollection(t *testing.T) {
 	// Serialize collection.
 	s := toJSON(c)
 
-	// Compare expected and collection serialized outputs.
-	if diff := cmp.Diff(s, expect); diff != "" {
-		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
-	}
+	// Ensure outputs are equal.
+	assert.Equal(t, s, expect)
 }
 
 func TestASCollectionPage(t *testing.T) {
@@ -112,10 +109,8 @@ func TestASCollectionPage(t *testing.T) {
 	// Serialize page.
 	s := toJSON(p)
 
-	// Compare expected and page serialized outputs.
-	if diff := cmp.Diff(s, expect); diff != "" {
-		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
-	}
+	// Ensure outputs are equal.
+	assert.Equal(t, s, expect)
 }
 
 func TestASOrderedCollection(t *testing.T) {
@@ -142,10 +137,8 @@ func TestASOrderedCollection(t *testing.T) {
 	// Serialize collection.
 	s := toJSON(c)
 
-	// Compare expected and collection serialized outputs.
-	if diff := cmp.Diff(s, expect); diff != "" {
-		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
-	}
+	// Ensure outputs are equal.
+	assert.Equal(t, s, expect)
 }
 
 func TestASOrderedCollectionPage(t *testing.T) {
@@ -198,10 +191,8 @@ func TestASOrderedCollectionPage(t *testing.T) {
 	// Serialize page.
 	s := toJSON(p)
 
-	// Compare expected and page serialized outputs.
-	if diff := cmp.Diff(s, expect); diff != "" {
-		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
-	}
+	// Ensure outputs are equal.
+	assert.Equal(t, s, expect)
 }
 
 func parseURI(s string) *url.URL {

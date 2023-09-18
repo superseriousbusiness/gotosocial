@@ -28,7 +28,6 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-fed/httpsig v1.1.0
 	github.com/go-playground/form/v4 v4.2.1
-	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.1
 	github.com/gorilla/feeds v1.1.1
 	github.com/gorilla/websocket v1.5.0
