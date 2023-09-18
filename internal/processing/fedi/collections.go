@@ -113,14 +113,14 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 	// Parse the collection ID object from account's followers URI.
 	collectionID, err := url.Parse(requestedAccount.FollowersURI)
 	if err != nil {
-		err := gtserror.Newf("error parsing account followers uri %s: %v", requestedAccount.FollowersURI, err)
+		err := gtserror.Newf("error parsing account followers uri %s: %w", requestedAccount.FollowersURI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Calculate total number of followers available for account.
 	total, err := p.state.DB.CountAccountFollowers(ctx, requestedAccount.ID)
 	if err != nil {
-		err := gtserror.Newf("error counting followers: %v", err)
+		err := gtserror.Newf("error counting followers: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -142,7 +142,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 		// Get the request page of full follower objects with attached accounts.
 		followers, err := p.state.DB.GetAccountFollowers(ctx, requestedAccount.ID, page)
 		if err != nil {
-			err := gtserror.Newf("error getting followers: %v", err)
+			err := gtserror.Newf("error getting followers: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
@@ -187,7 +187,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 	// Serialized the prepared object.
 	data, err := ap.Serialize(obj)
 	if err != nil {
-		err := gtserror.Newf("error serializing: %v", err)
+		err := gtserror.Newf("error serializing: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -205,14 +205,14 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 	// Parse the collection ID object from account's following URI.
 	collectionID, err := url.Parse(requestedAccount.FollowingURI)
 	if err != nil {
-		err := gtserror.Newf("error parsing account following uri %s: %v", requestedAccount.FollowingURI, err)
+		err := gtserror.Newf("error parsing account following uri %s: %w", requestedAccount.FollowingURI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Calculate total number of following available for account.
 	total, err := p.state.DB.CountAccountFollows(ctx, requestedAccount.ID)
 	if err != nil {
-		err := gtserror.Newf("error counting follows: %v", err)
+		err := gtserror.Newf("error counting follows: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -234,7 +234,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 		// Get the request page of full follower objects with attached accounts.
 		follows, err := p.state.DB.GetAccountFollows(ctx, requestedAccount.ID, page)
 		if err != nil {
-			err := gtserror.Newf("error getting follows: %v", err)
+			err := gtserror.Newf("error getting follows: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
@@ -279,7 +279,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 	// Serialized the prepared object.
 	data, err := ap.Serialize(obj)
 	if err != nil {
-		err := gtserror.Newf("error serializing: %v", err)
+		err := gtserror.Newf("error serializing: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
