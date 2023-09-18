@@ -48,10 +48,10 @@ require (
 	github.com/tdewolff/minify/v2 v2.12.9
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
-	github.com/uptrace/bun v1.1.15
-	github.com/uptrace/bun/dialect/pgdialect v1.1.15
-	github.com/uptrace/bun/dialect/sqlitedialect v1.1.15
-	github.com/uptrace/bun/extra/bunotel v1.1.15
+	github.com/uptrace/bun v1.1.16
+	github.com/uptrace/bun/dialect/pgdialect v1.1.16
+	github.com/uptrace/bun/dialect/sqlitedialect v1.1.16
+	github.com/uptrace/bun/extra/bunotel v1.1.16
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.5.6
 	go.opentelemetry.io/otel v1.17.0
