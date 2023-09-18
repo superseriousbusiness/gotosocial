@@ -51,7 +51,7 @@ As the chart shows, in allowlist mode (the right-hand part of the diagram) an ex
 
 If either of the above conditions are not met, the request will be denied.
 
-!!! danger 
+!!! danger
     Combining blocks and allows is a tricky business!
     
     When importing lists of allows and blocks, you should always review the list manually to make sure that you do not inadvertently block a domain that you would prefer not to block, since this can have **very annoying side effects** like removing follows/following, statuses, etc.
