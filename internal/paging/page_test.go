@@ -30,17 +30,6 @@ import (
 // random reader according to current-time source seed.
 var randRd = rand.New(rand.NewSource(time.Now().Unix()))
 
-// randIntnPlus1 returns a POSITIVE integer between 1  and n (inclusive).
-func randIntnPlus1(n int) int {
-	for {
-		o := randRd.Intn(n + 1)
-		if o == 0 {
-			continue
-		}
-		return o
-	}
-}
-
 type Case struct {
 	// Name is the test case name.
 	Name string
@@ -121,7 +110,7 @@ var cases = []Case{
 		// Select random parameters in slice.
 		minIdx := randRd.Intn(len(ids))
 		maxIdx := randRd.Intn(len(ids))
-		limit := randIntnPlus1(len(ids))
+		limit := randRd.Intn(len(ids)) + 1
 
 		// Select the boundaries.
 		minID := ids[minIdx]
