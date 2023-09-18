@@ -39,7 +39,7 @@ With this in mind, you should only ever treat domain blocking as *one layer* of 
 
 ### Block announce bots
 
-Unfortunately, the Fediverse has its share of thin-skinned trolls, many of whom see domain blocking as an adversary to be defeated. To achieve this, they often target instances which use domain blocks to protect users.
+Unfortunately, the Fediverse has its share of trolls, many of whom see domain blocking as an adversary to be defeated. To achieve this, they often target instances which use domain blocks to protect users.
 
 As such, there are bots on the Fediverse which scrape instance domain blocks and announce any discovered blocks to the followers of the bot, opening the admin of the blocking instance up to harassment. These bots use the `api/v1/instance/peers?filter=suspended` endpoint of GoToSocial instances to gather domain block information.
 
