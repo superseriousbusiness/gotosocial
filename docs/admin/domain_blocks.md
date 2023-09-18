@@ -39,9 +39,25 @@ With this in mind, you should only ever treat domain blocking as *one layer* of 
 
 ### Block announce bots
 
-Unfortunately, the fediverse has its share of 
+Unfortunately, the Fediverse has its share of thin-skinned trolls, many of whom see domain blocking as an adversary to be defeated. To achieve this, they often target instances which use domain blocks to protect users.
+
+As such, there are bots on the Fediverse which scrape instance domain blocks and announce any discovered blocks to the followers of the bot, opening the admin of the blocking instance up to harassment. These bots use the `api/v1/instance/peers?filter=suspended` endpoint of GoToSocial instances to gather domain block information.
+
+By default, GoToSocial does not expose this endpoint publicly, so your instance will be safe from such scraping. However, if you set `instance-expose-suspended` to `true` in your config.yaml file, you may find that this endpoint gets scraped occasionally, and you may see your blocks being announced by troll bots.
 
 ## What are the side effects of creating a domain block
+
+When you create a new domain block (or resubmit an existing domain block), your instance will process side effects for the block. These side effects are:
+
+1. Mark all accounts stored in your database from the target domain as suspended, and remove most information (bio, display name, fields, etc) from each account marked this way.
+2. Clear all mutual and one-way relationships between local accounts and suspended accounts (followed, following, follow requests, bookmarks, etc).
+3. Delete all statuses from suspended accounts.
+4. Delete all media from suspended accounts and their statuses, including media attachments, avatars, headers, and emojis.
+
+!!! danger
+    Currently, most of the above side effects are **irreversible**. If you unblock a domain after blocking it, all accounts on that domain will be marked as no longer suspended, and you will be able to interact with them again, but all relationships will still be wiped out, and all statuses and media will be gone.
+    
+    Think carefully before blocking a domain.
 
 ## Blocking a domain and all subdomains
 
