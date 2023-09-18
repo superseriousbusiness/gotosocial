@@ -161,3 +161,135 @@ func (m *Module) createDomainPermissions(
 
 	c.JSON(http.StatusOK, domainPerms)
 }
+
+// deleteDomainPermission deletes a single domain permission (block or allow).
+func (m *Module) deleteDomainPermission(
+	c *gin.Context,
+	permType gtsmodel.DomainPermissionType, // block/allow
+) {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if !*authed.User.Admin {
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	domainPermID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	domainPerm, _, errWithCode := m.processor.Admin().DomainPermissionDelete(
+		c.Request.Context(),
+		permType,
+		authed.Account,
+		domainPermID,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.JSON(http.StatusOK, domainPerm)
+}
+
+// getDomainPermission gets a single domain permission (block or allow).
+func (m *Module) getDomainPermission(
+	c *gin.Context,
+	permType gtsmodel.DomainPermissionType,
+) {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if !*authed.User.Admin {
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	domainPermID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	export, errWithCode := apiutil.ParseDomainPermissionExport(c.Query(apiutil.DomainPermissionExportKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	domainPerm, errWithCode := m.processor.Admin().DomainPermissionGet(
+		c.Request.Context(),
+		permType,
+		domainPermID,
+		export,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.JSON(http.StatusOK, domainPerm)
+}
+
+// getDomainPermissions gets all domain permissions of the given type (block, allow).
+func (m *Module) getDomainPermissions(
+	c *gin.Context,
+	permType gtsmodel.DomainPermissionType,
+) {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if !*authed.User.Admin {
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	export, errWithCode := apiutil.ParseDomainPermissionExport(c.Query(apiutil.DomainPermissionExportKey), false)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	domainPerm, errWithCode := m.processor.Admin().DomainPermissionsGet(
+		c.Request.Context(),
+		permType,
+		authed.Account,
+		export,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.JSON(http.StatusOK, domainPerm)
+}
