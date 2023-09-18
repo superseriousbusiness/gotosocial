@@ -30,6 +30,17 @@ import (
 // random reader according to current-time source seed.
 var randRd = rand.New(rand.NewSource(time.Now().Unix()))
 
+// randIntnPlus1 returns a POSITIVE integer between 1  and n (inclusive).
+func randIntnPlus1(n int) int {
+	for {
+		o := randRd.Intn(n + 1)
+		if o == 0 {
+			continue
+		}
+		return o
+	}
+}
+
 type Case struct {
 	// Name is the test case name.
 	Name string
@@ -64,7 +75,7 @@ func TestPage(t *testing.T) {
 			out := c.Page.Page(c.Input)
 
 			// Log the results for case of error returns.
-			t.Logf("\ninput=%v\noutput=%v\nexpected=%v", c.Input, out, c.Expect)
+			t.Logf("%s\npage=%+v input=%v expect=%v output=%v", c.Name, c.Page, c.Input, c.Expect, out)
 
 			// Check paged output is as expected.
 			if !slices.Equal(out, c.Expect) {
@@ -110,7 +121,7 @@ var cases = []Case{
 		// Select random parameters in slice.
 		minIdx := randRd.Intn(len(ids))
 		maxIdx := randRd.Intn(len(ids))
-		limit := randRd.Intn(len(ids))
+		limit := randIntnPlus1(len(ids))
 
 		// Select the boundaries.
 		minID := ids[minIdx]
