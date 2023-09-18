@@ -236,7 +236,7 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 		collectionPage.SetActivityStreamsNext(nextProp)
 	}
 
-	// Build the prevocab.page link IRI.
+	// Build the prev page link IRI.
 	prevIRI := params.Prev.ToLinkURL(
 		params.ID.Scheme,
 		params.ID.Host,
@@ -245,7 +245,7 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 	)
 
 	if prevIRI != nil {
-		// Add the collection prevocab.property for the prevocab.page.
+		// Add the collection prev property for the prev page.
 		prevProp := streams.NewActivityStreamsPrevProperty()
 		prevProp.SetIRI(prevIRI)
 		collectionPage.SetActivityStreamsPrev(prevProp)
