@@ -64,7 +64,7 @@ func TestPage(t *testing.T) {
 			out := c.Page.Page(c.Input)
 
 			// Log the results for case of error returns.
-			t.Logf("\ninput=%v\noutput=%v\nexpected=%v", c.Input, out, c.Expect)
+			t.Logf("%s\npage=%+v input=%v expect=%v output=%v", c.Name, c.Page, c.Input, c.Expect, out)
 
 			// Check paged output is as expected.
 			if !slices.Equal(out, c.Expect) {
@@ -110,7 +110,7 @@ var cases = []Case{
 		// Select random parameters in slice.
 		minIdx := randRd.Intn(len(ids))
 		maxIdx := randRd.Intn(len(ids))
-		limit := randRd.Intn(len(ids))
+		limit := randRd.Intn(len(ids)) + 1
 
 		// Select the boundaries.
 		minID := ids[minIdx]
