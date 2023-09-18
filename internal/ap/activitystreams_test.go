@@ -1,0 +1,214 @@
+package ap_test
+
+import (
+	"encoding/json"
+	"net/url"
+	"testing"
+
+	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
+
+	"github.com/google/go-cmp/cmp"
+)
+
+func TestASCollection(t *testing.T) {
+	const (
+		proto = "https"
+		host  = "zorg.flabormagorg.xyz"
+		path  = "/users/itsa_me_mario"
+
+		idURI = proto + "://" + host + path
+		total = 10
+	)
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":   "https://www.w3.org/ns/activitystreams",
+		"type":       "Collection",
+		"id":         idURI,
+		"first":      idURI + "?limit=40",
+		"totalItems": total,
+	})
+
+	// Create new collection using builder function.
+	c := ap.NewASCollection(ap.CollectionParams{
+		ID:    parseURI(idURI),
+		Total: total,
+	})
+
+	// Serialize collection.
+	s := toJSON(c)
+
+	// Compare expected and collection serialized outputs.
+	if diff := cmp.Diff(s, expect); diff != "" {
+		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
+	}
+}
+
+func TestASCollectionPage(t *testing.T) {
+	const (
+		proto = "https"
+		host  = "zorg.flabormagorg.xyz"
+		path  = "/users/itsa_me_mario"
+
+		idURI = proto + "://" + host + path
+		total = 10
+
+		minID = "minimum"
+		maxID = "maximum"
+		limit = 40
+		count = 2
+	)
+
+	// Create the current page.
+	currPg := &paging.Page{
+		Limit: 40,
+	}
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":   "https://www.w3.org/ns/activitystreams",
+		"type":       "CollectionPage",
+		"id":         currPg.ToLink(proto, host, path, nil),
+		"partOf":     idURI,
+		"next":       currPg.Next(minID, maxID).ToLink(proto, host, path, nil),
+		"prev":       currPg.Prev(minID, maxID).ToLink(proto, host, path, nil),
+		"items":      []interface{}{},
+		"totalItems": total,
+	})
+
+	// Create new collection page using builder function.
+	p := ap.NewASCollectionPage(ap.CollectionPageParams{
+		CollectionParams: ap.CollectionParams{
+			ID:    parseURI(idURI),
+			Total: total,
+		},
+
+		Current: currPg,
+		Next:    currPg.Next(minID, maxID),
+		Prev:    currPg.Prev(minID, maxID),
+
+		Append: func(i int, ipb ap.ItemsPropertyBuilder) {},
+		Count:  count,
+	})
+
+	// Serialize page.
+	s := toJSON(p)
+
+	// Compare expected and page serialized outputs.
+	if diff := cmp.Diff(s, expect); diff != "" {
+		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
+	}
+}
+
+func TestASOrderedCollection(t *testing.T) {
+	const (
+		idURI = "https://zorg.flabormagorg.xyz/users/itsa_me_mario"
+		total = 10
+	)
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":   "https://www.w3.org/ns/activitystreams",
+		"type":       "OrderedCollection",
+		"id":         idURI,
+		"first":      idURI + "?limit=40",
+		"totalItems": total,
+	})
+
+	// Create new collection using builder function.
+	c := ap.NewASOrderedCollection(ap.CollectionParams{
+		ID:    parseURI(idURI),
+		Total: total,
+	})
+
+	// Serialize collection.
+	s := toJSON(c)
+
+	// Compare expected and collection serialized outputs.
+	if diff := cmp.Diff(s, expect); diff != "" {
+		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
+	}
+}
+
+func TestASOrderedCollectionPage(t *testing.T) {
+	const (
+		proto = "https"
+		host  = "zorg.flabormagorg.xyz"
+		path  = "/users/itsa_me_mario"
+
+		idURI = proto + "://" + host + path
+		total = 10
+
+		minID = "minimum"
+		maxID = "maximum"
+		limit = 40
+		count = 2
+	)
+
+	// Create the current page.
+	currPg := &paging.Page{
+		Limit: 40,
+	}
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":     "https://www.w3.org/ns/activitystreams",
+		"type":         "OrderedCollectionPage",
+		"id":           currPg.ToLink(proto, host, path, nil),
+		"partOf":       idURI,
+		"next":         currPg.Next(minID, maxID).ToLink(proto, host, path, nil),
+		"prev":         currPg.Prev(minID, maxID).ToLink(proto, host, path, nil),
+		"orderedItems": []interface{}{},
+		"totalItems":   total,
+	})
+
+	// Create new collection page using builder function.
+	p := ap.NewASOrderedCollectionPage(ap.CollectionPageParams{
+		CollectionParams: ap.CollectionParams{
+			ID:    parseURI(idURI),
+			Total: total,
+		},
+
+		Current: currPg,
+		Next:    currPg.Next(minID, maxID),
+		Prev:    currPg.Prev(minID, maxID),
+
+		Append: func(i int, ipb ap.ItemsPropertyBuilder) {},
+		Count:  count,
+	})
+
+	// Serialize page.
+	s := toJSON(p)
+
+	// Compare expected and page serialized outputs.
+	if diff := cmp.Diff(s, expect); diff != "" {
+		t.Fatalf("unexpected serialized JSON output:\n%s", diff)
+	}
+}
+
+func parseURI(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+// toJSON will return indented JSON serialized form of 'a'.
+func toJSON(a any) string {
+	v, ok := a.(vocab.Type)
+	if ok {
+		m, err := ap.Serialize(v)
+		if err != nil {
+			panic(err)
+		}
+		a = m
+	}
+	b, err := json.MarshalIndent(a, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
