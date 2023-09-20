@@ -52,6 +52,8 @@ type GTSCaches struct {
 	media            *result.Cache[*gtsmodel.MediaAttachment]
 	mention          *result.Cache[*gtsmodel.Mention]
 	notification     *result.Cache[*gtsmodel.Notification]
+	poll             *result.Cache[*gtsmodel.Poll]
+	pollVote         *result.Cache[*gtsmodel.PollVote]
 	report           *result.Cache[*gtsmodel.Report]
 	status           *result.Cache[*gtsmodel.Status]
 	statusFave       *result.Cache[*gtsmodel.StatusFave]
@@ -90,6 +92,8 @@ func (c *GTSCaches) Init() {
 	c.initMedia()
 	c.initMention()
 	c.initNotification()
+	c.initPoll()
+	c.initPollVote()
 	c.initReport()
 	c.initStatus()
 	c.initStatusFave()
@@ -229,6 +233,16 @@ func (c *GTSCaches) Mention() *result.Cache[*gtsmodel.Mention] {
 // Notification provides access to the gtsmodel Notification database cache.
 func (c *GTSCaches) Notification() *result.Cache[*gtsmodel.Notification] {
 	return c.notification
+}
+
+// Poll ...
+func (c *GTSCaches) Poll() *result.Cache[*gtsmodel.Poll] {
+	return c.poll
+}
+
+// PollVote ...
+func (c *GTSCaches) PollVote() *result.Cache[*gtsmodel.PollVote] {
+	return c.pollVote
 }
 
 // Report provides access to the gtsmodel Report database cache.
@@ -683,6 +697,42 @@ func (c *GTSCaches) initNotification() {
 	}, cap)
 
 	c.notification.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initPoll() {
+	// Calculate maximum cache size.
+	cap := 1000
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.poll = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "StatusID", Multi: true},
+	}, func(p1 *gtsmodel.Poll) *gtsmodel.Poll {
+		p2 := new(gtsmodel.Poll)
+		*p2 = *p1
+		return p2
+	}, cap)
+
+	c.poll.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initPollVote() {
+	// Calculate maximum cache size.
+	cap := 1000
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.pollVote = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "PollID", Multi: true},
+	}, func(v1 *gtsmodel.PollVote) *gtsmodel.PollVote {
+		v2 := new(gtsmodel.PollVote)
+		*v2 = *v1
+		return v2
+	}, cap)
+
+	c.pollVote.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initReport() {
