@@ -94,7 +94,7 @@ func (p *Processor) getTargetPoll(ctx context.Context, requestingAccount *gtsmod
 
 	if poll == nil {
 		// No poll could be found for given ID.
-		err := errors.New("poll not found")
+		err := errors.New("target poll not found")
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
