@@ -18,12 +18,10 @@
 package admin
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"mime/multipart"
 	"net/http"
 
@@ -173,23 +171,9 @@ func (p *Processor) DomainPermissionsImport(
 	}
 	defer file.Close()
 
-	// Copy the file contents into a buffer.
-	buf := new(bytes.Buffer)
-	size, err := io.Copy(buf, file)
-	if err != nil {
-		err = gtserror.Newf("error reading attachment: %w", err)
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	// Ensure we actually read something.
-	if size == 0 {
-		err = gtserror.New("error reading attachment: size 0 bytes")
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	// Parse bytes as slice of domain blocks.
+	// Parse file as slice of domain blocks.
 	domainPerms := make([]*apimodel.DomainPermission, 0)
-	if err := json.Unmarshal(buf.Bytes(), &domainPerms); err != nil {
+	if err := json.NewDecoder(file).Decode(&domainPerms); err != nil {
 		err = gtserror.Newf("error parsing attachment as domain permissions: %w", err)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
