@@ -11,9 +11,12 @@ When your instance receives a new request from an instance that is not blocked v
 When your instance encounters a mention or an announce of a status or account it hasn't seen before, it will go fetch the resource if the domain of the resource is not blocked via a domain block entry.
 
 !!! info
-    Blocklist federation mode is the default federation mode for GoToSocial, and indeed for most ActivityPub server software.
+    Blocklist federation mode is the default federation mode for GoToSocial. It's also the default for most other ActivityPub server implementations.
 
 ## Allowlist federation mode
+
+!!! warning
+    Allowlist federation mode is still considered "experimental" while we work out how well it actually works in practice. It should do what it says on the box, but it may cause bugs or edge cases to appear elsewhere, we're not sure yet!
 
 When `instance-federation-mode` is set to `allowlist`, your instance will federate only with instances for which an explicit allow has been created via the settings panel, and will restrict access by any instances for which an allow has not been created.
 
