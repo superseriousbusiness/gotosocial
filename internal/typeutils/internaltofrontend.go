@@ -94,10 +94,14 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	return apiAccount, nil
 }
 
+<<<<<<< HEAD
 // AccountToAPIAccountPublic takes a db model account as a param, and returns a populated apitype account, or an error
 // if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 // In other words, this is the public record that the server has of an account.
 func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+=======
+func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+>>>>>>> d2002d44 (update typeconverter to use state structure)
 	if err := c.state.DB.PopulateAccount(ctx, a); err != nil {
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
 	}
