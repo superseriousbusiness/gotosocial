@@ -52,6 +52,9 @@ GoToSocial comes with built-in support for provisioning certificates through Let
 
 ## Server / VPS
 
+!!! bug "Clustering / multi-node deployments"
+    GoToSocial does not support [clustering or any form of multi-node deployment](https://github.com/superseriousbusiness/gotosocial/issues/1749). Though multiple GtS instances can use the same Postgres database and either shared local storage or the same object bucket, GtS relies on a lot of internal caching to keep things fast. There is no mechanism for synchronising these caches between instances. Without it, you'll get all kinds of odd and inconsistent behaviour.
+
 GoToSocial aims to fit in small spaces so we try and ensure that the system requirements are fairly minimal: for a single-user instance with about 100 followers/followees, it uses somewhere between 50 to 100MB of RAM. CPU usage is only intensive when handling media (encoding blurhashes, mostly) and/or doing a lot of federation requests at the same time.
 
 These light requirements mean GtS runs pretty well on something like a Raspberry Pi (a €40 single-board computer). It's been tested on a Raspberry Pi Zero W as well (a €9 computer smaller than a credit card), but it's not quite able to run on that. It should run on a Raspberry Pi Zero W 2 (which costs €14!), but we haven't tested that yet. You can also repurpose an old laptop or desktop to run GoToSocial for you.
