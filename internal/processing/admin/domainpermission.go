@@ -245,7 +245,7 @@ func (p *Processor) DomainPermissionsGet(
 	export bool,
 ) ([]*apimodel.DomainPermission, gtserror.WithCode) {
 	var (
-		domainPerms *[]gtsmodel.DomainPermission
+		domainPerms []gtsmodel.DomainPermission
 		err         error
 	)
 
@@ -258,12 +258,9 @@ func (p *Processor) DomainPermissionsGet(
 			break
 		}
 
-		blocksI := make([]gtsmodel.DomainPermission, len(blocks))
-		for i, block := range blocks {
-			blocksI[i] = block
+		for _, block := range blocks {
+			domainPerms = append(domainPerms, block)
 		}
-
-		domainPerms = &blocksI
 
 	case gtsmodel.DomainPermissionAllow:
 		var allows []*gtsmodel.DomainAllow
@@ -273,12 +270,9 @@ func (p *Processor) DomainPermissionsGet(
 			break
 		}
 
-		allowsI := make([]gtsmodel.DomainPermission, len(allows))
-		for i, allow := range allows {
-			allowsI[i] = allow
+		for _, allow := range allows {
+			domainPerms = append(domainPerms, allow)
 		}
-
-		domainPerms = &allowsI
 
 	default:
 		err = errors.New("unrecognized permission type")
@@ -289,8 +283,8 @@ func (p *Processor) DomainPermissionsGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiDomainPerms := make([]*apimodel.DomainPermission, len(*domainPerms))
-	for i, domainPerm := range *domainPerms {
+	apiDomainPerms := make([]*apimodel.DomainPermission, len(domainPerms))
+	for i, domainPerm := range domainPerms {
 		apiDomainBlock, errWithCode := p.apiDomainPerm(ctx, domainPerm, export)
 		if errWithCode != nil {
 			return nil, errWithCode
