@@ -185,10 +185,6 @@ func (p *Processor) deleteDomainBlock(
 		return nil, "", errWithCode
 	}
 
-	// Copy value of the domain block.
-	domainBlockC := new(gtsmodel.DomainBlock)
-	*domainBlockC = *domainBlock
-
 	// Delete the original domain block.
 	if err := p.state.DB.DeleteDomainBlock(ctx, domainBlock.Domain); err != nil {
 		err = gtserror.Newf("db error deleting domain block: %w", err)
@@ -204,14 +200,14 @@ func (p *Processor) deleteDomainBlock(
 		&gtsmodel.AdminAction{
 			ID:             actionID,
 			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domainBlockC.Domain,
+			TargetID:       domainBlock.Domain,
 			Type:           gtsmodel.AdminActionUnsuspend,
 			AccountID:      adminAcct.ID,
 		},
 		func(ctx context.Context) gtserror.MultiError {
 			// Log start + finish.
 			l := log.WithFields(kv.Fields{
-				{"domain", domainBlockC.Domain},
+				{"domain", domainBlock.Domain},
 				{"actionID", actionID},
 			}...).WithContext(ctx)
 

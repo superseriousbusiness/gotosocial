@@ -173,10 +173,6 @@ func (p *Processor) deleteDomainAllow(
 		return nil, "", errWithCode
 	}
 
-	// Copy value of the domain allow.
-	domainAllowC := new(gtsmodel.DomainAllow)
-	*domainAllowC = *domainAllow
-
 	// Delete the original domain allow.
 	if err := p.state.DB.DeleteDomainAllow(ctx, domainAllow.Domain); err != nil {
 		err = gtserror.Newf("db error deleting domain allow: %w", err)
@@ -192,14 +188,14 @@ func (p *Processor) deleteDomainAllow(
 		&gtsmodel.AdminAction{
 			ID:             actionID,
 			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domainAllowC.Domain,
+			TargetID:       domainAllow.Domain,
 			Type:           gtsmodel.AdminActionUnsuspend,
 			AccountID:      adminAcct.ID,
 		},
 		func(ctx context.Context) gtserror.MultiError {
 			// Log start + finish.
 			l := log.WithFields(kv.Fields{
-				{"domain", domainAllowC.Domain},
+				{"domain", domainAllow.Domain},
 				{"actionID", actionID},
 			}...).WithContext(ctx)
 
