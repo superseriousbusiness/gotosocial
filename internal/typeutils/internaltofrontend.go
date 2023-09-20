@@ -68,7 +68,7 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	// then adding the Source object to it...
 
 	// check pending follow requests aimed at this account
-	frc, err := c.db.CountAccountFollowRequests(ctx, a.ID)
+	frc, err := c.state.DB.CountAccountFollowRequests(ctx, a.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting follow requests: %s", err)
 	}
@@ -92,7 +92,7 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 }
 
 func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-	if err := c.db.PopulateAccount(ctx, a); err != nil {
+	if err := c.state.DB.PopulateAccount(ctx, a); err != nil {
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
 	}
 
@@ -102,23 +102,23 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	//   - Statuses count
 	//   - Last status time
 
-	followersCount, err := c.db.CountAccountFollowers(ctx, a.ID)
+	followersCount, err := c.state.DB.CountAccountFollowers(ctx, a.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting followers: %w", err)
 	}
 
-	followingCount, err := c.db.CountAccountFollows(ctx, a.ID)
+	followingCount, err := c.state.DB.CountAccountFollows(ctx, a.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting following: %w", err)
 	}
 
-	statusesCount, err := c.db.CountAccountStatuses(ctx, a.ID)
+	statusesCount, err := c.state.DB.CountAccountStatuses(ctx, a.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting statuses: %w", err)
 	}
 
 	var lastStatusAt *string
-	lastPosted, err := c.db.GetAccountLastPosted(ctx, a.ID, false)
+	lastPosted, err := c.state.DB.GetAccountLastPosted(ctx, a.ID, false)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting statuses: %w", err)
 	}
@@ -182,7 +182,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		// fetch more info. Skip for instance
 		// accounts since they have no user.
 		if !a.IsInstance() {
-			user, err := c.db.GetUserByAccountID(ctx, a.ID)
+			user, err := c.state.DB.GetUserByAccountID(ctx, a.ID)
 			if err != nil {
 				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
 			}
@@ -277,7 +277,7 @@ func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		// fetch more info. Skip for instance
 		// accounts since they have no user.
 		if !a.IsInstance() {
-			user, err := c.db.GetUserByAccountID(ctx, a.ID)
+			user, err := c.state.DB.GetUserByAccountID(ctx, a.ID)
 			if err != nil {
 				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
 			}
@@ -334,7 +334,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 	} else if !a.IsInstance() {
 		// This is a local, non-instance
 		// acct; we can fetch more info.
-		user, err := c.db.GetUserByAccountID(ctx, a.ID)
+		user, err := c.state.DB.GetUserByAccountID(ctx, a.ID)
 		if err != nil {
 			return nil, fmt.Errorf("AccountToAdminAPIAccount: error getting user from database for account id %s: %w", a.ID, err)
 		}
@@ -481,7 +481,7 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 
 func (c *converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (apimodel.Mention, error) {
 	if m.TargetAccount == nil {
-		targetAccount, err := c.db.GetAccountByID(ctx, m.TargetAccountID)
+		targetAccount, err := c.state.DB.GetAccountByID(ctx, m.TargetAccountID)
 		if err != nil {
 			return apimodel.Mention{}, err
 		}
@@ -516,7 +516,7 @@ func (c *converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (api
 	if e.CategoryID != "" {
 		if e.Category == nil {
 			var err error
-			e.Category, err = c.db.GetEmojiCategory(ctx, e.CategoryID)
+			e.Category, err = c.state.DB.GetEmojiCategory(ctx, e.CategoryID)
 			if err != nil {
 				return apimodel.Emoji{}, err
 			}
@@ -585,7 +585,7 @@ func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistor
 }
 
 func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
-	if err := c.db.PopulateStatus(ctx, s); err != nil {
+	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
 		// Ensure author account present + correct;
 		// can't really go further without this!
 		if s.Account == nil {
@@ -600,17 +600,17 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		return nil, fmt.Errorf("error converting status author: %w", err)
 	}
 
-	repliesCount, err := c.db.CountStatusReplies(ctx, s.ID)
+	repliesCount, err := c.state.DB.CountStatusReplies(ctx, s.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting replies: %w", err)
 	}
 
-	reblogsCount, err := c.db.CountStatusBoosts(ctx, s.ID)
+	reblogsCount, err := c.state.DB.CountStatusBoosts(ctx, s.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting reblogs: %w", err)
 	}
 
-	favesCount, err := c.db.CountStatusFaves(ctx, s.ID)
+	favesCount, err := c.state.DB.CountStatusFaves(ctx, s.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error counting faves: %w", err)
 	}
@@ -699,7 +699,7 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	}
 
 	if appID := s.CreatedWithApplicationID; appID != "" {
-		app, err := c.db.GetApplicationByID(ctx, appID)
+		app, err := c.state.DB.GetApplicationByID(ctx, appID)
 		if err != nil {
 			return nil, fmt.Errorf("error getting application %s: %w", appID, err)
 		}
@@ -810,19 +810,19 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 
 	// statistics
 	stats := make(map[string]int, 3)
-	userCount, err := c.db.CountInstanceUsers(ctx, i.Domain)
+	userCount, err := c.state.DB.CountInstanceUsers(ctx, i.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance users: %w", err)
 	}
 	stats["user_count"] = userCount
 
-	statusCount, err := c.db.CountInstanceStatuses(ctx, i.Domain)
+	statusCount, err := c.state.DB.CountInstanceStatuses(ctx, i.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance statuses: %w", err)
 	}
 	stats["status_count"] = statusCount
 
-	domainCount, err := c.db.CountInstanceDomains(ctx, i.Domain)
+	domainCount, err := c.state.DB.CountInstanceDomains(ctx, i.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance domains: %w", err)
 	}
@@ -830,14 +830,14 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Stats = stats
 
 	// thumbnail
-	iAccount, err := c.db.GetInstanceAccount(ctx, "")
+	iAccount, err := c.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting instance account: %w", err)
 	}
 
 	if iAccount.AvatarMediaAttachmentID != "" {
 		if iAccount.AvatarMediaAttachment == nil {
-			avi, err := c.db.GetAttachmentByID(ctx, iAccount.AvatarMediaAttachmentID)
+			avi, err := c.state.DB.GetAttachmentByID(ctx, iAccount.AvatarMediaAttachmentID)
 			if err != nil {
 				return nil, fmt.Errorf("InstanceToAPIInstance: error getting instance avatar attachment with id %s: %w", iAccount.AvatarMediaAttachmentID, err)
 			}
@@ -854,7 +854,7 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	// contact account
 	if i.ContactAccountID != "" {
 		if i.ContactAccount == nil {
-			contactAccount, err := c.db.GetAccountByID(ctx, i.ContactAccountID)
+			contactAccount, err := c.state.DB.GetAccountByID(ctx, i.ContactAccountID)
 			if err != nil {
 				return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting instance contact account %s: %w", i.ContactAccountID, err)
 			}
@@ -891,14 +891,14 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	// thumbnail
 	thumbnail := apimodel.InstanceV2Thumbnail{}
 
-	iAccount, err := c.db.GetInstanceAccount(ctx, "")
+	iAccount, err := c.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV2Instance: db error getting instance account: %w", err)
 	}
 
 	if iAccount.AvatarMediaAttachmentID != "" {
 		if iAccount.AvatarMediaAttachment == nil {
-			avi, err := c.db.GetAttachmentByID(ctx, iAccount.AvatarMediaAttachmentID)
+			avi, err := c.state.DB.GetAttachmentByID(ctx, iAccount.AvatarMediaAttachmentID)
 			if err != nil {
 				return nil, fmt.Errorf("InstanceToAPIV2Instance: error getting instance avatar attachment with id %s: %w", iAccount.AvatarMediaAttachmentID, err)
 			}
@@ -945,7 +945,7 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Contact.Email = i.ContactEmail
 	if i.ContactAccountID != "" {
 		if i.ContactAccount == nil {
-			contactAccount, err := c.db.GetAccountByID(ctx, i.ContactAccountID)
+			contactAccount, err := c.state.DB.GetAccountByID(ctx, i.ContactAccountID)
 			if err != nil {
 				return nil, fmt.Errorf("InstanceToAPIV2Instance: db error getting instance contact account %s: %w", i.ContactAccountID, err)
 			}
@@ -982,7 +982,7 @@ func (c *converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmod
 
 func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*apimodel.Notification, error) {
 	if n.TargetAccount == nil {
-		tAccount, err := c.db.GetAccountByID(ctx, n.TargetAccountID)
+		tAccount, err := c.state.DB.GetAccountByID(ctx, n.TargetAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToapi: error getting target account with id %s from the db: %s", n.TargetAccountID, err)
 		}
@@ -990,7 +990,7 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 	}
 
 	if n.OriginAccount == nil {
-		ogAccount, err := c.db.GetAccountByID(ctx, n.OriginAccountID)
+		ogAccount, err := c.state.DB.GetAccountByID(ctx, n.OriginAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToapi: error getting origin account with id %s from the db: %s", n.OriginAccountID, err)
 		}
@@ -1005,7 +1005,7 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 	var apiStatus *apimodel.Status
 	if n.StatusID != "" {
 		if n.Status == nil {
-			status, err := c.db.GetStatusByID(ctx, n.StatusID)
+			status, err := c.state.DB.GetStatusByID(ctx, n.StatusID)
 			if err != nil {
 				return nil, fmt.Errorf("NotificationToapi: error getting status with id %s from the db: %s", n.StatusID, err)
 			}
@@ -1098,7 +1098,7 @@ func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (
 	}
 
 	if r.TargetAccount == nil {
-		tAccount, err := c.db.GetAccountByID(ctx, r.TargetAccountID)
+		tAccount, err := c.state.DB.GetAccountByID(ctx, r.TargetAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAPIReport: error getting target account with id %s from the db: %s", r.TargetAccountID, err)
 		}
@@ -1128,7 +1128,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 	}
 
 	if r.Account == nil {
-		r.Account, err = c.db.GetAccountByID(ctx, r.AccountID)
+		r.Account, err = c.state.DB.GetAccountByID(ctx, r.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting account with id %s from the db: %w", r.AccountID, err)
 		}
@@ -1139,7 +1139,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 	}
 
 	if r.TargetAccount == nil {
-		r.TargetAccount, err = c.db.GetAccountByID(ctx, r.TargetAccountID)
+		r.TargetAccount, err = c.state.DB.GetAccountByID(ctx, r.TargetAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting target account with id %s from the db: %w", r.TargetAccountID, err)
 		}
@@ -1151,7 +1151,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 
 	if r.ActionTakenByAccountID != "" {
 		if r.ActionTakenByAccount == nil {
-			r.ActionTakenByAccount, err = c.db.GetAccountByID(ctx, r.ActionTakenByAccountID)
+			r.ActionTakenByAccount, err = c.state.DB.GetAccountByID(ctx, r.ActionTakenByAccountID)
 			if err != nil {
 				return nil, fmt.Errorf("ReportToAdminAPIReport: error getting action taken by account with id %s from the db: %w", r.ActionTakenByAccountID, err)
 			}
@@ -1165,7 +1165,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 
 	statuses := make([]*apimodel.Status, 0, len(r.StatusIDs))
 	if len(r.StatusIDs) != 0 && len(r.Statuses) == 0 {
-		r.Statuses, err = c.db.GetStatusesByIDs(ctx, r.StatusIDs)
+		r.Statuses, err = c.state.DB.GetStatusesByIDs(ctx, r.StatusIDs)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting statuses from the db: %w", err)
 		}
@@ -1180,7 +1180,7 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 
 	rules := make([]*apimodel.InstanceRule, 0, len(r.RuleIDs))
 	if len(r.RuleIDs) != 0 && len(r.Rules) == 0 {
-		r.Rules, err = c.db.GetRulesByIDs(ctx, r.RuleIDs)
+		r.Rules, err = c.state.DB.GetRulesByIDs(ctx, r.RuleIDs)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error getting rules from the db: %w", err)
 		}
@@ -1255,7 +1255,7 @@ func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 
 		// Fetch GTS models for attachment IDs
 		for _, id := range attachmentIDs {
-			attachment, err := c.db.GetAttachmentByID(ctx, id)
+			attachment, err := c.state.DB.GetAttachmentByID(ctx, id)
 			if err != nil {
 				errs.Appendf("error fetching attachment %s from database: %v", id, err)
 				continue
@@ -1292,7 +1292,7 @@ func (c *converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsm
 
 		// Fetch GTS models for emoji IDs
 		for _, id := range emojiIDs {
-			emoji, err := c.db.GetEmojiByID(ctx, id)
+			emoji, err := c.state.DB.GetEmojiByID(ctx, id)
 			if err != nil {
 				errs.Appendf("error fetching emoji %s from database: %v", id, err)
 				continue
@@ -1327,7 +1327,7 @@ func (c *converter) convertMentionsToAPIMentions(ctx context.Context, mentions [
 		// GTS model mentions were not populated
 		//
 		// Fetch GTS models for mention IDs
-		mentions, err = c.db.GetMentions(ctx, mentionIDs)
+		mentions, err = c.state.DB.GetMentions(ctx, mentionIDs)
 		if err != nil {
 			errs.Appendf("error fetching mentions from database: %v", err)
 		}
@@ -1356,7 +1356,7 @@ func (c *converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 	if len(tags) == 0 {
 		var err error
 
-		tags, err = c.db.GetTags(ctx, tagIDs)
+		tags, err = c.state.DB.GetTags(ctx, tagIDs)
 		if err != nil {
 			errs.Appendf("error fetching tags from database: %v", err)
 		}

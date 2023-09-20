@@ -86,7 +86,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

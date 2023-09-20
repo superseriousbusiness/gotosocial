@@ -87,7 +87,7 @@ func (suite *MediaUpdateTestSuite) SetupSuite() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

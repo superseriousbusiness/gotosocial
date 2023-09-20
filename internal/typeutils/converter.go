@@ -26,8 +26,8 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // TypeConverter is an interface for the common action of converting between apimodule (frontend, serializable) models,
@@ -221,15 +221,15 @@ type TypeConverter interface {
 }
 
 type converter struct {
-	db             db.DB
+	state          *state.State
 	defaultAvatars []string
 	randAvatars    sync.Map
 }
 
 // NewConverter returns a new Converter
-func NewConverter(db db.DB) TypeConverter {
+func NewConverter(state *state.State) TypeConverter {
 	return &converter{
-		db:             db,
+		state:          state,
 		defaultAvatars: populateDefaultAvatars(),
 	}
 }

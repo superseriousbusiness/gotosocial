@@ -40,25 +40,25 @@ func (c *converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 	si := &statusInteractions{}
 
 	if requestingAccount != nil {
-		faved, err := c.db.IsStatusFavedBy(ctx, s.ID, requestingAccount.ID)
+		faved, err := c.state.DB.IsStatusFavedBy(ctx, s.ID, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
 		}
 		si.Faved = faved
 
-		reblogged, err := c.db.IsStatusBoostedBy(ctx, s.ID, requestingAccount.ID)
+		reblogged, err := c.state.DB.IsStatusBoostedBy(ctx, s.ID, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has reblogged status: %s", err)
 		}
 		si.Reblogged = reblogged
 
-		muted, err := c.db.IsStatusMutedBy(ctx, s, requestingAccount.ID)
+		muted, err := c.state.DB.IsStatusMutedBy(ctx, s, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
 		}
 		si.Muted = muted
 
-		bookmarked, err := c.db.IsStatusBookmarkedBy(ctx, s, requestingAccount.ID)
+		bookmarked, err := c.state.DB.IsStatusBookmarkedBy(ctx, s, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
 		}

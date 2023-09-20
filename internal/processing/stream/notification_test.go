@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type NotificationTestSuite struct {
@@ -39,7 +39,7 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 	suite.NoError(errWithCode)
 
 	followAccount := suite.testAccounts["remote_account_1"]
-	followAccountAPIModel, err := testrig.NewTestTypeConverter(suite.db).AccountToAPIAccountPublic(context.Background(), followAccount)
+	followAccountAPIModel, err := typeutils.NewConverter(&suite.state).AccountToAPIAccountPublic(context.Background(), followAccount)
 	suite.NoError(err)
 
 	notification := &apimodel.Notification{

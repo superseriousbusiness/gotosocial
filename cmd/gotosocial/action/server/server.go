@@ -129,7 +129,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
-	typeConverter := typeutils.NewConverter(dbService)
+	typeConverter := typeutils.NewConverter(&state)
 	filter := visibility.NewFilter(&state)
 	federatingDB := federatingdb.New(&state, typeConverter)
 	transportController := transport.NewController(&state, federatingDB, &federation.Clock{}, client)

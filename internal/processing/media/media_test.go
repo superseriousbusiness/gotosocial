@@ -73,7 +73,7 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)

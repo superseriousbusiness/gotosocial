@@ -65,7 +65,7 @@ func (suite *FederatorStandardTestSuite) SetupTest() {
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
-	suite.typeconverter = testrig.NewTestTypeConverter(suite.state.DB)
+	suite.typeconverter = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

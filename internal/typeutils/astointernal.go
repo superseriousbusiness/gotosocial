@@ -341,7 +341,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 	accountURI := attributedTo.String()
 
-	account, err := c.db.GetAccountByURI(ctx, accountURI)
+	account, err := c.state.DB.GetAccountByURI(ctx, accountURI)
 	if err != nil {
 		err = gtserror.Newf("db error getting status author account %s: %w", accountURI, err)
 		return nil, err
@@ -364,7 +364,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		status.InReplyToURI = inReplyToURI
 
 		// Check if we already have the replied-to status.
-		inReplyTo, err := c.db.GetStatusByURI(ctx, inReplyToURI)
+		inReplyTo, err := c.state.DB.GetStatusByURI(ctx, inReplyToURI)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			// Real database error.
 			err = gtserror.Newf("db error getting replied-to status %s: %w", inReplyToURI, err)
@@ -428,7 +428,7 @@ func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
-	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
+	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -437,7 +437,7 @@ func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
-	targetAccount, err := c.db.GetAccountByURI(ctx, target.String())
+	targetAccount, err := c.state.DB.GetAccountByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -462,7 +462,7 @@ func (c *converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 	if err != nil {
 		return nil, errors.New("error extracting actor property from follow")
 	}
-	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
+	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -471,7 +471,7 @@ func (c *converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 	if err != nil {
 		return nil, errors.New("error extracting object property from follow")
 	}
-	targetAccount, err := c.db.GetAccountByURI(ctx, target.String())
+	targetAccount, err := c.state.DB.GetAccountByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -496,7 +496,7 @@ func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 	if err != nil {
 		return nil, errors.New("error extracting actor property from like")
 	}
-	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
+	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -506,7 +506,7 @@ func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 		return nil, errors.New("error extracting object property from like")
 	}
 
-	targetStatus, err := c.db.GetStatusByURI(ctx, target.String())
+	targetStatus, err := c.state.DB.GetStatusByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting status with uri %s from the database: %s", target.String(), err)
 	}
@@ -515,7 +515,7 @@ func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 	if targetStatus.Account != nil {
 		targetAccount = targetStatus.Account
 	} else {
-		a, err := c.db.GetAccountByID(ctx, targetStatus.AccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, targetStatus.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("error extracting account with id %s from the database: %s", targetStatus.AccountID, err)
 		}
@@ -544,7 +544,7 @@ func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 	if err != nil {
 		return nil, errors.New("ASBlockToBlock: error extracting actor property from block")
 	}
-	originAccount, err := c.db.GetAccountByURI(ctx, origin.String())
+	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -554,7 +554,7 @@ func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 		return nil, errors.New("ASBlockToBlock: error extracting object property from block")
 	}
 
-	targetAccount, err := c.db.GetAccountByURI(ctx, target.String())
+	targetAccount, err := c.state.DB.GetAccountByURI(ctx, target.String())
 	if err != nil {
 		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
 	}
@@ -591,7 +591,7 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	)
 
 	// Check if we already have this boost in the database.
-	status, err = c.db.GetStatusByURI(ctx, statusURIStr)
+	status, err = c.state.DB.GetStatusByURI(ctx, statusURIStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		// Real database error.
 		err = gtserror.Newf("db error trying to get status with uri %s: %w", statusURIStr, err)
@@ -648,7 +648,7 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	// This should have been dereferenced already before
 	// we hit this point so we can confidently error out
 	// if we don't have it.
-	account, err := c.db.GetAccountByURI(ctx, accountURIStr)
+	account, err := c.state.DB.GetAccountByURI(ctx, accountURIStr)
 	if err != nil {
 		err = gtserror.Newf("db error trying to get account with uri %s: %w", accountURIStr, err)
 		return nil, isNew, err
@@ -692,7 +692,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 	if err != nil {
 		return nil, fmt.Errorf("ASFlagToReport: error extracting actor: %w", err)
 	}
-	account, err := c.db.GetAccountByURI(ctx, actor.String())
+	account, err := c.state.DB.GetAccountByURI(ctx, actor.String())
 	if err != nil {
 		return nil, fmt.Errorf("ASFlagToReport: error in db fetching account with uri %s: %w", actor.String(), err)
 	}
@@ -744,7 +744,7 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 	if targetAccountURI == nil {
 		return nil, errors.New("ASFlagToReport: flaggable objects contained no recognizable target account uri")
 	}
-	targetAccount, err := c.db.GetAccountByURI(ctx, targetAccountURI.String())
+	targetAccount, err := c.state.DB.GetAccountByURI(ctx, targetAccountURI.String())
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			return nil, fmt.Errorf("ASFlagToReport: account with uri %s could not be found in the db", targetAccountURI.String())
@@ -761,13 +761,13 @@ func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 		statusURIString := statusURI.String()
 
 		// try getting this status by URI first, then URL
-		status, err := c.db.GetStatusByURI(ctx, statusURIString)
+		status, err := c.state.DB.GetStatusByURI(ctx, statusURIString)
 		if err != nil {
 			if !errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("ASFlagToReport: db error getting status with uri %s: %w", statusURIString, err)
 			}
 
-			status, err = c.db.GetStatusByURL(ctx, statusURIString)
+			status, err = c.state.DB.GetStatusByURL(ctx, statusURIString)
 			if err != nil {
 				if !errors.Is(err, db.ErrNoEntries) {
 					return nil, fmt.Errorf("ASFlagToReport: db error getting status with url %s: %w", statusURIString, err)

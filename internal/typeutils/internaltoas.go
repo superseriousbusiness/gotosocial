@@ -220,7 +220,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	if len(a.EmojiIDs) > len(emojis) {
 		emojis = []*gtsmodel.Emoji{}
 		for _, emojiID := range a.EmojiIDs {
-			emoji, err := c.db.GetEmojiByID(ctx, emojiID)
+			emoji, err := c.state.DB.GetEmojiByID(ctx, emojiID)
 			if err != nil {
 				return nil, fmt.Errorf("AccountToAS: error getting emoji %s from database: %s", emojiID, err)
 			}
@@ -269,7 +269,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// Used as profile avatar.
 	if a.AvatarMediaAttachmentID != "" {
 		if a.AvatarMediaAttachment == nil {
-			avatar, err := c.db.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
+			avatar, err := c.state.DB.GetAttachmentByID(ctx, a.AvatarMediaAttachmentID)
 			if err == nil {
 				a.AvatarMediaAttachment = avatar
 			} else {
@@ -303,7 +303,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// Used as profile header.
 	if a.HeaderMediaAttachmentID != "" {
 		if a.HeaderMediaAttachment == nil {
-			header, err := c.db.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
+			header, err := c.state.DB.GetAttachmentByID(ctx, a.HeaderMediaAttachmentID)
 			if err == nil {
 				a.HeaderMediaAttachment = header
 			} else {
@@ -407,7 +407,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	// check if author account is already attached to status and attach it if not
 	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
 	if s.Account == nil {
-		a, err := c.db.GetAccountByID(ctx, s.AccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, s.AccountID)
 		if err != nil {
 			return nil, gtserror.Newf("error retrieving author account from db: %w", err)
 		}
@@ -478,7 +478,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	// tag -- mentions
 	mentions := s.Mentions
 	if len(s.MentionIDs) > len(mentions) {
-		mentions, err = c.db.GetMentions(ctx, s.MentionIDs)
+		mentions, err = c.state.DB.GetMentions(ctx, s.MentionIDs)
 		if err != nil {
 			return nil, gtserror.Newf("error getting mentions: %w", err)
 		}
@@ -496,7 +496,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	if len(s.EmojiIDs) > len(emojis) {
 		emojis = []*gtsmodel.Emoji{}
 		for _, emojiID := range s.EmojiIDs {
-			emoji, err := c.db.GetEmojiByID(ctx, emojiID)
+			emoji, err := c.state.DB.GetEmojiByID(ctx, emojiID)
 			if err != nil {
 				return nil, gtserror.Newf("error getting emoji %s from database: %w", emojiID, err)
 			}
@@ -514,7 +514,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	// tag -- hashtags
 	hashtags := s.Tags
 	if len(s.TagIDs) > len(hashtags) {
-		hashtags, err = c.db.GetTags(ctx, s.TagIDs)
+		hashtags, err = c.state.DB.GetTags(ctx, s.TagIDs)
 		if err != nil {
 			return nil, gtserror.Newf("error getting tags: %w", err)
 		}
@@ -605,7 +605,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	if len(s.AttachmentIDs) > len(attachments) {
 		attachments = []*gtsmodel.MediaAttachment{}
 		for _, attachmentID := range s.AttachmentIDs {
-			attachment, err := c.db.GetAttachmentByID(ctx, attachmentID)
+			attachment, err := c.state.DB.GetAttachmentByID(ctx, attachmentID)
 			if err != nil {
 				return nil, gtserror.Newf("error getting attachment %s from database: %w", attachmentID, err)
 			}
@@ -645,7 +645,7 @@ func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 
 	if s.Account == nil {
 		var err error
-		s.Account, err = c.db.GetAccountByID(ctx, s.AccountID)
+		s.Account, err = c.state.DB.GetAccountByID(ctx, s.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToASDelete: error retrieving author account from db: %w", err)
 		}
@@ -717,7 +717,7 @@ func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 	// Ensure mentions are populated.
 	mentions := s.Mentions
 	if len(s.MentionIDs) > len(mentions) {
-		mentions, err = c.db.GetMentions(ctx, s.MentionIDs)
+		mentions, err = c.state.DB.GetMentions(ctx, s.MentionIDs)
 		if err != nil {
 			return nil, fmt.Errorf("StatusToASDelete: error getting mentions: %w", err)
 		}
@@ -752,7 +752,7 @@ func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 			// Only address to this account if it
 			// wasn't already included as a mention.
 			if s.InReplyToAccount == nil {
-				s.InReplyToAccount, err = c.db.GetAccountByID(ctx, s.InReplyToAccountID)
+				s.InReplyToAccount, err = c.state.DB.GetAccountByID(ctx, s.InReplyToAccountID)
 				if err != nil && !errors.Is(err, db.ErrNoEntries) {
 					return nil, fmt.Errorf("StatusToASDelete: db error getting account %s: %w", s.InReplyToAccountID, err)
 				}
@@ -775,7 +775,7 @@ func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 }
 
 func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow) (vocab.ActivityStreamsFollow, error) {
-	if err := c.db.PopulateFollow(ctx, f); err != nil {
+	if err := c.state.DB.PopulateFollow(ctx, f); err != nil {
 		return nil, gtserror.Newf("error populating follow: %w", err)
 	}
 
@@ -826,7 +826,7 @@ func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow) (vocab.A
 
 func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
 	if m.TargetAccount == nil {
-		a, err := c.db.GetAccountByID(ctx, m.TargetAccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, m.TargetAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("MentionToAS: error getting target account from db: %s", err)
 		}
@@ -995,7 +995,7 @@ We want to end up with something like this:
 func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
 	// check if targetStatus is already pinned to this fave, and fetch it if not
 	if f.Status == nil {
-		s, err := c.db.GetStatusByID(ctx, f.StatusID)
+		s, err := c.state.DB.GetStatusByID(ctx, f.StatusID)
 		if err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target status from database: %s", err)
 		}
@@ -1004,7 +1004,7 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 
 	// check if the targetAccount is already pinned to this fave, and fetch it if not
 	if f.TargetAccount == nil {
-		a, err := c.db.GetAccountByID(ctx, f.TargetAccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, f.TargetAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching target account from database: %s", err)
 		}
@@ -1013,7 +1013,7 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 
 	// check if the faving account is already pinned to this fave, and fetch it if not
 	if f.Account == nil {
-		a, err := c.db.GetAccountByID(ctx, f.AccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, f.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("FaveToAS: error fetching faving account from database: %s", err)
 		}
@@ -1065,7 +1065,7 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
 	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
 	if boostWrapperStatus.BoostOf == nil {
-		b, err := c.db.GetStatusByID(ctx, boostWrapperStatus.BoostOfID)
+		b, err := c.state.DB.GetStatusByID(ctx, boostWrapperStatus.BoostOfID)
 		if err != nil {
 			return nil, fmt.Errorf("BoostToAS: error getting status with ID %s from the db: %s", boostWrapperStatus.BoostOfID, err)
 		}
@@ -1152,7 +1152,7 @@ we want to end up with something like this:
 */
 func (c *converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.ActivityStreamsBlock, error) {
 	if b.Account == nil {
-		a, err := c.db.GetAccountByID(ctx, b.AccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, b.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("BlockToAS: error getting block owner account from database: %s", err)
 		}
@@ -1160,7 +1160,7 @@ func (c *converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.Act
 	}
 
 	if b.TargetAccount == nil {
-		a, err := c.db.GetAccountByID(ctx, b.TargetAccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, b.TargetAccountID)
 		if err != nil {
 			return nil, fmt.Errorf("BlockToAS: error getting block target account from database: %s", err)
 		}
@@ -1524,7 +1524,7 @@ func (c *converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (voc
 
 	// for privacy, set the actor as the INSTANCE ACTOR,
 	// not as the actor who created the report
-	instanceAccount, err := c.db.GetInstanceAccount(ctx, "")
+	instanceAccount, err := c.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return nil, fmt.Errorf("error getting instance account: %w", err)
 	}

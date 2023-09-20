@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -57,7 +58,7 @@ func (suite *TimelineStandardTestSuite) SetupTest() {
 	testrig.StartTimelines(
 		suite.state,
 		visibility.NewFilter(suite.state),
-		testrig.NewTestTypeConverter(suite.state.DB),
+		typeutils.NewConverter(suite.state),
 	)
 
 	testrig.StandardDBSetup(suite.state.DB, nil)

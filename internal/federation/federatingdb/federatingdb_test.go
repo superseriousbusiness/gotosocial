@@ -79,7 +79,7 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,
