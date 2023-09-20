@@ -72,6 +72,7 @@ For more information on GoToSocial image licensing, see [here](https://github.co
 
 In alphabetical order:
 
+- daenney
 - f0x \[[donate with liberapay](https://liberapay.com/f0x)\]
 - kim
 - tobi \[[donate with liberapay](https://liberapay.com/GoToSocial/)\]
