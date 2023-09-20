@@ -36,6 +36,7 @@ type DB interface {
 	Media
 	Mention
 	Notification
+	Poll
 	Relationship
 	Report
 	Rule

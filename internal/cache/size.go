@@ -438,6 +438,10 @@ func sizeofNotification() uintptr {
 	}))
 }
 
+func sizeofPoll() uintptr { return 0 }
+
+func sizeofPollVote() uintptr { return 0 }
+
 func sizeofReport() uintptr {
 	return uintptr(size.Of(&gtsmodel.Report{
 		ID:                     exampleID,

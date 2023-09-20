@@ -701,7 +701,10 @@ func (c *GTSCaches) initNotification() {
 
 func (c *GTSCaches) initPoll() {
 	// Calculate maximum cache size.
-	cap := 1000
+	cap := calculateResultCacheMax(
+		sizeofPoll(), // model in-mem size.
+		config.GetCachePollMemRatio(),
+	)
 
 	log.Infof(nil, "cache size = %d", cap)
 
@@ -719,7 +722,10 @@ func (c *GTSCaches) initPoll() {
 
 func (c *GTSCaches) initPollVote() {
 	// Calculate maximum cache size.
-	cap := 1000
+	cap := calculateResultCacheMax(
+		sizeofPollVote(), // model in-mem size.
+		config.GetCachePollVoteMemRatio(),
+	)
 
 	log.Infof(nil, "cache size = %d", cap)
 
