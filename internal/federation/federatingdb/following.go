@@ -19,11 +19,10 @@ package federatingdb
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // Following obtains the Following Collection for an actor with the
@@ -38,23 +37,18 @@ func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
+	// Fetch follows for account from database.
 	follows, err := f.state.DB.GetAccountFollows(ctx, acct.ID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Following: db error getting following for account id %s: %w", acct.ID, err)
+		return nil, gtserror.Newf("db error getting following for account id %s: %w", acct.ID, err)
 	}
 
+	// Convert the follows to a slice of account URIs.
 	iris := make([]*url.URL, 0, len(follows))
 	for _, follow := range follows {
-		if follow.TargetAccount == nil {
-			// Follow target account no longer exists,
-			// for some reason. Skip this one.
-			log.WithContext(ctx).WithField("follow", follow).Warnf("follow missing target account %s", follow.TargetAccountID)
-			continue
-		}
-
 		u, err := url.Parse(follow.TargetAccount.URI)
 		if err != nil {
-			return nil, err
+			return nil, gtserror.Newf("invalid account uri: %v", err)
 		}
 		iris = append(iris, u)
 	}

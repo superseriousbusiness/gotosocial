@@ -729,7 +729,7 @@ func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 
 	// For direct messages, add URI
 	// to To, else just add to CC.
-	var f func(v *url.URL)
+	var f func(*url.URL)
 	if s.Visibility == gtsmodel.VisibilityDirect {
 		f = toProp.AppendIRI
 	} else {

@@ -26,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // FollowingGETHandler returns a collection of URIs for accounts that the target user follows, formatted so that other AP servers can understand it.
@@ -51,7 +52,17 @@ func (m *Module) FollowingGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().FollowingGet(c.Request.Context(), requestedUsername)
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		80, // max limit
+		0,  // default = disabled
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	resp, errWithCode := m.processor.Fedi().FollowingGet(c.Request.Context(), requestedUsername, page)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

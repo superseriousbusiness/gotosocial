@@ -23,7 +23,7 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // Followers obtains the Followers Collection for an actor with the
@@ -38,25 +38,19 @@ func (f *federatingDB) Followers(ctx context.Context, actorIRI *url.URL) (follow
 		return nil, err
 	}
 
+	// Fetch followers for account from database.
 	follows, err := f.state.DB.GetAccountFollowers(ctx, acct.ID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Followers: db error getting followers for account id %s: %s", acct.ID, err)
 	}
 
+	// Convert the followers to a slice of account URIs.
 	iris := make([]*url.URL, 0, len(follows))
 	for _, follow := range follows {
-		if follow.Account == nil {
-			// Follow account no longer exists,
-			// for some reason. Skip this one.
-			log.WithContext(ctx).WithField("follow", follow).Warnf("follow missing account %s", follow.AccountID)
-			continue
-		}
-
 		u, err := url.Parse(follow.Account.URI)
 		if err != nil {
-			return nil, err
+			return nil, gtserror.Newf("invalid account uri: %v", err)
 		}
-
 		iris = append(iris, u)
 	}
 
