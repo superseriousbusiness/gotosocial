@@ -31,9 +31,8 @@ import (
 )
 
 type domainDB struct {
-	db                     *DB
-	state                  *state.State
-	instanceFederationMode string
+	db    *DB
+	state *state.State
 }
 
 func (d *domainDB) CreateDomainAllow(ctx context.Context, allow *gtsmodel.DomainAllow) error {
@@ -279,7 +278,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, er
 
 	// Calculate if blocked
 	// based on federation mode.
-	switch mode := d.instanceFederationMode; mode {
+	switch mode := config.GetInstanceFederationMode(); mode {
 
 	case config.InstanceFederationModeBlocklist:
 		// Blocklist/default mode: explicit allow

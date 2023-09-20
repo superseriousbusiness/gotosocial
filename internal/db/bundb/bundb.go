@@ -170,9 +170,8 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			db: db,
 		},
 		Domain: &domainDB{
-			db:                     db,
-			state:                  state,
-			instanceFederationMode: config.GetInstanceFederationMode(),
+			db:    db,
+			state: state,
 		},
 		Emoji: &emojiDB{
 			db:    db,
