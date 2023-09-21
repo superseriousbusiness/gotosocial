@@ -25,7 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string, choice int) (*apimodel.Poll, gtserror.WithCode) {
@@ -43,8 +42,9 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 
 	if !*poll.Multiple {
 		// This is a SINGLE choice poll, we need to delete any existing votes by account for poll.
-		if err := p.state.DB.DeletePollVotes(ctx, pollID, requestingAccount.ID); err != nil {
-			log.Errorf(ctx, "error deleting poll %s vote(s) for %s: %v", poll.Status.URI, requestingAccount.URI, err)
+		if err := p.state.DB.DeletePollVotesBy(ctx, pollID, requestingAccount.ID); err != nil {
+			err := gtserror.Newf("error deleting poll vote: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
 
@@ -60,12 +60,14 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 
 	// Insert the new poll vote into the database.
 	if err := p.state.DB.PutPollVote(ctx, vote); err != nil {
+		err := gtserror.Newf("error inserting poll vote: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Convert the poll to API model view for the requesting account.
 	apiPoll, err := p.converter.PollToAPIPoll(ctx, requestingAccount, poll)
 	if err != nil {
+		err := gtserror.Newf("error converting to api model: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

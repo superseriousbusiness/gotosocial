@@ -223,6 +223,19 @@ func (p *pollDB) GetPollVotesBy(ctx context.Context, pollID string, accountID st
 	return votes, nil
 }
 
+func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
+	return p.state.Caches.GTS.PollVote().Store(vote, func() error {
+		_, err := p.db.NewInsert().Model(vote).Exec(ctx)
+		return err
+	})
+}
+
+func (p *pollDB) DeletePollVotesBy(ctx context.Context, pollID string, accountID string) error {
+}
+
+func (p *pollDB) DeletePollVotesByAccountID(ctx context.Context, accountID string) error {
+}
+
 func (p *pollDB) getPollVoterIDs(ctx context.Context, pollID string) ([]string, error) {
 	return p.state.Caches.GTS.PollVoterIDs().Load(pollID, func() ([]string, error) {
 		var accountIDs []string
@@ -249,28 +262,6 @@ func (p *pollDB) getPollVoteIDs(ctx context.Context, pollID string, accountID st
 
 		return voteIDs, nil
 	})
-}
-
-func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
-	return p.state.Caches.GTS.PollVote().Store(vote, func() error {
-		_, err := p.db.NewInsert().Model(vote).Exec(ctx)
-		return err
-	})
-}
-
-func (p *pollDB) DeletePollVoteByID(ctx context.Context, id string) error {
-	// Delete vote from database.
-	if _, err := p.db.NewDelete().
-		Table("poll_votes").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx); err != nil {
-		return err
-	}
-
-	// Invalidate poll vote from cache by ID.
-	p.state.Caches.GTS.PollVote().Invalidate("ID", id)
-
-	return nil
 }
 
 // newSelectFollowers returns a new select query for all id column values in the poll votes table with poll_id = pollID and account_id = accountID.

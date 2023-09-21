@@ -387,12 +387,12 @@ statusLoop:
 func (p *Processor) deleteAccountNotifications(ctx context.Context, account *gtsmodel.Account) error {
 	// Delete all notifications of all types targeting given account.
 	if err := p.state.DB.DeleteNotifications(ctx, nil, account.ID, ""); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
+		return gtserror.Newf("error deleting notifications targeting account: %w", err)
 	}
 
 	// Delete all notifications of all types originating from given account.
 	if err := p.state.DB.DeleteNotifications(ctx, nil, "", account.ID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
+		return gtserror.Newf("error deleting notifications by account: %w", err)
 	}
 
 	return nil
@@ -402,28 +402,34 @@ func (p *Processor) deleteAccountPeripheral(ctx context.Context, account *gtsmod
 	// Delete all bookmarks owned by given account.
 	if err := p.state.DB.DeleteStatusBookmarks(ctx, account.ID, ""); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
+		return gtserror.Newf("error deleting bookmarks by account: %w", err)
 	}
 
 	// Delete all bookmarks targeting given account.
 	if err := p.state.DB.DeleteStatusBookmarks(ctx, "", account.ID); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
+		return gtserror.Newf("error deleting bookmarks targeting account: %w", err)
 	}
 
 	// Delete all faves owned by given account.
 	if err := p.state.DB.DeleteStatusFaves(ctx, account.ID, ""); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
+		return gtserror.Newf("error deleting faves by account: %w", err)
 	}
 
 	// Delete all faves targeting given account.
 	if err := p.state.DB.DeleteStatusFaves(ctx, "", account.ID); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
+		return gtserror.Newf("error deleting faves targeting account: %w", err)
 	}
 
 	// TODO: add status mutes here when they're implemented.
+
+	// Delete all poll votes owned by given account.
+	if err := p.state.DB.DeletePollVotesByAccountID(ctx, account.ID); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("error deleting poll votes by account: %w", err)
+	}
 
 	return nil
 }
