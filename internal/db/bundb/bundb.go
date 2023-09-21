@@ -71,6 +71,7 @@ type DBService struct {
 	db.Media
 	db.Mention
 	db.Notification
+	db.Poll
 	db.Relationship
 	db.Report
 	db.Rule
@@ -200,6 +201,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Notification: &notificationDB{
+			db:    db,
+			state: state,
+		},
+		Poll: &pollDB{
 			db:    db,
 			state: state,
 		},

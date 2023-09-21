@@ -33,9 +33,6 @@ type Poll interface {
 	// PutPoll ...
 	PutPoll(ctx context.Context, poll *gtsmodel.Poll) error
 
-	// DeletePollByID ...
-	DeletePollByID(ctx context.Context, id string) error
-
 	// GetPollVoteByID ...
 	GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.PollVote, error)
 
@@ -45,18 +42,9 @@ type Poll interface {
 	// GetPollVotesBy ...
 	GetPollVotesBy(ctx context.Context, pollID string, accountID string) ([]*gtsmodel.PollVote, error)
 
-	// CountPollVotes returns the total number of votes registered against poll with given ID.
-	CountPollVotes(ctx context.Context, pollID string)
-
-	// CountPollVoters returns the total number of accounts with votes registered against poll with given ID.
-	CountPollVoters(ctx context.Context, pollID string) (int, error)
-
 	// PutPollVote ...
 	PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 
 	// DeletePollVoteByID ...
 	DeletePollVoteByID(ctx context.Context, id string) error
-
-	// DeletePollVotes ...
-	DeletePollVotes(ctx context.Context, pollID string, accountID string) error
 }

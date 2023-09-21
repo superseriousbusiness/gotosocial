@@ -54,6 +54,8 @@ type GTSCaches struct {
 	notification     *result.Cache[*gtsmodel.Notification]
 	poll             *result.Cache[*gtsmodel.Poll]
 	pollVote         *result.Cache[*gtsmodel.PollVote]
+	pollVoteIDs      *SliceCache[string]
+	pollVoterIDs     *SliceCache[string]
 	report           *result.Cache[*gtsmodel.Report]
 	status           *result.Cache[*gtsmodel.Status]
 	statusFave       *result.Cache[*gtsmodel.StatusFave]
@@ -94,6 +96,8 @@ func (c *GTSCaches) Init() {
 	c.initNotification()
 	c.initPoll()
 	c.initPollVote()
+	c.initPollVoteIDs()
+	c.initPollVoterIDs()
 	c.initReport()
 	c.initStatus()
 	c.initStatusFave()
@@ -235,14 +239,26 @@ func (c *GTSCaches) Notification() *result.Cache[*gtsmodel.Notification] {
 	return c.notification
 }
 
-// Poll ...
+// Poll provides access to the gtsmodel Poll database cache.
 func (c *GTSCaches) Poll() *result.Cache[*gtsmodel.Poll] {
 	return c.poll
 }
 
-// PollVote ...
+// PollVote provides access to the gtsmodel PollVote database cache.
 func (c *GTSCaches) PollVote() *result.Cache[*gtsmodel.PollVote] {
 	return c.pollVote
+}
+
+// PollVoteIDs provides access to the poll voter IDs list database cache.
+// {$pollID} -> registered votes by unique (account) IDs in poll.
+func (c *GTSCaches) PollVoterIDs() *SliceCache[string] {
+	return c.pollVoterIDs
+}
+
+// PollVoteIDs provides access to the poll vote IDs list database cache.
+// {$pollID}.{$accountID} -> registered vote IDs in poll by acccount.
+func (c *GTSCaches) PollVoteIDs() *SliceCache[string] {
+	return c.pollVoteIDs
 }
 
 // Report provides access to the gtsmodel Report database cache.
@@ -260,24 +276,24 @@ func (c *GTSCaches) StatusFave() *result.Cache[*gtsmodel.StatusFave] {
 	return c.statusFave
 }
 
-// Tag provides access to the gtsmodel Tag database cache.
-func (c *GTSCaches) Tag() *result.Cache[*gtsmodel.Tag] {
-	return c.tag
-}
-
-// ThreadMute provides access to the gtsmodel ThreadMute database cache.
-func (c *GTSCaches) ThreadMute() *result.Cache[*gtsmodel.ThreadMute] {
-	return c.threadMute
-}
-
 // StatusFaveIDs provides access to the status fave IDs list database cache.
 func (c *GTSCaches) StatusFaveIDs() *SliceCache[string] {
 	return c.statusFaveIDs
 }
 
+// Tag provides access to the gtsmodel Tag database cache.
+func (c *GTSCaches) Tag() *result.Cache[*gtsmodel.Tag] {
+	return c.tag
+}
+
 // Tombstone provides access to the gtsmodel Tombstone database cache.
 func (c *GTSCaches) Tombstone() *result.Cache[*gtsmodel.Tombstone] {
 	return c.tombstone
+}
+
+// ThreadMute provides access to the gtsmodel ThreadMute database cache.
+func (c *GTSCaches) ThreadMute() *result.Cache[*gtsmodel.ThreadMute] {
+	return c.threadMute
 }
 
 // User provides access to the gtsmodel User database cache.
@@ -739,6 +755,34 @@ func (c *GTSCaches) initPollVote() {
 	}, cap)
 
 	c.pollVote.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initPollVoteIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		1.0,
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.pollVoteIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
+}
+
+func (c *GTSCaches) initPollVoterIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		1.0,
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.pollVoterIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
 }
 
 func (c *GTSCaches) initReport() {

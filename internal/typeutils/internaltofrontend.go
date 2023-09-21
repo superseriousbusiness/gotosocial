@@ -1358,15 +1358,6 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmod
 	}, nil
 }
 
-// countMapSliceValues returns the combined length of all available slices in given map.
-func countMapSliceValues[K comparable, V any](m map[K][]V) int {
-	var total int
-	for _, vs := range m {
-		total += len(vs)
-	}
-	return total
-}
-
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
 func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]apimodel.Attachment, error) {
 	var errs gtserror.MultiError

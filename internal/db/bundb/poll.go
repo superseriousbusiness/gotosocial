@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
@@ -110,33 +111,6 @@ func (p *pollDB) PutPoll(ctx context.Context, poll *gtsmodel.Poll) error {
 	})
 }
 
-func (p *pollDB) DeletePollByID(ctx context.Context, id string) error {
-	err := p.db.RunInTx(ctx, func(tx Tx) error {
-		// Delete poll from database.
-		if _, err := p.db.NewDelete().
-			Table("polls").
-			Where("? = ?", bun.Ident("id"), id).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		// Delete related poll votes from database.
-		if _, err := p.db.NewDelete().
-			Table("poll_votes").
-			Where("? = ?", bun.Ident("poll_id"), id).
-			Exec(ctx); err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	// Invalidate poll vote from cache by ID.
-	p.state.Caches.GTS.PollVote().Invalidate("ID", id)
-
-	return nil
-}
-
 func (p *pollDB) GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.PollVote, error) {
 	return p.getPollVote(
 		ctx,
@@ -146,9 +120,6 @@ func (p *pollDB) GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.Poll
 		},
 		id,
 	)
-}
-
-func (p *pollDB) GetPollVotes(ctx context.Context, statusID string, accountID string) ([]*gtsmodel.PollVote, error) {
 }
 
 func (p *pollDB) getPollVote(ctx context.Context, lookup string, dbQuery func(*gtsmodel.PollVote) error, keyParts ...any) (*gtsmodel.PollVote, error) {
@@ -211,6 +182,75 @@ func (p *pollDB) PopulatePollVote(ctx context.Context, vote *gtsmodel.PollVote) 
 	return errs.Combine()
 }
 
+func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) (map[string][]*gtsmodel.PollVote, error) {
+	// Get all account IDs of those who voted in poll.
+	accountIDs, err := p.getPollVoterIDs(ctx, pollID)
+	if err != nil {
+		return nil, gtserror.Newf("error getting voter ids: %w", err)
+	}
+
+	// Fetch slices of poll votes made by each account ID.
+	votes := make(map[string][]*gtsmodel.PollVote, len(accountIDs))
+	for _, id := range accountIDs {
+		votesBy, err := p.GetPollVotesBy(ctx, pollID, id)
+		if err != nil {
+			return nil, err
+		}
+		votes[id] = votesBy
+	}
+
+	return votes, nil
+}
+
+func (p *pollDB) GetPollVotesBy(ctx context.Context, pollID string, accountID string) ([]*gtsmodel.PollVote, error) {
+	// Get all vote IDs by the given account in given poll.
+	voteIDs, err := p.getPollVoteIDs(ctx, pollID, accountID)
+	if err != nil {
+		return nil, gtserror.Newf("error getting vote ids: %w", err)
+	}
+
+	// Fetch poll vote models for all fetched vote IDs.
+	votes := make([]*gtsmodel.PollVote, 0, len(voteIDs))
+	for _, id := range voteIDs {
+		vote, err := p.GetPollVoteByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting vote with id %s: %v", err)
+			continue
+		}
+		votes = append(votes, vote)
+	}
+
+	return votes, nil
+}
+
+func (p *pollDB) getPollVoterIDs(ctx context.Context, pollID string) ([]string, error) {
+	return p.state.Caches.GTS.PollVoterIDs().Load(pollID, func() ([]string, error) {
+		var accountIDs []string
+
+		// Voter account IDs not in cache, perform DB query!
+		q := newSelectPollVoters(p.db, pollID)
+		if _, err := q.Exec(ctx, &accountIDs); err != nil {
+			return nil, err
+		}
+
+		return accountIDs, nil
+	})
+}
+
+func (p *pollDB) getPollVoteIDs(ctx context.Context, pollID string, accountID string) ([]string, error) {
+	return p.state.Caches.GTS.PollVoteIDs().Load(pollID+"."+accountID, func() ([]string, error) {
+		var voteIDs []string
+
+		// Poll vote IDs not in cache, perform DB query!
+		q := newSelectPollVotes(p.db, pollID, accountID)
+		if _, err := q.Exec(ctx, &voteIDs); err != nil {
+			return nil, err
+		}
+
+		return voteIDs, nil
+	})
+}
+
 func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
 	return p.state.Caches.GTS.PollVote().Store(vote, func() error {
 		_, err := p.db.NewInsert().Model(vote).Exec(ctx)
@@ -231,4 +271,23 @@ func (p *pollDB) DeletePollVoteByID(ctx context.Context, id string) error {
 	p.state.Caches.GTS.PollVote().Invalidate("ID", id)
 
 	return nil
+}
+
+// newSelectFollowers returns a new select query for all id column values in the poll votes table with poll_id = pollID and account_id = accountID.
+func newSelectPollVotes(db *DB, pollID string, accountID string) *bun.SelectQuery {
+	return db.NewSelect().
+		Table("poll_votes").
+		Column("id").
+		Where("? = ?", bun.Ident("poll_id"), pollID).
+		Where("? = ?", bun.Ident("account_id"), accountID).
+		OrderExpr("? DESC", bun.Ident("id"))
+}
+
+// newSelectFollowers returns a new select query for all account_id column values in the poll votes table with poll_id = pollID.
+func newSelectPollVoters(db *DB, pollID string) *bun.SelectQuery {
+	return db.NewSelect().
+		Table("poll_votes").
+		Column("account_id").
+		Where("? = ?", bun.Ident("poll_id"), pollID).
+		OrderExpr("? DESC", bun.Ident("id"))
 }
