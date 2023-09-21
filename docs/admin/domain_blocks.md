@@ -26,7 +26,7 @@ Secondly, a domain block instructs your instance to no longer make any requests 
 
 ### Block evasion
 
-Domain blocking is not airtight. GoToSocial can guarantee that it will not serve requests from or make requests to instances on blocked domains. Unfortunately it cannot guarantee that accounts on your instance will never be visible in any way to users with accounts on blocked instances. Consider the following circumstances, all of which represent a form of [block evasion](https://en.wikipedia.org/wiki/Block_(Internet)#Evasion):
+Domain blocking is not airtight. GoToSocial *can* ensure that it will neither serve requests from nor make requests to instances on blocked domains. Unfortunately it *cannot* guarantee that accounts on your instance will never be visible in any way to users with accounts on blocked instances. Consider the following circumstances, all of which represent a form of [block evasion](https://en.wikipedia.org/wiki/Block_(Internet)#Evasion):
 
 - You've domain blocked `blocked.instance.org`. A user on `blocked.instance.org` makes an account on `not-blocked.domain`, so that they can use their new account to interact with your posts or send messages to you. They may be upfront about who they are, or they may use a false identity.
 - You've domain blocked `blocked.instance.org`. A user on `not-blocked.domain` screenshots a post of yours and sends it to someone on `blocked.instance.org`.
