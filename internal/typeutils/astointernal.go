@@ -34,6 +34,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// ASRepresentationToAccount converts a remote account/person/application representation into a gts model account.
+//
+// If accountDomain is provided then this value will be used as the account's Domain, else the AP ID host.
 func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
@@ -245,6 +248,7 @@ func (c *Converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAtt
 	return attachments
 }
 
+// ASStatus converts a remote activitystreams 'status' representation into a gts model status.
 func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
 	status := new(gtsmodel.Status)
 
@@ -417,6 +421,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	return status, nil
 }
 
+// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
 func (c *Converter) ASFollowToFollowRequest(ctx context.Context, followable ap.Followable) (*gtsmodel.FollowRequest, error) {
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -451,6 +456,7 @@ func (c *Converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 	return followRequest, nil
 }
 
+// ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
 func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followable) (*gtsmodel.Follow, error) {
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -485,6 +491,7 @@ func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 	return follow, nil
 }
 
+// ASLikeToFave converts a remote activitystreams 'like' representation into a gts model status fave.
 func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
 	idProp := likeable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -533,6 +540,7 @@ func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 	}, nil
 }
 
+// ASBlockToBlock converts a remote activity streams 'block' representation into a gts model block.
 func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) (*gtsmodel.Block, error) {
 	idProp := blockable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -568,6 +576,19 @@ func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 	}, nil
 }
 
+// ASAnnounceToStatus converts an activitystreams 'announce' into a status.
+//
+// The returned bool indicates whether this status is new (true) or not new (false).
+//
+// In other words, if the status is already in the database with the ID set on the announceable, then that will be returned,
+// the returned bool will be false, and no further processing is necessary. If the returned bool is true, indicating
+// that this is a new announce, then further processing will be necessary, because the returned status will be bareboned and
+// require further dereferencing.
+//
+// This is useful when multiple users on an instance might receive the same boost, and we only want to process the boost once.
+//
+// NOTE -- this is different from one status being boosted multiple times! In this case, new boosts should indeed be created.
+//
 // Implementation note: this function creates and returns a boost WRAPPER
 // status which references the boosted status in its BoostOf field. No
 // dereferencing is done on the boosted status by this function. Callers
@@ -678,6 +699,7 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	return status, isNew, nil
 }
 
+// ASFlagToReport converts a remote activitystreams 'flag' representation into a gts model report.
 func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (*gtsmodel.Report, error) {
 	// Extract flag uri.
 	idProp := flaggable.GetJSONLDId()
