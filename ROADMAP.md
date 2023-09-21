@@ -45,24 +45,24 @@ What follows is a rough timeline of features that will be implemented on the roa
 
 ### Mid 2023
 
-- **Hashtags** -- implement federating hashtags and viewing hashtags to allow users to discover posts that they might be interested in.
-- **Block list subscriptions** -- allow instance admins to subscribe their instance to plaintext domain block lists (much of the work for this is already in place).
-- **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
+- [x] **Hashtags** -- implement federating hashtags and viewing hashtags to allow users to discover posts that they might be interested in. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2032).
+- [ ] **Block list subscriptions** -- allow instance admins to subscribe their instance to plaintext domain block lists (much of the work for this is already in place).
+- [ ] **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
 
 ### Mid/late 2023
 
-- **Polls** -- implementing parsing, creating, and voting in polls.
-- **Mute posts/threads** -- opt-out of notifications for replies to a thread; no longer show a given post in your timeline.
-- **Limited peering/allowlists** -- allow instance admins to limit federation with other instances by default.
+- [ ] **Polls** -- implementing parsing, creating, and voting in polls.
+- [ ] **Mute posts/threads** -- opt-out of notifications for replies to a thread; no longer show a given post in your timeline.
+- [x] **Limited peering/allowlists** -- allow instance admins to limit federation with other instances by default. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2200)
 
 ### Late 2023
 
-- **Move activity** -- use the ActivityPub `Move` activity to support migration of a user's profile across servers.
-- **Sign-up flow** -- allow users to submit a sign-up request to an instance; allow admins to moderate sign-up requests.
+- [ ] **Move activity** -- use the ActivityPub `Move` activity to support migration of a user's profile across servers.
+- [ ] **Sign-up flow** -- allow users to submit a sign-up request to an instance; allow admins to moderate sign-up requests.
 
 ### Early 2024
 
-- **Non-replyable posts** -- design a non-replyable post path for GoToSocial based on https://github.com/mastodon/mastodon/issues/14762#issuecomment-1196889788; allow users to create non-replyable posts.
+- [ ] **Non-replyable posts** -- design a non-replyable post path for GoToSocial based on https://github.com/mastodon/mastodon/issues/14762#issuecomment-1196889788; allow users to create non-replyable posts.
 
 ### And then...
 
