@@ -20,7 +20,6 @@ package status
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -28,9 +27,6 @@ import (
 )
 
 type Processor struct {
-	// common processor logic
-	c *common.Processor
-
 	state        *state.State
 	federator    *federation.Federator
 	converter    *typeutils.Converter

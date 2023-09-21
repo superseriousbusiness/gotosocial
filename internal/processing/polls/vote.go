@@ -15,31 +15,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package status
+package polls
 
 import (
 	"context"
 	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
-
-func (p *Processor) PollGet(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string) (*apimodel.Poll, gtserror.WithCode) {
-	// Get (+ check visibility of) requested poll with ID.
-	poll, errWithCode := p.getTargetPoll(ctx, requestingAccount, pollID)
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
-
-	// Package poll API model response.
-	return p.toAPIPoll(ctx, poll)
-}
 
 func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string, choice int) (*apimodel.Poll, gtserror.WithCode) {
 	// Get (+ check visibility of) requested poll with ID.
@@ -76,56 +63,11 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Package poll API model response.
-	return p.toAPIPoll(ctx, poll)
-}
-
-// getTargetPoll fetches a target poll ID for requesting account, taking visibility of the poll's originating status into account.
-func (p *Processor) getTargetPoll(ctx context.Context, requestingAccount *gtsmodel.Account, targetID string) (*gtsmodel.Poll, gtserror.WithCode) {
-	// Load the requested poll with ID.
-	// (barebones as we fetch status below)
-	poll, err := p.state.DB.GetPollByID(
-		gtscontext.SetBarebones(ctx),
-		targetID,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	// Convert the poll to API model view for the requesting account.
+	apiPoll, err := p.converter.PollToAPIPoll(ctx, requestingAccount, poll)
+	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if poll == nil {
-		// No poll could be found for given ID.
-		err := errors.New("target poll not found")
-		return nil, gtserror.NewErrorNotFound(err)
-	}
-
-	// Check that we can see + fetch the originating status for requesting account.
-	status, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, poll.StatusID)
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
-
-	// Update poll status.
-	poll.Status = status
-
-	return poll, nil
-}
-
-func (p *Processor) toAPIPoll(ctx context.Context, poll *gtsmodel.Poll) (*apimodel.Poll, gtserror.WithCode) {
-	// Preallocate a slice of frontend model poll options.
-	options := make([]apimodel.PollOption, len(poll.Options))
-
-	if *poll.HideCounts {
-		// Simply set the poll option titles.
-		for i, title := range poll.Options {
-			options[i].Title = title
-		}
-	} else {
-		// Set the poll option titles WITH vote counts.
-		for i, title := range poll.Options {
-			options[i].Title = title
-			options[i].VotesCount = 999
-		}
-	}
-
-	return nil, nil
+	return apiPoll, nil
 }

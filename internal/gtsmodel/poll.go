@@ -25,6 +25,8 @@ type Poll struct {
 	Multiple   *bool     `bun:"nullzero,notnull,default:false"`                              // Is this a multiple choice poll? i.e. can you vote on multiple options.
 	HideCounts *bool     `bun:"nullzero,notnull,default:false"`                              // Hides vote counts until poll ends.
 	Options    []string  `bun:"nullzero,notnull"`                                            // The available options for this poll.
+	EmojiIDs   []string  `bun:"nullzero"`                                                    // TODO!
+	Emojis     []*Emoji  `bun:"-"`                                                           // TODO!
 	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`                       // Status ID of which this Poll is attached to.
 	Status     *Status   `bun:"-"`                                                           // The related Status for StatusID (not always set).
 	CreatedAt  time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // The creation date of this Poll.

@@ -24,6 +24,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -1285,6 +1286,85 @@ func (c *Converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.
 		}
 	}
 	return apiMarker, nil
+}
+
+// PollToAPIPoll converts a database (gtsmodel) Poll into an API model representation appropriate for the given requesting account.
+func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmodel.Account, poll *gtsmodel.Poll) (*apimodel.Poll, error) {
+	// Get all available votes (by account ID) for poll.
+	allVotes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error getting votes for poll %s: %w", poll.ID, err)
+	}
+
+	var totalVoters int
+
+	// Get the total count of all available votes.
+	totalVotes := countMapSliceValues(allVotes)
+
+	if *poll.Multiple {
+		// This is a multiple choice poll, we
+		// also need to return total no. voters.
+		totalVoters = len(allVotes)
+	}
+
+	var ownChoices []int
+
+	if requestingAccount != nil {
+		// Get votes in poll registered by requester.
+		votes := allVotes[requestingAccount.ID]
+
+		// Convert into a slice of option choices.
+		ownChoices = make([]int, len(votes))
+		for i, vote := range votes {
+			ownChoices[i] = vote.Choice
+		}
+	}
+
+	// Preallocate a slice of frontend model poll options.
+	options := make([]apimodel.PollOption, len(poll.Options))
+
+	// Add the titles to all of the options.
+	for i, title := range poll.Options {
+		options[i].Title = title
+	}
+
+	if !*poll.HideCounts {
+		// When hide counts is disabled, increment the
+		// counter for each available option by each
+		// vote that exists for that choice index.
+		for _, votes := range allVotes {
+			for _, vote := range votes {
+				options[vote.Choice].VotesCount++
+			}
+		}
+	}
+
+	// Convert any required emojis in the poll option titles to API models.
+	emojis, err := c.convertEmojisToAPIEmojis(ctx, poll.Emojis, poll.EmojiIDs)
+	if err != nil {
+		return nil, gtserror.Newf("error converting emojis: %w", err)
+	}
+
+	return &apimodel.Poll{
+		ID:          poll.ID,
+		ExpiresAt:   util.FormatISO8601(poll.ExpiresAt),
+		Expired:     time.Now().Before(poll.ExpiresAt),
+		Multiple:    *poll.Multiple,
+		VotesCount:  totalVotes,
+		VotersCount: totalVoters,
+		OwnVotes:    ownChoices,
+		Options:     options,
+		Emojis:      emojis,
+	}, nil
+}
+
+// countMapSliceValues returns the combined length of all available slices in given map.
+func countMapSliceValues[K comparable, V any](m map[K][]V) int {
+	var total int
+	for _, vs := range m {
+		total += len(vs)
+	}
+	return total
 }
 
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
