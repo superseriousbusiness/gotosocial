@@ -27,25 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-<<<<<<< HEAD
-=======
-// apiDomainBlock is a cheeky shortcut for returning
-// the API version of the given domainBlock, or an
-// appropriate error if something goes wrong.
-func (p *Processor) apiDomainBlock(
-	ctx context.Context,
-	domainBlock *gtsmodel.DomainBlock,
-) (*apimodel.DomainBlock, gtserror.WithCode) {
-	apiDomainBlock, err := p.converter.DomainBlockToAPIDomainBlock(ctx, domainBlock, false)
-	if err != nil {
-		err = gtserror.Newf("error converting domain block for %s to api model : %w", domainBlock.Domain, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return apiDomainBlock, nil
-}
-
->>>>>>> c151f621 (deinterface the typeutils.TypeConverter -> typeutils.Converter)
 // stubbifyInstance renders the given instance as a stub,
 // removing most information from it and marking it as
 // suspended.
