@@ -70,7 +70,7 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 				"last": "https://example.org/users/whatever/outbox?min_id=0&page=true"
 			}
 		*/
-		collection, err := p.tc.OutboxToASCollection(ctx, requestedAccount.OutboxURI)
+		collection, err := p.converter.OutboxToASCollection(ctx, requestedAccount.OutboxURI)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -90,7 +90,7 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	outboxPage, err := p.tc.StatusesToASOutboxPage(ctx, requestedAccount.OutboxURI, maxID, minID, publicStatuses)
+	outboxPage, err := p.converter.StatusesToASOutboxPage(ctx, requestedAccount.OutboxURI, maxID, minID, publicStatuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -301,7 +301,7 @@ func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername
 		}
 	}
 
-	collection, err := p.tc.StatusesToASFeaturedCollection(ctx, requestedAccount.FeaturedCollectionURI, statuses)
+	collection, err := p.converter.StatusesToASFeaturedCollection(ctx, requestedAccount.FeaturedCollectionURI, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

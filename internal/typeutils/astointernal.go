@@ -34,7 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
+func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
 	// first check if we actually already know this account
 	uriProp := accountable.GetJSONLDId()
 	if uriProp == nil || !uriProp.IsIRI() {
@@ -213,7 +213,7 @@ func (c *converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	return acct, nil
 }
 
-func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAttachment {
+func (c *Converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAttachment {
 	attachmentProp := i.GetActivityStreamsAttachment()
 	if attachmentProp == nil {
 		return nil
@@ -245,7 +245,7 @@ func (c *converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAtt
 	return attachments
 }
 
-func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
+func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
 	status := new(gtsmodel.Status)
 
 	// status.URI
@@ -417,7 +417,7 @@ func (c *converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	return status, nil
 }
 
-func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.Followable) (*gtsmodel.FollowRequest, error) {
+func (c *Converter) ASFollowToFollowRequest(ctx context.Context, followable ap.Followable) (*gtsmodel.FollowRequest, error) {
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on follow, or was not an iri")
@@ -451,7 +451,7 @@ func (c *converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 	return followRequest, nil
 }
 
-func (c *converter) ASFollowToFollow(ctx context.Context, followable ap.Followable) (*gtsmodel.Follow, error) {
+func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followable) (*gtsmodel.Follow, error) {
 	idProp := followable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on follow, or was not an iri")
@@ -485,7 +485,7 @@ func (c *converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 	return follow, nil
 }
 
-func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
+func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
 	idProp := likeable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("no id property set on like, or was not an iri")
@@ -533,7 +533,7 @@ func (c *converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 	}, nil
 }
 
-func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) (*gtsmodel.Block, error) {
+func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) (*gtsmodel.Block, error) {
 	idProp := blockable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
 		return nil, errors.New("ASBlockToBlock: no id property set on block, or was not an iri")
@@ -577,7 +577,7 @@ func (c *converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 // The returned boolean indicates whether or not the boost has already been
 // seen before by this instance. If it was, then status.BoostOf should be a
 // fully filled-out status. If not, then only status.BoostOf.URI will be set.
-func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
+func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
 	// Ensure item has an ID URI set.
 	_, statusURIStr, err := getURI(announceable)
 	if err != nil {
@@ -678,7 +678,7 @@ func (c *converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	return status, isNew, nil
 }
 
-func (c *converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (*gtsmodel.Report, error) {
+func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (*gtsmodel.Report, error) {
 	// Extract flag uri.
 	idProp := flaggable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {

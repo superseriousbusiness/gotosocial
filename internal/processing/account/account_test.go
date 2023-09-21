@@ -43,7 +43,7 @@ type AccountStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db                  db.DB
-	tc                  typeutils.TypeConverter
+	tc                  *typeutils.Converter
 	storage             *storage.Driver
 	state               state.State
 	mediaManager        *media.Manager

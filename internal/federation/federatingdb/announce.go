@@ -44,7 +44,7 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		return nil // Already processed.
 	}
 
-	boost, isNew, err := f.typeConverter.ASAnnounceToStatus(ctx, announce)
+	boost, isNew, err := f.converter.ASAnnounceToStatus(ctx, announce)
 	if err != nil {
 		return gtserror.Newf("error converting announce to boost: %w", err)
 	}

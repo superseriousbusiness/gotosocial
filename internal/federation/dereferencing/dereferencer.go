@@ -85,7 +85,7 @@ type Dereferencer interface {
 
 type deref struct {
 	state               *state.State
-	typeConverter       typeutils.TypeConverter
+	converter           *typeutils.Converter
 	transportController transport.Controller
 	mediaManager        *media.Manager
 	derefAvatars        map[string]*media.ProcessingMedia
@@ -99,10 +99,10 @@ type deref struct {
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
-func NewDereferencer(state *state.State, typeConverter typeutils.TypeConverter, transportController transport.Controller, mediaManager *media.Manager) Dereferencer {
+func NewDereferencer(state *state.State, converter *typeutils.Converter, transportController transport.Controller, mediaManager *media.Manager) Dereferencer {
 	return &deref{
 		state:               state,
-		typeConverter:       typeConverter,
+		converter:           converter,
 		transportController: transportController,
 		mediaManager:        mediaManager,
 		derefAvatars:        make(map[string]*media.ProcessingMedia),

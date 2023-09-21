@@ -56,7 +56,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, gtserror.NewErrorUnprocessableEntity(err)
 	}
 
-	apiAttachment, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)
+	apiAttachment, err := p.converter.AttachmentToAPIAttachment(ctx, attachment)
 	if err != nil {
 		err := fmt.Errorf("error parsing media attachment to frontend type: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)

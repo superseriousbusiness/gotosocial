@@ -481,7 +481,7 @@ type TypeUtilsTestSuite struct {
 	testReports     map[string]*gtsmodel.Report
 	testMentions    map[string]*gtsmodel.Mention
 
-	typeconverter typeutils.TypeConverter
+	typeconverter *typeutils.Converter
 }
 
 func (suite *TypeUtilsTestSuite) SetupTest() {

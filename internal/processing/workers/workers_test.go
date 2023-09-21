@@ -44,7 +44,7 @@ type WorkersTestSuite struct {
 	storage             *storage.Driver
 	state               state.State
 	mediaManager        *media.Manager
-	typeconverter       typeutils.TypeConverter
+	typeconverter       *typeutils.Converter
 	httpClient          *testrig.MockHTTPClient
 	transportController transport.Controller
 	federator           federation.Federator

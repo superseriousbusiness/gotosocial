@@ -54,7 +54,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		// the bare minimum user profile needed for the pubkey.
 		//
 		// TODO: https://github.com/superseriousbusiness/gotosocial/issues/1186
-		minimalPerson, err := p.tc.AccountToASMinimal(ctx, requestedAccount)
+		minimalPerson, err := p.converter.AccountToASMinimal(ctx, requestedAccount)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -72,7 +72,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 	}
 
 	// Auth passed, generate the proper AP representation.
-	person, err := p.tc.AccountToAS(ctx, requestedAccount)
+	person, err := p.converter.AccountToAS(ctx, requestedAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

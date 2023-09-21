@@ -35,7 +35,7 @@ import (
 type FederatingDBTestSuite struct {
 	suite.Suite
 	db            db.DB
-	tc            typeutils.TypeConverter
+	tc            *typeutils.Converter
 	fromFederator chan messages.FromFediAPI
 	federatingDB  federatingdb.DB
 	state         state.State

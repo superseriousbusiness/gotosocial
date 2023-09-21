@@ -97,7 +97,7 @@ func (f *federatingDB) undoFollow(
 		return nil
 	}
 
-	follow, err := f.typeConverter.ASFollowToFollow(ctx, Follow)
+	follow, err := f.converter.ASFollowToFollow(ctx, Follow)
 	if err != nil {
 		return fmt.Errorf("undoFollow: error converting ActivityStreams Follow to follow: %w", err)
 	}
@@ -139,7 +139,7 @@ func (f *federatingDB) undoLike(
 		return nil
 	}
 
-	fave, err := f.typeConverter.ASLikeToFave(ctx, Like)
+	fave, err := f.converter.ASLikeToFave(ctx, Like)
 	if err != nil {
 		return fmt.Errorf("undoLike: error converting ActivityStreams Like to fave: %w", err)
 	}
@@ -192,7 +192,7 @@ func (f *federatingDB) undoBlock(
 		return nil
 	}
 
-	block, err := f.typeConverter.ASBlockToBlock(ctx, Block)
+	block, err := f.converter.ASBlockToBlock(ctx, Block)
 	if err != nil {
 		return fmt.Errorf("undoBlock: error converting ActivityStreams Block to block: %w", err)
 	}

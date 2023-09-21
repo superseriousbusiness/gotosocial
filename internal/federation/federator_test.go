@@ -36,7 +36,7 @@ type FederatorStandardTestSuite struct {
 	suite.Suite
 	storage             *storage.Driver
 	state               state.State
-	typeconverter       typeutils.TypeConverter
+	typeconverter       *typeutils.Converter
 	transportController transport.Controller
 	httpClient          *testrig.MockHTTPClient
 	federator           federation.Federator

@@ -42,13 +42,13 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 		if err != nil {
 			return nil, err
 		}
-		return f.typeConverter.AccountToAS(ctx, acct)
+		return f.converter.AccountToAS(ctx, acct)
 	case uris.IsStatusesPath(id):
 		status, err := f.state.DB.GetStatusByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
-		return f.typeConverter.StatusToAS(ctx, status)
+		return f.converter.StatusToAS(ctx, status)
 	case uris.IsFollowersPath(id):
 		return f.Followers(ctx, id)
 	case uris.IsFollowingPath(id):

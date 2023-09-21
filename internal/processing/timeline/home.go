@@ -84,7 +84,7 @@ func HomeTimelineFilter(state *state.State, filter *visibility.Filter) timeline.
 }
 
 // HomeTimelineStatusPrepare returns a function that satisfies PrepareFunction for home timelines.
-func HomeTimelineStatusPrepare(state *state.State, tc typeutils.TypeConverter) timeline.PrepareFunction {
+func HomeTimelineStatusPrepare(state *state.State, converter *typeutils.Converter) timeline.PrepareFunction {
 	return func(ctx context.Context, accountID string, itemID string) (timeline.Preparable, error) {
 		status, err := state.DB.GetStatusByID(ctx, itemID)
 		if err != nil {
@@ -98,7 +98,7 @@ func HomeTimelineStatusPrepare(state *state.State, tc typeutils.TypeConverter) t
 			return nil, err
 		}
 
-		return tc.StatusToAPIStatus(ctx, status, requestingAccount)
+		return converter.StatusToAPIStatus(ctx, status, requestingAccount)
 	}
 }
 

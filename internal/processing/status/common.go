@@ -29,7 +29,7 @@ import (
 )
 
 func (p *Processor) apiStatus(ctx context.Context, targetStatus *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, gtserror.WithCode) {
-	apiStatus, err := p.tc.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
+	apiStatus, err := p.converter.StatusToAPIStatus(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", targetStatus.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)

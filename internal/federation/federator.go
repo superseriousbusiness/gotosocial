@@ -59,7 +59,7 @@ type federator struct {
 	db                  db.DB
 	federatingDB        federatingdb.DB
 	clock               pub.Clock
-	typeConverter       typeutils.TypeConverter
+	converter           *typeutils.Converter
 	transportController transport.Controller
 	mediaManager        *media.Manager
 	actor               pub.FederatingActor
@@ -67,15 +67,15 @@ type federator struct {
 }
 
 // NewFederator returns a new federator
-func NewFederator(state *state.State, federatingDB federatingdb.DB, transportController transport.Controller, typeConverter typeutils.TypeConverter, mediaManager *media.Manager) Federator {
-	dereferencer := dereferencing.NewDereferencer(state, typeConverter, transportController, mediaManager)
+func NewFederator(state *state.State, federatingDB federatingdb.DB, transportController transport.Controller, converter *typeutils.Converter, mediaManager *media.Manager) Federator {
+	dereferencer := dereferencing.NewDereferencer(state, converter, transportController, mediaManager)
 
 	clock := &Clock{}
 	f := &federator{
 		db:                  state.DB,
 		federatingDB:        federatingDB,
 		clock:               &Clock{},
-		typeConverter:       typeConverter,
+		converter:           converter,
 		transportController: transportController,
 		mediaManager:        mediaManager,
 		Dereferencer:        dereferencer,

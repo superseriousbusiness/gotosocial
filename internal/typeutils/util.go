@@ -36,7 +36,7 @@ type statusInteractions struct {
 	Pinned     bool
 }
 
-func (c *converter) interactionsWithStatusForAccount(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*statusInteractions, error) {
+func (c *Converter) interactionsWithStatusForAccount(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*statusInteractions, error) {
 	si := &statusInteractions{}
 
 	if requestingAccount != nil {

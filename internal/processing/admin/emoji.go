@@ -84,7 +84,7 @@ func (p *Processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error loading emoji: %s", err), "error loading emoji")
 	}
 
-	apiEmoji, err := p.tc.EmojiToAPIEmoji(ctx, emoji)
+	apiEmoji, err := p.converter.EmojiToAPIEmoji(ctx, emoji)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting emoji: %s", err), "error converting emoji to api representation")
 	}
@@ -122,7 +122,7 @@ func (p *Processor) EmojisGet(
 
 	items := make([]interface{}, 0, count)
 	for _, emoji := range emojis {
-		adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
+		adminEmoji, err := p.converter.EmojiToAdminAPIEmoji(ctx, emoji)
 		if err != nil {
 			err := fmt.Errorf("EmojisGet: error converting emoji to admin model emoji: %s", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -185,7 +185,7 @@ func (p *Processor) EmojiGet(ctx context.Context, account *gtsmodel.Account, use
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
+	adminEmoji, err := p.converter.EmojiToAdminAPIEmoji(ctx, emoji)
 	if err != nil {
 		err = fmt.Errorf("EmojiGet: error converting emoji to admin api emoji: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -211,7 +211,7 @@ func (p *Processor) EmojiDelete(ctx context.Context, id string) (*apimodel.Admin
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
+	adminEmoji, err := p.converter.EmojiToAdminAPIEmoji(ctx, emoji)
 	if err != nil {
 		err = fmt.Errorf("EmojiDelete: error converting emoji to admin api emoji: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -260,7 +260,7 @@ func (p *Processor) EmojiCategoriesGet(ctx context.Context) ([]*apimodel.EmojiCa
 
 	apiCategories := make([]*apimodel.EmojiCategory, 0, len(categories))
 	for _, category := range categories {
-		apiCategory, err := p.tc.EmojiCategoryToAPIEmojiCategory(ctx, category)
+		apiCategory, err := p.converter.EmojiCategoryToAPIEmojiCategory(ctx, category)
 		if err != nil {
 			err := fmt.Errorf("EmojiCategoriesGet: error converting emoji category to api emoji category: %s", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -367,7 +367,7 @@ func (p *Processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, newEmoji)
+	adminEmoji, err := p.converter.EmojiToAdminAPIEmoji(ctx, newEmoji)
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateCopy: error converting updated emoji %s to admin emoji: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -391,7 +391,7 @@ func (p *Processor) emojiUpdateDisable(ctx context.Context, emoji *gtsmodel.Emoj
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
+	adminEmoji, err := p.converter.EmojiToAdminAPIEmoji(ctx, emoji)
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateDisable: error converting updated emoji %s to admin emoji: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -472,7 +472,7 @@ func (p *Processor) emojiUpdateModify(ctx context.Context, emoji *gtsmodel.Emoji
 		}
 	}
 
-	adminEmoji, err := p.tc.EmojiToAdminAPIEmoji(ctx, emoji)
+	adminEmoji, err := p.converter.EmojiToAdminAPIEmoji(ctx, emoji)
 	if err != nil {
 		err = fmt.Errorf("emojiUpdateModify: error converting updated emoji %s to admin emoji: %s", emoji.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)

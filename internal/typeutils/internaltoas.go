@@ -38,7 +38,7 @@ import (
 )
 
 // Converts a gts model account into an Activity Streams person type.
-func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
+func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -339,7 +339,7 @@ func (c *converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 // Converts a gts model account into a VERY MINIMAL Activity Streams person type.
 //
 // The returned account will just have the Type, Username, PublicKey, and ID properties set.
-func (c *converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
+func (c *Converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
 	person := streams.NewActivityStreamsPerson()
 
 	// id should be the activitypub URI of this user
@@ -401,7 +401,7 @@ func (c *converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account)
 	return person, nil
 }
 
-func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
+func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
 	// ensure prerequisites here before we get stuck in
 
 	// check if author account is already attached to status and attach it if not
@@ -639,7 +639,7 @@ func (c *converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 	return status, nil
 }
 
-func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsDelete, error) {
+func (c *Converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsDelete, error) {
 	// Parse / fetch some information
 	// we need to create the Delete.
 
@@ -774,7 +774,7 @@ func (c *converter) StatusToASDelete(ctx context.Context, s *gtsmodel.Status) (v
 	return delete, nil
 }
 
-func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow) (vocab.ActivityStreamsFollow, error) {
+func (c *Converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow) (vocab.ActivityStreamsFollow, error) {
 	if err := c.state.DB.PopulateFollow(ctx, f); err != nil {
 		return nil, gtserror.Newf("error populating follow: %w", err)
 	}
@@ -824,7 +824,7 @@ func (c *converter) FollowToAS(ctx context.Context, f *gtsmodel.Follow) (vocab.A
 	return follow, nil
 }
 
-func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
+func (c *Converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab.ActivityStreamsMention, error) {
 	if m.TargetAccount == nil {
 		a, err := c.state.DB.GetAccountByID(ctx, m.TargetAccountID)
 		if err != nil {
@@ -865,7 +865,7 @@ func (c *converter) MentionToAS(ctx context.Context, m *gtsmodel.Mention) (vocab
 	return mention, nil
 }
 
-func (c *converter) TagToAS(ctx context.Context, t *gtsmodel.Tag) (vocab.TootHashtag, error) {
+func (c *Converter) TagToAS(ctx context.Context, t *gtsmodel.Tag) (vocab.TootHashtag, error) {
 	// This is probably already lowercase,
 	// but let's err on the safe side.
 	nameLower := strings.ToLower(t.Name)
@@ -904,7 +904,7 @@ func (c *converter) TagToAS(ctx context.Context, t *gtsmodel.Tag) (vocab.TootHas
 			}
 		}
 */
-func (c *converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.TootEmoji, error) {
+func (c *Converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.TootEmoji, error) {
 	// create the emoji
 	emoji := streams.NewTootEmoji()
 
@@ -947,7 +947,7 @@ func (c *converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.Too
 	return emoji, nil
 }
 
-func (c *converter) AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
+func (c *Converter) AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
 	// type -- Document
 	doc := streams.NewActivityStreamsDocument()
 
@@ -992,7 +992,7 @@ We want to end up with something like this:
 "type": "Like"
 }
 */
-func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
+func (c *Converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab.ActivityStreamsLike, error) {
 	// check if targetStatus is already pinned to this fave, and fetch it if not
 	if f.Status == nil {
 		s, err := c.state.DB.GetStatusByID(ctx, f.StatusID)
@@ -1062,7 +1062,7 @@ func (c *converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 	return like, nil
 }
 
-func (c *converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
+func (c *Converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.Status, boostingAccount *gtsmodel.Account, boostedAccount *gtsmodel.Account) (vocab.ActivityStreamsAnnounce, error) {
 	// the boosted status is probably pinned to the boostWrapperStatus but double check to make sure
 	if boostWrapperStatus.BoostOf == nil {
 		b, err := c.state.DB.GetStatusByID(ctx, boostWrapperStatus.BoostOfID)
@@ -1150,7 +1150,7 @@ we want to end up with something like this:
 		"type":"Block"
 	}
 */
-func (c *converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.ActivityStreamsBlock, error) {
+func (c *Converter) BlockToAS(ctx context.Context, b *gtsmodel.Block) (vocab.ActivityStreamsBlock, error) {
 	if b.Account == nil {
 		a, err := c.state.DB.GetAccountByID(ctx, b.AccountID)
 		if err != nil {
@@ -1225,7 +1225,7 @@ the goal is to end up with something like this:
 		}
 	}
 */
-func (c *converter) StatusToASRepliesCollection(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
+func (c *Converter) StatusToASRepliesCollection(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool) (vocab.ActivityStreamsCollection, error) {
 	collectionID := fmt.Sprintf("%s/replies", status.URI)
 	collectionIDURI, err := url.Parse(collectionID)
 	if err != nil {
@@ -1289,7 +1289,7 @@ the goal is to end up with something like this:
 		]
 	}
 */
-func (c *converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error) {
+func (c *Converter) StatusURIsToASRepliesPage(ctx context.Context, status *gtsmodel.Status, onlyOtherAccounts bool, minID string, replies map[string]*url.URL) (vocab.ActivityStreamsCollectionPage, error) {
 	collectionID := fmt.Sprintf("%s/replies", status.URI)
 
 	page := streams.NewActivityStreamsCollectionPage()
@@ -1369,7 +1369,7 @@ the goal is to end up with something like this:
 		]
 	}
 */
-func (c *converter) StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string, maxID string, minID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	page := streams.NewActivityStreamsOrderedCollectionPage()
 
 	// .id
@@ -1460,7 +1460,7 @@ we want something that looks like this:
 		"first": "https://example.org/users/whatever/outbox?page=true"
 	}
 */
-func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error) {
+func (c *Converter) OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error) {
 	collection := streams.NewActivityStreamsOrderedCollection()
 
 	collectionIDProp := streams.NewJSONLDIdProperty()
@@ -1483,7 +1483,7 @@ func (c *converter) OutboxToASCollection(ctx context.Context, outboxID string) (
 	return collection, nil
 }
 
-func (c *converter) StatusesToASFeaturedCollection(ctx context.Context, featuredCollectionID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollection, error) {
+func (c *Converter) StatusesToASFeaturedCollection(ctx context.Context, featuredCollectionID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollection, error) {
 	collection := streams.NewActivityStreamsOrderedCollection()
 
 	collectionIDProp := streams.NewJSONLDIdProperty()
@@ -1511,7 +1511,7 @@ func (c *converter) StatusesToASFeaturedCollection(ctx context.Context, featured
 	return collection, nil
 }
 
-func (c *converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (vocab.ActivityStreamsFlag, error) {
+func (c *Converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (vocab.ActivityStreamsFlag, error) {
 	flag := streams.NewActivityStreamsFlag()
 
 	flagIDProp := streams.NewJSONLDIdProperty()

@@ -62,7 +62,7 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, authed.Account)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, authed.Account)
 		if err != nil {
 			log.Errorf(ctx, "error convert to api status: %v", err)
 			continue

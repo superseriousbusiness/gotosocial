@@ -30,7 +30,7 @@ import (
 type Processor struct {
 	state               *state.State
 	cleaner             *cleaner.Cleaner
-	tc                  typeutils.TypeConverter
+	converter           *typeutils.Converter
 	mediaManager        *media.Manager
 	transportController transport.Controller
 	emailSender         email.Sender
@@ -45,11 +45,11 @@ func (p *Processor) Actions() *Actions {
 }
 
 // New returns a new admin processor.
-func New(state *state.State, tc typeutils.TypeConverter, mediaManager *media.Manager, transportController transport.Controller, emailSender email.Sender) Processor {
+func New(state *state.State, converter *typeutils.Converter, mediaManager *media.Manager, transportController transport.Controller, emailSender email.Sender) Processor {
 	return Processor{
 		state:               state,
 		cleaner:             cleaner.New(state),
-		tc:                  tc,
+		converter:           converter,
 		mediaManager:        mediaManager,
 		transportController: transportController,
 		emailSender:         emailSender,

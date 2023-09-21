@@ -36,7 +36,7 @@ const (
 	rssDescriptionMaxRunes = 256
 )
 
-func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error) {
+func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error) {
 	// see https://cyber.harvard.edu/rss/rss.html
 
 	// Title -- The title of the item.

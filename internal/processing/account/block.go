@@ -155,7 +155,7 @@ func (p *Processor) BlocksGet(
 
 	for _, block := range blocks {
 		// Convert target account to frontend API model. (target will never be nil)
-		account, err := p.tc.AccountToAPIAccountBlocked(ctx, block.TargetAccount)
+		account, err := p.converter.AccountToAPIAccountBlocked(ctx, block.TargetAccount)
 		if err != nil {
 			log.Errorf(ctx, "error converting account to public api account: %v", err)
 			continue

@@ -23,13 +23,13 @@ import (
 )
 
 type Processor struct {
-	state *state.State
-	tc    typeutils.TypeConverter
+	state     *state.State
+	converter *typeutils.Converter
 }
 
-func New(state *state.State, tc typeutils.TypeConverter) Processor {
+func New(state *state.State, converter *typeutils.Converter) Processor {
 	return Processor{
-		state: state,
-		tc:    tc,
+		state:     state,
+		converter: converter,
 	}
 }

@@ -263,7 +263,7 @@ func (d *deref) enrichStatus(
 
 	// ActivityPub model was recently dereferenced, so assume that passed status
 	// may contain out-of-date information, convert AP model to our GTS model.
-	latestStatus, err := d.typeConverter.ASStatusToStatus(ctx, apubStatus)
+	latestStatus, err := d.converter.ASStatusToStatus(ctx, apubStatus)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}

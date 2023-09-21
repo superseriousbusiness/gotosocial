@@ -24,15 +24,15 @@ import (
 )
 
 type Processor struct {
-	state  *state.State
-	tc     typeutils.TypeConverter
-	filter *visibility.Filter
+	state     *state.State
+	converter *typeutils.Converter
+	filter    *visibility.Filter
 }
 
-func New(state *state.State, tc typeutils.TypeConverter, filter *visibility.Filter) Processor {
+func New(state *state.State, converter *typeutils.Converter, filter *visibility.Filter) Processor {
 	return Processor{
-		state:  state,
-		tc:     tc,
-		filter: filter,
+		state:     state,
+		converter: converter,
+		filter:    filter,
 	}
 }

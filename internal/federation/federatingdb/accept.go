@@ -94,7 +94,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				return errors.New("ACCEPT: couldn't parse follow into vocab.ActivityStreamsFollow")
 			}
 			// convert the follow to something we can understand
-			gtsFollow, err := f.typeConverter.ASFollowToFollow(ctx, asFollow)
+			gtsFollow, err := f.converter.ASFollowToFollow(ctx, asFollow)
 			if err != nil {
 				return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
 			}

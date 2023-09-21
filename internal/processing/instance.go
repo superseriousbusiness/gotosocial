@@ -48,7 +48,7 @@ func (p *Processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gt
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
-	ai, err := p.tc.InstanceToAPIV1Instance(ctx, i)
+	ai, err := p.converter.InstanceToAPIV1Instance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
@@ -62,7 +62,7 @@ func (p *Processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gt
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
-	ai, err := p.tc.InstanceToAPIV2Instance(ctx, i)
+	ai, err := p.converter.InstanceToAPIV2Instance(ctx, i)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}
@@ -142,7 +142,7 @@ func (p *Processor) InstanceGetRules(ctx context.Context) ([]apimodel.InstanceRu
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
-	return p.tc.InstanceRulesToAPIRules(i.Rules), nil
+	return p.converter.InstanceRulesToAPIRules(i.Rules), nil
 }
 
 func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
@@ -289,7 +289,7 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		}
 	}
 
-	ai, err := p.tc.InstanceToAPIV1Instance(ctx, instance)
+	ai, err := p.converter.InstanceToAPIV1Instance(ctx, instance)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
 	}

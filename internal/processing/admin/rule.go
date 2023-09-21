@@ -35,7 +35,6 @@ func (p *Processor) RulesGet(
 	ctx context.Context,
 ) ([]*apimodel.AdminInstanceRule, gtserror.WithCode) {
 	rules, err := p.state.DB.GetActiveRules(ctx)
-
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -43,7 +42,7 @@ func (p *Processor) RulesGet(
 	apiRules := make([]*apimodel.AdminInstanceRule, len(rules))
 
 	for i := range rules {
-		apiRules[i] = p.tc.InstanceRuleToAdminAPIRule(&rules[i])
+		apiRules[i] = p.converter.InstanceRuleToAdminAPIRule(&rules[i])
 	}
 
 	return apiRules, nil
@@ -59,7 +58,7 @@ func (p *Processor) RuleGet(ctx context.Context, id string) (*apimodel.AdminInst
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.tc.InstanceRuleToAdminAPIRule(rule), nil
+	return p.converter.InstanceRuleToAdminAPIRule(rule), nil
 }
 
 // RuleCreate adds a new rule to the instance.
@@ -78,7 +77,7 @@ func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleC
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.tc.InstanceRuleToAdminAPIRule(rule), nil
+	return p.converter.InstanceRuleToAdminAPIRule(rule), nil
 }
 
 // RuleUpdate updates text for an existing rule.
@@ -96,12 +95,11 @@ func (p *Processor) RuleUpdate(ctx context.Context, id string, form *apimodel.In
 	rule.Text = form.Text
 
 	updatedRule, err := p.state.DB.UpdateRule(ctx, rule)
-
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.tc.InstanceRuleToAdminAPIRule(updatedRule), nil
+	return p.converter.InstanceRuleToAdminAPIRule(updatedRule), nil
 }
 
 // RuleDelete deletes an existing rule.
@@ -118,10 +116,9 @@ func (p *Processor) RuleDelete(ctx context.Context, id string) (*apimodel.AdminI
 
 	rule.Deleted = util.Ptr(true)
 	deletedRule, err := p.state.DB.UpdateRule(ctx, rule)
-
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.tc.InstanceRuleToAdminAPIRule(deletedRule), nil
+	return p.converter.InstanceRuleToAdminAPIRule(deletedRule), nil
 }

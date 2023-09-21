@@ -80,7 +80,7 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 		}
 
 		if blocked {
-			apiAccount, err := p.tc.AccountToAPIAccountBlocked(ctx, targetAccount)
+			apiAccount, err := p.converter.AccountToAPIAccountBlocked(ctx, targetAccount)
 			if err != nil {
 				return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %w", err))
 			}
@@ -107,9 +107,9 @@ func (p *Processor) getFor(ctx context.Context, requestingAccount *gtsmodel.Acco
 	var apiAccount *apimodel.Account
 
 	if requestingAccount != nil && targetAccount.ID == requestingAccount.ID {
-		apiAccount, err = p.tc.AccountToAPIAccountSensitive(ctx, targetAccount)
+		apiAccount, err = p.converter.AccountToAPIAccountSensitive(ctx, targetAccount)
 	} else {
-		apiAccount, err = p.tc.AccountToAPIAccountPublic(ctx, targetAccount)
+		apiAccount, err = p.converter.AccountToAPIAccountPublic(ctx, targetAccount)
 	}
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting account: %w", err))

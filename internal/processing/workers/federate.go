@@ -37,8 +37,8 @@ type federate struct {
 	// Embed federator to give access
 	// to send and retrieve functions.
 	federation.Federator
-	state *state.State
-	tc    typeutils.TypeConverter
+	state     *state.State
+	converter *typeutils.Converter
 }
 
 // parseURI is a cheeky little
@@ -160,12 +160,12 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 
 	// Convert status to an ActivityStreams
 	// Note, wrapped in a Create activity.
-	asStatus, err := f.tc.StatusToAS(ctx, status)
+	asStatus, err := f.converter.StatusToAS(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error converting status to AS: %w", err)
 	}
 
-	create, err := f.tc.WrapNoteInCreate(asStatus, false)
+	create, err := f.converter.WrapNoteInCreate(asStatus, false)
 	if err != nil {
 		return gtserror.Newf("error wrapping status in create: %w", err)
 	}
@@ -208,7 +208,7 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 	}
 
 	// Wrap the status URI in a Delete activity.
-	delete, err := f.tc.StatusToASDelete(ctx, status)
+	delete, err := f.converter.StatusToASDelete(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error creating Delete: %w", err)
 	}
@@ -245,7 +245,7 @@ func (f *federate) Follow(ctx context.Context, follow *gtsmodel.Follow) error {
 	}
 
 	// Convert follow to ActivityStreams Follow.
-	asFollow, err := f.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.converter.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %s", err)
 	}
@@ -287,7 +287,7 @@ func (f *federate) UndoFollow(ctx context.Context, follow *gtsmodel.Follow) erro
 	}
 
 	// Recreate the ActivityStreams Follow.
-	asFollow, err := f.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.converter.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %w", err)
 	}
@@ -351,7 +351,7 @@ func (f *federate) UndoLike(ctx context.Context, fave *gtsmodel.StatusFave) erro
 	}
 
 	// Recreate the ActivityStreams Like.
-	like, err := f.tc.FaveToAS(ctx, fave)
+	like, err := f.converter.FaveToAS(ctx, fave)
 	if err != nil {
 		return gtserror.Newf("error converting fave to AS: %w", err)
 	}
@@ -410,7 +410,7 @@ func (f *federate) UndoAnnounce(ctx context.Context, boost *gtsmodel.Status) err
 	}
 
 	// Recreate the ActivityStreams Announce.
-	asAnnounce, err := f.tc.BoostToAS(
+	asAnnounce, err := f.converter.BoostToAS(
 		ctx,
 		boost,
 		boost.Account,
@@ -493,7 +493,7 @@ func (f *federate) AcceptFollow(ctx context.Context, follow *gtsmodel.Follow) er
 	}
 
 	// Recreate the ActivityStreams Follow.
-	asFollow, err := f.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.converter.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %w", err)
 	}
@@ -571,7 +571,7 @@ func (f *federate) RejectFollow(ctx context.Context, follow *gtsmodel.Follow) er
 	}
 
 	// Recreate the ActivityStreams Follow.
-	asFollow, err := f.tc.FollowToAS(ctx, follow)
+	asFollow, err := f.converter.FollowToAS(ctx, follow)
 	if err != nil {
 		return gtserror.Newf("error converting follow to AS: %w", err)
 	}
@@ -631,7 +631,7 @@ func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	}
 
 	// Create the ActivityStreams Like.
-	like, err := f.tc.FaveToAS(ctx, fave)
+	like, err := f.converter.FaveToAS(ctx, fave)
 	if err != nil {
 		return gtserror.Newf("error converting fave to AS Like: %w", err)
 	}
@@ -668,7 +668,7 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	}
 
 	// Create the ActivityStreams Announce.
-	announce, err := f.tc.BoostToAS(
+	announce, err := f.converter.BoostToAS(
 		ctx,
 		boost,
 		boost.Account,
@@ -704,13 +704,13 @@ func (f *federate) UpdateAccount(ctx context.Context, account *gtsmodel.Account)
 	}
 
 	// Convert account to ActivityStreams Person.
-	person, err := f.tc.AccountToAS(ctx, account)
+	person, err := f.converter.AccountToAS(ctx, account)
 	if err != nil {
 		return gtserror.Newf("error converting account to Person: %w", err)
 	}
 
 	// Use ActivityStreams Person as Object of Update.
-	update, err := f.tc.WrapPersonInUpdate(person, account)
+	update, err := f.converter.WrapPersonInUpdate(person, account)
 	if err != nil {
 		return gtserror.Newf("error wrapping Person in Update: %w", err)
 	}
@@ -747,7 +747,7 @@ func (f *federate) Block(ctx context.Context, block *gtsmodel.Block) error {
 	}
 
 	// Convert block to ActivityStreams Block.
-	asBlock, err := f.tc.BlockToAS(ctx, block)
+	asBlock, err := f.converter.BlockToAS(ctx, block)
 	if err != nil {
 		return gtserror.Newf("error converting block to AS: %w", err)
 	}
@@ -789,7 +789,7 @@ func (f *federate) UndoBlock(ctx context.Context, block *gtsmodel.Block) error {
 	}
 
 	// Convert block to ActivityStreams Block.
-	asBlock, err := f.tc.BlockToAS(ctx, block)
+	asBlock, err := f.converter.BlockToAS(ctx, block)
 	if err != nil {
 		return gtserror.Newf("error converting block to AS: %w", err)
 	}
@@ -861,7 +861,7 @@ func (f *federate) Flag(ctx context.Context, report *gtsmodel.Report) error {
 	}
 
 	// Convert report to ActivityStreams Flag.
-	flag, err := f.tc.ReportToASFlag(ctx, report)
+	flag, err := f.converter.ReportToASFlag(ctx, report)
 	if err != nil {
 		return gtserror.Newf("error converting report to AS: %w", err)
 	}

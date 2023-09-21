@@ -70,7 +70,7 @@ func (p *Processor) packageAccounts(
 			continue
 		}
 
-		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, account)
+		apiAccount, err := p.converter.AccountToAPIAccountPublic(ctx, account)
 		if err != nil {
 			log.Debugf(ctx, "skipping account %s because it couldn't be converted to its api representation: %s", account.ID, err)
 			continue
@@ -105,7 +105,7 @@ func (p *Processor) packageStatuses(
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", status.ID, err)
 			continue
@@ -137,7 +137,7 @@ func (p *Processor) packageHashtags(
 	} else {
 		// If API not version 1, provide slice of full tags.
 		rangeF = func(tag *gtsmodel.Tag) {
-			apiTag, err := p.tc.TagToAPITag(ctx, tag, true)
+			apiTag, err := p.converter.TagToAPITag(ctx, tag, true)
 			if err != nil {
 				log.Debugf(
 					ctx,

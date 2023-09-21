@@ -49,7 +49,7 @@ import (
 // or sub processors will trigger asynchronous processing
 // via the workers contained in state.
 type Processor struct {
-	tc          typeutils.TypeConverter
+	converter   *typeutils.Converter
 	oauthServer oauth.Server
 	state       *state.State
 
@@ -126,7 +126,7 @@ func (p *Processor) Workers() *workers.Processor {
 
 // NewProcessor returns a new Processor.
 func NewProcessor(
-	tc typeutils.TypeConverter,
+	converter *typeutils.Converter,
 	federator federation.Federator,
 	oauthServer oauth.Server,
 	mediaManager *mm.Manager,
@@ -139,7 +139,7 @@ func NewProcessor(
 	)
 
 	processor := &Processor{
-		tc:          tc,
+		converter:   converter,
 		oauthServer: oauthServer,
 		state:       state,
 	}
@@ -148,23 +148,23 @@ func NewProcessor(
 	//
 	// Start with sub processors that will
 	// be required by the workers processor.
-	commonProcessor := common.New(state, tc, federator, filter)
-	accountProcessor := account.New(&commonProcessor, state, tc, mediaManager, oauthServer, federator, filter, parseMentionFunc)
-	mediaProcessor := media.New(state, tc, mediaManager, federator.TransportController())
+	commonProcessor := common.New(state, converter, federator, filter)
+	accountProcessor := account.New(&commonProcessor, state, converter, mediaManager, oauthServer, federator, filter, parseMentionFunc)
+	mediaProcessor := media.New(state, converter, mediaManager, federator.TransportController())
 	streamProcessor := stream.New(state, oauthServer)
 
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
 	processor.account = accountProcessor
-	processor.admin = admin.New(state, tc, mediaManager, federator.TransportController(), emailSender)
-	processor.fedi = fedi.New(state, tc, federator, filter)
-	processor.list = list.New(state, tc)
-	processor.markers = markers.New(state, tc)
+	processor.admin = admin.New(state, converter, mediaManager, federator.TransportController(), emailSender)
+	processor.fedi = fedi.New(state, converter, federator, filter)
+	processor.list = list.New(state, converter)
+	processor.markers = markers.New(state, converter)
 	processor.media = mediaProcessor
-	processor.report = report.New(state, tc)
-	processor.timeline = timeline.New(state, tc, filter)
-	processor.search = search.New(state, federator, tc, filter)
-	processor.status = status.New(state, federator, tc, filter, parseMentionFunc)
+	processor.report = report.New(state, converter)
+	processor.timeline = timeline.New(state, converter, filter)
+	processor.search = search.New(state, federator, converter, filter)
+	processor.status = status.New(state, federator, converter, filter, parseMentionFunc)
 	processor.stream = streamProcessor
 	processor.user = user.New(state, emailSender)
 
@@ -174,7 +174,7 @@ func NewProcessor(
 	processor.workers = workers.New(
 		state,
 		federator,
-		tc,
+		converter,
 		filter,
 		emailSender,
 		&accountProcessor,

@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error) {
+func (c *Converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error) {
 	update := streams.NewActivityStreamsUpdate()
 
 	// set the actor
@@ -84,7 +84,7 @@ func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 	return update, nil
 }
 
-func (c *converter) WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error) {
+func (c *Converter) WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error) {
 	create := streams.NewActivityStreamsCreate()
 
 	// Object property

@@ -197,7 +197,7 @@ func (p *Processor) accountsFromListEntries(
 			continue
 		}
 
-		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, listEntry.Follow.TargetAccount)
+		apiAccount, err := p.converter.AccountToAPIAccountPublic(ctx, listEntry.Follow.TargetAccount)
 		if err != nil {
 			log.Errorf(ctx, "error converting to public api account: %v", err)
 			continue

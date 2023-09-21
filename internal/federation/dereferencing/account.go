@@ -372,7 +372,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	}
 
 	// Convert the dereferenced AP account object to our GTS model.
-	latestAcc, err := d.typeConverter.ASRepresentationToAccount(ctx,
+	latestAcc, err := d.converter.ASRepresentationToAccount(ctx,
 		apubAcc,
 		account.Domain,
 	)

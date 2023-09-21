@@ -122,7 +122,7 @@ func (p *Processor) packageTagResponse(
 			continue
 		}
 
-		apiStatus, err := p.tc.StatusToAPIStatus(ctx, s, requestingAcct)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requestingAcct)
 		if err != nil {
 			log.Errorf(ctx, "error converting to api status: %v", err)
 			continue

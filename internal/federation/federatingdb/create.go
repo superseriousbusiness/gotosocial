@@ -94,7 +94,7 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 		return errors.New("activityBlock: could not convert type to block")
 	}
 
-	block, err := f.typeConverter.ASBlockToBlock(ctx, blockable)
+	block, err := f.converter.ASBlockToBlock(ctx, blockable)
 	if err != nil {
 		return fmt.Errorf("activityBlock: could not convert Block to gts model block")
 	}
@@ -246,7 +246,7 @@ func (f *federatingDB) createStatusable(
 
 	// This is a non-forwarded status we can trust the requester on,
 	// convert this provided statusable data to a useable gtsmodel status.
-	status, err = f.typeConverter.ASStatusToStatus(ctx, statusable)
+	status, err = f.converter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return gtserror.Newf("error converting statusable to status: %w", err)
 	}
@@ -333,7 +333,7 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 		return errors.New("activityFollow: could not convert type to follow")
 	}
 
-	followRequest, err := f.typeConverter.ASFollowToFollowRequest(ctx, follow)
+	followRequest, err := f.converter.ASFollowToFollowRequest(ctx, follow)
 	if err != nil {
 		return fmt.Errorf("activityFollow: could not convert Follow to follow request: %s", err)
 	}
@@ -364,7 +364,7 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 		return errors.New("activityLike: could not convert type to like")
 	}
 
-	fave, err := f.typeConverter.ASLikeToFave(ctx, like)
+	fave, err := f.converter.ASLikeToFave(ctx, like)
 	if err != nil {
 		return fmt.Errorf("activityLike: could not convert Like to fave: %w", err)
 	}
@@ -401,7 +401,7 @@ func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, rece
 		return errors.New("activityFlag: could not convert type to flag")
 	}
 
-	report, err := f.typeConverter.ASFlagToReport(ctx, flag)
+	report, err := f.converter.ASFlagToReport(ctx, flag)
 	if err != nil {
 		return fmt.Errorf("activityFlag: could not convert Flag to report: %w", err)
 	}

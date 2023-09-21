@@ -39,7 +39,7 @@ func (p *Processor) Update(ctx context.Context, markers []*gtsmodel.Marker) (*ap
 		}
 	}
 
-	apiMarker, err := p.tc.MarkersToAPIMarker(ctx, markers)
+	apiMarker, err := p.converter.MarkersToAPIMarker(ctx, markers)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting marker to api: %w", err))
 	}

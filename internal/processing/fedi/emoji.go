@@ -44,7 +44,7 @@ func (p *Processor) EmojiGet(ctx context.Context, requestedEmojiID string) (inte
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji with id %s has been disabled", requestedEmojiID))
 	}
 
-	apEmoji, err := p.tc.EmojiToAS(ctx, requestedEmoji)
+	apEmoji, err := p.converter.EmojiToAS(ctx, requestedEmoji)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting gtsmodel emoji with id %s to ap emoji: %s", requestedEmojiID, err))
 	}

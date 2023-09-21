@@ -58,7 +58,10 @@ func toMastodonVersion(in string) string {
 	return instanceMastodonVersion + "+" + strings.ReplaceAll(in, " ", "-")
 }
 
-func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+// AppToAPIAppSensitive takes a db model application as a param, and returns a populated apitype application, or an error
+// if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
+// (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
+func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	// we can build this sensitive account easily by first getting the public account....
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
 	if err != nil {
@@ -91,7 +94,10 @@ func (c *converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	return apiAccount, nil
 }
 
-func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+// AccountToAPIAccountPublic takes a db model account as a param, and returns a populated apitype account, or an error
+// if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
+// In other words, this is the public record that the server has of an account.
+func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	if err := c.state.DB.PopulateAccount(ctx, a); err != nil {
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
 	}
@@ -238,7 +244,7 @@ func (c *converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	return accountFrontend, nil
 }
 
-func (c *converter) fieldsToAPIFields(f []*gtsmodel.Field) []apimodel.Field {
+func (c *Converter) fieldsToAPIFields(f []*gtsmodel.Field) []apimodel.Field {
 	fields := make([]apimodel.Field, len(f))
 
 	for i, field := range f {
@@ -257,7 +263,10 @@ func (c *converter) fieldsToAPIFields(f []*gtsmodel.Field) []apimodel.Field {
 	return fields
 }
 
-func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+// AccountToAPIAccountBlocked takes a db model account as a param, and returns a apitype account, or an error if
+// something goes wrong. The returned account will be a bare minimum representation of the account. This function should be used
+// when someone wants to view an account they've blocked.
+func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	var (
 		acct string
 		role *apimodel.AccountRole
@@ -308,7 +317,7 @@ func (c *converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 	}, nil
 }
 
-func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Account) (*apimodel.AdminAccountInfo, error) {
+func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Account) (*apimodel.AdminAccountInfo, error) {
 	var (
 		email                  string
 		ip                     *string
@@ -393,7 +402,7 @@ func (c *converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 	}, nil
 }
 
-func (c *converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
+func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
 	return &apimodel.Application{
 		ID:           a.ID,
 		Name:         a.Name,
@@ -404,14 +413,18 @@ func (c *converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Applic
 	}, nil
 }
 
-func (c *converter) AppToAPIAppPublic(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
+// AppToAPIAppPublic takes a db model application as a param, and returns a populated apitype application, or an error
+// if something goes wrong. The returned application should be ready to serialize on an API level, and has sensitive
+// fields sanitized so that it can be served to non-authorized accounts without revealing any private information.
+func (c *Converter) AppToAPIAppPublic(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
 	return &apimodel.Application{
 		Name:    a.Name,
 		Website: a.Website,
 	}, nil
 }
 
-func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.MediaAttachment) (apimodel.Attachment, error) {
+// AttachmentToAPIAttachment converts a gts model media attacahment into its api representation for serialization on the API.
+func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.MediaAttachment) (apimodel.Attachment, error) {
 	apiAttachment := apimodel.Attachment{
 		ID:         a.ID,
 		Type:       strings.ToLower(string(a.Type)),
@@ -479,7 +492,8 @@ func (c *converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 	return apiAttachment, nil
 }
 
-func (c *converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (apimodel.Mention, error) {
+// MentionToAPIMention converts a gts model mention into its api (frontend) representation for serialization on the API.
+func (c *Converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention) (apimodel.Mention, error) {
 	if m.TargetAccount == nil {
 		targetAccount, err := c.state.DB.GetAccountByID(ctx, m.TargetAccountID)
 		if err != nil {
@@ -511,7 +525,8 @@ func (c *converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention
 	}, nil
 }
 
-func (c *converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (apimodel.Emoji, error) {
+// EmojiToAPIEmoji converts a gts model emoji into its api (frontend) representation for serialization on the API.
+func (c *Converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (apimodel.Emoji, error) {
 	var category string
 	if e.CategoryID != "" {
 		if e.Category == nil {
@@ -533,7 +548,8 @@ func (c *converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (api
 	}, nil
 }
 
-func (c *converter) EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (*apimodel.AdminEmoji, error) {
+// EmojiToAdminAPIEmoji converts a gts model emoji into an API representation with extra admin information.
+func (c *Converter) EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (*apimodel.AdminEmoji, error) {
 	emoji, err := c.EmojiToAPIEmoji(ctx, e)
 	if err != nil {
 		return nil, err
@@ -562,14 +578,17 @@ func (c *converter) EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji)
 	}, nil
 }
 
-func (c *converter) EmojiCategoryToAPIEmojiCategory(ctx context.Context, category *gtsmodel.EmojiCategory) (*apimodel.EmojiCategory, error) {
+// EmojiCategoryToAPIEmojiCategory converts a gts model emoji category into its api (frontend) representation.
+func (c *Converter) EmojiCategoryToAPIEmojiCategory(ctx context.Context, category *gtsmodel.EmojiCategory) (*apimodel.EmojiCategory, error) {
 	return &apimodel.EmojiCategory{
 		ID:   category.ID,
 		Name: category.Name,
 	}, nil
 }
 
-func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistory bool) (apimodel.Tag, error) {
+// TagToAPITag converts a gts model tag into its api (frontend) representation for serialization on the API.
+// If stubHistory is set to 'true', then the 'history' field of the tag will be populated with a pointer to an empty slice, for API compatibility reasons.
+func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistory bool) (apimodel.Tag, error) {
 	return apimodel.Tag{
 		Name: strings.ToLower(t.Name),
 		URL:  uris.GenerateURIForTag(t.Name),
@@ -584,7 +603,10 @@ func (c *converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistor
 	}, nil
 }
 
-func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
+// StatusToAPIStatus converts a gts model status into its api (frontend) representation for serialization on the API.
+//
+// Requesting account can be nil.
+func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
 	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
 		// Ensure author account present + correct;
 		// can't really go further without this!
@@ -723,8 +745,8 @@ func (c *converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	return apiStatus, nil
 }
 
-// VisToapi converts a gts visibility into its api equivalent
-func (c *converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apimodel.Visibility {
+// VisToAPIVis converts a gts visibility into its api equivalent
+func (c *Converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apimodel.Visibility {
 	switch m {
 	case gtsmodel.VisibilityPublic:
 		return apimodel.VisibilityPublic
@@ -738,14 +760,16 @@ func (c *converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 	return ""
 }
 
-func (c *converter) InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule {
+// InstanceRuleToAdminAPIRule converts a local instance rule into its api equivalent for serving at /api/v1/admin/instance/rules/:id
+func (c *Converter) InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule {
 	return apimodel.InstanceRule{
 		ID:   r.ID,
 		Text: r.Text,
 	}
 }
 
-func (c *converter) InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.InstanceRule {
+// InstanceRulesToAPIRules converts all local instance rules into their api equivalent for serving at /api/v1/instance/rules
+func (c *Converter) InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.InstanceRule {
 	rules := make([]apimodel.InstanceRule, len(r))
 
 	for i, v := range r {
@@ -755,7 +779,8 @@ func (c *converter) InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.Instan
 	return rules
 }
 
-func (c *converter) InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.AdminInstanceRule {
+// InstanceRuleToAdminAPIRule converts a local instance rule into its api equivalent for serving at /api/v1/admin/instance/rules/:id
+func (c *Converter) InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.AdminInstanceRule {
 	return &apimodel.AdminInstanceRule{
 		ID:        r.ID,
 		CreatedAt: util.FormatISO8601(r.CreatedAt),
@@ -764,7 +789,8 @@ func (c *converter) InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.Admin
 	}
 }
 
-func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error) {
+// InstanceToAPIV1Instance converts a gts instance into its api equivalent for serving at /api/v1/instance
+func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error) {
 	instance := &apimodel.InstanceV1{
 		URI:              i.URI,
 		AccountDomain:    config.GetAccountDomain(),
@@ -871,7 +897,8 @@ func (c *converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	return instance, nil
 }
 
-func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV2, error) {
+// InstanceToAPIV2Instance converts a gts instance into its api equivalent for serving at /api/v2/instance
+func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV2, error) {
 	instance := &apimodel.InstanceV2{
 		Domain:        i.Domain,
 		AccountDomain: config.GetAccountDomain(),
@@ -962,7 +989,8 @@ func (c *converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	return instance, nil
 }
 
-func (c *converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*apimodel.Relationship, error) {
+// RelationshipToAPIRelationship converts a gts relationship into its api equivalent for serving in various places
+func (c *Converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmodel.Relationship) (*apimodel.Relationship, error) {
 	return &apimodel.Relationship{
 		ID:                  r.ID,
 		Following:           r.Following,
@@ -980,7 +1008,8 @@ func (c *converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmod
 	}, nil
 }
 
-func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*apimodel.Notification, error) {
+// NotificationToAPINotification converts a gts notification into a api notification
+func (c *Converter) NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification) (*apimodel.Notification, error) {
 	if n.TargetAccount == nil {
 		tAccount, err := c.state.DB.GetAccountByID(ctx, n.TargetAccountID)
 		if err != nil {
@@ -1041,7 +1070,8 @@ func (c *converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 	}, nil
 }
 
-func (c *converter) DomainPermToAPIDomainPerm(
+// DomainPermToAPIDomainPerm converts a gts model domin block or allow into an api domain permission.
+func (c *Converter) DomainPermToAPIDomainPerm(
 	ctx context.Context,
 	d gtsmodel.DomainPermission,
 	export bool,
@@ -1076,7 +1106,8 @@ func (c *converter) DomainPermToAPIDomainPerm(
 	return domainPerm, nil
 }
 
-func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error) {
+// ReportToAPIReport converts a gts model report into an api model report, for serving at /api/v1/reports
+func (c *Converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (*apimodel.Report, error) {
 	report := &apimodel.Report{
 		ID:          r.ID,
 		CreatedAt:   util.FormatISO8601(r.CreatedAt),
@@ -1114,7 +1145,8 @@ func (c *converter) ReportToAPIReport(ctx context.Context, r *gtsmodel.Report) (
 	return report, nil
 }
 
-func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Report, requestingAccount *gtsmodel.Account) (*apimodel.AdminReport, error) {
+// ReportToAdminAPIReport converts a gts model report into an admin view report, for serving at /api/v1/admin/reports
+func (c *Converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Report, requestingAccount *gtsmodel.Account) (*apimodel.AdminReport, error) {
 	var (
 		err                  error
 		actionTakenAt        *string
@@ -1215,7 +1247,8 @@ func (c *converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 	}, nil
 }
 
-func (c *converter) ListToAPIList(ctx context.Context, l *gtsmodel.List) (*apimodel.List, error) {
+// ListToAPIList converts one gts model list into an api model list, for serving at /api/v1/lists/{id}
+func (c *Converter) ListToAPIList(ctx context.Context, l *gtsmodel.List) (*apimodel.List, error) {
 	return &apimodel.List{
 		ID:            l.ID,
 		Title:         l.Title,
@@ -1223,7 +1256,8 @@ func (c *converter) ListToAPIList(ctx context.Context, l *gtsmodel.List) (*apimo
 	}, nil
 }
 
-func (c *converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.Marker) (*apimodel.Marker, error) {
+// MarkersToAPIMarker converts several gts model markers into an api marker, for serving at /api/v1/markers
+func (c *Converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.Marker) (*apimodel.Marker, error) {
 	apiMarker := &apimodel.Marker{}
 	for _, marker := range markers {
 		apiTimelineMarker := &apimodel.TimelineMarker{
@@ -1244,7 +1278,7 @@ func (c *converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.
 }
 
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
-func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]apimodel.Attachment, error) {
+func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]apimodel.Attachment, error) {
 	var errs gtserror.MultiError
 
 	if len(attachments) == 0 {
@@ -1281,7 +1315,7 @@ func (c *converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 }
 
 // convertEmojisToAPIEmojis will convert a slice of GTS model emojis to frontend API model emojis, falling back to IDs if no GTS models supplied.
-func (c *converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]apimodel.Emoji, error) {
+func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]apimodel.Emoji, error) {
 	var errs gtserror.MultiError
 
 	if len(emojis) == 0 {
@@ -1318,7 +1352,7 @@ func (c *converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsm
 }
 
 // convertMentionsToAPIMentions will convert a slice of GTS model mentions to frontend API model mentions, falling back to IDs if no GTS models supplied.
-func (c *converter) convertMentionsToAPIMentions(ctx context.Context, mentions []*gtsmodel.Mention, mentionIDs []string) ([]apimodel.Mention, error) {
+func (c *Converter) convertMentionsToAPIMentions(ctx context.Context, mentions []*gtsmodel.Mention, mentionIDs []string) ([]apimodel.Mention, error) {
 	var errs gtserror.MultiError
 
 	if len(mentions) == 0 {
@@ -1350,7 +1384,7 @@ func (c *converter) convertMentionsToAPIMentions(ctx context.Context, mentions [
 }
 
 // convertTagsToAPITags will convert a slice of GTS model tags to frontend API model tags, falling back to IDs if no GTS models supplied.
-func (c *converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.Tag, tagIDs []string) ([]apimodel.Tag, error) {
+func (c *Converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.Tag, tagIDs []string) ([]apimodel.Tag, error) {
 	var errs gtserror.MultiError
 
 	if len(tags) == 0 {
