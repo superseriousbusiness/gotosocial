@@ -29,7 +29,6 @@ type Converter struct {
 	randAvatars    sync.Map
 }
 
-// NewConverter returns a new Converter
 func NewConverter(state *state.State) *Converter {
 	return &Converter{
 		state:          state,

@@ -39,7 +39,7 @@ type WebfingerStandardTestSuite struct {
 	suite.Suite
 	db           db.DB
 	state        state.State
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	mediaManager *media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender

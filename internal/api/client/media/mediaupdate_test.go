@@ -52,7 +52,7 @@ type MediaUpdateTestSuite struct {
 	db           db.DB
 	storage      *storage.Driver
 	federator    federation.Federator
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	mediaManager *media.Manager
 	oauthServer  oauth.Server
 	emailSender  email.Sender

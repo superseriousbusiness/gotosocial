@@ -56,7 +56,7 @@ type MediaCreateTestSuite struct {
 	storage      *storage.Driver
 	mediaManager *media.Manager
 	federator    federation.Federator
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	oauthServer  oauth.Server
 	emailSender  email.Sender
 	processor    *processing.Processor

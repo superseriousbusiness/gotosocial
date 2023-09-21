@@ -36,7 +36,7 @@ import (
 type UserStandardTestSuite struct {
 	suite.Suite
 	db           db.DB
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	mediaManager *media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender

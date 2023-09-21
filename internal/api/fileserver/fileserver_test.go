@@ -42,7 +42,7 @@ type FileserverTestSuite struct {
 	storage      *storage.Driver
 	state        state.State
 	federator    federation.Federator
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	processor    *processing.Processor
 	mediaManager *media.Manager
 	oauthServer  oauth.Server
