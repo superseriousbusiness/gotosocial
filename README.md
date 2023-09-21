@@ -141,9 +141,11 @@ GoToSocial plays nice with lower-powered machines like Raspberry Pi, old laptops
 
 GoToSocial doesn't apply a one-size-fits-all approach to federation. Who your server federates with should be up to you.
 
-- 'Normal' federation; discover new servers.
-- *Allow list*-only federation; choose which servers you talk to (not yet implemented).
-- Zero federation; keep your server private (not yet implemented).
+- 'blocklist' mode (default): discover new servers; block servers you don't like.
+- 'allowlist' mode (experimental); opt-in to federation with trusted servers.
+- 'zero' federation mode; keep your server private (not yet implemented).
+
+[See the docs for more info](https://docs.gotosocial.org/en/latest/admin/federation_modes).
 
 ### OIDC integration
 

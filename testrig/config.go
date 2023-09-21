@@ -63,6 +63,7 @@ var testDefaults = config.Configuration{
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
+	InstanceFederationMode:         config.InstanceFederationModeDefault,
 	InstanceExposePeers:            true,
 	InstanceExposeSuspended:        true,
 	InstanceExposeSuspendedWeb:     true,

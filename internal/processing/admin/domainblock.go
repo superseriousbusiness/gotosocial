@@ -18,14 +18,9 @@
 package admin
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"mime/multipart"
-	"net/http"
 	"time"
 
 	"codeberg.org/gruf/go-kv"
@@ -40,14 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
-// DomainBlockCreate creates an instance-level block against the given domain,
-// and then processes side effects of that block (deleting accounts, media, etc).
-//
-// If a domain block already exists for the domain, side effects will be retried.
-//
-// Return values for this function are the (new) domain block, the ID of the admin
-// action resulting from this call, and/or an error if something goes wrong.
-func (p *Processor) DomainBlockCreate(
+func (p *Processor) createDomainBlock(
 	ctx context.Context,
 	adminAcct *gtsmodel.Account,
 	domain string,
@@ -55,7 +43,7 @@ func (p *Processor) DomainBlockCreate(
 	publicComment string,
 	privateComment string,
 	subscriptionID string,
-) (*apimodel.DomainBlock, string, gtserror.WithCode) {
+) (*apimodel.DomainPermission, string, gtserror.WithCode) {
 	// Check if a block already exists for this domain.
 	domainBlock, err := p.state.DB.GetDomainBlock(ctx, domain)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -98,218 +86,27 @@ func (p *Processor) DomainBlockCreate(
 			Text:           domainBlock.PrivateComment,
 		},
 		func(ctx context.Context) gtserror.MultiError {
+			// Log start + finish.
+			l := log.WithFields(kv.Fields{
+				{"domain", domain},
+				{"actionID", actionID},
+			}...).WithContext(ctx)
+
+			l.Info("processing domain block side effects")
+			defer func() { l.Info("finished processing domain block side effects") }()
+
 			return p.domainBlockSideEffects(ctx, domainBlock)
 		},
 	); errWithCode != nil {
 		return nil, actionID, errWithCode
 	}
 
-	apiDomainBlock, errWithCode := p.apiDomainBlock(ctx, domainBlock)
+	apiDomainBlock, errWithCode := p.apiDomainPerm(ctx, domainBlock, false)
 	if errWithCode != nil {
 		return nil, actionID, errWithCode
 	}
 
 	return apiDomainBlock, actionID, nil
-}
-
-// DomainBlockDelete removes one domain block with the given ID,
-// and processes side effects of removing the block asynchronously.
-//
-// Return values for this function are the deleted domain block, the ID of the admin
-// action resulting from this call, and/or an error if something goes wrong.
-func (p *Processor) DomainBlockDelete(
-	ctx context.Context,
-	adminAcct *gtsmodel.Account,
-	domainBlockID string,
-) (*apimodel.DomainBlock, string, gtserror.WithCode) {
-	domainBlock, err := p.state.DB.GetDomainBlockByID(ctx, domainBlockID)
-	if err != nil {
-		if !errors.Is(err, db.ErrNoEntries) {
-			// Real error.
-			err = gtserror.Newf("db error getting domain block: %w", err)
-			return nil, "", gtserror.NewErrorInternalError(err)
-		}
-
-		// There are just no entries for this ID.
-		err = fmt.Errorf("no domain block entry exists with ID %s", domainBlockID)
-		return nil, "", gtserror.NewErrorNotFound(err, err.Error())
-	}
-
-	// Prepare the domain block to return, *before* the deletion goes through.
-	apiDomainBlock, errWithCode := p.apiDomainBlock(ctx, domainBlock)
-	if errWithCode != nil {
-		return nil, "", errWithCode
-	}
-
-	// Copy value of the domain block.
-	domainBlockC := new(gtsmodel.DomainBlock)
-	*domainBlockC = *domainBlock
-
-	// Delete the original domain block.
-	if err := p.state.DB.DeleteDomainBlock(ctx, domainBlock.Domain); err != nil {
-		err = gtserror.Newf("db error deleting domain block: %w", err)
-		return nil, "", gtserror.NewErrorInternalError(err)
-	}
-
-	actionID := id.NewULID()
-
-	// Process domain unblock side
-	// effects asynchronously.
-	if errWithCode := p.actions.Run(
-		ctx,
-		&gtsmodel.AdminAction{
-			ID:             actionID,
-			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domainBlockC.Domain,
-			Type:           gtsmodel.AdminActionUnsuspend,
-			AccountID:      adminAcct.ID,
-		},
-		func(ctx context.Context) gtserror.MultiError {
-			return p.domainUnblockSideEffects(ctx, domainBlock)
-		},
-	); errWithCode != nil {
-		return nil, actionID, errWithCode
-	}
-
-	return apiDomainBlock, actionID, nil
-}
-
-// DomainBlocksImport handles the import of multiple domain blocks,
-// by calling the DomainBlockCreate function for each domain in the
-// provided file. Will return a slice of processed domain blocks.
-//
-// In the case of total failure, a gtserror.WithCode will be returned
-// so that the caller can respond appropriately. In the case of
-// partial or total success, a MultiStatus model will be returned,
-// which contains information about success/failure count, so that
-// the caller can retry any failures as they wish.
-func (p *Processor) DomainBlocksImport(
-	ctx context.Context,
-	account *gtsmodel.Account,
-	domainsF *multipart.FileHeader,
-) (*apimodel.MultiStatus, gtserror.WithCode) {
-	// Open the provided file.
-	file, err := domainsF.Open()
-	if err != nil {
-		err = gtserror.Newf("error opening attachment: %w", err)
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-	defer file.Close()
-
-	// Copy the file contents into a buffer.
-	buf := new(bytes.Buffer)
-	size, err := io.Copy(buf, file)
-	if err != nil {
-		err = gtserror.Newf("error reading attachment: %w", err)
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	// Ensure we actually read something.
-	if size == 0 {
-		err = gtserror.New("error reading attachment: size 0 bytes")
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	// Parse bytes as slice of domain blocks.
-	domainBlocks := make([]*apimodel.DomainBlock, 0)
-	if err := json.Unmarshal(buf.Bytes(), &domainBlocks); err != nil {
-		err = gtserror.Newf("error parsing attachment as domain blocks: %w", err)
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	count := len(domainBlocks)
-	if count == 0 {
-		err = gtserror.New("error importing domain blocks: 0 entries provided")
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	// Try to process each domain block, differentiating
-	// between successes and errors so that the caller can
-	// try failed imports again if desired.
-	multiStatusEntries := make([]apimodel.MultiStatusEntry, 0, count)
-
-	for _, domainBlock := range domainBlocks {
-		var (
-			domain         = domainBlock.Domain.Domain
-			obfuscate      = domainBlock.Obfuscate
-			publicComment  = domainBlock.PublicComment
-			privateComment = domainBlock.PrivateComment
-			subscriptionID = "" // No sub ID for imports.
-			errWithCode    gtserror.WithCode
-		)
-
-		domainBlock, _, errWithCode = p.DomainBlockCreate(
-			ctx,
-			account,
-			domain,
-			obfuscate,
-			publicComment,
-			privateComment,
-			subscriptionID,
-		)
-
-		var entry *apimodel.MultiStatusEntry
-
-		if errWithCode != nil {
-			entry = &apimodel.MultiStatusEntry{
-				// Use the failed domain entry as the resource value.
-				Resource: domain,
-				Message:  errWithCode.Safe(),
-				Status:   errWithCode.Code(),
-			}
-		} else {
-			entry = &apimodel.MultiStatusEntry{
-				// Use successfully created API model domain block as the resource value.
-				Resource: domainBlock,
-				Message:  http.StatusText(http.StatusOK),
-				Status:   http.StatusOK,
-			}
-		}
-
-		multiStatusEntries = append(multiStatusEntries, *entry)
-	}
-
-	return apimodel.NewMultiStatus(multiStatusEntries), nil
-}
-
-// DomainBlocksGet returns all existing domain blocks. If export is
-// true, the format will be suitable for writing out to an export.
-func (p *Processor) DomainBlocksGet(ctx context.Context, account *gtsmodel.Account, export bool) ([]*apimodel.DomainBlock, gtserror.WithCode) {
-	domainBlocks, err := p.state.DB.GetDomainBlocks(ctx)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("db error getting domain blocks: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	apiDomainBlocks := make([]*apimodel.DomainBlock, 0, len(domainBlocks))
-	for _, domainBlock := range domainBlocks {
-		apiDomainBlock, errWithCode := p.apiDomainBlock(ctx, domainBlock)
-		if errWithCode != nil {
-			return nil, errWithCode
-		}
-
-		apiDomainBlocks = append(apiDomainBlocks, apiDomainBlock)
-	}
-
-	return apiDomainBlocks, nil
-}
-
-// DomainBlockGet returns one domain block with the given id. If export
-// is true, the format will be suitable for writing out to an export.
-func (p *Processor) DomainBlockGet(ctx context.Context, id string, export bool) (*apimodel.DomainBlock, gtserror.WithCode) {
-	domainBlock, err := p.state.DB.GetDomainBlockByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			err = fmt.Errorf("no domain block exists with id %s", id)
-			return nil, gtserror.NewErrorNotFound(err, err.Error())
-		}
-
-		// Something went wrong in the DB.
-		err = gtserror.Newf("db error getting domain block %s: %w", id, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return p.apiDomainBlock(ctx, domainBlock)
 }
 
 // domainBlockSideEffects processes the side effects of a domain block:
@@ -323,13 +120,6 @@ func (p *Processor) domainBlockSideEffects(
 	ctx context.Context,
 	block *gtsmodel.DomainBlock,
 ) gtserror.MultiError {
-	l := log.
-		WithContext(ctx).
-		WithFields(kv.Fields{
-			{"domain", block.Domain},
-		}...)
-	l.Debug("processing domain block side effects")
-
 	var errs gtserror.MultiError
 
 	// If we have an instance entry for this domain,
@@ -347,7 +137,6 @@ func (p *Processor) domainBlockSideEffects(
 			errs.Appendf("db error updating instance: %w", err)
 			return errs
 		}
-		l.Debug("instance entry updated")
 	}
 
 	// For each account that belongs to this domain,
@@ -372,6 +161,68 @@ func (p *Processor) domainBlockSideEffects(
 	return errs
 }
 
+func (p *Processor) deleteDomainBlock(
+	ctx context.Context,
+	adminAcct *gtsmodel.Account,
+	domainBlockID string,
+) (*apimodel.DomainPermission, string, gtserror.WithCode) {
+	domainBlock, err := p.state.DB.GetDomainBlockByID(ctx, domainBlockID)
+	if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real error.
+			err = gtserror.Newf("db error getting domain block: %w", err)
+			return nil, "", gtserror.NewErrorInternalError(err)
+		}
+
+		// There are just no entries for this ID.
+		err = fmt.Errorf("no domain block entry exists with ID %s", domainBlockID)
+		return nil, "", gtserror.NewErrorNotFound(err, err.Error())
+	}
+
+	// Prepare the domain block to return, *before* the deletion goes through.
+	apiDomainBlock, errWithCode := p.apiDomainPerm(ctx, domainBlock, false)
+	if errWithCode != nil {
+		return nil, "", errWithCode
+	}
+
+	// Delete the original domain block.
+	if err := p.state.DB.DeleteDomainBlock(ctx, domainBlock.Domain); err != nil {
+		err = gtserror.Newf("db error deleting domain block: %w", err)
+		return nil, "", gtserror.NewErrorInternalError(err)
+	}
+
+	actionID := id.NewULID()
+
+	// Process domain unblock side
+	// effects asynchronously.
+	if errWithCode := p.actions.Run(
+		ctx,
+		&gtsmodel.AdminAction{
+			ID:             actionID,
+			TargetCategory: gtsmodel.AdminActionCategoryDomain,
+			TargetID:       domainBlock.Domain,
+			Type:           gtsmodel.AdminActionUnsuspend,
+			AccountID:      adminAcct.ID,
+		},
+		func(ctx context.Context) gtserror.MultiError {
+			// Log start + finish.
+			l := log.WithFields(kv.Fields{
+				{"domain", domainBlock.Domain},
+				{"actionID", actionID},
+			}...).WithContext(ctx)
+
+			l.Info("processing domain unblock side effects")
+			defer func() { l.Info("finished processing domain unblock side effects") }()
+
+			return p.domainUnblockSideEffects(ctx, domainBlock)
+		},
+	); errWithCode != nil {
+		return nil, actionID, errWithCode
+	}
+
+	return apiDomainBlock, actionID, nil
+}
+
 // domainUnblockSideEffects processes the side effects of undoing a
 // domain block:
 //
@@ -385,13 +236,6 @@ func (p *Processor) domainUnblockSideEffects(
 	ctx context.Context,
 	block *gtsmodel.DomainBlock,
 ) gtserror.MultiError {
-	l := log.
-		WithContext(ctx).
-		WithFields(kv.Fields{
-			{"domain", block.Domain},
-		}...)
-	l.Debug("processing domain unblock side effects")
-
 	var errs gtserror.MultiError
 
 	// Update instance entry for this domain, if we have it.
@@ -414,7 +258,6 @@ func (p *Processor) domainUnblockSideEffects(
 			errs.Appendf("db error updating instance: %w", err)
 			return errs
 		}
-		l.Debug("instance entry updated")
 	}
 
 	// Unsuspend all accounts whose suspension origin was this domain block.

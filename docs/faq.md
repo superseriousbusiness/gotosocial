@@ -46,5 +46,4 @@ Take a look at the [list of open bugs](https://github.com/superseriousbusiness/g
 - polls
 - scheduling posts
 - account migration
-- federated hashtag search
 - shared block lists across servers

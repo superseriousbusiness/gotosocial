@@ -36,7 +36,8 @@ type GTSCaches struct {
 	block            *result.Cache[*gtsmodel.Block]
 	blockIDs         *SliceCache[string]
 	boostOfIDs       *SliceCache[string]
-	domainBlock      *domain.BlockCache
+	domainAllow      *domain.Cache
+	domainBlock      *domain.Cache
 	emoji            *result.Cache[*gtsmodel.Emoji]
 	emojiCategory    *result.Cache[*gtsmodel.EmojiCategory]
 	follow           *result.Cache[*gtsmodel.Follow]
@@ -72,6 +73,7 @@ func (c *GTSCaches) Init() {
 	c.initBlock()
 	c.initBlockIDs()
 	c.initBoostOfIDs()
+	c.initDomainAllow()
 	c.initDomainBlock()
 	c.initEmoji()
 	c.initEmojiCategory()
@@ -139,8 +141,13 @@ func (c *GTSCaches) BoostOfIDs() *SliceCache[string] {
 	return c.boostOfIDs
 }
 
+// DomainAllow provides access to the domain allow database cache.
+func (c *GTSCaches) DomainAllow() *domain.Cache {
+	return c.domainAllow
+}
+
 // DomainBlock provides access to the domain block database cache.
-func (c *GTSCaches) DomainBlock() *domain.BlockCache {
+func (c *GTSCaches) DomainBlock() *domain.Cache {
 	return c.domainBlock
 }
 
@@ -384,8 +391,12 @@ func (c *GTSCaches) initBoostOfIDs() {
 	)}
 }
 
+func (c *GTSCaches) initDomainAllow() {
+	c.domainAllow = new(domain.Cache)
+}
+
 func (c *GTSCaches) initDomainBlock() {
-	c.domainBlock = new(domain.BlockCache)
+	c.domainBlock = new(domain.Cache)
 }
 
 func (c *GTSCaches) initEmoji() {

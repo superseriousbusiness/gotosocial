@@ -102,6 +102,8 @@ nav:
 
   - "Admin":
       - "admin/settings.md"
+      - "admin/federation_modes.md"
+      - "admin/domain_blocks.md"
       - "admin/cli.md"
       - "admin/backup_and_restore.md"
   - "Federation":

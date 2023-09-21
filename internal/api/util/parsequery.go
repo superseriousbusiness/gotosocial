@@ -60,10 +60,10 @@ const (
 	WebUsernameKey = "username"
 	WebStatusIDKey = "status"
 
-	/* Domain block keys */
+	/* Domain permission keys */
 
-	DomainBlockExportKey = "export"
-	DomainBlockImportKey = "import"
+	DomainPermissionExportKey = "export"
+	DomainPermissionImportKey = "import"
 )
 
 // parseError returns gtserror.WithCode set to 400 Bad Request, to indicate
@@ -121,12 +121,12 @@ func ParseSearchResolve(value string, defaultValue bool) (bool, gtserror.WithCod
 	return parseBool(value, defaultValue, SearchResolveKey)
 }
 
-func ParseDomainBlockExport(value string, defaultValue bool) (bool, gtserror.WithCode) {
-	return parseBool(value, defaultValue, DomainBlockExportKey)
+func ParseDomainPermissionExport(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, DomainPermissionExportKey)
 }
 
-func ParseDomainBlockImport(value string, defaultValue bool) (bool, gtserror.WithCode) {
-	return parseBool(value, defaultValue, DomainBlockImportKey)
+func ParseDomainPermissionImport(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, DomainPermissionImportKey)
 }
 
 /*

@@ -42,7 +42,7 @@ func (c AdminActionCategory) String() string {
 	case AdminActionCategoryDomain:
 		return "domain"
 	default:
-		return "unknown"
+		return "unknown" //nolint:goconst
 	}
 }
 

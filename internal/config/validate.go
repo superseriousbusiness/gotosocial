@@ -61,6 +61,17 @@ func Validate() error {
 		errs = append(errs, fmt.Errorf("%s must be set to either http or https, provided value was %s", ProtocolFlag(), proto))
 	}
 
+	// federation mode
+	switch federationMode := GetInstanceFederationMode(); federationMode {
+	case InstanceFederationModeBlocklist, InstanceFederationModeAllowlist:
+		// no problem
+		break
+	case "":
+		errs = append(errs, fmt.Errorf("%s must be set", InstanceFederationModeFlag()))
+	default:
+		errs = append(errs, fmt.Errorf("%s must be set to either blocklist or allowlist, provided value was %s", InstanceFederationModeFlag(), federationMode))
+	}
+
 	webAssetsBaseDir := GetWebAssetBaseDir()
 	if webAssetsBaseDir == "" {
 		errs = append(errs, fmt.Errorf("%s must be set", WebAssetBaseDirFlag()))

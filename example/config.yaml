@@ -81,7 +81,7 @@ host: "localhost"
 # DO NOT change this after your server has already run once, or you will break things!
 #
 # Please read the appropriate section of the installation guide before you go messing around with this setting:
-# https://docs.gotosocial.org/installation_guide/advanced/#can-i-host-my-instance-at-fediexampleorg-but-have-just-exampleorg-in-my-username
+# https://docs.gotosocial.org/en/latest/advanced/host-account-domain/
 #
 # Examples: ["example.org","server.com"]
 # Default: ""
@@ -272,6 +272,21 @@ web-asset-base-dir: "./web/assets/"
 
 # Config pertaining to instance federation settings, pages to hide/expose, etc.
 
+# String. Federation mode to use for this instance.
+#
+# "blocklist" -- open federation by default. Only instances that are explicitly 
+#                blocked will be denied (unless they are also explicitly allowed).
+#
+# "allowlist" -- closed federation by default. Only instances that are explicitly
+#                allowed will be able to interact with this instance.
+#
+# For more details on blocklist and allowlist modes, check the documentation at:
+# https://docs.gotosocial.org/en/latest/admin/federation_modes
+#
+# Options: ["blocklist", "allowlist"]
+# Default: "blocklist"
+instance-federation-mode: "blocklist"
+
 # Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=open in order
 # to see a list of instances that this instance 'peers' with. Even if set to 'false', then authenticated
 # users (members of the instance) will still be able to query the endpoint.
@@ -280,9 +295,12 @@ web-asset-base-dir: "./web/assets/"
 instance-expose-peers: false
 
 # Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=suspended in order
-# to see a list of instances that this instance blocks/suspends. This will also allow unauthenticated
-# users to see the list through the web UI. Even if set to 'false', then authenticated users (members
-# of the instance) will still be able to query the endpoint.
+# to see a list of instances that this instance blocks/suspends. Even if set to 'false', then authenticated
+# users (members of the instance) will still be able to query the endpoint.
+#
+# WARNING: Setting this variable to 'true' may result in your instance being scraped by blocklist scrapers.
+# See: https://docs.gotosocial.org/en/latest/admin/domain_blocks/#block-announce-bots
+#
 # Options: [true, false]
 # Default: false
 instance-expose-suspended: false

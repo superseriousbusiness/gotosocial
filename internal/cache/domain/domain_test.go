@@ -24,21 +24,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
 )
 
-func TestBlockCache(t *testing.T) {
-	c := new(domain.BlockCache)
+func TestCache(t *testing.T) {
+	c := new(domain.Cache)
 
-	blocks := []string{
+	cachedDomains := []string{
 		"google.com",
 		"google.co.uk",
 		"pleroma.bad.host",
 	}
 
 	loader := func() ([]string, error) {
-		t.Log("load: returning blocked domains")
-		return blocks, nil
+		t.Log("load: returning cached domains")
+		return cachedDomains, nil
 	}
 
-	// Check a list of known blocked domains.
+	// Check a list of known cached domains.
 	for _, domain := range []string{
 		"google.com",
 		"mail.google.com",
@@ -47,13 +47,13 @@ func TestBlockCache(t *testing.T) {
 		"pleroma.bad.host",
 		"dev.pleroma.bad.host",
 	} {
-		t.Logf("checking domain is blocked: %s", domain)
-		if b, _ := c.IsBlocked(domain, loader); !b {
-			t.Errorf("domain should be blocked: %s", domain)
+		t.Logf("checking domain matches: %s", domain)
+		if b, _ := c.Matches(domain, loader); !b {
+			t.Errorf("domain should be matched: %s", domain)
 		}
 	}
 
-	// Check a list of known unblocked domains.
+	// Check a list of known uncached domains.
 	for _, domain := range []string{
 		"askjeeves.com",
 		"ask-kim.co.uk",
@@ -62,9 +62,9 @@ func TestBlockCache(t *testing.T) {
 		"gts.bad.host",
 		"mastodon.bad.host",
 	} {
-		t.Logf("checking domain isn't blocked: %s", domain)
-		if b, _ := c.IsBlocked(domain, loader); b {
-			t.Errorf("domain should not be blocked: %s", domain)
+		t.Logf("checking domain isn't matched: %s", domain)
+		if b, _ := c.Matches(domain, loader); b {
+			t.Errorf("domain should not be matched: %s", domain)
 		}
 	}
 
@@ -76,10 +76,10 @@ func TestBlockCache(t *testing.T) {
 	knownErr := errors.New("known error")
 
 	// Check that reload is actually performed and returns our error
-	if _, err := c.IsBlocked("", func() ([]string, error) {
+	if _, err := c.Matches("", func() ([]string, error) {
 		t.Log("load: returning known error")
 		return nil, knownErr
 	}); !errors.Is(err, knownErr) {
-		t.Errorf("is blocked did not return expected error: %v", err)
+		t.Errorf("matches did not return expected error: %v", err)
 	}
 }

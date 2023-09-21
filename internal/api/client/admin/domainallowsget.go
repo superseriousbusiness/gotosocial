@@ -22,9 +22,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DomainBlockGETHandler swagger:operation GET /api/v1/admin/domain_blocks/{id} domainBlockGet
+// DomainAllowsGETHandler swagger:operation GET /api/v1/admin/domain_allows domainAllowsGet
 //
-// View domain block with the given ID.
+// View all domain allows currently in place.
 //
 //	---
 //	tags:
@@ -35,11 +35,15 @@ import (
 //
 //	parameters:
 //	-
-//		name: id
-//		type: string
-//		description: The id of the domain block.
-//		in: path
-//		required: true
+//		name: export
+//		type: boolean
+//		description: >-
+//			If set to `true`, then each entry in the returned list of domain allows will only consist of
+//			the fields `domain` and `public_comment`. This is perfect for when you want to save and share
+//			a list of all the domains you have allowed on your instance, so that someone else can easily import them,
+//			but you don't want them to see the database IDs of your allows, or private comments etc.
+//		in: query
+//		required: false
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -47,9 +51,11 @@ import (
 //
 //	responses:
 //		'200':
-//			description: The requested domain block.
+//			description: All domain allows currently in place.
 //			schema:
-//				"$ref": "#/definitions/domainPermission"
+//				type: array
+//				items:
+//					"$ref": "#/definitions/domainPermission"
 //		'400':
 //			description: bad request
 //		'401':
@@ -62,6 +68,6 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) DomainBlockGETHandler(c *gin.Context) {
-	m.getDomainPermission(c, gtsmodel.DomainPermissionBlock)
+func (m *Module) DomainAllowsGETHandler(c *gin.Context) {
+	m.getDomainPermissions(c, gtsmodel.DomainPermissionAllow)
 }

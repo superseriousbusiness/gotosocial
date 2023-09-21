@@ -57,6 +57,7 @@ var Defaults = Configuration{
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
+	InstanceFederationMode:         InstanceFederationModeDefault,
 	InstanceExposePeers:            false,
 	InstanceExposeSuspended:        false,
 	InstanceExposeSuspendedWeb:     false,

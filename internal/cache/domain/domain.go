@@ -26,23 +26,28 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// BlockCache provides a means of caching domain blocks in memory to reduce load
-// on an underlying storage mechanism, e.g. a database.
+// Cache provides a means of caching domains in memory to reduce
+// load on an underlying storage mechanism, e.g. a database.
 //
-// The in-memory block list is kept up-to-date by means of a passed loader function during every
-// call to .IsBlocked(). In the case of a nil internal block list, the loader function is called to
-// hydrate the cache with the latest list of domain blocks. The .Clear() function can be used to
-// invalidate the cache, e.g. when a domain block is added / deleted from the database.
-type BlockCache struct {
+// The in-memory domain list is kept up-to-date by means of a passed
+// loader function during every call to .Matches(). In the case of
+// a nil internal domain list, the loader function is called to hydrate
+// the cache with the latest list of domains.
+//
+// The .Clear() function can be used to invalidate the cache,
+// e.g. when an entry is added / deleted from the database.
+type Cache struct {
 	// atomically updated ptr value to the
-	// current domain block cache radix trie.
+	// current domain cache radix trie.
 	rootptr unsafe.Pointer
 }
 
-// IsBlocked checks whether domain is blocked. If the cache is not currently loaded, then the provided load function is used to hydrate it.
-func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bool, error) {
+// Matches checks whether domain matches an entry in the cache.
+// If the cache is not currently loaded, then the provided load
+// function is used to hydrate it.
+func (c *Cache) Matches(domain string, load func() ([]string, error)) (bool, error) {
 	// Load the current root pointer value.
-	ptr := atomic.LoadPointer(&b.rootptr)
+	ptr := atomic.LoadPointer(&c.rootptr)
 
 	if ptr == nil {
 		// Cache is not hydrated.
@@ -67,7 +72,7 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 
 		// Store the new node ptr.
 		ptr = unsafe.Pointer(root)
-		atomic.StorePointer(&b.rootptr, ptr)
+		atomic.StorePointer(&c.rootptr, ptr)
 	}
 
 	// Look for a match in the trie node.
@@ -75,22 +80,20 @@ func (b *BlockCache) IsBlocked(domain string, load func() ([]string, error)) (bo
 }
 
 // Clear will drop the currently loaded domain list,
-// triggering a reload on next call to .IsBlocked().
-func (b *BlockCache) Clear() {
-	atomic.StorePointer(&b.rootptr, nil)
+// triggering a reload on next call to .Matches().
+func (c *Cache) Clear() {
+	atomic.StorePointer(&c.rootptr, nil)
 }
 
-// String returns a string representation of stored domains in block cache.
-func (b *BlockCache) String() string {
-	if ptr := atomic.LoadPointer(&b.rootptr); ptr != nil {
+// String returns a string representation of stored domains in cache.
+func (c *Cache) String() string {
+	if ptr := atomic.LoadPointer(&c.rootptr); ptr != nil {
 		return (*root)(ptr).String()
 	}
 	return "<empty>"
 }
 
-// root is the root node in the domain
-// block cache radix trie. this is the
-// singular access point to the trie.
+// root is the root node in the domain cache radix trie. this is the singular access point to the trie.
 type root struct{ root node }
 
 // Add will add the given domain to the radix trie.
@@ -99,14 +102,14 @@ func (r *root) Add(domain string) {
 }
 
 // Match will return whether the given domain matches
-// an existing stored domain block in this radix trie.
+// an existing stored domain in this radix trie.
 func (r *root) Match(domain string) bool {
 	return r.root.match(strings.Split(domain, "."))
 }
 
 // Sort will sort the entire radix trie ensuring that
 // child nodes are stored in alphabetical order. This
-// MUST be done to finalize the block cache in order
+// MUST be done to finalize the domain cache in order
 // to speed up the binary search of node child parts.
 func (r *root) Sort() {
 	r.root.sort()
@@ -154,7 +157,7 @@ func (n *node) add(parts []string) {
 
 		if len(parts) == 0 {
 			// Drop all children here as
-			// this is a higher-level block
+			// this is a higher-level domain
 			// than that we previously had.
 			nn.child = nil
 			return

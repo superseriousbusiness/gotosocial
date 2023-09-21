@@ -22,13 +22,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DomainBlocksPOSTHandler swagger:operation POST /api/v1/admin/domain_blocks domainBlockCreate
+// DomainAllowsPOSTHandler swagger:operation POST /api/v1/admin/domain_allows domainAllowCreate
 //
-// Create one or more domain blocks, from a string or a file.
+// Create one or more domain allows, from a string or a file.
 //
 // You have two options when using this endpoint: either you can set `import` to `true` and
-// upload a file containing multiple domain blocks, JSON-formatted, or you can leave import as
-// `false`, and just add one domain block.
+// upload a file containing multiple domain allows, JSON-formatted, or you can leave import as
+// `false`, and just add one domain allow.
 //
 // The format of the json file should be something like: `[{"domain":"example.org"},{"domain":"whatever.com","public_comment":"they smell"}]`
 //
@@ -47,7 +47,7 @@ import (
 //		name: import
 //		in: query
 //		description: >-
-//			Signal that a list of domain blocks is being imported as a file.
+//			Signal that a list of domain allows is being imported as a file.
 //			If set to `true`, then 'domains' must be present as a JSON-formatted file.
 //			If set to `false`, then `domains` will be ignored, and `domain` must be present.
 //		type: boolean
@@ -56,14 +56,14 @@ import (
 //		name: domains
 //		in: formData
 //		description: >-
-//			JSON-formatted list of domain blocks to import.
+//			JSON-formatted list of domain allows to import.
 //			This is only used if `import` is set to `true`.
 //		type: file
 //	-
 //		name: domain
 //		in: formData
 //		description: >-
-//			Single domain to block.
+//			Single domain to allow.
 //			Used only if `import` is not `true`.
 //		type: string
 //	-
@@ -78,16 +78,16 @@ import (
 //		name: public_comment
 //		in: formData
 //		description: >-
-//			Public comment about this domain block.
-//			This will be displayed alongside the domain block if you choose to share blocks.
+//			Public comment about this domain allow.
+//			This will be displayed alongside the domain allow if you choose to share allows.
 //			Used only if `import` is not `true`.
 //		type: string
 //	-
 //		name: private_comment
 //		in: formData
 //		description: >-
-//			Private comment about this domain block. Will only be shown to other admins, so this
-//			is a useful way of internally keeping track of why a certain domain ended up blocked.
+//			Private comment about this domain allow. Will only be shown to other admins, so this
+//			is a useful way of internally keeping track of why a certain domain ended up allowed.
 //			Used only if `import` is not `true`.
 //		type: string
 //
@@ -98,8 +98,8 @@ import (
 //	responses:
 //		'200':
 //			description: >-
-//				The newly created domain block, if `import` != `true`.
-//				If a list has been imported, then an `array` of newly created domain blocks will be returned instead.
+//				The newly created domain allow, if `import` != `true`.
+//				If a list has been imported, then an `array` of newly created domain allows will be returned instead.
 //			schema:
 //				"$ref": "#/definitions/domainPermission"
 //		'400':
@@ -119,9 +119,9 @@ import (
 //				error; it should be possible to process this action if you try again in a bit.
 //		'500':
 //			description: internal server error
-func (m *Module) DomainBlocksPOSTHandler(c *gin.Context) {
+func (m *Module) DomainAllowsPOSTHandler(c *gin.Context) {
 	m.createDomainPermissions(c,
-		gtsmodel.DomainPermissionBlock,
+		gtsmodel.DomainPermissionAllow,
 		m.processor.Admin().DomainPermissionCreate,
 		m.processor.Admin().DomainPermissionsImport,
 	)
