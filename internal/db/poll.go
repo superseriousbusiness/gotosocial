@@ -33,6 +33,9 @@ type Poll interface {
 	// PutPoll ...
 	PutPoll(ctx context.Context, poll *gtsmodel.Poll) error
 
+	// DeletePollByID ...
+	DeletePollByID(ctx context.Context, id string) error
+
 	// GetPollVoteByID ...
 	GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.PollVote, error)
 
@@ -44,6 +47,9 @@ type Poll interface {
 
 	// PutPollVote ...
 	PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
+
+	// DeletePollVotes ...
+	DeletePollVotes(ctx context.Context, pollID string) error
 
 	// DeletePollVotesBy ...
 	DeletePollVotesBy(ctx context.Context, pollID string, accountID string) error

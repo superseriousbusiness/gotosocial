@@ -113,6 +113,10 @@ func (p *pollDB) PutPoll(ctx context.Context, poll *gtsmodel.Poll) error {
 	})
 }
 
+func (p *pollDB) DeletePollByID(ctx context.Context, id string) error {
+	panic("TODO")
+}
+
 func (p *pollDB) GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.PollVote, error) {
 	return p.getPollVote(
 		ctx,
@@ -230,6 +234,24 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 		_, err := p.db.NewInsert().Model(vote).Exec(ctx)
 		return err
 	})
+}
+
+func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
+	// Get all account IDs of those who voted in poll.
+	accountIDs, err := p.getPollVoterIDs(ctx, pollID)
+	if err != nil {
+		return err
+	}
+
+	for _, id := range accountIDs {
+		// Delete all votes by this account in each of the polls,
+		// this way ensures that all necessary caches are invalidated.
+		if err := p.DeletePollVotesBy(ctx, pollID, id); err != nil {
+			log.Errorf(ctx, "error deleting votes by %s in %s: %v", id, pollID, err)
+		}
+	}
+
+	return nil
 }
 
 func (p *pollDB) DeletePollVotesBy(ctx context.Context, pollID string, accountID string) error {
