@@ -76,20 +76,18 @@ func (iter *regularCollectionPageIterator) PrevItem() IteratorItemable {
 }
 
 func (iter *regularCollectionPageIterator) initItems() bool {
-	if !iter.once {
-		if iter.items != nil {
-			return true // already itering
-		}
-		if iter.ActivityStreamsCollectionPage == nil {
-			return false // no page set
-		}
-		items := iter.GetActivityStreamsItems()
-		if items == nil {
-			return false // no items found
-		}
-		iter.items = items.Begin()
+	if iter.once {
+		return (iter.items != nil)
 	}
 	iter.once = true
+	if iter.ActivityStreamsCollectionPage == nil {
+		return false // no page set
+	}
+	items := iter.GetActivityStreamsItems()
+	if items == nil {
+		return false // no items found
+	}
+	iter.items = items.Begin()
 	return (iter.items != nil)
 }
 
