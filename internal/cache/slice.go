@@ -22,7 +22,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// SliceCache wraps a ttl.Cache to provide simple loader-callback
+// SliceCache wraps a simple.Cache to provide simple loader-callback
 // functions for fetching + caching slices of objects (e.g. IDs).
 type SliceCache[T any] struct {
 	*simple.Cache[string, []T]
