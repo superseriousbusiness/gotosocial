@@ -161,6 +161,7 @@ type ReplyToable interface {
 // CollectionPage or OrderedCollectionPage in order to access both next / prev pages and items.
 type CollectionPageIterator interface {
 	WithJSONLDId
+	WithTypeName
 
 	NextPage() WithIRI
 	PrevPage() WithIRI
@@ -190,7 +191,7 @@ type WithJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
 }
 
-// WithIRI ...
+// WithIRI represents an object (possibly) representable as an IRI.
 type WithIRI interface {
 	GetIRI() *url.URL
 	IsIRI() bool

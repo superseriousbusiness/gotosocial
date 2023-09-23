@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // dereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
@@ -81,6 +82,7 @@ func getAttachedStatusCollectionPage(status ap.Statusable) (ap.CollectionPageIte
 		return ap.WrapOrderedCollectionPage(page), getIDString(page)
 	}
 
+	log.Warnf(nil, "replies without collection page: %s", getIDString(status))
 	return nil, ""
 }
 
