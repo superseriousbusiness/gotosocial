@@ -40,7 +40,7 @@ func WrapOrderedCollectionPage(page vocab.ActivityStreamsOrderedCollectionPage) 
 type regularCollectionPageIterator struct {
 	vocab.ActivityStreamsCollectionPage
 	items vocab.ActivityStreamsItemsPropertyIterator
-	once  bool
+	once  bool // only init items once
 }
 
 func (iter *regularCollectionPageIterator) NextPage() WithIRI {
@@ -98,7 +98,7 @@ func (iter *regularCollectionPageIterator) initItems() bool {
 type orderedCollectionPageIterator struct {
 	vocab.ActivityStreamsOrderedCollectionPage
 	items vocab.ActivityStreamsOrderedItemsPropertyIterator
-	once  bool
+	once  bool // only init items once
 }
 
 func (iter *orderedCollectionPageIterator) NextPage() WithIRI {
