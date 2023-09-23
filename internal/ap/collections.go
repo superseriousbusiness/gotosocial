@@ -27,12 +27,12 @@ func ToCollectionPageIterator(t vocab.Type) (CollectionPageIterator, error) {
 
 // WrapCollectionPage wraps an ActivityStreamsCollectionPage in a standardised collection page interface.
 func WrapCollectionPage(page vocab.ActivityStreamsCollectionPage) CollectionPageIterator {
-	return &regularCollectionPageIterator{page, nil}
+	return &regularCollectionPageIterator{ActivityStreamsCollectionPage: page}
 }
 
 // WrapOrderedCollectionPage wraps an ActivityStreamsOrderedCollectionPage in a standardised collection page interface.
 func WrapOrderedCollectionPage(page vocab.ActivityStreamsOrderedCollectionPage) CollectionPageIterator {
-	return &orderedCollectionPageIterator{page, nil}
+	return &orderedCollectionPageIterator{ActivityStreamsOrderedCollectionPage: page}
 }
 
 // regularCollectionPageIterator implements CollectionPageIterator
@@ -40,6 +40,7 @@ func WrapOrderedCollectionPage(page vocab.ActivityStreamsOrderedCollectionPage) 
 type regularCollectionPageIterator struct {
 	vocab.ActivityStreamsCollectionPage
 	items vocab.ActivityStreamsItemsPropertyIterator
+	once  bool
 }
 
 func (iter *regularCollectionPageIterator) NextPage() WithIRI {
@@ -75,17 +76,20 @@ func (iter *regularCollectionPageIterator) PrevItem() IteratorItemable {
 }
 
 func (iter *regularCollectionPageIterator) initItems() bool {
-	if iter.items != nil {
-		return true // already itering
+	if !iter.once {
+		if iter.items != nil {
+			return true // already itering
+		}
+		if iter.ActivityStreamsCollectionPage == nil {
+			return false // no page set
+		}
+		items := iter.GetActivityStreamsItems()
+		if items == nil {
+			return false // no items found
+		}
+		iter.items = items.Begin()
 	}
-	if iter.ActivityStreamsCollectionPage == nil {
-		return false // no page set
-	}
-	items := iter.GetActivityStreamsItems()
-	if items == nil {
-		return false // no items found
-	}
-	iter.items = items.Begin()
+	iter.once = true
 	return (iter.items != nil)
 }
 
@@ -94,6 +98,7 @@ func (iter *regularCollectionPageIterator) initItems() bool {
 type orderedCollectionPageIterator struct {
 	vocab.ActivityStreamsOrderedCollectionPage
 	items vocab.ActivityStreamsOrderedItemsPropertyIterator
+	once  bool
 }
 
 func (iter *orderedCollectionPageIterator) NextPage() WithIRI {
@@ -129,9 +134,10 @@ func (iter *orderedCollectionPageIterator) PrevItem() IteratorItemable {
 }
 
 func (iter *orderedCollectionPageIterator) initItems() bool {
-	if iter.items != nil {
-		return true // already itering
+	if iter.once {
+		return (iter.items != nil)
 	}
+	iter.once = true
 	if iter.ActivityStreamsOrderedCollectionPage == nil {
 		return false // no page set
 	}
