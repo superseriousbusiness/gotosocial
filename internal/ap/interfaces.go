@@ -17,7 +17,11 @@
 
 package ap
 
-import "github.com/superseriousbusiness/activity/streams/vocab"
+import (
+	"net/url"
+
+	"github.com/superseriousbusiness/activity/streams/vocab"
+)
 
 // Accountable represents the minimum activitypub interface for representing an 'account'.
 // This interface is fulfilled by: Person, Application, Organization, Service, and Group
@@ -153,14 +157,23 @@ type ReplyToable interface {
 	WithInReplyTo
 }
 
-// CollectionPageable represents the minimum interface for an activitystreams 'CollectionPage' object.
-type CollectionPageable interface {
+// CollectionPageIterator represents the minimum interface for interacting with a wrapped
+// CollectionPage or OrderedCollectionPage in order to access both next / prev pages and items.
+type CollectionPageIterator interface {
 	WithJSONLDId
 	WithTypeName
 
-	WithNext
-	WithPartOf
-	WithItems
+	NextPage() WithIRI
+	PrevPage() WithIRI
+
+	NextItem() IteratorItemable
+	PrevItem() IteratorItemable
+}
+
+// IteratorItemable represents the minimum interface for an item in an iterator.
+type IteratorItemable interface {
+	WithIRI
+	WithType
 }
 
 // Flaggable represents the minimum interface for an activitystreams 'Flag' activity.
@@ -173,9 +186,20 @@ type Flaggable interface {
 	WithObject
 }
 
-// WithJSONLDId represents an activity with JSONLDIdProperty
+// WithJSONLDId represents an activity with JSONLDIdProperty.
 type WithJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty
+}
+
+// WithIRI represents an object (possibly) representable as an IRI.
+type WithIRI interface {
+	GetIRI() *url.URL
+	IsIRI() bool
+}
+
+// WithType ...
+type WithType interface {
+	GetType() vocab.Type
 }
 
 // WithTypeName represents an activity with a type name

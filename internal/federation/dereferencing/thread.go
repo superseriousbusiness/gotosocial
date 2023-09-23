@@ -25,7 +25,6 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -247,15 +246,12 @@ func (d *deref) DereferenceStatusDescendants(ctx context.Context, username strin
 		// page is the current activity streams
 		// collection page we are on (as we often
 		// push a frame to stack mid-paging).
-		page ap.CollectionPageable
+		page ap.CollectionPageIterator
 
 		// pageURI is the URI string of
 		// the frame's collection page
 		// (is useful for logging).
 		pageURI string
-
-		// items is the entity iterator for frame's page.
-		items vocab.ActivityStreamsItemsPropertyIterator
 	}
 
 	var (
@@ -270,7 +266,7 @@ func (d *deref) DereferenceStatusDescendants(ctx context.Context, username strin
 		stack = []*frame{
 			func() *frame {
 				// Start input frame is built from the first input.
-				page, pageURI := getAttachedStatusCollection(parent)
+				page, pageURI := getAttachedStatusCollectionPage(parent)
 				if page == nil {
 					return nil
 				}
@@ -305,34 +301,18 @@ stackLoop:
 
 	pageLoop:
 		for {
-			if current.items == nil {
-				// Get the items associated with this page
-				items := current.page.GetActivityStreamsItems()
-				if items == nil {
-					continue stackLoop
-				}
-
-				// Start off the item iterator
-				current.items = items.Begin()
-			}
-
 			l.Tracef("following collection page: %s", current.pageURI)
 
 		itemLoop:
 			for {
-				// Check for remaining iter
-				if current.items == nil {
+				// Get next item from page iter.
+				next := current.page.NextItem()
+				if next == nil {
 					break itemLoop
 				}
 
-				// Get current item iterator
-				itemIter := current.items
-
-				// Set the next available iterator
-				current.items = itemIter.Next()
-
 				// Check for available IRI on item
-				itemIRI, _ := pub.ToId(itemIter)
+				itemIRI, _ := pub.ToId(next)
 				if itemIRI == nil {
 					continue itemLoop
 				}
@@ -364,8 +344,8 @@ stackLoop:
 					continue itemLoop
 				}
 
-				// Extract any attached collection + URI from status.
-				page, pageURI := getAttachedStatusCollection(statusable)
+				// Extract any attached collection + ID URI from status.
+				page, pageURI := getAttachedStatusCollectionPage(statusable)
 				if page == nil {
 					continue itemLoop
 				}
@@ -380,80 +360,41 @@ stackLoop:
 				continue stackLoop
 			}
 
-			// Get the current page's "next" property.
-			pageNext := current.page.GetActivityStreamsNext()
-			if pageNext == nil || !pageNext.IsIRI() {
+			// Get the next page from iterator.
+			next := current.page.NextPage()
+			if next == nil || !next.IsIRI() {
 				continue stackLoop
 			}
 
-			// Get the IRI of the "next" property.
-			pageNextURI := pageNext.GetIRI()
-			pageNextURIStr := pageNextURI.String()
+			// Get the next page IRI.
+			nextURI := next.GetIRI()
+			nextURIStr := nextURI.String()
 
 			// Check whether this page has already been deref'd.
-			if _, ok := derefdPages[pageNextURIStr]; ok {
-				l.Warnf("self referencing collection page(s): %s", pageNextURIStr)
+			if _, ok := derefdPages[nextURIStr]; ok {
+				l.Warnf("self referencing collection page(s): %s", nextURIStr)
 				continue stackLoop
 			}
 
 			// Mark this collection page as deref'd.
-			derefdPages[pageNextURIStr] = struct{}{}
+			derefdPages[nextURIStr] = struct{}{}
 
 			// Dereference this next collection page by its IRI.
 			collectionPage, err := d.dereferenceCollectionPage(ctx,
 				username,
-				pageNextURI,
+				nextURI,
 			)
 			if err != nil {
-				l.Errorf("error dereferencing collection page %q: %s", pageNextURIStr, err)
+				l.Errorf("error dereferencing collection page %q: %s", nextURIStr, err)
 				continue stackLoop
 			}
 
 			// Set the next collection page.
 			current.page = collectionPage
-			current.pageURI = pageNextURIStr
+			current.pageURI = nextURIStr
 			continue pageLoop
 		}
 	}
 
 	return gtserror.Newf("reached %d descendant iterations for %q", maxIter, statusIRIStr)
-}
-
-// getAttachedStatusCollection is a small utility function to fetch the first page
-// of an attached activity streams collection from a provided statusable object .
-func getAttachedStatusCollection(status ap.Statusable) (page ap.CollectionPageable, uri string) { //nolint:gocritic
-	// Look for an attached status replies (as collection)
-	replies := status.GetActivityStreamsReplies()
-	if replies == nil {
-		return nil, ""
-	}
-
-	// Get the status replies collection
-	collection := replies.GetActivityStreamsCollection()
-	if collection == nil {
-		return nil, ""
-	}
-
-	// Get the "first" property of the replies collection
-	first := collection.GetActivityStreamsFirst()
-	if first == nil {
-		return nil, ""
-	}
-
-	// Return the first activity stream collection page
-	page = first.GetActivityStreamsCollectionPage()
-	if page == nil {
-		return nil, ""
-	}
-
-	if pageID := page.GetJSONLDId(); pageID != nil {
-		// By default use collection JSONLD ID
-		return page, pageID.Get().String()
-	} else if statusID := status.GetJSONLDId(); statusID != nil {
-		// Else, if possible use status JSONLD ID
-		return page, statusID.Get().String()
-	} else {
-		// MUST have some kind of ID
-		return nil, ""
-	}
 }
