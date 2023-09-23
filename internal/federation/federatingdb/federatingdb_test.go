@@ -35,7 +35,7 @@ import (
 type FederatingDBTestSuite struct {
 	suite.Suite
 	db            db.DB
-	tc            typeutils.TypeConverter
+	tc            *typeutils.Converter
 	fromFederator chan messages.FromFediAPI
 	federatingDB  federatingdb.DB
 	state         state.State
@@ -79,7 +79,7 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

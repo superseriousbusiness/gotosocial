@@ -103,7 +103,7 @@ func (p *Processor) StatusesGet(
 
 	for _, s := range filtered {
 		// Convert filtered statuses to API statuses.
-		item, err := p.tc.StatusToAPIStatus(ctx, s, requestingAccount)
+		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue
@@ -173,7 +173,7 @@ func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 
 	for _, s := range statuses {
 		// Convert fetched statuses to API statuses.
-		item, err := p.tc.StatusToAPIStatus(ctx, s, nil)
+		item, err := p.converter.StatusToAPIStatus(ctx, s, nil)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue

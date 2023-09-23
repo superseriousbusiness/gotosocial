@@ -40,7 +40,7 @@ func (p *Processor) apiDomainPerm(
 	domainPermission gtsmodel.DomainPermission,
 	export bool,
 ) (*apimodel.DomainPermission, gtserror.WithCode) {
-	apiDomainPerm, err := p.tc.DomainPermToAPIDomainPerm(ctx, domainPermission, export)
+	apiDomainPerm, err := p.converter.DomainPermToAPIDomainPerm(ctx, domainPermission, export)
 	if err != nil {
 		err := gtserror.NewfAt(3, "error converting domain permission to api model: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

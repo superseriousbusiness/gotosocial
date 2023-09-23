@@ -96,7 +96,7 @@ func populateDefaultAvatars() (defaultAvatars []string) {
 //
 // If there are no default avatars available, this function is a
 // no-op.
-func (c *converter) ensureAvatar(account *apimodel.Account) {
+func (c *Converter) ensureAvatar(account *apimodel.Account) {
 	if (account.Avatar != "" && account.AvatarStatic != "") || len(c.defaultAvatars) == 0 {
 		return
 	}
@@ -126,7 +126,7 @@ func (c *converter) ensureAvatar(account *apimodel.Account) {
 //
 // If a value for the header URL is already set, this function is
 // a no-op.
-func (c *converter) ensureHeader(account *apimodel.Account) {
+func (c *Converter) ensureHeader(account *apimodel.Account) {
 	if account.Header != "" && account.HeaderStatic != "" {
 		return
 	}

@@ -26,7 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (c *converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.FollowRequest) *gtsmodel.Follow {
+// FollowRequestToFollow just converts a follow request into a follow, that's it! No bells and whistles.
+func (c *Converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.FollowRequest) *gtsmodel.Follow {
 	showReblogs := *f.ShowReblogs
 	notify := *f.Notify
 	return &gtsmodel.Follow{
@@ -41,7 +42,8 @@ func (c *converter) FollowRequestToFollow(ctx context.Context, f *gtsmodel.Follo
 	}
 }
 
-func (c *converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error) {
+// StatusToBoost wraps the given status into a boosting status.
+func (c *Converter) StatusToBoost(ctx context.Context, s *gtsmodel.Status, boostingAccount *gtsmodel.Account) (*gtsmodel.Status, error) {
 	// the wrapper won't use the same ID as the boosted status so we generate some new UUIDs
 	accountURIs := uris.GenerateURIsForAccount(boostingAccount.Username)
 	boostWrapperStatusID := id.NewULID()

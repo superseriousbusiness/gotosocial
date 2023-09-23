@@ -56,7 +56,7 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, req
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	asStatus, err := p.tc.StatusToAS(ctx, status)
+	asStatus, err := p.converter.StatusToAS(ctx, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -104,7 +104,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 	case !page:
 		// scenario 1
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
+		collection, err := p.converter.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -116,7 +116,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 	case page && !onlyOtherAccountsSet:
 		// scenario 2
 		// get the collection
-		collection, err := p.tc.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
+		collection, err := p.converter.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -166,7 +166,7 @@ func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername stri
 			replyURIs[r.ID] = rURI
 		}
 
-		repliesPage, err := p.tc.StatusURIsToASRepliesPage(ctx, status, onlyOtherAccounts, minID, replyURIs)
+		repliesPage, err := p.converter.StatusURIsToASRepliesPage(ctx, status, onlyOtherAccounts, minID, replyURIs)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}

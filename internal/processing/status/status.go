@@ -29,18 +29,18 @@ import (
 type Processor struct {
 	state        *state.State
 	federator    federation.Federator
-	tc           typeutils.TypeConverter
+	converter    *typeutils.Converter
 	filter       *visibility.Filter
 	formatter    text.Formatter
 	parseMention gtsmodel.ParseMentionFunc
 }
 
 // New returns a new status processor.
-func New(state *state.State, federator federation.Federator, tc typeutils.TypeConverter, filter *visibility.Filter, parseMention gtsmodel.ParseMentionFunc) Processor {
+func New(state *state.State, federator federation.Federator, converter *typeutils.Converter, filter *visibility.Filter, parseMention gtsmodel.ParseMentionFunc) Processor {
 	return Processor{
 		state:        state,
 		federator:    federator,
-		tc:           tc,
+		converter:    converter,
 		filter:       filter,
 		formatter:    text.NewFormatter(state.DB),
 		parseMention: parseMention,

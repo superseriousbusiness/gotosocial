@@ -55,7 +55,7 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 
 	for _, status := range parents {
 		if v, err := p.filter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
-			apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
+			apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
 			if err == nil {
 				context.Ancestors = append(context.Ancestors, *apiStatus)
 			}
@@ -73,7 +73,7 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 
 	for _, status := range children {
 		if v, err := p.filter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
-			apiStatus, err := p.tc.StatusToAPIStatus(ctx, status, requestingAccount)
+			apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
 			if err == nil {
 				context.Descendants = append(context.Descendants, *apiStatus)
 			}

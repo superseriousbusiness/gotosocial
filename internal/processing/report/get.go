@@ -45,7 +45,7 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id strin
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	apiReport, err := p.tc.ReportToAPIReport(ctx, report)
+	apiReport, err := p.converter.ReportToAPIReport(ctx, report)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting report to api: %s", err))
 	}
@@ -79,7 +79,7 @@ func (p *Processor) GetMultiple(
 	prevMinIDValue := reports[0].ID
 
 	for _, r := range reports {
-		item, err := p.tc.ReportToAPIReport(ctx, r)
+		item, err := p.converter.ReportToAPIReport(ctx, r)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting report to api: %s", err))
 		}

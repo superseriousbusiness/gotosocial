@@ -33,7 +33,7 @@ import (
 //   - sending an email
 type surface struct {
 	state       *state.State
-	tc          typeutils.TypeConverter
+	converter   *typeutils.Converter
 	stream      *stream.Processor
 	filter      *visibility.Filter
 	emailSender email.Sender

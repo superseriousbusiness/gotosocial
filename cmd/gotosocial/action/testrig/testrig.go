@@ -43,6 +43,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -96,7 +97,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	federator := testrig.NewTestFederator(&state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
-	typeConverter := testrig.NewTestTypeConverter(state.DB)
+	typeConverter := typeutils.NewConverter(&state)
 	filter := visibility.NewFilter(&state)
 
 	// Initialize timelines.

@@ -30,7 +30,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error) {
+// WrapPersonInUpdate ...
+func (c *Converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error) {
 	update := streams.NewActivityStreamsUpdate()
 
 	// set the actor
@@ -84,7 +85,12 @@ func (c *converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 	return update, nil
 }
 
-func (c *converter) WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error) {
+// WrapNoteInCreate wraps a Note with a Create activity.
+//
+// If objectIRIOnly is set to true, then the function won't put the *entire* note in the Object field of the Create,
+// but just the AP URI of the note. This is useful in cases where you want to give a remote server something to dereference,
+// and still have control over whether or not they're allowed to actually see the contents.
+func (c *Converter) WrapNoteInCreate(note vocab.ActivityStreamsNote, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error) {
 	create := streams.NewActivityStreamsCreate()
 
 	// Object property

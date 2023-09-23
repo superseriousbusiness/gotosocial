@@ -40,7 +40,7 @@ type AdminStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db                  db.DB
-	tc                  typeutils.TypeConverter
+	tc                  *typeutils.Converter
 	storage             *storage.Driver
 	state               state.State
 	mediaManager        *media.Manager
@@ -86,7 +86,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

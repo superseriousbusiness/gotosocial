@@ -79,7 +79,7 @@ func (p *Processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiApp, err := p.tc.AppToAPIAppSensitive(ctx, app)
+	apiApp, err := p.converter.AppToAPIAppSensitive(ctx, app)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

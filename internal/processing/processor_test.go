@@ -44,7 +44,7 @@ type ProcessingStandardTestSuite struct {
 	storage             *storage.Driver
 	state               state.State
 	mediaManager        *media.Manager
-	typeconverter       typeutils.TypeConverter
+	typeconverter       *typeutils.Converter
 	httpClient          *testrig.MockHTTPClient
 	transportController transport.Controller
 	federator           federation.Federator
@@ -104,7 +104,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
-	suite.typeconverter = testrig.NewTestTypeConverter(suite.db)
+	suite.typeconverter = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

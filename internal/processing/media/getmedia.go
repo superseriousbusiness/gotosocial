@@ -42,7 +42,7 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, mediaAtt
 		return nil, gtserror.NewErrorNotFound(errors.New("attachment not owned by requesting account"))
 	}
 
-	a, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)
+	a, err := p.converter.AttachmentToAPIAttachment(ctx, attachment)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
 	}

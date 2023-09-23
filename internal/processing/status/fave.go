@@ -135,7 +135,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 			continue
 		}
 
-		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, fave.Account)
+		apiAccount, err := p.converter.AccountToAPIAccountPublic(ctx, fave.Account)
 		if err != nil {
 			err = fmt.Errorf("FavedBy: error converting account %s to frontend representation: %w", fave.AccountID, err)
 			return nil, gtserror.NewErrorInternalError(err)

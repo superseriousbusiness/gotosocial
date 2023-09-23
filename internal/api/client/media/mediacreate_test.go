@@ -56,7 +56,7 @@ type MediaCreateTestSuite struct {
 	storage      *storage.Driver
 	mediaManager *media.Manager
 	federator    federation.Federator
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	oauthServer  oauth.Server
 	emailSender  email.Sender
 	processor    *processing.Processor
@@ -91,7 +91,7 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

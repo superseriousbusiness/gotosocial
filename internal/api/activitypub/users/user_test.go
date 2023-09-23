@@ -39,7 +39,7 @@ type UserStandardTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	mediaManager *media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender
@@ -85,7 +85,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

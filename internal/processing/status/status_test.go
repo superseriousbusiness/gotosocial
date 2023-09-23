@@ -36,7 +36,7 @@ import (
 type StatusStandardTestSuite struct {
 	suite.Suite
 	db            db.DB
-	typeConverter typeutils.TypeConverter
+	typeConverter *typeutils.Converter
 	tc            transport.Controller
 	storage       *storage.Driver
 	state         state.State
@@ -78,7 +78,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB(&suite.state)
-	suite.typeConverter = testrig.NewTestTypeConverter(suite.db)
+	suite.typeConverter = typeutils.NewConverter(&suite.state)
 	suite.state.DB = suite.db
 
 	suite.tc = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
@@ -91,7 +91,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	testrig.StartTimelines(
 		&suite.state,
 		filter,
-		testrig.NewTestTypeConverter(suite.db),
+		suite.typeConverter,
 	)
 
 	suite.status = status.New(&suite.state, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))

@@ -49,7 +49,7 @@ type StreamingTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
 	db           db.DB
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	mediaManager *media.Manager
 	federator    federation.Federator
 	emailSender  email.Sender
@@ -94,7 +94,7 @@ func (suite *StreamingTestSuite) SetupTest() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

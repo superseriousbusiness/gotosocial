@@ -481,7 +481,7 @@ type TypeUtilsTestSuite struct {
 	testReports     map[string]*gtsmodel.Report
 	testMentions    map[string]*gtsmodel.Mention
 
-	typeconverter typeutils.TypeConverter
+	typeconverter *typeutils.Converter
 }
 
 func (suite *TypeUtilsTestSuite) SetupTest() {
@@ -502,7 +502,7 @@ func (suite *TypeUtilsTestSuite) SetupTest() {
 	suite.testEmojis = testrig.NewTestEmojis()
 	suite.testReports = testrig.NewTestReports()
 	suite.testMentions = testrig.NewTestMentions()
-	suite.typeconverter = typeutils.NewConverter(suite.db)
+	suite.typeconverter = typeutils.NewConverter(&suite.state)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }
@@ -519,7 +519,7 @@ func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
 	testrig.StartTimelines(
 		&suite.state,
 		visibility.NewFilter(&suite.state),
-		testrig.NewTestTypeConverter(suite.db),
+		suite.typeconverter,
 	)
 
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")

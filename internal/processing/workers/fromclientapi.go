@@ -40,7 +40,7 @@ import (
 // from the client/REST API.
 type clientAPI struct {
 	state      *state.State
-	tc         typeutils.TypeConverter
+	converter  *typeutils.Converter
 	surface    *surface
 	federate   *federate
 	wipeStatus wipeStatus
@@ -242,7 +242,7 @@ func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClien
 
 	if err := p.federate.Follow(
 		ctx,
-		p.tc.FollowRequestToFollow(ctx, followRequest),
+		p.converter.FollowRequestToFollow(ctx, followRequest),
 	); err != nil {
 		return gtserror.Newf("error federating follow: %w", err)
 	}
@@ -389,7 +389,7 @@ func (p *clientAPI) RejectFollowRequest(ctx context.Context, cMsg messages.FromC
 
 	if err := p.federate.RejectFollow(
 		ctx,
-		p.tc.FollowRequestToFollow(ctx, followReq),
+		p.converter.FollowRequestToFollow(ctx, followReq),
 	); err != nil {
 		return gtserror.Newf("error federating reject follow: %w", err)
 	}

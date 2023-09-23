@@ -87,7 +87,7 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 			}
 		}
 
-		item, err := p.tc.NotificationToAPINotification(ctx, n)
+		item, err := p.converter.NotificationToAPINotification(ctx, n)
 		if err != nil {
 			log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
 			continue
@@ -121,7 +121,7 @@ func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Accou
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	apiNotif, err := p.tc.NotificationToAPINotification(ctx, notif)
+	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorNotFound(err)

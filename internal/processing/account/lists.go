@@ -94,7 +94,7 @@ func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Ac
 			continue
 		}
 
-		apiList, err := p.tc.ListToAPIList(ctx, list)
+		apiList, err := p.converter.ListToAPIList(ctx, list)
 		if err != nil {
 			log.Debugf(ctx, "skipping list %s due to error %q", listEntry.ListID, err)
 			continue

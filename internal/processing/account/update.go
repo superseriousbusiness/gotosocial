@@ -274,7 +274,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		OriginAccount:  account,
 	})
 
-	acctSensitive, err := p.tc.AccountToAPIAccountSensitive(ctx, account)
+	acctSensitive, err := p.converter.AccountToAPIAccountSensitive(ctx, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not convert account into apisensitive account: %s", err))
 	}

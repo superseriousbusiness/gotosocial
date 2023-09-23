@@ -286,7 +286,6 @@ func (s *surface) listEligible(
 			list.ID,
 			status.InReplyToAccountID,
 		)
-
 		if err != nil {
 			err := gtserror.Newf(
 				"db error checking if account %s in list %s: %w",
@@ -352,7 +351,7 @@ func (s *surface) timelineStatus(
 	}
 
 	// The status was inserted so stream it to the user.
-	apiStatus, err := s.tc.StatusToAPIStatus(ctx, status, account)
+	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account)
 	if err != nil {
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return true, err

@@ -130,7 +130,7 @@ func (p *Processor) RelationshipGet(ctx context.Context, requestingAccount *gtsm
 		return nil, gtserror.NewErrorInternalError(gtserror.Newf("error getting relationship: %s", err))
 	}
 
-	r, err := p.tc.RelationshipToAPIRelationship(ctx, gtsR)
+	r, err := p.converter.RelationshipToAPIRelationship(ctx, gtsR)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(gtserror.Newf("error converting relationship: %s", err))
 	}

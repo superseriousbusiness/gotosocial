@@ -36,7 +36,7 @@ const (
 	rssDescriptionMaxRunes = 256
 )
 
-func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error) {
+func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error) {
 	// see https://cyber.harvard.edu/rss/rss.html
 
 	// Title -- The title of the item.
@@ -57,7 +57,7 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	// Author -- Email address of the author of the item.
 	// example: oprah\@oxygen.net
 	if s.Account == nil {
-		a, err := c.db.GetAccountByID(ctx, s.AccountID)
+		a, err := c.state.DB.GetAccountByID(ctx, s.AccountID)
 		if err != nil {
 			return nil, fmt.Errorf("error getting status author: %s", err)
 		}
@@ -110,7 +110,7 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	if len(s.Attachments) > 0 {
 		attachment = s.Attachments[0]
 	} else if len(s.AttachmentIDs) > 0 {
-		a, err := c.db.GetAttachmentByID(ctx, s.AttachmentIDs[0])
+		a, err := c.state.DB.GetAttachmentByID(ctx, s.AttachmentIDs[0])
 		if err == nil {
 			attachment = a
 		}
@@ -139,7 +139,7 @@ func (c *converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	} else {
 		for _, e := range s.EmojiIDs {
 			gtsEmoji := &gtsmodel.Emoji{}
-			if err := c.db.GetByID(ctx, e, gtsEmoji); err != nil {
+			if err := c.state.DB.GetByID(ctx, e, gtsEmoji); err != nil {
 				log.Errorf(ctx, "error getting emoji with id %s: %s", e, err)
 				continue
 			}

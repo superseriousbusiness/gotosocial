@@ -53,7 +53,7 @@ func (p *Processor) getList(ctx context.Context, accountID string, listID string
 // apiList is a shortcut to return the API version of the given
 // list, or return an appropriate error if conversion fails.
 func (p *Processor) apiList(ctx context.Context, list *gtsmodel.List) (*apimodel.List, gtserror.WithCode) {
-	apiList, err := p.tc.ListToAPIList(ctx, list)
+	apiList, err := p.converter.ListToAPIList(ctx, list)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting list to api: %w", err))
 	}

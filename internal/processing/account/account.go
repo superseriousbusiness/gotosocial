@@ -37,7 +37,7 @@ type Processor struct {
 	c *common.Processor
 
 	state        *state.State
-	tc           typeutils.TypeConverter
+	converter    *typeutils.Converter
 	mediaManager *media.Manager
 	oauthServer  oauth.Server
 	filter       *visibility.Filter
@@ -50,7 +50,7 @@ type Processor struct {
 func New(
 	common *common.Processor,
 	state *state.State,
-	tc typeutils.TypeConverter,
+	converter *typeutils.Converter,
 	mediaManager *media.Manager,
 	oauthServer oauth.Server,
 	federator federation.Federator,
@@ -60,7 +60,7 @@ func New(
 	return Processor{
 		c:            common,
 		state:        state,
-		tc:           tc,
+		converter:    converter,
 		mediaManager: mediaManager,
 		oauthServer:  oauthServer,
 		filter:       filter,

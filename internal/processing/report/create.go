@@ -99,7 +99,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		TargetAccount:  targetAccount,
 	})
 
-	apiReport, err := p.tc.ReportToAPIReport(ctx, report)
+	apiReport, err := p.converter.ReportToAPIReport(ctx, report)
 	if err != nil {
 		err = fmt.Errorf("error converting report to frontend representation: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

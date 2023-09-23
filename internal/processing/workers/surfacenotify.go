@@ -34,7 +34,7 @@ func (s *surface) notifyMentions(
 	ctx context.Context,
 	mentions []*gtsmodel.Mention,
 ) error {
-	var errs = gtserror.NewMultiError(len(mentions))
+	errs := gtserror.NewMultiError(len(mentions))
 
 	for _, mention := range mentions {
 		if err := s.notify(
@@ -208,7 +208,7 @@ func (s *surface) notify(
 	}
 
 	// Stream notification to the user.
-	apiNotif, err := s.tc.NotificationToAPINotification(ctx, notif)
+	apiNotif, err := s.converter.NotificationToAPINotification(ctx, notif)
 	if err != nil {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}

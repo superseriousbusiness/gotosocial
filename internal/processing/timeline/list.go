@@ -90,7 +90,7 @@ func ListTimelineFilter(state *state.State, filter *visibility.Filter) timeline.
 }
 
 // ListTimelineStatusPrepare returns a function that satisfies PrepareFunction for list timelines.
-func ListTimelineStatusPrepare(state *state.State, tc typeutils.TypeConverter) timeline.PrepareFunction {
+func ListTimelineStatusPrepare(state *state.State, converter *typeutils.Converter) timeline.PrepareFunction {
 	return func(ctx context.Context, listID string, itemID string) (timeline.Preparable, error) {
 		status, err := state.DB.GetStatusByID(ctx, itemID)
 		if err != nil {
@@ -110,7 +110,7 @@ func ListTimelineStatusPrepare(state *state.State, tc typeutils.TypeConverter) t
 			return nil, err
 		}
 
-		return tc.StatusToAPIStatus(ctx, status, requestingAccount)
+		return converter.StatusToAPIStatus(ctx, status, requestingAccount)
 	}
 }
 

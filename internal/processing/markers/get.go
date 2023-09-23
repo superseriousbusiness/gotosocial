@@ -45,7 +45,7 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, names []
 		markers = append(markers, marker)
 	}
 
-	apiMarker, err := p.tc.MarkersToAPIMarker(ctx, markers)
+	apiMarker, err := p.converter.MarkersToAPIMarker(ctx, markers)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting marker to api: %w", err))
 	}

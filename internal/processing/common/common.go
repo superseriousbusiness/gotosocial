@@ -29,7 +29,7 @@ import (
 // processing subsection of the codebase.
 type Processor struct {
 	state     *state.State
-	converter typeutils.TypeConverter
+	converter *typeutils.Converter
 	federator federation.Federator
 	filter    *visibility.Filter
 }
@@ -37,7 +37,7 @@ type Processor struct {
 // New returns a new Processor instance.
 func New(
 	state *state.State,
-	converter typeutils.TypeConverter,
+	converter *typeutils.Converter,
 	federator federation.Federator,
 	filter *visibility.Filter,
 ) Processor {

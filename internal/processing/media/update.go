@@ -65,7 +65,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("database error updating media: %s", err))
 	}
 
-	a, err := p.tc.AttachmentToAPIAttachment(ctx, attachment)
+	a, err := p.converter.AttachmentToAPIAttachment(ctx, attachment)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error converting attachment: %s", err))
 	}

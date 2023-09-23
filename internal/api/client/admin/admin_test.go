@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -96,7 +97,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 	testrig.StartTimelines(
 		&suite.state,
 		visibility.NewFilter(&suite.state),
-		testrig.NewTestTypeConverter(suite.db),
+		typeutils.NewConverter(&suite.state),
 	)
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)

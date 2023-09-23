@@ -58,7 +58,7 @@ func (p *Processor) ReportsGet(
 	prevMinIDValue := reports[0].ID
 
 	for _, r := range reports {
-		item, err := p.tc.ReportToAdminAPIReport(ctx, r, account)
+		item, err := p.converter.ReportToAdminAPIReport(ctx, r, account)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting report to api: %s", err))
 		}
@@ -96,7 +96,7 @@ func (p *Processor) ReportGet(ctx context.Context, account *gtsmodel.Account, id
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apimodelReport, err := p.tc.ReportToAdminAPIReport(ctx, report, account)
+	apimodelReport, err := p.converter.ReportToAdminAPIReport(ctx, report, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -144,7 +144,7 @@ func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account
 		TargetAccount:  report.Account,
 	})
 
-	apimodelReport, err := p.tc.ReportToAdminAPIReport(ctx, updatedReport, account)
+	apimodelReport, err := p.converter.ReportToAdminAPIReport(ctx, updatedReport, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

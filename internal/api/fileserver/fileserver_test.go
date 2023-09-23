@@ -42,7 +42,7 @@ type FileserverTestSuite struct {
 	storage      *storage.Driver
 	state        state.State
 	federator    federation.Federator
-	tc           typeutils.TypeConverter
+	tc           *typeutils.Converter
 	processor    *processing.Processor
 	mediaManager *media.Manager
 	oauthServer  oauth.Server
@@ -79,7 +79,7 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), suite.mediaManager)
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 
-	suite.tc = testrig.NewTestTypeConverter(suite.db)
+	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,

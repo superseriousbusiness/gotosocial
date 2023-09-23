@@ -63,7 +63,7 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 	}
 
 	// it's visible! it's boostable! so let's boost the FUCK out of it
-	boostWrapperStatus, err := p.tc.StatusToBoost(ctx, targetStatus, requestingAccount)
+	boostWrapperStatus, err := p.converter.StatusToBoost(ctx, targetStatus, requestingAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -199,7 +199,7 @@ func (p *Processor) StatusBoostedBy(ctx context.Context, requestingAccount *gtsm
 			return nil, gtserror.NewErrorNotFound(wrapped)
 		}
 
-		apiAccount, err := p.tc.AccountToAPIAccountPublic(ctx, account)
+		apiAccount, err := p.converter.AccountToAPIAccountPublic(ctx, account)
 		if err != nil {
 			err = fmt.Errorf("BoostedBy: error converting account to api model: %s", err)
 			return nil, gtserror.NewErrorInternalError(err)

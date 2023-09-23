@@ -38,7 +38,7 @@ type Processor struct {
 func New(
 	state *state.State,
 	federator federation.Federator,
-	tc typeutils.TypeConverter,
+	converter *typeutils.Converter,
 	filter *visibility.Filter,
 	emailSender email.Sender,
 	account *account.Processor,
@@ -49,7 +49,7 @@ func New(
 	// wrapper struct.
 	surface := &surface{
 		state:       state,
-		tc:          tc,
+		converter:   converter,
 		stream:      stream,
 		filter:      filter,
 		emailSender: emailSender,
@@ -60,7 +60,7 @@ func New(
 	federate := &federate{
 		Federator: federator,
 		state:     state,
-		tc:        tc,
+		converter: converter,
 	}
 
 	// Init shared logic wipe
@@ -75,7 +75,7 @@ func New(
 		workers: &state.Workers,
 		clientAPI: &clientAPI{
 			state:      state,
-			tc:         tc,
+			converter:  converter,
 			surface:    surface,
 			federate:   federate,
 			wipeStatus: wipeStatus,

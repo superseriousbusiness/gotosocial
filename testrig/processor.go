@@ -23,11 +23,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // NewTestProcessor returns a Processor suitable for testing purposes
 func NewTestProcessor(state *state.State, federator federation.Federator, emailSender email.Sender, mediaManager *media.Manager) *processing.Processor {
-	p := processing.NewProcessor(NewTestTypeConverter(state.DB), federator, NewTestOauthServer(state.DB), mediaManager, state, emailSender)
+	p := processing.NewProcessor(typeutils.NewConverter(state), federator, NewTestOauthServer(state.DB), mediaManager, state, emailSender)
 	state.Workers.EnqueueClientAPI = p.Workers().EnqueueClientAPI
 	state.Workers.EnqueueFediAPI = p.Workers().EnqueueFediAPI
 	return p
