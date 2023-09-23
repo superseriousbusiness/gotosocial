@@ -13,13 +13,15 @@ import (
 // ToCollectionPageIterator attempts to resolve the given vocab type as a CollectionPage
 // like object and wrap in a standardised interface in order to iterate its contents.
 func ToCollectionPageIterator(t vocab.Type) (CollectionPageIterator, error) {
-	switch t := t.(type) {
-	case vocab.ActivityStreamsCollectionPage:
+	switch name := t.GetTypeName(); name {
+	case ObjectCollectionPage:
+		t := t.(vocab.ActivityStreamsCollectionPage) //nolint:forcetypeassert
 		return WrapCollectionPage(t), nil
-	case vocab.ActivityStreamsOrderedCollectionPage:
+	case ObjectOrderedCollectionPage:
+		t := t.(vocab.ActivityStreamsOrderedCollectionPage) //nolint:forcetypeassert
 		return WrapOrderedCollectionPage(t), nil
 	default:
-		return nil, fmt.Errorf("%T(%s) was not CollectionPage-like", t, t.GetTypeName())
+		return nil, fmt.Errorf("%T(%s) was not CollectionPage-like", t, name)
 	}
 }
 
