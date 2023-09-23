@@ -18,6 +18,7 @@
 package ap
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 
@@ -63,21 +64,22 @@ const (
 	ActorPerson       = "Person"       // ActivityStreamsPerson https://www.w3.org/TR/activitystreams-vocabulary/#dfn-person
 	ActorService      = "Service"      // ActivityStreamsService https://www.w3.org/TR/activitystreams-vocabulary/#dfn-service
 
-	ObjectArticle           = "Article"           // ActivityStreamsArticle https://www.w3.org/TR/activitystreams-vocabulary/#dfn-article
-	ObjectAudio             = "Audio"             // ActivityStreamsAudio https://www.w3.org/TR/activitystreams-vocabulary/#dfn-audio
-	ObjectDocument          = "Document"          // ActivityStreamsDocument https://www.w3.org/TR/activitystreams-vocabulary/#dfn-document
-	ObjectEvent             = "Event"             // ActivityStreamsEvent https://www.w3.org/TR/activitystreams-vocabulary/#dfn-event
-	ObjectImage             = "Image"             // ActivityStreamsImage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-image
-	ObjectNote              = "Note"              // ActivityStreamsNote https://www.w3.org/TR/activitystreams-vocabulary/#dfn-note
-	ObjectPage              = "Page"              // ActivityStreamsPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-page
-	ObjectPlace             = "Place"             // ActivityStreamsPlace https://www.w3.org/TR/activitystreams-vocabulary/#dfn-place
-	ObjectProfile           = "Profile"           // ActivityStreamsProfile https://www.w3.org/TR/activitystreams-vocabulary/#dfn-profile
-	ObjectRelationship      = "Relationship"      // ActivityStreamsRelationship https://www.w3.org/TR/activitystreams-vocabulary/#dfn-relationship
-	ObjectTombstone         = "Tombstone"         // ActivityStreamsTombstone https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tombstone
-	ObjectVideo             = "Video"             // ActivityStreamsVideo https://www.w3.org/TR/activitystreams-vocabulary/#dfn-video
-	ObjectCollection        = "Collection"        // ActivityStreamsCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collection
-	ObjectCollectionPage    = "CollectionPage"    // ActivityStreamsCollectionPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collectionpage
-	ObjectOrderedCollection = "OrderedCollection" // ActivityStreamsOrderedCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection
+	ObjectArticle               = "Article"               // ActivityStreamsArticle https://www.w3.org/TR/activitystreams-vocabulary/#dfn-article
+	ObjectAudio                 = "Audio"                 // ActivityStreamsAudio https://www.w3.org/TR/activitystreams-vocabulary/#dfn-audio
+	ObjectDocument              = "Document"              // ActivityStreamsDocument https://www.w3.org/TR/activitystreams-vocabulary/#dfn-document
+	ObjectEvent                 = "Event"                 // ActivityStreamsEvent https://www.w3.org/TR/activitystreams-vocabulary/#dfn-event
+	ObjectImage                 = "Image"                 // ActivityStreamsImage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-image
+	ObjectNote                  = "Note"                  // ActivityStreamsNote https://www.w3.org/TR/activitystreams-vocabulary/#dfn-note
+	ObjectPage                  = "Page"                  // ActivityStreamsPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-page
+	ObjectPlace                 = "Place"                 // ActivityStreamsPlace https://www.w3.org/TR/activitystreams-vocabulary/#dfn-place
+	ObjectProfile               = "Profile"               // ActivityStreamsProfile https://www.w3.org/TR/activitystreams-vocabulary/#dfn-profile
+	ObjectRelationship          = "Relationship"          // ActivityStreamsRelationship https://www.w3.org/TR/activitystreams-vocabulary/#dfn-relationship
+	ObjectTombstone             = "Tombstone"             // ActivityStreamsTombstone https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tombstone
+	ObjectVideo                 = "Video"                 // ActivityStreamsVideo https://www.w3.org/TR/activitystreams-vocabulary/#dfn-video
+	ObjectCollection            = "Collection"            // ActivityStreamsCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collection
+	ObjectCollectionPage        = "CollectionPage"        // ActivityStreamsCollectionPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collectionpage
+	ObjectOrderedCollection     = "OrderedCollection"     // ActivityStreamsOrderedCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection
+	ObjectOrderedCollectionPage = "OrderedCollectionPage" // ActivityStreamsOrderedCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection
 
 	// Hashtag is not in the AS spec per se, but it tends to get used
 	// as though 'Hashtag' is a named type under the Tag property.
@@ -86,6 +88,115 @@ const (
 	// and https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tag
 	TagHashtag = "Hashtag"
 )
+
+func ToCollectionPageIterator(t vocab.Type) (CollectionPageIterator, error) {
+	switch t := t.(type) {
+	case vocab.ActivityStreamsCollectionPage:
+		return WrapCollectionPage(t), nil
+	case vocab.ActivityStreamsOrderedCollectionPage:
+		return WrapOrderedCollectionPage(t), nil
+	default:
+		return nil, fmt.Errorf("%T(%s) was not CollectionPage-like", t, t.GetTypeName())
+	}
+}
+
+func WrapCollectionPage(page vocab.ActivityStreamsCollectionPage) CollectionPageIterator {
+	return &regularCollectionPageIterator{page, nil}
+}
+
+func WrapOrderedCollectionPage(page vocab.ActivityStreamsOrderedCollectionPage) CollectionPageIterator {
+	return &orderedCollectionPageIterator{page, nil}
+}
+
+type regularCollectionPageIterator struct {
+	vocab.ActivityStreamsCollectionPage
+	items vocab.ActivityStreamsItemsPropertyIterator
+}
+
+func (iter *regularCollectionPageIterator) NextPage() WithIRI {
+	if iter.ActivityStreamsCollectionPage == nil {
+		return nil
+	}
+	return iter.GetActivityStreamsNext()
+}
+
+func (iter *regularCollectionPageIterator) PrevPage() WithIRI {
+	if iter.ActivityStreamsCollectionPage == nil {
+		return nil
+	}
+	return iter.GetActivityStreamsPrev()
+}
+
+func (iter *regularCollectionPageIterator) NextItem() IteratorItemable {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Next()
+	return cur
+}
+
+func (iter *regularCollectionPageIterator) PrevItem() IteratorItemable {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Prev()
+	return cur
+}
+
+func (iter *regularCollectionPageIterator) initItems() bool {
+	if iter.items == nil && iter.ActivityStreamsCollectionPage != nil {
+		items := iter.GetActivityStreamsItems()
+		iter.items = items.Begin()
+	}
+	return (iter.items != nil)
+}
+
+type orderedCollectionPageIterator struct {
+	vocab.ActivityStreamsOrderedCollectionPage
+	items vocab.ActivityStreamsOrderedItemsPropertyIterator
+}
+
+func (iter *orderedCollectionPageIterator) NextPage() WithIRI {
+	if iter.ActivityStreamsOrderedCollectionPage == nil {
+		return nil
+	}
+	return iter.GetActivityStreamsNext()
+}
+
+func (iter *orderedCollectionPageIterator) PrevPage() WithIRI {
+	if iter.ActivityStreamsOrderedCollectionPage == nil {
+		return nil
+	}
+	return iter.GetActivityStreamsPrev()
+}
+
+func (iter *orderedCollectionPageIterator) NextItem() IteratorItemable {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Next()
+	return cur
+}
+
+func (iter *orderedCollectionPageIterator) PrevItem() IteratorItemable {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Prev()
+	return cur
+}
+
+func (iter *orderedCollectionPageIterator) initItems() bool {
+	if iter.items == nil && iter.ActivityStreamsOrderedCollectionPage != nil {
+		items := iter.GetActivityStreamsOrderedItems()
+		iter.items = items.Begin()
+	}
+	return (iter.items != nil)
+}
 
 type CollectionParams struct {
 	// Containing collection
