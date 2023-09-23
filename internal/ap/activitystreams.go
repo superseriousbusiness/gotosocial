@@ -69,7 +69,7 @@ const (
 	ObjectCollection            = "Collection"            // ActivityStreamsCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collection
 	ObjectCollectionPage        = "CollectionPage"        // ActivityStreamsCollectionPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collectionpage
 	ObjectOrderedCollection     = "OrderedCollection"     // ActivityStreamsOrderedCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection
-	ObjectOrderedCollectionPage = "OrderedCollectionPage" // ActivityStreamsOrderedCollection https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection
+	ObjectOrderedCollectionPage = "OrderedCollectionPage" // ActivityStreamsOrderedCollectionPage https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollectionPage
 
 	// Hashtag is not in the AS spec per se, but it tends to get used
 	// as though 'Hashtag' is a named type under the Tag property.
