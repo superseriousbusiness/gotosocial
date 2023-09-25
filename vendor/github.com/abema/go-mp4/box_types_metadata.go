@@ -3,7 +3,7 @@ package mp4
 import (
 	"fmt"
 
-	"github.com/abema/go-mp4/util"
+	"github.com/abema/go-mp4/internal/util"
 )
 
 /*************************** ilst ****************************/

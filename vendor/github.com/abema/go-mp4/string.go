@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/abema/go-mp4/util"
+	"github.com/abema/go-mp4/internal/util"
 )
 
 type stringifier struct {

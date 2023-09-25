@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/abema/go-mp4/bitio"
+	"github.com/abema/go-mp4/internal/bitio"
 )
 
 type ProbeInfo struct {
