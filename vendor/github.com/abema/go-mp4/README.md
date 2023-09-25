@@ -6,7 +6,8 @@ go-mp4
 [![Coverage Status](https://coveralls.io/repos/github/abema/go-mp4/badge.svg)](https://coveralls.io/github/abema/go-mp4)
 [![Go Report Card](https://goreportcard.com/badge/github.com/abema/go-mp4)](https://goreportcard.com/report/github.com/abema/go-mp4)
 
-go-mp4 is Go library for reading and writing MP4.
+go-mp4 is Go library and CLI tool which provide low-level I/O interfaces of MP4.
+This library supports you to parse or build any MP4 boxes(atoms) directly.
 
 ## Integration with your Go application
 
@@ -135,7 +136,7 @@ If you should reduce Read function calls, you can wrap the io.ReadSeeker by [buf
 Install mp4tool as follows:
 
 ```sh
-go install github.com/abema/go-mp4/mp4tool@latest
+go install github.com/abema/go-mp4/cmd/mp4tool@latest
 
 mp4tool -help
 ```

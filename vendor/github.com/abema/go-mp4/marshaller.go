@@ -8,7 +8,7 @@ import (
 	"math"
 	"reflect"
 
-	"github.com/abema/go-mp4/bitio"
+	"github.com/abema/go-mp4/internal/bitio"
 )
 
 const (

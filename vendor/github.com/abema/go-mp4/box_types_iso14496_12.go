@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/abema/go-mp4/bitio"
-	"github.com/abema/go-mp4/util"
+	"github.com/abema/go-mp4/internal/bitio"
+	"github.com/abema/go-mp4/internal/util"
 )
 
 /*************************** btrt ****************************/
