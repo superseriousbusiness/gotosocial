@@ -55,6 +55,38 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingStatusHomeTimel
 	suite.True(timelineable)
 }
 
+func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingBoostedStatusHomeTimelineable() {
+	ctx := context.Background()
+
+	testStatus := suite.testStatuses["admin_account_status_4"]
+	testAccount := suite.testAccounts["local_account_1"]
+	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
+	suite.NoError(err)
+
+	suite.True(timelineable)
+}
+
+func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingBoostedStatusHomeTimelineableNoReblogs() {
+	ctx := context.Background()
+
+	// Update follow to indicate that local_account_1
+	// doesn't want to see reblogs by admin_account.
+	follow := &gtsmodel.Follow{}
+	*follow = *suite.testFollows["local_account_1_admin_account"]
+	follow.ShowReblogs = util.Ptr(false)
+
+	if err := suite.db.UpdateFollow(ctx, follow, "show_reblogs"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	testStatus := suite.testStatuses["admin_account_status_4"]
+	testAccount := suite.testAccounts["local_account_1"]
+	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
+	suite.NoError(err)
+
+	suite.False(timelineable)
+}
+
 func (suite *StatusStatusHomeTimelineableTestSuite) TestNotFollowingStatusHomeTimelineable() {
 	testStatus := suite.testStatuses["remote_account_1_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]

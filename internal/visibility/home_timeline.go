@@ -19,10 +19,12 @@ package visibility
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -169,24 +171,23 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 	// a status thread *including* the owner, or a conversation thread between
 	// accounts the timeline owner follows.
 
-	if status.Visibility == gtsmodel.VisibilityFollowersOnly ||
-		status.Visibility == gtsmodel.VisibilityMutualsOnly {
-		// Followers/mutuals only post that already passed the status
-		// visibility check, (i.e. we follow / mutuals with author).
-		return true, nil
-	}
-
-	// Ensure owner follows author of public/unlocked status.
-	follow, err := f.state.DB.IsFollowing(ctx,
+	// Ensure owner follows author.
+	follow, err := f.state.DB.GetFollow(ctx,
 		owner.ID,
 		status.AccountID,
 	)
-	if err != nil {
-		return false, gtserror.Newf("error checking follow %s->%s: %w", owner.ID, status.AccountID, err)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, gtserror.Newf("error retrieving follow %s->%s: %w", owner.ID, status.AccountID, err)
 	}
 
-	if !follow {
-		log.Trace(ctx, "ignoring visible status from unfollowed author")
+	if follow == nil {
+		log.Trace(ctx, "ignoring status from unfollowed author")
+		return false, nil
+	}
+
+	if status.BoostOfID != "" && !*follow.ShowReblogs {
+		// Status is a boost, but the owner of this follow
+		// doesn't want to see boosts from this account.
 		return false, nil
 	}
 
