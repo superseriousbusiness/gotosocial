@@ -31,7 +31,7 @@ type Processor struct {
 	federator    federation.Federator
 	converter    *typeutils.Converter
 	filter       *visibility.Filter
-	formatter    text.Formatter
+	formatter    *text.Formatter
 	parseMention gtsmodel.ParseMentionFunc
 }
 

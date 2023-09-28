@@ -20,7 +20,6 @@ package text
 import (
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -36,8 +35,10 @@ const (
 //
 // Finally, it will do a check on the normalized string to
 // ensure that it's below maximumHashtagLength chars, and
-// contains only unicode letters and numbers. If this passes,
-// returned bool will be true.
+// contains only letters, numbers, and underscores (and not
+// *JUST* underscores).
+//
+// If all this passes, returned bool will be true.
 func NormalizeHashtag(text string) (string, bool) {
 	// This normalization is specifically to avoid cases
 	// where visually-identical hashtags are stored with
@@ -47,14 +48,31 @@ func NormalizeHashtag(text string) (string, bool) {
 	// with parent characters to form regular letter symbols.
 	normalized := norm.NFC.String(strings.TrimPrefix(text, "#"))
 
-	// Validate normalized.
-	ok := true
+	// Validate normalized result.
+	var (
+		notJustUnderscores = false
+		onlyPermittedChars = true
+		lengthOK           = true
+	)
+
 	for i, r := range normalized {
-		if i >= maximumHashtagLength || !util.IsPermittedInHashtag(r) {
-			ok = false
+		if r != '_' {
+			// This isn't an underscore,
+			// so the whole hashtag isn't
+			// just underscores.
+			notJustUnderscores = true
+		}
+
+		if i >= maximumHashtagLength {
+			lengthOK = false
+			break
+		}
+
+		if !isPermittedInHashtag(r) {
+			onlyPermittedChars = false
 			break
 		}
 	}
 
-	return normalized, ok
+	return normalized, (lengthOK && onlyPermittedChars && notJustUnderscores)
 }

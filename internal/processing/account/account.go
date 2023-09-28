@@ -41,7 +41,7 @@ type Processor struct {
 	mediaManager *media.Manager
 	oauthServer  oauth.Server
 	filter       *visibility.Filter
-	formatter    text.Formatter
+	formatter    *text.Formatter
 	federator    federation.Federator
 	parseMention gtsmodel.ParseMentionFunc
 }

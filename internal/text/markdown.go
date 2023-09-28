@@ -28,38 +28,55 @@ import (
 	"github.com/yuin/goldmark/renderer/html"
 )
 
-func (f *formatter) FromMarkdown(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, markdownText string) *FormatResult {
-	result := &FormatResult{
-		Mentions: []*gtsmodel.Mention{},
-		Tags:     []*gtsmodel.Tag{},
-		Emojis:   []*gtsmodel.Emoji{},
-	}
+// FromMarkdown fulfils FormatFunc by parsing
+// the given markdown input into a FormatResult.
+func (f *Formatter) FromMarkdown(
+	ctx context.Context,
+	parseMention gtsmodel.ParseMentionFunc,
+	authorID string,
+	statusID string,
+	input string,
+) *FormatResult {
+	result := new(FormatResult)
 
-	// parse markdown text into html, using custom renderer to add hashtag/mention links
+	// Instantiate goldmark parser for
+	// markdown, using custom renderer
+	// to add hashtag/mention links.
 	md := goldmark.New(
 		goldmark.WithRendererOptions(
 			html.WithXHTML(),
 			html.WithHardWraps(),
-			html.WithUnsafe(), // allows raw HTML
+			// Allows raw HTML. We sanitize
+			// at the end so this is OK.
+			html.WithUnsafe(),
 		),
 		goldmark.WithExtensions(
-			&customRenderer{f, ctx, pmf, authorID, statusID, false, result},
-			extension.Linkify, // turns URLs into links
+			&customRenderer{
+				ctx,
+				f.db,
+				parseMention,
+				authorID,
+				statusID,
+				false, // emojiOnly = false.
+				result,
+			},
+			extension.Linkify, // Turns URLs into links.
 			extension.Strikethrough,
 		),
 	)
 
-	var htmlContentBytes bytes.Buffer
-	err := md.Convert([]byte(markdownText), &htmlContentBytes)
-	if err != nil {
-		log.Errorf(ctx, "error formatting markdown to HTML: %s", err)
+	// Parse input into HTML.
+	var htmlBytes bytes.Buffer
+	if err := md.Convert(
+		[]byte(input),
+		&htmlBytes,
+	); err != nil {
+		log.Errorf(ctx, "error formatting markdown input to HTML: %s", err)
 	}
-	result.HTML = htmlContentBytes.String()
 
-	// clean anything dangerous out of the HTML
+	// Clean and shrink HTML.
+	result.HTML = htmlBytes.String()
 	result.HTML = SanitizeToHTML(result.HTML)
-
-	// shrink ray
 	result.HTML = MinifyHTML(result.HTML)
 
 	return result

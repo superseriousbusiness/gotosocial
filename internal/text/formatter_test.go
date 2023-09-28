@@ -48,7 +48,7 @@ type TextStandardTestSuite struct {
 	testEmojis       map[string]*gtsmodel.Emoji
 
 	// module being tested
-	formatter text.Formatter
+	formatter *text.Formatter
 }
 
 func (suite *TextStandardTestSuite) SetupSuite() {
@@ -85,14 +85,32 @@ func (suite *TextStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *TextStandardTestSuite) FromMarkdown(text string) *text.FormatResult {
-	return suite.formatter.FromMarkdown(context.Background(), suite.parseMention, suite.testAccounts["local_account_1"].ID, "status_ID", text)
+func (suite *TextStandardTestSuite) FromMarkdown(input string) *text.FormatResult {
+	return suite.formatter.FromMarkdown(
+		context.Background(),
+		suite.parseMention,
+		suite.testAccounts["local_account_1"].ID,
+		"dummy_status_ID",
+		input,
+	)
 }
 
-func (suite *TextStandardTestSuite) FromPlain(text string) *text.FormatResult {
-	return suite.formatter.FromPlain(context.Background(), suite.parseMention, suite.testAccounts["local_account_1"].ID, "status_ID", text)
+func (suite *TextStandardTestSuite) FromPlain(input string) *text.FormatResult {
+	return suite.formatter.FromPlain(
+		context.Background(),
+		suite.parseMention,
+		suite.testAccounts["local_account_1"].ID,
+		"dummy_status_ID",
+		input,
+	)
 }
 
-func (suite *TextStandardTestSuite) FromPlainNoParagraph(text string) *text.FormatResult {
-	return suite.formatter.FromPlainNoParagraph(context.Background(), suite.parseMention, suite.testAccounts["local_account_1"].ID, "status_ID", text)
+func (suite *TextStandardTestSuite) FromPlainNoParagraph(input string) *text.FormatResult {
+	return suite.formatter.FromPlainNoParagraph(
+		context.Background(),
+		suite.parseMention,
+		suite.testAccounts["local_account_1"].ID,
+		"dummmy_status_ID",
+		input,
+	)
 }

@@ -17,39 +17,35 @@
 
 package text
 
-import (
-	"context"
+import "unicode"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-)
-
-// FormatFunc is fulfilled by FromPlain,
-// FromPlainNoParagraph, and FromMarkdown.
-type FormatFunc func(
-	ctx context.Context,
-	parseMention gtsmodel.ParseMentionFunc,
-	authorID string,
-	statusID string,
-	text string,
-) *FormatResult
-
-// Formatter wraps logic and functions for parsing
-// statuses and other text input into nice html.
-type Formatter struct {
-	db db.DB
+func isPlausiblyInHashtag(r rune) bool {
+	// Marks are allowed during parsing
+	// prior to normalization, but not after,
+	// since they may be combined into letters
+	// during normalization.
+	return unicode.IsMark(r) ||
+		isPermittedInHashtag(r)
 }
 
-// NewFormatter returns a new Formatter.
-func NewFormatter(db db.DB) *Formatter {
-	return &Formatter{
-		db: db,
-	}
+func isPermittedInHashtag(r rune) bool {
+	return unicode.IsLetter(r) ||
+		unicode.IsNumber(r) ||
+		r == '_'
 }
 
-type FormatResult struct {
-	HTML     string
-	Mentions []*gtsmodel.Mention
-	Tags     []*gtsmodel.Tag
-	Emojis   []*gtsmodel.Emoji
+// isHashtagBoundary returns true if rune r
+// is a recognized break character for before
+// or after a #hashtag.
+func isHashtagBoundary(r rune) bool {
+	return unicode.IsSpace(r) ||
+		(unicode.IsPunct(r) && r != '_')
+}
+
+// isMentionBoundary returns true if rune r
+// is a recognized break character for before
+// or after a @mention.
+func isMentionBoundary(r rune) bool {
+	return unicode.IsSpace(r) ||
+		unicode.IsPunct(r)
 }
