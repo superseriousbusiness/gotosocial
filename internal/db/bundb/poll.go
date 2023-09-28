@@ -114,7 +114,18 @@ func (p *pollDB) PutPoll(ctx context.Context, poll *gtsmodel.Poll) error {
 }
 
 func (p *pollDB) DeletePollByID(ctx context.Context, id string) error {
-	panic("TODO")
+	// Delete poll by ID from database.
+	if _, err := p.db.NewDelete().
+		Table("polls").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	// Invalidate poll by ID from cache.
+	p.state.Caches.GTS.Poll().Invalidate("ID", id)
+
+	return nil
 }
 
 func (p *pollDB) GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.PollVote, error) {
