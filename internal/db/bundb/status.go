@@ -213,6 +213,17 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
+	if status.PollID != "" && status.Poll == nil {
+		// Status poll is not set, fetch from database.
+		status.Poll, err = s.state.DB.GetPollByID(
+			gtscontext.SetBarebones(ctx),
+			status.PollID,
+		)
+		if err != nil {
+			errs.Appendf("error populating status poll: %w", err)
+		}
+	}
+
 	if !status.AttachmentsPopulated() {
 		// Status attachments are out-of-date with IDs, repopulate.
 		status.Attachments, err = s.state.DB.GetAttachmentsByIDs(
