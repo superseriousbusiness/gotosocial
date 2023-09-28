@@ -99,7 +99,10 @@ func New(ctx context.Context, database db.Basic) Server {
 			oauth2.AuthorizationCode,
 			oauth2.ClientCredentials,
 		},
-		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{oauth2.CodeChallengePlain},
+		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{
+			oauth2.CodeChallengePlain,
+			oauth2.CodeChallengeS256,
+		},
 	}
 
 	srv := server.NewServer(sc, manager)
