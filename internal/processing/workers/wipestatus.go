@@ -85,6 +85,17 @@ func wipeStatusF(state *state.State, media *media.Processor, surface *surface) w
 			errs.Appendf("error deleting status faves: %w", err)
 		}
 
+		// delete poll of status, and votes of poll
+		if pollID := statusToDelete.PollID; pollID != "" {
+			if err := state.DB.DeletePollByID(ctx, pollID); err != nil {
+				errs.Appendf("error deleting status poll: %w", err)
+			}
+
+			if err := state.DB.DeletePollVotes(ctx, pollID); err != nil {
+				errs.Appendf("error deleting status poll votes: %w", err)
+			}
+		}
+
 		// delete all boosts for this status + remove them from timelines
 		boosts, err := state.DB.GetStatusBoosts(
 			// we MUST set a barebones context here,
