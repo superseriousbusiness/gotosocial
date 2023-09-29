@@ -26,7 +26,7 @@ import (
 // plaintextParser implements goldmark.parser.BlockParser
 type plaintextParser struct{}
 
-var defaultPlaintextParser = &plaintextParser{}
+var defaultPlaintextParser = new(plaintextParser)
 
 func newPlaintextParser() parser.BlockParser {
 	return defaultPlaintextParser
@@ -64,7 +64,7 @@ func (b *plaintextParser) CanAcceptIndentedLine() bool {
 // plaintextParserNoParagraph implements goldmark.parser.BlockParser
 type plaintextParserNoParagraph struct{}
 
-var defaultPlaintextParserNoParagraph = &plaintextParserNoParagraph{}
+var defaultPlaintextParserNoParagraph = new(plaintextParserNoParagraph)
 
 func newPlaintextParserNoParagraph() parser.BlockParser {
 	return defaultPlaintextParserNoParagraph

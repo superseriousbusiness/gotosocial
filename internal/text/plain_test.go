@@ -20,7 +20,6 @@ package text_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -85,7 +84,7 @@ that link shouldn't come out formatted as a mention!`
 func (suite *PlainTestSuite) TestDeriveMentionsEmpty() {
 	statusText := ``
 	menchies := suite.FromPlain(statusText).Mentions
-	assert.Len(suite.T(), menchies, 0)
+	suite.Len(menchies, 0)
 }
 
 func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
@@ -98,7 +97,9 @@ func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
 	here's a link with a fragment: https://example.org/whatever#ahhh
 	here's another link with a fragment: https://example.org/whatever/#ahhh
 
-(#ThisShouldAlsoWork) #this_should_be_split
+(#ThisShouldAlsoWork) #this_should_not_be_split
+
+#__ <- just underscores, shouldn't work
 
 #111111 thisalsoshouldn'twork#### ##
 
@@ -108,24 +109,24 @@ func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
 `
 
 	tags := suite.FromPlain(statusText).Tags
-	assert.Len(suite.T(), tags, 13)
-	assert.Equal(suite.T(), "testing123", tags[0].Name)
-	assert.Equal(suite.T(), "also", tags[1].Name)
-	assert.Equal(suite.T(), "thisshouldwork", tags[2].Name)
-	assert.Equal(suite.T(), "dupe", tags[3].Name)
-	assert.Equal(suite.T(), "ThisShouldAlsoWork", tags[4].Name)
-	assert.Equal(suite.T(), "this", tags[5].Name)
-	assert.Equal(suite.T(), "111111", tags[6].Name)
-	assert.Equal(suite.T(), "alimentación", tags[7].Name)
-	assert.Equal(suite.T(), "saúde", tags[8].Name)
-	assert.Equal(suite.T(), "lävistää", tags[9].Name)
-	assert.Equal(suite.T(), "ö", tags[10].Name)
-	assert.Equal(suite.T(), "네", tags[11].Name)
-	assert.Equal(suite.T(), "ThisOneIsThirteyCharactersLong", tags[12].Name)
+	suite.Len(tags, 13)
+	suite.Equal("testing123", tags[0].Name)
+	suite.Equal("also", tags[1].Name)
+	suite.Equal("thisshouldwork", tags[2].Name)
+	suite.Equal("dupe", tags[3].Name)
+	suite.Equal("ThisShouldAlsoWork", tags[4].Name)
+	suite.Equal("this_should_not_be_split", tags[5].Name)
+	suite.Equal("111111", tags[6].Name)
+	suite.Equal("alimentación", tags[7].Name)
+	suite.Equal("saúde", tags[8].Name)
+	suite.Equal("lävistää", tags[9].Name)
+	suite.Equal("ö", tags[10].Name)
+	suite.Equal("네", tags[11].Name)
+	suite.Equal("ThisOneIsThirteyCharactersLong", tags[12].Name)
 
 	statusText = `#올빼미 hej`
 	tags = suite.FromPlain(statusText).Tags
-	assert.Equal(suite.T(), "올빼미", tags[0].Name)
+	suite.Equal("올빼미", tags[0].Name)
 }
 
 func (suite *PlainTestSuite) TestDeriveMultiple() {
@@ -137,20 +138,20 @@ func (suite *PlainTestSuite) TestDeriveMultiple() {
 
 	f := suite.FromPlain(statusText)
 
-	assert.Len(suite.T(), f.Mentions, 1)
-	assert.Equal(suite.T(), "@foss_satan@fossbros-anonymous.io", f.Mentions[0].NameString)
+	suite.Len(f.Mentions, 1)
+	suite.Equal("@foss_satan@fossbros-anonymous.io", f.Mentions[0].NameString)
 
-	assert.Len(suite.T(), f.Tags, 1)
-	assert.Equal(suite.T(), "hashtag", f.Tags[0].Name)
+	suite.Len(f.Tags, 1)
+	suite.Equal("hashtag", f.Tags[0].Name)
 
-	assert.Len(suite.T(), f.Emojis, 0)
+	suite.Len(f.Emojis, 0)
 }
 
 func (suite *PlainTestSuite) TestZalgoHashtag() {
 	statusText := `yo who else loves #praying to #z̸͉̅a̸͚͋l̵͈̊g̸̫͌ỏ̷̪?`
 	f := suite.FromPlain(statusText)
-	assert.Len(suite.T(), f.Tags, 1)
-	assert.Equal(suite.T(), "praying", f.Tags[0].Name)
+	suite.Len(f.Tags, 1)
+	suite.Equal("praying", f.Tags[0].Name)
 }
 
 func TestPlainTestSuite(t *testing.T) {

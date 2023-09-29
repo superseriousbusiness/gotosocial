@@ -76,10 +76,16 @@ const (
 	mdWithLinkExpected              = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a></p>"
 	mdObjectInCodeBlock             = "@foss_satan@fossbros-anonymous.io this is how to mention a user\n```\n@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you've been writing lately! :rainbow:\n```\nhope that helps"
 	mdObjectInCodeBlockExpected     = "<p><span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span> this is how to mention a user</p><pre><code>@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you&#39;ve been writing lately! :rainbow:\n</code></pre><p>hope that helps</p>"
-	mdItalicHashtag                 = "_#hashtag_"
-	mdItalicHashtagExpected         = "<p><em><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
-	mdItalicHashtags                = "_#hashtag #hashtag #hashtag_"
-	mdItalicHashtagsExpected        = "<p><em><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
+	// Hashtags can be italicized but only with *, not _.
+	mdItalicHashtag          = "*#hashtag*"
+	mdItalicHashtagExpected  = "<p><em><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
+	mdItalicHashtags         = "*#hashtag #hashtag #hashtag*"
+	mdItalicHashtagsExpected = "<p><em><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
+	// Hashtags can end with or contain _ but not start with it.
+	mdUnderscorePrefixHashtag         = "_#hashtag"
+	mdUnderscorePrefixHashtagExpected = "<p>_#hashtag</p>"
+	mdUnderscoreSuffixHashtag         = "#hashtag_"
+	mdUnderscoreSuffixHashtagExpected = "<p><a href=\"http://localhost:8080/tags/hashtag_\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag_</span></a></p>"
 	// BEWARE: sneaky unicode business going on.
 	// the first ö is one rune, the second ö is an o with a combining diacritic.
 	mdUnnormalizedHashtag         = "#hellöthere #hellöthere"
@@ -192,6 +198,19 @@ func (suite *MarkdownTestSuite) TestParseItalicHashtag() {
 func (suite *MarkdownTestSuite) TestParseItalicHashtags() {
 	formatted := suite.FromMarkdown(mdItalicHashtags)
 	suite.Equal(mdItalicHashtagsExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseHashtagUnderscorePrefix() {
+	formatted := suite.FromMarkdown(mdUnderscorePrefixHashtag)
+	suite.Equal(mdUnderscorePrefixHashtagExpected, formatted.HTML)
+	suite.Empty(formatted.Tags)
+}
+
+func (suite *MarkdownTestSuite) TestParseHashtagUnderscoreSuffix() {
+	formatted := suite.FromMarkdown(mdUnderscoreSuffixHashtag)
+	suite.Equal(mdUnderscoreSuffixHashtagExpected, formatted.HTML)
+	suite.NotEmpty(formatted.Tags)
+	suite.Equal("hashtag_", formatted.Tags[0].Name)
 }
 
 func (suite *MarkdownTestSuite) TestParseUnnormalizedHashtag() {

@@ -30,66 +30,150 @@ import (
 	"github.com/yuin/goldmark/util"
 )
 
-func (f *formatter) fromPlain(
+// FromPlain fulfils FormatFunc by parsing
+// the given plaintext input into a FormatResult.
+func (f *Formatter) FromPlain(
 	ctx context.Context,
-	ptParser parser.Parser,
-	pmf gtsmodel.ParseMentionFunc,
+	parseMention gtsmodel.ParseMentionFunc,
 	authorID string,
 	statusID string,
-	plain string,
+	input string,
 ) *FormatResult {
-	result := &FormatResult{
-		Mentions: []*gtsmodel.Mention{},
-		Tags:     []*gtsmodel.Tag{},
-		Emojis:   []*gtsmodel.Emoji{},
-	}
-
-	// Parse markdown into html, using custom renderer
-	// to add hashtag/mention links and emoji images.
-	md := goldmark.New(
-		goldmark.WithRendererOptions(
-			html.WithXHTML(),
-			html.WithHardWraps(),
-		),
-		goldmark.WithParser(ptParser), // use parser we were passed
-		goldmark.WithExtensions(
-			&customRenderer{f, ctx, pmf, authorID, statusID, false, result},
-			extension.Linkify, // turns URLs into links
-		),
-	)
-
-	var htmlContentBytes bytes.Buffer
-	if err := md.Convert([]byte(plain), &htmlContentBytes); err != nil {
-		log.Errorf(ctx, "error formatting plaintext to HTML: %s", err)
-	}
-	result.HTML = htmlContentBytes.String()
-
-	// Clean anything dangerous out of resulting HTML.
-	result.HTML = SanitizeToHTML(result.HTML)
-
-	// Shrink ray!
-	result.HTML = MinifyHTML(result.HTML)
-
-	return result
-}
-
-func (f *formatter) FromPlain(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
-	ptParser := parser.NewParser(
+	// Initialize standard block parser
+	// that wraps result in <p> tags.
+	plainTextParser := parser.NewParser(
 		parser.WithBlockParsers(
 			util.Prioritized(newPlaintextParser(), 500),
 		),
 	)
 
-	return f.fromPlain(ctx, ptParser, pmf, authorID, statusID, plain)
+	return f.fromPlain(
+		ctx,
+		plainTextParser,
+		false, // emojiOnly = false
+		parseMention,
+		authorID,
+		statusID,
+		input,
+	)
 }
 
-func (f *formatter) FromPlainNoParagraph(ctx context.Context, pmf gtsmodel.ParseMentionFunc, authorID string, statusID string, plain string) *FormatResult {
-	ptParser := parser.NewParser(
+// FromPlainNoParagraph fulfils FormatFunc by parsing
+// the given plaintext input into a FormatResult.
+//
+// Unlike FromPlain, it will not wrap the resulting
+// HTML in <p> tags, making it useful for parsing
+// short fragments of text that oughtn't be formally
+// wrapped as a paragraph.
+func (f *Formatter) FromPlainNoParagraph(
+	ctx context.Context,
+	parseMention gtsmodel.ParseMentionFunc,
+	authorID string,
+	statusID string,
+	input string,
+) *FormatResult {
+	// Initialize block parser that
+	// doesn't wrap result in <p> tags.
+	plainTextParser := parser.NewParser(
 		parser.WithBlockParsers(
-			// Initialize block parser that doesn't wrap in <p> tags.
 			util.Prioritized(newPlaintextParserNoParagraph(), 500),
 		),
 	)
 
-	return f.fromPlain(ctx, ptParser, pmf, authorID, statusID, plain)
+	return f.fromPlain(
+		ctx,
+		plainTextParser,
+		false, // emojiOnly = false
+		parseMention,
+		authorID,
+		statusID,
+		input,
+	)
+}
+
+// FromPlainEmojiOnly fulfils FormatFunc by parsing
+// the given plaintext input into a FormatResult.
+//
+// Unlike FromPlain, it will only parse emojis with
+// the custom renderer, leaving aside mentions and tags.
+func (f *Formatter) FromPlainEmojiOnly(
+	ctx context.Context,
+	parseMention gtsmodel.ParseMentionFunc,
+	authorID string,
+	statusID string,
+	input string,
+) *FormatResult {
+	// Initialize standard block parser
+	// that wraps result in <p> tags.
+	plainTextParser := parser.NewParser(
+		parser.WithBlockParsers(
+			util.Prioritized(newPlaintextParser(), 500),
+		),
+	)
+
+	return f.fromPlain(
+		ctx,
+		plainTextParser,
+		true, // emojiOnly = true
+		parseMention,
+		authorID,
+		statusID,
+		input,
+	)
+}
+
+// fromPlain parses the given input text
+// using the given plainTextParser, and
+// returns the result.
+func (f *Formatter) fromPlain(
+	ctx context.Context,
+	plainTextParser parser.Parser,
+	emojiOnly bool,
+	parseMention gtsmodel.ParseMentionFunc,
+	authorID string,
+	statusID string,
+	input string,
+) *FormatResult {
+	result := new(FormatResult)
+
+	// Instantiate goldmark parser for
+	// plaintext, using custom renderer
+	// to add hashtag/mention links.
+	md := goldmark.New(
+		goldmark.WithRendererOptions(
+			html.WithXHTML(),
+			html.WithHardWraps(),
+		),
+		// Use whichever plaintext
+		// parser we were passed.
+		goldmark.WithParser(plainTextParser),
+		goldmark.WithExtensions(
+			&customRenderer{
+				ctx,
+				f.db,
+				parseMention,
+				authorID,
+				statusID,
+				emojiOnly,
+				result,
+			},
+			extension.Linkify, // Turns URLs into links.
+		),
+	)
+
+	// Parse input into HTML.
+	var htmlBytes bytes.Buffer
+	if err := md.Convert(
+		[]byte(input),
+		&htmlBytes,
+	); err != nil {
+		log.Errorf(ctx, "error formatting plaintext input to HTML: %s", err)
+	}
+
+	// Clean and shrink HTML.
+	result.HTML = htmlBytes.String()
+	result.HTML = SanitizeToHTML(result.HTML)
+	result.HTML = MinifyHTML(result.HTML)
+
+	return result
 }

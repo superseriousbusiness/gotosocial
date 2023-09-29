@@ -277,7 +277,7 @@ func processLanguage(ctx context.Context, form *apimodel.AdvancedStatusCreateFor
 	return nil
 }
 
-func processContent(ctx context.Context, dbService db.DB, formatter text.Formatter, parseMention gtsmodel.ParseMentionFunc, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
+func processContent(ctx context.Context, dbService db.DB, formatter *text.Formatter, parseMention gtsmodel.ParseMentionFunc, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
 	// if there's nothing in the status at all we can just return early
 	if form.Status == "" {
 		status.Content = ""
