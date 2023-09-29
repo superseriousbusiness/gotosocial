@@ -22,6 +22,7 @@ import (
 	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -61,9 +62,20 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 		}
 	}
 
-	// Insert the new poll vote into the database.
-	if err := p.state.DB.PutPollVotes(ctx, votes...); err != nil {
-		err := gtserror.Newf("error inserting poll vote: %w", err)
+	// Insert the new poll votes into the database.
+	switch err := p.state.DB.PutPollVotes(ctx, votes...); {
+
+	case err == nil:
+		// no issue.
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		// Users cannot vote multiple *times* (not choices).
+		const text = "already voted in poll"
+		return nil, gtserror.NewErrorUnprocessableEntity(err, text)
+
+	default:
+		// Any other irrecoverable database error.
+		err := gtserror.Newf("error inserting poll votes: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
