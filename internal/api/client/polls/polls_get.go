@@ -17,7 +17,87 @@
 
 package polls
 
-import "github.com/gin-gonic/gin"
+import (
+	"errors"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+)
+
+// PollGETHandler swagger:operation GET /api/v1/polls/{id} poll
+//
+// View poll with given ID.
+//
+//	---
+//	tags:
+//	- polls
+//
+//	produces:
+//	- application/json
+//
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Target poll ID.
+//		in: path
+//		required: true
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- write:statuses
+//
+//	responses:
+//		'200':
+//			description: "The requested poll."
+//			schema:
+//				"$ref": "#/definitions/poll"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) PollGETHandler(c *gin.Context) {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
+		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	pollID := c.Param(IDKey)
+	if pollID == "" {
+		const text = "no poll id specified"
+		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	poll, errWithCode := m.processor.Polls().PollGet(
+		c.Request.Context(),
+		authed.Account,
+		pollID,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.JSON(http.StatusOK, poll)
 }

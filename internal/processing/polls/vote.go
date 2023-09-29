@@ -27,39 +27,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string, choice int) (*apimodel.Poll, gtserror.WithCode) {
+func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string, choices []int) (*apimodel.Poll, gtserror.WithCode) {
 	// Get (+ check visibility of) requested poll with ID.
 	poll, errWithCode := p.getTargetPoll(ctx, requestingAccount, pollID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if choice >= len(poll.Options) {
-		// This is an invalid poll choice.
-		err := errors.New("invalid poll choice")
-		return nil, gtserror.NewErrorBadRequest(err)
+	if !*poll.Multiple && len(choices) > 1 {
+		// Multiple given for single-choice poll.
+		const text = "poll only accepts single choice"
+		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	if !*poll.Multiple {
-		// This is a SINGLE choice poll, we need to delete any existing votes by account for poll.
-		if err := p.state.DB.DeletePollVotesBy(ctx, pollID, requestingAccount.ID); err != nil {
-			err := gtserror.Newf("error deleting poll vote: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
+	for _, choice := range choices {
+		if choice >= len(poll.Options) {
+			// This is an invalid poll choice (index out of range).
+			const text = "poll choice out of range"
+			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 	}
 
-	// Create new poll vote for choice.
-	vote := &gtsmodel.PollVote{
-		ID:        id.NewULID(),
-		Choice:    choice,
-		AccountID: requestingAccount.ID,
-		Account:   requestingAccount,
-		PollID:    pollID,
-		Poll:      poll,
+	// Convert choices to a slice of DB model poll votes.
+	votes := make([]*gtsmodel.PollVote, len(choices))
+	for i, choice := range choices {
+		votes[i] = &gtsmodel.PollVote{
+			ID:        id.NewULID(),
+			Choice:    choice,
+			AccountID: requestingAccount.ID,
+			Account:   requestingAccount,
+			PollID:    pollID,
+			Poll:      poll,
+		}
 	}
 
 	// Insert the new poll vote into the database.
-	if err := p.state.DB.PutPollVote(ctx, vote); err != nil {
+	if err := p.state.DB.PutPollVotes(ctx, votes...); err != nil {
 		err := gtserror.Newf("error inserting poll vote: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}

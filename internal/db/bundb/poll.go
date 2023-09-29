@@ -240,11 +240,28 @@ func (p *pollDB) GetPollVotesBy(ctx context.Context, pollID string, accountID st
 	return votes, nil
 }
 
-func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
-	return p.state.Caches.GTS.PollVote().Store(vote, func() error {
-		_, err := p.db.NewInsert().Model(vote).Exec(ctx)
-		return err
+func (p *pollDB) PutPollVotes(ctx context.Context, votes ...*gtsmodel.PollVote) error {
+	// Insert all votes into DB in transaction.
+	err := p.db.RunInTx(ctx, func(tx Tx) error {
+		for _, vote := range votes {
+			if _, err := p.db.NewInsert().
+				Model(vote).
+				Exec(ctx); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	for _, vote := range votes {
+		// Only cache votes on confirmed insert, with no-op store func.
+		_ = p.state.Caches.GTS.PollVote().Store(vote, noopStore)
+	}
+
+	return nil
 }
 
 func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
