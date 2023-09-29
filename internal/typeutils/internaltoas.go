@@ -411,9 +411,16 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
 		return nil, gtserror.Newf("error populating status: %w", err)
 	}
+	var status ap.Statusable
 
-	// We convert it as an AS Note.
-	status := streams.NewActivityStreamsNote()
+	if s.PollID != "" {
+		// If status has poll available, we convert
+		// it as an AS Question (similar to a Note).
+		status = streams.NewActivityStreamsQuestion()
+	} else {
+		// Else we converter it as an AS Note.
+		status = streams.NewActivityStreamsNote()
+	}
 
 	// id
 	statusURI, err := url.Parse(s.URI)

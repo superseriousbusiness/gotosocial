@@ -56,12 +56,12 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, req
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	asStatus, err := p.converter.StatusToAS(ctx, status)
+	statusable, err := p.converter.StatusToAS(ctx, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	data, err := ap.Serialize(asStatus)
+	data, err := ap.Serialize(statusable)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
