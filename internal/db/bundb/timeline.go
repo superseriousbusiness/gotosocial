@@ -178,19 +178,22 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 	}
 
 	// Make educated guess for slice size
-	statusIDs := make([]string, 0, limit)
+	var (
+		statusIDs   = make([]string, 0, limit)
+		frontToBack = true
+	)
 
 	q := t.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		Column("status.id").
 		// Public only.
 		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
 		// Ignore boosts.
 		Where("? IS NULL", bun.Ident("status.boost_of_id")).
-		Order("status.id DESC")
+		// Select only IDs from table
+		Column("status.id")
 
-	if maxID == "" {
+	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
 
 		var err error
@@ -206,27 +209,54 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
 
 	if sinceID != "" {
+		// return only statuses HIGHER (ie., newer) than sinceID
 		q = q.Where("? > ?", bun.Ident("status.id"), sinceID)
 	}
 
 	if minID != "" {
+		// return only statuses HIGHER (ie., newer) than minID
 		q = q.Where("? > ?", bun.Ident("status.id"), minID)
+
+		// page up
+		frontToBack = false
 	}
 
 	if local {
+		// return only statuses posted by local account havers
 		q = q.Where("? = ?", bun.Ident("status.local"), local)
 	}
 
 	if limit > 0 {
+		// limit amount of statuses returned
 		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("status.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status.id ASC")
 	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, err
 	}
 
-	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
+	if len(statusIDs) == 0 {
+		return nil, nil
+	}
 
+	// If we're paging up, we still want statuses
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+		}
+	}
+
+	statuses := make([]*gtsmodel.Status, 0, len(statusIDs))
 	for _, id := range statusIDs {
 		// Fetch status from db for ID
 		status, err := t.state.DB.GetStatusByID(ctx, id)
