@@ -129,9 +129,9 @@ func (suite *PagingSuite) TestPagingNoItems() {
 	}
 
 	suite.Empty(resp.Items)
-	suite.Empty(resp.LinkHeader)
-	suite.Empty(resp.NextLink)
-	suite.Empty(resp.PrevLink)
+	suite.NotEmpty(resp.LinkHeader)
+	suite.NotEmpty(resp.NextLink)
+	suite.NotEmpty(resp.PrevLink)
 }
 
 func TestPagingSuite(t *testing.T) {
