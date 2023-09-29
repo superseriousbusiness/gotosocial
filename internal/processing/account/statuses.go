@@ -74,21 +74,8 @@ func (p *Processor) StatusesGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if len(statuses) == 0 {
-		return util.EmptyPageableResponse(), nil
-	}
-
-	// Filtering + serialization process is the same for
-	// both pinned status queries and 'normal' ones.
-	filtered, err := p.filter.StatusesVisible(ctx, requestingAccount, statuses)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	count := len(filtered)
+	count := len(statuses)
 	if count == 0 {
-		// After filtering there were
-		// no statuses left to serve.
 		return util.EmptyPageableResponse(), nil
 	}
 
@@ -97,9 +84,16 @@ func (p *Processor) StatusesGet(
 
 		// Set next + prev values before filtering and API
 		// converting, so caller can still page properly.
-		nextMaxIDValue = filtered[count-1].ID
-		prevMinIDValue = filtered[0].ID
+		nextMaxIDValue = statuses[count-1].ID
+		prevMinIDValue = statuses[0].ID
 	)
+
+	// Filtering + serialization process is the same for
+	// both pinned status queries and 'normal' ones.
+	filtered, err := p.filter.StatusesVisible(ctx, requestingAccount, statuses)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 
 	for _, s := range filtered {
 		// Convert filtered statuses to API statuses.

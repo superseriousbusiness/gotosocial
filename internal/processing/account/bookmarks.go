@@ -25,7 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -34,15 +33,23 @@ import (
 // Paging for this response is done based on bookmark ID rather than status ID.
 func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmodel.Account, limit int, maxID string, minID string) (*apimodel.PageableResponse, gtserror.WithCode) {
 	bookmarks, err := p.state.DB.GetStatusBookmarks(ctx, requestingAccount.ID, limit, maxID, minID)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	count := len(bookmarks)
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
 	var (
-		count          = len(bookmarks)
-		items          = make([]interface{}, 0, count)
-		nextMaxIDValue = id.Highest
-		prevMinIDValue = id.Lowest
+		items = make([]interface{}, 0, count)
+
+		// Set next + prev values before filtering and API
+		// converting, so caller can still page properly.
+		// Page based on bookmark ID, not status ID.
+		nextMaxIDValue = bookmarks[count-1].ID
+		prevMinIDValue = bookmarks[0].ID
 	)
 
 	for _, bookmark := range bookmarks {
@@ -73,23 +80,6 @@ func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 			continue
 		}
 		items = append(items, item)
-
-		// Page based on bookmark ID, not status ID.
-		// Note that we only set these values here
-		// when we're certain that the caller is able
-		// to see the status, *and* we're sure that
-		// we can produce an api model representation.
-		if bookmark.ID < nextMaxIDValue {
-			nextMaxIDValue = bookmark.ID // Lowest ID (for paging down).
-		}
-
-		if bookmark.ID > prevMinIDValue {
-			prevMinIDValue = bookmark.ID // Highest ID (for paging up).
-		}
-	}
-
-	if len(items) == 0 {
-		return util.EmptyPageableResponse(), nil
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
