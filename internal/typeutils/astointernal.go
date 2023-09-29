@@ -260,9 +260,11 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	//
 	// Attached poll information (the statusable will actually
 	// be a Pollable, as a Question is a subset of our Status).
-	if pollable, ok := ap.ToPollable(statusable); ok {
-		// TODO: handle decoding poll data
-		_ = pollable
+	if poll, ok := statusable.(ap.Pollable); ok {
+		status.Poll, err = ap.ExtractPoll(poll)
+		if err != nil {
+			l.Warnf("error(s) extracting poll: %v", err)
+		}
 	}
 
 	// status.Hashtags

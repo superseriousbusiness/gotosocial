@@ -1320,7 +1320,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmod
 		}
 	}
 
-	// Preallocate a slice of frontend model poll options.
+	// Preallocate a slice of frontend model poll choices.
 	options := make([]apimodel.PollOption, len(poll.Options))
 
 	// Add the titles to all of the options.
@@ -1339,12 +1339,6 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmod
 		}
 	}
 
-	// Convert any required emojis in the poll option titles to API models.
-	emojis, err := c.convertEmojisToAPIEmojis(ctx, poll.Emojis, poll.EmojiIDs)
-	if err != nil {
-		return nil, gtserror.Newf("error converting emojis: %w", err)
-	}
-
 	return &apimodel.Poll{
 		ID:          poll.ID,
 		ExpiresAt:   util.FormatISO8601(poll.ExpiresAt),
@@ -1354,7 +1348,6 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmod
 		VotersCount: totalVoters,
 		OwnVotes:    ownChoices,
 		Options:     options,
-		Emojis:      emojis,
 	}, nil
 }
 

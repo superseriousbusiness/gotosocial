@@ -648,6 +648,10 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 	return nil
 }
 
+func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gtsmodel.Status) error {
+
+}
+
 func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transport.Transport, existing, status *gtsmodel.Status) error {
 	// Allocate new slice to take the yet-to-be fetched attachment IDs.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
