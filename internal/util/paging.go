@@ -48,11 +48,6 @@ type PageableResponseParams struct {
 // a bunch of pageable items (notifications, statuses, etc), as well
 // as a Link header to inform callers of where to find next/prev items.
 func PackagePageableResponse(params PageableResponseParams) (*apimodel.PageableResponse, gtserror.WithCode) {
-	if len(params.Items) == 0 {
-		// No items to page through.
-		return EmptyPageableResponse(), nil
-	}
-
 	// Set default paging values, if
 	// they weren't set by the caller.
 	if params.NextMaxIDKey == "" {
