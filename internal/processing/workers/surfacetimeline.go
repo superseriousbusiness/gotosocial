@@ -91,9 +91,13 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 	)
 
 	for _, follow := range follows {
-		// Do an initial rough-grained check to see if the
-		// status is timelineable for this follower at all
-		// based on its visibility and who it replies to etc.
+		// Check to see if the status is timelineable for this follower,
+		// taking account of its visibility, who it replies to, and, if
+		// it's a reblog, whether follower account wants to see reblogs.
+		//
+		// If it's not timelineable, we can just stop early, since lists
+		// are prettymuch subsets of the home timeline, so if it shouldn't
+		// appear there, it shouldn't appear in lists either.
 		timelineable, err := s.filter.StatusHomeTimelineable(
 			ctx, follow.Account, status,
 		)
@@ -104,17 +108,6 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 
 		if !timelineable {
 			// Nothing to do.
-			continue
-		}
-
-		if boost && !*follow.ShowReblogs {
-			// Status is a boost, but the owner of
-			// this follow doesn't want to see boosts
-			// from this account. We can safely skip
-			// everything, then, because we also know
-			// that the follow owner won't want to be
-			// have the status put in any list timelines,
-			// or be notified about the status either.
 			continue
 		}
 
