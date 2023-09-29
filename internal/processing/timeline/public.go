@@ -20,7 +20,6 @@ package timeline
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -33,7 +32,7 @@ import (
 func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, err := p.state.DB.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("PublicTimelineGet: db error getting statuses: %w", err)
+		err = gtserror.Newf("db error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
