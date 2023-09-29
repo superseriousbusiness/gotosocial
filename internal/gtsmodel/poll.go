@@ -21,14 +21,14 @@ import "time"
 
 // Poll ...
 type Poll struct {
-	ID         string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
-	Multiple   *bool     `bun:"nullzero,notnull,default:false"`                              // Is this a multiple choice poll? i.e. can you vote on multiple options.
-	HideCounts *bool     `bun:"nullzero,notnull,default:false"`                              // Hides vote counts until poll ends.
-	Options    []string  `bun:"nullzero,notnull"`                                            // The available options for this poll.
-	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`                       // Status ID of which this Poll is attached to.
-	Status     *Status   `bun:"-"`                                                           // The related Status for StatusID (not always set).
-	CreatedAt  time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // The creation date of this Poll.
-	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`                           // The expiry date of this Poll.
+	ID         string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // Unique identity string.
+	Multiple   *bool     `bun:"nullzero,notnull,default:false"`           // Is this a multiple choice poll? i.e. can you vote on multiple options.
+	HideCounts *bool     `bun:"nullzero,notnull,default:false"`           // Hides vote counts until poll ends.
+	Options    []string  `bun:"nullzero,notnull"`                         // The available options for this poll.
+	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`    // Status ID of which this Poll is attached to.
+	Status     *Status   `bun:"-"`                                        // The related Status for StatusID (not always set).
+	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`        // The expiry date of this Poll.
+	// no creation date, use attached Status.CreatedAt.
 }
 
 // Expired returns whether the given poll is expired.

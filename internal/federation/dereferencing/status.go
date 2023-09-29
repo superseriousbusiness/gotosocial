@@ -22,9 +22,8 @@ import (
 	"errors"
 	"io"
 	"net/url"
-	"time"
-
 	"slices"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -346,6 +345,11 @@ func (d *Dereferencer) enrichStatus(
 	latestStatus.FetchedAt = time.Now()
 	latestStatus.Local = status.Local
 
+	// Ensure the status' poll remains consistent, else reset the poll.
+	if err := d.fetchStatusPoll(ctx, status, latestStatus); err != nil {
+		return nil, nil, gtserror.Newf("error populating poll for status %s: %w", uri, err)
+	}
+
 	// Ensure the status' mentions are populated, and pass in existing to check for changes.
 	if err := d.fetchStatusMentions(ctx, requestUser, status, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
@@ -649,7 +653,58 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 }
 
 func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gtsmodel.Status) error {
+	var err error
 
+	switch {
+	case existing.Poll != nil:
+		// Check poll is up-to-date.
+		if status.Poll != nil &&
+			slices.Equal(existing.Poll.Options, status.Poll.Options) &&
+			existing.Poll.ExpiresAt.Equal(status.Poll.ExpiresAt) {
+			return nil // latest and existing are equal.
+		}
+
+		// Poll has changed from existing to latest. Delete existing!
+		if err = d.state.DB.DeletePollByID(ctx, existing.Poll.ID); err != nil {
+			return gtserror.Newf("error deleting existing poll from db: %w", err)
+		}
+
+		// Delete any poll votes pointing to the existing poll ID.
+		if err = d.state.DB.DeletePollVotes(ctx, existing.Poll.ID); err != nil {
+			return gtserror.Newf("error deleting existing votes from db: %w", err)
+		}
+
+		if status.Poll == nil {
+			// Old poll deleted,
+			// all done here.
+			return nil
+		}
+
+	// If we reached here, there is no
+	// poll on either of the statuses.
+	case status.Poll == nil:
+		return nil
+	}
+
+	// Generate new ID for poll from the status CreatedAt.
+	// TODO: update this to use fetched at / updated at
+	//       when we support edited statuses properly.
+	status.Poll.ID, err = id.NewULIDFromTime(status.CreatedAt)
+	if err != nil {
+		log.Errorf(ctx, "invalid created at date: %v", err)
+		status.Poll.ID = id.NewULID() // just use "now"
+	}
+
+	// Ensure points to latest status.
+	status.Poll.StatusID = status.ID
+	status.Poll.Status = status
+
+	// Insert this latest poll into the database.
+	if err = d.state.DB.PutPoll(ctx, status.Poll); err != nil {
+		return gtserror.Newf("error inserting new poll in db: %w", err)
+	}
+
+	return nil
 }
 
 func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transport.Transport, existing, status *gtsmodel.Status) error {
