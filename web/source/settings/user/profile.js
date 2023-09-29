@@ -82,6 +82,7 @@ function UserProfileForm({ data: profile }) {
 		customCSS: useTextInput("custom_css", { source: profile }),
 		bot: useBoolInput("bot", { source: profile }),
 		locked: useBoolInput("locked", { source: profile }),
+		discoverable: useBoolInput("discoverable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
 		fields: useFieldArrayInput("fields_attributes", {
 			defaultValue: profile?.source?.fields,
@@ -109,24 +110,36 @@ function UserProfileForm({ data: profile }) {
 				/>
 				<div className="files">
 					<div>
-						<h3>Header</h3>
 						<FileInput
+							label="Header"
 							field={form.header}
 							accept="image/*"
 						/>
 					</div>
 					<div>
-						<h3>Avatar</h3>
 						<FileInput
+							label="Avatar"
 							field={form.avatar}
 							accept="image/*"
 						/>
 					</div>
 				</div>
 			</div>
+
+			<div className="form-section-docs">
+				<h3>Basic Information</h3>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#basic-information"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about these settings (opens in a new tab)
+				</a>
+			</div>
 			<TextInput
 				field={form.displayName}
-				label="Name"
+				label="Display name"
 				placeholder="A GoToSocial user"
 			/>
 			<TextArea
@@ -135,28 +148,53 @@ function UserProfileForm({ data: profile }) {
 				placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."
 				rows={8}
 			/>
+			<b>Profile fields</b>
+			<ProfileFields
+				field={form.fields}
+			/>
+
+			<div className="form-section-docs">
+				<h3>Visibility and privacy</h3>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#visibility-and-privacy"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about these settings (opens in a new tab)
+				</a>
+			</div>
 			<Checkbox
 				field={form.locked}
 				label="Manually approve follow requests"
 			/>
 			<Checkbox
+				field={form.discoverable}
+				label="Mark account as discoverable by search engines and directories"
+			/>
+			<Checkbox
 				field={form.enableRSS}
 				label="Enable RSS feed of Public posts"
 			/>
-			<b>Profile fields</b>
-			<ProfileFields
-				field={form.fields}
-			/>
-			{!instanceConfig.allowCustomCSS ? null :
-				<TextArea
-					field={form.customCSS}
-					label="Custom CSS"
-					className="monospace"
-					rows={8}
+
+			<div className="form-section-docs">
+				<h3>Advanced</h3>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#advanced"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
 				>
-					<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about custom profile CSS (opens in a new tab)</a>
-				</TextArea>
-			}
+					Learn more about these settings (opens in a new tab)
+				</a>
+			</div>
+			<TextArea
+				field={form.customCSS}
+				label="Custom CSS"
+				className="monospace"
+				rows={8}
+				disabled={!instanceConfig.allowCustomCSS}
+			/>
 			<MutationButton label="Save profile info" result={result} />
 		</form>
 	);

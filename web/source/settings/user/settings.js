@@ -81,7 +81,7 @@ function UserSettingsForm({ data }) {
 						<option value="public">Public</option>
 					</>
 				}>
-					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#privacy-settings" target="_blank" className="docslink" rel="noreferrer">Learn more about post privacy settings (opens in a new tab)</a>
 				</Select>
 				<Select field={form.statusContentType} label="Default post (and bio) format" options={
 					<>
@@ -89,7 +89,7 @@ function UserSettingsForm({ data }) {
 						<option value="text/markdown">Markdown</option>
 					</>
 				}>
-					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="moreinfolink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
+					<a href="https://docs.gotosocial.org/en/latest/user_guide/posts/#input-types" target="_blank" className="docslink" rel="noreferrer">Learn more about post format settings (opens in a new tab)</a>
 				</Select>
 				<Checkbox
 					field={form.isSensitive}
