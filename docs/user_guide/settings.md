@@ -1,10 +1,10 @@
 # Settings
 
-GoToSocial provides a settings interface where you can update your post settings, add an avatar and header image, write a bio for your account, and so on.
+GoToSocial provides a settings interface where you can update your post and profile settings, add an avatar and header image, write a bio for your account, and so on.
 
-You can access the Settings at `https://my-instance.example.com/settings` with your own GoToSocial instance. It uses the same OAUTH mechanism as normal clients (with scope: admin), and as such can be accessed from anywhere, separately from your own instance, or ran locally. A public installation is available here: [https://gts.superseriousbusiness.org/settings](https://gts.superseriousbusiness.org).
+You can access the Settings at `https://my-instance.example.com/settings` with your own GoToSocial instance. It uses the same OAuth mechanism as normal clients.
 
-You will be prompted to log in with your email address and password after providing the instance url (auto-filled when using the page that comes with your instance).
+You will be prompted to log in with your email address and password after providing the instance url.
 
 ## Profile
 
@@ -16,29 +16,60 @@ In the profile section you can change your display name, avatar and header image
 
 To set an avatar or header image, click on the `Browse` button in the appropriate section, and use the file browser to select an image.
 
-Currently, supported image formats are `gif`, `png`, and `jpeg`/`jpg`.
+Currently, supported image formats are `gif`, `png`, `webp`, and `jpeg`/`jpg`.
 
-A preview of the image as it will appear on your profile will be shown. If you're happy with your choices, click on the `Save profile info` button at the bottom of the Profile Info section. If you navigate to your profile and refresh the page, your new avatar / header will be shown. It might take a bit longer for the update to federate out to remote instances.
+A preview of the image as it will appear on your profile will be shown. If you're happy with your choices, click on the `Save profile info` button at the bottom of the page.
 
-### Set Displayname and Bio
+If you navigate to your profile and refresh the page, your new avatar / header will be shown. It might take a bit longer for the update to federate out to remote instances.
 
-Your display name is a short handle shown alongside your username on your profile. While your username cannot be changed once it's created, your display name can. Your display name can also contain spaces, capital letters, emojis, and so on. It's a great place to put a nickname, full name, and/or pronouns. For example, if your username is `@miranda`, your display name could be something like `Miranda Priestly (she/her)`.
+### Basic Information
+
+#### Display Name
+
+Your display name is a short handle shown alongside your username on your profile.
+
+While your username cannot be changed once it's created, your display name can.
+
+Your display name can also contain spaces, capital letters, emojis, and so on.
+
+It's a great place to put a nickname or full name. For example, if your username is `@miranda`, your display name could be something like `Miranda Priestly`.
+
+#### Bio
 
 Your bio is a longer text that introduces your account and your self. Your bio is a good place to:
 
-- Give an indication of the sort of things you post about
-- Mention your approximate age / location
-- Link to any of your other accounts or profiles elsewhere
-- Describe your boundaries and preferences when it comes to other people interacting with you
-- Link hashtags that you often use when you post
+- Give an indication of the sort of things you post about.
+- Mention your approximate age / location.
+- Link to any of your other accounts or profiles elsewhere.
+- Describe your boundaries and preferences when it comes to other people interacting with you.
+- Link hashtags that you often use when you post.
 
-The bio accepts either `plain` or `markdown` formatting. This is set by the default post format setting described in [User Settings](#user-settings).
+The bio accepts either `plain` or `markdown` formatting. This is set by the default post format setting described in [Post Settings](#post-settings).
 
-After updating your display name and bio, click on the `Save profile info` button at the bottom of the Profile Info section to save your changes.
+#### Profile Fields
 
-### Manually Approve Followe Requests / Lock Your Account
+Profile fields are a series of name/value pairs that will appear on your profile, and be federated to remote instances.
 
-At the bottom of the Profile Info section, there's a checkbox to manually approve follow requests.
+This is a perfect place to put things like:
+
+- Links to your website(s)
+- Links to crowdfunding / donation pages
+- Your age
+- Pronouns
+
+Some examples:
+
+- Alias : handler walter
+- My Website : https://example.org
+- Age : 99
+- Pronouns : she/her
+- My other account : @someone@somewhere.com
+
+### Visibility and Privacy
+
+#### Manually Approve Follow Requests (aka Lock Your Account)
+
+This checkbox allows you to decide whether or not you want to manually review follow requests to your account.
 
 When this is **not checked**, new follow requests are approved automatically without your intervention. This is useful for more public-facing accounts or cases where you don't really post anything sensitive or private.
 
@@ -48,14 +79,41 @@ This option is often referred to on the fediverse as "locking" your account.
 
 After ticking or unticking the checkbox, be sure to click on the `Save profile info` button at the bottom to save your new settings.
 
-### Enable RSS feed of Public posts
+#### Enable RSS Feed of Public Posts
 
-RSS feeds for users are disabled by default, but can be opted into with this checkbox. For more information see [RSS](./rss.md). It's important to note that this by-passes follow requests, allowing anyone to get updates on your public posts. This feed only includes posts set as 'Public' (see [Privacy Settings](./posts.md#privacy-settings)). 
+RSS feeds for users are disabled by default, but can be opted into with this checkbox. For more information see [RSS](./rss.md).
 
-### Custom CSS
-If enabled on your instance, [Custom CSS](./custom_css.md) allows you to theme the way your profile looks when visited through a browser. When this setting is not enabled, the field is hidden.
+This feed only includes posts set as 'Public' (see [Privacy Settings](./posts.md#privacy-settings)).
 
-## Settings
+!!! warning
+    Exposing your RSS feed allows *anyone* to subscribe to updates on your Public posts anonymously, bypassing follows and follow requests.
+
+#### Mark Account as Discoverable by Search Engines and Directories
+
+This setting updates the 'discoverable' flag on your account.
+
+Checking the discoverable box for your account does the following:
+
+- Update robots meta tags for your account, allowing it to be indexed by search engines and appear in search engine results.
+- Indicate to remote instances that your account may be included in public directories and indexes.
+
+Turning on the discoverable flag may take a week or more to propagate; your account will not immediately appear in search engine results.
+
+!!! tip
+    Discoverable is set to false by default for new accounts, to avoid exposing them to crawlers. Setting it to true is useful for public-facing accounts where you actually *want* to be crawled.
+
+!!! info
+    The discoverable setting is about **discoverability of your account**, not searchability of your posts. It has nothing to do with indexing of your posts for search by Mastodon instances, or other federated instances that use full text search!
+
+### Advanced
+
+#### Custom CSS
+
+If enabled on your instance by the instance administrator, [Custom CSS](./custom_css.md) allows you to theme the way your profile looks when visited through a browser.
+
+When this setting is not enabled by the instance administrator, the text input box is read-only.
+
+## Post Settings
 
 ![Screenshot of the user settings section, providing drop-down menu's to select default post settings, and form fields to change your password](../assets/user-settings-post-settings.png)
 
