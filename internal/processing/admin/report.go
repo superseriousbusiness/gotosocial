@@ -19,6 +19,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -45,17 +46,20 @@ func (p *Processor) ReportsGet(
 	limit int,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	reports, err := p.state.DB.GetReports(ctx, resolved, accountID, targetAccountID, maxID, sinceID, minID, limit)
-	if err != nil {
-		if err == db.ErrNoEntries {
-			return util.EmptyPageableResponse(), nil
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(reports)
-	items := make([]interface{}, 0, count)
-	nextMaxIDValue := reports[count-1].ID
-	prevMinIDValue := reports[0].ID
+	if count == 0 {
+		return util.EmptyPageableResponse(), nil
+	}
+
+	var (
+		items          = make([]interface{}, 0, count)
+		nextMaxIDValue = reports[count-1].ID
+		prevMinIDValue = reports[0].ID
+	)
 
 	for _, r := range reports {
 		item, err := p.converter.ReportToAdminAPIReport(ctx, r, account)
@@ -65,7 +69,7 @@ func (p *Processor) ReportsGet(
 		items = append(items, item)
 	}
 
-	extraQueryParams := []string{}
+	extraQueryParams := make([]string, 0, 3)
 	if resolved != nil {
 		extraQueryParams = append(extraQueryParams, "resolved="+strconv.FormatBool(*resolved))
 	}

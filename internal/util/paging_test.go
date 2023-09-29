@@ -118,6 +118,7 @@ func (suite *PagingSuite) TestPagingNoItems() {
 	config.SetHost("example.org")
 
 	params := util.PageableResponseParams{
+		Path:           "/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses",
 		NextMaxIDValue: "01H11KA1DM2VH3747YDE7FV5HN",
 		PrevMinIDValue: "01H11KBBVRRDYYC5KEPME1NP5R",
 		Limit:          10,
@@ -129,9 +130,9 @@ func (suite *PagingSuite) TestPagingNoItems() {
 	}
 
 	suite.Empty(resp.Items)
-	suite.Empty(resp.LinkHeader)
-	suite.Empty(resp.NextLink)
-	suite.Empty(resp.PrevLink)
+	suite.Equal(`<https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&max_id=01H11KA1DM2VH3747YDE7FV5HN>; rel="next", <https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&min_id=01H11KBBVRRDYYC5KEPME1NP5R>; rel="prev"`, resp.LinkHeader)
+	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&max_id=01H11KA1DM2VH3747YDE7FV5HN`, resp.NextLink)
+	suite.Equal(`https://example.org/api/v1/accounts/01H11KA68PM4NNYJEG0FJQ90R3/statuses?limit=10&min_id=01H11KBBVRRDYYC5KEPME1NP5R`, resp.PrevLink)
 }
 
 func TestPagingSuite(t *testing.T) {
