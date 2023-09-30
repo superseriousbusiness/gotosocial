@@ -44,6 +44,11 @@ Disallow: /
 User-agent: Google-Extended
 Disallow: /
 
+# Block CommonCrawl. Used in training LLMs and specifically GPT-3.
+# https://commoncrawl.org/faq
+User-agent: CCBot
+Disallow: /
+
 # Rules for everything else.
 User-agent: *
 Crawl-delay: 500
