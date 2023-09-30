@@ -54,6 +54,11 @@ Disallow: /
 User-agent: Omgilibot
 Disallow: /
 
+# Block Faceboobot, because Meta.
+# https://developers.facebook.com/docs/sharing/bot
+User-agent: FacebookBot
+Disallow: /
+
 # Rules for everything else.
 User-agent: *
 Crawl-delay: 500
