@@ -34,6 +34,11 @@ const (
 User-agent: GPTBot
 Disallow: /
 
+# As of September 2023, GPTBot and ChatGPT-User are equivalent. But there's no telling
+# when OpenAI might decide to change that, so block this one too.
+User-agent: ChatGPT-User
+Disallow: /
+
 # And a giant fuck you to Google Bard and their other generative AI ventures too.
 # https://developers.google.com/search/docs/crawling-indexing/overview-google-crawlers
 User-agent: Google-Extended
