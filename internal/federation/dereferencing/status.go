@@ -687,8 +687,8 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 	}
 
 	// Generate new ID for poll from the status CreatedAt.
-	// TODO: update this to use fetched at / updated at
-	//       when we support edited statuses properly.
+	// TODO: update this to use "edited_at" when we add
+	//       support for edited status revision history.
 	status.Poll.ID, err = id.NewULIDFromTime(status.CreatedAt)
 	if err != nil {
 		log.Errorf(ctx, "invalid created at date: %v", err)
