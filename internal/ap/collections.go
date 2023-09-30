@@ -188,6 +188,15 @@ type CollectionPageParams struct {
 	Count  int
 }
 
+type OneOfParams _OfParams
+
+type AnyOfParams _OfParams
+
+type _OfParams struct {
+	Append func(int)
+	Count  int
+}
+
 // CollectionPage is a simplified interface type
 // that can be fulfilled by either of (where required):
 // vocab.ActivityStreamsCollection

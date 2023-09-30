@@ -240,6 +240,34 @@ func (p *pollDB) GetPollVotesBy(ctx context.Context, pollID string, accountID st
 	return votes, nil
 }
 
+func (p *pollDB) CountPollVotes(ctx context.Context, pollID string) ([]int, error) {
+	// Get the poll in question by ID.
+	poll, err := p.GetPollByID(ctx, pollID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get all account IDs of those who voted in poll.
+	accountIDs, err := p.getPollVoterIDs(ctx, pollID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Accumulate counts for each option.
+	counts := make([]int, len(poll.Options))
+	for _, id := range accountIDs {
+		votesBy, err := p.GetPollVotesBy(ctx, pollID, id)
+		if err != nil {
+			return nil, gtserror.Newf("error getting votes by %s in %s: %w", id, pollID, err)
+		}
+		for _, vote := range votesBy {
+			counts[vote.Choice]++
+		}
+	}
+
+	return counts, nil
+}
+
 func (p *pollDB) PutPollVotes(ctx context.Context, votes ...*gtsmodel.PollVote) error {
 	// Insert all votes into DB in transaction.
 	err := p.db.RunInTx(ctx, func(tx Tx) error {

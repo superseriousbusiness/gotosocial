@@ -413,10 +413,18 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	}
 	var status ap.Statusable
 
-	if s.PollID != "" {
+	if s.Poll != nil {
 		// If status has poll available, we convert
 		// it as an AS Question (similar to a Note).
-		status = streams.NewActivityStreamsQuestion()
+		poll := streams.NewActivityStreamsQuestion()
+
+		// Add status poll option data to AS Question object.
+		if err := c.addPollToAS(ctx, s.Poll, poll); err != nil {
+			return nil, gtserror.Newf("error converting poll: %w", err)
+		}
+
+		// Set poll as status.
+		status = poll
 	} else {
 		// Else we converter it as an AS Note.
 		status = streams.NewActivityStreamsNote()
@@ -641,6 +649,62 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	status.SetActivityStreamsSensitive(sensitiveProp)
 
 	return status, nil
+}
+
+func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap.Pollable) error {
+	// Count available votes in these poll options.
+	counts, err := c.state.DB.CountPollVotes(ctx, poll.ID)
+	if err != nil {
+		return gtserror.Newf("error fetching vote counts from db: %w", err)
+	}
+
+	var optionsProp interface {
+		// the minimum interface for appending AS Notes
+		// to an AS type options property of some kind.
+		AppendActivityStreamsNote(vocab.ActivityStreamsNote)
+	}
+
+	if *poll.Multiple {
+		// Create new multiple-choice (AnyOf) property for poll.
+		anyOfProp := streams.NewActivityStreamsAnyOfProperty()
+		defer func() { dst.SetActivityStreamsAnyOf(anyOfProp) }()
+		optionsProp = anyOfProp
+	} else {
+		// Create new single-choice (OneOf) property for poll.
+		oneOfProp := streams.NewActivityStreamsOneOfProperty()
+		defer func() { dst.SetActivityStreamsOneOf(oneOfProp) }()
+		optionsProp = oneOfProp
+	}
+
+	for i, name := range poll.Options {
+		// Create new Note object to represent option.
+		note := streams.NewActivityStreamsNote()
+
+		// Create new name property and set the option name.
+		nameProp := streams.NewActivityStreamsNameProperty()
+		nameProp.AppendXMLSchemaString(name)
+		note.SetActivityStreamsName(nameProp)
+
+		if !*poll.HideCounts {
+			// Create new total items property to hold the vote count.
+			totalItemsProp := streams.NewActivityStreamsTotalItemsProperty()
+			totalItemsProp.Set(counts[i])
+
+			// Create new replies property with collection to encompass count.
+			repliesProp := streams.NewActivityStreamsRepliesProperty()
+			collection := streams.NewActivityStreamsCollection()
+			collection.SetActivityStreamsTotalItems(totalItemsProp)
+			repliesProp.SetActivityStreamsCollection(collection)
+
+			// Attach the replies to Note object.
+			note.SetActivityStreamsReplies(repliesProp)
+		}
+
+		// Append the note to options property.
+		optionsProp.AppendActivityStreamsNote(note)
+	}
+
+	return nil
 }
 
 // StatusToASDelete converts a gts model status into a Delete of that status, using just the

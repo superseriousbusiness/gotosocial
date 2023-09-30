@@ -45,6 +45,9 @@ type Poll interface {
 	// GetPollVotesBy fetches the PollVotes in Poll with ID, by account ID, from the database.
 	GetPollVotesBy(ctx context.Context, pollID string, accountID string) ([]*gtsmodel.PollVote, error)
 
+	// CountPollVotes counts all PollVotes in Poll with ID, keyed by option index, from the database.
+	CountPollVotes(ctx context.Context, pollID string) ([]int, error)
+
 	// PutPollVotes puts the given PollVotes in the database.
 	PutPollVotes(ctx context.Context, vote ...*gtsmodel.PollVote) error
 
