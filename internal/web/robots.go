@@ -34,6 +34,11 @@ const (
 User-agent: GPTBot
 Disallow: /
 
+# And a giant fuck you to Google Bard and their other generative AI ventures too.
+# https://developers.google.com/search/docs/crawling-indexing/overview-google-crawlers
+User-agent: Google-Extended
+Disallow: /
+
 # Rules for everything else.
 User-agent: *
 Crawl-delay: 500
