@@ -438,9 +438,26 @@ func sizeofNotification() uintptr {
 	}))
 }
 
-func sizeofPoll() uintptr { return 0 }
+func sizeofPoll() uintptr {
+	return uintptr(size.Of(&gtsmodel.Poll{
+		ID:         exampleID,
+		Multiple:   func() *bool { ok := false; return &ok }(),
+		HideCounts: func() *bool { ok := false; return &ok }(),
+		Options:    []string{exampleTextSmall, exampleTextSmall, exampleTextSmall, exampleTextSmall},
+		StatusID:   exampleID,
+		ExpiresAt:  exampleTime,
+	}))
+}
 
-func sizeofPollVote() uintptr { return 0 }
+func sizeofPollVote() uintptr {
+	return uintptr(size.Of(&gtsmodel.PollVote{
+		ID:        exampleID,
+		Choice:    69,
+		AccountID: exampleID,
+		PollID:    exampleID,
+		CreatedAt: exampleTime,
+	}))
+}
 
 func sizeofReport() uintptr {
 	return uintptr(size.Of(&gtsmodel.Report{

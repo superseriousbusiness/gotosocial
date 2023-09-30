@@ -760,7 +760,7 @@ func (c *GTSCaches) initPollVote() {
 func (c *GTSCaches) initPollVoteIDs() {
 	// Calculate maximum cache size.
 	cap := calculateSliceCacheMax(
-		1.0,
+		config.GetCachePollVoteIDsMemRatio(),
 	)
 
 	log.Infof(nil, "cache size = %d", cap)
@@ -774,7 +774,7 @@ func (c *GTSCaches) initPollVoteIDs() {
 func (c *GTSCaches) initPollVoterIDs() {
 	// Calculate maximum cache size.
 	cap := calculateSliceCacheMax(
-		1.0,
+		config.GetCachePollVoterIDsMemRatio(),
 	)
 
 	log.Infof(nil, "cache size = %d", cap)
