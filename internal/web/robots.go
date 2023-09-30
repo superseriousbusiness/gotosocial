@@ -59,6 +59,11 @@ Disallow: /
 User-agent: FacebookBot
 Disallow: /
 
+# Well-known.dev crawler. Indexes stuff under /.well-known.
+# https://well-known.dev/about/
+User-agent: WellKnownBot
+Disallow: /
+
 # Rules for everything else.
 User-agent: *
 Crawl-delay: 500
