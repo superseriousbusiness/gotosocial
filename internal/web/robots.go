@@ -49,6 +49,11 @@ Disallow: /
 User-agent: CCBot
 Disallow: /
 
+# Block Omgilike/Webz.io, a "Big Web Data" engine.
+# https://webz.io/blog/web-data/what-is-the-omgili-bot-and-why-is-it-crawling-your-website/
+User-agent: Omgilibot
+Disallow: /
+
 # Rules for everything else.
 User-agent: *
 Crawl-delay: 500
