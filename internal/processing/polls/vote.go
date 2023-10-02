@@ -20,12 +20,15 @@ package polls
 import (
 	"context"
 	"errors"
+	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string, choices []int) (*apimodel.Poll, gtserror.WithCode) {
@@ -35,16 +38,27 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 		return nil, errWithCode
 	}
 
-	if !*poll.Multiple && len(choices) > 1 {
-		// Multiple given for single-choice poll.
-		const text = "poll only accepts single choice"
+	switch {
+	// Poll author isn't allowed to vote in their own poll.
+	case requestingAccount.ID == poll.Status.AccountID:
+		const text = "you can't vote in your own poll"
+		return nil, gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+
+	// Poll has already expired, no more voting!
+	case time.Now().After(poll.ExpiresAt):
+		const text = "poll has already expired"
+		return nil, gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+
+	// No choices given, or multiple given for single-choice poll.
+	case len(choices) == 0 || (!*poll.Multiple && len(choices) > 1):
+		const text = "invalid number of choices for poll"
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
 	for _, choice := range choices {
 		if choice >= len(poll.Options) {
-			// This is an invalid poll choice (index out of range).
-			const text = "poll choice out of range"
+			// This is an invalid choice (index out of range).
+			const text = "invalid option index for poll"
 			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 	}
@@ -63,14 +77,15 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 
 	// Insert the new poll votes into the database.
-	switch err := p.state.DB.PutPollVotes(ctx, votes...); {
+	err := p.state.DB.PutPollVotes(ctx, votes...)
+	switch {
 
 	case err == nil:
 		// no issue.
 
 	case errors.Is(err, db.ErrAlreadyExists):
 		// Users cannot vote multiple *times* (not choices).
-		const text = "already voted in poll"
+		const text = "you have already voted in poll"
 		return nil, gtserror.NewErrorUnprocessableEntity(err, text)
 
 	default:
@@ -78,6 +93,16 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 		err := gtserror.Newf("error inserting poll votes: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	// Enqueue worker task to handle side-effects of user poll vote(s)
+	// (note this is handled as a NOTE UPDATE activity due to how polls
+	// are represents in ActivityPub, i.e. as an alternative Note type).
+	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityUpdate,
+		GTSModel:       poll.Status,
+		OriginAccount:  requestingAccount,
+	})
 
 	// Convert the poll to API model view for the requesting account.
 	apiPoll, err := p.converter.PollToAPIPoll(ctx, requestingAccount, poll)
