@@ -219,6 +219,11 @@ func (c *Caches) setuphooks() {
 			// Invalidate in reply to ID list of original status.
 			c.GTS.InReplyToIDs().Invalidate(status.InReplyToID)
 		}
+
+		if status.PollID != "" {
+			// Invalidate cache of attached poll ID.
+			c.GTS.Poll().Invalidate(status.PollID)
+		}
 	})
 
 	c.GTS.StatusFave().SetInvalidateCallback(func(fave *gtsmodel.StatusFave) {

@@ -66,6 +66,29 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		Text:                     form.Status,
 	}
 
+	if form.Poll != nil {
+		// Create new poll for status from form.
+		secs := time.Duration(form.Poll.ExpiresIn)
+		status.Poll = &gtsmodel.Poll{
+			ID:         id.NewULID(),
+			Multiple:   &form.Poll.Multiple,
+			HideCounts: &form.Poll.HideTotals,
+			Options:    form.Poll.Options,
+			StatusID:   statusID,
+			Status:     status,
+			ExpiresAt:  now.Add(secs * time.Second),
+		}
+
+		// Try to insert the new status poll in the database.
+		if err := p.state.DB.PutPoll(ctx, status.Poll); err != nil {
+			err := gtserror.Newf("error inserting poll in db: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// Set poll ID on the status.
+		status.PollID = status.Poll.ID
+	}
+
 	if errWithCode := p.processReplyToID(ctx, form, requestingAccount.ID, status); errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -369,6 +392,18 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 	// Collect formatted results.
 	status.ContentWarning = warningRes.HTML
 	status.Emojis = append(status.Emojis, warningRes.Emojis...)
+
+	if status.Poll != nil {
+		for i := range status.Poll.Options {
+			// Sanitize each option title name and format.
+			option := text.SanitizeToPlaintext(status.Poll.Options[i])
+			optionRes := formatInput(format, option)
+
+			// Collect each formatted result.
+			status.Poll.Options[i] = optionRes.HTML
+			status.Emojis = append(status.Emojis, optionRes.Emojis...)
+		}
+	}
 
 	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
 	status.MentionIDs = gatherIDs(status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })

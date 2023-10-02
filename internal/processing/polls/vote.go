@@ -56,7 +56,7 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 
 	for _, choice := range choices {
-		if choice >= len(poll.Options) {
+		if choice < 0 || choice >= len(poll.Options) {
 			// This is an invalid choice (index out of range).
 			const text = "invalid option index for poll"
 			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
