@@ -67,7 +67,7 @@ skulk({
 			],
 		},
 		settings: {
-			entryFile: "settings",
+			entryFile: "settings-js",
 			outputFile: "settings.js",
 			prodCfg: prodCfg,
 			transform: [

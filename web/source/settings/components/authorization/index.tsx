@@ -19,21 +19,25 @@
 
 "use strict";
 
-const React = require("react");
-const Redux = require("react-redux");
+import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
+import { store } from "../../redux/store";
 
-const query = require("../../lib/query");
+import React from "react";
 
-const Login = require("./login");
-const Loading = require("../loading");
-const { Error } = require("../error");
+import Login from "./login";
+import Loading from "../loading";
+import { Error } from "../error";
 
-module.exports = function Authorization({ App }) {
-	const { loginState, expectingRedirect } = Redux.useSelector((state) => state.oauth);
+export function Authorization({ App }) {
+	const { loginState, expectingRedirect } = store.getState().oauth;
+	const skip = (loginState == "none" || loginState == "logout" || expectingRedirect);
 
-	const { isLoading, isSuccess, data: account, error } = query.useVerifyCredentialsQuery(undefined, {
-		skip: loginState == "none" || loginState == "logout" || expectingRedirect
-	});
+	const {
+		isLoading,
+		isSuccess,
+		data: account,
+		error,
+	} = useVerifyCredentialsQuery(null, { skip: skip });
 
 	let showLogin = true;
 	let content = null;

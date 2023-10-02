@@ -20,7 +20,7 @@
 "use strict";
 
 module.exports = {
-	...require("./base"),
+	...require("./gts-api"),
 	...require("./oauth"),
 	...require("./user"),
 	...require("./admin")

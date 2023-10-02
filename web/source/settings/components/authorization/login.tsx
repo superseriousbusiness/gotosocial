@@ -19,16 +19,16 @@
 
 "use strict";
 
-const React = require("react");
+import React from "react";
 
-const query = require("../../lib/query");
-const { useTextInput, useValue } = require("../../lib/form");
-const useFormSubmit = require("../../lib/form/submit");
-const { TextInput } = require("../form/inputs");
-const MutationButton = require("../form/mutation-button");
-const Loading = require("../loading");
+import { useAuthorizeFlowMutation } from "../../lib/query/oauth";
+import { useTextInput, useValue } from "../../lib/form";
+import useFormSubmit from "../../lib/form/submit";
+import { TextInput } from "../form/inputs";
+import MutationButton from "../form/mutation-button";
+import Loading from "../loading";
 
-module.exports = function Login({ }) {
+export default function Login({ }) {
 	const form = {
 		instance: useTextInput("instance", {
 			defaultValue: window.location.origin
@@ -38,8 +38,11 @@ module.exports = function Login({ }) {
 
 	const [formSubmit, result] = useFormSubmit(
 		form,
-		query.useAuthorizeFlowMutation(),
-		{ changedOnly: false }
+		useAuthorizeFlowMutation(),
+		{ 
+			changedOnly: false,
+			onFinish: undefined,
+		}
 	);
 
 	if (result.isLoading) {
@@ -63,7 +66,11 @@ module.exports = function Login({ }) {
 				label="Instance"
 				name="instance"
 			/>
-			<MutationButton label="Login" result={result} />
+			<MutationButton
+				label="Login"
+				result={result}
+				disabled={false}
+			/>
 		</form>
 	);
 };

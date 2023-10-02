@@ -5,4 +5,8 @@
 
 set -eu
 
+# Transpile typescript assets.
+yarn --cwd web/source tsc
+
+# Bundle transpiled javascript.
 BUDO_BUILD=1 node web/source

@@ -20,7 +20,7 @@
 "use strict";
 
 const syncpipe = require("syncpipe");
-const base = require("./base");
+const { gtsApi } = require("./gts-api");
 
 module.exports = {
 	unwrapRes(res) {
@@ -70,7 +70,7 @@ function makeCacheMutation(action) {
 		return {
 			onQueryStarted: (_, { dispatch, queryFulfilled }) => {
 				queryFulfilled.then(({ data: newData }) => {
-					dispatch(base.util.updateQueryData(queryName, arg, (draft) => {
+					dispatch(gtsApi.util.updateQueryData(queryName, arg, (draft) => {
 						if (findKey != undefined) {
 							key = findKey(draft, newData);
 						}

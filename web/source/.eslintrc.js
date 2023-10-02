@@ -25,5 +25,6 @@ module.exports = {
 	"rules": {
 		"license-header/header": ["error", __dirname + "/.license-header.js"],
 		"no-console": 'error'
-	}
+	},
+	sourceType: module
 };
