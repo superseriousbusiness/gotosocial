@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -73,4 +74,14 @@ func (p *Processor) getTargetPoll(ctx context.Context, requestingAccount *gtsmod
 	poll.Status = status
 
 	return poll, nil
+}
+
+// toAPIPoll converrts a given Poll to frontend API model, returning an appropriate error with HTTP code on failure.
+func (p *Processor) toAPIPoll(ctx context.Context, requester *gtsmodel.Account, poll *gtsmodel.Poll) (*apimodel.Poll, gtserror.WithCode) {
+	apiPoll, err := p.converter.PollToAPIPoll(ctx, requester, poll)
+	if err != nil {
+		err := gtserror.Newf("error converting to api model: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	return apiPoll, nil
 }

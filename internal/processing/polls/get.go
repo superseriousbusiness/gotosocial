@@ -25,18 +25,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *Processor) PollGet(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string) (*apimodel.Poll, gtserror.WithCode) {
+func (p *Processor) PollGet(ctx context.Context, requester *gtsmodel.Account, pollID string) (*apimodel.Poll, gtserror.WithCode) {
 	// Get (+ check visibility of) requested poll with ID.
-	poll, errWithCode := p.getTargetPoll(ctx, requestingAccount, pollID)
+	poll, errWithCode := p.getTargetPoll(ctx, requester, pollID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	// Convert the poll to API model view for the requesting account.
-	apiPoll, err := p.converter.PollToAPIPoll(ctx, requestingAccount, poll)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return apiPoll, nil
+	// Return converted API model poll.
+	return p.toAPIPoll(ctx, requester, poll)
 }

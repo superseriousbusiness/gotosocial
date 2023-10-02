@@ -31,16 +31,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Account, pollID string, choices []int) (*apimodel.Poll, gtserror.WithCode) {
+func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, pollID string, choices []int) (*apimodel.Poll, gtserror.WithCode) {
 	// Get (+ check visibility of) requested poll with ID.
-	poll, errWithCode := p.getTargetPoll(ctx, requestingAccount, pollID)
+	poll, errWithCode := p.getTargetPoll(ctx, requester, pollID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	switch {
 	// Poll author isn't allowed to vote in their own poll.
-	case requestingAccount.ID == poll.Status.AccountID:
+	case requester.ID == poll.Status.AccountID:
 		const text = "you can't vote in your own poll"
 		return nil, gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 
@@ -69,8 +69,8 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 		votes[i] = &gtsmodel.PollVote{
 			ID:        id.NewULID(),
 			Choice:    choice,
-			AccountID: requestingAccount.ID,
-			Account:   requestingAccount,
+			AccountID: requester.ID,
+			Account:   requester,
 			PollID:    pollID,
 			Poll:      poll,
 		}
@@ -101,15 +101,9 @@ func (p *Processor) PollVote(ctx context.Context, requestingAccount *gtsmodel.Ac
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       poll.Status,
-		OriginAccount:  requestingAccount,
+		OriginAccount:  requester,
 	})
 
-	// Convert the poll to API model view for the requesting account.
-	apiPoll, err := p.converter.PollToAPIPoll(ctx, requestingAccount, poll)
-	if err != nil {
-		err := gtserror.Newf("error converting to api model: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return apiPoll, nil
+	// Return converted API model poll.
+	return p.toAPIPoll(ctx, requester, poll)
 }
