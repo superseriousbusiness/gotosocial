@@ -42,6 +42,7 @@
     "@babel/core": "^7.19.6",
     "@babel/preset-env": "^7.19.4",
     "@babel/preset-react": "^7.18.6",
+    "@babel/preset-typescript": "^7.23.0",
     "@browserify/envify": "^6.0.0",
     "@browserify/uglifyify": "^6.0.0",
     "@joepie91/eslint-config": "^1.1.1",

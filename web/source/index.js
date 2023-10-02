@@ -67,12 +67,14 @@ skulk({
 			],
 		},
 		settings: {
-			entryFile: "settings-js",
+			entryFile: "settings",
 			outputFile: "settings.js",
 			prodCfg: prodCfg,
+			extensions: [".js", ".jsx", ".ts", ".tsx"],
 			transform: [
 				["babelify", {
 					global: true,
+					presets: ["@babel/preset-typescript"],
 					ignore: [/node_modules\/(?!nanoid)/]
 				}]
 			],
