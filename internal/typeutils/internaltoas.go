@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -418,7 +419,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		// it as an AS Question (similar to a Note).
 		poll := streams.NewActivityStreamsQuestion()
 
-		// Add status poll option data to AS Question object.
+		// Add required status poll data to AS Question.
 		if err := c.addPollToAS(ctx, s.Poll, poll); err != nil {
 			return nil, gtserror.Newf("error converting poll: %w", err)
 		}
@@ -703,6 +704,29 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 		// Append the note to options property.
 		optionsProp.AppendActivityStreamsNote(note)
 	}
+
+	// Set the poll endTime property from stored expiry.
+	endProp := streams.NewActivityStreamsEndTimeProperty()
+	endProp.Set(poll.ExpiresAt)
+	dst.SetActivityStreamsEndTime(endProp)
+
+	if time.Now().After(poll.ExpiresAt) {
+		// If this poll is expired, set the closed time.
+		closedProp := streams.NewActivityStreamsClosedProperty()
+		closedProp.AppendXMLSchemaDateTime(poll.ExpiresAt)
+		dst.SetActivityStreamsClosed(closedProp)
+	}
+
+	// Accumulate total vote count.
+	var totalVotes int
+	for _, count := range counts {
+		totalVotes += count
+	}
+
+	// Set votersCount property from accumulated counts.
+	countProp := streams.NewTootVotersCountProperty()
+	countProp.Set(totalVotes)
+	dst.SetTootVotersCount(countProp)
 
 	return nil
 }
