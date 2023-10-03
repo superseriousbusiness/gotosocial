@@ -75,7 +75,7 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, gtserror.WithCode) 
 	t, err := streams.ToType(r.Context(), raw)
 	if err != nil {
 		if !streams.IsUnmatchedErr(err) {
-			err = gtserror.Newf("error matching json to type: %w", err)
+			err := gtserror.Newf("error matching json to type: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
@@ -88,7 +88,7 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, gtserror.WithCode) 
 	// Ensure this is an Activity type.
 	activity, ok := t.(pub.Activity)
 	if !ok {
-		text := fmt.Sprintf("type %s(%T) does not implement pub.Activity", t.GetTypeName(), t)
+		text := fmt.Sprintf("cannot resolve vocab type %T as pub.Activity", t)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
@@ -130,7 +130,8 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	// Attempt to cast as Statusable.
 	statusable, ok := ToStatusable(t)
 	if !ok {
-		return nil, gtserror.Newf("vocab type %s(%T) is not statusable", t.GetTypeName(), t)
+		err := gtserror.Newf("cannot resolve vocab type %T as statusable", t)
+		return nil, gtserror.SetWrongType(err)
 	}
 
 	if pollable, ok := ToPollable(statusable); ok {
@@ -167,14 +168,15 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 
 	// Resolve an ActivityStreams type from JSON.
 	t, err := streams.ToType(ctx, raw)
-	if err != nil || !IsAccountable(t.GetTypeName()) {
+	if err != nil {
 		return nil, gtserror.Newf("error resolving json into ap vocab type: %w", err)
 	}
 
 	// Attempt to cast as Statusable.
 	accountable, ok := ToAccountable(t)
 	if !ok {
-		return nil, gtserror.Newf("vocab type %s(%T) is not accountable", t.GetTypeName(), t)
+		err := gtserror.Newf("cannot resolve vocab type %T as accountable", t)
+		return nil, gtserror.SetWrongType(err)
 	}
 
 	NormalizeIncomingSummary(accountable, raw)
