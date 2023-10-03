@@ -34,6 +34,7 @@ type DB interface {
 	Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error
 	Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error
 	Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error
+	Question(ctx context.Context, question vocab.ActivityStreamsQuestion) error
 }
 
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.

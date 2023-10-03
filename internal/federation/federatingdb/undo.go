@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -48,31 +49,24 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 		return nil // Already processed.
 	}
 
-	undoObject := undo.GetActivityStreamsObject()
-	if undoObject == nil {
-		return errors.New("UNDO: no object set on vocab.ActivityStreamsUndo")
-	}
+	var errs gtserror.MultiError
 
-	for iter := undoObject.Begin(); iter != undoObject.End(); iter = iter.Next() {
-		t := iter.GetType()
-		if t == nil {
-			continue
-		}
-
-		switch t.GetTypeName() {
+	for _, object := range ap.ExtractObjects(undo) {
+		switch object.GetTypeName() {
 		case ap.ActivityFollow:
-			if err := f.undoFollow(ctx, receivingAccount, undo, t); err != nil {
-				return err
+			if err := f.undoFollow(ctx, receivingAccount, undo, object); err != nil {
+				errs.Appendf("error undoing follow: %w", err)
 			}
 		case ap.ActivityLike:
-			if err := f.undoLike(ctx, receivingAccount, undo, t); err != nil {
-				return err
+			if err := f.undoLike(ctx, receivingAccount, undo, object); err != nil {
+				errs.Appendf("error undoing like: %w", err)
 			}
 		case ap.ActivityAnnounce:
-			// todo: undo boost / reblog / announce
+			// TODO: actually handle this !
+			log.Warn(ctx, "skipped undo announce")
 		case ap.ActivityBlock:
-			if err := f.undoBlock(ctx, receivingAccount, undo, t); err != nil {
-				return err
+			if err := f.undoBlock(ctx, receivingAccount, undo, object); err != nil {
+				errs.Appendf("error undoing block: %w", err)
 			}
 		}
 	}

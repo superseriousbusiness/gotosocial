@@ -56,21 +56,18 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		return nil // Already processed.
 	}
 
-	switch asType.GetTypeName() {
-	case ap.ActorApplication, ap.ActorGroup, ap.ActorOrganization, ap.ActorPerson, ap.ActorService:
-		return f.updateAccountable(ctx, receivingAccount, requestingAccount, asType)
+	if accountable, ok := ap.ToAccountable(asType); ok {
+		return f.updateAccountable(ctx, receivingAccount, requestingAccount, accountable)
+	}
+
+	if statusable, ok := ap.ToStatusable(asType); ok {
+		return f.updateStatusable(ctx, receivingAccount, requestingAccount, statusable)
 	}
 
 	return nil
 }
 
-func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, asType vocab.Type) error {
-	// Ensure delivered asType is a valid Accountable model.
-	accountable, ok := asType.(ap.Accountable)
-	if !ok {
-		return gtserror.Newf("could not convert vocab.Type %T to Accountable", asType)
-	}
-
+func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, accountable ap.Accountable) error {
 	// Extract AP URI of the updated Accountable model.
 	idProp := accountable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -98,6 +95,46 @@ func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gts
 		APActivityType:   ap.ActivityUpdate,
 		GTSModel:         requestingAcct,
 		APObjectModel:    accountable,
+		ReceivingAccount: receivingAcct,
+	})
+
+	return nil
+}
+
+func (f *federatingDB) updateStatusable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, statusable ap.Statusable) error {
+	// Extract AP URI of the updated model.
+	idProp := statusable.GetJSONLDId()
+	if idProp == nil || !idProp.IsIRI() {
+		return gtserror.New("invalid id prop")
+	}
+
+	// Get the status URI string for lookups.
+	statusURI := idProp.GetIRI()
+	statusURIStr := statusURI.String()
+
+	// Don't try to update local accounts.
+	if statusURI.Host == config.GetHost() {
+		return nil
+	}
+
+	// Get the status we have on file for this URI string.
+	status, err := f.state.DB.GetStatusByURI(ctx, statusURIStr)
+	if err != nil {
+		return gtserror.Newf("error fetching status from db: %w", err)
+	}
+
+	// Check that update was by the status author.
+	if status.AccountID != requestingAcct.ID {
+		return gtserror.Newf("update for %s was not requested by author", statusURIStr)
+	}
+
+	// Queue an UPDATE NOTE activity to our fedi API worker,
+	// this will handle necessary database insertions, etc.
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
+		APObjectType:     ap.ObjectNote,
+		APActivityType:   ap.ActivityUpdate,
+		GTSModel:         status, // original status
+		APObjectModel:    statusable,
 		ReceivingAccount: receivingAcct,
 	})
 

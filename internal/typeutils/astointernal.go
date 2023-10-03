@@ -250,6 +250,8 @@ func (c *Converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAtt
 
 // ASStatus converts a remote activitystreams 'status' representation into a gts model status.
 func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
+	var err error
+
 	status := new(gtsmodel.Status)
 
 	// status.URI
@@ -281,7 +283,19 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// status.Attachments
 	//
 	// Media attachments for later dereferencing.
-	status.Attachments = c.extractAttachments(statusable)
+	status.Attachments, err = ap.ExtractAttachments(statusable)
+	if err != nil {
+		l.Warnf("error(s) extracting attachments: %v", err)
+	}
+
+	// status.Poll
+	//
+	// Attached poll information (the statusable will actually
+	// be a Pollable, as a Question is a subset of our Status).
+	if pollable, ok := ap.ToPollable(statusable); ok {
+		// TODO: handle decoding poll data
+		_ = pollable
+	}
 
 	// status.Hashtags
 	//
@@ -341,7 +355,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// error if we don't.
 	attributedTo, err := ap.ExtractAttributedToURI(statusable)
 	if err != nil {
-		return nil, gtserror.Newf("%w", err)
+		return nil, gtserror.Newf("error extracting attributed to uri: %w", err)
 	}
 	accountURI := attributedTo.String()
 

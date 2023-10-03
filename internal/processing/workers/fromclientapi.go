@@ -114,6 +114,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 	case ap.ActivityUpdate:
 		switch cMsg.APObjectType {
 
+		// UPDATE NOTE/STATUS
+		case ap.ObjectNote:
+			return p.clientAPI.UpdateStatus(ctx, cMsg)
+
 		// UPDATE PROFILE/ACCOUNT
 		case ap.ObjectProfile, ap.ActorPerson:
 			return p.clientAPI.UpdateAccount(ctx, cMsg)
@@ -332,10 +336,25 @@ func (p *clientAPI) CreateBlock(ctx context.Context, cMsg messages.FromClientAPI
 	return nil
 }
 
+func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// Cast the updated Status model attached to msg.
+	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// Federate the updated status changes out remotely.
+	if err := p.federate.UpdateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error federating status update: %w", err)
+	}
+
+	return nil
+}
+
 func (p *clientAPI) UpdateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
 	account, ok := cMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.Account", cMsg.GTSModel)
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Account", cMsg.GTSModel)
 	}
 
 	if err := p.federate.UpdateAccount(ctx, account); err != nil {

@@ -35,39 +35,93 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// ExtractObject will extract an object vocab.Type from given implementing interface.
-func ExtractObject(with WithObject) vocab.Type {
+// ExtractObjects will extract object vocab.Types from given implementing interface.
+func ExtractObjects(with WithObject) []vocab.Type {
 	// Extract the attached object (if any).
-	obj := with.GetActivityStreamsObject()
-	if obj == nil {
+	objProp := with.GetActivityStreamsObject()
+	if objProp == nil {
 		return nil
 	}
 
-	// Only support single
-	// objects (for now...)
-	if obj.Len() != 1 {
+	// Check for zero len.
+	if objProp.Len() == 0 {
 		return nil
 	}
 
-	// Extract object vocab.Type.
-	return obj.At(0).GetType()
+	// Accumulate all of the objects into a slice.
+	objTypes := make([]vocab.Type, objProp.Len())
+	for i := 0; i < objProp.Len(); i++ {
+
+		// Get object vocab type at index.
+		objType := objProp.At(i).GetType()
+		if objType == nil {
+			return nil
+		}
+
+		// Set vocab type in slice.
+		objTypes[i] = objType
+	}
+
+	return objTypes
+}
+
+// ExtractObjectIRIs will extract object IRIs from given implementing interface.
+func ExtractObjectIRIs(with WithObject) []*url.URL {
+	// Extract the attached object (if any).
+	objProp := with.GetActivityStreamsObject()
+	if objProp == nil {
+		return nil
+	}
+
+	// Check for zero len.
+	if objProp.Len() == 0 {
+		return nil
+	}
+
+	// Accumulate all of the IRIs into a slice.
+	objIRIs := make([]*url.URL, objProp.Len())
+	for i := 0; i < objProp.Len(); i++ {
+
+		// Get iter at index.
+		at := objProp.At(i)
+		if !at.IsIRI() {
+			return nil
+		}
+
+		// Set vocab type in slice.
+		objIRIs[i] = at.GetIRI()
+	}
+
+	return objIRIs
 }
 
 // ExtractActivityData will extract the usable data type (e.g. Note, Question, etc) and corresponding JSON, from activity.
-func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) (vocab.Type, map[string]any, bool) {
+func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]vocab.Type, []any, bool) {
 	switch typeName := activity.GetTypeName(); {
 	// Activity (has "object").
 	case isActivity(typeName):
-		objType := ExtractObject(activity)
-		if objType == nil {
+		objTypes := ExtractObjects(activity)
+		if len(objTypes) == 0 {
 			return nil, nil, false
 		}
-		objJSON, _ := rawJSON["object"].(map[string]any)
-		return objType, objJSON, true
+
+		var objJSON []any
+		switch json := rawJSON["object"].(type) {
+		case nil:
+			// do nothing
+		case map[string]any:
+			// Wrap map in slice.
+			objJSON = []any{json}
+		case []any:
+			// Use existing slice.
+			objJSON = json
+		}
+
+		return objTypes, objJSON, true
 
 	// IntransitiveAcitivity (no "object").
 	case isIntransitiveActivity(typeName):
-		return activity, rawJSON, false
+		return []vocab.Type{activity}, []any{rawJSON}, true
 
 	// Unknown.
 	default:

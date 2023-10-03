@@ -147,27 +147,27 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 		return nil
 	}
 
-	// Populate model.
+	// Ensure the status model is fully populated.
 	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error populating status: %w", err)
 	}
 
-	// Parse relevant URI(s).
+	// Parse the outbox URI of the status author.
 	outboxIRI, err := parseURI(status.Account.OutboxURI)
 	if err != nil {
 		return err
 	}
 
-	// Convert status to an ActivityStreams
-	// Note, wrapped in a Create activity.
-	asStatus, err := f.converter.StatusToAS(ctx, status)
+	// Convert status to ActivityStreams Statusable implementing type.
+	statusable, err := f.converter.StatusToAS(ctx, status)
 	if err != nil {
-		return gtserror.Newf("error converting status to AS: %w", err)
+		return gtserror.Newf("error converting status to Statusable: %w", err)
 	}
 
-	create, err := f.converter.WrapNoteInCreate(asStatus, false)
+	// Use ActivityStreams Statusable type as Object of Create.
+	create, err := f.converter.WrapStatusableInCreate(statusable, false)
 	if err != nil {
-		return gtserror.Newf("error wrapping status in create: %w", err)
+		return gtserror.Newf("error wrapping Statusable in Create: %w", err)
 	}
 
 	// Send the Create via the Actor's outbox.
@@ -196,12 +196,12 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 		return nil
 	}
 
-	// Populate model.
+	// Ensure the status model is fully populated.
 	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error populating status: %w", err)
 	}
 
-	// Parse relevant URI(s).
+	// Parse the outbox URI of the status author.
 	outboxIRI, err := parseURI(status.Account.OutboxURI)
 	if err != nil {
 		return err
@@ -221,6 +221,50 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 			"error sending activity %T via outbox %s: %w",
 			delete, outboxIRI, err,
 		)
+	}
+
+	return nil
+}
+
+func (f *federate) UpdateStatus(ctx context.Context, status *gtsmodel.Status) error {
+	// Do nothing if the status
+	// shouldn't be federated.
+	if !*status.Federated {
+		return nil
+	}
+
+	// Do nothing if this
+	// isn't our status.
+	if !*status.Local {
+		return nil
+	}
+
+	// Ensure the status model is fully populated.
+	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error populating status: %w", err)
+	}
+
+	// Parse the outbox URI of the status author.
+	outboxIRI, err := parseURI(status.Account.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	// Convert status to ActivityStreams Statusable implementing type.
+	statusable, err := f.converter.StatusToAS(ctx, status)
+	if err != nil {
+		return gtserror.Newf("error converting status to Statusable: %w", err)
+	}
+
+	// Use ActivityStreams Statusable type as Object of Update.
+	update, err := f.converter.WrapStatusableInUpdate(statusable, false)
+	if err != nil {
+		return gtserror.Newf("error wrapping Statusable in Update: %w", err)
+	}
+
+	// Send the Update activity with Statusable via the Actor's outbox.
+	if _, err := f.FederatingActor().Send(ctx, outboxIRI, update); err != nil {
+		return gtserror.Newf("error sending Update activity via outbox %s: %w", outboxIRI, err)
 	}
 
 	return nil

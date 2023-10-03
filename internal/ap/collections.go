@@ -74,7 +74,7 @@ func (iter *regularCollectionPageIterator) PrevPage() WithIRI {
 	return iter.GetActivityStreamsPrev()
 }
 
-func (iter *regularCollectionPageIterator) NextItem() IteratorItemable {
+func (iter *regularCollectionPageIterator) NextItem() TypeOrIRI {
 	if !iter.initItems() {
 		return nil
 	}
@@ -83,7 +83,7 @@ func (iter *regularCollectionPageIterator) NextItem() IteratorItemable {
 	return cur
 }
 
-func (iter *regularCollectionPageIterator) PrevItem() IteratorItemable {
+func (iter *regularCollectionPageIterator) PrevItem() TypeOrIRI {
 	if !iter.initItems() {
 		return nil
 	}
@@ -130,7 +130,7 @@ func (iter *orderedCollectionPageIterator) PrevPage() WithIRI {
 	return iter.GetActivityStreamsPrev()
 }
 
-func (iter *orderedCollectionPageIterator) NextItem() IteratorItemable {
+func (iter *orderedCollectionPageIterator) NextItem() TypeOrIRI {
 	if !iter.initItems() {
 		return nil
 	}
@@ -139,7 +139,7 @@ func (iter *orderedCollectionPageIterator) NextItem() IteratorItemable {
 	return cur
 }
 
-func (iter *orderedCollectionPageIterator) PrevItem() IteratorItemable {
+func (iter *orderedCollectionPageIterator) PrevItem() TypeOrIRI {
 	if !iter.initItems() {
 		return nil
 	}

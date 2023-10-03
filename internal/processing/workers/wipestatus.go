@@ -38,7 +38,7 @@ func wipeStatusF(state *state.State, media *media.Processor, surface *surface) w
 		statusToDelete *gtsmodel.Status,
 		deleteAttachments bool,
 	) error {
-		errs := new(gtserror.MultiError)
+		var errs gtserror.MultiError
 
 		// Either delete all attachments for this status,
 		// or simply unattach + clean them separately later.
@@ -48,15 +48,15 @@ func wipeStatusF(state *state.State, media *media.Processor, surface *surface) w
 		// status immediately (in case of delete + redraft)
 		if deleteAttachments {
 			// todo:state.DB.DeleteAttachmentsForStatus
-			for _, a := range statusToDelete.AttachmentIDs {
-				if err := media.Delete(ctx, a); err != nil {
+			for _, id := range statusToDelete.AttachmentIDs {
+				if err := media.Delete(ctx, id); err != nil {
 					errs.Appendf("error deleting media: %w", err)
 				}
 			}
 		} else {
 			// todo:state.DB.UnattachAttachmentsForStatus
-			for _, a := range statusToDelete.AttachmentIDs {
-				if _, err := media.Unattach(ctx, statusToDelete.Account, a); err != nil {
+			for _, id := range statusToDelete.AttachmentIDs {
+				if _, err := media.Unattach(ctx, statusToDelete.Account, id); err != nil {
 					errs.Appendf("error unattaching media: %w", err)
 				}
 			}
@@ -95,11 +95,12 @@ func wipeStatusF(state *state.State, media *media.Processor, surface *surface) w
 		if err != nil {
 			errs.Appendf("error fetching status boosts: %w", err)
 		}
-		for _, b := range boosts {
-			if err := surface.deleteStatusFromTimelines(ctx, b.ID); err != nil {
+
+		for _, boost := range boosts {
+			if err := surface.deleteStatusFromTimelines(ctx, boost.ID); err != nil {
 				errs.Appendf("error deleting boost from timelines: %w", err)
 			}
-			if err := state.DB.DeleteStatusByID(ctx, b.ID); err != nil {
+			if err := state.DB.DeleteStatusByID(ctx, boost.ID); err != nil {
 				errs.Appendf("error deleting boost: %w", err)
 			}
 		}

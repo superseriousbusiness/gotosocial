@@ -39,65 +39,73 @@ import (
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
 //
 // Precondition: the form's fields should have already been validated and normalized by the caller.
-func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
-	accountURIs := uris.GenerateURIsForAccount(account.Username)
-	thisStatusID := id.NewULID()
-	local := true
-	sensitive := form.Sensitive
+func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
+	// Generate new ID for status.
+	statusID := id.NewULID()
 
-	newStatus := &gtsmodel.Status{
-		ID:                       thisStatusID,
-		URI:                      accountURIs.StatusesURI + "/" + thisStatusID,
-		URL:                      accountURIs.StatusesURL + "/" + thisStatusID,
-		CreatedAt:                time.Now(),
-		UpdatedAt:                time.Now(),
-		Local:                    &local,
-		AccountID:                account.ID,
-		AccountURI:               account.URI,
+	// Generate necessary URIs for username, to build status URIs.
+	accountURIs := uris.GenerateURIsForAccount(requestingAccount.Username)
+
+	// Get current time.
+	now := time.Now()
+
+	status := &gtsmodel.Status{
+		ID:                       statusID,
+		URI:                      accountURIs.StatusesURI + "/" + statusID,
+		URL:                      accountURIs.StatusesURL + "/" + statusID,
+		CreatedAt:                now,
+		UpdatedAt:                now,
+		Local:                    func() *bool { b := true; return &b }(),
+		AccountID:                requestingAccount.ID,
+		AccountURI:               requestingAccount.URI,
 		ContentWarning:           text.SanitizeToPlaintext(form.SpoilerText),
 		ActivityStreamsType:      ap.ObjectNote,
-		Sensitive:                &sensitive,
+		Sensitive:                &form.Sensitive,
 		CreatedWithApplicationID: application.ID,
 		Text:                     form.Status,
 	}
 
-	if errWithCode := processReplyToID(ctx, p.state.DB, form, account.ID, newStatus); errWithCode != nil {
+	if form.Poll != nil {
+		// TODO: handle poll creation
+	}
+
+	if errWithCode := p.processReplyToID(ctx, form, requestingAccount.ID, status); errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if errWithCode := processMediaIDs(ctx, p.state.DB, form, account.ID, newStatus); errWithCode != nil {
+	if errWithCode := p.processMediaIDs(ctx, form, requestingAccount.ID, status); errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if err := processVisibility(ctx, form, account.Privacy, newStatus); err != nil {
+	if err := processVisibility(form, requestingAccount.Privacy, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := processLanguage(ctx, form, account.Language, newStatus); err != nil {
+	if err := processLanguage(form, requestingAccount.Language, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := processContent(ctx, p.state.DB, p.formatter, p.parseMention, form, account.ID, newStatus); err != nil {
+	if err := p.processContent(ctx, p.parseMention, form, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// put the new status in the database
-	if err := p.state.DB.PutStatus(ctx, newStatus); err != nil {
+	// Insert this new status in the database.
+	if err := p.state.DB.PutStatus(ctx, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// send it back to the processor for async processing
+	// send it back to the client API worker for async side-effects.
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
-		GTSModel:       newStatus,
-		OriginAccount:  account,
+		GTSModel:       status,
+		OriginAccount:  requestingAccount,
 	})
 
-	return p.apiStatus(ctx, newStatus, account)
+	return p.apiStatus(ctx, status, requestingAccount)
 }
 
-func processReplyToID(ctx context.Context, dbService db.DB, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
+func (p *Processor) processReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
 	if form.InReplyToID == "" {
 		return nil
 	}
@@ -109,78 +117,74 @@ func processReplyToID(ctx context.Context, dbService db.DB, form *apimodel.Advan
 	// 3. Does a block exist between either the current account or the account that posted the status it's replying to?
 	//
 	// If this is all OK, then we fetch the repliedStatus and the repliedAccount for later processing.
-	repliedStatus := &gtsmodel.Status{}
-	repliedAccount := &gtsmodel.Account{}
 
-	if err := dbService.GetByID(ctx, form.InReplyToID, repliedStatus); err != nil {
-		if err == db.ErrNoEntries {
-			err := fmt.Errorf("status with id %s not replyable because it doesn't exist", form.InReplyToID)
-			return gtserror.NewErrorBadRequest(err, err.Error())
-		}
-		err := fmt.Errorf("db error fetching status with id %s: %s", form.InReplyToID, err)
-		return gtserror.NewErrorInternalError(err)
-	}
-	if !*repliedStatus.Replyable {
-		err := fmt.Errorf("status with id %s is marked as not replyable", form.InReplyToID)
-		return gtserror.NewErrorForbidden(err, err.Error())
-	}
-
-	if err := dbService.GetByID(ctx, repliedStatus.AccountID, repliedAccount); err != nil {
-		if err == db.ErrNoEntries {
-			err := fmt.Errorf("status with id %s not replyable because account id %s is not known", form.InReplyToID, repliedStatus.AccountID)
-			return gtserror.NewErrorBadRequest(err, err.Error())
-		}
-		err := fmt.Errorf("db error fetching account with id %s: %s", repliedStatus.AccountID, err)
+	inReplyTo, err := p.state.DB.GetStatusByID(ctx, form.InReplyToID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error fetching status %s from db: %w", form.InReplyToID, err)
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	if blocked, err := dbService.IsEitherBlocked(ctx, thisAccountID, repliedAccount.ID); err != nil {
-		err := fmt.Errorf("db error checking block: %s", err)
+	if inReplyTo == nil {
+		const text = "cannot reply to status that does not exist"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
+	if !*inReplyTo.Replyable {
+		text := fmt.Sprintf("status %s is marked as not replyable", form.InReplyToID)
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	if blocked, err := p.state.DB.IsEitherBlocked(ctx, thisAccountID, inReplyTo.AccountID); err != nil {
+		err := gtserror.Newf("error checking block in db: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	} else if blocked {
-		err := fmt.Errorf("status with id %s not replyable", form.InReplyToID)
-		return gtserror.NewErrorNotFound(err)
+		text := fmt.Sprintf("status %s is not replyable", form.InReplyToID)
+		return gtserror.NewErrorNotFound(errors.New(text), text)
 	}
 
-	status.InReplyToID = repliedStatus.ID
-	status.InReplyToURI = repliedStatus.URI
-	status.InReplyToAccountID = repliedAccount.ID
+	// Set status fields from inReplyTo.
+	status.InReplyToID = inReplyTo.ID
+	status.InReplyToURI = inReplyTo.URI
+	status.InReplyToAccountID = inReplyTo.AccountID
 
 	return nil
 }
 
-func processMediaIDs(ctx context.Context, dbService db.DB, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
+func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
 	if form.MediaIDs == nil {
 		return nil
 	}
 
+	// Get minimum allowed char descriptions.
+	minChars := config.GetMediaDescriptionMinChars()
+
 	attachments := []*gtsmodel.MediaAttachment{}
 	attachmentIDs := []string{}
 	for _, mediaID := range form.MediaIDs {
-		attachment, err := dbService.GetAttachmentByID(ctx, mediaID)
-		if err != nil {
-			if errors.Is(err, db.ErrNoEntries) {
-				err = fmt.Errorf("ProcessMediaIDs: media not found for media id %s", mediaID)
-				return gtserror.NewErrorBadRequest(err, err.Error())
-			}
-			err = fmt.Errorf("ProcessMediaIDs: db error for media id %s", mediaID)
+		attachment, err := p.state.DB.GetAttachmentByID(ctx, mediaID)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("error fetching media from db: %w", err)
 			return gtserror.NewErrorInternalError(err)
 		}
 
+		if attachment == nil {
+			text := fmt.Sprintf("media %s not found", mediaID)
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+
 		if attachment.AccountID != thisAccountID {
-			err = fmt.Errorf("ProcessMediaIDs: media with id %s does not belong to account %s", mediaID, thisAccountID)
-			return gtserror.NewErrorBadRequest(err, err.Error())
+			text := fmt.Sprintf("media %s does not belong to account", mediaID)
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
 		if attachment.StatusID != "" || attachment.ScheduledStatusID != "" {
-			err = fmt.Errorf("ProcessMediaIDs: media with id %s is already attached to a status", mediaID)
-			return gtserror.NewErrorBadRequest(err, err.Error())
+			text := fmt.Sprintf("media %s already attached to status", mediaID)
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
-		minDescriptionChars := config.GetMediaDescriptionMinChars()
-		if descriptionLength := len([]rune(attachment.Description)); descriptionLength < minDescriptionChars {
-			err = fmt.Errorf("ProcessMediaIDs: description too short! media description of at least %d chararacters is required but %d was provided for media with id %s", minDescriptionChars, descriptionLength, mediaID)
-			return gtserror.NewErrorBadRequest(err, err.Error())
+		if length := len([]rune(attachment.Description)); length < minChars {
+			text := fmt.Sprintf("media %s description too short, at least %d required", mediaID, minChars)
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
 		attachments = append(attachments, attachment)
@@ -192,7 +196,7 @@ func processMediaIDs(ctx context.Context, dbService db.DB, form *apimodel.Advanc
 	return nil
 }
 
-func processVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
+func processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
 	federated := true
 	boostable := true
@@ -265,7 +269,7 @@ func processVisibility(ctx context.Context, form *apimodel.AdvancedStatusCreateF
 	return nil
 }
 
-func processLanguage(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
+func processLanguage(form *apimodel.AdvancedStatusCreateForm, accountDefaultLanguage string, status *gtsmodel.Status) error {
 	if form.Language != "" {
 		status.Language = form.Language
 	} else {
@@ -277,68 +281,71 @@ func processLanguage(ctx context.Context, form *apimodel.AdvancedStatusCreateFor
 	return nil
 }
 
-func processContent(ctx context.Context, dbService db.DB, formatter *text.Formatter, parseMention gtsmodel.ParseMentionFunc, form *apimodel.AdvancedStatusCreateForm, accountID string, status *gtsmodel.Status) error {
-	// if there's nothing in the status at all we can just return early
-	if form.Status == "" {
-		status.Content = ""
-		return nil
-	}
-
-	// if content type wasn't specified we should try to figure out what content type this user prefers
+func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.ParseMentionFunc, form *apimodel.AdvancedStatusCreateForm, status *gtsmodel.Status) error {
 	if form.ContentType == "" {
-		acct, err := dbService.GetAccountByID(ctx, accountID)
-		if err != nil {
-			return fmt.Errorf("error processing new content: couldn't retrieve account from db to check post format: %s", err)
-		}
-
-		switch acct.StatusContentType {
-		case "text/plain":
-			form.ContentType = apimodel.StatusContentTypePlain
-		case "text/markdown":
-			form.ContentType = apimodel.StatusContentTypeMarkdown
-		default:
-			form.ContentType = apimodel.StatusContentTypeDefault
-		}
+		// If content type wasn't specified, use the author's preferred content-type.
+		contentType := apimodel.StatusContentType(status.Account.StatusContentType)
+		form.ContentType = contentType
 	}
 
-	// parse content out of the status depending on what content type has been submitted
-	var f text.FormatFunc
+	var (
+		// formatFunc is the currently set text formatting
+		// function, according to the provided content-type.
+		formatFunc text.FormatFunc
+
+		// formatInput is a shorthand function to format the given input string with the
+		// currently set 'formatFunc', passing in all required args and returning result.
+		formatInput = func(input string) *text.FormatResult {
+			return formatFunc(ctx, parseMention, status.AccountID, status.ID, input)
+		}
+	)
+
 	switch form.ContentType {
+
+	// Format status according to text/plain.
 	case apimodel.StatusContentTypePlain:
-		f = formatter.FromPlain
+		formatFunc = p.formatter.FromPlain
+
+	// Format status according to text/markdown.
 	case apimodel.StatusContentTypeMarkdown:
-		f = formatter.FromMarkdown
+		formatFunc = p.formatter.FromMarkdown
+
+	// Unknown.
 	default:
 		return fmt.Errorf("format %s not recognised as a valid status format", form.ContentType)
 	}
-	formatted := f(ctx, parseMention, accountID, status.ID, form.Status)
 
-	// add full populated gts {mentions, tags, emojis} to the status for passing them around conveniently
-	// add just their ids to the status for putting in the db
-	status.Mentions = formatted.Mentions
-	status.MentionIDs = make([]string, 0, len(formatted.Mentions))
-	for _, gtsmention := range formatted.Mentions {
-		status.MentionIDs = append(status.MentionIDs, gtsmention.ID)
-	}
+	// Format status content with formatter.
+	content := formatInput(status.Content)
+	status.Content = content.HTML
+	status.Mentions = append(status.Mentions, content.Mentions...)
+	status.Emojis = append(status.Emojis, content.Emojis...)
+	status.Tags = append(status.Tags, content.Tags...)
 
-	status.Tags = formatted.Tags
-	status.TagIDs = make([]string, 0, len(formatted.Tags))
-	for _, gtstag := range formatted.Tags {
-		status.TagIDs = append(status.TagIDs, gtstag.ID)
-	}
+	// Format status content warning with formatter.
+	contWarning := formatInput(status.ContentWarning)
+	status.ContentWarning = contWarning.HTML
+	status.Mentions = append(status.Mentions, contWarning.Mentions...)
+	status.Emojis = append(status.Emojis, contWarning.Emojis...)
+	status.Tags = append(status.Tags, contWarning.Tags...)
 
-	status.Emojis = formatted.Emojis
-	status.EmojiIDs = make([]string, 0, len(formatted.Emojis))
-	for _, gtsemoji := range formatted.Emojis {
-		status.EmojiIDs = append(status.EmojiIDs, gtsemoji.ID)
-	}
+	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
+	status.MentionIDs = gatherIDs(status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
+	status.TagIDs = gatherIDs(status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
+	status.EmojiIDs = gatherIDs(status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
 
-	spoilerformatted := formatter.FromPlainEmojiOnly(ctx, parseMention, accountID, status.ID, form.SpoilerText)
-	for _, gtsemoji := range spoilerformatted.Emojis {
-		status.Emojis = append(status.Emojis, gtsemoji)
-		status.EmojiIDs = append(status.EmojiIDs, gtsemoji.ID)
-	}
-
-	status.Content = formatted.HTML
 	return nil
+}
+
+// gatherIDs is a small utility function to gather IDs from a slice of type T.
+func gatherIDs[T any](in []T, getID func(T) string) []string {
+	if getID == nil {
+		// move nil check out loop.
+		panic("nil getID function")
+	}
+	ids := make([]string, len(in))
+	for i, t := range in {
+		ids[i] = getID(t)
+	}
+	return ids
 }

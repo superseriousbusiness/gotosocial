@@ -247,14 +247,8 @@ type CollectionPageIterator interface {
 	NextPage() WithIRI
 	PrevPage() WithIRI
 
-	NextItem() IteratorItemable
-	PrevItem() IteratorItemable
-}
-
-// IteratorItemable represents the minimum interface for an item in an iterator.
-type IteratorItemable interface {
-	WithIRI
-	WithType
+	NextItem() TypeOrIRI
+	PrevItem() TypeOrIRI
 }
 
 // Flaggable represents the minimum interface for an activitystreams 'Flag' activity.
@@ -265,6 +259,12 @@ type Flaggable interface {
 	WithActor
 	WithContent
 	WithObject
+}
+
+// TypeOrIRI represents the minimum interface for something that may be a vocab.Type OR IRI.
+type TypeOrIRI interface {
+	WithIRI
+	WithType
 }
 
 // WithJSONLDId represents an activity with JSONLDIdProperty.
