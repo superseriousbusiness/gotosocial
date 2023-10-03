@@ -331,7 +331,8 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 	format = p.formatter.FromPlainEmojiOnly
 
 	// Sanitize content warning and format.
-	warningRes := formatInput(format, form.SpoilerText)
+	spoiler := text.SanitizeToPlaintext(form.SpoilerText)
+	warningRes := formatInput(format, spoiler)
 
 	// Collect formatted results.
 	status.ContentWarning = warningRes.HTML
