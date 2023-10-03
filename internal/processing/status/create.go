@@ -326,18 +326,16 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 	status.Emojis = append(status.Emojis, contentRes.Emojis...)
 	status.Tags = append(status.Tags, contentRes.Tags...)
 
-	// From here-on-out just use paragraph-less
+	// From here-on-out just use emoji-only
 	// plain-text formatting as the FormatFunc.
-	format = p.formatter.FromPlainNoParagraph
+	format = p.formatter.FromPlainEmojiOnly
 
 	// Sanitize content warning and format.
 	warningRes := formatInput(format, form.SpoilerText)
 
 	// Collect formatted results.
 	status.ContentWarning = warningRes.HTML
-	status.Mentions = append(status.Mentions, warningRes.Mentions...)
 	status.Emojis = append(status.Emojis, warningRes.Emojis...)
-	status.Tags = append(status.Tags, warningRes.Tags...)
 
 	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
 	status.MentionIDs = gatherIDs(status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
