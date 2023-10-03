@@ -59,7 +59,6 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		Account:                  requestingAccount,
 		AccountID:                requestingAccount.ID,
 		AccountURI:               requestingAccount.URI,
-		ContentWarning:           text.SanitizeToPlaintext(form.SpoilerText),
 		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                &form.Sensitive,
 		CreatedWithApplicationID: application.ID,
@@ -79,15 +78,15 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	if err := processVisibility(form, requestingAccount.Privacy, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err, err.Error())
 	}
 
 	if err := processLanguage(form, requestingAccount.Language, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err, err.Error())
 	}
 
 	if err := p.processContent(ctx, p.parseMention, form, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err, err.Error())
 	}
 
 	// Insert this new status in the database.
@@ -289,46 +288,56 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 		form.ContentType = contentType
 	}
 
-	var (
-		// formatFunc is the currently set text formatting
-		// function, according to the provided content-type.
-		formatFunc text.FormatFunc
+	// format is the currently set text formatting
+	// function, according to the provided content-type.
+	var format text.FormatFunc
 
-		// formatInput is a shorthand function to format the given input string with the
-		// currently set 'formatFunc', passing in all required args and returning result.
-		formatInput = func(input string) *text.FormatResult {
-			return formatFunc(ctx, parseMention, status.AccountID, status.ID, input)
-		}
-	)
+	// formatInput is a shorthand function to format the given input string with the
+	// currently set 'formatFunc', passing in all required args and returning result.
+	formatInput := func(formatFunc text.FormatFunc, input string) *text.FormatResult {
+		return formatFunc(ctx, parseMention, status.AccountID, status.ID, input)
+	}
 
 	switch form.ContentType {
+	// None given / set,
+	// use default (plain).
+	case "":
+		fallthrough
 
 	// Format status according to text/plain.
 	case apimodel.StatusContentTypePlain:
-		formatFunc = p.formatter.FromPlain
+		format = p.formatter.FromPlain
 
 	// Format status according to text/markdown.
 	case apimodel.StatusContentTypeMarkdown:
-		formatFunc = p.formatter.FromMarkdown
+		format = p.formatter.FromMarkdown
 
 	// Unknown.
 	default:
-		return fmt.Errorf("format %s not recognised as a valid status format", form.ContentType)
+		return fmt.Errorf("invalid status format: %q", form.ContentType)
 	}
 
-	// Format status content with formatter.
-	content := formatInput(status.Content)
-	status.Content = content.HTML
-	status.Mentions = append(status.Mentions, content.Mentions...)
-	status.Emojis = append(status.Emojis, content.Emojis...)
-	status.Tags = append(status.Tags, content.Tags...)
+	// Sanitize status text and format.
+	contentRes := formatInput(format, form.Status)
 
-	// Format status content warning with formatter.
-	contWarning := formatInput(status.ContentWarning)
-	status.ContentWarning = contWarning.HTML
-	status.Mentions = append(status.Mentions, contWarning.Mentions...)
-	status.Emojis = append(status.Emojis, contWarning.Emojis...)
-	status.Tags = append(status.Tags, contWarning.Tags...)
+	// Collect formatted results.
+	status.Content = contentRes.HTML
+	status.Mentions = append(status.Mentions, contentRes.Mentions...)
+	status.Emojis = append(status.Emojis, contentRes.Emojis...)
+	status.Tags = append(status.Tags, contentRes.Tags...)
+
+	// From here-on-out just use paragraph-less
+	// plain-text formatting as the FormatFunc.
+	format = p.formatter.FromPlainNoParagraph
+
+	// Sanitize content warning and format.
+	warningRes := formatInput(format, form.SpoilerText)
+
+	// Collect formatted results.
+	status.ContentWarning = warningRes.HTML
+	status.Mentions = append(status.Mentions, warningRes.Mentions...)
+	status.Emojis = append(status.Emojis, warningRes.Emojis...)
+	status.Tags = append(status.Tags, warningRes.Tags...)
 
 	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
 	status.MentionIDs = gatherIDs(status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
