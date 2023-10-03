@@ -1033,24 +1033,6 @@ func IterateAnyOf(withAnyOf WithAnyOf, foreach func(vocab.ActivityStreamsAnyOfPr
 	}
 }
 
-// extractPollOption extracts a usable poll option name from vocab.Type, or error.
-func extractPollOption(t vocab.Type) (string, error) {
-	// Check fulfills PollOptionable type
-	// (this accounts for nil input type).
-	optionable, ok := t.(PollOptionable)
-	if !ok {
-		return "", fmt.Errorf("incorrect option type: %T", t)
-	}
-
-	// Extract PollOption from interface.
-	name := ExtractName(optionable)
-	if name == "" {
-		return "", errors.New("empty option name")
-	}
-
-	return name, nil
-}
-
 // isPublic checks if at least one entry in the given
 // uris slice equals the activitystreams public uri.
 func isPublic(uris []*url.URL) bool {
