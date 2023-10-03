@@ -191,7 +191,7 @@ func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
 		note,
 	)
 
-	ap.NormalizeIncomingActivityObject(create, map[string]interface{}{"object": rawNote})
+	ap.NormalizeIncomingActivity(create, map[string]interface{}{"object": rawNote})
 	suite.Equal(`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" href="https://example.org/tag/twittermigration" rel="tag ugc nofollow noreferrer noopener" target="_blank">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night's spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`, ap.ExtractContent(note))
 }
 
