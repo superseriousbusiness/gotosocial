@@ -19,10 +19,8 @@ package federation
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -30,7 +28,6 @@ import (
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/pub"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -132,12 +129,13 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// Authenticate request by checking http signature.
 	ctx, authenticated, err := f.sideEffectActor.AuthenticatePostInbox(ctx, w, r)
 	if err != nil {
+		err := gtserror.Newf("error authenticating post inbox: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}
 
 	if !authenticated {
-		err = errors.New("not authenticated")
-		return false, gtserror.NewErrorUnauthorized(err)
+		const text = "not authenticated"
+		return false, gtserror.NewErrorUnauthorized(errors.New(text), text)
 	}
 
 	/*
@@ -146,7 +144,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	*/
 
 	// Obtain the activity; reject unknown activities.
-	activity, errWithCode := resolveActivity(ctx, r)
+	activity, errWithCode := ap.ResolveIncomingActivity(r)
 	if errWithCode != nil {
 		return false, errWithCode
 	}
@@ -156,6 +154,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// involved in it tangentially.
 	ctx, err = f.sideEffectActor.PostInboxRequestBodyHook(ctx, r, activity)
 	if err != nil {
+		err := gtserror.Newf("error during post inbox request body hook: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -174,6 +173,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		}
 
 		// Real error has occurred.
+		err := gtserror.Newf("error authorizing post inbox: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -181,8 +181,8 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// Block exists either from this instance against
 		// one or more directly involved actors, or between
 		// receiving account and one of those actors.
-		err = errors.New("blocked")
-		return false, gtserror.NewErrorForbidden(err)
+		const text = "blocked"
+		return false, gtserror.NewErrorForbidden(errors.New(text), text)
 	}
 
 	// Copy existing URL + add request host and scheme.
@@ -205,13 +205,13 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// Send the rejection to the peer.
 		if errors.Is(err, pub.ErrObjectRequired) || errors.Is(err, pub.ErrTargetRequired) {
 			// Log the original error but return something a bit more generic.
-			l.Debugf("malformed incoming Activity: %q", err)
-			err = errors.New("malformed incoming Activity: an Object and/or Target was required but not set")
-			return false, gtserror.NewErrorBadRequest(err, err.Error())
+			log.Warnf(ctx, "malformed incoming activity: %v", err)
+			const text = "malformed activity: missing Object and / or Target"
+			return false, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
 		// There's been some real error.
-		err = fmt.Errorf("PostInboxScheme: error calling sideEffectActor.PostInbox: %w", err)
+		err := gtserror.Newf("error calling sideEffectActor.PostInbox: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -241,65 +241,13 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		) {
 			// Failed inbox forwarding is not a show-stopper,
 			// and doesn't even necessarily denote a real error.
-			l.Warnf("error calling sideEffectActor.InboxForwarding: %q", err)
+			l.Warnf("error calling sideEffectActor.InboxForwarding: %v", err)
 		}
 	}
 
 	// Request is now undergoing processing. Caller
 	// of this function will handle writing Accepted.
 	return true, nil
-}
-
-// resolveActivity is a util function for pulling a
-// pub.Activity type out of an incoming POST request.
-func resolveActivity(ctx context.Context, r *http.Request) (pub.Activity, gtserror.WithCode) {
-	// Tidy up when done.
-	defer r.Body.Close()
-
-	b, err := io.ReadAll(r.Body)
-	if err != nil {
-		err = fmt.Errorf("error reading request body: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	var rawActivity map[string]interface{}
-	if err := json.Unmarshal(b, &rawActivity); err != nil {
-		err = fmt.Errorf("error unmarshalling request body: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	t, err := streams.ToType(ctx, rawActivity)
-	if err != nil {
-		if !streams.IsUnmatchedErr(err) {
-			// Real error.
-			err = fmt.Errorf("error matching json to type: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		// Respond with bad request; we just couldn't
-		// match the type to one that we know about.
-		err = errors.New("body json could not be resolved to ActivityStreams value")
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	activity, ok := t.(pub.Activity)
-	if !ok {
-		err = fmt.Errorf("ActivityStreams value with type %T is not a pub.Activity", t)
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	if activity.GetJSONLDId() == nil {
-		err = fmt.Errorf("incoming Activity %s did not have required id property set", activity.GetTypeName())
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
-	}
-
-	// If activity Object is a Statusable, we'll want to replace the
-	// parsed `content` value with the value from the raw JSON instead.
-	// See https://github.com/superseriousbusiness/gotosocial/issues/1661
-	// Likewise, if it's an Accountable, we'll normalize some fields on it.
-	ap.NormalizeIncomingActivityObject(activity, rawActivity)
-
-	return activity, nil
 }
 
 /*

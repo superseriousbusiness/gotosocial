@@ -43,7 +43,7 @@ func (suite *ResolveTestSuite) TestResolveDocumentAsAccountable() {
 
 	accountable, err := ap.ResolveAccountable(context.Background(), b)
 	suite.True(gtserror.WrongType(err))
-	suite.EqualError(err, "ResolveAccountable: could not resolve *typedocument.ActivityStreamsDocument to Accountable")
+	suite.EqualError(err, "ResolveAccountable: cannot resolve vocab type *typedocument.ActivityStreamsDocument as accountable")
 	suite.Nil(accountable)
 }
 

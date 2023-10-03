@@ -486,7 +486,7 @@ func (suite *InboxPostTestSuite) TestPostEmptyCreate() {
 		requestingAccount,
 		targetAccount,
 		http.StatusBadRequest,
-		`{"error":"Bad Request: incoming Activity Create did not have required id property set"}`,
+		`{"error":"Bad Request: missing ActivityStreams id property"}`,
 		suite.signatureCheck,
 	)
 }
@@ -511,7 +511,7 @@ func (suite *InboxPostTestSuite) TestPostFromBlockedAccount() {
 		requestingAccount,
 		targetAccount,
 		http.StatusForbidden,
-		`{"error":"Forbidden"}`,
+		`{"error":"Forbidden: blocked"}`,
 		suite.signatureCheck,
 	)
 }
@@ -555,7 +555,7 @@ func (suite *InboxPostTestSuite) TestPostUnauthorized() {
 		requestingAccount,
 		targetAccount,
 		http.StatusUnauthorized,
-		`{"error":"Unauthorized"}`,
+		`{"error":"Unauthorized: not authenticated"}`,
 		// Omit signature check middleware.
 	)
 }

@@ -78,3 +78,49 @@ const (
 	// and https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tag
 	TagHashtag = "Hashtag"
 )
+
+// isActivity returns whether AS type name is of an Activity (NOT IntransitiveActivity).
+func isActivity(typeName string) bool {
+	switch typeName {
+	case ActivityAccept,
+		ActivityTentativeAccept,
+		ActivityAdd,
+		ActivityCreate,
+		ActivityDelete,
+		ActivityFollow,
+		ActivityIgnore,
+		ActivityJoin,
+		ActivityLeave,
+		ActivityLike,
+		ActivityOffer,
+		ActivityInvite,
+		ActivityReject,
+		ActivityTentativeReject,
+		ActivityRemove,
+		ActivityUndo,
+		ActivityUpdate,
+		ActivityView,
+		ActivityListen,
+		ActivityRead,
+		ActivityMove,
+		ActivityAnnounce,
+		ActivityBlock,
+		ActivityFlag,
+		ActivityDislike:
+		return true
+	default:
+		return false
+	}
+}
+
+// isIntransitiveActivity returns whether AS type name is of an IntransitiveActivity.
+func isIntransitiveActivity(typeName string) bool {
+	switch typeName {
+	case ActivityArrive,
+		ActivityTravel,
+		ActivityQuestion:
+		return true
+	default:
+		return false
+	}
+}

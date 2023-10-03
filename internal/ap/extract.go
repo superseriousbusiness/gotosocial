@@ -28,11 +28,52 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
+
+// ExtractObject will extract an object vocab.Type from given implementing interface.
+func ExtractObject(with WithObject) vocab.Type {
+	// Extract the attached object (if any).
+	obj := with.GetActivityStreamsObject()
+	if obj == nil {
+		return nil
+	}
+
+	// Only support single
+	// objects (for now...)
+	if obj.Len() != 1 {
+		return nil
+	}
+
+	// Extract object vocab.Type.
+	return obj.At(0).GetType()
+}
+
+// ExtractActivityData will extract the usable data type (e.g. Note, Question, etc) and corresponding JSON, from activity.
+func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) (vocab.Type, map[string]any, bool) {
+	switch typeName := activity.GetTypeName(); {
+	// Activity (has "object").
+	case isActivity(typeName):
+		objType := ExtractObject(activity)
+		if objType == nil {
+			return nil, nil, false
+		}
+		objJSON, _ := rawJSON["object"].(map[string]any)
+		return objType, objJSON, true
+
+	// IntransitiveAcitivity (no "object").
+	case isIntransitiveActivity(typeName):
+		return activity, rawJSON, false
+
+	// Unknown.
+	default:
+		return nil, nil, false
+	}
+}
 
 // ExtractPreferredUsername returns a string representation of
 // an interface's preferredUsername property. Will return an
@@ -497,6 +538,38 @@ func ExtractContent(i WithContent) string {
 	return ""
 }
 
+// ExtractAttachments attempts to extract barebones MediaAttachment objects from given AS interface type.
+func ExtractAttachments(i WithAttachment) ([]*gtsmodel.MediaAttachment, error) {
+	attachmentProp := i.GetActivityStreamsAttachment()
+	if attachmentProp == nil {
+		return nil, nil
+	}
+
+	var errs gtserror.MultiError
+
+	attachments := make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
+	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
+		t := iter.GetType()
+		if t == nil {
+			errs.Appendf("nil attachment type")
+			continue
+		}
+		attachmentable, ok := t.(Attachmentable)
+		if !ok {
+			errs.Appendf("incorrect attachment type: %T", t)
+			continue
+		}
+		attachment, err := ExtractAttachment(attachmentable)
+		if err != nil {
+			errs.Appendf("error extracting attachment: %w", err)
+			continue
+		}
+		attachments = append(attachments, attachment)
+	}
+
+	return attachments, errs.Combine()
+}
+
 // ExtractAttachment extracts a minimal gtsmodel.Attachment
 // (just remote URL, description, and blurhash) from the given
 // Attachmentable interface, or an error if no remote URL is set.
@@ -911,6 +984,52 @@ func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 	}
 
 	return nil
+}
+
+// IterateOneOf will attempt to extract oneOf property from given interface, and passes each iterated item to function.
+func IterateOneOf(withOneOf WithOneOf, foreach func(vocab.ActivityStreamsOneOfPropertyIterator)) {
+	if foreach == nil {
+		// nil check outside loop.
+		panic("nil function")
+	}
+
+	// Extract the one-of property from interface.
+	oneOfProp := withOneOf.GetActivityStreamsOneOf()
+	if oneOfProp == nil {
+		return
+	}
+
+	// Get start and end of iter.
+	start := oneOfProp.Begin()
+	end := oneOfProp.End()
+
+	// Pass iterated oneOf entries to given function.
+	for iter := start; iter != end; iter = iter.Next() {
+		foreach(iter)
+	}
+}
+
+// IterateAnyOf will attempt to extract anyOf property from given interface, and passes each iterated item to function.
+func IterateAnyOf(withAnyOf WithAnyOf, foreach func(vocab.ActivityStreamsAnyOfPropertyIterator)) {
+	if foreach == nil {
+		// nil check outside loop.
+		panic("nil function")
+	}
+
+	// Extract the any-of property from interface.
+	anyOfProp := withAnyOf.GetActivityStreamsAnyOf()
+	if anyOfProp == nil {
+		return
+	}
+
+	// Get start and end of iter.
+	start := anyOfProp.Begin()
+	end := anyOfProp.End()
+
+	// Pass iterated anyOf entries to given function.
+	for iter := start; iter != end; iter = iter.Next() {
+		foreach(iter)
+	}
 }
 
 // isPublic checks if at least one entry in the given

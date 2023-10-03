@@ -37,92 +37,62 @@ import (
 // The rawActivity map should the freshly deserialized json representation of the Activity.
 //
 // This function is a noop if the type passed in is anything except a Create or Update with a Statusable or Accountable as its Object.
-func NormalizeIncomingActivityObject(activity pub.Activity, rawJSON map[string]interface{}) {
-	if typeName := activity.GetTypeName(); typeName != ActivityCreate && typeName != ActivityUpdate {
-		// Only interested in Create or Update right now.
-		return
-	}
-
-	withObject, ok := activity.(WithObject)
+func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interface{}) {
+	// From the activity extract the data vocab.Type + its "raw" JSON.
+	dataType, rawData, ok := ExtractActivityData(activity, rawJSON)
 	if !ok {
-		// Create was not a WithObject.
 		return
 	}
 
-	createObject := withObject.GetActivityStreamsObject()
-	if createObject == nil {
-		// No object set.
-		return
-	}
-
-	if createObject.Len() != 1 {
-		// Not interested in Object arrays.
-		return
-	}
-
-	// We now know length is 1 so get the first
-	// item from the iter. We need this to be
-	// a Statusable or Accountable if we're to continue.
-	i := createObject.At(0)
-	if i == nil {
-		// This is awkward.
-		return
-	}
-
-	t := i.GetType()
-	if t == nil {
-		// This is also awkward.
-		return
-	}
-
-	switch t.GetTypeName() {
-	case ObjectArticle, ObjectDocument, ObjectImage, ObjectVideo, ObjectNote, ObjectPage, ObjectEvent, ObjectPlace, ObjectProfile:
-		statusable, ok := t.(Statusable)
+	switch dataType.GetTypeName() {
+	// "Pollable" types.
+	case ActivityQuestion:
+		pollable, ok := dataType.(Pollable)
 		if !ok {
-			// Object is not Statusable;
-			// we're not interested.
 			return
 		}
 
-		rawObject, ok := rawJSON["object"]
-		if !ok {
-			// No object in raw map.
-			return
-		}
+		// Normalize the Pollable specific properties.
+		NormalizeIncomingPollOptions(pollable, rawData)
 
-		rawStatusableJSON, ok := rawObject.(map[string]interface{})
+		// Fallthrough to handle
+		// the rest as Statusable.
+		fallthrough
+
+	// "Statusable" types.
+	case ObjectArticle,
+		ObjectDocument,
+		ObjectImage,
+		ObjectVideo,
+		ObjectNote,
+		ObjectPage,
+		ObjectEvent,
+		ObjectPlace,
+		ObjectProfile:
+		statusable, ok := dataType.(Statusable)
 		if !ok {
-			// Object wasn't a json object.
 			return
 		}
 
 		// Normalize everything we can on the statusable.
-		NormalizeIncomingContent(statusable, rawStatusableJSON)
-		NormalizeIncomingAttachments(statusable, rawStatusableJSON)
-		NormalizeIncomingSummary(statusable, rawStatusableJSON)
-		NormalizeIncomingName(statusable, rawStatusableJSON)
-	case ActorApplication, ActorGroup, ActorOrganization, ActorPerson, ActorService:
-		accountable, ok := t.(Accountable)
-		if !ok {
-			// Object is not Accountable;
-			// we're not interested.
-			return
-		}
+		NormalizeIncomingContent(statusable, rawData)
+		NormalizeIncomingAttachments(statusable, rawData)
+		NormalizeIncomingSummary(statusable, rawData)
+		NormalizeIncomingName(statusable, rawData)
 
-		rawObject, ok := rawJSON["object"]
+	// "Accountable" types.
+	case ActorApplication,
+		ActorGroup,
+		ActorOrganization,
+		ActorPerson,
+		ActorService:
+		accountable, ok := dataType.(Accountable)
 		if !ok {
-			// No object in raw map.
-			return
-		}
-
-		rawAccountableJSON, ok := rawObject.(map[string]interface{})
-		if !ok {
-			// Object wasn't a json object.
 			return
 		}
 
 		// Normalize everything we can on the accountable.
-		NormalizeIncomingSummary(accountable, rawAccountableJSON)
+		NormalizeIncomingSummary(accountable, rawData)
 	}
 }
 
@@ -132,7 +102,7 @@ func NormalizeIncomingActivityObject(activity pub.Activity, rawJSON map[string]i
 //
 // noop if there was no content in the json object map or the
 // content was not a plain string.
-func NormalizeIncomingContent(item WithSetContent, rawJSON map[string]interface{}) {
+func NormalizeIncomingContent(item WithContent, rawJSON map[string]interface{}) {
 	rawContent, ok := rawJSON["content"]
 	if !ok {
 		// No content in rawJSON.
@@ -228,7 +198,7 @@ func NormalizeIncomingAttachments(item WithAttachment, rawJSON map[string]interf
 //
 // noop if there was no summary in the json object map or the
 // summary was not a plain string.
-func NormalizeIncomingSummary(item WithSetSummary, rawJSON map[string]interface{}) {
+func NormalizeIncomingSummary(item WithSummary, rawJSON map[string]interface{}) {
 	rawSummary, ok := rawJSON["summary"]
 	if !ok {
 		// No summary in rawJSON.
@@ -258,7 +228,7 @@ func NormalizeIncomingSummary(item WithSetSummary, rawJSON map[string]interface{
 //
 // noop if there was no name in the json object map or the
 // name was not a plain string.
-func NormalizeIncomingName(item WithSetName, rawJSON map[string]interface{}) {
+func NormalizeIncomingName(item WithName, rawJSON map[string]interface{}) {
 	rawName, ok := rawJSON["name"]
 	if !ok {
 		// No name in rawJSON.
@@ -283,4 +253,61 @@ func NormalizeIncomingName(item WithSetName, rawJSON map[string]interface{}) {
 	nameProp := streams.NewActivityStreamsNameProperty()
 	nameProp.AppendXMLSchemaString(name)
 	item.SetActivityStreamsName(nameProp)
+}
+
+// NormalizeIncomingOneOf normalizes all oneOf (if any) of the given
+// item, replacing the 'name' field of each oneOf with the raw 'name'
+// value from the raw json object map, and doing sanitization
+// on the result.
+//
+// noop if there are no oneOf; noop if oneOf is not expected format.
+func NormalizeIncomingPollOptions(item WithOneOf, rawJSON map[string]interface{}) {
+	var oneOf []interface{}
+
+	// Get the raw one-of JSON data.
+	rawOneOf, ok := rawJSON["oneOf"]
+	if !ok {
+		return
+	}
+
+	// Convert to slice if not already, so we can iterate.
+	if oneOf, ok = rawOneOf.([]interface{}); !ok {
+		oneOf = []interface{}{rawOneOf}
+	}
+
+	// Extract the one-of property from interface.
+	oneOfProp := item.GetActivityStreamsOneOf()
+	if oneOfProp == nil {
+		return
+	}
+
+	// Check we have useable one-of JSON-vs-unmarshaled data.
+	if l := oneOfProp.Len(); l == 0 || l != len(oneOf) {
+		return
+	}
+
+	// Get start and end of iter.
+	start := oneOfProp.Begin()
+	end := oneOfProp.End()
+
+	// Iterate a counter, from start through to end iter item.
+	for i, iter := 0, start; iter != end; i, iter = i+1, iter.Next() {
+		// Get item type.
+		t := iter.GetType()
+
+		// Check fulfills Choiceable type
+		// (this accounts for nil input type).
+		choiceable, ok := t.(PollOptionable)
+		if !ok {
+			continue
+		}
+
+		// Get the corresponding raw one-of data.
+		rawChoice, ok := oneOf[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		NormalizeIncomingName(choiceable, rawChoice)
+	}
 }
