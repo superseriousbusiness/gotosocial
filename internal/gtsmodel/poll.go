@@ -31,11 +31,6 @@ type Poll struct {
 	// no creation date, use attached Status.CreatedAt.
 }
 
-// Expired returns whether the given poll is expired.
-func (p *Poll) Expired() bool {
-	return time.Now().After(p.ExpiresAt)
-}
-
 // PollVote ...
 type PollVote struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
