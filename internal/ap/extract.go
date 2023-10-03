@@ -539,6 +539,7 @@ func ExtractContent(i WithContent) string {
 	return ""
 }
 
+// ExtractAttachments attempts to extract barebones MediaAttachment objects from given AS interface type.
 func ExtractAttachments(i WithAttachment) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentProp := i.GetActivityStreamsAttachment()
 	if attachmentProp == nil {
@@ -548,26 +549,22 @@ func ExtractAttachments(i WithAttachment) ([]*gtsmodel.MediaAttachment, error) {
 	var errs gtserror.MultiError
 
 	attachments := make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
-
 	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
 		t := iter.GetType()
 		if t == nil {
 			errs.Appendf("nil attachment type")
 			continue
 		}
-
 		attachmentable, ok := t.(Attachmentable)
 		if !ok {
 			errs.Appendf("incorrect attachment type: %T", t)
 			continue
 		}
-
 		attachment, err := ExtractAttachment(attachmentable)
 		if err != nil {
 			errs.Appendf("error extracting attachment: %w", err)
 			continue
 		}
-
 		attachments = append(attachments, attachment)
 	}
 
