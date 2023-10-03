@@ -56,6 +56,7 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		CreatedAt:                now,
 		UpdatedAt:                now,
 		Local:                    func() *bool { b := true; return &b }(),
+		Account:                  requestingAccount,
 		AccountID:                requestingAccount.ID,
 		AccountURI:               requestingAccount.URI,
 		ContentWarning:           text.SanitizeToPlaintext(form.SpoilerText),
