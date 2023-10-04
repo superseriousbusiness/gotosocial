@@ -41,6 +41,8 @@ func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interfa
 	// From the activity extract the data vocab.Type + its "raw" JSON.
 	dataTypes, rawData, ok := ExtractActivityData(activity, rawJSON)
 	if !ok || len(dataTypes) != len(rawData) {
+		// non-equal lengths *shouldn't* happen,
+		// but this is just an integrity check.
 		return
 	}
 
