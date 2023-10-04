@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
@@ -55,7 +56,7 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		URL:                      accountURIs.StatusesURL + "/" + statusID,
 		CreatedAt:                now,
 		UpdatedAt:                now,
-		Local:                    func() *bool { b := true; return &b }(),
+		Local:                    util.Ptr(true),
 		Account:                  requestingAccount,
 		AccountID:                requestingAccount.ID,
 		AccountURI:               requestingAccount.URI,
