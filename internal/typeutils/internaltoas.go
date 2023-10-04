@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -403,21 +404,15 @@ func (c *Converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account)
 	return person, nil
 }
 
-// StatusToAS converts a gts model status into an activity streams note, suitable for federation
-func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.ActivityStreamsNote, error) {
-	// ensure prerequisites here before we get stuck in
-
-	// check if author account is already attached to status and attach it if not
-	// if we can't retrieve this, bail here already because we can't attribute the status to anyone
-	if s.Account == nil {
-		a, err := c.state.DB.GetAccountByID(ctx, s.AccountID)
-		if err != nil {
-			return nil, gtserror.Newf("error retrieving author account from db: %w", err)
-		}
-		s.Account = a
+// StatusToAS converts a gts model status into an ActivityStreams Statusable implementation, suitable for federation
+func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Statusable, error) {
+	// Ensure the status model is fully populated.
+	// The status and poll models are REQUIRED so nothing to do if this fails.
+	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
+		return nil, gtserror.Newf("error populating status: %w", err)
 	}
 
-	// create the Note!
+	// We convert it as an AS Note.
 	status := streams.NewActivityStreamsNote()
 
 	// id
@@ -529,7 +524,6 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (vocab.A
 		}
 		tagProp.AppendTootHashtag(asHashtag)
 	}
-
 	status.SetActivityStreamsTag(tagProp)
 
 	// parse out some URIs we need here
@@ -1419,7 +1413,7 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 			return nil, err
 		}
 
-		create, err := c.WrapNoteInCreate(note, true)
+		create, err := c.WrapStatusableInCreate(note, true)
 		if err != nil {
 			return nil, err
 		}

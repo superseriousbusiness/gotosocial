@@ -39,60 +39,48 @@ import (
 // This function is a noop if the type passed in is anything except a Create or Update with a Statusable or Accountable as its Object.
 func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interface{}) {
 	// From the activity extract the data vocab.Type + its "raw" JSON.
-	dataType, rawData, ok := ExtractActivityData(activity, rawJSON)
-	if !ok {
+	dataIfaces, rawData, ok := ExtractActivityData(activity, rawJSON)
+	if !ok || len(dataIfaces) != len(rawData) {
+		// non-equal lengths *shouldn't* happen,
+		// but this is just an integrity check.
 		return
 	}
 
-	switch dataType.GetTypeName() {
-	// "Pollable" types.
-	case ActivityQuestion:
-		pollable, ok := dataType.(Pollable)
-		if !ok {
-			return
+	// Iterate over the available data.
+	for i, dataIface := range dataIfaces {
+		// Try to get as vocab.Type, else
+		// skip this entry for normalization.
+		dataType := dataIface.GetType()
+		if dataType == nil {
+			continue
 		}
 
-		// Normalize the Pollable specific properties.
-		NormalizeIncomingPollOptions(pollable, rawData)
-
-		// Fallthrough to handle
-		// the rest as Statusable.
-		fallthrough
-
-	// "Statusable" types.
-	case ObjectArticle,
-		ObjectDocument,
-		ObjectImage,
-		ObjectVideo,
-		ObjectNote,
-		ObjectPage,
-		ObjectEvent,
-		ObjectPlace,
-		ObjectProfile:
-		statusable, ok := dataType.(Statusable)
+		// Get the raw data map at index, else skip
+		// this entry due to impossible normalization.
+		rawData, ok := rawData[i].(map[string]any)
 		if !ok {
-			return
+			continue
 		}
 
-		// Normalize everything we can on the statusable.
-		NormalizeIncomingContent(statusable, rawData)
-		NormalizeIncomingAttachments(statusable, rawData)
-		NormalizeIncomingSummary(statusable, rawData)
-		NormalizeIncomingName(statusable, rawData)
+		if statusable, ok := ToStatusable(dataType); ok {
+			if pollable, ok := ToPollable(dataType); ok {
+				// Normalize the Pollable specific properties.
+				NormalizeIncomingPollOptions(pollable, rawData)
+			}
 
-	// "Accountable" types.
-	case ActorApplication,
-		ActorGroup,
-		ActorOrganization,
-		ActorPerson,
-		ActorService:
-		accountable, ok := dataType.(Accountable)
-		if !ok {
-			return
+			// Normalize everything we can on the statusable.
+			NormalizeIncomingContent(statusable, rawData)
+			NormalizeIncomingAttachments(statusable, rawData)
+			NormalizeIncomingSummary(statusable, rawData)
+			NormalizeIncomingName(statusable, rawData)
+			continue
 		}
 
-		// Normalize everything we can on the accountable.
-		NormalizeIncomingSummary(accountable, rawData)
+		if accountable, ok := ToAccountable(dataType); ok {
+			// Normalize everything we can on the accountable.
+			NormalizeIncomingSummary(accountable, rawData)
+			continue
+		}
 	}
 }
 

@@ -81,6 +81,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		// FLAG / REPORT SOMETHING
 		return f.activityFlag(ctx, asType, receivingAccount, requestingAccount)
 	}
+
 	return nil
 }
 
@@ -111,6 +112,7 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 		GTSModel:         block,
 		ReceivingAccount: receiving,
 	})
+
 	return nil
 }
 
@@ -132,37 +134,19 @@ func (f *federatingDB) activityCreate(
 		return gtserror.Newf("could not convert asType %T to ActivityStreamsCreate", asType)
 	}
 
-	// Create must have an Object.
-	objectProp := create.GetActivityStreamsObject()
-	if objectProp == nil {
-		return gtserror.New("create had no Object")
-	}
-
-	// Iterate through the Object property and process FIRST provided statusable.
-	// todo: https://github.com/superseriousbusiness/gotosocial/issues/1905
-	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
-		object := iter.GetType()
-		if object == nil {
-			// Can't do Create with Object that's just a URI.
-			// Warn log this because it's an AP error.
-			log.Warn(ctx, "object entry was not a type: %[1]T%[1]+v", iter)
+	for _, object := range ap.ExtractObjects(create) {
+		// Try to get object as vocab.Type,
+		// else skip handling (likely) IRI.
+		objType := object.GetType()
+		if objType == nil {
 			continue
 		}
 
-		// Ensure given object type is a statusable.
-		statusable, ok := object.(ap.Statusable)
-		if !ok {
-			// Can't (currently) Create anything other than a Statusable. ([1] is a format arg index)
-			log.Debugf(ctx, "object entry type (currently) unsupported: %[1]T%[1]+v", object)
-			continue
+		if statusable, ok := ap.ToStatusable(objType); ok {
+			return f.createStatusable(ctx, statusable, receivingAccount, requestingAccount)
 		}
 
-		// Handle creation of statusable.
-		return f.createStatusable(ctx,
-			statusable,
-			receivingAccount,
-			requestingAccount,
-		)
+		// TODO: handle CREATE of other types?
 	}
 
 	return nil

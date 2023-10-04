@@ -15,36 +15,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package timeline
+package federatingdb
 
 import (
 	"context"
+
+	"github.com/superseriousbusiness/activity/streams/vocab"
 )
 
-func (t *timeline) Unprepare(ctx context.Context, itemID string) error {
-	t.Lock()
-	defer t.Unlock()
-
-	if t.items == nil || t.items.data == nil {
-		// Nothing to do.
-		return nil
+func (f *federatingDB) Question(ctx context.Context, question vocab.ActivityStreamsQuestion) error {
+	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
+	if internal {
+		return nil // Already processed.
 	}
-
-	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry)
-
-		if entry.itemID != itemID && entry.boostOfID != itemID {
-			// Not relevant.
-			continue
-		}
-
-		if entry.prepared == nil {
-			// It's already unprepared (mood).
-			continue
-		}
-
-		entry.prepared = nil // <- eat this up please garbage collector nom nom nom
-	}
-
-	return nil
+	return f.createStatusable(ctx, question, receivingAccount, requestingAccount)
 }

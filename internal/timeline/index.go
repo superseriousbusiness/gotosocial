@@ -65,7 +65,7 @@ func (t *timeline) indexXBetweenIDs(ctx context.Context, amount int, behindID st
 	)
 
 	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+		entry := e.Value.(*indexedItemsEntry)
 
 		position++
 
@@ -174,7 +174,6 @@ func (t *timeline) grab(ctx context.Context, amount int, behindID string, before
 			// Don't grab more than we need to.
 			amount-grabbed,
 		)
-
 		if err != nil {
 			// Grab function already checks for
 			// db.ErrNoEntries, so if an error
@@ -280,5 +279,5 @@ func (t *timeline) OldestIndexedItemID() string {
 		return ""
 	}
 
-	return e.Value.(*indexedItemsEntry).itemID //nolint:forcetypeassert
+	return e.Value.(*indexedItemsEntry).itemID
 }

@@ -63,7 +63,7 @@ func (t *timeline) Prune(desiredPreparedItemsLength int, desiredIndexedItemsLeng
 			continue
 		}
 
-		entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+		entry := e.Value.(*indexedItemsEntry)
 		if entry.prepared == nil {
 			// It's already unprepared (mood).
 			continue

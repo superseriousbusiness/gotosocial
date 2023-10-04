@@ -42,7 +42,7 @@ func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {
 
 	var toRemove []*list.Element
 	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry) // nolint:forcetypeassert
+		entry := e.Value.(*indexedItemsEntry)
 
 		if entry.itemID != statusID {
 			// Not relevant.
@@ -78,7 +78,7 @@ func (t *timeline) RemoveAllByOrBoosting(ctx context.Context, accountID string) 
 
 	var toRemove []*list.Element
 	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry) // nolint:forcetypeassert
+		entry := e.Value.(*indexedItemsEntry)
 
 		if entry.accountID != accountID && entry.boostOfAccountID != accountID {
 			// Not relevant.

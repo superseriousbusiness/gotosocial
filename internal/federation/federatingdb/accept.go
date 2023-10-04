@@ -46,28 +46,29 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		return nil // Already processed.
 	}
 
-	acceptObject := accept.GetActivityStreamsObject()
-	if acceptObject == nil {
-		return errors.New("ACCEPT: no object set on vocab.ActivityStreamsAccept")
-	}
+	// Iterate all provided objects in the activity.
+	for _, object := range ap.ExtractObjects(accept) {
 
-	for iter := acceptObject.Begin(); iter != acceptObject.End(); iter = iter.Next() {
-		// check if the object is an IRI
-		if iter.IsIRI() {
-			// we have just the URI of whatever is being accepted, so we need to find out what it is
-			acceptedObjectIRI := iter.GetIRI()
-			if uris.IsFollowPath(acceptedObjectIRI) {
-				// ACCEPT FOLLOW
-				followReq, err := f.state.DB.GetFollowRequestByURI(ctx, acceptedObjectIRI.String())
+		// Check and handle any vocab.Type objects.
+		if objType := object.GetType(); objType != nil {
+			switch objType.GetTypeName() { //nolint:gocritic
+
+			case ap.ActivityFollow:
+				// Cast the vocab.Type object to known AS type.
+				asFollow := objType.(vocab.ActivityStreamsFollow)
+
+				// convert the follow to something we can understand
+				gtsFollow, err := f.converter.ASFollowToFollow(ctx, asFollow)
 				if err != nil {
-					return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", acceptedObjectIRI.String(), err)
+					return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
 				}
 
 				// make sure the addressee of the original follow is the same as whatever inbox this landed in
-				if followReq.AccountID != receivingAccount.ID {
+				if gtsFollow.AccountID != receivingAccount.ID {
 					return errors.New("ACCEPT: follow object account and inbox account were not the same")
 				}
-				follow, err := f.state.DB.AcceptFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
+
+				follow, err := f.state.DB.AcceptFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
 				if err != nil {
 					return err
 				}
@@ -78,31 +79,36 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					GTSModel:         follow,
 					ReceivingAccount: receivingAccount,
 				})
-
-				return nil
 			}
-		}
 
-		// check if iter is an AP object / type
-		if iter.GetType() == nil {
 			continue
 		}
-		if iter.GetType().GetTypeName() == ap.ActivityFollow {
+
+		// Check and handle any
+		// IRI type objects.
+		if object.IsIRI() {
+
+			// Extract IRI from object.
+			iri := object.GetIRI()
+			if !uris.IsFollowPath(iri) {
+				continue
+			}
+
+			// Serialize IRI.
+			iriStr := iri.String()
+
 			// ACCEPT FOLLOW
-			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
-			if !ok {
-				return errors.New("ACCEPT: couldn't parse follow into vocab.ActivityStreamsFollow")
-			}
-			// convert the follow to something we can understand
-			gtsFollow, err := f.converter.ASFollowToFollow(ctx, asFollow)
+			followReq, err := f.state.DB.GetFollowRequestByURI(ctx, iriStr)
 			if err != nil {
-				return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
+				return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", iriStr, err)
 			}
+
 			// make sure the addressee of the original follow is the same as whatever inbox this landed in
-			if gtsFollow.AccountID != receivingAccount.ID {
+			if followReq.AccountID != receivingAccount.ID {
 				return errors.New("ACCEPT: follow object account and inbox account were not the same")
 			}
-			follow, err := f.state.DB.AcceptFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
+
+			follow, err := f.state.DB.AcceptFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
 			if err != nil {
 				return err
 			}
@@ -114,8 +120,9 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				ReceivingAccount: receivingAccount,
 			})
 
-			return nil
+			continue
 		}
+
 	}
 
 	return nil

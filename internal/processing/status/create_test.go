@@ -204,7 +204,7 @@ func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
-	suite.EqualError(err, "ProcessMediaIDs: description too short! media description of at least 100 chararacters is required but 15 was provided for media with id 01F8MH8RMYQ6MSNY3JM2XT1CQ5")
+	suite.EqualError(err, "media 01F8MH8RMYQ6MSNY3JM2XT1CQ5 description too short, at least 100 required")
 	suite.Nil(apiStatus)
 }
 

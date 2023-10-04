@@ -15,36 +15,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package timeline
+package ap
 
 import (
-	"context"
+	"net/url"
+
+	"github.com/superseriousbusiness/activity/streams/vocab"
 )
 
-func (t *timeline) Unprepare(ctx context.Context, itemID string) error {
-	t.Lock()
-	defer t.Unlock()
+// _TypeOrIRI wraps a vocab.Type to implement TypeOrIRI.
+type _TypeOrIRI struct {
+	vocab.Type
+}
 
-	if t.items == nil || t.items.data == nil {
-		// Nothing to do.
-		return nil
-	}
+func (t *_TypeOrIRI) GetType() vocab.Type {
+	return t.Type
+}
 
-	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry)
-
-		if entry.itemID != itemID && entry.boostOfID != itemID {
-			// Not relevant.
-			continue
-		}
-
-		if entry.prepared == nil {
-			// It's already unprepared (mood).
-			continue
-		}
-
-		entry.prepared = nil // <- eat this up please garbage collector nom nom nom
-	}
-
+func (t *_TypeOrIRI) GetIRI() *url.URL {
 	return nil
 }
+
+func (t *_TypeOrIRI) IsIRI() bool {
+	return false
+}
+
+func (t *_TypeOrIRI) SetIRI(*url.URL) {}

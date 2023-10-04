@@ -288,8 +288,8 @@ func (d *deref) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
 	}
 
-	// Ensure the status' tags are populated.
-	if err := d.fetchStatusTags(ctx, requestUser, latestStatus); err != nil {
+	// Ensure the status' tags are populated, (changes are expected / okay).
+	if err := d.fetchStatusTags(ctx, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating tags for status %s: %w", uri, err)
 	}
 
@@ -298,8 +298,8 @@ func (d *deref) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating attachments for status %s: %w", uri, err)
 	}
 
-	// Ensure the status' emoji attachments are populated, passing in existing to check for changes.
-	if err := d.fetchStatusEmojis(ctx, requestUser, status, latestStatus); err != nil {
+	// Ensure the status' emoji attachments are populated, (changes are expected / okay).
+	if err := d.fetchStatusEmojis(ctx, requestUser, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating emojis for status %s: %w", uri, err)
 	}
 
@@ -359,6 +359,8 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 		}
 
 		// Generate new ID according to status creation.
+		// TODO: update this to use "edited_at" when we add
+		//       support for edited status revision history.
 		mention.ID, err = id.NewULIDFromTime(status.CreatedAt)
 		if err != nil {
 			log.Errorf(ctx, "invalid created at date: %v", err)
@@ -403,7 +405,7 @@ func (d *deref) fetchStatusMentions(ctx context.Context, requestUser string, exi
 	return nil
 }
 
-func (d *deref) fetchStatusTags(ctx context.Context, requestUser string, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusTags(ctx context.Context, status *gtsmodel.Status) error {
 	// Allocate new slice to take the yet-to-be determined tag IDs.
 	status.TagIDs = make([]string, len(status.Tags))
 
@@ -417,13 +419,14 @@ func (d *deref) fetchStatusTags(ctx context.Context, requestUser string, status 
 			continue
 		}
 
-		// No tag with this name yet, create it.
 		if tag == nil {
+			// Create new ID for tag name.
 			tag = &gtsmodel.Tag{
 				ID:   id.NewULID(),
 				Name: placeholder.Name,
 			}
 
+			// Insert this tag with new name into the database.
 			if err := d.state.DB.PutTag(ctx, tag); err != nil {
 				log.Errorf(ctx, "db error putting tag %s: %v", tag.Name, err)
 				continue
@@ -516,7 +519,7 @@ func (d *deref) fetchStatusAttachments(ctx context.Context, tsport transport.Tra
 	return nil
 }
 
-func (d *deref) fetchStatusEmojis(ctx context.Context, requestUser string, existing, status *gtsmodel.Status) error {
+func (d *deref) fetchStatusEmojis(ctx context.Context, requestUser string, status *gtsmodel.Status) error {
 	// Fetch the full-fleshed-out emoji objects for our status.
 	emojis, err := d.populateEmojis(ctx, status.Emojis, requestUser)
 	if err != nil {
