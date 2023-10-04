@@ -412,10 +412,8 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		return nil, gtserror.Newf("error populating status: %w", err)
 	}
 
-	var status ap.Statusable
-
 	// We convert it as an AS Note.
-	status = streams.NewActivityStreamsNote()
+	status := streams.NewActivityStreamsNote()
 
 	// id
 	statusURI, err := url.Parse(s.URI)
