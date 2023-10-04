@@ -75,15 +75,15 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	if err := processVisibility(form, requestingAccount.Privacy, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err, err.Error())
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if err := processLanguage(form, requestingAccount.Language, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err, err.Error())
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if err := p.processContent(ctx, p.parseMention, form, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err, err.Error())
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Insert this new status in the database.
