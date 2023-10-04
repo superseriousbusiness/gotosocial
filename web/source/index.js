@@ -70,13 +70,15 @@ skulk({
 			entryFile: "settings",
 			outputFile: "settings.js",
 			prodCfg: prodCfg,
-			extensions: [".js", ".jsx", ".ts", ".tsx"],
+			plugin: [
+				["tsify", {
+					jsx: "react"
+				}]
+			],
 			transform: [
 				["babelify", {
 					global: true,
-					presets: ["@babel/preset-typescript"],
 					ignore: [/node_modules\/(?!nanoid)/],
-					include: ["@babel/plugin-transform-modules-commonjs"]
 				}]
 			],
 			presets: [
