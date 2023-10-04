@@ -100,12 +100,3 @@ func getURI(withID ap.WithJSONLDId) (*url.URL, string, error) {
 	id := idProp.Get()
 	return id, id.String(), nil
 }
-
-// countMapSliceValues returns the combined length of all available slices in given map.
-func countMapSliceValues[K comparable, V any](m map[K][]V) int {
-	var total int
-	for _, vs := range m {
-		total += len(vs)
-	}
-	return total
-}

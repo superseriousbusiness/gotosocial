@@ -95,11 +95,10 @@ func (c *Converter) WrapStatusableInCreate(status ap.Statusable, objectIRIOnly b
 	// Object property
 	objectProp := streams.NewActivityStreamsObjectProperty()
 	if objectIRIOnly {
+		// Only append the object IRI to objectProp.
 		objectProp.AppendIRI(status.GetJSONLDId().GetIRI())
-	} else if _, ok := status.(ap.Pollable); ok {
-		asQuestion := status.(vocab.ActivityStreamsQuestion)
-		objectProp.AppendActivityStreamsQuestion(asQuestion)
 	} else {
+		// Our statusable's are always note types.
 		asNote := status.(vocab.ActivityStreamsNote)
 		objectProp.AppendActivityStreamsNote(asNote)
 	}
