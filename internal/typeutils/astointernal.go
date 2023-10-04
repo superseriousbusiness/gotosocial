@@ -216,38 +216,6 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	return acct, nil
 }
 
-func (c *Converter) extractAttachments(i ap.WithAttachment) []*gtsmodel.MediaAttachment {
-	attachmentProp := i.GetActivityStreamsAttachment()
-	if attachmentProp == nil {
-		return nil
-	}
-
-	attachments := make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
-
-	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
-		t := iter.GetType()
-		if t == nil {
-			continue
-		}
-
-		attachmentable, ok := t.(ap.Attachmentable)
-		if !ok {
-			log.Error(nil, "ap attachment was not attachmentable")
-			continue
-		}
-
-		attachment, err := ap.ExtractAttachment(attachmentable)
-		if err != nil {
-			log.Errorf(nil, "error extracting attachment: %s", err)
-			continue
-		}
-
-		attachments = append(attachments, attachment)
-	}
-
-	return attachments
-}
-
 // ASStatus converts a remote activitystreams 'status' representation into a gts model status.
 func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
 	var err error
