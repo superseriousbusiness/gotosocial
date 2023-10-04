@@ -23,6 +23,21 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 )
 
+// IsActivityable returns whether AS vocab type name is acceptable as Activityable.
+func IsActivityable(typeName string) bool {
+	return isActivity(typeName) ||
+		isIntransitiveActivity(typeName)
+}
+
+// ToActivityable safely tries to cast vocab.Type as Activityable, also checking for expected AS type names.
+func ToActivityable(t vocab.Type) (Activityable, bool) {
+	activityable, ok := t.(Activityable)
+	if !ok || !IsActivityable(t.GetTypeName()) {
+		return nil, false
+	}
+	return activityable, true
+}
+
 // IsAccountable returns whether AS vocab type name is acceptable as Accountable.
 func IsAccountable(typeName string) bool {
 	switch typeName {
@@ -88,6 +103,19 @@ func ToPollable(t vocab.Type) (Pollable, bool) {
 	return pollable, true
 }
 
+// Activityable represents the minimum activitypub interface for representing an 'activity'.
+// (see: IsActivityable() for types implementing this, though you MUST make sure to check
+// the typeName as this bare interface may be implementable by non-Activityable types).
+type Activityable interface {
+	// Activity is also a vocab.Type
+	vocab.Type
+
+	WithTo
+	WithCC
+	WithActor
+	WithAttributedTo
+}
+
 // Accountable represents the minimum activitypub interface for representing an 'account'.
 // (see: IsAccountable() for types implementing this, though you MUST make sure to check
 // the typeName as this bare interface may be implementable by non-Accountable types).
@@ -145,7 +173,8 @@ type Pollable interface {
 	WithClosed
 	WithVotersCount
 
-	// base-interface
+	// base-interfaces
+	Activityable
 	Statusable
 }
 
@@ -386,16 +415,16 @@ type WithTo interface {
 	SetActivityStreamsTo(vocab.ActivityStreamsToProperty)
 }
 
-// WithInReplyTo represents an activity with ActivityStreamsInReplyToProperty
-type WithInReplyTo interface {
-	GetActivityStreamsInReplyTo() vocab.ActivityStreamsInReplyToProperty
-	SetActivityStreamsInReplyTo(vocab.ActivityStreamsInReplyToProperty)
-}
-
 // WithCC represents an activity with ActivityStreamsCcProperty
 type WithCC interface {
 	GetActivityStreamsCc() vocab.ActivityStreamsCcProperty
 	SetActivityStreamsCc(vocab.ActivityStreamsCcProperty)
+}
+
+// WithInReplyTo represents an activity with ActivityStreamsInReplyToProperty
+type WithInReplyTo interface {
+	GetActivityStreamsInReplyTo() vocab.ActivityStreamsInReplyToProperty
+	SetActivityStreamsInReplyTo(vocab.ActivityStreamsInReplyToProperty)
 }
 
 // WithSensitive represents an activity with ActivityStreamsSensitiveProperty

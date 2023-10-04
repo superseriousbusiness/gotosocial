@@ -89,69 +89,44 @@ func (c *Converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 // If objectIRIOnly is set to true, then the function won't put the *entire* note in the Object field of the Create,
 // but just the AP URI of the note. This is useful in cases where you want to give a remote server something to dereference,
 // and still have control over whether or not they're allowed to actually see the contents.
-func (c *Converter) WrapStatusableInCreate(status ap.Statusable, objectIRIOnly bool) (vocab.ActivityStreamsCreate, error) {
-	create := streams.NewActivityStreamsCreate()
+func (c *Converter) WrapStatusableInCreate(status ap.Statusable, iriOnly bool) (ap.Activityable, error) {
+	var activity ap.Activityable
 
-	// Object property
-	objectProp := streams.NewActivityStreamsObjectProperty()
-	if objectIRIOnly {
-		objectProp.AppendIRI(status.GetJSONLDId().GetIRI())
-	} else if _, ok := status.(ap.Pollable); ok {
-		asQuestion := status.(vocab.ActivityStreamsQuestion)
-		objectProp.AppendActivityStreamsQuestion(asQuestion)
+	if pollable, ok := ap.ToPollable(status); ok && !iriOnly {
+		// If Statusable is actually sub-type Pollable,
+		// i.e. an AS Question, it is already any activity
+		// that represents a "create" (logically at least).
+		activity = pollable
 	} else {
-		asNote := status.(vocab.ActivityStreamsNote)
-		objectProp.AppendActivityStreamsNote(asNote)
-	}
-	create.SetActivityStreamsObject(objectProp)
+		// Else, allocate new AS create activity.
+		create := streams.NewActivityStreamsCreate()
 
-	// ID property
-	idProp := streams.NewJSONLDIdProperty()
-	createID := status.GetJSONLDId().GetIRI().String() + "/activity"
-	createIDIRI, err := url.Parse(createID)
-	if err != nil {
+		// Create new object property for the activity
+		// to hold the statusable itself, or the IRI only.
+		objProp := streams.NewActivityStreamsObjectProperty()
+		if iriOnly {
+			// Fetch the status IRI and append.
+			iri := status.GetJSONLDId().GetIRI()
+			objProp.AppendIRI(iri)
+		} else {
+			// Our regular statuses are always AS Note types.
+			asNote := status.(vocab.ActivityStreamsNote)
+			objProp.AppendActivityStreamsNote(asNote)
+		}
+
+		// Set object property on the activity.
+		create.SetActivityStreamsObject(objProp)
+
+		// Set the activity.
+		activity = create
+	}
+
+	// Copy over remaining required properties from status to activity.
+	if err := copyFromStatusToActivity(status, activity); err != nil {
 		return nil, err
 	}
-	idProp.SetIRI(createIDIRI)
-	create.SetJSONLDId(idProp)
 
-	// Actor Property
-	actorProp := streams.NewActivityStreamsActorProperty()
-	actorIRI, err := ap.ExtractAttributedToURI(status)
-	if err != nil {
-		return nil, gtserror.Newf("couldn't extract AttributedTo: %w", err)
-	}
-	actorProp.AppendIRI(actorIRI)
-	create.SetActivityStreamsActor(actorProp)
-
-	// Published Property
-	publishedProp := streams.NewActivityStreamsPublishedProperty()
-	published, err := ap.ExtractPublished(status)
-	if err != nil {
-		return nil, gtserror.Newf("couldn't extract Published: %w", err)
-	}
-	publishedProp.Set(published)
-	create.SetActivityStreamsPublished(publishedProp)
-
-	// To Property
-	toProp := streams.NewActivityStreamsToProperty()
-	if toURIs := ap.ExtractToURIs(status); len(toURIs) != 0 {
-		for _, toURI := range toURIs {
-			toProp.AppendIRI(toURI)
-		}
-		create.SetActivityStreamsTo(toProp)
-	}
-
-	// Cc Property
-	ccProp := streams.NewActivityStreamsCcProperty()
-	if ccURIs := ap.ExtractCcURIs(status); len(ccURIs) != 0 {
-		for _, ccURI := range ccURIs {
-			ccProp.AppendIRI(ccURI)
-		}
-		create.SetActivityStreamsCc(ccProp)
-	}
-
-	return create, nil
+	return activity, nil
 }
 
 // WrapStatusableInUpdate wraps a Statusable with an Update activity.
@@ -159,58 +134,77 @@ func (c *Converter) WrapStatusableInCreate(status ap.Statusable, objectIRIOnly b
 // If objectIRIOnly is set to true, then the function won't put the *entire* note in the Object field of the Create,
 // but just the AP URI of the note. This is useful in cases where you want to give a remote server something to dereference,
 // and still have control over whether or not they're allowed to actually see the contents.
-func (c *Converter) WrapStatusableInUpdate(status ap.Statusable, objectIRIOnly bool) (vocab.ActivityStreamsUpdate, error) {
+func (c *Converter) WrapStatusableInUpdate(status ap.Statusable, iriOnly bool) (vocab.ActivityStreamsUpdate, error) {
+	// Allocate a new AS update activity.
 	update := streams.NewActivityStreamsUpdate()
 
-	// Object property
-	objectProp := streams.NewActivityStreamsObjectProperty()
-	if objectIRIOnly {
-		objectProp.AppendIRI(status.GetJSONLDId().GetIRI())
+	// Create new object property and set required status form.
+	objProp := streams.NewActivityStreamsObjectProperty()
+	if iriOnly {
+		// Fetch the status IRI and append.
+		iri := status.GetJSONLDId().GetIRI()
+		objProp.AppendIRI(iri)
 	} else if _, ok := status.(ap.Pollable); ok {
+		// Our poll statuses are always AS Question types.
 		asQuestion := status.(vocab.ActivityStreamsQuestion)
-		objectProp.AppendActivityStreamsQuestion(asQuestion)
+		objProp.AppendActivityStreamsQuestion(asQuestion)
 	} else {
+		// Our regular statuses are always AS Note types.
 		asNote := status.(vocab.ActivityStreamsNote)
-		objectProp.AppendActivityStreamsNote(asNote)
+		objProp.AppendActivityStreamsNote(asNote)
 	}
-	update.SetActivityStreamsObject(objectProp)
 
-	// ID property
-	idProp := streams.NewJSONLDIdProperty()
-	createID := status.GetJSONLDId().GetIRI().String() + "/activity"
-	createIDIRI, err := url.Parse(createID)
-	if err != nil {
+	// Set the object property on activity.
+	update.SetActivityStreamsObject(objProp)
+
+	// Copy over remaining required properties from status to activity.
+	if err := copyFromStatusToActivity(status, update); err != nil {
 		return nil, err
-	}
-	idProp.SetIRI(createIDIRI)
-	update.SetJSONLDId(idProp)
-
-	// Actor Property
-	actorProp := streams.NewActivityStreamsActorProperty()
-	actorIRI, err := ap.ExtractAttributedToURI(status)
-	if err != nil {
-		return nil, gtserror.Newf("couldn't extract AttributedTo: %w", err)
-	}
-	actorProp.AppendIRI(actorIRI)
-	update.SetActivityStreamsActor(actorProp)
-
-	// To Property
-	toProp := streams.NewActivityStreamsToProperty()
-	if toURIs := ap.ExtractToURIs(status); len(toURIs) != 0 {
-		for _, toURI := range toURIs {
-			toProp.AppendIRI(toURI)
-		}
-		update.SetActivityStreamsTo(toProp)
-	}
-
-	// Cc Property
-	ccProp := streams.NewActivityStreamsCcProperty()
-	if ccURIs := ap.ExtractCcURIs(status); len(ccURIs) != 0 {
-		for _, ccURI := range ccURIs {
-			ccProp.AppendIRI(ccURI)
-		}
-		update.SetActivityStreamsCc(ccProp)
 	}
 
 	return update, nil
+}
+
+// copyFromStatusToActivity copies over requried properties in an activity from a statusable.
+func copyFromStatusToActivity(statusable ap.Statusable, activityable ap.Activityable) error {
+	// Fetch the IRI of this status.
+	iri := statusable.GetJSONLDId().GetIRI()
+
+	// Create new IRI (URL) object for this activity.
+	idIRI, err := url.Parse(iri.String() + "/activity")
+	if err != nil {
+		return gtserror.Newf("invalid activity id: %w", err)
+	}
+
+	// Wrap in ID property and add to activity.
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(idIRI)
+	activityable.SetJSONLDId(idProp)
+
+	// Fetch attributed-to URI to use as actor IRI from statusable.
+	actorIRI, err := ap.ExtractAttributedToURI(statusable)
+	if err != nil {
+		return gtserror.Newf("couldn't extract attributedTo: %w", err)
+	}
+
+	// Wrap in actor property and add to the activity.
+	actorProp := streams.NewActivityStreamsActorProperty()
+	actorProp.AppendIRI(actorIRI)
+	activityable.SetActivityStreamsActor(actorProp)
+
+	// Extract TO URIs from statusable and add to activity.
+	toProp := streams.NewActivityStreamsToProperty()
+	for _, to := range ap.ExtractToURIs(statusable) {
+		toProp.AppendIRI(to)
+	}
+	activityable.SetActivityStreamsTo(toProp)
+
+	// Extract CC URIs from statusable and add to activity.
+	ccProp := streams.NewActivityStreamsCcProperty()
+	for _, cc := range ap.ExtractCcURIs(statusable) {
+		ccProp.AppendIRI(cc)
+	}
+	activityable.SetActivityStreamsCc(ccProp)
+
+	return nil
 }
