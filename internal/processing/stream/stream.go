@@ -46,7 +46,7 @@ func (p *Processor) toAccount(payload string, event string, streamTypes []string
 	if !ok {
 		return nil // No entry = nothing to stream.
 	}
-	streamsForAccount := v.(*stream.StreamsForAccount) //nolint:forcetypeassert
+	streamsForAccount := v.(*stream.StreamsForAccount)
 
 	streamsForAccount.Lock()
 	defer streamsForAccount.Unlock()

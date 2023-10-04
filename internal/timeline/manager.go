@@ -219,7 +219,6 @@ func (m *manager) UnprepareItemFromAllTimelines(ctx context.Context, itemID stri
 	// Work through all timelines held by this
 	// manager, and call Unprepare for each.
 	m.timelines.Range(func(_ any, v any) bool {
-		// nolint:forcetypeassert
 		if err := v.(Timeline).Unprepare(ctx, itemID); err != nil {
 			errs.Append(err)
 		}
@@ -248,7 +247,7 @@ func (m *manager) getOrCreateTimeline(ctx context.Context, timelineID string) Ti
 	i, ok := m.timelines.Load(timelineID)
 	if ok {
 		// Timeline already existed in sync.Map.
-		return i.(Timeline) //nolint:forcetypeassert
+		return i.(Timeline)
 	}
 
 	// Timeline did not yet exist in sync.Map.

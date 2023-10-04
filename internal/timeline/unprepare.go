@@ -31,7 +31,7 @@ func (t *timeline) Unprepare(ctx context.Context, itemID string) error {
 	}
 
 	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry) // nolint:forcetypeassert
+		entry := e.Value.(*indexedItemsEntry)
 
 		if entry.itemID != itemID && entry.boostOfID != itemID {
 			// Not relevant.

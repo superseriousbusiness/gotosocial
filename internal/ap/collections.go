@@ -32,10 +32,10 @@ import (
 func ToCollectionPageIterator(t vocab.Type) (CollectionPageIterator, error) {
 	switch name := t.GetTypeName(); name {
 	case ObjectCollectionPage:
-		t := t.(vocab.ActivityStreamsCollectionPage) //nolint:forcetypeassert
+		t := t.(vocab.ActivityStreamsCollectionPage)
 		return WrapCollectionPage(t), nil
 	case ObjectOrderedCollectionPage:
-		t := t.(vocab.ActivityStreamsOrderedCollectionPage) //nolint:forcetypeassert
+		t := t.(vocab.ActivityStreamsOrderedCollectionPage)
 		return WrapOrderedCollectionPage(t), nil
 	default:
 		return nil, fmt.Errorf("%T(%s) was not CollectionPage-like", t, name)

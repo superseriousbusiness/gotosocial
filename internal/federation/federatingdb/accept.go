@@ -49,7 +49,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	for _, object := range ap.ExtractObjects(accept) {
 		switch object.GetTypeName() { //nolint:gocritic
 		case ap.ActivityFollow:
-			asFollow := object.(vocab.ActivityStreamsFollow) //nolint:forcetypeassert
+			asFollow := object.(vocab.ActivityStreamsFollow)
 
 			// convert the follow to something we can understand
 			gtsFollow, err := f.converter.ASFollowToFollow(ctx, asFollow)
