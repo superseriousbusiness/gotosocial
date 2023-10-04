@@ -112,7 +112,7 @@ func (f *federatingDB) updateStatusable(ctx context.Context, receivingAcct *gtsm
 	statusURI := idProp.GetIRI()
 	statusURIStr := statusURI.String()
 
-	// Don't try to update local accounts.
+	// Don't try to update local statuses.
 	if statusURI.Host == config.GetHost() {
 		return nil
 	}
