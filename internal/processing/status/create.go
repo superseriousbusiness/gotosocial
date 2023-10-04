@@ -65,10 +65,6 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		Text:                     form.Status,
 	}
 
-	if form.Poll != nil {
-		// TODO: handle poll creation
-	}
-
 	if errWithCode := p.processReplyToID(ctx, form, requestingAccount.ID, status); errWithCode != nil {
 		return nil, errWithCode
 	}
