@@ -3305,7 +3305,7 @@ paths:
                 - default: false
                   description: Show only pinned statuses. In other words, exclude statuses that are not pinned to the given account ID.
                   in: query
-                  name: pinned_only
+                  name: pinned
                   type: boolean
                 - default: false
                   description: Show only statuses with media attachments.
