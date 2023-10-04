@@ -36,7 +36,7 @@ import (
 )
 
 // ExtractObjects will extract object vocab.Types from given implementing interface.
-func ExtractObjects(with WithObject) []vocab.Type {
+func ExtractObjects(with WithObject) []TypeOrIRI {
 	// Extract the attached object (if any).
 	objProp := with.GetActivityStreamsObject()
 	if objProp == nil {
@@ -49,54 +49,16 @@ func ExtractObjects(with WithObject) []vocab.Type {
 	}
 
 	// Accumulate all of the objects into a slice.
-	objTypes := make([]vocab.Type, objProp.Len())
+	objs := make([]TypeOrIRI, objProp.Len())
 	for i := 0; i < objProp.Len(); i++ {
-
-		// Get object vocab type at index.
-		objType := objProp.At(i).GetType()
-		if objType == nil {
-			return nil
-		}
-
-		// Set vocab type in slice.
-		objTypes[i] = objType
+		objs[i] = objProp.At(i)
 	}
 
-	return objTypes
-}
-
-// ExtractObjectIRIs will extract object IRIs from given implementing interface.
-func ExtractObjectIRIs(with WithObject) []*url.URL {
-	// Extract the attached object (if any).
-	objProp := with.GetActivityStreamsObject()
-	if objProp == nil {
-		return nil
-	}
-
-	// Check for zero len.
-	if objProp.Len() == 0 {
-		return nil
-	}
-
-	// Accumulate all of the IRIs into a slice.
-	objIRIs := make([]*url.URL, objProp.Len())
-	for i := 0; i < objProp.Len(); i++ {
-
-		// Get iter at index.
-		at := objProp.At(i)
-		if !at.IsIRI() {
-			return nil
-		}
-
-		// Set vocab type in slice.
-		objIRIs[i] = at.GetIRI()
-	}
-
-	return objIRIs
+	return objs
 }
 
 // ExtractActivityData will extract the usable data type (e.g. Note, Question, etc) and corresponding JSON, from activity.
-func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]vocab.Type, []any, bool) {
+func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]TypeOrIRI, []any, bool) {
 	switch typeName := activity.GetTypeName(); {
 	// Activity (has "object").
 	case isActivity(typeName):
@@ -121,7 +83,8 @@ func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]vocab
 
 	// IntransitiveAcitivity (no "object").
 	case isIntransitiveActivity(typeName):
-		return []vocab.Type{activity}, []any{rawJSON}, true
+		asTypeOrIRI := _TypeOrIRI{activity} // wrap activity.
+		return []TypeOrIRI{&asTypeOrIRI}, []any{rawJSON}, true
 
 	// Unknown.
 	default:

@@ -135,9 +135,17 @@ func (f *federatingDB) activityCreate(
 	}
 
 	for _, object := range ap.ExtractObjects(create) {
-		if statusable, ok := ap.ToStatusable(object); ok {
+		// Try to get object as vocab.Type,
+		// else skip handling (likely) IRI.
+		objType := object.GetType()
+		if objType == nil {
+			continue
+		}
+
+		if statusable, ok := ap.ToStatusable(objType); ok {
 			return f.createStatusable(ctx, statusable, receivingAccount, requestingAccount)
 		}
+
 		// TODO: handle CREATE of other types?
 	}
 

@@ -39,18 +39,28 @@ import (
 // This function is a noop if the type passed in is anything except a Create or Update with a Statusable or Accountable as its Object.
 func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interface{}) {
 	// From the activity extract the data vocab.Type + its "raw" JSON.
-	dataTypes, rawData, ok := ExtractActivityData(activity, rawJSON)
-	if !ok || len(dataTypes) != len(rawData) {
+	dataIfaces, rawData, ok := ExtractActivityData(activity, rawJSON)
+	if !ok || len(dataIfaces) != len(rawData) {
 		// non-equal lengths *shouldn't* happen,
 		// but this is just an integrity check.
 		return
 	}
 
 	// Iterate over the available data.
-	for i, dataType := range dataTypes {
+	for i, dataIface := range dataIfaces {
+		// Try to get as vocab.Type, else
+		// skip this entry for normalization.
+		dataType := dataIface.GetType()
+		if dataType == nil {
+			continue
+		}
 
-		// Get the raw data map at type index.
-		rawData, _ := rawData[i].(map[string]any)
+		// Get the raw data map at index, else skip
+		// this entry due to impossible normalization.
+		rawData, ok := rawData[i].(map[string]any)
+		if !ok {
+			continue
+		}
 
 		if statusable, ok := ToStatusable(dataType); ok {
 			if pollable, ok := ToPollable(dataType); ok {

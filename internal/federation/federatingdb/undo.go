@@ -52,20 +52,27 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 	var errs gtserror.MultiError
 
 	for _, object := range ap.ExtractObjects(undo) {
-		switch object.GetTypeName() {
+		// Try to get object as vocab.Type,
+		// else skip handling (likely) IRI.
+		objType := object.GetType()
+		if objType == nil {
+			continue
+		}
+
+		switch objType.GetTypeName() {
 		case ap.ActivityFollow:
-			if err := f.undoFollow(ctx, receivingAccount, undo, object); err != nil {
+			if err := f.undoFollow(ctx, receivingAccount, undo, objType); err != nil {
 				errs.Appendf("error undoing follow: %w", err)
 			}
 		case ap.ActivityLike:
-			if err := f.undoLike(ctx, receivingAccount, undo, object); err != nil {
+			if err := f.undoLike(ctx, receivingAccount, undo, objType); err != nil {
 				errs.Appendf("error undoing like: %w", err)
 			}
 		case ap.ActivityAnnounce:
 			// TODO: actually handle this !
 			log.Warn(ctx, "skipped undo announce")
 		case ap.ActivityBlock:
-			if err := f.undoBlock(ctx, receivingAccount, undo, object); err != nil {
+			if err := f.undoBlock(ctx, receivingAccount, undo, objType); err != nil {
 				errs.Appendf("error undoing block: %w", err)
 			}
 		}
