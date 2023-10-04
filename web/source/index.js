@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const skulk = require("skulk");
 const fs = require("fs");
 const path = require("path");

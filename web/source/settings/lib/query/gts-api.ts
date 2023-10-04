@@ -17,14 +17,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import type {
 	BaseQueryFn,
 	FetchArgs,
 	FetchBaseQueryError,
-} from '@reduxjs/toolkit/query/react'
+} from '@reduxjs/toolkit/query/react';
 import { serialize as serializeForm } from "object-to-formdata";
 
 import type { RootState } from '../../redux/store';
@@ -70,7 +68,7 @@ const gtsBaseQuery: BaseQueryFn<
 > = async (args, api, extraOptions) => {
 	// Retrieve state at the moment
 	// this function was called.
-	const state = api.getState() as RootState
+	const state = api.getState() as RootState;
 	const { instanceUrl, token } = state.oauth;
 
 	// Derive baseUrl dynamically.
@@ -79,7 +77,7 @@ const gtsBaseQuery: BaseQueryFn<
 	// Check if simple string baseUrl provided
 	// as args, or if more complex args provided.
 	if (typeof args === "string") {
-		baseUrl = args
+		baseUrl = args;
 	} else {
 		if (args.baseUrl != undefined) {
 			baseUrl = args.baseUrl;
@@ -114,7 +112,7 @@ const gtsBaseQuery: BaseQueryFn<
 				statusText: 'Bad Request',
 				data: {"error":"No baseUrl set for request"},
 			},
-		}
+		};
 	}
 
 	return fetchBaseQuery({
@@ -127,7 +125,7 @@ const gtsBaseQuery: BaseQueryFn<
 			return headers;
 		},
 	})(args, api, extraOptions);
-}
+};
 
 export const gtsApi = createApi({
 	reducerPath: "api",

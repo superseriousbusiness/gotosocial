@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 import { gtsApi } from "../gts-api";
@@ -87,7 +85,7 @@ const extended = gtsApi.injectEndpoints({
 							statusText: 'Bad Request',
 							data: {"error":"Waiting for callback, but no ?code= provided in url."},
 						},
-					}
+					};
 				}
 				
 				// Retrieve app with which the
@@ -100,7 +98,7 @@ const extended = gtsApi.injectEndpoints({
 							statusText: 'Bad Request',
 							data: {"error":"No stored app registration data, can't finish login flow."},
 						},
-					}
+					};
 				}
 				
 				// Use the provided code and app
@@ -111,15 +109,15 @@ const extended = gtsApi.injectEndpoints({
 					redirect_uri: SETTINGS_URL,
 					grant_type: "authorization_code",
 					code: code
-				}
+				};
 
 				const tokenResult = await fetchWithBQ({
 					method: "POST",
 					url: "/oauth/token",
 					body: tokenReqBody,
-				})
+				});
 				if (tokenResult.error) {
-					return { error: tokenResult.error as FetchBaseQueryError }
+					return { error: tokenResult.error as FetchBaseQueryError };
 				}
 				
 				// Remove ?code= query param from
@@ -162,12 +160,12 @@ const extended = gtsApi.injectEndpoints({
 						redirect_uris: SETTINGS_URL,
 						website: SETTINGS_URL
 					}
-				})
+				});
 				if (appResult.error) {
-					return { error: appResult.error as FetchBaseQueryError }
+					return { error: appResult.error as FetchBaseQueryError };
 				}
 
-				let app = appResult.data as any
+				let app = appResult.data as any;
 
 				app.scopes = formData.scopes;
 				api.dispatch(oauthAuthorize({

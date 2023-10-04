@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const React = require("react");
 
 module.exports = function CheckList({ field, header = "All", EntryComponent, getExtraProps }) {

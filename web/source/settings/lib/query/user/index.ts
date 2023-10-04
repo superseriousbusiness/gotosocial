@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 import { replaceCacheOnMutation } from "../lib";
 import { gtsApi } from "../gts-api";
 

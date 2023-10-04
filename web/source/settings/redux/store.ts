@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 import { combineReducers } from "redux";
 import { configureStore } from "@reduxjs/toolkit";
 import {
@@ -47,12 +45,12 @@ const persistedReducer = persistReducer({
 	whitelist: ["oauth"],
 	migrate: async (state) => {
 		if (state == undefined) {
-			return state
+			return state;
 		}
 
 		// This is a cheeky workaround for
 		// redux-persist being a stickler.
-		let anyState = state as any 
+		let anyState = state as any; 
 		if (anyState?.oauth != undefined) {
 			anyState.oauth.expectingRedirect = false;
 		}

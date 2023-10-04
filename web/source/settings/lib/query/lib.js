@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const syncpipe = require("syncpipe");
 const { gtsApi } = require("./gts-api");
 

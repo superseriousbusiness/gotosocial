@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 import React from "react";
 
 import { useAuthorizeFlowMutation } from "../../lib/query/oauth";
@@ -73,4 +71,4 @@ export default function Login({ }) {
 			/>
 		</form>
 	);
-};
+}

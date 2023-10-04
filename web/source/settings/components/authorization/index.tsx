@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
 import { store } from "../../redux/store";
 
@@ -77,4 +75,4 @@ export function Authorization({ App }) {
 			</section>
 		);
 	}
-};
+}

@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const Promise = require("bluebird");
 const fileDownload = require("js-file-download");
 const csv = require("papaparse");

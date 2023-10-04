@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const React = require("react");
 const ReactDom = require("react-dom/client");
 const { Provider } = require("react-redux");
