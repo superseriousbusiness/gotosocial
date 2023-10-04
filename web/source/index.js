@@ -75,7 +75,8 @@ skulk({
 				["babelify", {
 					global: true,
 					presets: ["@babel/preset-typescript"],
-					ignore: [/node_modules\/(?!nanoid)/]
+					ignore: [/node_modules\/(?!nanoid)/],
+					include: ["@babel/plugin-transform-modules-commonjs"]
 				}]
 			],
 			presets: [
