@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-module.exports = (build) => ({
+export default (build) => ({
 	listReports: build.query({
 		query: (params = {}) => ({
 			url: "/api/v1/admin/reports",

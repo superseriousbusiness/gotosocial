@@ -20,6 +20,9 @@
 import { replaceCacheOnMutation, removeFromCacheOnMutation, domainListToObject, idListToObject } from "../lib";
 import { gtsApi } from "../gts-api";
 
+import * as emojis from  "./custom-emoji";
+import * as reports from "./reports";
+
 const extended = gtsApi.injectEndpoints({
 	endpoints: (builder) => ({
 		updateInstance: builder.mutation({
@@ -169,20 +172,20 @@ const extended = gtsApi.injectEndpoints({
 				arg: undefined,
 			})
 		}),
-		...require("./custom-emoji")(builder),
-		...require("./reports")(builder)
+		...emojis.default,
+		...reports.default,
 	})
 });
 
 export const {
 	useUpdateInstanceMutation,
 	useMediaCleanupMutation,
-	useInstanceKeyExpireMutation,
+	useInstanceKeysExpireMutation,
 	useInstanceBlocksQuery,
 	useAddInstanceBlockMutation,
 	useRemoveInstanceBlockMutation,
 	useGetAccountQuery,
-	useAccountActionMutation,
+	useActionAccountMutation,
 	useSearchAccountMutation,
 	useInstanceRulesQuery,
 	useAddInstanceRuleMutation,
