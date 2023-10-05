@@ -58,7 +58,7 @@ const SETTINGS_URL = (getSettingsURL());
 // https://redux-toolkit.js.org/rtk-query/usage/customizing-queries#performing-multiple-requests-with-a-single-query
 const extended = gtsApi.injectEndpoints({
 	endpoints: (builder) => ({
-		verifyCredentials: builder.query<any, void>({
+		verifyCredentials: builder.query<any, void | null>({
 			providesTags: (_res, error) =>
 				error == undefined ? ["Auth"] : [],
 			async queryFn(_arg, api, _extraOpts, fetchWithBQ) {

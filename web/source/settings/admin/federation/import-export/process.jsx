@@ -19,8 +19,8 @@
 
 const React = require("react");
 
-const query = require("../../../lib/query");
-const { isValidDomainBlock, hasBetterScope } = require("../../../lib/domain-block");
+const { useImportDomainBlocksMutation } = require("../../../lib/query/admin/domain-permissions/import");
+const { isValidDomainBlock, hasBetterScope } = require("../../../lib/domain-permission");
 
 const {
 	useTextInput,
@@ -42,13 +42,14 @@ const {
 const CheckList = require("../../../components/check-list");
 const MutationButton = require("../../../components/form/mutation-button");
 const FormWithData = require("../../../lib/form/form-with-data");
+const { useInstanceBlocksQuery } = require("../../../lib/query/admin");
 
 module.exports = React.memo(
 	function ProcessImport({ list }) {
 		return (
 			<div className="without-border">
 				<FormWithData
-					dataQuery={query.useInstanceBlocksQuery}
+					dataQuery={useInstanceBlocksQuery}
 					DataForm={ImportList}
 					list={list}
 				/>
@@ -110,7 +111,7 @@ function ImportList({ list, data: blockedInstances }) {
 		}),
 	};
 
-	const [importDomains, importResult] = useFormSubmit(form, query.useImportDomainListMutation(), { changedOnly: false });
+	const [importDomains, importResult] = useFormSubmit(form, useImportDomainBlocksMutation(), { changedOnly: false });
 
 	return (
 		<>

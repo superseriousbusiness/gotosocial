@@ -72,7 +72,7 @@ const gtsBaseQuery: BaseQueryFn<
 	const { instanceUrl, token } = state.oauth;
 
 	// Derive baseUrl dynamically.
-	let baseUrl: string;
+	let baseUrl: string | undefined;
 
 	// Check if simple string baseUrl provided
 	// as args, or if more complex args provided.

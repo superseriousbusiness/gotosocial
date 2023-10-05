@@ -17,33 +17,32 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const isValidDomain = require("is-valid-domain");
-const psl = require("psl");
+import isValidDomain from "is-valid-domain";
+import { get } from "psl";
 
-function isValidDomainBlock(domain) {
+/**
+ * Check the domain string to ensure it's a valid domain
+ * string that doesn't include a wildcard ("*").
+ * @param domain 
+ * @returns 
+ */
+export function isValidDomainPermission(domain: string): boolean {
 	return isValidDomain(domain, {
-		/* 
-			Wildcard prefix *. can be stripped since it's equivalent to not having it,
-			but wildcard anywhere else in the domain is not handled by the backend so it's invalid.
-		*/
 		wildcard: false,
 		allowUnicode: true
 	});
 }
 
-/* 
-	Still can't think of a better function name for this,
-	but we're checking a domain against the Public Suffix List <https://publicsuffix.org/>
-	to see if we should suggest removing subdomain(s) since they're likely owned/ran by the same party
-	social.example.com -> suggests example.com
-*/
-function hasBetterScope(domain) {
-	const lookup = psl.get(domain);
+/**
+ * Checks a domain against the Public Suffix List <https://publicsuffix.org/> to see if we
+ * should suggest removing subdomain(s), since they're likely owned/ran by the same party.
+ * Eg., "social.example.com" suggests "example.com".
+ * @param domain 
+ * @returns 
+ */
+export function hasBetterScope(domain: string): string | undefined {
+	const lookup = get(domain);
 	if (lookup && lookup != domain) {
 		return lookup;
-	} else {
-		return false;
 	}
 }
-
-module.exports = { isValidDomainBlock, hasBetterScope };

@@ -20,7 +20,7 @@
 const React = require("react");
 const { Switch, Route, Redirect, useLocation } = require("wouter");
 
-const query = require("../../../lib/query");
+const { useProcessDomainPermissionsMutation } = require("../../../lib/query/admin/domain-permissions/process");
 
 const {
 	useTextInput,
@@ -37,7 +37,7 @@ module.exports = function ImportExport({ baseUrl }) {
 		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true })
 	};
 
-	const [submitParse, parseResult] = useFormSubmit(form, query.useProcessDomainListMutation(), { changedOnly: false });
+	const [submitParse, parseResult] = useFormSubmit(form, useProcessDomainPermissionsMutation(), { changedOnly: false });
 
 	const [_location, setLocation] = useLocation();
 

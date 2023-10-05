@@ -38,12 +38,12 @@ export function Authorization({ App }) {
 	} = useVerifyCredentialsQuery(null, { skip: skip });
 
 	let showLogin = true;
-	let content = null;
+	let content: React.JSX.Element | null = null;
 
 	if (isLoading) {
 		showLogin = false;
 
-		let loadingInfo;
+		let loadingInfo = "";
 		if (loginState == "callback") {
 			loadingInfo = "Processing OAUTH callback.";
 		} else if (loginState == "login") {

@@ -19,7 +19,7 @@
 
 const React = require("react");
 
-const query = require("../../../lib/query");
+const { useExportDomainListMutation } = require("../../../lib/query/admin/domain-permissions");
 const useFormSubmit = require("../../../lib/form/submit");
 
 const {
@@ -33,7 +33,7 @@ const { Error } = require("../../../components/error");
 const ExportFormatTable = require("./export-format-table");
 
 module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
-	const [submitExport, exportResult] = useFormSubmit(form, query.useExportDomainListMutation());
+	const [submitExport, exportResult] = useFormSubmit(form, useExportDomainListMutation());
 
 	function fileChanged(e) {
 		const reader = new FileReader();

@@ -25,12 +25,11 @@ const { useTextInput } = require("../../lib/form");
 
 const { TextInput } = require("../../components/form/inputs");
 
-const query = require("../../lib/query");
-
 const Loading = require("../../components/loading");
+const { useInstanceBlocksQuery } = require("../../lib/query/admin");
 
 module.exports = function InstanceOverview({ baseUrl }) {
-	const { data: blockedInstances = [], isLoading } = query.useInstanceBlocksQuery();
+	const { data: blockedInstances = [], isLoading } = useInstanceBlocksQuery();
 
 	const [_location, setLocation] = useLocation();
 

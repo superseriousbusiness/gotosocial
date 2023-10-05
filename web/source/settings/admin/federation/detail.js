@@ -20,8 +20,6 @@
 const React = require("react");
 const { useRoute, Redirect, useLocation } = require("wouter");
 
-const query = require("../../lib/query");
-
 const { useTextInput, useBoolInput } = require("../../lib/form");
 
 const useFormSubmit = require("../../lib/form/submit");
@@ -31,9 +29,14 @@ const { TextInput, Checkbox, TextArea } = require("../../components/form/inputs"
 const Loading = require("../../components/loading");
 const BackButton = require("../../components/back-button");
 const MutationButton = require("../../components/form/mutation-button");
+const { 
+	useInstanceBlocksQuery,
+	useAddInstanceBlockMutation,
+	useRemoveInstanceBlockMutation,
+} = require("../../lib/query/admin");
 
 module.exports = function InstanceDetail({ baseUrl }) {
-	const { data: blockedInstances = {}, isLoading } = query.useInstanceBlocksQuery();
+	const { data: blockedInstances = {}, isLoading } = useInstanceBlocksQuery();
 
 	let [_match, { domain }] = useRoute(`${baseUrl}/:domain`);
 	if (domain == "view") {
@@ -93,9 +96,9 @@ function DomainBlockForm({ defaultDomain, block = {}, baseUrl }) {
 		commentPublic: useTextInput("public_comment", { source: block })
 	};
 
-	const [submitForm, addResult] = useFormSubmit(form, query.useAddInstanceBlockMutation(), { changedOnly: false });
+	const [submitForm, addResult] = useFormSubmit(form, useAddInstanceBlockMutation(), { changedOnly: false });
 
-	const [removeBlock, removeResult] = query.useRemoveInstanceBlockMutation({ fixedCacheKey: block.id });
+	const [removeBlock, removeResult] = useRemoveInstanceBlockMutation({ fixedCacheKey: block.id });
 
 	const [location, setLocation] = useLocation();
 
