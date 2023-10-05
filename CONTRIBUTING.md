@@ -226,30 +226,43 @@ To bundle changes, you need [Node.js](https://nodejs.org/en/download/) and [Yarn
 
 Using [NVM](https://github.com/nvm-sh/nvm) is one convenient way to install them which also supports managing different Node versions.
 
-To install Yarn dependencies:
+To install frontend dependencies:
 
 ```bash
-yarn install --cwd web/source
+yarn --cwd web/source
 ```
 
-To recompile bundles:
+To recompile frontend bundles into `web/assets/dist`:
 
 ```bash
-node web/source
+yarn --cwd web/source build
 ```
 
 #### Live Reloading
 
 For a more convenient development environment, you can run a livereloading version of the bundler alongside the [testrig](#testing).
 
-Open two terminals, first start the testrig on port 8081:
+First build the GtS binary with DEBUG=1 to enable the testrig:
+
 ``` bash
-GTS_PORT=8081 go run ./cmd/gotosocial testrig start
+DEBUG=1 ./scripts/build.sh
 ```
+
+Now open two terminals.
+
+In the first terminal, run the testrig on port 8081, using the binary you just built:
+
+```bash
+DEBUG=1 GTS_PORT=8081 ./gotosocial testrig start
+```
+
 Then start the bundler, which will run on port 8080, and proxy requests to the testrig instance where needed.
+
 ``` bash
-NODE_ENV=development node web/source
+NODE_ENV=development yarn --cwd ./web/source dev
 ```
+
+You can then log in to the GoToSocial settings panel at `http://localhost:8080/settings` and see your changes reflected in real time as the dev bundler reloads.
 
 The livereloading bundler *will not* change the bundled assets in `dist/`, so once you are finished with changes and want to deploy it somewhere, you have to run `node web/source` to generate production-ready bundles.
 

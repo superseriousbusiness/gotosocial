@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const skulk = require("skulk");
 const fs = require("fs");
 const path = require("path");
@@ -70,10 +68,17 @@ skulk({
 			entryFile: "settings",
 			outputFile: "settings.js",
 			prodCfg: prodCfg,
+			plugin: [
+				// Additional settings for TS are passed from tsconfig.json.
+				// See: https://github.com/TypeStrong/tsify#tsconfigjson
+				["tsify"]
+			],
 			transform: [
+				// tsify is called before babelify, so we're just babelifying
+				// commonjs here, no need for the typescript preset.
 				["babelify", {
 					global: true,
-					ignore: [/node_modules\/(?!nanoid)/]
+					ignore: [/node_modules\/(?!nanoid)/],
 				}]
 			],
 			presets: [

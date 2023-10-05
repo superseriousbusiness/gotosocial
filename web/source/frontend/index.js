@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;

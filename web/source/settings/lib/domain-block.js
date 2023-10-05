@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const isValidDomain = require("is-valid-domain");
 const psl = require("psl");
 

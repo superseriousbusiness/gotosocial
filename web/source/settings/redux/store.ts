@@ -17,11 +17,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
-const { combineReducers } = require("redux");
-const { configureStore } = require("@reduxjs/toolkit");
-const {
+import { combineReducers } from "redux";
+import { configureStore } from "@reduxjs/toolkit";
+import {
 	persistStore,
 	persistReducer,
 	FLUSH,
@@ -30,14 +28,14 @@ const {
 	PERSIST,
 	PURGE,
 	REGISTER,
-} = require("redux-persist");
+} from "redux-persist";
 
-const query = require("../lib/query/base");
-const { Promise } = require("bluebird");
+import { oauthSlice } from "./oauth";
+import { gtsApi } from "../lib/query/gts-api";
 
 const combinedReducers = combineReducers({
-	oauth: require("./oauth").reducer,
-	[query.reducerPath]: query.reducer
+	[gtsApi.reducerPath]: gtsApi.reducer,
+	oauth: oauthSlice.reducer,
 });
 
 const persistedReducer = persistReducer({
@@ -45,27 +43,41 @@ const persistedReducer = persistReducer({
 	storage: require("redux-persist/lib/storage").default,
 	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel1").default,
 	whitelist: ["oauth"],
-	migrate: (state) => {
-		return Promise.try(() => {
-			if (state?.oauth != undefined) {
-				state.oauth.expectingRedirect = false;
-			}
+	migrate: async (state) => {
+		if (state == undefined) {
 			return state;
-		});
+		}
+
+		// This is a cheeky workaround for
+		// redux-persist being a stickler.
+		let anyState = state as any; 
+		if (anyState?.oauth != undefined) {
+			anyState.oauth.expectingRedirect = false;
+		}
+
+		return anyState;
 	}
 }, combinedReducers);
 
-const store = configureStore({
+export const store = configureStore({
 	reducer: persistedReducer,
 	middleware: (getDefaultMiddleware) => {
 		return getDefaultMiddleware({
 			serializableCheck: {
-				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
+				ignoredActions: [
+					FLUSH,
+					REHYDRATE,
+					PAUSE,
+					PERSIST,
+					PURGE,
+					REGISTER,
+				]
 			}
-		}).concat(query.middleware);
+		}).concat(gtsApi.middleware);
 	}
 });
 
-const persistor = persistStore(store);
+export const persistor = persistStore(store);
 
-module.exports = { store, persistor };
+export type AppDispatch = typeof store.dispatch;
+export type RootState = ReturnType<typeof store.getState>;

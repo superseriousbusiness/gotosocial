@@ -17,15 +17,13 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const {
 	replaceCacheOnMutation,
 	removeFromCacheOnMutation,
 	domainListToObject,
 	idListToObject
 } = require("../lib");
-const base = require("../base");
+const { gtsApi } = require("../gts-api");
 
 const endpoints = (build) => ({
 	updateInstance: build.mutation({
@@ -164,4 +162,4 @@ const endpoints = (build) => ({
 	...require("./reports")(build)
 });
 
-module.exports = base.injectEndpoints({ endpoints });
+module.exports = gtsApi.injectEndpoints({ endpoints });

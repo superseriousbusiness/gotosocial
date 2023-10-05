@@ -6,9 +6,9 @@ before:
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
   - swagger generate spec --scan-models --exclude-deps -o web/assets/swagger.yaml
   - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" web/assets/swagger.yaml
-  # bundle web assets
-  - yarn install --cwd web/source
-  - scripts/bundle.sh
+  # Install web deps + bundle web assets
+  - yarn --cwd ./web/source install
+  - yarn --cwd ./web/source build
 builds:
   # https://goreleaser.com/customization/build/
   -

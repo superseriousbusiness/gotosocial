@@ -17,29 +17,32 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
+import { replaceCacheOnMutation } from "../lib";
+import { gtsApi } from "../gts-api";
 
-const { replaceCacheOnMutation } = require("./lib");
-const base = require("./base");
-
-const endpoints = (build) => ({
-	updateCredentials: build.mutation({
-		query: (formData) => ({
-			method: "PATCH",
-			url: `/api/v1/accounts/update_credentials`,
-			asForm: true,
-			body: formData,
-			discardEmpty: true
+const extended = gtsApi.injectEndpoints({
+	endpoints: (builder) => ({
+		updateCredentials: builder.mutation({
+			query: (formData) => ({
+				method: "PATCH",
+				url: `/api/v1/accounts/update_credentials`,
+				asForm: true,
+				body: formData,
+				discardEmpty: true
+			}),
+			...replaceCacheOnMutation("verifyCredentials")
 		}),
-		...replaceCacheOnMutation("verifyCredentials")
-	}),
-	passwordChange: build.mutation({
-		query: (data) => ({
-			method: "POST",
-			url: `/api/v1/user/password_change`,
-			body: data
+		passwordChange: builder.mutation({
+			query: (data) => ({
+				method: "POST",
+				url: `/api/v1/user/password_change`,
+				body: data
+			})
 		})
 	})
 });
 
-module.exports = base.injectEndpoints({ endpoints });
+export const {
+	useUpdateCredentialsMutation,
+	usePasswordChangeMutation,
+} = extended;

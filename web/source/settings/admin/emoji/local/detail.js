@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const React = require("react");
 const { useRoute, Link, Redirect } = require("wouter");
 

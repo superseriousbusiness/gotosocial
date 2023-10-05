@@ -17,8 +17,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const React = require("react");
 const RoleContext = React.createContext([]);
 const BaseUrlContext = React.createContext(null);

@@ -1,2 +1,5 @@
 node_modules
 public/bundle.*
+
+# Built/Typescript-compiled settings files.
+settings-js

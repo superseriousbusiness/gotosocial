@@ -17,17 +17,15 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-"use strict";
-
 const React = require("react");
 const ReactDom = require("react-dom/client");
 const { Provider } = require("react-redux");
 const { PersistGate } = require("redux-persist/integration/react");
 
-const { store, persistor } = require("./redux");
+const { store, persistor } = require("./redux/store");
 const { createNavigation, Menu, Item } = require("./lib/navigation");
 
-const AuthorizationGate = require("./components/authorization");
+const { Authorization } = require("./components/authorization");
 const Loading = require("./components/loading");
 const UserLogoutCard = require("./components/user-logout-card");
 const { RoleContext } = require("./lib/navigation/util");
@@ -90,7 +88,7 @@ function Main() {
 	return (
 		<Provider store={store}>
 			<PersistGate loading={<section><Loading /></section>} persistor={persistor}>
-				<AuthorizationGate App={App} />
+				<Authorization App={App} />
 			</PersistGate>
 		</Provider>
 	);
