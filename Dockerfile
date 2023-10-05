@@ -12,12 +12,12 @@ WORKDIR /go/src/github.com/superseriousbusiness/gotosocial
 RUN swagger generate spec -o /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml --scan-models
 
 # stage 2: generate the web/assets/dist bundles
-FROM --platform=${BUILDPLATFORM} node:16.19.1-alpine3.17 AS bundler
+FROM --platform=${BUILDPLATFORM} node:18-alpine AS bundler
 
 COPY web web
-RUN yarn install --cwd web/source && \
-    BUDO_BUILD=1 node web/source  && \
-    rm -r web/source
+RUN yarn --cwd ./web/source install && \
+    yarn --cwd ./web/source build   && \
+    rm -rf ./web/source
 
 # stage 3: build the executor container
 FROM --platform=${TARGETPLATFORM} alpine:3.17.2 as executor
