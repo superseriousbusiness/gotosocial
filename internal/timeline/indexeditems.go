@@ -65,7 +65,7 @@ func (i *indexedItems) insertIndexed(ctx context.Context, newEntry *indexedItems
 	for e := i.data.Front(); e != nil; e = e.Next() {
 		currentPosition++
 
-		currentEntry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+		currentEntry := e.Value.(*indexedItemsEntry)
 
 		// Check if we need to skip inserting this item based on
 		// the current item.

@@ -144,7 +144,6 @@ func (m *Module) createDomainPermissions(
 	if multiStatus.Metadata.Failure != 0 {
 		failures := make(map[string]any, multiStatus.Metadata.Failure)
 		for _, entry := range multiStatus.Data {
-			// nolint:forcetypeassert
 			failures[entry.Resource.(string)] = entry.Message
 		}
 

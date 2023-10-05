@@ -86,7 +86,7 @@ import (
 //		in: query
 //		required: false
 //	-
-//		name: pinned_only
+//		name: pinned
 //		type: boolean
 //		description: Show only pinned statuses. In other words, exclude statuses that are not pinned to the given account ID.
 //		default: false

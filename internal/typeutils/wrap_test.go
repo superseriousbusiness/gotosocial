@@ -36,7 +36,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
 	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
 	suite.NoError(err)
 
-	create, err := suite.typeconverter.WrapNoteInCreate(note, true)
+	create, err := suite.typeconverter.WrapStatusableInCreate(note, true)
 	suite.NoError(err)
 	suite.NotNil(create)
 
@@ -64,7 +64,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
 	suite.NoError(err)
 
-	create, err := suite.typeconverter.WrapNoteInCreate(note, false)
+	create, err := suite.typeconverter.WrapStatusableInCreate(note, false)
 	suite.NoError(err)
 	suite.NotNil(create)
 

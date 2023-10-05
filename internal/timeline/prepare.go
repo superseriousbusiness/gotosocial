@@ -63,7 +63,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 	if frontToBack {
 		// Paging forwards / down.
 		for e := t.items.data.Front(); e != nil; e = e.Next() {
-			entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+			entry := e.Value.(*indexedItemsEntry)
 
 			if entry.itemID > behindID {
 				l.Trace("item is too new, continuing")
@@ -91,7 +91,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 	} else {
 		// Paging backwards / up.
 		for e := t.items.data.Back(); e != nil; e = e.Prev() {
-			entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+			entry := e.Value.(*indexedItemsEntry)
 
 			if entry.itemID < beforeID {
 				l.Trace("item is too old, continuing")

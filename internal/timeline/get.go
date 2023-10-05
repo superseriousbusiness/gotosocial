@@ -222,7 +222,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 		// a point where the items are out of the range
 		// we're interested in.
 		rangeF = func(e *list.Element) (bool, error) {
-			entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+			entry := e.Value.(*indexedItemsEntry)
 
 			if entry.itemID >= behindID {
 				// ID of this item is too high,
@@ -276,7 +276,6 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 			// Move the mark back one place each loop.
 			beforeIDMark = e
 
-			//nolint:forcetypeassert
 			if entry := e.Value.(*indexedItemsEntry); entry.itemID <= beforeID {
 				// We've gone as far as we can through
 				// the list and reached entries that are
@@ -319,7 +318,7 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 	// To preserve ordering, we need to reverse the slice
 	// when we're finished.
 	for e := beforeIDMark; e != nil; e = e.Prev() {
-		entry := e.Value.(*indexedItemsEntry) //nolint:forcetypeassert
+		entry := e.Value.(*indexedItemsEntry)
 
 		if entry.itemID == beforeID {
 			// Don't include the beforeID

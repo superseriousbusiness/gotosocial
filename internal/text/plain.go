@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/yuin/goldmark"
@@ -103,11 +104,11 @@ func (f *Formatter) FromPlainEmojiOnly(
 	statusID string,
 	input string,
 ) *FormatResult {
-	// Initialize standard block parser
-	// that wraps result in <p> tags.
+	// Initialize block parser that
+	// doesn't wrap result in <p> tags.
 	plainTextParser := parser.NewParser(
 		parser.WithBlockParsers(
-			util.Prioritized(newPlaintextParser(), 500),
+			util.Prioritized(newPlaintextParserNoParagraph(), 500),
 		),
 	)
 
@@ -161,17 +162,21 @@ func (f *Formatter) fromPlain(
 		),
 	)
 
+	// Convert input string to bytes
+	// without performing any allocs.
+	bInput := byteutil.S2B(input)
+
 	// Parse input into HTML.
 	var htmlBytes bytes.Buffer
 	if err := md.Convert(
-		[]byte(input),
+		bInput,
 		&htmlBytes,
 	); err != nil {
 		log.Errorf(ctx, "error formatting plaintext input to HTML: %s", err)
 	}
 
 	// Clean and shrink HTML.
-	result.HTML = htmlBytes.String()
+	result.HTML = byteutil.B2S(htmlBytes.Bytes())
 	result.HTML = SanitizeToHTML(result.HTML)
 	result.HTML = MinifyHTML(result.HTML)
 

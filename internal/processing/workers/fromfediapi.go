@@ -119,6 +119,10 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 	case ap.ActivityUpdate:
 		switch fMsg.APObjectType { //nolint:gocritic
 
+		// UPDATE NOTE/STATUS
+		case ap.ObjectNote:
+			return p.fediAPI.UpdateStatus(ctx, fMsg)
+
 		// UPDATE PROFILE/ACCOUNT
 		case ap.ObjectProfile:
 			return p.fediAPI.UpdateAccount(ctx, fMsg)
@@ -485,13 +489,13 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) 
 	// Parse the old/existing account model.
 	account, ok := fMsg.GTSModel.(*gtsmodel.Account)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.Account", fMsg.GTSModel)
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Account", fMsg.GTSModel)
 	}
 
 	// Because this was an Update, the new Accountable should be set on the message.
 	apubAcc, ok := fMsg.APObjectModel.(ap.Accountable)
 	if !ok {
-		return gtserror.Newf("%T not parseable as ap.Accountable", fMsg.APObjectModel)
+		return gtserror.Newf("cannot cast %T -> ap.Accountable", fMsg.APObjectModel)
 	}
 
 	// Fetch up-to-date bio, avatar, header, etc.
@@ -504,6 +508,34 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) 
 	)
 	if err != nil {
 		return gtserror.Newf("error refreshing updated account: %w", err)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
+	// Cast the existing Status model attached to msg.
+	existing, ok := fMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Status", fMsg.GTSModel)
+	}
+
+	// Cast the updated ActivityPub statusable object .
+	apStatus, ok := fMsg.APObjectModel.(ap.Statusable)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> ap.Statusable", fMsg.APObjectModel)
+	}
+
+	// Fetch up-to-date attach status attachments, etc.
+	_, _, err := p.federate.RefreshStatus(
+		ctx,
+		fMsg.ReceivingAccount.Username,
+		existing,
+		apStatus,
+		false,
+	)
+	if err != nil {
+		return gtserror.Newf("error refreshing updated status: %w", err)
 	}
 
 	return nil
