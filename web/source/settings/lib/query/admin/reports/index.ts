@@ -28,9 +28,10 @@ import type {
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
 		listReports: build.query<AdminReport[], AdminReportListParams>({
-			query: (params = {}) => ({
+			query: (params) => ({
 				url: "/api/v1/admin/reports",
 				params: {
+					// Override provided limit.
 					limit: 100,
 					...params
 				}
