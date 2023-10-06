@@ -22,9 +22,8 @@ const splitFilterN = require("split-filter-n");
 const syncpipe = require('syncpipe');
 const { matchSorter } = require("match-sorter");
 
-const query = require("../../lib/query");
-
 const ComboBox = require("../../components/combo-box");
+const { useListEmojiQuery } = require("../../lib/query/admin/custom-emoji");
 
 function useEmojiByCategory(emoji) {
 	// split all emoji over an object keyed by the category names (or Unsorted)
@@ -43,7 +42,7 @@ function CategorySelect({ field, children }) {
 		isLoading,
 		isSuccess,
 		error
-	} = query.useListEmojiQuery({ filter: "domain:local" });
+	} = useListEmojiQuery({ filter: "domain:local" });
 
 	const emojiByCategory = useEmojiByCategory(emoji);
 

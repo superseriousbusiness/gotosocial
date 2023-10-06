@@ -21,9 +21,9 @@ const React = require("react");
 
 const ParseFromToot = require("./parse-from-toot");
 
-const query = require("../../../lib/query");
 const Loading = require("../../../components/loading");
 const { Error } = require("../../../components/error");
+const { useListEmojiQuery } = require("../../../lib/query/admin/custom-emoji");
 
 module.exports = function RemoteEmoji() {
 	// local emoji are queried for shortcode collision detection
@@ -31,7 +31,7 @@ module.exports = function RemoteEmoji() {
 		data: emoji = [],
 		isLoading,
 		error
-	} = query.useListEmojiQuery({ filter: "domain:local" });
+	} = useListEmojiQuery({ filter: "domain:local" });
 
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));

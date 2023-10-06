@@ -20,8 +20,6 @@
 const React = require("react");
 const { useRoute, Redirect } = require("wouter");
 
-const query = require("../../lib/query");
-
 const FormWithData = require("../../lib/form/form-with-data");
 const BackButton = require("../../components/back-button");
 
@@ -33,6 +31,10 @@ const { TextArea } = require("../../components/form/inputs");
 const MutationButton = require("../../components/form/mutation-button");
 const Username = require("./username");
 const { useBaseUrl } = require("../../lib/navigation/util");
+const {
+	useGetReportQuery,
+	useResolveReportMutation,
+} = require("../../lib/query/admin/reports");
 
 module.exports = function ReportDetail({ }) {
 	const baseUrl = useBaseUrl();
@@ -46,7 +48,7 @@ module.exports = function ReportDetail({ }) {
 					<BackButton to={baseUrl} /> Report Details
 				</h1>
 				<FormWithData
-					dataQuery={query.useGetReportQuery}
+					dataQuery={useGetReportQuery}
 					queryArg={params.reportId}
 					DataForm={ReportDetailForm}
 				/>
@@ -115,7 +117,7 @@ function ReportActionForm({ report }) {
 		comment: useTextInput("action_taken_comment")
 	};
 
-	const [submit, result] = useFormSubmit(form, query.useResolveReportMutation(), { changedOnly: false });
+	const [submit, result] = useFormSubmit(form, useResolveReportMutation(), { changedOnly: false });
 
 	return (
 		<form onSubmit={submit} className="info-block">

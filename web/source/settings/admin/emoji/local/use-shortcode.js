@@ -19,15 +19,15 @@
 
 const React = require("react");
 
-const query = require("../../../lib/query");
 const { useTextInput } = require("../../../lib/form");
+const { useListEmojiQuery } = require("../../../lib/query/admin/custom-emoji");
 
 const shortcodeRegex = /^\w{2,30}$/;
 
 module.exports = function useShortcode() {
-	const {
-		data: emoji = []
-	} = query.useListEmojiQuery({ filter: "domain:local" });
+	const { data: emoji = [] } = useListEmojiQuery({
+		filter: "domain:local"
+	});
 
 	const emojiCodes = React.useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));

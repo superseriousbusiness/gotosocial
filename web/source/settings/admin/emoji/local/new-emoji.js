@@ -36,6 +36,7 @@ const {
 const { CategorySelect } = require('../category-select');
 const FakeToot = require("../../../components/fake-toot");
 const MutationButton = require("../../../components/form/mutation-button");
+const { useAddEmojiMutation } = require("../../../lib/query/admin/custom-emoji");
 
 module.exports = function NewEmojiForm() {
 	const shortcode = useShortcode();
@@ -54,7 +55,7 @@ module.exports = function NewEmojiForm() {
 
 	const [submitForm, result] = useFormSubmit({
 		shortcode, image, category
-	}, query.useAddEmojiMutation());
+	}, useAddEmojiMutation());
 
 	React.useEffect(() => {
 		if (shortcode.value.length == 0) {

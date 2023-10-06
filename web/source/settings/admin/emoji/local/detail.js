@@ -20,8 +20,6 @@
 const React = require("react");
 const { useRoute, Link, Redirect } = require("wouter");
 
-const query = require("../../../lib/query");
-
 const { useComboBoxInput, useFileInput, useValue } = require("../../../lib/form");
 const { CategorySelect } = require("../category-select");
 
@@ -35,6 +33,12 @@ const { FileInput } = require("../../../components/form/inputs");
 const MutationButton = require("../../../components/form/mutation-button");
 const { Error } = require("../../../components/error");
 
+const {
+	useGetEmojiQuery,
+	useEditEmojiMutation,
+	useDeleteEmojiMutation,
+} = require("../../../lib/query/admin/custom-emoji");
+
 module.exports = function EmojiDetailRoute({ }) {
 	const baseUrl = useBaseUrl();
 	let [_match, params] = useRoute(`${baseUrl}/:emojiId`);
@@ -44,7 +48,7 @@ module.exports = function EmojiDetailRoute({ }) {
 		return (
 			<div className="emoji-detail">
 				<Link to={baseUrl}><a>&lt; go back</a></Link>
-				<FormWithData dataQuery={query.useGetEmojiQuery} queryArg={params.emojiId} DataForm={EmojiDetailForm} />
+				<FormWithData dataQuery={useGetEmojiQuery} queryArg={params.emojiId} DataForm={EmojiDetailForm} />
 			</div>
 		);
 	}
@@ -61,7 +65,7 @@ function EmojiDetailForm({ data: emoji }) {
 		})
 	};
 
-	const [modifyEmoji, result] = useFormSubmit(form, query.useEditEmojiMutation());
+	const [modifyEmoji, result] = useFormSubmit(form, useEditEmojiMutation());
 
 	// Automatic submitting of category change
 	React.useEffect(() => {
@@ -74,7 +78,7 @@ function EmojiDetailForm({ data: emoji }) {
 		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [form.category.hasChanged(), form.category.isNew, form.category.state.open]);
 
-	const [deleteEmoji, deleteResult] = query.useDeleteEmojiMutation();
+	const [deleteEmoji, deleteResult] = useDeleteEmojiMutation();
 
 	if (deleteResult.isSuccess) {
 		return <Redirect to={baseUrl} />;

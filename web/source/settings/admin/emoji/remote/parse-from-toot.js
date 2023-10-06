@@ -19,8 +19,6 @@
 
 const React = require("react");
 
-const query = require("../../../lib/query");
-
 const {
 	useTextInput,
 	useComboBoxInput,
@@ -35,9 +33,10 @@ const { CategorySelect } = require('../category-select');
 const { TextInput } = require("../../../components/form/inputs");
 const MutationButton = require("../../../components/form/mutation-button");
 const { Error } = require("../../../components/error");
+const { useSearchStatusForEmojiMutation } = require("../../../lib/query/admin/custom-emoji");
 
 module.exports = function ParseFromToot({ emojiCodes }) {
-	const [searchStatus, result] = query.useSearchStatusForEmojiMutation();
+	const [searchStatus, result] = useSearchStatusForEmojiMutation();
 
 	const [onURLChange, _resetURL, { url }] = useTextInput("url");
 
@@ -121,7 +120,7 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 
 	const [formSubmit, result] = useFormSubmit(
 		form,
-		query.usePatchRemoteEmojisMutation(),
+		usePatchRemoteEmojisMutation(),
 		{
 			changedOnly: false,
 			onFinish: ({ data }) => {

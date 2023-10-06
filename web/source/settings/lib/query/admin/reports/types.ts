@@ -17,35 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-export default (build) => ({
-	listReports: build.query({
-		query: (params = {}) => ({
-			url: "/api/v1/admin/reports",
-			params: {
-				limit: 100,
-				...params
-			}
-		}),
-		providesTags: ["Reports"]
-	}),
+export interface AdminReport {
+    id: string;
+}
 
-	getReport: build.query({
-		query: (id) => ({
-			url: `/api/v1/admin/reports/${id}`
-		}),
-		providesTags: (res, error, id) => [{ type: "Reports", id }]
-	}),
+export interface AdminReportResolveParams {
+    id: string;
+}
 
-	resolveReport: build.mutation({
-		query: (formData) => ({
-			url: `/api/v1/admin/reports/${formData.id}/resolve`,
-			method: "POST",
-			asForm: true,
-			body: formData
-		}),
-		invalidatesTags: (res) =>
-			res
-				? [{ type: "Reports", id: "LIST" }, { type: "Reports", id: res.id }]
-				: [{ type: "Reports", id: "LIST" }]
-	})
-});
+export interface AdminReportListParams {
+
+}

@@ -20,9 +20,6 @@
 import { replaceCacheOnMutation, removeFromCacheOnMutation, domainListToObject, idListToObject } from "../lib";
 import { gtsApi } from "../gts-api";
 
-import * as emojis from  "./custom-emoji";
-import * as reports from "./reports";
-
 const extended = gtsApi.injectEndpoints({
 	endpoints: (builder) => ({
 		updateInstance: builder.mutation({
@@ -171,9 +168,7 @@ const extended = gtsApi.injectEndpoints({
 				key: undefined,
 				arg: undefined,
 			})
-		}),
-		...emojis.default,
-		...reports.default,
+		})
 	})
 });
 
