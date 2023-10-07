@@ -21,8 +21,8 @@ import isValidDomain from "is-valid-domain";
 import { get } from "psl";
 
 /**
- * Check the domain string to ensure it's a valid domain
- * string that doesn't include a wildcard ("*").
+ * Check the input string to ensure it's a valid
+ * domain that doesn't include a wildcard ("*").
  * @param domain 
  * @returns 
  */

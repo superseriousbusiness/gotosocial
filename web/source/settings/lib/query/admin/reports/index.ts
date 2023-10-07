@@ -23,7 +23,7 @@ import type {
 	AdminReport,
 	AdminReportListParams,
 	AdminReportResolveParams,
-} from "./types";
+} from "../../../types/report";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({

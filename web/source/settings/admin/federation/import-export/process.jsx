@@ -20,7 +20,7 @@
 const React = require("react");
 
 const { useImportDomainBlocksMutation } = require("../../../lib/query/admin/domain-permissions/import");
-const { isValidDomainBlock, hasBetterScope } = require("../../../lib/domain-permission");
+const { isValidDomainPermission, hasBetterScope } = require("../../../lib/util/domain-permission");
 
 const {
 	useTextInput,
@@ -254,7 +254,7 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 		defaultValue: entry.domain,
 		showValidation: entry.checked,
 		initValidation: domainValidationError(entry.valid),
-		validator: (value) => domainValidationError(isValidDomainBlock(value))
+		validator: (value) => domainValidationError(isValidDomainPermission(value))
 	});
 
 	React.useEffect(() => {

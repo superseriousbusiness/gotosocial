@@ -19,8 +19,6 @@
 
 const React = require("react");
 
-const query = require("../../../lib/query");
-
 const {
 	useFileInput,
 	useComboBoxInput
@@ -37,11 +35,12 @@ const { CategorySelect } = require('../category-select');
 const FakeToot = require("../../../components/fake-toot");
 const MutationButton = require("../../../components/form/mutation-button");
 const { useAddEmojiMutation } = require("../../../lib/query/admin/custom-emoji");
+const { useInstanceV1Query } = require("../../../lib/query");
 
 module.exports = function NewEmojiForm() {
 	const shortcode = useShortcode();
 
-	const { data: instance } = query.useInstanceQuery();
+	const { data: instance } = useInstanceV1Query();
 	const emojiMaxSize = React.useMemo(() => {
 		return instance?.configuration?.emojis?.emoji_size_limit ?? 50 * 1024;
 	}, [instance]);

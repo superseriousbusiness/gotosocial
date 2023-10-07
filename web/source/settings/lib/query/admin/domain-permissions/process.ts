@@ -23,7 +23,7 @@ import {
 } from "papaparse";
 import { nanoid } from "nanoid";
 
-import { isValidDomainPermission, hasBetterScope } from "../../../domain-permission";
+import { isValidDomainPermission, hasBetterScope } from "../../../util/domain-permission";
 import { gtsApi } from "../../gts-api";
 
 import {
@@ -31,7 +31,7 @@ import {
 	isDomainPerms,
 	type DomainPerm,
 	type DomainPermsImportForm,
-} from "./types";
+} from "../../../types/domain-permission";
 
 /**
  * entryProcessor builds up a processing function that can be applied to a

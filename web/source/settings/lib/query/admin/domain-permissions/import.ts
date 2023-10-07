@@ -21,7 +21,7 @@ import { replaceCacheOnMutation, domainListToObject } from "../../lib";
 import { gtsApi } from "../../gts-api";
 import { entryProcessor } from "./process";
 
-import type { DomainPermsImportForm } from "./types";
+import type { DomainPermsImportForm } from "../../../types/domain-permission";
 
 function normalizePermsBody(formData: DomainPermsImportForm) {
 	const { domains } = formData;

@@ -21,11 +21,7 @@ import { gtsApi } from "../../gts-api";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { RootState } from "../../../../redux/store";
 
-export interface CustomEmoji {
-	id?: string;
-	shortcode: string;
-	category?: string;
-}
+import type { CustomEmoji } from "../../../types/custom-emoji";
 
 function emojiFromSearchResult(searchRes) {
 	/* Parses the search response, prioritizing a toot result,

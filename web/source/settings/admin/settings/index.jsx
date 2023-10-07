@@ -19,8 +19,6 @@
 
 const React = require("react");
 
-const query = require("../../lib/query");
-
 const {
 	useTextInput,
 	useFileInput
@@ -37,10 +35,13 @@ const {
 const FormWithData = require("../../lib/form/form-with-data");
 const MutationButton = require("../../components/form/mutation-button");
 
+const { useInstanceV1Query } = require("../../lib/query");
+const { useUpdateInstanceMutation } = require("../../lib/query/admin");
+
 module.exports = function AdminSettings() {
 	return (
 		<FormWithData
-			dataQuery={query.useInstanceQuery}
+			dataQuery={useInstanceV1Query}
 			DataForm={AdminSettingsForm}
 		/>
 	);
@@ -61,7 +62,7 @@ function AdminSettingsForm({ data: instance }) {
 		terms: useTextInput("terms", { source: instance })
 	};
 
-	const [submitForm, result] = useFormSubmit(form, query.useUpdateInstanceMutation());
+	const [submitForm, result] = useFormSubmit(form, useUpdateInstanceMutation);
 
 	return (
 		<form onSubmit={submitForm}>
