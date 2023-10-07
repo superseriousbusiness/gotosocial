@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { replaceCacheOnMutation, removeFromCacheOnMutation, domainListToObject, idListToObject } from "../lib";
+import { replaceCacheOnMutation, removeFromCacheOnMutation, idListToObject } from "../lib";
 import { gtsApi } from "../gts-api";
 
 const extended = gtsApi.injectEndpoints({
@@ -51,13 +51,6 @@ const extended = gtsApi.injectEndpoints({
 					domain: domain
 				}
 			})
-		}),
-
-		instanceBlocks: builder.query({
-			query: () => ({
-				url: `/api/v1/admin/domain_blocks`
-			}),
-			transformResponse: domainListToObject
 		}),
 
 		addInstanceBlock: builder.mutation({
@@ -176,7 +169,6 @@ export const {
 	useUpdateInstanceMutation,
 	useMediaCleanupMutation,
 	useInstanceKeysExpireMutation,
-	useInstanceBlocksQuery,
 	useAddInstanceBlockMutation,
 	useRemoveInstanceBlockMutation,
 	useGetAccountQuery,

@@ -26,10 +26,10 @@ const { useTextInput } = require("../../lib/form");
 const { TextInput } = require("../../components/form/inputs");
 
 const Loading = require("../../components/loading");
-const { useInstanceBlocksQuery } = require("../../lib/query/admin");
+const { useGetDomainBlocksQuery } = require("../../lib/query/admin/domain-permissions/get");
 
 module.exports = function InstanceOverview({ baseUrl }) {
-	const { data: blockedInstances = [], isLoading } = useInstanceBlocksQuery();
+	const { data: blockedInstances = [], isLoading } = useGetDomainBlocksQuery();
 
 	const [_location, setLocation] = useLocation();
 

@@ -17,72 +17,46 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { replaceCacheOnMutation, domainListToObject } from "../../lib";
+import { replaceCacheOnMutation } from "../../lib";
 import { gtsApi } from "../../gts-api";
 import { entryProcessor } from "./process";
 
 import type { DomainPermsImportForm } from "../../../types/domain-permission";
+import { domainPermsToObject } from "./transforms";
 
-function normalizePermsBody(formData: DomainPermsImportForm) {
-	const { domains } = formData;
-
-	// Add/replace comments, override obfuscate
-	// if desired, remove internal keys.
-	let process = entryProcessor(formData);
-	return domains.map(process);
-}
-
-/**
- * POST domain blocks to /api/v1/admin/domain_blocks.
- */
-const useImportDomainBlocksMutation = gtsApi.injectEndpoints({
+const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({		
-		importDomainBlocks: build.mutation<any, DomainPermsImportForm>({
+		importDomainPerms: build.mutation<any, DomainPermsImportForm>({
 			query: (formData) => {
-				const domains = normalizePermsBody(formData);
+				// Add/replace comments, remove internal keys.
+				const process = entryProcessor(formData);
+				const domains = formData.domains.map(process);
 
 				return {
 					method: "POST",
-					url: `/api/v1/admin/domain_blocks?import=true`,
+					url: `/api/v1/admin/domain_${formData.perm_type}s`,
 					asForm: true,
 					discardEmpty: true,
 					body: {
-						domains: new Blob([JSON.stringify(domains)], { type: "application/json" })
+						import: true,
+						domains: new Blob(
+							[JSON.stringify(domains)],
+							{ type: "application/json" },
+						),
 					}
 				};
 			},
-			transformResponse: domainListToObject,
+			transformResponse: domainPermsToObject,
 			...replaceCacheOnMutation("instanceBlocks")
 		})
 	})
-}).useImportDomainBlocksMutation;
+});
 
 /**
- * POST domain allows to /api/v1/admin/domain_allows.
+ * POST domain permissions to /api/v1/admin/domain_{perm_type}s.
  */
-const useImportDomainAllowsMutation = gtsApi.injectEndpoints({
-	endpoints: (build) => ({		
-		importDomainAllows: build.mutation<any, DomainPermsImportForm>({
-			query: (formData) => {
-				const domains = normalizePermsBody(formData);
-
-				return {
-					method: "POST",
-					url: `/api/v1/admin/domain_allows?import=true`,
-					asForm: true,
-					discardEmpty: true,
-					body: {
-						domains: new Blob([JSON.stringify(domains)], { type: "application/json" })
-					}
-				};
-			},
-			transformResponse: domainListToObject,
-			...replaceCacheOnMutation("instanceAllows")
-		})
-	})
-}).useImportDomainAllowsMutation;
+const useImportDomainPermsMutation = extended.useImportDomainPermsMutation;
 
 export {
-	useImportDomainBlocksMutation,
-	useImportDomainAllowsMutation,
+	useImportDomainPermsMutation,
 };

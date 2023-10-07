@@ -19,7 +19,7 @@
 
 const React = require("react");
 
-const { useExportDomainListMutation } = require("../../../lib/query/admin/domain-permissions");
+const { useExportDomainListMutation } = require("../../../lib/query/admin/domain-permissions/export");
 const useFormSubmit = require("../../../lib/form/submit");
 
 const {

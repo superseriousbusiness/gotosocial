@@ -17,50 +17,48 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const syncpipe = require("syncpipe");
-const { gtsApi } = require("./gts-api");
+import syncpipe from "syncpipe";
+import { gtsApi } from "./gts-api";
 
-module.exports = {
-	unwrapRes(res) {
-		if (res.error != undefined) {
-			throw res.error;
-		} else {
-			return res.data;
-		}
-	},
-	domainListToObject: (data) => {
-		// Turn flat Array into Object keyed by block's domain
-		return syncpipe(data, [
-			(_) => _.map((entry) => [entry.domain, entry]),
-			(_) => Object.fromEntries(_)
-		]);
-	},
-	idListToObject: (data) => {
-		// Turn flat Array into Object keyed by entry id field
-		return syncpipe(data, [
-			(_) => _.map((entry) => [entry.id, entry]),
-			(_) => Object.fromEntries(_)
-		]);
-	},
-	replaceCacheOnMutation: makeCacheMutation((draft, newData) => {
-		Object.assign(draft, newData);
-	}),
-	appendCacheOnMutation: makeCacheMutation((draft, newData) => {
-		draft.push(newData);
-	}),
-	spliceCacheOnMutation: makeCacheMutation((draft, newData, { key }) => {
-		draft.splice(key, 1);
-	}),
-	updateCacheOnMutation: makeCacheMutation((draft, newData, { key }) => {
-		draft[key] = newData;
-	}),
-	removeFromCacheOnMutation: makeCacheMutation((draft, newData, { key }) => {
-		delete draft[key];
-	}),
-	editCacheOnMutation: makeCacheMutation((draft, newData, { update }) => {
-		update(draft, newData);
-	})
-};
+export function unwrapRes(res) {
+	if (res.error != undefined) {
+		throw res.error;
+	} else {
+		return res.data;
+	}
+}
+
+export function idListToObject(data) {
+	// Turn flat Array into Object keyed by entry id field
+	return syncpipe(data, [
+		(_) => _.map((entry) => [entry.id, entry]),
+		(_) => Object.fromEntries(_)
+	]);
+}
+
+export const replaceCacheOnMutation = makeCacheMutation((draft, newData) => {
+	Object.assign(draft, newData);
+});
+
+export const appendCacheOnMutation = makeCacheMutation((draft, newData) => {
+	draft.push(newData);
+});
+
+export const spliceCacheOnMutation = makeCacheMutation((draft, _newData, { key }) => {
+	draft.splice(key, 1);
+});
+
+export const updateCacheOnMutation = makeCacheMutation((draft, newData, { key }) => {
+	draft[key] = newData;
+});
+
+export const removeFromCacheOnMutation = makeCacheMutation((draft, _newData, { key }) => {
+	delete draft[key];
+});
+
+export const editCacheOnMutation = makeCacheMutation((draft, newData, { update }) => {
+	update(draft, newData);
+});
 
 // https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
 function makeCacheMutation(action) {

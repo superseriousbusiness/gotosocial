@@ -19,7 +19,6 @@
 
 const React = require("react");
 
-const { useImportDomainBlocksMutation } = require("../../../lib/query/admin/domain-permissions/import");
 const { isValidDomainPermission, hasBetterScope } = require("../../../lib/util/domain-permission");
 
 const {
@@ -42,14 +41,16 @@ const {
 const CheckList = require("../../../components/check-list");
 const MutationButton = require("../../../components/form/mutation-button");
 const FormWithData = require("../../../lib/form/form-with-data");
-const { useInstanceBlocksQuery } = require("../../../lib/query/admin");
+
+const { useGetDomainBlocksQuery } = require("../../../lib/query/admin/domain-permissions/get");
+const { useImportDomainPermsMutation } = require("../../../lib/query/admin/domain-permissions/import");
 
 module.exports = React.memo(
 	function ProcessImport({ list }) {
 		return (
 			<div className="without-border">
 				<FormWithData
-					dataQuery={useInstanceBlocksQuery}
+					dataQuery={useGetDomainBlocksQuery}
 					DataForm={ImportList}
 					list={list}
 				/>
@@ -111,7 +112,7 @@ function ImportList({ list, data: blockedInstances }) {
 		}),
 	};
 
-	const [importDomains, importResult] = useFormSubmit(form, useImportDomainBlocksMutation(), { changedOnly: false });
+	const [importDomains, importResult] = useFormSubmit(form, useImportDomainPermsMutation, { changedOnly: false });
 
 	return (
 		<>

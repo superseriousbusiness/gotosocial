@@ -17,12 +17,15 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import * as imports from "./import";
-import * as exports from "./export";
-import * as get from "./get";
+import type { 
+    DomainPerm,
+    MappedDomainPerms,
+} from "../../../types/domain-permission";
 
-export default {
-    ...imports,
-    ...exports,
-    ...get,
-}
+/**
+ * Turn flat Array of perms into Object keyed by perm's domain.
+ */
+export const domainPermsToObject = (data: DomainPerm[]): MappedDomainPerms => {
+	const entries = data.map((entry) => [entry.domain, entry]); 
+	return Object.fromEntries(entries);
+};

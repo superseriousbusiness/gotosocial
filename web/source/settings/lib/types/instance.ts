@@ -25,7 +25,7 @@ export interface InstanceV1 {
     short_description: string;
     email:             string;
     version:           string;
-    languages:         any[];
+    languages:         any[]; // TODO: define this
     registrations:     boolean;
     approval_required: boolean;
     invites_enabled:   boolean;
@@ -35,7 +35,7 @@ export interface InstanceV1 {
     thumbnail:         string;
     contact_account:   Object; // TODO: define this.
     max_toot_chars:    number;
-    rules:             any[];
+    rules:             any[]; // TODO: define this
 }
 
 export interface InstanceConfiguration {

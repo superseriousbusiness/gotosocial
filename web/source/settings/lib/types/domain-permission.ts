@@ -27,7 +27,8 @@ export interface DomainPerm {
 	private_comment?: string;
 	public_comment?: string;
 
-	// Internal keys.
+	// Internal keys, remove before
+	// submission of domain perm.
 	key?: string;
 	suggest?: string;
 	valid?: boolean;
@@ -53,4 +54,9 @@ export interface DomainPermsImportForm {
 	// Internal keys.
 	obfuscate?: boolean;
 	commentType?: string;
+	perm_type: "block" | "allow";
+}
+
+export interface MappedDomainPerms {
+	[key: string]: DomainPerm;
 }
