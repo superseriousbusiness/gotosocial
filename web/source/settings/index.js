@@ -45,7 +45,7 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		Item("Accounts", { icon: "fa-users", wildcard: true }, require("./admin/accounts")),
 		Menu("Federation", { icon: "fa-hubzilla" }, [
 			Item("Federation", { icon: "fa-hubzilla", url: "", wildcard: true }, require("./admin/federation")),
-			Item("Import/Export", { icon: "fa-floppy-o", wildcard: true }, require("./admin/federation/import-export")),
+			Item("Import/Export", { icon: "fa-floppy-o", wildcard: true }, require("./admin/federation/domain-permissions")),
 		])
 	]),
 	Menu("Administration", {

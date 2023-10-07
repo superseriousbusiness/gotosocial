@@ -27,74 +27,9 @@ import { isValidDomainPermission, hasBetterScope } from "../../../util/domain-pe
 import { gtsApi } from "../../gts-api";
 
 import {
-	DomainPermInternalKeys,
 	isDomainPerms,
 	type DomainPerm,
-	type DomainPermsImportForm,
 } from "../../../types/domain-permission";
-
-/**
- * entryProcessor builds up a processing function that can be applied to a
- * DomainPermission entry in order to normalize it before submission to the API.
- * @param formData 
- * @returns 
- */
-export function entryProcessor(formData: DomainPermsImportForm): (_entry: DomainPerm) => DomainPerm {
-	let processingFuncs: { (_entry: DomainPerm): void; }[] = [];
-
-	// Override each obfuscate entry if necessary.
-	if (formData.obfuscate !== undefined) {
-		const obfuscateEntry = (entry: DomainPerm) => {
-			entry.obfuscate = formData.obfuscate;
-		};
-		processingFuncs.push(obfuscateEntry);
-	}
-
-	// Check whether we need to append or replace
-	// private_comment and public_comment.
-	["private_comment","public_comment"].forEach((commentType) => {
-		let text = formData.commentType?.trim();
-		if (!text) {
-			return;
-		}
-
-		switch(formData[`${commentType}_behavior`]) {
-			case "append":
-				const appendComment = (entry: DomainPerm) => {
-					if (entry.commentType == undefined) {
-						entry.commentType = text;
-					} else {
-						entry.commentType = [entry.commentType, text].join("\n");
-					}
-				};
-
-				processingFuncs.push(appendComment);
-				break;
-			case "replace":
-				const replaceComment = (entry: DomainPerm) => {
-					entry.commentType = text;
-				};
-
-				processingFuncs.push(replaceComment);
-				break;
-		}
-	});
-
-	return function process(entry) {
-		// Call all the assembled processing functions.
-		processingFuncs.forEach((f) => f(entry));
-
-		// Unset all internal processing keys
-		// and any undefined keys on this entry.
-		Object.entries(entry).forEach(([key, val]) => {
-			if (DomainPermInternalKeys.has(key) || val == undefined) {
-				delete entry[key];
-			}
-		});
-
-		return entry;
-	};
-}
 
 /**
  * Parse the given string of domain permissions and return it as an array.
@@ -192,13 +127,7 @@ function validateDomainList(list: DomainPerm[]) {
 	return list;
 }
 
-/**
- * useProcessDomainPermissionsMutation uses the RTK Query API without actually
- * hitting the GtS API, it's purely an internal function for our own convenience.
- * 
- * It returns the validated and deduplicated domain permission list.
- */
-const useProcessDomainPermissionsMutation = gtsApi.injectEndpoints({
+const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
 		processDomainPermissions: build.mutation<DomainPerm[], any>({
 			async queryFn(formData, _api, _extraOpts, _fetchWithBQ) {
@@ -221,6 +150,14 @@ const useProcessDomainPermissionsMutation = gtsApi.injectEndpoints({
 			}
 		})
 	})
-}).useProcessDomainPermissionsMutation;
+});
+
+/**
+ * useProcessDomainPermissionsMutation uses the RTK Query API without actually
+ * hitting the GtS API, it's purely an internal function for our own convenience.
+ * 
+ * It returns the validated and deduplicated domain permission list.
+ */
+const useProcessDomainPermissionsMutation = extended.useProcessDomainPermissionsMutation;
 
 export { useProcessDomainPermissionsMutation };

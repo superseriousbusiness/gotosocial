@@ -17,24 +17,92 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { replaceCacheOnMutation } from "../../lib";
+import { replaceCacheOnMutation } from "../../query-modifiers";
 import { gtsApi } from "../../gts-api";
-import { entryProcessor } from "./process";
 
-import type { DomainPermsImportForm } from "../../../types/domain-permission";
-import { domainPermsToObject } from "./transforms";
+import {
+	DomainPermInternalKeys,
+	type DomainPerm,
+	type DomainPermsImportForm,
+	type MappedDomainPerms,
+} from "../../../types/domain-permission";
+import { listToKeyedObject } from "../../transforms";
+
+/**
+ * Builds up a map function that can be applied to a
+ * list of DomainPermission entries in order to normalize
+ * them before submission to the API.
+ * @param formData 
+ * @returns 
+ */
+export function importEntriesProcessor(formData: DomainPermsImportForm): (_entry: DomainPerm) => DomainPerm {
+	let processingFuncs: { (_entry: DomainPerm): void; }[] = [];
+
+	// Override each obfuscate entry if necessary.
+	if (formData.obfuscate !== undefined) {
+		const obfuscateEntry = (entry: DomainPerm) => {
+			entry.obfuscate = formData.obfuscate;
+		};
+		processingFuncs.push(obfuscateEntry);
+	}
+
+	// Check whether we need to append or replace
+	// private_comment and public_comment.
+	["private_comment","public_comment"].forEach((commentType) => {
+		let text = formData.commentType?.trim();
+		if (!text) {
+			return;
+		}
+
+		switch(formData[`${commentType}_behavior`]) {
+			case "append":
+				const appendComment = (entry: DomainPerm) => {
+					if (entry.commentType == undefined) {
+						entry.commentType = text;
+					} else {
+						entry.commentType = [entry.commentType, text].join("\n");
+					}
+				};
+
+				processingFuncs.push(appendComment);
+				break;
+			case "replace":
+				const replaceComment = (entry: DomainPerm) => {
+					entry.commentType = text;
+				};
+
+				processingFuncs.push(replaceComment);
+				break;
+		}
+	});
+
+	return function process(entry) {
+		// Call all the assembled processing functions.
+		processingFuncs.forEach((f) => f(entry));
+
+		// Unset all internal processing keys
+		// and any undefined keys on this entry.
+		Object.entries(entry).forEach(([key, val]) => {
+			if (DomainPermInternalKeys.has(key) || val == undefined) {
+				delete entry[key];
+			}
+		});
+
+		return entry;
+	};
+}
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({		
-		importDomainPerms: build.mutation<any, DomainPermsImportForm>({
+		importDomainPerms: build.mutation<MappedDomainPerms, DomainPermsImportForm>({
 			query: (formData) => {
 				// Add/replace comments, remove internal keys.
-				const process = entryProcessor(formData);
+				const process = importEntriesProcessor(formData);
 				const domains = formData.domains.map(process);
 
 				return {
 					method: "POST",
-					url: `/api/v1/admin/domain_${formData.perm_type}s`,
+					url: `/api/v1/admin/domain_${formData.permType}s`,
 					asForm: true,
 					discardEmpty: true,
 					body: {
@@ -46,14 +114,15 @@ const extended = gtsApi.injectEndpoints({
 					}
 				};
 			},
-			transformResponse: domainPermsToObject,
+			transformResponse: listToKeyedObject<DomainPerm>("domain"),
 			...replaceCacheOnMutation("instanceBlocks")
 		})
 	})
 });
 
 /**
- * POST domain permissions to /api/v1/admin/domain_{perm_type}s.
+ * POST domain permissions to /api/v1/admin/domain_{permType}s.
+ * Returns the newly created permissions.
  */
 const useImportDomainPermsMutation = extended.useImportDomainPermsMutation;
 

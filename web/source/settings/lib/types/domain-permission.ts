@@ -54,7 +54,7 @@ export interface DomainPermsImportForm {
 	// Internal keys.
 	obfuscate?: boolean;
 	commentType?: string;
-	perm_type: "block" | "allow";
+	permType: "block" | "allow";
 }
 
 export interface MappedDomainPerms {

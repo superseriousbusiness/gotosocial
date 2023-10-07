@@ -19,17 +19,22 @@
 
 import fileDownload from "js-file-download";
 import { unparse as csvUnparse } from "papaparse";
-import { try as bbTry } from "bluebird";
 
-import { unwrapRes } from "../../lib";
 import { gtsApi } from "../../gts-api";
 import { RootState } from "../../../../redux/store";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { DomainPerm } from "../../../types/domain-permission";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({		
 		exportDomainList: build.mutation({
-			queryFn: (formData, api, _extraOpts, baseQuery) => {
-				let process;
+			async queryFn(formData, api, _extraOpts, fetchWithBQ) {
+				let process: {
+					transformEntry: (entry: DomainPerm) => any;
+					stringify: (list: any[]) => string;
+					extension: string;
+					mime: string;
+				};
 
 				if (formData.exportType == "json") {
 					process = {
@@ -47,8 +52,8 @@ const extended = gtsApi.injectEndpoints({
 						transformEntry: (entry) => [
 							entry.domain,
 							"suspend", // severity
-							false, // reject_media
-							false, // reject_reports
+							false,     // reject_media
+							false,     // reject_reports
 							entry.public_comment,
 							entry.obfuscate ?? false
 						],
@@ -68,44 +73,47 @@ const extended = gtsApi.injectEndpoints({
 					};
 				}
 
-				return bbTry(() => {
-					return baseQuery({
-						url: `/api/v1/admin/domain_blocks`
-					});
-				}).then(unwrapRes).then((blockedInstances) => {
-					return blockedInstances.map(process.transformEntry);
-				}).then((exportList) => {
-					return process.stringify(exportList);
-				}).then((exportAsString) => {
-					if (formData.action == "export") {
-						return {
-							data: exportAsString
-						};
-					} else if (formData.action == "export-file") {
-						const state = api.getState() as RootState;
-						const instanceUrl = state.oauth.instanceUrl?? "unknown";
-
-						let domain = new URL(instanceUrl).host;
-						let date = new Date();
-
-						let filename = [
-							domain,
-							"blocklist",
-							date.getFullYear(),
-							(date.getMonth() + 1).toString().padStart(2, "0"),
-							date.getDate().toString().padStart(2, "0"),
-						].join("-");
-
-						fileDownload(
-							exportAsString,
-							filename + process.extension,
-							process.mime
-						);
-					}
-					return { data: null };
-				}).catch((e) => {
-					return { error: e };
+				// Fetch domain perms from relevant endpoint.
+				// We could have used 'useGetDomainBlocksQuery'
+				// or 'useGetDomainAllowsQuery' for this, but
+				// we want the untransformed array version.
+				const domainPermsResult = await fetchWithBQ({
+					url: `/api/v1/admin/domain_blocks`
 				});
+				if (domainPermsResult.error) {
+					return { error: domainPermsResult.error as FetchBaseQueryError };
+				}
+
+				// Process domain perms into desired format.
+				let domainPerms = domainPermsResult.data as DomainPerm[];
+				const transformed = domainPerms.map(process.transformEntry);
+
+				const exportAsString = process.stringify(transformed)
+
+				if (formData.action == "export") {
+					return { data: exportAsString };
+				} else if (formData.action == "export-file") {
+					const state = api.getState() as RootState;
+					const instanceUrl = state.oauth.instanceUrl?? "unknown";
+	
+					let domain = new URL(instanceUrl).host;
+					let date = new Date();
+	
+					let filename = [
+						domain,
+						"blocklist",
+						date.getFullYear(),
+						(date.getMonth() + 1).toString().padStart(2, "0"),
+						date.getDate().toString().padStart(2, "0"),
+					].join("-");
+	
+					fileDownload(
+						exportAsString,
+						filename + process.extension,
+						process.mime
+					);
+				}
+				return { data: null };
 			}
 		}),
 	})

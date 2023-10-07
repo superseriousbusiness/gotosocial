@@ -42,8 +42,8 @@ const CheckList = require("../../../components/check-list");
 const MutationButton = require("../../../components/form/mutation-button");
 const FormWithData = require("../../../lib/form/form-with-data");
 
-const { useGetDomainBlocksQuery } = require("../../../lib/query/admin/domain-permissions/get");
 const { useImportDomainPermsMutation } = require("../../../lib/query/admin/domain-permissions/import");
+const { useGetDomainBlocksQuery } = require("../../../lib/query/admin/domain-permissions/get");
 
 module.exports = React.memo(
 	function ProcessImport({ list }) {

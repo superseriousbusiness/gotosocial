@@ -34,7 +34,8 @@ const ImportExportForm = require("./form");
 module.exports = function ImportExport({ baseUrl }) {
 	const form = {
 		domains: useTextInput("domains"),
-		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true })
+		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true }),
+		permType: useTextInput("permType", { defaultValue: "block" })
 	};
 
 	const [submitParse, parseResult] = useFormSubmit(form, useProcessDomainPermissionsMutation(), { changedOnly: false });

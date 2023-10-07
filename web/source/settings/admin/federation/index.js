@@ -22,12 +22,12 @@ const { Switch, Route } = require("wouter");
 
 const InstanceOverview = require("./overview");
 const InstanceDetail = require("./detail");
-const InstanceImportExport = require("./import-export");
+const InstanceImportExport = require("./domain-permissions");
 
 module.exports = function Federation({ baseUrl }) {
 	return (
 		<Switch>
-			<Route path={`${baseUrl}/import-export/:list?`}>
+			<Route path={`${baseUrl}/domain-permissions/import-export/:list?`}>
 				<InstanceImportExport />
 			</Route>
 

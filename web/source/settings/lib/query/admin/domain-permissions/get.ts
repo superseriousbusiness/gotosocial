@@ -18,22 +18,26 @@
 */
 
 import { gtsApi } from "../../gts-api";
-import { domainPermsToObject } from "./transforms";
 
-import type { MappedDomainPerms } from "../../../types/domain-permission";
+import type { DomainPerm, MappedDomainPerms } from "../../../types/domain-permission";
+import { listToKeyedObject } from "../../transforms";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
-        getDomainBlocks: build.query<MappedDomainPerms, void | null>({
-            query: () => `/api/v1/admin/domain_blocks`,
-            transformResponse: domainPermsToObject,
-        }),
+		getDomainBlocks: build.query<MappedDomainPerms, void | null>({
+			query: () => ({
+				url: `/api/v1/admin/domain_blocks`
+			}),
+			transformResponse: listToKeyedObject<DomainPerm>("domain"),
+		}),
 
-        getDomainAllows: build.query<MappedDomainPerms, void | null>({
-            query: () => `/api/v1/admin/domain_allows`,
-            transformResponse: domainPermsToObject,
-        }),
-    }),
+		getDomainAllows: build.query<MappedDomainPerms, void | null>({
+			query: () => ({
+				url: `/api/v1/admin/domain_allows`
+			}),
+			transformResponse: listToKeyedObject<DomainPerm>("domain"),
+		}),
+	}),
 });
 
 /**

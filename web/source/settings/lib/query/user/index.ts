@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { replaceCacheOnMutation } from "../lib";
+import { replaceCacheOnMutation } from "../query-modifiers";
 import { gtsApi } from "../gts-api";
 
 const extended = gtsApi.injectEndpoints({

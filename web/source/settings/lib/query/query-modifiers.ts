@@ -17,24 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import syncpipe from "syncpipe";
 import { gtsApi } from "./gts-api";
-
-export function unwrapRes(res) {
-	if (res.error != undefined) {
-		throw res.error;
-	} else {
-		return res.data;
-	}
-}
-
-export function idListToObject(data) {
-	// Turn flat Array into Object keyed by entry id field
-	return syncpipe(data, [
-		(_) => _.map((entry) => [entry.id, entry]),
-		(_) => Object.fromEntries(_)
-	]);
-}
 
 export const replaceCacheOnMutation = makeCacheMutation((draft, newData) => {
 	Object.assign(draft, newData);
@@ -60,9 +43,18 @@ export const editCacheOnMutation = makeCacheMutation((draft, newData, { update }
 	update(draft, newData);
 });
 
-// https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
-function makeCacheMutation(action) {
-	return function cacheMutation(queryName, { key, findKey, arg, ...opts } = {}) {
+/**
+ * https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
+ */
+function makeCacheMutation(action: (draft, newData) => ) {
+	interface cMut {
+		key?: string;
+		findKey?: Function;
+		arg?: any;
+		opts?: Object;
+	}
+	
+	return function cacheMutation(queryName, { key, findKey, arg, ...opts }: cMut = {}) {
 		return {
 			onQueryStarted: (_, { dispatch, queryFulfilled }) => {
 				queryFulfilled.then(({ data: newData }) => {

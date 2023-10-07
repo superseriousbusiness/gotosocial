@@ -17,8 +17,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { replaceCacheOnMutation, removeFromCacheOnMutation, idListToObject } from "../lib";
+import { replaceCacheOnMutation, removeFromCacheOnMutation } from "../query-modifiers";
 import { gtsApi } from "../gts-api";
+import { listToKeyedObject } from "../transforms";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (builder) => ({
@@ -116,7 +117,7 @@ const extended = gtsApi.injectEndpoints({
 			query: () => ({
 				url: `/api/v1/admin/instance/rules`
 			}),
-			transformResponse: idListToObject
+			transformResponse: listToKeyedObject<any>("id")
 		}),
 
 		addInstanceRule: builder.mutation({
