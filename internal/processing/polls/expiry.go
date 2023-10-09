@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -29,8 +30,13 @@ import (
 )
 
 func (p *Processor) ScheduleAll(ctx context.Context) error {
+	// Fetch all open polls from the database (barebones models are enough).
+	polls, err := p.state.DB.GetOpenPolls(gtscontext.SetBarebones(ctx))
+	if err != nil {
+		return gtserror.Newf("error getting open polls from db: %w", err)
+	}
+
 	var errs gtserror.MultiError
-	var polls []*gtsmodel.Poll
 
 	for _, poll := range polls {
 		// Schedule each of the polls and catch any errors.
@@ -43,8 +49,8 @@ func (p *Processor) ScheduleAll(ctx context.Context) error {
 }
 
 func (p *Processor) ScheduleExpiry(ctx context.Context, poll *gtsmodel.Poll) error {
-	// Ensure poll has a valid expiry time...
-	if poll.ExpiresAt.After(time.Now()) {
+	// Ensure has a valid expiry.
+	if !poll.ClosedAt.IsZero() {
 		return gtserror.Newf("poll %s already expired", poll.ID)
 	}
 

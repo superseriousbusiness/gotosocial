@@ -87,6 +87,36 @@ func (p *pollDB) getPoll(ctx context.Context, lookup string, dbQuery func(*gtsmo
 	return poll, nil
 }
 
+func (p *pollDB) GetOpenPolls(ctx context.Context) ([]*gtsmodel.Poll, error) {
+	var pollIDs []string
+
+	// Select all polls with unset `closed_at` time.
+	if err := p.db.NewSelect().
+		Table("polls").
+		Column("id").
+		Where("? IS NULL", bun.Ident("closed_at")).
+		Scan(ctx, &pollIDs); err != nil {
+		return nil, err
+	}
+
+	// Preallocate a slice to contain the poll models.
+	polls := make([]*gtsmodel.Poll, 0, len(pollIDs))
+
+	for _, id := range pollIDs {
+		// Attempt to fetch poll from DB.
+		poll, err := p.GetPollByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting poll %s: %v", id, err)
+			continue
+		}
+
+		// Append poll to return slice.
+		polls = append(polls, poll)
+	}
+
+	return polls, nil
+}
+
 func (p *pollDB) PopulatePoll(ctx context.Context, poll *gtsmodel.Poll) error {
 	var (
 		err  error
