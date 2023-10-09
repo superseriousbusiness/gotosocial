@@ -49,12 +49,12 @@ func SetJSONLDId(with WithJSONLDId, id string) {
 // GetTo returns the IRIs contained in the To property of 'with'. Panics on entries with missing ID.
 func GetTo(with WithTo) []*url.URL {
 	toProp := with.GetActivityStreamsTo()
-	return GetIRIs(toProp)
+	return getIRIs[vocab.ActivityStreamsToPropertyIterator](toProp)
 }
 
 // AppendTo appends the given IRIs to the To property of 'with'.
 func AppendTo(with WithTo, to ...*url.URL) {
-	AppendIRIs(func() Property[vocab.ActivityStreamsToPropertyIterator] {
+	appendIRIs(func() Property[vocab.ActivityStreamsToPropertyIterator] {
 		toProp := with.GetActivityStreamsTo()
 		if toProp == nil {
 			toProp = streams.NewActivityStreamsToProperty()
@@ -66,12 +66,12 @@ func AppendTo(with WithTo, to ...*url.URL) {
 // GetCc returns the IRIs contained in the Cc property of 'with'. Panics on entries with missing ID.
 func GetCc(with WithCc) []*url.URL {
 	ccProp := with.GetActivityStreamsCc()
-	return GetIRIs(ccProp)
+	return getIRIs[vocab.ActivityStreamsCcPropertyIterator](ccProp)
 }
 
 // AppendCc appends the given IRIs to the Cc property of 'with'.
 func AppendCc(with WithCc, cc ...*url.URL) {
-	AppendIRIs(func() Property[vocab.ActivityStreamsCcPropertyIterator] {
+	appendIRIs(func() Property[vocab.ActivityStreamsCcPropertyIterator] {
 		ccProp := with.GetActivityStreamsCc()
 		if ccProp == nil {
 			ccProp = streams.NewActivityStreamsCcProperty()
@@ -83,12 +83,12 @@ func AppendCc(with WithCc, cc ...*url.URL) {
 // GetBcc returns the IRIs contained in the Bcc property of 'with'. Panics on entries with missing ID.
 func GetBcc(with WithBcc) []*url.URL {
 	bccProp := with.GetActivityStreamsBcc()
-	return GetIRIs(bccProp)
+	return getIRIs[vocab.ActivityStreamsBccPropertyIterator](bccProp)
 }
 
 // AppendBcc appends the given IRIs to the Bcc property of 'with'.
 func AppendBcc(with WithBcc, bcc ...*url.URL) {
-	AppendIRIs(func() Property[vocab.ActivityStreamsBccPropertyIterator] {
+	appendIRIs(func() Property[vocab.ActivityStreamsBccPropertyIterator] {
 		bccProp := with.GetActivityStreamsBcc()
 		if bccProp == nil {
 			bccProp = streams.NewActivityStreamsBccProperty()
@@ -100,12 +100,12 @@ func AppendBcc(with WithBcc, bcc ...*url.URL) {
 // GetActor returns the IRIs contained in the Actor property of 'with'. Panics on entries with missing ID.
 func GetActor(with WithActor) []*url.URL {
 	actorProp := with.GetActivityStreamsActor()
-	return GetIRIs(actorProp)
+	return getIRIs[vocab.ActivityStreamsActorPropertyIterator](actorProp)
 }
 
 // AppendActor appends the given IRIs to the Actor property of 'with'.
 func AppendActor(with WithActor, actor ...*url.URL) {
-	AppendIRIs(func() Property[vocab.ActivityStreamsActorPropertyIterator] {
+	appendIRIs(func() Property[vocab.ActivityStreamsActorPropertyIterator] {
 		actorProp := with.GetActivityStreamsActor()
 		if actorProp == nil {
 			actorProp = streams.NewActivityStreamsActorProperty()
@@ -117,12 +117,12 @@ func AppendActor(with WithActor, actor ...*url.URL) {
 // GetAttributedTo returns the IRIs contained in the AttributedTo property of 'with'. Panics on entries with missing ID.
 func GetAttributedTo(with WithAttributedTo) []*url.URL {
 	attribProp := with.GetActivityStreamsAttributedTo()
-	return GetIRIs(attribProp)
+	return getIRIs[vocab.ActivityStreamsAttributedToPropertyIterator](attribProp)
 }
 
 // AppendAttributedTo appends the given IRIs to the AttributedTo property of 'with'.
 func AppendAttributedTo(with WithAttributedTo, attribTo ...*url.URL) {
-	AppendIRIs(func() Property[vocab.ActivityStreamsAttributedToPropertyIterator] {
+	appendIRIs(func() Property[vocab.ActivityStreamsAttributedToPropertyIterator] {
 		attribProp := with.GetActivityStreamsAttributedTo()
 		if attribProp == nil {
 			attribProp = streams.NewActivityStreamsAttributedToProperty()
@@ -134,12 +134,12 @@ func AppendAttributedTo(with WithAttributedTo, attribTo ...*url.URL) {
 // GetInReplyTo returns the IRIs contained in the InReplyTo property of 'with'. Panics on entries with missing ID.
 func GetInReplyTo(with WithInReplyTo) []*url.URL {
 	replyProp := with.GetActivityStreamsInReplyTo()
-	return GetIRIs(replyProp)
+	return getIRIs[vocab.ActivityStreamsInReplyToPropertyIterator](replyProp)
 }
 
 // AppendInReplyTo appends the given IRIs to the InReplyTo property of 'with'.
 func AppendInReplyTo(with WithInReplyTo, replyTo ...*url.URL) {
-	AppendIRIs(func() Property[vocab.ActivityStreamsInReplyToPropertyIterator] {
+	appendIRIs(func() Property[vocab.ActivityStreamsInReplyToPropertyIterator] {
 		replyProp := with.GetActivityStreamsInReplyTo()
 		if replyProp == nil {
 			replyProp = streams.NewActivityStreamsInReplyToProperty()
@@ -148,15 +148,7 @@ func AppendInReplyTo(with WithInReplyTo, replyTo ...*url.URL) {
 	}, replyTo...)
 }
 
-type Property[T TypeOrIRI] interface {
-	Len() int
-	At(int) T
-
-	AppendIRI(*url.URL)
-	SetIRI(int, *url.URL)
-}
-
-func GetIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
+func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
 	if prop == nil || prop.Len() == 0 {
 		return nil
 	}
@@ -168,7 +160,7 @@ func GetIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
 	return ids
 }
 
-func AppendIRIs[T TypeOrIRI](getProp func() Property[T], iri ...*url.URL) {
+func appendIRIs[T TypeOrIRI](getProp func() Property[T], iri ...*url.URL) {
 	if len(iri) == 0 {
 		return
 	}

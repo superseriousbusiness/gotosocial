@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type WrapTestSuite struct {
@@ -36,7 +37,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
 	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
 	suite.NoError(err)
 
-	create, err := suite.typeconverter.WrapStatusableInCreate(note, true)
+	create := typeutils.WrapStatusableInCreate(note, true)
 	suite.NoError(err)
 	suite.NotNil(create)
 
@@ -64,7 +65,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
 	suite.NoError(err)
 
-	create, err := suite.typeconverter.WrapStatusableInCreate(note, false)
+	create := typeutils.WrapStatusableInCreate(note, false)
 	suite.NoError(err)
 	suite.NotNil(create)
 

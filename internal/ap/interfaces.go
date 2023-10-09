@@ -324,6 +324,15 @@ type TypeOrIRI interface {
 	WithType
 }
 
+// Property represents the minimum interface for an ActivityStreams property with IRIs.
+type Property[T TypeOrIRI] interface {
+	Len() int
+	At(int) T
+
+	AppendIRI(*url.URL)
+	SetIRI(int, *url.URL)
+}
+
 // WithJSONLDId represents an activity with JSONLDIdProperty.
 type WithJSONLDId interface {
 	GetJSONLDId() vocab.JSONLDIdProperty

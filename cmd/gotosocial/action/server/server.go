@@ -132,7 +132,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	oauthServer := oauth.New(ctx, dbService)
 	typeConverter := typeutils.NewConverter(&state)
 	filter := visibility.NewFilter(&state)
-	federatingDB := federatingdb.New(&state, typeConverter)
+	federatingDB := federatingdb.New(&state, typeConverter, filter)
 	transportController := transport.NewController(&state, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(&state, federatingDB, transportController, typeConverter, mediaManager)
 
