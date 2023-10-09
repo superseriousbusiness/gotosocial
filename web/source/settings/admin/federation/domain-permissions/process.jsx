@@ -112,7 +112,7 @@ function ImportList({ list, data: blockedInstances }) {
 		}),
 	};
 
-	const [importDomains, importResult] = useFormSubmit(form, useImportDomainPermsMutation, { changedOnly: false });
+	const [importDomains, importResult] = useFormSubmit(form, useImportDomainPermsMutation(), { changedOnly: false });
 
 	return (
 		<>

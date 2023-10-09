@@ -62,7 +62,7 @@ function AdminSettingsForm({ data: instance }) {
 		terms: useTextInput("terms", { source: instance })
 	};
 
-	const [submitForm, result] = useFormSubmit(form, useUpdateInstanceMutation);
+	const [submitForm, result] = useFormSubmit(form, useUpdateInstanceMutation());
 
 	return (
 		<form onSubmit={submitForm}>
