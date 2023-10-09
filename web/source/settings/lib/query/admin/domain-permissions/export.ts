@@ -39,7 +39,7 @@ interface _exportProcess {
  * @param formData 
  * @returns 
  */
-function exportProcess(formData): _exportProcess {
+function exportProcess(formData: ExportDomainPermsParams): _exportProcess {
 	if (formData.exportType == "json") {
 		return {
 			transformEntry: (entry) => ({

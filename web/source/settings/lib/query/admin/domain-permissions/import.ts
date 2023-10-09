@@ -21,10 +21,10 @@ import { replaceCacheOnMutation } from "../../query-modifiers";
 import { gtsApi } from "../../gts-api";
 
 import {
-	DomainPermInternalKeys,
 	type DomainPerm,
-	type DomainPermsImportForm,
+	type ImportDomainPermsParams,
 	type MappedDomainPerms,
+	isDomainPermInternalKey,
 } from "../../../types/domain-permission";
 import { listToKeyedObject } from "../../transforms";
 
@@ -35,7 +35,7 @@ import { listToKeyedObject } from "../../transforms";
  * @param formData 
  * @returns 
  */
-export function importEntriesProcessor(formData: DomainPermsImportForm): (_entry: DomainPerm) => DomainPerm {
+export function importEntriesProcessor(formData: ImportDomainPermsParams): (_entry: DomainPerm) => DomainPerm {
 	let processingFuncs: { (_entry: DomainPerm): void; }[] = [];
 
 	// Override each obfuscate entry if necessary.
@@ -82,8 +82,8 @@ export function importEntriesProcessor(formData: DomainPermsImportForm): (_entry
 
 		// Unset all internal processing keys
 		// and any undefined keys on this entry.
-		Object.entries(entry).forEach(([key, val]) => {
-			if (DomainPermInternalKeys.has(key) || val == undefined) {
+		Object.entries(entry).forEach(([key, val]: [keyof DomainPerm, any]) => {			
+			if (val == undefined || isDomainPermInternalKey(key)) {
 				delete entry[key];
 			}
 		});
@@ -94,7 +94,7 @@ export function importEntriesProcessor(formData: DomainPermsImportForm): (_entry
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({		
-		importDomainPerms: build.mutation<MappedDomainPerms, DomainPermsImportForm>({
+		importDomainPerms: build.mutation<MappedDomainPerms, ImportDomainPermsParams>({
 			query: (formData) => {
 				// Add/replace comments, remove internal keys.
 				const process = importEntriesProcessor(formData);
@@ -115,7 +115,7 @@ const extended = gtsApi.injectEndpoints({
 				};
 			},
 			transformResponse: listToKeyedObject<DomainPerm>("domain"),
-			...replaceCacheOnMutation("instanceBlocks")
+			...replaceCacheOnMutation("domainBlocks")
 		})
 	})
 });

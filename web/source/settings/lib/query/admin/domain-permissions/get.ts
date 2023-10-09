@@ -51,6 +51,6 @@ const useGetDomainBlocksQuery = extended.useGetDomainBlocksQuery;
 const useGetDomainAllowsQuery = extended.useGetDomainAllowsQuery;
 
 export {
-    useGetDomainBlocksQuery,
-    useGetDomainAllowsQuery,
-}
+	useGetDomainBlocksQuery,
+	useGetDomainAllowsQuery,
+};

@@ -54,36 +54,6 @@ const extended = gtsApi.injectEndpoints({
 			})
 		}),
 
-		addInstanceBlock: builder.mutation({
-			query: (formData) => ({
-				method: "POST",
-				url: `/api/v1/admin/domain_blocks`,
-				asForm: true,
-				body: formData,
-				discardEmpty: true
-			}),
-			transformResponse: (data) => {
-				return {
-					[data.domain]: data
-				};
-			},
-			...replaceCacheOnMutation("instanceBlocks")
-		}),
-
-		removeInstanceBlock: builder.mutation({
-			query: (id) => ({
-				method: "DELETE",
-				url: `/api/v1/admin/domain_blocks/${id}`,
-			}),
-			...removeFromCacheOnMutation("instanceBlocks", {
-				findKey: (_draft, newData) => {
-					return newData.domain;
-				},
-				key: undefined,
-				arg: undefined,
-			})
-		}),
-
 		getAccount: builder.query({
 			query: (id) => ({
 				url: `/api/v1/accounts/${id}`
@@ -170,8 +140,6 @@ export const {
 	useUpdateInstanceMutation,
 	useMediaCleanupMutation,
 	useInstanceKeysExpireMutation,
-	useAddInstanceBlockMutation,
-	useRemoveInstanceBlockMutation,
 	useGetAccountQuery,
 	useActionAccountMutation,
 	useSearchAccountMutation,

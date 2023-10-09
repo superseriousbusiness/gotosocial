@@ -46,7 +46,7 @@ export const editCacheOnMutation = makeCacheMutation((draft, newData, { update }
 /**
  * https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
  */
-function makeCacheMutation(action: (draft, newData) => ) {
+function makeCacheMutation(action: (draft, newData) => void) {
 	interface cMut {
 		key?: string;
 		findKey?: Function;

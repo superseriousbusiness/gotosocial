@@ -21,15 +21,22 @@ import typia from "typia";
 
 export const isDomainPerms = typia.createIs<DomainPerm[]>();
 
+export type PermType = "block" | "allow";
+
+/**
+ * A single domain permission entry (block or allow).
+ */
 export interface DomainPerm {
+	id?: string;
 	domain: string;
 	obfuscate?: boolean;
 	private_comment?: string;
 	public_comment?: string;
 
-	// Internal keys, remove before
-	// submission of domain perm.
+	// Internal processing keys; remove
+	// before serdes of domain perm.
 	key?: string;
+	permType?: PermType;
 	suggest?: string;
 	valid?: boolean;
 	checked?: boolean;
@@ -38,8 +45,17 @@ export interface DomainPerm {
 	public_comment_behavior?: "append" | "replace";
 }
 
-export const DomainPermInternalKeys = new Set([
+/**
+ * Domain permissions mapped to an Object where the Object
+ * keys are the "domain" value of each DomainPerm.
+ */
+export interface MappedDomainPerms {
+	[key: string]: DomainPerm;
+}
+
+const domainPermInternalKeys: Set<keyof DomainPerm> = new Set([
 	"key",
+	"permType",
 	"suggest",
 	"valid",
 	"checked",
@@ -48,23 +64,33 @@ export const DomainPermInternalKeys = new Set([
 	"public_comment_behavior",
 ]);
 
-export interface DomainPermsImportForm {
-	domains: DomainPerm[];
-
-	// Internal keys.
-	obfuscate?: boolean;
-	commentType?: string;
-	permType: "block" | "allow";
+/**
+ * Returns true if provided DomainPerm Object key is
+ * "internal"; ie., it's just for our use, and it shouldn't
+ * be serialized to or deserialized from the GtS API.
+ * 
+ * @param key 
+ * @returns 
+ */
+export function isDomainPermInternalKey(key: keyof DomainPerm) {
+	return domainPermInternalKeys.has(key);
 }
 
-export interface MappedDomainPerms {
-	[key: string]: DomainPerm;
+export interface ImportDomainPermsParams {
+	domains: DomainPerm[];
+
+	// Internal processing keys;
+	// remove before serdes of form.
+	obfuscate?: boolean;
+	commentType?: string;
+	permType: PermType;
 }
 
 /**
  * Model domain permissions bulk export params.
  */
 export interface ExportDomainPermsParams {
+	permType: PermType;
 	action: "export" | "export-file";
-	permType: "block" | "allow";
+	exportType: "json" | "csv" | "plain";
 }

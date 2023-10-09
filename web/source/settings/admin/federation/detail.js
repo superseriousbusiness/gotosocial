@@ -29,12 +29,9 @@ const { TextInput, Checkbox, TextArea } = require("../../components/form/inputs"
 const Loading = require("../../components/loading");
 const BackButton = require("../../components/back-button");
 const MutationButton = require("../../components/form/mutation-button");
-const { 
-	useAddInstanceBlockMutation,
-	useRemoveInstanceBlockMutation,
-} = require("../../lib/query/admin");
 
 const { useGetDomainBlocksQuery } = require("../../lib/query/admin/domain-permissions/get");
+const { useAddDomainBlockMutation, useRemoveDomainBlockMutation } = require("../../lib/query/admin/domain-permissions/update");
 
 module.exports = function InstanceDetail({ baseUrl }) {
 	const { data: blockedInstances = {}, isLoading } = useGetDomainBlocksQuery();
@@ -97,9 +94,9 @@ function DomainBlockForm({ defaultDomain, block = {}, baseUrl }) {
 		commentPublic: useTextInput("public_comment", { source: block })
 	};
 
-	const [submitForm, addResult] = useFormSubmit(form, useAddInstanceBlockMutation(), { changedOnly: false });
+	const [submitForm, addResult] = useFormSubmit(form, useAddDomainBlockMutation(), { changedOnly: false });
 
-	const [removeBlock, removeResult] = useRemoveInstanceBlockMutation({ fixedCacheKey: block.id });
+	const [removeBlock, removeResult] = useRemoveDomainBlockMutation({ fixedCacheKey: block.id });
 
 	const [location, setLocation] = useLocation();
 
@@ -164,8 +161,10 @@ function DomainBlockForm({ defaultDomain, block = {}, baseUrl }) {
 				}
 			</div>
 
-			{addResult.error && <Error error={addResult.error} />}
-			{removeResult.error && <Error error={removeResult.error} />}
+			<>
+				{addResult.error && <Error error={addResult.error} />}
+				{removeResult.error && <Error error={removeResult.error} />}
+			</>
 
 		</form>
 	);
