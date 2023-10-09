@@ -36,6 +36,9 @@ type Poll interface {
 	// PutPoll puts the given Poll in the database.
 	PutPoll(ctx context.Context, poll *gtsmodel.Poll) error
 
+	// UpdatePoll updates the Poll in the database, only on selected columns if provided (else, all).
+	UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...string) error
+
 	// DeletePollByID deletes the Poll with given ID from the database.
 	DeletePollByID(ctx context.Context, id string) error
 

@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -110,6 +111,25 @@ func (p *pollDB) PutPoll(ctx context.Context, poll *gtsmodel.Poll) error {
 	return p.state.Caches.GTS.Poll().Store(poll, func() error {
 		_, err := p.db.NewInsert().Model(poll).Exec(ctx)
 		return err
+	})
+}
+
+func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...string) error {
+	return p.state.Caches.GTS.Poll().Store(poll, func() error {
+		return p.db.RunInTx(ctx, func(tx Tx) error {
+			// Update the status' "updated_at" field.
+			if _, err := tx.NewUpdate().
+				Table("statuses").
+				Where("? = ?", bun.Ident("id"), poll.StatusID).
+				SetColumn("updated_at", "?", time.Now()).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			// Finally, update the poll columns in database.
+			_, err := tx.NewUpdate().Model(poll).Column(cols...).Exec(ctx)
+			return err
+		})
 	})
 }
 

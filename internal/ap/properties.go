@@ -19,6 +19,7 @@ package ap
 
 import (
 	"net/url"
+	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -58,6 +59,7 @@ func AppendTo(with WithTo, to ...*url.URL) {
 		toProp := with.GetActivityStreamsTo()
 		if toProp == nil {
 			toProp = streams.NewActivityStreamsToProperty()
+			with.SetActivityStreamsTo(toProp)
 		}
 		return toProp
 	}, to...)
@@ -75,6 +77,7 @@ func AppendCc(with WithCc, cc ...*url.URL) {
 		ccProp := with.GetActivityStreamsCc()
 		if ccProp == nil {
 			ccProp = streams.NewActivityStreamsCcProperty()
+			with.SetActivityStreamsCc(ccProp)
 		}
 		return ccProp
 	}, cc...)
@@ -92,6 +95,7 @@ func AppendBcc(with WithBcc, bcc ...*url.URL) {
 		bccProp := with.GetActivityStreamsBcc()
 		if bccProp == nil {
 			bccProp = streams.NewActivityStreamsBccProperty()
+			with.SetActivityStreamsBcc(bccProp)
 		}
 		return bccProp
 	}, bcc...)
@@ -109,6 +113,7 @@ func AppendActor(with WithActor, actor ...*url.URL) {
 		actorProp := with.GetActivityStreamsActor()
 		if actorProp == nil {
 			actorProp = streams.NewActivityStreamsActorProperty()
+			with.SetActivityStreamsActor(actorProp)
 		}
 		return actorProp
 	}, actor...)
@@ -126,6 +131,7 @@ func AppendAttributedTo(with WithAttributedTo, attribTo ...*url.URL) {
 		attribProp := with.GetActivityStreamsAttributedTo()
 		if attribProp == nil {
 			attribProp = streams.NewActivityStreamsAttributedToProperty()
+			with.SetActivityStreamsAttributedTo(attribProp)
 		}
 		return attribProp
 	}, attribTo...)
@@ -143,9 +149,55 @@ func AppendInReplyTo(with WithInReplyTo, replyTo ...*url.URL) {
 		replyProp := with.GetActivityStreamsInReplyTo()
 		if replyProp == nil {
 			replyProp = streams.NewActivityStreamsInReplyToProperty()
+			with.SetActivityStreamsInReplyTo(replyProp)
 		}
 		return replyProp
 	}, replyTo...)
+}
+
+// GetEndTime returns the time contained in the EndTime property of 'with'.
+func GetEndTime(with WithEndTime) time.Time {
+	endTimeProp := with.GetActivityStreamsEndTime()
+	if endTimeProp == nil {
+		return time.Time{}
+	}
+	return endTimeProp.Get()
+}
+
+// SetEndTime sets the given time on the EndTime property of 'with'.
+func SetEndTime(with WithEndTime, end time.Time) {
+	endTimeProp := streams.NewActivityStreamsEndTimeProperty()
+	endTimeProp.Set(end)
+	with.SetActivityStreamsEndTime(endTimeProp)
+}
+
+// GetEndTime returns the times contained in the Closed property of 'with'.
+func GetClosed(with WithClosed) []time.Time {
+	closedProp := with.GetActivityStreamsClosed()
+	if closedProp == nil || closedProp.Len() == 0 {
+		return nil
+	}
+	closed := make([]time.Time, closedProp.Len())
+	for i := 0; i < closedProp.Len(); i++ {
+		at := closedProp.At(i)
+		closed[i] = at.GetXMLSchemaDateTime()
+	}
+	return closed
+}
+
+// AppendClosed appends the given times to the Closed property of 'with'.
+func AppendClosed(with WithClosed, closed ...time.Time) {
+	if len(closed) == 0 {
+		return
+	}
+	closedProp := with.GetActivityStreamsClosed()
+	if closedProp == nil {
+		closedProp = streams.NewActivityStreamsClosedProperty()
+		with.SetActivityStreamsClosed(closedProp)
+	}
+	for _, closed := range closed {
+		closedProp.AppendXMLSchemaDateTime(closed)
+	}
 }
 
 func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {

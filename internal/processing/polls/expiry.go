@@ -21,8 +21,11 @@ import (
 	"context"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (p *Processor) ScheduleAll(ctx context.Context) error {
@@ -49,7 +52,7 @@ func (p *Processor) ScheduleExpiry(ctx context.Context, poll *gtsmodel.Poll) err
 	ok := p.state.Workers.Scheduler.AddOnce(
 		poll.ID,
 		poll.ExpiresAt,
-		p.onExpiry(poll),
+		p.onExpiry(poll.ID),
 	)
 
 	if !ok {
@@ -62,8 +65,41 @@ func (p *Processor) ScheduleExpiry(ctx context.Context, poll *gtsmodel.Poll) err
 }
 
 // onExpiry returns a callback function to be used by the scheduler when the given poll expires.
-func (p *Processor) onExpiry(poll *gtsmodel.Poll) func(context.Context, time.Time) {
-	return func(ctx context.Context, t time.Time) {
-		panic("DO SOMETHING FUCKO")
+func (p *Processor) onExpiry(pollID string) func(context.Context, time.Time) {
+	return func(ctx context.Context, now time.Time) {
+		// Get the latest version of poll from database.
+		poll, err := p.state.DB.GetPollByID(ctx, pollID)
+		if err != nil {
+			log.Errorf(ctx, "error getting poll from db: %v", err)
+			return
+		}
+
+		if !poll.ClosedAt.IsZero() {
+			// Expiry handler has already been run for this poll.
+			log.Errorf(ctx, "poll %s already closed", pollID)
+			return
+		}
+
+		// Set "closed" time.
+		poll.ClosedAt = now
+
+		// Update the Poll to mark it as closed in the database.
+		if err := p.state.DB.UpdatePoll(ctx, poll, "closed_at"); err != nil {
+			log.Errorf(ctx, "error updating poll in db: %v", err)
+			return
+		}
+
+		// Extract status and
+		// set its Poll field.
+		status := poll.Status
+		status.Poll = poll
+
+		// Enqueue a status update operation to the client API worker,
+		// this will asynchronously send an update with the Poll close time.
+		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+			APActivityType: ap.ActivityUpdate,
+			APObjectType:   ap.ObjectNote,
+			GTSModel:       status,
+		})
 	}
 }

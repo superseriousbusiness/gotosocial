@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -705,16 +704,12 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 		optionsProp.AppendActivityStreamsNote(note)
 	}
 
-	// Set the poll endTime property from stored expiry.
-	endProp := streams.NewActivityStreamsEndTimeProperty()
-	endProp.Set(poll.ExpiresAt)
-	dst.SetActivityStreamsEndTime(endProp)
+	// Set poll endTime property.
+	ap.SetEndTime(dst, poll.ExpiresAt)
 
-	if time.Now().After(poll.ExpiresAt) {
-		// If this poll is expired, set the closed time.
-		closedProp := streams.NewActivityStreamsClosedProperty()
-		closedProp.AppendXMLSchemaDateTime(poll.ExpiresAt)
-		dst.SetActivityStreamsClosed(closedProp)
+	if !poll.ClosedAt.IsZero() {
+		// Poll is closed, set closed property.
+		ap.AppendClosed(dst, poll.ClosedAt)
 	}
 
 	// Accumulate total vote count.

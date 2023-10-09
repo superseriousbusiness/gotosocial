@@ -31,6 +31,7 @@ type Poll struct {
 	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`    // Status ID of which this Poll is attached to.
 	Status     *Status   `bun:"-"`                                        // The related Status for StatusID (not always set).
 	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`        // The expiry date of this Poll.
+	ClosedAt   time.Time `bun:"type:timestamptz,nullzero"`                // The closure date of this poll, will be zerotime until set.
 	// no creation date, use attached Status.CreatedAt.
 }
 

@@ -1022,17 +1022,26 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 		return nil, err
 	}
 
-	// Extract the poll ending time property.
-	endTimeProp := poll.GetActivityStreamsEndTime()
-	if endTimeProp == nil {
+	// Extract the poll end time.
+	endTime := GetEndTime(poll)
+	if endTime.IsZero() {
 		return nil, errors.New("no poll end time specified")
+	}
+
+	var closed time.Time
+
+	// Extract the poll closed time (if any).
+	closedSlice := GetClosed(poll)
+	if len(closedSlice) == 1 {
+		closed = closedSlice[0]
 	}
 
 	return &gtsmodel.Poll{
 		Options:    options,
 		Multiple:   &multi,
 		HideCounts: new(bool), // default false
-		ExpiresAt:  endTimeProp.Get(),
+		ExpiresAt:  endTime,
+		ClosedAt:   closed,
 	}, nil
 }
 
