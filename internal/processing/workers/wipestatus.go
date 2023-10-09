@@ -85,15 +85,19 @@ func wipeStatusF(state *state.State, media *media.Processor, surface *surface) w
 			errs.Appendf("error deleting status faves: %w", err)
 		}
 
-		// delete poll of status, and votes of poll
 		if pollID := statusToDelete.PollID; pollID != "" {
+			// Delete this poll by ID from the database.
 			if err := state.DB.DeletePollByID(ctx, pollID); err != nil {
 				errs.Appendf("error deleting status poll: %w", err)
 			}
 
+			// Delete any poll votes pointing to this poll ID.
 			if err := state.DB.DeletePollVotes(ctx, pollID); err != nil {
 				errs.Appendf("error deleting status poll votes: %w", err)
 			}
+
+			// Cancel any scheduled expiry task for poll.
+			_ = state.Workers.Scheduler.Cancel(pollID)
 		}
 
 		// delete all boosts for this status + remove them from timelines

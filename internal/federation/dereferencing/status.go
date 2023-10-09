@@ -653,10 +653,7 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 }
 
 func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gtsmodel.Status) error {
-	var err error
-
-	switch {
-	case existing.Poll != nil:
+	if existing.Poll != nil {
 		// Check poll is up-to-date.
 		if status.Poll != nil &&
 			slices.Equal(existing.Poll.Options, status.Poll.Options) &&
@@ -665,26 +662,31 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 		}
 
 		// Poll has changed from existing to latest. Delete existing!
-		if err = d.state.DB.DeletePollByID(ctx, existing.Poll.ID); err != nil {
+		if err := d.state.DB.DeletePollByID(ctx, existing.Poll.ID); err != nil {
 			return gtserror.Newf("error deleting existing poll from db: %w", err)
 		}
 
 		// Delete any poll votes pointing to the existing poll ID.
-		if err = d.state.DB.DeletePollVotes(ctx, existing.Poll.ID); err != nil {
+		if err := d.state.DB.DeletePollVotes(ctx, existing.Poll.ID); err != nil {
 			return gtserror.Newf("error deleting existing votes from db: %w", err)
 		}
+
+		// Cancel any scheduled expiry task for existing poll.
+		_ = d.state.Workers.Scheduler.Cancel(existing.Poll.ID)
 
 		if status.Poll == nil {
 			// Old poll deleted,
 			// all done here.
 			return nil
 		}
+	}
 
-	// If we reached here, there is no
-	// poll on either of the statuses.
-	case status.Poll == nil:
+	if status.Poll == nil {
+		// no new poll to create.
 		return nil
 	}
+
+	var err error
 
 	// Generate new ID for poll from the status CreatedAt.
 	// TODO: update this to use "edited_at" when we add
