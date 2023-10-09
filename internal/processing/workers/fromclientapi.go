@@ -248,42 +248,23 @@ func (p *clientAPI) CreatePollVotes(ctx context.Context, cMsg messages.FromClien
 		return gtserror.Newf("cannot cast %T -> []*gtsmodel.Pollvote", cMsg.GTSModel)
 	}
 
-	// Extract a vote from slice we
-	// can use to get the origin poll.
+	// Extract any vote.
 	vote := votes[0]
-	poll := vote.Poll
 
-	if poll == nil {
-		var err error
-
-		// Poll was not set on the vote, fetch from db.
-		// (this should be fully populated with status).
-		poll, err = p.state.DB.GetPollByID(ctx, vote.PollID)
-		if err != nil {
-			return gtserror.Newf("error fetching poll from db: %w", err)
-		}
+	// Ensure the vote is fully populated in order to get original poll.
+	if err := p.state.DB.PopulatePollVote(ctx, vote); err != nil {
+		return gtserror.Newf("error populating poll vote from db: %w", err)
 	}
 
-	// Extract the origin
-	// status from poll itself.
-	status := poll.Status
-
-	if status == nil {
-		var err error
-
-		// Status was not set on the poll, fetch from db.
-		status, err = p.state.DB.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			poll.StatusID,
-		)
-		if err != nil {
-			return gtserror.Newf("error fetching status from db: %w", err)
-		}
+	// Ensure the poll on the vote is fully populated to get origin status.
+	if err := p.state.DB.PopulatePoll(ctx, vote.Poll); err != nil {
+		return gtserror.Newf("error populating poll from db: %w", err)
 	}
 
-	// Ensure the status also
-	// contains the poll model.
-	status.Poll = poll
+	// Get the origin status,
+	// (also set the poll on it).
+	status := vote.Poll.Status
+	status.Poll = vote.Poll
 
 	if *status.Local {
 		// These were poll votes in a local status,
@@ -292,12 +273,14 @@ func (p *clientAPI) CreatePollVotes(ctx context.Context, cMsg messages.FromClien
 		//
 		// Handle as a regular status update by
 		// updating the cMsg to contain the status.
+		cMsg.APActivityType = ap.ActivityUpdate
+		cMsg.APObjectType = ap.ObjectNote
 		cMsg.GTSModel = status
 		return p.UpdateStatus(ctx, cMsg)
 	}
 
 	// Respond to origin server with new poll vote(s).
-	return p.federate.CreatePollVotes(ctx, poll, votes)
+	return p.federate.CreatePollVotes(ctx, vote.Poll, votes)
 }
 
 func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClientAPI) error {
