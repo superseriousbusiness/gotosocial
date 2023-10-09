@@ -24,11 +24,11 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-logger/v2/level"
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -137,7 +137,9 @@ func (f *federatingDB) activityCreate(
 		return gtserror.Newf("could not convert asType %T to ActivityStreamsCreate", asType)
 	}
 
-	for _, object := range ap.ExtractObjects(create) {
+	var errs gtserror.MultiError
+
+	for i, object := range ap.ExtractObjects(create) {
 		// Try to get object as vocab.Type,
 		// else skip handling (likely) IRI.
 		objType := object.GetType()
@@ -145,12 +147,142 @@ func (f *federatingDB) activityCreate(
 			continue
 		}
 
-		if statusable, ok := ap.ToStatusable(objType); ok {
-			return f.createStatusable(ctx, statusable, receivingAccount, requestingAccount)
+		// Try cast as a Statusable type, else ignore.
+		statusable, ok := ap.ToStatusable(objType)
+		if !ok {
+			continue
 		}
 
-		// TODO: handle CREATE of other types?
+		// Check if this is a forwarded object, i.e. did
+		// the account making the request also create this?
+		forwarded := !isSender(statusable, requestingAccount)
+
+		// Before handling as status, check if it's actually a
+		// poll option type (i.e. status with "name" but no "content").
+		if option, ok := ap.ToPollOptionable(statusable); ok {
+			if forwarded {
+				// we don't care about forwarded
+				// votes, we only track our own.
+				continue
+			}
+
+			// Handle this CREATE as poll option.
+			if err := f.createPollOptionable(ctx,
+				receivingAccount,
+				requestingAccount,
+				option,
+				i == 0, // first in "object" slice.
+			); err != nil {
+				errs.Append(err)
+			}
+			continue
+		}
+
+		// Else, handle as Statusable CREATE.
+		if err := f.createStatusable(ctx,
+			receivingAccount,
+			requestingAccount,
+			statusable,
+			forwarded,
+		); err != nil {
+			errs.Append(err)
+		}
 	}
+
+	return errs.Combine()
+}
+
+// createPollOptionable handles a Create activity for a PollOptionable.
+// This function doesn't handle database insertion, only validation checks
+// before passing off to a worker for asynchronous processing.
+func (f *federatingDB) createPollOptionable(
+	ctx context.Context,
+	receiver *gtsmodel.Account,
+	requester *gtsmodel.Account,
+	option ap.PollOptionable,
+	firstObject bool,
+) error {
+	// Extract the "inReplyTo" property.
+	inReplyToURIs := ap.GetInReplyTo(option)
+	if len(inReplyToURIs) != 1 {
+		return gtserror.Newf("invalid inReplyTo property length: %d", len(inReplyToURIs))
+	}
+
+	// Stringify the inReplyTo URI.
+	statusURI := inReplyToURIs[0].String()
+
+	// Check database for a reply status by URI.
+	inReplyTo, err := f.state.DB.GetStatusByURI(ctx, statusURI)
+	if err != nil {
+		return gtserror.Newf("error getting poll vote source status %s: %w", statusURI, err)
+	}
+
+	switch {
+	// The origin status isn't a poll?
+	case inReplyTo.PollID == "":
+		return gtserror.Newf("poll vote by in status %s without poll", statusURI)
+
+	// We don't own the poll ...
+	case !*inReplyTo.Local:
+		return gtserror.Newf("poll vote by in remote status %s", statusURI)
+	}
+
+	if firstObject {
+		// This is the first object in the activity slice,
+		// check whether user has already vote in this poll.
+		// (we only check this for the first object, as multiple
+		// may be sent in response to a multiple-choice poll).
+		votes, err := f.state.DB.GetPollVotesBy(
+			gtscontext.SetBarebones(ctx),
+			inReplyTo.PollID,
+			requester.ID,
+		)
+		if err != nil {
+			return gtserror.Newf("error getting existing poll votes: %w", err)
+		}
+
+		if len(votes) > 0 {
+			log.Warnf(ctx, "%s has already voted in poll %s", requester.URI, statusURI)
+			return nil // this is a useful warning for admins to report to us from logs
+		}
+
+		// Before allowing vote, check if user user can *see* the status.
+		visible, err := f.filter.StatusVisible(ctx, requester, inReplyTo)
+		if err != nil {
+			return gtserror.Newf("error checking status visibility: %w", err)
+		}
+
+		if !visible {
+			log.Warnf(ctx, "%s attempting to vote in invisible poll %s", requester.URI, statusURI)
+			return nil // this is a useful warning for admins to report to us from logs
+		}
+	}
+
+	// Extract the poll option name.
+	name := ap.ExtractName(option)
+
+	// Check that this is a valid option name.
+	choice := inReplyTo.Poll.GetChoice(name)
+	if choice == -1 {
+		return gtserror.Newf("poll vote in status %s invalid: %s", statusURI, name)
+	}
+
+	// Enqueue message to the fedi API worker with new poll vote.
+	// TODO: bundling together the poll votes as a singular worker
+	// message would be more efficient (and require less cache
+	// invalidations, but doing so neatly here is a tricky one).
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
+		APActivityType: ap.ActivityCreate,
+		APObjectType:   ap.ActivityQuestion,
+		GTSModel: &gtsmodel.PollVote{
+			ID:        id.NewULID(),
+			Choice:    choice,
+			AccountID: requester.ID,
+			Account:   requester,
+			PollID:    inReplyTo.PollID,
+			Poll:      inReplyTo.Poll,
+		},
+	})
 
 	return nil
 }
@@ -161,87 +293,42 @@ func (f *federatingDB) activityCreate(
 // the processor for further asynchronous processing.
 func (f *federatingDB) createStatusable(
 	ctx context.Context,
+	receiver *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	statusable ap.Statusable,
-	receivingAccount *gtsmodel.Account,
-	requestingAccount *gtsmodel.Account,
+	forwarded bool,
 ) error {
-	// Statusable must have an attributedTo.
-	attrToProp := statusable.GetActivityStreamsAttributedTo()
-	if attrToProp == nil {
-		return gtserror.Newf("statusable had no attributedTo")
-	}
-
-	// Statusable must have an ID.
-	idProp := statusable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return gtserror.Newf("statusable had no id, or id was not a URI")
-	}
-
-	statusableURI := idProp.GetIRI()
-
-	// Check if we have a forward. In other words, was the
-	// statusable posted to our inbox by at least one actor
-	// who actually created it, or are they forwarding it?
-	forward := true
-	for iter := attrToProp.Begin(); iter != attrToProp.End(); iter = iter.Next() {
-		actorURI, err := pub.ToId(iter)
-		if err != nil {
-			return gtserror.Newf("error extracting id from attributedTo entry: %w", err)
-		}
-
-		if requestingAccount.URI == actorURI.String() {
-			// The actor who posted this statusable to our inbox is
-			// (one of) its creator(s), so this is not a forward.
-			forward = false
-			break
-		}
-	}
-
-	// Check if we already have a status entry
-	// for this statusable, based on the ID/URI.
-	statusableURIStr := statusableURI.String()
-	status, err := f.state.DB.GetStatusByURI(ctx, statusableURIStr)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return gtserror.Newf("db error checking existence of status %s: %w", statusableURIStr, err)
-	}
-
-	if status != nil {
-		// We already had this status in the db, no need for further action.
-		log.Trace(ctx, "status already exists: %s", statusableURIStr)
-		return nil
-	}
-
 	// If we do have a forward, we should ignore the content
 	// and instead deref based on the URI of the statusable.
 	//
 	// In other words, don't automatically trust whoever sent
 	// this status to us, but fetch the authentic article from
 	// the server it originated from.
-	if forward {
+	if forwarded {
 		// Pass the statusable URI (APIri) into the processor worker
 		// and do the rest of the processing asynchronously.
 		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityCreate,
-			APIri:            statusableURI,
+			APIri:            ap.GetJSONLDId(statusable),
 			APObjectModel:    nil,
 			GTSModel:         nil,
-			ReceivingAccount: receivingAccount,
+			ReceivingAccount: receiver,
 		})
 		return nil
 	}
 
 	// This is a non-forwarded status we can trust the requester on,
 	// convert this provided statusable data to a useable gtsmodel status.
-	status, err = f.converter.ASStatusToStatus(ctx, statusable)
+	status, err := f.converter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return gtserror.Newf("error converting statusable to status: %w", err)
 	}
 
 	// Check whether we should accept this new status.
 	accept, err := f.shouldAcceptStatusable(ctx,
-		receivingAccount,
-		requestingAccount,
+		receiver,
+		requester,
 		status,
 	)
 	if err != nil {
@@ -284,7 +371,7 @@ func (f *federatingDB) createStatusable(
 		APIri:            nil,
 		APObjectModel:    statusable,
 		GTSModel:         status,
-		ReceivingAccount: receivingAccount,
+		ReceivingAccount: receiver,
 	})
 
 	return nil

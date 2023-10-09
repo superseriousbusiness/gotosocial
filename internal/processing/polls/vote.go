@@ -94,13 +94,11 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Enqueue worker task to handle side-effects of user poll vote(s)
-	// (note this is handled as a NOTE UPDATE activity due to how polls
-	// are represents in ActivityPub, i.e. as an alternative Note type).
+	// Enqueue worker task to handle side-effects of user poll vote(s).
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
-		APObjectType:   ap.ObjectNote,
+		APObjectType:   ap.ActivityQuestion,
 		APActivityType: ap.ActivityUpdate,
-		GTSModel:       poll.Status,
+		GTSModel:       votes, // the vote choices
 		OriginAccount:  requester,
 	})
 

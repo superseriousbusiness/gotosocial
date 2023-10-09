@@ -522,9 +522,6 @@ func (f *Federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 		func(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
 			return f.FederatingDB().Announce(ctx, announce)
 		},
-		func(ctx context.Context, question vocab.ActivityStreamsQuestion) error {
-			return f.FederatingDB().Question(ctx, question)
-		},
 	}
 
 	return

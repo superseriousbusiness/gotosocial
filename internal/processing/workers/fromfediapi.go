@@ -113,6 +113,10 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 		// CREATE FLAG/REPORT
 		case ap.ActivityFlag:
 			return p.fediAPI.CreateFlag(ctx, fMsg)
+
+		// CREATE QUESTION
+		case ap.ActivityQuestion:
+			return p.fediAPI.CreatePollVotes(ctx, fMsg)
 		}
 
 	// UPDATE SOMETHING
@@ -211,13 +215,29 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	return nil
 }
 
+func (p *fediAPI) CreatePollVotes(ctx context.Context, fMsg messages.FromFediAPI) error {
+	// Cast poll vote type from the worker message.
+	vote, ok := fMsg.GTSModel.(*gtsmodel.PollVote)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Pollvote", fMsg.GTSModel)
+	}
+
+	// Insert the new poll vote in the database, in time this
+	// function might be updated to handle > 1 vote at a time
+	// which would make more sense for multiple choice votes.
+	if err := p.state.DB.PutPollVotes(ctx, vote); err != nil {
+		return gtserror.Newf("error inserting poll votes in db: %w", err)
+	}
+
+	return nil
+}
+
 func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
 	// There should be a status pinned to the message:
 	// we've already checked to ensure this is not nil.
 	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
-		err := gtserror.New("Note was not parseable as *gtsmodel.Status")
-		return nil, err
+		return nil, gtserror.Newf("cannot cast %T -> *gtsmodel.Status", fMsg.GTSModel)
 	}
 
 	// AP statusable representation may have also
@@ -226,8 +246,7 @@ func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFedi
 
 	// Call refresh on status to update
 	// it (deref remote) if necessary.
-	var err error
-	status, _, err = p.federate.RefreshStatus(
+	status, _, err := p.federate.RefreshStatus(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		status,
@@ -235,7 +254,7 @@ func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFedi
 		false, // Don't force refresh.
 	)
 	if err != nil {
-		return nil, gtserror.Newf("%w", err)
+		return nil, gtserror.Newf("error refreshing status: %w", err)
 	}
 
 	return status, nil

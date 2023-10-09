@@ -30,6 +30,9 @@ type Poll interface {
 	// GetPollByStatusID fetches the Poll with given status ID column value from the database.
 	GetPollByStatusID(ctx context.Context, statusID string) (*gtsmodel.Poll, error)
 
+	// PopulatePoll ensures the given Poll is fully populated with all other related database models.
+	PopulatePoll(ctx context.Context, poll *gtsmodel.Poll) error
+
 	// PutPoll puts the given Poll in the database.
 	PutPoll(ctx context.Context, poll *gtsmodel.Poll) error
 
@@ -44,6 +47,9 @@ type Poll interface {
 
 	// GetPollVotesBy fetches the PollVotes in Poll with ID, by account ID, from the database.
 	GetPollVotesBy(ctx context.Context, pollID string, accountID string) ([]*gtsmodel.PollVote, error)
+
+	// PopulatePollVote ensures the given PollVote is fully populated with all other related database models.
+	PopulatePollVote(ctx context.Context, votes *gtsmodel.PollVote) error
 
 	// CountPollVotes counts all PollVotes in Poll with ID, keyed by option index, from the database.
 	CountPollVotes(ctx context.Context, pollID string) ([]int, error)

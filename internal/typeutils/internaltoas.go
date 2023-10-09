@@ -1508,11 +1508,7 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 			return nil, err
 		}
 
-		activity, err := c.WrapStatusableInCreate(note, true)
-		if err != nil {
-			return nil, err
-		}
-
+		activity := WrapStatusableInCreate(note, true)
 		asCreate := activity.(vocab.ActivityStreamsCreate)
 		itemsProp.AppendActivityStreamsCreate(asCreate)
 
@@ -1664,4 +1660,69 @@ func (c *Converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (voc
 	flag.SetActivityStreamsObject(objectProp)
 
 	return flag, nil
+}
+
+func (c *Converter) PollVotesToASOptions(ctx context.Context, votes ...*gtsmodel.PollVote) ([]ap.PollOptionable, error) {
+	if len(votes) == 0 {
+		return nil, gtserror.New("no poll votes")
+	}
+
+	// Pick a vote from slice to
+	// fetch the author + poll for.
+	vote := votes[0]
+
+	// Ensure the vote is fully populated (this fetches author).
+	if err := c.state.DB.PopulatePollVote(ctx, vote); err != nil {
+		return nil, gtserror.Newf("error populating vote from db: %w", err)
+	}
+
+	// Get the vote author.
+	author := vote.Account
+
+	// Get the JSONLD ID IRI for author.
+	authorIRI, err := url.Parse(author.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid author uri: %w", err)
+	}
+
+	// Get the vote poll.
+	poll := vote.Poll
+
+	// Ensure the poll is fully populated with status.
+	if err := c.state.DB.PopulatePoll(ctx, poll); err != nil {
+		return nil, gtserror.Newf("error populating poll from db: %w", err)
+	}
+
+	// Get the JSONLD ID IRI for poll's source status.
+	statusIRI, err := url.Parse(poll.Status.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid status uri: %w", err)
+	}
+
+	// Preallocate the return slice of notes.
+	notes := make([]ap.PollOptionable, len(votes))
+
+	for i, vote := range votes {
+		// Create new note to represent vote.
+		note := streams.NewActivityStreamsNote()
+
+		// For AP IRI generate from author URI + ID of the vote.
+		ap.SetJSONLDId(note, author.URI+"#votes/"+vote.ID)
+
+		// Attach new name property to note with vote choice.
+		nameProp := streams.NewActivityStreamsNameProperty()
+		nameProp.AppendXMLSchemaString(poll.Options[vote.Choice])
+		note.SetActivityStreamsName(nameProp)
+
+		// Add the status IRI to reply field.
+		ap.AppendInReplyTo(note, statusIRI)
+
+		// Add the author's IRI to attrib field.
+		ap.AppendAttributedTo(note, authorIRI)
+
+		// Set note in return slice.
+		notes[i] = note
+	}
+
+	return notes, nil
 }

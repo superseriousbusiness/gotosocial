@@ -158,26 +158,52 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 		return err
 	}
 
-	// Convert status to ActivityStreams Statusable implementing type.
+	// Convert status to AS Statusable implementing type.
 	statusable, err := f.converter.StatusToAS(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error converting status to Statusable: %w", err)
 	}
 
-	// Use ActivityStreams Statusable type as Object of Create.
-	create, err := f.converter.WrapStatusableInCreate(statusable, false)
-	if err != nil {
-		return gtserror.Newf("error wrapping Statusable in Create: %w", err)
+	// Send a Create activity with Statusable via the Actor's outbox.
+	create := typeutils.WrapStatusableInCreate(statusable, false)
+	if _, err := f.FederatingActor().Send(ctx, outboxIRI, create); err != nil {
+		return gtserror.Newf("error sending Create activity via outbox %s: %w", outboxIRI, err)
+	}
+	return nil
+}
+
+func (f *federate) CreatePollVotes(ctx context.Context, poll *gtsmodel.Poll, votes []*gtsmodel.PollVote) error {
+	// Extract status from poll.
+	status := poll.Status
+
+	// Do nothing if the status
+	// shouldn't be federated.
+	if !*status.Federated {
+		return nil
 	}
 
-	// Send the Create via the Actor's outbox.
-	if _, err := f.FederatingActor().Send(
-		ctx, outboxIRI, create,
-	); err != nil {
-		return gtserror.Newf(
-			"error sending activity %T via outbox %s: %w",
-			create, outboxIRI, err,
-		)
+	// Do nothing if this
+	// isn't our status.
+	if !*status.Local {
+		return nil
+	}
+
+	// Parse the outbox URI of the status author.
+	outboxIRI, err := parseURI(status.Account.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	// Convert votes to AS PollOptionable implementing type.
+	notes, err := f.converter.PollVotesToASOptions(ctx, votes...)
+	if err != nil {
+		return gtserror.Newf("error converting to notes: %w", err)
+	}
+
+	// Send a Create activity with PollOptionables via the Actor's outbox.
+	create := typeutils.WrapPollOptionablesInCreate(notes...)
+	if _, err := f.FederatingActor().Send(ctx, outboxIRI, create); err != nil {
+		return gtserror.Newf("error sending Create activity via outbox %s: %w", create, outboxIRI, err)
 	}
 
 	return nil
@@ -256,13 +282,8 @@ func (f *federate) UpdateStatus(ctx context.Context, status *gtsmodel.Status) er
 		return gtserror.Newf("error converting status to Statusable: %w", err)
 	}
 
-	// Use ActivityStreams Statusable type as Object of Update.
-	update, err := f.converter.WrapStatusableInUpdate(statusable, false)
-	if err != nil {
-		return gtserror.Newf("error wrapping Statusable in Update: %w", err)
-	}
-
-	// Send the Update activity with Statusable via the Actor's outbox.
+	// Send an Update activity with Statusable via the Actor's outbox.
+	update := typeutils.WrapStatusableInUpdate(statusable, false)
 	if _, err := f.FederatingActor().Send(ctx, outboxIRI, update); err != nil {
 		return gtserror.Newf("error sending Update activity via outbox %s: %w", outboxIRI, err)
 	}

@@ -193,7 +193,7 @@ func ExtractToURIs(i WithTo) []*url.URL {
 
 // ExtractCcURIs returns a slice of URIs
 // that the given WithCC addresses as Cc.
-func ExtractCcURIs(i WithCC) []*url.URL {
+func ExtractCcURIs(i WithCc) []*url.URL {
 	ccProp := i.GetActivityStreamsCc()
 	if ccProp == nil {
 		return nil

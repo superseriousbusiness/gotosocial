@@ -17,7 +17,10 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // Poll ...
 type Poll struct {
@@ -29,6 +32,16 @@ type Poll struct {
 	Status     *Status   `bun:"-"`                                        // The related Status for StatusID (not always set).
 	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`        // The expiry date of this Poll.
 	// no creation date, use attached Status.CreatedAt.
+}
+
+// GetChoice returns the option index with name.
+func (p *Poll) GetChoice(name string) int {
+	for i, option := range p.Options {
+		if strings.EqualFold(option, name) {
+			return i
+		}
+	}
+	return -1
 }
 
 // PollVote ...

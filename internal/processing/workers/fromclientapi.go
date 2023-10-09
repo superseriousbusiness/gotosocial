@@ -93,6 +93,13 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		case ap.ObjectNote:
 			return p.clientAPI.CreateStatus(ctx, cMsg)
 
+		// CREATE QUESTION
+		// (note we don't handle poll *votes* as AS
+		// question type when federating (just notes),
+		// but it makes for a nicer type switch here.
+		case ap.ActivityQuestion:
+			return p.clientAPI.CreatePollVotes(ctx, cMsg)
+
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.CreateFollowReq(ctx, cMsg)
@@ -232,6 +239,65 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	return nil
+}
+
+func (p *clientAPI) CreatePollVotes(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// Cast the create poll votes attached to message.
+	votes, ok := cMsg.GTSModel.([]*gtsmodel.PollVote)
+	if !ok || len(votes) == 0 {
+		return gtserror.Newf("cannot cast %T -> []*gtsmodel.Pollvote", cMsg.GTSModel)
+	}
+
+	// Extract a vote from slice we
+	// can use to get the origin poll.
+	vote := votes[0]
+	poll := vote.Poll
+
+	if poll == nil {
+		var err error
+
+		// Poll was not set on the vote, fetch from db.
+		// (this should be fully populated with status).
+		poll, err = p.state.DB.GetPollByID(ctx, vote.PollID)
+		if err != nil {
+			return gtserror.Newf("error fetching poll from db: %w", err)
+		}
+	}
+
+	// Extract the origin
+	// status from poll itself.
+	status := poll.Status
+
+	if status == nil {
+		var err error
+
+		// Status was not set on the poll, fetch from db.
+		status, err = p.state.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			poll.StatusID,
+		)
+		if err != nil {
+			return gtserror.Newf("error fetching status from db: %w", err)
+		}
+	}
+
+	// Ensure the status also
+	// contains the poll model.
+	status.Poll = poll
+
+	if *status.Local {
+		// These were poll votes in a local status,
+		// we only need to federate-out the updated
+		// status model with latest vote counts.
+		//
+		// Handle as a regular status update by
+		// updating the cMsg to contain the status.
+		cMsg.GTSModel = status
+		return p.UpdateStatus(ctx, cMsg)
+	}
+
+	// Respond to origin server with new poll vote(s).
+	return p.federate.CreatePollVotes(ctx, poll, votes)
 }
 
 func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClientAPI) error {

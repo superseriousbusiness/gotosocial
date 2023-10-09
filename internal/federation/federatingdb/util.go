@@ -37,6 +37,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
+// isSender returns whether an object with AttributedTo property comes from the given requesting account.
+func isSender(with ap.WithAttributedTo, requester *gtsmodel.Account) bool {
+	for _, uri := range ap.GetAttributedTo(with) {
+		if uri.String() == requester.URI {
+			return true
+		}
+	}
+	return false
+}
+
 func sameActor(actor1 vocab.ActivityStreamsActorProperty, actor2 vocab.ActivityStreamsActorProperty) bool {
 	if actor1 == nil || actor2 == nil {
 		return false
