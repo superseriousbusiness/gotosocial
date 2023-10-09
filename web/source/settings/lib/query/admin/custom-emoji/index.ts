@@ -21,36 +21,58 @@ import { gtsApi } from "../../gts-api";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { RootState } from "../../../../redux/store";
 
-import type { CustomEmoji } from "../../../types/custom-emoji";
+import type { CustomEmoji, EmojisFromItem, ListEmojiParams } from "../../../types/custom-emoji";
 
-function emojiFromSearchResult(searchRes) {
-	/* Parses the search response, prioritizing a toot result,
-			and returns referenced custom emoji
-	*/
+/**
+ * Parses the search response, prioritizing a status
+ * result, and returns any referenced custom emoji.
+ * 
+ * Due to current API constraints, the returned emojis
+ * will not have their ID property set, so further
+ * processing is required to retrieve the IDs.
+ * 
+ * @param searchRes 
+ * @returns 
+ */
+function emojisFromSearchResult(searchRes): EmojisFromItem {
+	// We don't know in advance whether a searched URL
+	// is the URL for a status, or the URL for an account,
+	// but we can derive this by looking at which search
+	// result field actually has entries in it (if any).
 	let type: "statuses" | "accounts";
-
 	if (searchRes.statuses.length > 0) {
+		// We had status results,
+		// so this was a status URL.
 		type = "statuses";
 	} else if (searchRes.accounts.length > 0) {
+		// We had account results,
+		// so this was an account URL.
 		type = "accounts";
 	} else {
+		// Nada, zilch, we can't do
+		// anything with this.
 		throw "NONE_FOUND";
 	}
 
-	let data = searchRes[type][0];
+	// Narrow type to discard all the other
+	// data on the result that we don't need.
+	const data: {
+		url: string;
+		emojis: CustomEmoji[];
+	} = searchRes[type][0];
 
 	return {
 		type,
 		// Workaround to get host rather than account domain.
 		// See https://github.com/superseriousbusiness/gotosocial/issues/1225.
 		domain: (new URL(data.url)).host,
-		emojis: data.emojis as CustomEmoji[]
+		list: data.emojis,
 	};
 }
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (builder) => ({
-		listEmoji: builder.query<CustomEmoji[], Object>({
+		listEmoji: builder.query<CustomEmoji[], ListEmojiParams>({
 			query: (params = {}) => ({
 				url: "/api/v1/admin/custom_emojis",
 				params: {
@@ -85,7 +107,7 @@ const extended = gtsApi.injectEndpoints({
 				};
 			},
 			invalidatesTags: (res) =>
-			res
+				res
 					? [{ type: "Emoji", id: "LIST" }, { type: "Emoji", id: res.id }]
 					: [{ type: "Emoji", id: "LIST" }]
 		}),
@@ -116,52 +138,54 @@ const extended = gtsApi.injectEndpoints({
 			invalidatesTags: (_res, _error, id) => [{ type: "Emoji", id }]
 		}),
 
-		searchStatusForEmoji: builder.mutation<Object, string>({
+		searchItemForEmoji: builder.mutation<EmojisFromItem, string>({
 			async queryFn(url, api, _extraOpts, fetchWithBQ) {
+				const state = api.getState() as RootState;
+				const oauthState = state.oauth;
+				
 				// First search for given url.
 				const searchRes = await fetchWithBQ({
 					url: `/api/v2/search?q=${encodeURIComponent(url)}&resolve=true&limit=1`
-				})
+				});
 				if (searchRes.error) {
 					return { error: searchRes.error as FetchBaseQueryError };
 				}
 				
-				const { type, domain, emojis } = emojiFromSearchResult(searchRes.data)
+				// Parse initial results of search.
+				// These emojis will not have IDs set.
+				const {
+					type,
+					domain,
+					list: withoutIDs,
+				} = emojisFromSearchResult(searchRes.data);
 				
-				// Ensure emoji domain is not OUR domain. If it
+				// Ensure emojis domain is not OUR domain. If it
 				// is, we already have the emojis by definition.
-				const state = api.getState() as RootState;
-				const oauthState = state.oauth;
-
-				if (oauthState.instanceUrl === undefined) {
-					throw "AAAAAAAAAAAAAAA";
+				if (oauthState.instanceUrl !== undefined) {
+					if (domain == new URL(oauthState.instanceUrl).host) {
+						throw "LOCAL_INSTANCE";
+					}
 				}
 
-				if (domain == new URL(oauthState.instanceUrl).host) {
-					throw "LOCAL_INSTANCE";
-				}	
-
-				// Search for each listed emoji w/the
-				// admin api to map them to versions
-				// that include their ID.
-				const data: CustomEmoji[] = [];
+				// Search for each listed emoji with the admin
+				// api to get the version that includes an ID.
+				const withIDs: CustomEmoji[] = [];
 				const errors: FetchBaseQueryError[] = [];
 
-				emojis.forEach(async(emoji) => {
+				withoutIDs.forEach(async(emoji) => {
 					// Request admin view of this emoji.
-					const filter = `domain:${domain},shortcode:${emoji.shortcode}`
 					const emojiRes = await fetchWithBQ({
 						url: `/api/v1/admin/custom_emojis`,
 						params: {
-							filter: filter,
+							filter: `domain:${domain},shortcode:${emoji.shortcode}`,
 							limit: 1
 						}
-					})
+					});
 					if (emojiRes.error) {
-						errors.push(emojiRes.error)
+						errors.push(emojiRes.error);
 					} else {
 						// Got it!
-						emojis.push(emojiRes.data as CustomEmoji)
+						withIDs.push(emojiRes.data as CustomEmoji);
 					}
 				});
 
@@ -172,14 +196,16 @@ const extended = gtsApi.injectEndpoints({
 							statusText: 'Bad Request',
 							data: {"error":`One or more errors fetching custom emojis: ${errors}`},
 						},
-					}	
+					};
 				}
 				
+				// Return our ID'd
+				// emojis list.
 				return {
 					data: {
 						type,
 						domain,
-						list: data,
+						list: withIDs,
 					}
 				};
 			}
@@ -209,12 +235,12 @@ const extended = gtsApi.injectEndpoints({
 						url: `/api/v1/admin/custom_emojis/${emoji.id}`,
 						asForm: true,
 						body: body
-					})
+					});
 					if (emojiRes.error) {
-						errors.push(emojiRes.error)
+						errors.push(emojiRes.error);
 					} else {
 						// Got it!
-						data.push(emojiRes.data as CustomEmoji)
+						data.push(emojiRes.data as CustomEmoji);
 					}
 				});
 
@@ -225,7 +251,7 @@ const extended = gtsApi.injectEndpoints({
 							statusText: 'Bad Request',
 							data: {"error":`One or more errors patching custom emojis: ${errors}`},
 						},
-					}	
+					};	
 				}
 				
 				return { data };
@@ -261,9 +287,9 @@ const useEditEmojiMutation = extended.useEditEmojiMutation;
 const useDeleteEmojiMutation = extended.useDeleteEmojiMutation;
 
 /**
- * "Steal this look" function for select remote emoji from a status or account.
+ * "Steal this look" function for selecting remote emoji from a status or account.
  */
-const useSearchStatusForEmojiMutation = extended.useSearchStatusForEmojiMutation;
+const useSearchItemForEmojiMutation = extended.useSearchItemForEmojiMutation;
 
 /**
  * Update/patch a bunch of remote emojis.
@@ -276,6 +302,6 @@ export {
 	useAddEmojiMutation,
 	useEditEmojiMutation,
 	useDeleteEmojiMutation,
-	useSearchStatusForEmojiMutation,
+	useSearchItemForEmojiMutation,
 	usePatchRemoteEmojisMutation,
 };

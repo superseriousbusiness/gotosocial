@@ -22,3 +22,28 @@ export interface CustomEmoji {
 	shortcode: string;
 	category?: string;
 }
+
+/**
+ * Query parameters for GET to /api/v1/admin/custom_emojis.
+ */
+export interface ListEmojiParams {
+
+}
+
+/**
+ * Result of searchItemForEmoji mutation.
+ */
+export interface EmojisFromItem {
+	/**
+	 * Type of the search item result.
+	 */
+	type: "statuses" | "accounts";
+	/**
+	 * Domain of the returned emojis.
+	 */
+	domain: string;
+	/**
+	 * Discovered emojis.
+	 */
+	list: CustomEmoji[];
+}

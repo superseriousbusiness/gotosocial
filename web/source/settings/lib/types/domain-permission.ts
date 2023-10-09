@@ -60,3 +60,11 @@ export interface DomainPermsImportForm {
 export interface MappedDomainPerms {
 	[key: string]: DomainPerm;
 }
+
+/**
+ * Model domain permissions bulk export params.
+ */
+export interface ExportDomainPermsParams {
+	action: "export" | "export-file";
+	permType: "block" | "allow";
+}

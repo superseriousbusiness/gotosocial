@@ -33,10 +33,13 @@ const { CategorySelect } = require('../category-select');
 const { TextInput } = require("../../../components/form/inputs");
 const MutationButton = require("../../../components/form/mutation-button");
 const { Error } = require("../../../components/error");
-const { useSearchStatusForEmojiMutation } = require("../../../lib/query/admin/custom-emoji");
+const {
+	useSearchItemForEmojiMutation,
+	usePatchRemoteEmojisMutation
+} = require("../../../lib/query/admin/custom-emoji");
 
 module.exports = function ParseFromToot({ emojiCodes }) {
-	const [searchStatus, result] = useSearchStatusForEmojiMutation();
+	const [searchStatus, result] = useSearchItemForEmojiMutation();
 
 	const [onURLChange, _resetURL, { url }] = useTextInput("url");
 
