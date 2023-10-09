@@ -667,12 +667,12 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 	if *poll.Multiple {
 		// Create new multiple-choice (AnyOf) property for poll.
 		anyOfProp := streams.NewActivityStreamsAnyOfProperty()
-		defer func() { dst.SetActivityStreamsAnyOf(anyOfProp) }()
+		dst.SetActivityStreamsAnyOf(anyOfProp)
 		optionsProp = anyOfProp
 	} else {
 		// Create new single-choice (OneOf) property for poll.
 		oneOfProp := streams.NewActivityStreamsOneOfProperty()
-		defer func() { dst.SetActivityStreamsOneOf(oneOfProp) }()
+		dst.SetActivityStreamsOneOf(oneOfProp)
 		optionsProp = oneOfProp
 	}
 
