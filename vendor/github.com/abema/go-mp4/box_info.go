@@ -3,6 +3,7 @@ package mp4
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"math"
 )
@@ -128,7 +129,6 @@ func ReadBoxInfo(r io.ReadSeeker) (*BoxInfo, error) {
 		if _, err := bi.SeekToPayload(r); err != nil {
 			return nil, err
 		}
-
 	} else if bi.Size == 1 {
 		// read more 8 bytes
 		buf.Reset()
@@ -137,6 +137,10 @@ func ReadBoxInfo(r io.ReadSeeker) (*BoxInfo, error) {
 		}
 		bi.HeaderSize += LargeHeaderSize - SmallHeaderSize
 		bi.Size = binary.BigEndian.Uint64(buf.Bytes())
+	}
+
+	if bi.Size == 0 {
+		return nil, fmt.Errorf("invalid size")
 	}
 
 	return bi, nil
