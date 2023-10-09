@@ -126,6 +126,15 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		OriginAccount:  requestingAccount,
 	})
 
+	if status.Poll != nil {
+		// Now that the status is inserted, and side effects queued,
+		// attempt to schedule an expiry handler for the status poll.
+		if err := p.polls.ScheduleExpiry(ctx, status.Poll); err != nil {
+			err := gtserror.Newf("error scheduling poll expiry: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	}
+
 	return p.c.GetAPIStatus(ctx, requestingAccount, status)
 }
 

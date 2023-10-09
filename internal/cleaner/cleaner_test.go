@@ -48,7 +48,7 @@ func (suite *CleanerTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 
 	// Ensure scheduler started (even if unused).
-	suite.state.Workers.Scheduler.Start(nil)
+	suite.state.Workers.Scheduler.Start()
 
 	// Initialize test database.
 	_ = testrig.NewTestDB(&suite.state)
