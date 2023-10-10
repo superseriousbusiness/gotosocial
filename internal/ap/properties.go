@@ -155,6 +155,22 @@ func AppendInReplyTo(with WithInReplyTo, replyTo ...*url.URL) {
 	}, replyTo...)
 }
 
+// GetPublished returns the time contained in the Published property of 'with'.
+func GetPublished(with WithPublished) time.Time {
+	publishProp := with.GetActivityStreamsPublished()
+	if publishProp == nil {
+		return time.Time{}
+	}
+	return publishProp.Get()
+}
+
+// SetPublished sets the given time on the Published property of 'with'.
+func SetPublished(with WithPublished, published time.Time) {
+	publishProp := streams.NewActivityStreamsPublishedProperty()
+	publishProp.Set(published.UTC())
+	with.SetActivityStreamsPublished(publishProp)
+}
+
 // GetEndTime returns the time contained in the EndTime property of 'with'.
 func GetEndTime(with WithEndTime) time.Time {
 	endTimeProp := with.GetActivityStreamsEndTime()
@@ -196,7 +212,7 @@ func AppendClosed(with WithClosed, closed ...time.Time) {
 		with.SetActivityStreamsClosed(closedProp)
 	}
 	for _, closed := range closed {
-		closedProp.AppendXMLSchemaDateTime(closed)
+		closedProp.AppendXMLSchemaDateTime(closed.UTC())
 	}
 }
 

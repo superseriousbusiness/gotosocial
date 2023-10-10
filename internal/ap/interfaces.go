@@ -137,6 +137,7 @@ type Activityable interface {
 	WithAttributedTo
 	WithActor
 	WithObject
+	WithPublished
 }
 
 // Accountable represents the minimum activitypub interface for representing an 'account'.

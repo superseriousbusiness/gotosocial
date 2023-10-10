@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
@@ -131,6 +132,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
+	b = checkDropPublished(suite.T(), b, "orderedItems")
 	dst := new(bytes.Buffer)
 	err = json.Indent(dst, b, "", "  ")
 	suite.NoError(err)
@@ -143,7 +145,6 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
     "cc": "http://localhost:8080/users/the_mighty_zork/followers",
     "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",
     "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
-    "published": "2021-10-20T10:40:37Z",
     "to": "https://www.w3.org/ns/activitystreams#Public",
     "type": "Create"
   },
@@ -227,4 +228,31 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 
 func TestOutboxGetTestSuite(t *testing.T) {
 	suite.Run(t, new(OutboxGetTestSuite))
+}
+
+// checkDropPublished checks the published field at given key position for formatting, and drops from the JSON.
+// This is useful because the published property is usually set to the current time string (which is difficult to test).
+func checkDropPublished(t *testing.T, b []byte, at ...string) []byte {
+	m := make(map[string]any)
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("error unmarshaling json into map: %v", err)
+	}
+	mm := m
+	for _, key := range at {
+		switch vt := mm[key].(type) {
+		case map[string]any:
+			mm = vt
+		}
+	}
+	if s, ok := mm["published"].(string); !ok {
+		t.Fatal("missing published data on json")
+	} else if _, err := time.Parse(time.RFC3339, s); err != nil {
+		t.Fatalf("error parsing published time: %v", err)
+	}
+	delete(mm, "published")
+	b, err := json.Marshal(m)
+	if err != nil {
+		t.Fatalf("error remarshaling json: %v", err)
+	}
+	return b
 }

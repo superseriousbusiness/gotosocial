@@ -19,6 +19,7 @@ package typeutils
 
 import (
 	"net/url"
+	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -115,6 +116,9 @@ func WrapPollOptionablesInCreate(options ...ap.PollOptionable) vocab.ActivityStr
 	id := replyTos[0].String() + "/activity#vote/" + attribTos[0].String()
 	ap.SetJSONLDId(create, id)
 
+	// Set a current publish time for activity.
+	ap.SetPublished(create, time.Now())
+
 	// Append each poll option as object to activity.
 	for _, option := range options {
 		status, _ := ap.ToStatusable(option)
@@ -138,6 +142,7 @@ func wrapStatusableInActivity(activity ap.Activityable, status ap.Statusable, ir
 	ap.AppendTo(activity, ap.GetTo(status)...)
 	ap.AppendCc(activity, ap.GetCc(status)...)
 	ap.AppendActor(activity, ap.GetAttributedTo(status)...)
+	ap.SetPublished(activity, time.Now())
 }
 
 // appendStatusableToActivity ...
