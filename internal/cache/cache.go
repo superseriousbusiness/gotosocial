@@ -222,7 +222,7 @@ func (c *Caches) setuphooks() {
 
 		if status.PollID != "" {
 			// Invalidate cache of attached poll ID.
-			c.GTS.Poll().Invalidate(status.PollID)
+			c.GTS.Poll().Invalidate("ID", status.PollID)
 		}
 	})
 
@@ -262,6 +262,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Media().Trim(threshold)
 	c.GTS.Mention().Trim(threshold)
 	c.GTS.Notification().Trim(threshold)
+	c.GTS.Poll().Trim(threshold)
 	c.GTS.Report().Trim(threshold)
 	c.GTS.Status().Trim(threshold)
 	c.GTS.StatusFave().Trim(threshold)
