@@ -46,10 +46,10 @@ export default function useTextInput(
 
 	const [validation, setValidation] = useState(initValidation ?? "");
 	const [_isValidating, startValidation] = useTransition();
-	let valid = validation == "";
+	const valid = validation == "";
 
 	function onChange(e: React.ChangeEvent<HTMLInputElement>) {
-		let input = e.target.value;
+		const input = e.target.value;
 		setText(input);
 
 		if (validator) {

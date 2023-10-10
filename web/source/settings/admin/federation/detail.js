@@ -22,7 +22,7 @@ const { useRoute, Redirect, useLocation } = require("wouter");
 
 const { useTextInput, useBoolInput } = require("../../lib/form");
 
-const useFormSubmit = require("../../lib/form/submit");
+const useFormSubmit = require("../../lib/form/submit").default;
 
 const { TextInput, Checkbox, TextArea } = require("../../components/form/inputs");
 

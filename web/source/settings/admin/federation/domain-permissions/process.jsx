@@ -28,7 +28,7 @@ const {
 	useCheckListInput
 } = require("../../../lib/form");
 
-const useFormSubmit = require("../../../lib/form/submit");
+const useFormSubmit = require("../../../lib/form/submit").default;
 
 const {
 	TextInput,

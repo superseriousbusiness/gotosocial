@@ -54,6 +54,13 @@ export type UseInputHook = (
 	opts: UseFormInputHookOpts,
 ) => FormInputHook;
 
-export interface FormInputHook extends Object {
-
+export interface FormInputHook {
+	name: string;
+	value?: any;
+	selectedValues?: () => any[];
+	hasChanged: () => boolean;
 }
+
+export interface HookedForm {
+	[_: string]: FormInputHook
+};

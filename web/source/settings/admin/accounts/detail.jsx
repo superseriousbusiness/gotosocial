@@ -28,7 +28,7 @@ const { useBaseUrl } = require("../../lib/navigation/util");
 const FakeProfile = require("../../components/fake-profile");
 const MutationButton = require("../../components/form/mutation-button");
 
-const useFormSubmit = require("../../lib/form/submit");
+const useFormSubmit = require("../../lib/form/submit").default;
 const { useValue, useTextInput } = require("../../lib/form");
 const { TextInput } = require("../../components/form/inputs");
 

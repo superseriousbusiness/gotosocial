@@ -23,7 +23,7 @@ const { useRoute, Link, Redirect } = require("wouter");
 const { useComboBoxInput, useFileInput, useValue } = require("../../../lib/form");
 const { CategorySelect } = require("../category-select");
 
-const useFormSubmit = require("../../../lib/form/submit");
+const useFormSubmit = require("../../../lib/form/submit").default;
 const { useBaseUrl } = require("../../../lib/navigation/util");
 
 const FakeToot = require("../../../components/fake-toot");

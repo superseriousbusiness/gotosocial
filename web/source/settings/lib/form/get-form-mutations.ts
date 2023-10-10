@@ -17,29 +17,31 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const syncpipe = require("syncpipe");
+import { FormInputHook, HookedForm } from "./types";
 
-module.exports = function getFormMutations(form, { changedOnly }) {
-	let updatedFields = [];
+export default function getFormMutations(
+	form: HookedForm,
+	{ changedOnly }: { changedOnly: boolean },
+) {
+	const updatedFields: FormInputHook[] = [];
+	const mutationData: Array<[string, any]> = [];
+	
+	Object.values(form).forEach((field) => {
+		if (field.selectedValues !== undefined) {
+			// Array hook.
+			const selected = field.selectedValues();
+			if (!changedOnly || selected.length > 0) {
+				updatedFields.push(field);
+				mutationData.push([field.name, selected]);
+			}
+		} else if (!changedOnly || field.hasChanged()) {
+			updatedFields.push(field);
+			mutationData.push([field.name, field.value])
+		}
+	})
+
 	return {
 		updatedFields,
-		mutationData: syncpipe(form, [
-			(_) => Object.values(_),
-			(_) => _.map((field) => {
-				if (field.selectedValues != undefined) {
-					let selected = field.selectedValues();
-					if (!changedOnly || selected.length > 0) {
-						updatedFields.push(field);
-						return [field.name, selected];
-					}
-				} else if (!changedOnly || field.hasChanged()) {
-					updatedFields.push(field);
-					return [field.name, field.value];
-				}
-				return null;
-			}),
-			(_) => _.filter((value) => value != null),
-			(_) => Object.fromEntries(_)
-		])
-	};
+		mutationData: Object.fromEntries(mutationData),
+	}
 };

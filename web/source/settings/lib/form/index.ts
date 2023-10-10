@@ -32,6 +32,7 @@ import type {
 	HookFunction,
 	UseInputHook,
 	UseFormInputHookOpts,
+	FormInputHook,
 } from "./types";
 
 function capitalizeFirst(str: string) {
@@ -56,7 +57,7 @@ function selectorByKey(key: string) {
 }
 
 function makeHook(hookFunction: HookFunction): UseInputHook {
-	return (name: string, opts: UseFormInputHookOpts) => {
+	return function(name: string, opts: UseFormInputHookOpts): FormInputHook {
 		// for dynamically generating attributes like 'setName'
 		const Name = useMemo(() => capitalizeFirst(name), [name]);
 		const selector = useMemo(() => selectorByKey(name), [name]);
@@ -72,9 +73,7 @@ function makeHook(hookFunction: HookFunction): UseInputHook {
 
 		const hook = hookFunction({ name, Name }, opts);
 
-		return Object.assign(hook, {
-			name, Name,
-		});
+		return Object.assign(hook, { name, Name });
 	};
 }
 

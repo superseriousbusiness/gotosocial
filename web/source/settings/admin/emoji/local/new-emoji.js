@@ -25,7 +25,7 @@ const {
 } = require("../../../lib/form");
 const useShortcode = require("./use-shortcode");
 
-const useFormSubmit = require("../../../lib/form/submit");
+const useFormSubmit = require("../../../lib/form/submit").default;
 
 const {
 	TextInput, FileInput

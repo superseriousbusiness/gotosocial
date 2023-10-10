@@ -26,7 +26,7 @@ const {
 	useFieldArrayInput
 } = require("../lib/form");
 
-const useFormSubmit = require("../lib/form/submit");
+const useFormSubmit = require("../lib/form/submit").default;
 const { useWithFormContext, FormContext } = require("../lib/form/context");
 
 const {
