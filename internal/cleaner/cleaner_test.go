@@ -66,6 +66,7 @@ func (suite *CleanerTestSuite) SetupTest() {
 
 func (suite *CleanerTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.state.DB)
+	testrig.StopWorkers(&suite.state)
 }
 
 // mapvals extracts a slice of values from the values contained within the map.

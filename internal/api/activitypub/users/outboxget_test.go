@@ -101,12 +101,6 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	signedRequest := derefRequests["foss_satan_dereference_zork_outbox_first"]
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	tc := testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media"))
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -128,7 +122,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	}
 
 	// trigger the function being tested
-	userModule.OutboxGETHandler(ctx)
+	suite.userModule.OutboxGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -175,12 +169,6 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	signedRequest := derefRequests["foss_satan_dereference_zork_outbox_next"]
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	tc := testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media"))
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -206,7 +194,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	}
 
 	// trigger the function being tested
-	userModule.OutboxGETHandler(ctx)
+	suite.userModule.OutboxGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
