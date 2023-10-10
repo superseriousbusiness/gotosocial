@@ -29,8 +29,8 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		// Create `polls` + `poll_votes` tables.
 		for _, model := range []any{
-			(*gtsmodel.Poll)(nil),
-			(*gtsmodel.PollVote)(nil),
+			&gtsmodel.Poll{},
+			&gtsmodel.PollVote{},
 		} {
 			_, err := db.NewCreateTable().
 				IfNotExists().
@@ -43,8 +43,7 @@ func init() {
 
 		// Add the new status `poll_id` column.
 		_, err := db.NewAddColumn().
-			IfNotExists().
-			Model((*gtsmodel.Status)(nil)).
+			Model(&gtsmodel.Status{}).
 			ColumnExpr("? CHAR(26)", bun.Ident("poll_id")).
 			Exec(ctx)
 		if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
