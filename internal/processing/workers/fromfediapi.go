@@ -229,6 +229,14 @@ func (p *fediAPI) CreatePollVotes(ctx context.Context, fMsg messages.FromFediAPI
 		return gtserror.Newf("error inserting poll votes in db: %w", err)
 	}
 
+	// Ensure the poll vote is fully populated at this point.
+	if err := p.state.DB.PopulatePollVote(ctx, vote); err != nil {
+		return gtserror.Newf("error populating poll vote from db: %w", err)
+	}
+
+	// Interaction counts changed on the source status, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
+
 	return nil
 }
 
@@ -551,7 +559,7 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	}
 
 	// Fetch up-to-date attach status attachments, etc.
-	_, _, err := p.federate.RefreshStatus(
+	_, statusable, err := p.federate.RefreshStatus(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		existing,
@@ -560,6 +568,11 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	)
 	if err != nil {
 		return gtserror.Newf("error refreshing updated status: %w", err)
+	}
+
+	if statusable != nil {
+		// Status representation was refetched, uncache from timelines.
+		p.surface.invalidateStatusFromTimelines(ctx, existing.ID)
 	}
 
 	return nil

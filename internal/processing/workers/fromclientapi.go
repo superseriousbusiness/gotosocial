@@ -279,6 +279,9 @@ func (p *clientAPI) CreatePollVotes(ctx context.Context, cMsg messages.FromClien
 		return p.UpdateStatus(ctx, cMsg)
 	}
 
+	// Votes in status have changed, invalidate from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+
 	// Respond to origin server with new poll vote(s).
 	return p.federate.CreatePollVotes(ctx, vote.Poll, votes)
 }
@@ -401,6 +404,9 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg messages.FromClientAP
 	if err := p.federate.UpdateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error federating status update: %w", err)
 	}
+
+	// Status representation has changed, invalidate from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil
 }
