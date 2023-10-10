@@ -141,7 +141,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
   "orderedItems": {
     "actor": "http://localhost:8080/users/the_mighty_zork",
     "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-    "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+    "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",
     "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
     "published": "2021-10-20T10:40:37Z",
     "to": "https://www.w3.org/ns/activitystreams#Public",
