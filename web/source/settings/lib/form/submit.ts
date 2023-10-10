@@ -17,67 +17,83 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { try as bbTry } from "bluebird";
 import getFormMutations from "./get-form-mutations";
 import { HookedForm } from "./types";
-import { FormEvent, SyntheticEvent, useRef } from "react";
+import { SyntheticEvent, useRef } from "react";
+
+import type {
+	MutationTrigger,
+	UseMutationStateResult,
+} from "@reduxjs/toolkit/dist/query/react/buildHooks";
+
+type formSubmitEvent = string | (SyntheticEvent<HTMLFormElement, SubmitEvent>)
+type action = formSubmitEvent | undefined
+
+declare interface UseFormSubmitOptions {
+	changedOnly: boolean;
+	onFinish: ((_res: any) => void) | undefined;
+}
 
 export default function useFormSubmit(
 	form: HookedForm,
-	mutationQuery,
-	{
-		changedOnly = true,
-		onFinish 
-	}: {
-		changedOnly: boolean;
-		onFinish: ((_res: any) => void) | undefined;
+	mutationQuery: readonly [MutationTrigger<any>, UseMutationStateResult<any, any>],
+	opts: UseFormSubmitOptions = {
+		changedOnly: true,
+		onFinish: undefined,
 	}
-) {
+): [
+	(e: string | (SyntheticEvent<HTMLFormElement, SubmitEvent>)) => Promise<void>,
+	any,
+] {
 	if (!Array.isArray(mutationQuery)) {
 		throw "useFormSubmit: mutationQuery was not an Array. Is a valid useMutation RTK Query provided?";
 	}
-	const [runMutation, result] = mutationQuery;
-	let action: any;
-	let usedAction = useRef(action);
+
+	const { changedOnly, onFinish } = opts;
+	const [runMutation, mutationResult] = mutationQuery;
+	const usedAction = useRef<action>(undefined);
 	
-	const submitForm = (e: SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
-		if (e.preventDefault) {
-			e.preventDefault();
-			
-			if (e.nativeEvent.submitter) {
-				action = (e.nativeEvent.submitter as unknown as { name }).name;
-			}
+	const submitForm = async(e: formSubmitEvent) => {
+		let action: action;
+		
+		if (typeof e === "string") {
+			action = e !== "" ? e : undefined;
 		} else {
-			action = e;
+			e.preventDefault();
+			if (e.nativeEvent.submitter) {
+				action = (e.nativeEvent.submitter as Object)["name"];
+			}
 		}
 
-		if (action == "") {
-			action = undefined;
+		if (action !== undefined) {
+			usedAction.current = action;
 		}
-		usedAction = action;
-		// transform the field definitions into an object with just their values 
 
+		// Transform the field definitions into an object with just their values.
 		const { mutationData, updatedFields } = getFormMutations(form, { changedOnly });
 
 		if (updatedFields.length == 0) {
+			// No updated fields.
+			// Nothing to do.
 			return;
 		}
 
 		mutationData.action = action;
 
-		return bbTry(() => {
-			return runMutation(mutationData);
-		}).then((res) => {
+		try {
+			const res = await runMutation(mutationData);
 			if (onFinish) {
 				return onFinish(res);
 			}
-		});
+		} catch (e) {
+			console.error(`caught error running mutation: ${e}`)
+		}
 	}
 	
-	return [ 
+	return [
 		submitForm,
 		{
-			...result,
+			...mutationResult,
 			action: usedAction.current
 		}
 	];

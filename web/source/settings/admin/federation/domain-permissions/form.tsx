@@ -17,23 +17,21 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-const { useExportDomainListMutation } = require("../../../lib/query/admin/domain-permissions/export");
-const useFormSubmit = require("../../../lib/form/submit").default;
+import { useEffect } from "react";
 
-const {
-	TextArea,
-	Select,
-	RadioGroup,
-} = require("../../../components/form/inputs");
+import { useExportDomainListMutation } from "../../../lib/query/admin/domain-permissions/export";
+import useFormSubmit from "../../../lib/form/submit";
 
-const MutationButton = require("../../../components/form/mutation-button");
+import { TextArea, Select, RadioGroup } from "../../../components/form/inputs";
 
-const { Error } = require("../../../components/error");
-const ExportFormatTable = require("./export-format-table");
+import MutationButton from "../../../components/form/mutation-button";
 
-module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
+import { Error } from "../../../components/error";
+import ExportFormatTable from "./export-format-table";
+
+export default function ImportExportForm({ form, submitParse, parseResult }) {
 	const [submitExport, exportResult] = useFormSubmit(form, useExportDomainListMutation());
 
 	function fileChanged(e) {
@@ -45,7 +43,7 @@ module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 		reader.readAsText(e.target.files[0]);
 	}
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (exportResult.isSuccess) {
 			form.domains.setter(exportResult.data);
 		}

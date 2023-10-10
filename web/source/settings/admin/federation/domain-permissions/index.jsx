@@ -30,7 +30,7 @@ const {
 const useFormSubmit = require("../../../lib/form/submit").default;
 
 const ProcessImport = require("./process");
-const ImportExportForm = require("./form");
+const ImportExportForm = require("./form").default;
 
 module.exports = function ImportExport({ baseUrl }) {
 	const form = {
