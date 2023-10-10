@@ -1504,8 +1504,7 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 		}
 
 		activity := WrapStatusableInCreate(note, true)
-		asCreate := activity.(vocab.ActivityStreamsCreate)
-		itemsProp.AppendActivityStreamsCreate(asCreate)
+		itemsProp.AppendActivityStreamsCreate(activity)
 
 		if highest == "" || s.ID > highest {
 			highest = s.ID

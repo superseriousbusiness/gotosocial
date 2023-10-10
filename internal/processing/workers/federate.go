@@ -203,7 +203,7 @@ func (f *federate) CreatePollVotes(ctx context.Context, poll *gtsmodel.Poll, vot
 	// Send a Create activity with PollOptionables via the Actor's outbox.
 	create := typeutils.WrapPollOptionablesInCreate(notes...)
 	if _, err := f.FederatingActor().Send(ctx, outboxIRI, create); err != nil {
-		return gtserror.Newf("error sending Create activity via outbox %s: %w", create, outboxIRI, err)
+		return gtserror.Newf("error sending Create activity via outbox %s: %w", outboxIRI, err)
 	}
 
 	return nil

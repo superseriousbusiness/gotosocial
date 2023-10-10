@@ -244,15 +244,6 @@ func mustToID(i pub.IdProperty) *url.URL {
 	return id
 }
 
-// mustGetID calls pub.GetId() and panics on error.
-func mustGetID(t vocab.Type) *url.URL {
-	id, err := pub.GetId(t)
-	if err != nil {
-		panicfAt(3, "error getting id of %T: %w", t, err)
-	}
-	return id
-}
-
 // panicfAt panics with a call to gtserror.NewfAt() with given args (+1 to calldepth).
 func panicfAt(calldepth int, msg string, args ...any) {
 	panic(gtserror.NewfAt(calldepth+1, msg, args...))
