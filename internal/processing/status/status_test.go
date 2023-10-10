@@ -98,6 +98,10 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 
 	common := common.New(&suite.state, suite.typeConverter, suite.federator, filter)
 	polls := polls.New(&common, &suite.state)
+<<<<<<< HEAD
+=======
+
+>>>>>>> f8611497 (return copy of URL on GetJSONLDId())
 	suite.status = status.New(&suite.state, &common, &polls, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

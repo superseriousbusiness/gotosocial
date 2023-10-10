@@ -411,6 +411,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
 		return nil, gtserror.Newf("error populating status: %w", err)
 	}
+
 	var status ap.Statusable
 
 	if s.Poll != nil {

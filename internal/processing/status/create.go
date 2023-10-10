@@ -67,6 +67,9 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	if form.Poll != nil {
+		// Update the status AS type to "Question".
+		status.ActivityStreamsType = ap.ActivityQuestion
+
 		// Create new poll for status from form.
 		secs := time.Duration(form.Poll.ExpiresIn)
 		status.Poll = &gtsmodel.Poll{
