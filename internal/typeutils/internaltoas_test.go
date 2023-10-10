@@ -680,7 +680,7 @@ func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
     {
       "actor": "http://localhost:8080/users/admin",
       "cc": "http://localhost:8080/users/admin/followers",
-      "id": "http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37/activity",
+      "id": "http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37/activity#create",
       "object": "http://localhost:8080/users/admin/statuses/01F8MHAAY43M6RJ473VQFCVH37",
       "published": "2021-10-20T12:36:45Z",
       "to": "https://www.w3.org/ns/activitystreams#Public",
@@ -689,7 +689,7 @@ func (suite *InternalToASTestSuite) TestStatusesToASOutboxPage() {
     {
       "actor": "http://localhost:8080/users/admin",
       "cc": "http://localhost:8080/users/admin/followers",
-      "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R/activity",
+      "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R/activity#create",
       "object": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
       "published": "2021-10-20T11:36:45Z",
       "to": "https://www.w3.org/ns/activitystreams#Public",

@@ -51,7 +51,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#create",
   "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "published": "2021-10-20T12:40:37+02:00",
   "to": "https://www.w3.org/ns/activitystreams#Public",
@@ -79,7 +79,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#create",
   "object": {
     "attachment": [],
     "attributedTo": "http://localhost:8080/users/the_mighty_zork",
