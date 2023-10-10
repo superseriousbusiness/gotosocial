@@ -45,9 +45,9 @@ type Processor struct {
 
 // New returns a new status processor.
 func New(
+	state *state.State,
 	common *common.Processor,
 	polls *polls.Processor,
-	state *state.State,
 	federator *federation.Federator,
 	converter *typeutils.Converter,
 	filter *visibility.Filter,

@@ -172,7 +172,7 @@ func NewProcessor(
 	processor.report = report.New(state, converter)
 	processor.timeline = timeline.New(state, converter, filter)
 	processor.search = search.New(state, federator, converter, filter)
-	processor.status = status.New(&commonProcessor, &processor.polls, state, federator, converter, filter, parseMentionFunc)
+	processor.status = status.New(state, &commonProcessor, &processor.polls, federator, converter, filter, parseMentionFunc)
 	processor.user = user.New(state, emailSender)
 
 	// Workers processor handles asynchronous
