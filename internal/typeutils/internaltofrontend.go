@@ -730,9 +730,12 @@ func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	}
 
 	if appID := s.CreatedWithApplicationID; appID != "" {
-		app, err := c.state.DB.GetApplicationByID(ctx, appID)
-		if err != nil {
-			return nil, fmt.Errorf("error getting application %s: %w", appID, err)
+		app := s.CreatedWithApplication
+		if app == nil {
+			app, err = c.state.DB.GetApplicationByID(ctx, appID)
+			if err != nil {
+				return nil, fmt.Errorf("error getting application %s: %w", appID, err)
+			}
 		}
 
 		apiApp, err := c.AppToAPIAppPublic(ctx, app)
@@ -741,6 +744,13 @@ func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 		}
 
 		apiStatus.Application = apiApp
+	}
+
+	if s.Poll != nil {
+		apiStatus.Poll, err = c.PollToAPIPoll(ctx, requestingAccount, s.Poll)
+		if err != nil {
+			return nil, fmt.Errorf("error converting poll %s: %w", s.PollID, err)
+		}
 	}
 
 	// Normalization.

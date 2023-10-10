@@ -37,9 +37,7 @@ func GetJSONLDId(with WithJSONLDId) *url.URL {
 	if id == nil {
 		panicfAt(3, "%T ID property contains no url", with)
 	}
-	id2 := new(url.URL)
-	*id2 = *id
-	return id2
+	return id
 }
 
 // SetJSONLDId sets the given string to the JSONLD ID of 'with'. Panics on failed URL parse.
