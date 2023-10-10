@@ -50,6 +50,9 @@
  * }
  * ```
  * 
+ * If you pass a non-array type into this function it
+ * will be converted into an array first, as a treat.
+ * 
  * @example
  * const extended = gtsApi.injectEndpoints({
  *   endpoints: (build) => ({
@@ -62,8 +65,14 @@
  * });
  */
 export function listToKeyedObject<T>(key: keyof T) {
-    return (list: T[]): { [_ in keyof T]: T } => {
-    	const entries = list.map((entry) => [entry[key], entry]); 
-    	return Object.fromEntries(entries);
-    }
+	return (list: T[] | T): { [_ in keyof T]: T } => {
+		// Ensure we're actually
+		// dealing with an array.
+		if (!Array.isArray(list)) {
+			list = [list];
+		}
+		
+		const entries = list.map((entry) => [entry[key], entry]); 
+		return Object.fromEntries(entries);
+	};
 }

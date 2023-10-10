@@ -25,6 +25,7 @@ const useFormSubmit = require("../../../lib/form/submit");
 const {
 	TextArea,
 	Select,
+	RadioGroup,
 } = require("../../../components/form/inputs");
 
 const MutationButton = require("../../../components/form/mutation-button");
@@ -53,7 +54,7 @@ module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 
 	return (
 		<>
-			<h1>Import / Export suspended domains</h1>
+			<h1>Import / Export domain permissions</h1>
 			<p>
 				This page can be used to import and export lists of domains to suspend.
 				Exports can be done in various formats, with varying functionality and support in other software.
@@ -66,6 +67,10 @@ module.exports = function ImportExportForm({ form, submitParse, parseResult }) {
 					label="Domains"
 					placeholder={`google.com\nfacebook.com`}
 					rows={8}
+				/>
+
+				<RadioGroup
+					field={form.permType}
 				/>
 
 				<div className="button-grid">

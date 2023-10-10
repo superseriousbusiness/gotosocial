@@ -152,6 +152,6 @@ export const gtsApi = createApi({
  * This endpoint does not require authentication/authorization.
  * TODO: move this to ./instance.
  */
-const useInstanceV1Query = gtsApi.useInstanceV1Query
+const useInstanceV1Query = gtsApi.useInstanceV1Query;
 
 export { useInstanceV1Query };

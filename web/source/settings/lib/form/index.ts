@@ -17,14 +17,28 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const getByDot = require("get-by-dot").default;
+import { useMemo } from "react";
+import getByDot from "get-by-dot";
 
-function capitalizeFirst(str) {
+import text from "./text";
+import file from "./file";
+import bool from "./bool";
+import radio from "./radio";
+import combobox from "./combo-box";
+import checklist from "./check-list";
+import fieldarray from "./field-array";
+
+import type {
+	HookFunction,
+	UseInputHook,
+	UseFormInputHookOpts,
+} from "./types";
+
+function capitalizeFirst(str: string) {
 	return str.slice(0, 1).toUpperCase + str.slice(1);
 }
 
-function selectorByKey(key) {
+function selectorByKey(key: string) {
 	if (key.includes("[")) {
 		// get-by-dot does not support 'nested[deeper][key]' notation, convert to 'nested.deeper.key'
 		key = key
@@ -41,15 +55,14 @@ function selectorByKey(key) {
 	};
 }
 
-function makeHook(hookFunction) {
-	return function (name, opts = {}) {
+function makeHook(hookFunction: HookFunction): UseInputHook {
+	return (name: string, opts: UseFormInputHookOpts) => {
 		// for dynamically generating attributes like 'setName'
-		const Name = React.useMemo(() => capitalizeFirst(name), [name]);
-
-		const selector = React.useMemo(() => selectorByKey(name), [name]);
+		const Name = useMemo(() => capitalizeFirst(name), [name]);
+		const selector = useMemo(() => selectorByKey(name), [name]);
 		const valueSelector = opts.valueSelector ?? selector;
 
-		opts.initialValue = React.useMemo(() => {
+		opts.initialValue = useMemo(() => {
 			if (opts.source == undefined) {
 				return opts.defaultValue;
 			} else {
@@ -65,19 +78,18 @@ function makeHook(hookFunction) {
 	};
 }
 
-module.exports = {
-	useTextInput: makeHook(require("./text")),
-	useFileInput: makeHook(require("./file")),
-	useBoolInput: makeHook(require("./bool")),
-	useRadioInput: makeHook(require("./radio")),
-	useComboBoxInput: makeHook(require("./combo-box")),
-	useCheckListInput: makeHook(require("./check-list")),
-	useFieldArrayInput: makeHook(require("./field-array")),
-	useValue: function (name, value) {
-		return {
-			name,
-			value,
-			hasChanged: () => true // always included
-		};
-	}
-};
+export const useTextInput = makeHook(text);
+export const useFileInput = makeHook(file);
+export const useBoolInput = makeHook(bool);
+export const useRadioInput = makeHook(radio);
+export const useComboBoxInput = makeHook(combobox);
+export const useCheckListInput = makeHook(checklist);
+export const useFieldArrayInput = makeHook(fieldarray);
+
+export function useValue(name, value) {
+	return {
+		name,
+		value,
+		hasChanged: () => true // always included
+	};
+}

@@ -24,14 +24,14 @@ import { listToKeyedObject } from "../../transforms";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
-		getDomainBlocks: build.query<MappedDomainPerms, void | null>({
+		domainBlocks: build.query<MappedDomainPerms, void | null>({
 			query: () => ({
 				url: `/api/v1/admin/domain_blocks`
 			}),
 			transformResponse: listToKeyedObject<DomainPerm>("domain"),
 		}),
 
-		getDomainAllows: build.query<MappedDomainPerms, void | null>({
+		domainAllows: build.query<MappedDomainPerms, void | null>({
 			query: () => ({
 				url: `/api/v1/admin/domain_allows`
 			}),
@@ -43,14 +43,14 @@ const extended = gtsApi.injectEndpoints({
 /**
  * Get admin view of all explicitly blocked domains.
  */
-const useGetDomainBlocksQuery = extended.useGetDomainBlocksQuery;
+const useDomainBlocksQuery = extended.useDomainBlocksQuery;
 
 /**
  * Get admin view of all explicitly allowed domains.
  */
-const useGetDomainAllowsQuery = extended.useGetDomainAllowsQuery;
+const useDomainAllowsQuery = extended.useDomainAllowsQuery;
 
 export {
-	useGetDomainBlocksQuery,
-	useGetDomainAllowsQuery,
+	useDomainBlocksQuery as useGetDomainBlocksQuery,
+	useDomainAllowsQuery as useGetDomainAllowsQuery,
 };

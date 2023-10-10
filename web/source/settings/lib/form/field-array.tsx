@@ -17,12 +17,17 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import { useRef, useMemo } from "react";
 
-const getFormMutations = require("./get-form-mutations");
+import getFormMutations from "./get-form-mutations";
+
+import type {
+	HookName,
+	HookOpts,
+} from "./types";
 
 function parseFields(entries, length) {
-	const fields = [];
+	const fields: any[] = [];
 
 	for (let i = 0; i < length; i++) {
 		if (entries[i] != undefined) {
@@ -35,10 +40,16 @@ function parseFields(entries, length) {
 	return fields;
 }
 
-module.exports = function useArrayInput({ name, _Name }, { initialValue, length = 0 }) {
-	const fields = React.useRef({});
+export default function useArrayInput(
+	{ name }: HookName,
+	{
+		initialValue,
+		length = 0,
+	}: HookOpts<any[]>,
+) {
+	const fields = useRef({});
 
-	const value = React.useMemo(() => parseFields(initialValue, length), [initialValue, length]);
+	const value = useMemo(() => parseFields(initialValue, length), [initialValue, length]);
 
 	return {
 		name,
@@ -60,4 +71,4 @@ module.exports = function useArrayInput({ name, _Name }, { initialValue, length 
 			}
 		}
 	};
-};
+}

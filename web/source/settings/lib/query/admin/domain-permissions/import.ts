@@ -115,7 +115,9 @@ const extended = gtsApi.injectEndpoints({
 				};
 			},
 			transformResponse: listToKeyedObject<DomainPerm>("domain"),
-			...replaceCacheOnMutation("domainBlocks")
+			...replaceCacheOnMutation((formData: ImportDomainPermsParams) => {
+				return `domain_${formData.permType}s`;
+			}),
 		})
 	})
 });

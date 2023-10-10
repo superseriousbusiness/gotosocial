@@ -17,25 +17,38 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React, {
+	useState,
+	useRef,
+	useTransition,
+	useEffect,
+} from "react";
+
+import type {
+	HookName,
+	HookOpts,
+} from "./types";
 
 const _default = "";
-module.exports = function useTextInput({ name, Name }, {
-	initialValue = _default,
-	dontReset = false,
-	validator,
-	showValidation = true,
-	initValidation
-} = {}) {
 
-	const [text, setText] = React.useState(initialValue);
-	const textRef = React.useRef(null);
+export default function useTextInput(
+	{ name, Name }: HookName,
+	{
+		initialValue = _default,
+		dontReset = false,
+		validator,
+		showValidation = true,
+		initValidation
+	}: HookOpts<string>
+) {
+	const [text, setText] = useState(initialValue);
+	const textRef = useRef<HTMLInputElement>(null);
 
-	const [validation, setValidation] = React.useState(initValidation ?? "");
-	const [_isValidating, startValidation] = React.useTransition();
+	const [validation, setValidation] = useState(initValidation ?? "");
+	const [_isValidating, startValidation] = useTransition();
 	let valid = validation == "";
 
-	function onChange(e) {
+	function onChange(e: React.ChangeEvent<HTMLInputElement>) {
 		let input = e.target.value;
 		setText(input);
 
@@ -52,7 +65,7 @@ module.exports = function useTextInput({ name, Name }, {
 		}
 	}
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (validator && textRef.current) {
 			if (showValidation) {
 				textRef.current.setCustomValidity(validation);
@@ -80,8 +93,8 @@ module.exports = function useTextInput({ name, Name }, {
 		ref: textRef,
 		setter: setText,
 		valid,
-		validate: () => setValidation(validator(text)),
+		validate: () => setValidation(validator ? validator(text): ""),
 		hasChanged: () => text != initialValue,
 		_default
 	});
-};
+}

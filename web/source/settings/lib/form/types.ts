@@ -17,36 +17,43 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+/* eslint-disable no-unused-vars */
 
-const _default = "";
-module.exports = function useRadioInput({ name, Name }, { initialValue = _default, options }) {
-	const [value, setValue] = React.useState(initialValue);
+export interface HookOpts<T = any> {
+	initialValue: T,
+	dontReset: boolean,
+	validator?: (_input: T) => string,
+	showValidation: boolean,
+	initValidation: string,
+	length: number;
+	withPreview?: boolean,
+	maxSize,
+	initialInfo?: string;
+}
 
-	function onChange(e) {
-		setValue(e.target.value);
-	}
+export interface HookName {
+	name: string;
+	Name: string;
+}
 
-	function reset() {
-		setValue(initialValue);
-	}
+export type HookFunction = (
+	name: HookName,
+	opts: Object,
+) => Object;
 
-	// Array / Object hybrid, for easier access in different contexts
-	return Object.assign([
-		onChange,
-		reset,
-		{
-			[name]: value,
-			[`set${Name}`]: setValue
-		}
-	], {
-		name,
-		onChange,
-		reset,
-		value,
-		setter: setValue,
-		options,
-		hasChanged: () => value != initialValue,
-		_default
-	});
-};
+export interface UseFormInputHookOpts {
+	valueSelector: (_arg: string) => any;
+	initialValue;
+	defaultValue;
+	source: string;
+	options?: Object;
+}
+
+export type UseInputHook = (
+	name: string,
+	opts: UseFormInputHookOpts,
+) => FormInputHook;
+
+export interface FormInputHook extends Object {
+
+}

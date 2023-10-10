@@ -40,7 +40,7 @@ const extended = gtsApi.injectEndpoints({
 				discardEmpty: true
 			}),
 			transformResponse: listToKeyedObject<DomainPerm>("domain"),
-			...replaceCacheOnMutation("domainBlocks")
+			...replaceCacheOnMutation("domainBlocks"),
 		}),
 
 		addDomainAllow: build.mutation<MappedDomainPerms, any>({
@@ -61,11 +61,9 @@ const extended = gtsApi.injectEndpoints({
 				url: `/api/v1/admin/domain_blocks/${id}`,
 			}),
 			...removeFromCacheOnMutation("domainBlocks", {
-				findKey: (_draft, newData) => {
+				key: (_draft, newData) => {
 					return newData.domain;
-				},
-				key: undefined,
-				arg: undefined,
+				}
 			})
 		}),
 
@@ -75,11 +73,9 @@ const extended = gtsApi.injectEndpoints({
 				url: `/api/v1/admin/domain_allows/${id}`,
 			}),
 			...removeFromCacheOnMutation("domainAllows", {
-				findKey: (_draft, newData) => {
+				key: (_draft, newData) => {
 					return newData.domain;
-				},
-				key: undefined,
-				arg: undefined,
+				}
 			})
 		}),
 	}),

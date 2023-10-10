@@ -17,47 +17,61 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const prettierBytes = require("prettier-bytes");
+import React from "react";
 
-module.exports = function useFileInput({ name, _Name }, {
-	withPreview,
-	maxSize,
-	initialInfo = "no file selected"
-} = {}) {
-	const [file, setFile] = React.useState();
-	const [imageURL, setImageURL] = React.useState();
-	const [info, setInfo] = React.useState();
+import { useState } from "react";
+import prettierBytes from "prettier-bytes";
+import { HookName, HookOpts } from "./types";
 
-	function onChange(e) {
-		let file = e.target.files[0];
+export default function useFileInput(
+	{ name }: HookName,
+	{
+		withPreview,
+		maxSize,
+		initialInfo = "no file selected"
+	}: HookOpts
+) {
+	const [file, setFile] = useState<File>();
+	const [imageURL, setImageURL] = useState<string>();
+	const [info, setInfo] = useState<React.JSX.Element>();
+
+	function onChange(e: React.ChangeEvent<HTMLInputElement>) {
+		const files = e.target.files;
+		if (!files) {
+			setInfo(undefined);
+			return;
+		}
+
+		let file = files[0];
 		setFile(file);
 
-		URL.revokeObjectURL(imageURL);
-
-		if (file != undefined) {
-			if (withPreview) {
-				setImageURL(URL.createObjectURL(file));
-			}
-
-			let size = prettierBytes(file.size);
-			if (maxSize && file.size > maxSize) {
-				size = <span className="error-text">{size}</span>;
-			}
-
-			setInfo(<>
-				{file.name} ({size})
-			</>);
-		} else {
-			setInfo();
+		if (imageURL) {
+			URL.revokeObjectURL(imageURL);
 		}
+		
+		if (withPreview) {
+			setImageURL(URL.createObjectURL(file));
+		}
+
+		let size = prettierBytes(file.size);
+		if (maxSize && file.size > maxSize) {
+			size = <span className="error-text">{size}</span>;
+		}
+
+		setInfo(
+			<>
+				{file.name} ({size})
+			</>
+		);
 	}
 
 	function reset() {
-		URL.revokeObjectURL(imageURL);
-		setImageURL();
-		setFile();
-		setInfo();
+		if (imageURL) {
+			URL.revokeObjectURL(imageURL);
+		}
+		setImageURL(undefined);
+		setFile(undefined);
+		setInfo(undefined);
 	}
 
 	const infoComponent = (
@@ -87,4 +101,4 @@ module.exports = function useFileInput({ name, _Name }, {
 		hasChanged: () => file != undefined,
 		infoComponent
 	});
-};
+}

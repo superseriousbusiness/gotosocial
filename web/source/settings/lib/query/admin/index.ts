@@ -31,7 +31,7 @@ const extended = gtsApi.injectEndpoints({
 				body: formData,
 				discardEmpty: true
 			}),
-			...replaceCacheOnMutation("instance")
+			...replaceCacheOnMutation("instanceV1"),
 		}),
 
 		mediaCleanup: builder.mutation({
@@ -103,7 +103,7 @@ const extended = gtsApi.injectEndpoints({
 					[data.id]: data
 				};
 			},
-			...replaceCacheOnMutation("instanceRules")
+			...replaceCacheOnMutation("instanceRules"),
 		}),
 
 		updateInstanceRule: builder.mutation({
@@ -119,7 +119,7 @@ const extended = gtsApi.injectEndpoints({
 					[data.id]: data
 				};
 			},
-			...replaceCacheOnMutation("instanceRules")
+			...replaceCacheOnMutation("instanceRules"),
 		}),
 
 		deleteInstanceRule: builder.mutation({
@@ -128,9 +128,7 @@ const extended = gtsApi.injectEndpoints({
 				url: `/api/v1/admin/instance/rules/${id}`
 			}),
 			...removeFromCacheOnMutation("instanceRules", {
-				findKey: (_draft, rule) => rule.id,
-				key: undefined,
-				arg: undefined,
+				key: (_draft, rule) => rule.id,
 			})
 		})
 	})

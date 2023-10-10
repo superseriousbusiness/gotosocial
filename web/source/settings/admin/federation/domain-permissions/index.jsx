@@ -24,6 +24,7 @@ const { useProcessDomainPermissionsMutation } = require("../../../lib/query/admi
 
 const {
 	useTextInput,
+	useRadioInput,
 } = require("../../../lib/form");
 
 const useFormSubmit = require("../../../lib/form/submit");
@@ -35,7 +36,12 @@ module.exports = function ImportExport({ baseUrl }) {
 	const form = {
 		domains: useTextInput("domains"),
 		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true }),
-		permType: useTextInput("permType", { defaultValue: "block" })
+		permType: useRadioInput("permType", { 
+			options: {
+				allow: "Import / Export ALLOWS",
+				block: "Import / Export BLOCKS",
+			}
+		})
 	};
 
 	const [submitParse, parseResult] = useFormSubmit(form, useProcessDomainPermissionsMutation(), { changedOnly: false });
@@ -44,32 +50,38 @@ module.exports = function ImportExport({ baseUrl }) {
 
 	return (
 		<Switch>
-			<Route path={`${baseUrl}/process`}>
-				{parseResult.isSuccess ? (
-					<>
-						<h1>
-							<span className="button" onClick={() => {
-								parseResult.reset();
-								setLocation(baseUrl);
-							}}>
-								&lt; back
-							</span> Confirm import:
-						</h1>
-						<ProcessImport
-							list={parseResult.data}
+			<Route>
+				{
+					parseResult.isSuccess
+						? <Redirect to={`${baseUrl}/process`} />
+						: <ImportExportForm
+							form={form}
+							submitParse={submitParse}
+							parseResult={parseResult}
 						/>
-					</>
-				) : <Redirect to={baseUrl} />}
+				}
 			</Route>
 
-			<Route>
-				{!parseResult.isSuccess ? (
-					<ImportExportForm
-						form={form}
-						submitParse={submitParse}
-						parseResult={parseResult}
-					/>
-				) : <Redirect to={`${baseUrl}/process`} />}
+			<Route path={`${baseUrl}/process`}>
+				{
+					parseResult.isSuccess 
+						? (
+							<>
+								<h1>
+									<span className="button" onClick={() => {
+										parseResult.reset();
+										setLocation(baseUrl);
+									}}>
+										&lt; back
+									</span> Confirm import:
+								</h1>
+								<ProcessImport
+									list={parseResult.data}
+								/>
+							</>
+						)
+						: <Redirect to={baseUrl} />
+				}
 			</Route>
 		</Switch>
 	);

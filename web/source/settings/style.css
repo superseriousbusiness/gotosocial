@@ -875,6 +875,12 @@ button.with-padding {
 		align-items: center;
 	}
 
+	.form-field.radio {
+		display: flex;
+		flex-direction: column;
+		margin-left: 0.5rem;
+	}
+
 	.button-grid {
 		display: inline-grid;
 		grid-template-columns: auto auto auto;
