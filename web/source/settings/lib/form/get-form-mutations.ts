@@ -17,13 +17,13 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { FormInputHook, HookedForm } from "./types";
+import { PrototypeFormInputHook, HookedForm } from "./types";
 
 export default function getFormMutations(
 	form: HookedForm,
 	{ changedOnly }: { changedOnly: boolean },
 ) {
-	const updatedFields: FormInputHook[] = [];
+	const updatedFields: PrototypeFormInputHook[] = [];
 	const mutationData: Array<[string, any]> = [];
 	
 	Object.values(form).forEach((field) => {

@@ -36,7 +36,7 @@ const {
 	Checkbox,
 	Select,
 	RadioGroup
-} = require("../../../components/form/inputs");
+} = require("../../../components/form/inputs").default;
 
 const CheckList = require("../../../components/check-list");
 const MutationButton = require("../../../components/form/mutation-button");

@@ -17,11 +17,18 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import { useState } from "react";
+import { HookNames, HookOpts } from "./types";
 
 const _default = "";
-module.exports = function useRadioInput({ name, Name }, { initialValue = _default, options }) {
-	const [value, setValue] = React.useState(initialValue);
+export default function useRadioInput(
+	{ name, Name }: HookNames,
+	{
+		initialValue = _default,
+		options,
+	}: HookOpts<string>
+) {
+	const [value, setValue] = useState(initialValue);
 
 	function onChange(e) {
 		setValue(e.target.value);
@@ -49,4 +56,4 @@ module.exports = function useRadioInput({ name, Name }, { initialValue = _defaul
 		hasChanged: () => value != initialValue,
 		_default
 	});
-};
+}

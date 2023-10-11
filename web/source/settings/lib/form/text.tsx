@@ -25,14 +25,15 @@ import React, {
 } from "react";
 
 import type {
-	HookName,
+	FormInputHook,
+	HookNames,
 	HookOpts,
 } from "./types";
 
 const _default = "";
 
 export default function useTextInput(
-	{ name, Name }: HookName,
+	{ name, Name }: HookNames,
 	{
 		initialValue = _default,
 		dontReset = false,
@@ -40,7 +41,7 @@ export default function useTextInput(
 		showValidation = true,
 		initValidation
 	}: HookOpts<string>
-) {
+): FormInputHook<string> {
 	const [text, setText] = useState(initialValue);
 	const textRef = useRef<HTMLInputElement>(null);
 
@@ -89,6 +90,7 @@ export default function useTextInput(
 		onChange,
 		reset,
 		name,
+		Name: "", // Will be set by inputHook function.
 		value: text,
 		ref: textRef,
 		setter: setText,

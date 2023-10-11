@@ -31,13 +31,24 @@ import MutationButton from "../../../components/form/mutation-button";
 import { Error } from "../../../components/error";
 import ExportFormatTable from "./export-format-table";
 
-export default function ImportExportForm({ form, submitParse, parseResult }) {
+import type { FormInputHook, FormSubmitFunction, FormSubmitResult } from "../../../lib/form/types";
+
+export interface ImportExportFormProps {
+	form: {
+		domains: FormInputHook;
+		permType: FormInputHook<string>
+	};
+	submitParse: FormSubmitFunction;
+	parseResult: FormSubmitResult;
+} 
+
+export default function ImportExportForm({ form, submitParse, parseResult }: ImportExportFormProps) {
 	const [submitExport, exportResult] = useFormSubmit(form, useExportDomainListMutation());
 
 	function fileChanged(e) {
 		const reader = new FileReader();
 		reader.onload = function (read) {
-			form.domains.value = read.target.result;
+			form.domains.value = read.target?.result;
 			submitParse();
 		};
 		reader.readAsText(e.target.files[0]);
@@ -78,6 +89,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }) {
 						onClick={() => submitParse()}
 						result={parseResult}
 						showError={false}
+						disabled={false}
 					/>
 					<label className="button with-icon">
 						<i className="fa fa-fw " aria-hidden="true" />
@@ -124,4 +136,4 @@ export default function ImportExportForm({ form, submitParse, parseResult }) {
 			</div>
 		</>
 	);
-};
+}

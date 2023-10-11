@@ -18,16 +18,20 @@
 */
 
 import getFormMutations from "./get-form-mutations";
-import { HookedForm } from "./types";
-import { SyntheticEvent, useRef } from "react";
+
+import { useRef } from "react";
 
 import type {
 	MutationTrigger,
 	UseMutationStateResult,
 } from "@reduxjs/toolkit/dist/query/react/buildHooks";
 
-type formSubmitEvent = string | (SyntheticEvent<HTMLFormElement, SubmitEvent>)
-type action = formSubmitEvent | undefined
+import type {
+	FormSubmitEvent,
+	FormSubmitFunction,
+	FormSubmitResult,
+	HookedForm,
+} from "./types";
 
 declare interface UseFormSubmitOptions {
 	changedOnly: boolean;
@@ -41,24 +45,21 @@ export default function useFormSubmit(
 		changedOnly: true,
 		onFinish: undefined,
 	}
-): [
-	(e: string | (SyntheticEvent<HTMLFormElement, SubmitEvent>)) => Promise<void>,
-	any,
-] {
+): [ FormSubmitFunction, FormSubmitResult ] {
 	if (!Array.isArray(mutationQuery)) {
 		throw "useFormSubmit: mutationQuery was not an Array. Is a valid useMutation RTK Query provided?";
 	}
 
 	const { changedOnly, onFinish } = opts;
 	const [runMutation, mutationResult] = mutationQuery;
-	const usedAction = useRef<action>(undefined);
+	const usedAction = useRef<FormSubmitEvent>(undefined);
 	
-	const submitForm = async(e: formSubmitEvent) => {
-		let action: action;
+	const submitForm = async(e: FormSubmitEvent) => {
+		let action: FormSubmitEvent;
 		
 		if (typeof e === "string") {
 			action = e !== "" ? e : undefined;
-		} else {
+		} else if (e !== undefined) {
 			e.preventDefault();
 			if (e.nativeEvent.submitter) {
 				action = (e.nativeEvent.submitter as Object)["name"];
@@ -86,9 +87,10 @@ export default function useFormSubmit(
 				return onFinish(res);
 			}
 		} catch (e) {
-			console.error(`caught error running mutation: ${e}`)
+			// eslint-disable-next-line no-console
+			console.error(`caught error running mutation: ${e}`);
 		}
-	}
+	};
 	
 	return [
 		submitForm,
@@ -97,4 +99,4 @@ export default function useFormSubmit(
 			action: usedAction.current
 		}
 	];
-};
+}

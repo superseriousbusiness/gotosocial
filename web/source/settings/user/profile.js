@@ -34,7 +34,7 @@ const {
 	TextArea,
 	FileInput,
 	Checkbox
-} = require("../components/form/inputs");
+} = require("../components/form/inputs").default;
 
 const FormWithData = require("../lib/form/form-with-data");
 const FakeProfile = require("../components/fake-profile");

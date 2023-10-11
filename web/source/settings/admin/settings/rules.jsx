@@ -27,7 +27,7 @@ const { useBaseUrl } = require("../../lib/navigation/util");
 const { useValue, useTextInput } = require("../../lib/form");
 const useFormSubmit = require("../../lib/form/submit").default;
 
-const { TextArea } = require("../../components/form/inputs");
+const { TextArea } = require("../../components/form/inputs").default;
 const MutationButton = require("../../components/form/mutation-button");
 
 module.exports = function InstanceRulesData({ baseUrl }) {

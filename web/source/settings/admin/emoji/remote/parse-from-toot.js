@@ -30,7 +30,7 @@ const useFormSubmit = require("../../../lib/form/submit").default;
 const CheckList = require("../../../components/check-list");
 const { CategorySelect } = require('../category-select');
 
-const { TextInput } = require("../../../components/form/inputs");
+const { TextInput } = require("../../../components/form/inputs").default;
 const MutationButton = require("../../../components/form/mutation-button");
 const { Error } = require("../../../components/error");
 const {

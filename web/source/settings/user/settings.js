@@ -32,7 +32,7 @@ const {
 	Select,
 	TextInput,
 	Checkbox
-} = require("../components/form/inputs");
+} = require("../components/form/inputs").default;
 
 const FormWithData = require("../lib/form/form-with-data");
 const Languages = require("../components/languages");

@@ -19,6 +19,8 @@
 
 /* eslint-disable no-unused-vars */
 
+import React, { SyntheticEvent } from "react";
+
 export interface HookOpts<T = any> {
 	initialValue: T,
 	dontReset: boolean,
@@ -26,41 +28,95 @@ export interface HookOpts<T = any> {
 	showValidation: boolean,
 	initValidation: string,
 	length: number;
+	options: { [_: string]: string },
 	withPreview?: boolean,
 	maxSize,
 	initialInfo?: string;
 }
 
-export interface HookName {
+export interface HookNames {
 	name: string;
 	Name: string;
 }
 
-export type HookFunction = (
-	name: HookName,
+export type CreateHook = (
+	name: HookNames,
 	opts: Object,
-) => Object;
-
-export interface UseFormInputHookOpts {
-	valueSelector: (_arg: string) => any;
-	initialValue;
-	defaultValue;
-	source: string;
-	options?: Object;
-}
-
-export type UseInputHook = (
-	name: string,
-	opts: UseFormInputHookOpts,
 ) => FormInputHook;
 
-export interface FormInputHook {
+export type UseFormInputHook<T = any> = (
+	name: string,
+	opts: {
+		valueSelector: (_arg: string) => any;
+		initialValue;
+		defaultValue;
+		source: string;
+		options?: Object;
+	},
+) => FormInputHook<T>;
+
+export interface FormInputHook<T = any> {
+	/**
+	 * Name of this FormInputHook, as provided in the UseFormInputHook options.
+	 */
 	name: string;
-	value?: any;
+
+	/**
+	 * `name` with first letter capitalized.
+	 */
+	Name: string;
+	
+	/**
+	 * Current value of this FormInputHook.
+	 */
+	value?: T;
+
+	/**
+	 * Default value of this FormInputHook.
+	 */
+	_default: T;
+
+	/**
+	 * Sets the `value` of the FormInputHook to the provided value.
+	 */
+	setter: (_new: T) => void;
+
+	// TODO: move these to separate types.
 	selectedValues?: () => any[];
 	hasChanged: () => boolean;
+	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+	reset: () => void;
+	ctx?,
+	maxLength?,
+}
+
+export interface FormInputHookWithOptions<T = any> extends FormInputHook {
+	options: { [_: string]: T };
 }
 
 export interface HookedForm {
 	[_: string]: FormInputHook
-};
+}
+
+/**
+ * Parameters for FormSubmitFunction.
+ */
+export type FormSubmitEvent = (string | (SyntheticEvent<HTMLFormElement, SubmitEvent>) | undefined | void)
+
+/**
+ * Shadows "trigger" function for useMutation.
+ * See: https://redux-toolkit.js.org/rtk-query/usage/mutations#mutation-hook-behavior
+ */
+export type FormSubmitFunction = (_e: FormSubmitEvent) => Promise<void>
+
+/**
+ * Shadows redux mutation hook return values.
+ * See: https://redux-toolkit.js.org/rtk-query/usage/mutations#frequently-used-mutation-hook-return-values
+ */
+export interface FormSubmitResult {
+	data: any,
+	error: any,
+	isLoading: boolean,
+	isSuccess: boolean,
+	isError: boolean,
+}

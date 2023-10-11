@@ -17,7 +17,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
+import { FormInputHook, FormInputHookWithOptions } from "../../lib/form/types";
 
 function TextInput({ label, field, ...inputProps }) {
 	const { onChange, value, ref } = field;
@@ -91,7 +92,12 @@ function Checkbox({ label, field, ...inputProps }) {
 	);
 }
 
-function Select({ label, field, options, children, ...inputProps }) {
+export interface SelectProps {
+	field: FormInputHook<any>;
+	label?: string;
+}
+
+function Select({ label, field, options, children, ...inputProps }: SelectProps) {
 	const { onChange, value, ref } = field;
 
 	return (
@@ -109,7 +115,13 @@ function Select({ label, field, options, children, ...inputProps }) {
 	);
 }
 
-function RadioGroup({ field, label, ...inputProps }) {
+export interface RadioGroupProps {
+	field: FormInputHookWithOptions<string>;
+	label?: string;
+	inputProps: Object;
+}
+
+function RadioGroup({ field, label, ...inputProps }: RadioGroupProps) {
 	return (
 		<div className="form-field radio">
 			{Object.entries(field.options).map(([value, radioLabel]) => (
@@ -130,7 +142,7 @@ function RadioGroup({ field, label, ...inputProps }) {
 	);
 }
 
-module.exports = {
+export default {
 	TextInput,
 	TextArea,
 	FileInput,

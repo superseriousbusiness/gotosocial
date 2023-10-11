@@ -29,7 +29,7 @@ const { useBaseUrl } = require("../../../lib/navigation/util");
 const FakeToot = require("../../../components/fake-toot");
 const FormWithData = require("../../../lib/form/form-with-data");
 const Loading = require("../../../components/loading");
-const { FileInput } = require("../../../components/form/inputs");
+const { FileInput } = require("../../../components/form/inputs").default;
 const MutationButton = require("../../../components/form/mutation-button");
 const { Error } = require("../../../components/error");
 

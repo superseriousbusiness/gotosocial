@@ -29,8 +29,8 @@ import checklist from "./check-list";
 import fieldarray from "./field-array";
 
 import type {
-	HookFunction,
-	UseInputHook,
+	CreateHook,
+	UseFormInputHook,
 	UseFormInputHookOpts,
 	FormInputHook,
 } from "./types";
@@ -56,8 +56,15 @@ function selectorByKey(key: string) {
 	};
 }
 
-function makeHook(hookFunction: HookFunction): UseInputHook {
-	return function(name: string, opts: UseFormInputHookOpts): FormInputHook {
+/**
+ * Memoized hook generator function. Take a createHook
+ * function and use it to return a new FormInputHook.
+ * 
+ * @param createHook 
+ * @returns 
+ */
+function inputHook(createHook: CreateHook ? T): UseFormInputHook {
+	const useInputHook = (name: string, opts: UseFormInputHookOpts): FormInputHook => {
 		// for dynamically generating attributes like 'setName'
 		const Name = useMemo(() => capitalizeFirst(name), [name]);
 		const selector = useMemo(() => selectorByKey(name), [name]);
@@ -71,19 +78,22 @@ function makeHook(hookFunction: HookFunction): UseInputHook {
 			}
 		}, [opts.source, opts.defaultValue, valueSelector]);
 
-		const hook = hookFunction({ name, Name }, opts);
-
-		return Object.assign(hook, { name, Name });
+		const hook = createHook({ name, Name }, opts);
+		
+		const namedHook: FormInputHook = Object.assign(hook, { name, Name });
+		return namedHook;
 	};
+
+	return useInputHook;
 }
 
-export const useTextInput = makeHook(text);
-export const useFileInput = makeHook(file);
-export const useBoolInput = makeHook(bool);
-export const useRadioInput = makeHook(radio);
-export const useComboBoxInput = makeHook(combobox);
-export const useCheckListInput = makeHook(checklist);
-export const useFieldArrayInput = makeHook(fieldarray);
+export const useTextInput: UseFormInputHook<string> = inputHook(text);
+export const useFileInput: UseFormInputHook<File> = inputHook(file);
+export const useBoolInput: UseFormInputHook<boolean> = inputHook(bool);
+export const useRadioInput = inputHook(radio);
+export const useComboBoxInput = inputHook(combobox);
+export const useCheckListInput = inputHook(checklist);
+export const useFieldArrayInput = inputHook(fieldarray);
 
 export function useValue(name, value) {
 	return {

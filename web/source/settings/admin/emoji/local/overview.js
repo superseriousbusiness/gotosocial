@@ -30,7 +30,7 @@ const { useBaseUrl } = require("../../../lib/navigation/util");
 
 const Loading = require("../../../components/loading");
 const { Error } = require("../../../components/error");
-const { TextInput } = require("../../../components/form/inputs");
+const { TextInput } = require("../../../components/form/inputs").default;
 const { useListEmojiQuery } = require("../../../lib/query/admin/custom-emoji");
 
 module.exports = function EmojiOverview({ }) {

@@ -17,11 +17,17 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import { useState } from "react";
+import { FormInputHook, HookNames, HookOpts } from "./types";
 
 const _default = false;
-module.exports = function useBoolInput({ name, Name }, { initialValue = _default }) {
-	const [value, setValue] = React.useState(initialValue);
+export default function useBoolInput(
+	{ name, Name }: HookNames,
+	{ 
+		initialValue = _default
+	}: HookOpts<boolean>
+): FormInputHook<boolean> {
+	const [value, setValue] = useState(initialValue);
 
 	function onChange(e) {
 		setValue(e.target.checked);
@@ -41,6 +47,7 @@ module.exports = function useBoolInput({ name, Name }, { initialValue = _default
 		}
 	], {
 		name,
+		Name: "",
 		onChange,
 		reset,
 		value,
@@ -48,4 +55,4 @@ module.exports = function useBoolInput({ name, Name }, { initialValue = _default
 		hasChanged: () => value != initialValue,
 		_default
 	});
-};
+}
