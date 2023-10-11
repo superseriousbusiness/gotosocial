@@ -174,22 +174,10 @@ export interface FieldArrayInputHook extends FormInputHook<any[]>,
 	_withMaxLength,
 	_withCtx {}
 
-// /**
-//  * Sets the `value` of the FormInputHook to the provided value.
-//  */
-// setter: (_new: T) => void;
-
-// // TODO: move these to separate types.
-// ref?: React.RefObject<any>,
-// selectedValues?: () => any[];
-// hasChanged: () => boolean;
-// onChange: ChangeEventHandler;
-// reset: () => void;
-// ctx?,
-// maxLength?,
+export type AnyFormInputHook = FormInputHook | TextFormInputHook | RadioFormInputHook | FileFormInputHook | BoolFormInputHook | ComboboxFormInputHook | FieldArrayInputHook;
 
 export interface HookedForm {
-	[_: string]: FormInputHook | TextFormInputHook | RadioFormInputHook | FileFormInputHook | BoolFormInputHook | ComboboxFormInputHook | FieldArrayInputHook
+	[_: string]: AnyFormInputHook
 }
 
 /**
