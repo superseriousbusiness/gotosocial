@@ -63,7 +63,7 @@ function selectorByKey(key: string) {
  * @param createHook 
  * @returns 
  */
-function inputHook(createHook: CreateHook ? T): UseFormInputHook {
+function inputHook(createHook: CreateHook): UseFormInputHook {
 	const useInputHook = (name: string, opts: UseFormInputHookOpts): FormInputHook => {
 		// for dynamically generating attributes like 'setName'
 		const Name = useMemo(() => capitalizeFirst(name), [name]);

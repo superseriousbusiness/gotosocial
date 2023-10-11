@@ -95,6 +95,9 @@ function Checkbox({ label, field, ...inputProps }) {
 export interface SelectProps {
 	field: FormInputHook<any>;
 	label?: string;
+	options,
+	inputProps: Object;
+	children,
 }
 
 function Select({ label, field, options, children, ...inputProps }: SelectProps) {

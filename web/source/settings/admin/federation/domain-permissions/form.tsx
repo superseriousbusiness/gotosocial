@@ -24,7 +24,9 @@ import { useEffect } from "react";
 import { useExportDomainListMutation } from "../../../lib/query/admin/domain-permissions/export";
 import useFormSubmit from "../../../lib/form/submit";
 
-import { TextArea, Select, RadioGroup } from "../../../components/form/inputs";
+import TextArea from "../../../components/form/inputs";
+import Select from "../../../components/form/inputs";
+import RadioGroup from "../../../components/form/inputs";
 
 import MutationButton from "../../../components/form/mutation-button";
 
@@ -36,7 +38,8 @@ import type { FormInputHook, FormSubmitFunction, FormSubmitResult } from "../../
 export interface ImportExportFormProps {
 	form: {
 		domains: FormInputHook;
-		permType: FormInputHook<string>
+		exportType: FormInputHook<string>;
+		permType: FormInputHook<string>;
 	};
 	submitParse: FormSubmitFunction;
 	parseResult: FormSubmitResult;
@@ -107,6 +110,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						type="button"
 						onClick={() => submitExport("export")}
 						result={exportResult} showError={false}
+						disabled={false}
 					/>
 					<MutationButton
 						label="Export to file"
@@ -115,6 +119,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						onClick={() => submitExport("export-file")}
 						result={exportResult}
 						showError={false}
+						disabled={false}
 					/>
 					<div className="export-file">
 						<span>

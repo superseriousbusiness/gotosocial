@@ -19,7 +19,7 @@
 
 /* eslint-disable no-unused-vars */
 
-import React, { SyntheticEvent } from "react";
+import React, { ChangeEventHandler, SyntheticEvent } from "react";
 
 export interface HookOpts<T = any> {
 	initialValue: T,
@@ -82,9 +82,10 @@ export interface FormInputHook<T = any> {
 	setter: (_new: T) => void;
 
 	// TODO: move these to separate types.
+	ref?: React.RefObject<any>,
 	selectedValues?: () => any[];
 	hasChanged: () => boolean;
-	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+	onChange: ChangeEventHandler;
 	reset: () => void;
 	ctx?,
 	maxLength?,
