@@ -186,7 +186,7 @@ function UserProfileForm({ data: profile }) {
 					rel="noreferrer"
 				>
 					Learn more about these settings (opens in a new tab)
-                </a>
+				</a>
 			</div>
 			<Checkbox
 				field={form.showAllReplies}
