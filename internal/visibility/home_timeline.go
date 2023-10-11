@@ -161,11 +161,7 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		}
 	}
 
-	if next != status && !oneAuthor && !included && !converstn {
-        // An account may wish to see replies from their follow's even if they're not part of it
-        if *owner.ShowAllReplies {
-            return true, nil
-        }
+	if next != status && !oneAuthor && !included && !converstn && !*owner.ShowAllReplies {
 		log.Trace(ctx, "ignoring visible reply in conversation irrelevant to owner")
 		return false, nil
 	}
