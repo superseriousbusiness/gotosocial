@@ -112,7 +112,7 @@ func (f *Filter) isStatusPublicTimelineable(ctx context.Context, requester *gtsm
 			// This is not a single author reply-chain-thread,
 			// instead is an actualy conversation. Don't timeline.
 			log.Trace(ctx, "ignoring multi-author reply-chain")
-			return false, nil
+            return false, nil
 		}
 	}
 

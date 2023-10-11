@@ -162,6 +162,10 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 	}
 
 	if next != status && !oneAuthor && !included && !converstn {
+        paulscool := true
+        if paulscool {
+            return true, nil
+        }
 		log.Trace(ctx, "ignoring visible reply in conversation irrelevant to owner")
 		return false, nil
 	}
