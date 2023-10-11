@@ -233,6 +233,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Suspended:      !a.SuspendedAt.IsZero(),
 		CustomCSS:      a.CustomCSS,
 		EnableRSS:      *a.EnableRSS,
+        ShowAllReplies: *a.ShowAllReplies,
 		Role:           role,
 	}
 

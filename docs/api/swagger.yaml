@@ -204,6 +204,10 @@ definitions:
                 description: Account has enabled RSS feed.
                 type: boolean
                 x-go-name: EnableRSS
+            show_all_replies:
+                description: Account has enabled Show All Replies
+                type: boolean
+                x-go-name: ShowAllReplies
             fields:
                 description: Additional metadata attached to this account's profile.
                 items:
@@ -3627,6 +3631,10 @@ paths:
                 - description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
                   in: formData
                   name: enable_rss
+                  type: boolean
+                - description: Enable showing all follow's replies in home timeline
+                  in: formData
+                  name: show_all_replies
                   type: boolean
                 - description: Profile fields to be added to this account's profile
                   in: formData

@@ -93,6 +93,8 @@ type Account struct {
 	CustomCSS string `json:"custom_css,omitempty"`
 	// Account has enabled RSS feed.
 	EnableRSS bool `json:"enable_rss,omitempty"`
+    // Account has enabled Show All Replies
+	ShowAllReplies bool `json:"show_all_replies,omitempty"`
 	// Role of the account on this instance.
 	// Omitted for remote accounts.
 	Role *AccountRole `json:"role,omitempty"`
@@ -163,6 +165,8 @@ type UpdateCredentialsRequest struct {
 	CustomCSS *string `form:"custom_css" json:"custom_css"`
 	// Enable RSS feed of public toots for this account at /@[username]/feed.rss
 	EnableRSS *bool `form:"enable_rss" json:"enable_rss"`
+    // Enable showing all follow's replies in home timeline
+    ShowAllReplies *bool `form:"show_all_replies" json:"show_all_replies"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.

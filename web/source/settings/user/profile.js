@@ -61,6 +61,7 @@ function UserProfileForm({ data: profile }) {
 		- file avatar
 		- file header
 		- bool enable_rss
+		- bool show_all_replies
 		- string custom_css (if enabled)
 	*/
 
@@ -82,6 +83,7 @@ function UserProfileForm({ data: profile }) {
 		locked: useBoolInput("locked", { source: profile }),
 		discoverable: useBoolInput("discoverable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
+		showAllReplies: useBoolInput("show_all_replies", { source: profile }),
 		fields: useFieldArrayInput("fields_attributes", {
 			defaultValue: profile?.source?.fields,
 			length: instanceConfig.maxPinnedFields
@@ -173,6 +175,14 @@ function UserProfileForm({ data: profile }) {
 			<Checkbox
 				field={form.enableRSS}
 				label="Enable RSS feed of Public posts"
+			/>
+
+			<div className="form-section-docs">
+				<h3>Timelines</h3>
+			</div>
+			<Checkbox
+				field={form.showAllReplies}
+				label="Enable showing all follow's replies in home timeline"
 			/>
 
 			<div className="form-section-docs">

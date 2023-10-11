@@ -82,6 +82,7 @@ type Account struct {
 	HideCollections         *bool            `bun:",default:false"`                 // Hide this account's collections
 	SuspensionOrigin        string           `bun:"type:CHAR(26),nullzero"`         // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
 	EnableRSS               *bool            `bun:",default:false"`                 // enable RSS feed subscription for this account's public posts at [URL]/feed
+	ShowAllReplies          *bool            `bun:",default:false"`                 // enable showing all replies in the home timeline (i.e. a reply from a followed account to an unfollowed account ( Issue #2254 )
 }
 
 // IsLocal returns whether account is a local user account.
