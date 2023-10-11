@@ -114,9 +114,13 @@ export type FormSubmitFunction = (_e: FormSubmitEvent) => Promise<void>
  * See: https://redux-toolkit.js.org/rtk-query/usage/mutations#frequently-used-mutation-hook-return-values
  */
 export interface FormSubmitResult {
-	data: any,
-	error: any,
-	isLoading: boolean,
-	isSuccess: boolean,
-	isError: boolean,
+	/**
+	 * Action used to submit the form, if any.
+	 */
+	action: FormSubmitEvent;
+	data: any;
+	error: any;
+	isLoading: boolean;
+	isSuccess: boolean;
+	isError: boolean;
 }
