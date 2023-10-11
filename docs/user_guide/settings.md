@@ -105,6 +105,16 @@ Turning on the discoverable flag may take a week or more to propagate; your acco
 !!! info
     The discoverable setting is about **discoverability of your account**, not searchability of your posts. It has nothing to do with indexing of your posts for search by Mastodon instances, or other federated instances that use full text search!
 
+### Timelines
+
+#### Show All Replies
+
+Some replies that accounts you follow are ignored by default. This is when this reply is not directly to you, or does not mention other people you follow.  
+However, if you wish to make these replies visible, you can do so by enabling this option.  
+
+!!! info
+    Enabling this option will increase the amount of status visible in your home timeline
+
 ### Advanced
 
 #### Custom CSS
