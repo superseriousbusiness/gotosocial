@@ -147,9 +147,9 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	enableRSS := false
 	acct.EnableRSS = &enableRSS
 
-    // assume they don't want all replies shown on the home timeline
-    showAllReplies := false
-    acct.ShowAllReplies = &showAllReplies
+	// assume they don't want all replies shown on the home timeline
+	showAllReplies := false
+	acct.ShowAllReplies = &showAllReplies
 
 	// url property
 	url, err := ap.ExtractURL(accountable)
