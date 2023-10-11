@@ -490,7 +490,7 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 		"suspension_origin",
 		"hide_collections",
 		"enable_rss",
-        "show_all_replies",
+		"show_all_replies",
 	}
 }
 
