@@ -18,11 +18,11 @@
 */
 
 import { useState } from "react";
-import { HookNames, HookOpts } from "./types";
+import { CreateHookNames, HookOpts } from "./types";
 
 const _default = "";
 export default function useRadioInput(
-	{ name, Name }: HookNames,
+	{ name, Name }: CreateHookNames,
 	{
 		initialValue = _default,
 		options,

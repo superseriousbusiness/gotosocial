@@ -25,23 +25,23 @@ import React, {
 } from "react";
 
 import type {
-	FormInputHook,
-	HookNames,
+	CreateHookNames,
 	HookOpts,
+	TextFormInputHook,
 } from "./types";
 
 const _default = "";
 
 export default function useTextInput(
-	{ name, Name }: HookNames,
+	{ name, Name }: CreateHookNames,
 	{
 		initialValue = _default,
 		dontReset = false,
 		validator,
 		showValidation = true,
 		initValidation
-	}: HookOpts<string>
-): FormInputHook<string> {
+	}: HookOpts
+): TextFormInputHook {
 	const [text, setText] = useState(initialValue);
 	const textRef = useRef<HTMLInputElement>(null);
 

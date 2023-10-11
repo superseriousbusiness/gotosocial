@@ -21,11 +21,11 @@ import React from "react";
 
 import { useState } from "react";
 import prettierBytes from "prettier-bytes";
-import { FormInputHook, HookNames, HookOpts } from "./types";
+import { FormInputHook, CreateHookNames, HookOpts } from "./types";
 
 const _default = undefined;
 export default function useFileInput(
-	{ name }: HookNames,
+	{ name }: CreateHookNames,
 	{
 		withPreview,
 		maxSize,

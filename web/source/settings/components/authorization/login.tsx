@@ -22,12 +22,12 @@ import React from "react";
 import { useAuthorizeFlowMutation } from "../../lib/query/oauth";
 import { useTextInput, useValue } from "../../lib/form";
 import useFormSubmit from "../../lib/form/submit";
-import { TextInput } from "../form/inputs";
 import MutationButton from "../form/mutation-button";
 import Loading from "../loading";
+import { HookedForm } from "../../lib/form/types";
 
 export default function Login({ }) {
-	const form = {
+	const form: HookedForm = {
 		instance: useTextInput("instance", {
 			defaultValue: window.location.origin
 		}),

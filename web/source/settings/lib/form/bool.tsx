@@ -18,11 +18,11 @@
 */
 
 import { useState } from "react";
-import { FormInputHook, HookNames, HookOpts } from "./types";
+import { FormInputHook, CreateHookNames, HookOpts } from "./types";
 
 const _default = false;
 export default function useBoolInput(
-	{ name, Name }: HookNames,
+	{ name, Name }: CreateHookNames,
 	{ 
 		initialValue = _default
 	}: HookOpts<boolean>

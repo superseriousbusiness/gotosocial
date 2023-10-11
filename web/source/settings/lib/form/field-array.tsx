@@ -23,7 +23,7 @@ import getFormMutations from "./get-form-mutations";
 
 import type {
 	FormInputHook,
-	HookNames,
+	CreateHookNames,
 	HookOpts,
 } from "./types";
 
@@ -43,7 +43,7 @@ function parseFields(entries, length) {
 
 const _default: any[] = [];
 export default function useArrayInput(
-	{ name }: HookNames,
+	{ name }: CreateHookNames,
 	{
 		initialValue,
 		length = 0,

@@ -19,45 +19,38 @@
 
 /* eslint-disable no-unused-vars */
 
-import React, { ChangeEventHandler, SyntheticEvent } from "react";
+import { ChangeEventHandler, SyntheticEvent } from "react";
 
-export interface HookOpts<T = any> {
-	initialValue: T,
-	dontReset: boolean,
-	validator?: (_input: T) => string,
-	showValidation: boolean,
-	initValidation: string,
-	length: number;
-	options: { [_: string]: string },
-	withPreview?: boolean,
-	maxSize,
-	initialInfo?: string;
-}
-
-export interface HookNames {
+export interface CreateHookNames {
 	name: string;
 	Name: string;
 }
 
+export interface HookOpts {
+	initialValue?: any,
+	dontReset?: boolean,
+	validator?,
+	showValidation?: boolean,
+	initValidation?: string,
+	length?: number;
+	options?: { [_: string]: string },
+	withPreview?: boolean,
+	maxSize?,
+	initialInfo?: string;
+	valueSelector?,
+	source?,
+	defaultValue?,
+}
+
 export type CreateHook = (
-	name: HookNames,
-	opts: Object,
+	name: CreateHookNames,
+	opts: HookOpts,
 ) => FormInputHook;
 
-export type UseFormInputHook<T = any> = (
-	name: string,
-	opts: {
-		valueSelector: (_arg: string) => any;
-		initialValue;
-		defaultValue;
-		source: string;
-		options?: Object;
-	},
-) => FormInputHook<T>;
-
-export interface FormInputHook<T = any> {
+export interface FormInputHook {
 	/**
-	 * Name of this FormInputHook, as provided in the UseFormInputHook options.
+	 * Name of this FormInputHook, as provided
+	 * in the UseFormInputHook options.
 	 */
 	name: string;
 
@@ -69,27 +62,42 @@ export interface FormInputHook<T = any> {
 	/**
 	 * Current value of this FormInputHook.
 	 */
-	value?: T;
+	value?: any;
 
 	/**
 	 * Default value of this FormInputHook.
 	 */
-	_default: T;
+	_default: any;
 
 	/**
-	 * Sets the `value` of the FormInputHook to the provided value.
+	 * Return true if the values of this hook is considered 
+	 * to have been changed from the default / initial value.
 	 */
-	setter: (_new: T) => void;
-
-	// TODO: move these to separate types.
-	ref?: React.RefObject<any>,
-	selectedValues?: () => any[];
 	hasChanged: () => boolean;
+}
+
+export interface TextFormInputHook extends FormInputHook {
 	onChange: ChangeEventHandler;
 	reset: () => void;
-	ctx?,
-	maxLength?,
+	ref: React.RefObject<HTMLInputElement>;
+	setter: React.Dispatch<React.SetStateAction<string>>;
+	valid: boolean;
+	validate: () => void;
 }
+
+	// /**
+	//  * Sets the `value` of the FormInputHook to the provided value.
+	//  */
+	// setter: (_new: T) => void;
+
+	// // TODO: move these to separate types.
+	// ref?: React.RefObject<any>,
+	// selectedValues?: () => any[];
+	// hasChanged: () => boolean;
+	// onChange: ChangeEventHandler;
+	// reset: () => void;
+	// ctx?,
+	// maxLength?,
 
 export interface FormInputHookWithOptions<T = any> extends FormInputHook {
 	options: { [_: string]: T };

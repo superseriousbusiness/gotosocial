@@ -30,9 +30,10 @@ import fieldarray from "./field-array";
 
 import type {
 	CreateHook,
-	UseFormInputHook,
-	UseFormInputHookOpts,
 	FormInputHook,
+	HookOpts,
+	CreateHookNames,
+	TextFormInputHook,
 } from "./types";
 
 function capitalizeFirst(str: string) {
@@ -63,8 +64,8 @@ function selectorByKey(key: string) {
  * @param createHook 
  * @returns 
  */
-function inputHook(createHook: CreateHook): UseFormInputHook {
-	const useInputHook = (name: string, opts: UseFormInputHookOpts): FormInputHook => {
+function inputHook(createHook: CreateHook): (name: string, opts: HookOpts) => FormInputHook {	
+	return (name: string, opts: HookOpts): FormInputHook => {
 		// for dynamically generating attributes like 'setName'
 		const Name = useMemo(() => capitalizeFirst(name), [name]);
 		const selector = useMemo(() => selectorByKey(name), [name]);
@@ -79,32 +80,28 @@ function inputHook(createHook: CreateHook): UseFormInputHook {
 		}, [opts.source, opts.defaultValue, valueSelector]);
 
 		const hook = createHook({ name, Name }, opts);
-		
-		const namedHook: FormInputHook = Object.assign(hook, { name, Name });
-		return namedHook;
+		return Object.assign(hook, { name, Name });
 	};
-
-	return useInputHook;
 }
 
-export const useTextInput: UseFormInputHook<string> = inputHook(text);
-export const useFileInput: UseFormInputHook<File> = inputHook(file);
-export const useBoolInput: UseFormInputHook<boolean> = inputHook(bool);
+function value (
+	{ name, Name }: CreateHookNames,
+	{ initialValue }: HookOpts,
+): FormInputHook {
+	return {
+		_default: initialValue,
+		name,
+		Name: "", 
+		value: initialValue,
+		hasChanged: () => true // always included
+	}
+}
+
+export const useTextInput = inputHook(text) as (name: string, opts: HookOpts) => TextFormInputHook;
+export const useFileInput = inputHook(file);
+export const useBoolInput = inputHook(bool);
 export const useRadioInput = inputHook(radio);
 export const useComboBoxInput = inputHook(combobox);
 export const useCheckListInput = inputHook(checklist);
 export const useFieldArrayInput = inputHook(fieldarray);
-
-export function useValue(name: string, value: any): FormInputHook<typeof value> {
-	
-	const hook = {
-		_default: value,
-		name,
-		value,
-		hasChanged: () => true // always included
-	};
-
-	hook["setter"] = (v: typeof value) => { hook.value = v },
-
-	return hook;
-}
+export const useValue = inputHook(value);
