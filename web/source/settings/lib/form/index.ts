@@ -95,10 +95,16 @@ export const useComboBoxInput = inputHook(combobox);
 export const useCheckListInput = inputHook(checklist);
 export const useFieldArrayInput = inputHook(fieldarray);
 
-export function useValue(name, value) {
-	return {
+export function useValue(name: string, value: any): FormInputHook<typeof value> {
+	
+	const hook = {
+		_default: value,
 		name,
 		value,
 		hasChanged: () => true // always included
 	};
+
+	hook["setter"] = (v: typeof value) => { hook.value = v },
+
+	return hook;
 }
