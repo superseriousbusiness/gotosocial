@@ -179,6 +179,14 @@ function UserProfileForm({ data: profile }) {
 
 			<div className="form-section-docs">
 				<h3>Timelines</h3>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#timelines"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about these settings (opens in a new tab)
+                </a>
 			</div>
 			<Checkbox
 				field={form.showAllReplies}
