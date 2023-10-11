@@ -73,7 +73,7 @@ function inputHook(createHook: CreateHook): (_name: string, _opts: HookOpts) => 
 		// for dynamically generating attributes like 'setName'
 		const Name = useMemo(() => capitalizeFirst(name), [name]);
 		const selector = useMemo(() => selectorByKey(name), [name]);
-		const valueSelector = opts ? opts.valueSelector : selector;
+		const valueSelector = opts?.valueSelector?? selector;
 
 		if (opts) {
 			opts.initialValue = useMemo(() => {
@@ -90,6 +90,9 @@ function inputHook(createHook: CreateHook): (_name: string, _opts: HookOpts) => 
 	};
 }
 
+/**
+ * Simplest form hook type in town.
+ */
 function value<T>(name: string, initialValue: T) {
 	return {
 		_default: initialValue,

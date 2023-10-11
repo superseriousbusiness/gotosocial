@@ -77,7 +77,7 @@ function AccountDetailForm({ data: account }) {
 function ModifyAccount({ account }) {
 	const form = {
 		id: useValue("id", account.id),
-		reason: useTextInput("text", {})
+		reason: useTextInput("text")
 	};
 
 	const [modifyAccount, result] = useFormSubmit(form, query.useActionAccountMutation());

@@ -48,7 +48,7 @@ export interface HookOpts<T = any> {
 	withPreview?: boolean,
 	maxSize?,
 	initialInfo?: string;
-	valueSelector?,
+	valueSelector?: Function,
 	source?,
 }
 
