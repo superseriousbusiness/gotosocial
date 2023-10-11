@@ -27,8 +27,8 @@ export default function getFormMutations(
 	const mutationData: Array<[string, any]> = [];
 	
 	Object.values(form).forEach((field) => {
-		if (field.selectedValues !== undefined) {
-			// Array hook.
+		if ("selectedValues" in field) {
+			// FieldArrayInputHook.
 			const selected = field.selectedValues();
 			if (!changedOnly || selected.length > 0) {
 				updatedFields.push(field);

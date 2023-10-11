@@ -40,7 +40,7 @@ export default function useTextInput(
 		validator,
 		showValidation = true,
 		initValidation
-	}: HookOpts
+	}: HookOpts<string>
 ): TextFormInputHook {
 	const [text, setText] = useState(initialValue);
 	const textRef = useRef<HTMLInputElement>(null);

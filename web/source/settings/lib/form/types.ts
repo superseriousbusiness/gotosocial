@@ -19,15 +19,26 @@
 
 /* eslint-disable no-unused-vars */
 
-import { ChangeEventHandler, SyntheticEvent } from "react";
+import { ComboboxState } from "ariakit";
+import React from "react";
+
+import {
+	ChangeEventHandler,
+	Dispatch,
+	RefObject,
+	SetStateAction,
+	SyntheticEvent,
+} from "react";
 
 export interface CreateHookNames {
 	name: string;
 	Name: string;
 }
 
-export interface HookOpts {
-	initialValue?: any,
+export interface HookOpts<T = any> {
+	initialValue?: T,
+	defaultValue?: T,
+	
 	dontReset?: boolean,
 	validator?,
 	showValidation?: boolean,
@@ -39,7 +50,6 @@ export interface HookOpts {
 	initialInfo?: string;
 	valueSelector?,
 	source?,
-	defaultValue?,
 }
 
 export type CreateHook = (
@@ -47,7 +57,7 @@ export type CreateHook = (
 	opts: HookOpts,
 ) => FormInputHook;
 
-export interface FormInputHook {
+export interface FormInputHook<T = any> {
 	/**
 	 * Name of this FormInputHook, as provided
 	 * in the UseFormInputHook options.
@@ -62,12 +72,12 @@ export interface FormInputHook {
 	/**
 	 * Current value of this FormInputHook.
 	 */
-	value?: any;
+	value?: T;
 
 	/**
 	 * Default value of this FormInputHook.
 	 */
-	_default: any;
+	_default: T;
 
 	/**
 	 * Return true if the values of this hook is considered 
@@ -76,35 +86,110 @@ export interface FormInputHook {
 	hasChanged: () => boolean;
 }
 
-export interface TextFormInputHook extends FormInputHook {
-	onChange: ChangeEventHandler;
+interface _withReset {
 	reset: () => void;
-	ref: React.RefObject<HTMLInputElement>;
-	setter: React.Dispatch<React.SetStateAction<string>>;
+}
+
+interface _withOnChange {
+	onChange: ChangeEventHandler;
+}
+
+interface _withSetter<T> {
+	setter: Dispatch<SetStateAction<T>>;
+}
+
+interface _withValidate {
 	valid: boolean;
 	validate: () => void;
 }
 
-	// /**
-	//  * Sets the `value` of the FormInputHook to the provided value.
-	//  */
-	// setter: (_new: T) => void;
-
-	// // TODO: move these to separate types.
-	// ref?: React.RefObject<any>,
-	// selectedValues?: () => any[];
-	// hasChanged: () => boolean;
-	// onChange: ChangeEventHandler;
-	// reset: () => void;
-	// ctx?,
-	// maxLength?,
-
-export interface FormInputHookWithOptions<T = any> extends FormInputHook {
-	options: { [_: string]: T };
+interface _withRef {
+	ref: RefObject<HTMLElement>;
 }
 
+interface _withFile {
+	previewValue?: string;
+	infoComponent: React.JSX.Element;
+}
+
+interface _withComboboxState {
+	state: ComboboxState;
+}
+
+interface _withNew {
+	isNew: boolean;
+	setIsNew: Dispatch<SetStateAction<boolean>>;
+}
+
+interface _withSelectedValues {
+	selectedValues: () => {
+		[_: string]: any;
+	}[]
+}
+
+interface _withCtx {
+	ctx
+}
+
+interface _withMaxLength {
+	maxLength: number;
+}
+
+interface _withOptions {
+	options: { [_: string]: string };
+}
+
+export interface TextFormInputHook extends FormInputHook<string>,
+	_withSetter<string>,
+	_withOnChange,
+	_withReset,
+	_withValidate,
+	_withRef {}
+
+export interface RadioFormInputHook extends FormInputHook<string>,
+	_withSetter<string>,
+	_withOnChange,
+	_withOptions,
+	_withReset {}
+
+export interface FileFormInputHook extends FormInputHook<File | undefined>,
+	_withOnChange,
+	_withReset,
+	Partial<_withRef>,
+	_withFile {}
+
+export interface BoolFormInputHook extends FormInputHook<boolean>,
+	_withSetter<boolean>,
+	_withOnChange,
+	_withReset {}
+
+export interface ComboboxFormInputHook extends FormInputHook<string>,
+	_withSetter<string>,
+	_withComboboxState,
+	_withNew,
+	_withReset {}
+
+export interface FieldArrayInputHook extends FormInputHook<any[]>,
+	_withSelectedValues,
+	_withMaxLength,
+	_withCtx {}
+
+// /**
+//  * Sets the `value` of the FormInputHook to the provided value.
+//  */
+// setter: (_new: T) => void;
+
+// // TODO: move these to separate types.
+// ref?: React.RefObject<any>,
+// selectedValues?: () => any[];
+// hasChanged: () => boolean;
+// onChange: ChangeEventHandler;
+// reset: () => void;
+// ctx?,
+// maxLength?,
+
 export interface HookedForm {
-	[_: string]: FormInputHook
+	[_: string]: FormInputHook | TextFormInputHook | RadioFormInputHook | FileFormInputHook | BoolFormInputHook | ComboboxFormInputHook | FieldArrayInputHook
 }
 
 /**

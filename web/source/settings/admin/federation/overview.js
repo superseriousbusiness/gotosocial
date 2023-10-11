@@ -23,7 +23,7 @@ const { matchSorter } = require("match-sorter");
 
 const { useTextInput } = require("../../lib/form");
 
-const { TextInput } = require("../../components/form/inputs").default;
+const { TextInput } = require("../../components/form/inputs");
 
 const Loading = require("../../components/loading");
 const { useGetDomainBlocksQuery } = require("../../lib/query/admin/domain-permissions/get");

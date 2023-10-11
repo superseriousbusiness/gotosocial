@@ -17,13 +17,21 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import { useState } from "react";
 
-const { useComboboxState } = require("ariakit/combobox");
+import { useComboboxState } from "ariakit/combobox";
+import {
+	ComboboxFormInputHook,
+	CreateHookNames,
+	HookOpts,
+} from "./types";
 
 const _default = "";
-module.exports = function useComboBoxInput({ name, Name }, { initialValue = _default }) {
-	const [isNew, setIsNew] = React.useState(false);
+export default function useComboBoxInput(
+	{ name, Name }: CreateHookNames,
+	{ initialValue = _default }: HookOpts<string>
+): ComboboxFormInputHook {
+	const [isNew, setIsNew] = useState(false);
 
 	const state = useComboboxState({
 		defaultValue: initialValue,
@@ -45,14 +53,15 @@ module.exports = function useComboBoxInput({ name, Name }, { initialValue = _def
 			[`set${Name}IsNew`]: setIsNew
 		}
 	], {
+		reset,
 		name,
+		Name: "", // Will be set by inputHook function.
 		state,
 		value: state.value,
-		setter: (val) => state.setValue(val),
+		setter: (val: string) => state.setValue(val),
 		hasChanged: () => state.value != initialValue,
 		isNew,
 		setIsNew,
-		reset,
 		_default
 	});
-};
+}

@@ -35,7 +35,7 @@ import type {
 
 declare interface UseFormSubmitOptions {
 	changedOnly: boolean;
-	onFinish: ((_res: any) => void) | undefined;
+	onFinish?: ((_res: any) => void);
 }
 
 export default function useFormSubmit(

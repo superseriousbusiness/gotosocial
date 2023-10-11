@@ -22,7 +22,7 @@ const React = require("react");
 const query = require("../../../lib/query");
 
 const { useTextInput } = require("../../../lib/form");
-const { TextInput } = require("../../../components/form/inputs").default;
+const { TextInput } = require("../../../components/form/inputs");
 
 const MutationButton = require("../../../components/form/mutation-button");
 

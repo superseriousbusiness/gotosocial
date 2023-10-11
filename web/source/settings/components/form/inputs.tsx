@@ -18,9 +18,27 @@
 */
 
 import React from "react";
-import { FormInputHook, FormInputHookWithOptions } from "../../lib/form/types";
 
-function TextInput({ label, field, ...inputProps }) {
+import type {
+	ReactNode,
+	RefObject,
+} from "react";
+
+import type {
+	FileFormInputHook,
+	RadioFormInputHook,
+	TextFormInputHook,
+} from "../../lib/form/types";
+
+export interface TextInputProps extends React.DetailedHTMLProps<
+	React.InputHTMLAttributes<HTMLInputElement>,
+	HTMLInputElement
+> {
+	label?: string;
+	field: TextFormInputHook;
+}
+
+export function TextInput({label, field, ...props}: TextInputProps) {
 	const { onChange, value, ref } = field;
 
 	return (
@@ -28,16 +46,25 @@ function TextInput({ label, field, ...inputProps }) {
 			<label>
 				{label}
 				<input
-					type="text"
-					{...{ onChange, value, ref }}
-					{...inputProps}
+					onChange={onChange}
+					value={value}
+					ref={ref as RefObject<HTMLInputElement>}
+					{...props}
 				/>
 			</label>
 		</div>
 	);
 }
 
-function TextArea({ label, field, ...inputProps }) {
+export interface TextAreaProps extends React.DetailedHTMLProps<
+	React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+	HTMLTextAreaElement
+> {
+	label?: string;
+	field: TextFormInputHook;
+}
+
+export function TextArea({label, field, ...props}: TextAreaProps) {
 	const { onChange, value, ref } = field;
 
 	return (
@@ -45,16 +72,25 @@ function TextArea({ label, field, ...inputProps }) {
 			<label>
 				{label}
 				<textarea
-					type="text"
-					{...{ onChange, value, ref }}
-					{...inputProps}
+					onChange={onChange}
+					value={value}
+					ref={ref as RefObject<HTMLTextAreaElement>}
+					{...props}
 				/>
 			</label>
 		</div>
 	);
 }
 
-function FileInput({ label, field, ...inputProps }) {
+export interface FileInputProps extends React.DetailedHTMLProps<
+	React.InputHTMLAttributes<HTMLInputElement>,
+	HTMLInputElement
+> {
+	label?: string;
+	field: FileFormInputHook;
+}
+
+export function FileInput({ label, field, ...props }: FileInputProps) {
 	const { onChange, ref, infoComponent } = field;
 
 	return (
@@ -67,15 +103,16 @@ function FileInput({ label, field, ...inputProps }) {
 				<input
 					type="file"
 					className="hidden"
-					{...{ onChange, ref }}
-					{...inputProps}
+					onChange={onChange}
+					ref={ref ? ref as RefObject<HTMLInputElement> : undefined}
+					{...props}
 				/>
 			</label>
 		</div>
 	);
 }
 
-function Checkbox({ label, field, ...inputProps }) {
+export function Checkbox({ label, field, ...inputProps }) {
 	const { onChange, value } = field;
 
 	return (
@@ -92,24 +129,29 @@ function Checkbox({ label, field, ...inputProps }) {
 	);
 }
 
-export interface SelectProps {
-	field: FormInputHook<any>;
+export interface SelectProps extends React.DetailedHTMLProps<
+	React.SelectHTMLAttributes<HTMLSelectElement>,
+	HTMLSelectElement
+> {
 	label?: string;
-	options,
-	inputProps: Object;
-	children,
+	field: TextFormInputHook;
+	children?: ReactNode;
+	options: React.JSX.Element;
 }
 
-function Select({ label, field, options, children, ...inputProps }: SelectProps) {
+export function Select({ label, field, children, options, ...props }: SelectProps) {
 	const { onChange, value, ref } = field;
 
 	return (
 		<div className="form-field select">
 			<label>
-				{label} {children}
+				{label}
+				{children}
 				<select
-					{...{ onChange, value, ref }}
-					{...inputProps}
+					onChange={onChange}
+					value={value}
+					ref={ref as RefObject<HTMLSelectElement>}
+					{...props}
 				>
 					{options}
 				</select>
@@ -118,13 +160,15 @@ function Select({ label, field, options, children, ...inputProps }: SelectProps)
 	);
 }
 
-export interface RadioGroupProps {
-	field: FormInputHookWithOptions<string>;
+export interface RadioGroupProps extends React.DetailedHTMLProps<
+	React.InputHTMLAttributes<HTMLInputElement>,
+	HTMLInputElement
+> {
 	label?: string;
-	inputProps: Object;
+	field: RadioFormInputHook;
 }
 
-function RadioGroup({ field, label, ...inputProps }: RadioGroupProps) {
+export function RadioGroup({ label, field, ...props }: RadioGroupProps) {
 	return (
 		<div className="form-field radio">
 			{Object.entries(field.options).map(([value, radioLabel]) => (
@@ -135,7 +179,7 @@ function RadioGroup({ field, label, ...inputProps }: RadioGroupProps) {
 						value={value}
 						checked={field.value == value}
 						onChange={field.onChange}
-						{...inputProps}
+						{...props}
 					/>
 					{radioLabel}
 				</label>
@@ -144,12 +188,3 @@ function RadioGroup({ field, label, ...inputProps }: RadioGroupProps) {
 		</div>
 	);
 }
-
-export default {
-	TextInput,
-	TextArea,
-	FileInput,
-	Checkbox,
-	Select,
-	RadioGroup
-};

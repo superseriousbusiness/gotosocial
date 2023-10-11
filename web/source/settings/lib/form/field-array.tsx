@@ -22,9 +22,9 @@ import { useRef, useMemo } from "react";
 import getFormMutations from "./get-form-mutations";
 
 import type {
-	FormInputHook,
 	CreateHookNames,
 	HookOpts,
+	FieldArrayInputHook,
 } from "./types";
 
 function parseFields(entries, length) {
@@ -47,8 +47,8 @@ export default function useArrayInput(
 	{
 		initialValue,
 		length = 0,
-	}: HookOpts<any[]>,
-): FormInputHook<any[]> {
+	}: HookOpts,
+): FieldArrayInputHook {
 	const fields = useRef<Object>({});
 
 	const value = useMemo(
@@ -63,9 +63,6 @@ export default function useArrayInput(
 		value,
 		ctx: fields.current,
 		maxLength: length,
-		setter: () => {},
-		onChange: () => {},
-		reset: () => {},
 		hasChanged: () => true,
 		selectedValues() {
 			// if any form field changed, we need to re-send everything

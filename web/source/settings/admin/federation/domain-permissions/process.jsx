@@ -30,20 +30,13 @@ const {
 
 const useFormSubmit = require("../../../lib/form/submit").default;
 
-const {
-	TextInput,
-	TextArea,
-	Checkbox,
-	Select,
-	RadioGroup
-} = require("../../../components/form/inputs").default;
-
 const CheckList = require("../../../components/check-list");
 const MutationButton = require("../../../components/form/mutation-button");
 const FormWithData = require("../../../lib/form/form-with-data");
 
 const { useImportDomainPermsMutation } = require("../../../lib/query/admin/domain-permissions/import");
 const { useGetDomainBlocksQuery } = require("../../../lib/query/admin/domain-permissions/get");
+const { Select, TextArea, RadioGroup, Checkbox, TextInput } = require("../../../components/form/inputs");
 
 module.exports = React.memo(
 	function ProcessImport({ list }) {

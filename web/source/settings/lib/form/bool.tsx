@@ -18,15 +18,17 @@
 */
 
 import { useState } from "react";
-import { FormInputHook, CreateHookNames, HookOpts } from "./types";
+import type {
+	BoolFormInputHook,
+	CreateHookNames,
+	HookOpts,
+} from "./types";
 
 const _default = false;
 export default function useBoolInput(
 	{ name, Name }: CreateHookNames,
-	{ 
-		initialValue = _default
-	}: HookOpts<boolean>
-): FormInputHook<boolean> {
+	{ initialValue = _default }: HookOpts<boolean>
+): BoolFormInputHook {
 	const [value, setValue] = useState(initialValue);
 
 	function onChange(e) {

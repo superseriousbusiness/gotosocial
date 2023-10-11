@@ -24,22 +24,29 @@ import { useEffect } from "react";
 import { useExportDomainListMutation } from "../../../lib/query/admin/domain-permissions/export";
 import useFormSubmit from "../../../lib/form/submit";
 
-import TextArea from "../../../components/form/inputs";
-import Select from "../../../components/form/inputs";
-import RadioGroup from "../../../components/form/inputs";
+import {
+	RadioGroup,
+	TextArea,
+	Select,
+} from "../../../components/form/inputs";
 
 import MutationButton from "../../../components/form/mutation-button";
 
 import { Error } from "../../../components/error";
 import ExportFormatTable from "./export-format-table";
 
-import type { FormInputHook, FormSubmitFunction, FormSubmitResult } from "../../../lib/form/types";
+import type {
+	FormSubmitFunction,
+	FormSubmitResult,
+	RadioFormInputHook,
+	TextFormInputHook,
+} from "../../../lib/form/types";
 
 export interface ImportExportFormProps {
 	form: {
-		domains: FormInputHook;
-		exportType: FormInputHook<string>;
-		permType: FormInputHook<string>;
+		domains: TextFormInputHook;
+		exportType: TextFormInputHook;
+		permType: RadioFormInputHook;
 	};
 	submitParse: FormSubmitFunction;
 	parseResult: FormSubmitResult;
@@ -51,8 +58,11 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 	function fileChanged(e) {
 		const reader = new FileReader();
 		reader.onload = function (read) {
-			form.domains.value = read.target?.result;
-			submitParse();
+			const res = read.target?.result;
+			if (typeof res === "string") {
+				form.domains.value = res;
+				submitParse();
+			}
 		};
 		reader.readAsText(e.target.files[0]);
 	}

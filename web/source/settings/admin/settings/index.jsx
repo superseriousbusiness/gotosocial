@@ -30,7 +30,7 @@ const {
 	TextInput,
 	TextArea,
 	FileInput
-} = require("../../components/form/inputs").default;
+} = require("../../components/form/inputs");
 
 const FormWithData = require("../../lib/form/form-with-data");
 const MutationButton = require("../../components/form/mutation-button");

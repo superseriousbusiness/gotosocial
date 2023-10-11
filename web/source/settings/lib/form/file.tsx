@@ -21,7 +21,12 @@ import React from "react";
 
 import { useState } from "react";
 import prettierBytes from "prettier-bytes";
-import { FormInputHook, CreateHookNames, HookOpts } from "./types";
+
+import type {
+	CreateHookNames,
+	HookOpts,
+	FileFormInputHook,
+} from "./types";
 
 const _default = undefined;
 export default function useFileInput(
@@ -30,8 +35,8 @@ export default function useFileInput(
 		withPreview,
 		maxSize,
 		initialInfo = "no file selected"
-	}: HookOpts
-): FormInputHook<File | undefined> {
+	}: HookOpts<File>
+): FileFormInputHook {
 	const [file, setFile] = useState<File>();
 	const [imageURL, setImageURL] = useState<string>();
 	const [info, setInfo] = useState<React.JSX.Element>();
@@ -94,15 +99,14 @@ export default function useFileInput(
 			[`${name}Info`]: infoComponent,
 		}
 	], {
-		setter: () => {},
-		_default,
 		onChange,
 		reset,
 		name,
-		Name: "",
+		Name: "", // Will be set by inputHook function.
 		value: file,
 		previewValue: imageURL,
 		hasChanged: () => file != undefined,
-		infoComponent
+		infoComponent,
+		_default,
 	});
 }

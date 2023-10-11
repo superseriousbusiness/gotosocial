@@ -24,24 +24,19 @@ import { useTextInput, useValue } from "../../lib/form";
 import useFormSubmit from "../../lib/form/submit";
 import MutationButton from "../form/mutation-button";
 import Loading from "../loading";
-import { HookedForm } from "../../lib/form/types";
+import { TextInput } from "../form/inputs";
 
 export default function Login({ }) {
-	const form: HookedForm = {
+	const form = {
 		instance: useTextInput("instance", {
 			defaultValue: window.location.origin
 		}),
-		scopes: useValue("scopes", "user admin")
+		scopes: useValue("scopes", "user admin"),
 	};
 
-	const [formSubmit, result] = useFormSubmit(
-		form,
-		useAuthorizeFlowMutation(),
-		{ 
-			changedOnly: false,
-			onFinish: undefined,
-		}
-	);
+	const [formSubmit, result] = useFormSubmit(form, useAuthorizeFlowMutation(), { 
+		changedOnly: false,
+	});
 
 	if (result.isLoading) {
 		return (
@@ -58,7 +53,7 @@ export default function Login({ }) {
 	}
 
 	return (
-		<form onSubmit={formSubmit}>
+		<form onSubmit={formSubmit as React.FormEventHandler<HTMLFormElement>}>
 			<TextInput
 				field={form.instance}
 				label="Instance"

@@ -32,8 +32,12 @@ import type {
 	CreateHook,
 	FormInputHook,
 	HookOpts,
-	CreateHookNames,
 	TextFormInputHook,
+	RadioFormInputHook,
+	FileFormInputHook,
+	BoolFormInputHook,
+	ComboboxFormInputHook,
+	FieldArrayInputHook,
 } from "./types";
 
 function capitalizeFirst(str: string) {
@@ -59,49 +63,48 @@ function selectorByKey(key: string) {
 
 /**
  * Memoized hook generator function. Take a createHook
- * function and use it to return a new FormInputHook.
+ * function and use it to return a new FormInputHook function.
  * 
  * @param createHook 
  * @returns 
  */
-function inputHook(createHook: CreateHook): (name: string, opts: HookOpts) => FormInputHook {	
-	return (name: string, opts: HookOpts): FormInputHook => {
+function inputHook(createHook: CreateHook): (_name: string, _opts: HookOpts) => FormInputHook {	
+	return (name: string, opts?: HookOpts): FormInputHook => {
 		// for dynamically generating attributes like 'setName'
 		const Name = useMemo(() => capitalizeFirst(name), [name]);
 		const selector = useMemo(() => selectorByKey(name), [name]);
-		const valueSelector = opts.valueSelector ?? selector;
+		const valueSelector = opts ? opts.valueSelector : selector;
 
-		opts.initialValue = useMemo(() => {
-			if (opts.source == undefined) {
-				return opts.defaultValue;
-			} else {
-				return valueSelector(opts.source) ?? opts.defaultValue;
-			}
-		}, [opts.source, opts.defaultValue, valueSelector]);
+		if (opts) {
+			opts.initialValue = useMemo(() => {
+				if (opts.source == undefined) {
+					return opts.defaultValue;
+				} else {
+					return valueSelector(opts.source) ?? opts.defaultValue;
+				}
+			}, [opts.source, opts.defaultValue, valueSelector]);
+		}
 
-		const hook = createHook({ name, Name }, opts);
+		const hook = createHook({ name, Name }, opts ?? {});
 		return Object.assign(hook, { name, Name });
 	};
 }
 
-function value (
-	{ name, Name }: CreateHookNames,
-	{ initialValue }: HookOpts,
-): FormInputHook {
+function value<T>(name: string, initialValue: T) {
 	return {
 		_default: initialValue,
 		name,
 		Name: "", 
 		value: initialValue,
-		hasChanged: () => true // always included
-	}
+		hasChanged: () => true, // always included
+	};
 }
 
-export const useTextInput = inputHook(text) as (name: string, opts: HookOpts) => TextFormInputHook;
-export const useFileInput = inputHook(file);
-export const useBoolInput = inputHook(bool);
-export const useRadioInput = inputHook(radio);
-export const useComboBoxInput = inputHook(combobox);
+export const useTextInput = inputHook(text) as (_name: string, _opts?: HookOpts<string>) => TextFormInputHook;
+export const useFileInput = inputHook(file) as (_name: string, _opts?: HookOpts<File>) => FileFormInputHook;
+export const useBoolInput = inputHook(bool) as (_name: string, _opts?: HookOpts<boolean>) => BoolFormInputHook;
+export const useRadioInput = inputHook(radio) as (_name: string, _opts?: HookOpts<string>) => RadioFormInputHook;
+export const useComboBoxInput = inputHook(combobox) as (_name: string, _opts?: HookOpts<string>) => ComboboxFormInputHook;
 export const useCheckListInput = inputHook(checklist);
-export const useFieldArrayInput = inputHook(fieldarray);
-export const useValue = inputHook(value);
+export const useFieldArrayInput = inputHook(fieldarray) as (_name: string, _opts?: HookOpts<string>) => FieldArrayInputHook;
+export const useValue = value as <T>(_name: string, _initialValue: T) => FormInputHook<T>;

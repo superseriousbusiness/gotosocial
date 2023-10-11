@@ -29,7 +29,7 @@ const useFormSubmit = require("../../../lib/form/submit").default;
 
 const {
 	TextInput, FileInput
-} = require("../../../components/form/inputs").default;
+} = require("../../../components/form/inputs");
 
 const { CategorySelect } = require('../category-select');
 const FakeToot = require("../../../components/fake-toot");
