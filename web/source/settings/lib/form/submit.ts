@@ -33,18 +33,34 @@ import type {
 	HookedForm,
 } from "./types";
 
-declare interface UseFormSubmitOptions {
+interface UseFormSubmitOptions {
 	changedOnly: boolean;
 	onFinish?: ((_res: any) => void);
 }
 
+/**
+ * Parse changed values from the hooked form into a request
+ * body, and submit it using the given mutation trigger.
+ * 
+ * This function basically wraps RTK Query's submit methods to
+ * work with our hooked form interface.
+ * 
+ * An `onFinish` callback function can be provided, which will
+ * be executed on a **successful** run of the given MutationTrigger,
+ * with the mutation result passed into it.
+ * 
+ * If `changedOnly` is false, then **all** fields of the given HookedForm
+ * will be submitted to the mutation endpoint, not just changed ones.
+ * 
+ * The returned function and result can be triggered and read
+ * from just like an RTK Query mutation hook result would be.
+ * 
+ * See: https://redux-toolkit.js.org/rtk-query/usage/mutations#mutation-hook-behavior
+ */
 export default function useFormSubmit(
 	form: HookedForm,
 	mutationQuery: readonly [MutationTrigger<any>, UseMutationStateResult<any, any>],
-	opts: UseFormSubmitOptions = {
-		changedOnly: true,
-		onFinish: undefined,
-	}
+	opts: UseFormSubmitOptions = { changedOnly: true }
 ): [ FormSubmitFunction, FormSubmitResult ] {
 	if (!Array.isArray(mutationQuery)) {
 		throw "useFormSubmit: mutationQuery was not an Array. Is a valid useMutation RTK Query provided?";
@@ -52,30 +68,52 @@ export default function useFormSubmit(
 
 	const { changedOnly, onFinish } = opts;
 	const [runMutation, mutationResult] = mutationQuery;
-	const usedAction = useRef<FormSubmitEvent>(undefined);
-	
+	const usedAction = useRef<FormSubmitEvent>(null);
+
 	const submitForm = async(e: FormSubmitEvent) => {
 		let action: FormSubmitEvent;
 		
 		if (typeof e === "string") {
-			action = e !== "" ? e : undefined;
-		} else if (e !== undefined) {
+			if (e !== "") {
+				// String action name was provided.
+				action = e;
+			} else {
+				// Empty string action name was provided.
+				action = undefined;
+			}
+		} else if (e) {
+			// Submit event action was provided.
 			e.preventDefault();
 			if (e.nativeEvent.submitter) {
-				action = (e.nativeEvent.submitter as Object)["name"];
+				// We want the name of the element that was invoked to submit this form,
+				// which will be something that extends HTMLElement, though we don't know
+				// what at this point.
+				// 
+				// See: https://developer.mozilla.org/en-US/docs/Web/API/SubmitEvent/submitter
+				action = (e.nativeEvent.submitter as Object as { name: string }).name;
+			} else {
+				// No submitter defined. Fall back
+				// to just use the FormSubmitEvent.
+				action = e;
 			}
+		} else {
+			// Void or null or something
+			// else was provided.
+			action = undefined;
 		}
 
-		if (action !== undefined) {
-			usedAction.current = action;
-		}
+		usedAction.current = action;
 
-		// Transform the field definitions into an object with just their values.
-		const { mutationData, updatedFields } = getFormMutations(form, { changedOnly });
-
+		// Transform the hooked form into an object.
+		const {
+			mutationData,
+			updatedFields,
+		} = getFormMutations(form, { changedOnly });
+		
+		// If there were no updated fields according to
+		// the form parsing then there's nothing for us
+		// to do, since remote and desired state match.
 		if (updatedFields.length == 0) {
-			// No updated fields.
-			// Nothing to do.
 			return;
 		}
 
@@ -84,7 +122,7 @@ export default function useFormSubmit(
 		try {
 			const res = await runMutation(mutationData);
 			if (onFinish) {
-				return onFinish(res);
+				onFinish(res);
 			}
 		} catch (e) {
 			// eslint-disable-next-line no-console

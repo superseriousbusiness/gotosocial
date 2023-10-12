@@ -17,33 +17,52 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-const { isValidDomainPermission, hasBetterScope } = require("../../../lib/util/domain-permission");
+import { memo, useMemo, useCallback, useEffect } from "react";
 
-const {
+import { isValidDomainPermission, hasBetterScope } from "../../../lib/util/domain-permission";
+
+import {
 	useTextInput,
 	useBoolInput,
 	useRadioInput,
-	useCheckListInput
-} = require("../../../lib/form");
+	useCheckListInput,
+} from "../../../lib/form";
 
-const useFormSubmit = require("../../../lib/form/submit").default;
+import {
+	Select,
+	TextArea,
+	RadioGroup,
+	Checkbox,
+	TextInput,
+} from "../../../components/form/inputs";
 
-const CheckList = require("../../../components/check-list");
-const MutationButton = require("../../../components/form/mutation-button");
-const FormWithData = require("../../../lib/form/form-with-data");
+import useFormSubmit from "../../../lib/form/submit";
 
-const { useImportDomainPermsMutation } = require("../../../lib/query/admin/domain-permissions/import");
-const { useGetDomainBlocksQuery } = require("../../../lib/query/admin/domain-permissions/get");
-const { Select, TextArea, RadioGroup, Checkbox, TextInput } = require("../../../components/form/inputs");
+import CheckList from "../../../components/check-list";
+import MutationButton from "../../../components/form/mutation-button";
+import FormWithData from "../../../lib/form/form-with-data";
 
-module.exports = React.memo(
-	function ProcessImport({ list }) {
+import { useImportDomainPermsMutation } from "../../../lib/query/admin/domain-permissions/import";
+import { useGetDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
+
+
+import type {
+	DomainPerm
+} from "../../../lib/types/domain-permission";
+
+export interface ProcessImportProps {
+	list: DomainPerm[],
+}
+
+export const ProcessImport = memo(
+	function ProcessImport({ list }: ProcessImportProps) {
 		return (
 			<div className="without-border">
 				<FormWithData
 					dataQuery={useGetDomainBlocksQuery}
+					queryArg={null}
 					DataForm={ImportList}
 					list={list}
 				/>
@@ -52,8 +71,13 @@ module.exports = React.memo(
 	}
 );
 
-function ImportList({ list, data: blockedInstances }) {
-	const hasComment = React.useMemo(() => {
+export interface ImportListProps {
+	list,
+	data: DomainPerm[],
+}
+
+function ImportList({ list, data: domainPerms }: ImportListProps) {
+	const hasComment = useMemo(() => {
 		let hasPublic = false;
 		let hasPrivate = false;
 
@@ -83,7 +107,7 @@ function ImportList({ list, data: blockedInstances }) {
 	const showComment = useTextInput("showComment", { defaultValue: hasComment.type ?? "public_comment" });
 
 	const form = {
-		domains: useCheckListInput("domains", { entries: list }),
+		domains: useCheckListInput("domains", { entries: list } as any),
 		obfuscate: useBoolInput("obfuscate"),
 		privateComment: useTextInput("private_comment", {
 			defaultValue: `Imported on ${new Date().toLocaleString()}`
@@ -124,7 +148,7 @@ function ImportList({ list, data: blockedInstances }) {
 				<div className="checkbox-list-wrapper">
 					<DomainCheckList
 						field={form.domains}
-						blockedInstances={blockedInstances}
+						domainPerms={domainPerms}
 						commentType={showComment.value}
 					/>
 				</div>
@@ -154,21 +178,31 @@ function ImportList({ list, data: blockedInstances }) {
 					label="Obfuscate domains in public lists"
 				/>
 
-				<MutationButton label="Import" result={importResult} />
+				<MutationButton
+					label="Import"
+					disabled={false}
+					result={importResult}
+				/>
 			</form>
 		</>
 	);
 }
 
-function DomainCheckList({ field, blockedInstances, commentType }) {
-	const getExtraProps = React.useCallback((entry) => {
+interface DomainCheckListProps {
+	field,
+	domainPerms,
+	commentType,
+}
+
+function DomainCheckList({ field, domainPerms, commentType }: DomainCheckListProps) {
+	const getExtraProps = useCallback((entry) => {
 		return {
 			comment: entry[commentType],
-			alreadyExists: blockedInstances[entry.domain] != undefined
+			alreadyExists: entry.domain in domainPerms
 		};
-	}, [blockedInstances, commentType]);
+	}, [domainPerms, commentType]);
 
-	const entriesWithSuggestions = React.useMemo(() => (
+	const entriesWithSuggestions = useMemo(() => (
 		Object.values(field.value).filter((entry) => entry.suggest)
 	), [field.value]);
 
@@ -195,8 +229,14 @@ function DomainCheckList({ field, blockedInstances, commentType }) {
 	);
 }
 
-const UpdateHint = React.memo(
-	function UpdateHint({ entries, updateEntry, updateMultiple }) {
+interface UpdateHintProps {
+	entries,
+	updateEntry,
+	updateMultiple,
+}
+
+const UpdateHint = memo(
+	function UpdateHint({ entries, updateEntry, updateMultiple }: UpdateHintProps) {
 		if (entries.length == 0) {
 			return null;
 		}
@@ -224,8 +264,13 @@ const UpdateHint = React.memo(
 	}
 );
 
-const UpdateableEntry = React.memo(
-	function UpdateableEntry({ entry, updateEntry }) {
+interface UpdateableEntryProps {
+	entry,
+	updateEntry,
+}
+
+const UpdateableEntry = memo(
+	function UpdateableEntry({ entry, updateEntry }: UpdateableEntryProps) {
 		return (
 			<>
 				<span className="text-cutoff">{entry.domain}</span>
@@ -251,13 +296,13 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 		validator: (value) => domainValidationError(isValidDomainPermission(value))
 	});
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (entry.valid != domainField.valid) {
 			onChange({ valid: domainField.valid });
 		}
 	}, [onChange, entry.valid, domainField.valid]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (entry.domain != domainField.value) {
 			domainField.setter(entry.domain);
 		}
@@ -265,8 +310,8 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [entry.domain, domainField.setter]);
 
-	React.useEffect(() => {
-		onChange({ suggest: hasBetterScope(domainField.value) });
+	useEffect(() => {
+		onChange({ suggest: hasBetterScope(domainField.value ?? "") });
 		// only need this update if it's the entry.checked that updated, not onChange
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [domainField.value]);

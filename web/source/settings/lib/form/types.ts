@@ -183,7 +183,7 @@ export interface HookedForm {
 /**
  * Parameters for FormSubmitFunction.
  */
-export type FormSubmitEvent = (string | (SyntheticEvent<HTMLFormElement, SubmitEvent>) | undefined | void)
+export type FormSubmitEvent = (string | SyntheticEvent<HTMLFormElement, SubmitEvent> | undefined | void | null)
 
 /**
  * Shadows "trigger" function for useMutation.
