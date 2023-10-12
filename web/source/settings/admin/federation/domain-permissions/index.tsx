@@ -17,22 +17,20 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Switch, Route, Redirect, useLocation } = require("wouter");
+import React from "react";
 
-const { useProcessDomainPermissionsMutation } = require("../../../lib/query/admin/domain-permissions/process");
+import { Switch, Route, Redirect, useLocation } from "wouter";
 
-const {
-	useTextInput,
-	useRadioInput,
-} = require("../../../lib/form");
+import { useProcessDomainPermissionsMutation } from "../../../lib/query/admin/domain-permissions/process";
 
-const useFormSubmit = require("../../../lib/form/submit").default;
+import { useTextInput, useRadioInput } from "../../../lib/form";
 
-const { ProcessImport } = require("./process");
-const ImportExportForm = require("./form").default;
+import useFormSubmit from "../../../lib/form/submit";
 
-module.exports = function ImportExport({ baseUrl }) {
+import { ProcessImport } from "./process";
+import ImportExportForm from "./form";
+
+export default function ImportExport({ baseUrl }) {
 	const form = {
 		domains: useTextInput("domains"),
 		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true }),

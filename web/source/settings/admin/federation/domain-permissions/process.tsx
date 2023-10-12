@@ -45,7 +45,10 @@ import MutationButton from "../../../components/form/mutation-button";
 import FormWithData from "../../../lib/form/form-with-data";
 
 import { useImportDomainPermsMutation } from "../../../lib/query/admin/domain-permissions/import";
-import { useGetDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
+import {
+	useGetDomainAllowsQuery,
+	useGetDomainBlocksQuery
+} from "../../../lib/query/admin/domain-permissions/get";
 
 import type { DomainPerm, MappedDomainPerms } from "../../../lib/types/domain-permission";
 import type { ChecklistInputHook, RadioFormInputHook } from "../../../lib/form/types";
@@ -60,7 +63,10 @@ export const ProcessImport = memo(
 		return (
 			<div className="without-border">
 				<FormWithData
-					dataQuery={useGetDomainBlocksQuery}
+					dataQuery={permType.value == "allow"
+						? useGetDomainAllowsQuery
+						: useGetDomainBlocksQuery
+					}
 					queryArg={null}
 					DataForm={ImportList}
 					{...{ list, permType }}
@@ -154,6 +160,7 @@ function ImportList({ list, data: domainPerms, permType }: ImportListProps) {
 						field={form.domains}
 						domainPerms={domainPerms}
 						commentType={showComment.value as "public_comment" | "private_comment"}
+						permType={form.permType}
 					/>
 				</div>
 
@@ -196,20 +203,22 @@ interface DomainCheckListProps {
 	field: ChecklistInputHook,
 	domainPerms: MappedDomainPerms,
 	commentType: "public_comment" | "private_comment",
+	permType: RadioFormInputHook,
 }
 
-function DomainCheckList({ field, domainPerms, commentType }: DomainCheckListProps) {
+function DomainCheckList({ field, domainPerms, commentType, permType }: DomainCheckListProps) {
 	const getExtraProps = useCallback((entry: DomainPerm) => {
 		return {
 			comment: entry[commentType],
-			alreadyExists: entry.domain in domainPerms
+			alreadyExists: entry.domain in domainPerms,
+			permType: permType,
 		};
-	}, [domainPerms, commentType]);
+	}, [domainPerms, commentType, permType]);
 
 	const entriesWithSuggestions = useMemo(() => {
 		const fieldValue = (field.value ?? {}) as { [k: string]: DomainPerm; };
 		return Object.values(fieldValue).filter((entry) => entry.suggest);
-	}, [field.value]);
+	}, [field.value, permType]);
 
 	return (
 		<>
@@ -293,7 +302,17 @@ function domainValidationError(isValid) {
 	return isValid ? "" : "Invalid domain";
 }
 
-function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }) {
+interface DomainEntryProps {
+	entry;
+	onChange;
+	extraProps: {
+		alreadyExists: boolean;
+		comment: string;
+		permType: RadioFormInputHook;
+	};
+}
+
+function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment, permType } }: DomainEntryProps) {
 	const domainField = useTextInput("domain", {
 		defaultValue: entry.domain,
 		showValidation: entry.checked,
@@ -344,6 +363,7 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 					<DomainEntryIcon
 						alreadyExists={alreadyExists}
 						suggestion={entry.suggest}
+						permTypeString={permType.value?? ""}
 					/>
 				</span>
 			</div>
@@ -352,7 +372,13 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 	);
 }
 
-function DomainEntryIcon({ alreadyExists, suggestion }) {
+interface DomainEntryIconProps {
+	alreadyExists: boolean;
+	suggestion: string;
+	permTypeString: string; 
+}
+
+function DomainEntryIcon({ alreadyExists, suggestion, permTypeString }: DomainEntryIconProps) {
 	let icon;
 	let text;
 
@@ -360,8 +386,8 @@ function DomainEntryIcon({ alreadyExists, suggestion }) {
 		icon = "fa-info-circle suggest-changes";
 		text = `Entry targets a specific subdomain, consider changing it to '${suggestion}'.`;
 	} else if (alreadyExists) {
-		icon = "fa-history already-blocked";
-		text = "Domain block already exists.";
+		icon = "fa-history permission-already-exists";
+		text = `Domain ${permTypeString} already exists.`;
 	}
 
 	if (!icon) {

@@ -25,7 +25,7 @@ import { Checkable, ChecklistInputHook } from "../lib/form/types";
 interface CheckListProps {
 	field: ChecklistInputHook;
 	header: string | React.JSX.Element;
-	EntryComponent;
+	EntryComponent: React.FunctionComponent;
 	getExtraProps;
 }
 

@@ -116,7 +116,14 @@ const extended = gtsApi.injectEndpoints({
 			},
 			transformResponse: listToKeyedObject<DomainPerm>("domain"),
 			...replaceCacheOnMutation((formData: ImportDomainPermsParams) => {
-				return `domain_${formData.permType}s`;
+				// Query names for blocks and allows are like
+				// `domainBlocks` and `domainAllows`, so we need
+				// to convert `block` -> `Block` or `allow` -> `Allow`
+				// to do proper cache invalidation.
+				const permType =
+					formData.permType.charAt(0).toUpperCase() +
+					formData.permType.slice(1); 
+				return `domain${permType}s`;
 			}),
 		})
 	})

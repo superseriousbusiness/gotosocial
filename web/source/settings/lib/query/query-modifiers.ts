@@ -62,22 +62,6 @@ interface MutationStartedParams {
     getCacheEntry,
 }
 
-/**
- * Shadow the base API util functions, so that we can call it
- * even from extended endpoints without running into type issues.
- * 
- * See https://redux-toolkit.js.org/rtk-query/api/created-api/api-slice-utils#updatequerydata.
- */
-interface withUpdateQueryData {
-	util: {
-		updateQueryData: (
-			_endpointName: string,
-			_args: any,
-			_updateRecipe: (_draft: Draft<any>) => void,
-		) => void;
-	}
-}
-
 type MutationAction = (
 	_draft: Draft<any>,
 	_updated: any,
@@ -124,20 +108,22 @@ function makeCacheMutation(action: MutationAction): CacheMutation {
 		// onQueryStarted function signature.
 		const onQueryStarted = async(arg, { dispatch, queryFulfilled }) => {
 			try {
-				const api: withUpdateQueryData = gtsApi;
 				const { data: newData } = await queryFulfilled;
-
 				if (typeof queryName !== "string") {
 					queryName = queryName(arg);
 				}
 
-				dispatch(api.util.updateQueryData(queryName, arg, (draft) => {
-					if (key != undefined && typeof key !== "string") {
-						key = key(draft, newData);
-					}
+				const patchResult = dispatch(
+					gtsApi.util.updateQueryData(queryName as any, arg, (draft) => {
+						if (key != undefined && typeof key !== "string") {
+							key = key(draft, newData);
+						}
+						console.log("about to do the thing")
+						action(draft, newData, { key });
+					})
+				);
 
-					action(draft, newData, { key });
-				}));
+				console.log(patchResult);
 			} catch (e) {
 				// eslint-disable-next-line no-console
 				console.error(`rolling back pessimistic update of ${queryName}: ${e}`);
@@ -150,11 +136,14 @@ function makeCacheMutation(action: MutationAction): CacheMutation {
 	return cacheMutation;
 }
 
-export const replaceCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData) => {	
+export const replaceCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, params) => {	
+	console.log(`draft: ${draft}`)
+	console.log(`newData: ${newData}`)
+	console.log(`params: ${params}`)
 	Object.assign(draft, newData);
 });
 
-export const appendCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData) => {
+export const appendCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, _params) => {
 	draft.push(newData);
 });
 

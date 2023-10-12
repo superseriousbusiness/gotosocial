@@ -844,7 +844,7 @@ button.with-padding {
 				#icon {
 					align-self: center;
 	
-					.already-blocked {
+					.permission-already-exists {
 						color: $green1;
 					}
 		

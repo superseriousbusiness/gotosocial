@@ -248,4 +248,5 @@ export interface FormSubmitResult {
 	isLoading: boolean;
 	isSuccess: boolean;
 	isError: boolean;
+	reset: () => void;
 }

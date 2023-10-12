@@ -17,18 +17,22 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Switch, Route } = require("wouter");
+import React from "react";
+import { Switch, Route } from "wouter";
 
-const InstanceOverview = require("./overview");
-const InstanceDetail = require("./detail");
-const InstanceImportExport = require("./domain-permissions");
+import InstanceOverview from "./overview";
+import InstanceDetail from "./detail";
+import InstanceImportExport from "./domain-permissions";
 
-module.exports = function Federation({ baseUrl }) {
+export default function Federation({ baseUrl }) {
+	const nextBaseUrl = `${baseUrl}/domain-permissions/import-export`
+	
 	return (
 		<Switch>
-			<Route path={`${baseUrl}/domain-permissions/import-export/:list?`}>
-				<InstanceImportExport />
+			<Route path={nextBaseUrl}>
+				<InstanceImportExport
+					baseUrl={nextBaseUrl}
+				/>
 			</Route>
 
 			<Route path={`${baseUrl}/:domain`}>
