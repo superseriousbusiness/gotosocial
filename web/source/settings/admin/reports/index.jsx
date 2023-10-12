@@ -20,7 +20,7 @@
 const React = require("react");
 const { Link, Switch, Route } = require("wouter");
 
-const FormWithData = require("../../lib/form/form-with-data");
+const FormWithData = require("../../lib/form/form-with-data").default;
 
 const ReportDetail = require("./detail");
 const Username = require("./username");

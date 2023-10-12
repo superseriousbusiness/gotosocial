@@ -32,7 +32,7 @@ const {
 	FileInput
 } = require("../../components/form/inputs");
 
-const FormWithData = require("../../lib/form/form-with-data");
+const FormWithData = require("../../lib/form/form-with-data").default;
 const MutationButton = require("../../components/form/mutation-button");
 
 const { useInstanceV1Query } = require("../../lib/query");

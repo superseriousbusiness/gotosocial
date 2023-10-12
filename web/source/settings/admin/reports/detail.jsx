@@ -20,7 +20,7 @@
 const React = require("react");
 const { useRoute, Redirect } = require("wouter");
 
-const FormWithData = require("../../lib/form/form-with-data");
+const FormWithData = require("../../lib/form/form-with-data").default;
 const BackButton = require("../../components/back-button");
 
 const { useValue, useTextInput } = require("../../lib/form");

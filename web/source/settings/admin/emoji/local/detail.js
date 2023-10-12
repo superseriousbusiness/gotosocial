@@ -27,7 +27,7 @@ const useFormSubmit = require("../../../lib/form/submit").default;
 const { useBaseUrl } = require("../../../lib/navigation/util");
 
 const FakeToot = require("../../../components/fake-toot");
-const FormWithData = require("../../../lib/form/form-with-data");
+const FormWithData = require("../../../lib/form/form-with-data").default;
 const Loading = require("../../../components/loading");
 const { FileInput } = require("../../../components/form/inputs");
 const MutationButton = require("../../../components/form/mutation-button");

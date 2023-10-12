@@ -77,11 +77,9 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 	return (
 		<>
 			<h1>Import / Export domain permissions</h1>
-			<p>
-				This page can be used to import and export lists of domains to suspend.
-				Exports can be done in various formats, with varying functionality and support in other software.
-				Imports will automatically detect what format is being processed.
-			</p>
+			<p>This page can be used to import and export lists of domain permissions.</p>
+			<p>Exports can be done in various formats, with varying functionality and support in other software.</p>
+			<p>Imports will automatically detect what format is being processed.</p>
 			<ExportFormatTable />
 			<div className="import-export">
 				<TextArea

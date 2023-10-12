@@ -17,14 +17,22 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Error } = require("../../components/error");
+import React from "react";
 
-const Loading = require("../../components/loading");
+import { Error } from "../../components/error";
+import Loading from "../../components/loading";
 
-// Wrap Form component inside component that fires the RTK Query call,
-// so Form will only be rendered when data is available to generate form-fields for
-module.exports = function FormWithData({ dataQuery, DataForm, queryArg, ...formProps }) {
+interface FormWithDataProps {
+	dataQuery,
+	DataForm,
+	queryArg,
+}
+
+/**
+ * Wrap Form component inside component that fires the RTK Query call, so Form
+ * will only be rendered when data is available to generate form-fields for.
+ */
+export default function FormWithData({ dataQuery, DataForm, queryArg, ...props }: FormWithDataProps) {
 	const { data, isLoading, isError, error } = dataQuery(queryArg);
 
 	if (isLoading) {
@@ -38,6 +46,6 @@ module.exports = function FormWithData({ dataQuery, DataForm, queryArg, ...formP
 			<Error error={error} />
 		);
 	} else {
-		return <DataForm data={data} {...formProps} />;
+		return <DataForm data={data} {...props} />;
 	}
-};
+}

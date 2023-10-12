@@ -38,8 +38,8 @@ module.exports = function ImportExport({ baseUrl }) {
 		exportType: useTextInput("exportType", { defaultValue: "plain", dontReset: true }),
 		permType: useRadioInput("permType", { 
 			options: {
-				allow: "Import / Export ALLOWS",
-				block: "Import / Export BLOCKS",
+				block: "Domain blocks",
+				allow: "Domain allows",
 			}
 		})
 	};
@@ -50,6 +50,32 @@ module.exports = function ImportExport({ baseUrl }) {
 
 	return (
 		<Switch>
+			<Route path={`${baseUrl}/process`}>
+				{
+					parseResult.isSuccess 
+						? (
+							<>
+								<h1>
+									<span
+										className="button"
+										onClick={() => {
+											parseResult.reset();
+											setLocation(baseUrl);
+										}}
+									>
+										&lt; back
+									</span>
+									&nbsp; Confirm import of domain {form.permType.value}s:
+								</h1>
+								<ProcessImport
+									list={parseResult.data}
+									permType={form.permType}
+								/>
+							</>
+						)
+						: <Redirect to={baseUrl} />
+				}
+			</Route>
 			<Route>
 				{
 					parseResult.isSuccess
@@ -59,28 +85,6 @@ module.exports = function ImportExport({ baseUrl }) {
 							submitParse={submitParse}
 							parseResult={parseResult}
 						/>
-				}
-			</Route>
-
-			<Route path={`${baseUrl}/process`}>
-				{
-					parseResult.isSuccess 
-						? (
-							<>
-								<h1>
-									<span className="button" onClick={() => {
-										parseResult.reset();
-										setLocation(baseUrl);
-									}}>
-										&lt; back
-									</span> Confirm import:
-								</h1>
-								<ProcessImport
-									list={parseResult.data}
-								/>
-							</>
-						)
-						: <Redirect to={baseUrl} />
 				}
 			</Route>
 		</Switch>

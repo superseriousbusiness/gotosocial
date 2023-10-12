@@ -34,7 +34,7 @@ const {
 	Checkbox
 } = require("../components/form/inputs");
 
-const FormWithData = require("../lib/form/form-with-data");
+const FormWithData = require("../lib/form/form-with-data").default;
 const Languages = require("../components/languages");
 const MutationButton = require("../components/form/mutation-button");
 

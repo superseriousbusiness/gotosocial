@@ -47,22 +47,23 @@ import FormWithData from "../../../lib/form/form-with-data";
 import { useImportDomainPermsMutation } from "../../../lib/query/admin/domain-permissions/import";
 import { useGetDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
 
-import type { DomainPerm, MappedDomainPerms} from "../../../lib/types/domain-permission";
-import type { ChecklistInputHook } from "../../../lib/form/types";
+import type { DomainPerm, MappedDomainPerms } from "../../../lib/types/domain-permission";
+import type { ChecklistInputHook, RadioFormInputHook } from "../../../lib/form/types";
 
 export interface ProcessImportProps {
 	list: DomainPerm[],
+	permType: RadioFormInputHook,
 }
 
 export const ProcessImport = memo(
-	function ProcessImport({ list }: ProcessImportProps) {
+	function ProcessImport({ list, permType }: ProcessImportProps) {
 		return (
 			<div className="without-border">
 				<FormWithData
 					dataQuery={useGetDomainBlocksQuery}
 					queryArg={null}
 					DataForm={ImportList}
-					list={list}
+					{...{ list, permType }}
 				/>
 			</div>
 		);
@@ -72,9 +73,10 @@ export const ProcessImport = memo(
 export interface ImportListProps {
 	list: Array<DomainPerm>,
 	data: MappedDomainPerms,
+	permType: RadioFormInputHook,
 }
 
-function ImportList({ list, data: domainPerms }: ImportListProps) {
+function ImportList({ list, data: domainPerms, permType }: ImportListProps) {
 	const hasComment = useMemo(() => {
 		let hasPublic = false;
 		let hasPrivate = false;
@@ -125,6 +127,7 @@ function ImportList({ list, data: domainPerms }: ImportListProps) {
 				replace: "Replace"
 			}
 		}),
+		permType: permType,
 	};
 
 	const [importDomains, importResult] = useFormSubmit(form, useImportDomainPermsMutation(), { changedOnly: false });
@@ -133,7 +136,7 @@ function ImportList({ list, data: domainPerms }: ImportListProps) {
 		<>
 			<form
 				onSubmit={importDomains}
-				className="suspend-import-list"
+				className="domain-perm-import-list"
 			>
 				<span>{list.length} domain{list.length != 1 ? "s" : ""} in this list</span>
 
@@ -205,7 +208,7 @@ function DomainCheckList({ field, domainPerms, commentType }: DomainCheckListPro
 
 	const entriesWithSuggestions = useMemo(() => {
 		const fieldValue = (field.value ?? {}) as { [k: string]: DomainPerm; };
-		return Object.values(fieldValue).filter((entry) => entry.suggest)
+		return Object.values(fieldValue).filter((entry) => entry.suggest);
 	}, [field.value]);
 
 	return (

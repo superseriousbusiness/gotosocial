@@ -35,7 +35,7 @@ import { listToKeyedObject } from "../../transforms";
  * @param formData 
  * @returns 
  */
-export function importEntriesProcessor(formData: ImportDomainPermsParams): (_entry: DomainPerm) => DomainPerm {
+function importEntriesProcessor(formData: ImportDomainPermsParams): (_entry: DomainPerm) => DomainPerm {
 	let processingFuncs: { (_entry: DomainPerm): void; }[] = [];
 
 	// Override each obfuscate entry if necessary.
@@ -102,7 +102,7 @@ const extended = gtsApi.injectEndpoints({
 
 				return {
 					method: "POST",
-					url: `/api/v1/admin/domain_${formData.permType}s`,
+					url: `/api/v1/admin/domain_${formData.permType}s?import=true`,
 					asForm: true,
 					discardEmpty: true,
 					body: {

@@ -22,7 +22,7 @@ const { useRoute, Redirect } = require("wouter");
 
 const query = require("../../lib/query");
 
-const FormWithData = require("../../lib/form/form-with-data");
+const FormWithData = require("../../lib/form/form-with-data").default;
 
 const { useBaseUrl } = require("../../lib/navigation/util");
 const FakeProfile = require("../../components/fake-profile");
