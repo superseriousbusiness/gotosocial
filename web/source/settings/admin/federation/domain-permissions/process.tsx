@@ -47,10 +47,8 @@ import FormWithData from "../../../lib/form/form-with-data";
 import { useImportDomainPermsMutation } from "../../../lib/query/admin/domain-permissions/import";
 import { useGetDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
 
-
-import type {
-	DomainPerm
-} from "../../../lib/types/domain-permission";
+import type { DomainPerm, MappedDomainPerms} from "../../../lib/types/domain-permission";
+import type { ChecklistInputHook } from "../../../lib/form/types";
 
 export interface ProcessImportProps {
 	list: DomainPerm[],
@@ -72,8 +70,8 @@ export const ProcessImport = memo(
 );
 
 export interface ImportListProps {
-	list,
-	data: DomainPerm[],
+	list: Array<DomainPerm>,
+	data: MappedDomainPerms,
 }
 
 function ImportList({ list, data: domainPerms }: ImportListProps) {
@@ -82,11 +80,11 @@ function ImportList({ list, data: domainPerms }: ImportListProps) {
 		let hasPrivate = false;
 
 		list.some((entry) => {
-			if (entry.public_comment?.length > 0) {
+			if (entry.public_comment) {
 				hasPublic = true;
 			}
 
-			if (entry.private_comment?.length > 0) {
+			if (entry.private_comment) {
 				hasPrivate = true;
 			}
 
@@ -107,7 +105,7 @@ function ImportList({ list, data: domainPerms }: ImportListProps) {
 	const showComment = useTextInput("showComment", { defaultValue: hasComment.type ?? "public_comment" });
 
 	const form = {
-		domains: useCheckListInput("domains", { entries: list } as any),
+		domains: useCheckListInput("domains", { entries: list }), // DomainPerm is actually also a Checkable.
 		obfuscate: useBoolInput("obfuscate"),
 		privateComment: useTextInput("private_comment", {
 			defaultValue: `Imported on ${new Date().toLocaleString()}`
@@ -133,7 +131,10 @@ function ImportList({ list, data: domainPerms }: ImportListProps) {
 
 	return (
 		<>
-			<form onSubmit={importDomains} className="suspend-import-list">
+			<form
+				onSubmit={importDomains}
+				className="suspend-import-list"
+			>
 				<span>{list.length} domain{list.length != 1 ? "s" : ""} in this list</span>
 
 				{hasComment.both &&
@@ -149,7 +150,7 @@ function ImportList({ list, data: domainPerms }: ImportListProps) {
 					<DomainCheckList
 						field={form.domains}
 						domainPerms={domainPerms}
-						commentType={showComment.value}
+						commentType={showComment.value as "public_comment" | "private_comment"}
 					/>
 				</div>
 
@@ -189,27 +190,28 @@ function ImportList({ list, data: domainPerms }: ImportListProps) {
 }
 
 interface DomainCheckListProps {
-	field,
-	domainPerms,
-	commentType,
+	field: ChecklistInputHook,
+	domainPerms: MappedDomainPerms,
+	commentType: "public_comment" | "private_comment",
 }
 
 function DomainCheckList({ field, domainPerms, commentType }: DomainCheckListProps) {
-	const getExtraProps = useCallback((entry) => {
+	const getExtraProps = useCallback((entry: DomainPerm) => {
 		return {
 			comment: entry[commentType],
 			alreadyExists: entry.domain in domainPerms
 		};
 	}, [domainPerms, commentType]);
 
-	const entriesWithSuggestions = useMemo(() => (
-		Object.values(field.value).filter((entry) => entry.suggest)
-	), [field.value]);
+	const entriesWithSuggestions = useMemo(() => {
+		const fieldValue = (field.value ?? {}) as { [k: string]: DomainPerm; };
+		return Object.values(fieldValue).filter((entry) => entry.suggest)
+	}, [field.value]);
 
 	return (
 		<>
 			<CheckList
-				field={field}
+				field={field as ChecklistInputHook}
 				header={<>
 					<b>Domain</b>
 					<b>
@@ -336,7 +338,10 @@ function DomainEntry({ entry, onChange, extraProps: { alreadyExists, comment } }
 					}}
 				/>
 				<span id="icon" onClick={clickIcon}>
-					<DomainEntryIcon alreadyExists={alreadyExists} suggestion={entry.suggest} onChange={onChange} />
+					<DomainEntryIcon
+						alreadyExists={alreadyExists}
+						suggestion={entry.suggest}
+					/>
 				</span>
 			</div>
 			<p>{comment}</p>

@@ -38,6 +38,7 @@ import type {
 	BoolFormInputHook,
 	ComboboxFormInputHook,
 	FieldArrayInputHook,
+	ChecklistInputHook,
 } from "./types";
 
 function capitalizeFirst(str: string) {
@@ -108,6 +109,6 @@ export const useFileInput = inputHook(file) as (_name: string, _opts?: HookOpts<
 export const useBoolInput = inputHook(bool) as (_name: string, _opts?: HookOpts<boolean>) => BoolFormInputHook;
 export const useRadioInput = inputHook(radio) as (_name: string, _opts?: HookOpts<string>) => RadioFormInputHook;
 export const useComboBoxInput = inputHook(combobox) as (_name: string, _opts?: HookOpts<string>) => ComboboxFormInputHook;
-export const useCheckListInput = inputHook(checklist);
+export const useCheckListInput = inputHook(checklist) as (_name: string, _opts?: HookOpts<boolean>) => ChecklistInputHook;
 export const useFieldArrayInput = inputHook(fieldarray) as (_name: string, _opts?: HookOpts<string>) => FieldArrayInputHook;
 export const useValue = value as <T>(_name: string, _initialValue: T) => FormInputHook<T>;

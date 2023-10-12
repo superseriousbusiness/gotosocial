@@ -53,7 +53,7 @@ export default function Login({ }) {
 	}
 
 	return (
-		<form onSubmit={formSubmit as React.FormEventHandler<HTMLFormElement>}>
+		<form onSubmit={formSubmit}>
 			<TextInput
 				field={form.instance}
 				label="Instance"

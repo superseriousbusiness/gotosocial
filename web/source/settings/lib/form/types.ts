@@ -50,6 +50,10 @@ export interface HookOpts<T = any> {
 	initialInfo?: string;
 	valueSelector?: Function,
 	source?,
+
+	// checklist input types
+	entries?: any[];
+	uniqueKey?: string;
 }
 
 export type CreateHook = (
@@ -139,6 +143,18 @@ interface _withOptions {
 	options: { [_: string]: string };
 }
 
+interface _withToggleAll {
+	toggleAll: _withRef & _withOnChange
+}
+
+interface _withSomeSelected {
+	someSelected: boolean;
+}
+
+interface _withUpdateMultiple {
+	updateMultiple: (_entries: any) => void;
+}
+
 export interface TextFormInputHook extends FormInputHook<string>,
 	_withSetter<string>,
 	_withOnChange,
@@ -174,7 +190,30 @@ export interface FieldArrayInputHook extends FormInputHook<any[]>,
 	_withMaxLength,
 	_withCtx {}
 
-export type AnyFormInputHook = FormInputHook | TextFormInputHook | RadioFormInputHook | FileFormInputHook | BoolFormInputHook | ComboboxFormInputHook | FieldArrayInputHook;
+export interface Checkable {
+	key: string;
+	checked?: boolean;
+}
+
+export interface ChecklistInputHook<T = Checkable> extends FormInputHook<{[k: string]: T}>,
+	_withReset,
+	_withToggleAll,
+	_withSelectedValues,
+	_withSomeSelected,
+	_withUpdateMultiple {
+		// Uses its own funky onChange handler.
+		onChange: (key: any, value: any) => void
+	}
+
+export type AnyFormInputHook = 
+	FormInputHook |
+	TextFormInputHook |
+	RadioFormInputHook |
+	FileFormInputHook |
+	BoolFormInputHook |
+	ComboboxFormInputHook |
+	FieldArrayInputHook |
+	ChecklistInputHook;
 
 export interface HookedForm {
 	[_: string]: AnyFormInputHook
@@ -183,16 +222,20 @@ export interface HookedForm {
 /**
  * Parameters for FormSubmitFunction.
  */
-export type FormSubmitEvent = (string | SyntheticEvent<HTMLFormElement, SubmitEvent> | undefined | void | null)
+export type FormSubmitEvent = (string | SyntheticEvent<HTMLFormElement, Partial<SubmitEvent>> | undefined | void)
+
 
 /**
- * Shadows "trigger" function for useMutation.
+ * Shadows "trigger" function for useMutation, but can also
+ * be passed to onSubmit property of forms as a handler.
+ * 
  * See: https://redux-toolkit.js.org/rtk-query/usage/mutations#mutation-hook-behavior
  */
-export type FormSubmitFunction = (_e: FormSubmitEvent) => Promise<void>
+export type FormSubmitFunction = ((_e: FormSubmitEvent) => void)
 
 /**
  * Shadows redux mutation hook return values.
+ * 
  * See: https://redux-toolkit.js.org/rtk-query/usage/mutations#frequently-used-mutation-hook-return-values
  */
 export interface FormSubmitResult {

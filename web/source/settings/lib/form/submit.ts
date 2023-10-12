@@ -68,7 +68,7 @@ export default function useFormSubmit(
 
 	const { changedOnly, onFinish } = opts;
 	const [runMutation, mutationResult] = mutationQuery;
-	const usedAction = useRef<FormSubmitEvent>(null);
+	const usedAction = useRef<FormSubmitEvent>(undefined);
 
 	const submitForm = async(e: FormSubmitEvent) => {
 		let action: FormSubmitEvent;

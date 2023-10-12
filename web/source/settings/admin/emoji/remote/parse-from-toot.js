@@ -27,7 +27,7 @@ const {
 
 const useFormSubmit = require("../../../lib/form/submit").default;
 
-const CheckList = require("../../../components/check-list");
+const CheckList = require("../../../components/check-list").default;
 const { CategorySelect } = require('../category-select');
 
 const { TextInput } = require("../../../components/form/inputs");

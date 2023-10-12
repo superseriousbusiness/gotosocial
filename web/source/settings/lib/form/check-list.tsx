@@ -17,37 +17,60 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const syncpipe = require("syncpipe");
-const { createSlice } = require("@reduxjs/toolkit");
-const { enableMapSet } = require("immer");
+import React from "react";
 
-enableMapSet(); // for use in reducers
+import {
+	useReducer,
+	useRef,
+	useEffect,
+	useCallback,
+	useMemo,
+} from "react";
+
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+
+import type {
+	Checkable,
+	ChecklistInputHook,
+	CreateHookNames,
+	HookOpts,
+} from "./types";
+
+// https://immerjs.github.io/immer/installation#pick-your-immer-version
+import { enableMapSet } from "immer";
+enableMapSet();
+
+interface ChecklistState {
+	entries: { [k: string]: Checkable },
+	selectedEntries: Set<string>,
+}
+
+const initialState: ChecklistState = {
+	entries: {},
+	selectedEntries: new Set(),
+}
 
 const { reducer, actions } = createSlice({
 	name: "checklist",
-	initialState: {}, // not handled by slice itself
+	initialState, // not handled by slice itself
 	reducers: {
-		updateAll: (state, { payload: checked }) => {
-			const selectedEntries = new Set();
-			return {
-				entries: syncpipe(state.entries, [
-					(_) => Object.values(_),
-					(_) => _.map((entry) => {
-						if (checked) {
-							selectedEntries.add(entry.key);
-						}
-						return [entry.key, {
-							...entry,
-							checked
-						}];
-					}),
-					(_) => Object.fromEntries(_)
-				]),
-				selectedEntries
-			};
+		updateAll: (state, { payload: checked }: PayloadAction<boolean>) => {
+			const selectedEntries = new Set<string>();
+			const entries = Object.fromEntries(
+				Object.values(state.entries).map((entry) => {
+					if (checked) {
+						// Cheekily add this to selected
+						// entries while we're here.
+						selectedEntries.add(entry.key);
+					}
+
+					return [entry.key, { ...entry, checked } ];
+				})
+			)
+			
+			return { entries, selectedEntries };
 		},
-		update: (state, { payload: { key, value } }) => {
+		update: (state, { payload: { key, value } }: PayloadAction<{key: string, value: Checkable}>) => {
 			if (value.checked !== undefined) {
 				if (value.checked === true) {
 					state.selectedEntries.add(key);
@@ -61,7 +84,7 @@ const { reducer, actions } = createSlice({
 				...value
 			};
 		},
-		updateMultiple: (state, { payload }) => {
+		updateMultiple: (state, { payload }: PayloadAction<Array<[key: string, value: Checkable]>>) => {
 			payload.forEach(([key, value]) => {
 				if (value.checked !== undefined) {
 					if (value.checked === true) {
@@ -80,43 +103,56 @@ const { reducer, actions } = createSlice({
 	}
 });
 
-function initialState({ entries, uniqueKey, initialValue }) {
-	const selectedEntries = new Set();
+function initialHookState({
+	entries,
+	uniqueKey,
+	initialValue,
+}: {
+	entries: Checkable[],
+	uniqueKey: string,
+	initialValue: boolean,
+}): ChecklistState {
+	const selectedEntries = new Set<string>();
+	const mappedEntries = Object.fromEntries(
+		entries.map((entry) => {
+			const key = entry[uniqueKey];
+			const checked = entry.checked ?? initialValue;
+			
+			if (checked) {
+				selectedEntries.add(key);
+			} else {
+				selectedEntries.delete(key);
+			}
+		
+			return [ key, { ...entry, key, checked } ];
+		})
+	)
+
 	return {
-		entries: syncpipe(entries, [
-			(_) => _.map((entry) => {
-				let key = entry[uniqueKey];
-				let checked = entry.checked ?? initialValue;
-
-				if (checked) {
-					selectedEntries.add(key);
-				} else {
-					selectedEntries.delete(key);
-				}
-
-				return [
-					key,
-					{
-						...entry,
-						key,
-						checked
-					}
-				];
-			}),
-			(_) => Object.fromEntries(_)
-		]),
+		entries: mappedEntries,
 		selectedEntries
 	};
 }
 
-module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "key", initialValue = false }) {
-	const [state, dispatch] = React.useReducer(reducer, null,
-		() => initialState({ entries, uniqueKey, initialValue }) // initial state
+const _default: { [k: string]: Checkable } = {}
+
+export default function useCheckListInput(
+	{ name, Name }: CreateHookNames,
+	{
+		entries = [],
+		uniqueKey = "key",
+		initialValue = false,
+	}: HookOpts<boolean>
+): ChecklistInputHook {
+	const [state, dispatch] = useReducer(
+		reducer,
+		initialState,
+		(_) => initialHookState({ entries, uniqueKey, initialValue }) // initial state
 	);
 
-	const toggleAllRef = React.useRef(null);
+	const toggleAllRef = useRef<any>(null);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (toggleAllRef.current != null) {
 			let some = state.selectedEntries.size > 0;
 			let all = false;
@@ -130,22 +166,22 @@ module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "ke
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [state.selectedEntries]);
 
-	const reset = React.useCallback(
+	const reset = useCallback(
 		() => dispatch(actions.updateAll(initialValue)),
 		[initialValue]
 	);
 
-	const onChange = React.useCallback(
+	const onChange = useCallback(
 		(key, value) => dispatch(actions.update({ key, value })),
 		[]
 	);
 
-	const updateMultiple = React.useCallback(
+	const updateMultiple = useCallback(
 		(entries) => dispatch(actions.updateMultiple(entries)),
 		[]
 	);
 
-	return React.useMemo(() => {
+	return useMemo(() => {
 		function toggleAll(e) {
 			let checked = e.target.checked;
 			if (e.target.indeterminate) {
@@ -165,7 +201,10 @@ module.exports = function useCheckListInput({ name }, { entries, uniqueKey = "ke
 			reset,
 			{ name }
 		], {
+			_default,
+			hasChanged: () => true,
 			name,
+			Name: "",
 			value: state.entries,
 			onChange,
 			selectedValues,

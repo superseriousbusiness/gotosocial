@@ -17,14 +17,24 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-module.exports = function CheckList({ field, header = "All", EntryComponent, getExtraProps }) {
+import { memo, useDeferredValue, useCallback, useMemo } from "react";
+import { Checkable, ChecklistInputHook } from "../lib/form/types";
+
+interface CheckListProps {
+	field: ChecklistInputHook;
+	header: string | React.JSX.Element;
+	EntryComponent;
+	getExtraProps;
+}
+
+export default function CheckList({ field, header = "All", EntryComponent, getExtraProps }: CheckListProps) {
 	return (
 		<div className="checkbox-list list">
 			<CheckListHeader toggleAll={field.toggleAll}>	{header}</CheckListHeader>
 			<CheckListEntries
-				entries={field.value}
+				entries={field.value ?? {}}
 				updateValue={field.onChange}
 				EntryComponent={EntryComponent}
 				getExtraProps={getExtraProps}
@@ -45,9 +55,16 @@ function CheckListHeader({ toggleAll, children }) {
 	);
 }
 
-const CheckListEntries = React.memo(
-	function CheckListEntries({ entries, updateValue, EntryComponent, getExtraProps }) {
-		const deferredEntries = React.useDeferredValue(entries);
+interface CheckListEntriesProps {
+	entries: { [_: string]: Checkable },
+	updateValue,
+	EntryComponent,
+	getExtraProps,
+}
+
+const CheckListEntries = memo(
+	function CheckListEntries({ entries, updateValue, EntryComponent, getExtraProps }: CheckListEntriesProps) {
+		const deferredEntries = useDeferredValue(entries);
 
 		return Object.values(deferredEntries).map((entry) => (
 			<CheckListEntry
@@ -61,19 +78,26 @@ const CheckListEntries = React.memo(
 	}
 );
 
+interface CheckListEntryProps {
+	entry: Checkable,
+	updateValue,
+	getExtraProps,
+	EntryComponent,
+}
+
 /*
 	React.memo is a performance optimization that only re-renders a CheckListEntry
 	when it's props actually change, instead of every time anything
 	in the list (CheckListEntries) updates
 */
-const CheckListEntry = React.memo(
-	function CheckListEntry({ entry, updateValue, getExtraProps, EntryComponent }) {
-		const onChange = React.useCallback(
+const CheckListEntry = memo(
+	function CheckListEntry({ entry, updateValue, getExtraProps, EntryComponent }: CheckListEntryProps) {
+		const onChange = useCallback(
 			(value) => updateValue(entry.key, value),
 			[updateValue, entry.key]
 		);
 
-		const extraProps = React.useMemo(() => getExtraProps?.(entry), [getExtraProps, entry]);
+		const extraProps = useMemo(() => getExtraProps?.(entry), [getExtraProps, entry]);
 
 		return (
 			<label className="entry">
