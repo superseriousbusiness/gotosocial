@@ -326,6 +326,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
 			EnableRSS:               util.Ptr(false),
+			ShowAllReplies:          util.Ptr(false),
 		},
 		"unconfirmed_account": {
 			ID:                      "01F8MH0BBE4FHXPH513MBVFHB0",
@@ -365,6 +366,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
 			EnableRSS:               util.Ptr(false),
+			ShowAllReplies:          util.Ptr(false),
 		},
 		"admin_account": {
 			ID:                      "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -405,6 +407,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
 			EnableRSS:               util.Ptr(true),
+			ShowAllReplies:          util.Ptr(false),
 		},
 		"local_account_1": {
 			ID:                      "01F8MH1H7YV1Z7D2C8K2730QBF",
@@ -445,6 +448,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
 			EnableRSS:               util.Ptr(true),
+			ShowAllReplies:          util.Ptr(false),
 		},
 		"local_account_2": {
 			ID:                      "01F8MH5NBDF2MV7CTC4Q5128HF",
@@ -504,6 +508,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:       util.Ptr(false),
 			SuspensionOrigin:      "",
 			EnableRSS:             util.Ptr(false),
+			ShowAllReplies:        util.Ptr(false),
 		},
 		"remote_account_1": {
 			ID:                    "01F8MH5ZK5VRH73AKHQM6Y9VNX",
@@ -541,6 +546,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			HideCollections:       util.Ptr(false),
 			SuspensionOrigin:      "",
 			EnableRSS:             util.Ptr(false),
+			ShowAllReplies:        util.Ptr(false),
 		},
 		"remote_account_2": {
 			ID:                    "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -616,6 +622,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspensionOrigin:        "",
 			HeaderMediaAttachmentID: "01PFPMWK2FF0D9WMHEJHR07C3R",
 			EnableRSS:               util.Ptr(false),
+			ShowAllReplies:          util.Ptr(false),
 		},
 		"remote_account_4": {
 			ID:                      "07GZRBAEMBNKGZ8Z9VSKSXKR98",
@@ -653,6 +660,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SuspensionOrigin:        "",
 			HeaderMediaAttachmentID: "",
 			EnableRSS:               util.Ptr(false),
+			ShowAllReplies:          util.Ptr(false),
 		},
 	}
 
