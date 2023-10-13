@@ -94,7 +94,7 @@ module.exports = function InstanceOverview({ baseUrl }) {
 					</div>
 				</div>
 			</div>
-			<Link to={`${baseUrl}/domain-permissions/import-export`}><a>Or use the bulk import/export interface</a></Link>
+			<Link to={`${baseUrl}/import-export`}><a>Or use the bulk import/export interface</a></Link>
 		</>
 	);
 };

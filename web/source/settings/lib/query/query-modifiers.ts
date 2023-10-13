@@ -113,17 +113,14 @@ function makeCacheMutation(action: MutationAction): CacheMutation {
 					queryName = queryName(arg);
 				}
 
-				const patchResult = dispatch(
-					gtsApi.util.updateQueryData(queryName as any, arg, (draft) => {
+				dispatch(
+					gtsApi.util.updateQueryData(queryName, arg, (draft) => {
 						if (key != undefined && typeof key !== "string") {
 							key = key(draft, newData);
 						}
-						console.log("about to do the thing")
 						action(draft, newData, { key });
 					})
 				);
-
-				console.log(patchResult);
 			} catch (e) {
 				// eslint-disable-next-line no-console
 				console.error(`rolling back pessimistic update of ${queryName}: ${e}`);
@@ -136,18 +133,15 @@ function makeCacheMutation(action: MutationAction): CacheMutation {
 	return cacheMutation;
 }
 
-export const replaceCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, params) => {	
-	console.log(`draft: ${draft}`)
-	console.log(`newData: ${newData}`)
-	console.log(`params: ${params}`)
+const replaceCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, params) => {	
 	Object.assign(draft, newData);
 });
 
-export const appendCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, _params) => {
+const appendCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, _params) => {
 	draft.push(newData);
 });
 
-export const spliceCacheOnMutation: CacheMutation = makeCacheMutation((draft, _newData, { key }) => {
+const spliceCacheOnMutation: CacheMutation = makeCacheMutation((draft, _newData, { key }) => {
 	if (key === undefined) {
 		throw ("key undefined");
 	}
@@ -155,7 +149,7 @@ export const spliceCacheOnMutation: CacheMutation = makeCacheMutation((draft, _n
 	draft.splice(key, 1);
 });
 
-export const updateCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, { key }) => {
+const updateCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, { key }) => {
 	if (key === undefined) {
 		throw ("key undefined");
 	}
@@ -167,7 +161,7 @@ export const updateCacheOnMutation: CacheMutation = makeCacheMutation((draft, ne
 	draft[key] = newData;
 });
 
-export const removeFromCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, { key }) => {
+const removeFromCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, { key }) => {
 	if (key === undefined) {
 		throw ("key undefined");
 	}
@@ -178,3 +172,12 @@ export const removeFromCacheOnMutation: CacheMutation = makeCacheMutation((draft
 	
 	delete draft[key];
 });
+
+
+export {
+	replaceCacheOnMutation,
+	appendCacheOnMutation,
+	spliceCacheOnMutation,
+	updateCacheOnMutation,
+	removeFromCacheOnMutation,
+};
