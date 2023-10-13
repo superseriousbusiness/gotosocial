@@ -71,8 +71,8 @@ function emojisFromSearchResult(searchRes): EmojisFromItem {
 }
 
 const extended = gtsApi.injectEndpoints({
-	endpoints: (builder) => ({
-		listEmoji: builder.query<CustomEmoji[], ListEmojiParams>({
+	endpoints: (build) => ({
+		listEmoji: build.query<CustomEmoji[], ListEmojiParams | void>({
 			query: (params = {}) => ({
 				url: "/api/v1/admin/custom_emojis",
 				params: {
@@ -89,14 +89,14 @@ const extended = gtsApi.injectEndpoints({
 					: [{ type: "Emoji", id: "LIST" }]
 		}),
 
-		getEmoji: builder.query<CustomEmoji, string>({
+		getEmoji: build.query<CustomEmoji, string>({
 			query: (id) => ({
 				url: `/api/v1/admin/custom_emojis/${id}`
 			}),
 			providesTags: (_res, _error, id) => [{ type: "Emoji", id }]
 		}),
 
-		addEmoji: builder.mutation<CustomEmoji, Object>({
+		addEmoji: build.mutation<CustomEmoji, Object>({
 			query: (form) => {
 				return {
 					method: "POST",
@@ -112,7 +112,7 @@ const extended = gtsApi.injectEndpoints({
 					: [{ type: "Emoji", id: "LIST" }]
 		}),
 
-		editEmoji: builder.mutation<CustomEmoji, any>({
+		editEmoji: build.mutation<CustomEmoji, any>({
 			query: ({ id, ...patch }) => {
 				return {
 					method: "PATCH",
@@ -130,7 +130,7 @@ const extended = gtsApi.injectEndpoints({
 					: [{ type: "Emoji", id: "LIST" }]
 		}),
 
-		deleteEmoji: builder.mutation<any, string>({
+		deleteEmoji: build.mutation<any, string>({
 			query: (id) => ({
 				method: "DELETE",
 				url: `/api/v1/admin/custom_emojis/${id}`
@@ -138,7 +138,7 @@ const extended = gtsApi.injectEndpoints({
 			invalidatesTags: (_res, _error, id) => [{ type: "Emoji", id }]
 		}),
 
-		searchItemForEmoji: builder.mutation<EmojisFromItem, string>({
+		searchItemForEmoji: build.mutation<EmojisFromItem, string>({
 			async queryFn(url, api, _extraOpts, fetchWithBQ) {
 				const state = api.getState() as RootState;
 				const oauthState = state.oauth;
@@ -211,7 +211,7 @@ const extended = gtsApi.injectEndpoints({
 			}
 		}),
 
-		patchRemoteEmojis: builder.mutation({
+		patchRemoteEmojis: build.mutation({
 			async queryFn({ action, ...formData }, _api, _extraOpts, fetchWithBQ) {
 				const data: CustomEmoji[] = [];
 				const errors: FetchBaseQueryError[] = [];

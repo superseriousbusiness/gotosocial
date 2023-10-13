@@ -22,8 +22,8 @@ import { gtsApi } from "../gts-api";
 import { listToKeyedObject } from "../transforms";
 
 const extended = gtsApi.injectEndpoints({
-	endpoints: (builder) => ({
-		updateInstance: builder.mutation({
+	endpoints: (build) => ({
+		updateInstance: build.mutation({
 			query: (formData) => ({
 				method: "PATCH",
 				url: `/api/v1/instance`,
@@ -34,7 +34,7 @@ const extended = gtsApi.injectEndpoints({
 			...replaceCacheOnMutation("instanceV1"),
 		}),
 
-		mediaCleanup: builder.mutation({
+		mediaCleanup: build.mutation({
 			query: (days) => ({
 				method: "POST",
 				url: `/api/v1/admin/media_cleanup`,
@@ -44,7 +44,7 @@ const extended = gtsApi.injectEndpoints({
 			})
 		}),
 
-		instanceKeysExpire: builder.mutation({
+		instanceKeysExpire: build.mutation({
 			query: (domain) => ({
 				method: "POST",
 				url: `/api/v1/admin/domain_keys_expire`,
@@ -54,14 +54,14 @@ const extended = gtsApi.injectEndpoints({
 			})
 		}),
 
-		getAccount: builder.query({
+		getAccount: build.query({
 			query: (id) => ({
 				url: `/api/v1/accounts/${id}`
 			}),
 			providesTags: (_, __, id) => [{ type: "Account", id }]
 		}),
 
-		actionAccount: builder.mutation({
+		actionAccount: build.mutation({
 			query: ({ id, action, reason }) => ({
 				method: "POST",
 				url: `/api/v1/admin/accounts/${id}/action`,
@@ -74,7 +74,7 @@ const extended = gtsApi.injectEndpoints({
 			invalidatesTags: (_, __, { id }) => [{ type: "Account", id }]
 		}),
 
-		searchAccount: builder.mutation({
+		searchAccount: build.mutation({
 			query: (username) => ({
 				url: `/api/v2/search?q=${encodeURIComponent(username)}&resolve=true`
 			}),
@@ -83,14 +83,14 @@ const extended = gtsApi.injectEndpoints({
 			}
 		}),
 
-		instanceRules: builder.query({
+		instanceRules: build.query({
 			query: () => ({
 				url: `/api/v1/admin/instance/rules`
 			}),
 			transformResponse: listToKeyedObject<any>("id")
 		}),
 
-		addInstanceRule: builder.mutation({
+		addInstanceRule: build.mutation({
 			query: (formData) => ({
 				method: "POST",
 				url: `/api/v1/admin/instance/rules`,
@@ -106,7 +106,7 @@ const extended = gtsApi.injectEndpoints({
 			...replaceCacheOnMutation("instanceRules"),
 		}),
 
-		updateInstanceRule: builder.mutation({
+		updateInstanceRule: build.mutation({
 			query: ({ id, ...edit }) => ({
 				method: "PATCH",
 				url: `/api/v1/admin/instance/rules/${id}`,
@@ -122,7 +122,7 @@ const extended = gtsApi.injectEndpoints({
 			...replaceCacheOnMutation("instanceRules"),
 		}),
 
-		deleteInstanceRule: builder.mutation({
+		deleteInstanceRule: build.mutation({
 			query: (id) => ({
 				method: "DELETE",
 				url: `/api/v1/admin/instance/rules/${id}`

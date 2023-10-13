@@ -93,8 +93,8 @@ const extended = gtsApi.injectEndpoints({
 		exportDomainList: build.mutation<string | null, ExportDomainPermsParams>({
 			async queryFn(formData, api, _extraOpts, fetchWithBQ) {
 				// Fetch domain perms from relevant endpoint.
-				// We could have used 'useGetDomainBlocksQuery'
-				// or 'useGetDomainAllowsQuery' for this, but
+				// We could have used 'useDomainBlocksQuery'
+				// or 'useDomainAllowsQuery' for this, but
 				// we want the untransformed array version.
 				const permsRes = await fetchWithBQ({ url: `/api/v1/admin/domain_${formData.permType}s` });
 				if (permsRes.error) {

@@ -57,8 +57,8 @@ const SETTINGS_URL = (getSettingsURL());
 //
 // https://redux-toolkit.js.org/rtk-query/usage/customizing-queries#performing-multiple-requests-with-a-single-query
 const extended = gtsApi.injectEndpoints({
-	endpoints: (builder) => ({
-		verifyCredentials: builder.query<any, void | null>({
+	endpoints: (build) => ({
+		verifyCredentials: build.query<any, void>({
 			providesTags: (_res, error) =>
 				error == undefined ? ["Auth"] : [],
 			async queryFn(_arg, api, _extraOpts, fetchWithBQ) {
@@ -135,7 +135,7 @@ const extended = gtsApi.injectEndpoints({
 			}
 		}),
 
-		authorizeFlow: builder.mutation({
+		authorizeFlow: build.mutation({
 			async queryFn(formData, api, _extraOpts, fetchWithBQ) {
 				const state = api.getState() as RootState;
 				const oauthState = state.oauth;
@@ -187,7 +187,7 @@ const extended = gtsApi.injectEndpoints({
 				return { data: null };
 			},
 		}),
-		logout: builder.mutation({
+		logout: build.mutation({
 			queryFn: (_arg, api) => {
 				api.dispatch(oauthRemove());
 				return { data: null };

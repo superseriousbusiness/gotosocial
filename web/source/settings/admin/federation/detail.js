@@ -30,11 +30,11 @@ const Loading = require("../../components/loading");
 const BackButton = require("../../components/back-button");
 const MutationButton = require("../../components/form/mutation-button");
 
-const { useGetDomainBlocksQuery } = require("../../lib/query/admin/domain-permissions/get");
+const { useDomainBlocksQuery } = require("../../lib/query/admin/domain-permissions/get");
 const { useAddDomainBlockMutation, useRemoveDomainBlockMutation } = require("../../lib/query/admin/domain-permissions/update");
 
 module.exports = function InstanceDetail({ baseUrl }) {
-	const { data: blockedInstances = {}, isLoading } = useGetDomainBlocksQuery();
+	const { data: blockedInstances = {}, isLoading } = useDomainBlocksQuery();
 
 	let [_match, { domain }] = useRoute(`${baseUrl}/:domain`);
 	if (domain == "view") {

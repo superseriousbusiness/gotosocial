@@ -138,8 +138,8 @@ export const gtsApi = createApi({
 		"Account",
 		"InstanceRules",
 	],
-	endpoints: (builder) => ({
-		instanceV1: builder.query<InstanceV1, void | null>({
+	endpoints: (build) => ({
+		instanceV1: build.query<InstanceV1, void>({
 			query: () => ({
 				url: `/api/v1/instance`
 			})

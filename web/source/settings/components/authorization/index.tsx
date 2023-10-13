@@ -25,6 +25,7 @@ import React from "react";
 import Login from "./login";
 import Loading from "../loading";
 import { Error } from "../error";
+import { NoArg } from "../../lib/types/query";
 
 export function Authorization({ App }) {
 	const { loginState, expectingRedirect } = store.getState().oauth;
@@ -35,7 +36,7 @@ export function Authorization({ App }) {
 		isSuccess,
 		data: account,
 		error,
-	} = useVerifyCredentialsQuery(null, { skip: skip });
+	} = useVerifyCredentialsQuery(NoArg, { skip: skip });
 
 	let showLogin = true;
 	let content: React.JSX.Element | null = null;

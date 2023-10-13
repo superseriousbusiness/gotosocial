@@ -46,12 +46,13 @@ import FormWithData from "../../../lib/form/form-with-data";
 
 import { useImportDomainPermsMutation } from "../../../lib/query/admin/domain-permissions/import";
 import {
-	useGetDomainAllowsQuery,
-	useGetDomainBlocksQuery
+	useDomainAllowsQuery,
+	useDomainBlocksQuery
 } from "../../../lib/query/admin/domain-permissions/get";
 
 import type { DomainPerm, MappedDomainPerms } from "../../../lib/types/domain-permission";
 import type { ChecklistInputHook, RadioFormInputHook } from "../../../lib/form/types";
+import { NoArg } from "../../../lib/types/query";
 
 export interface ProcessImportProps {
 	list: DomainPerm[],
@@ -64,10 +65,10 @@ export const ProcessImport = memo(
 			<div className="without-border">
 				<FormWithData
 					dataQuery={permType.value == "allow"
-						? useGetDomainAllowsQuery
-						: useGetDomainBlocksQuery
+						? useDomainAllowsQuery
+						: useDomainBlocksQuery
 					}
-					queryArg={null}
+					queryArg={NoArg}
 					DataForm={ImportList}
 					{...{ list, permType }}
 				/>

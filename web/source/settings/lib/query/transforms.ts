@@ -56,7 +56,7 @@
  * @example
  * const extended = gtsApi.injectEndpoints({
  *   endpoints: (build) => ({
- *     getDomainBlocks: build.query<MappedDomainPerms, void | null>({
+ *     getDomainBlocks: build.query<MappedDomainPerms, void>({
  *       query: () => ({
  *         url: `/api/v1/admin/domain_blocks`
  *       }),

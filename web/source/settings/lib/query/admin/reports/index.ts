@@ -27,7 +27,7 @@ import type {
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
-		listReports: build.query<AdminReport[], AdminReportListParams>({
+		listReports: build.query<AdminReport[], AdminReportListParams | void>({
 			query: (params) => ({
 				url: "/api/v1/admin/reports",
 				params: {

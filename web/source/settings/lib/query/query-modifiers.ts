@@ -17,77 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { Draft } from "@reduxjs/toolkit";
 import { gtsApi } from "./gts-api";
 
-/**
- * Shadow the redux onQueryStarted function for mutations.
- * https://redux-toolkit.js.org/rtk-query/api/createApi#onquerystarted
- */
-type OnMutationStarted = (
-	_arg: any,
-	_params: MutationStartedParams
-) => Promise<void>;
+import type { 
+	Action,
+	CacheMutation,
+} from "../types/query";
 
-/**
- * Shadow the redux onQueryStarted function parameters for mutations.
- * https://redux-toolkit.js.org/rtk-query/api/createApi#onquerystarted
- */
-interface MutationStartedParams {
-	/**
-	 * The dispatch method for the store.
-	 */
-	dispatch,
-	/**
-	 * A method to get the current state for the store.
-	 */
-    getState,
-	/**
-	 * extra as provided as thunk.extraArgument to the configureStore getDefaultMiddleware option.
-	 */
-    extra,
-	/**
-	 * A unique ID generated for the query/mutation.
-	 */
-    requestId,
-	/**
-	 *  A Promise that will resolve with a data property (the transformed query result), and a
-	 * meta property (meta returned by the baseQuery). If the query fails, this Promise will
-	 * reject with the error. This allows you to await for the query to finish.
-	 */
-    queryFulfilled,
-	/**
-	 * A function that gets the current value of the cache entry.
-	 */
-    getCacheEntry,
-}
-
-type MutationAction = (
-	_draft: Draft<any>,
-	_updated: any,
-	_params: MutationActionParams,
-) => void;
-
-interface MutationActionParams {
-	/**
-	 * Either a normal old string, or a custom
-	 * function to derive the key to change based
-	 * on the draft and updated data.
-	 * 
-	 * @param _draft
-	 * @param _updated 
-	 * @returns 
-	 */
-	key?: string | ((_draft: Draft<any>, _updated: any) => string),
-}
-
-/**
- * Custom cache mutation.
- */
-type CacheMutation = (
-	_queryName: string | ((_arg: any) => string),
-	_params?: MutationActionParams,
-) => { onQueryStarted: OnMutationStarted }
+import { NoArg } from "../types/query";
 
 /**
  * Cache mutation creator for pessimistic updates.
@@ -98,42 +35,72 @@ type CacheMutation = (
  * https://redux-toolkit.js.org/rtk-query/api/createApi#onquerystarted
  * https://redux-toolkit.js.org/rtk-query/usage/manual-cache-updates#pessimistic-updates
  */
-function makeCacheMutation(action: MutationAction): CacheMutation {
-	const cacheMutation: CacheMutation = (
+function makeCacheMutation(action: Action): CacheMutation {
+	return function cacheMutation(
 		queryName: string | ((_arg: any) => string),
-		{ key }: MutationActionParams = {},
-	) => {
-		// The actual meat + potatoes of this function: returning
-		// an onQueryStarted function that satisfies the redux
-		// onQueryStarted function signature.
-		const onQueryStarted = async(arg, { dispatch, queryFulfilled }) => {
-			try {
-				const { data: newData } = await queryFulfilled;
+		{ key } = {},
+	) {
+		return {
+			onQueryStarted: async(mutationData, { dispatch, queryFulfilled }) => {
+				// queryName might be a function that returns
+				// a query name; trigger it if so. The returned
+				// queryName has to match one of the API endpoints
+				// we've defined. So if we have endpoints called
+				// (for example) `instanceV1` and `getPosts` then
+				// the queryName provided here has to line up with
+				// one of those in order to actually do anything.
 				if (typeof queryName !== "string") {
-					queryName = queryName(arg);
+					queryName = queryName(mutationData);
+				}
+				
+				if (queryName == "") {
+					throw (
+						"provided queryName resolved to an empty string;" +
+						"double check your mutation definition!"
+					)
 				}
 
-				dispatch(
-					gtsApi.util.updateQueryData(queryName, arg, (draft) => {
-						if (key != undefined && typeof key !== "string") {
-							key = key(draft, newData);
-						}
-						action(draft, newData, { key });
-					})
-				);
-			} catch (e) {
-				// eslint-disable-next-line no-console
-				console.error(`rolling back pessimistic update of ${queryName}: ${e}`);
+				try {
+					// Wait for the mutation to finish (this
+					// is why it's a pessimistic update).
+					const { data: newData } = await queryFulfilled;	
+					
+					// In order for `gtsApi.util.updateQueryData` to
+					// actually do something within a dispatch, the
+					// first two arguments passed into it have to line
+					// up with arguments that were used earlier to
+					// fetch the data whose cached version we're now
+					// trying to modify.
+					// 
+					// So, if we earlier fetched all reports with
+					// queryName `getReports`, and arg `undefined`,
+					// then we now need match those parameters in
+					// `updateQueryData` in order to modify the cache.
+					//
+					// If you pass something like `null` or `""` here
+					// instead, then the cache will not get modified!
+					// Redux will just quietly discard the thunk action.
+					dispatch(
+						gtsApi.util.updateQueryData(queryName as any, NoArg, (draft) => {
+							if (key != undefined && typeof key !== "string") {
+								key = key(draft, newData);
+							}
+							action(draft, newData, { key });
+						})
+					);
+				} catch (e) {
+					// eslint-disable-next-line no-console
+					console.error(`rolling back pessimistic update of ${queryName}: ${e}`);
+				}
 			}
-		};
-
-		return { onQueryStarted };
-	};
-	
-	return cacheMutation;
+		}
+	}
 }
 
-const replaceCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, params) => {	
+/**
+ * 
+ */
+const replaceCacheOnMutation: CacheMutation = makeCacheMutation((draft, newData, _params) => {	
 	Object.assign(draft, newData);
 });
 
