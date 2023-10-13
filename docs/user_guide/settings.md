@@ -107,9 +107,9 @@ Turning on the discoverable flag may take a week or more to propagate; your acco
 
 ### Timelines
 
-#### Show All Replies
+#### Enable showing all follow's replies in home timeline
 
-Some replies that accounts you follow are ignored by default. This is when this reply is not directly to you, or does not mention other people you follow.  
+By default, when an account you follow replies to an account you do not follow it is ignored unless you, or someone else you follow, is mentioned in this reply.  
 However, if you wish to make these replies visible, you can do so by enabling this option.  
 
 !!! info
