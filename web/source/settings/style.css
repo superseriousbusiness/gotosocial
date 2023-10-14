@@ -498,7 +498,7 @@ span.form-info {
 	}
 }
 
-.instance-list {
+.domain-permissions-list {
 	p {
 		margin-top: 0;
 	}
@@ -612,7 +612,7 @@ span.form-info {
 		padding: 0.75rem;
 	}
 
-	.instance-list .filter {
+	.domain-permissions-list .filter {
 		flex-direction: column;
 	}
 }

@@ -20,26 +20,20 @@
 import React from "react";
 import { Switch, Route } from "wouter";
 
-import InstanceOverview from "./overview";
-import InstanceDetail from "./detail";
-import InstanceImportExport from "./domain-permissions";
+import DomainPermissionsOverview from "./overview";
+import { PermType } from "../../lib/types/domain-permission";
 
-export default function Federation({ baseUrl }) {
-	const nextBaseUrl = `${baseUrl}/domain-permissions/import-export`
-	
+export default function DomainPermissions({ baseUrl }: { baseUrl: string }) {
 	return (
 		<Switch>
-			<Route path={nextBaseUrl}>
-				<InstanceImportExport
-					baseUrl={nextBaseUrl}
-				/>
+			<Route path="/settings/admin/domain-permissions/:permType">
+				{params => (
+					<DomainPermissionsOverview
+						permType={params.permType as PermType}
+						baseUrl={baseUrl}
+					/>
+				)}
 			</Route>
-
-			<Route path={`${baseUrl}/:domain`}>
-				<InstanceDetail baseUrl={baseUrl} />
-			</Route>
-
-			<InstanceOverview baseUrl={baseUrl} />
 		</Switch>
 	);
 };

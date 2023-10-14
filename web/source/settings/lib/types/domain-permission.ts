@@ -32,6 +32,7 @@ export interface DomainPerm {
 	obfuscate?: boolean;
 	private_comment?: string;
 	public_comment?: string;
+	created_at?: string;
 
 	// Internal processing keys; remove
 	// before serdes of domain perm.

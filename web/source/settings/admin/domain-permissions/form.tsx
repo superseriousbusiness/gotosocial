@@ -21,18 +21,18 @@ import React from "react";
 
 import { useEffect } from "react";
 
-import { useExportDomainListMutation } from "../../../lib/query/admin/domain-permissions/export";
-import useFormSubmit from "../../../lib/form/submit";
+import { useExportDomainListMutation } from "../../lib/query/admin/domain-permissions/export";
+import useFormSubmit from "../../lib/form/submit";
 
 import {
 	RadioGroup,
 	TextArea,
 	Select,
-} from "../../../components/form/inputs";
+} from "../../components/form/inputs";
 
-import MutationButton from "../../../components/form/mutation-button";
+import MutationButton from "../../components/form/mutation-button";
 
-import { Error } from "../../../components/error";
+import { Error } from "../../components/error";
 import ExportFormatTable from "./export-format-table";
 
 import type {
@@ -40,7 +40,7 @@ import type {
 	FormSubmitResult,
 	RadioFormInputHook,
 	TextFormInputHook,
-} from "../../../lib/form/types";
+} from "../../lib/form/types";
 
 export interface ImportExportFormProps {
 	form: {

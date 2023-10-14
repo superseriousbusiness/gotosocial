@@ -21,11 +21,11 @@ import React from "react";
 
 import { Switch, Route, Redirect, useLocation } from "wouter";
 
-import { useProcessDomainPermissionsMutation } from "../../../lib/query/admin/domain-permissions/process";
+import { useProcessDomainPermissionsMutation } from "../../lib/query/admin/domain-permissions/process";
 
-import { useTextInput, useRadioInput } from "../../../lib/form";
+import { useTextInput, useRadioInput } from "../../lib/form";
 
-import useFormSubmit from "../../../lib/form/submit";
+import useFormSubmit from "../../lib/form/submit";
 
 import { ProcessImport } from "./process";
 import ImportExportForm from "./form";

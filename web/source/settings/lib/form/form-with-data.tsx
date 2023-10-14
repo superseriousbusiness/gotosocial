@@ -21,11 +21,13 @@ import React from "react";
 
 import { Error } from "../../components/error";
 import Loading from "../../components/loading";
+import { NoArg } from "../types/query";
+import { FormWithDataQuery } from "./types";
 
-interface FormWithDataProps {
-	dataQuery,
-	DataForm,
-	queryArg,
+export interface FormWithDataProps {
+	dataQuery: FormWithDataQuery,
+	DataForm: ({ data, ...props }) => React.JSX.Element,
+	queryArg?: any,
 }
 
 /**
@@ -33,6 +35,11 @@ interface FormWithDataProps {
  * will only be rendered when data is available to generate form-fields for.
  */
 export default function FormWithData({ dataQuery, DataForm, queryArg, ...props }: FormWithDataProps) {
+	if (!queryArg) {
+		queryArg = NoArg;
+	}
+
+	// Trigger provided query.
 	const { data, isLoading, isError, error } = dataQuery(queryArg);
 
 	if (isLoading) {

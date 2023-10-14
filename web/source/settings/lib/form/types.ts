@@ -250,3 +250,15 @@ export interface FormSubmitResult {
 	isError: boolean;
 	reset: () => void;
 }
+
+/**
+ * Shadows redux query hook return values.
+ * 
+ * See: https://redux-toolkit.js.org/rtk-query/usage/queries#frequently-used-query-hook-return-values
+ */
+export type FormWithDataQuery = (_queryArg: any) => {
+	data?: any;
+	isLoading: boolean;
+	isError: boolean;
+	error?: any;
+}

@@ -21,14 +21,14 @@ import React from "react";
 
 import { memo, useMemo, useCallback, useEffect } from "react";
 
-import { isValidDomainPermission, hasBetterScope } from "../../../lib/util/domain-permission";
+import { isValidDomainPermission, hasBetterScope } from "../../lib/util/domain-permission";
 
 import {
 	useTextInput,
 	useBoolInput,
 	useRadioInput,
 	useCheckListInput,
-} from "../../../lib/form";
+} from "../../lib/form";
 
 import {
 	Select,
@@ -36,23 +36,22 @@ import {
 	RadioGroup,
 	Checkbox,
 	TextInput,
-} from "../../../components/form/inputs";
+} from "../../components/form/inputs";
 
-import useFormSubmit from "../../../lib/form/submit";
+import useFormSubmit from "../../lib/form/submit";
 
-import CheckList from "../../../components/check-list";
-import MutationButton from "../../../components/form/mutation-button";
-import FormWithData from "../../../lib/form/form-with-data";
+import CheckList from "../../components/check-list";
+import MutationButton from "../../components/form/mutation-button";
+import FormWithData from "../../lib/form/form-with-data";
 
-import { useImportDomainPermsMutation } from "../../../lib/query/admin/domain-permissions/import";
+import { useImportDomainPermsMutation } from "../../lib/query/admin/domain-permissions/import";
 import {
 	useDomainAllowsQuery,
 	useDomainBlocksQuery
-} from "../../../lib/query/admin/domain-permissions/get";
+} from "../../lib/query/admin/domain-permissions/get";
 
-import type { DomainPerm, MappedDomainPerms } from "../../../lib/types/domain-permission";
-import type { ChecklistInputHook, RadioFormInputHook } from "../../../lib/form/types";
-import { NoArg } from "../../../lib/types/query";
+import type { DomainPerm, MappedDomainPerms } from "../../lib/types/domain-permission";
+import type { ChecklistInputHook, RadioFormInputHook } from "../../lib/form/types";
 
 export interface ProcessImportProps {
 	list: DomainPerm[],
@@ -68,7 +67,6 @@ export const ProcessImport = memo(
 						? useDomainAllowsQuery
 						: useDomainBlocksQuery
 					}
-					queryArg={NoArg}
 					DataForm={ImportList}
 					{...{ list, permType }}
 				/>
