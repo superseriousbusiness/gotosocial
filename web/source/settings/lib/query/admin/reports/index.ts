@@ -80,4 +80,4 @@ export {
 	useListReportsQuery,
 	useGetReportQuery,
 	useResolveReportMutation,
-}
+};

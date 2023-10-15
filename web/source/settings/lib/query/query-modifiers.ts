@@ -57,7 +57,7 @@ function makeCacheMutation(action: Action): CacheMutation {
 					throw (
 						"provided queryName resolved to an empty string;" +
 						"double check your mutation definition!"
-					)
+					);
 				}
 
 				try {
@@ -93,8 +93,8 @@ function makeCacheMutation(action: Action): CacheMutation {
 					console.error(`rolling back pessimistic update of ${queryName}: ${e}`);
 				}
 			}
-		}
-	}
+		};
+	};
 }
 
 /**

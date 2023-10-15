@@ -48,7 +48,7 @@ interface ChecklistState {
 const initialState: ChecklistState = {
 	entries: {},
 	selectedEntries: new Set(),
-}
+};
 
 const { reducer, actions } = createSlice({
 	name: "checklist",
@@ -66,7 +66,7 @@ const { reducer, actions } = createSlice({
 
 					return [entry.key, { ...entry, checked } ];
 				})
-			)
+			);
 			
 			return { entries, selectedEntries };
 		},
@@ -126,7 +126,7 @@ function initialHookState({
 		
 			return [ key, { ...entry, key, checked } ];
 		})
-	)
+	);
 
 	return {
 		entries: mappedEntries,
@@ -134,9 +134,10 @@ function initialHookState({
 	};
 }
 
-const _default: { [k: string]: Checkable } = {}
+const _default: { [k: string]: Checkable } = {};
 
 export default function useCheckListInput(
+	/* eslint-disable no-unused-vars */
 	{ name, Name }: CreateHookNames,
 	{
 		entries = [],
@@ -217,4 +218,4 @@ export default function useCheckListInput(
 			}
 		});
 	}, [state, reset, name, onChange, updateMultiple]);
-};
+}

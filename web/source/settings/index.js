@@ -30,8 +30,8 @@ const Loading = require("./components/loading");
 const UserLogoutCard = require("./components/user-logout-card");
 const { RoleContext } = require("./lib/navigation/util");
 
-const DomainPerms = require("./admin/domain-permissions").default
-const DomainPermsImportExport = require("./admin/domain-permissions/import-export").default
+const DomainPerms = require("./admin/domain-permissions").default;
+const DomainPermsImportExport = require("./admin/domain-permissions/import-export").default;
 
 require("./style.css");
 

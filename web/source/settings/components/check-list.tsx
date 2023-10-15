@@ -41,7 +41,7 @@ export default function CheckList({ field, header = "All", EntryComponent, getEx
 			/>
 		</div>
 	);
-};
+}
 
 function CheckListHeader({ toggleAll, children }) {
 	return (

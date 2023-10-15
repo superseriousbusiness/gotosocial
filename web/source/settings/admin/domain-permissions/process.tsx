@@ -217,7 +217,7 @@ function DomainCheckList({ field, domainPerms, commentType, permType }: DomainCh
 	const entriesWithSuggestions = useMemo(() => {
 		const fieldValue = (field.value ?? {}) as { [k: string]: DomainPerm; };
 		return Object.values(fieldValue).filter((entry) => entry.suggest);
-	}, [field.value, permType]);
+	}, [field.value]);
 
 	return (
 		<>
