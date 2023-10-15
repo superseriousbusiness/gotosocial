@@ -54,6 +54,7 @@ steps:
         path: /tmp/cache
     commands:
       - yarn --cwd ./web/source install --frozen-lockfile --cache-folder /tmp/cache
+      - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
 
   - name: web-lint
     image: node:18-alpine
@@ -191,6 +192,6 @@ steps:
 
 ---
 kind: signature
-hmac: c3efbd528a76016562f88ae435141cfb5fd6d4d07b6ad2a24ecc23cb529cc1c6
+hmac: d7b93470276a0df7e4d862941489f00da107df3d085200009b776d33599e6043
 
 ...

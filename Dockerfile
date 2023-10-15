@@ -16,6 +16,7 @@ FROM --platform=${BUILDPLATFORM} node:18-alpine AS bundler
 
 COPY web web
 RUN yarn --cwd ./web/source install && \
+    yarn --cwd ./web/source ts-patch install && \
     yarn --cwd ./web/source build   && \
     rm -rf ./web/source
 

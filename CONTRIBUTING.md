@@ -229,13 +229,15 @@ Using [NVM](https://github.com/nvm-sh/nvm) is one convenient way to install them
 To install frontend dependencies:
 
 ```bash
-yarn --cwd web/source
+yarn --cwd ./web/source install && yarn --cwd ./web/source ts-patch install
 ```
+
+The `ts-patch` step is necessary because of Typia, which we use for some type validation: see [Typia install docs](https://typia.io/docs/setup/#manual-setup).
 
 To recompile frontend bundles into `web/assets/dist`:
 
 ```bash
-yarn --cwd web/source build
+yarn --cwd ./web/source build
 ```
 
 #### Live Reloading
