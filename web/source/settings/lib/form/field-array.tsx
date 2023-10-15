@@ -25,10 +25,11 @@ import type {
 	CreateHookNames,
 	HookOpts,
 	FieldArrayInputHook,
+	HookedForm,
 } from "./types";
 
-function parseFields(entries, length) {
-	const fields: any[] = [];
+function parseFields(entries: HookedForm[], length: number): HookedForm[] {
+	const fields: HookedForm[] = [];
 
 	for (let i = 0; i < length; i++) {
 		if (entries[i] != undefined) {
@@ -41,7 +42,6 @@ function parseFields(entries, length) {
 	return fields;
 }
 
-const _default: any[] = [];
 export default function useArrayInput(
 	{ name }: CreateHookNames,
 	{
@@ -49,12 +49,20 @@ export default function useArrayInput(
 		length = 0,
 	}: HookOpts,
 ): FieldArrayInputHook {
-	const fields = useRef<Object>({});
+	const _default: HookedForm[] = Array(length);
+	const fields = useRef<HookedForm[]>(_default);
 
 	const value = useMemo(
 		() => parseFields(initialValue, length),
 		[initialValue, length],
 	);
+
+	function hasUpdate() {		
+		return Object.values(fields.current).some((fieldSet) => {
+			const { updatedFields } = getFormMutations(fieldSet, { changedOnly: true });
+			return updatedFields.length > 0;
+		});
+	}
 
 	return {
 		_default,
@@ -63,14 +71,9 @@ export default function useArrayInput(
 		value,
 		ctx: fields.current,
 		maxLength: length,
-		hasChanged: () => true,
+		hasChanged: hasUpdate,
 		selectedValues() {
-			// if any form field changed, we need to re-send everything
-			const hasUpdate = Object.values(fields.current).some((fieldSet) => {
-				const { updatedFields } = getFormMutations(fieldSet, { changedOnly: true });
-				return updatedFields.length > 0;
-			});
-			if (hasUpdate) {
+			if (hasUpdate()) {
 				return Object.values(fields.current).map((fieldSet) => {
 					return getFormMutations(fieldSet, { changedOnly: false }).mutationData;
 				});

@@ -17,6 +17,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/* eslint-disable no-unused-vars */
+
 import React from "react";
 
 import { Error } from "../../components/error";

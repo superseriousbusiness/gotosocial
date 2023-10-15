@@ -185,7 +185,7 @@ export interface ComboboxFormInputHook extends FormInputHook<string>,
 	_withNew,
 	_withReset {}
 
-export interface FieldArrayInputHook extends FormInputHook<any[]>,
+export interface FieldArrayInputHook extends FormInputHook<HookedForm[]>,
 	_withSelectedValues,
 	_withMaxLength,
 	_withCtx {}

@@ -87,4 +87,4 @@ export default function ImportExport({ baseUrl }) {
 			</Route>
 		</Switch>
 	);
-};
+}

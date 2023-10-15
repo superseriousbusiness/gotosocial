@@ -22,10 +22,20 @@ import { Switch, Route } from "wouter";
 
 import DomainPermissionsOverview from "./overview";
 import { PermType } from "../../lib/types/domain-permission";
+import DomainPermDetail from "./detail";
 
 export default function DomainPermissions({ baseUrl }: { baseUrl: string }) {
 	return (
 		<Switch>
+			<Route path="/settings/admin/domain-permissions/:permType/:domain">
+				{params => (
+					<DomainPermDetail
+						permType={params.permType as PermType}
+						baseUrl={baseUrl}
+						domain={params.domain}
+					/>
+				)}
+			</Route>
 			<Route path="/settings/admin/domain-permissions/:permType">
 				{params => (
 					<DomainPermissionsOverview
@@ -36,4 +46,4 @@ export default function DomainPermissions({ baseUrl }: { baseUrl: string }) {
 			</Route>
 		</Switch>
 	);
-};
+}

@@ -29,8 +29,7 @@ import { TextInput } from "../../components/form/inputs";
 
 import Loading from "../../components/loading";
 import { useDomainAllowsQuery, useDomainBlocksQuery } from "../../lib/query/admin/domain-permissions/get";
-import { TextFormInputHook } from "../../lib/form/types";
-import { DomainPerm, MappedDomainPerms, PermType } from "../../lib/types/domain-permission";
+import type { MappedDomainPerms, PermType } from "../../lib/types/domain-permission";
 import { NoArg } from "../../lib/types/query";
 
 export interface DomainPermissionsOverviewProps {
@@ -48,7 +47,7 @@ export default function DomainPermissionsOverview({ permType, baseUrl }: DomainP
 	// Uppercase first letter of given permType.
 	const permTypeUpper = useMemo(() => {
 		return permType.charAt(0).toUpperCase() + permType.slice(1); 
-	}, [permType])
+	}, [permType]);
 
 	// Fetch / wait for desired perms to load.
 	const { data: blocks, isLoading: isLoadingBlocks } = useDomainBlocksQuery(NoArg, { skip: permType !== "block" });
@@ -84,7 +83,7 @@ export default function DomainPermissionsOverview({ permType, baseUrl }: DomainP
 			</Link>
 		</div>
 	);
-};
+}
 
 interface DomainPermsListProps {
 	data: MappedDomainPerms;
@@ -115,9 +114,9 @@ function DomainPermsList({ data, baseUrl, permType, permTypeUpper }: DomainPerms
 	
 	const filterInfo = (
 		<span>
-			{perms.length} {permType}ed instance{perms.length != 1 ? "s" : ""} {filtered > 0 && `(${filtered} filtered by search)`}
+			{perms.length} {permType}ed domain{perms.length != 1 ? "s" : ""} {filtered > 0 && `(${filtered} filtered by search)`}
 		</span>
-	)
+	);
 
 	const entries = filteredPerms.map((entry) => {
 		return (
@@ -128,7 +127,7 @@ function DomainPermsList({ data, baseUrl, permType, permTypeUpper }: DomainPerms
 				</a>
 			</Link>
 		);
-	})
+	});
 
 	return (
 		<div className="domain-permissions-list">
@@ -151,15 +150,16 @@ function DomainPermsList({ data, baseUrl, permType, permTypeUpper }: DomainPerms
 				</div>
 			</div>
 		</div>
-	)
+	);
 }
 
-function BlockHelperText({}) {
+function BlockHelperText() {
 	return (
-		<>
-			<br/>Blocking a domain blocks all current and future accounts on instance(s) running on that domain.
-			<br/>Stored content will be removed, and no more data is sent to the remote server.
-			<br/>This extends to all subdomains as well, so blocking 'example.com' also includes 'social.example.com'.
+		<p>
+			Blocking a domain blocks interaction between your instance, and all current and future accounts on
+			instance(s) running on the blocked domain. Stored content will be removed, and no more data is sent to
+			the remote server. This extends to all subdomains as well, so blocking 'example.com' also blocks 'social.example.com'.
+			<br/>
 			<a
 				href="https://docs.gotosocial.org/en/latest/admin/domain_blocks/"
 				target="_blank"
@@ -169,23 +169,30 @@ function BlockHelperText({}) {
 				Learn more about domain blocks (opens in a new tab)
 			</a>
 			<br/>
-		</>
-	)
+		</p>
+	);
 }
 
-function AllowHelperText({}) {
+function AllowHelperText() {
 	return (
-		<>
-			<br/>Blah blah blah blah blah.
+		<p>
+			Allowing a domain explicitly allows instance(s) running on that domain to interact with your instance.
+			If you're running in allowlist mode, this is how you "allow" instances through.
+			If you're running in blocklist mode (the default federation mode), you can use explicit domain allows
+			to override domain blocks. In blocklist mode, explicitly allowed instances will be able to interact with
+			your instance regardless of any domain blocks in place.  This extends to all subdomains as well, so allowing
+			'example.com' also allows 'social.example.com'. This is useful when you're importing a block list but
+			there are some domains on the list you don't want to block: just create an explicit allow for those domains
+			before importing the list.
+			<br/>
 			<a
 				href="https://docs.gotosocial.org/en/latest/admin/federation_modes/"
 				target="_blank"
 				className="docslink"
 				rel="noreferrer"
 			>
-				Learn more about allowlist federation mode (opens in a new tab)
+				Learn more about federation modes (opens in a new tab)
 			</a>
-			<br/>
-		</>
-	)
+		</p>
+	);
 }

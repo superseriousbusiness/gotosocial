@@ -47,8 +47,8 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		Item("Reports", { icon: "fa-flag", wildcard: true }, require("./admin/reports")),
 		Item("Accounts", { icon: "fa-users", wildcard: true }, require("./admin/accounts")),
 		Menu("Domain Permissions", { icon: "fa-hubzilla" }, [
-			Item("Blocks", { icon: "fa-photo", url: "block", wildcard: true }, DomainPerms),
-			Item("Allows", { icon: "fa-photo", url: "allow", wildcard: true }, DomainPerms),
+			Item("Blocks", { icon: "fa-close", url: "block", wildcard: true }, DomainPerms),
+			Item("Allows", { icon: "fa-check", url: "allow", wildcard: true }, DomainPerms),
 			Item("Import/Export", { icon: "fa-floppy-o", url: "import-export", wildcard: true }, DomainPermsImportExport),
 		]),
 	]),
