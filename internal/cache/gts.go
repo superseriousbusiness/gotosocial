@@ -57,6 +57,8 @@ type GTSCaches struct {
 	statusFave       *result.Cache[*gtsmodel.StatusFave]
 	statusFaveIDs    *SliceCache[string]
 	tag              *result.Cache[*gtsmodel.Tag]
+	thread           *result.Cache[*gtsmodel.Thread]
+	threadMute       *result.Cache[*gtsmodel.ThreadMute]
 	tombstone        *result.Cache[*gtsmodel.Tombstone]
 	user             *result.Cache[*gtsmodel.User]
 
@@ -93,6 +95,8 @@ func (c *GTSCaches) Init() {
 	c.initStatus()
 	c.initStatusFave()
 	c.initTag()
+	c.initThread()
+	c.initThreadMute()
 	c.initStatusFaveIDs()
 	c.initTombstone()
 	c.initUser()
@@ -247,6 +251,16 @@ func (c *GTSCaches) StatusFave() *result.Cache[*gtsmodel.StatusFave] {
 // Tag provides access to the gtsmodel Tag database cache.
 func (c *GTSCaches) Tag() *result.Cache[*gtsmodel.Tag] {
 	return c.tag
+}
+
+// Thread provides access to the gtsmodel Thread database cache.
+func (c *GTSCaches) Thread() *result.Cache[*gtsmodel.Thread] {
+	return c.thread
+}
+
+// ThreadMute provides access to the gtsmodel ThreadMute database cache.
+func (c *GTSCaches) ThreadMute() *result.Cache[*gtsmodel.ThreadMute] {
+	return c.threadMute
 }
 
 // StatusFaveIDs provides access to the status fave IDs list database cache.
@@ -712,6 +726,7 @@ func (c *GTSCaches) initStatus() {
 		{Name: "URI"},
 		{Name: "URL"},
 		{Name: "BoostOfID.AccountID"},
+		{Name: "ThreadID", Multi: true},
 	}, func(s1 *gtsmodel.Status) *gtsmodel.Status {
 		s2 := new(gtsmodel.Status)
 		*s2 = *s1
@@ -776,6 +791,47 @@ func (c *GTSCaches) initTag() {
 	}, cap)
 
 	c.tag.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initThread() {
+	cap := calculateResultCacheMax(
+		sizeOfThread(), // model in-mem size.
+		config.GetCacheThreadMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.thread = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, func(t1 *gtsmodel.Thread) *gtsmodel.Thread {
+		t2 := new(gtsmodel.Thread)
+		*t2 = *t1
+		return t2
+	}, cap)
+
+	c.thread.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initThreadMute() {
+	cap := calculateResultCacheMax(
+		sizeOfThreadMute(), // model in-mem size.
+		config.GetCacheThreadMuteMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.threadMute = result.New([]result.Lookup{
+		{Name: "ID"},
+		{Name: "ThreadID", Multi: true},
+		{Name: "AccountID", Multi: true},
+		{Name: "ThreadID.AccountID"},
+	}, func(t1 *gtsmodel.ThreadMute) *gtsmodel.ThreadMute {
+		t2 := new(gtsmodel.ThreadMute)
+		*t2 = *t1
+		return t2
+	}, cap)
+
+	c.thread.IgnoreErrors(ignoreErrors)
 }
 
 func (c *GTSCaches) initTombstone() {

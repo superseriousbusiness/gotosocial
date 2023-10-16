@@ -15,38 +15,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package gtsmodel
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
-)
+// Thread represents one thread of statuses.
+// TODO: add more fields here if necessary.
+type Thread struct {
+	ID        string   `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
+	StatusIDs []string `bun:"-"`                                        // ids of statuses belonging to this thread (order not guaranteed)
+}
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+// ThreadToStatus is an intermediate struct to facilitate the
+// many2many relationship between a thread and one or more statuses.
+type ThreadToStatus struct {
+	ThreadID string `bun:"type:CHAR(26),unique:statusthread,nullzero,notnull"`
+	StatusID string `bun:"type:CHAR(26),unique:statusthread,nullzero,notnull"`
 }

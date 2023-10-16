@@ -54,6 +54,7 @@ type Status struct {
 	BoostOfAccountID         string             `bun:"type:CHAR(26),nullzero"`                                      // id of the account that owns the boosted status
 	BoostOf                  *Status            `bun:"-"`                                                           // status that corresponds to boostOfID
 	BoostOfAccount           *Account           `bun:"rel:belongs-to"`                                              // account that corresponds to boostOfAccountID
+	ThreadID                 string             `bun:"type:CHAR(26),nullzero"`                                      // id of the thread to which this status belongs; only set for remote statuses if a local status is involved at some point in the thread, otherwise null
 	ContentWarning           string             `bun:",nullzero"`                                                   // cw string for this status
 	Visibility               Visibility         `bun:",nullzero,notnull"`                                           // visibility entry for this status
 	Sensitive                *bool              `bun:",nullzero,notnull,default:false"`                             // mark the status as sensitive?

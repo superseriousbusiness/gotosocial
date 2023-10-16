@@ -324,6 +324,23 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 				}
 			}
 
+			// If the status is threaded, create
+			// link between thread and status.
+			if status.ThreadID != "" {
+				if _, err := tx.
+					NewInsert().
+					Model(&gtsmodel.ThreadToStatus{
+						ThreadID: status.ThreadID,
+						StatusID: status.ID,
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("thread_id"), bun.Ident("status_id")).
+					Exec(ctx); err != nil {
+					if !errors.Is(err, db.ErrAlreadyExists) {
+						return err
+					}
+				}
+			}
+
 			// Finally, insert the status
 			_, err := tx.NewInsert().Model(status).Exec(ctx)
 			return err
@@ -390,6 +407,23 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 				}
 			}
 
+			// If the status is threaded, create
+			// link between thread and status.
+			if status.ThreadID != "" {
+				if _, err := tx.
+					NewInsert().
+					Model(&gtsmodel.ThreadToStatus{
+						ThreadID: status.ThreadID,
+						StatusID: status.ID,
+					}).
+					On("CONFLICT (?, ?) DO NOTHING", bun.Ident("thread_id"), bun.Ident("status_id")).
+					Exec(ctx); err != nil {
+					if !errors.Is(err, db.ErrAlreadyExists) {
+						return err
+					}
+				}
+			}
+
 			// Finally, update the status
 			_, err := tx.
 				NewUpdate().
@@ -436,6 +470,17 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
 			TableExpr("? AS ?", bun.Ident("status_to_tags"), bun.Ident("status_to_tag")).
 			Where("? = ?", bun.Ident("status_to_tag.status_id"), id).
 			Exec(ctx); err != nil {
+			return err
+		}
+
+		// Delete links between this status
+		// and any threads it was a part of.
+		_, err = tx.
+			NewDelete().
+			TableExpr("? AS ?", bun.Ident("thread_to_statuses"), bun.Ident("thread_to_status")).
+			Where("? = ?", bun.Ident("thread_to_status.status_id"), id).
+			Exec(ctx)
+		if err != nil {
 			return err
 		}
 

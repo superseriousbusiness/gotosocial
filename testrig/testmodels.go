@@ -1318,6 +1318,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWDF2Q4HV5QC161C4TGQ0M3",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
@@ -1343,6 +1344,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWDQ1C7APSEY34B1HFVHVX7",
 			ContentWarning:           "open to see some puppies",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(true),
@@ -1370,6 +1372,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			InReplyToAccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToURI:             "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWDKKBWECZJQ93E262N36VN",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
 			Language:                 "en",
@@ -1396,6 +1399,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			InReplyToURI:             "",
 			BoostOfID:                "01F8MHAMCHF6Y650WCRSCP4WMY",
 			BoostOfAccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ThreadID:                 "",
 			ContentWarning:           "introduction post",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(true),
@@ -1420,6 +1424,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWDKKBWECZJQ93E262N36VN",
 			ContentWarning:           "introduction post",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(true),
@@ -1444,6 +1449,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWDVTW3HQWSX66VJQ91Z1RH",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityUnlocked,
 			Sensitive:                util.Ptr(false),
@@ -1468,6 +1474,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWDY9PDNHDBDBBFTJKJY8XE",
 			ContentWarning:           "test: you shouldn't be able to interact with this post in any way",
 			Visibility:               gtsmodel.VisibilityMutualsOnly,
 			Sensitive:                util.Ptr(false),
@@ -1493,6 +1500,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE0H2GKH794Q7GDPANH91Q",
 			ContentWarning:           "eye contact, trent reznor gif, cow",
 			Visibility:               gtsmodel.VisibilityMutualsOnly,
 			Sensitive:                util.Ptr(false),
@@ -1518,6 +1526,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE1ERQSMMVWDD0BE491E2P",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityFollowersOnly,
 			Sensitive:                util.Ptr(false),
@@ -1542,6 +1551,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE2Q24FWCZE41AS77SDFRZ",
 			ContentWarning:           "introduction post",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(true),
@@ -1566,6 +1576,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE3P291Z3NJEJVFPW0K9ZQ",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(true),
@@ -1590,6 +1601,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE4P0EW9HBA5WHW97D5YV0",
 			ContentWarning:           "you won't be able to like or reply to this",
 			Visibility:               gtsmodel.VisibilityUnlocked,
 			Sensitive:                util.Ptr(true),
@@ -1614,6 +1626,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE5JXFPFP3P5W2QNHVVV27",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(true),
@@ -1642,6 +1655,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			InReplyToAccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
 			InReplyToURI:             "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWDKKBWECZJQ93E262N36VN",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
@@ -1669,6 +1683,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			InReplyToAccountID:       "",
 			InReplyToURI:             "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE71MGRRDSHBKXFD5DDSWR",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityDirect,
 			Sensitive:                util.Ptr(false),
@@ -1695,6 +1710,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
 			InReplyToID:              "",
 			BoostOfID:                "",
+			ThreadID:                 "01HCWE7ZNC2SS4P05WA5QYED23",
 			ContentWarning:           "",
 			Visibility:               gtsmodel.VisibilityFollowersOnly,
 			Sensitive:                util.Ptr(false),
@@ -1763,6 +1779,111 @@ func NewTestStatusToTags() map[string]*gtsmodel.StatusToTag {
 		"admin_account_status_1_welcome": {
 			StatusID: "01F8MH75CBF9JFX4ZAD54N0W0R",
 			TagID:    "01F8MHA1A2NF9MJ3WCCQ3K8BSZ",
+		},
+	}
+}
+
+func NewTestThreads() map[string]*gtsmodel.Thread {
+	return map[string]*gtsmodel.Thread{
+		"admin_account_status_1": {
+			ID: "01HCWDF2Q4HV5QC161C4TGQ0M3",
+		},
+		"admin_account_status_2": {
+			ID: "01HCWDQ1C7APSEY34B1HFVHVX7",
+		},
+		"local_account_1_status_1": {
+			ID: "01HCWDKKBWECZJQ93E262N36VN",
+		},
+		"local_account_1_status_2": {
+			ID: "01HCWDVTW3HQWSX66VJQ91Z1RH",
+		},
+		"local_account_1_status_3": {
+			ID: "01HCWDY9PDNHDBDBBFTJKJY8XE",
+		},
+		"local_account_1_status_4": {
+			ID: "01HCWE0H2GKH794Q7GDPANH91Q",
+		},
+		"local_account_1_status_5": {
+			ID: "01HCWE1ERQSMMVWDD0BE491E2P",
+		},
+		"local_account_2_status_1": {
+			ID: "01HCWE2Q24FWCZE41AS77SDFRZ",
+		},
+		"local_account_2_status_2": {
+			ID: "01HCWE3P291Z3NJEJVFPW0K9ZQ",
+		},
+		"local_account_2_status_3": {
+			ID: "01HCWE4P0EW9HBA5WHW97D5YV0",
+		},
+		"local_account_2_status_4": {
+			ID: "01HCWE5JXFPFP3P5W2QNHVVV27",
+		},
+		"local_account_2_status_6": {
+			ID: "01HCWE71MGRRDSHBKXFD5DDSWR",
+		},
+		"local_account_2_status_7": {
+			ID: "01HCWE7ZNC2SS4P05WA5QYED23",
+		},
+	}
+}
+
+func NewTestThreadToStatus() []*gtsmodel.ThreadToStatus {
+	return []*gtsmodel.ThreadToStatus{
+		{
+			ThreadID: "01HCWDF2Q4HV5QC161C4TGQ0M3",
+			StatusID: "01F8MH75CBF9JFX4ZAD54N0W0R",
+		},
+		{
+			ThreadID: "01HCWDQ1C7APSEY34B1HFVHVX7",
+			StatusID: "01F8MHAAY43M6RJ473VQFCVH37",
+		},
+		{
+			ThreadID: "01HCWDKKBWECZJQ93E262N36VN",
+			StatusID: "01FF25D5Q0DH7CHD57CTRS6WK0",
+		},
+		{
+			ThreadID: "01HCWDKKBWECZJQ93E262N36VN",
+			StatusID: "01F8MHAMCHF6Y650WCRSCP4WMY",
+		},
+		{
+			ThreadID: "01HCWDVTW3HQWSX66VJQ91Z1RH",
+			StatusID: "01F8MHAYFKS4KMXF8K5Y1C0KRN",
+		},
+		{
+			ThreadID: "01HCWDY9PDNHDBDBBFTJKJY8XE",
+			StatusID: "01F8MHBBN8120SYH7D5S050MGK",
+		},
+		{
+			ThreadID: "01HCWE0H2GKH794Q7GDPANH91Q",
+			StatusID: "01F8MH82FYRXD2RC6108DAJ5HB",
+		},
+		{
+			ThreadID: "01HCWE1ERQSMMVWDD0BE491E2P",
+			StatusID: "01FCTA44PW9H1TB328S9AQXKDS",
+		},
+		{
+			ThreadID: "01HCWE2Q24FWCZE41AS77SDFRZ",
+			StatusID: "01F8MHBQCBTDKN6X5VHGMMN4MA",
+		},
+		{
+			ThreadID: "01HCWE3P291Z3NJEJVFPW0K9ZQ",
+			StatusID: "01F8MHC0H0A7XHTVH5F596ZKBM",
+		},
+		{
+			ThreadID: "01HCWE4P0EW9HBA5WHW97D5YV0",
+			StatusID: "01F8MHC8VWDRBQR0N1BATDDEM5",
+		},
+		{
+			ThreadID: "01HCWDKKBWECZJQ93E262N36VN",
+			StatusID: "01FCQSQ667XHJ9AV9T27SJJSX5",
+		},
+		{
+			ThreadID: "01HCWE71MGRRDSHBKXFD5DDSWR",
+			StatusID: "01FN3VJGFH10KR7S2PB0GFJZYG",
+		},
+		{
+			ThreadID: "01HCWE7ZNC2SS4P05WA5QYED23",
+			StatusID: "01G20ZM733MGN8J344T4ZDDFY1",
 		},
 	}
 }

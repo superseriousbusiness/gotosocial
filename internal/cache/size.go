@@ -194,6 +194,8 @@ func totalOfRatios() float64 {
 		config.GetCacheStatusFaveMemRatio() +
 		config.GetCacheStatusFaveIDsMemRatio() +
 		config.GetCacheTagMemRatio() +
+		config.GetCacheThreadMemRatio() +
+		config.GetCacheThreadMuteMemRatio() +
 		config.GetCacheTombstoneMemRatio() +
 		config.GetCacheUserMemRatio() +
 		config.GetCacheWebfingerMemRatio() +
@@ -508,6 +510,22 @@ func sizeofTag() uintptr {
 		UpdatedAt: exampleTime,
 		Useable:   func() *bool { ok := true; return &ok }(),
 		Listable:  func() *bool { ok := true; return &ok }(),
+	}))
+}
+
+func sizeOfThread() uintptr {
+	return uintptr(size.Of(&gtsmodel.Thread{
+		ID:        exampleID,
+	}))
+}
+
+func sizeOfThreadMute() uintptr {
+	return uintptr(size.Of(&gtsmodel.ThreadMute{
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		ThreadID:  exampleID,
+		AccountID: exampleID,
 	}))
 }
 
