@@ -25,13 +25,13 @@ const { matchSorter } = require("match-sorter");
 const NewEmojiForm = require("./new-emoji");
 const { useTextInput } = require("../../../lib/form");
 
-const query = require("../../../lib/query");
 const { useEmojiByCategory } = require("../category-select");
 const { useBaseUrl } = require("../../../lib/navigation/util");
 
 const Loading = require("../../../components/loading");
 const { Error } = require("../../../components/error");
 const { TextInput } = require("../../../components/form/inputs");
+const { useListEmojiQuery } = require("../../../lib/query/admin/custom-emoji");
 
 module.exports = function EmojiOverview({ }) {
 	const {
@@ -39,7 +39,7 @@ module.exports = function EmojiOverview({ }) {
 		isLoading,
 		isError,
 		error
-	} = query.useListEmojiQuery({ filter: "domain:local" });
+	} = useListEmojiQuery({ filter: "domain:local" });
 
 	let content = null;
 

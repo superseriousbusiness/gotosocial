@@ -8,6 +8,7 @@ before:
   - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" web/assets/swagger.yaml
   # Install web deps + bundle web assets
   - yarn --cwd ./web/source install
+  - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
   - yarn --cwd ./web/source build
 builds:
   # https://goreleaser.com/customization/build/

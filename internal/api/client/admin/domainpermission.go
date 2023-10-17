@@ -95,7 +95,7 @@ func (m *Module) createDomainPermissions(
 
 	if importing && form.Domains.Size == 0 {
 		err = errors.New("import was specified but list of domains is empty")
-	} else if form.Domain == "" {
+	} else if !importing && form.Domain == "" {
 		err = errors.New("empty domain provided")
 	}
 
