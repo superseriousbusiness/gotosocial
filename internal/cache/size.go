@@ -515,7 +515,7 @@ func sizeofTag() uintptr {
 
 func sizeOfThread() uintptr {
 	return uintptr(size.Of(&gtsmodel.Thread{
-		ID:        exampleID,
+		ID: exampleID,
 	}))
 }
 

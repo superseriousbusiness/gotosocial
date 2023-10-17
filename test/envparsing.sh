@@ -48,6 +48,8 @@ EXPECT=$(cat << "EOF"
         "status-fave-mem-ratio": 2,
         "status-mem-ratio": 5,
         "tag-mem-ratio": 2,
+        "thread-memo-ratio": 0.2,
+        "thread-mute-mem-ratio": 0.2,
         "tombstone-mem-ratio": 0.5,
         "user-mem-ratio": 0.25,
         "visibility-mem-ratio": 2,
