@@ -19,25 +19,27 @@
 
 const React = require("react");
 
-const query = require("../../../lib/query");
-
 const {
 	useTextInput,
 	useComboBoxInput,
 	useCheckListInput
 } = require("../../../lib/form");
 
-const useFormSubmit = require("../../../lib/form/submit");
+const useFormSubmit = require("../../../lib/form/submit").default;
 
-const CheckList = require("../../../components/check-list");
+const CheckList = require("../../../components/check-list").default;
 const { CategorySelect } = require('../category-select');
 
 const { TextInput } = require("../../../components/form/inputs");
 const MutationButton = require("../../../components/form/mutation-button");
 const { Error } = require("../../../components/error");
+const {
+	useSearchItemForEmojiMutation,
+	usePatchRemoteEmojisMutation
+} = require("../../../lib/query/admin/custom-emoji");
 
 module.exports = function ParseFromToot({ emojiCodes }) {
-	const [searchStatus, result] = query.useSearchStatusForEmojiMutation();
+	const [searchStatus, result] = useSearchItemForEmojiMutation();
 
 	const [onURLChange, _resetURL, { url }] = useTextInput("url");
 
@@ -121,7 +123,7 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 
 	const [formSubmit, result] = useFormSubmit(
 		form,
-		query.usePatchRemoteEmojisMutation(),
+		usePatchRemoteEmojisMutation(),
 		{
 			changedOnly: false,
 			onFinish: ({ data }) => {

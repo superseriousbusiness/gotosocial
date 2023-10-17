@@ -30,6 +30,9 @@ const Loading = require("./components/loading");
 const UserLogoutCard = require("./components/user-logout-card");
 const { RoleContext } = require("./lib/navigation/util");
 
+const DomainPerms = require("./admin/domain-permissions").default;
+const DomainPermsImportExport = require("./admin/domain-permissions/import-export").default;
+
 require("./style.css");
 
 const { Sidebar, ViewRouter } = createNavigation("/settings", [
@@ -43,10 +46,11 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 	}, [
 		Item("Reports", { icon: "fa-flag", wildcard: true }, require("./admin/reports")),
 		Item("Accounts", { icon: "fa-users", wildcard: true }, require("./admin/accounts")),
-		Menu("Federation", { icon: "fa-hubzilla" }, [
-			Item("Federation", { icon: "fa-hubzilla", url: "", wildcard: true }, require("./admin/federation")),
-			Item("Import/Export", { icon: "fa-floppy-o", wildcard: true }, require("./admin/federation/import-export")),
-		])
+		Menu("Domain Permissions", { icon: "fa-hubzilla" }, [
+			Item("Blocks", { icon: "fa-close", url: "block", wildcard: true }, DomainPerms),
+			Item("Allows", { icon: "fa-check", url: "allow", wildcard: true }, DomainPerms),
+			Item("Import/Export", { icon: "fa-floppy-o", url: "import-export", wildcard: true }, DomainPermsImportExport),
+		]),
 	]),
 	Menu("Administration", {
 		url: "admin",

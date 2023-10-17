@@ -498,7 +498,7 @@ span.form-info {
 	}
 }
 
-.instance-list {
+.domain-permissions-list {
 	p {
 		margin-top: 0;
 	}
@@ -612,7 +612,7 @@ span.form-info {
 		padding: 0.75rem;
 	}
 
-	.instance-list .filter {
+	.domain-permissions-list .filter {
 		flex-direction: column;
 	}
 }
@@ -809,7 +809,7 @@ button.with-padding {
 	animation-fill-mode: forwards;
 }
 
-.suspend-import-list {
+.domain-perm-import-list {
 	.checkbox-list-wrapper {
 		overflow-x: auto;
 		display: grid;
@@ -844,7 +844,7 @@ button.with-padding {
 				#icon {
 					align-self: center;
 	
-					.already-blocked {
+					.permission-already-exists {
 						color: $green1;
 					}
 		
@@ -873,6 +873,12 @@ button.with-padding {
 		display: flex;
 		gap: 0.7rem;
 		align-items: center;
+	}
+
+	.form-field.radio {
+		display: flex;
+		flex-direction: column;
+		margin-left: 0.5rem;
 	}
 
 	.button-grid {

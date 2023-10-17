@@ -17,12 +17,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { replaceCacheOnMutation } from "../lib";
+import { replaceCacheOnMutation } from "../query-modifiers";
 import { gtsApi } from "../gts-api";
 
 const extended = gtsApi.injectEndpoints({
-	endpoints: (builder) => ({
-		updateCredentials: builder.mutation({
+	endpoints: (build) => ({
+		updateCredentials: build.mutation({
 			query: (formData) => ({
 				method: "PATCH",
 				url: `/api/v1/accounts/update_credentials`,
@@ -32,7 +32,7 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			...replaceCacheOnMutation("verifyCredentials")
 		}),
-		passwordChange: builder.mutation({
+		passwordChange: build.mutation({
 			query: (data) => ({
 				method: "POST",
 				url: `/api/v1/user/password_change`,

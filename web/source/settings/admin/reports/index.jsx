@@ -20,13 +20,12 @@
 const React = require("react");
 const { Link, Switch, Route } = require("wouter");
 
-const query = require("../../lib/query");
-
-const FormWithData = require("../../lib/form/form-with-data");
+const FormWithData = require("../../lib/form/form-with-data").default;
 
 const ReportDetail = require("./detail");
 const Username = require("./username");
 const { useBaseUrl } = require("../../lib/navigation/util");
+const { useListReportsQuery } = require("../../lib/query/admin/reports");
 
 module.exports = function Reports({ baseUrl }) {
 	return (
@@ -51,7 +50,7 @@ function ReportOverview({ }) {
 				</p>
 			</div>
 			<FormWithData
-				dataQuery={query.useListReportsQuery}
+				dataQuery={useListReportsQuery}
 				DataForm={ReportsList}
 			/>
 		</>

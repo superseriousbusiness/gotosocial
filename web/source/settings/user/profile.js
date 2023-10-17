@@ -19,8 +19,6 @@
 
 const React = require("react");
 
-const query = require("../lib/query");
-
 const {
 	useTextInput,
 	useFileInput,
@@ -28,7 +26,7 @@ const {
 	useFieldArrayInput
 } = require("../lib/form");
 
-const useFormSubmit = require("../lib/form/submit");
+const useFormSubmit = require("../lib/form/submit").default;
 const { useWithFormContext, FormContext } = require("../lib/form/context");
 
 const {
@@ -38,14 +36,18 @@ const {
 	Checkbox
 } = require("../components/form/inputs");
 
-const FormWithData = require("../lib/form/form-with-data");
+const FormWithData = require("../lib/form/form-with-data").default;
 const FakeProfile = require("../components/fake-profile");
 const MutationButton = require("../components/form/mutation-button");
+
+const { useInstanceV1Query } = require("../lib/query");
+const { useUpdateCredentialsMutation } = require("../lib/query/user");
+const { useVerifyCredentialsQuery } = require("../lib/query/oauth");
 
 module.exports = function UserProfile() {
 	return (
 		<FormWithData
-			dataQuery={query.useVerifyCredentialsQuery}
+			dataQuery={useVerifyCredentialsQuery}
 			DataForm={UserProfileForm}
 		/>
 	);
@@ -64,7 +66,7 @@ function UserProfileForm({ data: profile }) {
 		- string custom_css (if enabled)
 	*/
 
-	const { data: instance } = query.useInstanceQuery();
+	const { data: instance } = useInstanceV1Query();
 	const instanceConfig = React.useMemo(() => {
 		return {
 			allowCustomCSS: instance?.configuration?.accounts?.allow_custom_css === true,
@@ -88,7 +90,7 @@ function UserProfileForm({ data: profile }) {
 		}),
 	};
 
-	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation(), {
+	const [submitForm, result] = useFormSubmit(form, useUpdateCredentialsMutation(), {
 		onFinish: () => {
 			form.avatar.reset();
 			form.header.reset();

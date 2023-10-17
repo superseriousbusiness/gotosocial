@@ -18,15 +18,17 @@
 */
 
 const React = require("react");
-
-const query = require("../lib/query");
-
 const Loading = require("./loading");
+const {
+	useVerifyCredentialsQuery,
+	useLogoutMutation,
+} = require("../lib/query/oauth");
+const { useInstanceV1Query } = require("../lib/query");
 
 module.exports = function UserLogoutCard() {
-	const { data: profile, isLoading } = query.useVerifyCredentialsQuery();
-	const { data: instance } = query.useInstanceQuery();
-	const [logoutQuery] = query.useLogoutMutation();
+	const { data: profile, isLoading } = useVerifyCredentialsQuery();
+	const { data: instance } = useInstanceV1Query();
+	const [logoutQuery] = useLogoutMutation();
 
 	if (isLoading) {
 		return <Loading />;

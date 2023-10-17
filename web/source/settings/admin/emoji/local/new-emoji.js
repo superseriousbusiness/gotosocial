@@ -19,15 +19,13 @@
 
 const React = require("react");
 
-const query = require("../../../lib/query");
-
 const {
 	useFileInput,
 	useComboBoxInput
 } = require("../../../lib/form");
 const useShortcode = require("./use-shortcode");
 
-const useFormSubmit = require("../../../lib/form/submit");
+const useFormSubmit = require("../../../lib/form/submit").default;
 
 const {
 	TextInput, FileInput
@@ -36,11 +34,13 @@ const {
 const { CategorySelect } = require('../category-select');
 const FakeToot = require("../../../components/fake-toot");
 const MutationButton = require("../../../components/form/mutation-button");
+const { useAddEmojiMutation } = require("../../../lib/query/admin/custom-emoji");
+const { useInstanceV1Query } = require("../../../lib/query");
 
 module.exports = function NewEmojiForm() {
 	const shortcode = useShortcode();
 
-	const { data: instance } = query.useInstanceQuery();
+	const { data: instance } = useInstanceV1Query();
 	const emojiMaxSize = React.useMemo(() => {
 		return instance?.configuration?.emojis?.emoji_size_limit ?? 50 * 1024;
 	}, [instance]);
@@ -54,7 +54,7 @@ module.exports = function NewEmojiForm() {
 
 	const [submitForm, result] = useFormSubmit({
 		shortcode, image, category
-	}, query.useAddEmojiMutation());
+	}, useAddEmojiMutation());
 
 	React.useEffect(() => {
 		if (shortcode.value.length == 0) {

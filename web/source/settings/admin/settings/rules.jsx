@@ -21,11 +21,11 @@ const React = require("react");
 const { Switch, Route, Link, Redirect, useRoute } = require("wouter");
 
 const query = require("../../lib/query");
-const FormWithData = require("../../lib/form/form-with-data");
+const FormWithData = require("../../lib/form/form-with-data").default;
 const { useBaseUrl } = require("../../lib/navigation/util");
 
 const { useValue, useTextInput } = require("../../lib/form");
-const useFormSubmit = require("../../lib/form/submit");
+const useFormSubmit = require("../../lib/form/submit").default;
 
 const { TextArea } = require("../../components/form/inputs");
 const MutationButton = require("../../components/form/mutation-button");
