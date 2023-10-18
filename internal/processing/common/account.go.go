@@ -47,8 +47,11 @@ func (p *Processor) GetTargetAccountBy(
 
 	if target == nil {
 		// DB loader could not find account in database.
-		err := errors.New("target account not found")
-		return nil, false, gtserror.NewErrorNotFound(err)
+		const text = "target account not found"
+		return nil, false, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
 	}
 
 	// Check whether target account is visible to requesting account.
@@ -106,8 +109,11 @@ func (p *Processor) GetVisibleTargetAccount(
 
 	if !visible {
 		// Pretend account doesn't exist if not visible.
-		err := errors.New("target account not found")
-		return nil, gtserror.NewErrorNotFound(err)
+		const text = "target account not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
 	}
 
 	return target, nil
