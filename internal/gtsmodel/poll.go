@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-// Poll ...
+// Poll represents an attached (to) Status poll, i.e. a questionaire. Can be remote / local.
 type Poll struct {
 	ID         string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`    // Unique identity string.
 	Multiple   *bool     `bun:"type:BOOLEAN,nullzero,notnull,default:false"` // Is this a multiple choice poll? i.e. can you vote on multiple options.
@@ -57,7 +57,7 @@ func (p *Poll) Closed() bool {
 		time.Now().After(p.ClosedAt)
 }
 
-// PollVote ...
+// PollVote represents a vote in a Poll. Can be remote or local.
 type PollVote struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
 	Choice    int       `bun:"nullzero,notnull"`                                            // The Poll's option index of which this is a vote for.
