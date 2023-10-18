@@ -155,6 +155,28 @@ func (t *threadDB) GetThreadMute(ctx context.Context, id string) (*gtsmodel.Thre
 	}, id)
 }
 
+func (t *threadDB) GetThreadMutedByAccount(
+	ctx context.Context,
+	threadID string,
+	accountID string,
+) (*gtsmodel.ThreadMute, error) {
+	return t.state.Caches.GTS.ThreadMute().Load("ThreadID.AccountID", func() (*gtsmodel.ThreadMute, error) {
+		var threadMute gtsmodel.ThreadMute
+
+		q := t.db.
+			NewSelect().
+			Model(&threadMute).
+			Where("? = ?", bun.Ident("thread_mute.thread_id"), threadID).
+			Where("? = ?", bun.Ident("thread_mute.account_id"), accountID)
+
+		if err := q.Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return &threadMute, nil
+	}, threadID, accountID)
+}
+
 func (t *threadDB) PutThreadMute(ctx context.Context, threadMute *gtsmodel.ThreadMute) error {
 	return t.state.Caches.GTS.ThreadMute().Store(threadMute, func() error {
 		_, err := t.db.NewInsert().Model(threadMute).Exec(ctx)

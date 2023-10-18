@@ -135,7 +135,7 @@ func (b *basicDB) CreateAllTables(ctx context.Context) error {
 		&gtsmodel.StatusToEmoji{},
 		&gtsmodel.StatusFave{},
 		&gtsmodel.StatusBookmark{},
-		&gtsmodel.StatusMute{},
+		&gtsmodel.ThreadMute{},
 		&gtsmodel.Tag{},
 		&gtsmodel.User{},
 		&gtsmodel.Emoji{},

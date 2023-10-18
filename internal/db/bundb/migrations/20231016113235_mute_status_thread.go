@@ -23,6 +23,7 @@ import (
 
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 func init() {
@@ -46,7 +47,40 @@ func init() {
 				return err
 			}
 
-			// Create thread mute table.
+			// Drop old pkey constraint from
+			// deprecated status mute table.
+			//
+			// This is only necessary with postgres.
+			if tx.Dialect().Name() == dialect.PG {
+				if _, err := tx.ExecContext(
+					ctx,
+					"ALTER TABLE ? DROP CONSTRAINT IF EXISTS ?",
+					bun.Ident("status_mutes"),
+					bun.Safe("status_mutes_pkey"),
+				); err != nil {
+					return err
+				}
+			}
+
+			// Drop old index.
+			if _, err := tx.
+				NewDropIndex().
+				Index("status_mutes_account_id_target_account_id_status_id_idx").
+				IfExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			// Drop deprecated status mute table.
+			if _, err := tx.
+				NewDropTable().
+				Table("status_mutes").
+				IfExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			// Create new thread mute table.
 			if _, err := tx.
 				NewCreateTable().
 				Model(&gtsmodel.ThreadMute{}).

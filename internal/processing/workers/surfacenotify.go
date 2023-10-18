@@ -28,15 +28,39 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-// notifyMentions notifies each targeted account in
-// the given mentions that they have a new mention.
+// notifyMentions iterates through mentions on the
+// given status, and notifies each mentioned account
+// that they have a new mention.
 func (s *surface) notifyMentions(
 	ctx context.Context,
-	mentions []*gtsmodel.Mention,
+	status *gtsmodel.Status,
 ) error {
-	errs := gtserror.NewMultiError(len(mentions))
+	var (
+		mentions = status.Mentions
+		errs     = gtserror.NewMultiError(len(mentions))
+	)
 
 	for _, mention := range mentions {
+		// Ensure thread not muted
+		// by mentioned account.
+		muted, err := s.state.DB.IsStatusThreadMutedBy(
+			ctx,
+			status,
+			mention.TargetAccountID,
+		)
+
+		if err != nil {
+			errs.Append(err)
+			continue
+		}
+
+		if muted {
+			// This mentioned account
+			// has muted the thread.
+			// Don't pester them.
+			continue
+		}
+
 		if err := s.notify(
 			ctx,
 			gtsmodel.NotificationMention,
@@ -114,6 +138,24 @@ func (s *surface) notifyFave(
 		return nil
 	}
 
+	// Ensure boostee hasn't
+	// muted the thread.
+	muted, err := s.state.DB.IsStatusThreadMutedBy(
+		ctx,
+		fave.Status,
+		fave.TargetAccountID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if muted {
+		// Boostee doesn't want
+		// notifs for this thread.
+		return nil
+	}
+
 	return s.notify(
 		ctx,
 		gtsmodel.NotificationFave,
@@ -134,8 +176,32 @@ func (s *surface) notifyAnnounce(
 		return nil
 	}
 
+	if status.BoostOf == nil {
+		// No boosted status
+		// set, nothing to do.
+		return nil
+	}
+
 	if status.BoostOfAccountID == status.AccountID {
 		// Self-boost, nothing to do.
+		return nil
+	}
+
+	// Ensure boostee hasn't
+	// muted the thread.
+	muted, err := s.state.DB.IsStatusThreadMutedBy(
+		ctx,
+		status.BoostOf,
+		status.BoostOfAccountID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if muted {
+		// Boostee doesn't want
+		// notifs for this thread.
 		return nil
 	}
 

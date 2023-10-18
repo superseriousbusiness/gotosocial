@@ -38,6 +38,10 @@ type Thread interface {
 	// GetThreadMute gets a single threadMute by its ID.
 	GetThreadMute(ctx context.Context, id string) (*gtsmodel.ThreadMute, error)
 
+	// GetThreadMutedByAccount gets a threadMute targeting the
+	// given thread, created by the given accountID, if it exists.
+	GetThreadMutedByAccount(ctx context.Context, threadID string, accountID string) (*gtsmodel.ThreadMute, error)
+
 	// PutThreadMute inserts a new threadMute.
 	PutThreadMute(ctx context.Context, threadMute *gtsmodel.ThreadMute) error
 

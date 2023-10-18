@@ -39,6 +39,7 @@
 //	      read:follows: grant read access to follows
 //	      read:lists: grant read access to lists
 //	      read:media: grant read access to media
+//	      read:mutes: grant read access to mutes
 //	      read:search: grant read access to searches
 //	      read:statuses: grants read access to statuses
 //	      read:streaming: grants read access to streaming api
@@ -50,6 +51,7 @@
 //	      write:follows: grants write access to follows
 //	      write:lists: grants write access to lists
 //	      write:media: grants write access to media
+//	      write:mutes: grants write access to mutes
 //	      write:statuses: grants write access to statuses
 //	      write:user: grants write access to user-level info
 //	      admin: grants admin access to everything

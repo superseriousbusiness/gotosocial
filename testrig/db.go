@@ -49,7 +49,6 @@ var testModels = []interface{}{
 	&gtsmodel.StatusToTag{},
 	&gtsmodel.StatusFave{},
 	&gtsmodel.StatusBookmark{},
-	&gtsmodel.StatusMute{},
 	&gtsmodel.Tag{},
 	&gtsmodel.Thread{},
 	&gtsmodel.ThreadMute{},
