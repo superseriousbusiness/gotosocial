@@ -24,7 +24,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -1352,7 +1351,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmod
 	return &apimodel.Poll{
 		ID:          poll.ID,
 		ExpiresAt:   util.FormatISO8601(poll.ExpiresAt),
-		Expired:     time.Now().Before(poll.ExpiresAt),
+		Expired:     poll.Closed(),
 		Multiple:    *poll.Multiple,
 		VotesCount:  totalVotes,
 		VotersCount: totalVoters,

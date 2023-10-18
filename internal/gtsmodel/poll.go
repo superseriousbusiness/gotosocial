@@ -45,6 +45,18 @@ func (p *Poll) GetChoice(name string) int {
 	return -1
 }
 
+// Expired returns whether the Poll is expired (i.e. date is BEFORE now).
+func (p *Poll) Expired() bool {
+	return !p.ExpiresAt.IsZero() &&
+		time.Now().After(p.ExpiresAt)
+}
+
+// Closed returns whether the Poll is closed (i.e. date is set and BEFORE now).
+func (p *Poll) Closed() bool {
+	return !p.ClosedAt.IsZero() &&
+		time.Now().After(p.ClosedAt)
+}
+
 // PollVote ...
 type PollVote struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
