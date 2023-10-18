@@ -78,7 +78,7 @@ export default function DomainPermissionsOverview({ permType, baseUrl }: DomainP
 				permType={permType}
 				permTypeUpper={permTypeUpper}
 			/>
-			<Link to={`${baseUrl}/import-export`}>
+			<Link to="/settings/admin/domain-permissions/import-export">
 				<a>Or use the bulk import/export interface</a>
 			</Link>
 		</div>
