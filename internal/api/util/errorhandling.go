@@ -55,7 +55,7 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 		})
 	default:
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": http.StatusText(http.StatusNotFound),
+			"error": errWithCode.Safe(),
 		})
 	}
 }
