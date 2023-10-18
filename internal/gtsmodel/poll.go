@@ -24,14 +24,14 @@ import (
 
 // Poll ...
 type Poll struct {
-	ID         string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // Unique identity string.
-	Multiple   *bool     `bun:"nullzero,notnull,default:false"`           // Is this a multiple choice poll? i.e. can you vote on multiple options.
-	HideCounts *bool     `bun:"nullzero,notnull,default:false"`           // Hides vote counts until poll ends.
-	Options    []string  `bun:"nullzero,notnull"`                         // The available options for this poll.
-	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`    // Status ID of which this Poll is attached to.
-	Status     *Status   `bun:"-"`                                        // The related Status for StatusID (not always set).
-	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`        // The expiry date of this Poll.
-	ClosedAt   time.Time `bun:"type:timestamptz,nullzero"`                // The closure date of this poll, will be zerotime until set.
+	ID         string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`    // Unique identity string.
+	Multiple   *bool     `bun:"type:BOOLEAN,nullzero,notnull,default:false"` // Is this a multiple choice poll? i.e. can you vote on multiple options.
+	HideCounts *bool     `bun:"type:BOOLEAN,nullzero,notnull,default:false"` // Hides vote counts until poll ends.
+	Options    []string  `bun:"type:VARCHAR,nullzero,notnull"`               // The available options for this poll.
+	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`       // Status ID of which this Poll is attached to.
+	Status     *Status   `bun:"-"`                                           // The related Status for StatusID (not always set).
+	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`           // The expiry date of this Poll.
+	ClosedAt   time.Time `bun:"type:timestamptz,nullzero"`                   // The closure date of this poll, will be zerotime until set.
 	// no creation date, use attached Status.CreatedAt.
 }
 
