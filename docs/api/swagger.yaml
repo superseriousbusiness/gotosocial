@@ -6527,6 +6527,44 @@ paths:
             summary: View accounts that have faved/starred/liked the target status.
             tags:
                 - statuses
+    /api/v1/statuses/{id}/mute:
+        post:
+            description: |-
+                Target status must belong to you.
+
+                Status thread mutes and unmutes are idempotent. If you already mute a thread, muting it again just means it stays muted and you'll get 200 OK back.
+            operationId: statusMute
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-muted status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request; you're not part of the target status thread
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:mutes
+            summary: Mute a status's thread. This prevents notifications from being created for future replies, likes, boosts etc in the thread of which the target status is a part.
+            tags:
+                - statuses
     /api/v1/statuses/{id}/pin:
         post:
             description: |-
@@ -6701,6 +6739,44 @@ paths:
                 - OAuth2 Bearer:
                     - write:statuses
             summary: Unstar/unlike/unfavourite the given status.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/unmute:
+        post:
+            description: |-
+                Target status must belong to you.
+
+                Status thread mutes and unmutes are idempotent. If you already unmuted a thread, unmuting it again just means it stays unmuted and you'll get 200 OK back.
+            operationId: statusUnmute
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-unmuted status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request; you're not part of the target status thread
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:mutes
+            summary: Unmute a status's thread. This reenables notifications for future replies, likes, boosts etc in the thread of which the target status is a part.
             tags:
                 - statuses
     /api/v1/statuses/{id}/unpin:
@@ -7336,6 +7412,7 @@ securityDefinitions:
             read:follows: grant read access to follows
             read:lists: grant read access to lists
             read:media: grant read access to media
+            read:mutes: grant read access to mutes
             read:notifications: grants read access to notifications
             read:search: grant read access to searches
             read:statuses: grants read access to statuses
@@ -7347,6 +7424,7 @@ securityDefinitions:
             write:follows: grants write access to follows
             write:lists: grants write access to lists
             write:media: grants write access to media
+            write:mutes: grants write access to mutes
             write:statuses: grants write access to statuses
             write:user: grants write access to user-level info
         tokenUrl: https://example.org/oauth/token

@@ -30,7 +30,7 @@ import (
 //
 // Unmute a status's thread. This reenables notifications for future replies, likes, boosts etc in the thread of which the target status is a part.
 //
-// Target status must be in a thread you are participating in (you've written the target post, or a post further up or further down the thread).
+// Target status must belong to you.
 //
 // Status thread mutes and unmutes are idempotent. If you already unmuted a thread, unmuting it again just means it stays unmuted and you'll get 200 OK back.
 //
