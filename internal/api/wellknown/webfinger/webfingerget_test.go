@@ -84,6 +84,7 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 	config.SetHost(host)
 	config.SetAccountDomain(accountDomain)
 	testrig.StopWorkers(&suite.state)
+	testrig.StartWorkers(&suite.state)
 	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(&suite.state), &suite.state, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.processor)
 	testrig.StartWorkers(&suite.state)
