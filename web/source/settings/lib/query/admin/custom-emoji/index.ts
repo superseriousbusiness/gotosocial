@@ -169,24 +169,33 @@ const extended = gtsApi.injectEndpoints({
 
 				// Search for each listed emoji with the admin
 				// api to get the version that includes an ID.
-				const withIDs: CustomEmoji[] = [];
 				const errors: FetchBaseQueryError[] = [];
-
-				withoutIDs.forEach(async(emoji) => {
-					// Request admin view of this emoji.
-					const emojiRes = await fetchWithBQ({
-						url: `/api/v1/admin/custom_emojis`,
-						params: {
-							filter: `domain:${domain},shortcode:${emoji.shortcode}`,
-							limit: 1
-						}
-					});
-					if (emojiRes.error) {
-						errors.push(emojiRes.error);
-					} else {
-						// Got it!
-						withIDs.push(emojiRes.data as CustomEmoji);
-					}
+				const withIDs: CustomEmoji[] = (
+					await Promise.all(
+						withoutIDs.map(async(emoji) => {
+							// Request admin view of this emoji.
+							const emojiRes = await fetchWithBQ({
+								url: `/api/v1/admin/custom_emojis`,
+								params: {
+									filter: `domain:${domain},shortcode:${emoji.shortcode}`,
+									limit: 1
+								}
+							});
+						
+							if (emojiRes.error) {
+								// Put error in separate array so
+								// the null can be filtered nicely.
+								errors.push(emojiRes.error);
+								return null;
+							}
+							
+							// Got it!
+							return emojiRes.data as CustomEmoji;
+						})
+					)
+				).flatMap((emoji) => {
+					// Remove any nulls.
+					return emoji || [];
 				});
 
 				if (errors.length !== 0) {

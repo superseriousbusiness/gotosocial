@@ -20,7 +20,7 @@ package bundb
 import (
 	"errors"
 
-	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"

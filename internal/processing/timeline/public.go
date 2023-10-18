@@ -20,6 +20,7 @@ package timeline
 import (
 	"context"
 	"errors"
+	"strconv"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -76,5 +77,8 @@ func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, m
 		NextMaxIDValue: nextMaxIDValue,
 		PrevMinIDValue: prevMinIDValue,
 		Limit:          limit,
+		ExtraQueryParams: []string{
+			"local=" + strconv.FormatBool(local),
+		},
 	})
 }
