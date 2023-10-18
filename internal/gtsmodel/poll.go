@@ -60,7 +60,7 @@ func (p *Poll) Closed() bool {
 // PollVote represents a vote in a Poll. Can be remote or local.
 type PollVote struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
-	Choice    int       `bun:"nullzero,notnull"`                                            // The Poll's option index of which this is a vote for.
+	Choice    int       `bun:"type:INTEGER,nullzero,notnull"`                               // The Poll's option index of which this is a vote for.
 	AccountID string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID from which this vote originated.
 	Account   *Account  `bun:"-"`                                                           // The related Account for AccountID (not always set).
 	PollID    string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Poll ID of which this is a vote in.
