@@ -60,8 +60,11 @@ func (p *Processor) getTargetPoll(ctx context.Context, requestingAccount *gtsmod
 
 	if poll == nil {
 		// No poll could be found for given ID.
-		err := errors.New("target poll not found")
-		return nil, gtserror.NewErrorNotFound(err)
+		const text = "target poll not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
 	}
 
 	// Check that we can see + fetch the originating status for requesting account.
