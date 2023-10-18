@@ -1298,7 +1298,12 @@ func (c *Converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.
 }
 
 // PollToAPIPoll converts a database (gtsmodel) Poll into an API model representation appropriate for the given requesting account.
-func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmodel.Account, poll *gtsmodel.Poll) (*apimodel.Poll, error) {
+func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Account, poll *gtsmodel.Poll) (*apimodel.Poll, error) {
+	// Ensure the poll model is fully populated for src status.
+	if err := c.state.DB.PopulatePoll(ctx, poll); err != nil {
+		return nil, gtserror.Newf("error populating poll: %w", err)
+	}
+
 	// Get all available votes (by account ID) for poll.
 	allVotes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
 	if err != nil {
@@ -1316,17 +1321,23 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmod
 		totalVoters = len(allVotes)
 	}
 
-	var ownChoices []int
+	var (
+		ownChoices []int
+		isAuthor   bool
+	)
 
-	if requestingAccount != nil {
-		// Get votes in poll registered by requester.
-		votes := allVotes[requestingAccount.ID]
+	if requester != nil {
+		// Get votes in poll by requester.
+		votes := allVotes[requester.ID]
 
 		// Convert into a slice of option choices.
 		ownChoices = make([]int, len(votes))
 		for i, vote := range votes {
 			ownChoices[i] = vote.Choice
 		}
+
+		// Check if requester is author of status poll.
+		isAuthor = (requester.ID == poll.Status.AccountID)
 	}
 
 	// Preallocate a slice of frontend model poll choices.
@@ -1337,7 +1348,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requestingAccount *gtsmod
 		options[i].Title = title
 	}
 
-	if !*poll.HideCounts {
+	if isAuthor || !*poll.HideCounts {
 		// When hide counts is disabled, increment the
 		// counter for each available option by each
 		// vote that exists for that choice index.
