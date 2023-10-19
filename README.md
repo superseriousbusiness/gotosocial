@@ -334,6 +334,7 @@ Under the terms of the license, you are free to:
 
 In alphabetical order (... and order of smell):
 
+- daenney
 - f0x \[[donate with liberapay](https://liberapay.com/f0x)\]
 - kim \[check out my code @ [codeberg](https://codeberg.org/gruf), or find me @ [@kim](https://k.iim.gay/@kim)\]
 - tobi \[[donate with liberapay](https://liberapay.com/GoToSocial/)\]
