@@ -156,8 +156,13 @@ func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...st
 				return err
 			}
 
-			// Finally, update the poll columns in database.
-			_, err := tx.NewUpdate().Model(poll).Column(cols...).Exec(ctx)
+			// Finally, update poll
+			// columns in database.
+			_, err := tx.NewUpdate().
+				Model(poll).
+				Column(cols...).
+				Where("? = ?", bun.Ident("id"), poll.ID).
+				Exec(ctx)
 			return err
 		})
 	})
