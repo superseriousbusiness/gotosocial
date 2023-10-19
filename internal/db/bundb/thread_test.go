@@ -91,6 +91,53 @@ func (suite *ThreadTestSuite) TestDeleteThread() {
 	}
 }
 
+func (suite *ThreadTestSuite) TestMuteUnmuteThread() {
+	var (
+		threadID   = suite.testThreads["local_account_1_status_1"].ID
+		accountID  = suite.testAccounts["local_account_1"].ID
+		testStatus = suite.testStatuses["local_account_1_status_1"]
+		ctx        = context.Background()
+		threadMute = &gtsmodel.ThreadMute{
+			ID:        "01HD3K14B62YJHH4RR0DSZ1EQ2",
+			ThreadID:  threadID,
+			AccountID: accountID,
+		}
+	)
+
+	// Mute the thread and ensure it's actually muted.
+	if err := suite.db.PutThreadMute(ctx, threadMute); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	muted, err := suite.db.IsStatusThreadMutedBy(ctx, testStatus, accountID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	if !muted {
+		suite.FailNow("", "expected thread %s to be muted by account %s", threadID, accountID)
+	}
+
+	_, err = suite.db.GetThreadMutedByAccount(ctx, threadID, accountID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Unmute the thread and ensure it's actually unmuted.
+	if err := suite.db.DeleteThreadMute(ctx, threadMute.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	muted, err = suite.db.IsStatusThreadMutedBy(ctx, testStatus, accountID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	if muted {
+		suite.FailNow("", "expected thread %s to not be muted by account %s", threadID, accountID)
+	}
+}
+
 func TestThreadTestSuite(t *testing.T) {
 	suite.Run(t, new(ThreadTestSuite))
 }
