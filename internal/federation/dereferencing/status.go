@@ -663,12 +663,12 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 
 		// Poll has changed from existing to latest. Delete existing!
 		if err := d.state.DB.DeletePollByID(ctx, existing.Poll.ID); err != nil {
-			return gtserror.Newf("error deleting existing poll from db: %w", err)
+			return gtserror.Newf("error deleting existing poll from database: %w", err)
 		}
 
 		// Delete any poll votes pointing to the existing poll ID.
 		if err := d.state.DB.DeletePollVotes(ctx, existing.Poll.ID); err != nil {
-			return gtserror.Newf("error deleting existing votes from db: %w", err)
+			return gtserror.Newf("error deleting existing votes from database: %w", err)
 		}
 
 		// Cancel any scheduled expiry task for existing poll.
@@ -697,13 +697,23 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 		status.Poll.ID = id.NewULID() // just use "now"
 	}
 
-	// Ensure points to latest status.
+	// Update the status<->poll links.
+	status.PollID = status.Poll.ID
 	status.Poll.StatusID = status.ID
 	status.Poll.Status = status
 
 	// Insert this latest poll into the database.
-	if err = d.state.DB.PutPoll(ctx, status.Poll); err != nil {
-		return gtserror.Newf("error inserting new poll in db: %w", err)
+	err = d.state.DB.PutPoll(ctx, status.Poll)
+	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+		return gtserror.Newf("error putting in database: %w", err)
+	}
+
+	if err != nil /* i.e. db.ErrAlreadyExists */ {
+		// TODO: replace this quick fix with per-URI deref locks.
+		status.Poll, err = d.state.DB.GetPollByID(ctx, status.PollID)
+		if err != nil {
+			return gtserror.Newf("error getting from database after race: %w", err)
+		}
 	}
 
 	return nil
