@@ -83,7 +83,7 @@ func (m *Module) StatusUnmutePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	targetStatusID, errWithCode := apiutil.ParseID(apiutil.IDKey)
+	targetStatusID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
