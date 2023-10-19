@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -88,6 +89,8 @@ func init() {
 				Exec(ctx); err != nil {
 				return err
 			}
+
+			log.Info(ctx, "creating a new index on the statuses table, please wait and don't interrupt it (this may take a few minutes)")
 
 			// Update statuses to add thread ID column.
 			_, err := tx.ExecContext(
