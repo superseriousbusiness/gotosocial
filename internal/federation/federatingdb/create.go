@@ -139,54 +139,48 @@ func (f *federatingDB) activityCreate(
 
 	var errs gtserror.MultiError
 
-	for i, object := range ap.ExtractObjects(create) {
-		// Try to get object as vocab.Type,
-		// else skip handling (likely) IRI.
-		objType := object.GetType()
-		if objType == nil {
-			continue
-		}
+	// Extract objects from create activity.
+	objects := ap.ExtractObjects(create)
 
-		// Try cast as a Statusable type, else ignore.
-		statusable, ok := ap.ToStatusable(objType)
-		if !ok {
-			continue
-		}
+	// Extract PollOptionables (votes!) from objects slice.
+	optionables, objects := ap.ExtractPollOptionables(objects)
 
+	if len(optionables) > 0 {
+		// Handle provided poll vote(s) creation, this can
+		// be for single or multiple votes in the same poll.
+		err := f.createPollOptionables(ctx,
+			receivingAccount,
+			requestingAccount,
+			optionables,
+		)
+		if err != nil {
+			errs.Appendf("error creating poll vote(s): %w", err)
+		}
+	}
+
+	// Extract Statusables from objects slice (this must be
+	// done AFTER extracting options due to how AS typing works).
+	statusables, objects := ap.ExtractStatusables(objects)
+
+	for _, statusable := range statusables {
 		// Check if this is a forwarded object, i.e. did
 		// the account making the request also create this?
 		forwarded := !isSender(statusable, requestingAccount)
 
-		// Before handling as status, check if it's actually a
-		// poll option type (i.e. status with "name" but no "content").
-		if option, ok := ap.ToPollOptionable(statusable); ok {
-			if forwarded {
-				// we don't care about forwarded
-				// votes, we only track our own.
-				continue
-			}
-
-			// Handle this CREATE as poll option.
-			if err := f.createPollOptionable(ctx,
-				receivingAccount,
-				requestingAccount,
-				option,
-				i == 0, // first in "object" slice.
-			); err != nil {
-				errs.Append(err)
-			}
-			continue
-		}
-
-		// Else, handle as Statusable CREATE.
+		// Handle create event for this statusable.
 		if err := f.createStatusable(ctx,
 			receivingAccount,
 			requestingAccount,
 			statusable,
 			forwarded,
 		); err != nil {
-			errs.Append(err)
+			errs.Appendf("error creating statusable: %w", err)
 		}
+	}
+
+	if len(objects) > 0 {
+		// Log any unhandled objects after filtering for debug purposes.
+		log.Debugf(ctx, "unhandled CREATE types: %v", typeNames(objects))
 	}
 
 	return errs.Combine()
@@ -195,88 +189,98 @@ func (f *federatingDB) activityCreate(
 // createPollOptionable handles a Create activity for a PollOptionable.
 // This function doesn't handle database insertion, only validation checks
 // before passing off to a worker for asynchronous processing.
-func (f *federatingDB) createPollOptionable(
+func (f *federatingDB) createPollOptionables(
 	ctx context.Context,
 	receiver *gtsmodel.Account,
 	requester *gtsmodel.Account,
-	option ap.PollOptionable,
-	firstObject bool,
+	options []ap.PollOptionable,
 ) error {
-	// Extract the "inReplyTo" property.
-	inReplyToURIs := ap.GetInReplyTo(option)
-	if len(inReplyToURIs) != 1 {
-		return gtserror.Newf("invalid inReplyTo property length: %d", len(inReplyToURIs))
-	}
+	var (
+		// the origin Status w/ Poll the vote
+		// options are in. This gets set on first
+		// iteration, relevant checks performed
+		// then re-used in each further iteration.
+		inReplyTo *gtsmodel.Status
 
-	// Stringify the inReplyTo URI.
-	statusURI := inReplyToURIs[0].String()
+		// the resulting slices of Poll.Option
+		// choice indices passed into the new
+		// created PollVote object.
+		choices []int
+	)
 
-	// Check database for a reply status by URI.
-	inReplyTo, err := f.state.DB.GetStatusByURI(ctx, statusURI)
-	if err != nil {
-		return gtserror.Newf("error getting poll vote source status %s: %w", statusURI, err)
-	}
-
-	switch {
-	// The origin status isn't a poll?
-	case inReplyTo.PollID == "":
-		return gtserror.Newf("poll vote by in status %s without poll", statusURI)
-
-	// We don't own the poll ...
-	case !*inReplyTo.Local:
-		return gtserror.Newf("poll vote by in remote status %s", statusURI)
-	}
-
-	if firstObject {
-		// This is the first object in the activity slice,
-		// check whether user has already vote in this poll.
-		// (we only check this for the first object, as multiple
-		// may be sent in response to a multiple-choice poll).
-		votes, err := f.state.DB.GetPollVotesBy(
-			gtscontext.SetBarebones(ctx),
-			inReplyTo.PollID,
-			requester.ID,
-		)
-		if err != nil {
-			return gtserror.Newf("error getting existing poll votes: %w", err)
+	for _, option := range options {
+		// Extract the "inReplyTo" property.
+		inReplyToURIs := ap.GetInReplyTo(option)
+		if len(inReplyToURIs) != 1 {
+			return gtserror.Newf("invalid inReplyTo property length: %d", len(inReplyToURIs))
 		}
 
-		if len(votes) > 0 {
-			log.Warnf(ctx, "%s has already voted in poll %s", requester.URI, statusURI)
-			return nil // this is a useful warning for admins to report to us from logs
+		// Stringify the inReplyTo URI.
+		statusURI := inReplyToURIs[0].String()
+
+		if inReplyTo == nil {
+			var err error
+
+			// This is the first object in the activity slice,
+			// check database for the poll source status by URI.
+			inReplyTo, err = f.state.DB.GetStatusByURI(ctx, statusURI)
+			if err != nil {
+				return gtserror.Newf("error getting poll source from database %s: %w", statusURI, err)
+			}
+
+			switch {
+			// The origin status isn't a poll?
+			case inReplyTo.PollID == "":
+				return gtserror.Newf("poll vote by in status %s without poll", statusURI)
+
+			// We don't own the poll ...
+			case !*inReplyTo.Local:
+				return gtserror.Newf("poll vote by in remote status %s", statusURI)
+			}
+
+			// Check whether user has already vote in this poll.
+			// (we only check this for the first object, as multiple
+			// may be sent in response to a multiple-choice poll).
+			vote, err := f.state.DB.GetPollVoteBy(
+				gtscontext.SetBarebones(ctx),
+				inReplyTo.PollID,
+				requester.ID,
+			)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return gtserror.Newf("error getting status %s poll votes from database: %w", statusURI, err)
+			}
+
+			if vote != nil {
+				log.Warnf(ctx, "%s has already voted in poll %s", requester.URI, statusURI)
+				return nil // this is a useful warning for admins to report to us from logs
+			}
 		}
 
-		// Before allowing vote, check if user user can *see* the status.
-		visible, err := f.filter.StatusVisible(ctx, requester, inReplyTo)
-		if err != nil {
-			return gtserror.Newf("error checking status visibility: %w", err)
+		if statusURI != inReplyTo.URI {
+			// All activity votes should be to the same poll per activity.
+			return gtserror.New("votes to multiple polls in single activity")
 		}
 
-		if !visible {
-			log.Warnf(ctx, "%s attempting to vote in invisible poll %s", requester.URI, statusURI)
-			return nil // this is a useful warning for admins to report to us from logs
+		// Extract the poll option name.
+		name := ap.ExtractName(option)
+
+		// Check that this is a valid option name.
+		choice := inReplyTo.Poll.GetChoice(name)
+		if choice == -1 {
+			return gtserror.Newf("poll vote in status %s invalid: %s", statusURI, name)
 		}
+
+		// Append the option index to choices.
+		choices = append(choices, choice)
 	}
 
-	// Extract the poll option name.
-	name := ap.ExtractName(option)
-
-	// Check that this is a valid option name.
-	choice := inReplyTo.Poll.GetChoice(name)
-	if choice == -1 {
-		return gtserror.Newf("poll vote in status %s invalid: %s", statusURI, name)
-	}
-
-	// Enqueue message to the fedi API worker with new poll vote.
-	// TODO: bundling together the poll votes as a singular worker
-	// message would be more efficient (and require less cache
-	// invalidations, but doing so neatly here is a tricky one).
+	// Enqueue message to the fedi API worker with poll vote(s).
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APActivityType: ap.ActivityCreate,
 		APObjectType:   ap.ActivityQuestion,
 		GTSModel: &gtsmodel.PollVote{
 			ID:        id.NewULID(),
-			Choice:    choice,
+			Choices:   choices,
 			AccountID: requester.ID,
 			Account:   requester,
 			PollID:    inReplyTo.PollID,

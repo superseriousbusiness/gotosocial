@@ -1305,20 +1305,25 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	}
 
 	// Get all available votes (by account ID) for poll.
-	allVotes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
+	votes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
 	if err != nil {
 		return nil, gtserror.Newf("error getting votes for poll %s: %w", poll.ID, err)
 	}
 
-	var totalVoters int
+	var (
+		totalVotes  int
+		totalVoters int
+	)
 
-	// Get the total count of all available votes.
-	totalVotes := countMapSliceValues(allVotes)
+	// Accumulate total vote counts.
+	for _, vote := range votes {
+		totalVotes += len(vote.Choices)
+	}
 
 	if *poll.Multiple {
 		// This is a multiple choice poll, we
 		// also need to return total no. voters.
-		totalVoters = len(allVotes)
+		totalVoters = len(votes)
 	}
 
 	var (
@@ -1327,14 +1332,9 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	)
 
 	if requester != nil {
-		// Get votes in poll by requester.
-		votes := allVotes[requester.ID]
-
-		// Convert into a slice of option choices.
-		ownChoices = make([]int, len(votes))
-		for i, vote := range votes {
-			ownChoices[i] = vote.Choice
-		}
+		// Get votes by requester.
+		vote := votes[requester.ID]
+		ownChoices = vote.Choices
 
 		// Check if requester is author of status poll.
 		isAuthor = (requester.ID == poll.Status.AccountID)
@@ -1352,9 +1352,9 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		// When hide counts is disabled, increment the
 		// counter for each available option by each
 		// vote that exists for that choice index.
-		for _, votes := range allVotes {
-			for _, vote := range votes {
-				options[vote.Choice].VotesCount++
+		for _, vote := range votes {
+			for _, choice := range vote.Choices {
+				options[choice].VotesCount++
 			}
 		}
 	}

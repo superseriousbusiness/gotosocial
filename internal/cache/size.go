@@ -189,6 +189,9 @@ func totalOfRatios() float64 {
 		config.GetCacheMediaMemRatio() +
 		config.GetCacheMentionMemRatio() +
 		config.GetCacheNotificationMemRatio() +
+		config.GetCachePollMemRatio() +
+		config.GetCachePollVoteMemRatio() +
+		config.GetCachePollVoterIDsMemRatio() +
 		config.GetCacheReportMemRatio() +
 		config.GetCacheStatusMemRatio() +
 		config.GetCacheStatusFaveMemRatio() +
@@ -452,7 +455,7 @@ func sizeofPoll() uintptr {
 func sizeofPollVote() uintptr {
 	return uintptr(size.Of(&gtsmodel.PollVote{
 		ID:        exampleID,
-		Choice:    69,
+		Choices:   []int{69, 420, 1337},
 		AccountID: exampleID,
 		PollID:    exampleID,
 		CreatedAt: exampleTime,

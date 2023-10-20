@@ -116,7 +116,7 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 
 		// CREATE QUESTION
 		case ap.ActivityQuestion:
-			return p.fediAPI.CreatePollVotes(ctx, fMsg)
+			return p.fediAPI.CreatePollVote(ctx, fMsg)
 		}
 
 	// UPDATE SOMETHING
@@ -215,18 +215,16 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	return nil
 }
 
-func (p *fediAPI) CreatePollVotes(ctx context.Context, fMsg messages.FromFediAPI) error {
+func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg messages.FromFediAPI) error {
 	// Cast poll vote type from the worker message.
 	vote, ok := fMsg.GTSModel.(*gtsmodel.PollVote)
 	if !ok {
 		return gtserror.Newf("cannot cast %T -> *gtsmodel.Pollvote", fMsg.GTSModel)
 	}
 
-	// Insert the new poll vote in the database, in time this
-	// function might be updated to handle > 1 vote at a time
-	// which would make more sense for multiple choice votes.
-	if err := p.state.DB.PutPollVotes(ctx, vote); err != nil {
-		return gtserror.Newf("error inserting poll votes in db: %w", err)
+	// Insert the new poll vote in the database.
+	if err := p.state.DB.PutPollVote(ctx, vote); err != nil {
+		return gtserror.Newf("error inserting poll vote in db: %w", err)
 	}
 
 	// Ensure the poll vote is fully populated at this point.

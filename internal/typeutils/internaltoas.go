@@ -1657,15 +1657,7 @@ func (c *Converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (voc
 	return flag, nil
 }
 
-func (c *Converter) PollVotesToASOptions(ctx context.Context, votes ...*gtsmodel.PollVote) ([]ap.PollOptionable, error) {
-	if len(votes) == 0 {
-		return nil, gtserror.New("no poll votes")
-	}
-
-	// Pick a vote from slice to
-	// fetch the author + poll for.
-	vote := votes[0]
-
+func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.PollVote) ([]ap.PollOptionable, error) {
 	// Ensure the vote is fully populated (this fetches author).
 	if err := c.state.DB.PopulatePollVote(ctx, vote); err != nil {
 		return nil, gtserror.Newf("error populating vote from db: %w", err)
@@ -1695,18 +1687,19 @@ func (c *Converter) PollVotesToASOptions(ctx context.Context, votes ...*gtsmodel
 	}
 
 	// Preallocate the return slice of notes.
-	notes := make([]ap.PollOptionable, len(votes))
+	notes := make([]ap.PollOptionable, len(vote.Choices))
 
-	for i, vote := range votes {
+	for i, choice := range vote.Choices {
 		// Create new note to represent vote.
 		note := streams.NewActivityStreamsNote()
 
-		// For AP IRI generate from author URI + ID of the vote.
-		ap.SetJSONLDId(note, author.URI+"#votes/"+vote.ID)
+		// For AP IRI generate from author URI + poll ID + vote choice.
+		id := fmt.Sprintf("%s#%s/votes/%d", author.URI, poll.ID, choice)
+		ap.SetJSONLDId(note, id)
 
 		// Attach new name property to note with vote choice.
 		nameProp := streams.NewActivityStreamsNameProperty()
-		nameProp.AppendXMLSchemaString(poll.Options[vote.Choice])
+		nameProp.AppendXMLSchemaString(poll.Options[choice])
 		note.SetActivityStreamsName(nameProp)
 
 		// Add the status IRI to reply field.

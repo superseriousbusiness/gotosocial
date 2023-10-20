@@ -36,6 +36,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
+func typeNames(objects []ap.TypeOrIRI) []string {
+	names := make([]string, len(objects))
+	for i, object := range objects {
+		if object.IsIRI() {
+			names[i] = "IRI"
+		} else if t := object.GetType(); t != nil {
+			names[i] = t.GetTypeName()
+		} else {
+			names[i] = "nil"
+		}
+	}
+	return names
+}
+
 // isSender returns whether an object with AttributedTo property comes from the given requesting account.
 func isSender(with ap.WithAttributedTo, requester *gtsmodel.Account) bool {
 	for _, uri := range ap.GetAttributedTo(with) {

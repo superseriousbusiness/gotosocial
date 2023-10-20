@@ -57,13 +57,13 @@ func (p *Poll) Closed() bool {
 		time.Now().After(p.ClosedAt)
 }
 
-// PollVote represents a vote in a Poll. Can be remote or local.
+// PollVote represents a single instance of vote(s) in a Poll. Can be remote or local.
 type PollVote struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
-	Choice    int       `bun:"type:INTEGER,nullzero,notnull"`                               // The Poll's option index of which this is a vote for.
-	AccountID string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID from which this vote originated.
+	Choices   []int     `bun:"type:VARCHAR,nullzero,notnull"`                               // The Poll's option indices of which these are votes for.
+	AccountID string    `bun:"type:CHAR(26),nullzero,notnull,unique:in_poll_by_account"`    // Account ID from which this vote originated.
 	Account   *Account  `bun:"-"`                                                           // The related Account for AccountID (not always set).
-	PollID    string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Poll ID of which this is a vote in.
+	PollID    string    `bun:"type:CHAR(26),nullzero,notnull,unique:in_poll_by_account"`    // Poll ID of which this is a vote in.
 	Poll      *Poll     `bun:"-"`                                                           // The related Poll for PollID (not always set).
 	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // The creation date of this PollVote.
 }

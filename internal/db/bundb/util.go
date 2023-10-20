@@ -157,7 +157,3 @@ func parseWhere(w db.Where) (query string, args []interface{}) {
 	args = []interface{}{bun.Ident(w.Key), w.Value}
 	return
 }
-
-// noopStore is a no-op function that fits
-// the result.Cache{} store function signature.
-func noopStore() error { return nil }

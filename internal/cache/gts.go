@@ -54,7 +54,6 @@ type GTSCaches struct {
 	notification     *result.Cache[*gtsmodel.Notification]
 	poll             *result.Cache[*gtsmodel.Poll]
 	pollVote         *result.Cache[*gtsmodel.PollVote]
-	pollVoteIDs      *SliceCache[string]
 	pollVoterIDs     *SliceCache[string]
 	report           *result.Cache[*gtsmodel.Report]
 	status           *result.Cache[*gtsmodel.Status]
@@ -96,7 +95,6 @@ func (c *GTSCaches) Init() {
 	c.initNotification()
 	c.initPoll()
 	c.initPollVote()
-	c.initPollVoteIDs()
 	c.initPollVoterIDs()
 	c.initReport()
 	c.initStatus()
@@ -253,12 +251,6 @@ func (c *GTSCaches) PollVote() *result.Cache[*gtsmodel.PollVote] {
 // {$pollID} -> registered votes by unique (account) IDs in poll.
 func (c *GTSCaches) PollVoterIDs() *SliceCache[string] {
 	return c.pollVoterIDs
-}
-
-// PollVoteIDs provides access to the poll vote IDs list database cache.
-// {$pollID}.{$accountID} -> registered vote IDs in poll by acccount.
-func (c *GTSCaches) PollVoteIDs() *SliceCache[string] {
-	return c.pollVoteIDs
 }
 
 // Report provides access to the gtsmodel Report database cache.
@@ -747,6 +739,7 @@ func (c *GTSCaches) initPollVote() {
 
 	c.pollVote = result.New([]result.Lookup{
 		{Name: "ID"},
+		{Name: "PollID.AccountID"},
 		{Name: "PollID", Multi: true},
 	}, func(v1 *gtsmodel.PollVote) *gtsmodel.PollVote {
 		v2 := new(gtsmodel.PollVote)
@@ -755,20 +748,6 @@ func (c *GTSCaches) initPollVote() {
 	}, cap)
 
 	c.pollVote.IgnoreErrors(ignoreErrors)
-}
-
-func (c *GTSCaches) initPollVoteIDs() {
-	// Calculate maximum cache size.
-	cap := calculateSliceCacheMax(
-		config.GetCachePollVoteIDsMemRatio(),
-	)
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	c.pollVoteIDs = &SliceCache[string]{Cache: simple.New[string, []string](
-		0,
-		cap,
-	)}
 }
 
 func (c *GTSCaches) initPollVoterIDs() {

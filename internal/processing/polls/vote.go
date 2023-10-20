@@ -62,21 +62,18 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 		}
 	}
 
-	// Convert choices to a slice of DB model poll votes.
-	votes := make([]*gtsmodel.PollVote, len(choices))
-	for i, choice := range choices {
-		votes[i] = &gtsmodel.PollVote{
-			ID:        id.NewULID(),
-			Choice:    choice,
-			AccountID: requester.ID,
-			Account:   requester,
-			PollID:    pollID,
-			Poll:      poll,
-		}
+	// Wrap the choices in a PollVote model.
+	vote := &gtsmodel.PollVote{
+		ID:        id.NewULID(),
+		Choices:   choices,
+		AccountID: requester.ID,
+		Account:   requester,
+		PollID:    pollID,
+		Poll:      poll,
 	}
 
 	// Insert the new poll votes into the database.
-	err := p.state.DB.PutPollVotes(ctx, votes...)
+	err := p.state.DB.PutPollVote(ctx, vote)
 	switch {
 
 	case err == nil:
@@ -89,7 +86,7 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 
 	default:
 		// Any other irrecoverable database error.
-		err := gtserror.Newf("error inserting poll votes: %w", err)
+		err := gtserror.Newf("error inserting poll vote: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -97,7 +94,7 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ActivityQuestion,
 		APActivityType: ap.ActivityUpdate,
-		GTSModel:       votes, // the vote choices
+		GTSModel:       vote, // the vote choices
 		OriginAccount:  requester,
 	})
 

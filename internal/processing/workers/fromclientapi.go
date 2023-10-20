@@ -98,7 +98,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// question type when federating (just notes),
 		// but it makes for a nicer type switch here.
 		case ap.ActivityQuestion:
-			return p.clientAPI.CreatePollVotes(ctx, cMsg)
+			return p.clientAPI.CreatePollVote(ctx, cMsg)
 
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
@@ -241,15 +241,12 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAP
 	return nil
 }
 
-func (p *clientAPI) CreatePollVotes(ctx context.Context, cMsg messages.FromClientAPI) error {
-	// Cast the create poll votes attached to message.
-	votes, ok := cMsg.GTSModel.([]*gtsmodel.PollVote)
-	if !ok || len(votes) == 0 {
-		return gtserror.Newf("cannot cast %T -> []*gtsmodel.Pollvote", cMsg.GTSModel)
+func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// Cast the create poll vote attached to message.
+	vote, ok := cMsg.GTSModel.(*gtsmodel.PollVote)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Pollvote", cMsg.GTSModel)
 	}
-
-	// Extract any vote.
-	vote := votes[0]
 
 	// Ensure the vote is fully populated in order to get original poll.
 	if err := p.state.DB.PopulatePollVote(ctx, vote); err != nil {
@@ -283,7 +280,7 @@ func (p *clientAPI) CreatePollVotes(ctx context.Context, cMsg messages.FromClien
 	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	// Respond to origin server with new poll vote(s).
-	return p.federate.CreatePollVotes(ctx, vote.Poll, votes)
+	return p.federate.CreatePollVote(ctx, vote.Poll, vote)
 }
 
 func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClientAPI) error {

@@ -2,7 +2,7 @@
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//
+// 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -3149,31 +3149,6 @@ func GetCachePollVoteMemRatio() float64 { return global.GetCachePollVoteMemRatio
 // SetCachePollVoteMemRatio safely sets the value for global configuration 'Cache.PollVoteMemRatio' field
 func SetCachePollVoteMemRatio(v float64) { global.SetCachePollVoteMemRatio(v) }
 
-// GetCachePollVoteIDsMemRatio safely fetches the Configuration value for state's 'Cache.PollVoteIDsMemRatio' field
-func (st *ConfigState) GetCachePollVoteIDsMemRatio() (v float64) {
-	st.mutex.RLock()
-	v = st.config.Cache.PollVoteIDsMemRatio
-	st.mutex.RUnlock()
-	return
-}
-
-// SetCachePollVoteIDsMemRatio safely sets the Configuration value for state's 'Cache.PollVoteIDsMemRatio' field
-func (st *ConfigState) SetCachePollVoteIDsMemRatio(v float64) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.Cache.PollVoteIDsMemRatio = v
-	st.reloadToViper()
-}
-
-// CachePollVoteIDsMemRatioFlag returns the flag name for the 'Cache.PollVoteIDsMemRatio' field
-func CachePollVoteIDsMemRatioFlag() string { return "cache-poll-vote-ids-mem-ratio" }
-
-// GetCachePollVoteIDsMemRatio safely fetches the value for global configuration 'Cache.PollVoteIDsMemRatio' field
-func GetCachePollVoteIDsMemRatio() float64 { return global.GetCachePollVoteIDsMemRatio() }
-
-// SetCachePollVoteIDsMemRatio safely sets the value for global configuration 'Cache.PollVoteIDsMemRatio' field
-func SetCachePollVoteIDsMemRatio(v float64) { global.SetCachePollVoteIDsMemRatio(v) }
-
 // GetCachePollVoterIDsMemRatio safely fetches the Configuration value for state's 'Cache.PollVoterIDsMemRatio' field
 func (st *ConfigState) GetCachePollVoterIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -3648,3 +3623,4 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
+

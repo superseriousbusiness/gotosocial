@@ -172,7 +172,7 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 	return nil
 }
 
-func (f *federate) CreatePollVotes(ctx context.Context, poll *gtsmodel.Poll, votes []*gtsmodel.PollVote) error {
+func (f *federate) CreatePollVote(ctx context.Context, poll *gtsmodel.Poll, vote *gtsmodel.PollVote) error {
 	// Extract status from poll.
 	status := poll.Status
 
@@ -195,7 +195,7 @@ func (f *federate) CreatePollVotes(ctx context.Context, poll *gtsmodel.Poll, vot
 	}
 
 	// Convert votes to AS PollOptionable implementing type.
-	notes, err := f.converter.PollVotesToASOptions(ctx, votes...)
+	notes, err := f.converter.PollVoteToASOptions(ctx, vote)
 	if err != nil {
 		return gtserror.Newf("error converting to notes: %w", err)
 	}

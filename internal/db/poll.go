@@ -49,10 +49,10 @@ type Poll interface {
 	GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.PollVote, error)
 
 	// GetPollVotes fetches all PollVotes in Poll with ID, keyed by account ID, from the database.
-	GetPollVotes(ctx context.Context, pollID string) (map[string][]*gtsmodel.PollVote, error)
+	GetPollVotes(ctx context.Context, pollID string) (map[string]*gtsmodel.PollVote, error)
 
-	// GetPollVotesBy fetches the PollVotes in Poll with ID, by account ID, from the database.
-	GetPollVotesBy(ctx context.Context, pollID string, accountID string) ([]*gtsmodel.PollVote, error)
+	// GetPollVotesBy fetches the PollVote in Poll with ID, by account ID, from the database.
+	GetPollVoteBy(ctx context.Context, pollID string, accountID string) (*gtsmodel.PollVote, error)
 
 	// PopulatePollVote ensures the given PollVote is fully populated with all other related database models.
 	PopulatePollVote(ctx context.Context, votes *gtsmodel.PollVote) error
@@ -60,14 +60,14 @@ type Poll interface {
 	// CountPollVotes counts all PollVotes in Poll with ID, keyed by option index, from the database.
 	CountPollVotes(ctx context.Context, pollID string) ([]int, error)
 
-	// PutPollVotes puts the given PollVotes in the database.
-	PutPollVotes(ctx context.Context, vote ...*gtsmodel.PollVote) error
+	// PutPollVote puts the given PollVote in the database.
+	PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 
 	// DeletePollVotes deletes all PollVotes in Poll with given ID from the database.
 	DeletePollVotes(ctx context.Context, pollID string) error
 
-	// DeletePollVotesBy deletes the PollVotes in Poll with ID, by account ID, from the database.
-	DeletePollVotesBy(ctx context.Context, pollID string, accountID string) error
+	// DeletePollVoteBy deletes the PollVote in Poll with ID, by account ID, from the database.
+	DeletePollVoteBy(ctx context.Context, pollID string, accountID string) error
 
 	// DeletePollVotesByAccountID deletes all PollVotes in all Polls, by account ID, from the database.
 	DeletePollVotesByAccountID(ctx context.Context, accountID string) error
