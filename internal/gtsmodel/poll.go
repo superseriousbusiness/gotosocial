@@ -57,7 +57,9 @@ func (p *Poll) Closed() bool {
 		time.Now().After(p.ClosedAt)
 }
 
-// PollVote represents a single instance of vote(s) in a Poll. Can be remote or local.
+// PollVote represents a single instance of vote(s) in a Poll by an account.
+// If the Poll is single-choice, len(.Choices) = 1, if multiple-choice then
+// len(.Choices) >= 1. Can be remote or local.
 type PollVote struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
 	Choices   []int     `bun:"type:VARCHAR,nullzero,notnull"`                               // The Poll's option indices of which these are votes for.
