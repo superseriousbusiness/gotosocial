@@ -309,8 +309,8 @@ func (f *federatingDB) createStatusable(
 	// this status to us, but fetch the authentic article from
 	// the server it originated from.
 	if forwarded {
-		// Pass the statusable URI (APIri) into the processor worker
-		// and do the rest of the processing asynchronously.
+		// Pass the statusable URI (APIri) into the processor
+		// worker and do the rest of the processing asynchronously.
 		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 			APObjectType:     ap.ObjectNote,
 			APActivityType:   ap.ActivityCreate,

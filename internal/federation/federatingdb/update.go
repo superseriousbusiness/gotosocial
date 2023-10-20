@@ -122,25 +122,31 @@ func (f *federatingDB) updateStatusable(ctx context.Context, receivingAcct *gtsm
 		return nil
 	}
 
+	// Check if this is a forwarded object, i.e. did
+	// the account making the request also create this?
+	forwarded := !isSender(statusable, requestingAcct)
+
 	// Get the status we have on file for this URI string.
 	status, err := f.state.DB.GetStatusByURI(ctx, statusURIStr)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// If we haven't seen this status before,
-			// be lenient and handle as a CREATE event.
-			return f.createStatusable(ctx,
-				receivingAcct,
-				requestingAcct,
-				statusable,
-				!isSender(statusable, requestingAcct),
-			)
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("error fetching status from db: %w", err)
 	}
 
-	// Check that update was by the status author.
-	if status.AccountURI != requestingAcct.URI {
-		return gtserror.Newf("update for %s was not requested by author", statusURIStr)
+	if status == nil {
+		// We haven't seen this status before, be
+		// lenient and handle as a CREATE event.
+		return f.createStatusable(ctx,
+			receivingAcct,
+			requestingAcct,
+			statusable,
+			forwarded,
+		)
+	}
+
+	if forwarded {
+		// For forwarded updates, set a nil AS
+		// status to force refresh from remote.
+		statusable = nil
 	}
 
 	// Queue an UPDATE NOTE activity to our fedi API worker,
@@ -149,7 +155,7 @@ func (f *federatingDB) updateStatusable(ctx context.Context, receivingAcct *gtsm
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityUpdate,
 		GTSModel:         status, // original status
-		APObjectModel:    statusable,
+		APObjectModel:    (ap.Statusable)(statusable),
 		ReceivingAccount: receivingAcct,
 	})
 
