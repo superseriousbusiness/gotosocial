@@ -551,10 +551,7 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	}
 
 	// Cast the updated ActivityPub statusable object .
-	apStatus, ok := fMsg.APObjectModel.(ap.Statusable)
-	if !ok {
-		return gtserror.Newf("cannot cast %T -> ap.Statusable", fMsg.APObjectModel)
-	}
+	apStatus, _ := fMsg.APObjectModel.(ap.Statusable)
 
 	// Fetch up-to-date attach status attachments, etc.
 	_, statusable, err := p.federate.RefreshStatus(
