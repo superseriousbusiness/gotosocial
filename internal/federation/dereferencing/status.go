@@ -710,7 +710,7 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 
 	if err != nil /* i.e. db.ErrAlreadyExists */ {
 		// TODO: replace this quick fix with per-URI deref locks.
-		status.Poll, err = d.state.DB.GetPollByID(ctx, status.PollID)
+		status.Poll, err = d.state.DB.GetPollByStatusID(ctx, status.ID)
 		if err != nil {
 			return gtserror.Newf("error getting from database after race: %w", err)
 		}

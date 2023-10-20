@@ -19,11 +19,13 @@ package federatingdb
 
 import (
 	"context"
+	"errors"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -71,18 +73,21 @@ func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gts
 	// Extract AP URI of the updated Accountable model.
 	idProp := accountable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
-		return gtserror.New("Accountable id prop was nil or not IRI")
+		return gtserror.New("invalid id prop")
 	}
-	updatedAcctURI := idProp.GetIRI()
 
-	// Don't try to update local accounts, it will break things.
-	if updatedAcctURI.Host == config.GetHost() {
+	// Get the account URI string for checks
+	accountURI := idProp.GetIRI()
+	accountURIStr := accountURI.String()
+
+	// Don't try to update local accounts.
+	if accountURI.Host == config.GetHost() {
 		return nil
 	}
 
-	// Ensure Accountable and requesting account are one and the same.
-	if updatedAcctURIStr := updatedAcctURI.String(); requestingAcct.URI != updatedAcctURIStr {
-		return gtserror.Newf("update for %s was requested by %s, this is not valid", updatedAcctURIStr, requestingAcct.URI)
+	// Check that update was by the account themselves.
+	if accountURIStr != requestingAcct.URI {
+		return gtserror.Newf("update for %s was not requested by owner", accountURIStr)
 	}
 
 	// Pass in to the processor the existing version of the requesting
@@ -120,11 +125,21 @@ func (f *federatingDB) updateStatusable(ctx context.Context, receivingAcct *gtsm
 	// Get the status we have on file for this URI string.
 	status, err := f.state.DB.GetStatusByURI(ctx, statusURIStr)
 	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// If we haven't seen this status before,
+			// be lenient and handle as a CREATE event.
+			return f.createStatusable(ctx,
+				receivingAcct,
+				requestingAcct,
+				statusable,
+				!isSender(statusable, requestingAcct),
+			)
+		}
 		return gtserror.Newf("error fetching status from db: %w", err)
 	}
 
 	// Check that update was by the status author.
-	if status.AccountID != requestingAcct.ID {
+	if status.AccountURI != requestingAcct.URI {
 		return gtserror.Newf("update for %s was not requested by author", statusURIStr)
 	}
 
