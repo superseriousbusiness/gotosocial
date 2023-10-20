@@ -1334,7 +1334,9 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	if requester != nil {
 		// Get votes by requester.
 		vote := votes[requester.ID]
-		ownChoices = vote.Choices
+		if vote != nil {
+			ownChoices = vote.Choices
+		}
 
 		// Check if requester is author of status poll.
 		isAuthor = (requester.ID == poll.Status.AccountID)
