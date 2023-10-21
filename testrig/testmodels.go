@@ -1129,7 +1129,7 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			ImageRemoteURL:         "",
 			ImageStaticRemoteURL:   "",
 			ImageURL:               "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
-			ImagePath:              "/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+			ImagePath:              "01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
 			ImageStaticURL:         "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
 			ImageStaticPath:        "01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
 			ImageContentType:       "image/png",
@@ -1141,7 +1141,7 @@ func NewTestEmojis() map[string]*gtsmodel.Emoji {
 			URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 			VisibleInPicker:        util.Ptr(true),
 			CategoryID:             "01GGQ8V4993XK67B2JB396YFB7",
-			Cached:                 util.Ptr(false),
+			Cached:                 util.Ptr(true),
 		},
 		"yell": {
 			ID:                     "01GD5KP5CQEE1R3X43Y1EHS2CW",
