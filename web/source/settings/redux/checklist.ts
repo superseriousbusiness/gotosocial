@@ -121,6 +121,31 @@ const checklistSlice = createSlice({
 
 export const actions = checklistSlice.actions;
 
+/**
+ * useChecklistReducer wraps the react 'useReducer'
+ * hook with logic specific to the checklist reducer.
+ * 
+ * Use it in components where you need to keep track
+ * of checklist state.
+ * 
+ * @example
+ * 
+ * ```javascript
+ * // Start with one entry with "checked" set to "false".
+ * const initialEntries = [{ key: "some_key", id: "some_id", value: "some_value", checked: false }];
+ * const [state, dispatch] = useChecklistReducer(initialEntries, "id", false);
+ * 
+ * // Dispatch an action to set "checked" of all entries to "true".
+ * let checked = true;
+ * dispatch(actions.updateAll(checked));
+ * 
+ * // Will log `["some_id"]`
+ * console.log(state.selectedEntries)
+ * 
+ * // Will log `{ key: "some_key", id: "some_id", value: "some_value", checked: true }`
+ * console.log(state.entries["some_id"])
+ * ```
+ */
 export const useChecklistReducer = (entries: Checkable[], uniqueKey: string, initialValue: boolean) => {
 	return useReducer(
 		checklistSlice.reducer,
