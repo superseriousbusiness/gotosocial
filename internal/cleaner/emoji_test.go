@@ -9,7 +9,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
+
+func copyMap(in map[string]*gtsmodel.Emoji) map[string]*gtsmodel.Emoji {
+	out := make(map[string]*gtsmodel.Emoji, len(in))
+
+	for k, v1 := range in {
+		v2 := new(gtsmodel.Emoji)
+		*v2 = *v1
+		out[k] = v2
+	}
+
+	return out
+}
 
 func (suite *CleanerTestSuite) TestEmojiUncacheRemote() {
 	suite.testEmojiUncacheRemote(
@@ -54,16 +67,28 @@ func (suite *CleanerTestSuite) TestEmojiPruneUnusedDryRun() {
 }
 
 func (suite *CleanerTestSuite) TestEmojiFixCacheStates() {
+	// Copy testrig emojis + mark
+	// rainbow emoji as uncached
+	// so there's something to fix.
+	emojis := copyMap(suite.emojis)
+	emojis["rainbow"].Cached = util.Ptr(false)
+
 	suite.testEmojiFixCacheStates(
 		context.Background(),
-		mapvals(suite.emojis),
+		mapvals(emojis),
 	)
 }
 
 func (suite *CleanerTestSuite) TestEmojiFixCacheStatesDryRun() {
+	// Copy testrig emojis + mark
+	// rainbow emoji as uncached
+	// so there's something to fix.
+	emojis := copyMap(suite.emojis)
+	emojis["rainbow"].Cached = util.Ptr(false)
+
 	suite.testEmojiFixCacheStates(
 		gtscontext.SetDryRun(context.Background()),
-		mapvals(suite.emojis),
+		mapvals(emojis),
 	)
 }
 
