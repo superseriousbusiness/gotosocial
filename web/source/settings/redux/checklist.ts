@@ -128,6 +128,9 @@ export const actions = checklistSlice.actions;
  * Use it in components where you need to keep track
  * of checklist state.
  * 
+ * To update it, use dispatch with the actions
+ * exported from this module.
+ * 
  * @example
  * 
  * ```javascript
