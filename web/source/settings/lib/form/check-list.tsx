@@ -65,17 +65,17 @@ export default function useCheckListInput(
 
 	const reset = useCallback(
 		() => dispatch(actions.updateAll(initialValue)),
-		[initialValue]
+		[initialValue, dispatch]
 	);
 
 	const onChange = useCallback(
 		(key: string, value: Checkable) => dispatch(actions.update({ key, value })),
-		[]
+		[dispatch]
 	);
 
 	const updateMultiple = useCallback(
 		(entries: [key: string, value: Partial<Checkable>][]) => dispatch(actions.updateMultiple(entries)),
-		[]
+		[dispatch]
 	);
 
 	return useMemo(() => {
@@ -113,5 +113,5 @@ export default function useCheckListInput(
 				onChange: toggleAll
 			}
 		});
-	}, [state, reset, name, onChange, updateMultiple]);
+	}, [state, reset, name, onChange, updateMultiple, dispatch]);
 }

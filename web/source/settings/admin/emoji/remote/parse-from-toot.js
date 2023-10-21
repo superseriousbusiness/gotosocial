@@ -130,7 +130,7 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 				if (data) {
 					// uncheck all successfully processed emoji
 					const processed = data.map((emoji) => {
-						return [emoji.id, { checked: false }]
+						return [emoji.id, { checked: false }];
 					});
 					form.selectedEmoji.updateMultiple(processed);
 				}

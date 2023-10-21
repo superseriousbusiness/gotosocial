@@ -155,4 +155,4 @@ export const useChecklistReducer = (entries: Checkable[], uniqueKey: string, ini
 		initialState,
 		(_) => initialHookState({ entries, uniqueKey, initialValue })
 	);
-}
+};

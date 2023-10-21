@@ -199,7 +199,7 @@ const extended = gtsApi.injectEndpoints({
 				});
 
 				if (errors.length !== 0) {
-					const errData = errors.map(e => JSON.stringify(e.data)).join(",")
+					const errData = errors.map(e => JSON.stringify(e.data)).join(",");
 					return {
 						error: {
 							status: 400,
@@ -279,7 +279,7 @@ const extended = gtsApi.injectEndpoints({
 				).flatMap((emoji) => emoji || []);
 
 				if (errors.length !== 0) {
-					const errData = errors.map(e => JSON.stringify(e.data)).join(",")
+					const errData = errors.map(e => JSON.stringify(e.data)).join(",");
 					return {
 						error: {
 							status: 400,
