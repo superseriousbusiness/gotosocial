@@ -32,7 +32,7 @@ import (
 // ensures that requestingAccount can mute or unmute it.
 //
 // It checks:
-//   - Status exists and is owned by requesting account.
+//   - Status exists and belongs to or mentions requesting account.
 //   - Status is not a boost.
 //   - Status has a thread ID.
 func (p *Processor) getMuteableStatus(
@@ -50,8 +50,9 @@ func (p *Processor) getMuteableStatus(
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if targetStatus.AccountID != requestingAccount.ID {
-		err := gtserror.Newf("status %s does not belong to account %s", targetStatusID, requestingAccount.ID)
+	if !targetStatus.BelongsToAccount(requestingAccount.ID) &&
+		!targetStatus.MentionsAccount(requestingAccount.ID) {
+		err := gtserror.Newf("status %s does not belong to or mention account %s", targetStatusID, requestingAccount.ID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 

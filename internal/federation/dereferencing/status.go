@@ -24,6 +24,8 @@ import (
 	"net/url"
 	"time"
 
+	"slices"
+
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -293,6 +295,12 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
 	}
 
+	// Now that we know who this status replies to (handled by ASStatusToStatus)
+	// and who it mentions, we can add a ThreadID to it if necessary.
+	if err := d.threadStatus(ctx, latestStatus); err != nil {
+		return nil, nil, gtserror.Newf("error checking / creating threadID for status %s: %w", uri, err)
+	}
+
 	// Ensure the status' tags are populated, (changes are expected / okay).
 	if err := d.fetchStatusTags(ctx, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating tags for status %s: %w", uri, err)
@@ -407,6 +415,57 @@ func (d *Dereferencer) fetchStatusMentions(ctx context.Context, requestUser stri
 		i++
 	}
 
+	return nil
+}
+
+func (d *Dereferencer) threadStatus(ctx context.Context, status *gtsmodel.Status) error {
+	if status.InReplyTo != nil {
+		if parentThreadID := status.InReplyTo.ThreadID; parentThreadID != "" {
+			// Simplest case: parent status
+			// is threaded, so inherit threadID.
+			status.ThreadID = parentThreadID
+			return nil
+		}
+	}
+
+	// Parent wasn't threaded. If this
+	// status mentions a local account,
+	// we should thread it so that local
+	// account can mute it if they want.
+	mentionsLocal := slices.ContainsFunc(
+		status.Mentions,
+		func(m *gtsmodel.Mention) bool {
+			// If TargetAccount couldn't
+			// be deref'd, we know it's not
+			// a local account, so only
+			// check for non-nil accounts.
+			return m.TargetAccount != nil &&
+				m.TargetAccount.IsLocal()
+		},
+	)
+
+	if !mentionsLocal {
+		// Status doesn't mention a
+		// local account, so we don't
+		// need to thread it.
+		return nil
+	}
+
+	// Status mentions a local account.
+	// Create a new thread and assign
+	// it to the status.
+	threadID := id.NewULID()
+
+	if err := d.state.DB.PutThread(
+		ctx,
+		&gtsmodel.Thread{
+			ID: threadID,
+		},
+	); err != nil {
+		return gtserror.Newf("error inserting new thread in db: %w", err)
+	}
+
+	status.ThreadID = threadID
 	return nil
 }
 

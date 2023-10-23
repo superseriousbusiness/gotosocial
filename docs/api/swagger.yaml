@@ -6530,7 +6530,7 @@ paths:
     /api/v1/statuses/{id}/mute:
         post:
             description: |-
-                Target status must belong to you.
+                Target status must belong to you or mention you.
 
                 Status thread mutes and unmutes are idempotent. If you already mute a thread, muting it again just means it stays muted and you'll get 200 OK back.
             operationId: statusMute
@@ -6744,7 +6744,7 @@ paths:
     /api/v1/statuses/{id}/unmute:
         post:
             description: |-
-                Target status must belong to you.
+                Target status must belong to you or mention you.
 
                 Status thread mutes and unmutes are idempotent. If you already unmuted a thread, unmuting it again just means it stays unmuted and you'll get 200 OK back.
             operationId: statusUnmute

@@ -30,7 +30,7 @@ import (
 //
 // Mute a status's thread. This prevents notifications from being created for future replies, likes, boosts etc in the thread of which the target status is a part.
 //
-// Target status must belong to you.
+// Target status must belong to you or mention you.
 //
 // Status thread mutes and unmutes are idempotent. If you already mute a thread, muting it again just means it stays muted and you'll get 200 OK back.
 //

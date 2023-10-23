@@ -364,7 +364,6 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 			status.InReplyTo = inReplyTo
 			status.InReplyToAccountID = inReplyTo.AccountID
 			status.InReplyToAccount = inReplyTo.Account
-			status.ThreadID = inReplyTo.ThreadID
 		}
 	}
 
