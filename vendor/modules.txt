@@ -53,7 +53,7 @@ codeberg.org/gruf/go-mangler
 # codeberg.org/gruf/go-maps v1.0.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-maps
-# codeberg.org/gruf/go-mutexes v1.1.5
+# codeberg.org/gruf/go-mutexes v1.2.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-pools v1.1.0

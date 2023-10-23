@@ -20,7 +20,6 @@ package federatingdb
 import (
 	"context"
 
-	"codeberg.org/gruf/go-mutexes"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -40,7 +39,6 @@ type DB interface {
 // FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
 // It doesn't care what the underlying implementation of the DB interface is, as long as it works.
 type federatingDB struct {
-	locks     mutexes.MutexMap
 	state     *state.State
 	converter *typeutils.Converter
 }
@@ -48,7 +46,6 @@ type federatingDB struct {
 // New returns a DB interface using the given database and config
 func New(state *state.State, converter *typeutils.Converter) DB {
 	fdb := federatingDB{
-		locks:     mutexes.NewMap(-1, -1), // use defaults
 		state:     state,
 		converter: converter,
 	}
