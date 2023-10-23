@@ -14,7 +14,6 @@ run:
 linters:
   # enable some extra linters, see here for the list: https://golangci-lint.run/usage/linters/
   enable:
-    - goconst
     - gocritic
     - gofmt
     - goheader

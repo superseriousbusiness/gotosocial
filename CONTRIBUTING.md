@@ -148,7 +148,7 @@ In case this post disappears, here are the steps (slightly modified):
 
 #### Binary
 
-To get started, you first need to have Go installed. GtS is currently using Go 1.20, so you should take that too. See [here](https://golang.org/doc/install) for installation instructions.
+To get started, you first need to have Go installed. GtS is currently using Go 1.21, so you should take that too. See [here](https://golang.org/doc/install) for installation instructions.
 
 Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
