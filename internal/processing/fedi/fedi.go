@@ -26,13 +26,13 @@ import (
 
 type Processor struct {
 	state     *state.State
-	federator federation.Federator
+	federator *federation.Federator
 	converter *typeutils.Converter
 	filter    *visibility.Filter
 }
 
 // New returns a new fedi processor.
-func New(state *state.State, converter *typeutils.Converter, federator federation.Federator, filter *visibility.Filter) Processor {
+func New(state *state.State, converter *typeutils.Converter, federator *federation.Federator, filter *visibility.Filter) Processor {
 	return Processor{
 		state:     state,
 		federator: federator,

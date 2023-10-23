@@ -60,8 +60,10 @@ func accountUpToDate(account *gtsmodel.Account) bool {
 	return false
 }
 
-// GetAccountByURI: implements Dereferencer{}.GetAccountByURI.
-func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
+// GetAccountByURI will attempt to fetch an accounts by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
+// whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority account information
+// may be enqueued for asynchronous fetching, e.g. featured account statuses (pins). An ActivityPub object indicates the account was dereferenced.
+func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
 	// Fetch and dereference account if necessary.
 	account, apubAcc, err := d.getAccountByURI(ctx,
 		requestUser,
@@ -84,7 +86,7 @@ func (d *deref) GetAccountByURI(ctx context.Context, requestUser string, uri *ur
 }
 
 // getAccountByURI is a package internal form of .GetAccountByURI() that doesn't bother dereferencing featured posts on update.
-func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
+func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
 	var (
 		account *gtsmodel.Account
 		uriStr  = uri.String()
@@ -157,8 +159,10 @@ func (d *deref) getAccountByURI(ctx context.Context, requestUser string, uri *ur
 	return latest, apubAcc, nil
 }
 
-// GetAccountByUsernameDomain: implements Dereferencer{}.GetAccountByUsernameDomain.
-func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, ap.Accountable, error) {
+// GetAccountByUsernameDomain will attempt to fetch an accounts by its username@domain, first checking the database. In the case of a newly-met remote model,
+// or a remote model whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority
+// account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins). An ActivityPub object indicates the account was dereferenced.
+func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, ap.Accountable, error) {
 	if domain == config.GetHost() || domain == config.GetAccountDomain() {
 		// We do local lookups using an empty domain,
 		// else it will fail the db search below.
@@ -224,8 +228,10 @@ func (d *deref) GetAccountByUsernameDomain(ctx context.Context, requestUser stri
 	return latest, apubAcc, nil
 }
 
-// RefreshAccount: implements Dereferencer{}.RefreshAccount.
-func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error) {
+// RefreshAccount updates the given account if remote and last_fetched is beyond fetch interval, or if force is set. An updated account model is returned,
+// but in the case of dereferencing, some low-priority account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
+// An ActivityPub object indicates the account was dereferenced (i.e. updated).
+func (d *Dereferencer) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error) {
 	// Check whether needs update (and not forced).
 	if accountUpToDate(account) && !force {
 		return account, nil, nil
@@ -264,8 +270,9 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 	return latest, apubAcc, nil
 }
 
-// RefreshAccountAsync: implements Dereferencer{}.RefreshAccountAsync.
-func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) {
+// RefreshAccountAsync enqueues the given account for an asychronous update fetching, if last_fetched is beyond fetch interval, or if forcc is set.
+// This is a more optimized form of manually enqueueing .UpdateAccount() to the federation worker, since it only enqueues update if necessary.
+func (d *Dereferencer) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) {
 	// Check whether needs update (and not forced).
 	if accountUpToDate(account) && !force {
 		return
@@ -294,7 +301,7 @@ func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, acc
 }
 
 // enrichAccount will enrich the given account, whether a new barebones model, or existing model from the database. It handles necessary dereferencing, webfingering etc.
-func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account, apubAcc ap.Accountable) (*gtsmodel.Account, ap.Accountable, error) {
+func (d *Dereferencer) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account, apubAcc ap.Accountable) (*gtsmodel.Account, ap.Accountable, error) {
 	// Pre-fetch a transport for requesting username, used by later deref procedures.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
@@ -472,7 +479,7 @@ func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.
 	return latestAcc, apubAcc, nil
 }
 
-func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.Transport, existing, latestAcc *gtsmodel.Account) error {
+func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.Transport, existing, latestAcc *gtsmodel.Account) error {
 	if latestAcc.AvatarRemoteURL == "" {
 		// No avatar set on newest model, leave
 		// latest avatar attachment ID empty.
@@ -562,7 +569,7 @@ func (d *deref) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.T
 	return nil
 }
 
-func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.Transport, existing, latestAcc *gtsmodel.Account) error {
+func (d *Dereferencer) fetchRemoteAccountHeader(ctx context.Context, tsport transport.Transport, existing, latestAcc *gtsmodel.Account) error {
 	if latestAcc.HeaderRemoteURL == "" {
 		// No header set on newest model, leave
 		// latest header attachment ID empty.
@@ -652,7 +659,7 @@ func (d *deref) fetchRemoteAccountHeader(ctx context.Context, tsport transport.T
 	return nil
 }
 
-func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {
+func (d *Dereferencer) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gtsmodel.Account, requestingUsername string) (bool, error) {
 	maybeEmojis := targetAccount.Emojis
 	maybeEmojiIDs := targetAccount.EmojiIDs
 
@@ -766,7 +773,7 @@ func (d *deref) fetchRemoteAccountEmojis(ctx context.Context, targetAccount *gts
 
 // dereferenceAccountFeatured dereferences an account's featuredCollectionURI (if not empty). For each discovered status, this status will
 // be dereferenced (if necessary) and marked as pinned (if necessary). Then, old pins will be removed if they're not included in new pins.
-func (d *deref) dereferenceAccountFeatured(ctx context.Context, requestUser string, account *gtsmodel.Account) error {
+func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUser string, account *gtsmodel.Account) error {
 	uri, err := url.Parse(account.FeaturedCollectionURI)
 	if err != nil {
 		return err

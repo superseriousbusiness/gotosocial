@@ -47,7 +47,7 @@ type AuthStandardTestSuite struct {
 	storage      *storage.Driver
 	state        state.State
 	mediaManager *media.Manager
-	federator    federation.Federator
+	federator    *federation.Federator
 	processor    *processing.Processor
 	emailSender  email.Sender
 	idp          oidc.IDP

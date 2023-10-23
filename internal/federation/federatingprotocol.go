@@ -93,7 +93,7 @@ func newErrOtherIRIBlocked(
 // In this case, the DelegateActor implementation must not write a response
 // to the ResponseWriter as is expected that the caller to PostInbox will
 // do so when handling the error.
-func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
+func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Request, activity pub.Activity) (context.Context, error) {
 	// Extract any other IRIs involved in this activity.
 	otherIRIs := []*url.URL{}
 
@@ -186,7 +186,7 @@ func (f *federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 // Finally, if the authentication and authorization succeeds, then
 // authenticated must be true and error nil. The request will continue
 // to be processed.
-func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	log.Tracef(ctx, "received request to authenticate inbox %s", r.URL.String())
 
 	// Ensure this is an inbox path, and fetch the inbox owner
@@ -298,7 +298,7 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 // Blocked should determine whether to permit a set of actors given by
 // their ids are able to interact with this particular end user due to
 // being blocked or other application-specific logic.
-func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
+func (f *Federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, error) {
 	// Fetch relevant items from request context.
 	// These should have been set further up the flow.
 	receivingAccount := gtscontext.ReceivingAccount(ctx)
@@ -498,7 +498,7 @@ func (f *federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 //
 // Applications are not expected to handle every single ActivityStreams
 // type and extension. The unhandled ones are passed to DefaultCallback.
-func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.FederatingWrappedCallbacks, other []interface{}, err error) {
+func (f *Federator) FederatingCallbacks(ctx context.Context) (wrapped pub.FederatingWrappedCallbacks, other []interface{}, err error) {
 	wrapped = pub.FederatingWrappedCallbacks{
 		// OnFollow determines what action to take for this
 		// particular callback if a Follow Activity is handled.
@@ -537,7 +537,7 @@ func (f *federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 // Applications are not expected to handle every single ActivityStreams
 // type and extension, so the unhandled ones are passed to
 // DefaultCallback.
-func (f *federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
+func (f *Federator) DefaultCallback(ctx context.Context, activity pub.Activity) error {
 	log.Debugf(ctx, "received unhandle-able activity type (%s) so ignoring it", activity.GetTypeName())
 	return nil
 }
@@ -546,7 +546,7 @@ func (f *federator) DefaultCallback(ctx context.Context, activity pub.Activity) 
 // an activity to determine if inbox forwarding needs to occur.
 //
 // Zero or negative numbers indicate infinite recursion.
-func (f *federator) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
+func (f *Federator) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 4
 }
@@ -556,7 +556,7 @@ func (f *federator) MaxInboxForwardingRecursionDepth(ctx context.Context) int {
 // delivery.
 //
 // Zero or negative numbers indicate infinite recursion.
-func (f *federator) MaxDeliveryRecursionDepth(ctx context.Context) int {
+func (f *Federator) MaxDeliveryRecursionDepth(ctx context.Context) int {
 	// TODO
 	return 4
 }
@@ -568,7 +568,7 @@ func (f *federator) MaxDeliveryRecursionDepth(ctx context.Context) int {
 //
 // The activity is provided as a reference for more intelligent
 // logic to be used, but the implementation must not modify it.
-func (f *federator) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
+func (f *Federator) FilterForwarding(ctx context.Context, potentialRecipients []*url.URL, a pub.Activity) ([]*url.URL, error) {
 	// TODO
 	return []*url.URL{}, nil
 }
@@ -581,7 +581,7 @@ func (f *federator) FilterForwarding(ctx context.Context, potentialRecipients []
 //
 // Always called, regardless whether the Federated Protocol or Social
 // API is enabled.
-func (f *federator) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (f *Federator) GetInbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return streams.NewActivityStreamsOrderedCollectionPage(), nil

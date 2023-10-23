@@ -30,7 +30,7 @@ import (
 type Processor struct {
 	state     *state.State
 	converter *typeutils.Converter
-	federator federation.Federator
+	federator *federation.Federator
 	filter    *visibility.Filter
 }
 
@@ -38,7 +38,7 @@ type Processor struct {
 func New(
 	state *state.State,
 	converter *typeutils.Converter,
-	federator federation.Federator,
+	federator *federation.Federator,
 	filter *visibility.Filter,
 ) Processor {
 	return Processor{

@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
+func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
 	var (
 		shortcodeDomain = shortcode + "@" + domain
 		processingEmoji *media.ProcessingEmoji
@@ -88,7 +88,7 @@ func (d *deref) GetRemoteEmoji(ctx context.Context, requestingUsername string, r
 	return processingEmoji, nil
 }
 
-func (d *deref) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji, requestingUsername string) ([]*gtsmodel.Emoji, error) {
+func (d *Dereferencer) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji, requestingUsername string) ([]*gtsmodel.Emoji, error) {
 	// At this point we should know:
 	// * the AP uri of the emoji
 	// * the domain of the emoji

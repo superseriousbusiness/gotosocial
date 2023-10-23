@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func GetParseMentionFunc(dbConn db.DB, federator federation.Federator) gtsmodel.ParseMentionFunc {
+func GetParseMentionFunc(dbConn db.DB, federator *federation.Federator) gtsmodel.ParseMentionFunc {
 	return func(ctx context.Context, targetAccount string, originAccountID string, statusID string) (*gtsmodel.Mention, error) {
 		// get the origin account first since we'll need it to create the mention
 		originAccount, err := dbConn.GetAccountByID(ctx, originAccountID)

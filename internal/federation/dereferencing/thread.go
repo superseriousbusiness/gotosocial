@@ -38,7 +38,7 @@ import (
 // ancesters we are willing to follow before returning error.
 const maxIter = 1000
 
-func (d *deref) dereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
+func (d *Dereferencer) dereferenceThread(ctx context.Context, username string, statusIRI *url.URL, status *gtsmodel.Status, statusable ap.Statusable) {
 	// Ensure that ancestors have been fully dereferenced
 	if err := d.DereferenceStatusAncestors(ctx, username, status); err != nil {
 		log.Error(ctx, err)
@@ -50,11 +50,8 @@ func (d *deref) dereferenceThread(ctx context.Context, username string, statusIR
 	}
 }
 
-func (d *deref) DereferenceStatusAncestors(
-	ctx context.Context,
-	username string,
-	status *gtsmodel.Status,
-) error {
+// DereferenceStatusAncestors iterates upwards from the given status, using InReplyToURI, to ensure that as many parent statuses as possible are dereferenced.
+func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username string, status *gtsmodel.Status) error {
 	// Start log entry with fields
 	l := log.WithContext(ctx).
 		WithFields(kv.Fields{
@@ -220,7 +217,8 @@ func (d *deref) DereferenceStatusAncestors(
 	return gtserror.Newf("reached %d ancestor iterations for %q", maxIter, status.URI)
 }
 
-func (d *deref) DereferenceStatusDescendants(ctx context.Context, username string, statusIRI *url.URL, parent ap.Statusable) error {
+// DereferenceStatusDescendents iterates downwards from the given status, using its replies, to ensure that as many children statuses as possible are dereferenced.
+func (d *Dereferencer) DereferenceStatusDescendants(ctx context.Context, username string, statusIRI *url.URL, parent ap.Statusable) error {
 	statusIRIStr := statusIRI.String()
 
 	// Start log entry with fields

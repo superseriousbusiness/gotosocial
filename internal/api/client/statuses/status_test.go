@@ -39,7 +39,7 @@ type StatusStandardTestSuite struct {
 	db           db.DB
 	tc           *typeutils.Converter
 	mediaManager *media.Manager
-	federator    federation.Federator
+	federator    *federation.Federator
 	emailSender  email.Sender
 	processor    *processing.Processor
 	storage      *storage.Driver

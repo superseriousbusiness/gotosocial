@@ -127,7 +127,7 @@ func (p *Processor) Workers() *workers.Processor {
 // NewProcessor returns a new Processor.
 func NewProcessor(
 	converter *typeutils.Converter,
-	federator federation.Federator,
+	federator *federation.Federator,
 	oauthServer oauth.Server,
 	mediaManager *mm.Manager,
 	state *state.State,
