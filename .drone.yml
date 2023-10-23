@@ -12,7 +12,7 @@ steps:
   # We use golangci-lint for linting.
   # See: https://golangci-lint.run/
   - name: lint
-    image: golangci/golangci-lint:v1.53.1
+    image: golangci/golangci-lint:v1.55.0
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.21.3-alpine
+    image: golang:1.21-alpine
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -192,6 +192,6 @@ steps:
 
 ---
 kind: signature
-hmac: 5fcdf64ba0fb33e0b8dfa7518fb1d121fe8dafa79f98dcd55d3d030378064f13
+hmac: 00f69df57e8852d610f8d570c504aae22d315c2a0ff4808ef8f191554745c5ae
 
 ...
