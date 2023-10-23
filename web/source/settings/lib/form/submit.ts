@@ -87,10 +87,10 @@ export default function useFormSubmit(
 			if (e.nativeEvent.submitter) {
 				// We want the name of the element that was invoked to submit this form,
 				// which will be something that extends HTMLElement, though we don't know
-				// what at this point.
+				// what at this point. If it's an empty string, fall back to undefined.
 				// 
 				// See: https://developer.mozilla.org/en-US/docs/Web/API/SubmitEvent/submitter
-				action = (e.nativeEvent.submitter as Object as { name: string }).name;
+				action = (e.nativeEvent.submitter as Object as { name: string }).name || undefined;
 			} else {
 				// No submitter defined. Fall back
 				// to just use the FormSubmitEvent.
