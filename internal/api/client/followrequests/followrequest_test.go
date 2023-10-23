@@ -45,7 +45,7 @@ type FollowRequestStandardTestSuite struct {
 	db           db.DB
 	storage      *storage.Driver
 	mediaManager *media.Manager
-	federator    federation.Federator
+	federator    *federation.Federator
 	processor    *processing.Processor
 	emailSender  email.Sender
 	state        state.State

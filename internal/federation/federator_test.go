@@ -39,7 +39,7 @@ type FederatorStandardTestSuite struct {
 	typeconverter       *typeutils.Converter
 	transportController transport.Controller
 	httpClient          *testrig.MockHTTPClient
-	federator           federation.Federator
+	federator           *federation.Federator
 
 	testAccounts   map[string]*gtsmodel.Account
 	testStatuses   map[string]*gtsmodel.Status

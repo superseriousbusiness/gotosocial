@@ -18,44 +18,22 @@
 package federation
 
 import (
-	"context"
-
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// Federator wraps various interfaces and functions to manage activitypub federation from gotosocial
-type Federator interface {
-	// FederatingActor returns the underlying pub.FederatingActor, which can be used to send activities, and serve actors at inboxes/outboxes.
-	FederatingActor() pub.FederatingActor
-	// FederatingDB returns the underlying FederatingDB interface.
-	FederatingDB() federatingdb.DB
-	// TransportController returns the underlying transport controller.
-	TransportController() transport.Controller
-
-	// AuthenticateFederatedRequest can be used to check the authenticity of incoming http-signed requests for federating resources.
-	// The given username will be used to create a transport for making outgoing requests. See the implementation for more detailed comments.
-	//
-	// If the request is valid and passes authentication, the URL of the key owner ID will be returned, as well as true, and nil.
-	//
-	// If the request does not pass authentication, or there's a domain block, nil, false, nil will be returned.
-	//
-	// If something goes wrong during authentication, nil, false, and an error will be returned.
-	AuthenticateFederatedRequest(ctx context.Context, username string) (*PubKeyAuth, gtserror.WithCode)
-
+var _ interface {
 	pub.CommonBehavior
 	pub.FederatingProtocol
-	dereferencing.Dereferencer
-}
+} = &Federator{}
 
-type federator struct {
+type Federator struct {
 	db                  db.DB
 	federatingDB        federatingdb.DB
 	clock               pub.Clock
@@ -66,33 +44,40 @@ type federator struct {
 	dereferencing.Dereferencer
 }
 
-// NewFederator returns a new federator
-func NewFederator(state *state.State, federatingDB federatingdb.DB, transportController transport.Controller, converter *typeutils.Converter, mediaManager *media.Manager) Federator {
-	dereferencer := dereferencing.NewDereferencer(state, converter, transportController, mediaManager)
-
+// NewFederator returns a new federator instance.
+func NewFederator(
+	state *state.State,
+	federatingDB federatingdb.DB,
+	transportController transport.Controller,
+	converter *typeutils.Converter,
+	mediaManager *media.Manager,
+) *Federator {
 	clock := &Clock{}
-	f := &federator{
+	f := &Federator{
 		db:                  state.DB,
 		federatingDB:        federatingDB,
-		clock:               &Clock{},
+		clock:               clock,
 		converter:           converter,
 		transportController: transportController,
 		mediaManager:        mediaManager,
-		Dereferencer:        dereferencer,
+		Dereferencer:        dereferencing.NewDereferencer(state, converter, transportController, mediaManager),
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor
 	return f
 }
 
-func (f *federator) FederatingActor() pub.FederatingActor {
+// FederatingActor returns the underlying pub.FederatingActor, which can be used to send activities, and serve actors at inboxes/outboxes.
+func (f *Federator) FederatingActor() pub.FederatingActor {
 	return f.actor
 }
 
-func (f *federator) FederatingDB() federatingdb.DB {
+// FederatingDB returns the underlying FederatingDB interface.
+func (f *Federator) FederatingDB() federatingdb.DB {
 	return f.federatingDB
 }
 
-func (f *federator) TransportController() transport.Controller {
+// TransportController returns the underlying transport controller.
+func (f *Federator) TransportController() transport.Controller {
 	return f.transportController
 }

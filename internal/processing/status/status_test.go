@@ -41,7 +41,7 @@ type StatusStandardTestSuite struct {
 	storage       *storage.Driver
 	state         state.State
 	mediaManager  *media.Manager
-	federator     federation.Federator
+	federator     *federation.Federator
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token

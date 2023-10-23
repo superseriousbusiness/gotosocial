@@ -30,7 +30,7 @@ import (
 )
 
 // dereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
-func (d *deref) dereferenceCollectionPage(ctx context.Context, username string, pageIRI *url.URL) (ap.CollectionPageIterator, error) {
+func (d *Dereferencer) dereferenceCollectionPage(ctx context.Context, username string, pageIRI *url.URL) (ap.CollectionPageIterator, error) {
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, pageIRI.Host); blocked || err != nil {
 		return nil, gtserror.Newf("domain %s is blocked", pageIRI.Host)
 	}

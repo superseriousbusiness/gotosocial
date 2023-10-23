@@ -51,7 +51,7 @@ type MediaUpdateTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
-	federator    federation.Federator
+	federator    *federation.Federator
 	tc           *typeutils.Converter
 	mediaManager *media.Manager
 	oauthServer  oauth.Server

@@ -21,7 +21,7 @@ import (
 	"net/url"
 )
 
-func (d *deref) Handshaking(username string, remoteAccountID *url.URL) bool {
+func (d *Dereferencer) Handshaking(username string, remoteAccountID *url.URL) bool {
 	d.handshakesMu.Lock()
 	defer d.handshakesMu.Unlock()
 
@@ -51,7 +51,7 @@ func (d *deref) Handshaking(username string, remoteAccountID *url.URL) bool {
 	return false
 }
 
-func (d *deref) startHandshake(username string, remoteAccountID *url.URL) {
+func (d *Dereferencer) startHandshake(username string, remoteAccountID *url.URL) {
 	d.handshakesMu.Lock()
 	defer d.handshakesMu.Unlock()
 
@@ -68,7 +68,7 @@ func (d *deref) startHandshake(username string, remoteAccountID *url.URL) {
 	d.handshakes[username] = remoteIDs
 }
 
-func (d *deref) stopHandshake(username string, remoteAccountID *url.URL) {
+func (d *Dereferencer) stopHandshake(username string, remoteAccountID *url.URL) {
 	d.handshakesMu.Lock()
 	defer d.handshakesMu.Unlock()
 

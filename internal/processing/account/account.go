@@ -42,7 +42,7 @@ type Processor struct {
 	oauthServer  oauth.Server
 	filter       *visibility.Filter
 	formatter    *text.Formatter
-	federator    federation.Federator
+	federator    *federation.Federator
 	parseMention gtsmodel.ParseMentionFunc
 }
 
@@ -53,7 +53,7 @@ func New(
 	converter *typeutils.Converter,
 	mediaManager *media.Manager,
 	oauthServer oauth.Server,
-	federator federation.Federator,
+	federator *federation.Federator,
 	filter *visibility.Filter,
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {

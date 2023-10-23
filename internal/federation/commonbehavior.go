@@ -51,7 +51,7 @@ import (
 // Finally, if the authentication and authorization succeeds, then
 // authenticated must be true and error nil. The request will continue
 // to be processed.
-func (f *federator) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (f *Federator) AuthenticateGetInbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return ctx, false, nil
@@ -76,7 +76,7 @@ func (f *federator) AuthenticateGetInbox(ctx context.Context, w http.ResponseWri
 // Finally, if the authentication and authorization succeeds, then
 // authenticated must be true and error nil. The request will continue
 // to be processed.
-func (f *federator) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
+func (f *Federator) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, bool, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return ctx, false, nil
@@ -90,7 +90,7 @@ func (f *federator) AuthenticateGetOutbox(ctx context.Context, w http.ResponseWr
 //
 // Always called, regardless whether the Federated Protocol or Social
 // API is enabled.
-func (f *federator) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
+func (f *Federator) GetOutbox(ctx context.Context, r *http.Request) (vocab.ActivityStreamsOrderedCollectionPage, error) {
 	// IMPLEMENTATION NOTE: For GoToSocial, we serve GETS to outboxes and inboxes through
 	// the CLIENT API, not through the federation API, so we just do nothing here.
 	return streams.NewActivityStreamsOrderedCollectionPage(), nil

@@ -37,7 +37,7 @@ type Processor struct {
 
 func New(
 	state *state.State,
-	federator federation.Federator,
+	federator *federation.Federator,
 	converter *typeutils.Converter,
 	filter *visibility.Filter,
 	emailSender email.Sender,

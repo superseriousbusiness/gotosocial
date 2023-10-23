@@ -36,7 +36,7 @@ import (
 type federate struct {
 	// Embed federator to give access
 	// to send and retrieve functions.
-	federation.Federator
+	*federation.Federator
 	state     *state.State
 	converter *typeutils.Converter
 }

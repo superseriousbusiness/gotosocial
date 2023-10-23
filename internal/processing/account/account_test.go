@@ -50,7 +50,7 @@ type AccountStandardTestSuite struct {
 	oauthServer         oauth.Server
 	fromClientAPIChan   chan messages.FromClientAPI
 	transportController transport.Controller
-	federator           federation.Federator
+	federator           *federation.Federator
 	emailSender         email.Sender
 	sentEmails          map[string]string
 
