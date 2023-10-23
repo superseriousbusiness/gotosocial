@@ -28,16 +28,10 @@ codeberg.org/gruf/go-errors/v2
 # codeberg.org/gruf/go-fastcopy v1.1.2
 ## explicit; go 1.17
 codeberg.org/gruf/go-fastcopy
-# codeberg.org/gruf/go-fastpath v1.0.3
-## explicit; go 1.14
-codeberg.org/gruf/go-fastpath
 # codeberg.org/gruf/go-fastpath/v2 v2.0.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath/v2
-# codeberg.org/gruf/go-hashenc v1.0.2
-## explicit; go 1.16
-codeberg.org/gruf/go-hashenc
-# codeberg.org/gruf/go-iotools v0.0.0-20230601182242-d933b07dcbef
+# codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f
 ## explicit; go 1.19
 codeberg.org/gruf/go-iotools
 # codeberg.org/gruf/go-kv v1.6.4
@@ -56,16 +50,13 @@ codeberg.org/gruf/go-maps
 # codeberg.org/gruf/go-mutexes v1.2.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
-# codeberg.org/gruf/go-pools v1.1.0
-## explicit; go 1.16
-codeberg.org/gruf/go-pools
 # codeberg.org/gruf/go-runners v1.6.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.2.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
-# codeberg.org/gruf/go-store/v2 v2.2.2
+# codeberg.org/gruf/go-store/v2 v2.2.4
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
@@ -348,7 +339,7 @@ github.com/json-iterator/go
 # github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
 ## explicit
 github.com/kballard/go-shellquote
-# github.com/klauspost/compress v1.16.7
+# github.com/klauspost/compress v1.17.2
 ## explicit; go 1.18
 github.com/klauspost/compress/flate
 github.com/klauspost/compress/gzip

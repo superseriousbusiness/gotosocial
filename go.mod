@@ -11,13 +11,13 @@ require (
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.2.0
 	codeberg.org/gruf/go-fastcopy v1.1.2
-	codeberg.org/gruf/go-iotools v0.0.0-20230601182242-d933b07dcbef
+	codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f
 	codeberg.org/gruf/go-kv v1.6.4
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.2.0
 	codeberg.org/gruf/go-runners v1.6.1
 	codeberg.org/gruf/go-sched v1.2.3
-	codeberg.org/gruf/go-store/v2 v2.2.2
+	codeberg.org/gruf/go-store/v2 v2.2.4
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.3.0
 	github.com/abema/go-mp4 v1.1.1
@@ -77,12 +77,9 @@ require (
 	codeberg.org/gruf/go-atomics v1.1.0 // indirect
 	codeberg.org/gruf/go-bitutil v1.1.0 // indirect
 	codeberg.org/gruf/go-bytes v1.0.2 // indirect
-	codeberg.org/gruf/go-fastpath v1.0.3 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
-	codeberg.org/gruf/go-hashenc v1.0.2 // indirect
 	codeberg.org/gruf/go-mangler v1.2.3 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
-	codeberg.org/gruf/go-pools v1.1.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
@@ -128,7 +125,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.16.7 // indirect
+	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

@@ -26,17 +26,6 @@ func OpenDisk(path string, cfg *storage.DiskConfig) (*KVStore, error) {
 	return OpenStorage(storage)
 }
 
-func OpenBlock(path string, cfg *storage.BlockConfig) (*KVStore, error) {
-	// Attempt to open block storage
-	storage, err := storage.OpenBlock(path, cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	// Return new KVStore
-	return OpenStorage(storage)
-}
-
 func OpenMemory(overwrites bool) *KVStore {
 	return New(storage.OpenMemory(100, overwrites))
 }
@@ -69,10 +58,10 @@ func New(storage storage.Storage) *KVStore {
 	if storage == nil {
 		panic("nil storage")
 	}
-	return &KVStore{
-		mu: mutexes.NewMap(-1, -1),
-		st: storage,
-	}
+	kv := new(KVStore)
+	kv.mu.Init(-1, -1) // defaults
+	kv.st = storage
+	return kv
 }
 
 // RLock acquires a read-lock on supplied key, returning unlock function.
