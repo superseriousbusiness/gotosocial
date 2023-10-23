@@ -120,6 +120,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Workers.Start()
 	defer state.Workers.Stop()
 
+	// Initialize per-URI federation locks.
+	state.FedLocks.Init(-1, -1) // defaults
+
 	// Add a task to the scheduler to sweep caches.
 	// Frequency = 1 * minute
 	// Threshold = 80% capacity
