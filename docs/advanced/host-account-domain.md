@@ -102,3 +102,17 @@ myservice:
     - 'traefik.http.middlewares.myservice-gts.redirectregex.replacement=https://social.$${1}/.well-known/$${2}'
     - 'traefik.http.routers.myservice.middlewares=myservice-gts@docker'
 ```
+
+### Caddy 2
+
+Ensure that the redirect is configured on the account domain in your `Caddyfile`. The following example assumes the account domain as `example.com`, and host domain as `social.example.com`.
+
+```
+example.com {
+        redir /.well-known/host-meta* https://social.example.com{uri} permanent
+        redir /.well-known/webfinger* https://social.example.com{uri} permanent
+        redir /.well-known/nodeinfo* https://social.example.com{uri} permanent
+}
+```
+
+
