@@ -127,11 +127,12 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 		{
 			changedOnly: false,
 			onFinish: ({ data }) => {
-				if (data != undefined) {
-					form.selectedEmoji.updateMultiple(
-						// uncheck all successfully processed emoji
-						data.map(([id]) => [id, { checked: false }])
-					);
+				if (data) {
+					// uncheck all successfully processed emoji
+					const processed = data.map((emoji) => {
+						return [emoji.id, { checked: false }];
+					});
+					form.selectedEmoji.updateMultiple(processed);
 				}
 			}
 		}

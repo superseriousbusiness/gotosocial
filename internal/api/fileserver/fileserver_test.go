@@ -41,7 +41,7 @@ type FileserverTestSuite struct {
 	db           db.DB
 	storage      *storage.Driver
 	state        state.State
-	federator    federation.Federator
+	federator    *federation.Federator
 	tc           *typeutils.Converter
 	processor    *processing.Processor
 	mediaManager *media.Manager

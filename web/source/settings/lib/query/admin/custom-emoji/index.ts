@@ -199,13 +199,16 @@ const extended = gtsApi.injectEndpoints({
 				});
 
 				if (errors.length !== 0) {
+					const errData = errors.map(e => JSON.stringify(e.data)).join(",");
 					return {
 						error: {
 							status: 400,
 							statusText: 'Bad Request',
-							data: {"error":`One or more errors fetching custom emojis: ${errors}`},
+							data: {
+								error: `One or more errors fetching custom emojis: [${errData}]`
+							},
 						},
-					};
+					};	
 				}
 				
 				// Return our ID'd
@@ -222,14 +225,18 @@ const extended = gtsApi.injectEndpoints({
 
 		patchRemoteEmojis: build.mutation({
 			async queryFn({ action, ...formData }, _api, _extraOpts, fetchWithBQ) {
-				const data: CustomEmoji[] = [];
 				const errors: FetchBaseQueryError[] = [];
-
-				formData.selectEmoji.forEach(async(emoji: CustomEmoji) => {
-					let body = {
+				const selectedEmoji: CustomEmoji[] = formData.selectedEmoji;
+				
+				// Map function to get a promise
+				// of an emoji (or null).
+				const copyEmoji = async(emoji: CustomEmoji) => {
+					let body: {
+						type: string;
+						shortcode?: string;
+						category?: string;
+					} = {
 						type: action,
-						shortcode: "",
-						category: "",
 					};
 
 					if (action == "copy") {
@@ -243,22 +250,43 @@ const extended = gtsApi.injectEndpoints({
 						method: "PATCH",
 						url: `/api/v1/admin/custom_emojis/${emoji.id}`,
 						asForm: true,
-						body: body
+						body: body,
 					});
+
 					if (emojiRes.error) {
 						errors.push(emojiRes.error);
-					} else {
-						// Got it!
-						data.push(emojiRes.data as CustomEmoji);
+						return null;
 					}
-				});
+					
+					// Instead of mapping to the emoji we just got in emojiRes.data,
+					// we map here to the existing emoji. The reason for this is that
+					// if we return the new emoji, it has a new ID, and the checklist
+					// component calling this function gets its state mixed up.
+					//
+					// For example, say you copy an emoji with ID "some_emoji"; the
+					// result would return an emoji with ID "some_new_emoji_id". The
+					// checklist state would then contain one emoji with ID "some_emoji",
+					// and the new copy of the emoji with ID "some_new_emoji_id", leading
+					// to weird-looking bugs where it suddenly appears as if the searched
+					// status has another blank emoji attached to it.
+					return emoji;
+				};
+
+				// Wait for all the promises to
+				// resolve and remove any nulls.
+				const data = (
+					await Promise.all(selectedEmoji.map(copyEmoji))
+				).flatMap((emoji) => emoji || []);
 
 				if (errors.length !== 0) {
+					const errData = errors.map(e => JSON.stringify(e.data)).join(",");
 					return {
 						error: {
 							status: 400,
 							statusText: 'Bad Request',
-							data: {"error":`One or more errors patching custom emojis: ${errors}`},
+							data: {
+								error: `One or more errors patching custom emojis: [${errData}]`
+							},
 						},
 					};	
 				}

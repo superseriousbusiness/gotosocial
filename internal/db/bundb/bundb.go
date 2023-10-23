@@ -359,9 +359,8 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 	case "", "disable":
 		break // nothing to do
 	case "enable":
-		/* #nosec G402 */
 		tlsConfig = &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, //nolint:gosec
 		}
 	case "require":
 		tlsConfig = &tls.Config{

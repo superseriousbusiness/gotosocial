@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (d *deref) fingerRemoteAccount(ctx context.Context, transport transport.Transport, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
+func (d *Dereferencer) fingerRemoteAccount(ctx context.Context, transport transport.Transport, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
 	b, err := transport.Finger(ctx, targetUsername, targetHost)
 	if err != nil {
 		err = fmt.Errorf("fingerRemoteAccount: error fingering @%s@%s: %s", targetUsername, targetHost, err)

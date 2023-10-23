@@ -41,7 +41,12 @@ type Server interface {
 // NewServer returns a new gotosocial server, initialized with the given configuration.
 // An error will be returned the caller if something goes wrong during initialization
 // eg., no db or storage connection, port for router already in use, etc.
-func NewServer(db db.DB, apiRouter router.Router, federator federation.Federator, mediaManager *media.Manager) (Server, error) {
+func NewServer(
+	db db.DB,
+	apiRouter router.Router,
+	federator *federation.Federator,
+	mediaManager *media.Manager,
+) (Server, error) {
 	return &gotosocial{
 		db:           db,
 		apiRouter:    apiRouter,
@@ -54,7 +59,7 @@ func NewServer(db db.DB, apiRouter router.Router, federator federation.Federator
 type gotosocial struct {
 	db           db.DB
 	apiRouter    router.Router
-	federator    federation.Federator
+	federator    *federation.Federator
 	mediaManager *media.Manager
 }
 

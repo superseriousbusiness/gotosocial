@@ -109,7 +109,7 @@ type PubKeyAuth struct {
 // Also note that this function *does not* dereference the remote account that
 // the signature key is associated with. Other functions should use the returned
 // URL to dereference the remote account, if required.
-func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*PubKeyAuth, gtserror.WithCode) {
+func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*PubKeyAuth, gtserror.WithCode) {
 	// Thanks to the signature check middleware,
 	// we should already have an http signature
 	// verifier set on the context. If we don't,
@@ -215,7 +215,7 @@ func (f *federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 //
 // In case an entry for the pubKey owner just doesn't
 // exist in the db (yet), will return nil, nil.
-func (f *federator) derefPubKeyDBOnly(
+func (f *Federator) derefPubKeyDBOnly(
 	ctx context.Context,
 	pubKeyIDStr string,
 ) (*PubKeyAuth, gtserror.WithCode) {
@@ -248,7 +248,7 @@ func (f *federator) derefPubKeyDBOnly(
 // checking in the database, and then (if no entry found, or entry
 // found but pubKey expired) calling the remote pub key URI and
 // extracting the key.
-func (f *federator) derefPubKey(
+func (f *Federator) derefPubKey(
 	ctx context.Context,
 	requestedUsername string,
 	pubKeyIDStr string,
@@ -363,7 +363,7 @@ func (f *federator) derefPubKey(
 // callForPubKey handles the nitty gritty of actually
 // making a request for the given pubKeyID with a
 // transport created on behalf of requestedUsername.
-func (f *federator) callForPubKey(
+func (f *Federator) callForPubKey(
 	ctx context.Context,
 	requestedUsername string,
 	pubKeyID *url.URL,

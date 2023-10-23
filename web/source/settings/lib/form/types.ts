@@ -152,7 +152,7 @@ interface _withSomeSelected {
 }
 
 interface _withUpdateMultiple {
-	updateMultiple: (_entries: any) => void;
+	updateMultiple: (entries: [key: string, value: Partial<Checkable>][]) => void;
 }
 
 export interface TextFormInputHook extends FormInputHook<string>,
