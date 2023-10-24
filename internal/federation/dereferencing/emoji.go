@@ -37,7 +37,8 @@ func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername st
 	)
 
 	// Acquire lock for derefs map.
-	unlock := d.derefEmojisMu.Lock()
+	unlock := d.state.FedLocks.Lock(remoteURL)
+	unlock = doOnce(unlock)
 	defer unlock()
 
 	// first check if we're already processing this emoji
@@ -75,7 +76,7 @@ func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername st
 
 	defer func() {
 		// On exit safely remove emoji from map.
-		unlock := d.derefEmojisMu.Lock()
+		unlock := d.state.FedLocks.Lock(remoteURL)
 		delete(d.derefEmojis, shortcodeDomain)
 		unlock()
 	}()
@@ -95,7 +96,6 @@ func (d *Dereferencer) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel
 	// * the shortcode of the emoji
 	// * the remote URL of the image
 	// This should be enough to dereference the emoji
-
 	gotEmojis := make([]*gtsmodel.Emoji, 0, len(rawEmojis))
 
 	for _, e := range rawEmojis {

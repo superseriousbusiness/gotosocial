@@ -587,7 +587,8 @@ func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport tran
 	}
 
 	// Acquire lock for derefs map.
-	unlock := d.derefAvatarsMu.Lock()
+	unlock := d.state.FedLocks.Lock(latestAcc.AvatarRemoteURL)
+	unlock = doOnce(unlock)
 	defer unlock()
 
 	// Look for an existing dereference in progress.
@@ -615,7 +616,7 @@ func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport tran
 
 		defer func() {
 			// On exit safely remove media from map.
-			unlock := d.derefAvatarsMu.Lock()
+			unlock := d.state.FedLocks.Lock(latestAcc.AvatarRemoteURL)
 			delete(d.derefAvatars, latestAcc.AvatarRemoteURL)
 			unlock()
 		}()
@@ -677,7 +678,8 @@ func (d *Dereferencer) fetchRemoteAccountHeader(ctx context.Context, tsport tran
 	}
 
 	// Acquire lock for derefs map.
-	unlock := d.derefHeadersMu.Lock()
+	unlock := d.state.FedLocks.Lock(latestAcc.HeaderRemoteURL)
+	unlock = doOnce(unlock)
 	defer unlock()
 
 	// Look for an existing dereference in progress.
@@ -705,7 +707,7 @@ func (d *Dereferencer) fetchRemoteAccountHeader(ctx context.Context, tsport tran
 
 		defer func() {
 			// On exit safely remove media from map.
-			unlock := d.derefHeadersMu.Lock()
+			unlock := d.state.FedLocks.Lock(latestAcc.HeaderRemoteURL)
 			delete(d.derefHeaders, latestAcc.HeaderRemoteURL)
 			unlock()
 		}()
