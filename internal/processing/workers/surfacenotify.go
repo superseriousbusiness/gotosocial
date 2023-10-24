@@ -138,7 +138,7 @@ func (s *surface) notifyFave(
 		return nil
 	}
 
-	// Ensure boostee hasn't
+	// Ensure favee hasn't
 	// muted the thread.
 	muted, err := s.state.DB.IsThreadMutedByAccount(
 		ctx,
