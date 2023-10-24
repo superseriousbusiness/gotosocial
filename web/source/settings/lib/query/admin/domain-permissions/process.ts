@@ -27,7 +27,7 @@ import { isValidDomainPermission, hasBetterScope } from "../../../util/domain-pe
 import { gtsApi } from "../../gts-api";
 
 import {
-	isDomainPerms,
+	validateDomainPerms,
 	type DomainPerm,
 } from "../../../types/domain-permission";
 
@@ -43,19 +43,39 @@ function parseDomainList(list: string): DomainPerm[] {
 	if (list.startsWith("[")) {
 		// Assume JSON array.
 		const data = JSON.parse(list);
-		if (!isDomainPerms(data)) {
-			throw "parsed JSON was not array of DomainPermission";
+		
+		const validateRes = validateDomainPerms(data);
+		if (!validateRes.success) {
+			throw `parsed JSON was not array of DomainPermission: ${JSON.stringify(validateRes.errors)}`;
 		}
 
 		return data;
 	} else if (list.startsWith("#domain") || list.startsWith("domain,severity")) {
 		// Assume Mastodon-style CSV.
 		const csvParseCfg: CSVParseConfig = {
+			// Key by header.
 			header: true,
-			// Remove leading '#' if present.
+			// Remove leading '#' from headers if present.
 			transformHeader: (header) => header.startsWith("#") ? header.slice(1) : header,
+			// Massage weird boolean values.
+			transform: (value, _field) => {				
+				if (value == "False" || value == "True") {
+					return value.toLowerCase();
+				} else {
+					return value;
+				}
+			},
 			skipEmptyLines: true,
-			dynamicTyping: true
+			// Only dynamic type boolean values,
+			// leave the rest as strings.
+			dynamicTyping: {
+				"domain": false,
+				"severity": false,
+				"reject_media": true,
+				"reject_reports": true,
+				"public_comment": false,
+				"obfuscate": true,
+			}
 		};
 		
 		const { data, errors } = csvParse(list, csvParseCfg);
@@ -67,8 +87,9 @@ function parseDomainList(list: string): DomainPerm[] {
 			throw error;
 		} 
 
-		if (!isDomainPerms(data)) {
-			throw "parsed CSV was not array of DomainPermission";
+		const validateRes = validateDomainPerms(data);
+		if (!validateRes.success) {
+			throw `parsed CSV was not array of DomainPermission: ${JSON.stringify(validateRes.errors)}`;
 		}
 
 		return data;
