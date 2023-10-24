@@ -99,7 +99,7 @@ func (t *threadDB) DeleteThread(ctx context.Context, id string) error {
 		_, err = tx.
 			NewUpdate().
 			Table("statuses").
-			Set("? = ?", bun.Ident("thread_id"), (*string)(nil)).
+			Set("? = NULL", bun.Ident("thread_id")).
 			Where("? = ?", bun.Ident("thread_id"), id).
 			Exec(ctx)
 		if err != nil {
