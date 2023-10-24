@@ -41,7 +41,10 @@ func (p *pollDB) GetPollByID(ctx context.Context, id string) (*gtsmodel.Poll, er
 		ctx,
 		"ID",
 		func(poll *gtsmodel.Poll) error {
-			return p.db.NewSelect().Model(poll).Where("? = ?", bun.Ident("poll.id"), id).Scan(ctx)
+			return p.db.NewSelect().
+				Model(poll).
+				Where("? = ?", bun.Ident("poll.id"), id).
+				Scan(ctx)
 		},
 		id,
 	)
@@ -52,7 +55,10 @@ func (p *pollDB) GetPollByStatusID(ctx context.Context, statusID string) (*gtsmo
 		ctx,
 		"StatusID",
 		func(poll *gtsmodel.Poll) error {
-			return p.db.NewSelect().Model(poll).Where("? = ?", bun.Ident("poll.status_id"), statusID).Scan(ctx)
+			return p.db.NewSelect().
+				Model(poll).
+				Where("? = ?", bun.Ident("poll.status_id"), statusID).
+				Scan(ctx)
 		},
 		statusID,
 	)
@@ -188,7 +194,10 @@ func (p *pollDB) GetPollVoteByID(ctx context.Context, id string) (*gtsmodel.Poll
 		ctx,
 		"ID",
 		func(vote *gtsmodel.PollVote) error {
-			return p.db.NewSelect().Model(vote).Where("? = ?", bun.Ident("poll_vote.id"), id).Scan(ctx)
+			return p.db.NewSelect().
+				Model(vote).
+				Where("? = ?", bun.Ident("poll_vote.id"), id).
+				Scan(ctx)
 		},
 		id,
 	)
@@ -201,8 +210,8 @@ func (p *pollDB) GetPollVoteBy(ctx context.Context, pollID string, accountID str
 		func(vote *gtsmodel.PollVote) error {
 			return p.db.NewSelect().
 				Model(vote).
-				Where("? = ?", bun.Ident("poll_vote.poll_id"), pollID).
 				Where("? = ?", bun.Ident("poll_vote.account_id"), accountID).
+				Where("? = ?", bun.Ident("poll_vote.poll_id"), pollID).
 				Scan(ctx)
 		},
 		pollID,
@@ -397,22 +406,13 @@ func (p *pollDB) getPollVoterIDs(ctx context.Context, pollID string) ([]string, 
 
 		// Voter account IDs not in cache, perform DB query!
 		q := newSelectPollVoters(p.db, pollID)
-		if _, err := q.Exec(ctx, &accountIDs); err != nil {
+		if _, err := q.Exec(ctx, &accountIDs); //nocollapse
+		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
 
 		return accountIDs, nil
 	})
-}
-
-// newSelectFollowers returns a new select query for all id column values in the poll votes table with poll_id = pollID and account_id = accountID.
-func newSelectPollVotes(db *DB, pollID string, accountID string) *bun.SelectQuery {
-	return db.NewSelect().
-		Table("poll_votes").
-		Column("id").
-		Where("? = ?", bun.Ident("poll_id"), pollID).
-		Where("? = ?", bun.Ident("account_id"), accountID).
-		OrderExpr("? DESC", bun.Ident("id"))
 }
 
 // newSelectFollowers returns a new select query for all account_id column values in the poll votes table with poll_id = pollID.

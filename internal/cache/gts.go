@@ -718,7 +718,7 @@ func (c *GTSCaches) initPoll() {
 
 	c.poll = result.New([]result.Lookup{
 		{Name: "ID"},
-		{Name: "StatusID", Multi: true},
+		{Name: "StatusID"},
 	}, func(p1 *gtsmodel.Poll) *gtsmodel.Poll {
 		p2 := new(gtsmodel.Poll)
 		*p2 = *p1

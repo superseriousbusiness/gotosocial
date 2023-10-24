@@ -231,11 +231,11 @@ func (f *federatingDB) createPollOptionables(
 			switch {
 			// The origin status isn't a poll?
 			case inReplyTo.PollID == "":
-				return gtserror.Newf("poll vote by in status %s without poll", statusURI)
+				return gtserror.Newf("poll vote in status %s without poll", statusURI)
 
 			// We don't own the poll ...
 			case !*inReplyTo.Local:
-				return gtserror.Newf("poll vote by in remote status %s", statusURI)
+				return gtserror.Newf("poll vote in remote status %s", statusURI)
 			}
 
 			// Check whether user has already vote in this poll.

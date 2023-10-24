@@ -82,12 +82,6 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 			ExpiresAt:  now.Add(secs * time.Second),
 		}
 
-		// Try to insert the new status poll in the database.
-		if err := p.state.DB.PutPoll(ctx, status.Poll); err != nil {
-			err := gtserror.Newf("error inserting poll in db: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
 		// Set poll ID on the status.
 		status.PollID = status.Poll.ID
 	}
@@ -114,6 +108,14 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 
 	if err := p.processContent(ctx, p.parseMention, form, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if status.Poll != nil {
+		// Try to insert the new status poll in the database.
+		if err := p.state.DB.PutPoll(ctx, status.Poll); err != nil {
+			err := gtserror.Newf("error inserting poll in db: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	// Insert this new status in the database.
