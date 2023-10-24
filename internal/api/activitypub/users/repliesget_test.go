@@ -106,6 +106,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
 	userModule := users.New(processor)
+	suite.state.FedLocks.Init(-1, -1)
 
 	// setup request
 	recorder := httptest.NewRecorder()
@@ -170,6 +171,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
 	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
 	userModule := users.New(processor)
+	suite.state.FedLocks.Init(-1, -1)
 
 	// setup request
 	recorder := httptest.NewRecorder()

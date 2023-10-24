@@ -77,6 +77,7 @@ func (suite *ListsStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	suite.state.Caches.Start()
 	testrig.StartWorkers(&suite.state)
+	suite.state.FedLocks.Init(-1, -1)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
