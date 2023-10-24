@@ -29,16 +29,31 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
+func (p *Processor) getBookmarkableStatus(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, string, gtserror.WithCode) {
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	if errWithCode != nil {
+		return nil, "", errWithCode
+	}
+
+	bookmarkID, err := p.state.DB.GetStatusBookmarkID(ctx, requestingAccount.ID, targetStatus.ID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("getBookmarkTarget: error checking existing bookmark: %w", err)
+		return nil, "", gtserror.NewErrorInternalError(err)
+	}
+
+	return targetStatus, bookmarkID, nil
+}
+
 // BookmarkCreate adds a bookmark for the requestingAccount, targeting the given status (no-op if bookmark already exists).
 func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
+	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkableStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	if existingBookmarkID != "" {
 		// Status is already bookmarked.
-		return p.apiStatus(ctx, targetStatus, requestingAccount)
+		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
 
 	// Create and store a new bookmark.
@@ -57,24 +72,24 @@ func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmo
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.invalidateStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
+	if err := p.c.InvalidateTimelinedStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
 		err = gtserror.Newf("error invalidating status from timelines: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
 // BookmarkRemove removes a bookmark for the requesting account, targeting the given status (no-op if bookmark doesn't exist).
 func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkTarget(ctx, requestingAccount, targetStatusID)
+	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkableStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	if existingBookmarkID == "" {
 		// Status isn't bookmarked.
-		return p.apiStatus(ctx, targetStatus, requestingAccount)
+		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
 
 	// We have a bookmark to remove.
@@ -83,25 +98,10 @@ func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmo
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := p.invalidateStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
+	if err := p.c.InvalidateTimelinedStatus(ctx, requestingAccount.ID, targetStatusID); err != nil {
 		err = gtserror.Newf("error invalidating status from timelines: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
-}
-
-func (p *Processor) getBookmarkTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, string, gtserror.WithCode) {
-	targetStatus, errWithCode := p.getVisibleStatus(ctx, requestingAccount, targetStatusID)
-	if errWithCode != nil {
-		return nil, "", errWithCode
-	}
-
-	bookmarkID, err := p.state.DB.GetStatusBookmarkID(ctx, requestingAccount.ID, targetStatus.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("getBookmarkTarget: error checking existing bookmark: %w", err)
-		return nil, "", gtserror.NewErrorInternalError(err)
-	}
-
-	return targetStatus, bookmarkID, nil
+	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }

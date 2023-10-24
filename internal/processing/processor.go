@@ -164,7 +164,7 @@ func NewProcessor(
 	processor.report = report.New(state, converter)
 	processor.timeline = timeline.New(state, converter, filter)
 	processor.search = search.New(state, federator, converter, filter)
-	processor.status = status.New(state, federator, converter, filter, parseMentionFunc)
+	processor.status = status.New(&commonProcessor, state, federator, converter, filter, parseMentionFunc)
 	processor.stream = streamProcessor
 	processor.user = user.New(state, emailSender)
 

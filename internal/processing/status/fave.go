@@ -33,16 +33,36 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
+func (p *Processor) getFaveableStatus(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, *gtsmodel.StatusFave, gtserror.WithCode) {
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	if errWithCode != nil {
+		return nil, nil, errWithCode
+	}
+
+	if !*targetStatus.Likeable {
+		err := errors.New("status is not faveable")
+		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
+	}
+
+	fave, err := p.state.DB.GetStatusFave(ctx, requestingAccount.ID, targetStatusID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = fmt.Errorf("getFaveTarget: error checking existing fave: %w", err)
+		return nil, nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return targetStatus, fave, nil
+}
+
 // FaveCreate adds a fave for the requestingAccount, targeting the given status (no-op if fave already exists).
 func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingFave, errWithCode := p.getFaveTarget(ctx, requestingAccount, targetStatusID)
+	targetStatus, existingFave, errWithCode := p.getFaveableStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	if existingFave != nil {
 		// Status is already faveed.
-		return p.apiStatus(ctx, targetStatus, requestingAccount)
+		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
 
 	// Create and store a new fave
@@ -72,19 +92,19 @@ func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.
 		TargetAccount:  targetStatus.Account,
 	})
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
 // FaveRemove removes a fave for the requesting account, targeting the given status (no-op if fave doesn't exist).
 func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingFave, errWithCode := p.getFaveTarget(ctx, requestingAccount, targetStatusID)
+	targetStatus, existingFave, errWithCode := p.getFaveableStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	if existingFave == nil {
 		// Status isn't faveed.
-		return p.apiStatus(ctx, targetStatus, requestingAccount)
+		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
 
 	// We have a fave to remove.
@@ -102,12 +122,12 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 		TargetAccount:  targetStatus.Account,
 	})
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
 // FavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
 func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
-	targetStatus, errWithCode := p.getVisibleStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -144,24 +164,4 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 	}
 
 	return apiAccounts, nil
-}
-
-func (p *Processor) getFaveTarget(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, *gtsmodel.StatusFave, gtserror.WithCode) {
-	targetStatus, errWithCode := p.getVisibleStatus(ctx, requestingAccount, targetStatusID)
-	if errWithCode != nil {
-		return nil, nil, errWithCode
-	}
-
-	if !*targetStatus.Likeable {
-		err := errors.New("status is not faveable")
-		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
-	}
-
-	fave, err := p.state.DB.GetStatusFave(ctx, requestingAccount.ID, targetStatusID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("getFaveTarget: error checking existing fave: %w", err)
-		return nil, nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return targetStatus, fave, nil
 }

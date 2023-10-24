@@ -103,7 +103,7 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		OriginAccount:  requestingAccount,
 	})
 
-	return p.apiStatus(ctx, status, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, status)
 }
 
 func (p *Processor) processReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {

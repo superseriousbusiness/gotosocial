@@ -45,7 +45,7 @@ func (p *Processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	// Parse the status to API model BEFORE deleting it.
-	apiStatus, errWithCode := p.apiStatus(ctx, targetStatus, requestingAccount)
+	apiStatus, errWithCode := p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}

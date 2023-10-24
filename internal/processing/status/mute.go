@@ -32,7 +32,8 @@ import (
 // ensures that requestingAccount can mute or unmute it.
 //
 // It checks:
-//   - Status exists and belongs to or mentions requesting account.
+//   - Status exists and is visible to requester.
+//   - Status belongs to or mentions requesting account.
 //   - Status is not a boost.
 //   - Status has a thread ID.
 func (p *Processor) getMuteableStatus(
@@ -40,14 +41,9 @@ func (p *Processor) getMuteableStatus(
 	requestingAccount *gtsmodel.Account,
 	targetStatusID string,
 ) (*gtsmodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if targetStatus == nil {
-		err := gtserror.Newf("status %s not found in the db", targetStatusID)
-		return nil, gtserror.NewErrorNotFound(err)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	if !targetStatus.BelongsToAccount(requestingAccount.ID) &&
@@ -95,7 +91,7 @@ func (p *Processor) MuteCreate(
 	if threadMute != nil {
 		// Thread mute already exists.
 		// Our job here is done ("but you didn't do anything!").
-		return p.apiStatus(ctx, targetStatus, requestingAccount)
+		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
 
 	// Gotta create a mute.
@@ -108,7 +104,7 @@ func (p *Processor) MuteCreate(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
 func (p *Processor) MuteRemove(
@@ -137,7 +133,7 @@ func (p *Processor) MuteRemove(
 	if threadMute == nil {
 		// Thread mute doesn't exist.
 		// Our job here is done ("but you didn't do anything!").
-		return p.apiStatus(ctx, targetStatus, requestingAccount)
+		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
 
 	// Gotta remove the mute.
@@ -146,5 +142,5 @@ func (p *Processor) MuteRemove(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
