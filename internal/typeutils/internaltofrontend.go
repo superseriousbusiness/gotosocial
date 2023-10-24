@@ -805,6 +805,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		InvitesEnabled:   false, // todo: not supported yet
 		MaxTootChars:     uint(config.GetStatusesMaxChars()),
 		Rules:            c.InstanceRulesToAPIRules(i.Rules),
+		Terms:            i.Terms,
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {
@@ -909,6 +910,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
 		Languages:     []string{},                 // todo: not implemented
 		Rules:         c.InstanceRulesToAPIRules(i.Rules),
+		Terms:         i.Terms,
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {
