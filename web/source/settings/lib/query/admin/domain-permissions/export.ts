@@ -56,21 +56,21 @@ function exportProcess(formData: ExportDomainPermsParams): _exportProcess {
 	if (formData.exportType == "csv") {
 		return {
 			transformEntry: (entry) => [
-				entry.domain,            // #domain
-				"suspend",               // #severity
-				false,                   // #reject_media
-				false,                   // #reject_reports
-				entry.public_comment,    // #public_comment
-				entry.obfuscate ?? false // #obfuscate
+				entry.domain,                      // domain
+				"suspend",                         // severity
+				"False",                           // reject_media
+				"False",                           // reject_reports
+				entry.public_comment ?? "",        // public_comment
+				entry.obfuscate ? "True" : "False" // obfuscate
 			],
 			stringify: (list) => csvUnparse({
 				fields: [
-					"#domain",
-					"#severity",
-					"#reject_media",
-					"#reject_reports",
-					"#public_comment",
-					"#obfuscate",
+					"domain",
+					"severity",
+					"reject_media",
+					"reject_reports",
+					"public_comment",
+					"obfuscate",
 				],
 				data: list
 			}),
