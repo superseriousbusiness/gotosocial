@@ -301,6 +301,16 @@ func (d *Dereferencer) enrichStatus(
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
+
+			if gtserror.StatusCode(err) >= 400 {
+				// Update fetch-at to slow re-attempts.
+				status.FetchedAt = time.Now()
+				_ = d.state.DB.UpdateStatus(ctx, status, "fetched_at")
+
+				// TODO: handle 404 as deleted status? but
+				// god knows this function is hairy enough...
+			}
+
 			err := gtserror.Newf("error deferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
