@@ -2,14 +2,21 @@
 # Dockerfile reference: https://docs.docker.com/engine/reference/builder/
 
 # stage 1: generate up-to-date swagger.yaml to put in the final container
-FROM --platform=${BUILDPLATFORM} quay.io/goswagger/swagger:v0.30.4 AS swagger
+FROM --platform=${BUILDPLATFORM} golang:1.21-alpine AS swagger
+
+RUN \
+    ### Installs goswagger for building swagger definitions inside this container
+    go install "github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5" && \
+    # Makes swagger executable
+    chmod +x /go/bin/swagger
 
 COPY go.mod /go/src/github.com/superseriousbusiness/gotosocial/go.mod
 COPY go.sum /go/src/github.com/superseriousbusiness/gotosocial/go.sum
 COPY cmd /go/src/github.com/superseriousbusiness/gotosocial/cmd
 COPY internal /go/src/github.com/superseriousbusiness/gotosocial/internal
+
 WORKDIR /go/src/github.com/superseriousbusiness/gotosocial
-RUN swagger generate spec -o /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml --scan-models
+RUN /go/bin/swagger generate spec -o /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml --scan-models
 
 # stage 2: generate the web/assets/dist bundles
 FROM --platform=${BUILDPLATFORM} node:18-alpine AS bundler
