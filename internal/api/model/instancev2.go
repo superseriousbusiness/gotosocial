@@ -64,6 +64,8 @@ type InstanceV2 struct {
 	Contact InstanceV2Contact `json:"contact"`
 	// An itemized list of rules for this instance.
 	Rules []InstanceRule `json:"rules"`
+	// Terms and conditions for accounts on this instance.
+	Terms string `json:"terms,omitempty"`
 }
 
 // Usage data for this instance.
