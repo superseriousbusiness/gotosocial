@@ -90,7 +90,7 @@ function makeCacheMutation(action: Action): CacheMutation {
 					);
 				} catch (e) {
 					// eslint-disable-next-line no-console
-					console.error(`rolling back pessimistic update of ${queryName}: ${e}`);
+					console.error(`rolling back pessimistic update of ${queryName}: ${JSON.stringify(e)}`);
 				}
 			}
 		};

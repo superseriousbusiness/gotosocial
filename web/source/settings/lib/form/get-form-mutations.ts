@@ -27,6 +27,12 @@ export default function getFormMutations(
 	const mutationData: Array<[string, any]> = [];
 	
 	Object.values(form).forEach((field) => {
+		if (field.nosubmit) {
+			// Completely ignore
+			// this field.
+			return;
+		}
+		
 		if ("selectedValues" in field) {
 			// FieldArrayInputHook.
 			const selected = field.selectedValues();
