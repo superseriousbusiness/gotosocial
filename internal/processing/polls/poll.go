@@ -39,10 +39,11 @@ type Processor struct {
 	converter *typeutils.Converter
 }
 
-func New(common *common.Processor, state *state.State) Processor {
+func New(common *common.Processor, state *state.State, converter *typeutils.Converter) Processor {
 	return Processor{
-		c:     common,
-		state: state,
+		c:         common,
+		state:     state,
+		converter: converter,
 	}
 }
 

@@ -168,7 +168,7 @@ func NewProcessor(
 	processor.fedi = fedi.New(state, converter, federator, filter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)
-	processor.polls = polls.New(&commonProcessor, state)
+	processor.polls = polls.New(&commonProcessor, state, converter)
 	processor.report = report.New(state, converter)
 	processor.timeline = timeline.New(state, converter, filter)
 	processor.search = search.New(state, federator, converter, filter)
