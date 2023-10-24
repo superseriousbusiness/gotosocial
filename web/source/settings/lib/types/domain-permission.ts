@@ -19,7 +19,7 @@
 
 import typia from "typia";
 
-export const isDomainPerms = typia.createIs<DomainPerm[]>();
+export const validateDomainPerms = typia.createValidate<DomainPerm[]>();
 
 export type PermType = "block" | "allow";
 
