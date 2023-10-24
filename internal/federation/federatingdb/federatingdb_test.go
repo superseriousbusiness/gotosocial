@@ -65,6 +65,7 @@ func (suite *FederatingDBTestSuite) SetupSuite() {
 func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+	suite.state.FedLocks.Init(-1, -1)
 
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)

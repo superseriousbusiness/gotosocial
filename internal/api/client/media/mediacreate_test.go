@@ -81,6 +81,7 @@ type MediaCreateTestSuite struct {
 func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)
+	suite.state.FedLocks.Init(-1, -1)
 
 	// setup standard items
 	testrig.InitTestConfig()
