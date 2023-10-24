@@ -704,16 +704,8 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 
 	// Insert this latest poll into the database.
 	err = d.state.DB.PutPoll(ctx, status.Poll)
-	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+	if err != nil {
 		return gtserror.Newf("error putting in database: %w", err)
-	}
-
-	if err != nil /* i.e. db.ErrAlreadyExists */ {
-		// TODO: replace this quick fix with per-URI deref locks.
-		status.Poll, err = d.state.DB.GetPollByStatusID(ctx, status.ID)
-		if err != nil {
-			return gtserror.Newf("error getting from database after race: %w", err)
-		}
 	}
 
 	return nil
