@@ -79,7 +79,7 @@ function UserProfileForm({ data: profile }) {
 		header: useFileInput("header", { withPreview: true }),
 		displayName: useTextInput("display_name", { source: profile }),
 		note: useTextInput("note", { source: profile, valueSelector: (p) => p.source?.note }),
-		customCSS: useTextInput("custom_css", { source: profile }),
+		customCSS: useTextInput("custom_css", { source: profile, nosubmit: !instanceConfig.allowCustomCSS }),
 		bot: useBoolInput("bot", { source: profile }),
 		locked: useBoolInput("locked", { source: profile }),
 		discoverable: useBoolInput("discoverable", { source: profile}),
@@ -190,7 +190,7 @@ function UserProfileForm({ data: profile }) {
 			</div>
 			<TextArea
 				field={form.customCSS}
-				label="Custom CSS"
+				label={`Custom CSS` + (!instanceConfig.allowCustomCSS ? ` (not enabled on this instance)` : ``)}
 				className="monospace"
 				rows={8}
 				disabled={!instanceConfig.allowCustomCSS}
