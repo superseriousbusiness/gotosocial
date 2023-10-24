@@ -52,7 +52,7 @@ func (c *Converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 		}
 		si.Reblogged = reblogged
 
-		muted, err := c.state.DB.IsStatusThreadMutedBy(ctx, s, requestingAccount.ID)
+		muted, err := c.state.DB.IsThreadMutedByAccount(ctx, s.ThreadID, requestingAccount.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has muted status: %s", err)
 		}

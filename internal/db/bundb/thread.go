@@ -19,7 +19,9 @@ package bundb
 
 import (
 	"context"
+	"errors"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -175,6 +177,23 @@ func (t *threadDB) GetThreadMutedByAccount(
 
 		return &threadMute, nil
 	}, threadID, accountID)
+}
+
+func (t *threadDB) IsThreadMutedByAccount(
+	ctx context.Context,
+	threadID string,
+	accountID string,
+) (bool, error) {
+	if threadID == "" {
+		return false, nil
+	}
+
+	mute, err := t.GetThreadMutedByAccount(ctx, threadID, accountID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, err
+	}
+
+	return (mute != nil), nil
 }
 
 func (t *threadDB) PutThreadMute(ctx context.Context, threadMute *gtsmodel.ThreadMute) error {

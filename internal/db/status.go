@@ -80,9 +80,6 @@ type Status interface {
 	// If onlyDirect is true, only the immediate children will be returned.
 	GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error)
 
-	// IsStatusThreadMutedBy checks if the thread of the given status has been muted by the given account ID
-	IsStatusThreadMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
-
 	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
 }

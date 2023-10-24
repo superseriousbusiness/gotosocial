@@ -679,21 +679,6 @@ func (s *statusDB) getStatusBoostIDs(ctx context.Context, statusID string) ([]st
 	})
 }
 
-func (s *statusDB) IsStatusThreadMutedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
-	if status.ThreadID == "" {
-		// No thread ID means
-		// it can't be muted.
-		return false, nil
-	}
-
-	threadMute, err := s.state.DB.GetThreadMutedByAccount(ctx, status.ThreadID, accountID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return false, err
-	}
-
-	return (threadMute != nil), nil
-}
-
 func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
 	q := s.db.
 		NewSelect().

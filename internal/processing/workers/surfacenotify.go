@@ -43,9 +43,9 @@ func (s *surface) notifyMentions(
 	for _, mention := range mentions {
 		// Ensure thread not muted
 		// by mentioned account.
-		muted, err := s.state.DB.IsStatusThreadMutedBy(
+		muted, err := s.state.DB.IsThreadMutedByAccount(
 			ctx,
-			status,
+			status.ThreadID,
 			mention.TargetAccountID,
 		)
 
@@ -140,9 +140,9 @@ func (s *surface) notifyFave(
 
 	// Ensure boostee hasn't
 	// muted the thread.
-	muted, err := s.state.DB.IsStatusThreadMutedBy(
+	muted, err := s.state.DB.IsThreadMutedByAccount(
 		ctx,
-		fave.Status,
+		fave.Status.ThreadID,
 		fave.TargetAccountID,
 	)
 
@@ -189,9 +189,9 @@ func (s *surface) notifyAnnounce(
 
 	// Ensure boostee hasn't
 	// muted the thread.
-	muted, err := s.state.DB.IsStatusThreadMutedBy(
+	muted, err := s.state.DB.IsThreadMutedByAccount(
 		ctx,
-		status.BoostOf,
+		status.BoostOf.ThreadID,
 		status.BoostOfAccountID,
 	)
 

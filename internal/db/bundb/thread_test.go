@@ -95,7 +95,6 @@ func (suite *ThreadTestSuite) TestMuteUnmuteThread() {
 	var (
 		threadID   = suite.testThreads["local_account_1_status_1"].ID
 		accountID  = suite.testAccounts["local_account_1"].ID
-		testStatus = suite.testStatuses["local_account_1_status_1"]
 		ctx        = context.Background()
 		threadMute = &gtsmodel.ThreadMute{
 			ID:        "01HD3K14B62YJHH4RR0DSZ1EQ2",
@@ -109,7 +108,7 @@ func (suite *ThreadTestSuite) TestMuteUnmuteThread() {
 		suite.FailNow(err.Error())
 	}
 
-	muted, err := suite.db.IsStatusThreadMutedBy(ctx, testStatus, accountID)
+	muted, err := suite.db.IsThreadMutedByAccount(ctx, threadID, accountID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -128,7 +127,7 @@ func (suite *ThreadTestSuite) TestMuteUnmuteThread() {
 		suite.FailNow(err.Error())
 	}
 
-	muted, err = suite.db.IsStatusThreadMutedBy(ctx, testStatus, accountID)
+	muted, err = suite.db.IsThreadMutedByAccount(ctx, threadID, accountID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

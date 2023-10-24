@@ -42,6 +42,10 @@ type Thread interface {
 	// given thread, created by the given accountID, if it exists.
 	GetThreadMutedByAccount(ctx context.Context, threadID string, accountID string) (*gtsmodel.ThreadMute, error)
 
+	// IsThreadMutedByAccount returns true if threadID is muted
+	// by given account. Empty thread ID will return false early.
+	IsThreadMutedByAccount(ctx context.Context, threadID string, accountID string) (bool, error)
+
 	// PutThreadMute inserts a new threadMute.
 	PutThreadMute(ctx context.Context, threadMute *gtsmodel.ThreadMute) error
 
