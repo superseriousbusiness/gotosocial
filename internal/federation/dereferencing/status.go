@@ -114,7 +114,7 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 		}
 
 		// Create and pass-through a new bare-bones model for deref.
-		return d.enrichStatus(ctx, requestUser, uri, &gtsmodel.Status{
+		return d.enrichStatusSafely(ctx, requestUser, uri, &gtsmodel.Status{
 			Local: func() *bool { var false bool; return &false }(),
 			URI:   uriStr,
 		}, nil)
@@ -130,7 +130,7 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 	}
 
 	// Try to update + deref existing status model.
-	latest, apubStatus, err := d.enrichStatus(ctx,
+	latest, apubStatus, err := d.enrichStatusSafely(ctx,
 		requestUser,
 		uri,
 		status,
@@ -138,10 +138,6 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote status: %v", err)
-
-		// Update fetch-at to slow re-attempts.
-		status.FetchedAt = time.Now()
-		_ = d.state.DB.UpdateStatus(ctx, status, "fetched_at")
 
 		// Fallback to existing.
 		return status, nil, nil
@@ -165,8 +161,8 @@ func (d *Dereferencer) RefreshStatus(ctx context.Context, requestUser string, st
 		return nil, nil, gtserror.Newf("invalid status uri %q: %w", status.URI, err)
 	}
 
-	// Try to update + deref existing status model.
-	latest, apubStatus, err := d.enrichStatus(ctx,
+	// Try to update + deref the passed status model.
+	latest, apubStatus, err := d.enrichStatusSafely(ctx,
 		requestUser,
 		uri,
 		status,
@@ -201,15 +197,65 @@ func (d *Dereferencer) RefreshStatusAsync(ctx context.Context, requestUser strin
 
 	// Enqueue a worker function to re-fetch this status async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		latest, apubStatus, err := d.enrichStatus(ctx, requestUser, uri, status, apubStatus)
+		latest, apubStatus, err := d.enrichStatusSafely(ctx, requestUser, uri, status, apubStatus)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote status: %v", err)
 			return
 		}
 
-		// This status was updated, re-dereference the whole thread.
-		d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
+		if apubStatus != nil {
+			// This status was updated, re-dereference the whole thread.
+			d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
+		}
 	})
+}
+
+// enrichStatusSafely wraps enrichStatus() to perform
+// it within the State{}.FedLocks mutexmap, which protects
+// dereferencing actions with per-URI mutex locks.
+func (d *Dereferencer) enrichStatusSafely(
+	ctx context.Context,
+	requestUser string,
+	uri *url.URL,
+	status *gtsmodel.Status,
+	apubStatus ap.Statusable,
+) (*gtsmodel.Status, ap.Statusable, error) {
+	uriStr := uri.String()
+
+	// Acquire per-URI deref lock, wraping unlock
+	// to safely defer in case of panic, while still
+	// performing more granular unlocks when needed.
+	unlock := d.state.FedLocks.Lock(uriStr)
+	unlock = doOnce(unlock)
+	defer unlock()
+
+	// Perform status enrichment with passed vars.
+	latest, apubStatus, err := d.enrichStatus(ctx,
+		requestUser,
+		uri,
+		status,
+		apubStatus,
+	)
+
+	// Unlock now
+	// we're done.
+	unlock()
+
+	if errors.Is(err, db.ErrAlreadyExists) {
+		// Ensure AP model isn't set,
+		// otherwise this indicates WE
+		// enriched the status.
+		apubStatus = nil
+
+		// DATA RACE! We likely lost out to another goroutine
+		// in a call to db.Put(Status). Look again in DB by URI.
+		latest, err = d.state.DB.GetStatusByURI(ctx, uriStr)
+		if err != nil {
+			err = gtserror.Newf("error getting status %s from database after race: %w", uriStr, err)
+		}
+	}
+
+	return latest, apubStatus, err
 }
 
 // enrichStatus will enrich the given status, whether a new
@@ -240,6 +286,16 @@ func (d *Dereferencer) enrichStatus(
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
+
+			if gtserror.StatusCode(err) >= 400 {
+				// Update fetch-at to slow re-attempts.
+				status.FetchedAt = time.Now()
+				_ = d.state.DB.UpdateStatus(ctx, status, "fetched_at")
+
+				// TODO: handle 404 as deleted status? but
+				// god knows this function is hairy enough...
+			}
+
 			err := gtserror.Newf("error deferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
