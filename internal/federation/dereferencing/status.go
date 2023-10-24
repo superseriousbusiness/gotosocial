@@ -220,7 +220,7 @@ func (d *Dereferencer) enrichStatusSafely(
 	status *gtsmodel.Status,
 	apubStatus ap.Statusable,
 ) (*gtsmodel.Status, ap.Statusable, error) {
-	uriStr := uri.String()
+	uriStr := status.URI
 
 	// Acquire per-URI deref lock, wraping unlock
 	// to safely defer in case of panic, while still
@@ -237,6 +237,12 @@ func (d *Dereferencer) enrichStatusSafely(
 		apubStatus,
 	)
 
+	if gtserror.StatusCode(err) >= 400 {
+		// Update fetch-at to slow re-attempts.
+		status.FetchedAt = time.Now()
+		_ = d.state.DB.UpdateStatus(ctx, status, "fetched_at")
+	}
+
 	// Unlock now
 	// we're done.
 	unlock()
@@ -249,7 +255,7 @@ func (d *Dereferencer) enrichStatusSafely(
 
 		// DATA RACE! We likely lost out to another goroutine
 		// in a call to db.Put(Status). Look again in DB by URI.
-		latest, err = d.state.DB.GetStatusByURI(ctx, uriStr)
+		latest, err = d.state.DB.GetStatusByURI(ctx, status.URI)
 		if err != nil {
 			err = gtserror.Newf("error getting status %s from database after race: %w", uriStr, err)
 		}
@@ -286,16 +292,6 @@ func (d *Dereferencer) enrichStatus(
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-
-			if gtserror.StatusCode(err) >= 400 {
-				// Update fetch-at to slow re-attempts.
-				status.FetchedAt = time.Now()
-				_ = d.state.DB.UpdateStatus(ctx, status, "fetched_at")
-
-				// TODO: handle 404 as deleted status? but
-				// god knows this function is hairy enough...
-			}
-
 			err := gtserror.Newf("error deferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
