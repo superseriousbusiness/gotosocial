@@ -34,5 +34,5 @@ import (
 //
 // Used to ensure race conditions in multiple requests do not occur.
 func (f *federatingDB) Lock(c context.Context, id *url.URL) (func(), error) {
-	return f.state.FedLocks.Lock(id.String()), nil // id should NEVER be nil.
+	return f.state.FedLocks.Lock("federatingDB " + id.String()), nil // id should NEVER be nil.
 }
