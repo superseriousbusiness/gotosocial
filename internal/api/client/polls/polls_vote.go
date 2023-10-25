@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -89,11 +90,9 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	var form struct {
-		Choices []int
-	}
+	var form apimodel.PollVoteRequest
 
-	if err := c.Bind(&form); err != nil {
+	if err := c.ShouldBind(&form); err != nil {
 		errWithCode := gtserror.NewErrorBadRequest(err, err.Error())
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

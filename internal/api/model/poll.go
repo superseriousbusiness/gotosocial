@@ -84,3 +84,12 @@ type PollRequest struct {
 	// Hide vote counts until the poll ends.
 	HideTotals bool `form:"hide_totals" json:"hide_totals" xml:"hide_totals"`
 }
+
+// PollVoteRequest models a request to vote in a poll.
+//
+// swagger:parameters pollVote
+type PollVoteRequest struct {
+	// Choices contains poll vote choice indices. Note that XML
+	// uses a different key than the JSON, i.e. the '[]' suffix.
+	Choices []int `form:"choices[]" json:"choices" xml:"choices"`
+}
