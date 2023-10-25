@@ -26,14 +26,8 @@ import (
 // Thread contains functions for getting/creating
 // status threads and thread mutes in the database.
 type Thread interface {
-	// GetThread gets a single thread by its ID.
-	GetThread(ctx context.Context, id string) (*gtsmodel.Thread, error)
-
 	// PutThread inserts a new thread.
 	PutThread(ctx context.Context, thread *gtsmodel.Thread) error
-
-	// DeleteThread deletes thread with the given ID.
-	DeleteThread(ctx context.Context, id string) error
 
 	// GetThreadMute gets a single threadMute by its ID.
 	GetThreadMute(ctx context.Context, id string) (*gtsmodel.ThreadMute, error)

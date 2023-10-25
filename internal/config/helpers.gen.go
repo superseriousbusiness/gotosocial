@@ -3174,31 +3174,6 @@ func GetCacheTagMemRatio() float64 { return global.GetCacheTagMemRatio() }
 // SetCacheTagMemRatio safely sets the value for global configuration 'Cache.TagMemRatio' field
 func SetCacheTagMemRatio(v float64) { global.SetCacheTagMemRatio(v) }
 
-// GetCacheThreadMemRatio safely fetches the Configuration value for state's 'Cache.ThreadMemRatio' field
-func (st *ConfigState) GetCacheThreadMemRatio() (v float64) {
-	st.mutex.RLock()
-	v = st.config.Cache.ThreadMemRatio
-	st.mutex.RUnlock()
-	return
-}
-
-// SetCacheThreadMemRatio safely sets the Configuration value for state's 'Cache.ThreadMemRatio' field
-func (st *ConfigState) SetCacheThreadMemRatio(v float64) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.Cache.ThreadMemRatio = v
-	st.reloadToViper()
-}
-
-// CacheThreadMemRatioFlag returns the flag name for the 'Cache.ThreadMemRatio' field
-func CacheThreadMemRatioFlag() string { return "cache-thread-memo-ratio" }
-
-// GetCacheThreadMemRatio safely fetches the value for global configuration 'Cache.ThreadMemRatio' field
-func GetCacheThreadMemRatio() float64 { return global.GetCacheThreadMemRatio() }
-
-// SetCacheThreadMemRatio safely sets the value for global configuration 'Cache.ThreadMemRatio' field
-func SetCacheThreadMemRatio(v float64) { global.SetCacheThreadMemRatio(v) }
-
 // GetCacheThreadMuteMemRatio safely fetches the Configuration value for state's 'Cache.ThreadMuteMemRatio' field
 func (st *ConfigState) GetCacheThreadMuteMemRatio() (v float64) {
 	st.mutex.RLock()
