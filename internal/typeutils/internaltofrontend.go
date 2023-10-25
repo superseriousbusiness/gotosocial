@@ -1368,6 +1368,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		Multiple:    *poll.Multiple,
 		VotesCount:  totalVotes,
 		VotersCount: totalVoters,
+		Voted:       (isAuthor || len(ownChoices) > 0),
 		OwnVotes:    ownChoices,
 		Options:     options,
 	}, nil
