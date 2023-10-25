@@ -746,9 +746,14 @@ func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	}
 
 	if s.Poll != nil {
-		apiStatus.Poll, err = c.PollToAPIPoll(ctx, requestingAccount, s.Poll)
+		// Set originating
+		// status on the poll.
+		poll := s.Poll
+		poll.Status = s
+
+		apiStatus.Poll, err = c.PollToAPIPoll(ctx, requestingAccount, poll)
 		if err != nil {
-			return nil, fmt.Errorf("error converting poll %s: %w", s.PollID, err)
+			return nil, fmt.Errorf("error converting poll: %w", err)
 		}
 	}
 
