@@ -1248,6 +1248,66 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
+func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
+	for index, test := range []struct {
+		name     string // Test title
+		path     string // File path
+		expected string // Expected ContentType
+	}{
+		{
+			name:     "golden case Jpeg (big size)",
+			path:     "./test/test-jpeg.jpg",
+			expected: "image/jpeg",
+		},
+		{
+			name:     "golden case PNG (big size)",
+			path:     "./test/test-png-noalphachannel.png",
+			expected: "image/png",
+		},
+	} {
+		suite.Run(test.name, func() {
+			ctx, cncl := context.WithTimeout(context.Background(), time.Second*60)
+			defer cncl()
+
+			data := func(_ context.Context) (io.ReadCloser, int64, error) {
+				// load bytes from a test image
+				b, err := os.ReadFile(test.path)
+				suite.NoError(err, "Test %d: failed during test setup", index+1)
+
+				return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+			}
+
+			accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+			// process the media with no additional info provided
+			processingMedia, err := suite.manager.ProcessMedia(ctx, data, accountID, nil)
+			suite.NoError(err)
+
+			// fetch the attachment id from the processing media
+			attachmentID := processingMedia.AttachmentID()
+
+			// wait for processing to complete
+			var attachment *gtsmodel.MediaAttachment
+			if !testrig.WaitFor(func() bool {
+				attachment, err = suite.db.GetAttachmentByID(ctx, attachmentID)
+				return err == nil && attachment != nil
+			}) {
+				suite.FailNow("timed out waiting for attachment to process")
+			}
+
+			// make sure it's got the stuff set on it that we expect
+			// the attachment ID and accountID we expect
+			suite.Equal(attachmentID, attachment.ID)
+			suite.Equal(accountID, attachment.AccountID)
+
+			actual := attachment.File.ContentType
+			expect := test.expected
+
+			suite.Equal(expect, actual, "Test %d: %s", index+1, test.name)
+		})
+	}
+}
+
 func TestManagerTestSuite(t *testing.T) {
 	suite.Run(t, &ManagerTestSuite{})
 }
