@@ -1255,13 +1255,23 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 		expected string // Expected ContentType
 	}{
 		{
-			name:     "golden case Jpeg (big size)",
+			name:     "big size JPEG",
 			path:     "./test/test-jpeg.jpg",
 			expected: "image/jpeg",
 		},
 		{
-			name:     "golden case PNG (big size)",
+			name:     "big size PNG",
 			path:     "./test/test-png-noalphachannel.png",
+			expected: "image/png",
+		},
+		{
+			name:     "small size JPEG",
+			path:     "./test/test-jpeg-1x1px-white.jpg",
+			expected: "image/jpeg",
+		},
+		{
+			name:     "golden case PNG (big size)",
+			path:     "./test/test-png-alphachannel-1x1px.png",
 			expected: "image/png",
 		},
 	} {
