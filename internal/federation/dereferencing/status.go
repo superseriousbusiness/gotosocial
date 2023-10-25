@@ -374,13 +374,6 @@ func (d *Dereferencer) enrichStatus(
 		//
 		// This is new, put the status in the database.
 		err := d.state.DB.PutStatus(ctx, latestStatus)
-
-		if errors.Is(err, db.ErrAlreadyExists) {
-			// TODO: replace this quick fix with per-URI deref locks.
-			latestStatus, err = d.state.DB.GetStatusByURI(ctx, latestStatus.URI)
-			return latestStatus, nil, err
-		}
-
 		if err != nil {
 			return nil, nil, gtserror.Newf("error putting in database: %w", err)
 		}

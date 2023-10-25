@@ -518,13 +518,6 @@ func (d *Dereferencer) enrichAccount(
 
 		// This is new, put it in the database.
 		err := d.state.DB.PutAccount(ctx, latestAcc)
-
-		if errors.Is(err, db.ErrAlreadyExists) {
-			// TODO: replace this quick fix with per-URI deref locks.
-			latestAcc, err = d.state.DB.GetAccountByURI(ctx, latestAcc.URI)
-			return latestAcc, nil, err
-		}
-
 		if err != nil {
 			return nil, nil, gtserror.Newf("error putting in database: %w", err)
 		}
