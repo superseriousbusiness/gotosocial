@@ -161,8 +161,8 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// and https://github.com/h2non/filetype
 	hdrBuf := make([]byte, 261)
 
-	// Read the first 261 header bytes into buffer.
-	if _, err := io.ReadFull(rc, hdrBuf); err != nil {
+	// Read the first 261 header bytes into buffer as much as possible.
+	if _, err := rc.Read(hdrBuf); err != nil {
 		return gtserror.Newf("error reading incoming media: %w", err)
 	}
 
