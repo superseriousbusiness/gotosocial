@@ -355,6 +355,18 @@ func (f *federatingDB) createStatusable(
 		return err
 	}
 
+	if status.Poll != nil {
+		// ID the new poll based on time status was created.
+		status.Poll.ID, err = id.NewULIDFromTime(status.CreatedAt)
+		if err != nil {
+			return err
+		}
+
+		// Link the status <-> poll.
+		status.PollID = status.Poll.ID
+		status.Poll.StatusID = status.ID
+	}
+
 	// Put this newly parsed status in the database.
 	if err := f.state.DB.PutStatus(ctx, status); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
