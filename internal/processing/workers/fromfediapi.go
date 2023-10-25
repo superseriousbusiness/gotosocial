@@ -315,6 +315,11 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg messages.FromFediAPI) err
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", fMsg.GTSModel)
 	}
 
+	// Ensure fave populated.
+	if err := p.state.DB.PopulateStatusFave(ctx, fave); err != nil {
+		return gtserror.Newf("error populating status fave: %w", err)
+	}
+
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		return gtserror.Newf("error notifying fave: %w", err)
 	}

@@ -85,7 +85,7 @@ func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel
 		TargetAccount:  targetStatus.Account,
 	})
 
-	return p.apiStatus(ctx, boostWrapperStatus, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, boostWrapperStatus)
 }
 
 // BoostRemove processes the unboost/unreblog of a given status, returning the status if all is well.
@@ -129,7 +129,7 @@ func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel
 		})
 	}
 
-	return p.apiStatus(ctx, targetStatus, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
 // StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.

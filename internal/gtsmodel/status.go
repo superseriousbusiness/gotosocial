@@ -20,6 +20,8 @@ package gtsmodel
 import (
 	"time"
 
+	"slices"
+
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -54,6 +56,7 @@ type Status struct {
 	BoostOfAccountID         string             `bun:"type:CHAR(26),nullzero"`                                      // id of the account that owns the boosted status
 	BoostOf                  *Status            `bun:"-"`                                                           // status that corresponds to boostOfID
 	BoostOfAccount           *Account           `bun:"rel:belongs-to"`                                              // account that corresponds to boostOfAccountID
+	ThreadID                 string             `bun:"type:CHAR(26),nullzero"`                                      // id of the thread to which this status belongs; only set for remote statuses if a local account is involved at some point in the thread, otherwise null
 	ContentWarning           string             `bun:",nullzero"`                                                   // cw string for this status
 	Visibility               Visibility         `bun:",nullzero,notnull"`                                           // visibility entry for this status
 	Sensitive                *bool              `bun:",nullzero,notnull,default:false"`                             // mark the status as sensitive?
@@ -241,13 +244,15 @@ func (s *Status) EmojisUpToDate(other *Status) bool {
 }
 
 // MentionsAccount returns whether status mentions the given account ID.
-func (s *Status) MentionsAccount(id string) bool {
-	for _, mention := range s.Mentions {
-		if mention.TargetAccountID == id {
-			return true
-		}
-	}
-	return false
+func (s *Status) MentionsAccount(accountID string) bool {
+	return slices.ContainsFunc(s.Mentions, func(m *Mention) bool {
+		return m.TargetAccountID == accountID
+	})
+}
+
+// BelongsToAccount returns whether status belongs to the given account ID.
+func (s *Status) BelongsToAccount(accountID string) bool {
+	return s.AccountID == accountID
 }
 
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.

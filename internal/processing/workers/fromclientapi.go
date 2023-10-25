@@ -260,6 +260,11 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg messages.FromClientAPI)
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", cMsg.GTSModel)
 	}
 
+	// Ensure fave populated.
+	if err := p.state.DB.PopulateStatusFave(ctx, fave); err != nil {
+		return gtserror.Newf("error populating status fave: %w", err)
+	}
+
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		return gtserror.Newf("error notifying fave: %w", err)
 	}

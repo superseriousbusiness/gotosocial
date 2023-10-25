@@ -54,6 +54,7 @@ var registerTables = []interface{}{
 	&gtsmodel.AccountToEmoji{},
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
+	&gtsmodel.ThreadToStatus{},
 }
 
 // DBService satisfies the DB interface
@@ -79,6 +80,7 @@ type DBService struct {
 	db.StatusBookmark
 	db.StatusFave
 	db.Tag
+	db.Thread
 	db.Timeline
 	db.User
 	db.Tombstone
@@ -234,6 +236,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		},
 		Tag: &tagDB{
 			conn:  db,
+			state: state,
+		},
+		Thread: &threadDB{
+			db:    db,
 			state: state,
 		},
 		Timeline: &timelineDB{

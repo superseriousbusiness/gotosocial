@@ -91,6 +91,10 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, PinPath, m.StatusPinPOSTHandler)
 	attachHandler(http.MethodPost, UnpinPath, m.StatusUnpinPOSTHandler)
 
+	// mute stuff
+	attachHandler(http.MethodPost, MutePath, m.StatusMutePOSTHandler)
+	attachHandler(http.MethodPost, UnmutePath, m.StatusUnmutePOSTHandler)
+
 	// reblog stuff
 	attachHandler(http.MethodPost, ReblogPath, m.StatusBoostPOSTHandler)
 	attachHandler(http.MethodPost, UnreblogPath, m.StatusUnboostPOSTHandler)

@@ -70,6 +70,10 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		return nil, errWithCode
 	}
 
+	if errWithCode := p.processThreadID(ctx, status); errWithCode != nil {
+		return nil, errWithCode
+	}
+
 	if errWithCode := p.processMediaIDs(ctx, form, requestingAccount.ID, status); errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -99,7 +103,7 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		OriginAccount:  requestingAccount,
 	})
 
-	return p.apiStatus(ctx, status, requestingAccount)
+	return p.c.GetAPIStatus(ctx, requestingAccount, status)
 }
 
 func (p *Processor) processReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
@@ -141,8 +145,39 @@ func (p *Processor) processReplyToID(ctx context.Context, form *apimodel.Advance
 
 	// Set status fields from inReplyTo.
 	status.InReplyToID = inReplyTo.ID
+	status.InReplyTo = inReplyTo
 	status.InReplyToURI = inReplyTo.URI
 	status.InReplyToAccountID = inReplyTo.AccountID
+
+	return nil
+}
+
+func (p *Processor) processThreadID(ctx context.Context, status *gtsmodel.Status) gtserror.WithCode {
+	// Status takes the thread ID
+	// of whatever it replies to.
+	if status.InReplyTo != nil {
+		status.ThreadID = status.InReplyTo.ThreadID
+		return nil
+	}
+
+	// Status doesn't reply to anything,
+	// so it's a new local top-level status
+	// and therefore needs a thread ID.
+	threadID := id.NewULID()
+
+	if err := p.state.DB.PutThread(
+		ctx,
+		&gtsmodel.Thread{
+			ID: threadID,
+		},
+	); err != nil {
+		err := gtserror.Newf("error inserting new thread in db: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Future replies to this status
+	// (if any) will inherit this thread ID.
+	status.ThreadID = threadID
 
 	return nil
 }
