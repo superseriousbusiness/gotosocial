@@ -87,9 +87,13 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			lvl := level.INFO
 
 			if code >= 500 {
-				// This is a server error
+				// Actual server error.
 				lvl = level.ERROR
-				l = l.WithField("error", c.Errors)
+			}
+
+			if len(c.Errors) > 0 {
+				// Always attach any found errors.
+				l = l.WithField("errors", c.Errors)
 			}
 
 			// Get appropriate text for this code.
