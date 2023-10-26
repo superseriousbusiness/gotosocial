@@ -317,15 +317,10 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.New("attributedTo was empty")
 	}
 
-	// Ensure we have the author account of the status dereferenced (+ up-to-date).
-	if author, _, err := d.getAccountByURI(ctx, requestUser, attributedTo); err != nil {
-		if status.AccountID == "" {
-			// Provided status account is nil, i.e. this is a new status / author, so a deref fail is unrecoverable.
-			return nil, nil, gtserror.Newf("failed to dereference status author %s: %w", uri, err)
-		}
-	} else if status.AccountID != "" && status.AccountID != author.ID {
-		// There already existed an account for this status author, but account ID changed. This shouldn't happen!
-		log.Warnf(ctx, "status author account ID changed: old=%s new=%s", status.AccountID, author.ID)
+	// Ensure we have the author account of the status dereferenced (+ up-to-date). If this is a new status
+	// (i.e. status.AccountID == "") then any error here is irrecoverable. AccountID must ALWAYS be set.
+	if _, _, err := d.getAccountByURI(ctx, requestUser, attributedTo); err != nil && status.AccountID == "" {
+		return nil, nil, gtserror.Newf("failed to dereference status author %s: %w", uri, err)
 	}
 
 	// ActivityPub model was recently dereferenced, so assume that passed status
