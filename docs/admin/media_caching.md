@@ -52,3 +52,6 @@ The above settings would mean that every 8 hours starting from midnight, GoToSoc
 
 !!! tip
     You can also run cleanup manually as a one-off action through the admin panel, if you so wish ([see docs](./settings.md#media)).
+
+!!! warning
+    Setting `media-cleanup-every` to a very small value like `"30m"` or less will probably cause your instance to just constantly iterate through attachments, causing high database use for very little benefit. We don't recommend setting this value to less than about `"8h"` and even that is probably overkill.
