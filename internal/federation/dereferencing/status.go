@@ -354,7 +354,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Ensure the status' tags are populated, (changes are expected / okay).
-	if err := d.fetchStatusTags(ctx, latestStatus); err != nil {
+	if err := d.fetchStatusTags(ctx, status, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating tags for status %s: %w", uri, err)
 	}
 
@@ -514,36 +514,31 @@ func (d *Dereferencer) threadStatus(ctx context.Context, status *gtsmodel.Status
 	return nil
 }
 
-func (d *Dereferencer) fetchStatusTags(ctx context.Context, status *gtsmodel.Status) error {
+func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gtsmodel.Status) error {
 	// Allocate new slice to take the yet-to-be determined tag IDs.
 	status.TagIDs = make([]string, len(status.Tags))
 
 	for i := range status.Tags {
-		placeholder := status.Tags[i]
+		tag := status.Tags[i]
 
-		// Look for existing tag with this name first.
-		tag, err := d.state.DB.GetTagByName(ctx, placeholder.Name)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			log.Errorf(ctx, "db error getting tag %s: %v", tag.Name, err)
+		// Look for existing mention with target account URI first.
+		existing, ok := existing.GetTagByName(tag.Name)
+		if ok && existing.ID != "" {
+			status.Tags[i] = existing
+			status.TagIDs[i] = existing.ID
 			continue
 		}
 
-		if tag == nil {
-			// Create new ID for tag name.
-			tag = &gtsmodel.Tag{
-				ID:   id.NewULID(),
-				Name: placeholder.Name,
-			}
+		// Create new ID for tag.
+		tag.ID = id.NewULID()
 
-			// Insert this tag with new name into the database.
-			if err := d.state.DB.PutTag(ctx, tag); err != nil {
-				log.Errorf(ctx, "db error putting tag %s: %v", tag.Name, err)
-				continue
-			}
+		// Insert this tag with new name into the database.
+		if err := d.state.DB.PutTag(ctx, tag); err != nil {
+			log.Errorf(ctx, "db error putting tag %s: %v", tag.Name, err)
+			continue
 		}
 
-		// Set the *new* tag and ID.
-		status.Tags[i] = tag
+		// Set new tag ID in slice.
 		status.TagIDs[i] = tag.ID
 	}
 
@@ -569,10 +564,10 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
 	for i := range status.Attachments {
-		placeholder := status.Attachments[i]
+		attachment := status.Attachments[i]
 
 		// Look for existing media attachment with remoet URL first.
-		existing, ok := existing.GetAttachmentByRemoteURL(placeholder.RemoteURL)
+		existing, ok := existing.GetAttachmentByRemoteURL(attachment.RemoteURL)
 		if ok && existing.ID != "" && *existing.Cached {
 			status.Attachments[i] = existing
 			status.AttachmentIDs[i] = existing.ID
@@ -580,9 +575,9 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 		}
 
 		// Ensure a valid media attachment remote URL.
-		remoteURL, err := url.Parse(placeholder.RemoteURL)
+		remoteURL, err := url.Parse(attachment.RemoteURL)
 		if err != nil {
-			log.Errorf(ctx, "invalid remote media url %q: %v", placeholder.RemoteURL, err)
+			log.Errorf(ctx, "invalid remote media url %q: %v", attachment.RemoteURL, err)
 			continue
 		}
 
@@ -591,9 +586,9 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 			return tsport.DereferenceMedia(ctx, remoteURL)
 		}, status.AccountID, &media.AdditionalMediaInfo{
 			StatusID:    &status.ID,
-			RemoteURL:   &placeholder.RemoteURL,
-			Description: &placeholder.Description,
-			Blurhash:    &placeholder.Blurhash,
+			RemoteURL:   &attachment.RemoteURL,
+			Description: &attachment.Description,
+			Blurhash:    &attachment.Blurhash,
 		})
 		if err != nil {
 			log.Errorf(ctx, "error processing attachment: %v", err)
@@ -601,15 +596,15 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 		}
 
 		// Force attachment loading *right now*.
-		media, err := processing.LoadAttachment(ctx)
+		attachment, err = processing.LoadAttachment(ctx)
 		if err != nil {
 			log.Errorf(ctx, "error loading attachment: %v", err)
 			continue
 		}
 
 		// Set the *new* attachment and ID.
-		status.Attachments[i] = media
-		status.AttachmentIDs[i] = media.ID
+		status.Attachments[i] = attachment
+		status.AttachmentIDs[i] = attachment.ID
 	}
 
 	for i := 0; i < len(status.AttachmentIDs); {

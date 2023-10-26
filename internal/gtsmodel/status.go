@@ -18,11 +18,8 @@
 package gtsmodel
 
 import (
-	"time"
-
 	"slices"
-
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"time"
 )
 
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
@@ -91,40 +88,14 @@ func (s *Status) GetBoostOfAccountID() string {
 	return s.BoostOfAccountID
 }
 
-func (s *Status) GetAttachmentByID(id string) (*MediaAttachment, bool) {
-	for _, media := range s.Attachments {
-		if media == nil {
-			log.Warnf(nil, "nil attachment in slice for status %s", s.URI)
-			continue
-		}
-		if media.ID == id {
-			return media, true
-		}
-	}
-	return nil, false
-}
-
-func (s *Status) GetAttachmentByRemoteURL(url string) (*MediaAttachment, bool) {
-	for _, media := range s.Attachments {
-		if media == nil {
-			log.Warnf(nil, "nil attachment in slice for status %s", s.URI)
-			continue
-		}
-		if media.RemoteURL == url {
-			return media, true
-		}
-	}
-	return nil, false
-}
-
 // AttachmentsPopulated returns whether media attachments are populated according to current AttachmentIDs.
 func (s *Status) AttachmentsPopulated() bool {
 	if len(s.AttachmentIDs) != len(s.Attachments) {
 		// this is the quickest indicator.
 		return false
 	}
-	for _, id := range s.AttachmentIDs {
-		if _, ok := s.GetAttachmentByID(id); !ok {
+	for i, id := range s.AttachmentIDs {
+		if s.Attachments[i].ID != id {
 			return false
 		}
 	}
@@ -137,45 +108,12 @@ func (s *Status) TagsPopulated() bool {
 		// this is the quickest indicator.
 		return false
 	}
-
-	// Tags must be in same order.
 	for i, id := range s.TagIDs {
-		if s.Tags[i] == nil {
-			log.Warnf(nil, "nil tag in slice for status %s", s.URI)
-			continue
-		}
 		if s.Tags[i].ID != id {
 			return false
 		}
 	}
-
 	return true
-}
-
-func (s *Status) GetMentionByID(id string) (*Mention, bool) {
-	for _, mention := range s.Mentions {
-		if mention == nil {
-			log.Warnf(nil, "nil mention in slice for status %s", s.URI)
-			continue
-		}
-		if mention.ID == id {
-			return mention, true
-		}
-	}
-	return nil, false
-}
-
-func (s *Status) GetMentionByTargetURI(uri string) (*Mention, bool) {
-	for _, mention := range s.Mentions {
-		if mention == nil {
-			log.Warnf(nil, "nil mention in slice for status %s", s.URI)
-			continue
-		}
-		if mention.TargetAccountURI == uri {
-			return mention, true
-		}
-	}
-	return nil, false
 }
 
 // MentionsPopulated returns whether mentions are populated according to current MentionIDs.
@@ -184,8 +122,8 @@ func (s *Status) MentionsPopulated() bool {
 		// this is the quickest indicator.
 		return false
 	}
-	for _, id := range s.MentionIDs {
-		if _, ok := s.GetMentionByID(id); !ok {
+	for i, id := range s.MentionIDs {
+		if s.Mentions[i].ID != id {
 			return false
 		}
 	}
@@ -198,18 +136,11 @@ func (s *Status) EmojisPopulated() bool {
 		// this is the quickest indicator.
 		return false
 	}
-
-	// Emojis must be in same order.
 	for i, id := range s.EmojiIDs {
-		if s.Emojis[i] == nil {
-			log.Warnf(nil, "nil emoji in slice for status %s", s.URI)
-			continue
-		}
 		if s.Emojis[i].ID != id {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -221,26 +152,42 @@ func (s *Status) EmojisUpToDate(other *Status) bool {
 		// this is the quickest indicator.
 		return false
 	}
-
-	// Emojis must be in same order.
 	for i := range s.Emojis {
-		if s.Emojis[i] == nil {
-			log.Warnf(nil, "nil emoji in slice for status %s", s.URI)
-			return false
-		}
-
-		if other.Emojis[i] == nil {
-			log.Warnf(nil, "nil emoji in slice for status %s", other.URI)
-			return false
-		}
-
 		if s.Emojis[i].URI != other.Emojis[i].URI {
-			// Emoji URI has changed, not up-to-date!
 			return false
 		}
 	}
-
 	return true
+}
+
+// GetAttachmentByRemoteURL searches status for MediaAttachment{} with remote URL.
+func (s *Status) GetAttachmentByRemoteURL(url string) (*MediaAttachment, bool) {
+	for _, media := range s.Attachments {
+		if media.RemoteURL == url {
+			return media, true
+		}
+	}
+	return nil, false
+}
+
+// GetMentionByTargetURI searches status for Mention{} with target URI.
+func (s *Status) GetMentionByTargetURI(uri string) (*Mention, bool) {
+	for _, mention := range s.Mentions {
+		if mention.TargetAccountURI == uri {
+			return mention, true
+		}
+	}
+	return nil, false
+}
+
+// GetTagByName searches status for Tag{} with name.
+func (s *Status) GetTagByName(name string) (*Tag, bool) {
+	for _, tag := range s.Tags {
+		if tag.Name == name {
+			return tag, true
+		}
+	}
+	return nil, false
 }
 
 // MentionsAccount returns whether status mentions the given account ID.
