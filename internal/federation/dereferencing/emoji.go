@@ -36,6 +36,12 @@ func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername st
 		processingEmoji *media.ProcessingEmoji
 	)
 
+	// Ensure we have been passed a valid URL.
+	derefURI, err := url.Parse(remoteURL)
+	if err != nil {
+		return nil, fmt.Errorf("GetRemoteEmoji: error parsing url for emoji %s: %s", shortcodeDomain, err)
+	}
+
 	// Acquire lock for derefs map.
 	unlock := d.state.FedLocks.Lock(remoteURL)
 	unlock = doOnce(unlock)
@@ -50,11 +56,6 @@ func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername st
 		t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
 		if err != nil {
 			return nil, fmt.Errorf("GetRemoteEmoji: error creating transport to fetch emoji %s: %s", shortcodeDomain, err)
-		}
-
-		derefURI, err := url.Parse(remoteURL)
-		if err != nil {
-			return nil, fmt.Errorf("GetRemoteEmoji: error parsing url for emoji %s: %s", shortcodeDomain, err)
 		}
 
 		dataFunc := func(innerCtx context.Context) (io.ReadCloser, int64, error) {

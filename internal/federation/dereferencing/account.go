@@ -312,7 +312,7 @@ func (d *Dereferencer) enrichAccountSafely(
 	uriStr := account.URI
 
 	if uriStr == "" {
-		// No URI is set, instead generate a faux-one from user+domain.
+		// No URI is set yet, instead generate a faux-one from user+domain.
 		uriStr = "https://" + account.Domain + "/user/" + account.Username
 	}
 
