@@ -184,7 +184,7 @@ func (d *Dereferencer) RefreshStatus(ctx context.Context, requestUser string, st
 // This is a more optimized form of manually enqueueing .UpdateStatus() to the federation worker, since it only enqueues update if necessary.
 func (d *Dereferencer) RefreshStatusAsync(ctx context.Context, requestUser string, status *gtsmodel.Status, apubStatus ap.Statusable, force bool) {
 	// Check whether needs update.
-	if statusUpToDate(status) {
+	if !force && statusUpToDate(status) {
 		return
 	}
 
@@ -221,6 +221,14 @@ func (d *Dereferencer) enrichStatusSafely(
 	apubStatus ap.Statusable,
 ) (*gtsmodel.Status, ap.Statusable, error) {
 	uriStr := status.URI
+
+	if status.ID != "" {
+		// This is an existing status, first try to populate it. This
+		// is required by the checks below for existing tags, media etc.
+		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error populating existing status %s: %v", uriStr, err)
+		}
+	}
 
 	// Acquire per-URI deref lock, wraping unlock
 	// to safely defer in case of panic, while still
