@@ -103,6 +103,8 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Int(MediaRemoteCacheDaysFlag(), cfg.MediaRemoteCacheDays, fieldtag("MediaRemoteCacheDays", "usage"))
 		cmd.Flags().Uint64(MediaEmojiLocalMaxSizeFlag(), uint64(cfg.MediaEmojiLocalMaxSize), fieldtag("MediaEmojiLocalMaxSize", "usage"))
 		cmd.Flags().Uint64(MediaEmojiRemoteMaxSizeFlag(), uint64(cfg.MediaEmojiRemoteMaxSize), fieldtag("MediaEmojiRemoteMaxSize", "usage"))
+		cmd.Flags().String(MediaCleanupFromFlag(), cfg.MediaCleanupFrom, fieldtag("MediaCleanupFrom", "usage"))
+		cmd.Flags().Duration(MediaCleanupEveryFlag(), cfg.MediaCleanupEvery, fieldtag("MediaCleanupEvery", "usage"))
 
 		// Storage
 		cmd.Flags().String(StorageBackendFlag(), cfg.StorageBackend, fieldtag("StorageBackend", "usage"))

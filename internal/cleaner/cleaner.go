@@ -47,7 +47,6 @@ func New(state *state.State) *Cleaner {
 	c.state = state
 	c.emoji.Cleaner = c
 	c.media.Cleaner = c
-	scheduleJobs(c)
 	return c
 }
 
@@ -109,16 +108,41 @@ func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error)
 	return diff, nil
 }
 
-func scheduleJobs(c *Cleaner) {
-	const day = time.Hour * 24
+// ScheduleJobs schedules cleaning
+// jobs using configured parameters.
+//
+// Returns an error if `MediaCleanupFrom`
+// is not a valid format (hh:mm:ss).
+func (c *Cleaner) ScheduleJobs() error {
+	var (
+		now            = time.Now()
+		cleanupEvery   = config.GetMediaCleanupEvery()
+		cleanupFromStr = config.GetMediaCleanupFrom()
+	)
 
-	// Calculate closest midnight.
-	now := time.Now()
-	midnight := now.Round(day)
+	// Parse cleanupFromStr as hh:mm:ss.
+	// Resulting time will be on 1 Jan 1970.
+	cleanupFrom, err := time.Parse(time.TimeOnly, cleanupFromStr)
+	if err != nil {
+		return gtserror.Newf("error parsing '%s' as time format '%s': %w", cleanupFromStr, time.TimeOnly, err)
+	}
 
-	if midnight.Before(now) {
-		// since <= 11:59am rounds down.
-		midnight = midnight.Add(day)
+	// Time travel from
+	// the 70's, groovy.
+	firstCleanupAt := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		cleanupFrom.Hour(),
+		cleanupFrom.Minute(),
+		cleanupFrom.Second(),
+		0,
+		now.Location(),
+	)
+
+	// Ensure first cleanup is in the future.
+	for firstCleanupAt.Before(now) {
+		firstCleanupAt = firstCleanupAt.Add(cleanupEvery)
 	}
 
 	// Get ctx associated with scheduler run state.
@@ -129,11 +153,18 @@ func scheduleJobs(c *Cleaner) {
 	// jobs restartable if we want to implement reloads in
 	// the future that make call to Workers.Stop() -> Workers.Start().
 
-	// Schedule the cleaning tasks to execute every day at midnight.
+	log.Infof(nil,
+		"scheduling media clean to run every %s, starting from %s; next clean will run at %s",
+		cleanupEvery, cleanupFromStr, firstCleanupAt,
+	)
+
+	// Schedule the cleaning tasks to execute according to given schedule.
 	c.state.Workers.Scheduler.Schedule(sched.NewJob(func(start time.Time) {
 		log.Info(nil, "starting media clean")
 		c.Media().All(doneCtx, config.GetMediaRemoteCacheDays())
 		c.Emoji().All(doneCtx, config.GetMediaRemoteCacheDays())
 		log.Infof(nil, "finished media clean after %s", time.Since(start))
-	}).EveryAt(midnight, day))
+	}).EveryAt(firstCleanupAt, cleanupEvery))
+
+	return nil
 }

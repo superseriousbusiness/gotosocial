@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -211,11 +212,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	activityPubModule.RoutePublicKey(router)
 	webModule.Route(router)
 
-	gts, err := gotosocial.NewServer(state.DB, router, federator, mediaManager)
-	if err != nil {
-		return fmt.Errorf("error creating gotosocial service: %s", err)
-	}
+	cleaner := cleaner.New(&state)
 
+	gts := gotosocial.NewServer(state.DB, router, cleaner)
 	if err := gts.Start(ctx); err != nil {
 		return fmt.Errorf("error starting gotosocial service: %s", err)
 	}

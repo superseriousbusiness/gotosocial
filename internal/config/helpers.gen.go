@@ -1224,6 +1224,56 @@ func GetMediaEmojiRemoteMaxSize() bytesize.Size { return global.GetMediaEmojiRem
 // SetMediaEmojiRemoteMaxSize safely sets the value for global configuration 'MediaEmojiRemoteMaxSize' field
 func SetMediaEmojiRemoteMaxSize(v bytesize.Size) { global.SetMediaEmojiRemoteMaxSize(v) }
 
+// GetMediaCleanupFrom safely fetches the Configuration value for state's 'MediaCleanupFrom' field
+func (st *ConfigState) GetMediaCleanupFrom() (v string) {
+	st.mutex.RLock()
+	v = st.config.MediaCleanupFrom
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaCleanupFrom safely sets the Configuration value for state's 'MediaCleanupFrom' field
+func (st *ConfigState) SetMediaCleanupFrom(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaCleanupFrom = v
+	st.reloadToViper()
+}
+
+// MediaCleanupFromFlag returns the flag name for the 'MediaCleanupFrom' field
+func MediaCleanupFromFlag() string { return "media-cleanup-from" }
+
+// GetMediaCleanupFrom safely fetches the value for global configuration 'MediaCleanupFrom' field
+func GetMediaCleanupFrom() string { return global.GetMediaCleanupFrom() }
+
+// SetMediaCleanupFrom safely sets the value for global configuration 'MediaCleanupFrom' field
+func SetMediaCleanupFrom(v string) { global.SetMediaCleanupFrom(v) }
+
+// GetMediaCleanupEvery safely fetches the Configuration value for state's 'MediaCleanupEvery' field
+func (st *ConfigState) GetMediaCleanupEvery() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.MediaCleanupEvery
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaCleanupEvery safely sets the Configuration value for state's 'MediaCleanupEvery' field
+func (st *ConfigState) SetMediaCleanupEvery(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaCleanupEvery = v
+	st.reloadToViper()
+}
+
+// MediaCleanupEveryFlag returns the flag name for the 'MediaCleanupEvery' field
+func MediaCleanupEveryFlag() string { return "media-cleanup-every" }
+
+// GetMediaCleanupEvery safely fetches the value for global configuration 'MediaCleanupEvery' field
+func GetMediaCleanupEvery() time.Duration { return global.GetMediaCleanupEvery() }
+
+// SetMediaCleanupEvery safely sets the value for global configuration 'MediaCleanupEvery' field
+func SetMediaCleanupEvery(v time.Duration) { global.SetMediaCleanupEvery(v) }
+
 // GetStorageBackend safely fetches the Configuration value for state's 'StorageBackend' field
 func (st *ConfigState) GetStorageBackend() (v string) {
 	st.mutex.RLock()
