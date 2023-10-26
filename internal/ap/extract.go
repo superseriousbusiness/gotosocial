@@ -600,10 +600,21 @@ func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 
 	return &gtsmodel.MediaAttachment{
 		RemoteURL:   remoteURL.String(),
-		Description: ExtractName(i),
+		Description: ExtractDescription(i),
 		Blurhash:    ExtractBlurhash(i),
 		Processing:  gtsmodel.ProcessingStatusReceived,
 	}, nil
+}
+
+// ExtractDescription extracts the image description
+// of an attachmentable, if present. Will try the
+// 'summary' prop first, then fall back to 'name'.
+func ExtractDescription(i Attachmentable) string {
+	if summary := ExtractSummary(i); summary != "" {
+		return summary
+	}
+
+	return ExtractName(i)
 }
 
 // ExtractBlurhash extracts the blurhash string value
