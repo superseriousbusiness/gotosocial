@@ -13,7 +13,7 @@ Remote media, on the other hand, is cached only temporarily. After a certain amo
     
     For example, say someone from a small instance makes a funny post with an image attached. The post gets boosted by an account that's followed by 1,000 people across 5 different instances (200 on each instance). Each of those 1,000 people then have the image put in their timeline at once.
     
-    With no remote media caching in place, this may cause up to 1,000 requests to hit the small instance at once, as the browser of each recipient of the post must go and make a unique request to fetch the image from the small instance. This causes a large traffic spike for the small instance. In extreme scenarios, this can cause the instance to become unresponsive or crash, essentially DDOS'ing it.
+    With no remote media caching in place, this may cause up to 1,000 requests to hit the small instance at simultaneously, as the browser of each recipient of the post must go and make a unique request to fetch the image from the small instance. This causes a large traffic spike for the small instance. In extreme scenarios, this can cause the instance to become unresponsive or crash, essentially DDOS'ing it.
     
     With remote media caching in place, however, boosting a post to 1,000 people across 5 different instances will cause only 5 requests to the small instance: 1 request for each instance. Each instance will then serve 200 requests to its local users from the cached version of the remote image, effectively spreading the load and sparing the smaller instance.
 
