@@ -29,17 +29,6 @@ media-description-min-chars: 0
 # Default: 500
 media-description-max-chars: 500
 
-# Int. Number of days to cache media from remote instances before they are removed from the cache.
-# A job will run every day at midnight to clean up any remote media older than the given amount of days.
-#
-# When remote media is removed from the cache, it is deleted from storage but the database entries for the media
-# are kept so that it can be fetched again if requested by a user.
-#
-# If this is set to 0, then media from remote instances will be cached indefinitely.
-# Examples: [30, 60, 7, 0]
-# Default: 7
-media-remote-cache-days: 7
-
 # Int. Max size in bytes of emojis uploaded to this instance via the admin API.
 # The default is the same as the Mastodon size limit for emojis (50kb), which allows
 # for good interoperability. Raising this limit may cause issues with federation
@@ -55,4 +44,35 @@ media-emoji-local-max-size: 51200
 # Examples: [51200, 102400]
 # Default: 102400
 media-emoji-remote-max-size: 102400
+
+# The below media cleanup settings allow admins to customize when and
+# how often media cleanup + prune jobs run, while being set to a fairly
+# sensible default (every night @ midnight). For more information on exactly
+# what these settings do, with some customization examples, see the docs:
+# https://docs.gotosocial.org/en/latest/admin/media_caching#cleanup
+
+# Int. Number of days to cache media from remote instances before
+# they are removed from the cache. When remote media is removed from
+# the cache, it is deleted from storage but the database entries for
+# the media are kept so that it can be fetched again if requested by a user.
+#
+# If this is set to 0, then media from remote instances will be cached indefinitely.
+#
+# Examples: [30, 60, 7, 0]
+# Default: 7
+media-remote-cache-days: 7
+
+# String. 24hr time of day formatted as hh:mm:ss.
+# Examples: ["14:30:00", "00:00:00", "04:00:00"]
+# Default: "00:00:00" (midnight). 
+media-cleanup-from: "00:00:00"
+
+# Duration. Period between media cleanup runs.
+# More than once per 24h is not recommended
+# is likely overkill. Setting this to something
+# very low like once every 10 minutes will probably
+# cause lag and possibly other issues.
+# Examples: ["24h", "72h", "12h"]
+# Default: "24h" (once per day).
+media-cleanup-every: "24h"
 ```

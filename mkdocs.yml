@@ -106,6 +106,7 @@ nav:
       - "admin/domain_blocks.md"
       - "admin/cli.md"
       - "admin/backup_and_restore.md"
+      - "admin/media_caching.md"
   - "Federation":
       - "federation/index.md"
       - "federation/glossary.md"

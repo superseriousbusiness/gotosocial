@@ -124,7 +124,10 @@ func (c *Cleaner) ScheduleJobs() error {
 	// Resulting time will be on 1 Jan 1970.
 	cleanupFrom, err := time.Parse(time.TimeOnly, cleanupFromStr)
 	if err != nil {
-		return gtserror.Newf("error parsing '%s' as time format '%s': %w", cleanupFromStr, time.TimeOnly, err)
+		return gtserror.Newf(
+			"error parsing '%s' as time format '%s': %w",
+			cleanupFromStr, time.TimeOnly, err,
+		)
 	}
 
 	// Time travel from
