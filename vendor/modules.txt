@@ -58,7 +58,6 @@ codeberg.org/gruf/go-runners
 codeberg.org/gruf/go-sched
 # codeberg.org/gruf/go-store/v2 v2.2.4
 ## explicit; go 1.19
-codeberg.org/gruf/go-store/v2/kv
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
 # github.com/DmitriyVTitov/size v1.5.0
