@@ -1666,7 +1666,7 @@ func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.Poll
 	// Get the vote author.
 	author := vote.Account
 
-	// Get the JSONLD ID IRI for author.
+	// Get the JSONLD ID IRI for vote author.
 	authorIRI, err := url.Parse(author.URI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid author uri: %w", err)
@@ -1686,6 +1686,12 @@ func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.Poll
 		return nil, gtserror.Newf("invalid status uri: %w", err)
 	}
 
+	// Get the JSONLD ID IRI for poll's author account.
+	pollAuthorIRI, err := url.Parse(poll.Status.AccountURI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid account uri: %w", err)
+	}
+
 	// Preallocate the return slice of notes.
 	notes := make([]ap.PollOptionable, len(vote.Choices))
 
@@ -1702,11 +1708,10 @@ func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.Poll
 		nameProp.AppendXMLSchemaString(poll.Options[choice])
 		note.SetActivityStreamsName(nameProp)
 
-		// Add the status IRI to reply field.
-		ap.AppendInReplyTo(note, statusIRI)
-
-		// Add the author's IRI to attrib field.
+		// Set 'to', 'attribTo', 'inReplyTo' fields.
 		ap.AppendAttributedTo(note, authorIRI)
+		ap.AppendInReplyTo(note, statusIRI)
+		ap.AppendTo(note, pollAuthorIRI)
 
 		// Set note in return slice.
 		notes[i] = note
