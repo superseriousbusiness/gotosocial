@@ -524,9 +524,19 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 	for i := range status.Tags {
 		tag := status.Tags[i]
 
-		// Look for existing mention with target account URI first.
+		// Look for tag in existing status with name.
 		existing, ok := existing.GetTagByName(tag.Name)
 		if ok && existing.ID != "" {
+			status.Tags[i] = existing
+			status.TagIDs[i] = existing.ID
+			continue
+		}
+
+		// Look for existing tag with name in the database.
+		existing, err := d.state.DB.GetTagByName(ctx, tag.Name)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return gtserror.Newf("db error getting tag %s: %w", tag.Name, err)
+		} else if existing != nil {
 			status.Tags[i] = existing
 			status.TagIDs[i] = existing.ID
 			continue
