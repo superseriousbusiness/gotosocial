@@ -23,8 +23,10 @@ bindings/js/example/node_modules
 bindings/js/example/test.min.html
 bindings/py/go.mod
 bindings/py/go.sum
-bindings/py/minify.h
-bindings/py/minify.so
-bindings/py/tdewolff_minify.egg-info
+bindings/py/**/*.h
+bindings/py/**/*.so
+bindings/py/**/*.egg-info
 bindings/py/example/example.min.html
 bindings/py/dist
+bindings/py/build
+bindings/py/**/*.pyc
