@@ -172,10 +172,12 @@ func (d *Dereferencer) RefreshStatus(ctx context.Context, requestUser string, st
 		return nil, nil, err
 	}
 
-	// This status was updated, enqueue re-dereferencing the whole thread.
-	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
-	})
+	if apubStatus != nil {
+		// This status was updated, enqueue re-dereferencing the whole thread.
+		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+			d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
+		})
+	}
 
 	return latest, apubStatus, nil
 }
