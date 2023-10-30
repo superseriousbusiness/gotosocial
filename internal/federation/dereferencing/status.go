@@ -387,7 +387,7 @@ func (d *Dereferencer) deriveMention(
 	// Look for existing mention with this URI.
 	// If we already have this mention we can return early.
 	existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
-	if ok && existing.ID != "" {
+	if ok && existingMention.ID != "" {
 		return existingMention, true, nil
 	}
 
