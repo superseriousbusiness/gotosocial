@@ -76,7 +76,7 @@ func (p *Processor) onExpiry(pollID string) func(context.Context, time.Time) {
 		// Get the latest version of poll from database.
 		poll, err := p.state.DB.GetPollByID(ctx, pollID)
 		if err != nil {
-			log.Errorf(ctx, "error getting poll from db: %v", err)
+			log.Errorf(ctx, "error getting poll %s from db: %v", pollID, err)
 			return
 		}
 
@@ -86,19 +86,30 @@ func (p *Processor) onExpiry(pollID string) func(context.Context, time.Time) {
 			return
 		}
 
+		// Extract status and
+		// set its Poll field.
+		status := poll.Status
+		status.Poll = poll
+
+		// Ensure the status is fully populated (we need the account)
+		if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error populating poll %s status: %v", pollID, err)
+
+			if status.Account == nil {
+				// cannot continue without
+				// status account author.
+				return
+			}
+		}
+
 		// Set "closed" time.
 		poll.ClosedAt = now
 
 		// Update the Poll to mark it as closed in the database.
 		if err := p.state.DB.UpdatePoll(ctx, poll, "closed_at"); err != nil {
-			log.Errorf(ctx, "error updating poll in db: %v", err)
+			log.Errorf(ctx, "error updating poll %s in db: %v", pollID, err)
 			return
 		}
-
-		// Extract status and
-		// set its Poll field.
-		status := poll.Status
-		status.Poll = poll
 
 		// Enqueue a status update operation to the client API worker,
 		// this will asynchronously send an update with the Poll close time.
@@ -106,6 +117,7 @@ func (p *Processor) onExpiry(pollID string) func(context.Context, time.Time) {
 			APActivityType: ap.ActivityUpdate,
 			APObjectType:   ap.ObjectNote,
 			GTSModel:       status,
+			OriginAccount:  status.Account,
 		})
 	}
 }
