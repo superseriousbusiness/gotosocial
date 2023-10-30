@@ -61,7 +61,6 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)
-	suite.state.FedLocks.Init(-1, -1)
 
 	suite.db = testrig.NewTestDB(&suite.state)
 

@@ -78,7 +78,6 @@ func (suite *AuthStandardTestSuite) SetupSuite() {
 
 func (suite *AuthStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	suite.state.FedLocks.Init(-1, -1)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

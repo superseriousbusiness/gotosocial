@@ -521,7 +521,6 @@ func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
 		visibility.NewFilter(&suite.state),
 		suite.typeconverter,
 	)
-	suite.state.FedLocks.Init(-1, -1)
 
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
 	transportController := testrig.NewTestTransportController(&suite.state, httpClient)

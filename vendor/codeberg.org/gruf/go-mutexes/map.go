@@ -1,290 +1,263 @@
 package mutexes
 
 import (
-	"runtime"
 	"sync"
+	"unsafe"
 )
 
 const (
-	// default values.
-	defaultWake = 1024
+	// possible lock types.
+	lockTypeRead  = uint8(1) << 0
+	lockTypeWrite = uint8(1) << 1
+	lockTypeMap   = uint8(1) << 2
+
+	// frequency of GC cycles
+	// per no. unlocks. i.e.
+	// every 'gcfreq' unlocks.
+	gcfreq = 1024
 )
 
-// MutexMap is a structure that allows read / write locking key, performing
-// as you'd expect a map[string]*sync.RWMutex to perform. The differences
-// being that the entire map can itself be read / write locked, it uses memory
-// pooling for the mutex (not quite) structures, and it is self-evicting. The
-// core configurations of maximum no. open locks and wake modulus* are user
-// definable.
+// MutexMap is a structure that allows read / write locking
+// per key, performing as you'd expect a map[string]*RWMutex
+// to perform, without you needing to worry about deadlocks
+// between competing read / write locks and the map's own mutex.
+// It uses memory pooling for the internal "mutex" (ish) types
+// and performs self-eviction of keys.
 //
-// * The wake modulus is the number that the current number of open locks is
-// modulused against to determine how often to notify sleeping goroutines.
-// These are goroutines that are attempting to lock a key / whole map and are
-// awaiting a permissible state (.e.g no key write locks allowed when the
-// map is read locked).
+// Under the hood this is achieved using a single mutex for the
+// map, state tracking for individual keys, and some simple waitgroup
+// type structures to park / block goroutines waiting for keys.
 type MutexMap struct {
-	queue *sync.WaitGroup
-	qucnt int32
-
-	mumap map[string]*rwmutexState
-	mpool rwmutexPool
-	evict []*rwmutexState
-
-	count int32
-	maxmu int32
-	wake  int32
-
-	mapmu sync.Mutex
-	state uint8
-
-	// NOTE:
-	// The 2 main thread synchronization mechanisms in use here are the sync.Mutex
-	// and the sync.WaitGroup. We take advantage of these instead of using simpler
-	// CAS-spin-locks as we gain the implemented goroutine parking measures on "spin".
-	// This is important as when when a goroutine blocks on acquiring a mutex lock,
-	// it may get parked and allow another scheduled goroutine to be released that
-	// actually releases the map from map / write locked state.
+	mapmu  sync.Mutex
+	mumap  map[string]*rwmutexish
+	mupool rwmutexPool
+	count  uint32
 }
 
-// NewMap returns a new MutexMap instance with provided max no. open mutexes.
-func NewMap(max, wake int32) *MutexMap {
-	var mm MutexMap
-	mm.Init(max, wake)
-	return &mm
-}
-
-// Init initializes the MutexMap with given max open locks and wake modulus.
-func (mm *MutexMap) Init(max, wake int32) {
-	mm.mapmu.Lock()
+// checkInit ensures MutexMap is initialized (UNSAFE).
+func (mm *MutexMap) checkInit() {
 	if mm.mumap == nil {
-		mm.queue = new(sync.WaitGroup)
-		mm.mumap = make(map[string]*rwmutexState)
-	}
-	mm.set(max, wake)
-	mm.mapmu.Unlock()
-}
-
-// SET sets the MutexMap max open locks and wake modulus, returns current values.
-// For values less than zero defaults are set, and zero is non-op.
-func (mm *MutexMap) SET(max, wake int32) (int32, int32) {
-	mm.mapmu.Lock()
-	max, wake = mm.set(max, wake)
-	mm.mapmu.Unlock()
-	return max, wake
-}
-
-// set contains the actual logic for MutexMap.SET, without mutex protection.
-func (mm *MutexMap) set(max, wake int32) (int32, int32) {
-	switch {
-	// Set default wake
-	case wake < 0:
-		mm.wake = defaultWake
-
-	// Set supplied wake
-	case wake > 0:
-		mm.wake = wake
-	}
-
-	switch {
-	// Set default max
-	case max < 0:
-		procs := runtime.GOMAXPROCS(0)
-		mm.maxmu = mm.wake * int32(procs)
-
-	// Set supplied max
-	case max > 0:
-		mm.maxmu = max
-	}
-
-	// Fetch current values
-	return mm.maxmu, mm.wake
-}
-
-// spinLock will wait (using a mutex to sleep thread) until conditional returns true.
-func (mm *MutexMap) spinLock(cond func() bool) {
-	for {
-		// Acquire map lock
-		mm.mapmu.Lock()
-
-		// Perform check
-		if cond() {
-			return
-		}
-
-		// Current queue ptr
-		queue := mm.queue
-
-		// Queue ourselves
-		queue.Add(1)
-		mm.qucnt++
-
-		// Unlock map
-		mm.mapmu.Unlock()
-
-		// Wait on notify
-		mm.queue.Wait()
+		mm.mumap = make(map[string]*rwmutexish)
 	}
 }
 
-// lock will acquire a lock of given type on the 'mutex' at key.
-func (mm *MutexMap) lock(key string, lt uint8) func() {
-	var mu *rwmutexState
-	var ok bool
-
-	// Spin lock until returns true
-	mm.spinLock(func() bool {
-		// Check not overloaded
-		if !(mm.count < mm.maxmu) {
-			return false
-		}
-
-		// Attempt to acquire usable map state
-		state, ok := acquireState(mm.state, lt)
-		if !ok {
-			return false
-		}
-
-		// Update state
-		mm.state = state
-
-		// Ensure mutex at key
-		// is in lockable state
-		mu, ok = mm.mumap[key]
-		return !ok || mu.CanLock(lt)
-	})
-
-	// Incr count
-	mm.count++
-
-	if !ok {
-		// No mutex for key, alloc new
-		mu = mm.mpool.Acquire()
-		mm.mumap[key] = mu
-
-		// Set our key
-		mu.key = key
-
-		// Queue mutex for eviction
-		mm.evict = append(mm.evict, mu)
-	}
-
-	// Lock mutex
-	mu.Lock(lt)
-
-	// Unlock map
-	mm.mapmu.Unlock()
-
-	return func() {
-		mm.mapmu.Lock()
-		mu.Unlock()
-		mm.cleanup()
-	}
+// Lock acquires a write lock on key in map, returning unlock function.
+func (mm *MutexMap) Lock(key string) func() {
+	return mm.lock(key, lockTypeWrite)
 }
 
-// lockMap will lock the whole map under given lock type.
-func (mm *MutexMap) lockMap(lt uint8) {
-	// Spin lock until returns true
-	mm.spinLock(func() bool {
-		// Attempt to acquire usable map state
-		state, ok := acquireState(mm.state, lt)
-		if !ok {
-			return false
-		}
-
-		// Update state
-		mm.state = state
-
-		return true
-	})
-
-	// Incr count
-	mm.count++
-
-	// State acquired, unlock
-	mm.mapmu.Unlock()
-}
-
-// cleanup is performed as the final stage of unlocking a locked key / map state, finally unlocks map.
-func (mm *MutexMap) cleanup() {
-	// Decr count
-	mm.count--
-
-	// Calculate current wake modulus
-	wakemod := mm.count % mm.wake
-
-	if mm.count != 0 && wakemod != 0 {
-		// Fast path => no cleanup.
-		// Unlock, return early
-		mm.mapmu.Unlock()
-		return
-	}
-
-	// Launch cleanup goroutine via
-	// outlined function below, this
-	// allows inlining of clean().
-	mm.goCleanup(wakemod)
-}
-
-// goCleanup launches the slow part of the cleanup routine in a separate
-// goroutine, using given calculated wake modulus. This releases all queued
-// goroutines and evicts any mutexes currently awaiting.
-func (mm *MutexMap) goCleanup(wakemod int32) {
-	go func() {
-		if wakemod == 0 {
-			// Release queued goroutines
-			mm.queue.Add(-int(mm.qucnt))
-
-			// Allocate new queue and reset
-			mm.queue = new(sync.WaitGroup)
-			mm.qucnt = 0
-		}
-
-		if mm.count == 0 {
-			// Perform evictions
-			for _, mu := range mm.evict {
-				key := mu.key
-				mu.key = ""
-				delete(mm.mumap, key)
-				mm.mpool.Release(mu)
-			}
-
-			// Reset map state
-			mm.evict = mm.evict[:0]
-			mm.state = stateUnlockd
-			mm.mpool.GC()
-		}
-
-		// Unlock map
-		mm.mapmu.Unlock()
-	}()
-}
-
-// RLockMap acquires a read lock over the entire map, returning a lock state for acquiring key read locks.
-// Please note that the 'unlock()' function will block until all keys locked from this state are unlocked.
-func (mm *MutexMap) RLockMap() *LockState {
-	mm.lockMap(lockTypeRead | lockTypeMap)
-	return &LockState{
-		mmap: mm,
-		ltyp: lockTypeRead,
-	}
-}
-
-// LockMap acquires a write lock over the entire map, returning a lock state for acquiring key read/write locks.
-// Please note that the 'unlock()' function will block until all keys locked from this state are unlocked.
-func (mm *MutexMap) LockMap() *LockState {
-	mm.lockMap(lockTypeWrite | lockTypeMap)
-	return &LockState{
-		mmap: mm,
-		ltyp: lockTypeWrite,
-	}
-}
-
-// RLock acquires a mutex read lock for supplied key, returning an RUnlock function.
-func (mm *MutexMap) RLock(key string) (runlock func()) {
+// RLock acquires a read lock on key in map, returning runlock function.
+func (mm *MutexMap) RLock(key string) func() {
 	return mm.lock(key, lockTypeRead)
 }
 
-// Lock acquires a mutex write lock for supplied key, returning an Unlock function.
-func (mm *MutexMap) Lock(key string) (unlock func()) {
-	return mm.lock(key, lockTypeWrite)
+func (mm *MutexMap) lock(key string, lt uint8) func() {
+	// Perform first map lock
+	// and check initialization
+	// OUTSIDE the main loop.
+	mm.mapmu.Lock()
+	mm.checkInit()
+
+	for {
+		// Check map for mu.
+		mu := mm.mumap[key]
+
+		if mu == nil {
+			// Allocate new mutex.
+			mu = mm.mupool.Acquire()
+			mm.mumap[key] = mu
+		}
+
+		if !mu.Lock(lt) {
+			// Wait on mutex unlock, after
+			// immediately relocking map mu.
+			mu.WaitRelock(&mm.mapmu)
+			continue
+		}
+
+		// Done with map.
+		mm.mapmu.Unlock()
+
+		// Return mutex unlock function.
+		return func() { mm.unlock(key, mu) }
+	}
 }
+
+func (mm *MutexMap) unlock(key string, mu *rwmutexish) {
+	// Get map lock.
+	mm.mapmu.Lock()
+
+	// Unlock mutex.
+	if mu.Unlock() {
+
+		// Mutex fully unlocked
+		// with zero waiters. Self
+		// evict and release it.
+		delete(mm.mumap, key)
+		mm.mupool.Release(mu)
+	}
+
+	if mm.count++; mm.count%gcfreq == 0 {
+		// Every 'gcfreq' unlocks perform
+		// a garbage collection to keep
+		// us squeaky clean :]
+		mm.mupool.GC()
+	}
+
+	// Done with map.
+	mm.mapmu.Unlock()
+}
+
+// rwmutexPool is a very simply memory rwmutexPool.
+type rwmutexPool struct {
+	current []*rwmutexish
+	victim  []*rwmutexish
+}
+
+// Acquire will returns a rwmutexState from rwmutexPool (or alloc new).
+func (p *rwmutexPool) Acquire() *rwmutexish {
+	// First try the current queue
+	if l := len(p.current) - 1; l >= 0 {
+		mu := p.current[l]
+		p.current = p.current[:l]
+		return mu
+	}
+
+	// Next try the victim queue.
+	if l := len(p.victim) - 1; l >= 0 {
+		mu := p.victim[l]
+		p.victim = p.victim[:l]
+		return mu
+	}
+
+	// Lastly, alloc new.
+	mu := new(rwmutexish)
+	return mu
+}
+
+// Release places a sync.rwmutexState back in the rwmutexPool.
+func (p *rwmutexPool) Release(mu *rwmutexish) {
+	p.current = append(p.current, mu)
+}
+
+// GC will clear out unused entries from the rwmutexPool.
+func (p *rwmutexPool) GC() {
+	current := p.current
+	p.current = nil
+	p.victim = current
+}
+
+// rwmutexish is a RW mutex (ish), i.e. the representation
+// of one only to be accessed within
+type rwmutexish struct {
+	tr trigger
+	ln int32 // no. locks
+	wn int32 // no. waiters
+	lt uint8 // lock type
+}
+
+// Lock will lock the mutex for given lock type, in the
+// sense that it will update the internal state tracker
+// accordingly. Return value is true on successful lock.
+func (mu *rwmutexish) Lock(lt uint8) bool {
+	switch mu.lt {
+	case lockTypeRead:
+		// already read locked,
+		// only permit more reads.
+		if lt != lockTypeRead {
+			return false
+		}
+
+	case lockTypeWrite:
+		// already write locked,
+		// no other locks allowed.
+		return false
+
+	default:
+		// Fully unlocked.
+		mu.lt = lt
+	}
+
+	// Update
+	// count.
+	mu.ln++
+
+	return true
+}
+
+// Unlock will unlock the mutex, in the sense that
+// it will update the internal state tracker accordingly.
+// On any unlock it will awaken sleeping waiting threads.
+// Returned boolean is if unlocked=true AND waiters=0.
+func (mu *rwmutexish) Unlock() bool {
+	var ok bool
+
+	switch mu.ln--; {
+	case mu.ln > 0 && mu.lt == lockTypeWrite:
+		panic("BUG: multiple writer locks")
+	case mu.ln < 0:
+		panic("BUG: negative lock count")
+	case mu.ln == 0:
+		// Fully unlocked.
+		mu.lt = 0
+
+		// Only return true
+		// with no waiters.
+		ok = (mu.wn == 0)
+	}
+
+	// Awake all waiting
+	// goroutines for mu.
+	mu.tr.Trigger()
+	return ok
+}
+
+// WaitRelock expects a mutex to be passed in already in
+// the lock state. It incr the rwmutexish waiter count before
+// unlocking the outer mutex and blocking on internal trigger.
+// On awake it will relock outer mutex and decr wait count.
+func (mu *rwmutexish) WaitRelock(outer *sync.Mutex) {
+	mu.wn++
+	outer.Unlock()
+	mu.tr.Wait()
+	outer.Lock()
+	mu.wn--
+}
+
+// trigger uses the internals of sync.Cond to provide
+// a waitgroup type structure (including goroutine parks)
+// without such a heavy reliance on a delta value.
+type trigger struct{ notifyList }
+
+func (t *trigger) Trigger() {
+	runtime_notifyListNotifyAll(&t.notifyList)
+}
+
+func (t *trigger) Wait() {
+	v := runtime_notifyListAdd(&t.notifyList)
+	runtime_notifyListWait(&t.notifyList, v)
+}
+
+// Approximation of notifyList in runtime/sema.go.
+type notifyList struct {
+	wait   uint32
+	notify uint32
+	lock   uintptr // key field of the mutex
+	head   unsafe.Pointer
+	tail   unsafe.Pointer
+}
+
+// See runtime/sema.go for documentation.
+//
+//go:linkname runtime_notifyListAdd sync.runtime_notifyListAdd
+func runtime_notifyListAdd(l *notifyList) uint32
+
+// See runtime/sema.go for documentation.
+//
+//go:linkname runtime_notifyListWait sync.runtime_notifyListWait
+func runtime_notifyListWait(l *notifyList, t uint32)
+
+// See runtime/sema.go for documentation.
+//
+//go:linkname runtime_notifyListNotifyAll sync.runtime_notifyListNotifyAll
+func runtime_notifyListNotifyAll(l *notifyList)

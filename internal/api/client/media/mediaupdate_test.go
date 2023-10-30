@@ -77,7 +77,6 @@ type MediaUpdateTestSuite struct {
 
 func (suite *MediaUpdateTestSuite) SetupSuite() {
 	testrig.StartWorkers(&suite.state)
-	suite.state.FedLocks.Init(-1, -1)
 
 	// setup standard items
 	testrig.InitTestConfig()
