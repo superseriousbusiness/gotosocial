@@ -449,7 +449,7 @@ func (l *Lexer) shiftXML(rawTag Hash) []byte {
 			}
 		} else if c == 0 {
 			if l.r.Err() == nil {
-				l.err = parse.NewErrorLexer(l.r, "HTML parse error: unexpected NULL character")
+				l.err = parse.NewErrorLexer(l.r, "unexpected NULL character")
 			}
 			return l.r.Shift()
 		} else {
@@ -464,7 +464,7 @@ func (l *Lexer) shiftXML(rawTag Hash) []byte {
 			break
 		} else if c == 0 {
 			if l.r.Err() == nil {
-				l.err = parse.NewErrorLexer(l.r, "HTML parse error: unexpected NULL character")
+				l.err = parse.NewErrorLexer(l.r, "unexpected NULL character")
 			}
 			return l.r.Shift()
 		}
