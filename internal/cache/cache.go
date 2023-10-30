@@ -248,6 +248,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Status().Trim(threshold)
 	c.GTS.StatusFave().Trim(threshold)
 	c.GTS.Tag().Trim(threshold)
+	c.GTS.ThreadMute().Trim(threshold)
 	c.GTS.Tombstone().Trim(threshold)
 	c.GTS.User().Trim(threshold)
 	c.Visibility.Trim(threshold)

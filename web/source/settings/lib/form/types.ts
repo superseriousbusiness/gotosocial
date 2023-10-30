@@ -39,6 +39,13 @@ export interface HookOpts<T = any> {
 	initialValue?: T,
 	defaultValue?: T,
 	
+	/**
+	 * If true, don't submit this field as
+	 * part of a mutation query's body.
+	 * 
+	 * Useful for 'internal' form fields.
+	 */
+	nosubmit?: boolean,
 	dontReset?: boolean,
 	validator?,
 	showValidation?: boolean,
@@ -88,6 +95,14 @@ export interface FormInputHook<T = any> {
 	 * to have been changed from the default / initial value.
 	 */
 	hasChanged: () => boolean;
+
+	/**
+	 * If true, don't submit this field as
+	 * part of a mutation query's body.
+	 * 
+	 * Useful for 'internal' form fields.
+	 */
+	nosubmit?: boolean;
 }
 
 interface _withReset {

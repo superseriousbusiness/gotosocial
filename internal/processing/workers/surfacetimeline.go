@@ -67,7 +67,7 @@ func (s *surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 	}
 
 	// Notify each local account that's mentioned by this status.
-	if err := s.notifyMentions(ctx, status.Mentions); err != nil {
+	if err := s.notifyMentions(ctx, status); err != nil {
 		return gtserror.Newf("error notifying status mentions for status %s: %w", status.ID, err)
 	}
 

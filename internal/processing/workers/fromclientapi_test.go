@@ -75,6 +75,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 		newStatus.InReplyToAccountID = replyToStatus.AccountID
 		newStatus.InReplyToID = replyToStatus.ID
 		newStatus.InReplyToURI = replyToStatus.URI
+		newStatus.ThreadID = replyToStatus.ThreadID
 
 		// Mention the replied-to account.
 		mention := &gtsmodel.Mention{
@@ -322,6 +323,114 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 		statusJSON,
 		stream.EventTypeUpdate,
 	)
+}
+
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+
+		// Admin account posts a reply to zork.
+		// Normally zork would get a notification
+		// for this, but zork mutes this thread.
+		status = suite.newStatus(
+			ctx,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			suite.testStatuses["local_account_1_status_1"],
+			nil,
+		)
+		threadMute = &gtsmodel.ThreadMute{
+			ID:        "01HD3KRMBB1M85QRWHD912QWRE",
+			ThreadID:  suite.testStatuses["local_account_1_status_1"].ThreadID,
+			AccountID: receivingAccount.ID,
+		}
+	)
+
+	// Store the thread mute before processing new status.
+	if err := suite.db.PutThreadMute(ctx, threadMute); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := suite.processor.Workers().ProcessFromClientAPI(
+		ctx,
+		messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			OriginAccount:  postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Ensure no notification received.
+	notif, err := suite.db.GetNotification(
+		ctx,
+		gtsmodel.NotificationMention,
+		receivingAccount.ID,
+		postingAccount.ID,
+		status.ID,
+	)
+
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(notif)
+}
+
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+
+		// Admin account boosts a status by zork.
+		// Normally zork would get a notification
+		// for this, but zork mutes this thread.
+		status = suite.newStatus(
+			ctx,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			suite.testStatuses["local_account_1_status_1"],
+		)
+		threadMute = &gtsmodel.ThreadMute{
+			ID:        "01HD3KRMBB1M85QRWHD912QWRE",
+			ThreadID:  suite.testStatuses["local_account_1_status_1"].ThreadID,
+			AccountID: receivingAccount.ID,
+		}
+	)
+
+	// Store the thread mute before processing new status.
+	if err := suite.db.PutThreadMute(ctx, threadMute); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := suite.processor.Workers().ProcessFromClientAPI(
+		ctx,
+		messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			OriginAccount:  postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Ensure no notification received.
+	notif, err := suite.db.GetNotification(
+		ctx,
+		gtsmodel.NotificationReblog,
+		receivingAccount.ID,
+		postingAccount.ID,
+		status.ID,
+	)
+
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(notif)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyListOnlyOK() {

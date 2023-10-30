@@ -164,6 +164,7 @@ type Attachmentable interface {
 	WithMediaType
 	WithURL
 	WithName
+	WithSummary
 	WithBlurhash
 }
 

@@ -19,7 +19,7 @@ package gtsmodel
 
 import "time"
 
-// StatusMute refers to one account having muted the status of another account or its own.
+// StatusMute IS DEPRECATED -- USE THREADMUTE INSTEAD NOW! THIS TABLE DOESN'T EXIST ANYMORE!
 type StatusMute struct {
 	ID              string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created

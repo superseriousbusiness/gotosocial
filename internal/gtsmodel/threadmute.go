@@ -15,38 +15,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package gtsmodel
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
-)
+import "time"
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+// ThreadMute represents an account-level mute of a thread of statuses.
+type ThreadMute struct {
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                               // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`            // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`            // when was item last updated
+	ThreadID  string    `bun:"type:CHAR(26),nullzero,notnull,unique:thread_mute_thread_id_account_id"` // ID of the muted thread
+	AccountID string    `bun:"type:CHAR(26),nullzero,notnull,unique:thread_mute_thread_id_account_id"` // Account ID of the creator of this mute
 }

@@ -20,6 +20,7 @@ package status
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -27,6 +28,9 @@ import (
 )
 
 type Processor struct {
+	// common processor logic
+	c *common.Processor
+
 	state        *state.State
 	federator    *federation.Federator
 	converter    *typeutils.Converter
@@ -36,8 +40,16 @@ type Processor struct {
 }
 
 // New returns a new status processor.
-func New(state *state.State, federator *federation.Federator, converter *typeutils.Converter, filter *visibility.Filter, parseMention gtsmodel.ParseMentionFunc) Processor {
+func New(
+	common *common.Processor,
+	state *state.State,
+	federator *federation.Federator,
+	converter *typeutils.Converter,
+	filter *visibility.Filter,
+	parseMention gtsmodel.ParseMentionFunc,
+) Processor {
 	return Processor{
+		c:            common,
 		state:        state,
 		federator:    federator,
 		converter:    converter,

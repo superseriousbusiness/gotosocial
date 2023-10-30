@@ -39,7 +39,8 @@ export default function useTextInput(
 		dontReset = false,
 		validator,
 		showValidation = true,
-		initValidation
+		initValidation,
+		nosubmit = false,
 	}: HookOpts<string>
 ): TextFormInputHook {
 	const [text, setText] = useState(initialValue);
@@ -91,6 +92,7 @@ export default function useTextInput(
 		reset,
 		name,
 		Name: "", // Will be set by inputHook function.
+		nosubmit,
 		value: text,
 		ref: textRef,
 		setter: setText,
