@@ -563,7 +563,7 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		fMsg.ReceivingAccount.Username,
 		existing,
 		apStatus,
-		false,
+		true,
 	)
 	if err != nil {
 		return gtserror.Newf("error refreshing updated status: %w", err)
