@@ -107,7 +107,7 @@ myservice:
 
 Ensure that the redirect is configured on the account domain in your `Caddyfile`. The following example assumes the account domain as `example.com`, and host domain as `social.example.com`.
 
-```caddy
+```
 example.com {
         redir /.well-known/host-meta* https://social.example.com{uri} permanent
         redir /.well-known/webfinger* https://social.example.com{uri} permanent
