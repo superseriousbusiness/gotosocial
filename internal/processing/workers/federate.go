@@ -188,8 +188,8 @@ func (f *federate) CreatePollVote(ctx context.Context, poll *gtsmodel.Poll, vote
 		return nil
 	}
 
-	// Parse the outbox URI of the status author.
-	outboxIRI, err := parseURI(status.Account.OutboxURI)
+	// Parse the outbox URI of the poll vote author.
+	outboxIRI, err := parseURI(vote.Account.OutboxURI)
 	if err != nil {
 		return err
 	}
