@@ -66,7 +66,6 @@ type FileserverTestSuite struct {
 
 func (suite *FileserverTestSuite) SetupSuite() {
 	testrig.StartWorkers(&suite.state)
-	suite.state.FedLocks.Init(-1, -1)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

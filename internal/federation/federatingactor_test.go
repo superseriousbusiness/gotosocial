@@ -61,7 +61,6 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 
 	// setup module being tested
 	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.typeconverter, testrig.NewTestMediaManager(&suite.state))
-	suite.state.FedLocks.Init(-1, -1)
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)
@@ -108,7 +107,6 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	tc := testrig.NewTestTransportController(&suite.state, httpClient)
 	// setup module being tested
 	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.typeconverter, testrig.NewTestMediaManager(&suite.state))
-	suite.state.FedLocks.Init(-1, -1)
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)

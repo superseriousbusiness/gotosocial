@@ -67,7 +67,6 @@ func (suite *TextStandardTestSuite) SetupSuite() {
 func (suite *TextStandardTestSuite) SetupTest() {
 	var state state.State
 	state.Caches.Init()
-	state.FedLocks.Init(-1, -1)
 
 	testrig.InitTestLog()
 	testrig.InitTestConfig()

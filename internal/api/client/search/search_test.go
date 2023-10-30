@@ -74,7 +74,6 @@ func (suite *SearchStandardTestSuite) SetupSuite() {
 func (suite *SearchStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)
-	suite.state.FedLocks.Init(-1, -1)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

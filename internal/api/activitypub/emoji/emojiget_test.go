@@ -67,7 +67,6 @@ func (suite *EmojiGetTestSuite) SetupSuite() {
 func (suite *EmojiGetTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	testrig.StartWorkers(&suite.state)
-	suite.state.FedLocks.Init(-1, -1)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
