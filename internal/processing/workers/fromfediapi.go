@@ -146,7 +146,7 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 		}
 	}
 
-	return nil
+	return gtserror.Newf("unhandled: %s %s", fMsg.APActivityType, fMsg.APObjectType)
 }
 
 func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
