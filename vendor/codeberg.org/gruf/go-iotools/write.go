@@ -10,6 +10,14 @@ func (w WriterFunc) Write(b []byte) (int, error) {
 	return w(b)
 }
 
+// WriterToFunc is a function signature which allows
+// a function to implement the io.WriterTo type.
+type WriterToFunc func(io.Writer) (int64, error)
+
+func (wt WriterToFunc) WriteTo(r io.Writer) (int64, error) {
+	return wt(r)
+}
+
 // WriteCloser wraps an io.Writer and io.Closer in order to implement io.WriteCloser.
 func WriteCloser(w io.Writer, c io.Closer) io.WriteCloser {
 	return &struct {

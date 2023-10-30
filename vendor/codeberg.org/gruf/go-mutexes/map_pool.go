@@ -1,13 +1,13 @@
 package mutexes
 
-// pool is a very simply memory pool.
-type pool struct {
-	current []*rwmutex
-	victim  []*rwmutex
+// rwmutexPool is a very simply memory rwmutexPool.
+type rwmutexPool struct {
+	current []*rwmutexState
+	victim  []*rwmutexState
 }
 
-// Acquire will returns a rwmutex from pool (or alloc new).
-func (p *pool) Acquire() *rwmutex {
+// Acquire will returns a rwmutexState from rwmutexPool (or alloc new).
+func (p *rwmutexPool) Acquire() *rwmutexState {
 	// First try the current queue
 	if l := len(p.current) - 1; l >= 0 {
 		mu := p.current[l]
@@ -23,16 +23,16 @@ func (p *pool) Acquire() *rwmutex {
 	}
 
 	// Lastly, alloc new.
-	return &rwmutex{}
+	return &rwmutexState{}
 }
 
-// Release places a sync.RWMutex back in the pool.
-func (p *pool) Release(mu *rwmutex) {
+// Release places a sync.rwmutexState back in the rwmutexPool.
+func (p *rwmutexPool) Release(mu *rwmutexState) {
 	p.current = append(p.current, mu)
 }
 
-// GC will clear out unused entries from the pool.
-func (p *pool) GC() {
+// GC will clear out unused entries from the rwmutexPool.
+func (p *rwmutexPool) GC() {
 	current := p.current
 	p.current = nil
 	p.victim = current
