@@ -240,18 +240,22 @@ func (p *fediAPI) statusFromAPModel(ctx context.Context, fMsg messages.FromFediA
 		return nil, gtserror.Newf("cannot cast %T -> ap.Statusable", fMsg.APObjectModel)
 	}
 
-	// Status may have been set, if not we create a bare
-	// representation for the federator to flesh-out.
+	// Status may have been set (no problem if not).
 	status, _ := fMsg.GTSModel.(*gtsmodel.Status)
+
 	if status == nil {
+		// No status was set, create a bare-bones
+		// model for the deferencer to flesh-out.
 		status = &gtsmodel.Status{
+
+			// if coming in here status will ALWAYS be remote.
 			Local: func() *bool { var false bool; return &false }(),
 			URI:   ap.GetJSONLDId(statusable).String(),
 		}
 	}
 
-	// Call refresh on status to update
-	// it (deref remote) if necessary.
+	// Call refresh on status to either update existing
+	// model, or parse + insert status from statusable data.
 	status, _, err := p.federate.RefreshStatus(
 		ctx,
 		fMsg.ReceivingAccount.Username,
