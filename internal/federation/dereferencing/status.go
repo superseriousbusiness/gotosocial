@@ -656,36 +656,41 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 }
 
 func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gtsmodel.Status) error {
-	if existing.Poll != nil {
-		// Check poll is up-to-date.
-		if status.Poll != nil &&
-			slices.Equal(existing.Poll.Options, status.Poll.Options) &&
-			existing.Poll.ExpiresAt.Equal(status.Poll.ExpiresAt) {
-			return nil // latest and existing are equal.
+	switch {
+	case existing.Poll == nil:
+		// drop through, no existing poll!
+
+	case status.Poll == nil:
+		// existing poll has been deleted, remove this.
+		return d.deleteStatusPoll(ctx, existing.PollID)
+
+	case !slices.Equal(existing.Poll.Options, status.Poll.Options) ||
+		!existing.Poll.ExpiresAt.Equal(status.Poll.ExpiresAt):
+		// poll has changed since original, delete existing by ID.
+		if err := d.deleteStatusPoll(ctx, existing.PollID); err != nil {
+			return err
 		}
 
-		// Poll has changed from existing to latest. Delete existing!
-		if err := d.state.DB.DeletePollByID(ctx, existing.Poll.ID); err != nil {
-			return gtserror.Newf("error deleting existing poll from database: %w", err)
+	case !existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt):
+		// Since we last saw it, the poll has closed!
+		//
+		// Update poll object with
+		// the latest ClosedAt date.
+		poll := existing.Poll
+		poll.ClosedAt = status.Poll.ClosedAt
+		status.Poll = poll
+
+		// Update poll model in the database (specifically only 'closed_at').
+		if err := d.state.DB.UpdatePoll(ctx, poll, "closed_at"); err != nil {
+			return gtserror.Newf("error updating poll: %w", err)
 		}
 
-		// Delete any poll votes pointing to the existing poll ID.
-		if err := d.state.DB.DeletePollVotes(ctx, existing.Poll.ID); err != nil {
-			return gtserror.Newf("error deleting existing votes from database: %w", err)
-		}
+		return nil
 
-		// Cancel any scheduled expiry task for existing poll.
-		_ = d.state.Workers.Scheduler.Cancel(existing.Poll.ID)
-
-		if status.Poll == nil {
-			// Old poll deleted,
-			// all done here.
-			return nil
-		}
-	}
-
-	if status.Poll == nil {
-		// no new poll to create.
+	default:
+		// latest and existing
+		// polls are up to date.
+		status.Poll = existing.Poll
 		return nil
 	}
 
@@ -711,6 +716,16 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 		return gtserror.Newf("error putting in database: %w", err)
 	}
 
+	return nil
+}
+
+func (d *Dereferencer) deleteStatusPoll(ctx context.Context, pollID string) error {
+	if err := d.state.DB.DeletePollByID(ctx, pollID); err != nil {
+		return gtserror.Newf("error deleting existing poll from database: %w", err)
+	}
+	if err := d.state.DB.DeletePollVotes(ctx, pollID); err != nil {
+		return gtserror.Newf("error deleting existing votes from database: %w", err)
+	}
 	return nil
 }
 
