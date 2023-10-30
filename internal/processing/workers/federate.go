@@ -182,9 +182,9 @@ func (f *federate) CreatePollVote(ctx context.Context, poll *gtsmodel.Poll, vote
 		return nil
 	}
 
-	// Do nothing if this
-	// isn't our status.
-	if !*status.Local {
+	// Do nothing if this is
+	// a vote in our status.
+	if *status.Local {
 		return nil
 	}
 
