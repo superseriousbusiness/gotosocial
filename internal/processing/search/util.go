@@ -49,6 +49,7 @@ func (p *Processor) packageAccounts(
 	requestingAccount *gtsmodel.Account,
 	accounts []*gtsmodel.Account,
 	includeInstanceAccounts bool,
+	includeBlockedAccounts bool,
 ) ([]*apimodel.Account, gtserror.WithCode) {
 	apiAccounts := make([]*apimodel.Account, 0, len(accounts))
 
@@ -58,19 +59,26 @@ func (p *Processor) packageAccounts(
 			continue
 		}
 
-		// Ensure requester can see result account.
-		visible, err := p.filter.AccountVisible(ctx, requestingAccount, account)
+		// Check if block exists between searcher and searchee.
+		blocked, err := p.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, account.ID)
 		if err != nil {
-			err = gtserror.Newf("error checking visibility of account %s for account %s: %w", account.ID, requestingAccount.ID, err)
+			err = gtserror.Newf("error checking block between searching account %s and searched account %s: %w", requestingAccount.ID, account.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		if !visible {
-			log.Debugf(ctx, "account %s is not visible to account %s, skipping this result", account.ID, requestingAccount.ID)
+		if blocked && !includeBlockedAccounts {
+			// Don't include
+			// this result.
 			continue
 		}
 
-		apiAccount, err := p.converter.AccountToAPIAccountPublic(ctx, account)
+		var apiAccount *apimodel.Account
+		if blocked {
+			apiAccount, err = p.converter.AccountToAPIAccountBlocked(ctx, account)
+		} else {
+			apiAccount, err = p.converter.AccountToAPIAccountPublic(ctx, account)
+		}
+
 		if err != nil {
 			log.Debugf(ctx, "skipping account %s because it couldn't be converted to its api representation: %s", account.ID, err)
 			continue
@@ -171,8 +179,15 @@ func (p *Processor) packageSearchResult(
 	tags []*gtsmodel.Tag,
 	v1 bool,
 	includeInstanceAccounts bool,
+	includeBlockedAccounts bool,
 ) (*apimodel.SearchResult, gtserror.WithCode) {
-	apiAccounts, errWithCode := p.packageAccounts(ctx, requestingAccount, accounts, includeInstanceAccounts)
+	apiAccounts, errWithCode := p.packageAccounts(
+		ctx,
+		requestingAccount,
+		accounts,
+		includeInstanceAccounts,
+		includeBlockedAccounts,
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
