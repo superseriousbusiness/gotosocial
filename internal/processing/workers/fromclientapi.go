@@ -196,7 +196,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		}
 	}
 
-	return nil
+	return gtserror.Newf("unhandled: %s %s", cMsg.APActivityType, cMsg.APObjectType)
 }
 
 func (p *clientAPI) CreateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
