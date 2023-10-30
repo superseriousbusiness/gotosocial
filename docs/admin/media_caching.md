@@ -28,12 +28,12 @@ By default, these variables are set to the following values:
 | Variable name             | Default      | Meaning  |
 |---------------------------|--------------|----------|
 | `media-remote-cache-days` | `7`          | 7 days   |
-| `media-cleanup-from`      | `"00:00:00"` | midnight |
+| `media-cleanup-from`      | `"00:00"`    | midnight |
 | `media-cleanup-every`     | `"24h"`      | daily    |
 
 In other words, the default settings mean that every night at midnight, remote media older than a week will be uncached and removed from storage.
 
-You can achieve different results by tuning these variables. For example, say you wanted to prune at 4.30am instead of midnight, you could change `media-cleanup-from` to `"04:30:00"`.
+You can achieve different results by tuning these variables. For example, say you wanted to prune at 4.30am instead of midnight, you could change `media-cleanup-from` to `"04:30"`.
 
 If you only want to prune every couple of days instead of every night, you could set `media-cleanup-every` to a higher value, like `"48h"` or `"72h"`.
 
@@ -42,7 +42,7 @@ If you wanted to adopt a more aggressive cleanup strategy to minimize storage us
 | Variable name             | Setting      | Meaning     |
 |---------------------------|--------------|-------------|
 | `media-remote-cache-days` | `1`          | 1 day       |
-| `media-cleanup-from`      | `"00:00:00"` | midnight    |
+| `media-cleanup-from`      | `"00:00"`    | midnight    |
 | `media-cleanup-every`     | `"8h"`       | every 8 hrs |
 
 The above settings would mean that every 8 hours starting from midnight, GoToSocial would prune any media older than 1 day (24hrs). The prune jobs would run at 00:00, 08:00, and 16:00, ie., midnight, 8am, and 4pm. With this configuration, the longest amount of time you could possibly keep remote media in your storage would be about 32 hours.

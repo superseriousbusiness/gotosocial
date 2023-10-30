@@ -443,10 +443,10 @@ media-emoji-remote-max-size: 102400
 # Default: 7
 media-remote-cache-days: 7
 
-# String. 24hr time of day formatted as hh:mm:ss.
-# Examples: ["14:30:00", "00:00:00", "04:00:00"]
-# Default: "00:00:00" (midnight). 
-media-cleanup-from: "00:00:00"
+# String. 24hr time of day formatted as hh:mm.
+# Examples: ["14:30", "00:00", "04:00"]
+# Default: "00:00" (midnight). 
+media-cleanup-from: "00:00"
 
 # Duration. Period between media cleanup runs.
 # More than once per 24h is not recommended

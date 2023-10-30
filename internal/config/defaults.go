@@ -76,7 +76,7 @@ var Defaults = Configuration{
 	MediaRemoteCacheDays:     7,
 	MediaEmojiLocalMaxSize:   50 * bytesize.KiB,
 	MediaEmojiRemoteMaxSize:  100 * bytesize.KiB,
-	MediaCleanupFrom:         "00:00:00",     // Midnight.
+	MediaCleanupFrom:         "00:00",        // Midnight.
 	MediaCleanupEvery:        24 * time.Hour, // 1/day.
 
 	StorageBackend:       "local",

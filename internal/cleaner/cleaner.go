@@ -114,31 +114,33 @@ func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error)
 // Returns an error if `MediaCleanupFrom`
 // is not a valid format (hh:mm:ss).
 func (c *Cleaner) ScheduleJobs() error {
+	const hourMinute = "15:04"
+
 	var (
 		now            = time.Now()
 		cleanupEvery   = config.GetMediaCleanupEvery()
 		cleanupFromStr = config.GetMediaCleanupFrom()
 	)
 
-	// Parse cleanupFromStr as hh:mm:ss.
-	// Resulting time will be on 1 Jan 1970.
-	cleanupFrom, err := time.Parse(time.TimeOnly, cleanupFromStr)
+	// Parse cleanupFromStr as hh:mm.
+	// Resulting time will be on 1 Jan year zero.
+	cleanupFrom, err := time.Parse(hourMinute, cleanupFromStr)
 	if err != nil {
 		return gtserror.Newf(
-			"error parsing '%s' as time format '%s': %w",
-			cleanupFromStr, time.TimeOnly, err,
+			"error parsing '%s' in time format 'hh:mm': %w",
+			cleanupFromStr, err,
 		)
 	}
 
 	// Time travel from
-	// the 70's, groovy.
+	// year zero, groovy.
 	firstCleanupAt := time.Date(
 		now.Year(),
 		now.Month(),
 		now.Day(),
 		cleanupFrom.Hour(),
 		cleanupFrom.Minute(),
-		cleanupFrom.Second(),
+		0,
 		0,
 		now.Location(),
 	)
