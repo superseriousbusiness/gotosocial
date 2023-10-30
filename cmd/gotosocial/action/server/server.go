@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
@@ -173,8 +174,19 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting list timeline: %s", err)
 	}
 
+	// Create a media cleaner using the given state.
+	cleaner := cleaner.New(&state)
+
 	// Create the processor using all the other services we've created so far.
-	processor := processing.NewProcessor(typeConverter, federator, oauthServer, mediaManager, &state, emailSender)
+	processor := processing.NewProcessor(
+		cleaner,
+		typeConverter,
+		federator,
+		oauthServer,
+		mediaManager,
+		&state,
+		emailSender,
+	)
 
 	// Set state client / federator asynchronous worker enqueue functions
 	state.Workers.EnqueueClientAPI = processor.Workers().EnqueueClientAPI
@@ -297,12 +309,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
 	webModule.Route(router, fsLimit, fsThrottle, gzip)
 
-	gts, err := gotosocial.NewServer(dbService, router, federator, mediaManager)
-	if err != nil {
-		return fmt.Errorf("error creating gotosocial service: %s", err)
-	}
-
-	if err := gts.Start(ctx); err != nil {
+	// Start the GoToSocial server.
+	server := gotosocial.NewServer(dbService, router, cleaner)
+	if err := server.Start(ctx); err != nil {
 		return fmt.Errorf("error starting gotosocial service: %s", err)
 	}
 
@@ -313,7 +322,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	log.Infof(ctx, "received signal %s, shutting down", sig)
 
 	// close down all running services in order
-	if err := gts.Stop(ctx); err != nil {
+	if err := server.Stop(ctx); err != nil {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 

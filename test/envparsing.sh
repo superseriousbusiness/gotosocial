@@ -94,6 +94,8 @@ EXPECT=$(cat << "EOF"
     "log-db-queries": true,
     "log-level": "info",
     "log-timestamp-format": "banana",
+    "media-cleanup-every": 86400000000000,
+    "media-cleanup-from": "00:00",
     "media-description-max-chars": 5000,
     "media-description-min-chars": 69,
     "media-emoji-local-max-size": 420,

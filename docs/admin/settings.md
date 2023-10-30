@@ -68,7 +68,7 @@ Run one-off administrative actions.
 
 #### Media
 
-You can use this section run a media action to clean up the remote media cache using the specified number of days. Media older than the given number of days will be removed from storage (s3 or local). Media removed in this way will be refetched again later if the media is required again. This action is functionally identical to the media cleanup that runs every night, automatically.
+You can use this section run a media action to clean up the remote media cache using the specified number of days. Media older than the given number of days will be removed from storage (s3 or local). Media removed in this way will be refetched again later if the media is required again. This action is functionally identical to the media cleanup that runs automatically.
 
 #### Keys
 

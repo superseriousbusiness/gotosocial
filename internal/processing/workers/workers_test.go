@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -124,7 +125,7 @@ func (suite *WorkersTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
-	suite.processor = processing.NewProcessor(suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
+	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
 	suite.state.Workers.EnqueueClientAPI = suite.processor.Workers().EnqueueClientAPI
 	suite.state.Workers.EnqueueFediAPI = suite.processor.Workers().EnqueueFediAPI
 

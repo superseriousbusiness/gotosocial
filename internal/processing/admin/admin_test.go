@@ -19,6 +19,7 @@ package admin_test
 
 import (
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -105,6 +106,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 
 	suite.processor = processing.NewProcessor(
+		cleaner.New(&suite.state),
 		suite.tc,
 		suite.federator,
 		suite.oauthServer,

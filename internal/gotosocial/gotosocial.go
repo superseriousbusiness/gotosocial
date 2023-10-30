@@ -20,62 +20,47 @@ package gotosocial
 import (
 	"context"
 
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-// Server is the 'main' function of the gotosocial server, and the place where everything hangs together.
-// The logic of stopping and starting the entire server is contained here.
-type Server interface {
-	// Start starts up the gotosocial server. If something goes wrong
-	// while starting the server, then an error will be returned.
-	Start(context.Context) error
-	// Stop closes down the gotosocial server, first closing the router
-	// then the database. If something goes wrong while stopping, an
-	// error will be returned.
-	Stop(context.Context) error
+// Server represents a long-running
+// GoToSocial server instance.
+type Server struct {
+	db        db.DB
+	apiRouter router.Router
+	cleaner   *cleaner.Cleaner
 }
 
-// NewServer returns a new gotosocial server, initialized with the given configuration.
-// An error will be returned the caller if something goes wrong during initialization
-// eg., no db or storage connection, port for router already in use, etc.
+// NewServer returns a new
+// GoToSocial server instance.
 func NewServer(
 	db db.DB,
 	apiRouter router.Router,
-	federator *federation.Federator,
-	mediaManager *media.Manager,
-) (Server, error) {
-	return &gotosocial{
-		db:           db,
-		apiRouter:    apiRouter,
-		federator:    federator,
-		mediaManager: mediaManager,
-	}, nil
+	cleaner *cleaner.Cleaner,
+) *Server {
+	return &Server{
+		db:        db,
+		apiRouter: apiRouter,
+		cleaner:   cleaner,
+	}
 }
 
-// gotosocial fulfils the gotosocial interface.
-type gotosocial struct {
-	db           db.DB
-	apiRouter    router.Router
-	federator    *federation.Federator
-	mediaManager *media.Manager
+// Start starts up the GoToSocial server by starting the router,
+// then the cleaner. If something goes wrong while starting the
+// server, then an error will be returned.
+func (s *Server) Start(ctx context.Context) error {
+	s.apiRouter.Start()
+	return s.cleaner.ScheduleJobs()
 }
 
-// Start starts up the gotosocial server. If something goes wrong
-// while starting the server, then an error will be returned.
-func (gts *gotosocial) Start(ctx context.Context) error {
-	gts.apiRouter.Start()
-	return nil
-}
-
-// Stop closes down the gotosocial server, first closing the router,
-// then the media manager, then the database.
-// If something goes wrong while stopping, an error will be returned.
-func (gts *gotosocial) Stop(ctx context.Context) error {
-	if err := gts.apiRouter.Stop(ctx); err != nil {
+// Stop closes down the GoToSocial server, first closing the cleaner,
+// then the router, then the database. If something goes wrong while
+// stopping, an error will be returned.
+func (s *Server) Stop(ctx context.Context) error {
+	if err := s.apiRouter.Stop(ctx); err != nil {
 		return err
 	}
-	return gts.db.Close()
+	return s.db.Close()
 }
