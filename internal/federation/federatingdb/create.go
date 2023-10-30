@@ -21,17 +21,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Create adds a new entry to the database which must be able to be
@@ -288,11 +291,34 @@ func (f *federatingDB) createStatusable(
 }
 
 func (f *federatingDB) shouldAcceptStatusable(ctx context.Context, receiver *gtsmodel.Account, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+	host := config.GetHost()
+	accountDomain := config.GetAccountDomain()
+
 	// Check whether status mentions the receiver,
 	// this is the quickest check so perform it first.
+	// Prefer checking using mention Href, fall back to Name.
 	for _, mention := range status.Mentions {
-		if mention.TargetAccountURI == receiver.URI {
-			return true, nil
+		targetURI := mention.TargetAccountURI
+		nameString := mention.NameString
+
+		if targetURI != "" {
+			if targetURI == receiver.URI || targetURI == receiver.URL {
+				// Target URI or URL match;
+				// receiver is mentioned.
+				return true, nil
+			}
+		} else if nameString != "" {
+			username, domain, err := util.ExtractNamestringParts(nameString)
+			if err != nil {
+				return false, gtserror.Newf("error checking if mentioned: %w", err)
+			}
+
+			if strings.EqualFold(username, receiver.Username) &&
+				(domain == host || domain == accountDomain) {
+				// Username + domain match;
+				// receiver is mentioned.
+				return true, nil
+			}
 		}
 	}
 

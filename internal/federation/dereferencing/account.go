@@ -163,6 +163,37 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 // or a remote model whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority
 // account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins). An ActivityPub object indicates the account was dereferenced.
 func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, ap.Accountable, error) {
+	account, apubAcc, err := d.getAccountByUsernameDomain(
+		ctx,
+		requestUser,
+		username,
+		domain,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if apubAcc != nil {
+		// This account was updated, enqueue re-dereference featured posts.
+		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
+				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
+		})
+	}
+
+	return account, apubAcc, nil
+}
+
+// getAccountByUsernameDomain is a package internal form
+// of .GetAccountByUsernameDomain() that doesn't bother
+// dereferencing featured posts.
+func (d *Dereferencer) getAccountByUsernameDomain(
+	ctx context.Context,
+	requestUser string,
+	username string,
+	domain string,
+) (*gtsmodel.Account, ap.Accountable, error) {
 	if domain == config.GetHost() || domain == config.GetAccountDomain() {
 		// We do local lookups using an empty domain,
 		// else it will fail the db search below.
@@ -195,13 +226,6 @@ func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUs
 		if err != nil {
 			return nil, nil, err
 		}
-
-		// This account was updated, enqueue dereference featured posts.
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
-				log.Errorf(ctx, "error fetching account featured collection: %v", err)
-			}
-		})
 
 		return account, apubAcc, nil
 	}

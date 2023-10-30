@@ -427,3 +427,58 @@ With just one tag, the `tag` property will be an object rather than an array, wh
 The `href` URL provided by GoToSocial in outgoing tags points to a web URL that serves `text/html`.
 
 GoToSocial makes no guarantees whatsoever about what the content of the given `text/html` will be, and remote servers should not interpret the URL as a canonical ActivityPub ID/URI property. The `href` URL is provided merely as an endpoint which *might* contain more information about the given hashtag.
+
+## Mentions
+
+GoToSocial users can Mention other users in their posts, using the common `@[username]@[domain]` format. For example, if a GoToSocial user wanted to mention user `someone` on instance `example.org`, they could do this by including `@someone@example.org` in their post somewhere.
+
+!!! info "Mentions and activity addressing"
+    
+    Mentions are not just aesthetic, they affect addressing of Activities as well.
+    
+    If a GoToSocial user explicitly mentions another user in a Note, the URI of that user will always be included in the `To` or `Cc` property of the Note's Create activity.
+    
+    If the Note is direct (ie., not `To` public or followers), each mention target URI will be in the `To` property of the wrapping Activity
+    
+    In all other cases, mentions will be included in the `Cc` property of the wrapping Activity.
+
+### Outgoing
+
+When a GoToSocial user Mentions another account, the Mention is included in outgoing federated messages as an entry in the `tag` property.
+
+For example, say a user on a GoToSocial instance Mentions `@someone@example.org`, the `tag` property of the outgoing Note might look like the following:
+
+```json
+"tag": {
+  "href": "http://example.org/users/someone",
+  "name": "@someone@example.org",
+  "type": "Mention"
+}
+```
+
+If a user Mentions a local user they share an instance with, the full `name` of the local user will still be included.
+
+For example, a GoToSocial user on domain `some.gotosocial.instance` mentions another user on the same instance called `user2`. They also mention `@someone@example.org` as above. The `tag` property of the outgoing Note would look like the following:
+
+```json
+"tag": [
+  {
+    "href": "http://example.org/users/someone",
+    "name": "@someone@example.org",
+    "type": "Mention"
+  },
+  {
+    "href": "http://some.gotosocial.instance/users/user2",
+    "name": "@user2@some.gotosocial.instance",
+    "type": "Mention"
+  }
+]
+```
+
+For the convenience of remote servers, GoToSocial will always provide both the `href` and the `name` properties on outgoing Mentions. The `href` property used by GoToSocial will always be the ActivityPub ID/URI of the target account, not the web URL.
+
+### Incoming
+
+GoToSocial tries to parse incoming Mentions in the same way it sends them out: as a `Mention` type entry in the `tag` property. However, when parsing incoming Mentions it's a bit more relaxed with regards to which properties must be set.
+
+GoToSocial will prefer the `href` property, which can be either the ActivityPub ID/URI or the web URL of the target; if `href` is not present, it will fall back to using the `name` property. If neither property is present, the mention will be considered invalid and discarded.
