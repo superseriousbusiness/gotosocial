@@ -313,8 +313,8 @@ func (f *federatingDB) shouldAcceptStatusable(ctx context.Context, receiver *gts
 				return false, gtserror.Newf("error checking if mentioned: %w", err)
 			}
 
-			if strings.EqualFold(username, receiver.Username) &&
-				(domain == host || domain == accountDomain) {
+			if (domain == host || domain == accountDomain) &&
+				strings.EqualFold(username, receiver.Username) {
 				// Username + domain match;
 				// receiver is mentioned.
 				return true, nil
