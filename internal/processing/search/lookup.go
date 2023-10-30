@@ -51,6 +51,11 @@ func (p *Processor) Lookup(
 	// accident.
 	const includeInstanceAccounts = true
 
+	// Since lookup is always for a specific
+	// account, it's fine to include a blocked
+	// account in the results.
+	const includeBlockedAccounts = true
+
 	// Validate query.
 	query = strings.TrimSpace(query)
 	if query == "" {
@@ -108,6 +113,7 @@ func (p *Processor) Lookup(
 		requestingAccount,
 		[]*gtsmodel.Account{account},
 		includeInstanceAccounts,
+		includeBlockedAccounts,
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

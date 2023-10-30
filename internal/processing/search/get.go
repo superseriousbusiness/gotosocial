@@ -77,6 +77,12 @@ func (p *Processor) Get(
 		// search in the database in the latter
 		// parts of this function.
 		includeInstanceAccounts = true
+
+		// Assume caller doesn't want to see
+		// blocked accounts. This will change
+		// to 'true' if caller is searching
+		// for a specific account.
+		includeBlockedAccounts = false
 	)
 
 	// Validate query.
@@ -120,7 +126,9 @@ func (p *Processor) Get(
 			ctx,
 			account,
 			nil, nil, nil, // No results.
-			req.APIv1, includeInstanceAccounts,
+			req.APIv1,
+			includeInstanceAccounts,
+			includeBlockedAccounts,
 		)
 	}
 
@@ -131,7 +139,6 @@ func (p *Processor) Get(
 		appendStatus  = func(s *gtsmodel.Status) { foundStatuses = append(foundStatuses, s) }
 		appendAccount = func(a *gtsmodel.Account) { foundAccounts = append(foundAccounts, a) }
 		appendTag     = func(t *gtsmodel.Tag) { foundTags = append(foundTags, t) }
-		keepLooking   bool
 		err           error
 	)
 
@@ -152,56 +159,83 @@ func (p *Processor) Get(
 			}
 		}
 
-		// Search using what may or may not be a namestring.
-		keepLooking, err = p.accountsByNamestring(
+		// See if we have something that looks like a namestring.
+		username, domain, err := util.ExtractNamestringParts(queryC)
+		if err == nil {
+			// We managed to parse query as a namestring.
+			// If domain was set, this is a very specific
+			// search for a particular account, so show
+			// that account to the caller even if they
+			// have it blocked. They might be looking
+			// for it to unblock it again!
+			domainSet := (domain != "")
+			includeBlockedAccounts = domainSet
+
+			err = p.accountsByNamestring(
+				ctx,
+				account,
+				maxID,
+				minID,
+				limit,
+				offset,
+				username,
+				domain,
+				resolve,
+				following,
+				appendAccount,
+			)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				err = gtserror.Newf("error searching by namestring: %w", err)
+				return nil, gtserror.NewErrorInternalError(err)
+			}
+
+			// If domain was set, we know this is
+			// a full namestring, and not a url or
+			// just a username, so we should stop
+			// looking now and just return what we
+			// have (if anything). Otherwise we'll
+			// let the search keep going.
+			if domainSet {
+				return p.packageSearchResult(
+					ctx,
+					account,
+					foundAccounts,
+					foundStatuses,
+					foundTags,
+					req.APIv1,
+					includeInstanceAccounts,
+					includeBlockedAccounts,
+				)
+			}
+		}
+	}
+
+	// Check if we're searching by a known URI scheme.
+	// (This might just be a weirdly-parsed URI,
+	// since Go's url package tends to be a bit
+	// trigger-happy when deciding things are URIs).
+	uri, err := url.Parse(query)
+	if err == nil && (uri.Scheme == "https" || uri.Scheme == "http") {
+		// URI is pretty specific so we can safely assume
+		// caller wants to include blocked accounts too.
+		includeBlockedAccounts = true
+
+		if err := p.byURI(
 			ctx,
 			account,
-			maxID,
-			minID,
-			limit,
-			offset,
-			queryC,
+			uri,
+			queryType,
 			resolve,
-			following,
 			appendAccount,
-		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = gtserror.Newf("error searching by namestring: %w", err)
+			appendStatus,
+		); err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = gtserror.Newf("error searching by URI: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		if !keepLooking {
-			// Return whatever we have.
-			return p.packageSearchResult(
-				ctx,
-				account,
-				foundAccounts,
-				foundStatuses,
-				foundTags,
-				req.APIv1,
-				includeInstanceAccounts,
-			)
-		}
-	}
-
-	// Check if the query is a URI with a recognizable
-	// scheme and use it to look for accounts or statuses.
-	keepLooking, err = p.byURI(
-		ctx,
-		account,
-		query,
-		queryType,
-		resolve,
-		appendAccount,
-		appendStatus,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("error searching by URI: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if !keepLooking {
-		// Return whatever we have.
+		// This was a URI, so at this point just return
+		// whatever we have. You can't search hashtags by
+		// URI, and shouldn't do full-text with a URI either.
 		return p.packageSearchResult(
 			ctx,
 			account,
@@ -210,6 +244,7 @@ func (p *Processor) Get(
 			foundTags,
 			req.APIv1,
 			includeInstanceAccounts,
+			includeBlockedAccounts,
 		)
 	}
 
@@ -226,7 +261,7 @@ func (p *Processor) Get(
 	// We know that none of the subsequent searches
 	// would show any good results either, and those
 	// searches are *much* more expensive.
-	keepLooking, err = p.hashtag(
+	keepLooking, err := p.hashtag(
 		ctx,
 		maxID,
 		minID,
@@ -251,6 +286,7 @@ func (p *Processor) Get(
 			foundTags,
 			req.APIv1,
 			includeInstanceAccounts,
+			includeBlockedAccounts,
 		)
 	}
 
@@ -291,15 +327,15 @@ func (p *Processor) Get(
 		foundTags,
 		req.APIv1,
 		includeInstanceAccounts,
+		includeBlockedAccounts,
 	)
 }
 
 // accountsByNamestring searches for accounts using the
-// provided namestring query. If domain is not set in
-// the namestring, it may return more than one result
-// by doing a text search in the database for accounts
-// matching the query. Otherwise, it tries to return an
-// exact match.
+// provided username and domain. If domain is not set,
+// it may return more than one result by doing a text
+// search in the database for accounts matching the query.
+// Otherwise, it tries to return an exact match.
 func (p *Processor) accountsByNamestring(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
@@ -307,26 +343,18 @@ func (p *Processor) accountsByNamestring(
 	minID string,
 	limit int,
 	offset int,
-	query string,
+	username string,
+	domain string,
 	resolve bool,
 	following bool,
 	appendAccount func(*gtsmodel.Account),
-) (bool, error) {
-	// See if we have something that looks like a namestring.
-	username, domain, err := util.ExtractNamestringParts(query)
-	if err != nil {
-		// No need to return error; just not a namestring
-		// we can search with. Caller should keep looking
-		// with another search method.
-		return true, nil //nolint:nilerr
-	}
-
+) error {
 	if domain == "" {
 		// No error, but no domain set. That means the query
 		// looked like '@someone' which is not an exact search.
 		// Try to search for any accounts that match the query
 		// string, and let the caller know they should stop.
-		return false, p.accountsByText(
+		return p.accountsByText(
 			ctx,
 			requestingAccount.ID,
 			maxID,
@@ -355,18 +383,14 @@ func (p *Processor) accountsByNamestring(
 		// Check for semi-expected error types.
 		// On one of these, we can continue.
 		if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
-			err = gtserror.Newf("error looking up %s as account: %w", query, err)
-			return false, gtserror.NewErrorInternalError(err)
+			err = gtserror.Newf("error looking up @%s@%s as account: %w", username, domain, err)
+			return gtserror.NewErrorInternalError(err)
 		}
 	} else {
 		appendAccount(foundAccount)
 	}
 
-	// Regardless of whether we have a hit at this point,
-	// return false to indicate caller should stop looking;
-	// namestrings are a very specific format so it's unlikely
-	// the caller was looking for something other than an account.
-	return false, nil
+	return nil
 }
 
 // accountByUsernameDomain looks for one account with the given
@@ -443,38 +467,22 @@ func (p *Processor) accountByUsernameDomain(
 func (p *Processor) byURI(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
-	query string,
+	uri *url.URL,
 	queryType string,
 	resolve bool,
 	appendAccount func(*gtsmodel.Account),
 	appendStatus func(*gtsmodel.Status),
-) (bool, error) {
-	uri, err := url.Parse(query)
-	if err != nil {
-		// No need to return error; just not a URI
-		// we can search with. Caller should keep
-		// looking with another search method.
-		return true, nil //nolint:nilerr
-	}
-
-	if !(uri.Scheme == "https" || uri.Scheme == "http") {
-		// This might just be a weirdly-parsed URI,
-		// since Go's url package tends to be a bit
-		// trigger-happy when deciding things are URIs.
-		// Indicate caller should keep looking.
-		return true, nil
-	}
-
+) error {
 	blocked, err := p.state.DB.IsURIBlocked(ctx, uri)
 	if err != nil {
 		err = gtserror.Newf("error checking domain block: %w", err)
-		return false, gtserror.NewErrorInternalError(err)
+		return gtserror.NewErrorInternalError(err)
 	}
 
 	if blocked {
-		// Don't search for blocked domains.
-		// Caller should stop looking.
-		return false, nil
+		// Don't search for
+		// blocked domains.
+		return nil
 	}
 
 	if includeAccounts(queryType) {
@@ -485,14 +493,13 @@ func (p *Processor) byURI(
 			// On one of these, we can continue.
 			if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
 				err = gtserror.Newf("error looking up %s as account: %w", uri, err)
-				return false, gtserror.NewErrorInternalError(err)
+				return gtserror.NewErrorInternalError(err)
 			}
 		} else {
-			// Hit; return false to indicate caller should
-			// stop looking, since it's extremely unlikely
+			// Hit! Return early since it's extremely unlikely
 			// a status and an account will have the same URL.
 			appendAccount(foundAccount)
-			return false, nil
+			return nil
 		}
 	}
 
@@ -504,20 +511,19 @@ func (p *Processor) byURI(
 			// On one of these, we can continue.
 			if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
 				err = gtserror.Newf("error looking up %s as status: %w", uri, err)
-				return false, gtserror.NewErrorInternalError(err)
+				return gtserror.NewErrorInternalError(err)
 			}
 		} else {
-			// Hit; return false to indicate caller should
-			// stop looking, since it's extremely unlikely
+			// Hit! Return early since it's extremely unlikely
 			// a status and an account will have the same URL.
 			appendStatus(foundStatus)
-			return false, nil
+			return nil
 		}
 	}
 
-	// No errors, but no hits either; since this
-	// was a URI, caller should stop looking.
-	return false, nil
+	// No errors, but no hits
+	// either; that's fine.
+	return nil
 }
 
 // accountByURI looks for one account with the given URI.

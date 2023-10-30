@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Accounts does a partial search for accounts that
@@ -55,6 +56,11 @@ func (p *Processor) Accounts(
 	// and then get a million instance service accounts
 	// in their search results.
 	const includeInstanceAccounts = false
+
+	// We *might* want to include blocked accounts
+	// in this search, but only if it's a search
+	// for a specific account.
+	includeBlockedAccounts := false
 
 	var (
 		foundAccounts = make([]*gtsmodel.Account, 0, limit)
@@ -95,26 +101,42 @@ func (p *Processor) Accounts(
 			requestingAccount,
 			foundAccounts,
 			includeInstanceAccounts,
+			includeBlockedAccounts,
 		)
 	}
 
-	// Return all accounts we can find that match the
-	// provided query. If it's not a namestring, this
-	// won't return an error, it'll just return 0 results.
-	if _, err := p.accountsByNamestring(
-		ctx,
-		requestingAccount,
-		id.Highest,
-		id.Lowest,
-		limit,
-		offset,
-		query,
-		resolve,
-		following,
-		appendAccount,
-	); err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("error searching by namestring: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
+	// See if we have something that looks like a namestring.
+	username, domain, err := util.ExtractNamestringParts(query)
+	if err != nil {
+		log.Warnf(ctx, "couldn't parse '%s' as namestring: %v", query, err)
+	} else {
+		if domain != "" {
+			// Search was an exact namestring;
+			// we can safely assume caller is
+			// searching for a specific account,
+			// and show it to them even if they
+			// have it blocked.
+			includeBlockedAccounts = true
+		}
+
+		// Get all accounts we can find
+		// that match the provided query.
+		if err := p.accountsByNamestring(
+			ctx,
+			requestingAccount,
+			id.Highest,
+			id.Lowest,
+			limit,
+			offset,
+			username,
+			domain,
+			resolve,
+			following,
+			appendAccount,
+		); err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = gtserror.Newf("error searching by namestring: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	// Return whatever we got (if anything).
@@ -123,5 +145,6 @@ func (p *Processor) Accounts(
 		requestingAccount,
 		foundAccounts,
 		includeInstanceAccounts,
+		includeBlockedAccounts,
 	)
 }
