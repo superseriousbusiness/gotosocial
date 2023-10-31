@@ -387,15 +387,6 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 		return gtserror.Newf("db error inserting status: %w", err)
 	}
 
-	// Ensure boosted status ancestors dereferenced. We need at least
-	// the immediate parent (if present) to ascertain timelineability.
-	if err := p.federate.DereferenceStatusAncestors(ctx,
-		fMsg.ReceivingAccount.Username,
-		status.BoostOf,
-	); err != nil {
-		return err
-	}
-
 	// Timeline and notify the announce.
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining status: %w", err)
