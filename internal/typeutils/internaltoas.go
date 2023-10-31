@@ -659,25 +659,13 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 		AppendActivityStreamsNote(vocab.ActivityStreamsNote)
 	}
 
-	var counts []int
+	if len(poll.Options) != len(poll.Votes) {
+		return gtserror.Newf("invalid poll %s", poll.ID)
+	}
 
 	if !*poll.HideCounts {
-		// Get map of poll votes keyed by voting account ID.
-		votes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
-		if err != nil {
-			return gtserror.Newf("error fetching votes from db: %w", err)
-		}
-
-		// Accumulate vote counts per poll option.
-		counts = make([]int, len(poll.Options))
-		for _, vote := range votes {
-			for _, choice := range vote.Choices {
-				counts[choice]++
-			}
-		}
-
 		// Set total no. voting accounts.
-		ap.SetVotersCount(dst, len(votes))
+		ap.SetVotersCount(dst, poll.Voters)
 	}
 
 	if *poll.Multiple {
@@ -701,10 +689,10 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 		nameProp.AppendXMLSchemaString(name)
 		note.SetActivityStreamsName(nameProp)
 
-		if len(counts) == len(poll.Options) /* i.e. NOT .HideCounts */ {
+		if !*poll.HideCounts {
 			// Create new total items property to hold the vote count.
 			totalItemsProp := streams.NewActivityStreamsTotalItemsProperty()
-			totalItemsProp.Set(counts[i])
+			totalItemsProp.Set(poll.Votes[i])
 
 			// Create new replies property with collection to encompass count.
 			repliesProp := streams.NewActivityStreamsRepliesProperty()

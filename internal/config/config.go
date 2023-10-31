@@ -206,7 +206,6 @@ type CacheConfiguration struct {
 	NotificationMemRatio     float64       `name:"notification-mem-ratio"`
 	PollMemRatio             float64       `name:"poll-mem-ratio"`
 	PollVoteMemRatio         float64       `name:"poll-vote-mem-ratio"`
-	PollVoterIDsMemRatio     float64       `name:"poll-voter-ids-mem-ratio"`
 	ReportMemRatio           float64       `name:"report-mem-ratio"`
 	StatusMemRatio           float64       `name:"status-mem-ratio"`
 	StatusFaveMemRatio       float64       `name:"status-fave-mem-ratio"`

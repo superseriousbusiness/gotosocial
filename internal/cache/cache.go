@@ -189,8 +189,8 @@ func (c *Caches) setuphooks() {
 	})
 
 	c.GTS.PollVote().SetInvalidateCallback(func(vote *gtsmodel.PollVote) {
-		// Invalidate all cached IDs of voters in poll.
-		c.GTS.PollVoterIDs().Invalidate(vote.PollID)
+		// Invalidate cached poll (contains no. votes).
+		c.GTS.Poll().Invalidate("ID", vote.PollID)
 	})
 
 	c.GTS.Status().SetInvalidateCallback(func(status *gtsmodel.Status) {

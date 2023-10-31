@@ -1115,6 +1115,8 @@ func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 
 // ExtractPoll extracts a placeholder Poll from Pollable interface, with available options and flags populated.
 func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
+	var closed time.Time
+
 	// Extract the options (votes if any) and 'multiple choice' flag.
 	options, votes, multi, err := ExtractPollOptions(poll)
 	if err != nil {
@@ -1124,7 +1126,11 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 	// Check if counts have been hidden from us.
 	hideCounts := len(options) != len(votes)
 	if hideCounts {
-		votes = nil
+
+		// Zero out all votes.
+		for i := range votes {
+			votes[i] = 0
+		}
 	}
 
 	// Extract the poll end time.
@@ -1132,8 +1138,6 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 	if endTime.IsZero() {
 		return nil, errors.New("no poll end time specified")
 	}
-
-	var closed time.Time
 
 	// Extract the poll closed time.
 	closedSlice := GetClosed(poll)

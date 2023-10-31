@@ -191,7 +191,6 @@ func totalOfRatios() float64 {
 		config.GetCacheNotificationMemRatio() +
 		config.GetCachePollMemRatio() +
 		config.GetCachePollVoteMemRatio() +
-		config.GetCachePollVoterIDsMemRatio() +
 		config.GetCacheReportMemRatio() +
 		config.GetCacheStatusMemRatio() +
 		config.GetCacheStatusFaveMemRatio() +

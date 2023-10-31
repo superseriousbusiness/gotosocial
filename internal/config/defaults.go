@@ -173,7 +173,6 @@ var Defaults = Configuration{
 		NotificationMemRatio:     2,
 		PollMemRatio:             1,
 		PollVoteMemRatio:         2,
-		PollVoterIDsMemRatio:     3,
 		ReportMemRatio:           1,
 		StatusMemRatio:           5,
 		StatusFaveMemRatio:       2,

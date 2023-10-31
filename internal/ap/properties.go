@@ -217,13 +217,13 @@ func AppendClosed(with WithClosed, closed ...time.Time) {
 }
 
 // GetVotersCount returns the integer contained in the VotersCount property of 'with', if found.
-func GetVotersCount(with WithVotersCount) *int {
+func GetVotersCount(with WithVotersCount) int {
 	votersProp := with.GetTootVotersCount()
 	if votersProp == nil {
-		return nil
+		return 0
 	}
 	count := votersProp.Get()
-	return &count
+	return count
 }
 
 // SetVotersCount sets the given count on the VotersCount property of 'with'.

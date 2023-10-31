@@ -265,11 +265,6 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		if err != nil {
 			l.Warnf("error(s) extracting poll: %v", err)
 		}
-
-		// This should ALWAYS be remote, so we don't
-		// need to worry about unsetting any of:
-		// - status.Poll.Votes
-		// - Status.Poll.Voters
 	}
 
 	// status.Hashtags
