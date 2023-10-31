@@ -677,18 +677,18 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 		}
 
 	case /*existing.Poll != nil && status.Poll != nil && */
-		!existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt):
-		// Since we last saw it, the poll has closed!
-		//
-		// Update poll object with
-		// the latest ClosedAt date.
+		!existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt) ||
+			!util.EqualPtrs(existing.Poll.Voters, status.Poll.Voters) ||
+			!slices.Equal(existing.Poll.Votes, status.Poll.Votes):
+		// Since we last saw it, the poll has updated!
+		// Whether that be stats, or close time.
 		poll := existing.Poll
 		poll.ClosedAt = status.Poll.ClosedAt
-		status.PollID = poll.ID
-		status.Poll = poll
+		poll.Voters = status.Poll.Voters
+		poll.Votes = status.Poll.Votes
 
-		// Update poll model in the database (specifically only 'closed_at').
-		if err := d.state.DB.UpdatePoll(ctx, poll, "closed_at"); err != nil {
+		// Update poll model in the database (specifically only the possible changed columns).
+		if err := d.state.DB.UpdatePoll(ctx, poll, "closed_at", "voters", "votes"); err != nil {
 			return gtserror.Newf("error updating poll: %w", err)
 		}
 
