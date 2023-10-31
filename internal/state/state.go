@@ -18,6 +18,7 @@
 package state
 
 import (
+	"codeberg.org/gruf/go-mutexes"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -40,6 +41,11 @@ type State struct {
 
 	// DB provides access to the database.
 	DB db.DB
+
+	// FedLocks provides access to this state's mutex map
+	// of per URI federation locks. Used during dereferencing
+	// and by the go-fed/activity library.
+	FedLocks mutexes.MutexMap
 
 	// Storage provides access to the storage driver.
 	Storage *storage.Driver

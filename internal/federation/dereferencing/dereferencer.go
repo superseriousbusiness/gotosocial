@@ -21,7 +21,6 @@ import (
 	"net/url"
 	"sync"
 
-	"codeberg.org/gruf/go-mutexes"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -35,14 +34,14 @@ type Dereferencer struct {
 	converter           *typeutils.Converter
 	transportController transport.Controller
 	mediaManager        *media.Manager
-	derefAvatars        map[string]*media.ProcessingMedia
-	derefAvatarsMu      mutexes.Mutex
-	derefHeaders        map[string]*media.ProcessingMedia
-	derefHeadersMu      mutexes.Mutex
-	derefEmojis         map[string]*media.ProcessingEmoji
-	derefEmojisMu       mutexes.Mutex
-	handshakes          map[string][]*url.URL
-	handshakesMu        sync.Mutex // mutex to lock/unlock when checking or updating the handshakes map
+
+	// all protected by State{}.FedLocks.
+	derefAvatars map[string]*media.ProcessingMedia
+	derefHeaders map[string]*media.ProcessingMedia
+	derefEmojis  map[string]*media.ProcessingEmoji
+
+	handshakes   map[string][]*url.URL
+	handshakesMu sync.Mutex
 }
 
 // NewDereferencer returns a Dereferencer initialized with the given parameters.
@@ -61,11 +60,5 @@ func NewDereferencer(
 		derefHeaders:        make(map[string]*media.ProcessingMedia),
 		derefEmojis:         make(map[string]*media.ProcessingEmoji),
 		handshakes:          make(map[string][]*url.URL),
-
-		// use wrapped mutexes to allow safely deferring unlock
-		// even when more granular locks are required (only unlocks once).
-		derefAvatarsMu: mutexes.WithSafety(mutexes.New()),
-		derefHeadersMu: mutexes.WithSafety(mutexes.New()),
-		derefEmojisMu:  mutexes.WithSafety(mutexes.New()),
 	}
 }

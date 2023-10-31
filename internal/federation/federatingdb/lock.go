@@ -19,7 +19,6 @@ package federatingdb
 
 import (
 	"context"
-	"errors"
 	"net/url"
 )
 
@@ -35,9 +34,5 @@ import (
 //
 // Used to ensure race conditions in multiple requests do not occur.
 func (f *federatingDB) Lock(c context.Context, id *url.URL) (func(), error) {
-	if id == nil {
-		return nil, errors.New("Lock: id was nil")
-	}
-	unlock := f.locks.Lock(id.String())
-	return unlock, nil
+	return f.state.FedLocks.Lock("federatingDB " + id.String()), nil // id should NEVER be nil.
 }

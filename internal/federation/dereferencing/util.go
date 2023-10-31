@@ -16,3 +16,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package dereferencing
+
+// doOnce wraps a function to only perform it once.
+func doOnce(fn func()) func() {
+	var once int32
+	return func() {
+		if once == 0 {
+			fn()
+			once = 1
+		}
+	}
+}

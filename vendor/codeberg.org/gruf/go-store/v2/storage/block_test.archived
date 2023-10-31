@@ -1,0 +1,38 @@
+package storage_test
+
+import (
+	"os"
+	"testing"
+
+	"codeberg.org/gruf/go-store/v2/storage"
+)
+
+func TestBlockStorage(t *testing.T) {
+	// Set test path, defer deleting it
+	testPath := "blockstorage.test"
+	t.Cleanup(func() {
+		os.RemoveAll(testPath)
+	})
+
+	// Open new blockstorage instance
+	st, err := storage.OpenBlock(testPath, nil)
+	if err != nil {
+		t.Fatalf("Failed opening storage: %v", err)
+	}
+
+	// Attempt multi open of same instance
+	_, err = storage.OpenBlock(testPath, nil)
+	if err == nil {
+		t.Fatal("Successfully opened a locked storage instance")
+	}
+
+	// Run the storage tests
+	testStorage(t, st)
+
+	// Test reopen storage path
+	st, err = storage.OpenBlock(testPath, nil)
+	if err != nil {
+		t.Fatalf("Failed opening storage: %v", err)
+	}
+	st.Close()
+}

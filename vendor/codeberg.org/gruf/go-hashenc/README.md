@@ -1,1 +1,0 @@
-HashEncoder provides a means of quickly hash-summing and encoding data
