@@ -47,7 +47,7 @@ codeberg.org/gruf/go-mangler
 # codeberg.org/gruf/go-maps v1.0.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-maps
-# codeberg.org/gruf/go-mutexes v1.2.0 => ../go-mutexes
+# codeberg.org/gruf/go-mutexes v1.3.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-runners v1.6.1
@@ -1072,4 +1072,3 @@ modernc.org/token
 # mvdan.cc/xurls/v2 v2.5.0
 ## explicit; go 1.19
 mvdan.cc/xurls/v2
-# codeberg.org/gruf/go-mutexes => ../go-mutexes
