@@ -180,7 +180,7 @@ func (f *federatingDB) activityCreate(
 
 	if len(objects) > 0 {
 		// Log any unhandled objects after filtering for debug purposes.
-		log.Debugf(ctx, "unhandled CREATE types: %v", typeNames(objects))
+		log.Warnf(ctx, "unhandled CREATE types: %v", typeNames(objects))
 	}
 
 	return errs.Combine()
