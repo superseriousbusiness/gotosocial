@@ -343,17 +343,19 @@ func (d *Dereferencer) enrichStatus(
 	return latestStatus, apubStatus, nil
 }
 
-// deriveMention tries to populate the given mention
-// with the correct TargetAccount for that mention.
+// populateMentionTarget tries to populate the given
+// mention with the correct TargetAccount and (if not
+// yet set) TargetAccountURI, returning the populated
+// mention.
 //
-// Will check on the existing status first if the mention
-// is already populated; if so, existing mention will
-// be returned along with `true`.
+// Will check on the existing status if the mention
+// is already there and populated; if so, existing
+// mention will be returned along with `true`.
 //
 // Otherwise, this function will try to parse first
 // the Href of the mention, and then the namestring,
-// to see who it targets.
-func (d *Dereferencer) deriveMention(
+// to see who it targets, and go fetch that account.
+func (d *Dereferencer) populateMentionTarget(
 	ctx context.Context,
 	mention *gtsmodel.Mention,
 	requestUser string,
@@ -365,47 +367,51 @@ func (d *Dereferencer) deriveMention(
 ) {
 	// Mentions can be created using Name or Href.
 	// Prefer Href (TargetAccountURI), fall back to Name.
-	if mention.TargetAccountURI == "" {
+	if mention.TargetAccountURI != "" {
+		// Look for existing mention with this URI.
+		// If we already have it we can return early.
+		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
+		if ok && existingMention.ID != "" {
+			return existingMention, true, nil
+		}
+
+		// Ensure that mention account URI is parseable.
+		accountURI, err := url.Parse(mention.TargetAccountURI)
+		if err != nil {
+			err = gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
+			return nil, false, err
+		}
+
+		// Ensure we have the account of the mention target dereferenced.
+		mention.TargetAccount, _, err = d.getAccountByURI(ctx, requestUser, accountURI)
+		if err != nil {
+			err = gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
+			return nil, false, err
+		}
+	} else {
 		// Href wasn't set. Find the target account using namestring.
 		username, domain, err := util.ExtractNamestringParts(mention.NameString)
 		if err != nil {
-			return nil, false, gtserror.Newf("failed to parse namestring %s: %w", mention.NameString, err)
+			err = gtserror.Newf("failed to parse namestring %s: %w", mention.NameString, err)
+			return nil, false, err
 		}
 
 		mention.TargetAccount, _, err = d.getAccountByUsernameDomain(ctx, requestUser, username, domain)
 		if err != nil {
-			if err != nil {
-				return nil, false, gtserror.Newf("failed to dereference account %s: %w", mention.NameString, err)
-			}
+			err = gtserror.Newf("failed to dereference account %s: %w", mention.NameString, err)
+			return nil, false, err
 		}
 
+		// Look for existing mention with this URI.
 		mention.TargetAccountURI = mention.TargetAccount.URI
+		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
+		if ok && existingMention.ID != "" {
+			return existingMention, true, nil
+		}
 	}
 
-	// TargetAccountURI must be set at this point.
-	//
-	// Look for existing mention with this URI.
-	// If we already have this mention we can return early.
-	existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
-	if ok && existingMention.ID != "" {
-		return existingMention, true, nil
-	}
-
-	// Ensure that mention account URI is parseable.
-	accountURI, err := url.Parse(mention.TargetAccountURI)
-	if err != nil {
-		return nil, false, gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
-	}
-
-	// Ensure we have the account of the mention target dereferenced.
-	//
-	// We might have just looked this up by namestring, for all we know,
-	// but at worse we're just getting it out of the cache again here.
-	mention.TargetAccount, _, err = d.getAccountByURI(ctx, requestUser, accountURI)
-	if err != nil {
-		return nil, false, gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
-	}
-
+	// At this point, mention.TargetAccountURI
+	// and mention.TargetAccount must be set.
 	return mention, false, nil
 }
 
@@ -420,7 +426,7 @@ func (d *Dereferencer) fetchStatusMentions(ctx context.Context, requestUser stri
 			err           error
 		)
 
-		mention, alreadyExists, err = d.deriveMention(
+		mention, alreadyExists, err = d.populateMentionTarget(
 			ctx,
 			mention,
 			requestUser,
