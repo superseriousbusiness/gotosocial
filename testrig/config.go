@@ -80,8 +80,10 @@ var testDefaults = config.Configuration{
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 500,
 	MediaRemoteCacheDays:     7,
-	MediaEmojiLocalMaxSize:   51200,  // 50kb
-	MediaEmojiRemoteMaxSize:  102400, // 100kb
+	MediaEmojiLocalMaxSize:   51200,          // 50kb
+	MediaEmojiRemoteMaxSize:  102400,         // 100kb
+	MediaCleanupFrom:         "00:00",        // midnight.
+	MediaCleanupEvery:        24 * time.Hour, // 1/day.
 
 	// the testrig only uses in-memory storage, so we can
 	// safely set this value to 'test' to avoid running storage

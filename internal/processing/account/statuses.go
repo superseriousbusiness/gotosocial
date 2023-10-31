@@ -52,8 +52,9 @@ func (p *Processor) StatusesGet(
 		}
 
 		if blocked {
-			err := errors.New("block exists between accounts")
-			return nil, gtserror.NewErrorNotFound(err)
+			// Block exists between accounts.
+			// Just return empty statuses.
+			return util.EmptyPageableResponse(), nil
 		}
 	}
 

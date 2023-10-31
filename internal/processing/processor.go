@@ -18,6 +18,7 @@
 package processing
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	mm "github.com/superseriousbusiness/gotosocial/internal/media"
@@ -126,6 +127,7 @@ func (p *Processor) Workers() *workers.Processor {
 
 // NewProcessor returns a new Processor.
 func NewProcessor(
+	cleaner *cleaner.Cleaner,
 	converter *typeutils.Converter,
 	federator *federation.Federator,
 	oauthServer oauth.Server,
@@ -156,7 +158,7 @@ func NewProcessor(
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
 	processor.account = accountProcessor
-	processor.admin = admin.New(state, converter, mediaManager, federator.TransportController(), emailSender)
+	processor.admin = admin.New(state, cleaner, converter, mediaManager, federator.TransportController(), emailSender)
 	processor.fedi = fedi.New(state, converter, federator, filter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)

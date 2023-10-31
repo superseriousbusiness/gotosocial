@@ -277,7 +277,7 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		// de-punify it just in case.
 		d, err := util.DePunify(a.Domain)
 		if err != nil {
-			return nil, fmt.Errorf("AccountToAPIAccountBlocked: error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
+			return nil, gtserror.Newf("error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
 		}
 
 		acct = a.Username + "@" + d
@@ -288,7 +288,7 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		if !a.IsInstance() {
 			user, err := c.state.DB.GetUserByAccountID(ctx, a.ID)
 			if err != nil {
-				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
+				return nil, gtserror.Newf("error getting user from database for account id %s: %w", a.ID, err)
 			}
 
 			switch {
@@ -304,17 +304,25 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		acct = a.Username // omit domain
 	}
 
-	return &apimodel.Account{
-		ID:          a.ID,
-		Username:    a.Username,
-		Acct:        acct,
-		DisplayName: a.DisplayName,
-		Bot:         *a.Bot,
-		CreatedAt:   util.FormatISO8601(a.CreatedAt),
-		URL:         a.URL,
-		Suspended:   !a.SuspendedAt.IsZero(),
-		Role:        role,
-	}, nil
+	account := &apimodel.Account{
+		ID:        a.ID,
+		Username:  a.Username,
+		Acct:      acct,
+		Bot:       *a.Bot,
+		CreatedAt: util.FormatISO8601(a.CreatedAt),
+		URL:       a.URL,
+		Suspended: !a.SuspendedAt.IsZero(),
+		Role:      role,
+	}
+
+	// Don't show the account's actual
+	// avatar+header since it may be
+	// upsetting to the blocker. Just
+	// show generic avatar+header instead.
+	c.ensureAvatar(account)
+	c.ensureHeader(account)
+
+	return account, nil
 }
 
 func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Account) (*apimodel.AdminAccountInfo, error) {

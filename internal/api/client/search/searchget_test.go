@@ -38,6 +38,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -1179,8 +1180,9 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountPartial() {
 	}
 
 	// Query was a partial namestring from our
-	// instance, so will return the instance account.
-	suite.Len(searchResult.Accounts, 1)
+	// instance, instance account should be
+	// excluded from results.
+	suite.Len(searchResult.Accounts, 0)
 	suite.Len(searchResult.Statuses, 0)
 	suite.Len(searchResult.Hashtags, 0)
 }
@@ -1544,6 +1546,189 @@ func (suite *SearchGetTestSuite) TestSearchNotHashtagButWithTypeHashtag() {
 	suite.Len(searchResult.Accounts, 0)
 	suite.Len(searchResult.Statuses, 0)
 	suite.Len(searchResult.Hashtags, 1)
+}
+
+func (suite *SearchGetTestSuite) TestSearchBlockedAccountFullNamestring() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		targetAccount              = suite.testAccounts["remote_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = func() *bool { i := true; return &i }()
+		query                      = "@" + targetAccount.Username + "@" + targetAccount.Domain
+		queryType          *string = func() *string { i := "accounts"; return &i }()
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ""
+	)
+
+	// Block the account
+	// we're about to search.
+	if err := suite.db.PutBlock(
+		context.Background(),
+		&gtsmodel.Block{
+			ID:              id.NewULID(),
+			URI:             "https://example.org/nooooooo",
+			AccountID:       requestingAccount.ID,
+			TargetAccountID: targetAccount.ID,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Search was for full namestring;
+	// we should still be able to see
+	// the account we've blocked.
+	if !suite.Len(searchResult.Accounts, 1) {
+		suite.FailNow("expected 1 account in search results but got 0")
+	}
+
+	gotAccount := searchResult.Accounts[0]
+	suite.NotNil(gotAccount)
+}
+
+func (suite *SearchGetTestSuite) TestSearchBlockedAccountPartialNamestring() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		targetAccount              = suite.testAccounts["remote_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = func() *bool { i := true; return &i }()
+		query                      = "@" + targetAccount.Username
+		queryType          *string = func() *string { i := "accounts"; return &i }()
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ""
+	)
+
+	// Block the account
+	// we're about to search.
+	if err := suite.db.PutBlock(
+		context.Background(),
+		&gtsmodel.Block{
+			ID:              id.NewULID(),
+			URI:             "https://example.org/nooooooo",
+			AccountID:       requestingAccount.ID,
+			TargetAccountID: targetAccount.ID,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Search was for partial namestring;
+	// we should not be able to see
+	// the account we've blocked.
+	if !suite.Empty(searchResult.Accounts) {
+		suite.FailNow("expected 0 accounts in search results")
+	}
+}
+
+func (suite *SearchGetTestSuite) TestSearchBlockedAccountURI() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		targetAccount              = suite.testAccounts["remote_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = func() *bool { i := true; return &i }()
+		query                      = targetAccount.URI
+		queryType          *string = func() *string { i := "accounts"; return &i }()
+		following          *bool   = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ""
+	)
+
+	// Block the account
+	// we're about to search.
+	if err := suite.db.PutBlock(
+		context.Background(),
+		&gtsmodel.Block{
+			ID:              id.NewULID(),
+			URI:             "https://example.org/nooooooo",
+			AccountID:       requestingAccount.ID,
+			TargetAccountID: targetAccount.ID,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Search was for precise URI;
+	// we should still be able to see
+	// the account we've blocked.
+	if !suite.Len(searchResult.Accounts, 1) {
+		suite.FailNow("expected 1 account in search results but got 0")
+	}
+
+	gotAccount := searchResult.Accounts[0]
+	suite.NotNil(gotAccount)
 }
 
 func TestSearchGetTestSuite(t *testing.T) {
