@@ -292,7 +292,7 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 	return p.state.Caches.GTS.PollVote().Store(vote, func() error {
 		return p.db.RunInTx(ctx, func(tx Tx) error {
 			// Try insert vote into database.
-			if _, err := p.db.NewInsert().
+			if _, err := tx.NewInsert().
 				Model(vote).
 				Exec(ctx); err != nil {
 				return err
@@ -301,21 +301,10 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 			var poll gtsmodel.Poll
 
 			// Select poll counts from DB.
-			switch err := tx.NewSelect().
+			if err := tx.NewSelect().
 				Model(&poll).
 				Where("? = ?", bun.Ident("id"), vote.PollID).
-				Scan(ctx); {
-
-			case err == nil:
-				// no issue.
-
-			case errors.Is(err, db.ErrNoEntries):
-				// no votes found,
-				// return here.
-				return nil
-
-			default:
-				// irrecoverable.
+				Scan(ctx); err != nil {
 				return err
 			}
 
