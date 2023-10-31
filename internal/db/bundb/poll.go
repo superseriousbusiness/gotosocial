@@ -334,7 +334,6 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 			_, err := tx.NewUpdate().
 				Model(&poll).
 				Column("votes", "voters").
-				WherePK().
 				Where("? = ?", bun.Ident("id"), vote.PollID).
 				Exec(ctx)
 			return err
@@ -515,23 +514,6 @@ func (p *pollDB) DeletePollVotesByAccountID(ctx context.Context, accountID strin
 	}
 
 	return nil
-}
-
-func selectPollByID(ctx context.Context, db interface{ NewSelect() *bun.SelectQuery }, id string) (*gtsmodel.Poll, error) {
-	var poll gtsmodel.Poll
-
-	// Select poll counts from DB.
-	if err := db.NewSelect().
-		Model(&poll).
-		Where("? = ?", bun.Ident("id"), id).
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-
-	// Ensure votes is set.
-	ensurePollVotes(&poll)
-
-	return &poll, nil
 }
 
 // ensurePollVotes slices ensures the poll votes slice is set (and equal to len(options)).
