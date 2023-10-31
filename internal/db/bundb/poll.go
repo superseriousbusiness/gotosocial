@@ -290,8 +290,55 @@ func (p *pollDB) PopulatePollVote(ctx context.Context, vote *gtsmodel.PollVote) 
 
 func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
 	return p.state.Caches.GTS.PollVote().Store(vote, func() error {
-		_, err := p.db.NewInsert().Model(vote).Exec(ctx)
-		return err
+		return p.db.RunInTx(ctx, func(tx Tx) error {
+			// Try insert vote into database.
+			if _, err := p.db.NewInsert().
+				Model(vote).
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			var poll gtsmodel.Poll
+
+			// Select poll counts from DB.
+			switch err := tx.NewSelect().
+				Model(&poll).
+				Where("? = ?", bun.Ident("id"), vote.PollID).
+				Scan(ctx); {
+
+			case err == nil:
+				// no issue.
+
+			case errors.Is(err, db.ErrNoEntries):
+				// no votes found,
+				// return here.
+				return nil
+
+			default:
+				// irrecoverable.
+				return err
+			}
+
+			// Ensure votes is set.
+			ensurePollVotes(&poll)
+
+			// Increment each poll vote count.
+			for _, choice := range vote.Choices {
+				poll.Votes[choice]++
+			}
+
+			// Incr voters.
+			poll.Voters++
+
+			// Finally, update the poll entry.
+			_, err := tx.NewUpdate().
+				Model(&poll).
+				Column("votes", "voters").
+				WherePK().
+				Where("? = ?", bun.Ident("id"), vote.PollID).
+				Exec(ctx)
+			return err
+		})
 	})
 }
 
@@ -317,27 +364,37 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 			return err
 		}
 
-		// Select the source poll by ID.
-		poll, err := selectPollByID(ctx, tx, pollID)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return err
-		}
+		var poll gtsmodel.Poll
 
-		if poll == nil {
-			// Poll is gone,
-			// simply return.
+		// Select poll counts from DB.
+		switch err := tx.NewSelect().
+			Model(&poll).
+			Where("? = ?", bun.Ident("id"), pollID).
+			Scan(ctx); {
+
+		case err == nil:
+			// no issue.
+
+		case errors.Is(err, db.ErrNoEntries):
+			// no votes found,
+			// return here.
 			return nil
+
+		default:
+			// irrecoverable.
+			return err
 		}
 
 		// Zero all counts.
 		poll.Voters = 0
 		poll.Votes = nil
-		ensurePollVotes(poll)
+		ensurePollVotes(&poll)
 
 		// Finally, update the poll entry.
-		_, err = tx.NewInsert().
+		_, err := tx.NewUpdate().
 			Model(&poll).
 			Column("votes", "voters").
+			Where("? = ?", bun.Ident("id"), pollID).
 			Exec(ctx)
 		return err
 	})
@@ -416,9 +473,10 @@ func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID 
 		}
 
 		// Finally, update the poll entry.
-		_, err := tx.NewInsert().
+		_, err := tx.NewUpdate().
 			Model(&poll).
 			Column("votes", "voters").
+			Where("? = ?", bun.Ident("id"), pollID).
 			Exec(ctx)
 		return err
 	})
