@@ -322,18 +322,11 @@ func (f *federatingDB) createStatusable(
 		return nil
 	}
 
-	// This is a non-forwarded status we can trust the requester on,
-	// convert this provided statusable data to a useable gtsmodel status.
-	status, err := f.converter.ASStatusToStatus(ctx, statusable)
-	if err != nil {
-		return gtserror.Newf("error converting statusable to status: %w", err)
-	}
-
 	// Check whether we should accept this new status.
 	accept, err := f.shouldAcceptStatusable(ctx,
 		receiver,
 		requester,
-		status,
+		statusable,
 	)
 	if err != nil {
 		return gtserror.Newf("error checking status acceptibility: %w", err)
@@ -349,77 +342,52 @@ func (f *federatingDB) createStatusable(
 		return nil
 	}
 
-	// ID the new status based on the time it was created.
-	status.ID, err = id.NewULIDFromTime(status.CreatedAt)
-	if err != nil {
-		return err
-	}
-
-	if status.Poll != nil {
-		// ID the new poll based on time status was created.
-		status.Poll.ID, err = id.NewULIDFromTime(status.CreatedAt)
-		if err != nil {
-			return err
-		}
-
-		// Link the status <-> poll.
-		status.PollID = status.Poll.ID
-		status.Poll.StatusID = status.ID
-	}
-
-	// Put this newly parsed status in the database.
-	if err := f.state.DB.PutStatus(ctx, status); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			// The status already exists in the database, which
-			// means we've already processed it and some race
-			// condition means we didn't catch it yet. We can
-			// just return nil here and be done with it.
-			return nil
-		}
-		return gtserror.Newf("db error inserting status: %w", err)
-	}
-
 	// Do the rest of the processing asynchronously. The processor
 	// will handle inserting/updating + further dereferencing the status.
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
 		APIri:            nil,
+		GTSModel:         nil,
 		APObjectModel:    statusable,
-		GTSModel:         status,
 		ReceivingAccount: receiver,
 	})
 
 	return nil
 }
 
-func (f *federatingDB) shouldAcceptStatusable(ctx context.Context, receiver *gtsmodel.Account, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+func (f *federatingDB) shouldAcceptStatusable(ctx context.Context, receiver *gtsmodel.Account, requester *gtsmodel.Account, statusable ap.Statusable) (bool, error) {
 	host := config.GetHost()
 	accountDomain := config.GetAccountDomain()
 
 	// Check whether status mentions the receiver,
 	// this is the quickest check so perform it first.
-	// Prefer checking using mention Href, fall back to Name.
-	for _, mention := range status.Mentions {
-		targetURI := mention.TargetAccountURI
-		nameString := mention.NameString
+	mentions, _ := ap.ExtractMentions(statusable)
+	for _, mention := range mentions {
 
-		if targetURI != "" {
-			if targetURI == receiver.URI || targetURI == receiver.URL {
-				// Target URI or URL match;
-				// receiver is mentioned.
+		// Extract placeholder mention vars.
+		accURI := mention.TargetAccountURI
+		name := mention.NameString
+
+		switch {
+		case accURI != "":
+			if accURI == receiver.URI ||
+				accURI == receiver.URL {
+				// Mention target is receiver,
+				// they are mentioned in status.
 				return true, nil
 			}
-		} else if nameString != "" {
-			username, domain, err := util.ExtractNamestringParts(nameString)
+
+		case accURI == "" && name != "":
+			// Only a name was provided, extract the user@domain parts.
+			user, domain, err := util.ExtractNamestringParts(name)
 			if err != nil {
-				return false, gtserror.Newf("error checking if mentioned: %w", err)
+				return false, gtserror.Newf("error extracting mention name parts: %w", err)
 			}
 
-			if (domain == host || domain == accountDomain) &&
-				strings.EqualFold(username, receiver.Username) {
-				// Username + domain match;
-				// receiver is mentioned.
+			// Check if the name points to our receiving local user.
+			isLocal := (domain == host || domain == accountDomain)
+			if isLocal && strings.EqualFold(user, receiver.Username) {
 				return true, nil
 			}
 		}

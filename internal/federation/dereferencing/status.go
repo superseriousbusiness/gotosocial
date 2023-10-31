@@ -342,6 +342,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Carry-over values and set fetch time.
+	latestStatus.UpdatedAt = status.UpdatedAt
 	latestStatus.FetchedAt = time.Now()
 	latestStatus.Local = status.Local
 

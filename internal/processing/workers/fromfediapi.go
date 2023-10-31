@@ -153,20 +153,15 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	var (
 		status *gtsmodel.Status
 		err    error
-
-		// Check the federatorMsg for either an already dereferenced
-		// and converted status pinned to the message, or a forwarded
-		// AP IRI that we still need to deref.
-		forwarded = (fMsg.GTSModel == nil)
 	)
 
-	if forwarded {
-		// Model was not set, deref with IRI.
+	if fMsg.APObjectModel == nil {
+		// Model was not set, deref with IRI (this is a forward).
 		// This will also cause the status to be inserted into the db.
 		status, err = p.statusFromAPIRI(ctx, fMsg)
 	} else {
 		// Model is set, ensure we have the most up-to-date model.
-		status, err = p.statusFromGTSModel(ctx, fMsg)
+		status, err = p.statusFromAPModel(ctx, fMsg)
 	}
 
 	if err != nil {
@@ -238,17 +233,22 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg messages.FromFediAPI)
 	return nil
 }
 
-func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
-	// There should be a status pinned to the message:
-	// we've already checked to ensure this is not nil.
-	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
+func (p *fediAPI) statusFromAPModel(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
+	// AP statusable representation MUST have been set.
+	statusable, ok := fMsg.APObjectModel.(ap.Statusable)
 	if !ok {
-		return nil, gtserror.Newf("cannot cast %T -> *gtsmodel.Status", fMsg.GTSModel)
+		return nil, gtserror.Newf("cannot cast %T -> ap.Statusable", fMsg.APObjectModel)
 	}
 
-	// AP statusable representation may have also
-	// been set on message (no problem if not).
-	statusable, _ := fMsg.APObjectModel.(ap.Statusable)
+	// Status may have been set, if not we create a bare
+	// representation for the federator to flesh-out.
+	status, _ := fMsg.GTSModel.(*gtsmodel.Status)
+	if status == nil {
+		status = &gtsmodel.Status{
+			Local: func() *bool { var false bool; return &false }(),
+			URI:   ap.GetJSONLDId(statusable).String(),
+		}
+	}
 
 	// Call refresh on status to update
 	// it (deref remote) if necessary.
