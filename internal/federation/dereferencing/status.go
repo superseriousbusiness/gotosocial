@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // statusUpToDate returns whether the given status model is both updateable
@@ -342,35 +343,110 @@ func (d *Dereferencer) enrichStatus(
 	return latestStatus, apubStatus, nil
 }
 
-func (d *Dereferencer) fetchStatusMentions(ctx context.Context, requestUser string, existing, status *gtsmodel.Status) error {
-	// Allocate new slice to take the yet-to-be created mention IDs.
-	status.MentionIDs = make([]string, len(status.Mentions))
-
-	for i := range status.Mentions {
-		mention := status.Mentions[i]
-
-		// Look for existing mention with target account URI first.
-		existing, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
-		if ok && existing.ID != "" {
-			status.Mentions[i] = existing
-			status.MentionIDs[i] = existing.ID
-			continue
+// populateMentionTarget tries to populate the given
+// mention with the correct TargetAccount and (if not
+// yet set) TargetAccountURI, returning the populated
+// mention.
+//
+// Will check on the existing status if the mention
+// is already there and populated; if so, existing
+// mention will be returned along with `true`.
+//
+// Otherwise, this function will try to parse first
+// the Href of the mention, and then the namestring,
+// to see who it targets, and go fetch that account.
+func (d *Dereferencer) populateMentionTarget(
+	ctx context.Context,
+	mention *gtsmodel.Mention,
+	requestUser string,
+	existing, status *gtsmodel.Status,
+) (
+	*gtsmodel.Mention,
+	bool, // True if mention already exists in the DB.
+	error,
+) {
+	// Mentions can be created using Name or Href.
+	// Prefer Href (TargetAccountURI), fall back to Name.
+	if mention.TargetAccountURI != "" {
+		// Look for existing mention with this URI.
+		// If we already have it we can return early.
+		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
+		if ok && existingMention.ID != "" {
+			return existingMention, true, nil
 		}
 
 		// Ensure that mention account URI is parseable.
 		accountURI, err := url.Parse(mention.TargetAccountURI)
 		if err != nil {
-			log.Errorf(ctx, "invalid account uri %q: %v", mention.TargetAccountURI, err)
-			continue
+			err = gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
+			return nil, false, err
 		}
 
 		// Ensure we have the account of the mention target dereferenced.
 		mention.TargetAccount, _, err = d.getAccountByURI(ctx, requestUser, accountURI)
 		if err != nil {
-			log.Errorf(ctx, "failed to dereference account %s: %v", accountURI, err)
+			err = gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
+			return nil, false, err
+		}
+	} else {
+		// Href wasn't set. Find the target account using namestring.
+		username, domain, err := util.ExtractNamestringParts(mention.NameString)
+		if err != nil {
+			err = gtserror.Newf("failed to parse namestring %s: %w", mention.NameString, err)
+			return nil, false, err
+		}
+
+		mention.TargetAccount, _, err = d.getAccountByUsernameDomain(ctx, requestUser, username, domain)
+		if err != nil {
+			err = gtserror.Newf("failed to dereference account %s: %w", mention.NameString, err)
+			return nil, false, err
+		}
+
+		// Look for existing mention with this URI.
+		mention.TargetAccountURI = mention.TargetAccount.URI
+		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
+		if ok && existingMention.ID != "" {
+			return existingMention, true, nil
+		}
+	}
+
+	// At this point, mention.TargetAccountURI
+	// and mention.TargetAccount must be set.
+	return mention, false, nil
+}
+
+func (d *Dereferencer) fetchStatusMentions(ctx context.Context, requestUser string, existing, status *gtsmodel.Status) error {
+	// Allocate new slice to take the yet-to-be created mention IDs.
+	status.MentionIDs = make([]string, len(status.Mentions))
+
+	for i := range status.Mentions {
+		var (
+			mention       = status.Mentions[i]
+			alreadyExists bool
+			err           error
+		)
+
+		mention, alreadyExists, err = d.populateMentionTarget(
+			ctx,
+			mention,
+			requestUser,
+			existing,
+			status,
+		)
+		if err != nil {
+			log.Errorf(ctx, "failed to derive mention: %v", err)
 			continue
 		}
 
+		if alreadyExists {
+			// This mention was already attached
+			// to the status, use it and continue.
+			status.Mentions[i] = mention
+			status.MentionIDs[i] = mention.ID
+			continue
+		}
+
+		// This mention didn't exist yet.
 		// Generate new ID according to status creation.
 		// TODO: update this to use "edited_at" when we add
 		//       support for edited status revision history.

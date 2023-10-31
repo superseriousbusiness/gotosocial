@@ -21,14 +21,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ExtractMentionsTestSuite struct {
 	APTestSuite
 }
 
-func (suite *ExtractMentionsTestSuite) TestExtractMentions() {
+func (suite *ExtractMentionsTestSuite) TestExtractMentionsFromNote() {
 	note := suite.noteWithMentions1
 
 	mentions, err := ap.ExtractMentions(note)
@@ -42,6 +44,101 @@ func (suite *ExtractMentionsTestSuite) TestExtractMentions() {
 	m2 := mentions[1]
 	suite.Equal("@f0x@superseriousbusiness.org", m2.NameString)
 	suite.Equal("https://gts.superseriousbusiness.org/users/f0x", m2.TargetAccountURI)
+}
+
+func (suite *ExtractMentionsTestSuite) TestExtractMentions() {
+	newMention := func(nameString string, href string) ap.Mentionable {
+		mention := streams.NewActivityStreamsMention()
+
+		if nameString != "" {
+			nameProp := streams.NewActivityStreamsNameProperty()
+			nameProp.AppendXMLSchemaString(nameString)
+			mention.SetActivityStreamsName(nameProp)
+		}
+
+		if href != "" {
+			hrefProp := streams.NewActivityStreamsHrefProperty()
+			hrefProp.SetIRI(testrig.URLMustParse(href))
+			mention.SetActivityStreamsHref(hrefProp)
+		}
+
+		return mention
+	}
+
+	type test struct {
+		nameString         string
+		href               string
+		expectedNameString string
+		expectedHref       string
+		expectedErr        string
+	}
+
+	for i, t := range []test{
+		{
+			// Mention with both Name and Href set, should be fine.
+			nameString:         "@someone@example.org",
+			href:               "https://example.org/@someone",
+			expectedNameString: "@someone@example.org",
+			expectedHref:       "https://example.org/@someone",
+			expectedErr:        "",
+		},
+		{
+			// Mention with just Href set, should be fine.
+			nameString:         "",
+			href:               "https://example.org/@someone",
+			expectedNameString: "",
+			expectedHref:       "https://example.org/@someone",
+			expectedErr:        "",
+		},
+		{
+			// Mention with just Name set, should be fine.
+			nameString:         "@someone@example.org",
+			href:               "",
+			expectedNameString: "@someone@example.org",
+			expectedHref:       "",
+			expectedErr:        "",
+		},
+		{
+			// Mention with nothing set, not fine!
+			nameString:         "",
+			href:               "",
+			expectedNameString: "",
+			expectedHref:       "",
+			expectedErr:        "ExtractMention: neither Name nor Href were set",
+		},
+	} {
+		apMention := newMention(t.nameString, t.href)
+		mention, err := ap.ExtractMention(apMention)
+
+		if err != nil {
+			if errString := err.Error(); errString != t.expectedErr {
+				suite.Fail("",
+					"test %d expected error %s, got %s",
+					i+1, t.expectedErr, errString,
+				)
+			}
+			continue
+		} else if t.expectedErr != "" {
+			suite.Fail("",
+				"test %d expected error %s, got no error",
+				i+1, t.expectedErr,
+			)
+		}
+
+		if mention.NameString != t.expectedNameString {
+			suite.Fail("",
+				"test %d expected nameString %s, got %s",
+				i+1, t.expectedNameString, mention.NameString,
+			)
+		}
+
+		if mention.TargetAccountURI != t.expectedHref {
+			suite.Fail("",
+				"test %d expected href %s, got %s",
+				i+1, t.expectedHref, mention.TargetAccountURI,
+			)
+		}
+	}
 }
 
 func TestExtractMentionsTestSuite(t *testing.T) {

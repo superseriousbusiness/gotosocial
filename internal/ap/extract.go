@@ -32,7 +32,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // ExtractObjects will extract object vocab.Types from given implementing interface.
@@ -841,27 +840,27 @@ func ExtractMentions(i WithTag) ([]*gtsmodel.Mention, error) {
 
 // ExtractMention extracts a minimal gtsmodel.Mention from a Mentionable.
 func ExtractMention(i Mentionable) (*gtsmodel.Mention, error) {
+	// See if a name has been set in the
+	// format `@someone@example.org`.
 	nameString := ExtractName(i)
-	if nameString == "" {
-		return nil, gtserror.New("name prop empty")
-	}
-
-	// Ensure namestring is valid so we
-	// can handle it properly later on.
-	if _, _, err := util.ExtractNamestringParts(nameString); err != nil {
-		return nil, err
-	}
 
 	// The href prop should be the AP URI
-	// of the target account.
+	// of the target account; it could also
+	// be the URL, but we'll check this later.
+	var href string
 	hrefProp := i.GetActivityStreamsHref()
-	if hrefProp == nil || !hrefProp.IsIRI() {
-		return nil, gtserror.New("no href prop")
+	if hrefProp != nil && hrefProp.IsIRI() {
+		href = hrefProp.GetIRI().String()
+	}
+
+	// One of nameString and hrefProp must be set.
+	if nameString == "" && href == "" {
+		return nil, gtserror.Newf("neither Name nor Href were set")
 	}
 
 	return &gtsmodel.Mention{
 		NameString:       nameString,
-		TargetAccountURI: hrefProp.GetIRI().String(),
+		TargetAccountURI: href,
 	}, nil
 }
 
