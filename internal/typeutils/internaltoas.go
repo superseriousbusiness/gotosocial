@@ -653,16 +653,31 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 }
 
 func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap.Pollable) error {
-	// Count available votes in these poll options.
-	counts, err := c.state.DB.CountPollVotes(ctx, poll.ID)
-	if err != nil {
-		return gtserror.Newf("error fetching vote counts from db: %w", err)
-	}
-
 	var optionsProp interface {
 		// the minimum interface for appending AS Notes
 		// to an AS type options property of some kind.
 		AppendActivityStreamsNote(vocab.ActivityStreamsNote)
+	}
+
+	var counts []int
+
+	if !*poll.HideCounts {
+		// Get map of poll votes keyed by voting account ID.
+		votes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
+		if err != nil {
+			return gtserror.Newf("error fetching votes from db: %w", err)
+		}
+
+		// Accumulate vote counts per poll option.
+		counts = make([]int, len(poll.Options))
+		for _, vote := range votes {
+			for _, choice := range vote.Choices {
+				counts[choice]++
+			}
+		}
+
+		// Set total no. voting accounts.
+		ap.SetVotersCount(dst, len(votes))
 	}
 
 	if *poll.Multiple {
@@ -686,7 +701,7 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 		nameProp.AppendXMLSchemaString(name)
 		note.SetActivityStreamsName(nameProp)
 
-		if !*poll.HideCounts {
+		if len(counts) == len(poll.Options) /* i.e. NOT .HideCounts */ {
 			// Create new total items property to hold the vote count.
 			totalItemsProp := streams.NewActivityStreamsTotalItemsProperty()
 			totalItemsProp.Set(counts[i])
@@ -712,17 +727,6 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 		// Poll is closed, set closed property.
 		ap.AppendClosed(dst, poll.ClosedAt)
 	}
-
-	// Accumulate total vote count.
-	var totalVotes int
-	for _, count := range counts {
-		totalVotes += count
-	}
-
-	// Set votersCount property from accumulated counts.
-	countProp := streams.NewTootVotersCountProperty()
-	countProp.Set(totalVotes)
-	dst.SetTootVotersCount(countProp)
 
 	return nil
 }

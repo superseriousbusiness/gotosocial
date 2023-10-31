@@ -1309,42 +1309,75 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		return nil, gtserror.Newf("error populating poll: %w", err)
 	}
 
-	// Get all available votes (by account ID) for poll.
-	votes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
-	if err != nil {
-		return nil, gtserror.Newf("error getting votes for poll %s: %w", poll.ID, err)
-	}
-
 	var (
 		totalVotes  int
 		totalVoters int
+		voteCounts  []int
+		ownChoices  []int
+		isAuthor    bool
 	)
 
-	// Accumulate total vote counts.
-	for _, vote := range votes {
-		totalVotes += len(vote.Choices)
-	}
+	if poll.Voters != nil {
+		// A remote status,
+		// the simple route!
+		//
+		// Pull cached remote values.
+		totalVoters = *poll.Voters
+		voteCounts = poll.Votes
 
-	if *poll.Multiple {
-		// This is a multiple choice poll, we
-		// also need to return total no. voters.
-		totalVoters = len(votes)
-	}
-
-	var (
-		ownChoices []int
-		isAuthor   bool
-	)
-
-	if requester != nil {
-		// Get votes by requester.
-		vote := votes[requester.ID]
-		if vote != nil {
-			ownChoices = vote.Choices
+		// Accumulate total from all counts.
+		for _, count := range poll.Votes {
+			totalVotes += count
 		}
 
-		// Check if requester is author of status poll.
-		isAuthor = (requester.ID == poll.Status.AccountID)
+		if requester != nil {
+			// Get vote by requester in poll (if any).
+			vote, err := c.state.DB.GetPollVoteBy(ctx,
+				poll.ID,
+				requester.ID,
+			)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return nil, gtserror.Newf("error getting vote for poll %s: %w", poll.ID, err)
+			}
+
+			if vote != nil {
+				// Set choices by requester.
+				ownChoices = vote.Choices
+			}
+		}
+
+		// isAuthor will always
+		// be false for remote.
+		isAuthor = false
+
+	} else {
+		// A local status,
+		// the complicated route...
+		//
+		// Get all available votes (by account ID) for poll.
+		votes, err := c.state.DB.GetPollVotes(ctx, poll.ID)
+		if err != nil {
+			return nil, gtserror.Newf("error getting votes for poll %s: %w", poll.ID, err)
+		}
+
+		// Accumulate total vote counts.
+		for _, vote := range votes {
+			totalVotes += len(vote.Choices)
+		}
+
+		// Set total no. voters.
+		totalVoters = len(votes)
+
+		if requester != nil {
+			// Get votes by requester.
+			vote := votes[requester.ID]
+			if vote != nil {
+				ownChoices = vote.Choices
+			}
+
+			// Check if requester is author of status poll.
+			isAuthor = (requester.ID == poll.Status.AccountID)
+		}
 	}
 
 	// Preallocate a slice of frontend model poll choices.
@@ -1356,13 +1389,10 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	}
 
 	if isAuthor || !*poll.HideCounts {
-		// When hide counts is disabled, increment the
-		// counter for each available option by each
-		// vote that exists for that choice index.
-		for _, vote := range votes {
-			for _, choice := range vote.Choices {
-				options[choice].VotesCount++
-			}
+		// When this is status author, or hide counts
+		// is disabled, set the counts known per vote.
+		for i, count := range voteCounts {
+			options[i].VotesCount = count
 		}
 	}
 

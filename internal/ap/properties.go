@@ -216,6 +216,26 @@ func AppendClosed(with WithClosed, closed ...time.Time) {
 	}
 }
 
+// GetVotersCount returns the integer contained in the VotersCount property of 'with', if found.
+func GetVotersCount(with WithVotersCount) *int {
+	votersProp := with.GetTootVotersCount()
+	if votersProp == nil {
+		return nil
+	}
+	count := votersProp.Get()
+	return &count
+}
+
+// SetVotersCount sets the given count on the VotersCount property of 'with'.
+func SetVotersCount(with WithVotersCount, count int) {
+	votersProp := with.GetTootVotersCount()
+	if votersProp == nil {
+		votersProp = streams.NewTootVotersCountProperty()
+		with.SetTootVotersCount(votersProp)
+	}
+	votersProp.Set(count)
+}
+
 func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
 	if prop == nil || prop.Len() == 0 {
 		return nil
