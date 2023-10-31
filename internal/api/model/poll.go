@@ -25,8 +25,8 @@ type Poll struct {
 	// example: 01FBYKMD1KBMJ0W6JF1YZ3VY5D
 	ID string `json:"id"`
 
-	// When the poll ends. (ISO 8601 Datetime), or null if the poll does not end
-	ExpiresAt string `json:"expires_at,omitempty"`
+	// When the poll ends. (ISO 8601 Datetime).
+	ExpiresAt string `json:"expires_at"`
 
 	// Is the poll currently expired?
 	Expired bool `json:"expired"`
@@ -37,8 +37,8 @@ type Poll struct {
 	// How many votes have been received.
 	VotesCount int `json:"votes_count"`
 
-	// How many unique accounts have voted on a multiple-choice poll. Null if multiple is false.
-	VotersCount int `json:"voters_count,omitempty"`
+	// How many unique accounts have voted on a multiple-choice poll.
+	VotersCount int `json:"voters_count"`
 
 	// When called with a user token, has the authorized user voted?
 	Voted bool `json:"voted,omitempty"`
@@ -61,8 +61,7 @@ type PollOption struct {
 	Title string `json:"title"`
 
 	// The number of received votes for this option.
-	// Number, or null if results are not published yet.
-	VotesCount int `json:"votes_count,omitempty"`
+	VotesCount int `json:"votes_count"`
 }
 
 // PollRequest models a request to create a poll.
