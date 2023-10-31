@@ -657,27 +657,34 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 
 func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gtsmodel.Status) error {
 	switch {
-	case existing.Poll == nil:
-		// drop through, no existing poll!
+	case existing.Poll == nil && status.Poll == nil:
+		// no poll before or after, nothing to do.
+		return nil
 
-	case status.Poll == nil:
+	case existing.Poll == nil && status.Poll != nil:
+		// no previous poll, drop through.
+
+	case /*existing.Poll != nil &&*/ status.Poll == nil:
 		// existing poll has been deleted, remove this.
 		return d.deleteStatusPoll(ctx, existing.PollID)
 
-	case !slices.Equal(existing.Poll.Options, status.Poll.Options) ||
-		!existing.Poll.ExpiresAt.Equal(status.Poll.ExpiresAt):
+	case /*existing.Poll != nil && status.Poll != nil && */
+		!slices.Equal(existing.Poll.Options, status.Poll.Options) ||
+			!existing.Poll.ExpiresAt.Equal(status.Poll.ExpiresAt):
 		// poll has changed since original, delete existing by ID.
 		if err := d.deleteStatusPoll(ctx, existing.PollID); err != nil {
 			return err
 		}
 
-	case !existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt):
+	case /*existing.Poll != nil && status.Poll != nil && */
+		!existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt):
 		// Since we last saw it, the poll has closed!
 		//
 		// Update poll object with
 		// the latest ClosedAt date.
 		poll := existing.Poll
 		poll.ClosedAt = status.Poll.ClosedAt
+		status.PollID = poll.ID
 		status.Poll = poll
 
 		// Update poll model in the database (specifically only 'closed_at').
@@ -690,7 +697,9 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 	default:
 		// latest and existing
 		// polls are up to date.
-		status.Poll = existing.Poll
+		poll := existing.Poll
+		status.PollID = poll.ID
+		status.Poll = poll
 		return nil
 	}
 
