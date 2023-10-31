@@ -214,7 +214,7 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg messages.FromFediAPI)
 	// Cast poll vote type from the worker message.
 	vote, ok := fMsg.GTSModel.(*gtsmodel.PollVote)
 	if !ok {
-		return gtserror.Newf("cannot cast %T -> *gtsmodel.Pollvote", fMsg.GTSModel)
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.PollVote", fMsg.GTSModel)
 	}
 
 	// Insert the new poll vote in the database.

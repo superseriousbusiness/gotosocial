@@ -286,6 +286,7 @@ func (f *federatingDB) createPollOptionables(
 			PollID:    inReplyTo.PollID,
 			Poll:      inReplyTo.Poll,
 		},
+		ReceivingAccount: receiver,
 	})
 
 	return nil
