@@ -663,7 +663,6 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 
 	case existing.Poll == nil && status.Poll != nil:
 		// no previous poll, drop through.
-		break
 
 	case /*existing.Poll != nil &&*/ status.Poll == nil:
 		// existing poll has been deleted, remove this.
@@ -676,7 +675,6 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 		if err := d.deleteStatusPoll(ctx, existing.PollID); err != nil {
 			return err
 		}
-		break
 
 	case /*existing.Poll != nil && status.Poll != nil && */
 		!existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt) ||
