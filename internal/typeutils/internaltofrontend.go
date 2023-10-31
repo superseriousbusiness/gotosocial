@@ -1360,9 +1360,17 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 			return nil, gtserror.Newf("error getting votes for poll %s: %w", poll.ID, err)
 		}
 
-		// Accumulate total vote counts.
+		// Allocate slice of vote counts
+		voteCounts = make([]int, len(poll.Options))
+
 		for _, vote := range votes {
+			// Accumulate total vote counts.
 			totalVotes += len(vote.Choices)
+
+			// Build slice of per-choice vote counts.
+			for _, choice := range vote.Choices {
+				voteCounts[choice]++
+			}
 		}
 
 		// Set total no. voters.
