@@ -692,6 +692,10 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 			return gtserror.Newf("error updating poll: %w", err)
 		}
 
+		// Update poll on status.
+		status.PollID = poll.ID
+		status.Poll = poll
+
 		return nil
 
 	default:
