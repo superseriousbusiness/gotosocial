@@ -4,8 +4,6 @@ go 1.21
 
 toolchain go1.21.3
 
-replace codeberg.org/gruf/go-mutexes => ../go-mutexes
-
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
 	codeberg.org/gruf/go-byteutil v1.1.2
@@ -16,7 +14,7 @@ require (
 	codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f
 	codeberg.org/gruf/go-kv v1.6.4
 	codeberg.org/gruf/go-logger/v2 v2.2.1
-	codeberg.org/gruf/go-mutexes v1.2.0
+	codeberg.org/gruf/go-mutexes v1.3.0
 	codeberg.org/gruf/go-runners v1.6.1
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.4

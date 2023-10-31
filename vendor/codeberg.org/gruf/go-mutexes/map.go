@@ -9,7 +9,6 @@ const (
 	// possible lock types.
 	lockTypeRead  = uint8(1) << 0
 	lockTypeWrite = uint8(1) << 1
-	lockTypeMap   = uint8(1) << 2
 
 	// frequency of GC cycles
 	// per no. unlocks. i.e.
