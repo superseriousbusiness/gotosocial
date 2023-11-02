@@ -142,27 +142,22 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 		}
 	}
 
-	return nil
+	return gtserror.Newf("unhandled: %s %s", fMsg.APActivityType, fMsg.APObjectType)
 }
 
 func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) error {
 	var (
 		status *gtsmodel.Status
 		err    error
-
-		// Check the federatorMsg for either an already dereferenced
-		// and converted status pinned to the message, or a forwarded
-		// AP IRI that we still need to deref.
-		forwarded = (fMsg.GTSModel == nil)
 	)
 
-	if forwarded {
-		// Model was not set, deref with IRI.
+	if fMsg.APObjectModel == nil {
+		// Model was not set, deref with IRI (this is a forward).
 		// This will also cause the status to be inserted into the db.
 		status, err = p.statusFromAPIRI(ctx, fMsg)
 	} else {
 		// Model is set, ensure we have the most up-to-date model.
-		status, err = p.statusFromGTSModel(ctx, fMsg)
+		status, err = p.statusFromAPModel(ctx, fMsg)
 	}
 
 	if err != nil {
@@ -211,23 +206,30 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	return nil
 }
 
-func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
-	// There should be a status pinned to the message:
-	// we've already checked to ensure this is not nil.
-	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
+func (p *fediAPI) statusFromAPModel(ctx context.Context, fMsg messages.FromFediAPI) (*gtsmodel.Status, error) {
+	// AP statusable representation MUST have been set.
+	statusable, ok := fMsg.APObjectModel.(ap.Statusable)
 	if !ok {
-		err := gtserror.New("Note was not parseable as *gtsmodel.Status")
-		return nil, err
+		return nil, gtserror.Newf("cannot cast %T -> ap.Statusable", fMsg.APObjectModel)
 	}
 
-	// AP statusable representation may have also
-	// been set on message (no problem if not).
-	statusable, _ := fMsg.APObjectModel.(ap.Statusable)
+	// Status may have been set (no problem if not).
+	status, _ := fMsg.GTSModel.(*gtsmodel.Status)
 
-	// Call refresh on status to update
-	// it (deref remote) if necessary.
-	var err error
-	status, _, err = p.federate.RefreshStatus(
+	if status == nil {
+		// No status was set, create a bare-bones
+		// model for the deferencer to flesh-out.
+		status = &gtsmodel.Status{
+
+			// if coming in here status will ALWAYS be remote.
+			Local: func() *bool { var false bool; return &false }(),
+			URI:   ap.GetJSONLDId(statusable).String(),
+		}
+	}
+
+	// Call refresh on status to either update existing
+	// model, or parse + insert status from statusable data.
+	status, _, err := p.federate.RefreshStatus(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		status,
@@ -235,7 +237,7 @@ func (p *fediAPI) statusFromGTSModel(ctx context.Context, fMsg messages.FromFedi
 		false, // Don't force refresh.
 	)
 	if err != nil {
-		return nil, gtserror.Newf("%w", err)
+		return nil, gtserror.Newf("error refreshing status: %w", err)
 	}
 
 	return status, nil
@@ -356,15 +358,6 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 	// Store the boost wrapper status.
 	if err := p.state.DB.PutStatus(ctx, status); err != nil {
 		return gtserror.Newf("db error inserting status: %w", err)
-	}
-
-	// Ensure boosted status ancestors dereferenced. We need at least
-	// the immediate parent (if present) to ascertain timelineability.
-	if err := p.federate.DereferenceStatusAncestors(ctx,
-		fMsg.ReceivingAccount.Username,
-		status.BoostOf,
-	); err != nil {
-		return err
 	}
 
 	// Timeline and notify the announce.
@@ -526,21 +519,23 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	}
 
 	// Cast the updated ActivityPub statusable object .
-	apStatus, ok := fMsg.APObjectModel.(ap.Statusable)
-	if !ok {
-		return gtserror.Newf("cannot cast %T -> ap.Statusable", fMsg.APObjectModel)
-	}
+	apStatus, _ := fMsg.APObjectModel.(ap.Statusable)
 
 	// Fetch up-to-date attach status attachments, etc.
-	_, _, err := p.federate.RefreshStatus(
+	_, statusable, err := p.federate.RefreshStatus(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		existing,
 		apStatus,
-		false,
+		true,
 	)
 	if err != nil {
 		return gtserror.Newf("error refreshing updated status: %w", err)
+	}
+
+	if statusable != nil {
+		// Status representation was refetched, uncache from timelines.
+		p.surface.invalidateStatusFromTimelines(ctx, existing.ID)
 	}
 
 	return nil
