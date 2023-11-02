@@ -102,8 +102,10 @@ func (p *pollDB) GetOpenPolls(ctx context.Context) ([]*gtsmodel.Poll, error) {
 	// Select all polls with unset `closed_at` time.
 	if err := p.db.NewSelect().
 		Table("polls").
-		Column("id").
-		Where("? IS NULL", bun.Ident("closed_at")).
+		Column("polls.id").
+		Join("JOIN ? ON ? = ?", bun.Ident("statuses"), bun.Ident("polls.id"), bun.Ident("statuses.poll_id")).
+		Where("? = true", bun.Ident("statuses.local")).
+		Where("? IS NULL", bun.Ident("polls.closed_at")).
 		Scan(ctx, &pollIDs); err != nil {
 		return nil, err
 	}
