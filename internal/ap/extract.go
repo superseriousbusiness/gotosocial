@@ -91,6 +91,105 @@ func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]TypeO
 	}
 }
 
+// ExtractAccountables extracts Accountable objects from a slice TypeOrIRI, returning extracted and remaining TypeOrIRIs.
+func ExtractAccountables(arr []TypeOrIRI) ([]Accountable, []TypeOrIRI) {
+	var accounts []Accountable
+
+	for i := 0; i < len(arr); i++ {
+		elem := arr[i]
+
+		if elem.IsIRI() {
+			// skip IRIs
+			continue
+		}
+
+		// Extract AS vocab type
+		// associated with elem.
+		t := elem.GetType()
+
+		// Try cast AS type as Accountable.
+		account, ok := ToAccountable(t)
+		if !ok {
+			continue
+		}
+
+		// Add casted accountable type.
+		accounts = append(accounts, account)
+
+		// Drop elem from slice.
+		copy(arr[:i], arr[i+1:])
+		arr = arr[:len(arr)-1]
+	}
+
+	return accounts, arr
+}
+
+// ExtractStatusables extracts Statusable objects from a slice TypeOrIRI, returning extracted and remaining TypeOrIRIs.
+func ExtractStatusables(arr []TypeOrIRI) ([]Statusable, []TypeOrIRI) {
+	var statuses []Statusable
+
+	for i := 0; i < len(arr); i++ {
+		elem := arr[i]
+
+		if elem.IsIRI() {
+			// skip IRIs
+			continue
+		}
+
+		// Extract AS vocab type
+		// associated with elem.
+		t := elem.GetType()
+
+		// Try cast AS type as Statusable.
+		status, ok := ToStatusable(t)
+		if !ok {
+			continue
+		}
+
+		// Add casted Statusable type.
+		statuses = append(statuses, status)
+
+		// Drop elem from slice.
+		copy(arr[:i], arr[i+1:])
+		arr = arr[:len(arr)-1]
+	}
+
+	return statuses, arr
+}
+
+// ExtractPollOptionables extracts PollOptionable objects from a slice TypeOrIRI, returning extracted and remaining TypeOrIRIs.
+func ExtractPollOptionables(arr []TypeOrIRI) ([]PollOptionable, []TypeOrIRI) {
+	var options []PollOptionable
+
+	for i := 0; i < len(arr); i++ {
+		elem := arr[i]
+
+		if elem.IsIRI() {
+			// skip IRIs
+			continue
+		}
+
+		// Extract AS vocab type
+		// associated with elem.
+		t := elem.GetType()
+
+		// Try cast as PollOptionable.
+		option, ok := ToPollOptionable(t)
+		if !ok {
+			continue
+		}
+
+		// Add casted PollOptionable type.
+		options = append(options, option)
+
+		// Drop elem from slice.
+		copy(arr[:i], arr[i+1:])
+		arr = arr[:len(arr)-1]
+	}
+
+	return options, arr
+}
+
 // ExtractPreferredUsername returns a string representation of
 // an interface's preferredUsername property. Will return an
 // error if preferredUsername is nil, not a string, or empty.
@@ -192,7 +291,7 @@ func ExtractToURIs(i WithTo) []*url.URL {
 
 // ExtractCcURIs returns a slice of URIs
 // that the given WithCC addresses as Cc.
-func ExtractCcURIs(i WithCC) []*url.URL {
+func ExtractCcURIs(i WithCc) []*url.URL {
 	ccProp := i.GetActivityStreamsCc()
 	if ccProp == nil {
 		return nil

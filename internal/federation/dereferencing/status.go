@@ -22,9 +22,8 @@ import (
 	"errors"
 	"io"
 	"net/url"
-	"time"
-
 	"slices"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -173,10 +172,12 @@ func (d *Dereferencer) RefreshStatus(ctx context.Context, requestUser string, st
 		return nil, nil, err
 	}
 
-	// This status was updated, enqueue re-dereferencing the whole thread.
-	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
-	})
+	if apubStatus != nil {
+		// This status was updated, enqueue re-dereferencing the whole thread.
+		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+			d.dereferenceThread(ctx, requestUser, uri, latest, apubStatus)
+		})
+	}
 
 	return latest, apubStatus, nil
 }
@@ -343,6 +344,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Carry-over values and set fetch time.
+	latestStatus.UpdatedAt = status.UpdatedAt
 	latestStatus.FetchedAt = time.Now()
 	latestStatus.Local = status.Local
 

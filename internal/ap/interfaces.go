@@ -23,6 +23,21 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 )
 
+// IsActivityable returns whether AS vocab type name is acceptable as Activityable.
+func IsActivityable(typeName string) bool {
+	return isActivity(typeName) ||
+		isIntransitiveActivity(typeName)
+}
+
+// ToActivityable safely tries to cast vocab.Type as Activityable, also checking for expected AS type names.
+func ToActivityable(t vocab.Type) (Activityable, bool) {
+	activityable, ok := t.(Activityable)
+	if !ok || !IsActivityable(t.GetTypeName()) {
+		return nil, false
+	}
+	return activityable, true
+}
+
 // IsAccountable returns whether AS vocab type name is acceptable as Accountable.
 func IsAccountable(typeName string) bool {
 	switch typeName {
@@ -88,6 +103,43 @@ func ToPollable(t vocab.Type) (Pollable, bool) {
 	return pollable, true
 }
 
+// IsPollOptionable returns whether AS vocab type name is acceptable as PollOptionable.
+func IsPollOptionable(typeName string) bool {
+	return typeName == ObjectNote
+}
+
+// ToPollOptionable safely tries to cast vocab.Type as PollOptionable, also checking for expected AS type names.
+func ToPollOptionable(t vocab.Type) (PollOptionable, bool) {
+	note, ok := t.(vocab.ActivityStreamsNote)
+	if !ok || !IsPollOptionable(t.GetTypeName()) {
+		return nil, false
+	}
+	if note.GetActivityStreamsContent() != nil ||
+		note.GetActivityStreamsName() == nil {
+		// A PollOption is an ActivityStreamsNote
+		// WITHOUT a content property, instead only
+		// a name property.
+		return nil, false
+	}
+	return note, true
+}
+
+// Activityable represents the minimum activitypub interface for representing an 'activity'.
+// (see: IsActivityable() for types implementing this, though you MUST make sure to check
+// the typeName as this bare interface may be implementable by non-Activityable types).
+type Activityable interface {
+	// Activity is also a vocab.Type
+	vocab.Type
+
+	WithTo
+	WithCc
+	WithBcc
+	WithAttributedTo
+	WithActor
+	WithObject
+	WithPublished
+}
+
 // Accountable represents the minimum activitypub interface for representing an 'account'.
 // (see: IsAccountable() for types implementing this, though you MUST make sure to check
 // the typeName as this bare interface may be implementable by non-Accountable types).
@@ -126,7 +178,7 @@ type Statusable interface {
 	WithURL
 	WithAttributedTo
 	WithTo
-	WithCC
+	WithCc
 	WithSensitive
 	WithConversation
 	WithContent
@@ -145,16 +197,21 @@ type Pollable interface {
 	WithClosed
 	WithVotersCount
 
-	// base-interface
+	// base-interfaces
 	Statusable
 }
 
-// PollOptionable represents the minimum activitypub interface for representing a poll 'option'.
-// (see: IsPollOptionable() for types implementing this).
+// PollOptionable represents the minimum activitypub interface for representing a poll 'vote'.
+// (see: IsPollOptionable() for types implementing this, though you MUST make sure to check
+// the typeName as this bare interface may be implementable by non-Pollable types).
 type PollOptionable interface {
-	WithTypeName
+	vocab.Type
+
 	WithName
+	WithTo
+	WithInReplyTo
 	WithReplies
+	WithAttributedTo
 }
 
 // Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'. (see: IsAttachmentable).
@@ -226,13 +283,13 @@ type Announceable interface {
 	WithObject
 	WithPublished
 	WithTo
-	WithCC
+	WithCc
 }
 
 // Addressable represents the minimum interface for an addressed activity.
 type Addressable interface {
 	WithTo
-	WithCC
+	WithCc
 }
 
 // ReplyToable represents the minimum interface for an Activity that can be InReplyTo another activity.
@@ -266,6 +323,15 @@ type Flaggable interface {
 type TypeOrIRI interface {
 	WithIRI
 	WithType
+}
+
+// Property represents the minimum interface for an ActivityStreams property with IRIs.
+type Property[T TypeOrIRI] interface {
+	Len() int
+	At(int) T
+
+	AppendIRI(*url.URL)
+	SetIRI(int, *url.URL)
 }
 
 // WithJSONLDId represents an activity with JSONLDIdProperty.
@@ -386,16 +452,22 @@ type WithTo interface {
 	SetActivityStreamsTo(vocab.ActivityStreamsToProperty)
 }
 
+// WithCC represents an activity with ActivityStreamsCcProperty
+type WithCc interface {
+	GetActivityStreamsCc() vocab.ActivityStreamsCcProperty
+	SetActivityStreamsCc(vocab.ActivityStreamsCcProperty)
+}
+
+// WithCC represents an activity with ActivityStreamsBccProperty
+type WithBcc interface {
+	GetActivityStreamsBcc() vocab.ActivityStreamsBccProperty
+	SetActivityStreamsBcc(vocab.ActivityStreamsBccProperty)
+}
+
 // WithInReplyTo represents an activity with ActivityStreamsInReplyToProperty
 type WithInReplyTo interface {
 	GetActivityStreamsInReplyTo() vocab.ActivityStreamsInReplyToProperty
 	SetActivityStreamsInReplyTo(vocab.ActivityStreamsInReplyToProperty)
-}
-
-// WithCC represents an activity with ActivityStreamsCcProperty
-type WithCC interface {
-	GetActivityStreamsCc() vocab.ActivityStreamsCcProperty
-	SetActivityStreamsCc(vocab.ActivityStreamsCcProperty)
 }
 
 // WithSensitive represents an activity with ActivityStreamsSensitiveProperty
