@@ -29,7 +29,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -92,54 +91,33 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	repliedStatus := suite.testStatuses["local_account_1_status_1"]
 	replyingAccount := suite.testAccounts["remote_account_1"]
 
-	replyingStatus := &gtsmodel.Status{
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		URI:       "http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552",
-		URL:       "http://fossbros-anonymous.io/@foss_satan/106221634728637552",
-		Content:   `<p><span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention">@<span>the_mighty_zork</span></a></span> nice there it is:</p><p><a href="http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity" rel="nofollow noopener noreferrer" target="_blank"><span class="invisible">https://</span><span class="ellipsis">social.pixie.town/users/f0x/st</span><span class="invisible">atuses/106221628567855262/activity</span></a></p>`,
-		Mentions: []*gtsmodel.Mention{
-			{
-				TargetAccountURI: repliedAccount.URI,
-				NameString:       "@the_mighty_zork@localhost:8080",
-			},
-		},
-		AccountID:           replyingAccount.ID,
-		AccountURI:          replyingAccount.URI,
-		InReplyToID:         repliedStatus.ID,
-		InReplyToURI:        repliedStatus.URI,
-		InReplyToAccountID:  repliedAccount.ID,
-		Visibility:          gtsmodel.VisibilityUnlocked,
-		ActivityStreamsType: ap.ObjectNote,
-		Federated:           util.Ptr(true),
-		Boostable:           util.Ptr(true),
-		Replyable:           util.Ptr(true),
-		Likeable:            util.Ptr(false),
-	}
+	// Set the replyingAccount's last fetched_at
+	// date to something recent so no refresh is attempted.
+	replyingAccount.FetchedAt = time.Now()
+	err := suite.state.DB.UpdateAccount(context.Background(), replyingAccount, "fetched_at")
+	suite.NoError(err)
 
+	// Get replying statusable to use from remote test statuses.
+	const replyingURI = "http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552"
+	replyingStatusable := testrig.NewTestFediStatuses()[replyingURI]
+	ap.AppendInReplyTo(replyingStatusable, testrig.URLMustParse(repliedStatus.URI))
+
+	// Open a websocket stream to later test the streamed status reply.
 	wssStream, errWithCode := suite.processor.Stream().Open(context.Background(), repliedAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
-	// id the status based on the time it was created
-	statusID, err := id.NewULIDFromTime(replyingStatus.CreatedAt)
-	suite.NoError(err)
-	replyingStatus.ID = statusID
-
-	err = suite.db.PutStatus(context.Background(), replyingStatus)
-	suite.NoError(err)
-
+	// Send the replied status off to the fedi worker to be further processed.
 	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
 		APObjectType:     ap.ObjectNote,
 		APActivityType:   ap.ActivityCreate,
-		GTSModel:         replyingStatus,
+		APObjectModel:    replyingStatusable,
 		ReceivingAccount: suite.testAccounts["local_account_1"],
 	})
 	suite.NoError(err)
 
 	// side effects should be triggered
 	// 1. status should be in the database
-	suite.NotEmpty(replyingStatus.ID)
-	_, err = suite.db.GetStatusByID(context.Background(), replyingStatus.ID)
+	replyingStatus, err := suite.state.DB.GetStatusByURI(context.Background(), replyingURI)
 	suite.NoError(err)
 
 	// 2. a notification should exist for the mention

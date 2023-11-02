@@ -39,6 +39,8 @@ func (suite *CreateTestSuite) TestCreateNote() {
 	ctx := createTestContext(receivingAccount, requestingAccount)
 
 	create := suite.testActivities["dm_for_zork"].Activity
+	objProp := create.GetActivityStreamsObject()
+	note := objProp.At(0).GetType().(ap.Statusable)
 
 	err := suite.federatingDB.Create(ctx, create)
 	suite.NoError(err)
@@ -47,18 +49,7 @@ func (suite *CreateTestSuite) TestCreateNote() {
 	msg := <-suite.fromFederator
 	suite.Equal(ap.ObjectNote, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
-
-	// shiny new status should be defined on the message
-	suite.NotNil(msg.GTSModel)
-	status := msg.GTSModel.(*gtsmodel.Status)
-
-	// status should have some expected values
-	suite.Equal(requestingAccount.ID, status.AccountID)
-	suite.Equal("@the_mighty_zork@localhost:8080 hey zork here's a new private note for you", status.Content)
-
-	// status should be in the database
-	_, err = suite.db.GetStatusByID(context.Background(), status.ID)
-	suite.NoError(err)
+	suite.Equal(note, msg.APObjectModel)
 }
 
 func (suite *CreateTestSuite) TestCreateNoteForward() {
@@ -78,7 +69,7 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 
 	// nothing should be set as the model since this is a forward
-	suite.Nil(msg.GTSModel)
+	suite.Nil(msg.APObjectModel)
 
 	// but we should have a uri set
 	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", msg.APIri.String())

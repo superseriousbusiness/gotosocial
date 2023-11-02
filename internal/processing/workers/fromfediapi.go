@@ -151,7 +151,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		err    error
 	)
 
-	if fMsg.APObjectModel == nil {
+	if fMsg.APObjectModel == nil /* i.e. forwarded */ {
 		// Model was not set, deref with IRI (this is a forward).
 		// This will also cause the status to be inserted into the db.
 		status, err = p.statusFromAPIRI(ctx, fMsg)
@@ -247,11 +247,8 @@ func (p *fediAPI) statusFromAPIRI(ctx context.Context, fMsg messages.FromFediAPI
 	// There should be a status IRI pinned to
 	// the federatorMsg for us to dereference.
 	if fMsg.APIri == nil {
-		err := gtserror.New(
-			"status was not pinned to federatorMsg, " +
-				"and neither was an IRI for us to dereference",
-		)
-		return nil, err
+		const text = "neither APObjectModel nor APIri set"
+		return nil, gtserror.New(text)
 	}
 
 	// Get the status + ensure we have
@@ -262,7 +259,7 @@ func (p *fediAPI) statusFromAPIRI(ctx context.Context, fMsg messages.FromFediAPI
 		fMsg.APIri,
 	)
 	if err != nil {
-		return nil, gtserror.Newf("%w", err)
+		return nil, gtserror.Newf("error getting status by uri %s: %w", fMsg.APIri, err)
 	}
 
 	return status, nil
