@@ -92,7 +92,7 @@ func ExtractActivityData(activity pub.Activity, rawJSON map[string]any) ([]TypeO
 	}
 }
 
-// ExtractAccountables ...
+// ExtractAccountables extracts Accountable objects from a slice TypeOrIRI, returning extracted and remaining TypeOrIRIs.
 func ExtractAccountables(arr []TypeOrIRI) ([]Accountable, []TypeOrIRI) {
 	var accounts []Accountable
 
@@ -125,7 +125,7 @@ func ExtractAccountables(arr []TypeOrIRI) ([]Accountable, []TypeOrIRI) {
 	return accounts, arr
 }
 
-// ExtractStatusables ...
+// ExtractStatusables extracts Statusable objects from a slice TypeOrIRI, returning extracted and remaining TypeOrIRIs.
 func ExtractStatusables(arr []TypeOrIRI) ([]Statusable, []TypeOrIRI) {
 	var statuses []Statusable
 
@@ -158,7 +158,7 @@ func ExtractStatusables(arr []TypeOrIRI) ([]Statusable, []TypeOrIRI) {
 	return statuses, arr
 }
 
-// ExtractPollOptionables ...
+// ExtractPollOptionables extracts PollOptionable objects from a slice TypeOrIRI, returning extracted and remaining TypeOrIRIs.
 func ExtractPollOptionables(arr []TypeOrIRI) ([]PollOptionable, []TypeOrIRI) {
 	var options []PollOptionable
 

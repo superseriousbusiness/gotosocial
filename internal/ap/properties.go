@@ -27,6 +27,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
+// Below lie a collection of ActivityStreams property getter
+// and setter functions. They are all without error returns
+// as they are fundamental property types, as such they will
+// panic on failed parse. This is because without these fundamental
+// property types / values being in a valid state, the ActivityPub
+// objects themselves will be unusable, so this panic behaviour
+// helps reduce the rather verbose error-checking code that the
+// go-fed/activity library tends to produce. Note that the panics
+// themselves will still be caught by our worker and HTTP func
+// recovery handlers.
+
 // GetJSONLDId returns the ID of 'with'. It will ALWAYS be non-nil, or panics.
 func GetJSONLDId(with WithJSONLDId) *url.URL {
 	idProp := with.GetJSONLDId()
