@@ -276,11 +276,26 @@ func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg messages.FromClient
 		return p.UpdateStatus(ctx, cMsg)
 	}
 
-	// Votes in status have changed, invalidate from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	// Federate back to origin server the new poll vote(s).
+	if err := p.federate.CreatePollVote(ctx, vote.Poll, vote); err != nil {
+		return gtserror.Newf("error federating poll vote: %w", err)
+	}
 
-	// Respond to origin server with new poll vote(s).
-	return p.federate.CreatePollVote(ctx, vote.Poll, vote)
+	// Force-refresh the poll source status in
+	// order to get most up-to-date vote counts.
+	if _, _, err := p.federate.RefreshStatus(
+		ctx,
+		cMsg.OriginAccount.Username,
+		status,
+		nil,
+		true,
+	); err != nil {
+		return gtserror.Newf("error refreshing status: %w", err)
+	}
+
+	// Votes in status SHOULD have changed, invalidate caches.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	return nil
 }
 
 func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClientAPI) error {
