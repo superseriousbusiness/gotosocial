@@ -22,8 +22,6 @@ import (
 	"errors"
 	"time"
 
-	"codeberg.org/gruf/go-runners"
-	"codeberg.org/gruf/go-sched"
 	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -150,26 +148,27 @@ func (c *Cleaner) ScheduleJobs() error {
 		firstCleanupAt = firstCleanupAt.Add(cleanupEvery)
 	}
 
-	// Get ctx associated with scheduler run state.
-	done := c.state.Workers.Scheduler.Done()
-	doneCtx := runners.CancelCtx(done)
-
-	// TODO: we'll need to do some thinking to make these
-	// jobs restartable if we want to implement reloads in
-	// the future that make call to Workers.Stop() -> Workers.Start().
+	fn := func(ctx context.Context, start time.Time) {
+		log.Info(ctx, "starting media clean")
+		c.Media().All(ctx, config.GetMediaRemoteCacheDays())
+		c.Emoji().All(ctx, config.GetMediaRemoteCacheDays())
+		log.Infof(ctx, "finished media clean after %s", time.Since(start))
+	}
 
 	log.Infof(nil,
 		"scheduling media clean to run every %s, starting from %s; next clean will run at %s",
 		cleanupEvery, cleanupFromStr, firstCleanupAt,
 	)
 
-	// Schedule the cleaning tasks to execute according to given schedule.
-	c.state.Workers.Scheduler.Schedule(sched.NewJob(func(start time.Time) {
-		log.Info(nil, "starting media clean")
-		c.Media().All(doneCtx, config.GetMediaRemoteCacheDays())
-		c.Emoji().All(doneCtx, config.GetMediaRemoteCacheDays())
-		log.Infof(nil, "finished media clean after %s", time.Since(start))
-	}).EveryAt(firstCleanupAt, cleanupEvery))
+	// Schedule the cleaning to execute according to schedule.
+	if !c.state.Workers.Scheduler.AddRecurring(
+		"@mediacleanup",
+		firstCleanupAt,
+		cleanupEvery,
+		fn,
+	) {
+		panic("failed to schedule @mediacleanup")
+	}
 
 	return nil
 }
