@@ -199,7 +199,7 @@ func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID stri
 
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectFollows(r.db, accountID)
-		if _, err := q.Exec(ctx, &followIDs); //nocollapse
+		if _, err := q.Exec(ctx, &followIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
@@ -214,7 +214,7 @@ func (r *relationshipDB) getAccountLocalFollowIDs(ctx context.Context, accountID
 
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectLocalFollows(r.db, accountID)
-		if _, err := q.Exec(ctx, &followIDs); //nocollapse
+		if _, err := q.Exec(ctx, &followIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
@@ -229,7 +229,7 @@ func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID st
 
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectFollowers(r.db, accountID)
-		if _, err := q.Exec(ctx, &followIDs); //nocollapse
+		if _, err := q.Exec(ctx, &followIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
@@ -244,7 +244,7 @@ func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, account
 
 		// Follow IDs not in cache, perform DB query!
 		q := newSelectLocalFollowers(r.db, accountID)
-		if _, err := q.Exec(ctx, &followIDs); //nocollapse
+		if _, err := q.Exec(ctx, &followIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
@@ -259,7 +259,7 @@ func (r *relationshipDB) getAccountFollowRequestIDs(ctx context.Context, account
 
 		// Follow request IDs not in cache, perform DB query!
 		q := newSelectFollowRequests(r.db, accountID)
-		if _, err := q.Exec(ctx, &followReqIDs); //nocollapse
+		if _, err := q.Exec(ctx, &followReqIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
@@ -274,7 +274,7 @@ func (r *relationshipDB) getAccountFollowRequestingIDs(ctx context.Context, acco
 
 		// Follow request IDs not in cache, perform DB query!
 		q := newSelectFollowRequesting(r.db, accountID)
-		if _, err := q.Exec(ctx, &followReqIDs); //nocollapse
+		if _, err := q.Exec(ctx, &followReqIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
@@ -289,7 +289,7 @@ func (r *relationshipDB) getAccountBlockIDs(ctx context.Context, accountID strin
 
 		// Block IDs not in cache, perform DB query!
 		q := newSelectBlocks(r.db, accountID)
-		if _, err := q.Exec(ctx, &blockIDs); //nocollapse
+		if _, err := q.Exec(ctx, &blockIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
