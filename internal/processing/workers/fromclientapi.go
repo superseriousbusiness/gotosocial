@@ -425,7 +425,7 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg messages.FromClientAP
 		// If the latest status has a newly closed poll, at least compared
 		// to the existing version, then notify poll close to all voters.
 		if err := p.surface.notifyPollClose(ctx, status); err != nil {
-			log.Errorf(ctx, "error sending poll notification: %w", err)
+			log.Errorf(ctx, "error sending poll notification: %v", err)
 		}
 	}
 
