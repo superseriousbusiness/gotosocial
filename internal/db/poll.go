@@ -51,6 +51,9 @@ type Poll interface {
 	// GetPollVotesBy fetches the PollVote in Poll with ID, by account ID, from the database.
 	GetPollVoteBy(ctx context.Context, pollID string, accountID string) (*gtsmodel.PollVote, error)
 
+	// GetPollVotes fetches all PollVotes in Poll with ID, from the database.
+	GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.PollVote, error)
+
 	// PopulatePollVote ensures the given PollVote is fully populated with all other related database models.
 	PopulatePollVote(ctx context.Context, votes *gtsmodel.PollVote) error
 

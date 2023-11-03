@@ -3149,6 +3149,31 @@ func GetCachePollVoteMemRatio() float64 { return global.GetCachePollVoteMemRatio
 // SetCachePollVoteMemRatio safely sets the value for global configuration 'Cache.PollVoteMemRatio' field
 func SetCachePollVoteMemRatio(v float64) { global.SetCachePollVoteMemRatio(v) }
 
+// GetCachePollVoteIDsMemRatio safely fetches the Configuration value for state's 'Cache.PollVoteIDsMemRatio' field
+func (st *ConfigState) GetCachePollVoteIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.PollVoteIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCachePollVoteIDsMemRatio safely sets the Configuration value for state's 'Cache.PollVoteIDsMemRatio' field
+func (st *ConfigState) SetCachePollVoteIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.PollVoteIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CachePollVoteIDsMemRatioFlag returns the flag name for the 'Cache.PollVoteIDsMemRatio' field
+func CachePollVoteIDsMemRatioFlag() string { return "cache-poll-vote-ids-mem-ratio" }
+
+// GetCachePollVoteIDsMemRatio safely fetches the value for global configuration 'Cache.PollVoteIDsMemRatio' field
+func GetCachePollVoteIDsMemRatio() float64 { return global.GetCachePollVoteIDsMemRatio() }
+
+// SetCachePollVoteIDsMemRatio safely sets the value for global configuration 'Cache.PollVoteIDsMemRatio' field
+func SetCachePollVoteIDsMemRatio(v float64) { global.SetCachePollVoteIDsMemRatio(v) }
+
 // GetCacheReportMemRatio safely fetches the Configuration value for state's 'Cache.ReportMemRatio' field
 func (st *ConfigState) GetCacheReportMemRatio() (v float64) {
 	st.mutex.RLock()

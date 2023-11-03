@@ -541,7 +541,7 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	apStatus, _ := fMsg.APObjectModel.(ap.Statusable)
 
 	// Fetch up-to-date attach status attachments, etc.
-	_, statusable, err := p.federate.RefreshStatus(
+	status, statusable, err := p.federate.RefreshStatus(
 		ctx,
 		fMsg.ReceivingAccount.Username,
 		existing,
@@ -554,7 +554,16 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 
 	if statusable != nil {
 		// Status representation was refetched, uncache from timelines.
-		p.surface.invalidateStatusFromTimelines(ctx, existing.ID)
+		p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+
+		if status.Poll != nil && status.Poll.Closing {
+
+			// If the latest status has a newly closed poll, at least compared
+			// to the existing version, then notify poll close to all voters.
+			if err := p.surface.notifyPollClose(ctx, status); err != nil {
+				log.Errorf(ctx, "error sending poll notification: %w", err)
+			}
+		}
 	}
 
 	return nil

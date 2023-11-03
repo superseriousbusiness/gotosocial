@@ -54,6 +54,7 @@ type GTSCaches struct {
 	notification     *result.Cache[*gtsmodel.Notification]
 	poll             *result.Cache[*gtsmodel.Poll]
 	pollVote         *result.Cache[*gtsmodel.PollVote]
+	pollVoteIDs      *SliceCache[string]
 	report           *result.Cache[*gtsmodel.Report]
 	status           *result.Cache[*gtsmodel.Status]
 	statusFave       *result.Cache[*gtsmodel.StatusFave]
@@ -94,6 +95,7 @@ func (c *GTSCaches) Init() {
 	c.initNotification()
 	c.initPoll()
 	c.initPollVote()
+	c.initPollVoteIDs()
 	c.initReport()
 	c.initStatus()
 	c.initStatusFave()
@@ -243,6 +245,11 @@ func (c *GTSCaches) Poll() *result.Cache[*gtsmodel.Poll] {
 // PollVote provides access to the gtsmodel PollVote database cache.
 func (c *GTSCaches) PollVote() *result.Cache[*gtsmodel.PollVote] {
 	return c.pollVote
+}
+
+// PollVoteIDs provides access to the poll vote IDs list database cache.
+func (c *GTSCaches) PollVoteIDs() *SliceCache[string] {
+	return c.pollVoteIDs
 }
 
 // Report provides access to the gtsmodel Report database cache.
@@ -740,6 +747,20 @@ func (c *GTSCaches) initPollVote() {
 	}, cap)
 
 	c.pollVote.IgnoreErrors(ignoreErrors)
+}
+
+func (c *GTSCaches) initPollVoteIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCachePollVoteIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.pollVoteIDs = &SliceCache[string]{Cache: simple.New[string, []string](
+		0,
+		cap,
+	)}
 }
 
 func (c *GTSCaches) initReport() {

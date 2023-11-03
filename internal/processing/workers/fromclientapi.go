@@ -420,6 +420,15 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg messages.FromClientAP
 	// Status representation has changed, invalidate from timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
+	if status.Poll != nil && status.Poll.Closing {
+
+		// If the latest status has a newly closed poll, at least compared
+		// to the existing version, then notify poll close to all voters.
+		if err := p.surface.notifyPollClose(ctx, status); err != nil {
+			log.Errorf(ctx, "error sending poll notification: %w", err)
+		}
+	}
+
 	return nil
 }
 

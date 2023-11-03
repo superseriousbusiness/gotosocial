@@ -104,6 +104,7 @@ func (p *Processor) onExpiry(pollID string) func(context.Context, time.Time) {
 
 		// Set "closed" time.
 		poll.ClosedAt = now
+		poll.Closing = true
 
 		// Update the Poll to mark it as closed in the database.
 		if err := p.state.DB.UpdatePoll(ctx, poll, "closed_at"); err != nil {

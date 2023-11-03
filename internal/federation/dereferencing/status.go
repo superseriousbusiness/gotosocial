@@ -756,6 +756,7 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 		// Since we last saw it, the poll has updated!
 		// Whether that be stats, or close time.
 		poll := existing.Poll
+		poll.Closing = (!poll.Closed() && status.Poll.Closed())
 		poll.ClosedAt = status.Poll.ClosedAt
 		poll.Voters = status.Poll.Voters
 		poll.Votes = status.Poll.Votes

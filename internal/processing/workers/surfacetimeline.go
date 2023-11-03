@@ -85,7 +85,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 	follows []*gtsmodel.Follow,
 ) error {
 	var (
-		errs  = new(gtserror.MultiError)
+		errs  gtserror.MultiError
 		boost = status.BoostOfID != ""
 		reply = status.InReplyToURI != ""
 	)
@@ -117,7 +117,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 			ctx,
 			status,
 			follow,
-			errs,
+			&errs,
 		)
 
 		// Add status to home timeline for owner
@@ -160,11 +160,10 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 		//   - This is a top-level post (not a reply or boost).
 		//
 		// That means we can officially notify this one.
-		if err := s.notify(
-			ctx,
+		if err := s.notify(ctx,
 			gtsmodel.NotificationStatus,
-			follow.AccountID,
-			status.AccountID,
+			follow.Account,
+			status.Account,
 			status.ID,
 		); err != nil {
 			errs.Appendf("error notifying account %s about new status: %w", follow.AccountID, err)

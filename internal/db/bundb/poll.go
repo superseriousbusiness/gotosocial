@@ -196,6 +196,7 @@ func (p *pollDB) DeletePollByID(ctx context.Context, id string) error {
 
 	// Invalidate poll by ID from cache.
 	p.state.Caches.GTS.Poll().Invalidate("ID", id)
+	p.state.Caches.GTS.PollVoteIDs().Invalidate(id)
 
 	return nil
 }
@@ -257,6 +258,41 @@ func (p *pollDB) getPollVote(ctx context.Context, lookup string, dbQuery func(*g
 	}
 
 	return vote, nil
+}
+
+func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.PollVote, error) {
+	voteIDs, err := p.state.Caches.GTS.PollVoteIDs().Load(pollID, func() ([]string, error) {
+		var voteIDs []string
+
+		// Vote IDs not in cache, perform DB query!
+		q := newSelectPollVotes(p.db, pollID)
+		if _, err := q.Exec(ctx, &voteIDs); // nocollapse
+		err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, err
+		}
+
+		return voteIDs, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Preallocate slice of expected length.
+	votes := make([]*gtsmodel.PollVote, len(voteIDs))
+
+	for _, id := range voteIDs {
+		// Fetch poll vote model for this ID.
+		vote, err := p.GetPollVoteByID(ctx, id)
+		if err != nil {
+			log.Errorf(ctx, "error getting poll vote %s: %v", id, err)
+			continue
+		}
+
+		// Append to return slice.
+		votes = append(votes, vote)
+	}
+
+	return votes, nil
 }
 
 func (p *pollDB) PopulatePollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
@@ -396,6 +432,7 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 	// Invalidate poll vote and poll entry from caches.
 	p.state.Caches.GTS.Poll().Invalidate("ID", pollID)
 	p.state.Caches.GTS.PollVote().Invalidate("PollID", pollID)
+	p.state.Caches.GTS.PollVoteIDs().Invalidate(pollID)
 
 	return nil
 }
@@ -478,6 +515,7 @@ func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID 
 	// Invalidate poll vote and poll entry from caches.
 	p.state.Caches.GTS.Poll().Invalidate("ID", pollID)
 	p.state.Caches.GTS.PollVote().Invalidate("PollID.AccountID", pollID, accountID)
+	p.state.Caches.GTS.PollVoteIDs().Invalidate(pollID)
 
 	return nil
 }
@@ -505,6 +543,15 @@ func (p *pollDB) DeletePollVotesByAccountID(ctx context.Context, accountID strin
 	}
 
 	return nil
+}
+
+// newSelectPollVotes returns a new select query for all rows in the poll_votes table with poll_id = pollID.
+func newSelectPollVotes(db *DB, pollID string) *bun.SelectQuery {
+	return db.NewSelect().
+		TableExpr("?", bun.Ident("poll_votes")).
+		ColumnExpr("?", bun.Ident("id")).
+		Where("? = ?", bun.Ident("poll_id"), pollID).
+		OrderExpr("? DESC", bun.Ident("id"))
 }
 
 // ensurePollVotes slices ensures the poll votes slice is set (and equal to len(options)).

@@ -35,12 +35,25 @@ func (s *surface) notifyMentions(
 	ctx context.Context,
 	status *gtsmodel.Status,
 ) error {
-	var (
-		mentions = status.Mentions
-		errs     = gtserror.NewMultiError(len(mentions))
-	)
+	var errs gtserror.MultiError
 
-	for _, mention := range mentions {
+	for _, mention := range status.Mentions {
+		// Set status on the mention (stops
+		// the below function populating it).
+		mention.Status = status
+
+		// Beforehand, ensure the passed mention is fully populated.
+		if err := s.state.DB.PopulateMention(ctx, mention); err != nil {
+			errs.Appendf("error populating mention %s: %w", mention.ID, err)
+			continue
+		}
+
+		if mention.TargetAccount.IsRemote() {
+			// no need to notify
+			// remote accounts.
+			continue
+		}
+
 		// Ensure thread not muted
 		// by mentioned account.
 		muted, err := s.state.DB.IsThreadMutedByAccount(
@@ -48,9 +61,8 @@ func (s *surface) notifyMentions(
 			status.ThreadID,
 			mention.TargetAccountID,
 		)
-
 		if err != nil {
-			errs.Append(err)
+			errs.Appendf("error checking status thread mute %s: %w", status.ThreadID, err)
 			continue
 		}
 
@@ -61,14 +73,16 @@ func (s *surface) notifyMentions(
 			continue
 		}
 
-		if err := s.notify(
-			ctx,
+		// notify mentioned
+		// by status author.
+		if err := s.notify(ctx,
 			gtsmodel.NotificationMention,
-			mention.TargetAccountID,
-			mention.OriginAccountID,
+			mention.TargetAccount,
+			mention.OriginAccount,
 			mention.StatusID,
 		); err != nil {
-			errs.Append(err)
+			errs.Appendf("error notifying mention target %s: %w", mention.TargetAccountID, err)
+			continue
 		}
 	}
 
@@ -79,15 +93,30 @@ func (s *surface) notifyMentions(
 // follow request that they have a new follow request.
 func (s *surface) notifyFollowRequest(
 	ctx context.Context,
-	followRequest *gtsmodel.FollowRequest,
+	followReq *gtsmodel.FollowRequest,
 ) error {
-	return s.notify(
-		ctx,
+	// Beforehand, ensure the passed follow request is fully populated.
+	if err := s.state.DB.PopulateFollowRequest(ctx, followReq); err != nil {
+		return gtserror.Newf("error populating follow request %s: %w", followReq.ID, err)
+	}
+
+	if followReq.TargetAccount.IsRemote() {
+		// no need to notify
+		// remote accounts.
+		return nil
+	}
+
+	// Now notify the follow request itself.
+	if err := s.notify(ctx,
 		gtsmodel.NotificationFollowRequest,
-		followRequest.TargetAccountID,
-		followRequest.AccountID,
+		followReq.TargetAccount,
+		followReq.Account,
 		"",
-	)
+	); err != nil {
+		return gtserror.Newf("error notifying follow target %s: %w", followReq.TargetAccountID, err)
+	}
+
+	return nil
 }
 
 // notifyFollow notifies the target of the given follow that
@@ -98,6 +127,17 @@ func (s *surface) notifyFollow(
 	ctx context.Context,
 	follow *gtsmodel.Follow,
 ) error {
+	// Beforehand, ensure the passed follow is fully populated.
+	if err := s.state.DB.PopulateFollow(ctx, follow); err != nil {
+		return gtserror.Newf("error populating follow %s: %w", follow.ID, err)
+	}
+
+	if follow.TargetAccount.IsRemote() {
+		// no need to notify
+		// remote accounts.
+		return nil
+	}
+
 	// Check if previous follow req notif exists.
 	prevNotif, err := s.state.DB.GetNotification(
 		gtscontext.SetBarebones(ctx),
@@ -107,24 +147,28 @@ func (s *surface) notifyFollow(
 		"",
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return gtserror.Newf("db error checking for previous follow request notification: %w", err)
+		return gtserror.Newf("error getting notification: %w", err)
 	}
 
 	if prevNotif != nil {
-		// Previous notif existed, delete it.
-		if err := s.state.DB.DeleteNotificationByID(ctx, prevNotif.ID); err != nil {
-			return gtserror.Newf("db error removing previous follow request notification %s: %w", prevNotif.ID, err)
+		// Previous follow request notif existed, delete it before creating new.
+		if err := s.state.DB.DeleteNotificationByID(ctx, prevNotif.ID); // nocollapse
+		err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return gtserror.Newf("error deleting notification %s: %w", prevNotif.ID, err)
 		}
 	}
 
 	// Now notify the follow itself.
-	return s.notify(
-		ctx,
+	if err := s.notify(ctx,
 		gtsmodel.NotificationFollow,
-		follow.TargetAccountID,
-		follow.AccountID,
+		follow.TargetAccount,
+		follow.Account,
 		"",
-	)
+	); err != nil {
+		return gtserror.Newf("error notifying follow target %s: %w", follow.TargetAccountID, err)
+	}
+
+	return nil
 }
 
 // notifyFave notifies the target of the given
@@ -138,6 +182,17 @@ func (s *surface) notifyFave(
 		return nil
 	}
 
+	// Beforehand, ensure the passed status fave is fully populated.
+	if err := s.state.DB.PopulateStatusFave(ctx, fave); err != nil {
+		return gtserror.Newf("error populating fave %s: %w", fave.ID, err)
+	}
+
+	if fave.TargetAccount.IsRemote() {
+		// no need to notify
+		// remote accounts.
+		return nil
+	}
+
 	// Ensure favee hasn't
 	// muted the thread.
 	muted, err := s.state.DB.IsThreadMutedByAccount(
@@ -145,24 +200,28 @@ func (s *surface) notifyFave(
 		fave.Status.ThreadID,
 		fave.TargetAccountID,
 	)
-
 	if err != nil {
-		return err
+		return gtserror.Newf("error checking status thread mute %s: %w", fave.StatusID, err)
 	}
 
 	if muted {
-		// Boostee doesn't want
+		// Favee doesn't want
 		// notifs for this thread.
 		return nil
 	}
 
-	return s.notify(
-		ctx,
+	// notify status author
+	// of fave by account.
+	if err := s.notify(ctx,
 		gtsmodel.NotificationFave,
-		fave.TargetAccountID,
-		fave.AccountID,
+		fave.TargetAccount,
+		fave.Account,
 		fave.StatusID,
-	)
+	); err != nil {
+		return gtserror.Newf("error notifying status author %s: %w", fave.TargetAccountID, err)
+	}
+
+	return nil
 }
 
 // notifyAnnounce notifies the status boost target
@@ -176,14 +235,19 @@ func (s *surface) notifyAnnounce(
 		return nil
 	}
 
-	if status.BoostOf == nil {
-		// No boosted status
-		// set, nothing to do.
+	if status.BoostOfAccountID == status.AccountID {
+		// Self-boost, nothing to do.
 		return nil
 	}
 
-	if status.BoostOfAccountID == status.AccountID {
-		// Self-boost, nothing to do.
+	// Beforehand, ensure the passed status is fully populated.
+	if err := s.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error populating status %s: %w", status.ID, err)
+	}
+
+	if status.BoostOfAccount.IsRemote() {
+		// no need to notify
+		// remote accounts.
 		return nil
 	}
 
@@ -196,7 +260,7 @@ func (s *surface) notifyAnnounce(
 	)
 
 	if err != nil {
-		return err
+		return gtserror.Newf("error checking status thread mute %s: %w", status.BoostOfID, err)
 	}
 
 	if muted {
@@ -205,13 +269,68 @@ func (s *surface) notifyAnnounce(
 		return nil
 	}
 
-	return s.notify(
-		ctx,
+	// notify status author
+	// of boost by account.
+	if err := s.notify(ctx,
 		gtsmodel.NotificationReblog,
-		status.BoostOfAccountID,
-		status.AccountID,
+		status.BoostOfAccount,
+		status.Account,
 		status.ID,
-	)
+	); err != nil {
+		return gtserror.Newf("error notifying status author %s: %w", status.BoostOfAccountID, err)
+	}
+
+	return nil
+}
+
+func (s *surface) notifyPollClose(ctx context.Context, status *gtsmodel.Status) error {
+	// Beforehand, ensure the passed status is fully populated.
+	if err := s.state.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error populating status %s: %w", status.ID, err)
+	}
+
+	// Fetch all votes in the attached status poll.
+	votes, err := s.state.DB.GetPollVotes(ctx, status.PollID)
+	if err != nil {
+		return gtserror.Newf("error getting poll %s votes: %w", status.PollID, err)
+	}
+
+	var errs gtserror.MultiError
+
+	if status.Account.IsLocal() {
+		// Send a notification to the status
+		// author that their poll has closed!
+		if err := s.notify(ctx,
+			gtsmodel.NotificationPoll,
+			status.Account,
+			status.Account,
+			status.ID,
+		); err != nil {
+			errs.Appendf("error notifying poll author: %w", err)
+		}
+	}
+
+	for _, vote := range votes {
+		if vote.Account.IsRemote() {
+			// no need to notify
+			// remote accounts.
+			continue
+		}
+
+		// notify voter that
+		// poll has been closed.
+		if err := s.notify(ctx,
+			gtsmodel.NotificationMention,
+			vote.Account,
+			status.Account,
+			status.ID,
+		); err != nil {
+			errs.Appendf("error notifying poll voter %s: %w", vote.AccountID, err)
+			continue
+		}
+	}
+
+	return errs.Combine()
 }
 
 // notify creates, inserts, and streams a new
@@ -228,17 +347,12 @@ func (s *surface) notifyAnnounce(
 func (s *surface) notify(
 	ctx context.Context,
 	notificationType gtsmodel.NotificationType,
-	targetAccountID string,
-	originAccountID string,
+	targetAccount *gtsmodel.Account,
+	originAccount *gtsmodel.Account,
 	statusID string,
 ) error {
-	targetAccount, err := s.state.DB.GetAccountByID(ctx, targetAccountID)
-	if err != nil {
-		return gtserror.Newf("error getting target account %s: %w", targetAccountID, err)
-	}
-
-	if !targetAccount.IsLocal() {
-		// Nothing to do.
+	if targetAccount.IsRemote() {
+		// nothing to do.
 		return nil
 	}
 
@@ -247,8 +361,8 @@ func (s *surface) notify(
 	if _, err := s.state.DB.GetNotification(
 		gtscontext.SetBarebones(ctx),
 		notificationType,
-		targetAccountID,
-		originAccountID,
+		targetAccount.ID,
+		originAccount.ID,
 		statusID,
 	); err == nil {
 		// Notification exists;
@@ -264,8 +378,10 @@ func (s *surface) notify(
 	notif := &gtsmodel.Notification{
 		ID:               id.NewULID(),
 		NotificationType: notificationType,
-		TargetAccountID:  targetAccountID,
-		OriginAccountID:  originAccountID,
+		TargetAccountID:  targetAccount.ID,
+		TargetAccount:    targetAccount,
+		OriginAccountID:  originAccount.ID,
+		OriginAccount:    originAccount,
 		StatusID:         statusID,
 	}
 
