@@ -67,6 +67,7 @@ func (p *Processor) ScheduleExpiry(ctx context.Context, poll *gtsmodel.Poll) err
 		return gtserror.Newf("failed adding poll %s to scheduler", poll.ID)
 	}
 
+	log.Infof(ctx, "scheduled poll expiry for %s at %s", poll.ID, poll.ExpiresAt)
 	return nil
 }
 
