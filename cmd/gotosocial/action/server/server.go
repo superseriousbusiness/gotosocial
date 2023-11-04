@@ -27,7 +27,6 @@ import (
 	"syscall"
 	"time"
 
-	"codeberg.org/gruf/go-sched"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -123,16 +122,21 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Add a task to the scheduler to sweep caches.
 	// Frequency = 1 * minute
 	// Threshold = 80% capacity
-	sweep := func(time.Time) { state.Caches.Sweep(80) }
-	job := sched.NewJob(sweep).Every(time.Minute)
-	_ = state.Workers.Scheduler.Schedule(job)
+	_ = state.Workers.Scheduler.AddRecurring(
+		"@cachesweep", // id
+		time.Time{},   // start
+		time.Minute,   // freq
+		func(context.Context, time.Time) {
+			state.Caches.Sweep(80)
+		},
+	)
 
 	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
 	typeConverter := typeutils.NewConverter(&state)
 	filter := visibility.NewFilter(&state)
-	federatingDB := federatingdb.New(&state, typeConverter)
+	federatingDB := federatingdb.New(&state, typeConverter, filter)
 	transportController := transport.NewController(&state, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(&state, federatingDB, transportController, typeConverter, mediaManager)
 

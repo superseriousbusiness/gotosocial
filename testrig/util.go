@@ -41,7 +41,7 @@ func StartWorkers(state *state.State) {
 	state.Workers.ProcessFromClientAPI = func(context.Context, messages.FromClientAPI) error { return nil }
 	state.Workers.ProcessFromFediAPI = func(context.Context, messages.FromFediAPI) error { return nil }
 
-	_ = state.Workers.Scheduler.Start(nil)
+	_ = state.Workers.Scheduler.Start()
 	_ = state.Workers.ClientAPI.Start(1, 10)
 	_ = state.Workers.Federator.Start(1, 10)
 	_ = state.Workers.Media.Start(1, 10)

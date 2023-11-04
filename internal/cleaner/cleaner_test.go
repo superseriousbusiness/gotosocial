@@ -48,7 +48,7 @@ func (suite *CleanerTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 
 	// Ensure scheduler started (even if unused).
-	suite.state.Workers.Scheduler.Start(nil)
+	suite.state.Workers.Scheduler.Start()
 
 	// Initialize test database.
 	_ = testrig.NewTestDB(&suite.state)
@@ -58,6 +58,7 @@ func (suite *CleanerTestSuite) SetupTest() {
 	suite.state.Storage = testrig.NewInMemoryStorage()
 
 	// Initialize test cleaner instance.
+	testrig.StartWorkers(&suite.state)
 	suite.cleaner = cleaner.New(&suite.state)
 
 	// Allocate new test model emojis.
@@ -66,6 +67,7 @@ func (suite *CleanerTestSuite) SetupTest() {
 
 func (suite *CleanerTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.state.DB)
+	testrig.StopWorkers(&suite.state)
 }
 
 // mapvals extracts a slice of values from the values contained within the map.

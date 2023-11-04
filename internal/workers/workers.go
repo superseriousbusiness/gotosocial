@@ -23,13 +23,13 @@ import (
 	"runtime"
 
 	"codeberg.org/gruf/go-runners"
-	"codeberg.org/gruf/go-sched"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/scheduler"
 )
 
 type Workers struct {
 	// Main task scheduler instance.
-	Scheduler sched.Scheduler
+	Scheduler scheduler.Scheduler
 
 	// ClientAPI provides a worker pool that handles both
 	// incoming client actions, and our own side-effects.
@@ -70,9 +70,7 @@ func (w *Workers) Start() {
 	// Get currently set GOMAXPROCS.
 	maxprocs := runtime.GOMAXPROCS(0)
 
-	tryUntil("starting scheduler", 5, func() bool {
-		return w.Scheduler.Start(nil)
-	})
+	tryUntil("starting scheduler", 5, w.Scheduler.Start)
 
 	tryUntil("starting client API workerpool", 5, func() bool {
 		return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)

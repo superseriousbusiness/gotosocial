@@ -20,7 +20,6 @@ package federatingdb
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 
@@ -36,6 +35,30 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
+
+func typeNames(objects []ap.TypeOrIRI) []string {
+	names := make([]string, len(objects))
+	for i, object := range objects {
+		if object.IsIRI() {
+			names[i] = "IRI"
+		} else if t := object.GetType(); t != nil {
+			names[i] = t.GetTypeName()
+		} else {
+			names[i] = "nil"
+		}
+	}
+	return names
+}
+
+// isSender returns whether an object with AttributedTo property comes from the given requesting account.
+func isSender(with ap.WithAttributedTo, requester *gtsmodel.Account) bool {
+	for _, uri := range ap.GetAttributedTo(with) {
+		if uri.String() == requester.URI {
+			return true
+		}
+	}
+	return false
+}
 
 func sameActor(actor1 vocab.ActivityStreamsActorProperty, actor2 vocab.ActivityStreamsActorProperty) bool {
 	if actor1 == nil || actor2 == nil {
@@ -78,131 +101,31 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 		l.Debug("entering NewID")
 	}
 
-	switch t.GetTypeName() {
-	case ap.ActivityFollow:
-		// FOLLOW
-		// ID might already be set on a follow we've created, so check it here and return it if it is
-		follow, ok := t.(vocab.ActivityStreamsFollow)
-		if !ok {
-			return nil, errors.New("newid: follow couldn't be parsed into vocab.ActivityStreamsFollow")
-		}
-		idProp := follow.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
-			}
-		}
-		// it's not set so create one based on the actor set on the follow (ie., the followER not the followEE)
-		actorProp := follow.GetActivityStreamsActor()
-		if actorProp != nil {
-			for iter := actorProp.Begin(); iter != actorProp.End(); iter = iter.Next() {
-				// take the IRI of the first actor we can find (there should only be one)
-				if iter.IsIRI() {
-					// if there's an error here, just use the fallback behavior -- we don't need to return an error here
-					if actorAccount, err := f.state.DB.GetAccountByURI(ctx, iter.GetIRI().String()); err == nil {
-						newID, err := id.NewRandomULID()
-						if err != nil {
-							return nil, err
-						}
-						return url.Parse(uris.GenerateURIForFollow(actorAccount.Username, newID))
-					}
+	// Most of our types set an ID already
+	// by this point, return this if found.
+	idProp := t.GetJSONLDId()
+	if idProp != nil && idProp.IsIRI() {
+		return idProp.GetIRI(), nil
+	}
+
+	if t.GetTypeName() == ap.ActivityFollow {
+		follow, _ := t.(vocab.ActivityStreamsFollow)
+
+		// If an actor URI has been set, create a new ID
+		// based on actor (i.e. followER not the followEE).
+		if uri := ap.GetActor(follow); len(uri) == 1 {
+			if actorAccount, err := f.state.DB.GetAccountByURI(ctx, uri[0].String()); err == nil {
+				newID, err := id.NewRandomULID()
+				if err != nil {
+					return nil, err
 				}
-			}
-		}
-	case ap.ObjectNote:
-		// NOTE aka STATUS
-		// ID might already be set on a note we've created, so check it here and return it if it is
-		note, ok := t.(vocab.ActivityStreamsNote)
-		if !ok {
-			return nil, errors.New("newid: note couldn't be parsed into vocab.ActivityStreamsNote")
-		}
-		idProp := note.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
-			}
-		}
-	case ap.ActivityLike:
-		// LIKE aka FAVE
-		// ID might already be set on a fave we've created, so check it here and return it if it is
-		fave, ok := t.(vocab.ActivityStreamsLike)
-		if !ok {
-			return nil, errors.New("newid: fave couldn't be parsed into vocab.ActivityStreamsLike")
-		}
-		idProp := fave.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
-			}
-		}
-	case ap.ActivityCreate:
-		// CREATE
-		// ID might already be set on a Create, so check it here and return it if it is
-		create, ok := t.(vocab.ActivityStreamsCreate)
-		if !ok {
-			return nil, errors.New("newid: create couldn't be parsed into vocab.ActivityStreamsCreate")
-		}
-		idProp := create.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
-			}
-		}
-	case ap.ActivityAnnounce:
-		// ANNOUNCE aka BOOST
-		// ID might already be set on an announce we've created, so check it here and return it if it is
-		announce, ok := t.(vocab.ActivityStreamsAnnounce)
-		if !ok {
-			return nil, errors.New("newid: announce couldn't be parsed into vocab.ActivityStreamsAnnounce")
-		}
-		idProp := announce.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
-			}
-		}
-	case ap.ActivityUpdate:
-		// UPDATE
-		// ID might already be set on an update we've created, so check it here and return it if it is
-		update, ok := t.(vocab.ActivityStreamsUpdate)
-		if !ok {
-			return nil, errors.New("newid: update couldn't be parsed into vocab.ActivityStreamsUpdate")
-		}
-		idProp := update.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
-			}
-		}
-	case ap.ActivityBlock:
-		// BLOCK
-		// ID might already be set on a block we've created, so check it here and return it if it is
-		block, ok := t.(vocab.ActivityStreamsBlock)
-		if !ok {
-			return nil, errors.New("newid: block couldn't be parsed into vocab.ActivityStreamsBlock")
-		}
-		idProp := block.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
-			}
-		}
-	case ap.ActivityUndo:
-		// UNDO
-		// ID might already be set on an undo we've created, so check it here and return it if it is
-		undo, ok := t.(vocab.ActivityStreamsUndo)
-		if !ok {
-			return nil, errors.New("newid: undo couldn't be parsed into vocab.ActivityStreamsUndo")
-		}
-		idProp := undo.GetJSONLDId()
-		if idProp != nil {
-			if idProp.IsIRI() {
-				return idProp.GetIRI(), nil
+				return url.Parse(uris.GenerateURIForFollow(actorAccount.Username, newID))
 			}
 		}
 	}
 
-	// fallback default behavior: just return a random ULID after our protocol and host
+	// Default fallback behaviour:
+	// {proto}://{host}/{randomID}
 	newID, err := id.NewRandomULID()
 	if err != nil {
 		return nil, err

@@ -945,7 +945,7 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 		// we still know it was *meant* to be pinned.
 		statusURIs = append(statusURIs, statusURI)
 
-		status, _, err := d.getStatusByURI(ctx, requestUser, statusURI)
+		status, _, _, err := d.getStatusByURI(ctx, requestUser, statusURI)
 		if err != nil {
 			// We couldn't get the status, bummer. Just log + move on, we can try later.
 			log.Errorf(ctx, "error getting status from featured collection %s: %v", statusURI, err)
