@@ -34,4 +34,14 @@ tracing-endpoint: ""
 # Bool. Disable TLS for the gRPC and HTTP transport protocols.
 # Default: false
 tracing-insecure-transport: false
+
+# Bool. Enable OpenTelemetry based metrics support.
+# Default: false
+metrics-enabled: false
+
+# String. The OpenTelemetry metrics exporter to use. Only "prometheus" for Prometheus pull is currently supported.
+# Exposes a public /metrics endpoint.
+# Examples: ["prometheus"]
+# Default: "prometheus"
+metrics-exporter: "prometheus"
 ```
