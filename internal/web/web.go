@@ -110,6 +110,11 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
 	r.AttachHandler(http.MethodGet, tagsPath, m.tagGETHandler)
 
+	// Prometheus metrics endpoint
+	if config.GetMetricsEnabled() {
+		r.AttachHandler(http.MethodGet, metricsPath, m.metricsGETHandler)
+	}
+
 	// Attach redirects from old endpoints to current ones for backwards compatibility
 	r.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })
 	r.AttachHandler(http.MethodGet, "/user", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })

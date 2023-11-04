@@ -106,6 +106,8 @@ EXPECT=$(cat << "EOF"
     "media-image-max-size": 420,
     "media-remote-cache-days": 30,
     "media-video-max-size": 420,
+    "metrics-enabled": false,
+    "metrics-exporter": "prometheus",
     "oidc-admin-groups": [
         "steamy"
     ],

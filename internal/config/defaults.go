@@ -119,6 +119,9 @@ var Defaults = Configuration{
 	TracingEndpoint:          "",
 	TracingInsecureTransport: false,
 
+	MetricsEnabled:  false,
+	MetricsExporter: "prometheus",
+
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",

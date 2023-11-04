@@ -123,6 +123,9 @@ var testDefaults = config.Configuration{
 	TracingTransport:         "grpc",
 	TracingInsecureTransport: true,
 
+	MetricsEnabled:  false,
+	MetricsExporter: "prometheus",
+
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",

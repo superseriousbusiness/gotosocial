@@ -2074,6 +2074,56 @@ func GetTracingInsecureTransport() bool { return global.GetTracingInsecureTransp
 // SetTracingInsecureTransport safely sets the value for global configuration 'TracingInsecureTransport' field
 func SetTracingInsecureTransport(v bool) { global.SetTracingInsecureTransport(v) }
 
+// GetMetricsEnabled safely fetches the Configuration value for state's 'MetricsEnabled' field
+func (st *ConfigState) GetMetricsEnabled() (v bool) {
+	st.mutex.RLock()
+	v = st.config.MetricsEnabled
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsEnabled safely sets the Configuration value for state's 'MetricsEnabled' field
+func (st *ConfigState) SetMetricsEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsEnabled = v
+	st.reloadToViper()
+}
+
+// MetricsEnabledFlag returns the flag name for the 'MetricsEnabled' field
+func MetricsEnabledFlag() string { return "metrics-enabled" }
+
+// GetMetricsEnabled safely fetches the value for global configuration 'MetricsEnabled' field
+func GetMetricsEnabled() bool { return global.GetMetricsEnabled() }
+
+// SetMetricsEnabled safely sets the value for global configuration 'MetricsEnabled' field
+func SetMetricsEnabled(v bool) { global.SetMetricsEnabled(v) }
+
+// GetMetricsExporter safely fetches the Configuration value for state's 'MetricsExporter' field
+func (st *ConfigState) GetMetricsExporter() (v string) {
+	st.mutex.RLock()
+	v = st.config.MetricsExporter
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsExporter safely sets the Configuration value for state's 'MetricsExporter' field
+func (st *ConfigState) SetMetricsExporter(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsExporter = v
+	st.reloadToViper()
+}
+
+// MetricsExporterFlag returns the flag name for the 'MetricsExporter' field
+func MetricsExporterFlag() string { return "metrics-exporter" }
+
+// GetMetricsExporter safely fetches the value for global configuration 'MetricsExporter' field
+func GetMetricsExporter() string { return global.GetMetricsExporter() }
+
+// SetMetricsExporter safely sets the value for global configuration 'MetricsExporter' field
+func SetMetricsExporter(v string) { global.SetMetricsExporter(v) }
+
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
 	st.mutex.RLock()

@@ -138,6 +138,9 @@ type Configuration struct {
 	TracingEndpoint          string `name:"tracing-endpoint" usage:"Endpoint of your trace collector. Eg., 'localhost:4317' for gRPC, 'localhost:4318' for http"`
 	TracingInsecureTransport bool   `name:"tracing-insecure-transport" usage:"Disable TLS for the gRPC or HTTP transport protocol"`
 
+	MetricsEnabled  bool   `name:"metrics-enabled" usage:"Enable OTLP metrics"`
+	MetricsExporter string `name:"metrics-exporter" usage:"prometheus"`
+
 	SMTPHost               string `name:"smtp-host" usage:"Host of the smtp server. Eg., 'smtp.eu.mailgun.org'"`
 	SMTPPort               int    `name:"smtp-port" usage:"Port of the smtp server. Eg., 587"`
 	SMTPUsername           string `name:"smtp-username" usage:"Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'"`
