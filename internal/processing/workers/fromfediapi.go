@@ -219,7 +219,8 @@ func (p *fediAPI) statusFromAPModel(ctx context.Context, fMsg messages.FromFediA
 
 	if status == nil {
 		// No status was set, create a bare-bones
-		// model for the deferencer to flesh-out.
+		// model for the deferencer to flesh-out,
+		// this indicates it is a new (to us) status.
 		status = &gtsmodel.Status{
 
 			// if coming in here status will ALWAYS be remote.

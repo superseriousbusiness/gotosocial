@@ -603,7 +603,6 @@ func (p *Processor) statusByURI(
 			requestingAccount.Username,
 			uri,
 		)
-
 		return status, err
 	}
 
