@@ -27,38 +27,30 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// Below lie a collection of ActivityStreams property getter
-// and setter functions. They are all without error returns
-// as they are fundamental property types, as such they will
-// panic on failed parse. This is because without these fundamental
-// property types / values being in a valid state, the ActivityPub
-// objects themselves will be unusable, so this panic behaviour
-// helps reduce the rather verbose error-checking code that the
-// go-fed/activity library tends to produce. Note that the panics
-// themselves will still be caught by our worker and HTTP func
-// recovery handlers.
+// MustGet performs the given 'Get$Property(with) (T, error)' signature function, panicking on error.
+// func MustGet[W, T any](fn func(W) (T, error), with W) T {
+// 	t, err := fn(with)
+// 	if err != nil {
+// 		panicfAt(3, "error getting property on %T: %w", with, err)
+// 	}
+// 	return t
+// }
 
-func MustGet[W, T any](fn func(W) (T, error), with W) T {
-	t, err := fn(with)
-	if err != nil {
-		panicfAt(3, "error getting property on %T: %w", with, err)
-	}
-	return t
-}
+// MustSet performs the given 'Set$Property(with, T) error' signature function, panicking on error.
+// func MustSet[W, T any](fn func(W, T) error, with W, value T) {
+// 	err := fn(with, value)
+// 	if err != nil {
+// 		panicfAt(3, "error setting property on %T: %w", with, err)
+// 	}
+// }
 
-func MustSet[W, T any](fn func(W, T) error, with W, value T) {
-	err := fn(with, value)
-	if err != nil {
-		panicfAt(3, "error setting property on %T: %w", with, err)
-	}
-}
-
-func MustAppend[W, T any](fn func(W, ...T) error, with W, values ...T) {
-	err := fn(with, values...)
-	if err != nil {
-		panicfAt(3, "error appending properties on %T: %w", with, err)
-	}
-}
+// AppendSet performs the given 'Append$Property(with, ...T) error' signature function, panicking on error.
+// func MustAppend[W, T any](fn func(W, ...T) error, with W, values ...T) {
+// 	err := fn(with, values...)
+// 	if err != nil {
+// 		panicfAt(3, "error appending properties on %T: %w", with, err)
+// 	}
+// }
 
 // GetJSONLDId returns the ID of 'with', or nil.
 func GetJSONLDId(with WithJSONLDId) *url.URL {
