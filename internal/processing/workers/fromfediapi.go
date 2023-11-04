@@ -337,7 +337,9 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
 	}
 
-	// Dereference status that this status boosts.
+	// Dereference status that this boosts, note
+	// that this will handle dereferencing the status
+	// ancestors / descendants where appropriate.
 	if err := p.federate.DereferenceAnnounce(
 		ctx,
 		status,
