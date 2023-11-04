@@ -415,7 +415,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		log.Errorf(ctx, "error wiping items from target -> block's home timeline: %w", err)
+		log.Errorf(ctx, "error wiping items from target -> block's home timeline: %v", err)
 	}
 
 	// Now list timelines.
@@ -424,7 +424,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
-		log.Errorf(ctx, "error wiping items from block -> target's list timeline(s): %w", err)
+		log.Errorf(ctx, "error wiping items from block -> target's list timeline(s): %v", err)
 	}
 
 	if err := p.state.Timelines.List.WipeItemsFromAccountID(
@@ -432,7 +432,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		log.Errorf(ctx, "error wiping items from target -> block's list timeline(s): %w", err)
+		log.Errorf(ctx, "error wiping items from target -> block's list timeline(s): %v", err)
 	}
 
 	// Remove any follows that existed between blocker + blockee.
@@ -441,7 +441,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
-		log.Errorf(ctx, "error deleting follow from block -> target: %w", err)
+		log.Errorf(ctx, "error deleting follow from block -> target: %v", err)
 	}
 
 	if err := p.state.DB.DeleteFollow(
@@ -449,7 +449,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		log.Errorf(ctx, "error deleting follow from target -> block: %w", err)
+		log.Errorf(ctx, "error deleting follow from target -> block: %v", err)
 	}
 
 	// Remove any follow requests that existed between blocker + blockee.
@@ -458,7 +458,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
-		log.Errorf(ctx, "error deleting follow request from block -> target: %w", err)
+		log.Errorf(ctx, "error deleting follow request from block -> target: %v", err)
 	}
 
 	if err := p.state.DB.DeleteFollowRequest(
@@ -466,7 +466,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		log.Errorf(ctx, "error deleting follow request from target -> block: %w", err)
+		log.Errorf(ctx, "error deleting follow request from target -> block: %v", err)
 	}
 
 	return nil
