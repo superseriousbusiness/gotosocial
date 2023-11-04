@@ -18,10 +18,10 @@
 package ap
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -38,24 +38,59 @@ import (
 // themselves will still be caught by our worker and HTTP func
 // recovery handlers.
 
-// GetJSONLDId returns the ID of 'with'. It will ALWAYS be non-nil, or panics.
+func MustGet[W, T any](fn func(W) (T, error), with W) T {
+	t, err := fn(with)
+	if err != nil {
+		panicfAt(3, "error getting property on %T: %w", with, err)
+	}
+	return t
+}
+
+func MustSet[W, T any](fn func(W, T) error, with W, value T) {
+	err := fn(with, value)
+	if err != nil {
+		panicfAt(3, "error setting property on %T: %w", with, err)
+	}
+}
+
+func MustAppend[W, T any](fn func(W, ...T) error, with W, values ...T) {
+	err := fn(with, values...)
+	if err != nil {
+		panicfAt(3, "error appending properties on %T: %w", with, err)
+	}
+}
+
+// GetJSONLDId returns the ID of 'with', or nil.
 func GetJSONLDId(with WithJSONLDId) *url.URL {
 	idProp := with.GetJSONLDId()
 	if idProp == nil {
-		panicfAt(3, "%T contains no JSONLD ID property", with)
+		return nil
 	}
 	id := idProp.Get()
 	if id == nil {
-		panicfAt(3, "%T ID property contains no url", with)
+		return nil
 	}
 	return id
 }
 
-// SetJSONLDId sets the given string to the JSONLD ID of 'with'. Panics on failed URL parse.
-func SetJSONLDId(with WithJSONLDId, id string) {
-	idProp := streams.NewJSONLDIdProperty()
-	idProp.SetIRI(mustParseURL(id))
+// SetJSONLDId sets the given URL to the JSONLD ID of 'with'.
+func SetJSONLDId(with WithJSONLDId, id *url.URL) {
+	idProp := with.GetJSONLDId()
+	if idProp == nil {
+		idProp = streams.NewJSONLDIdProperty()
+	}
+	idProp.SetIRI(id)
 	with.SetJSONLDId(idProp)
+}
+
+// SetJSONLDIdStr sets the given string to the JSONLDID of 'with'. Returns error
+func SetJSONLDIdStr(with WithJSONLDId, id string) error {
+	u, err := url.Parse(id)
+	if err != nil {
+		return fmt.Errorf("error parsing id url: %w", err)
+	}
+	SetJSONLDId(with, u)
+	return nil
 }
 
 // GetTo returns the IRIs contained in the To property of 'with'. Panics on entries with missing ID.
@@ -177,9 +212,12 @@ func GetPublished(with WithPublished) time.Time {
 
 // SetPublished sets the given time on the Published property of 'with'.
 func SetPublished(with WithPublished, published time.Time) {
-	publishProp := streams.NewActivityStreamsPublishedProperty()
-	publishProp.Set(published.UTC())
-	with.SetActivityStreamsPublished(publishProp)
+	publishProp := with.GetActivityStreamsPublished()
+	if publishProp == nil {
+		publishProp = streams.NewActivityStreamsPublishedProperty()
+		with.SetActivityStreamsPublished(publishProp)
+	}
+	publishProp.Set(published)
 }
 
 // GetEndTime returns the time contained in the EndTime property of 'with'.
@@ -193,9 +231,12 @@ func GetEndTime(with WithEndTime) time.Time {
 
 // SetEndTime sets the given time on the EndTime property of 'with'.
 func SetEndTime(with WithEndTime, end time.Time) {
-	endTimeProp := streams.NewActivityStreamsEndTimeProperty()
+	endTimeProp := with.GetActivityStreamsEndTime()
+	if endTimeProp == nil {
+		endTimeProp = streams.NewActivityStreamsEndTimeProperty()
+		with.SetActivityStreamsEndTime(endTimeProp)
+	}
 	endTimeProp.Set(end)
-	with.SetActivityStreamsEndTime(endTimeProp)
 }
 
 // GetEndTime returns the times contained in the Closed property of 'with'.
@@ -204,10 +245,12 @@ func GetClosed(with WithClosed) []time.Time {
 	if closedProp == nil || closedProp.Len() == 0 {
 		return nil
 	}
-	closed := make([]time.Time, closedProp.Len())
+	closed := make([]time.Time, 0, closedProp.Len())
 	for i := 0; i < closedProp.Len(); i++ {
 		at := closedProp.At(i)
-		closed[i] = at.GetXMLSchemaDateTime()
+		if t := at.GetXMLSchemaDateTime(); !t.IsZero() {
+			closed = append(closed, t)
+		}
 	}
 	return closed
 }
@@ -223,7 +266,7 @@ func AppendClosed(with WithClosed, closed ...time.Time) {
 		with.SetActivityStreamsClosed(closedProp)
 	}
 	for _, closed := range closed {
-		closedProp.AppendXMLSchemaDateTime(closed.UTC())
+		closedProp.AppendXMLSchemaDateTime(closed)
 	}
 }
 
@@ -233,8 +276,7 @@ func GetVotersCount(with WithVotersCount) int {
 	if votersProp == nil {
 		return 0
 	}
-	count := votersProp.Get()
-	return count
+	return votersProp.Get()
 }
 
 // SetVotersCount sets the given count on the VotersCount property of 'with'.
@@ -251,10 +293,23 @@ func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
 	if prop == nil || prop.Len() == 0 {
 		return nil
 	}
-	ids := make([]*url.URL, prop.Len())
+	ids := make([]*url.URL, 0, prop.Len())
 	for i := 0; i < prop.Len(); i++ {
 		at := prop.At(i)
-		ids[i] = mustToID(at)
+		if t := at.GetType(); t != nil {
+			id := GetJSONLDId(t)
+			if id != nil {
+				ids = append(ids, id)
+				continue
+			}
+		}
+		if at.IsIRI() {
+			id := at.GetIRI()
+			if id != nil {
+				ids = append(ids, id)
+				continue
+			}
+		}
 	}
 	return ids
 }
@@ -271,24 +326,6 @@ func appendIRIs[T TypeOrIRI](getProp func() Property[T], iri ...*url.URL) {
 	for _, iri := range iri {
 		prop.AppendIRI(iri)
 	}
-}
-
-// mustParseURL calls url.Parse() and panics on error.
-func mustParseURL(s string) *url.URL {
-	u, err := url.Parse(s)
-	if err != nil {
-		panicfAt(3, "error parsing url %s: %w", s, err)
-	}
-	return u
-}
-
-// mustToID calls pub.ToId() and panics on error.
-func mustToID(i pub.IdProperty) *url.URL {
-	id, err := pub.ToId(i)
-	if err != nil {
-		panicfAt(3, "error getting id of %T: %w", i, err)
-	}
-	return id
 }
 
 // panicfAt panics with a call to gtserror.NewfAt() with given args (+1 to calldepth).
