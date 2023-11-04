@@ -184,19 +184,10 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		}
 	}
 
-	// Ensure status ancestors dereferenced. We need at least the
-	// immediate parent (if present) to ascertain timelineability.
-	if err := p.federate.DereferenceStatusAncestors(
-		ctx,
-		fMsg.ReceivingAccount.Username,
-		status,
-	); err != nil {
-		return err
-	}
-
 	if status.InReplyToID != "" {
-		// Interaction counts changed on the replied status;
-		// uncache the prepared version from all timelines.
+		// Interaction counts changed on the replied status; uncache the
+		// prepared version from all timelines. The status dereferencer
+		// functions will ensure necessary ancestors exist before this point.
 		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
