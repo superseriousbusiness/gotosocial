@@ -174,7 +174,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		// Both situations we need to parse account URI to fetch it.
 		accountURI, err := url.Parse(status.AccountURI)
 		if err != nil {
-			return err
+			return gtserror.Newf("error parsing account uri: %w", err)
 		}
 
 		// Ensure that account for this status has been deref'd.
@@ -184,7 +184,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 			accountURI,
 		)
 		if err != nil {
-			return err
+			return gtserror.Newf("error getting account by uri: %w", err)
 		}
 	}
 
@@ -196,7 +196,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	}
 
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
-		return gtserror.Newf("error timelining status: %w", err)
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
 	return nil
@@ -296,12 +296,10 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI
 	}
 
 	if *followRequest.TargetAccount.Locked {
-		// Account on our instance is locked:
-		// just notify the follow request.
+		// Account on our instance is locked: just notify the follow request.
 		if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
-			return gtserror.Newf("error notifying follow request: %w", err)
+			log.Errorf(ctx, "error notifying follow request: %v", err)
 		}
-
 		return nil
 	}
 
@@ -318,11 +316,11 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI
 	}
 
 	if err := p.federate.AcceptFollow(ctx, follow); err != nil {
-		return gtserror.Newf("error federating accept follow request: %w", err)
+		log.Errorf(ctx, "error federating follow request accept: %v", err)
 	}
 
 	if err := p.surface.notifyFollow(ctx, follow); err != nil {
-		return gtserror.Newf("error notifying follow: %w", err)
+		log.Errorf(ctx, "error notifying follow: %v", err)
 	}
 
 	return nil
@@ -340,7 +338,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg messages.FromFediAPI) err
 	}
 
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
-		return gtserror.Newf("error notifying fave: %w", err)
+		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
 	// Interaction counts changed on the faved status;
@@ -381,11 +379,11 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 
 	// Timeline and notify the announce.
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
-		return gtserror.Newf("error timelining status: %w", err)
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
 	if err := p.surface.notifyAnnounce(ctx, status); err != nil {
-		return gtserror.Newf("error notifying status: %w", err)
+		log.Errorf(ctx, "error notifying announce: %v", err)
 	}
 
 	// Interaction counts changed on the boosted status;
@@ -409,7 +407,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
-		return gtserror.Newf("%w", err)
+		log.Errorf(ctx, "error wiping items from block -> target's home timeline: %v", err)
 	}
 
 	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
@@ -417,7 +415,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		return gtserror.Newf("%w", err)
+		log.Errorf(ctx, "error wiping items from target -> block's home timeline: %w", err)
 	}
 
 	// Now list timelines.
@@ -426,7 +424,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
-		return gtserror.Newf("%w", err)
+		log.Errorf(ctx, "error wiping items from block -> target's list timeline(s): %w", err)
 	}
 
 	if err := p.state.Timelines.List.WipeItemsFromAccountID(
@@ -434,7 +432,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		return gtserror.Newf("%w", err)
+		log.Errorf(ctx, "error wiping items from target -> block's list timeline(s): %w", err)
 	}
 
 	// Remove any follows that existed between blocker + blockee.
@@ -443,10 +441,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
-		return gtserror.Newf(
-			"db error deleting follow from %s targeting %s: %w",
-			block.AccountID, block.TargetAccountID, err,
-		)
+		log.Errorf(ctx, "error deleting follow from block -> target: %w", err)
 	}
 
 	if err := p.state.DB.DeleteFollow(
@@ -454,10 +449,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		return gtserror.Newf(
-			"db error deleting follow from %s targeting %s: %w",
-			block.TargetAccountID, block.AccountID, err,
-		)
+		log.Errorf(ctx, "error deleting follow from target -> block: %w", err)
 	}
 
 	// Remove any follow requests that existed between blocker + blockee.
@@ -466,10 +458,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
-		return gtserror.Newf(
-			"db error deleting follow request from %s targeting %s: %w",
-			block.AccountID, block.TargetAccountID, err,
-		)
+		log.Errorf(ctx, "error deleting follow request from block -> target: %w", err)
 	}
 
 	if err := p.state.DB.DeleteFollowRequest(
@@ -477,10 +466,7 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg messages.FromFediAPI) er
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
-		return gtserror.Newf(
-			"db error deleting follow request from %s targeting %s: %w",
-			block.TargetAccountID, block.AccountID, err,
-		)
+		log.Errorf(ctx, "error deleting follow request from target -> block: %w", err)
 	}
 
 	return nil
@@ -496,7 +482,7 @@ func (p *fediAPI) CreateFlag(ctx context.Context, fMsg messages.FromFediAPI) err
 	// - notify admins by dm / notification
 
 	if err := p.surface.emailReportOpened(ctx, incomingReport); err != nil {
-		return gtserror.Newf("error sending report opened email: %w", err)
+		log.Errorf(ctx, "error emailing report opened: %v", err)
 	}
 
 	return nil
@@ -524,7 +510,7 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) 
 		true, // Force refresh.
 	)
 	if err != nil {
-		return gtserror.Newf("error refreshing updated account: %w", err)
+		log.Errorf(ctx, "error refreshing account: %v", err)
 	}
 
 	return nil
@@ -549,7 +535,7 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		true,
 	)
 	if err != nil {
-		return gtserror.Newf("error refreshing updated status: %w", err)
+		log.Errorf(ctx, "error refreshing status: %v", err)
 	}
 
 	// Status representation was refetched, uncache from timelines.
@@ -579,7 +565,7 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	}
 
 	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
-		return gtserror.Newf("error wiping status: %w", err)
+		log.Errorf(ctx, "error wiping status: %v", err)
 	}
 
 	if status.InReplyToID != "" {
@@ -598,7 +584,7 @@ func (p *fediAPI) DeleteAccount(ctx context.Context, fMsg messages.FromFediAPI) 
 	}
 
 	if err := p.account.Delete(ctx, account, account.ID); err != nil {
-		return gtserror.Newf("error deleting account: %w", err)
+		log.Errorf(ctx, "error deleting account: %v", err)
 	}
 
 	return nil
