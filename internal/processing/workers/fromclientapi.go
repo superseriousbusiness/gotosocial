@@ -93,6 +93,13 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		case ap.ObjectNote:
 			return p.clientAPI.CreateStatus(ctx, cMsg)
 
+		// CREATE QUESTION
+		// (note we don't handle poll *votes* as AS
+		// question type when federating (just notes),
+		// but it makes for a nicer type switch here.
+		case ap.ActivityQuestion:
+			return p.clientAPI.CreatePollVote(ctx, cMsg)
+
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.CreateFollowReq(ctx, cMsg)
@@ -189,7 +196,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		}
 	}
 
-	return nil
+	return gtserror.Newf("unhandled: %s %s", cMsg.APActivityType, cMsg.APObjectType)
 }
 
 func (p *clientAPI) CreateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
@@ -231,6 +238,63 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAP
 		return gtserror.Newf("error federating status: %w", err)
 	}
 
+	return nil
+}
+
+func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// Cast the create poll vote attached to message.
+	vote, ok := cMsg.GTSModel.(*gtsmodel.PollVote)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Pollvote", cMsg.GTSModel)
+	}
+
+	// Ensure the vote is fully populated in order to get original poll.
+	if err := p.state.DB.PopulatePollVote(ctx, vote); err != nil {
+		return gtserror.Newf("error populating poll vote from db: %w", err)
+	}
+
+	// Ensure the poll on the vote is fully populated to get origin status.
+	if err := p.state.DB.PopulatePoll(ctx, vote.Poll); err != nil {
+		return gtserror.Newf("error populating poll from db: %w", err)
+	}
+
+	// Get the origin status,
+	// (also set the poll on it).
+	status := vote.Poll.Status
+	status.Poll = vote.Poll
+
+	if *status.Local {
+		// These were poll votes in a local status,
+		// we only need to federate-out the updated
+		// status model with latest vote counts.
+		//
+		// Handle as a regular status update by
+		// updating the cMsg to contain the status.
+		cMsg.APActivityType = ap.ActivityUpdate
+		cMsg.APObjectType = ap.ObjectNote
+		cMsg.GTSModel = status
+		return p.UpdateStatus(ctx, cMsg)
+	}
+
+	// Federate back to origin server the new poll vote(s).
+	if err := p.federate.CreatePollVote(ctx, vote.Poll, vote); err != nil {
+		return gtserror.Newf("error federating poll vote: %w", err)
+	}
+
+	// Force-refresh the poll source status in
+	// order to get most up-to-date vote counts.
+	if _, _, err := p.federate.RefreshStatus(
+		ctx,
+		cMsg.OriginAccount.Username,
+		status,
+		nil,
+		true,
+	); err != nil {
+		return gtserror.Newf("error refreshing status: %w", err)
+	}
+
+	// Votes in status SHOULD have changed, invalidate caches.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 	return nil
 }
 
@@ -352,6 +416,9 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg messages.FromClientAP
 	if err := p.federate.UpdateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error federating status update: %w", err)
 	}
+
+	// Status representation has changed, invalidate from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil
 }

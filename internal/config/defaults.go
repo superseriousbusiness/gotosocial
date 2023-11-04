@@ -171,6 +171,8 @@ var Defaults = Configuration{
 		MediaMemRatio:            4,
 		MentionMemRatio:          2,
 		NotificationMemRatio:     2,
+		PollMemRatio:             1,
+		PollVoteMemRatio:         2,
 		ReportMemRatio:           1,
 		StatusMemRatio:           5,
 		StatusFaveMemRatio:       2,

@@ -114,6 +114,10 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 		// CREATE FLAG/REPORT
 		case ap.ActivityFlag:
 			return p.fediAPI.CreateFlag(ctx, fMsg)
+
+		// CREATE QUESTION
+		case ap.ActivityQuestion:
+			return p.fediAPI.CreatePollVote(ctx, fMsg)
 		}
 
 	// UPDATE SOMETHING
@@ -194,6 +198,29 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 		return gtserror.Newf("error timelining status: %w", err)
 	}
+
+	return nil
+}
+
+func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg messages.FromFediAPI) error {
+	// Cast poll vote type from the worker message.
+	vote, ok := fMsg.GTSModel.(*gtsmodel.PollVote)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.PollVote", fMsg.GTSModel)
+	}
+
+	// Insert the new poll vote in the database.
+	if err := p.state.DB.PutPollVote(ctx, vote); err != nil {
+		return gtserror.Newf("error inserting poll vote in db: %w", err)
+	}
+
+	// Ensure the poll vote is fully populated at this point.
+	if err := p.state.DB.PopulatePollVote(ctx, vote); err != nil {
+		return gtserror.Newf("error populating poll vote from db: %w", err)
+	}
+
+	// Interaction counts changed on the source status, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
 
 	return nil
 }

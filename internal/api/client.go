@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/media"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notifications"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/preferences"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/reports"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
@@ -68,6 +69,7 @@ type Client struct {
 	markers        *markers.Module        // api/v1/markers
 	media          *media.Module          // api/v1/media, api/v2/media
 	notifications  *notifications.Module  // api/v1/notifications
+	polls          *polls.Module          // api/v1/polls
 	preferences    *preferences.Module    // api/v1/preferences
 	reports        *reports.Module        // api/v1/reports
 	search         *search.Module         // api/v1/search, api/v2/search
@@ -109,6 +111,7 @@ func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
 	c.markers.Route(h)
 	c.media.Route(h)
 	c.notifications.Route(h)
+	c.polls.Route(h)
 	c.preferences.Route(h)
 	c.reports.Route(h)
 	c.search.Route(h)
@@ -138,6 +141,7 @@ func NewClient(db db.DB, p *processing.Processor) *Client {
 		markers:        markers.New(p),
 		media:          media.New(p),
 		notifications:  notifications.New(p),
+		polls:          polls.New(p),
 		preferences:    preferences.New(p),
 		reports:        reports.New(p),
 		search:         search.New(p),

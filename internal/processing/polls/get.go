@@ -15,39 +15,23 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package polls
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Domain
-	Emoji
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+func (p *Processor) PollGet(ctx context.Context, requester *gtsmodel.Account, pollID string) (*apimodel.Poll, gtserror.WithCode) {
+	// Get (+ check visibility of) requested poll with ID.
+	poll, errWithCode := p.getTargetPoll(ctx, requester, pollID)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Return converted API model poll.
+	return p.toAPIPoll(ctx, requester, poll)
 }

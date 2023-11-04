@@ -379,6 +379,11 @@ func (d *Dereferencer) enrichStatus(
 	latestStatus.FetchedAt = time.Now()
 	latestStatus.Local = status.Local
 
+	// Ensure the status' poll remains consistent, else reset the poll.
+	if err := d.fetchStatusPoll(ctx, status, latestStatus); err != nil {
+		return nil, nil, gtserror.Newf("error populating poll for status %s: %w", uri, err)
+	}
+
 	// Ensure the status' mentions are populated, and pass in existing to check for changes.
 	if err := d.fetchStatusMentions(ctx, requestUser, status, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
@@ -679,6 +684,100 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 	}
 
 	return nil
+}
+
+func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gtsmodel.Status) error {
+	var (
+		// insertStatusPoll generates ID and inserts the poll attached to status into the database.
+		insertStatusPoll = func(ctx context.Context, status *gtsmodel.Status) error {
+			var err error
+
+			// Generate new ID for poll from the status CreatedAt.
+			// TODO: update this to use "edited_at" when we add
+			//       support for edited status revision history.
+			status.Poll.ID, err = id.NewULIDFromTime(status.CreatedAt)
+			if err != nil {
+				log.Errorf(ctx, "invalid created at date: %v", err)
+				status.Poll.ID = id.NewULID() // just use "now"
+			}
+
+			// Update the status<->poll links.
+			status.PollID = status.Poll.ID
+			status.Poll.StatusID = status.ID
+			status.Poll.Status = status
+
+			// Insert this latest poll into the database.
+			err = d.state.DB.PutPoll(ctx, status.Poll)
+			if err != nil {
+				return gtserror.Newf("error putting in database: %w", err)
+			}
+
+			return nil
+		}
+
+		// deleteStatusPoll deletes the poll with ID, and all attached votes, from the database.
+		deleteStatusPoll = func(ctx context.Context, pollID string) error {
+			if err := d.state.DB.DeletePollByID(ctx, pollID); err != nil {
+				return gtserror.Newf("error deleting existing poll from database: %w", err)
+			}
+			if err := d.state.DB.DeletePollVotes(ctx, pollID); err != nil {
+				return gtserror.Newf("error deleting existing votes from database: %w", err)
+			}
+			return nil
+		}
+	)
+
+	switch {
+	case existing.Poll == nil && status.Poll == nil:
+		// no poll before or after, nothing to do.
+		return nil
+
+	case existing.Poll == nil && status.Poll != nil:
+		// no previous poll, insert new poll!
+		return insertStatusPoll(ctx, status)
+
+	case /*existing.Poll != nil &&*/ status.Poll == nil:
+		// existing poll has been deleted, remove this.
+		return deleteStatusPoll(ctx, existing.PollID)
+
+	case /*existing.Poll != nil && status.Poll != nil && */
+		!slices.Equal(existing.Poll.Options, status.Poll.Options) ||
+			!existing.Poll.ExpiresAt.Equal(status.Poll.ExpiresAt):
+		// poll has changed since original, delete and reinsert new.
+		if err := deleteStatusPoll(ctx, existing.PollID); err != nil {
+			return err
+		}
+		return insertStatusPoll(ctx, status)
+
+	case /*existing.Poll != nil && status.Poll != nil && */
+		!existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt) ||
+			!slices.Equal(existing.Poll.Votes, status.Poll.Votes) ||
+			existing.Poll.Voters != status.Poll.Voters:
+		// Since we last saw it, the poll has updated!
+		// Whether that be stats, or close time.
+		poll := existing.Poll
+		poll.ClosedAt = status.Poll.ClosedAt
+		poll.Voters = status.Poll.Voters
+		poll.Votes = status.Poll.Votes
+
+		// Update poll model in the database (specifically only the possible changed columns).
+		if err := d.state.DB.UpdatePoll(ctx, poll, "closed_at", "voters", "votes"); err != nil {
+			return gtserror.Newf("error updating poll: %w", err)
+		}
+
+		// Update poll on status.
+		status.PollID = poll.ID
+		status.Poll = poll
+		return nil
+
+	default:
+		// latest and existing
+		// polls are up to date.
+		poll := existing.Poll
+		status.PollID = poll.ID
+		status.Poll = poll
+		return nil
+	}
 }
 
 func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transport.Transport, existing, status *gtsmodel.Status) error {

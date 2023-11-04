@@ -91,11 +91,14 @@ func (suite *AuthStandardTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.authModule = auth.New(suite.db, suite.processor, suite.idp)
+
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+	testrig.StartWorkers(&suite.state)
 }
 
 func (suite *AuthStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
+	testrig.StopWorkers(&suite.state)
 }
 
 func (suite *AuthStandardTestSuite) newContext(requestMethod string, requestPath string, requestBody []byte, bodyContentType string) (*gin.Context, *httptest.ResponseRecorder) {

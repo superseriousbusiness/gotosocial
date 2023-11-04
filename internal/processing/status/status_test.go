@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -96,8 +97,8 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	)
 
 	common := common.New(&suite.state, suite.typeConverter, suite.federator, filter)
-
-	suite.status = status.New(&common, &suite.state, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
+	polls := polls.New(&common, &suite.state, suite.typeConverter)
+	suite.status = status.New(&suite.state, &common, &polls, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
