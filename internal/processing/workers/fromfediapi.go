@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // fediAPI wraps processing functions
@@ -222,7 +223,7 @@ func (p *fediAPI) statusFromAPModel(ctx context.Context, fMsg messages.FromFediA
 		status = &gtsmodel.Status{
 
 			// if coming in here status will ALWAYS be remote.
-			Local: func() *bool { var false bool; return &false }(),
+			Local: util.Ptr(false),
 			URI:   ap.GetJSONLDId(statusable).String(),
 		}
 	}
