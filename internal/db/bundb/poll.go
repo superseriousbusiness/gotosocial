@@ -278,7 +278,7 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 	}
 
 	// Preallocate slice of expected length.
-	votes := make([]*gtsmodel.PollVote, len(voteIDs))
+	votes := make([]*gtsmodel.PollVote, 0, len(voteIDs))
 
 	for _, id := range voteIDs {
 		// Fetch poll vote model for this ID.
