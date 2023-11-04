@@ -24,7 +24,6 @@ import (
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // MustGet performs the given 'Get$Property(with) (T, error)' signature function, panicking on error.
@@ -321,6 +320,6 @@ func appendIRIs[T TypeOrIRI](getProp func() Property[T], iri ...*url.URL) {
 }
 
 // panicfAt panics with a call to gtserror.NewfAt() with given args (+1 to calldepth).
-func panicfAt(calldepth int, msg string, args ...any) {
-	panic(gtserror.NewfAt(calldepth+1, msg, args...))
-}
+// func panicfAt(calldepth int, msg string, args ...any) {
+// 	panic(gtserror.NewfAt(calldepth+1, msg, args...))
+// }
