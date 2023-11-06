@@ -66,6 +66,8 @@ import (
 //			description: not found
 //		'406':
 //			description: not acceptable
+//		'422':
+//			description: unprocessable entity
 //		'500':
 //			description: internal server error
 func (m *Module) PollVotePOSTHandler(c *gin.Context) {

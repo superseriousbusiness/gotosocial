@@ -48,7 +48,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- write:statuses
+//		- read:statuses
 //
 //	responses:
 //		'200':
