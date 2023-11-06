@@ -8,12 +8,13 @@ import (
 // Token is a single token unit with an attribute value (if given) and hash of the data.
 type Token struct {
 	html.TokenType
-	Hash    Hash
-	Data    []byte
-	Text    []byte
-	AttrVal []byte
-	Traits  traits
-	Offset  int
+	Hash        Hash
+	Data        []byte
+	Text        []byte
+	AttrVal     []byte
+	Traits      traits
+	Offset      int
+	HasTemplate bool
 }
 
 // TokenBuffer is a buffer that allows for token look-ahead.
@@ -40,10 +41,11 @@ func (z *TokenBuffer) read(t *Token) {
 	t.Offset = z.r.Offset()
 	t.TokenType, t.Data = z.l.Next()
 	t.Text = z.l.Text()
+	t.HasTemplate = z.l.HasTemplate()
 	if t.TokenType == html.AttributeToken {
 		t.Offset += 1 + len(t.Text) + 1
 		t.AttrVal = z.l.AttrVal()
-		if len(t.AttrVal) > 1 && (t.AttrVal[0] == '"' || t.AttrVal[0] == '\'') {
+		if 1 < len(t.AttrVal) && (t.AttrVal[0] == '"' || t.AttrVal[0] == '\'') {
 			t.Offset++
 			t.AttrVal = t.AttrVal[1 : len(t.AttrVal)-1] // quotes will be readded in attribute loop if necessary
 		}

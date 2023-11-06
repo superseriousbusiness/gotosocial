@@ -167,8 +167,8 @@ github.com/dsoprea/go-utility/v2/image
 # github.com/dustin/go-humanize v1.0.1
 ## explicit; go 1.16
 github.com/dustin/go-humanize
-# github.com/fsnotify/fsnotify v1.6.0
-## explicit; go 1.16
+# github.com/fsnotify/fsnotify v1.7.0
+## explicit; go 1.17
 github.com/fsnotify/fsnotify
 # github.com/gabriel-vasile/mimetype v1.4.2
 ## explicit; go 1.20
@@ -636,11 +636,11 @@ github.com/superseriousbusiness/oauth2/v4/generates
 github.com/superseriousbusiness/oauth2/v4/manage
 github.com/superseriousbusiness/oauth2/v4/models
 github.com/superseriousbusiness/oauth2/v4/server
-# github.com/tdewolff/minify/v2 v2.20.0
+# github.com/tdewolff/minify/v2 v2.20.6
 ## explicit; go 1.18
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.7.0
+# github.com/tdewolff/parse/v2 v2.7.4
 ## explicit; go 1.13
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer
