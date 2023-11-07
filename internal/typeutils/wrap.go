@@ -114,7 +114,7 @@ func WrapPollOptionablesInCreate(options ...ap.PollOptionable) vocab.ActivityStr
 
 	// Activity ID formatted as: {$statusIRI}/activity#vote/{$voterIRI}.
 	id := replyTos[0].String() + "/activity#vote/" + attribTos[0].String()
-	ap.SetJSONLDIdStr(create, id)
+	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), id)
 
 	// Set a current publish time for activity.
 	ap.SetPublished(create, time.Now())
@@ -137,7 +137,7 @@ func WrapStatusableInUpdate(status ap.Statusable, iriOnly bool) vocab.ActivitySt
 // wrapStatusableInActivity adds the required ap.Statusable data to the given ap.Activityable.
 func wrapStatusableInActivity(activity ap.Activityable, status ap.Statusable, iriOnly bool) {
 	idIRI := ap.GetJSONLDId(status) // activity ID formatted as {$statusIRI}/activity#{$typeName}
-	ap.SetJSONLDIdStr(activity, idIRI.String()+"/activity#"+activity.GetTypeName())
+	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(activity), idIRI.String()+"/activity#"+activity.GetTypeName())
 	appendStatusableToActivity(activity, status, iriOnly)
 	ap.AppendTo(activity, ap.GetTo(status)...)
 	ap.AppendCc(activity, ap.GetCc(status)...)

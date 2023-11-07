@@ -1693,7 +1693,7 @@ func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.Poll
 
 		// For AP IRI generate from author URI + poll ID + vote choice.
 		id := fmt.Sprintf("%s#%s/votes/%d", author.URI, poll.ID, choice)
-		ap.SetJSONLDIdStr(note, id)
+		ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(note), id)
 
 		// Attach new name property to note with vote choice.
 		nameProp := streams.NewActivityStreamsNameProperty()
