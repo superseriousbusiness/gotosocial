@@ -44,6 +44,8 @@ var testModels = []interface{}{
 	&gtsmodel.Marker{},
 	&gtsmodel.MediaAttachment{},
 	&gtsmodel.Mention{},
+	&gtsmodel.Poll{},
+	&gtsmodel.PollVote{},
 	&gtsmodel.Status{},
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
@@ -310,6 +312,18 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestThreadToStatus() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestPolls() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestPollVotes() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}
