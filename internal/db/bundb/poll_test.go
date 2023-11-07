@@ -20,12 +20,14 @@ package bundb_test
 import (
 	"context"
 	"errors"
+	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -220,11 +222,56 @@ func (suite *PollTestSuite) TestPutPoll() {
 	}
 }
 
-// func (suite *PollTestSuite) TestPutPollVote() {
-// 	// Create a new context for this test.
-// 	ctx, cncl := context.WithCancel(context.Background())
-// 	defer cncl()
-// }
+func (suite *PollTestSuite) TestPutPollVote() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// randomChoices generates random vote choices in poll.
+	randomChoices := func(poll *gtsmodel.Poll) []int {
+		var max int
+		if *poll.Multiple {
+			max = len(poll.Options)
+		} else {
+			max = 1
+		}
+		count := 1 + rand.Intn(max)
+		choices := make([]int, count)
+		for i := range choices {
+			choices[i] = rand.Intn(len(poll.Options))
+		}
+		return choices
+	}
+
+	for _, poll := range suite.testPolls {
+		// Create a new vote to insert for poll.
+		vote := &gtsmodel.PollVote{
+			ID:        id.NewULID(),
+			Choices:   randomChoices(poll),
+			PollID:    poll.ID,
+			AccountID: id.NewULID(), // random account, doesn't matter
+		}
+
+		// Insert this new vote into database.
+		err := suite.db.PutPollVote(ctx, vote)
+		suite.NoError(err)
+
+		// Fetch latest version of poll from database.
+		latest, err := suite.db.GetPollByID(ctx, poll.ID)
+		suite.NoError(err)
+
+		// Decr latest version choices by new vote's.
+		for _, choice := range vote.Choices {
+			latest.Votes[choice]--
+		}
+		(*latest.Voters)--
+
+		// Old poll and latest model after decr
+		// should have equal vote + voter counts.
+		suite.Equal(poll.Voters, latest.Voters)
+		suite.Equal(poll.Votes, latest.Votes)
+	}
+}
 
 func (suite *PollTestSuite) TestDeletePoll() {
 	// Create a new context for this test.
