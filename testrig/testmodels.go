@@ -1841,7 +1841,7 @@ func NewTestPolls() map[string]*gtsmodel.Poll {
 			HideCounts: util.Ptr(true),
 			Options:    []string{"good", "bad", "meh"},
 			Votes:      []int{2, 0, 0}, // needs to match stored poll votes
-			Voters:     2,              // needs to match stored poll votes
+			Voters:     util.Ptr(2),    // needs to match stored poll votes
 			StatusID:   "01HEN2RZ8BG29Y5Z9VJC73HZW7",
 			Status:     nil,
 			ExpiresAt:  TimeMustParse("2022-05-21T11:41:10Z"),
@@ -1854,7 +1854,7 @@ func NewTestPolls() map[string]*gtsmodel.Poll {
 			HideCounts: util.Ptr(false),
 			Options:    []string{"50:50", "phone a friend", "ask the audience"},
 			Votes:      []int{0, 1, 1}, // needs to match stored poll votes
-			Voters:     2,              // needs to match stored poll votes
+			Voters:     util.Ptr(2),    // needs to match stored poll votes
 			StatusID:   "01HEN2PRXT0TF4YDRA64FZZRN7",
 			Status:     nil,
 			ExpiresAt:  TimeMustParse("2021-08-28T10:40:37+02:00"),
@@ -1867,7 +1867,7 @@ func NewTestPolls() map[string]*gtsmodel.Poll {
 			HideCounts: util.Ptr(false),
 			Options:    []string{"vaseline", "tissues", "financial times"},
 			Votes:      []int{3, 2, 18},
-			Voters:     6,
+			Voters:     util.Ptr(6),
 			StatusID:   "01HEN2QRFA8H3C6QPN7RD4KSR6",
 			Status:     nil,
 			ExpiresAt:  TimeMustParse("2021-09-11T12:40:37+02:00"),

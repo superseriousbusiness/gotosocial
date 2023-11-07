@@ -665,7 +665,7 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 
 	if !*poll.HideCounts {
 		// Set total no. voting accounts.
-		ap.SetVotersCount(dst, poll.Voters)
+		ap.SetVotersCount(dst, *poll.Voters)
 	}
 
 	if *poll.Multiple {

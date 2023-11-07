@@ -1354,7 +1354,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		// the simple route!
 		//
 		// Pull cached remote values.
-		totalVoters = poll.Voters
+		totalVoters = *poll.Voters
 		voteCounts = poll.Votes
 
 		// Accumulate total from all counts.

@@ -29,7 +29,7 @@ type Poll struct {
 	HideCounts *bool     `bun:"type:BOOLEAN,nullzero,notnull,default:false"` // Hides vote counts until poll ends.
 	Options    []string  `bun:"type:VARCHAR,nullzero,notnull"`               // The available options for this poll.
 	Votes      []int     `bun:"type:VARCHAR,nullzero,notnull"`               // Vote counts per choice.
-	Voters     int       `bun:"type:INTEGER,nullzero,notnull"`               // Total no. voters count.
+	Voters     *int      `bun:"type:INTEGER,nullzero,notnull"`               // Total no. voters count.
 	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`       // Status ID of which this Poll is attached to.
 	Status     *Status   `bun:"-"`                                           // The related Status for StatusID (not always set).
 	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`           // The expiry date of this Poll.

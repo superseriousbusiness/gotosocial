@@ -21,9 +21,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type PollTestSuite struct {
@@ -169,6 +172,97 @@ func (suite *PollTestSuite) TestGetPollVoteBy() {
 				continue
 			}
 		}
+	}
+}
+
+func (suite *PollTestSuite) TestUpdatePoll() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	for _, poll := range suite.testPolls {
+		// Take copy of poll.
+		poll := util.Ptr(*poll)
+
+		// Update the poll closed field.
+		poll.ClosedAt = time.Now()
+
+		// Update poll model in the database.
+		err := suite.db.UpdatePoll(ctx, poll)
+		suite.NoError(err)
+
+		// Refetch poll from database to get latest.
+		latest, err := suite.db.GetPollByID(ctx, poll.ID)
+		suite.NoError(err)
+
+		// The latest poll should have updated closedAt.
+		suite.Equal(poll.ClosedAt, latest.ClosedAt)
+	}
+}
+
+func (suite *PollTestSuite) TestPutPoll() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	for _, poll := range suite.testPolls {
+		// Delete this poll from the database.
+		err := suite.db.DeletePollByID(ctx, poll.ID)
+		suite.NoError(err)
+
+		// Ensure that afterwards we can
+		// enter it again into database.
+		err = suite.db.PutPoll(ctx, poll)
+
+		// Ensure that afterwards we can fetch poll.
+		_, err = suite.db.GetPollByID(ctx, poll.ID)
+		suite.NoError(err)
+	}
+}
+
+// func (suite *PollTestSuite) TestPutPollVote() {
+// 	// Create a new context for this test.
+// 	ctx, cncl := context.WithCancel(context.Background())
+// 	defer cncl()
+// }
+
+func (suite *PollTestSuite) TestDeletePoll() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	for _, poll := range suite.testPolls {
+		// Delete this poll from the database.
+		err := suite.db.DeletePollByID(ctx, poll.ID)
+		suite.NoError(err)
+
+		// Ensure that afterwards we cannot fetch poll.
+		_, err = suite.db.GetPollByID(ctx, poll.ID)
+		suite.ErrorIs(err, db.ErrNoEntries)
+
+		// Or again by the status it's attached to.
+		_, err = suite.db.GetPollByStatusID(ctx, poll.StatusID)
+		suite.ErrorIs(err, db.ErrNoEntries)
+	}
+}
+
+func (suite *PollTestSuite) TestDeletePollVotes() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	for _, poll := range suite.testPolls {
+		// Delete votes associated with poll from database.
+		err := suite.db.DeletePollVotes(ctx, poll.ID)
+		suite.NoError(err)
+
+		// Fetch latest version of poll from database.
+		poll, err = suite.db.GetPollByID(ctx, poll.ID)
+		suite.NoError(err)
+
+		// Check that poll counts are all zero.
+		suite.Equal(*poll.Voters, 0)
+		suite.Equal(poll.Votes, make([]int, len(poll.Options)))
 	}
 }
 

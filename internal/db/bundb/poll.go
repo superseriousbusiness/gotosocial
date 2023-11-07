@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -355,7 +356,7 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 			}
 
 			// Incr voters.
-			poll.Voters++
+			(*poll.Voters)++
 
 			// Finally, update the poll entry.
 			_, err := tx.NewUpdate().
@@ -372,10 +373,10 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 	err := p.db.RunInTx(ctx, func(tx Tx) error {
 		// Delete all vote in poll,
 		// returning all vote choices.
-		switch err := tx.NewDelete().
+		switch _, err := tx.NewDelete().
 			Table("poll_votes").
 			Where("? = ?", bun.Ident("poll_id"), pollID).
-			Scan(ctx); {
+			Exec(ctx); {
 
 		case err == nil:
 			// no issue.
@@ -412,7 +413,7 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 		}
 
 		// Zero all counts.
-		poll.Voters = 0
+		poll.Voters = util.Ptr(0)
 		poll.Votes = nil
 		ensurePollVotes(&poll)
 
@@ -495,8 +496,8 @@ func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID 
 		}
 
 		// Decrement voters.
-		if poll.Voters > 0 {
-			poll.Voters--
+		if (*poll.Voters) > 0 {
+			(*poll.Voters)--
 		}
 
 		// Finally, update the poll entry.

@@ -1145,12 +1145,15 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 		closed = closedSlice[0]
 	}
 
+	// Extract the number of voters.
+	voters := GetVotersCount(poll)
+
 	return &gtsmodel.Poll{
 		Options:    options,
 		Multiple:   &multi,
 		HideCounts: &hideCounts,
 		Votes:      votes,
-		Voters:     GetVotersCount(poll),
+		Voters:     &voters,
 		ExpiresAt:  endTime,
 		ClosedAt:   closed,
 	}, nil
