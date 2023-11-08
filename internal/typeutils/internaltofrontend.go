@@ -1361,12 +1361,20 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	}
 
 	var (
+		options     []apimodel.PollOption
 		totalVotes  int
 		totalVoters int
-		voteCounts  []int
 		ownChoices  []int
 		isAuthor    bool
 	)
+
+	// Preallocate a slice of frontend model poll choices.
+	options = make([]apimodel.PollOption, len(poll.Options))
+
+	// Add the titles to all of the options.
+	for i, title := range poll.Options {
+		options[i].Title = title
+	}
 
 	if requester != nil {
 		// Get vote by requester in poll (if any).
@@ -1386,18 +1394,13 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 			// case that counts are hidden.
 			totalVotes = len(vote.Choices)
 			totalVoters = 1
+			for _, choice := range ownChoices {
+				options[choice].VotesCount++
+			}
 		}
 
 		// Check if requester is author of source status.
 		isAuthor = (requester.ID == poll.Status.AccountID)
-	}
-
-	// Preallocate a slice of frontend model poll choices.
-	options := make([]apimodel.PollOption, len(poll.Options))
-
-	// Add the titles to all of the options.
-	for i, title := range poll.Options {
-		options[i].Title = title
 	}
 
 	if isAuthor || !*poll.HideCounts {
@@ -1405,18 +1408,14 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		// the simple route!
 		//
 		// Pull cached remote values.
-		totalVoters = *poll.Voters
-		voteCounts = poll.Votes
-
-		// Accumulate total from all counts.
-		for _, count := range poll.Votes {
-			totalVotes += count
-		}
+		totalVoters = (*poll.Voters)
 
 		// When this is status author, or hide counts
-		// is disabled, set the counts known per vote.
-		for i, count := range voteCounts {
+		// is disabled, set the counts known per vote,
+		// and accumulate all the vote totals.
+		for i, count := range poll.Votes {
 			options[i].VotesCount = count
+			totalVotes += count
 		}
 	}
 
@@ -1424,7 +1423,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		ID:          poll.ID,
 		ExpiresAt:   util.FormatISO8601(poll.ExpiresAt),
 		Expired:     poll.Closed(),
-		Multiple:    *poll.Multiple,
+		Multiple:    (*poll.Multiple),
 		VotesCount:  totalVotes,
 		VotersCount: totalVoters,
 		Voted:       (isAuthor || len(ownChoices) > 0),

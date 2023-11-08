@@ -90,6 +90,11 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Before enqueuing it, increment the poll
+	// vote counts on the copy attached to the
+	// PollVote (that we also later return).
+	poll.IncrementVotes(choices)
+
 	// Enqueue worker task to handle side-effects of user poll vote(s).
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APActivityType: ap.ActivityCreate,
@@ -97,11 +102,6 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 		GTSModel:       vote, // the vote choices
 		OriginAccount:  requester,
 	})
-
-	// Before returning the converted poll model,
-	// increment the vote counts on our local copy
-	// to get latest, instead of another db query.
-	poll.IncrementVotes(choices)
 
 	// Return converted API model poll.
 	return p.toAPIPoll(ctx, requester, poll)
