@@ -101,12 +101,6 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	targetAccount := suite.testAccounts["local_account_1"]
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
-	tc := testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media"))
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -132,7 +126,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	}
 
 	// trigger the function being tested
-	userModule.StatusRepliesGETHandler(ctx)
+	suite.userModule.StatusRepliesGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
@@ -165,12 +159,6 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	targetAccount := suite.testAccounts["local_account_1"]
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 
-	tc := testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media"))
-	federator := testrig.NewTestFederator(&suite.state, tc, suite.mediaManager)
-	emailSender := testrig.NewEmailSender("../../../../web/template/", nil)
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, suite.mediaManager)
-	userModule := users.New(processor)
-
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -196,7 +184,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	}
 
 	// trigger the function being tested
-	userModule.StatusRepliesGETHandler(ctx)
+	suite.userModule.StatusRepliesGETHandler(ctx)
 
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)

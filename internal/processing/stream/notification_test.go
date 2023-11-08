@@ -77,8 +77,8 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
     "header_static": "http://localhost:8080/assets/default_header.png",
     "followers_count": 0,
     "following_count": 0,
-    "statuses_count": 1,
-    "last_status_at": "2021-09-20T10:40:37.000Z",
+    "statuses_count": 2,
+    "last_status_at": "2021-09-11T09:40:37.000Z",
     "emojis": [],
     "fields": []
   }

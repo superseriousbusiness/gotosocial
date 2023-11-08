@@ -20,10 +20,10 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -54,31 +54,9 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 		return nil, err
 	}
 
-	// Set the mention originating status.
-	mention.Status, err = m.state.DB.GetStatusByID(
-		gtscontext.SetBarebones(ctx),
-		mention.StatusID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error populating mention status: %w", err)
-	}
-
-	// Set the mention origin account model.
-	mention.OriginAccount, err = m.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		mention.OriginAccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error populating mention origin account: %w", err)
-	}
-
-	// Set the mention target account model.
-	mention.TargetAccount, err = m.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		mention.TargetAccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error populating mention target account: %w", err)
+	// Further populate the mention fields where applicable.
+	if err := m.PopulateMention(ctx, mention); err != nil {
+		return nil, err
 	}
 
 	return mention, nil
@@ -100,6 +78,45 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 	}
 
 	return mentions, nil
+}
+
+func (m *mentionDB) PopulateMention(ctx context.Context, mention *gtsmodel.Mention) (err error) {
+	var errs gtserror.MultiError
+
+	if mention.Status == nil {
+		// Set the mention originating status.
+		mention.Status, err = m.state.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			mention.StatusID,
+		)
+		if err != nil {
+			return gtserror.Newf("error populating mention status: %w", err)
+		}
+	}
+
+	if mention.OriginAccount == nil {
+		// Set the mention origin account model.
+		mention.OriginAccount, err = m.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			mention.OriginAccountID,
+		)
+		if err != nil {
+			return gtserror.Newf("error populating mention origin account: %w", err)
+		}
+	}
+
+	if mention.TargetAccount == nil {
+		// Set the mention target account model.
+		mention.TargetAccount, err = m.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			mention.TargetAccountID,
+		)
+		if err != nil {
+			return gtserror.Newf("error populating mention target account: %w", err)
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (m *mentionDB) PutMention(ctx context.Context, mention *gtsmodel.Mention) error {

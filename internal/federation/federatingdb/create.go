@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -141,6 +142,22 @@ func (f *federatingDB) activityCreate(
 	// Extract objects from create activity.
 	objects := ap.ExtractObjects(create)
 
+	// Extract PollOptionables (votes!) from objects slice.
+	optionables, objects := ap.ExtractPollOptionables(objects)
+
+	if len(optionables) > 0 {
+		// Handle provided poll vote(s) creation, this can
+		// be for single or multiple votes in the same poll.
+		err := f.createPollOptionables(ctx,
+			receivingAccount,
+			requestingAccount,
+			optionables,
+		)
+		if err != nil {
+			errs.Appendf("error creating poll vote(s): %w", err)
+		}
+	}
+
 	// Extract Statusables from objects slice (this must be
 	// done AFTER extracting options due to how AS typing works).
 	statusables, objects := ap.ExtractStatusables(objects)
@@ -167,6 +184,112 @@ func (f *federatingDB) activityCreate(
 	}
 
 	return errs.Combine()
+}
+
+// createPollOptionable handles a Create activity for a PollOptionable.
+// This function doesn't handle database insertion, only validation checks
+// before passing off to a worker for asynchronous processing.
+func (f *federatingDB) createPollOptionables(
+	ctx context.Context,
+	receiver *gtsmodel.Account,
+	requester *gtsmodel.Account,
+	options []ap.PollOptionable,
+) error {
+	var (
+		// the origin Status w/ Poll the vote
+		// options are in. This gets set on first
+		// iteration, relevant checks performed
+		// then re-used in each further iteration.
+		inReplyTo *gtsmodel.Status
+
+		// the resulting slices of Poll.Option
+		// choice indices passed into the new
+		// created PollVote object.
+		choices []int
+	)
+
+	for _, option := range options {
+		// Extract the "inReplyTo" property.
+		inReplyToURIs := ap.GetInReplyTo(option)
+		if len(inReplyToURIs) != 1 {
+			return gtserror.Newf("invalid inReplyTo property length: %d", len(inReplyToURIs))
+		}
+
+		// Stringify the inReplyTo URI.
+		statusURI := inReplyToURIs[0].String()
+
+		if inReplyTo == nil {
+			var err error
+
+			// This is the first object in the activity slice,
+			// check database for the poll source status by URI.
+			inReplyTo, err = f.state.DB.GetStatusByURI(ctx, statusURI)
+			if err != nil {
+				return gtserror.Newf("error getting poll source from database %s: %w", statusURI, err)
+			}
+
+			switch {
+			// The origin status isn't a poll?
+			case inReplyTo.PollID == "":
+				return gtserror.Newf("poll vote in status %s without poll", statusURI)
+
+			// We don't own the poll ...
+			case !*inReplyTo.Local:
+				return gtserror.Newf("poll vote in remote status %s", statusURI)
+			}
+
+			// Check whether user has already vote in this poll.
+			// (we only check this for the first object, as multiple
+			// may be sent in response to a multiple-choice poll).
+			vote, err := f.state.DB.GetPollVoteBy(
+				gtscontext.SetBarebones(ctx),
+				inReplyTo.PollID,
+				requester.ID,
+			)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return gtserror.Newf("error getting status %s poll votes from database: %w", statusURI, err)
+			}
+
+			if vote != nil {
+				log.Warnf(ctx, "%s has already voted in poll %s", requester.URI, statusURI)
+				return nil // this is a useful warning for admins to report to us from logs
+			}
+		}
+
+		if statusURI != inReplyTo.URI {
+			// All activity votes should be to the same poll per activity.
+			return gtserror.New("votes to multiple polls in single activity")
+		}
+
+		// Extract the poll option name.
+		name := ap.ExtractName(option)
+
+		// Check that this is a valid option name.
+		choice := inReplyTo.Poll.GetChoice(name)
+		if choice == -1 {
+			return gtserror.Newf("poll vote in status %s invalid: %s", statusURI, name)
+		}
+
+		// Append the option index to choices.
+		choices = append(choices, choice)
+	}
+
+	// Enqueue message to the fedi API worker with poll vote(s).
+	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
+		APActivityType: ap.ActivityCreate,
+		APObjectType:   ap.ActivityQuestion,
+		GTSModel: &gtsmodel.PollVote{
+			ID:        id.NewULID(),
+			Choices:   choices,
+			AccountID: requester.ID,
+			Account:   requester,
+			PollID:    inReplyTo.PollID,
+			Poll:      inReplyTo.Poll,
+		},
+		ReceivingAccount: receiver,
+	})
+
+	return nil
 }
 
 // createStatusable handles a Create activity for a Statusable.

@@ -31,6 +31,9 @@ type Mention interface {
 	// GetMentions gets multiple mentions.
 	GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error)
 
+	// PopulateMention ensures that all sub-models of a mention are populated (e.g. accounts).
+	PopulateMention(ctx context.Context, mention *gtsmodel.Mention) error
+
 	// PutMention will insert the given mention into the database.
 	PutMention(ctx context.Context, mention *gtsmodel.Mention) error
 

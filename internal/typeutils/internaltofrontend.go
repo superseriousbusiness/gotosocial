@@ -782,9 +782,12 @@ func (c *Converter) statusToFrontend(
 	}
 
 	if appID := s.CreatedWithApplicationID; appID != "" {
-		app, err := c.state.DB.GetApplicationByID(ctx, appID)
-		if err != nil {
-			return nil, gtserror.Newf("error getting application %s: %w", appID, err)
+		app := s.CreatedWithApplication
+		if app == nil {
+			app, err = c.state.DB.GetApplicationByID(ctx, appID)
+			if err != nil {
+				return nil, gtserror.Newf("error getting application %s: %w", appID, err)
+			}
 		}
 
 		apiApp, err := c.AppToAPIAppPublic(ctx, app)
@@ -793,6 +796,18 @@ func (c *Converter) statusToFrontend(
 		}
 
 		apiStatus.Application = apiApp
+	}
+
+	if s.Poll != nil {
+		// Set originating
+		// status on the poll.
+		poll := s.Poll
+		poll.Status = s
+
+		apiStatus.Poll, err = c.PollToAPIPoll(ctx, requestingAccount, poll)
+		if err != nil {
+			return nil, fmt.Errorf("error converting poll: %w", err)
+		}
 	}
 
 	// If web URL is empty for whatever
@@ -1336,6 +1351,86 @@ func (c *Converter) MarkersToAPIMarker(ctx context.Context, markers []*gtsmodel.
 		}
 	}
 	return apiMarker, nil
+}
+
+// PollToAPIPoll converts a database (gtsmodel) Poll into an API model representation appropriate for the given requesting account.
+func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Account, poll *gtsmodel.Poll) (*apimodel.Poll, error) {
+	// Ensure the poll model is fully populated for src status.
+	if err := c.state.DB.PopulatePoll(ctx, poll); err != nil {
+		return nil, gtserror.Newf("error populating poll: %w", err)
+	}
+
+	var (
+		totalVotes  int
+		totalVoters int
+		voteCounts  []int
+		ownChoices  []int
+		isAuthor    bool
+	)
+
+	if requester != nil {
+		// Get vote by requester in poll (if any).
+		vote, err := c.state.DB.GetPollVoteBy(ctx,
+			poll.ID,
+			requester.ID,
+		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.Newf("error getting vote for poll %s: %w", poll.ID, err)
+		}
+
+		if vote != nil {
+			// Set choices by requester.
+			ownChoices = vote.Choices
+
+			// Update default totals in the
+			// case that counts are hidden.
+			totalVotes = len(vote.Choices)
+			totalVoters = 1
+		}
+
+		// Check if requester is author of source status.
+		isAuthor = (requester.ID == poll.Status.AccountID)
+	}
+
+	// Preallocate a slice of frontend model poll choices.
+	options := make([]apimodel.PollOption, len(poll.Options))
+
+	// Add the titles to all of the options.
+	for i, title := range poll.Options {
+		options[i].Title = title
+	}
+
+	if isAuthor || !*poll.HideCounts {
+		// A remote status,
+		// the simple route!
+		//
+		// Pull cached remote values.
+		totalVoters = *poll.Voters
+		voteCounts = poll.Votes
+
+		// Accumulate total from all counts.
+		for _, count := range poll.Votes {
+			totalVotes += count
+		}
+
+		// When this is status author, or hide counts
+		// is disabled, set the counts known per vote.
+		for i, count := range voteCounts {
+			options[i].VotesCount = count
+		}
+	}
+
+	return &apimodel.Poll{
+		ID:          poll.ID,
+		ExpiresAt:   util.FormatISO8601(poll.ExpiresAt),
+		Expired:     poll.Closed(),
+		Multiple:    *poll.Multiple,
+		VotesCount:  totalVotes,
+		VotersCount: totalVoters,
+		Voted:       (isAuthor || len(ownChoices) > 0),
+		OwnVotes:    ownChoices,
+		Options:     options,
+	}, nil
 }
 
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.

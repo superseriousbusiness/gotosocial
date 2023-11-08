@@ -79,7 +79,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.Equal("http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg", apimodelAccount.HeaderStatic)
 	suite.Equal(2, apimodelAccount.FollowersCount)
 	suite.Equal(2, apimodelAccount.FollowingCount)
-	suite.Equal(5, apimodelAccount.StatusesCount)
+	suite.Equal(6, apimodelAccount.StatusesCount)
 	suite.EqualValues(gtsmodel.VisibilityPublic, apimodelAccount.Source.Privacy)
 	suite.Equal(testAccount.Language, apimodelAccount.Source.Language)
 	suite.Equal(testAccount.NoteRaw, apimodelAccount.Source.Note)

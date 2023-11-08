@@ -412,8 +412,24 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		return nil, gtserror.Newf("error populating status: %w", err)
 	}
 
-	// We convert it as an AS Note.
-	status := streams.NewActivityStreamsNote()
+	var status ap.Statusable
+
+	if s.Poll != nil {
+		// If status has poll available, we convert
+		// it as an AS Question (similar to a Note).
+		poll := streams.NewActivityStreamsQuestion()
+
+		// Add required status poll data to AS Question.
+		if err := c.addPollToAS(ctx, s.Poll, poll); err != nil {
+			return nil, gtserror.Newf("error converting poll: %w", err)
+		}
+
+		// Set poll as status.
+		status = poll
+	} else {
+		// Else we converter it as an AS Note.
+		status = streams.NewActivityStreamsNote()
+	}
 
 	// id
 	statusURI, err := url.Parse(s.URI)
@@ -634,6 +650,73 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	status.SetActivityStreamsSensitive(sensitiveProp)
 
 	return status, nil
+}
+
+func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap.Pollable) error {
+	var optionsProp interface {
+		// the minimum interface for appending AS Notes
+		// to an AS type options property of some kind.
+		AppendActivityStreamsNote(vocab.ActivityStreamsNote)
+	}
+
+	if len(poll.Options) != len(poll.Votes) {
+		return gtserror.Newf("invalid poll %s", poll.ID)
+	}
+
+	if !*poll.HideCounts {
+		// Set total no. voting accounts.
+		ap.SetVotersCount(dst, *poll.Voters)
+	}
+
+	if *poll.Multiple {
+		// Create new multiple-choice (AnyOf) property for poll.
+		anyOfProp := streams.NewActivityStreamsAnyOfProperty()
+		dst.SetActivityStreamsAnyOf(anyOfProp)
+		optionsProp = anyOfProp
+	} else {
+		// Create new single-choice (OneOf) property for poll.
+		oneOfProp := streams.NewActivityStreamsOneOfProperty()
+		dst.SetActivityStreamsOneOf(oneOfProp)
+		optionsProp = oneOfProp
+	}
+
+	for i, name := range poll.Options {
+		// Create new Note object to represent option.
+		note := streams.NewActivityStreamsNote()
+
+		// Create new name property and set the option name.
+		nameProp := streams.NewActivityStreamsNameProperty()
+		nameProp.AppendXMLSchemaString(name)
+		note.SetActivityStreamsName(nameProp)
+
+		if !*poll.HideCounts {
+			// Create new total items property to hold the vote count.
+			totalItemsProp := streams.NewActivityStreamsTotalItemsProperty()
+			totalItemsProp.Set(poll.Votes[i])
+
+			// Create new replies property with collection to encompass count.
+			repliesProp := streams.NewActivityStreamsRepliesProperty()
+			collection := streams.NewActivityStreamsCollection()
+			collection.SetActivityStreamsTotalItems(totalItemsProp)
+			repliesProp.SetActivityStreamsCollection(collection)
+
+			// Attach the replies to Note object.
+			note.SetActivityStreamsReplies(repliesProp)
+		}
+
+		// Append the note to options property.
+		optionsProp.AppendActivityStreamsNote(note)
+	}
+
+	// Set poll endTime property.
+	ap.SetEndTime(dst, poll.ExpiresAt)
+
+	if !poll.ClosedAt.IsZero() {
+		// Poll is closed, set closed property.
+		ap.AppendClosed(dst, poll.ClosedAt)
+	}
+
+	return nil
 }
 
 // StatusToASDelete converts a gts model status into a Delete of that status, using just the
@@ -1413,12 +1496,8 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 			return nil, err
 		}
 
-		create, err := c.WrapStatusableInCreate(note, true)
-		if err != nil {
-			return nil, err
-		}
-
-		itemsProp.AppendActivityStreamsCreate(create)
+		activity := WrapStatusableInCreate(note, true)
+		itemsProp.AppendActivityStreamsCreate(activity)
 
 		if highest == "" || s.ID > highest {
 			highest = s.ID
@@ -1568,4 +1647,67 @@ func (c *Converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (voc
 	flag.SetActivityStreamsObject(objectProp)
 
 	return flag, nil
+}
+
+func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.PollVote) ([]ap.PollOptionable, error) {
+	// Ensure the vote is fully populated (this fetches author).
+	if err := c.state.DB.PopulatePollVote(ctx, vote); err != nil {
+		return nil, gtserror.Newf("error populating vote from db: %w", err)
+	}
+
+	// Get the vote author.
+	author := vote.Account
+
+	// Get the JSONLD ID IRI for vote author.
+	authorIRI, err := url.Parse(author.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid author uri: %w", err)
+	}
+
+	// Get the vote poll.
+	poll := vote.Poll
+
+	// Ensure the poll is fully populated with status.
+	if err := c.state.DB.PopulatePoll(ctx, poll); err != nil {
+		return nil, gtserror.Newf("error populating poll from db: %w", err)
+	}
+
+	// Get the JSONLD ID IRI for poll's source status.
+	statusIRI, err := url.Parse(poll.Status.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid status uri: %w", err)
+	}
+
+	// Get the JSONLD ID IRI for poll's author account.
+	pollAuthorIRI, err := url.Parse(poll.Status.AccountURI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid account uri: %w", err)
+	}
+
+	// Preallocate the return slice of notes.
+	notes := make([]ap.PollOptionable, len(vote.Choices))
+
+	for i, choice := range vote.Choices {
+		// Create new note to represent vote.
+		note := streams.NewActivityStreamsNote()
+
+		// For AP IRI generate from author URI + poll ID + vote choice.
+		id := fmt.Sprintf("%s#%s/votes/%d", author.URI, poll.ID, choice)
+		ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(note), id)
+
+		// Attach new name property to note with vote choice.
+		nameProp := streams.NewActivityStreamsNameProperty()
+		nameProp.AppendXMLSchemaString(poll.Options[choice])
+		note.SetActivityStreamsName(nameProp)
+
+		// Set 'to', 'attribTo', 'inReplyTo' fields.
+		ap.AppendAttributedTo(note, authorIRI)
+		ap.AppendInReplyTo(note, statusIRI)
+		ap.AppendTo(note, pollAuthorIRI)
+
+		// Set note in return slice.
+		notes[i] = note
+	}
+
+	return notes, nil
 }

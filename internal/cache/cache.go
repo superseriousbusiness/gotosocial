@@ -183,6 +183,22 @@ func (c *Caches) setuphooks() {
 		}
 	})
 
+	c.GTS.Poll().SetInvalidateCallback(func(poll *gtsmodel.Poll) {
+		// Invalidate all cached votes of this poll.
+		c.GTS.PollVote().Invalidate("PollID", poll.ID)
+
+		// Invalidate cache of poll vote IDs.
+		c.GTS.PollVoteIDs().Invalidate(poll.ID)
+	})
+
+	c.GTS.PollVote().SetInvalidateCallback(func(vote *gtsmodel.PollVote) {
+		// Invalidate cached poll (contains no. votes).
+		c.GTS.Poll().Invalidate("ID", vote.PollID)
+
+		// Invalidate cache of poll vote IDs.
+		c.GTS.PollVoteIDs().Invalidate(vote.PollID)
+	})
+
 	c.GTS.Status().SetInvalidateCallback(func(status *gtsmodel.Status) {
 		// Invalidate status ID cached visibility.
 		c.Visibility.Invalidate("ItemID", status.ID)
@@ -205,6 +221,11 @@ func (c *Caches) setuphooks() {
 		if status.InReplyToID != "" {
 			// Invalidate in reply to ID list of original status.
 			c.GTS.InReplyToIDs().Invalidate(status.InReplyToID)
+		}
+
+		if status.PollID != "" {
+			// Invalidate cache of attached poll ID.
+			c.GTS.Poll().Invalidate("ID", status.PollID)
 		}
 	})
 
@@ -244,6 +265,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Media().Trim(threshold)
 	c.GTS.Mention().Trim(threshold)
 	c.GTS.Notification().Trim(threshold)
+	c.GTS.Poll().Trim(threshold)
 	c.GTS.Report().Trim(threshold)
 	c.GTS.Status().Trim(threshold)
 	c.GTS.StatusFave().Trim(threshold)

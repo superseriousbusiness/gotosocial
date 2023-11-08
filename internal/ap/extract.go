@@ -22,6 +22,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -1112,6 +1113,91 @@ func ExtractSharedInbox(withEndpoints WithEndpoints) *url.URL {
 	return nil
 }
 
+// ExtractPoll extracts a placeholder Poll from Pollable interface, with available options and flags populated.
+func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
+	var closed time.Time
+
+	// Extract the options (votes if any) and 'multiple choice' flag.
+	options, votes, multi, err := ExtractPollOptions(poll)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if counts have been hidden from us.
+	hideCounts := len(options) != len(votes)
+	if hideCounts {
+
+		// Zero out all votes.
+		for i := range votes {
+			votes[i] = 0
+		}
+	}
+
+	// Extract the poll end time.
+	endTime := GetEndTime(poll)
+	if endTime.IsZero() {
+		return nil, errors.New("no poll end time specified")
+	}
+
+	// Extract the poll closed time.
+	closedSlice := GetClosed(poll)
+	if len(closedSlice) == 1 {
+		closed = closedSlice[0]
+	}
+
+	// Extract the number of voters.
+	voters := GetVotersCount(poll)
+
+	return &gtsmodel.Poll{
+		Options:    options,
+		Multiple:   &multi,
+		HideCounts: &hideCounts,
+		Votes:      votes,
+		Voters:     &voters,
+		ExpiresAt:  endTime,
+		ClosedAt:   closed,
+	}, nil
+}
+
+// ExtractPollOptions extracts poll option name strings, and the 'multiple choice flag' property value from Pollable.
+func ExtractPollOptions(poll Pollable) (names []string, votes []int, multi bool, err error) {
+	var errs gtserror.MultiError
+
+	// Iterate the oneOf property and gather poll single-choice options.
+	IterateOneOf(poll, func(iter vocab.ActivityStreamsOneOfPropertyIterator) {
+		name, count, err := extractPollOption(iter.GetType())
+		if err != nil {
+			errs.Append(err)
+			return
+		}
+		names = append(names, name)
+		if count != nil {
+			votes = append(votes, *count)
+		}
+	})
+	if len(names) > 0 || len(errs) > 0 {
+		return names, votes, false, errs.Combine()
+	}
+
+	// Iterate the anyOf property and gather poll multi-choice options.
+	IterateAnyOf(poll, func(iter vocab.ActivityStreamsAnyOfPropertyIterator) {
+		name, count, err := extractPollOption(iter.GetType())
+		if err != nil {
+			errs.Append(err)
+			return
+		}
+		names = append(names, name)
+		if count != nil {
+			votes = append(votes, *count)
+		}
+	})
+	if len(names) > 0 || len(errs) > 0 {
+		return names, votes, true, errs.Combine()
+	}
+
+	return nil, nil, false, errors.New("poll without options")
+}
+
 // IterateOneOf will attempt to extract oneOf property from given interface, and passes each iterated item to function.
 func IterateOneOf(withOneOf WithOneOf, foreach func(vocab.ActivityStreamsOneOfPropertyIterator)) {
 	if foreach == nil {
@@ -1156,6 +1242,41 @@ func IterateAnyOf(withAnyOf WithAnyOf, foreach func(vocab.ActivityStreamsAnyOfPr
 	for iter := start; iter != end; iter = iter.Next() {
 		foreach(iter)
 	}
+}
+
+// extractPollOption extracts a usable poll option name from vocab.Type, or error.
+func extractPollOption(t vocab.Type) (name string, votes *int, err error) {
+	// Check fulfills PollOptionable type
+	// (this accounts for nil input type).
+	optionable, ok := t.(PollOptionable)
+	if !ok {
+		return "", nil, fmt.Errorf("incorrect option type: %T", t)
+	}
+
+	// Extract PollOption from interface.
+	name = ExtractName(optionable)
+	if name == "" {
+		return "", nil, errors.New("empty option name")
+	}
+
+	// Check PollOptionable for attached 'replies' property.
+	repliesProp := optionable.GetActivityStreamsReplies()
+	if repliesProp != nil {
+
+		// Get repliesProp as the AS collection type it should be.
+		collection := repliesProp.GetActivityStreamsCollection()
+		if collection != nil {
+
+			// Extract integer value from the collection 'totalItems' property.
+			totalItemsProp := collection.GetActivityStreamsTotalItems()
+			if totalItemsProp != nil {
+				i := totalItemsProp.Get()
+				votes = &i
+			}
+		}
+	}
+
+	return name, votes, nil
 }
 
 // isPublic checks if at least one entry in the given

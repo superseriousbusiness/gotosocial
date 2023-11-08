@@ -47,8 +47,11 @@ func (p *Processor) GetTargetStatusBy(
 
 	if target == nil {
 		// DB loader could not find status in database.
-		err := errors.New("target status not found")
-		return nil, false, gtserror.NewErrorNotFound(err)
+		const text = "target status not found"
+		return nil, false, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
 	}
 
 	// Check whether target status is visible to requesting account.
@@ -106,8 +109,11 @@ func (p *Processor) GetVisibleTargetStatus(
 
 	if !visible {
 		// Target should not be seen by requester.
-		err := errors.New("target status not found")
-		return nil, gtserror.NewErrorNotFound(err)
+		const text = "target status not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
 	}
 
 	return target, nil

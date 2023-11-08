@@ -54,6 +54,8 @@ type BunDBStandardTestSuite struct {
 	testMarkers      map[string]*gtsmodel.Marker
 	testRules        map[string]*gtsmodel.Rule
 	testThreads      map[string]*gtsmodel.Thread
+	testPolls        map[string]*gtsmodel.Poll
+	testPollVotes    map[string]*gtsmodel.PollVote
 }
 
 func (suite *BunDBStandardTestSuite) SetupSuite() {
@@ -77,6 +79,8 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 	suite.testMarkers = testrig.NewTestMarkers()
 	suite.testRules = testrig.NewTestRules()
 	suite.testThreads = testrig.NewTestThreads()
+	suite.testPolls = testrig.NewTestPolls()
+	suite.testPollVotes = testrig.NewTestPollVotes()
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {
