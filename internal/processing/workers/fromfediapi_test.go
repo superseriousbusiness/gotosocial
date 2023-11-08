@@ -347,8 +347,15 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 		suite.FailNow("timeout waiting for statuses to be deleted")
 	}
 
-	dbAccount, err := suite.db.GetAccountByID(ctx, deletedAccount.ID)
-	suite.NoError(err)
+	var dbAccount *gtsmodel.Account
+
+	// account data should be zeroed.
+	if !testrig.WaitFor(func() bool {
+		dbAccount, err = suite.db.GetAccountByID(ctx, deletedAccount.ID)
+		return err == nil && dbAccount.DisplayName == ""
+	}) {
+		suite.FailNow("timeout waiting for statuses to be deleted")
+	}
 
 	suite.Empty(dbAccount.Note)
 	suite.Empty(dbAccount.DisplayName)
