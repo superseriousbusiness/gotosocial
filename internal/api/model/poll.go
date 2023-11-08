@@ -88,7 +88,7 @@ type PollRequest struct {
 //
 // swagger:parameters pollVote
 type PollVoteRequest struct {
-	// Choices contains poll vote choice indices. Note that XML
+	// Choices contains poll vote choice indices. Note that form
 	// uses a different key than the JSON, i.e. the '[]' suffix.
 	Choices []int `form:"choices[]" json:"choices" xml:"choices"`
 }
