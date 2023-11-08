@@ -18,7 +18,6 @@
 package polls
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -81,10 +80,8 @@ func (m *Module) PollGETHandler(c *gin.Context) {
 		return
 	}
 
-	pollID := c.Param(IDKey)
-	if pollID == "" {
-		const text = "no poll id specified"
-		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
+	pollID, errWithCode := apiutil.ParseID(c.Param(IDKey))
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
