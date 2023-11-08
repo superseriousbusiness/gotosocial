@@ -365,8 +365,8 @@ func (d *Dereferencer) enrichStatus(
 
 	// Use existing status ID.
 	latestStatus.ID = status.ID
-
 	if latestStatus.ID == "" {
+
 		// Generate new status ID from the provided creation date.
 		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
 		if err != nil {
