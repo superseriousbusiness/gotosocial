@@ -20,7 +20,6 @@ package media
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 
 	"codeberg.org/gruf/go-bytesize"
@@ -33,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // ProcessingEmoji represents an emoji currently processing. It exposes
@@ -161,9 +161,11 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// and https://github.com/h2non/filetype
 	hdrBuf := make([]byte, 261)
 
-	// Read the first 261 header bytes into buffer.
-	if _, err := io.ReadFull(rc, hdrBuf); err != nil {
-		return gtserror.Newf("error reading incoming media: %w", err)
+	// Read the first 261 header bytes into buffer as much as possible.
+	// EOF is fine, just means the media is less than 261 bytes.
+	// Any other error means the connection has likely been buggered.
+	if _, err := rc.Read(hdrBuf); err != nil && err != io.EOF {
+		return gtserror.Newf("error reading first bytes of incoming media: %w", err)
 	}
 
 	// Parse file type info from header buffer.
@@ -215,11 +217,10 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	instanceAccID := regexes.FilePath.FindStringSubmatch(p.emoji.ImageStaticPath)[1]
 
 	// Calculate emoji file path.
-	p.emoji.ImagePath = fmt.Sprintf(
-		"%s/%s/%s/%s.%s",
+	p.emoji.ImagePath = uris.StoragePathForAttachment(
 		instanceAccID,
-		TypeEmoji,
-		SizeOriginal,
+		string(TypeEmoji),
+		string(SizeOriginal),
 		pathID,
 		info.Extension,
 	)
@@ -251,7 +252,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	// Fill in remaining attachment data now it's stored.
-	p.emoji.ImageURL = uris.GenerateURIForAttachment(
+	p.emoji.ImageURL = uris.URIForAttachment(
 		instanceAccID,
 		string(TypeEmoji),
 		string(SizeOriginal),
@@ -260,10 +261,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	)
 	p.emoji.ImageContentType = info.MIME.Value
 	p.emoji.ImageFileSize = int(sz)
-	p.emoji.Cached = func() *bool {
-		ok := true
-		return &ok
-	}()
+	p.emoji.Cached = util.Ptr(true)
 
 	return nil
 }

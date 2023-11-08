@@ -304,7 +304,7 @@ func (suite *MediaTestSuite) TestUncacheRemote() {
 	after := time.Now().Add(-24 * time.Hour)
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(ctx, after)
 	suite.NoError(err)
-	suite.Equal(2, totalUncached)
+	suite.Equal(3, totalUncached)
 
 	uncachedAttachment, err := suite.db.GetAttachmentByID(ctx, testStatusAttachment.ID)
 	suite.NoError(err)
@@ -327,7 +327,7 @@ func (suite *MediaTestSuite) TestUncacheRemoteDry() {
 	after := time.Now().Add(-24 * time.Hour)
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(gtscontext.SetDryRun(ctx), after)
 	suite.NoError(err)
-	suite.Equal(2, totalUncached)
+	suite.Equal(3, totalUncached)
 
 	uncachedAttachment, err := suite.db.GetAttachmentByID(ctx, testStatusAttachment.ID)
 	suite.NoError(err)
@@ -344,7 +344,7 @@ func (suite *MediaTestSuite) TestUncacheRemoteTwice() {
 
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(ctx, after)
 	suite.NoError(err)
-	suite.Equal(2, totalUncached)
+	suite.Equal(3, totalUncached)
 
 	// final uncache should uncache nothing, since the first uncache already happened
 	totalUncachedAgain, err := suite.cleaner.Media().UncacheRemote(ctx, after)
@@ -360,7 +360,7 @@ func (suite *MediaTestSuite) TestUncacheAndRecache() {
 	after := time.Now().Add(-24 * time.Hour)
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(ctx, after)
 	suite.NoError(err)
-	suite.Equal(2, totalUncached)
+	suite.Equal(3, totalUncached)
 
 	// media should no longer be stored
 	_, err = suite.storage.Get(ctx, testStatusAttachment.File.Path)
@@ -424,5 +424,5 @@ func (suite *MediaTestSuite) TestUncacheOneNonExistent() {
 	after := time.Now().Add(-24 * time.Hour)
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(ctx, after)
 	suite.NoError(err)
-	suite.Equal(2, totalUncached)
+	suite.Equal(3, totalUncached)
 }

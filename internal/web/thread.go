@@ -125,7 +125,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	// Fill in the rest of the thread context.
-	context, errWithCode := m.processor.Status().ContextGet(ctx, authed.Account, targetStatusID)
+	context, errWithCode := m.processor.Status().WebContextGet(ctx, targetStatusID)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return

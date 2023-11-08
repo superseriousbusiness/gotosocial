@@ -434,11 +434,14 @@ func (c *Converter) AppToAPIAppPublic(ctx context.Context, a *gtsmodel.Applicati
 // AttachmentToAPIAttachment converts a gts model media attacahment into its api representation for serialization on the API.
 func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.MediaAttachment) (apimodel.Attachment, error) {
 	apiAttachment := apimodel.Attachment{
-		ID:         a.ID,
-		Type:       strings.ToLower(string(a.Type)),
-		TextURL:    a.URL,
-		PreviewURL: a.Thumbnail.URL,
-		Meta: apimodel.MediaMeta{
+		ID:   a.ID,
+		Type: strings.ToLower(string(a.Type)),
+	}
+
+	// Don't try to serialize meta for
+	// unknown attachments, there's no point.
+	if a.Type != gtsmodel.FileTypeUnknown {
+		apiAttachment.Meta = &apimodel.MediaMeta{
 			Original: apimodel.MediaDimensions{
 				Width:  a.FileMeta.Original.Width,
 				Height: a.FileMeta.Original.Height,
@@ -449,13 +452,20 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 				Size:   strconv.Itoa(a.FileMeta.Small.Width) + "x" + strconv.Itoa(a.FileMeta.Small.Height),
 				Aspect: float32(a.FileMeta.Small.Aspect),
 			},
-		},
-		Blurhash: a.Blurhash,
+		}
 	}
 
-	// nullable fields
+	if i := a.Blurhash; i != "" {
+		apiAttachment.Blurhash = &i
+	}
+
 	if i := a.URL; i != "" {
 		apiAttachment.URL = &i
+		apiAttachment.TextURL = &i
+	}
+
+	if i := a.Thumbnail.URL; i != "" {
+		apiAttachment.PreviewURL = &i
 	}
 
 	if i := a.RemoteURL; i != "" {
@@ -470,8 +480,9 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 		apiAttachment.Description = &i
 	}
 
-	// type specific fields
+	// Type-specific fields.
 	switch a.Type {
+
 	case gtsmodel.FileTypeImage:
 		apiAttachment.Meta.Original.Size = strconv.Itoa(a.FileMeta.Original.Width) + "x" + strconv.Itoa(a.FileMeta.Original.Height)
 		apiAttachment.Meta.Original.Aspect = float32(a.FileMeta.Original.Aspect)
@@ -479,16 +490,17 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 			X: a.FileMeta.Focus.X,
 			Y: a.FileMeta.Focus.Y,
 		}
+
 	case gtsmodel.FileTypeVideo:
 		if i := a.FileMeta.Original.Duration; i != nil {
 			apiAttachment.Meta.Original.Duration = *i
 		}
 
 		if i := a.FileMeta.Original.Framerate; i != nil {
-			// the masto api expects this as a string in
-			// the format `integer/1`, so 30fps is `30/1`
+			// The masto api expects this as a string in
+			// the format `integer/1`, so 30fps is `30/1`.
 			round := math.Round(float64(*i))
-			fr := strconv.FormatInt(int64(round), 10)
+			fr := strconv.Itoa(int(round))
 			apiAttachment.Meta.Original.FrameRate = fr + "/1"
 		}
 
@@ -599,7 +611,7 @@ func (c *Converter) EmojiCategoryToAPIEmojiCategory(ctx context.Context, categor
 func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistory bool) (apimodel.Tag, error) {
 	return apimodel.Tag{
 		Name: strings.ToLower(t.Name),
-		URL:  uris.GenerateURIForTag(t.Name),
+		URL:  uris.URIForTag(t.Name),
 		History: func() *[]any {
 			if !stubHistory {
 				return nil
@@ -611,15 +623,56 @@ func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistor
 	}, nil
 }
 
-// StatusToAPIStatus converts a gts model status into its api (frontend) representation for serialization on the API.
+// StatusToAPIStatus converts a gts model status into its api
+// (frontend) representation for serialization on the API.
 //
 // Requesting account can be nil.
-func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
+func (c *Converter) StatusToAPIStatus(
+	ctx context.Context,
+	s *gtsmodel.Status,
+	requestingAccount *gtsmodel.Account,
+) (*apimodel.Status, error) {
+	apiStatus, err := c.statusToFrontend(ctx, s, requestingAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	// Normalize status for the API by pruning
+	// out unknown attachment types and replacing
+	// them with a helpful message.
+	var aside string
+	aside, apiStatus.MediaAttachments = placeholdUnknownAttachments(apiStatus.MediaAttachments)
+	apiStatus.Content += aside
+
+	return apiStatus, nil
+}
+
+// StatusToWebStatus converts a gts model status into an
+// api representation suitable for serving into a web template.
+//
+// Requesting account can be nil.
+func (c *Converter) StatusToWebStatus(
+	ctx context.Context,
+	s *gtsmodel.Status,
+	requestingAccount *gtsmodel.Account,
+) (*apimodel.Status, error) {
+	return c.statusToFrontend(ctx, s, requestingAccount)
+}
+
+// statusToFrontend is a package internal function for
+// parsing a status into its initial frontend representation.
+//
+// Requesting account can be nil.
+func (c *Converter) statusToFrontend(
+	ctx context.Context,
+	s *gtsmodel.Status,
+	requestingAccount *gtsmodel.Account,
+) (*apimodel.Status, error) {
 	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
 		// Ensure author account present + correct;
 		// can't really go further without this!
 		if s.Account == nil {
-			return nil, fmt.Errorf("error(s) populating status, cannot continue: %w", err)
+			return nil, gtserror.Newf("error(s) populating status, cannot continue: %w", err)
 		}
 
 		log.Errorf(ctx, "error(s) populating status, will continue: %v", err)
@@ -627,22 +680,22 @@ func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 
 	apiAuthorAccount, err := c.AccountToAPIAccountPublic(ctx, s.Account)
 	if err != nil {
-		return nil, fmt.Errorf("error converting status author: %w", err)
+		return nil, gtserror.Newf("error converting status author: %w", err)
 	}
 
 	repliesCount, err := c.state.DB.CountStatusReplies(ctx, s.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error counting replies: %w", err)
+		return nil, gtserror.Newf("error counting replies: %w", err)
 	}
 
 	reblogsCount, err := c.state.DB.CountStatusBoosts(ctx, s.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error counting reblogs: %w", err)
+		return nil, gtserror.Newf("error counting reblogs: %w", err)
 	}
 
 	favesCount, err := c.state.DB.CountStatusFaves(ctx, s.ID)
 	if err != nil {
-		return nil, fmt.Errorf("error counting faves: %w", err)
+		return nil, gtserror.Newf("error counting faves: %w", err)
 	}
 
 	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
@@ -722,7 +775,7 @@ func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	if s.BoostOf != nil {
 		apiBoostOf, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount)
 		if err != nil {
-			return nil, fmt.Errorf("error converting boosted status: %w", err)
+			return nil, gtserror.Newf("error converting boosted status: %w", err)
 		}
 
 		apiStatus.Reblog = &apimodel.StatusReblogged{Status: apiBoostOf}
@@ -731,22 +784,20 @@ func (c *Converter) StatusToAPIStatus(ctx context.Context, s *gtsmodel.Status, r
 	if appID := s.CreatedWithApplicationID; appID != "" {
 		app, err := c.state.DB.GetApplicationByID(ctx, appID)
 		if err != nil {
-			return nil, fmt.Errorf("error getting application %s: %w", appID, err)
+			return nil, gtserror.Newf("error getting application %s: %w", appID, err)
 		}
 
 		apiApp, err := c.AppToAPIAppPublic(ctx, app)
 		if err != nil {
-			return nil, fmt.Errorf("error converting application %s: %w", appID, err)
+			return nil, gtserror.Newf("error converting application %s: %w", appID, err)
 		}
 
 		apiStatus.Application = apiApp
 	}
 
-	// Normalization.
-
+	// If web URL is empty for whatever
+	// reason, provide AP URI as fallback.
 	if s.URL == "" {
-		// URL was empty for some reason;
-		// provide AP URI as fallback.
 		s.URL = s.URI
 	}
 

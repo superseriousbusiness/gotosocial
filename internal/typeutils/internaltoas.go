@@ -871,7 +871,7 @@ func (c *Converter) TagToAS(ctx context.Context, t *gtsmodel.Tag) (vocab.TootHas
 	// This is probably already lowercase,
 	// but let's err on the safe side.
 	nameLower := strings.ToLower(t.Name)
-	tagURLString := uris.GenerateURIForTag(nameLower)
+	tagURLString := uris.URIForTag(nameLower)
 
 	// Create the tag.
 	tag := streams.NewTootHashtag()

@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -281,57 +282,76 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	return acctSensitive, nil
 }
 
-// UpdateAvatar does the dirty work of checking the avatar part of an account update form,
-// parsing and checking the image, and doing the necessary updates in the database for this to become
-// the account's new avatar image.
-func (p *Processor) UpdateAvatar(ctx context.Context, avatar *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
+// UpdateAvatar does the dirty work of checking the avatar
+// part of an account update form, parsing and checking the
+// media, and doing the necessary updates in the database
+// for this to become the account's new avatar.
+func (p *Processor) UpdateAvatar(
+	ctx context.Context,
+	avatar *multipart.FileHeader,
+	description *string,
+	accountID string,
+) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if avatar.Size > int64(maxImageSize) {
-		return nil, fmt.Errorf("UpdateAvatar: avatar with size %d exceeded max image size of %d bytes", avatar.Size, maxImageSize)
+		return nil, gtserror.Newf("size %d exceeded max media size of %d bytes", avatar.Size, maxImageSize)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
+	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := avatar.Open()
 		return f, avatar.Size, err
 	}
 
-	isAvatar := true
-	ai := &media.AdditionalMediaInfo{
-		Avatar:      &isAvatar,
+	// Process the media attachment and load it immediately.
+	media := p.mediaManager.PreProcessMedia(data, accountID, &media.AdditionalMediaInfo{
+		Avatar:      util.Ptr(true),
 		Description: description,
-	}
+	})
 
-	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, accountID, ai)
+	attachment, err := media.LoadAttachment(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateAvatar: error processing avatar: %s", err)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	} else if attachment.Type == gtsmodel.FileTypeUnknown {
+		err = gtserror.Newf("could not process uploaded file with extension %s", attachment.File.ContentType)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
-	return processingMedia.LoadAttachment(ctx)
+	return attachment, nil
 }
 
-// UpdateHeader does the dirty work of checking the header part of an account update form,
-// parsing and checking the image, and doing the necessary updates in the database for this to become
-// the account's new header image.
-func (p *Processor) UpdateHeader(ctx context.Context, header *multipart.FileHeader, description *string, accountID string) (*gtsmodel.MediaAttachment, error) {
+// UpdateHeader does the dirty work of checking the header
+// part of an account update form, parsing and checking the
+// media, and doing the necessary updates in the database
+// for this to become the account's new header.
+func (p *Processor) UpdateHeader(
+	ctx context.Context,
+	header *multipart.FileHeader,
+	description *string,
+	accountID string,
+) (*gtsmodel.MediaAttachment, error) {
 	maxImageSize := config.GetMediaImageMaxSize()
 	if header.Size > int64(maxImageSize) {
-		return nil, fmt.Errorf("UpdateHeader: header with size %d exceeded max image size of %d bytes", header.Size, maxImageSize)
+		return nil, gtserror.Newf("size %d exceeded max media size of %d bytes", header.Size, maxImageSize)
 	}
 
-	dataFunc := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
+	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := header.Open()
 		return f, header.Size, err
 	}
 
-	isHeader := true
-	ai := &media.AdditionalMediaInfo{
-		Header: &isHeader,
-	}
+	// Process the media attachment and load it immediately.
+	media := p.mediaManager.PreProcessMedia(data, accountID, &media.AdditionalMediaInfo{
+		Header:      util.Ptr(true),
+		Description: description,
+	})
 
-	processingMedia, err := p.mediaManager.PreProcessMedia(ctx, dataFunc, accountID, ai)
+	attachment, err := media.LoadAttachment(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("UpdateHeader: error processing header: %s", err)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	} else if attachment.Type == gtsmodel.FileTypeUnknown {
+		err = gtserror.Newf("could not process uploaded file with extension %s", attachment.File.ContentType)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
-	return processingMedia.LoadAttachment(ctx)
+	return attachment, nil
 }

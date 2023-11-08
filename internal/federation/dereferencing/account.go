@@ -612,21 +612,16 @@ func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport tran
 	processing, ok := d.derefAvatars[latestAcc.AvatarRemoteURL]
 
 	if !ok {
-		var err error
-
 		// Set the media data function to dereference avatar from URI.
 		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
 			return tsport.DereferenceMedia(ctx, avatarURI)
 		}
 
 		// Create new media processing request from the media manager instance.
-		processing, err = d.mediaManager.PreProcessMedia(ctx, data, latestAcc.ID, &media.AdditionalMediaInfo{
+		processing = d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
 			Avatar:    func() *bool { v := true; return &v }(),
 			RemoteURL: &latestAcc.AvatarRemoteURL,
 		})
-		if err != nil {
-			return gtserror.Newf("error preprocessing media for attachment %s: %w", latestAcc.AvatarRemoteURL, err)
-		}
 
 		// Store media in map to mark as processing.
 		d.derefAvatars[latestAcc.AvatarRemoteURL] = processing
@@ -703,21 +698,16 @@ func (d *Dereferencer) fetchRemoteAccountHeader(ctx context.Context, tsport tran
 	processing, ok := d.derefHeaders[latestAcc.HeaderRemoteURL]
 
 	if !ok {
-		var err error
-
 		// Set the media data function to dereference avatar from URI.
 		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
 			return tsport.DereferenceMedia(ctx, headerURI)
 		}
 
 		// Create new media processing request from the media manager instance.
-		processing, err = d.mediaManager.PreProcessMedia(ctx, data, latestAcc.ID, &media.AdditionalMediaInfo{
+		processing = d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
 			Header:    func() *bool { v := true; return &v }(),
 			RemoteURL: &latestAcc.HeaderRemoteURL,
 		})
-		if err != nil {
-			return gtserror.Newf("error preprocessing media for attachment %s: %w", latestAcc.HeaderRemoteURL, err)
-		}
 
 		// Store media in map to mark as processing.
 		d.derefHeaders[latestAcc.HeaderRemoteURL] = processing

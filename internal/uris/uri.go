@@ -165,23 +165,79 @@ func GenerateURIsForAccount(username string) *UserURIs {
 	}
 }
 
-// GenerateURIForAttachment generates a URI for an attachment/emoji/header etc.
-// Will produced something like https://example.org/fileserver/01FPST95B8FC3HG3AGCDKPQNQ2/attachment/original/01FPST9QK4V5XWS3F9Z4F2G1X7.gif
-func GenerateURIForAttachment(accountID string, mediaType string, mediaSize string, mediaID string, extension string) string {
-	protocol := config.GetProtocol()
-	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s/%s/%s/%s.%s", protocol, host, FileserverPath, accountID, mediaType, mediaSize, mediaID, extension)
+// URIForAttachment generates a URI for
+// an attachment/emoji/header etc.
+//
+// Will produce something like:
+//
+//	"https://example.org/fileserver/01FPST95B8FC3HG3AGCDKPQNQ2/attachment/original/01FPST9QK4V5XWS3F9Z4F2G1X7.gif"
+func URIForAttachment(
+	accountID string,
+	mediaType string,
+	mediaSize string,
+	mediaID string,
+	extension string,
+) string {
+	const format = "%s://%s/%s/%s/%s/%s/%s.%s"
+
+	return fmt.Sprintf(
+		format,
+		config.GetProtocol(),
+		config.GetHost(),
+		FileserverPath,
+		accountID,
+		mediaType,
+		mediaSize,
+		mediaID,
+		extension,
+	)
 }
 
-// GenerateURIForEmoji generates an activitypub uri for a new emoji.
-func GenerateURIForEmoji(emojiID string) string {
-	protocol := config.GetProtocol()
-	host := config.GetHost()
-	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, EmojiPath, emojiID)
+// StoragePathForAttachment generates a storage
+// path for an attachment/emoji/header etc.
+//
+// Will produce something like:
+//
+//	"01FPST95B8FC3HG3AGCDKPQNQ2/attachment/original/01FPST9QK4V5XWS3F9Z4F2G1X7.gif"
+func StoragePathForAttachment(
+	accountID string,
+	mediaType string,
+	mediaSize string,
+	mediaID string,
+	extension string,
+) string {
+	const format = "%s/%s/%s/%s.%s"
+
+	return fmt.Sprintf(
+		format,
+		accountID,
+		mediaType,
+		mediaSize,
+		mediaID,
+		extension,
+	)
 }
 
-// GenerateURIForTag generates an activitypub uri for a tag.
-func GenerateURIForTag(name string) string {
+// URIForEmoji generates an
+// ActivityPub URI for an emoji.
+//
+// Will produce something like:
+//
+//	"https://example.org/emoji/01FPST9QK4V5XWS3F9Z4F2G1X7"
+func URIForEmoji(emojiID string) string {
+	const format = "%s://%s/%s/%s"
+
+	return fmt.Sprintf(
+		format,
+		config.GetProtocol(),
+		config.GetHost(),
+		EmojiPath,
+		emojiID,
+	)
+}
+
+// URIForTag generates an activitypub uri for a tag.
+func URIForTag(name string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s", protocol, host, TagsPath, strings.ToLower(name))

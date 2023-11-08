@@ -290,7 +290,7 @@ func (m *Media) isOrphaned(ctx context.Context, path string) (bool, error) {
 
 	case media.TypeEmoji:
 		// Generate static URL for this emoji to lookup.
-		staticURL := uris.GenerateURIForAttachment(
+		staticURL := uris.URIForAttachment(
 			pathParts[1], // instance account ID
 			string(media.TypeEmoji),
 			string(media.SizeStatic),

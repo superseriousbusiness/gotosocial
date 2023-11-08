@@ -319,7 +319,7 @@ func (cr *customRenderer) handleHashtag(text string) string {
 	// `<a href="https://example.org/tags/somehashtag" class="mention hashtag" rel="tag">#<span>SomeHashtag</span></a>`
 	var b strings.Builder
 	b.WriteString(`<a href="`)
-	b.WriteString(uris.GenerateURIForTag(normalized))
+	b.WriteString(uris.URIForTag(normalized))
 	b.WriteString(`" class="mention hashtag" rel="tag">#<span>`)
 	b.WriteString(normalized)
 	b.WriteString(`</span></a>`)

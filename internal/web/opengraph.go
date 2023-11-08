@@ -123,9 +123,14 @@ func (og *ogMeta) withStatus(status *apimodel.Status) *ogMeta {
 
 	if !status.Sensitive && len(status.MediaAttachments) > 0 {
 		a := status.MediaAttachments[0]
-		og.Image = a.PreviewURL
+
 		og.ImageWidth = strconv.Itoa(a.Meta.Small.Width)
 		og.ImageHeight = strconv.Itoa(a.Meta.Small.Height)
+
+		if a.PreviewURL != nil {
+			og.Image = *a.PreviewURL
+		}
+
 		if a.Description != nil {
 			og.ImageAlt = *a.Description
 		}

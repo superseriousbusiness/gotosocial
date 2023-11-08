@@ -23,17 +23,24 @@ import (
 	"io"
 	"net/url"
 	"strings"
+	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// GetFile retrieves a file from storage and streams it back to the caller via an io.reader embedded in *apimodel.Content.
-func (p *Processor) GetFile(ctx context.Context, requestingAccount *gtsmodel.Account, form *apimodel.GetContentRequestForm) (*apimodel.Content, gtserror.WithCode) {
+// GetFile retrieves a file from storage and streams it back
+// to the caller via an io.reader embedded in *apimodel.Content.
+func (p *Processor) GetFile(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	form *apimodel.GetContentRequestForm,
+) (*apimodel.Content, gtserror.WithCode) {
 	// parse the form fields
 	mediaSize, err := parseSize(form.MediaSize)
 	if err != nil {
@@ -118,11 +125,35 @@ func (p *Processor) getAttachmentContent(ctx context.Context, requestingAccount 
 	// retrieve attachment from the database and do basic checks on it
 	a, err := p.state.DB.GetAttachmentByID(ctx, wantedMediaID)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s could not be taken from the db: %w", wantedMediaID, err))
+		err = gtserror.Newf("attachment %s could not be taken from the db: %w", wantedMediaID, err)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	if a.AccountID != owningAccountID {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("attachment %s is not owned by %s", wantedMediaID, owningAccountID))
+		err = gtserror.Newf("attachment %s is not owned by %s", wantedMediaID, owningAccountID)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	// If this is an "Unknown" file type, ie., one we
+	// tried to process and couldn't, or one we refused
+	// to process because it wasn't supported, then we
+	// can skip a lot of steps here by simply forwarding
+	// the request to the remote URL.
+	if a.Type == gtsmodel.FileTypeUnknown {
+		remoteURL, err := url.Parse(a.RemoteURL)
+		if err != nil {
+			err = gtserror.Newf("error parsing remote URL of 'Unknown'-type attachment for redirection: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		url := &storage.PresignedURL{
+			URL: remoteURL,
+			// We might manage to cache the media
+			// at some point, so set a low-ish expiry.
+			Expiry: time.Now().Add(2 * time.Hour),
+		}
+
+		return &apimodel.Content{URL: url}, nil
 	}
 
 	if !*a.Cached {
@@ -205,7 +236,7 @@ func (p *Processor) getEmojiContent(ctx context.Context, fileName string, owning
 	// for using the static URL rather than full size url
 	// is that static emojis are always encoded as png,
 	// so this is more reliable than using full size url
-	imageStaticURL := uris.GenerateURIForAttachment(
+	imageStaticURL := uris.URIForAttachment(
 		owningAccountID,
 		string(media.TypeEmoji),
 		string(media.SizeStatic),
