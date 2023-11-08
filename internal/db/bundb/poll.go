@@ -534,10 +534,3 @@ func newSelectPollVotes(db *DB, pollID string) *bun.SelectQuery {
 		Where("? = ?", bun.Ident("poll_id"), pollID).
 		OrderExpr("? DESC", bun.Ident("id"))
 }
-
-// ensurePollVotes slices ensures the poll votes slice is set (and equal to len(options)).
-func ensurePollVotes(poll *gtsmodel.Poll) {
-	if len(poll.Votes) == 0 {
-		poll.Votes = make([]int, len(poll.Options))
-	}
-}
