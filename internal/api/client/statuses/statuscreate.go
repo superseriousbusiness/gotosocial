@@ -103,7 +103,12 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiStatus, errWithCode := m.processor.Status().Create(c.Request.Context(), authed.Account, authed.Application, form)
+	apiStatus, errWithCode := m.processor.Status().Create(
+		c.Request.Context(),
+		authed.Account,
+		authed.Application,
+		form,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -144,7 +149,7 @@ func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) erro
 	}
 
 	if form.Poll != nil {
-		if form.Poll.Options == nil {
+		if len(form.Poll.Options) == 0 {
 			return errors.New("poll with no options")
 		}
 		if len(form.Poll.Options) > maxPollOptions {

@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"codeberg.org/gruf/go-kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -73,20 +74,18 @@ func getFutureStatus() *gtsmodel.Status {
 
 func (suite *TimelineTestSuite) publicCount() int {
 	var publicCount int
-
 	for _, status := range suite.testStatuses {
 		if status.Visibility == gtsmodel.VisibilityPublic &&
 			status.BoostOfID == "" {
 			publicCount++
 		}
 	}
-
 	return publicCount
 }
 
 func (suite *TimelineTestSuite) checkStatuses(statuses []*gtsmodel.Status, maxID string, minID string, expectedLength int) {
 	if l := len(statuses); l != expectedLength {
-		suite.FailNow("", "expected %d statuses in slice, got %d", expectedLength, l)
+		suite.FailNowf("", "expected %d statuses in slice, got %d", expectedLength, l)
 	} else if l == 0 {
 		// Can't test empty slice.
 		return
@@ -98,15 +97,15 @@ func (suite *TimelineTestSuite) checkStatuses(statuses []*gtsmodel.Status, maxID
 		id := status.ID
 
 		if id >= maxID {
-			suite.FailNow("", "%s greater than maxID %s", id, maxID)
+			suite.FailNowf("", "%s greater than maxID %s", id, maxID)
 		}
 
 		if id <= minID {
-			suite.FailNow("", "%s smaller than minID %s", id, minID)
+			suite.FailNowf("", "%s smaller than minID %s", id, minID)
 		}
 
 		if id > highest {
-			suite.FailNow("", "statuses in slice were not ordered highest -> lowest ID")
+			suite.FailNowf("", "statuses in slice were not ordered highest -> lowest ID")
 		}
 
 		highest = id
@@ -120,6 +119,10 @@ func (suite *TimelineTestSuite) TestGetPublicTimeline() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	suite.T().Log(kv.Field{
+		K: "statuses", V: s,
+	})
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, suite.publicCount())
 }
@@ -154,7 +157,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimeline() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 16)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 18)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
@@ -186,7 +189,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 6)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
@@ -208,7 +211,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
 	}
 
 	suite.NotContains(s, futureStatus)
-	suite.checkStatuses(s, id.Highest, id.Lowest, 16)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 18)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
@@ -239,8 +242,8 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 	}
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
-	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[0].ID)
-	suite.Equal("01FCTA44PW9H1TB328S9AQXKDS", s[len(s)-1].ID)
+	suite.Equal("01HEN2RZ8BG29Y5Z9VJC73HZW7", s[0].ID)
+	suite.Equal("01FN3VJGFH10KR7S2PB0GFJZYG", s[len(s)-1].ID)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
@@ -254,7 +257,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 11)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 12)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
@@ -269,8 +272,8 @@ func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
 	}
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
-	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[0].ID)
-	suite.Equal("01FCQSQ667XHJ9AV9T27SJJSX5", s[len(s)-1].ID)
+	suite.Equal("01HEN2PRXT0TF4YDRA64FZZRN7", s[0].ID)
+	suite.Equal("01FF25D5Q0DH7CHD57CTRS6WK0", s[len(s)-1].ID)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineMinID() {

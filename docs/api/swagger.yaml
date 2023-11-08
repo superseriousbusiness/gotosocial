@@ -1416,6 +1416,10 @@ definitions:
                 description: 'Statistics about the instance: number of posts, accounts, etc.'
                 type: object
                 x-go-name: Stats
+            terms:
+                description: Terms and conditions for accounts on this instance.
+                type: string
+                x-go-name: Terms
             thumbnail:
                 description: URL of the instance avatar/banner image.
                 example: https://example.org/files/instance/thumbnail.jpeg
@@ -1533,6 +1537,10 @@ definitions:
                 example: https://github.com/superseriousbusiness/gotosocial
                 type: string
                 x-go-name: SourceURL
+            terms:
+                description: Terms and conditions for accounts on this instance.
+                type: string
+                x-go-name: Terms
             thumbnail:
                 $ref: '#/definitions/instanceV2Thumbnail'
             title:
@@ -1993,7 +2001,7 @@ definitions:
                 type: boolean
                 x-go-name: Expired
             expires_at:
-                description: When the poll ends. (ISO 8601 Datetime), or null if the poll does not end
+                description: When the poll ends. (ISO 8601 Datetime).
                 type: string
                 x-go-name: ExpiresAt
             id:
@@ -2008,7 +2016,7 @@ definitions:
             options:
                 description: Possible answers for the poll.
                 items:
-                    $ref: '#/definitions/pollOptions'
+                    $ref: '#/definitions/pollOption'
                 type: array
                 x-go-name: Options
             own_votes:
@@ -2023,7 +2031,7 @@ definitions:
                 type: boolean
                 x-go-name: Voted
             voters_count:
-                description: How many unique accounts have voted on a multiple-choice poll. Null if multiple is false.
+                description: How many unique accounts have voted on a multiple-choice poll.
                 format: int64
                 type: integer
                 x-go-name: VotersCount
@@ -2036,22 +2044,20 @@ definitions:
         type: object
         x-go-name: Poll
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    pollOptions:
+    pollOption:
         properties:
             title:
                 description: The text value of the poll option. String.
                 type: string
                 x-go-name: Title
             votes_count:
-                description: |-
-                    The number of received votes for this option.
-                    Number, or null if results are not published yet.
+                description: The number of received votes for this option.
                 format: int64
                 type: integer
                 x-go-name: VotesCount
-        title: PollOptions represents the current vote counts for different poll options.
+        title: PollOption represents the current vote counts for different poll options.
         type: object
-        x-go-name: PollOptions
+        x-go-name: PollOption
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     report:
         properties:
@@ -5986,6 +5992,76 @@ paths:
             summary: Clear/delete all notifications for currently authorized user.
             tags:
                 - notifications
+    /api/v1/polls/{id}:
+        get:
+            operationId: poll
+            parameters:
+                - description: Target poll ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested poll.
+                    schema:
+                        $ref: '#/definitions/poll'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: View poll with given ID.
+            tags:
+                - polls
+    /api/v1/polls/{id}/vote:
+        post:
+            operationId: poll
+            parameters:
+                - description: Target poll ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated poll with user vote choices.
+                    schema:
+                        $ref: '#/definitions/poll'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: unprocessable entity
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Vote with choices in the given poll.
+            tags:
+                - polls
     /api/v1/preferences:
         get:
             description: |-

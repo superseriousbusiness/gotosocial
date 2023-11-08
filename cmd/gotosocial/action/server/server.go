@@ -200,6 +200,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Workers.ProcessFromClientAPI = processor.Workers().ProcessFromClientAPI
 	state.Workers.ProcessFromFediAPI = processor.Workers().ProcessFromFediAPI
 
+	// Schedule tasks for all existing poll expiries.
+	if err := processor.Polls().ScheduleAll(ctx); err != nil {
+		return fmt.Errorf("error scheduling poll expiries: %w", err)
+	}
+
 	/*
 		HTTP router initialization
 	*/

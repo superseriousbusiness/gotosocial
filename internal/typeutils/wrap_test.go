@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type WrapTestSuite struct {
@@ -36,7 +37,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
 	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
 	suite.NoError(err)
 
-	create, err := suite.typeconverter.WrapStatusableInCreate(note, true)
+	create := typeutils.WrapStatusableInCreate(note, true)
 	suite.NoError(err)
 	suite.NotNil(create)
 
@@ -50,7 +51,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",
   "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "published": "2021-10-20T12:40:37+02:00",
   "to": "https://www.w3.org/ns/activitystreams#Public",
@@ -64,7 +65,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
 	suite.NoError(err)
 
-	create, err := suite.typeconverter.WrapStatusableInCreate(note, false)
+	create := typeutils.WrapStatusableInCreate(note, false)
 	suite.NoError(err)
 	suite.NotNil(create)
 
@@ -78,7 +79,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity",
+  "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",
   "object": {
     "attachment": [],
     "attributedTo": "http://localhost:8080/users/the_mighty_zork",

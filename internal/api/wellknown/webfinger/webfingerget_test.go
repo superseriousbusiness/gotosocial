@@ -83,8 +83,11 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 	// to new host + account domain.
 	config.SetHost(host)
 	config.SetAccountDomain(accountDomain)
+	testrig.StopWorkers(&suite.state)
+	testrig.StartWorkers(&suite.state)
 	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(&suite.state), &suite.state, suite.emailSender)
 	suite.webfingerModule = webfinger.New(suite.processor)
+	testrig.StartWorkers(&suite.state)
 
 	// Generate a new account for the
 	// tester, which uses the new host.

@@ -26,18 +26,16 @@ import (
 	"codeberg.org/gruf/go-sched"
 )
 
-// Scheduler wraps an underlying task scheduler
-// to provide concurrency safe tracking by 'id'
-// strings in order to provide easy cancellation.
+// Scheduler wraps an underlying scheduler to provide
+// task tracking by unique string identifiers, so jobs
+// may be cancelled with only an identifier.
 type Scheduler struct {
 	sch sched.Scheduler
 	ts  map[string]*task
 	mu  sync.Mutex
 }
 
-// Start will start the Scheduler background routine, returning success.
-// Note that this creates a new internal task map, stopping and dropping
-// all previously known running tasks.
+// Start attempts to start the scheduler. Returns false if already running.
 func (sch *Scheduler) Start() bool {
 	if sch.sch.Start(nil) {
 		sch.ts = make(map[string]*task)
@@ -46,9 +44,8 @@ func (sch *Scheduler) Start() bool {
 	return false
 }
 
-// Stop will stop the Scheduler background routine, returning success.
-// Note that this nils-out the internal task map, stopping and dropping
-// all previously known running tasks.
+// Stop attempts to stop scheduler, cancelling
+// all running tasks. Returns false if not running.
 func (sch *Scheduler) Stop() bool {
 	if sch.sch.Stop() {
 		sch.ts = nil
@@ -57,18 +54,17 @@ func (sch *Scheduler) Stop() bool {
 	return false
 }
 
-// AddOnce adds a run-once job with given id, function and timing parameters, returning success.
+// AddOnce schedules the given task to run at time, registered under the given ID. Returns false if task already exists for id.
 func (sch *Scheduler) AddOnce(id string, start time.Time, fn func(context.Context, time.Time)) bool {
 	return sch.schedule(id, fn, (*sched.Once)(&start))
 }
 
-// AddRecurring adds a new recurring job with given id, function and timing parameters, returning success.
+// AddRecurring schedules the given task to return at given period, starting at given time, registered under given id. Returns false if task already exists for id.
 func (sch *Scheduler) AddRecurring(id string, start time.Time, freq time.Duration, fn func(context.Context, time.Time)) bool {
 	return sch.schedule(id, fn, &sched.PeriodicAt{Once: sched.Once(start), Period: sched.Periodic(freq)})
 }
 
-// Cancel will attempt to cancel job with given id,
-// dropping it from internal scheduler and task map.
+// Cancel attempts to cancel a scheduled task with id, returns false if no task found.
 func (sch *Scheduler) Cancel(id string) bool {
 	// Attempt to acquire and
 	// delete task with iD.
@@ -125,6 +121,8 @@ func (sch *Scheduler) schedule(id string, fn func(context.Context, time.Time), t
 	return true
 }
 
+// task simply wraps together a scheduled
+// job, and the matching cancel function.
 type task struct {
 	job  *sched.Job
 	cncl func()

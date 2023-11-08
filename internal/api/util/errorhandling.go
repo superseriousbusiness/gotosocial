@@ -40,7 +40,7 @@ import (
 // 404 header and footer.
 //
 // If an error is returned by InstanceGet, the function will panic.
-func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string) {
+func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), accept string, errWithCode gtserror.WithCode) {
 	switch accept {
 	case string(TextHTML):
 		ctx := c.Request.Context()
@@ -54,9 +54,7 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 			"requestID": gtscontext.RequestID(ctx),
 		})
 	default:
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": http.StatusText(http.StatusNotFound),
-		})
+		c.JSON(http.StatusNotFound, gin.H{"error": errWithCode.Safe()})
 	}
 }
 
@@ -122,7 +120,7 @@ func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet fun
 
 	if errWithCode.Code() == http.StatusNotFound {
 		// Use our special not found handler with useful status text.
-		NotFoundHandler(c, instanceGet, accept)
+		NotFoundHandler(c, instanceGet, accept, errWithCode)
 	} else {
 		genericErrorHandler(c, instanceGet, accept, errWithCode)
 	}

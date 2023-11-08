@@ -93,6 +93,13 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		case ap.ObjectNote:
 			return p.clientAPI.CreateStatus(ctx, cMsg)
 
+		// CREATE QUESTION
+		// (note we don't handle poll *votes* as AS
+		// question type when federating (just notes),
+		// but it makes for a nicer type switch here.
+		case ap.ActivityQuestion:
+			return p.clientAPI.CreatePollVote(ctx, cMsg)
+
 		// CREATE FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.CreateFollowReq(ctx, cMsg)
@@ -189,7 +196,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		}
 	}
 
-	return nil
+	return gtserror.Newf("unhandled: %s %s", cMsg.APActivityType, cMsg.APObjectType)
 }
 
 func (p *clientAPI) CreateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
@@ -205,7 +212,7 @@ func (p *clientAPI) CreateAccount(ctx context.Context, cMsg messages.FromClientA
 	}
 
 	if err := p.surface.emailPleaseConfirm(ctx, user, account.Username); err != nil {
-		return gtserror.Newf("error emailing %s: %w", account.Username, err)
+		log.Errorf(ctx, "error emailing confirm: %v", err)
 	}
 
 	return nil
@@ -218,7 +225,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
-		return gtserror.Newf("error timelining status: %w", err)
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
 	if status.InReplyToID != "" {
@@ -228,7 +235,48 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	if err := p.federate.CreateStatus(ctx, status); err != nil {
-		return gtserror.Newf("error federating status: %w", err)
+		log.Errorf(ctx, "error federating status: %v", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// Cast the create poll vote attached to message.
+	vote, ok := cMsg.GTSModel.(*gtsmodel.PollVote)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.Pollvote", cMsg.GTSModel)
+	}
+
+	// Ensure the vote is fully populated in order to get original poll.
+	if err := p.state.DB.PopulatePollVote(ctx, vote); err != nil {
+		return gtserror.Newf("error populating poll vote from db: %w", err)
+	}
+
+	// Ensure the poll on the vote is fully populated to get origin status.
+	if err := p.state.DB.PopulatePoll(ctx, vote.Poll); err != nil {
+		return gtserror.Newf("error populating poll from db: %w", err)
+	}
+
+	// Get the origin status,
+	// (also set the poll on it).
+	status := vote.Poll.Status
+	status.Poll = vote.Poll
+
+	// Interaction counts changed on the source status, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
+
+	if *status.Local {
+		// These are poll votes in a local status, we only need to
+		// federate the updated status model with latest vote counts.
+		if err := p.federate.UpdateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error federating status update: %v", err)
+		}
+	} else {
+		// These are votes in a remote poll, federate to origin the new poll vote(s).
+		if err := p.federate.CreatePollVote(ctx, vote.Poll, vote); err != nil {
+			log.Errorf(ctx, "error federating poll vote: %v", err)
+		}
 	}
 
 	return nil
@@ -241,14 +289,17 @@ func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClien
 	}
 
 	if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
-		return gtserror.Newf("error notifying follow request: %w", err)
+		log.Errorf(ctx, "error notifying follow request: %v", err)
 	}
+
+	// Convert the follow request to follow model (requests are sent as follows).
+	follow := p.converter.FollowRequestToFollow(ctx, followRequest)
 
 	if err := p.federate.Follow(
 		ctx,
-		p.converter.FollowRequestToFollow(ctx, followRequest),
+		follow,
 	); err != nil {
-		return gtserror.Newf("error federating follow: %w", err)
+		log.Errorf(ctx, "error federating follow request: %v", err)
 	}
 
 	return nil
@@ -266,7 +317,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg messages.FromClientAPI)
 	}
 
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
-		return gtserror.Newf("error notifying fave: %w", err)
+		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
 	// Interaction counts changed on the faved status;
@@ -274,7 +325,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg messages.FromClientAPI)
 	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
 
 	if err := p.federate.Like(ctx, fave); err != nil {
-		return gtserror.Newf("error federating like: %w", err)
+		log.Errorf(ctx, "error federating like: %v", err)
 	}
 
 	return nil
@@ -288,12 +339,12 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg messages.FromClient
 
 	// Timeline and notify the boost wrapper status.
 	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
-		return gtserror.Newf("error timelining boost: %w", err)
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
 	// Notify the boost target account.
 	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
-		return gtserror.Newf("error notifying boost: %w", err)
+		log.Errorf(ctx, "error notifying boost: %v", err)
 	}
 
 	// Interaction counts changed on the boosted status;
@@ -301,7 +352,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg messages.FromClient
 	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
 
 	if err := p.federate.Announce(ctx, boost); err != nil {
-		return gtserror.Newf("error federating announce: %w", err)
+		log.Errorf(ctx, "error federating announce: %v", err)
 	}
 
 	return nil
@@ -335,7 +386,7 @@ func (p *clientAPI) CreateBlock(ctx context.Context, cMsg messages.FromClientAPI
 	// TODO: same with bookmarks?
 
 	if err := p.federate.Block(ctx, block); err != nil {
-		return gtserror.Newf("error federating block: %w", err)
+		log.Errorf(ctx, "error federating block: %v", err)
 	}
 
 	return nil
@@ -350,7 +401,19 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg messages.FromClientAP
 
 	// Federate the updated status changes out remotely.
 	if err := p.federate.UpdateStatus(ctx, status); err != nil {
-		return gtserror.Newf("error federating status update: %w", err)
+		log.Errorf(ctx, "error federating status update: %v", err)
+	}
+
+	// Status representation has changed, invalidate from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+
+	if status.Poll != nil && status.Poll.Closing {
+
+		// If the latest status has a newly closed poll, at least compared
+		// to the existing version, then notify poll close to all voters.
+		if err := p.surface.notifyPollClose(ctx, status); err != nil {
+			log.Errorf(ctx, "error notifying poll close: %v", err)
+		}
 	}
 
 	return nil
@@ -363,7 +426,7 @@ func (p *clientAPI) UpdateAccount(ctx context.Context, cMsg messages.FromClientA
 	}
 
 	if err := p.federate.UpdateAccount(ctx, account); err != nil {
-		return gtserror.Newf("error federating account update: %w", err)
+		log.Errorf(ctx, "error federating account update: %v", err)
 	}
 
 	return nil
@@ -382,7 +445,7 @@ func (p *clientAPI) UpdateReport(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	if err := p.surface.emailReportClosed(ctx, report); err != nil {
-		return gtserror.Newf("error sending report closed email: %w", err)
+		log.Errorf(ctx, "error emailing report closed: %v", err)
 	}
 
 	return nil
@@ -395,11 +458,11 @@ func (p *clientAPI) AcceptFollow(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	if err := p.surface.notifyFollow(ctx, follow); err != nil {
-		return gtserror.Newf("error notifying follow: %w", err)
+		log.Errorf(ctx, "error notifying follow: %v", err)
 	}
 
 	if err := p.federate.AcceptFollow(ctx, follow); err != nil {
-		return gtserror.Newf("error federating follow request accept: %w", err)
+		log.Errorf(ctx, "error federating follow accept: %v", err)
 	}
 
 	return nil
@@ -415,7 +478,7 @@ func (p *clientAPI) RejectFollowRequest(ctx context.Context, cMsg messages.FromC
 		ctx,
 		p.converter.FollowRequestToFollow(ctx, followReq),
 	); err != nil {
-		return gtserror.Newf("error federating reject follow: %w", err)
+		log.Errorf(ctx, "error federating follow reject: %v", err)
 	}
 
 	return nil
@@ -428,7 +491,7 @@ func (p *clientAPI) UndoFollow(ctx context.Context, cMsg messages.FromClientAPI)
 	}
 
 	if err := p.federate.UndoFollow(ctx, follow); err != nil {
-		return gtserror.Newf("error federating undo follow: %w", err)
+		log.Errorf(ctx, "error federating follow undo: %v", err)
 	}
 
 	return nil
@@ -441,7 +504,7 @@ func (p *clientAPI) UndoBlock(ctx context.Context, cMsg messages.FromClientAPI) 
 	}
 
 	if err := p.federate.UndoBlock(ctx, block); err != nil {
-		return gtserror.Newf("error federating undo block: %w", err)
+		log.Errorf(ctx, "error federating block undo: %v", err)
 	}
 
 	return nil
@@ -458,7 +521,7 @@ func (p *clientAPI) UndoFave(ctx context.Context, cMsg messages.FromClientAPI) e
 	p.surface.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
 
 	if err := p.federate.UndoLike(ctx, statusFave); err != nil {
-		return gtserror.Newf("error federating undo like: %w", err)
+		log.Errorf(ctx, "error federating like undo: %v", err)
 	}
 
 	return nil
@@ -475,7 +538,7 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	if err := p.surface.deleteStatusFromTimelines(ctx, status.ID); err != nil {
-		return gtserror.Newf("error removing status from timelines: %w", err)
+		log.Errorf(ctx, "error removing timelined status: %v", err)
 	}
 
 	// Interaction counts changed on the boosted status;
@@ -483,7 +546,7 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg messages.FromClientAP
 	p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
 
 	if err := p.federate.UndoAnnounce(ctx, status); err != nil {
-		return gtserror.Newf("error federating undo announce: %w", err)
+		log.Errorf(ctx, "error federating announce undo: %v", err)
 	}
 
 	return nil
@@ -509,7 +572,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
-		return gtserror.Newf("error wiping status: %w", err)
+		log.Errorf(ctx, "error wiping status: %v", err)
 	}
 
 	if status.InReplyToID != "" {
@@ -519,7 +582,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg messages.FromClientAP
 	}
 
 	if err := p.federate.DeleteStatus(ctx, status); err != nil {
-		return gtserror.Newf("error federating status delete: %w", err)
+		log.Errorf(ctx, "error federating status delete: %v", err)
 	}
 
 	return nil
@@ -543,11 +606,11 @@ func (p *clientAPI) DeleteAccount(ctx context.Context, cMsg messages.FromClientA
 	}
 
 	if err := p.federate.DeleteAccount(ctx, cMsg.TargetAccount); err != nil {
-		return gtserror.Newf("error federating account delete: %w", err)
+		log.Errorf(ctx, "error federating account delete: %v", err)
 	}
 
 	if err := p.account.Delete(ctx, cMsg.TargetAccount, originID); err != nil {
-		return gtserror.Newf("error deleting account: %w", err)
+		log.Errorf(ctx, "error deleting account: %v", err)
 	}
 
 	return nil
@@ -563,12 +626,12 @@ func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientA
 	// remote instance if desired.
 	if *report.Forwarded {
 		if err := p.federate.Flag(ctx, report); err != nil {
-			return gtserror.Newf("error federating report: %w", err)
+			log.Errorf(ctx, "error federating flag: %v", err)
 		}
 	}
 
 	if err := p.surface.emailReportOpened(ctx, report); err != nil {
-		return gtserror.Newf("error sending report opened email: %w", err)
+		log.Errorf(ctx, "error emailing report opened: %v", err)
 	}
 
 	return nil

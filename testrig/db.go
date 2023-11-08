@@ -44,6 +44,8 @@ var testModels = []interface{}{
 	&gtsmodel.Marker{},
 	&gtsmodel.MediaAttachment{},
 	&gtsmodel.Mention{},
+	&gtsmodel.Poll{},
+	&gtsmodel.PollVote{},
 	&gtsmodel.Status{},
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
@@ -315,6 +317,18 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestPolls() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestPollVotes() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
 	if err := db.CreateInstanceAccount(ctx); err != nil {
 		log.Panic(nil, err)
 	}
@@ -330,7 +344,7 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 func StandardDBTeardown(db db.DB) {
 	ctx := context.Background()
 	if db == nil {
-		log.Panic(nil, "db was nil")
+		return
 	}
 	for _, m := range testModels {
 		if err := db.DropTable(ctx, m); err != nil {

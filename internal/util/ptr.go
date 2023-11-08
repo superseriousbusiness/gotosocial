@@ -17,6 +17,18 @@
 
 package util
 
+// EqualPtrs returns whether the values contained within two comparable ptr types are equal.
+func EqualPtrs[T comparable](t1, t2 *T) bool {
+	switch {
+	case t1 == nil:
+		return (t2 == nil)
+	case t2 == nil:
+		return false
+	default:
+		return (*t1 == *t2)
+	}
+}
+
 // Ptr returns a pointer to the passed in type
 func Ptr[T any](t T) *T {
 	return &t

@@ -154,17 +154,6 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
-	if status.InReplyToID != "" && status.InReplyTo == nil {
-		// Status parent is not set, fetch from database.
-		status.InReplyTo, err = s.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			status.InReplyToID,
-		)
-		if err != nil {
-			errs.Appendf("error populating status parent: %w", err)
-		}
-	}
-
 	if status.InReplyToID != "" {
 		if status.InReplyTo == nil {
 			// Status parent is not set, fetch from database.
@@ -210,6 +199,17 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 			if err != nil {
 				errs.Appendf("error populating status boost author: %w", err)
 			}
+		}
+	}
+
+	if status.PollID != "" && status.Poll == nil {
+		// Status poll is not set, fetch from database.
+		status.Poll, err = s.state.DB.GetPollByID(
+			gtscontext.SetBarebones(ctx),
+			status.PollID,
+		)
+		if err != nil {
+			errs.Appendf("error populating status poll: %w", err)
 		}
 	}
 
