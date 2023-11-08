@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -75,8 +74,9 @@ func (p *pollDB) getPoll(ctx context.Context, lookup string, dbQuery func(*gtsmo
 			return nil, err
 		}
 
-		// Ensure votes are set.
-		ensurePollVotes(&poll)
+		// Ensure vote slice
+		// is non nil and set.
+		poll.CheckVotes()
 
 		return &poll, nil
 	}, keyParts...)
@@ -150,8 +150,9 @@ func (p *pollDB) PopulatePoll(ctx context.Context, poll *gtsmodel.Poll) error {
 }
 
 func (p *pollDB) PutPoll(ctx context.Context, poll *gtsmodel.Poll) error {
-	// Ensure votes are set.
-	ensurePollVotes(poll)
+	// Ensure vote slice
+	// is non nil and set.
+	poll.CheckVotes()
 
 	return p.state.Caches.GTS.Poll().Store(poll, func() error {
 		_, err := p.db.NewInsert().Model(poll).Exec(ctx)
@@ -160,8 +161,9 @@ func (p *pollDB) PutPoll(ctx context.Context, poll *gtsmodel.Poll) error {
 }
 
 func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...string) error {
-	// Ensure votes are set.
-	ensurePollVotes(poll)
+	// Ensure vote slice
+	// is non nil and set.
+	poll.CheckVotes()
 
 	return p.state.Caches.GTS.Poll().Store(poll, func() error {
 		return p.db.RunInTx(ctx, func(tx Tx) error {
@@ -347,16 +349,8 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 				return err
 			}
 
-			// Ensure votes is set.
-			ensurePollVotes(&poll)
-
-			// Increment each poll vote count.
-			for _, choice := range vote.Choices {
-				poll.Votes[choice]++
-			}
-
-			// Incr voters.
-			(*poll.Voters)++
+			// Increment poll votes for choices.
+			poll.IncrementVotes(vote.Choices)
 
 			// Finally, update the poll entry.
 			_, err := tx.NewUpdate().
@@ -413,9 +407,7 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 		}
 
 		// Zero all counts.
-		poll.Voters = util.Ptr(0)
-		poll.Votes = nil
-		ensurePollVotes(&poll)
+		poll.ResetVotes()
 
 		// Finally, update the poll entry.
 		_, err := tx.NewUpdate().
@@ -485,20 +477,8 @@ func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID 
 			return err
 		}
 
-		// Ensure votes is set.
-		ensurePollVotes(&poll)
-
-		// Decrement each poll vote count.
-		for _, choice := range choices {
-			if poll.Votes[choice] > 0 {
-				poll.Votes[choice]--
-			}
-		}
-
-		// Decrement voters.
-		if (*poll.Voters) > 0 {
-			(*poll.Voters)--
-		}
+		// Decrement votes for choices.
+		poll.IncrementVotes(choices)
 
 		// Finally, update the poll entry.
 		_, err := tx.NewUpdate().

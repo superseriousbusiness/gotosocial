@@ -60,6 +60,53 @@ func (p *Poll) Closed() bool {
 		time.Now().After(p.ClosedAt)
 }
 
+// IncrementVotes increments Poll vote and voter counts for given choices.
+func (p *Poll) IncrementVotes(choices []int) {
+	if len(choices) == 0 {
+		return
+	}
+	p.CheckVotes()
+	for _, choice := range p.Votes {
+		p.Votes[choice]++
+	}
+	(*p.Voters)++
+}
+
+// DecrementVotes decrements Poll vote and voter counts for given choices.
+func (p *Poll) DecrementVotes(choices []int) {
+	if len(choices) == 0 {
+		return
+	}
+	p.CheckVotes()
+	for _, choice := range p.Votes {
+		if p.Votes[choice] != 0 {
+			p.Votes[choice]--
+		}
+	}
+	if (*p.Voters) != 0 {
+		(*p.Voters)--
+	}
+}
+
+// ResetVotes resets all stored vote counts.
+func (p *Poll) ResetVotes() {
+	p.Votes = make([]int, len(p.Options))
+	p.Voters = new(int)
+}
+
+// CheckVotes ensures that the Poll.Votes slice is not nil,
+// else initializing an int slice len+cap equal to Poll.Options.
+// Note this should not be needed anywhere other than the
+// database and the processor.
+func (p *Poll) CheckVotes() {
+	if p.Votes == nil {
+		p.Votes = make([]int, len(p.Options))
+	}
+	if p.Voters == nil {
+		p.Voters = new(int)
+	}
+}
+
 // PollVote represents a single instance of vote(s) in a Poll by an account.
 // If the Poll is single-choice, len(.Choices) = 1, if multiple-choice then
 // len(.Choices) >= 1. Can be remote or local.

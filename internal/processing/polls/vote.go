@@ -98,6 +98,11 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 		OriginAccount:  requester,
 	})
 
+	// Before returning the converted poll model,
+	// increment the vote counts on our local copy
+	// to get latest, instead of another db query.
+	poll.IncrementVotes(choices)
+
 	// Return converted API model poll.
 	return p.toAPIPoll(ctx, requester, poll)
 }
