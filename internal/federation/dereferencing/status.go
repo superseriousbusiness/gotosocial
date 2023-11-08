@@ -370,7 +370,8 @@ func (d *Dereferencer) enrichStatus(
 		// Generate new status ID from the provided creation date.
 		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
 		if err != nil {
-			return nil, nil, gtserror.Newf("invalid created at date: %w", err)
+			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
+			latestStatus.ID = id.NewULID() // just use "now"
 		}
 	}
 
@@ -538,7 +539,7 @@ func (d *Dereferencer) fetchStatusMentions(ctx context.Context, requestUser stri
 		//       support for edited status revision history.
 		mention.ID, err = id.NewULIDFromTime(status.CreatedAt)
 		if err != nil {
-			log.Errorf(ctx, "invalid created at date: %v", err)
+			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
 			mention.ID = id.NewULID() // just use "now"
 		}
 
@@ -697,7 +698,7 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 			//       support for edited status revision history.
 			status.Poll.ID, err = id.NewULIDFromTime(status.CreatedAt)
 			if err != nil {
-				log.Errorf(ctx, "invalid created at date: %v", err)
+				log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
 				status.Poll.ID = id.NewULID() // just use "now"
 			}
 
