@@ -263,38 +263,22 @@ func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg messages.FromClient
 	status := vote.Poll.Status
 	status.Poll = vote.Poll
 
+	// Interaction counts changed on the source status, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
+
 	if *status.Local {
-		// These were poll votes in a local status,
-		// we only need to federate-out the updated
-		// status model with latest vote counts.
-		//
-		// Handle as a regular status update by
-		// updating the cMsg to contain the status.
-		cMsg.APActivityType = ap.ActivityUpdate
-		cMsg.APObjectType = ap.ObjectNote
-		cMsg.GTSModel = status
-		return p.UpdateStatus(ctx, cMsg)
+		// These are poll votes in a local status, we only need to
+		// federate the updated status model with latest vote counts.
+		if err := p.federate.UpdateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error federating status update: %v", err)
+		}
+	} else {
+		// These are votes in a remote poll, federate to origin the new poll vote(s).
+		if err := p.federate.CreatePollVote(ctx, vote.Poll, vote); err != nil {
+			log.Errorf(ctx, "error federating poll vote: %v", err)
+		}
 	}
 
-	// Federate back to origin server the new poll vote(s).
-	if err := p.federate.CreatePollVote(ctx, vote.Poll, vote); err != nil {
-		log.Errorf(ctx, "error federating poll vote: %v", err)
-	}
-
-	// Force-refresh the poll source status in
-	// order to get most up-to-date vote counts.
-	if _, _, err := p.federate.RefreshStatus(
-		ctx,
-		cMsg.OriginAccount.Username,
-		status,
-		nil,
-		true,
-	); err != nil {
-		log.Errorf(ctx, "error refreshing poll status: %v", err)
-	}
-
-	// Votes in status SHOULD have changed, invalidate caches.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 	return nil
 }
 

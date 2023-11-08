@@ -219,8 +219,26 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg messages.FromFediAPI)
 		return gtserror.Newf("error populating poll vote from db: %w", err)
 	}
 
+	// Ensure the poll on the vote is fully populated to get origin status.
+	if err := p.state.DB.PopulatePoll(ctx, vote.Poll); err != nil {
+		return gtserror.Newf("error populating poll from db: %w", err)
+	}
+
+	// Get the origin status,
+	// (also set the poll on it).
+	status := vote.Poll.Status
+	status.Poll = vote.Poll
+
 	// Interaction counts changed on the source status, uncache from timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
+
+	if *status.Local {
+		// These were poll votes in a local status, we need to
+		// federate the updated status model with latest vote counts.
+		if err := p.federate.UpdateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error federating status update: %v", err)
+		}
+	}
 
 	return nil
 }
