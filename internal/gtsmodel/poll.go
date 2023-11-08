@@ -66,7 +66,7 @@ func (p *Poll) IncrementVotes(choices []int) {
 		return
 	}
 	p.CheckVotes()
-	for _, choice := range p.Votes {
+	for _, choice := range choices {
 		p.Votes[choice]++
 	}
 	(*p.Voters)++
@@ -78,7 +78,7 @@ func (p *Poll) DecrementVotes(choices []int) {
 		return
 	}
 	p.CheckVotes()
-	for _, choice := range p.Votes {
+	for _, choice := range choices {
 		if p.Votes[choice] != 0 {
 			p.Votes[choice]--
 		}
