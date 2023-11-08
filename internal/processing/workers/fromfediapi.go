@@ -233,6 +233,10 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg messages.FromFediAPI)
 	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
 
 	if *status.Local {
+		// Before federating it, increment the
+		// poll vote counts on our local copy.
+		status.Poll.IncrementVotes(vote.Choices)
+
 		// These were poll votes in a local status, we need to
 		// federate the updated status model with latest vote counts.
 		if err := p.federate.UpdateStatus(ctx, status); err != nil {
