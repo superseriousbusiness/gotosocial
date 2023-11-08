@@ -24,17 +24,17 @@ import (
 
 // Poll represents an attached (to) Status poll, i.e. a questionaire. Can be remote / local.
 type Poll struct {
-	ID         string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`    // Unique identity string.
-	Multiple   *bool     `bun:"type:BOOLEAN,nullzero,notnull,default:false"` // Is this a multiple choice poll? i.e. can you vote on multiple options.
-	HideCounts *bool     `bun:"type:BOOLEAN,nullzero,notnull,default:false"` // Hides vote counts until poll ends.
-	Options    []string  `bun:"type:VARCHAR,nullzero,notnull"`               // The available options for this poll.
-	Votes      []int     `bun:"type:VARCHAR,nullzero,notnull"`               // Vote counts per choice.
-	Voters     *int      `bun:"type:INTEGER,nullzero,notnull"`               // Total no. voters count.
-	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`       // Status ID of which this Poll is attached to.
-	Status     *Status   `bun:"-"`                                           // The related Status for StatusID (not always set).
-	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`           // The expiry date of this Poll.
-	ClosedAt   time.Time `bun:"type:timestamptz,nullzero"`                   // The closure date of this poll, will be zerotime until set.
-	Closing    bool      `bun:"-"`                                           // An ephemeral field only set on Polls in the middle of closing.
+	ID         string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // Unique identity string.
+	Multiple   *bool     `bun:",nullzero,notnull,default:false"`          // Is this a multiple choice poll? i.e. can you vote on multiple options.
+	HideCounts *bool     `bun:",nullzero,notnull,default:false"`          // Hides vote counts until poll ends.
+	Options    []string  `bun:",nullzero,notnull"`                        // The available options for this poll.
+	Votes      []int     `bun:",nullzero,notnull"`                        // Vote counts per choice.
+	Voters     *int      `bun:",nullzero,notnull"`                        // Total no. voters count.
+	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`    // Status ID of which this Poll is attached to.
+	Status     *Status   `bun:"-"`                                        // The related Status for StatusID (not always set).
+	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`        // The expiry date of this Poll.
+	ClosedAt   time.Time `bun:"type:timestamptz,nullzero"`                // The closure date of this poll, will be zerotime until set.
+	Closing    bool      `bun:"-"`                                        // An ephemeral field only set on Polls in the middle of closing.
 	// no creation date, use attached Status.CreatedAt.
 }
 
@@ -112,7 +112,7 @@ func (p *Poll) CheckVotes() {
 // len(.Choices) >= 1. Can be remote or local.
 type PollVote struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // Unique identity string.
-	Choices   []int     `bun:"type:VARCHAR,nullzero,notnull"`                               // The Poll's option indices of which these are votes for.
+	Choices   []int     `bun:",nullzero,notnull"`                                           // The Poll's option indices of which these are votes for.
 	AccountID string    `bun:"type:CHAR(26),nullzero,notnull,unique:in_poll_by_account"`    // Account ID from which this vote originated.
 	Account   *Account  `bun:"-"`                                                           // The related Account for AccountID (not always set).
 	PollID    string    `bun:"type:CHAR(26),nullzero,notnull,unique:in_poll_by_account"`    // Poll ID of which this is a vote in.
