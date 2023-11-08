@@ -70,7 +70,7 @@ func main() {
 	fmt.Fprint(output, ")\n\n")
 	generateFields(output, nil, reflect.TypeOf(config.Configuration{}))
 	_ = output.Close()
-	_ = exec.Command("gofumports", "-w", out).Run()
+	_ = exec.Command("gofumpt", "-w", out).Run()
 
 	// The plan here is that eventually we might be able
 	// to generate an example configuration from struct tags
