@@ -1273,6 +1273,62 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 	}
 }
 
+func (suite *ManagerTestSuite) TestMisreportedSmallMedia() {
+	const accountID = "01FS1X72SK9ZPW0J1QQ68BD264"
+	var actualSize int
+
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+		// Load bytes from small png.
+		b, err := os.ReadFile("./test/test-png-alphachannel-1x1px.png")
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		actualSize = len(b)
+
+		// Report media as twice its actual size. This should be corrected.
+		return io.NopCloser(bytes.NewBuffer(b)), int64(2 * actualSize), nil
+	}
+
+	// Process the media with no additional info provided.
+	attachment, err := suite.manager.
+		PreProcessMedia(data, accountID, nil).
+		LoadAttachment(context.Background())
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(actualSize, attachment.File.FileSize)
+}
+
+func (suite *ManagerTestSuite) TestNoReportedSizeSmallMedia() {
+	const accountID = "01FS1X72SK9ZPW0J1QQ68BD264"
+	var actualSize int
+
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+		// Load bytes from small png.
+		b, err := os.ReadFile("./test/test-png-alphachannel-1x1px.png")
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		actualSize = len(b)
+
+		// Return zero for media size. This should be detected.
+		return io.NopCloser(bytes.NewBuffer(b)), 0, nil
+	}
+
+	// Process the media with no additional info provided.
+	attachment, err := suite.manager.
+		PreProcessMedia(data, accountID, nil).
+		LoadAttachment(context.Background())
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(actualSize, attachment.File.FileSize)
+}
+
 func TestManagerTestSuite(t *testing.T) {
 	suite.Run(t, &ManagerTestSuite{})
 }

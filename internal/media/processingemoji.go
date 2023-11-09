@@ -156,16 +156,51 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		}
 	}()
 
-	// Byte buffer to read file header into.
-	// See: https://en.wikipedia.org/wiki/File_format#File_header
-	// and https://github.com/h2non/filetype
-	hdrBuf := make([]byte, 261)
+	var maxSize bytesize.Size
 
-	// Read the first 261 header bytes into buffer as much as possible.
-	// EOF is fine, just means the media is less than 261 bytes.
-	// Any other error means the connection has likely been buggered.
-	if _, err := rc.Read(hdrBuf); err != nil && err != io.EOF {
-		return gtserror.Newf("error reading first bytes of incoming media: %w", err)
+	if p.emoji.Domain == "" {
+		// this is a local emoji upload
+		maxSize = config.GetMediaEmojiLocalMaxSize()
+	} else {
+		// this is a remote incoming emoji
+		maxSize = config.GetMediaEmojiRemoteMaxSize()
+	}
+
+	// Check that provided size isn't beyond max. We check beforehand
+	// so that we don't attempt to stream the emoji into storage if not needed.
+	if size := bytesize.Size(sz); sz > 0 && size > maxSize {
+		return gtserror.Newf("given emoji size %s greater than max allowed %s", size, maxSize)
+	}
+
+	// Prepare to read bytes from
+	// file header or magic number.
+	fileSize := int(sz)
+	hdrBuf := newHdrBuf(fileSize)
+
+	// Read into buffer as much as possible.
+	//
+	// UnexpectedEOF means we couldn't read up to the
+	// given size, but we may still have read something.
+	//
+	// EOF means we couldn't read anything at all.
+	//
+	// Any other error likely means the connection messed up.
+	//
+	// In other words, rather counterintuitively, we
+	// can only proceed on no error or unexpected error!
+	n, err := io.ReadFull(rc, hdrBuf)
+	if err != nil {
+		if err != io.ErrUnexpectedEOF {
+			return gtserror.Newf("error reading first bytes of incoming media: %w", err)
+		}
+
+		// Initial file size was misreported, so we didn't read
+		// fully into hdrBuf. Reslice it to the size we did read.
+		log.Warnf(ctx,
+			"recovered from misreported file size; reported %d; read %d",
+			fileSize, n,
+		)
+		hdrBuf = hdrBuf[:n]
 	}
 
 	// Parse file type info from header buffer.
@@ -186,24 +221,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Recombine header bytes with remaining stream
 	r := io.MultiReader(bytes.NewReader(hdrBuf), rc)
 
-	var maxSize bytesize.Size
-
-	if p.emoji.Domain == "" {
-		// this is a local emoji upload
-		maxSize = config.GetMediaEmojiLocalMaxSize()
-	} else {
-		// this is a remote incoming emoji
-		maxSize = config.GetMediaEmojiRemoteMaxSize()
-	}
-
-	// Check that provided size isn't beyond max. We check beforehand
-	// so that we don't attempt to stream the emoji into storage if not needed.
-	if size := bytesize.Size(sz); sz > 0 && size > maxSize {
-		return gtserror.Newf("given emoji size %s greater than max allowed %s", size, maxSize)
-	}
-
 	var pathID string
-
 	if p.newPathID != "" {
 		// This is a refreshed emoji with a new
 		// path ID that this will be stored under.
@@ -236,14 +254,13 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	}
 
 	// Write the final image reader stream to our storage.
-	sz, err = p.mgr.state.Storage.PutStream(ctx, p.emoji.ImagePath, r)
+	wroteSize, err := p.mgr.state.Storage.PutStream(ctx, p.emoji.ImagePath, r)
 	if err != nil {
 		return gtserror.Newf("error writing emoji to storage: %w", err)
 	}
 
 	// Once again check size in case none was provided previously.
-	if size := bytesize.Size(sz); size > maxSize {
-
+	if size := bytesize.Size(wroteSize); size > maxSize {
 		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
 			log.Errorf(ctx, "error removing too-large-emoji from storage: %v", err)
 		}
@@ -260,7 +277,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		info.Extension,
 	)
 	p.emoji.ImageContentType = info.MIME.Value
-	p.emoji.ImageFileSize = int(sz)
+	p.emoji.ImageFileSize = int(wroteSize)
 	p.emoji.Cached = util.Ptr(true)
 
 	return nil

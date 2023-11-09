@@ -215,18 +215,39 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Assume we're given correct file
 	// size, we can overwrite this later
 	// once we know THE TRUTH.
-	p.media.File.FileSize = int(sz)
+	fileSize := int(sz)
+	p.media.File.FileSize = fileSize
 
-	// Byte buffer to read file header into.
-	// See: https://en.wikipedia.org/wiki/File_format#File_header
-	// and https://github.com/h2non/filetype
-	hdrBuf := make([]byte, 261)
+	// Prepare to read bytes from
+	// file header or magic number.
+	hdrBuf := newHdrBuf(fileSize)
 
-	// Read the first 261 header bytes into buffer as much as possible.
-	// EOF is fine, just means the media is less than 261 bytes.
-	// Any other error means the connection has likely been buggered.
-	if _, err := rc.Read(hdrBuf); err != nil && err != io.EOF {
-		return gtserror.Newf("error reading first bytes of incoming media: %w", err)
+	// Read into buffer as much as possible.
+	//
+	// UnexpectedEOF means we couldn't read up to the
+	// given size, but we may still have read something.
+	//
+	// EOF means we couldn't read anything at all.
+	//
+	// Any other error likely means the connection messed up.
+	//
+	// In other words, rather counterintuitively, we
+	// can only proceed on no error or unexpected error!
+	n, err := io.ReadFull(rc, hdrBuf)
+	if err != nil {
+		if err != io.ErrUnexpectedEOF {
+			return gtserror.Newf("error reading first bytes of incoming media: %w", err)
+		}
+
+		// Initial file size was misreported, so we didn't read
+		// fully into hdrBuf. Reslice it to the size we did read.
+		log.Warnf(ctx,
+			"recovered from misreported file size; reported %d; read %d",
+			fileSize, n,
+		)
+		hdrBuf = hdrBuf[:n]
+		fileSize = n
+		p.media.File.FileSize = fileSize
 	}
 
 	// Parse file type info from header buffer.
@@ -252,10 +273,10 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		// No problem
 
 	case "jpg", "jpeg", "png", "webp":
-		if sz > 0 {
+		if fileSize > 0 {
 			// A file size was provided so we can clean
 			// exif data from image as we're streaming it.
-			r, err = terminator.Terminate(r, int(sz), info.Extension)
+			r, err = terminator.Terminate(r, fileSize, info.Extension)
 			if err != nil {
 				return gtserror.Newf("error cleaning exif data: %w", err)
 			}
@@ -321,14 +342,14 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	// Write the final reader stream to our storage.
-	sz, err = p.mgr.state.Storage.PutStream(ctx, p.media.File.Path, r)
+	wroteSize, err := p.mgr.state.Storage.PutStream(ctx, p.media.File.Path, r)
 	if err != nil {
 		return gtserror.Newf("error writing media to storage: %w", err)
 	}
 
 	// Set actual written size
 	// as authoritative file size.
-	p.media.File.FileSize = int(sz)
+	p.media.File.FileSize = int(wroteSize)
 
 	// We can now consider this cached.
 	p.media.Cached = util.Ptr(true)
