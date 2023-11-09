@@ -170,18 +170,17 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 		}()
 
 		var dbErr error
-		if p.recache {
-			// Existing attachment we're recaching.
-			//
-			// We only want to update if everything
-			// went OK so far, otherwise we'd better
-			// leave the previous attachment alone.
-			if len(errs) == 0 {
-				dbErr = p.mgr.state.DB.UpdateAttachment(ctx, p.media)
-			}
-		} else {
+		switch {
+		case !p.recache:
 			// First time caching this attachment, insert it.
 			dbErr = p.mgr.state.DB.PutAttachment(ctx, p.media)
+
+		case p.recache && len(errs) == 0:
+			// Existing attachment we're recaching, update it.
+			//
+			// (We only want to update if everything went OK so far,
+			// otherwise we'd better leave previous version alone.)
+			dbErr = p.mgr.state.DB.UpdateAttachment(ctx, p.media)
 		}
 
 		if dbErr != nil {
