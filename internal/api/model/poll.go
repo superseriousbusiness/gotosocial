@@ -41,10 +41,15 @@ type Poll struct {
 	VotersCount int `json:"voters_count"`
 
 	// When called with a user token, has the authorized user voted?
-	Voted bool `json:"voted,omitempty"`
+	//
+	// Omitted when no user token provided.
+	Voted *bool `json:"voted,omitempty"`
 
-	// When called with a user token, which options has the authorized user chosen? Contains an array of index values for options.
-	OwnVotes []int `json:"own_votes,omitempty"`
+	// When called with a user token, which options has the authorized
+	// user chosen? Contains an array of index values for options.
+	//
+	// Omitted when no user token provided.
+	OwnVotes *[]int `json:"own_votes,omitempty"`
 
 	// Possible answers for the poll.
 	Options []PollOption `json:"options"`
@@ -66,7 +71,7 @@ type PollOption struct {
 
 // PollRequest models a request to create a poll.
 //
-// swagger:parameters createStatus
+// swagger:model pollRequest
 type PollRequest struct {
 	// Array of possible answers.
 	// If provided, media_ids cannot be used, and poll[expires_in] must be provided.
@@ -86,7 +91,7 @@ type PollRequest struct {
 
 // PollVoteRequest models a request to vote in a poll.
 //
-// swagger:parameters pollVote
+// swagger:ignore
 type PollVoteRequest struct {
 	// Choices contains poll vote choice indices. Note that form
 	// uses a different key than the JSON, i.e. the '[]' suffix.
