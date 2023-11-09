@@ -41,10 +41,15 @@ type Poll struct {
 	VotersCount int `json:"voters_count"`
 
 	// When called with a user token, has the authorized user voted?
-	Voted bool `json:"voted,omitempty"`
+	//
+	// Omitted when no user token provided.
+	Voted *bool `json:"voted,omitempty"`
 
-	// When called with a user token, which options has the authorized user chosen? Contains an array of index values for options.
-	OwnVotes []int `json:"own_votes,omitempty"`
+	// When called with a user token, which options has the authorized
+	// user chosen? Contains an array of index values for options.
+	//
+	// Omitted when no user token provided.
+	OwnVotes *[]int `json:"own_votes,omitempty"`
 
 	// Possible answers for the poll.
 	Options []PollOption `json:"options"`
