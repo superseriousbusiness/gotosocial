@@ -2020,14 +2020,21 @@ definitions:
                 type: array
                 x-go-name: Options
             own_votes:
-                description: When called with a user token, which options has the authorized user chosen? Contains an array of index values for options.
+                description: |-
+                    When called with a user token, which options has the authorized
+                    user chosen? Contains an array of index values for options.
+
+                    Omitted when no user token provided.
                 items:
                     format: int64
                     type: integer
                 type: array
                 x-go-name: OwnVotes
             voted:
-                description: When called with a user token, has the authorized user voted?
+                description: |-
+                    When called with a user token, has the authorized user voted?
+
+                    Omitted when no user token provided.
                 type: boolean
                 x-go-name: Voted
             voters_count:
@@ -2058,6 +2065,36 @@ definitions:
         title: PollOption represents the current vote counts for different poll options.
         type: object
         x-go-name: PollOption
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    pollRequest:
+        properties:
+            expires_in:
+                description: |-
+                    Duration the poll should be open, in seconds.
+                    If provided, media_ids cannot be used, and poll[options] must be provided.
+                format: int64
+                type: integer
+                x-go-name: ExpiresIn
+            hide_totals:
+                description: Hide vote counts until the poll ends.
+                type: boolean
+                x-go-name: HideTotals
+            multiple:
+                description: Allow multiple choices on this poll.
+                type: boolean
+                x-go-name: Multiple
+            options:
+                description: |-
+                    Array of possible answers.
+                    If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+                    name: poll[options]
+                items:
+                    type: string
+                type: array
+                x-go-name: Options
+        title: PollRequest models a request to create a poll.
+        type: object
+        x-go-name: PollRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     report:
         properties:
@@ -2346,6 +2383,8 @@ definitions:
                     type: string
                 type: array
                 x-go-name: MediaIDs
+            poll:
+                $ref: '#/definitions/pollRequest'
             scheduled_at:
                 description: |-
                     ISO 8601 Datetime at which to schedule a status.
@@ -6028,13 +6067,20 @@ paths:
                 - polls
     /api/v1/polls/{id}/vote:
         post:
-            operationId: poll
+            operationId: pollVote
             parameters:
                 - description: Target poll ID.
                   in: path
                   name: id
                   required: true
                   type: string
+                - description: Poll choice indices on which to vote.
+                  in: formData
+                  items:
+                    type: integer
+                  name: choices
+                  required: true
+                  type: array
             produces:
                 - application/json
             responses:
@@ -6309,6 +6355,11 @@ paths:
                   name: media_ids
                   type: array
                   x-go-name: MediaIDs
+                - $ref: '#/definitions/pollRequest'
+                  description: Poll to include with this status.
+                  in: formData
+                  name: poll
+                  x-go-name: Poll
                 - description: ID of the status being replied to, if status is a reply.
                   in: formData
                   name: in_reply_to_id

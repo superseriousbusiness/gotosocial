@@ -66,7 +66,7 @@ type PollOption struct {
 
 // PollRequest models a request to create a poll.
 //
-// swagger:parameters createStatus
+// swagger:model pollRequest
 type PollRequest struct {
 	// Array of possible answers.
 	// If provided, media_ids cannot be used, and poll[expires_in] must be provided.
@@ -86,7 +86,7 @@ type PollRequest struct {
 
 // PollVoteRequest models a request to vote in a poll.
 //
-// swagger:parameters pollVote
+// swagger:ignore
 type PollVoteRequest struct {
 	// Choices contains poll vote choice indices. Note that form
 	// uses a different key than the JSON, i.e. the '[]' suffix.

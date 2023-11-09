@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// PollVotePOSTHandler swagger:operation POST /api/v1/polls/{id}/vote poll
+// PollVotePOSTHandler swagger:operation POST /api/v1/polls/{id}/vote pollVote
 //
 // Vote with choices in the given poll.
 //
@@ -44,6 +44,14 @@ import (
 //		type: string
 //		description: Target poll ID.
 //		in: path
+//		required: true
+//	-
+//		name: choices
+//		type: array
+//		items:
+//			type: integer
+//		description: Poll choice indices on which to vote.
+//		in: formData
 //		required: true
 //
 //	security:

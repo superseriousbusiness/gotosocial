@@ -155,7 +155,7 @@ type StatusCreateRequest struct {
 	// in: formData
 	MediaIDs []string `form:"media_ids[]" json:"media_ids" xml:"media_ids"`
 	// Poll to include with this status.
-	// swagger:ignore
+	// in: formData
 	Poll *PollRequest `form:"poll" json:"poll" xml:"poll"`
 	// ID of the status being replied to, if status is a reply.
 	// in: formData
