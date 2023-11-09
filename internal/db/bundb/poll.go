@@ -478,7 +478,7 @@ func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID 
 		}
 
 		// Decrement votes for choices.
-		poll.IncrementVotes(choices)
+		poll.DecrementVotes(choices)
 
 		// Finally, update the poll entry.
 		_, err := tx.NewUpdate().
