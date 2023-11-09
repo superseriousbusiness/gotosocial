@@ -1364,8 +1364,10 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		options     []apimodel.PollOption
 		totalVotes  int
 		totalVoters int
-		ownChoices  []int
+		voted       *bool
+		ownChoices  *[]int
 		isAuthor    bool
+		emojis      []apimodel.Emoji
 	)
 
 	// Preallocate a slice of frontend model poll choices.
@@ -1388,19 +1390,26 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 
 		if vote != nil {
 			// Set choices by requester.
-			ownChoices = vote.Choices
+			ownChoices = &vote.Choices
 
 			// Update default totals in the
 			// case that counts are hidden.
 			totalVotes = len(vote.Choices)
 			totalVoters = 1
-			for _, choice := range ownChoices {
+			for _, choice := range *ownChoices {
 				options[choice].VotesCount++
 			}
+		} else {
+			// Requester is defined but hasn't made
+			// a choice. Init slice to serialize as `[]`.
+			ownChoices = util.Ptr(make([]int, 0))
 		}
 
 		// Check if requester is author of source status.
 		isAuthor = (requester.ID == poll.Status.AccountID)
+
+		// Requester is defined so voted should be defined too.
+		voted = util.Ptr((isAuthor || len(*ownChoices) > 0))
 	}
 
 	if isAuthor || !*poll.HideCounts {
@@ -1419,6 +1428,11 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		}
 	}
 
+	// TODO: emojis used in poll options.
+	// For now init to empty slice to serialize as `[]`.
+	// In future inherit from parent status.
+	emojis = make([]apimodel.Emoji, 0)
+
 	return &apimodel.Poll{
 		ID:          poll.ID,
 		ExpiresAt:   util.FormatISO8601(poll.ExpiresAt),
@@ -1426,9 +1440,10 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		Multiple:    (*poll.Multiple),
 		VotesCount:  totalVotes,
 		VotersCount: totalVoters,
-		Voted:       (isAuthor || len(ownChoices) > 0),
+		Voted:       voted,
 		OwnVotes:    ownChoices,
 		Options:     options,
+		Emojis:      emojis,
 	}, nil
 }
 
