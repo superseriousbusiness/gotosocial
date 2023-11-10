@@ -36,7 +36,7 @@ type InstancePatchTestSuite struct {
 	InstanceStandardTestSuite
 }
 
-func (suite *InstancePatchTestSuite) instancePatch(fieldName string, fileName string, extraFields map[string]string) (code int, body []byte) {
+func (suite *InstancePatchTestSuite) instancePatch(fieldName string, fileName string, extraFields map[string][]string) (code int, body []byte) {
 	requestBody, w, err := testrig.CreateMultipartFormData(fieldName, fileName, extraFields)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -59,10 +59,10 @@ func (suite *InstancePatchTestSuite) instancePatch(fieldName string, fileName st
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch1() {
-	code, b := suite.instancePatch("", "", map[string]string{
-		"title":            "Example Instance",
-		"contact_username": "admin",
-		"contact_email":    "someone@example.org",
+	code, b := suite.instancePatch("", "", map[string][]string{
+		"title":            {"Example Instance"},
+		"contact_username": {"admin"},
+		"contact_email":    {"someone@example.org"},
 	})
 
 	if expectedCode := http.StatusOK; code != expectedCode {
@@ -175,8 +175,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch2() {
-	code, b := suite.instancePatch("", "", map[string]string{
-		"title": "<p>Geoff's Instance</p>",
+	code, b := suite.instancePatch("", "", map[string][]string{
+		"title": {"<p>Geoff's Instance</p>"},
 	})
 
 	if expectedCode := http.StatusOK; code != expectedCode {
@@ -289,8 +289,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch3() {
-	code, b := suite.instancePatch("", "", map[string]string{
-		"short_description": "<p>This is some html, which is <em>allowed</em> in short descriptions.</p>",
+	code, b := suite.instancePatch("", "", map[string][]string{
+		"short_description": {"<p>This is some html, which is <em>allowed</em> in short descriptions.</p>"},
 	})
 
 	if expectedCode := http.StatusOK; code != expectedCode {
@@ -403,8 +403,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch4() {
-	code, b := suite.instancePatch("", "", map[string]string{
-		"": "",
+	code, b := suite.instancePatch("", "", map[string][]string{
+		"": {""},
 	})
 
 	if expectedCode := http.StatusBadRequest; code != expectedCode {
@@ -422,8 +422,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch4() {
 func (suite *InstancePatchTestSuite) TestInstancePatch5() {
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"short_description": "<p>This is some html, which is <em>allowed</em> in short descriptions.</p>",
+		map[string][]string{
+			"short_description": {"<p>This is some html, which is <em>allowed</em> in short descriptions.</p>"},
 		})
 	if err != nil {
 		panic(err)
@@ -454,8 +454,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch5() {
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch6() {
-	code, b := suite.instancePatch("", "", map[string]string{
-		"contact_email": "",
+	code, b := suite.instancePatch("", "", map[string][]string{
+		"contact_email": {""},
 	})
 
 	if expectedCode := http.StatusOK; code != expectedCode {
@@ -568,8 +568,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch7() {
-	code, b := suite.instancePatch("", "", map[string]string{
-		"contact_email": "not.an.email.address",
+	code, b := suite.instancePatch("", "", map[string][]string{
+		"contact_email": {"not.an.email.address"},
 	})
 
 	if expectedCode := http.StatusBadRequest; code != expectedCode {
@@ -585,8 +585,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch7() {
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch8() {
-	code, b := suite.instancePatch("thumbnail", "../../../../testrig/media/peglin.gif", map[string]string{
-		"thumbnail_description": "A bouncing little green peglin.",
+	code, b := suite.instancePatch("thumbnail", "../../../../testrig/media/peglin.gif", map[string][]string{
+		"thumbnail_description": {"A bouncing little green peglin."},
 	})
 
 	if expectedCode := http.StatusOK; code != expectedCode {
@@ -723,8 +723,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 }`, string(instanceV2ThumbnailJson))
 
 	// double extra special bonus: now update the image description without changing the image
-	code2, b2 := suite.instancePatch("", "", map[string]string{
-		"thumbnail_description": "updating the thumbnail description without changing anything else!",
+	code2, b2 := suite.instancePatch("", "", map[string][]string{
+		"thumbnail_description": {"updating the thumbnail description without changing anything else!"},
 	})
 
 	if expectedCode := http.StatusOK; code2 != expectedCode {
@@ -741,8 +741,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch9() {
-	code, b := suite.instancePatch("", "", map[string]string{
-		"thumbnail_description": "setting a new description without having a custom image set; this should change nothing!",
+	code, b := suite.instancePatch("", "", map[string][]string{
+		"thumbnail_description": {"setting a new description without having a custom image set; this should change nothing!"},
 	})
 
 	if expectedCode := http.StatusOK; code != expectedCode {

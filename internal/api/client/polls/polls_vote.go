@@ -18,7 +18,9 @@
 package polls
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -97,9 +99,8 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	var form apimodel.PollVoteRequest
-
-	if err := c.ShouldBind(&form); err != nil {
+	choices, err := bindChoices(c)
+	if err != nil {
 		errWithCode := gtserror.NewErrorBadRequest(err, err.Error())
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -109,7 +110,7 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 		c.Request.Context(),
 		authed.Account,
 		pollID,
-		form.Choices,
+		choices,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -117,4 +118,52 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, poll)
+}
+
+func bindChoices(c *gin.Context) ([]int, error) {
+	var form apimodel.PollVoteRequest
+	if err := c.ShouldBind(&form); err != nil {
+		return nil, err
+	}
+
+	if form.Choices != nil {
+		// Easiest option: we parsed
+		// from a form successfully.
+		return form.Choices, nil
+	}
+
+	// More difficult option: we
+	// parsed choices from json.
+	//
+	// Convert submitted choices
+	// into the ints we need.
+	choices := make([]int, 0, len(form.ChoicesI))
+	for _, choiceI := range form.ChoicesI {
+		switch i := choiceI.(type) {
+
+		// JSON numbers normally
+		// parse into float64.
+		//
+		// This is the most likely
+		// option so try it first.
+		case float64:
+			choices = append(choices, int(i))
+
+		// Fallback option for funky
+		// clients (pinafore, semaphore).
+		case string:
+			choice, err := strconv.Atoi(i)
+			if err != nil {
+				return nil, err
+			}
+
+			choices = append(choices, choice)
+
+		default:
+			// Nothing else will do.
+			return nil, fmt.Errorf("could not parse json poll choice %T to integer", choiceI)
+		}
+	}
+
+	return choices, nil
 }

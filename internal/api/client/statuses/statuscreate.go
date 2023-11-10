@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -117,7 +118,10 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, apiStatus)
 }
 
-// validateNormalizeCreateStatus checks the form for disallowed combinations of attachments and overlength inputs.
+// validateNormalizeCreateStatus checks the form
+// for disallowed combinations of attachments and
+// overlength inputs.
+//
 // Side effect: normalizes the post's language tag.
 func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) error {
 	hasStatus := form.Status != ""
@@ -134,8 +138,6 @@ func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) erro
 
 	maxChars := config.GetStatusesMaxChars()
 	maxMediaFiles := config.GetStatusesMediaMaxFiles()
-	maxPollOptions := config.GetStatusesPollMaxOptions()
-	maxPollChars := config.GetStatusesPollOptionMaxChars()
 	maxCwChars := config.GetStatusesCWMaxChars()
 
 	if form.Status != "" {
@@ -149,16 +151,8 @@ func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) erro
 	}
 
 	if form.Poll != nil {
-		if len(form.Poll.Options) == 0 {
-			return errors.New("poll with no options")
-		}
-		if len(form.Poll.Options) > maxPollOptions {
-			return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), maxPollOptions)
-		}
-		for _, p := range form.Poll.Options {
-			if length := len([]rune(p)); length > maxPollChars {
-				return fmt.Errorf("poll option too long, %d characters provided but limit is %d", length, maxPollChars)
-			}
+		if err := validateNormalizeCreatePoll(form); err != nil {
+			return err
 		}
 	}
 
@@ -174,6 +168,48 @@ func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) erro
 			return err
 		}
 		form.Language = language
+	}
+
+	return nil
+}
+
+func validateNormalizeCreatePoll(form *apimodel.AdvancedStatusCreateForm) error {
+	maxPollOptions := config.GetStatusesPollMaxOptions()
+	maxPollChars := config.GetStatusesPollOptionMaxChars()
+
+	// Normalize poll expiry if necessary.
+	// If we parsed this as JSON, expires_in
+	// may be either a float64 or a string.
+	if ei := form.Poll.ExpiresInI; ei != nil {
+		switch e := ei.(type) {
+		case float64:
+			form.Poll.ExpiresIn = int(e)
+
+		case string:
+			expiresIn, err := strconv.Atoi(e)
+			if err != nil {
+				return fmt.Errorf("could not parse expires_in value %s as integer: %w", e, err)
+			}
+
+			form.Poll.ExpiresIn = expiresIn
+
+		default:
+			return fmt.Errorf("could not parse expires_in type %T as integer", ei)
+		}
+	}
+
+	if len(form.Poll.Options) == 0 {
+		return errors.New("poll with no options")
+	}
+
+	if len(form.Poll.Options) > maxPollOptions {
+		return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), maxPollOptions)
+	}
+
+	for _, p := range form.Poll.Options {
+		if length := len([]rune(p)); length > maxPollChars {
+			return fmt.Errorf("poll option too long, %d characters provided but limit is %d", length, maxPollChars)
+		}
 	}
 
 	return nil

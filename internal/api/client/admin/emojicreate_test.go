@@ -39,9 +39,9 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateNewCategory() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"image", "../../../../testrig/media/rainbow-original.png",
-		map[string]string{
-			"shortcode": "new_emoji",
-			"category":  "Test Emojis", // this category doesn't exist yet
+		map[string][]string{
+			"shortcode": {"new_emoji"},
+			"category":  {"Test Emojis"}, // this category doesn't exist yet
 		})
 	if err != nil {
 		panic(err)
@@ -112,9 +112,9 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateExistingCategory() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"image", "../../../../testrig/media/rainbow-original.png",
-		map[string]string{
-			"shortcode": "new_emoji",
-			"category":  "cute stuff", // this category already exists
+		map[string][]string{
+			"shortcode": {"new_emoji"},
+			"category":  {"cute stuff"}, // this category already exists
 		})
 	if err != nil {
 		panic(err)
@@ -185,9 +185,9 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateNoCategory() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"image", "../../../../testrig/media/rainbow-original.png",
-		map[string]string{
-			"shortcode": "new_emoji",
-			"category":  "",
+		map[string][]string{
+			"shortcode": {"new_emoji"},
+			"category":  {""},
 		})
 	if err != nil {
 		panic(err)
@@ -258,8 +258,8 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateAlreadyExists() {
 	// set up the request -- use a shortcode that already exists for an emoji in the database
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"image", "../../../../testrig/media/rainbow-original.png",
-		map[string]string{
-			"shortcode": "rainbow",
+		map[string][]string{
+			"shortcode": {"rainbow"},
 		})
 	if err != nil {
 		panic(err)

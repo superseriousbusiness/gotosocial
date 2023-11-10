@@ -63,6 +63,13 @@ func (p *Processor) authenticate(ctx context.Context, requestedUsername string) 
 		return nil, nil, gtserror.NewErrorUnauthorized(err)
 	}
 
+	if !requestingAccount.SuspendedAt.IsZero() {
+		// Account was marked as suspended by a
+		// local admin action. Stop request early.
+		err = fmt.Errorf("account %s marked as suspended", requestingAccount.ID)
+		return nil, nil, gtserror.NewErrorForbidden(err)
+	}
+
 	// Ensure no block exists between requester + requested.
 	blocked, err := p.state.DB.IsEitherBlocked(ctx, requestedAccount.ID, requestingAccount.ID)
 	if err != nil {
@@ -72,7 +79,7 @@ func (p *Processor) authenticate(ctx context.Context, requestedUsername string) 
 
 	if blocked {
 		err = fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID)
-		return nil, nil, gtserror.NewErrorUnauthorized(err)
+		return nil, nil, gtserror.NewErrorForbidden(err)
 	}
 
 	return requestedAccount, requestingAccount, nil

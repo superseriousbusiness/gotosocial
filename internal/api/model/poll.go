@@ -80,7 +80,11 @@ type PollRequest struct {
 
 	// Duration the poll should be open, in seconds.
 	// If provided, media_ids cannot be used, and poll[options] must be provided.
-	ExpiresIn int `form:"expires_in" json:"expires_in" xml:"expires_in"`
+	ExpiresIn int `form:"expires_in" xml:"expires_in"`
+
+	// Duration the poll should be open, in seconds.
+	// If provided, media_ids cannot be used, and poll[options] must be provided.
+	ExpiresInI interface{} `json:"expires_in"`
 
 	// Allow multiple choices on this poll.
 	Multiple bool `form:"multiple" json:"multiple" xml:"multiple"`
@@ -93,7 +97,10 @@ type PollRequest struct {
 //
 // swagger:ignore
 type PollVoteRequest struct {
-	// Choices contains poll vote choice indices. Note that form
-	// uses a different key than the JSON, i.e. the '[]' suffix.
-	Choices []int `form:"choices[]" json:"choices" xml:"choices"`
+	// Choices contains poll vote choice indices.
+	Choices []int `form:"choices[]" xml:"choices"`
+
+	// ChoicesI contains poll vote choice
+	// indices. Can be strings or integers.
+	ChoicesI []interface{} `json:"choices"`
 }

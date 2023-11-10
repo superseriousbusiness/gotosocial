@@ -42,6 +42,11 @@ import (
 // accountUpToDate returns whether the given account model is both updateable (i.e.
 // non-instance remote account) and whether it needs an update based on `fetched_at`.
 func accountUpToDate(account *gtsmodel.Account) bool {
+	if !account.SuspendedAt.IsZero() {
+		// Can't update suspended accounts.
+		return true
+	}
+
 	if account.IsLocal() {
 		// Can't update local accounts.
 		return true
@@ -331,6 +336,11 @@ func (d *Dereferencer) enrichAccountSafely(
 	account *gtsmodel.Account,
 	apubAcc ap.Accountable,
 ) (*gtsmodel.Account, ap.Accountable, error) {
+	// Noop if account has been suspended.
+	if !account.SuspendedAt.IsZero() {
+		return account, nil, nil
+	}
+
 	// By default use account.URI
 	// as the per-URI deref lock.
 	uriStr := account.URI
