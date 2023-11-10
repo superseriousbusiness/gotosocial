@@ -44,7 +44,7 @@ func init() {
 				Table("polls").
 				Column("expires_at_new").
 				Set("? = ?", bun.Ident("expires_at_new"), bun.Ident("expires_at")).
-				Where("NULL = NULL"). // bun gets angry performing update over all rows
+				Where("1"). // bun gets angry performing update over all rows
 				Exec(ctx); err != nil {
 				return err
 			}
