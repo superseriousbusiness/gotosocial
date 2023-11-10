@@ -149,10 +149,10 @@ func (suite *MediaUpdateTestSuite) TestUpdateImage() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("", "", map[string]string{
-		"id":          toUpdate.ID,
-		"description": "new description!",
-		"focus":       "-0.1,0.3",
+	buf, w, err := testrig.CreateMultipartFormData("", "", map[string][]string{
+		"id":          {toUpdate.ID},
+		"description": {"new description!"},
+		"focus":       {"-0.1,0.3"},
 	})
 	if err != nil {
 		panic(err)
@@ -210,10 +210,10 @@ func (suite *MediaUpdateTestSuite) TestUpdateImageShortDescription() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("", "", map[string]string{
-		"id":          toUpdate.ID,
-		"description": "new description!",
-		"focus":       "-0.1,0.3",
+	buf, w, err := testrig.CreateMultipartFormData("", "", map[string][]string{
+		"id":          {toUpdate.ID},
+		"description": {"new description!"},
+		"focus":       {"-0.1,0.3"},
 	})
 	if err != nil {
 		panic(err)
