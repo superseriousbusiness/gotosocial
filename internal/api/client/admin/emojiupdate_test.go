@@ -45,7 +45,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 		"", "",
 		map[string][]string{
 			"category": {"New Category"}, // this category doesn't exist yet
-			"type":    { "modify"},
+			"type":     {"modify"},
 		})
 	if err != nil {
 		panic(err)
@@ -198,7 +198,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
 		map[string][]string{
-			"type":     { "copy"},
+			"type":      {"copy"},
 			"category":  {"emojis i stole"},
 			"shortcode": {"yell"},
 		})

@@ -106,7 +106,9 @@ func CreateMultipartFormData(fieldName string, fileName string, extraFields map[
 
 	for k, vs := range extraFields {
 		for _, v := range vs {
-			w.WriteField(k, v)
+			if err := w.WriteField(k, v); err != nil {
+				return b, nil, err
+			}
 		}
 	}
 

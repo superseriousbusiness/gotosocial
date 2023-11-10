@@ -372,7 +372,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountWithImageFormData() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal(data["display_name"], apimodelAccount.DisplayName)
+	suite.Equal(data["display_name"][0], apimodelAccount.DisplayName)
 	suite.True(apimodelAccount.Locked)
 	suite.Empty(apimodelAccount.Note)
 	suite.Empty(apimodelAccount.Source.Note)
@@ -416,7 +416,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountSourceForm() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal(data["source[language]"], apimodelAccount.Source.Language)
+	suite.Equal(data["source[language]"][0], apimodelAccount.Source.Language)
 	suite.EqualValues(apimodel.VisibilityPrivate, apimodelAccount.Source.Privacy)
 	suite.True(apimodelAccount.Source.Sensitive)
 	suite.True(apimodelAccount.Locked)
@@ -435,7 +435,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountSourceFormData() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal(data["source[language]"], apimodelAccount.Source.Language)
+	suite.Equal(data["source[language]"][0], apimodelAccount.Source.Language)
 	suite.EqualValues(apimodel.VisibilityPrivate, apimodelAccount.Source.Privacy)
 	suite.True(apimodelAccount.Source.Sensitive)
 	suite.True(apimodelAccount.Locked)
@@ -474,14 +474,14 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountSourceBadContentTypeFormDa
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal(data["source[status_content_type]"], apimodelAccount.Source.StatusContentType)
+	suite.Equal(data["source[status_content_type]"][0], apimodelAccount.Source.StatusContentType)
 
 	// Check the account in the database too.
 	dbAccount, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Equal(data["source[status_content_type]"], dbAccount.StatusContentType)
+	suite.Equal(data["source[status_content_type]"][0], dbAccount.StatusContentType)
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateCredentialsPATCHHandlerUpdateStatusContentTypeBad() {
