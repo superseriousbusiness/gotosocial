@@ -121,7 +121,7 @@ func (suite *BasicTestSuite) TestGetAllStatuses() {
 	s := []*gtsmodel.Status{}
 	err := suite.db.GetAll(context.Background(), &s)
 	suite.NoError(err)
-	suite.Len(s, 20)
+	suite.Len(s, 21)
 }
 
 func (suite *BasicTestSuite) TestGetAllNotNull() {

@@ -99,8 +99,8 @@ func (suite *GetTestSuite) TestGet() {
     "header_static": "http://localhost:8080/assets/default_header.png",
     "followers_count": 0,
     "following_count": 0,
-    "statuses_count": 0,
-    "last_status_at": null,
+    "statuses_count": 1,
+    "last_status_at": "2023-11-02T10:44:25.000Z",
     "emojis": [],
     "fields": []
   }

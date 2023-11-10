@@ -55,7 +55,7 @@ func (p *Processor) EmojiCreate(ctx context.Context, account *gtsmodel.Account, 
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error creating id for new emoji: %s", err), "error creating emoji ID")
 	}
 
-	emojiURI := uris.GenerateURIForEmoji(emojiID)
+	emojiURI := uris.URIForEmoji(emojiID)
 
 	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
 		f, err := form.Image.Open()
@@ -335,7 +335,7 @@ func (p *Processor) emojiUpdateCopy(ctx context.Context, emoji *gtsmodel.Emoji, 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	newEmojiURI := uris.GenerateURIForEmoji(newEmojiID)
+	newEmojiURI := uris.URIForEmoji(newEmojiID)
 
 	data := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
 		rc, err := p.state.Storage.GetStream(ctx, emoji.ImagePath)

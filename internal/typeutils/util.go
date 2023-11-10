@@ -22,10 +22,17 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
+	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 type statusInteractions struct {
@@ -99,4 +106,81 @@ func getURI(withID ap.WithJSONLDId) (*url.URL, string, error) {
 
 	id := idProp.Get()
 	return id, id.String(), nil
+}
+
+// placeholdUnknownAttachments separates any attachments with type `unknown`
+// out of the given slice, and returns an `<aside>` tag containing links to
+// those attachments, as well as the slice of remaining "known" attachments.
+// If there are no unknown-type attachments in the provided slice, an empty
+// string and the original slice will be returned.
+//
+// If an aside is created, it will be run through the sanitizer before being
+// returned, to ensure that malicious links don't cause issues.
+//
+// Example:
+//
+//	<aside>
+//	   <p>Note from your.instance.com: 2 attachments in this status could not be downloaded. Treat the following external links with care:
+//	      <ul>
+//	         <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg" rel="nofollow noreferrer noopener" target="_blank">01HE7ZGJYTSYMXF927GF9353KR.svg</a> [SVG line art of a sloth, public domain]</li>
+//	         <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3" rel="nofollow noreferrer noopener" target="_blank">01HE892Y8ZS68TQCNPX7J888P3.mp3</a> [Jolly salsa song, public domain.]</li>
+//	      </ul>
+//	   </p>
+//	</aside>
+func placeholdUnknownAttachments(arr []apimodel.Attachment) (string, []apimodel.Attachment) {
+	// Extract unknown-type attachments into a separate
+	// slice, deleting them from arr in the process.
+	var unknowns []apimodel.Attachment
+	arr = slices.DeleteFunc(arr, func(elem apimodel.Attachment) bool {
+		unknown := elem.Type == "unknown"
+		if unknown {
+			// Set aside unknown-type attachment.
+			unknowns = append(unknowns, elem)
+		}
+
+		return unknown
+	})
+
+	unknownsLen := len(unknowns)
+	if unknownsLen == 0 {
+		// No unknown attachments,
+		// nothing to do.
+		return "", arr
+	}
+
+	// Plural / singular.
+	var (
+		attachments string
+		links       string
+	)
+
+	if unknownsLen == 1 {
+		attachments = "1 attachment"
+		links = "link"
+	} else {
+		attachments = strconv.Itoa(unknownsLen) + " attachments"
+		links = "links"
+	}
+
+	var aside strings.Builder
+	aside.WriteString(`<aside>`)
+	aside.WriteString(`<p>`)
+	aside.WriteString(`Note from ` + config.GetHost() + `: ` + attachments + ` in this status could not be downloaded. Treat the following external ` + links + ` with care:`)
+	aside.WriteString(`<ul>`)
+	for _, a := range unknowns {
+		var (
+			remoteURL = *a.RemoteURL
+			base      = path.Base(remoteURL)
+			entry     = fmt.Sprintf(`<a href="%s">%s</a>`, remoteURL, base)
+		)
+		if d := a.Description; d != nil && *d != "" {
+			entry += ` [` + *d + `]`
+		}
+		aside.WriteString(`<li>` + entry + `</li>`)
+	}
+	aside.WriteString(`</ul>`)
+	aside.WriteString(`</p>`)
+	aside.WriteString(`</aside>`)
+
+	return text.SanitizeToHTML(aside.String()), arr
 }

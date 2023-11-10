@@ -39,7 +39,7 @@ func (suite *MediaTestSuite) TestGetAttachmentByID() {
 func (suite *MediaTestSuite) TestGetOlder() {
 	attachments, err := suite.db.GetCachedAttachmentsOlderThan(context.Background(), time.Now(), 20)
 	suite.NoError(err)
-	suite.Len(attachments, 2)
+	suite.Len(attachments, 3)
 }
 
 func (suite *MediaTestSuite) TestGetCachedAttachmentsOlderThan() {
@@ -47,7 +47,7 @@ func (suite *MediaTestSuite) TestGetCachedAttachmentsOlderThan() {
 
 	attachments, err := suite.db.GetCachedAttachmentsOlderThan(ctx, time.Now(), 20)
 	suite.NoError(err)
-	suite.Len(attachments, 2)
+	suite.Len(attachments, 3)
 }
 
 func TestMediaTestSuite(t *testing.T) {

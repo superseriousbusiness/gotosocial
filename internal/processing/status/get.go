@@ -36,8 +36,12 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
-// ContextGet returns the context (previous and following posts) from the given status ID.
-func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
+func (p *Processor) contextGet(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	targetStatusID string,
+	convert func(context.Context, *gtsmodel.Status, *gtsmodel.Account) (*apimodel.Status, error),
+) (*apimodel.Context, gtserror.WithCode) {
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -55,7 +59,7 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 
 	for _, status := range parents {
 		if v, err := p.filter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
-			apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
+			apiStatus, err := convert(ctx, status, requestingAccount)
 			if err == nil {
 				context.Ancestors = append(context.Ancestors, *apiStatus)
 			}
@@ -73,7 +77,7 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 
 	for _, status := range children {
 		if v, err := p.filter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
-			apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
+			apiStatus, err := convert(ctx, status, requestingAccount)
 			if err == nil {
 				context.Descendants = append(context.Descendants, *apiStatus)
 			}
@@ -81,4 +85,17 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 	}
 
 	return context, nil
+}
+
+// ContextGet returns the context (previous and following posts) from the given status ID.
+func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
+	return p.contextGet(ctx, requestingAccount, targetStatusID, p.converter.StatusToAPIStatus)
+}
+
+// WebContextGet is like ContextGet, but is explicitly
+// for viewing statuses via the unauthenticated web UI.
+//
+// TODO: a more advanced threading model could be implemented here.
+func (p *Processor) WebContextGet(ctx context.Context, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
+	return p.contextGet(ctx, nil, targetStatusID, p.converter.StatusToWebStatus)
 }

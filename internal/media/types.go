@@ -44,9 +44,6 @@ const (
 	mimeVideoMp4 = mimeVideo + "/" + mimeMp4
 )
 
-// EmojiMaxBytes is the maximum permitted bytes of an emoji upload (50kb)
-// const EmojiMaxBytes = 51200
-
 type Size string
 
 const (

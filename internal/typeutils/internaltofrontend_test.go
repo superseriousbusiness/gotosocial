@@ -344,7 +344,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   "language": "en",
   "uri": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
-  "replies_count": 0,
+  "replies_count": 1,
   "reblogs_count": 0,
   "favourites_count": 1,
   "favourited": true,
@@ -437,6 +437,105 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 }`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments() {
+	testStatus := suite.testStatuses["remote_account_2_status_1"]
+	requestingAccount := suite.testAccounts["admin_account"]
+
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01HE7XJ1CG84TBKH5V9XKBVGF5",
+  "created_at": "2023-11-02T10:44:25.000Z",
+  "in_reply_to_id": "01F8MH75CBF9JFX4ZAD54N0W0R",
+  "in_reply_to_account_id": "01F8MH17FWEB39HZJ76B6VXSKF",
+  "sensitive": false,
+  "spoiler_text": "",
+  "visibility": "public",
+  "language": "en",
+  "uri": "http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5",
+  "url": "http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 0,
+  "favourited": false,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": false,
+  "pinned": false,
+  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003caside\u003e\u003cp\u003eNote from localhost:8080: 2 attachments in this status could not be downloaded. Treat the following external links with care:\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e\u003c/p\u003e\u003c/aside\u003e",
+  "reblog": null,
+  "account": {
+    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
+    "username": "Some_User",
+    "acct": "Some_User@example.org",
+    "display_name": "some user",
+    "locked": true,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2020-08-10T12:13:28.000Z",
+    "note": "i'm a real son of a gun",
+    "url": "http://example.org/@Some_User",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 1,
+    "last_status_at": "2023-11-02T10:44:25.000Z",
+    "emojis": [],
+    "fields": []
+  },
+  "media_attachments": [
+    {
+      "id": "01HE7Y3C432WRSNS10EZM86SA5",
+      "type": "image",
+      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7Y6G0EMCKST3Q0914WW0MS.jpg",
+      "preview_remote_url": null,
+      "meta": {
+        "original": {
+          "width": 3000,
+          "height": 2000,
+          "size": "3000x2000",
+          "aspect": 1.5
+        },
+        "small": {
+          "width": 512,
+          "height": 341,
+          "size": "512x341",
+          "aspect": 1.5014663
+        },
+        "focus": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "description": "Photograph of a sloth, Public Domain.",
+      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+    }
+  ],
+  "mentions": [
+    {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "url": "http://localhost:8080/@admin",
+      "acct": "admin"
+    }
+  ],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null
+}`, string(b))
+}
+
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() {
 	testStatus := &gtsmodel.Status{}
 	*testStatus = *suite.testStatuses["admin_account_status_1"]
@@ -459,7 +558,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
   "language": null,
   "uri": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
-  "replies_count": 0,
+  "replies_count": 1,
   "reblogs_count": 0,
   "favourites_count": 1,
   "favourited": true,
@@ -583,7 +682,8 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
       "aspect": 1.7821782
     }
   },
-  "description": "A cow adorably licking another cow!"
+  "description": "A cow adorably licking another cow!",
+  "blurhash": null
 }`, string(b))
 }
 

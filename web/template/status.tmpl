@@ -53,42 +53,59 @@
 	<div
 		class="media photoswipe-gallery {{(len .) | oddOrEven }}{{if eq (len .) 1}} single{{end}}{{if eq (len .) 2}} double{{end}}">
 		{{range $index, $media := .}}
-		{{with $media}}
-		<div class="media-wrapper">
-			<details class="{{.Type}}-spoiler media-spoiler" {{if not $.Sensitive}}open{{end}}>
-				<summary>
-					<div class="show sensitive button" aria-hidden="true">
-						Show sensitive media
-					</div>
-					<span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
-						<i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
-						<i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
-					</span>
+			{{with $media}}
+				<div class="media-wrapper">
+					<details class="{{.Type}}-spoiler media-spoiler" {{if not $.Sensitive}}open{{end}}>
+						<summary>
+							<div class="show sensitive button" aria-hidden="true">
+								Show sensitive media
+							</div>
+							<span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
+								<i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
+								<i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
+							</span>
 
-					{{if eq .Type "video"}}
-					<video {{if .Description}} title="{{.Description}}" {{end}}>
-						<source type="video/mp4" src="{{.URL}}" />
-					</video>
-					{{else}}
-					<img {{if .Description}} title="{{.Description}}" {{end}} src="{{.PreviewURL}}" />
-					{{end}}
-				</summary>
-				{{if eq .Type "video"}}
-				<video class="plyr-video photoswipe-slide" controls {{if .Description}}alt="{{.Description}}"
-					title="{{.Description}}" {{end}} data-pswp-index="{{$index}}" data-pswp-width="{{.Meta.Original.Width}}px"
-					data-pswp-height="{{.Meta.Original.Height}}px">
-					<source type="video/mp4" src="{{.URL}}" />
-				</video>
-				{{else}}
-				<a class="photoswipe-slide" href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}" {{end}}
-					data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px"
-					data-cropped="true">
-					<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}" {{end}} />
-				</a>
-				{{end}}
-			</details>
-		</div>
-		{{end}}
+							{{if eq .Type "video"}}
+								<video {{if .Description}} title="{{.Description}}" {{end}}>
+									<source type="video/mp4" src="{{.URL}}" />
+								</video>
+							{{else if eq .Type "image"}}
+								<img {{if .Description}} title="{{.Description}}" {{end}} src="{{.PreviewURL}}" />
+							{{end}}
+						</summary>
+						{{if eq .Type "video"}}
+							<video class="plyr-video photoswipe-slide" controls {{if .Description}}alt="{{.Description}}"
+								title="{{.Description}}" {{end}} data-pswp-index="{{$index}}" data-pswp-width="{{.Meta.Original.Width}}px"
+								data-pswp-height="{{.Meta.Original.Height}}px">
+								<source type="video/mp4" src="{{.URL}}" />
+							</video>
+						{{else if eq .Type "image"}}
+							<a class="photoswipe-slide" href="{{.URL}}" target="_blank" {{if .Description}}title="{{.Description}}" {{end}}
+								data-pswp-width="{{.Meta.Original.Width}}px" data-pswp-height="{{.Meta.Original.Height}}px"
+								data-cropped="true">
+								<img src="{{.PreviewURL}}" {{if .Description}}alt="{{.Description}}" {{end}} />
+							</a>
+						{{else}}
+							<a
+								class="unknown-attachment"
+								href="{{.RemoteURL}}"
+								target="_blank"
+								{{if .Description}}
+									title="Link to external media: {{.Description}}&#10;&#13;{{.RemoteURL}}"
+								{{else}}
+									title="Link to external media.&#10;&#13;{{.RemoteURL}}"
+								{{end}}
+							>
+								<div class="placeholder" aria-hidden="true">
+									<i class="placeholder-external-link fa fa-external-link"></i>
+									<i class="placeholder-icon fa fa-file-text"></i>
+									<div class="placeholder-link-to">External media</div>
+								</div>
+							</a>
+						{{end}}
+					</details>
+				</div>
+			{{end}}
 		{{end}}
 	</div>
 	{{end}}

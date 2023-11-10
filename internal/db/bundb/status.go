@@ -316,6 +316,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 				if _, err := tx.
 					NewUpdate().
 					Model(a).
+					Column("status_id", "updated_at").
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
 					if !errors.Is(err, db.ErrAlreadyExists) {

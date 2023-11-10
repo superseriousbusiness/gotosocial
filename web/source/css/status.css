@@ -339,6 +339,40 @@ main {
 					object-fit: contain;
 					background: $gray1;
 				}
+
+				.unknown-attachment {
+					.placeholder {
+						width: 100%;
+						height: 100%;
+						padding: 0.8rem;
+						border: 0.2rem dashed $white2;
+						
+						display: flex;
+						flex-direction: column;
+						align-items: center;
+						gap: 0.25rem;
+
+						color: $white2;
+
+						.placeholder-external-link {
+							align-self: end;
+							font-size: 2.5rem;
+						}
+
+						.placeholder-icon {
+							width: 100%;
+							font-size: 3.5rem;
+							text-align: center;
+							margin-top: auto;
+						}
+
+						.placeholder-link-to {
+							width: 100%;
+							text-align: center;
+							margin-bottom: auto;
+						}
+					}
+				}
 			}
 		}
 

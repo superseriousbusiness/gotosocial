@@ -43,9 +43,10 @@ const (
 // Unretrievable checks error for a stored "unretrievable" flag.
 //
 // Unretrievable indicates that a call to retrieve a resource
-// (account, status, etc) could not be fulfilled, either because
-// it was not found locally, or because some prerequisite remote
-// resource call failed, making it impossible to return the item.
+// (account, status, attachment, etc) could not be fulfilled,
+// either because it was not found locally, or because some
+// prerequisite remote resource call failed, making it impossible
+// to return the item.
 func Unretrievable(err error) bool {
 	_, ok := errors.Value(err, unrtrvableKey).(struct{})
 	return ok

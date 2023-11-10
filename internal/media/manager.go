@@ -20,7 +20,6 @@ package media
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"time"
 
@@ -32,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 var SupportedMIMETypes = []string{
@@ -57,52 +57,67 @@ func NewManager(state *state.State) *Manager {
 	return m
 }
 
-// PreProcessMedia begins the process of decoding and storing the given data as an attachment.
-// It will return a pointer to a ProcessingMedia struct upon which further actions can be performed, such as getting
-// the finished media, thumbnail, attachment, etc.
+// PreProcessMedia begins the process of decoding
+// and storing the given data as an attachment.
+// It will return a pointer to a ProcessingMedia
+// struct upon which further actions can be performed,
+// such as getting the finished media, thumbnail,
+// attachment, etc.
 //
-// data should be a function that the media manager can call to return a reader containing the media data.
+//   - data: a function that the media manager can call
+//     to return a reader containing the media data.
+//   - accountID: the account that the media belongs to.
+//   - ai: optional and can be nil. Any additional information
+//     about the attachment provided will be put in the database.
 //
-// accountID should be the account that the media belongs to.
-//
-// ai is optional and can be nil. Any additional information about the attachment provided will be put in the database.
-//
-// Note: unlike ProcessMedia, this will NOT queue the media to be asynchronously processed.
-func (m *Manager) PreProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
-	id, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	avatar := false
-	header := false
-	cached := false
+// Note: unlike ProcessMedia, this will NOT
+// queue the media to be asynchronously processed.
+func (m *Manager) PreProcessMedia(
+	data DataFunc,
+	accountID string,
+	ai *AdditionalMediaInfo,
+) *ProcessingMedia {
+	// Populate initial fields on the new media,
+	// leaving out fields with values we don't know
+	// yet. These will be overwritten as we go.
 	now := time.Now()
-
-	// populate initial fields on the media attachment -- some of these will be overwritten as we proceed
 	attachment := &gtsmodel.MediaAttachment{
-		ID:                id,
-		CreatedAt:         now,
-		UpdatedAt:         now,
-		StatusID:          "",
-		URL:               "", // we don't know yet because it depends on the uncalled DataFunc
-		RemoteURL:         "",
-		Type:              gtsmodel.FileTypeUnknown, // we don't know yet because it depends on the uncalled DataFunc
-		FileMeta:          gtsmodel.FileMeta{},
-		AccountID:         accountID,
-		Description:       "",
-		ScheduledStatusID: "",
-		Blurhash:          "",
-		Processing:        gtsmodel.ProcessingStatusReceived,
-		File:              gtsmodel.File{UpdatedAt: now},
-		Thumbnail:         gtsmodel.Thumbnail{UpdatedAt: now},
-		Avatar:            &avatar,
-		Header:            &header,
-		Cached:            &cached,
+		ID:         id.NewULID(),
+		CreatedAt:  now,
+		UpdatedAt:  now,
+		Type:       gtsmodel.FileTypeUnknown,
+		FileMeta:   gtsmodel.FileMeta{},
+		AccountID:  accountID,
+		Processing: gtsmodel.ProcessingStatusReceived,
+		File: gtsmodel.File{
+			UpdatedAt:   now,
+			ContentType: "application/octet-stream",
+		},
+		Thumbnail: gtsmodel.Thumbnail{UpdatedAt: now},
+		Avatar:    util.Ptr(false),
+		Header:    util.Ptr(false),
+		Cached:    util.Ptr(false),
 	}
 
-	// check if we have additional info to add to the attachment,
-	// and overwrite some of the attachment fields if so
+	attachment.URL = uris.URIForAttachment(
+		accountID,
+		string(TypeAttachment),
+		string(SizeOriginal),
+		attachment.ID,
+		"unknown",
+	)
+
+	attachment.File.Path = uris.StoragePathForAttachment(
+		accountID,
+		string(TypeAttachment),
+		string(SizeOriginal),
+		attachment.ID,
+		"unknown",
+	)
+
+	// Check if we were provided additional info
+	// to add to the attachment, and overwrite
+	// some of the attachment fields if so.
 	if ai != nil {
 		if ai.CreatedAt != nil {
 			attachment.CreatedAt = *ai.CreatedAt
@@ -151,14 +166,21 @@ func (m *Manager) PreProcessMedia(ctx context.Context, data DataFunc, accountID 
 		mgr:    m,
 	}
 
-	return processingMedia, nil
+	return processingMedia
 }
 
-// PreProcessMediaRecache refetches, reprocesses, and recaches an existing attachment that has been uncached via cleaner pruning.
+// PreProcessMediaRecache refetches, reprocesses,
+// and recaches an existing attachment that has
+// been uncached via cleaner pruning.
 //
-// Note: unlike ProcessMedia, this will NOT queue the media to be asychronously processed.
-func (m *Manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, attachmentID string) (*ProcessingMedia, error) {
-	// get the existing attachment from database.
+// Note: unlike ProcessMedia, this will NOT queue
+// the media to be asychronously processed.
+func (m *Manager) PreProcessMediaRecache(
+	ctx context.Context,
+	data DataFunc,
+	attachmentID string,
+) (*ProcessingMedia, error) {
+	// Get the existing attachment from database.
 	attachment, err := m.state.DB.GetAttachmentByID(ctx, attachmentID)
 	if err != nil {
 		return nil, err
@@ -167,43 +189,39 @@ func (m *Manager) PreProcessMediaRecache(ctx context.Context, data DataFunc, att
 	processingMedia := &ProcessingMedia{
 		media:   attachment,
 		dataFn:  data,
-		recache: true, // indicate it's a recache
+		recache: true, // Indicate it's a recache.
 		mgr:     m,
 	}
 
 	return processingMedia, nil
 }
 
-// ProcessMedia will call PreProcessMedia, followed by queuing the media to be processing in the media worker queue.
-func (m *Manager) ProcessMedia(ctx context.Context, data DataFunc, accountID string, ai *AdditionalMediaInfo) (*ProcessingMedia, error) {
-	// Create a new processing media object for this media request.
-	media, err := m.PreProcessMedia(ctx, data, accountID, ai)
-	if err != nil {
-		return nil, err
-	}
-
-	// Attempt to add this media processing item to the worker queue.
-	_ = m.state.Workers.Media.MustEnqueueCtx(ctx, media.Process)
-
-	return media, nil
-}
-
-// PreProcessEmoji begins the process of decoding and storing the given data as an emoji.
-// It will return a pointer to a ProcessingEmoji struct upon which further actions can be performed, such as getting
-// the finished media, thumbnail, attachment, etc.
+// PreProcessEmoji begins the process of decoding and storing
+// the given data as an emoji. It will return a pointer to a
+// ProcessingEmoji struct upon which further actions can be
+// performed, such as getting the finished media, thumbnail,
+// attachment, etc.
 //
-// data should be a function that the media manager can call to return a reader containing the emoji data.
+//   - data: function that the media manager can call
+//     to return a reader containing the emoji data.
+//   - shortcode: the emoji shortcode without the ':'s around it.
+//   - emojiID: database ID that should be used to store the emoji.
+//   - uri: ActivityPub URI/ID of the emoji.
+//   - ai: optional and can be nil. Any additional information
+//     about the emoji provided will be put in the database.
+//   - refresh: refetch/refresh the emoji.
 //
-// shortcode should be the emoji shortcode without the ':'s around it.
-//
-// id is the database ID that should be used to store the emoji.
-//
-// uri is the ActivityPub URI/ID of the emoji.
-//
-// ai is optional and can be nil. Any additional information about the emoji provided will be put in the database.
-//
-// Note: unlike ProcessEmoji, this will NOT queue the emoji to be asynchronously processed.
-func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode string, emojiID string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+// Note: unlike ProcessEmoji, this will NOT queue
+// the emoji to be asynchronously processed.
+func (m *Manager) PreProcessEmoji(
+	ctx context.Context,
+	data DataFunc,
+	shortcode string,
+	emojiID string,
+	uri string,
+	ai *AdditionalEmojiInfo,
+	refresh bool,
+) (*ProcessingEmoji, error) {
 	var (
 		newPathID string
 		emoji     *gtsmodel.Emoji
@@ -217,18 +235,22 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 	}
 
 	if refresh {
-		// Look for existing emoji by given ID.
+		// Existing emoji!
+
 		emoji, err = m.state.DB.GetEmojiByID(ctx, emojiID)
 		if err != nil {
-			return nil, gtserror.Newf("error fetching emoji to refresh from the db: %s", err)
+			err = gtserror.Newf("error fetching emoji to refresh from the db: %w", err)
+			return nil, err
 		}
 
-		// if this is a refresh, we will end up with new images
-		// stored for this emoji, so we can use an io.Closer callback
-		// to perform clean up of the old images from storage
+		// Since this is a refresh, we will end up with
+		// new images stored for this emoji, so we should
+		// use an io.Closer callback to perform clean up
+		// of the original images from storage.
 		originalData := data
 		originalImagePath := emoji.ImagePath
 		originalImageStaticPath := emoji.ImageStaticPath
+
 		data = func(ctx context.Context) (io.ReadCloser, int64, error) {
 			// Call original data func.
 			rc, sz, err := originalData(ctx)
@@ -251,49 +273,81 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 			return iotools.ReadCloser(rc, c), sz, nil
 		}
 
+		// Reuse existing shortcode and URI -
+		// these don't change when we refresh.
+		emoji.Shortcode = shortcode
+		emoji.URI = uri
+
+		// Use a new ID to create a new path
+		// for the new images, to get around
+		// needing to do cache invalidation.
 		newPathID, err = id.NewRandomULID()
 		if err != nil {
 			return nil, gtserror.Newf("error generating alternateID for emoji refresh: %s", err)
 		}
 
-		// store + serve static image at new path ID
-		emoji.ImageStaticURL = uris.GenerateURIForAttachment(instanceAcc.ID, string(TypeEmoji), string(SizeStatic), newPathID, mimePng)
-		emoji.ImageStaticPath = fmt.Sprintf("%s/%s/%s/%s.%s", instanceAcc.ID, TypeEmoji, SizeStatic, newPathID, mimePng)
+		emoji.ImageStaticURL = uris.URIForAttachment(
+			instanceAcc.ID,
+			string(TypeEmoji),
+			string(SizeStatic),
+			newPathID,
+			// All static emojis
+			// are encoded as png.
+			mimePng,
+		)
 
-		emoji.Shortcode = shortcode
-		emoji.URI = uri
+		emoji.ImageStaticPath = uris.StoragePathForAttachment(
+			instanceAcc.ID,
+			string(TypeEmoji),
+			string(SizeStatic),
+			newPathID,
+			// All static emojis
+			// are encoded as png.
+			mimePng,
+		)
 	} else {
-		disabled := false
-		visibleInPicker := true
+		// New emoji!
 
-		// populate initial fields on the emoji -- some of these will be overwritten as we proceed
+		imageStaticURL := uris.URIForAttachment(
+			instanceAcc.ID,
+			string(TypeEmoji),
+			string(SizeStatic),
+			emojiID,
+			// All static emojis
+			// are encoded as png.
+			mimePng,
+		)
+
+		imageStaticPath := uris.StoragePathForAttachment(
+			instanceAcc.ID,
+			string(TypeEmoji),
+			string(SizeStatic),
+			emojiID,
+			// All static emojis
+			// are encoded as png.
+			mimePng,
+		)
+
+		// Populate initial fields on the new emoji,
+		// leaving out fields with values we don't know
+		// yet. These will be overwritten as we go.
 		emoji = &gtsmodel.Emoji{
 			ID:                     emojiID,
 			CreatedAt:              now,
+			UpdatedAt:              now,
 			Shortcode:              shortcode,
-			Domain:                 "", // assume our own domain unless told otherwise
-			ImageRemoteURL:         "",
-			ImageStaticRemoteURL:   "",
-			ImageURL:               "",                                                                                                     // we don't know yet
-			ImageStaticURL:         uris.GenerateURIForAttachment(instanceAcc.ID, string(TypeEmoji), string(SizeStatic), emojiID, mimePng), // all static emojis are encoded as png
-			ImagePath:              "",                                                                                                     // we don't know yet
-			ImageStaticPath:        fmt.Sprintf("%s/%s/%s/%s.%s", instanceAcc.ID, TypeEmoji, SizeStatic, emojiID, mimePng),                 // all static emojis are encoded as png
-			ImageContentType:       "",                                                                                                     // we don't know yet
-			ImageStaticContentType: mimeImagePng,                                                                                           // all static emojis are encoded as png
-			ImageFileSize:          0,
-			ImageStaticFileSize:    0,
-			Disabled:               &disabled,
+			ImageStaticURL:         imageStaticURL,
+			ImageStaticPath:        imageStaticPath,
+			ImageStaticContentType: mimeImagePng,
+			ImageUpdatedAt:         now,
+			Disabled:               util.Ptr(false),
 			URI:                    uri,
-			VisibleInPicker:        &visibleInPicker,
-			CategoryID:             "",
+			VisibleInPicker:        util.Ptr(true),
 		}
 	}
 
-	emoji.ImageUpdatedAt = now
-	emoji.UpdatedAt = now
-
-	// check if we have additional info to add to the emoji,
-	// and overwrite some of the emoji fields if so
+	// Check if we have additional info to add to the emoji,
+	// and overwrite some of the emoji fields if so.
 	if ai != nil {
 		if ai.CreatedAt != nil {
 			emoji.CreatedAt = *ai.CreatedAt
@@ -335,11 +389,17 @@ func (m *Manager) PreProcessEmoji(ctx context.Context, data DataFunc, shortcode 
 	return processingEmoji, nil
 }
 
-// PreProcessEmojiRecache refetches, reprocesses, and recaches an existing emoji that has been uncached via cleaner pruning.
+// PreProcessEmojiRecache refetches, reprocesses, and recaches
+// an existing emoji that has been uncached via cleaner pruning.
 //
-// Note: unlike ProcessEmoji, this will NOT queue the emoji to be asychronously processed.
-func (m *Manager) PreProcessEmojiRecache(ctx context.Context, data DataFunc, emojiID string) (*ProcessingEmoji, error) {
-	// get the existing emoji from the database.
+// Note: unlike ProcessEmoji, this will NOT queue the emoji to
+// be asychronously processed.
+func (m *Manager) PreProcessEmojiRecache(
+	ctx context.Context,
+	data DataFunc,
+	emojiID string,
+) (*ProcessingEmoji, error) {
+	// Get the existing emoji from the database.
 	emoji, err := m.state.DB.GetEmojiByID(ctx, emojiID)
 	if err != nil {
 		return nil, err
@@ -348,15 +408,24 @@ func (m *Manager) PreProcessEmojiRecache(ctx context.Context, data DataFunc, emo
 	processingEmoji := &ProcessingEmoji{
 		emoji:    emoji,
 		dataFn:   data,
-		existing: true, // inidcate recache
+		existing: true, // Indicate recache.
 		mgr:      m,
 	}
 
 	return processingEmoji, nil
 }
 
-// ProcessEmoji will call PreProcessEmoji, followed by queuing the emoji to be processing in the emoji worker queue.
-func (m *Manager) ProcessEmoji(ctx context.Context, data DataFunc, shortcode string, id string, uri string, ai *AdditionalEmojiInfo, refresh bool) (*ProcessingEmoji, error) {
+// ProcessEmoji will call PreProcessEmoji, followed
+// by queuing the emoji in the emoji worker queue.
+func (m *Manager) ProcessEmoji(
+	ctx context.Context,
+	data DataFunc,
+	shortcode string,
+	id string,
+	uri string,
+	ai *AdditionalEmojiInfo,
+	refresh bool,
+) (*ProcessingEmoji, error) {
 	// Create a new processing emoji object for this emoji request.
 	emoji, err := m.PreProcessEmoji(ctx, data, shortcode, id, uri, ai, refresh)
 	if err != nil {

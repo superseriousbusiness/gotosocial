@@ -789,7 +789,7 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 	for i := range status.Attachments {
 		attachment := status.Attachments[i]
 
-		// Look for existing media attachment with remoet URL first.
+		// Look for existing media attachment with remote URL first.
 		existing, ok := existing.GetAttachmentByRemoteURL(attachment.RemoteURL)
 		if ok && existing.ID != "" && *existing.Cached {
 			status.Attachments[i] = existing
@@ -804,25 +804,33 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 			continue
 		}
 
-		// Start pre-processing remote media at remote URL.
-		processing, err := d.mediaManager.PreProcessMedia(ctx, func(ctx context.Context) (io.ReadCloser, int64, error) {
+		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
 			return tsport.DereferenceMedia(ctx, remoteURL)
-		}, status.AccountID, &media.AdditionalMediaInfo{
+		}
+
+		ai := &media.AdditionalMediaInfo{
 			StatusID:    &status.ID,
 			RemoteURL:   &attachment.RemoteURL,
 			Description: &attachment.Description,
 			Blurhash:    &attachment.Blurhash,
-		})
-		if err != nil {
-			log.Errorf(ctx, "error processing attachment: %v", err)
-			continue
 		}
+
+		// Start pre-processing remote media at remote URL.
+		processing := d.mediaManager.PreProcessMedia(data, status.AccountID, ai)
 
 		// Force attachment loading *right now*.
 		attachment, err = processing.LoadAttachment(ctx)
 		if err != nil {
-			log.Errorf(ctx, "error loading attachment: %v", err)
-			continue
+			if attachment == nil {
+				// Totally failed to load;
+				// bail on this attachment.
+				log.Errorf(ctx, "error loading attachment: %v", err)
+				continue
+			}
+
+			// Partially loaded. Keep as
+			// placeholder and try again later.
+			log.Warnf(ctx, "partially loaded attachment: %v", err)
 		}
 
 		// Set the *new* attachment and ID.
@@ -832,8 +840,7 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 
 	for i := 0; i < len(status.AttachmentIDs); {
 		if status.AttachmentIDs[i] == "" {
-			// This is a failed attachment population, this may
-			// be due to us not currently supporting a media type.
+			// Remove totally failed attachment populations
 			copy(status.Attachments[i:], status.Attachments[i+1:])
 			copy(status.AttachmentIDs[i:], status.AttachmentIDs[i+1:])
 			status.Attachments = status.Attachments[:len(status.Attachments)-1]

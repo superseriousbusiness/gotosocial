@@ -42,18 +42,18 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// process the media attachment and load it immediately
-	media, err := p.mediaManager.PreProcessMedia(ctx, data, account.ID, &media.AdditionalMediaInfo{
+	media := p.mediaManager.PreProcessMedia(data, account.ID, &media.AdditionalMediaInfo{
 		Description: &form.Description,
 		FocusX:      &focusX,
 		FocusY:      &focusY,
 	})
-	if err != nil {
-		return nil, gtserror.NewErrorUnprocessableEntity(err)
-	}
 
 	attachment, err := media.LoadAttachment(ctx)
 	if err != nil {
-		return nil, gtserror.NewErrorUnprocessableEntity(err)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	} else if attachment.Type == gtsmodel.FileTypeUnknown {
+		err = gtserror.Newf("could not process uploaded file with extension %s", attachment.File.ContentType)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
 	apiAttachment, err := p.converter.AttachmentToAPIAttachment(ctx, attachment)
