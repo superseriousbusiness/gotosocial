@@ -1125,12 +1125,10 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 
 	// Check if counts have been hidden from us.
 	hideCounts := len(options) != len(votes)
-	if hideCounts {
 
-		// Zero out all votes.
-		for i := range votes {
-			votes[i] = 0
-		}
+	if hideCounts {
+		// Simply provide zeroed slice.
+		votes = make([]int, len(options))
 	}
 
 	// Extract the poll closed time,
