@@ -106,6 +106,13 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
+	if !requestingAccount.SuspendedAt.IsZero() {
+		// Account was marked as suspended by a
+		// local admin action. Stop request early.
+		err = fmt.Errorf("account %s marked as suspended", requestingAccount.ID)
+		return nil, gtserror.NewErrorForbidden(err)
+	}
+
 	blocked, err := p.state.DB.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID)
 	if err != nil {
 		err := gtserror.Newf("error checking block from account %s to account %s: %w", requestedAccount.ID, requestingAccount.ID, err)
@@ -114,7 +121,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 
 	if blocked {
 		err := fmt.Errorf("account %s blocks account %s", requestedAccount.ID, requestingAccount.ID)
-		return nil, gtserror.NewErrorUnauthorized(err)
+		return nil, gtserror.NewErrorForbidden(err)
 	}
 
 	return data(person)
