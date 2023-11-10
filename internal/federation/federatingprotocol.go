@@ -288,6 +288,13 @@ func (f *federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		return nil, false, err
 	}
 
+	if !requestingAccount.SuspendedAt.IsZero() {
+		// Account was marked as suspended by a
+		// local admin action. Stop request early.
+		w.WriteHeader(http.StatusForbidden)
+		return ctx, false, nil
+	}
+
 	// We have everything we need now, set the requesting
 	// and receiving accounts on the context for later use.
 	ctx = gtscontext.SetRequestingAccount(ctx, requestingAccount)

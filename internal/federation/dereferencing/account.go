@@ -42,6 +42,11 @@ import (
 // accountUpToDate returns whether the given account model is both updateable (i.e.
 // non-instance remote account) and whether it needs an update based on `fetched_at`.
 func accountUpToDate(account *gtsmodel.Account) bool {
+	if !account.SuspendedAt.IsZero() {
+		// Can't update suspended accounts.
+		return true
+	}
+
 	if account.IsLocal() {
 		// Can't update local accounts.
 		return true
@@ -254,12 +259,14 @@ func (d *deref) RefreshAccount(ctx context.Context, requestUser string, account 
 		return nil, nil, err
 	}
 
-	// This account was updated, enqueue re-dereference featured posts.
-	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
-			log.Errorf(ctx, "error fetching account featured collection: %v", err)
-		}
-	})
+	if apubAcc != nil {
+		// This account was updated, enqueue re-dereference featured posts.
+		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
+				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
+		})
+	}
 
 	return latest, apubAcc, nil
 }
@@ -280,21 +287,28 @@ func (d *deref) RefreshAccountAsync(ctx context.Context, requestUser string, acc
 
 	// Enqueue a worker function to enrich this account async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		latest, _, err := d.enrichAccount(ctx, requestUser, uri, account, apubAcc)
+		latest, apubAcc, err := d.enrichAccount(ctx, requestUser, uri, account, apubAcc)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote account: %v", err)
 			return
 		}
 
-		// This account was updated, re-dereference account featured posts.
-		if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
-			log.Errorf(ctx, "error fetching account featured collection: %v", err)
+		if apubAcc != nil {
+			// This account was updated, re-dereference account featured posts.
+			if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
+				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
 		}
 	})
 }
 
 // enrichAccount will enrich the given account, whether a new barebones model, or existing model from the database. It handles necessary dereferencing, webfingering etc.
 func (d *deref) enrichAccount(ctx context.Context, requestUser string, uri *url.URL, account *gtsmodel.Account, apubAcc ap.Accountable) (*gtsmodel.Account, ap.Accountable, error) {
+	// Noop if account has been suspended.
+	if !account.SuspendedAt.IsZero() {
+		return account, nil, nil
+	}
+
 	// Pre-fetch a transport for requesting username, used by later deref procedures.
 	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
