@@ -20,6 +20,7 @@ package media
 import (
 	"bytes"
 	"context"
+	"errors"
 	"image/jpeg"
 	"io"
 	"time"
@@ -32,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -152,22 +154,12 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 		// jpeg, which is fine, but streaming it to storage
 		// was interrupted halfway through and so it was
 		// never decoded). Try to clean up in this case.
-		func() {
-			if p.media.Type != gtsmodel.FileTypeUnknown {
-				return // All good.
-			}
-
-			have, _ := p.mgr.state.Storage.Has(ctx, p.media.File.Path)
-			if !have {
-				return // All good.
-			}
-
-			// Try to clean up.
+		if p.media.Type == gtsmodel.FileTypeUnknown {
 			deleteErr := p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
-			if deleteErr != nil {
+			if deleteErr != nil && !errors.Is(deleteErr, storage.ErrNotFound) {
 				errs.Append(deleteErr)
 			}
-		}()
+		}
 
 		var dbErr error
 		switch {
