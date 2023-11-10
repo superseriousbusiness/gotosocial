@@ -43,9 +43,9 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"category": "New Category", // this category doesn't exist yet
-			"type":     "modify",
+		map[string][]string{
+			"category": {"New Category"}, // this category doesn't exist yet
+			"type":    { "modify"},
 		})
 	if err != nil {
 		panic(err)
@@ -120,9 +120,9 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateSwitchCategory() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type":     "modify",
-			"category": "cute stuff",
+		map[string][]string{
+			"type":     {"modify"},
+			"category": {"cute stuff"},
 		})
 	if err != nil {
 		panic(err)
@@ -197,10 +197,10 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type":      "copy",
-			"category":  "emojis i stole",
-			"shortcode": "yell",
+		map[string][]string{
+			"type":     { "copy"},
+			"category":  {"emojis i stole"},
+			"shortcode": {"yell"},
 		})
 	if err != nil {
 		panic(err)
@@ -275,8 +275,8 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableEmoji() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type": "disable",
+		map[string][]string{
+			"type": {"disable"},
 		})
 	if err != nil {
 		panic(err)
@@ -316,8 +316,8 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableLocalEmoji() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type": "disable",
+		map[string][]string{
+			"type": {"disable"},
 		})
 	if err != nil {
 		panic(err)
@@ -349,8 +349,8 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyRemoteEmoji() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"image", "../../../../testrig/media/kip-original.gif",
-		map[string]string{
-			"type": "modify",
+		map[string][]string{
+			"type": {"modify"},
 		})
 	if err != nil {
 		panic(err)
@@ -382,8 +382,8 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyNoParams() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type": "modify",
+		map[string][]string{
+			"type": {"modify"},
 		})
 	if err != nil {
 		panic(err)
@@ -415,9 +415,9 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyLocalToLocal() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type":      "copy",
-			"shortcode": "bottoms",
+		map[string][]string{
+			"type":      {"copy"},
+			"shortcode": {"bottoms"},
 		})
 	if err != nil {
 		panic(err)
@@ -449,9 +449,9 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyEmptyShortcode() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type":      "copy",
-			"shortcode": "",
+		map[string][]string{
+			"type":      {"copy"},
+			"shortcode": {""},
 		})
 	if err != nil {
 		panic(err)
@@ -483,8 +483,8 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyNoShortcode() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type": "copy",
+		map[string][]string{
+			"type": {"copy"},
 		})
 	if err != nil {
 		panic(err)
@@ -516,9 +516,9 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyShortcodeAlreadyInUse() {
 	// set up the request
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"type":      "copy",
-			"shortcode": "rainbow",
+		map[string][]string{
+			"type":      {"copy"},
+			"shortcode": {"rainbow"},
 		})
 	if err != nil {
 		panic(err)

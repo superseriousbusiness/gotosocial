@@ -58,11 +58,11 @@ func (suite *TokenTestSuite) TestRetrieveClientCredentialsOK() {
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"grant_type":    "client_credentials",
-			"client_id":     testClient.ID,
-			"client_secret": testClient.Secret,
-			"redirect_uri":  "http://localhost:8080",
+		map[string][]string{
+			"grant_type":    {"client_credentials"},
+			"client_id":     {testClient.ID},
+			"client_secret": {testClient.Secret},
+			"redirect_uri":  {"http://localhost:8080"},
 		})
 	if err != nil {
 		panic(err)
@@ -104,12 +104,12 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeOK() {
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"grant_type":    "authorization_code",
-			"client_id":     testClient.ID,
-			"client_secret": testClient.Secret,
-			"redirect_uri":  "http://localhost:8080",
-			"code":          testUserAuthorizationToken.Code,
+		map[string][]string{
+			"grant_type":    {"authorization_code"},
+			"client_id":     {testClient.ID},
+			"client_secret": {testClient.Secret},
+			"redirect_uri":  {"http://localhost:8080"},
+			"code":          {testUserAuthorizationToken.Code},
 		})
 	if err != nil {
 		panic(err)
@@ -149,11 +149,11 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeNoCode() {
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"grant_type":    "authorization_code",
-			"client_id":     testClient.ID,
-			"client_secret": testClient.Secret,
-			"redirect_uri":  "http://localhost:8080",
+		map[string][]string{
+			"grant_type":    {"authorization_code"},
+			"client_id":     {testClient.ID},
+			"client_secret": {testClient.Secret},
+			"redirect_uri":  {"http://localhost:8080"},
 		})
 	if err != nil {
 		panic(err)
@@ -181,12 +181,12 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeWrongGrantType() {
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		"", "",
-		map[string]string{
-			"grant_type":    "client_credentials",
-			"client_id":     testClient.ID,
-			"client_secret": testClient.Secret,
-			"redirect_uri":  "http://localhost:8080",
-			"code":          "peepeepoopoo",
+		map[string][]string{
+			"grant_type":    {"client_credentials"},
+			"client_id":     {testClient.ID},
+			"client_secret": {testClient.Secret},
+			"redirect_uri":  {"http://localhost:8080"},
+			"code":          {"peepeepoopoo"},
 		})
 	if err != nil {
 		panic(err)

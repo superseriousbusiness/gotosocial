@@ -85,7 +85,7 @@ func StartTimelines(state *state.State, filter *visibility.Filter, converter *ty
 // The returned *multipart.Writer w can be used to set the content type of the request, like so:
 //
 //	req.Header.Set("Content-Type", w.FormDataContentType())
-func CreateMultipartFormData(fieldName string, fileName string, extraFields map[string]string) (bytes.Buffer, *multipart.Writer, error) {
+func CreateMultipartFormData(fieldName string, fileName string, extraFields map[string][]string) (bytes.Buffer, *multipart.Writer, error) {
 	var b bytes.Buffer
 
 	w := multipart.NewWriter(&b)
@@ -104,13 +104,9 @@ func CreateMultipartFormData(fieldName string, fileName string, extraFields map[
 		}
 	}
 
-	for k, v := range extraFields {
-		f, err := w.CreateFormField(k)
-		if err != nil {
-			return b, nil, err
-		}
-		if _, err := io.Copy(f, bytes.NewBufferString(v)); err != nil {
-			return b, nil, err
+	for k, vs := range extraFields {
+		for _, v := range vs {
+			w.WriteField(k, v)
 		}
 	}
 
