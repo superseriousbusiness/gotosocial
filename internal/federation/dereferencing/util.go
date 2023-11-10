@@ -38,49 +38,16 @@ func doOnce(fn func()) func() {
 // indicates that this should be an entirely new poll. i.e. if
 // the available options have changed, or the expiry has increased.
 func pollChanged(existing, latest *gtsmodel.Poll) bool {
-	switch {
-	case !slices.Equal(existing.Options, latest.Options):
-		// easy case, the options changed!
-		return true
-
-	case existing.ExpiresAt.Equal(latest.ExpiresAt):
-		// again, easy. expiry remained.
-		return false
-
-	case latest.ExpiresAt.IsZero() &&
-		existing.ClosedAt.IsZero() &&
-		!latest.ClosedAt.IsZero():
-		// closedAt newly set, and expiresAt
-		// unset, indicating a closing poll.
-		return false
-
-	default:
-		// all other cases
-		// we deal as changes
-		return true
-	}
+	return !slices.Equal(existing.Options, latest.Options) ||
+		!existing.ExpiresAt.Equal(latest.ExpiresAt)
 }
 
 // pollUpdated returns whether a poll has updated, i.e. if the
 // vote counts have changed, or if it has expired / been closed.
 func pollUpdated(existing, latest *gtsmodel.Poll) bool {
-	switch {
-	case *existing.Voters != *latest.Voters:
-		// easy case, no. votes changed.
-		return true
-
-	case !slices.Equal(existing.Votes, latest.Votes):
-		// again, easy. per-vote counts changed.
-		return true
-
-	case !existing.ClosedAt.Equal(latest.ClosedAt):
-		// closedAt has changed, indicating closing.
-		return true
-
-	default:
-		// no updates.
-		return false
-	}
+	return *existing.Voters != *latest.Voters ||
+		!slices.Equal(existing.Votes, latest.Votes) ||
+		!existing.ClosedAt.Equal(latest.ClosedAt)
 }
 
 // pollJustClosed returns whether a poll has *just* closed.
