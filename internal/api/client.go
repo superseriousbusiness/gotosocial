@@ -79,7 +79,7 @@ type Client struct {
 	user           *user.Module           // api/v1/user
 }
 
-func (c *Client) Route(r router.Router, m ...gin.HandlerFunc) {
+func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	// create a new group on the top level client 'api' prefix
 	apiGroup := r.AttachGroup("api")
 

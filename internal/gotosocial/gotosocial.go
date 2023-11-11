@@ -29,7 +29,7 @@ import (
 // GoToSocial server instance.
 type Server struct {
 	db        db.DB
-	apiRouter router.Router
+	apiRouter *router.Router
 	cleaner   *cleaner.Cleaner
 }
 
@@ -37,7 +37,7 @@ type Server struct {
 // GoToSocial server instance.
 func NewServer(
 	db db.DB,
-	apiRouter router.Router,
+	apiRouter *router.Router,
 	cleaner *cleaner.Cleaner,
 ) *Server {
 	return &Server{
