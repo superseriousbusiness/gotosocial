@@ -53,7 +53,7 @@ func (suite *InstanceTestSuite) TestCountInstanceStatuses() {
 func (suite *InstanceTestSuite) TestCountInstanceStatusesRemote() {
 	count, err := suite.db.CountInstanceStatuses(context.Background(), "fossbros-anonymous.io")
 	suite.NoError(err)
-	suite.Equal(2, count)
+	suite.Equal(3, count)
 }
 
 func (suite *InstanceTestSuite) TestCountInstanceDomains() {
