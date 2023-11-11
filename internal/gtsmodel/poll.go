@@ -32,8 +32,8 @@ type Poll struct {
 	Voters     *int      `bun:",nullzero,notnull"`                        // Total no. voters count.
 	StatusID   string    `bun:"type:CHAR(26),nullzero,notnull,unique"`    // Status ID of which this Poll is attached to.
 	Status     *Status   `bun:"-"`                                        // The related Status for StatusID (not always set).
-	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero,notnull"`        // The expiry date of this Poll.
-	ClosedAt   time.Time `bun:"type:timestamptz,nullzero"`                // The closure date of this poll, will be zerotime until set.
+	ExpiresAt  time.Time `bun:"type:timestamptz,nullzero"`                // The expiry date of this Poll, will be zerotime until set. (local polls ALWAYS have this set).
+	ClosedAt   time.Time `bun:"type:timestamptz,nullzero"`                // The closure date of this poll, anything other than zerotime indicates closed.
 	Closing    bool      `bun:"-"`                                        // An ephemeral field only set on Polls in the middle of closing.
 	// no creation date, use attached Status.CreatedAt.
 }

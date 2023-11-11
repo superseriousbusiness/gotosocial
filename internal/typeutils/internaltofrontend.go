@@ -1367,6 +1367,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		voted       *bool
 		ownChoices  *[]int
 		isAuthor    bool
+		expiresAt   string
 		emojis      []apimodel.Emoji
 	)
 
@@ -1428,6 +1429,11 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		}
 	}
 
+	if !poll.ExpiresAt.IsZero() {
+		// Calculate poll expiry string (if set).
+		expiresAt = util.FormatISO8601(poll.ExpiresAt)
+	}
+
 	// TODO: emojis used in poll options.
 	// For now init to empty slice to serialize as `[]`.
 	// In future inherit from parent status.
@@ -1435,7 +1441,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 
 	return &apimodel.Poll{
 		ID:          poll.ID,
-		ExpiresAt:   util.FormatISO8601(poll.ExpiresAt),
+		ExpiresAt:   expiresAt,
 		Expired:     poll.Closed(),
 		Multiple:    (*poll.Multiple),
 		VotesCount:  totalVotes,

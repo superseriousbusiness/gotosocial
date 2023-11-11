@@ -1125,24 +1125,29 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 
 	// Check if counts have been hidden from us.
 	hideCounts := len(options) != len(votes)
+
 	if hideCounts {
-
-		// Zero out all votes.
-		for i := range votes {
-			votes[i] = 0
-		}
+		// Simply provide zeroed slice.
+		votes = make([]int, len(options))
 	}
 
-	// Extract the poll end time.
-	endTime := GetEndTime(poll)
-	if endTime.IsZero() {
-		return nil, errors.New("no poll end time specified")
-	}
-
-	// Extract the poll closed time.
+	// Extract the poll closed time,
+	// it's okay for this to be zero.
 	closedSlice := GetClosed(poll)
 	if len(closedSlice) == 1 {
 		closed = closedSlice[0]
+	}
+
+	// Extract the poll end time, again
+	// this isn't necessarily set as some
+	// servers support "endless" polls.
+	endTime := GetEndTime(poll)
+
+	if endTime.IsZero() && !closed.IsZero() {
+		// If no endTime is provided, but the
+		// poll is marked as closed, infer the
+		// endTime from the closed time.
+		endTime = closed
 	}
 
 	// Extract the number of voters.

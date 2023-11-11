@@ -737,27 +737,22 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 		// no previous poll, insert new poll!
 		return insertStatusPoll(ctx, status)
 
-	case /*existing.Poll != nil &&*/ status.Poll == nil:
+	case status.Poll == nil:
 		// existing poll has been deleted, remove this.
 		return deleteStatusPoll(ctx, existing.PollID)
 
-	case /*existing.Poll != nil && status.Poll != nil && */
-		!slices.Equal(existing.Poll.Options, status.Poll.Options) ||
-			!existing.Poll.ExpiresAt.Equal(status.Poll.ExpiresAt):
+	case pollChanged(existing.Poll, status.Poll):
 		// poll has changed since original, delete and reinsert new.
 		if err := deleteStatusPoll(ctx, existing.PollID); err != nil {
 			return err
 		}
 		return insertStatusPoll(ctx, status)
 
-	case /*existing.Poll != nil && status.Poll != nil && */
-		!existing.Poll.ClosedAt.Equal(status.Poll.ClosedAt) ||
-			!slices.Equal(existing.Poll.Votes, status.Poll.Votes) ||
-			existing.Poll.Voters != status.Poll.Voters:
+	case pollUpdated(existing.Poll, status.Poll):
 		// Since we last saw it, the poll has updated!
 		// Whether that be stats, or close time.
 		poll := existing.Poll
-		poll.Closing = (!poll.Closed() && status.Poll.Closed())
+		poll.Closing = pollJustClosed(existing.Poll, status.Poll)
 		poll.ClosedAt = status.Poll.ClosedAt
 		poll.Voters = status.Poll.Voters
 		poll.Votes = status.Poll.Votes

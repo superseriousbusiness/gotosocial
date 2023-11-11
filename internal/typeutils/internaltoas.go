@@ -708,8 +708,10 @@ func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap
 		optionsProp.AppendActivityStreamsNote(note)
 	}
 
-	// Set poll endTime property.
-	ap.SetEndTime(dst, poll.ExpiresAt)
+	if !poll.ExpiresAt.IsZero() {
+		// Set poll endTime property.
+		ap.SetEndTime(dst, poll.ExpiresAt)
+	}
 
 	if !poll.ClosedAt.IsZero() {
 		// Poll is closed, set closed property.

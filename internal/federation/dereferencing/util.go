@@ -17,6 +17,12 @@
 
 package dereferencing
 
+import (
+	"slices"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
+
 // doOnce wraps a function to only perform it once.
 func doOnce(fn func()) func() {
 	var once int32
@@ -26,4 +32,25 @@ func doOnce(fn func()) func() {
 			once = 1
 		}
 	}
+}
+
+// pollChanged returns whether a poll has changed in way that
+// indicates that this should be an entirely new poll. i.e. if
+// the available options have changed, or the expiry has increased.
+func pollChanged(existing, latest *gtsmodel.Poll) bool {
+	return !slices.Equal(existing.Options, latest.Options) ||
+		!existing.ExpiresAt.Equal(latest.ExpiresAt)
+}
+
+// pollUpdated returns whether a poll has updated, i.e. if the
+// vote counts have changed, or if it has expired / been closed.
+func pollUpdated(existing, latest *gtsmodel.Poll) bool {
+	return *existing.Voters != *latest.Voters ||
+		!slices.Equal(existing.Votes, latest.Votes) ||
+		!existing.ClosedAt.Equal(latest.ClosedAt)
+}
+
+// pollJustClosed returns whether a poll has *just* closed.
+func pollJustClosed(existing, latest *gtsmodel.Poll) bool {
+	return existing.ClosedAt.IsZero() && latest.Closed()
 }

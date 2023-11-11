@@ -154,7 +154,7 @@ func (suite *ReportsGetTestSuite) TestGetReports() {
       "header_static": "http://localhost:8080/assets/default_header.png",
       "followers_count": 0,
       "following_count": 0,
-      "statuses_count": 2,
+      "statuses_count": 3,
       "last_status_at": "2021-09-11T09:40:37.000Z",
       "emojis": [],
       "fields": []
@@ -244,7 +244,7 @@ func (suite *ReportsGetTestSuite) TestGetReports4() {
       "header_static": "http://localhost:8080/assets/default_header.png",
       "followers_count": 0,
       "following_count": 0,
-      "statuses_count": 2,
+      "statuses_count": 3,
       "last_status_at": "2021-09-11T09:40:37.000Z",
       "emojis": [],
       "fields": []
@@ -318,7 +318,7 @@ func (suite *ReportsGetTestSuite) TestGetReports6() {
       "header_static": "http://localhost:8080/assets/default_header.png",
       "followers_count": 0,
       "following_count": 0,
-      "statuses_count": 2,
+      "statuses_count": 3,
       "last_status_at": "2021-09-11T09:40:37.000Z",
       "emojis": [],
       "fields": []
@@ -376,7 +376,7 @@ func (suite *ReportsGetTestSuite) TestGetReports7() {
       "header_static": "http://localhost:8080/assets/default_header.png",
       "followers_count": 0,
       "following_count": 0,
-      "statuses_count": 2,
+      "statuses_count": 3,
       "last_status_at": "2021-09-11T09:40:37.000Z",
       "emojis": [],
       "fields": []
