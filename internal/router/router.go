@@ -277,8 +277,10 @@ func (r *Router) letsEncryptTLS() (func() error, error) {
 	//
 	// This will redirect all non-LetsEncrypt http
 	// reqs to https, preserving path and query params.
-	var fallback http.HandlerFunc
-	fallback = func(w http.ResponseWriter, r *http.Request) {
+	var fallback http.HandlerFunc = func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
 		// Rewrite target to https.
 		target := "https://" + r.Host + r.URL.Path
 		if len(r.URL.RawQuery) > 0 {
@@ -291,7 +293,7 @@ func (r *Router) letsEncryptTLS() (func() error, error) {
 	// Take our own copy of the HTTP server,
 	// and update it to serve LetsEncrypt
 	// requests via the autocert manager.
-	leSrv := (*r.srv) //nolint:copylocks
+	leSrv := (*r.srv) //nolint:govet
 	leSrv.Handler = acm.HTTPHandler(fallback)
 	leSrv.Addr = fmt.Sprintf("%s:%d",
 		config.GetBindAddress(),
