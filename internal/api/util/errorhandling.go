@@ -115,6 +115,11 @@ func ErrorHandler(
 		if ctxErr == router.ErrRequestDeadlineExpired {
 			// We timed out the request.
 			errWithCode = gtserror.NewErrorRequestTimeout(err)
+
+			// Be correct and write "close".
+			// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection#close
+			// and: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/408
+			c.Header("Connection", "close")
 		} else {
 			// Client timed out the request.
 			errWithCode = gtserror.NewErrorClientClosedRequest(err)
