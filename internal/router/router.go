@@ -20,7 +20,6 @@ package router
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -36,7 +35,7 @@ import (
 )
 
 const (
-	requestDeadline    = 5 * time.Minute
+	requestDeadline    = 10 * time.Minute
 	readTimeout        = 60 * time.Second
 	writeTimeout       = 30 * time.Second
 	idleTimeout        = 30 * time.Second
@@ -45,13 +44,19 @@ const (
 	maxMultipartMemory = int64(8 * bytesize.MiB)
 )
 
-var requestDeadlineExpired = errors.New("deadlineHandler requestDeadline expired")
+var ErrRequestDeadlineExpired = fmt.Errorf("deadlineHandler: incoming HTTP request deadline expired after %.0f minutes", requestDeadline.Minutes())
 
 type deadlineHandler struct {
 	*gin.Engine
 }
 
-func (dh deadlineHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP wraps the embedded Gin engine's ServeHTTP
+// function with an injected deadline context which
+// times out incoming requests after 10 minutes.
+func (dh deadlineHandler) ServeHTTP(
+	w http.ResponseWriter,
+	r *http.Request,
+) {
 	if upgr := r.Header.Get("Upgrade"); upgr != "" {
 		// Upgrade to wss (probably).
 		// Leave well enough alone.
@@ -59,12 +64,18 @@ func (dh deadlineHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deadlineCtx, cancelCtx := context.WithDeadlineCause(
+	// Create deadline ctx.
+	dlCtx, cancelCtx := context.WithDeadlineCause(
 		r.Context(),
 		time.Now().Add(requestDeadline),
-		requestDeadlineExpired,
+		ErrRequestDeadlineExpired,
 	)
 	defer cancelCtx()
+
+	// Serve the request
+	// with the new context.
+	r = r.WithContext(dlCtx)
+	dh.Engine.ServeHTTP(w, r)
 }
 
 // Router provides the HTTP REST
@@ -122,9 +133,14 @@ func New(ctx context.Context) (*Router, error) {
 		config.GetPort(),
 	)
 
+	// Wrap the gin engine handler in our
+	// own deadline handler, to ensure we
+	// don't keep very slow requests around.
+	handler := deadlineHandler{engine}
+
 	s := &http.Server{
 		Addr:              addr,
-		Handler:           deadlineHandler{engine}, // use gin engine as handler
+		Handler:           handler,
 		ReadTimeout:       readTimeout,
 		ReadHeaderTimeout: readHeaderTimeout,
 		WriteTimeout:      writeTimeout,
