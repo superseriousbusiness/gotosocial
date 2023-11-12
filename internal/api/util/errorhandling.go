@@ -112,7 +112,7 @@ func ErrorHandler(
 		// and just abort the request gracelessly.
 		err := errWithCode.Unwrap()
 
-		if ctxErr == router.ErrRequestDeadlineExpired {
+		if ctxErr == router.ErrRequestTimeout {
 			// We timed out the request.
 			errWithCode = gtserror.NewErrorRequestTimeout(err)
 

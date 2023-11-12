@@ -35,7 +35,6 @@ import (
 )
 
 const (
-	requestDeadline    = 10 * time.Minute
 	readTimeout        = 60 * time.Second
 	writeTimeout       = 30 * time.Second
 	idleTimeout        = 30 * time.Second
@@ -43,40 +42,6 @@ const (
 	shutdownTimeout    = 30 * time.Second
 	maxMultipartMemory = int64(8 * bytesize.MiB)
 )
-
-var ErrRequestDeadlineExpired = fmt.Errorf("deadlineHandler: incoming HTTP request deadline expired after %.0f minutes", requestDeadline.Minutes())
-
-type deadlineHandler struct {
-	*gin.Engine
-}
-
-// ServeHTTP wraps the embedded Gin engine's ServeHTTP
-// function with an injected deadline context which
-// times out incoming requests after 10 minutes.
-func (dh deadlineHandler) ServeHTTP(
-	w http.ResponseWriter,
-	r *http.Request,
-) {
-	if upgr := r.Header.Get("Upgrade"); upgr != "" {
-		// Upgrade to wss (probably).
-		// Leave well enough alone.
-		dh.Engine.ServeHTTP(w, r)
-		return
-	}
-
-	// Create deadline ctx.
-	dlCtx, cancelCtx := context.WithDeadlineCause(
-		r.Context(),
-		time.Now().Add(requestDeadline),
-		ErrRequestDeadlineExpired,
-	)
-	defer cancelCtx()
-
-	// Serve the request
-	// with the new context.
-	r = r.WithContext(dlCtx)
-	dh.Engine.ServeHTTP(w, r)
-}
 
 // Router provides the HTTP REST
 // interface for GoToSocial, using gin.
@@ -134,9 +99,9 @@ func New(ctx context.Context) (*Router, error) {
 	)
 
 	// Wrap the gin engine handler in our
-	// own deadline handler, to ensure we
+	// own timeout handler, to ensure we
 	// don't keep very slow requests around.
-	handler := deadlineHandler{engine}
+	handler := timeoutHandler{engine}
 
 	s := &http.Server{
 		Addr:              addr,
