@@ -56,10 +56,10 @@ func (th timeoutHandler) ServeHTTP(
 	)
 	defer cancelCtx()
 
-	// Replace request with new
-	// version, and serve it.
-	tor := r.WithContext(toCtx)
-	*r = *tor
-
-	th.Engine.ServeHTTP(w, r)
+	// Serve the request using a shallow copy
+	// with the new context, without replacing
+	// the underlying request, since the latter
+	// may be used later outside of the Gin
+	// engine for post-request cleanup tasks.
+	th.Engine.ServeHTTP(w, r.WithContext(toCtx))
 }
