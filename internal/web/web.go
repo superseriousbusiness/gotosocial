@@ -74,7 +74,7 @@ func New(db db.DB, processor *processing.Processor) *Module {
 	}
 }
 
-func (m *Module) Route(r router.Router, mi ...gin.HandlerFunc) {
+func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	// Group all static files from assets dir at /assets,
 	// so that they can use the same cache control middleware.
 	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())

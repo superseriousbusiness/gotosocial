@@ -30,7 +30,7 @@ type Fileserver struct {
 	fileserver *fileserver.Module
 }
 
-func (f *Fileserver) Route(r router.Router, m ...gin.HandlerFunc) {
+func (f *Fileserver) Route(r *router.Router, m ...gin.HandlerFunc) {
 	fileserverGroup := r.AttachGroup("fileserver")
 
 	// Attach middlewares appropriate for this group.

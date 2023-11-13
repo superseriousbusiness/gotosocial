@@ -19,6 +19,7 @@ package util
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"codeberg.org/gruf/go-kv"
@@ -90,19 +91,40 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 // try to serve an appropriate application/json content-type error.
 // To override the default response type, specify `offers`.
 //
-// If the requester already hung up on the request, ErrorHandler
-// will overwrite the given errWithCode with a 499 error to indicate
-// that the failure wasn't due to something we did, and will avoid
-// trying to write extensive bytes to the caller by just aborting.
+// If the requester already hung up on the request, or the server
+// timed out a very slow request, ErrorHandler will overwrite the
+// given errWithCode with a 408 or 499 error to indicate that the
+// failure wasn't due to something we did, and will avoid trying
+// to write extensive bytes to the caller by just aborting.
 //
-// See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx.
-func ErrorHandler(c *gin.Context, errWithCode gtserror.WithCode, instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode), offers ...MIME) {
-	if c.Request.Context().Err() != nil {
-		// Context error means requester probably left already.
-		// Wrap original error with a less alarming one. Then
-		// we can return early, because it doesn't matter what
-		// we send to the client at this point; they're gone.
-		errWithCode = gtserror.NewErrorClientClosedRequest(errWithCode.Unwrap())
+// For 499, see https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx.
+func ErrorHandler(
+	c *gin.Context,
+	errWithCode gtserror.WithCode,
+	instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode),
+	offers ...MIME,
+) {
+	if ctxErr := c.Request.Context().Err(); ctxErr != nil {
+		// Context error means either client has left already,
+		// or server has timed out a very slow request.
+		//
+		// Rewrap the error with something less scary,
+		// and just abort the request gracelessly.
+		err := errWithCode.Unwrap()
+
+		if errors.Is(ctxErr, context.DeadlineExceeded) {
+			// We timed out the request.
+			errWithCode = gtserror.NewErrorRequestTimeout(err)
+
+			// Be correct and write "close".
+			// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection#close
+			// and: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/408
+			c.Header("Connection", "close")
+		} else {
+			// Client timed out the request.
+			errWithCode = gtserror.NewErrorClientClosedRequest(err)
+		}
+
 		c.AbortWithStatus(errWithCode.Code())
 		return
 	}

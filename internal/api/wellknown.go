@@ -33,7 +33,7 @@ type WellKnown struct {
 	hostMeta  *hostmeta.Module
 }
 
-func (w *WellKnown) Route(r router.Router, m ...gin.HandlerFunc) {
+func (w *WellKnown) Route(r *router.Router, m ...gin.HandlerFunc) {
 	// group .well-known endpoints together
 	wellKnownGroup := r.AttachGroup(".well-known")
 

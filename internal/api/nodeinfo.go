@@ -29,7 +29,7 @@ type NodeInfo struct {
 	nodeInfo *nodeinfo.Module
 }
 
-func (w *NodeInfo) Route(r router.Router, m ...gin.HandlerFunc) {
+func (w *NodeInfo) Route(r *router.Router, m ...gin.HandlerFunc) {
 	// group nodeinfo endpoints together
 	nodeInfoGroup := r.AttachGroup("nodeinfo")
 

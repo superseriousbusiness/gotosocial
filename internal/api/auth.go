@@ -36,7 +36,7 @@ type Auth struct {
 }
 
 // Route attaches 'auth' and 'oauth' groups to the given router.
-func (a *Auth) Route(r router.Router, m ...gin.HandlerFunc) {
+func (a *Auth) Route(r *router.Router, m ...gin.HandlerFunc) {
 	// create groupings for the 'auth' and 'oauth' prefixes
 	authGroup := r.AttachGroup("auth")
 	oauthGroup := r.AttachGroup("oauth")

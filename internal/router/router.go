@@ -29,6 +29,7 @@ import (
 	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"golang.org/x/crypto/acme/autocert"
 )
@@ -42,94 +43,120 @@ const (
 	maxMultipartMemory = int64(8 * bytesize.MiB)
 )
 
-// Router provides the REST interface for gotosocial, using gin.
-type Router interface {
-	// Attach global gin middlewares to this router.
-	AttachGlobalMiddleware(handlers ...gin.HandlerFunc) gin.IRoutes
-	// AttachGroup attaches the given handlers into a group with the given relativePath as
-	// base path for that group. It then returns the *gin.RouterGroup so that the caller
-	// can add any extra middlewares etc specific to that group, as desired.
-	AttachGroup(relativePath string, handlers ...gin.HandlerFunc) *gin.RouterGroup
-	// Attach a single gin handler to the router with the given method and path.
-	// To make middleware management easier, AttachGroup should be preferred where possible.
-	// However, this function can be used for attaching single handlers that only require
-	// global middlewares.
-	AttachHandler(method string, path string, handler gin.HandlerFunc)
-
-	// Attach 404 NoRoute handler
-	AttachNoRouteHandler(handler gin.HandlerFunc)
-	// Start the router
-	Start()
-	// Stop the router
-	Stop(ctx context.Context) error
+// Router provides the HTTP REST
+// interface for GoToSocial, using gin.
+type Router struct {
+	engine *gin.Engine
+	srv    *http.Server
 }
 
-// router fulfils the Router interface using gin and logrus
-type router struct {
-	engine      *gin.Engine
-	srv         *http.Server
-	certManager *autocert.Manager
-}
+// New returns a new Router, which wraps
+// an http server and gin handler engine.
+//
+// The router's Attach functions should be
+// used *before* the router is Started.
+//
+// When the router's work is finished, Stop
+// should be called on it to close connections
+// gracefully.
+//
+// The provided context will be used as the base
+// context for all requests passing through the
+// underlying http.Server, so this should be a
+// long-running context.
+func New(ctx context.Context) (*Router, error) {
+	// TODO: make this configurable?
+	gin.SetMode(gin.ReleaseMode)
 
-// Start starts the router nicely. It will serve two handlers if letsencrypt is enabled, and only the web/API handler if letsencrypt is not enabled.
-func (r *router) Start() {
-	// listen is the server start function, by
-	// default pointing to regular HTTP listener,
-	// but updated to TLS if LetsEncrypt is enabled.
-	listen := r.srv.ListenAndServe
+	// Create the engine here -- this is the core
+	// request routing handler for GoToSocial.
+	engine := gin.New()
+	engine.MaxMultipartMemory = maxMultipartMemory
+	engine.HandleMethodNotAllowed = true
 
-	// During config validation we already checked that both Chain and Key are set
-	// so we can forego checking for both here
-	if chain := config.GetTLSCertificateChain(); chain != "" {
-		pkey := config.GetTLSCertificateKey()
-		cer, err := tls.LoadX509KeyPair(chain, pkey)
-		if err != nil {
-			log.Fatalf(
-				nil,
-				"tls: failed to load keypair from %s and %s, ensure they are PEM-encoded and can be read by this process: %s",
-				chain, pkey, err,
-			)
-		}
-		r.srv.TLSConfig = &tls.Config{
-			MinVersion:   tls.VersionTLS12,
-			Certificates: []tls.Certificate{cer},
-		}
-		// TLS is enabled, update the listen function
-		listen = func() error { return r.srv.ListenAndServeTLS("", "") }
+	// Set up client IP forwarding via
+	// trusted x-forwarded-* headers.
+	trustedProxies := config.GetTrustedProxies()
+	if err := engine.SetTrustedProxies(trustedProxies); err != nil {
+		return nil, err
 	}
 
-	if config.GetLetsEncryptEnabled() {
-		// LetsEncrypt support is enabled
+	// Attach functions used by HTML templating,
+	// and load HTML templates into the engine.
+	LoadTemplateFunctions(engine)
+	if err := LoadTemplates(engine); err != nil {
+		return nil, err
+	}
 
-		// Prepare an HTTPS-redirect handler for LetsEncrypt fallback
-		redirect := http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			target := "https://" + r.Host + r.URL.Path
-			if len(r.URL.RawQuery) > 0 {
-				target += "?" + r.URL.RawQuery
-			}
-			http.Redirect(rw, r, target, http.StatusTemporaryRedirect)
-		})
+	// Use the passed-in cmd context as the base context for the
+	// server, since we'll never want the server to live past the
+	// `server start` command anyway.
+	baseCtx := func(_ net.Listener) context.Context { return ctx }
 
-		go func() {
-			// Take our own copy of HTTP server
-			// with updated autocert manager endpoint
-			srv := (*r.srv) //nolint
-			srv.Handler = r.certManager.HTTPHandler(redirect)
-			srv.Addr = fmt.Sprintf("%s:%d",
-				config.GetBindAddress(),
-				config.GetLetsEncryptPort(),
-			)
+	addr := fmt.Sprintf("%s:%d",
+		config.GetBindAddress(),
+		config.GetPort(),
+	)
 
-			// Start the LetsEncrypt autocert manager HTTP server.
-			log.Infof(nil, "letsencrypt listening on %s", srv.Addr)
-			if err := srv.ListenAndServe(); err != nil &&
-				err != http.ErrServerClosed {
-				log.Fatalf(nil, "letsencrypt: listen: %s", err)
-			}
-		}()
+	// Wrap the gin engine handler in our
+	// own timeout handler, to ensure we
+	// don't keep very slow requests around.
+	handler := timeoutHandler{engine}
 
-		// TLS is enabled, update the listen function
-		listen = func() error { return r.srv.ListenAndServeTLS("", "") }
+	s := &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadTimeout:       readTimeout,
+		ReadHeaderTimeout: readHeaderTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+		BaseContext:       baseCtx,
+	}
+
+	return &Router{
+		engine: engine,
+		srv:    s,
+	}, nil
+}
+
+// Start starts the router nicely.
+//
+// It will serve two handlers if letsencrypt is enabled,
+// and only the web/API handler if letsencrypt is not enabled.
+func (r *Router) Start() {
+	var (
+		// listen is the server start function.
+		// By default this points to a regular
+		// HTTP listener, but will be changed to
+		// TLS if custom certs or LE are enabled.
+		listen func() error
+		err    error
+
+		certFile  = config.GetTLSCertificateChain()
+		keyFile   = config.GetTLSCertificateKey()
+		leEnabled = config.GetLetsEncryptEnabled()
+	)
+
+	switch {
+	// TLS with custom certs.
+	case certFile != "":
+		// During config validation we already checked
+		// that either both or neither of Chain and Key
+		// are set, so we can forego checking again here.
+		listen, err = r.customTLS(certFile, keyFile)
+
+	// TLS with letsencrypt.
+	case leEnabled:
+		listen, err = r.letsEncryptTLS()
+
+	// Default listen. TLS must
+	// be handled by reverse proxy.
+	default:
+		listen = r.srv.ListenAndServe
+	}
+
+	if err != nil {
+		log.Fatal(nil, err)
 	}
 
 	// Pass the server handler through a debug pprof middleware handler.
@@ -154,7 +181,7 @@ func (r *router) Start() {
 }
 
 // Stop shuts down the router nicely
-func (r *router) Stop(ctx context.Context) error {
+func (r *Router) Stop(ctx context.Context) error {
 	log.Infof(nil, "shutting down http router with %s grace period", shutdownTimeout)
 	timeout, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
@@ -167,78 +194,87 @@ func (r *router) Stop(ctx context.Context) error {
 	return nil
 }
 
-// New returns a new Router.
-//
-// The router's Attach functions should be used *before* the router is Started.
-//
-// When the router's work is finished, Stop should be called on it to close connections gracefully.
-//
-// The provided context will be used as the base context for all requests passing
-// through the underlying http.Server, so this should be a long-running context.
-func New(ctx context.Context) (Router, error) {
-	gin.SetMode(gin.TestMode)
-
-	// create the actual engine here -- this is the core request routing handler for gts
-	engine := gin.New()
-	engine.MaxMultipartMemory = maxMultipartMemory
-	engine.HandleMethodNotAllowed = true
-
-	// set up IP forwarding via x-forward-* headers.
-	trustedProxies := config.GetTrustedProxies()
-	if err := engine.SetTrustedProxies(trustedProxies); err != nil {
+// customTLS modifies the router's underlying
+// http server to use custom TLS cert/key pair.
+func (r *Router) customTLS(
+	certFile string,
+	keyFile string,
+) (func() error, error) {
+	// Load certificates from disk.
+	cer, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		err = gtserror.Newf(
+			"failed to load keypair from %s and %s, ensure they are "+
+				"PEM-encoded and can be read by this process: %w",
+			certFile, keyFile, err,
+		)
 		return nil, err
 	}
 
-	// set template functions
-	LoadTemplateFunctions(engine)
-
-	// load templates onto the engine
-	if err := LoadTemplates(engine); err != nil {
-		return nil, err
+	// Override server's TLSConfig.
+	r.srv.TLSConfig = &tls.Config{
+		MinVersion:   tls.VersionTLS12,
+		Certificates: []tls.Certificate{cer},
 	}
 
-	// use the passed-in command context as the base context for the server,
-	// since we'll never want the server to live past the command anyway
-	baseCtx := func(_ net.Listener) context.Context {
-		return ctx
+	// Update listen function to use custom TLS.
+	listen := func() error { return r.srv.ListenAndServeTLS("", "") }
+	return listen, nil
+}
+
+// letsEncryptTLS modifies the router's underlying http
+// server to use LetsEncrypt via an ACME Autocert manager.
+//
+// It also starts a listener on the configured LetsEncrypt
+// port to validate LE requests.
+func (r *Router) letsEncryptTLS() (func() error, error) {
+	acm := &autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(config.GetHost()),
+		Cache:      autocert.DirCache(config.GetLetsEncryptCertDir()),
+		Email:      config.GetLetsEncryptEmailAddress(),
 	}
 
-	bindAddress := config.GetBindAddress()
-	port := config.GetPort()
-	addr := fmt.Sprintf("%s:%d", bindAddress, port)
+	// Override server's TLSConfig.
+	r.srv.TLSConfig = acm.TLSConfig()
 
-	s := &http.Server{
-		Addr:              addr,
-		Handler:           engine, // use gin engine as handler
-		ReadTimeout:       readTimeout,
-		ReadHeaderTimeout: readHeaderTimeout,
-		WriteTimeout:      writeTimeout,
-		IdleTimeout:       idleTimeout,
-		BaseContext:       baseCtx,
-	}
-
-	// We need to spawn the underlying server slightly differently depending on whether lets encrypt is enabled or not.
-	// In either case, the gin engine will still be used for routing requests.
-	leEnabled := config.GetLetsEncryptEnabled()
-
-	var m *autocert.Manager
-	if leEnabled {
-		// le IS enabled, so roll up an autocert manager for handling letsencrypt requests
-		host := config.GetHost()
-		leCertDir := config.GetLetsEncryptCertDir()
-		leEmailAddress := config.GetLetsEncryptEmailAddress()
-		m = &autocert.Manager{
-			Prompt:     autocert.AcceptTOS,
-			HostPolicy: autocert.HostWhitelist(host),
-			Cache:      autocert.DirCache(leCertDir),
-			Email:      leEmailAddress,
+	// Prepare a fallback handler for LetsEncrypt.
+	//
+	// This will redirect all non-LetsEncrypt http
+	// reqs to https, preserving path and query params.
+	var fallback http.HandlerFunc = func(
+		w http.ResponseWriter,
+		r *http.Request,
+	) {
+		// Rewrite target to https.
+		target := "https://" + r.Host + r.URL.Path
+		if len(r.URL.RawQuery) > 0 {
+			target += "?" + r.URL.RawQuery
 		}
-		s.TLSConfig = m.TLSConfig()
+
+		http.Redirect(w, r, target, http.StatusTemporaryRedirect)
 	}
 
-	return &router{
-		engine:      engine,
-		srv:         s,
-		certManager: m,
-	}, nil
+	// Take our own copy of the HTTP server,
+	// and update it to serve LetsEncrypt
+	// requests via the autocert manager.
+	leSrv := (*r.srv) //nolint:govet
+	leSrv.Handler = acm.HTTPHandler(fallback)
+	leSrv.Addr = fmt.Sprintf("%s:%d",
+		config.GetBindAddress(),
+		config.GetLetsEncryptPort(),
+	)
+
+	go func() {
+		// Start the LetsEncrypt autocert manager HTTP server.
+		log.Infof(nil, "letsencrypt listening on %s", leSrv.Addr)
+		if err := leSrv.ListenAndServe(); err != nil &&
+			err != http.ErrServerClosed {
+			log.Fatalf(nil, "letsencrypt: listen: %s", err)
+		}
+	}()
+
+	// Update listen function to use LetsEncrypt TLS.
+	listen := func() error { return r.srv.ListenAndServeTLS("", "") }
+	return listen, nil
 }

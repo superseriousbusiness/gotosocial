@@ -198,3 +198,14 @@ func NewErrorClientClosedRequest(original error) WithCode {
 		code:     StatusClientClosedRequest,
 	}
 }
+
+// NewErrorRequestTimeout returns an ErrorWithCode 408 with the given original error.
+// This error type should only be used when the server has decided to hang up a client
+// request after x amount of time, to avoid keeping extremely slow client requests open.
+func NewErrorRequestTimeout(original error) WithCode {
+	return withCode{
+		original: original,
+		safe:     errors.New(http.StatusText(http.StatusRequestTimeout)),
+		code:     http.StatusRequestTimeout,
+	}
+}

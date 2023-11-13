@@ -33,7 +33,7 @@ import (
 //
 // If the environment variable GTS_WEB_TEMPLATE_BASE_DIR set, it will take that
 // value as the template base directory instead.
-func NewTestRouter(db db.DB) router.Router {
+func NewTestRouter(db db.DB) *router.Router {
 	if alternativeTemplateBaseDir := os.Getenv("GTS_WEB_TEMPLATE_BASE_DIR"); alternativeTemplateBaseDir != "" {
 		config.Config(func(cfg *config.Configuration) {
 			cfg.WebTemplateBaseDir = alternativeTemplateBaseDir

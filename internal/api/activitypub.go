@@ -35,7 +35,7 @@ type ActivityPub struct {
 	signatureCheckMiddleware gin.HandlerFunc
 }
 
-func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
+func (a *ActivityPub) Route(r *router.Router, m ...gin.HandlerFunc) {
 	// create groupings for the 'emoji' and 'users' prefixes
 	emojiGroup := r.AttachGroup("emoji")
 	usersGroup := r.AttachGroup("users")
@@ -54,7 +54,7 @@ func (a *ActivityPub) Route(r router.Router, m ...gin.HandlerFunc) {
 }
 
 // Public key endpoint requires different middleware + cache policies from other AP endpoints.
-func (a *ActivityPub) RoutePublicKey(r router.Router, m ...gin.HandlerFunc) {
+func (a *ActivityPub) RoutePublicKey(r *router.Router, m ...gin.HandlerFunc) {
 	// Create grouping for the 'users/[username]/main-key' prefix.
 	publicKeyGroup := r.AttachGroup(publickey.PublicKeyPath)
 
