@@ -14,15 +14,15 @@
 
 // Package httpconv provides OpenTelemetry HTTP semantic conventions for
 // tracing telemetry.
-package httpconv // import "go.opentelemetry.io/otel/semconv/v1.17.0/httpconv"
+package httpconv // import "go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
 
 import (
 	"net/http"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/semconv/internal/v2"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/semconv/internal/v4"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
 var (
@@ -44,7 +44,8 @@ var (
 
 		EnduserIDKey:                 semconv.EnduserIDKey,
 		HTTPClientIPKey:              semconv.HTTPClientIPKey,
-		HTTPFlavorKey:                semconv.HTTPFlavorKey,
+		NetProtocolNameKey:           semconv.NetProtocolNameKey,
+		NetProtocolVersionKey:        semconv.NetProtocolVersionKey,
 		HTTPMethodKey:                semconv.HTTPMethodKey,
 		HTTPRequestContentLengthKey:  semconv.HTTPRequestContentLengthKey,
 		HTTPResponseContentLengthKey: semconv.HTTPResponseContentLengthKey,
@@ -54,7 +55,7 @@ var (
 		HTTPStatusCodeKey:            semconv.HTTPStatusCodeKey,
 		HTTPTargetKey:                semconv.HTTPTargetKey,
 		HTTPURLKey:                   semconv.HTTPURLKey,
-		HTTPUserAgentKey:             semconv.HTTPUserAgentKey,
+		UserAgentOriginalKey:         semconv.UserAgentOriginalKey,
 	}
 )
 
@@ -74,10 +75,11 @@ func ClientResponse(resp *http.Response) []attribute.KeyValue {
 }
 
 // ClientRequest returns trace attributes for an HTTP request made by a client.
-// The following attributes are always returned: "http.url", "http.flavor",
-// "http.method", "net.peer.name". The following attributes are returned if the
-// related values are defined in req: "net.peer.port", "http.user_agent",
-// "http.request_content_length", "enduser.id".
+// The following attributes are always returned: "http.url",
+// "net.protocol.(name|version)", "http.method", "net.peer.name".
+// The following attributes are returned if the related values are defined
+// in req: "net.peer.port", "http.user_agent", "http.request_content_length",
+// "enduser.id".
 func ClientRequest(req *http.Request) []attribute.KeyValue {
 	return hc.ClientRequest(req)
 }
@@ -106,10 +108,10 @@ func ClientStatus(code int) (codes.Code, string) {
 // The req Host will be used to determine the server instead.
 //
 // The following attributes are always returned: "http.method", "http.scheme",
-// "http.flavor", "http.target", "net.host.name". The following attributes are
-// returned if they related values are defined in req: "net.host.port",
-// "net.sock.peer.addr", "net.sock.peer.port", "http.user_agent", "enduser.id",
-// "http.client_ip".
+// ""net.protocol.(name|version)", "http.target", "net.host.name".
+// The following attributes are returned if they related values are defined
+// in req: "net.host.port", "net.sock.peer.addr", "net.sock.peer.port",
+// "user_agent.original", "enduser.id", "http.client_ip".
 func ServerRequest(server string, req *http.Request) []attribute.KeyValue {
 	return hc.ServerRequest(server, req)
 }
@@ -128,7 +130,7 @@ func ServerStatus(code int) (codes.Code, string) {
 // security risk - explicit configuration helps avoid leaking sensitive
 // information.
 //
-// The User-Agent header is already captured in the http.user_agent attribute
+// The User-Agent header is already captured in the user_agent.original attribute
 // from ClientRequest and ServerRequest. Instrumentation may provide an option
 // to capture that header here even though it is not recommended. Otherwise,
 // instrumentation should filter that out of what is passed.
@@ -143,7 +145,7 @@ func RequestHeader(h http.Header) []attribute.KeyValue {
 // security risk - explicit configuration helps avoid leaking sensitive
 // information.
 //
-// The User-Agent header is already captured in the http.user_agent attribute
+// The User-Agent header is already captured in the user_agent.original attribute
 // from ClientRequest and ServerRequest. Instrumentation may provide an option
 // to capture that header here even though it is not recommended. Otherwise,
 // instrumentation should filter that out of what is passed.
