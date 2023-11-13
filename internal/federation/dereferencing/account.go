@@ -317,11 +317,9 @@ func (d *Dereferencer) RefreshAccountAsync(ctx context.Context, requestUser stri
 
 		if apubAcc != nil {
 			// This account was updated, enqueue re-dereference featured posts.
-			d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-				if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
-					log.Errorf(ctx, "error fetching account featured collection: %v", err)
-				}
-			})
+			if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
+				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
 		}
 	})
 }
