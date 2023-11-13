@@ -76,7 +76,7 @@ type MediaUpdateTestSuite struct {
 */
 
 func (suite *MediaUpdateTestSuite) SetupSuite() {
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	// setup standard items
 	testrig.InitTestConfig()

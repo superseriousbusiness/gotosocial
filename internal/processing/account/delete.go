@@ -377,7 +377,8 @@ statusLoop:
 			// that they're handled first, before the
 			// parent status that's being boosted.
 			//
-			// Use a barebones context since this will be
+			// Use a barebones context and just select the
+			// origin account separately. The rest will be
 			// populated later anyway, and we don't want to
 			// stop now because we couldn't get something.
 			boosts, err := p.state.DB.GetStatusBoosts(
@@ -390,6 +391,20 @@ statusLoop:
 
 			// Prepare to Undo each boost.
 			for _, boost := range boosts {
+				boost.Account, err = p.state.DB.GetAccountByID(
+					gtscontext.SetBarebones(ctx),
+					boost.AccountID,
+				)
+
+				if err != nil {
+					log.Warnf(
+						ctx,
+						"db error getting owner %s of status boost %s: %v",
+						boost.AccountID, boost.ID, err,
+					)
+					continue
+				}
+
 				msgs = append(msgs, messages.FromClientAPI{
 					APObjectType:   ap.ActivityAnnounce,
 					APActivityType: ap.ActivityUndo,

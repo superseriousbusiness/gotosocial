@@ -50,7 +50,7 @@ func (suite *PollTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 	testrig.NewTestDB(&suite.state)
 	converter := typeutils.NewConverter(&suite.state)
 	controller := testrig.NewTestTransportController(&suite.state, nil)

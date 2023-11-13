@@ -56,7 +56,7 @@ func (suite *FederatorStandardTestSuite) SetupSuite() {
 
 func (suite *FederatorStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

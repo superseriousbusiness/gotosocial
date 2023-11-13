@@ -67,7 +67,7 @@ func (suite *TransportTestSuite) SetupSuite() {
 
 func (suite *TransportTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

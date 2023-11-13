@@ -73,7 +73,7 @@ func (suite *SearchStandardTestSuite) SetupSuite() {
 
 func (suite *SearchStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

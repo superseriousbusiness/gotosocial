@@ -67,7 +67,7 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.InitTestLog()
 
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	suite.fromFederator = make(chan messages.FromFediAPI, 10)
 	suite.state.Workers.EnqueueFediAPI = func(ctx context.Context, msgs ...messages.FromFediAPI) {

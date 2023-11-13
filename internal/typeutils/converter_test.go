@@ -515,7 +515,6 @@ func (suite *TypeUtilsTestSuite) TearDownTest() {
 // GetProcessor is a utility function that instantiates a processor.
 // Useful when a test in the test suite needs to change some state.
 func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
-	testrig.StartWorkers(&suite.state)
 	testrig.StartTimelines(
 		&suite.state,
 		visibility.NewFilter(&suite.state),
@@ -527,5 +526,9 @@ func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
 	mediaManager := testrig.NewTestMediaManager(&suite.state)
 	federator := testrig.NewTestFederator(&suite.state, transportController, mediaManager)
 	emailSender := testrig.NewEmailSender("../../web/template/", nil)
-	return testrig.NewTestProcessor(&suite.state, federator, emailSender, mediaManager)
+	
+	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, mediaManager)
+	testrig.StartWorkers(&suite.state, processor.Workers())
+
+	return processor
 }

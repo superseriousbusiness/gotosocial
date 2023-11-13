@@ -48,7 +48,7 @@ func (suite *TimelineStandardTestSuite) SetupTest() {
 	suite.state = new(state.State)
 
 	suite.state.Caches.Init()
-	testrig.StartWorkers(suite.state)
+	testrig.StartNoopWorkers(suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

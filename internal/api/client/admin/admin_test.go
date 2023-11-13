@@ -84,7 +84,7 @@ func (suite *AdminStandardTestSuite) SetupSuite() {
 
 func (suite *AdminStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

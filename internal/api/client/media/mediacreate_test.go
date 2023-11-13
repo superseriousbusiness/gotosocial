@@ -80,7 +80,7 @@ type MediaCreateTestSuite struct {
 
 func (suite *MediaCreateTestSuite) SetupSuite() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	// setup standard items
 	testrig.InitTestConfig()

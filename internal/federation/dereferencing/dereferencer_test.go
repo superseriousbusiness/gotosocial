@@ -60,7 +60,7 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.testEmojis = testrig.NewTestEmojis()
 
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	suite.db = testrig.NewTestDB(&suite.state)
 

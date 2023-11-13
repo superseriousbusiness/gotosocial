@@ -72,7 +72,7 @@ func (suite *WebfingerStandardTestSuite) SetupSuite() {
 
 func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestLog()
 	testrig.InitTestConfig()

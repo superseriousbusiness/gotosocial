@@ -80,7 +80,7 @@ func (suite *AdminStandardTestSuite) SetupSuite() {
 
 func (suite *AdminStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
@@ -115,7 +115,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 		suite.emailSender,
 	)
 
-	suite.state.Workers.ProcessFromClientAPI = suite.processor.Workers().ProcessFromClientAPI
+	testrig.StartWorkers(&suite.state, suite.processor.Workers())
 	suite.adminProcessor = suite.processor.Admin()
 
 	testrig.StandardDBSetup(suite.db, nil)
