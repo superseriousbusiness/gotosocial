@@ -19,6 +19,7 @@ package util
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"codeberg.org/gruf/go-kv"
@@ -27,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 // TODO: add more templated html pages here for different error types
@@ -112,7 +112,7 @@ func ErrorHandler(
 		// and just abort the request gracelessly.
 		err := errWithCode.Unwrap()
 
-		if ctxErr == router.ErrRequestTimeout {
+		if errors.Is(ctxErr, context.DeadlineExceeded) {
 			// We timed out the request.
 			errWithCode = gtserror.NewErrorRequestTimeout(err)
 

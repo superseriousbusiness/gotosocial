@@ -19,7 +19,6 @@ package router
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -27,8 +26,6 @@ import (
 )
 
 const requestTimeout = 10 * time.Minute
-
-var ErrRequestTimeout = fmt.Errorf("timeoutHandler: timed out incoming HTTP request after %.0f minutes", requestTimeout.Minutes())
 
 type timeoutHandler struct {
 	*gin.Engine
@@ -49,10 +46,9 @@ func (th timeoutHandler) ServeHTTP(
 	}
 
 	// Create timeout ctx.
-	toCtx, cancelCtx := context.WithTimeoutCause(
+	toCtx, cancelCtx := context.WithTimeout(
 		r.Context(),
 		requestTimeout,
-		ErrRequestTimeout,
 	)
 	defer cancelCtx()
 
