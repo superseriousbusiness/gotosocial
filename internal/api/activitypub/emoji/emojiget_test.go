@@ -66,7 +66,7 @@ func (suite *EmojiGetTestSuite) SetupSuite() {
 
 func (suite *EmojiGetTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

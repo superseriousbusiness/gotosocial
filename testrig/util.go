@@ -29,17 +29,34 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
+	wprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/workers"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-func StartWorkers(state *state.State) {
+// Starts workers on the provided state using noop processing functions.
+// Useful when you *don't* want to trigger side effects in a test.
+func StartNoopWorkers(state *state.State) {
 	state.Workers.EnqueueClientAPI = func(context.Context, ...messages.FromClientAPI) {}
 	state.Workers.EnqueueFediAPI = func(context.Context, ...messages.FromFediAPI) {}
 	state.Workers.ProcessFromClientAPI = func(context.Context, messages.FromClientAPI) error { return nil }
 	state.Workers.ProcessFromFediAPI = func(context.Context, messages.FromFediAPI) error { return nil }
+
+	_ = state.Workers.Scheduler.Start()
+	_ = state.Workers.ClientAPI.Start(1, 10)
+	_ = state.Workers.Federator.Start(1, 10)
+	_ = state.Workers.Media.Start(1, 10)
+}
+
+// Starts workers on the provided state using processing functions from the given
+// workers processor. Useful when you *do* want to trigger side effects in a test.
+func StartWorkers(state *state.State, wProcessor *wprocessor.Processor) {
+	state.Workers.EnqueueClientAPI = wProcessor.EnqueueClientAPI
+	state.Workers.EnqueueFediAPI = wProcessor.EnqueueFediAPI
+	state.Workers.ProcessFromClientAPI = wProcessor.ProcessFromClientAPI
+	state.Workers.ProcessFromFediAPI = wProcessor.ProcessFromFediAPI
 
 	_ = state.Workers.Scheduler.Start()
 	_ = state.Workers.ClientAPI.Start(1, 10)

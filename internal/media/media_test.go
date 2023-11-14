@@ -48,7 +48,7 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	testrig.InitTestLog()
 
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.storage = testrig.NewInMemoryStorage()

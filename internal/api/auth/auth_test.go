@@ -93,7 +93,7 @@ func (suite *AuthStandardTestSuite) SetupTest() {
 	suite.authModule = auth.New(suite.db, suite.processor, suite.idp)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 }
 
 func (suite *AuthStandardTestSuite) TearDownTest() {

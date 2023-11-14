@@ -97,7 +97,6 @@ func (suite *WorkersTestSuite) SetupSuite() {
 
 func (suite *WorkersTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
@@ -126,6 +125,8 @@ func (suite *WorkersTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
 	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
+	testrig.StartWorkers(&suite.state, suite.processor.Workers())
+
 	suite.state.Workers.EnqueueClientAPI = suite.processor.Workers().EnqueueClientAPI
 	suite.state.Workers.EnqueueFediAPI = suite.processor.Workers().EnqueueFediAPI
 

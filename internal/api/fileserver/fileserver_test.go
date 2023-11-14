@@ -65,7 +65,7 @@ type FileserverTestSuite struct {
 */
 
 func (suite *FileserverTestSuite) SetupSuite() {
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
@@ -96,7 +96,7 @@ func (suite *FileserverTestSuite) SetupSuite() {
 
 func (suite *FileserverTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")

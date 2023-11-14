@@ -58,7 +58,7 @@ func (suite *CleanerTestSuite) SetupTest() {
 	suite.state.Storage = testrig.NewInMemoryStorage()
 
 	// Initialize test cleaner instance.
-	testrig.StartWorkers(&suite.state)
+	testrig.StartNoopWorkers(&suite.state)
 	suite.cleaner = cleaner.New(&suite.state)
 
 	// Allocate new test model emojis.
