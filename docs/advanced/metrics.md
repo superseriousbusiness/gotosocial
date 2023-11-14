@@ -19,7 +19,7 @@ metrics-auth-password: some_password
 
 This will expose the metrics under the endpoint `/metrics`, protected with HTTP Basic Authentication.
 
-A following is an example how to configure a job in Prometheus `scrape_configs`:
+A following is an example how to configure a job for collecting the metrics in Prometheus `scrape_configs`:
 
 ```yaml
   - job_name: gotosocial
