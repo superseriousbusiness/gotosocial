@@ -107,6 +107,8 @@ EXPECT=$(cat << "EOF"
     "media-remote-cache-days": 30,
     "media-video-max-size": 420,
     "metrics-auth-enabled": false,
+    "metrics-auth-password": "",
+    "metrics-auth-username": "",
     "metrics-enabled": false,
     "oidc-admin-groups": [
         "steamy"
