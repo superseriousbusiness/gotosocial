@@ -112,9 +112,15 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 
 	// Prometheus metrics export endpoint
 	if config.GetMetricsEnabled() {
-		if config.GetMetricsExporter() == "prometheus" {
-			r.AttachHandler(http.MethodGet, metricsPath, m.metricsGETHandler)
+		metricsGroup := r.AttachGroup(metricsPath)
+		metricsGroup.Use(mi...)
+		// Attach basic auth if enabled
+		if config.GetMetricsAuthEnabled() {
+			metricsGroup.Use(gin.BasicAuth(gin.Accounts{
+				config.GetMetricsAuthUsername(): config.GetMetricsAuthPassword(),
+			}))
 		}
+		metricsGroup.Handle(http.MethodGet, "", m.metricsGETHandler)
 	}
 
 	// Attach redirects from old endpoints to current ones for backwards compatibility

@@ -24,6 +24,7 @@ import (
 
 const (
 	metricsPath = "/metrics"
+	metricsUser = "metrics"
 )
 
 func (m *Module) metricsGETHandler(c *gin.Context) {

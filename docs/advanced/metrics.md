@@ -9,10 +9,26 @@ How to configure metrics is explained in the [Observability configuration refere
 
 ```yaml
 metrics-enabled: true
-metrics-exporter: "prometheus"
+metrics-auth-enabled: true
+metrics-auth-username: some_username
+metrics-auth-password: some_password
 ```
 
-This will expose the metrics under the **public** endpoint `/metrics`.
+This will expose the metrics under the endpoint `/metrics`, protected with HTTP Basic Authentication.
+
+A following is an example how to configure a job in Prometheus `scrape_configs`:
+
+```yaml
+  - job_name: gotosocial
+    metrics_path: /metrics
+    scheme: https
+    basic_auth:
+        username: some_username
+        password: some_password
+    static_configs:
+    - targets:
+      - example.org
+```
 
 [otel]: https://opentelemetry.io/
 [obs]: ../configuration/observability.md

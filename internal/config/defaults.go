@@ -119,8 +119,8 @@ var Defaults = Configuration{
 	TracingEndpoint:          "",
 	TracingInsecureTransport: false,
 
-	MetricsEnabled:  false,
-	MetricsExporter: "prometheus",
+	MetricsEnabled:     false,
+	MetricsAuthEnabled: true,
 
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",

@@ -2,7 +2,7 @@
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//
+// 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -2099,30 +2099,80 @@ func GetMetricsEnabled() bool { return global.GetMetricsEnabled() }
 // SetMetricsEnabled safely sets the value for global configuration 'MetricsEnabled' field
 func SetMetricsEnabled(v bool) { global.SetMetricsEnabled(v) }
 
-// GetMetricsExporter safely fetches the Configuration value for state's 'MetricsExporter' field
-func (st *ConfigState) GetMetricsExporter() (v string) {
+// GetMetricsAuthEnabled safely fetches the Configuration value for state's 'MetricsAuthEnabled' field
+func (st *ConfigState) GetMetricsAuthEnabled() (v bool) {
 	st.mutex.RLock()
-	v = st.config.MetricsExporter
+	v = st.config.MetricsAuthEnabled
 	st.mutex.RUnlock()
 	return
 }
 
-// SetMetricsExporter safely sets the Configuration value for state's 'MetricsExporter' field
-func (st *ConfigState) SetMetricsExporter(v string) {
+// SetMetricsAuthEnabled safely sets the Configuration value for state's 'MetricsAuthEnabled' field
+func (st *ConfigState) SetMetricsAuthEnabled(v bool) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.MetricsExporter = v
+	st.config.MetricsAuthEnabled = v
 	st.reloadToViper()
 }
 
-// MetricsExporterFlag returns the flag name for the 'MetricsExporter' field
-func MetricsExporterFlag() string { return "metrics-exporter" }
+// MetricsAuthEnabledFlag returns the flag name for the 'MetricsAuthEnabled' field
+func MetricsAuthEnabledFlag() string { return "metrics-auth-enabled" }
 
-// GetMetricsExporter safely fetches the value for global configuration 'MetricsExporter' field
-func GetMetricsExporter() string { return global.GetMetricsExporter() }
+// GetMetricsAuthEnabled safely fetches the value for global configuration 'MetricsAuthEnabled' field
+func GetMetricsAuthEnabled() bool { return global.GetMetricsAuthEnabled() }
 
-// SetMetricsExporter safely sets the value for global configuration 'MetricsExporter' field
-func SetMetricsExporter(v string) { global.SetMetricsExporter(v) }
+// SetMetricsAuthEnabled safely sets the value for global configuration 'MetricsAuthEnabled' field
+func SetMetricsAuthEnabled(v bool) { global.SetMetricsAuthEnabled(v) }
+
+// GetMetricsAuthUsername safely fetches the Configuration value for state's 'MetricsAuthUsername' field
+func (st *ConfigState) GetMetricsAuthUsername() (v string) {
+	st.mutex.RLock()
+	v = st.config.MetricsAuthUsername
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsAuthUsername safely sets the Configuration value for state's 'MetricsAuthUsername' field
+func (st *ConfigState) SetMetricsAuthUsername(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsAuthUsername = v
+	st.reloadToViper()
+}
+
+// MetricsAuthUsernameFlag returns the flag name for the 'MetricsAuthUsername' field
+func MetricsAuthUsernameFlag() string { return "metrics-auth-username" }
+
+// GetMetricsAuthUsername safely fetches the value for global configuration 'MetricsAuthUsername' field
+func GetMetricsAuthUsername() string { return global.GetMetricsAuthUsername() }
+
+// SetMetricsAuthUsername safely sets the value for global configuration 'MetricsAuthUsername' field
+func SetMetricsAuthUsername(v string) { global.SetMetricsAuthUsername(v) }
+
+// GetMetricsAuthPassword safely fetches the Configuration value for state's 'MetricsAuthPassword' field
+func (st *ConfigState) GetMetricsAuthPassword() (v string) {
+	st.mutex.RLock()
+	v = st.config.MetricsAuthPassword
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsAuthPassword safely sets the Configuration value for state's 'MetricsAuthPassword' field
+func (st *ConfigState) SetMetricsAuthPassword(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsAuthPassword = v
+	st.reloadToViper()
+}
+
+// MetricsAuthPasswordFlag returns the flag name for the 'MetricsAuthPassword' field
+func MetricsAuthPasswordFlag() string { return "metrics-auth-password" }
+
+// GetMetricsAuthPassword safely fetches the value for global configuration 'MetricsAuthPassword' field
+func GetMetricsAuthPassword() string { return global.GetMetricsAuthPassword() }
+
+// SetMetricsAuthPassword safely sets the value for global configuration 'MetricsAuthPassword' field
+func SetMetricsAuthPassword(v string) { global.SetMetricsAuthPassword(v) }
 
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
@@ -3673,3 +3723,4 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
+

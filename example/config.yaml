@@ -782,11 +782,17 @@ tracing-insecure-transport: false
 # Default: false
 metrics-enabled: false
 
-# String. The OpenTelemetry metrics exporter to use. Only "prometheus" for Prometheus pull is currently supported.
-# Exposes a public /metrics endpoint.
-# Examples: ["prometheus"]
-# Default: "prometheus"
-metrics-exporter: "prometheus"
+# Bool. Enable HTTP Basic Authentication for Prometheus metrics endpoint.
+# Default: false
+metrics-auth-enabled: false
+
+# String. Username for Prometheus metrics endpoint.
+# Default: ""
+metrics-auth-username: ""
+
+# String. Password for Prometheus metrics endpoint.
+# Default: ""
+metrics-auth-password: ""
 
 ################################
 ##### HTTP CLIENT SETTINGS #####

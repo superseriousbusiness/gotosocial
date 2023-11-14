@@ -123,8 +123,8 @@ var testDefaults = config.Configuration{
 	TracingTransport:         "grpc",
 	TracingInsecureTransport: true,
 
-	MetricsEnabled:  false,
-	MetricsExporter: "prometheus",
+	MetricsEnabled:     false,
+	MetricsAuthEnabled: false,
 
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",

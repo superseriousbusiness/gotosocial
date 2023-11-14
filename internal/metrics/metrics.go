@@ -20,7 +20,7 @@
 package metrics
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -43,7 +43,12 @@ func Initialize() error {
 		return nil
 	}
 
-	fmt.Println("Initializing metrics")
+	if config.GetMetricsAuthEnabled() {
+		if config.GetMetricsAuthPassword() == "" || config.GetMetricsAuthUsername() == "" {
+			return errors.New("metrics-auth-username and metrics-auth-password must be set when metrics-auth-enabled is true")
+		}
+	}
+
 	r, _ := resource.Merge(
 		resource.Default(),
 		resource.NewWithAttributes(
@@ -52,18 +57,16 @@ func Initialize() error {
 		),
 	)
 
-	if config.GetMetricsExporter() == "prometheus" {
-		prometheusExporter, err := prometheus.New()
-		if err != nil {
-			return err
-		}
-
-		meterProvider := sdk.NewMeterProvider(
-			sdk.WithResource(r),
-			sdk.WithReader(prometheusExporter),
-		)
-		otel.SetMeterProvider(meterProvider)
+	prometheusExporter, err := prometheus.New()
+	if err != nil {
+		return err
 	}
+
+	meterProvider := sdk.NewMeterProvider(
+		sdk.WithResource(r),
+		sdk.WithReader(prometheusExporter),
+	)
+	otel.SetMeterProvider(meterProvider)
 
 	return nil
 }
