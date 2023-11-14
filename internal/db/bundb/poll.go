@@ -341,9 +341,12 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 
 			var poll gtsmodel.Poll
 
-			// Select poll counts from DB.
+			// Select current poll counts from DB,
+			// taking minimal columns needed to
+			// increment/decrement votes.
 			if err := tx.NewSelect().
 				Model(&poll).
+				Column("options", "votes", "voters").
 				Where("? = ?", bun.Ident("id"), vote.PollID).
 				Scan(ctx); err != nil {
 				return err
@@ -365,31 +368,35 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 
 func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 	err := p.db.RunInTx(ctx, func(tx Tx) error {
-		// Delete all vote in poll,
-		// returning all vote choices.
-		switch _, err := tx.NewDelete().
+		// Delete all votes in poll.
+		res, err := tx.NewDelete().
 			Table("poll_votes").
 			Where("? = ?", bun.Ident("poll_id"), pollID).
-			Exec(ctx); {
-
-		case err == nil:
-			// no issue.
-
-		case errors.Is(err, db.ErrNoEntries):
-			// no votes found,
-			// return here.
-			return nil
-
-		default:
-			// irrecoverable.
+			Exec(ctx)
+		if err != nil {
+			// irrecoverable
 			return err
 		}
 
-		var poll gtsmodel.Poll
+		ra, err := res.RowsAffected()
+		if err != nil {
+			// irrecoverable
+			return err
+		}
 
-		// Select poll counts from DB.
+		if ra == 0 {
+			// No poll votes deleted,
+			// nothing to update.
+			return nil
+		}
+
+		// Select current poll counts from DB,
+		// taking minimal columns needed to
+		// increment/decrement votes.
+		var poll gtsmodel.Poll
 		switch err := tx.NewSelect().
 			Model(&poll).
+			Column("options", "votes", "voters").
 			Where("? = ?", bun.Ident("id"), pollID).
 			Scan(ctx); {
 
@@ -410,7 +417,7 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 		poll.ResetVotes()
 
 		// Finally, update the poll entry.
-		_, err := tx.NewUpdate().
+		_, err = tx.NewUpdate().
 			Model(&poll).
 			Column("votes", "voters").
 			Where("? = ?", bun.Ident("id"), pollID).
@@ -432,35 +439,37 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 
 func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID string) error {
 	err := p.db.RunInTx(ctx, func(tx Tx) error {
-		var choices []int
+		// Slice should only ever be of length
+		// 0 or 1; it's a slice of slices only
+		// because we can't LIMIT deletes to 1.
+		var choicesSl [][]int
 
 		// Delete vote in poll by account,
 		// returning the ID + choices of the vote.
-		switch err := tx.NewDelete().
+		if err := tx.NewDelete().
 			Table("poll_votes").
 			Where("? = ?", bun.Ident("poll_id"), pollID).
 			Where("? = ?", bun.Ident("account_id"), accountID).
-			Returning("choices").
-			Scan(ctx, &choices); {
-
-		case err == nil:
-			// no issue.
-
-		case errors.Is(err, db.ErrNoEntries):
-			// no votes found,
-			// return here.
-			return nil
-
-		default:
+			Returning("?", bun.Ident("choices")).
+			Scan(ctx, &choicesSl); err != nil {
 			// irrecoverable.
 			return err
 		}
 
-		var poll gtsmodel.Poll
+		if len(choicesSl) != 1 {
+			// No poll votes by this
+			// acct on this poll.
+			return nil
+		}
+		choices := choicesSl[0]
 
-		// Select poll counts from DB.
+		// Select current poll counts from DB,
+		// taking minimal columns needed to
+		// increment/decrement votes.
+		var poll gtsmodel.Poll
 		switch err := tx.NewSelect().
 			Model(&poll).
+			Column("options", "votes", "voters").
 			Where("? = ?", bun.Ident("id"), pollID).
 			Scan(ctx); {
 
@@ -468,7 +477,7 @@ func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID 
 			// no issue.
 
 		case errors.Is(err, db.ErrNoEntries):
-			// no votes found,
+			// no poll found,
 			// return here.
 			return nil
 
