@@ -8,7 +8,7 @@ GoToSocial comes with [OpenTelemetry][otel] based metrics built-in with pull-sty
 
 How to configure metrics is explained in the [Observability configuration reference][obs].
 
-Quickstart: add the following to your GoToSocial configuration and restart your instance:
+For a quickstart, add the following to your GoToSocial configuration and restart your instance:
 
 ```yaml
 metrics-enabled: true
