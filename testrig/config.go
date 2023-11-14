@@ -33,7 +33,7 @@ func InitTestConfig() {
 }
 
 var testDefaults = config.Configuration{
-	LogLevel:           "trace",
+	LogLevel:           "info",
 	LogTimestampFormat: "02/01/2006 15:04:05.000",
 	LogDbQueries:       true,
 	ApplicationName:    "gotosocial",
