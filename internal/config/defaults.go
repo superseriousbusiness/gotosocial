@@ -120,7 +120,7 @@ var Defaults = Configuration{
 	TracingInsecureTransport: false,
 
 	MetricsEnabled:     false,
-	MetricsAuthEnabled: true,
+	MetricsAuthEnabled: false,
 
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
