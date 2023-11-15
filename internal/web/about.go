@@ -24,6 +24,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/langs"
 )
 
 const (
@@ -39,6 +40,7 @@ func (m *Module) aboutGETHandler(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "about.tmpl", gin.H{
 		"instance":         instance,
+		"languages":        langs.InstanceLangStrings(),
 		"ogMeta":           ogBase(instance),
 		"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
 		"stylesheets": []string{

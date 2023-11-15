@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/langs"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -656,7 +657,25 @@ func (c *Converter) StatusToWebStatus(
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 ) (*apimodel.Status, error) {
-	return c.statusToFrontend(ctx, s, requestingAccount)
+	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add additional information for template.
+
+	// Languages.
+	if lang := webStatus.Language; lang == nil {
+		webStatus.Languages = &apimodel.Languages{}
+	} else {
+		tagStr, displayStr := langs.DisplayLang(*lang)
+		webStatus.Languages = &apimodel.Languages{
+			Tag:     tagStr,
+			Display: displayStr,
+		}
+	}
+
+	return webStatus, nil
 }
 
 // statusToFrontend is a package internal function for
@@ -873,7 +892,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		ShortDescription: i.ShortDescription,
 		Email:            i.ContactEmail,
 		Version:          config.GetSoftwareVersion(),
-		Languages:        []string{}, // todo: not supported yet
+		Languages:        config.GetInstanceLanguages(),
 		Registrations:    config.GetAccountsRegistrationOpen(),
 		ApprovalRequired: config.GetAccountsApprovalRequired(),
 		InvitesEnabled:   false, // todo: not supported yet
@@ -982,7 +1001,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		SourceURL:     instanceSourceURL,
 		Description:   i.Description,
 		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
-		Languages:     []string{},                 // todo: not implemented
+		Languages:     config.GetInstanceLanguages(),
 		Rules:         c.InstanceRulesToAPIRules(i.Rules),
 		Terms:         i.Terms,
 	}

@@ -712,7 +712,10 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "registrations": true,
   "approval_required": true,
   "invites_enabled": false,
@@ -826,7 +829,10 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
   "thumbnail": {
     "url": "http://localhost:8080/assets/logo.png"
   },
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "configuration": {
     "urls": {
       "streaming": "wss://localhost:8080"

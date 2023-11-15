@@ -68,6 +68,7 @@ var testDefaults = config.Configuration{
 	InstanceExposeSuspended:        true,
 	InstanceExposeSuspendedWeb:     true,
 	InstanceDeliverToSharedInboxes: true,
+	InstanceLanguages:              []string{"nl", "en-gb"},
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,

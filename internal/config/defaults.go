@@ -62,6 +62,7 @@ var Defaults = Configuration{
 	InstanceExposeSuspended:        false,
 	InstanceExposeSuspendedWeb:     false,
 	InstanceDeliverToSharedInboxes: true,
+	InstanceLanguages:              []string{},
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,

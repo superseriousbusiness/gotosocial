@@ -88,6 +88,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Bool(InstanceExposeSuspendedFlag(), cfg.InstanceExposeSuspended, fieldtag("InstanceExposeSuspended", "usage"))
 		cmd.Flags().Bool(InstanceExposeSuspendedWebFlag(), cfg.InstanceExposeSuspendedWeb, fieldtag("InstanceExposeSuspendedWeb", "usage"))
 		cmd.Flags().Bool(InstanceDeliverToSharedInboxesFlag(), cfg.InstanceDeliverToSharedInboxes, fieldtag("InstanceDeliverToSharedInboxes", "usage"))
+		cmd.Flags().StringSlice(InstanceLanguagesFlag(), cfg.InstanceLanguages, fieldtag("InstanceLanguages", "usage"))
 
 		// Accounts
 		cmd.Flags().Bool(AccountsRegistrationOpenFlag(), cfg.AccountsRegistrationOpen, fieldtag("AccountsRegistrationOpen", "usage"))
@@ -156,7 +157,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Int(AdvancedThrottlingMultiplierFlag(), cfg.AdvancedThrottlingMultiplier, fieldtag("AdvancedThrottlingMultiplier", "usage"))
 		cmd.Flags().Duration(AdvancedThrottlingRetryAfterFlag(), cfg.AdvancedThrottlingRetryAfter, fieldtag("AdvancedThrottlingRetryAfter", "usage"))
 		cmd.Flags().Int(AdvancedSenderMultiplierFlag(), cfg.AdvancedSenderMultiplier, fieldtag("AdvancedSenderMultiplier", "usage"))
-		cmd.Flags().StringSlice(AdvancedCSPExtraURIsFlag(), cfg.AdvancedCSPExtraURIs, fieldtag("AdvancedCSPExtraURIs", "usage"))
+		cmd.Flags().StringSlice(AdvancedCSPExtraURIsFlag(), cfg.AdvancedCSPExtraURIs, fieldtag("AdvancedCSPExtraURIs", "usage"))		
 
 		cmd.Flags().String(RequestIDHeaderFlag(), cfg.RequestIDHeader, fieldtag("RequestIDHeader", "usage"))
 	})

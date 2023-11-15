@@ -349,6 +349,31 @@ func GetTrustedProxies() []string { return global.GetTrustedProxies() }
 // SetTrustedProxies safely sets the value for global configuration 'TrustedProxies' field
 func SetTrustedProxies(v []string) { global.SetTrustedProxies(v) }
 
+// GetInstanceLanguages safely fetches the Configuration value for state's 'InstanceLanguages' field
+func (st *ConfigState) GetInstanceLanguages() (v []string) {
+	st.mutex.RLock()
+	v = st.config.InstanceLanguages
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceLanguages safely sets the Configuration value for state's 'InstanceLanguages' field
+func (st *ConfigState) SetInstanceLanguages(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceLanguages = v
+	st.reloadToViper()
+}
+
+// InstanceLanguagesFlag returns the flag name for the 'InstanceLanguages' field
+func InstanceLanguagesFlag() string { return "server-languages" }
+
+// GetInstanceLanguages safely fetches the value for global configuration 'InstanceLanguages' field
+func GetInstanceLanguages() []string { return global.GetInstanceLanguages() }
+
+// SetInstanceLanguages safely sets the value for global configuration 'InstanceLanguages' field
+func SetInstanceLanguages(v []string) { global.SetInstanceLanguages(v) }
+
 // GetSoftwareVersion safely fetches the Configuration value for state's 'SoftwareVersion' field
 func (st *ConfigState) GetSoftwareVersion() (v string) {
 	st.mutex.RLock()

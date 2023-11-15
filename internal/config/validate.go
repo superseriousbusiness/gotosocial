@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
+	"github.com/superseriousbusiness/gotosocial/internal/langs"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -70,6 +71,11 @@ func Validate() error {
 		errs = append(errs, fmt.Errorf("%s must be set", InstanceFederationModeFlag()))
 	default:
 		errs = append(errs, fmt.Errorf("%s must be set to either blocklist or allowlist, provided value was %s", InstanceFederationModeFlag(), federationMode))
+	}
+
+	// init / validate instance languages
+	if err := langs.InitLangs(GetInstanceLanguages()); err != nil {
+		errs = append(errs, err)
 	}
 
 	webAssetsBaseDir := GetWebAssetBaseDir()

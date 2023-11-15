@@ -31,7 +31,7 @@
 		<span class="username">@{{.Account.Username}}<span class="sr-only">, </span>{{acctInstance .Account.Acct}}</span>
 	</a>
 </section>
-<section class="body">
+<section class="body" lang="{{ .Languages.Tag }}">
 	<div class="text">
 		{{if .SpoilerText}}
 		<details class="text-spoiler">
@@ -113,30 +113,29 @@
 <aside class="info">
 	<time datetime="{{.CreatedAt}}">{{.CreatedAt | timestampPrecise}}</time>
 	<div class="stats" role="group">
-		<div>
-			<span aria-hidden="true">
-				<i class="fa fa-reply-all"></i> {{.RepliesCount}}
-			</span>
+		<div class="stats-item">
+			<span aria-hidden="true"><i class="fa fa-reply-all"></i> {{.RepliesCount}}</span>
 			<span class="sr-only">{{.RepliesCount}} {{if .RepliesCount | eq 1}}reply{{else}}replies{{end}}</span>
 		</div>
-		<div>
-			<span aria-hidden="true">
-				<i class="fa fa-star"></i> {{.FavouritesCount}}
-			</span>
+		<div class="stats-item">
+			<span aria-hidden="true"><i class="fa fa-star"></i> {{.FavouritesCount}}</span>
 			<span class="sr-only">{{.FavouritesCount}} favourite{{if .FavouritesCount | eq 1 | not}}s{{end}}</span>
 		</div>
-		<div>
-			<span aria-hidden="true">
-				<i class="fa fa-retweet"></i> {{.ReblogsCount}}
-			</span>
+		<div class="stats-item">
+			<span aria-hidden="true"><i class="fa fa-retweet"></i> {{.ReblogsCount}}</span>
 			<span class="sr-only">{{.ReblogsCount}} boost{{if .ReblogsCount | eq 1 | not}}s{{end}}</span>
 		</div>
 		{{if .Pinned}}
-		<div>
-			<i class="fa fa-thumb-tack" aria-hidden="true"></i>
-			<span class="sr-only">pinned</span>
-		</div>
+			<div class="stats-item">
+				<i class="fa fa-thumb-tack" aria-hidden="true"></i>
+				<span class="sr-only">pinned</span>
+			</div>
 		{{end}}
+		{{ if .Languages.Display }}
+			<div class="stats-item language" title="Language: {{ .Languages.Display }}">
+				<span><i class="fa fa-language"></i> {{ .Languages.Tag }}</span>
+			</div>
+		{{ end }}
 	</div>
 </aside>
 <a data-nosnippet href="{{.URL}}" class="toot-link">Open

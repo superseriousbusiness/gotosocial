@@ -98,6 +98,13 @@ type Status struct {
 	// so the user may redraft from the source text without the client having to reverse-engineer
 	// the original text from the HTML content.
 	Text string `json:"text,omitempty"`
+
+	// Additional fields not exposed via JSON
+	// (used only internally for templating etc).
+
+	// Template-ready language tag + string, based
+	// on *status.Language. Nil for non-web statuses
+	Languages *Languages `json:"-"`
 }
 
 /*
@@ -239,3 +246,14 @@ const (
 	StatusContentTypeMarkdown StatusContentType = "text/markdown"
 	StatusContentTypeDefault                    = StatusContentTypePlain
 )
+
+// Model normalized language tag and display
+// string based on server language preferences,
+// for serving via the web.
+type Languages struct {
+	// Normalized BCP47 tag.
+	Tag string
+	// Human-readable
+	// language name(s).
+	Display string
+}

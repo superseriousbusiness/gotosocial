@@ -26,6 +26,22 @@
 		</div>
 
 		<div>
+			<h2 id="languages">Languages</h2>
+			<p>
+				{{ if .languages }}
+					This instance prefers the following languages:
+					<ol>
+						{{range .languages}}
+						<li>{{.}}</li>
+						{{end}}
+					</ol>
+				{{ else }}
+					This instance does not have any preferred languages. 
+				{{ end }}
+			</p>
+		</div>
+
+		<div>
 			<h2 id="contact">Admin Contact</h2>
 			{{if .instance.ContactAccount}}
 			<a href="{{.instance.ContactAccount.URL}}" class="account-card">
@@ -81,7 +97,7 @@
 		<div>
 			<h2 id="moderated-servers">Moderated servers</h2>
 			<p>
-				ActivityPub instances exchange (federate) data with other servers, including accounts and toots.
+				ActivityPub instances exchange (federate) data with other instances, including accounts and toots.
 				This can be prevented for specific domains by suspending them. None of their content is stored,
 				and interaction with their users is blocked both ways.</br>
 				{{if .blocklistExposed}}

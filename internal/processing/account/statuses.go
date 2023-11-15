@@ -133,7 +133,11 @@ func (p *Processor) StatusesGet(
 // WebStatusesGet fetches a number of statuses (in descending order)
 // from the given account. It selects only statuses which are suitable
 // for showing on the public web profile of an account.
-func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, maxID string) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) WebStatusesGet(
+	ctx context.Context,
+	targetAccountID string,
+	maxID string,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
 	account, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
@@ -167,10 +171,10 @@ func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 	)
 
 	for _, s := range statuses {
-		// Convert fetched statuses to API statuses.
-		item, err := p.converter.StatusToAPIStatus(ctx, s, nil)
+		// Convert fetched statuses to web view statuses.
+		item, err := p.converter.StatusToWebStatus(ctx, s, nil)
 		if err != nil {
-			log.Errorf(ctx, "error convering to api status: %v", err)
+			log.Errorf(ctx, "error convering to web status: %v", err)
 			continue
 		}
 		items = append(items, item)
@@ -183,8 +187,39 @@ func (p *Processor) WebStatusesGet(ctx context.Context, targetAccountID string, 
 	})
 }
 
-// PinnedStatusesGet is a shortcut for getting just an account's pinned statuses.
-// Under the hood, it just calls StatusesGet using mostly default parameters.
-func (p *Processor) PinnedStatusesGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	return p.StatusesGet(ctx, requestingAccount, targetAccountID, 0, false, false, "", "", true, false, false)
+// WebStatusesGetPinned returns web versions of pinned statuses.
+func (p *Processor) WebStatusesGetPinned(
+	ctx context.Context,
+	targetAccountID string,
+) ([]*apimodel.Status, gtserror.WithCode) {
+	statuses, err := p.state.DB.GetAccountPinnedStatuses(ctx, targetAccountID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	webStatuses := make([]*apimodel.Status, 0, len(statuses))
+	for _, status := range statuses {
+		if status.Visibility != gtsmodel.VisibilityPublic {
+			// Skip non-public
+			// pinned status.
+			continue
+		}
+
+		webStatus, err := p.converter.StatusToWebStatus(ctx, status, nil)
+		if err != nil {
+			log.Errorf(ctx, "error convering to web status: %v", err)
+			continue
+		}
+
+		// Normally when viewed via the API, 'pinned' is
+		// only true if the *viewing account* has pinned
+		// the status being viewed. For web statuses,
+		// however, we still want to be able to indicate
+		// a pinned status, so bodge this in here.
+		webStatus.Pinned = true
+
+		webStatuses = append(webStatuses, webStatus)
+	}
+
+	return webStatuses, nil
 }
