@@ -111,7 +111,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	// Get the status itself from the processor using provided ID and authorization (if any).
-	status, errWithCode := m.processor.Status().Get(ctx, authed.Account, targetStatusID)
+	status, errWithCode := m.processor.Status().WebGet(ctx, targetStatusID)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
