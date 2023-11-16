@@ -119,13 +119,20 @@ func (p *Processor) StatusRepliesGet(
 	params.ID = collectionID
 
 	switch {
+	// NOTE:
+	// the odd behaviour below regarding "paging enabled" and
+	// "onlyOtherAccounts value provided" semantics is something
+	// we carry over from Mastodon, since we aim for compatibility
+	// up to a reasonable point. Ideally here we would just handle
+	// the case of no paging provided, or paging provided.
+
 	case page == nil:
 		// i.e. paging disabled and 'onlyOtherAccounts' not given,
-		// so return a collection with 'first' IRI including this.
+		// return collection linking to first page (i.e. paths below).
 		params.Query = make(url.Values, 2)
 		onlyOtherAccounts := util.PtrValueOr(onlyOtherAccounts, true) // deref ptr.
 		params.Query.Set("onlyOtherAccounts", strconv.FormatBool(onlyOtherAccounts))
-		params.Query.Set("page", "true") // set to enable paging
+		params.Query.Set("page", "true") // enables paging
 		obj = ap.NewASOrderedCollection(params)
 
 	case onlyOtherAccounts == nil:

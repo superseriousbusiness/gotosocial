@@ -132,9 +132,10 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 	params.Total = total
 
 	if page == nil {
-		// i.e. paging disabled, the simplest case.
-		//
-		// Just build collection object from params.
+		// i.e. paging disabled, return collection
+		// that links to first page (i.e. path below).
+		params.Query = make(url.Values, 1)
+		params.Query.Set("limit", "0") // enables paging
 		obj = ap.NewASOrderedCollection(params)
 	} else {
 		// i.e. paging enabled
@@ -224,9 +225,10 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 	params.Total = total
 
 	if page == nil {
-		// i.e. paging disabled, the simplest case.
-		//
-		// Just build collection object from params.
+		// i.e. paging disabled, return collection
+		// that links to first page (i.e. path below).
+		params.Query = make(url.Values, 1)
+		params.Query.Set("limit", "0") // enables paging
 		obj = ap.NewASOrderedCollection(params)
 	} else {
 		// i.e. paging enabled
