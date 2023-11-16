@@ -23,6 +23,7 @@ import (
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/langs"
 )
 
 // InitTestConfig initializes viper configuration with test defaults.
@@ -68,7 +69,14 @@ var testDefaults = config.Configuration{
 	InstanceExposeSuspended:        true,
 	InstanceExposeSuspendedWeb:     true,
 	InstanceDeliverToSharedInboxes: true,
-	InstanceLanguages:              []string{"nl", "en-gb"},
+	InstanceLanguages: []*langs.Language{
+		{
+			TagStr: "nl",
+		},
+		{
+			TagStr: "en-gb",
+		},
+	},
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,

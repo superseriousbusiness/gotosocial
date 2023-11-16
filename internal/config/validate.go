@@ -74,8 +74,11 @@ func Validate() error {
 	}
 
 	// init / validate instance languages
-	if err := langs.InitLangs(GetInstanceLanguages()); err != nil {
+	parsedLangs, err := langs.InitInstanceLangs(GetInstanceLanguages().TagStrs())
+	if err != nil {
 		errs = append(errs, err)
+	} else {
+		SetInstanceLanguages(parsedLangs)
 	}
 
 	webAssetsBaseDir := GetWebAssetBaseDir()

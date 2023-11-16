@@ -36,15 +36,15 @@
 		{{if .SpoilerText}}
 		<details class="text-spoiler">
 			<summary>
-				<span class="spoiler-text">{{emojify .Emojis (escape .SpoilerText)}}</span>
+				<span class="spoiler-text" lang="{{ .TmplLanguage.TagStr }}">{{emojify .Emojis (escape .SpoilerText)}}</span>
 				<span class="button" role="button" tabindex="0">Toggle visibility</span>
 			</summary>
-			<div class="content">
+			<div class="content" lang="{{ .TmplLanguage.TagStr }}">
 				{{emojify .Emojis (noescape .Content)}}
 			</div>
 		</details>
 		{{else}}
-		<div class="content">
+		<div class="content" lang="{{ .TmplLanguage.TagStr }}">
 			{{emojify .Emojis (noescape .Content)}}
 		</div>
 		{{end}}
@@ -131,9 +131,9 @@
 				<span class="sr-only">pinned</span>
 			</div>
 		{{end}}
-		{{ if .Languages.Display }}
-			<div class="stats-item language" title="Language: {{ .Languages.Display }}">
-				{{ .Languages.Tag }}
+		{{ if .TmplLanguage.DisplayStr }}
+			<div class="stats-item language" title="Language: {{ .TmplLanguage.DisplayStr }}">
+				{{ .TmplLanguage.TagStr }}
 			</div>
 		{{ end }}
 	</div>

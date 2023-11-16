@@ -17,6 +17,8 @@
 
 package model
 
+import "github.com/superseriousbusiness/gotosocial/internal/langs"
+
 // Status models a status or post.
 //
 // swagger:model status
@@ -104,7 +106,7 @@ type Status struct {
 
 	// Template-ready language tag + string, based
 	// on *status.Language. Nil for non-web statuses
-	Languages *Languages `json:"-"`
+	TmplLanguage *langs.Language `json:"-"`
 }
 
 /*
@@ -246,14 +248,3 @@ const (
 	StatusContentTypeMarkdown StatusContentType = "text/markdown"
 	StatusContentTypeDefault                    = StatusContentTypePlain
 )
-
-// Model normalized language tag and display
-// string based on server language preferences,
-// for serving via the web.
-type Languages struct {
-	// Normalized BCP47 tag.
-	Tag string
-	// Human-readable
-	// language name(s).
-	Display string
-}

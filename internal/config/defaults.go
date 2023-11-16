@@ -22,6 +22,7 @@ import (
 
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/superseriousbusiness/gotosocial/internal/langs"
 )
 
 // Defaults contains a populated Configuration with reasonable defaults. Note that
@@ -62,7 +63,7 @@ var Defaults = Configuration{
 	InstanceExposeSuspended:        false,
 	InstanceExposeSuspendedWeb:     false,
 	InstanceDeliverToSharedInboxes: true,
-	InstanceLanguages:              []string{},
+	InstanceLanguages:              make([]*langs.Language, 0),
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,

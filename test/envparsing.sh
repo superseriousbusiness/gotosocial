@@ -89,7 +89,7 @@ EXPECT=$(cat << "EOF"
     "instance-inject-mastodon-version": true,
     "instance-languages": [
         "nl",
-        "en-gb"
+        "en-GB"
     ],
     "landing-page-user": "admin",
     "letsencrypt-cert-dir": "/gotosocial/storage/certs",

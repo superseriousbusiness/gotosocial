@@ -663,15 +663,12 @@ func (c *Converter) StatusToWebStatus(
 	}
 
 	// Add additional information for template.
-
-	// Languages.
-	if lang := webStatus.Language; lang == nil {
-		webStatus.Languages = &apimodel.Languages{}
-	} else {
-		tagStr, displayStr := langs.DisplayLang(*lang)
-		webStatus.Languages = &apimodel.Languages{
-			Tag:     tagStr,
-			Display: displayStr,
+	// Assume empty langs, hope for not empty langs.
+	webStatus.TmplLanguage = new(langs.Language)
+	if lang := webStatus.Language; lang != nil {
+		tmplLang, err := langs.Parse(*lang)
+		if err == nil {
+			webStatus.TmplLanguage = tmplLang
 		}
 	}
 
@@ -892,7 +889,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		ShortDescription: i.ShortDescription,
 		Email:            i.ContactEmail,
 		Version:          config.GetSoftwareVersion(),
-		Languages:        config.GetInstanceLanguages(),
+		Languages:        config.GetInstanceLanguages().TagStrs(),
 		Registrations:    config.GetAccountsRegistrationOpen(),
 		ApprovalRequired: config.GetAccountsApprovalRequired(),
 		InvitesEnabled:   false, // todo: not supported yet
@@ -1001,7 +998,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		SourceURL:     instanceSourceURL,
 		Description:   i.Description,
 		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
-		Languages:     config.GetInstanceLanguages(),
+		Languages:     config.GetInstanceLanguages().TagStrs(),
 		Rules:         c.InstanceRulesToAPIRules(i.Rules),
 		Terms:         i.Terms,
 	}

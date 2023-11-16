@@ -42,7 +42,7 @@ func TestInstanceLangs(t *testing.T) {
 			},
 			expectedLangStrs: []string{
 				"American English",
-				"français",
+				"French (français)",
 			},
 			parseDisplayLang:    "de",
 			expectedDisplayLang: "German (Deutsch)",
@@ -55,7 +55,7 @@ func TestInstanceLangs(t *testing.T) {
 			},
 			expectedLangStrs: []string{
 				"français",
-				"American English",
+				"anglais américain (American English)",
 			},
 			parseDisplayLang:    "de",
 			expectedDisplayLang: "allemand (Deutsch)",
@@ -86,7 +86,7 @@ func TestInstanceLangs(t *testing.T) {
 			},
 			expectedLangStrs: []string{
 				"العربية",
-				"English",
+				"الإنجليزية (English)",
 			},
 			parseDisplayLang:    "fi",
 			expectedDisplayLang: "الفنلندية (suomi)",
@@ -114,23 +114,29 @@ func TestInstanceLangs(t *testing.T) {
 			expectedDisplayLang: "British English",
 		},
 	} {
-		if err := langs.InitLangs(test.InstanceLangs); err != test.expectedErr {
+		languages, err := langs.InitInstanceLangs(test.InstanceLangs)
+		if err != test.expectedErr {
 			t.Errorf("test %d expected error %v, got %v", i, test.expectedErr, err)
 		}
 
-		parsedLangs := langs.InstanceLangTags()
-		if !slices.Equal(test.expectedLangs, parsedLangs) {
-			t.Errorf("test %d expected language tags %v, got %v", i, test.expectedLangs, parsedLangs)
+		parsedTags := languages.Tags()
+		if !slices.Equal(test.expectedLangs, parsedTags) {
+			t.Errorf("test %d expected language tags %v, got %v", i, test.expectedLangs, parsedTags)
 		}
 
-		parsedLangStrs := langs.InstanceLangStrings()
+		parsedLangStrs := languages.DisplayStrs()
 		if !slices.Equal(test.expectedLangStrs, parsedLangStrs) {
 			t.Errorf("test %d expected language strings %v, got %v", i, test.expectedLangStrs, parsedLangStrs)
 		}
 
-		_, displayLang := langs.DisplayLang(test.parseDisplayLang)
-		if test.expectedDisplayLang != displayLang {
-			t.Errorf("test %d expected to parse language %v, got %v", i, test.expectedDisplayLang, displayLang)
+		parsedLang, err := langs.Parse(test.parseDisplayLang)
+		if err != nil {
+			t.Errorf("unexpected error %v", err)
+			return
+		}
+
+		if test.expectedDisplayLang != parsedLang.DisplayStr {
+			t.Errorf("test %d expected to parse language %v, got %v", i, test.expectedDisplayLang, parsedLang.DisplayStr)
 		}
 	}
 }
