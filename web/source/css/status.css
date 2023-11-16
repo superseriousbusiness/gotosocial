@@ -417,7 +417,7 @@ main {
 				margin-left: auto;
 				z-index: 1;
 				cursor: pointer;
-				text-transform: uppercase;
+				user-select: none;
 			}
 		}
 

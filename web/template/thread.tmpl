@@ -21,15 +21,15 @@
 <main>
 	<section data-nosnippet class="thread">
 		{{range .context.Ancestors}}
-		<article class="toot" id="{{.ID}}">
+		<article class="toot" id="{{.ID}}" lang="{{ .Languages.Tag }}">
 			{{ template "status.tmpl" .}}
 		</article>
 		{{end}}
-		<article class="toot expanded" id="{{.status.ID}}">
+		<article class="toot expanded" id="{{.status.ID}}" lang="{{ .status.Languages.Tag }}">
 			{{ template "status.tmpl" .status}}
 		</article>
 		{{range .context.Descendants}}
-		<article class="toot" id="{{.ID}}">
+		<article class="toot" id="{{.ID}}" lang="{{ .Languages.Tag }}">
 			{{ template "status.tmpl" .}}
 		</article>
 		{{end}}
