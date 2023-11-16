@@ -135,6 +135,13 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
+	// COMPATIBILITY FIX: 'page=true' enables paging.
+	if page == nil && c.Query("page") == "true" {
+		page = new(paging.Page)
+		page.Min = paging.MinID("")
+		page.Limit = 40 // max
+	}
+
 	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(
 		c.Request.Context(),
 		requestedUsername,
