@@ -105,8 +105,8 @@ func (p *Processor) StatusRepliesGet(
 		return nil, gtserror.NewErrorNotFound(errors.New(text), text)
 	}
 
-	// Parse collection ID from status' URI.
-	collectionID, err := url.Parse(status.URI)
+	// Parse replies collection ID from status' URI.
+	collectionID, err := url.Parse(status.URI + "/replies")
 	if err != nil {
 		err := gtserror.Newf("error parsing status uri %s: %w", status.URI, err)
 		return nil, gtserror.NewErrorInternalError(err)
