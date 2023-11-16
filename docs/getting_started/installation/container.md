@@ -76,6 +76,22 @@ If you want to use [LetsEncrypt](../../configuration/tls.md) for TLS certificate
 2. Remove the `#` before `- "80:80"` in the `ports` section.
 3. (Optional) Set `GTS_LETSENCRYPT_EMAIL_ADDRESS` to a valid email address to receive certificate expiry warnings etc.
 
+!!! info "Optional configuration"
+    
+    There are many other configuration options documented in the config.yaml file, which you can use to further customize the behavior of your GoToSocial instance. These use sensible defaults where possible, so you don't necessarily need to make any changes to them right now, but here are a few you may be interested in:
+    
+    - `GTS_INSTANCE_LANGUAGES`: array of [BCP47 language tags](https://en.wikipedia.org/wiki/IETF_language_tag) which determines the preferred languages of your instance.
+    - `GTS_MEDIA_REMOTE_CACHE_DAYS`: number of days to keep remote media cached in storage.
+    - `GTS_SMTP_*`: settings to allow your GoToSocial instance to connect to an email server and send notification emails.
+
+    If you decide to set/change any of these variables later on, be sure to restart your GoToSocial instance after making the changes.
+
+!!! tip "Environment variable arrays"
+    
+    If you need to use an environment variable to set a configuration option that accepts an array, provide each value in a comma-separated list.
+    
+    For example, `instance-languages` may be set in the config.yaml file as an array like so: `["nl", "de", "fr", "en"]`. To set the same values as an environment variable, use: `GTS_INSTANCE_LANGUAGES="nl,de,fr,en"`
+
 ## Start GoToSocial
 
 With those small changes out of the way, you can now start GoToSocial with the following command:
