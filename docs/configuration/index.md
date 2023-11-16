@@ -38,6 +38,12 @@ GTS_MEDIA_IMAGE_MAX_SIZE=2097152
 
 If you're in doubt about any of the names of these environment variables, just check the `--help` for the subcommand you're using.
 
+!!! tip "Environment variable arrays"
+    
+    If you need to use an environment variable to set a configuration option that accepts an array, provide each value in a comma-separated list.
+    
+    For example, `instance-languages` may be set in the config.yaml file as an array like so: `["nl", "de", "fr", "en"]`. To set the same values as an environment variable, use: `GTS_INSTANCE_LANGUAGES="nl,de,fr,en"`
+
 ### Command Line Flags
 
 Finally, you can set configuration values using command-line flags, which you pass directly when you're running a `gotosocial` command. For example, instead of setting `media-image-max-size` in your config.yaml, or with an environment variable, you can pass the value directly through the command line:

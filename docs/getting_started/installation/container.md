@@ -85,12 +85,11 @@ If you want to use [LetsEncrypt](../../configuration/tls.md) for TLS certificate
     - `GTS_SMTP_*`: settings to allow your GoToSocial instance to connect to an email server and send notification emails.
 
     If you decide to set/change any of these variables later on, be sure to restart your GoToSocial instance after making the changes.
+    
 
-!!! tip "Environment variable arrays"
+!!! tip
     
-    If you need to use an environment variable to set a configuration option that accepts an array, provide each value in a comma-separated list.
-    
-    For example, `instance-languages` may be set in the config.yaml file as an array like so: `["nl", "de", "fr", "en"]`. To set the same values as an environment variable, use: `GTS_INSTANCE_LANGUAGES="nl,de,fr,en"`
+    For help translating variable names from the config.yaml file to environment variables, refer to the [configuration section](../../configuration/index.md#environment-variables).
 
 ## Start GoToSocial
 
