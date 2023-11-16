@@ -20,7 +20,6 @@ package visibility
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
@@ -219,7 +218,7 @@ func (f *Filter) isVisibleConversation(ctx context.Context, owner *gtsmodel.Acco
 			status.AccountID,
 		)
 		if err != nil {
-			return false, fmt.Errorf("error checking follow %s->%s: %w", owner.ID, status.AccountID, err)
+			return false, gtserror.Newf("error checking follow %s->%s: %w", owner.ID, status.AccountID, err)
 		}
 
 		if !followAuthor {
@@ -236,7 +235,7 @@ func (f *Filter) isVisibleConversation(ctx context.Context, owner *gtsmodel.Acco
 			mention.TargetAccountID,
 		)
 		if err != nil {
-			return false, fmt.Errorf("error checking mention follow %s->%s: %w", owner.ID, mention.TargetAccountID, err)
+			return false, gtserror.Newf("error checking mention follow %s->%s: %w", owner.ID, mention.TargetAccountID, err)
 		}
 
 		if follow {
