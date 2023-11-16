@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Status contains functions for getting statuses, creating statuses, and checking various other fields on statuses.
@@ -56,7 +57,7 @@ type Status interface {
 	GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error)
 
 	// GetStatusReplies returns the *direct* (i.e. in_reply_to_id column) replies to this status ID.
-	GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
+	GetStatusReplies(ctx context.Context, statusID string, page *paging.Page) ([]*gtsmodel.Status, error)
 
 	// CountStatusReplies returns the number of stored *direct* (i.e. in_reply_to_id column) replies to this status ID.
 	CountStatusReplies(ctx context.Context, statusID string) (int, error)
@@ -71,14 +72,10 @@ type Status interface {
 	IsStatusBoostedBy(ctx context.Context, statusID string, accountID string) (bool, error)
 
 	// GetStatusParents gets the parent statuses of a given status.
-	//
-	// If onlyDirect is true, only the immediate parent will be returned.
-	GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, error)
+	GetStatusParents(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, error)
 
 	// GetStatusChildren gets the child statuses of a given status.
-	//
-	// If onlyDirect is true, only the immediate children will be returned.
-	GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error)
+	GetStatusChildren(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
 
 	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)

@@ -20,31 +20,26 @@ package visibility
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // StatusesVisible calls StatusVisible for each status in the statuses slice, and returns a slice of only statuses which are visible to the requester.
 func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Account, statuses []*gtsmodel.Status) ([]*gtsmodel.Status, error) {
-	// Preallocate slice of maximum possible length.
-	filtered := make([]*gtsmodel.Status, 0, len(statuses))
-
-	for _, status := range statuses {
-		// Check whether status is visible to requester.
+	var errs gtserror.MultiError
+	filtered := slices.DeleteFunc(statuses, func(status *gtsmodel.Status) bool {
 		visible, err := f.StatusVisible(ctx, requester, status)
 		if err != nil {
-			return nil, err
+			errs.Append(err)
+			return true
 		}
-
-		if visible {
-			// Add filtered status to ret slice.
-			filtered = append(filtered, status)
-		}
-	}
-
-	return filtered, nil
+		return !visible
+	})
+	return filtered, errs.Combine()
 }
 
 // StatusVisible will check if given status is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users, account blocks and status privacy.

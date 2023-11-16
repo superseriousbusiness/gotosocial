@@ -165,7 +165,7 @@ func (suite *StatusTestSuite) TestGetStatusTwice() {
 
 func (suite *StatusTestSuite) TestGetStatusChildren() {
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
-	children, err := suite.db.GetStatusChildren(context.Background(), targetStatus, true, "")
+	children, err := suite.db.GetStatusReplies(context.Background(), targetStatus.ID, nil)
 	suite.NoError(err)
 	suite.Len(children, 2)
 	for _, c := range children {

@@ -146,10 +146,10 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	t, err := streams.ToType(context.Background(), m)
 	assert.NoError(suite.T(), err)
 
-	page, ok := t.(vocab.ActivityStreamsCollectionPage)
+	page, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
 	assert.True(suite.T(), ok)
 
-	assert.Equal(suite.T(), page.GetActivityStreamsItems().Len(), 1)
+	assert.Equal(suite.T(), page.GetActivityStreamsOrderedItems().Len(), 1)
 }
 
 func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
@@ -205,10 +205,10 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	t, err := streams.ToType(context.Background(), m)
 	assert.NoError(suite.T(), err)
 
-	page, ok := t.(vocab.ActivityStreamsCollectionPage)
+	page, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
 	assert.True(suite.T(), ok)
 
-	assert.Equal(suite.T(), page.GetActivityStreamsItems().Len(), 0)
+	assert.Equal(suite.T(), page.GetActivityStreamsOrderedItems().Len(), 0)
 }
 
 func TestRepliesGetTestSuite(t *testing.T) {

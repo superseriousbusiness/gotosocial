@@ -19,9 +19,8 @@ package paging
 
 import (
 	"net/url"
+	"slices"
 	"strconv"
-
-	"golang.org/x/exp/slices"
 )
 
 type Page struct {
@@ -117,7 +116,7 @@ func (p *Page) Page(in []string) []string {
 
 			// Output slice must
 			// ALWAYS be descending.
-			in = Reverse(in)
+			slices.Reverse(in)
 		}
 	} else {
 		// Default sort is descending,
@@ -142,6 +141,65 @@ func (p *Page) Page(in []string) []string {
 
 	return in
 }
+
+// Page_PageFunc ...
+// func Page_PageFunc[T any](p *Page, in []T, get func(T) string) []T { //nolint:revive
+// 	if p == nil {
+// 		// no paging.
+// 		return in
+// 	}
+
+// 	if p.order().Ascending() {
+// 		// Sort type is ascending, input
+// 		// data is assumed to be ascending.
+
+// 		if minIdx := Boundary_FindFunc(p.Min, in, get); minIdx != -1 {
+// 			// Reslice skipping up to min.
+// 			in = in[minIdx+1:]
+// 		}
+
+// 		if maxIdx := Boundary_FindFunc(p.Max, in, get); maxIdx != -1 {
+// 			// Reslice stripping past max.
+// 			in = in[:maxIdx]
+// 		}
+
+// 		if p.Limit > 0 && p.Limit < len(in) {
+// 			// Reslice input to limit.
+// 			in = in[:p.Limit]
+// 		}
+
+// 		if len(in) > 1 {
+// 			// Clone input before
+// 			// any modifications.
+// 			in = slices.Clone(in)
+
+// 			// Output slice must
+// 			// ALWAYS be descending.
+// 			in = Reverse(in)
+// 		}
+// 	} else {
+// 		// Default sort is descending,
+// 		// catching all cases when NOT
+// 		// ascending (even zero value).
+
+// 		if maxIdx := Boundary_FindFunc(p.Max, in, get); maxIdx != -1 {
+// 			// Reslice skipping up to max.
+// 			in = in[maxIdx+1:]
+// 		}
+
+// 		if minIdx := Boundary_FindFunc(p.Min, in, get); minIdx != -1 {
+// 			// Reslice stripping past min.
+// 			in = in[:minIdx]
+// 		}
+
+// 		if p.Limit > 0 && p.Limit < len(in) {
+// 			// Reslice input to limit.
+// 			in = in[:p.Limit]
+// 		}
+// 	}
+
+// 	return in
+// }
 
 // Next creates a new instance for the next returnable page, using
 // given max value. This preserves original limit and max key name.

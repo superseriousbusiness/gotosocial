@@ -131,3 +131,19 @@ func (b Boundary) Find(in []string) int {
 	}
 	return -1
 }
+
+// Boundary_FindFunc ...
+// func Boundary_FindFunc[T any](b Boundary, in []T, get func(T) string) int { //nolint:revive
+// 	if get == nil {
+// 		panic("nil function")
+// 	}
+// 	if b.Value == "" {
+// 		return -1
+// 	}
+// 	for i := range in {
+// 		if get(in[i]) == b.Value {
+// 			return i
+// 		}
+// 	}
+// 	return -1
+// }

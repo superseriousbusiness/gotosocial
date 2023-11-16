@@ -67,7 +67,7 @@ func (p *Processor) contextGet(
 		Descendants: []apimodel.Status{},
 	}
 
-	parents, err := p.state.DB.GetStatusParents(ctx, targetStatus, false)
+	parents, err := p.state.DB.GetStatusParents(ctx, targetStatus)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -85,7 +85,7 @@ func (p *Processor) contextGet(
 		return context.Ancestors[i].ID < context.Ancestors[j].ID
 	})
 
-	children, err := p.state.DB.GetStatusChildren(ctx, targetStatus, false, "")
+	children, err := p.state.DB.GetStatusChildren(ctx, targetStatus.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

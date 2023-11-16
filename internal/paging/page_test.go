@@ -19,12 +19,12 @@ package paging_test
 
 import (
 	"math/rand"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/oklog/ulid"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
-	"golang.org/x/exp/slices"
 )
 
 // random reader according to current-time source seed.
@@ -77,9 +77,7 @@ func TestPage(t *testing.T) {
 var cases = []Case{
 	CreateCase("minID and maxID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
-		slices.SortFunc(ids, func(a, b string) bool {
-			return a > b // i.e. largest at lowest idx
-		})
+		slices.SortFunc(ids, ascending)
 
 		// Select random indices in slice.
 		minIdx := randRd.Intn(len(ids))
@@ -93,7 +91,7 @@ var cases = []Case{
 		expect := slices.Clone(ids)
 		expect = cutLower(expect, minID)
 		expect = cutUpper(expect, maxID)
-		expect = paging.Reverse(expect)
+		slices.Reverse(expect)
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
@@ -103,9 +101,7 @@ var cases = []Case{
 	}),
 	CreateCase("minID, maxID and limit set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
-		slices.SortFunc(ids, func(a, b string) bool {
-			return a > b // i.e. largest at lowest idx
-		})
+		slices.SortFunc(ids, ascending)
 
 		// Select random parameters in slice.
 		minIdx := randRd.Intn(len(ids))
@@ -120,7 +116,7 @@ var cases = []Case{
 		expect := slices.Clone(ids)
 		expect = cutLower(expect, minID)
 		expect = cutUpper(expect, maxID)
-		expect = paging.Reverse(expect)
+		slices.Reverse(expect)
 
 		// Now limit the slice.
 		if limit < len(expect) {
@@ -136,9 +132,7 @@ var cases = []Case{
 	}),
 	CreateCase("minID, maxID and too-large limit set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
-		slices.SortFunc(ids, func(a, b string) bool {
-			return a > b // i.e. largest at lowest idx
-		})
+		slices.SortFunc(ids, ascending)
 
 		// Select random parameters in slice.
 		minIdx := randRd.Intn(len(ids))
@@ -152,7 +146,7 @@ var cases = []Case{
 		expect := slices.Clone(ids)
 		expect = cutLower(expect, minID)
 		expect = cutUpper(expect, maxID)
-		expect = paging.Reverse(expect)
+		slices.Reverse(expect)
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
@@ -163,9 +157,7 @@ var cases = []Case{
 	}),
 	CreateCase("sinceID and maxID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted descending for since_id
-		slices.SortFunc(ids, func(a, b string) bool {
-			return a < b // i.e. smallest at lowest idx
-		})
+		slices.SortFunc(ids, descending)
 
 		// Select random indices in slice.
 		sinceIdx := randRd.Intn(len(ids))
@@ -188,9 +180,7 @@ var cases = []Case{
 	}),
 	CreateCase("maxID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted descending for max_id
-		slices.SortFunc(ids, func(a, b string) bool {
-			return a < b // i.e. smallest at lowest idx
-		})
+		slices.SortFunc(ids, descending)
 
 		// Select random indices in slice.
 		maxIdx := randRd.Intn(len(ids))
@@ -209,9 +199,7 @@ var cases = []Case{
 	}),
 	CreateCase("sinceID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted descending for since_id
-		slices.SortFunc(ids, func(a, b string) bool {
-			return a < b
-		})
+		slices.SortFunc(ids, descending)
 
 		// Select random indices in slice.
 		sinceIdx := randRd.Intn(len(ids))
@@ -230,9 +218,7 @@ var cases = []Case{
 	}),
 	CreateCase("minID set", func(ids []string) ([]string, *paging.Page, []string) {
 		// Ensure input slice sorted ascending for min_id
-		slices.SortFunc(ids, func(a, b string) bool {
-			return a > b // i.e. largest at lowest idx
-		})
+		slices.SortFunc(ids, ascending)
 
 		// Select random indices in slice.
 		minIdx := randRd.Intn(len(ids))
@@ -243,7 +229,7 @@ var cases = []Case{
 		// Create expected output.
 		expect := slices.Clone(ids)
 		expect = cutLower(expect, minID)
-		expect = paging.Reverse(expect)
+		slices.Reverse(expect)
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
@@ -295,4 +281,22 @@ func generateSlice(len int) []string {
 		now = now.Add(time.Second)
 	}
 	return in
+}
+
+func ascending(a, b string) int {
+	if a > b {
+		return 1
+	} else if a < b {
+		return -1
+	}
+	return 0
+}
+
+func descending(a, b string) int {
+	if a < b {
+		return 1
+	} else if a > b {
+		return -1
+	}
+	return 0
 }

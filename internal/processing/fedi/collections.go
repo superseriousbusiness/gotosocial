@@ -126,7 +126,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 
 	var obj vocab.Type
 
-	// Start building AS collection params.
+	// Start the AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
 	params.Total = total
@@ -196,21 +196,21 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 
 // FollowingGet handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, page *paging.Page) (interface{}, gtserror.WithCode) {
-	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
+func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page *paging.Page) (interface{}, gtserror.WithCode) {
+	requested, _, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	// Parse the collection ID object from account's following URI.
-	collectionID, err := url.Parse(requestedAccount.FollowingURI)
+	// Parse collection ID from account's following URI.
+	collectionID, err := url.Parse(requested.FollowingURI)
 	if err != nil {
-		err := gtserror.Newf("error parsing account following uri %s: %w", requestedAccount.FollowingURI, err)
+		err := gtserror.Newf("error parsing account following uri %s: %w", requested.FollowingURI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Calculate total number of following available for account.
-	total, err := p.state.DB.CountAccountFollows(ctx, requestedAccount.ID)
+	total, err := p.state.DB.CountAccountFollows(ctx, requested.ID)
 	if err != nil {
 		err := gtserror.Newf("error counting follows: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -218,7 +218,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 
 	var obj vocab.Type
 
-	// Start building AS collection params.
+	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
 	params.Total = total
@@ -232,7 +232,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 		// i.e. paging enabled
 
 		// Get the request page of full follower objects with attached accounts.
-		follows, err := p.state.DB.GetAccountFollows(ctx, requestedAccount.ID, page)
+		follows, err := p.state.DB.GetAccountFollows(ctx, requested.ID, page)
 		if err != nil {
 			err := gtserror.Newf("error getting follows: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -243,7 +243,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUsername string, 
 		lo := follows[len(follows)-1].ID
 		hi := follows[0].ID
 
-		// Start building AS collection page params.
+		// Start AS collection page params.
 		var pageParams ap.CollectionPageParams
 		pageParams.CollectionParams = params
 

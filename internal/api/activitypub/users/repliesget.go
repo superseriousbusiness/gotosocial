@@ -18,9 +18,7 @@
 package users
 
 import (
-	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -28,6 +26,7 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // StatusRepliesGETHandler swagger:operation GET /users/{username}/statuses/{status}/replies s2sRepliesGet
@@ -120,46 +119,33 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	var page bool
-	if pageString := c.Query(PageKey); pageString != "" {
-		i, err := strconv.ParseBool(pageString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", PageKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		page = i
+	var onlyOtherAccPtr *bool
+
+	// Look for 'onlyOtherAccounts' query key, nil = unset.
+	if raw, ok := c.GetQuery("onlyOtherAccounts"); ok {
+		onlyOtherAcc, _ := strconv.ParseBool(raw)
+		onlyOtherAccPtr = &onlyOtherAcc
 	}
 
-	onlyOtherAccounts := false
-	onlyOtherAccountsString := c.Query(OnlyOtherAccountsKey)
-	if onlyOtherAccountsString != "" {
-		i, err := strconv.ParseBool(onlyOtherAccountsString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", OnlyOtherAccountsKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		onlyOtherAccounts = i
+	// Look for paging parameters, within min / max values.
+	// A zero value default indicates no paging is supported.
+	page, errWithCode := paging.ParseIDPage(c, 1, 40, 0)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		return
 	}
 
-	minID := ""
-	minIDString := c.Query(MinIDKey)
-	if minIDString != "" {
-		minID = minIDString
-	}
-
-	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(c.Request.Context(), requestedUsername, requestedStatusID, page, onlyOtherAccounts, c.Query("only_other_accounts") != "", minID)
+	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(
+		c.Request.Context(),
+		requestedUsername,
+		requestedStatusID,
+		page,
+		onlyOtherAccPtr,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	b, err := json.Marshal(resp)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	c.Data(http.StatusOK, format, b)
+	c.JSON(http.StatusOK, resp)
 }
