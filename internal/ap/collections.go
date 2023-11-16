@@ -20,7 +20,6 @@ package ap
 import (
 	"fmt"
 	"net/url"
-	"strconv"
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -169,6 +168,10 @@ type CollectionParams struct {
 	// ID (i.e. NOT the page).
 	ID *url.URL
 
+	// First page details.
+	First *paging.Page
+	Query url.Values
+
 	// Total no. items.
 	Total int
 }
@@ -262,15 +265,13 @@ func buildCollection[C CollectionBuilder](collection C, params CollectionParams,
 	totalItems.Set(params.Total)
 	collection.SetActivityStreamsTotalItems(totalItems)
 
-	// Clone the collection ID page
-	// to add first page query data.
-	firstIRI := new(url.URL)
-	*firstIRI = *params.ID
-
-	// Note that simply adding a limit signals to our
-	// endpoint to use paging (which will start at beginning).
-	limit := "limit=" + strconv.Itoa(pageLimit)
-	firstIRI.RawQuery = appendQuery(firstIRI.RawQuery, limit)
+	// Build the first page link IRI.
+	firstIRI := params.First.ToLinkURL(
+		params.ID.Scheme,
+		params.ID.Host,
+		params.ID.Path,
+		params.Query,
+	)
 
 	// Add the collection first IRI property.
 	first := streams.NewActivityStreamsFirstProperty()

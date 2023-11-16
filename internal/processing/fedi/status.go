@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusGet handles the getting of a fedi/activitypub representation of a local status.
@@ -119,13 +120,17 @@ func (p *Processor) StatusRepliesGet(
 
 	switch {
 	case page == nil:
-		// i.e. paging disabled.
-		//
-		// Just build collection object from params.
+		// i.e. paging disabled and 'onlyOtherAccounts' not given,
+		// so return a collection with 'first' IRI including this.
+		params.Query = make(url.Values, 2)
+		onlyOtherAccounts := util.PtrValueOr(onlyOtherAccounts, true) // deref ptr.
+		params.Query.Set("onlyOtherAccounts", strconv.FormatBool(onlyOtherAccounts))
+		params.Query.Set("page", "true") // set to enable paging
 		obj = ap.NewASOrderedCollection(params)
 
 	case onlyOtherAccounts == nil:
-		// i.e. paging enabled, but only first page.
+		// i.e. paging enabled, but 'onlyOtherAccounts' not
+		// provided, so provide page with 'next' including this.
 
 		// Start AS collection page params.
 		var pageParams ap.CollectionPageParams
@@ -133,6 +138,11 @@ func (p *Processor) StatusRepliesGet(
 		pageParams.Append = func(int, ap.ItemsPropertyBuilder) {
 			panic("this should not be called!")
 		}
+
+		// Add the 'onlyOtherAccounts' query param.
+		pageParams.Next = page // current page value
+		pageParams.Query = make(url.Values, 1)
+		pageParams.Query.Set("onlyOtherAccounts", "true")
 
 		// Build AS collection page from params.
 		obj = ap.NewASOrderedCollectionPage(pageParams)
