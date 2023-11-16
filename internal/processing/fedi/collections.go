@@ -147,10 +147,15 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		// Get the lowest and highest
-		// ID values, used for paging.
-		lo := followers[len(followers)-1].ID
-		hi := followers[0].ID
+		// page ID values.
+		var lo, hi string
+
+		if len(followers) > 0 {
+			// Get the lowest and highest
+			// ID values, used for paging.
+			lo = followers[len(followers)-1].ID
+			hi = followers[0].ID
+		}
 
 		// Start building AS collection page params.
 		var pageParams ap.CollectionPageParams
@@ -240,10 +245,15 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		// Get the lowest and highest
-		// ID values, used for paging.
-		lo := follows[len(follows)-1].ID
-		hi := follows[0].ID
+		// page ID values.
+		var lo, hi string
+
+		if len(follows) > 0 {
+			// Get the lowest and highest
+			// ID values, used for paging.
+			lo = follows[len(follows)-1].ID
+			hi = follows[0].ID
+		}
 
 		// Start AS collection page params.
 		var pageParams ap.CollectionPageParams

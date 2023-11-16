@@ -178,10 +178,14 @@ func (p *Processor) StatusRepliesGet(
 			})
 		}
 
-		// Get the lowest and highest
-		// ID values, used for paging.
-		lo := replies[len(replies)-1].ID
-		hi := replies[0].ID
+		var lo, hi string
+
+		if len(replies) > 0 {
+			// Get the lowest and highest
+			// ID values, used for paging.
+			lo = replies[len(replies)-1].ID
+			hi = replies[0].ID
+		}
 
 		// Start AS collection page params.
 		var pageParams ap.CollectionPageParams
