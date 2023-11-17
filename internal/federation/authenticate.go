@@ -40,12 +40,7 @@ import (
 )
 
 var (
-	errUnsigned       = errors.New("http request wasn't signed or http signature was invalid")
-	signingAlgorithms = []httpsig.Algorithm{
-		httpsig.RSA_SHA256, // Prefer common RSA_SHA256.
-		httpsig.RSA_SHA512, // Fall back to less common RSA_SHA512.
-		httpsig.ED25519,    // Try ED25519 as a long shot.
-	}
+	errUnsigned = errors.New("http request wasn't signed or http signature was invalid")
 )
 
 // PubKeyAuth models authorization information for a remote
@@ -172,15 +167,13 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Attempt to verify auth with both fetched and public keys.
-	if !verifyAuth(&l, verifier, pubKeyAuth.FetchedPubKey) &&
-		!verifyAuth(&l, verifier, pubKeyAuth.CachedPubKey) {
-		text := fmt.Sprintf(
-			"authentication NOT PASSED for public key %s; tried algorithms %+v; signature value was '%s'",
-			pubKeyIDStr, signature, signingAlgorithms,
-		)
-		errWithCode = gtserror.NewErrorUnauthorized(errors.New(text), text)
-		return nil, errWithCode
+	// Attempt to verify auth with both fetched and cached keys.
+	if !verifyAuth(&l, verifier, pubKeyAuth.CachedPubKey) &&
+		!verifyAuth(&l, verifier, pubKeyAuth.FetchedPubKey) {
+
+		const format = "authentication NOT PASSED for public key %s; tried algorithms %+v; signature value was '%s'"
+		text := fmt.Sprintf(format, pubKeyIDStr, signingAlgorithms, signature)
+		return nil, gtserror.NewErrorUnauthorized(errors.New(text), text)
 	}
 
 	if pubKeyAuth.Owner == nil {
@@ -245,7 +238,7 @@ func (f *Federator) derefPubKeyDBOnly(
 	*PubKeyAuth,
 	gtserror.WithCode,
 ) {
-	// Look for pubkey ID owner in the
+	// Look for pubkey ID owner in the database.
 	owner, err := f.db.GetAccountByPubkeyID(ctx, pubKeyIDStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting account with pubKeyID %s: %w", pubKeyIDStr, err)
@@ -510,18 +503,31 @@ func parsePubKeyBytes(
 	return pubKey, pubKeyOwnerID, nil
 }
 
-// verifyAuth ...
+var signingAlgorithms = []httpsig.Algorithm{
+	httpsig.RSA_SHA256, // Prefer common RSA_SHA256.
+	httpsig.RSA_SHA512, // Fall back to less common RSA_SHA512.
+	httpsig.ED25519,    // Try ED25519 as a long shot.
+}
+
+// verifyAuth verifies auth using generated verifier, according to pubkey and our supported signing algorithms.
 func verifyAuth(l *log.Entry, verifier httpsig.Verifier, pubKey *rsa.PublicKey) bool {
-	if pubKey == nil || verifier == nil {
+	if pubKey == nil {
 		return false
 	}
+
+	// Loop through all supported algorithms.
 	for _, algo := range signingAlgorithms {
-		if err := verifier.Verify(pubKey, algo); err != nil {
+
+		// Verify according to pubkey and algo.
+		err := verifier.Verify(pubKey, algo)
+		if err != nil {
 			l.Tracef("authentication NOT PASSED with %s: %v", algo, err)
 			continue
 		}
+
 		l.Tracef("authenticated PASSED with %s", algo)
 		return true
 	}
+
 	return false
 }

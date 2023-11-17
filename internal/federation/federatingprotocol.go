@@ -236,7 +236,7 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		// There is a mutal handshake occurring between us and
 		// the owner URI. Return 202 and leave as we can't do
 		// much else until the handshake procedure has finished.
-		w.WriteHeader(http.StatusTooEarly)
+		w.WriteHeader(http.StatusAccepted)
 		return ctx, false, nil
 	}
 
