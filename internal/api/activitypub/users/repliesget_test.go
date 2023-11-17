@@ -93,7 +93,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 		"type":       "OrderedCollection",
 		"id":         targetStatus.URI + "/replies?only_other_accounts=false",
 		"first":      targetStatus.URI + "/replies?limit=20&only_other_accounts=false",
-		"totalItems": 2,
+		"totalItems": 1,
 	})
 	assert.Equal(suite.T(), expect, string(b))
 
@@ -157,17 +157,14 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 
 	// Create JSON string of expected output.
 	expect := toJSON(map[string]any{
-		"@context": "https://www.w3.org/ns/activitystreams",
-		"type":     "OrderedCollectionPage",
-		"id":       targetStatus.URI + "/replies?limit=20&only_other_accounts=false",
-		"partOf":   targetStatus.URI + "/replies?only_other_accounts=false",
-		"next":     "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&min_id=01FCQSQ667XHJ9AV9T27SJJSX5&only_other_accounts=false",
-		"prev":     "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&max_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false",
-		"orderedItems": []any{
-			"http://localhost:8080/users/1happyturtle/statuses/01FCQSQ667XHJ9AV9T27SJJSX5",
-			"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
-		},
-		"totalItems": 2,
+		"@context":     "https://www.w3.org/ns/activitystreams",
+		"type":         "OrderedCollectionPage",
+		"id":           targetStatus.URI + "/replies?limit=20&only_other_accounts=false",
+		"partOf":       targetStatus.URI + "/replies?only_other_accounts=false",
+		"next":         "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&min_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false",
+		"prev":         "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&max_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false",
+		"orderedItems": "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+		"totalItems":   1,
 	})
 	assert.Equal(suite.T(), expect, string(b))
 
@@ -181,7 +178,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	page, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
 	assert.True(suite.T(), ok)
 
-	assert.Equal(suite.T(), page.GetActivityStreamsOrderedItems().Len(), 2)
+	assert.Equal(suite.T(), page.GetActivityStreamsOrderedItems().Len(), 1)
 }
 
 func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
@@ -194,7 +191,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies?only_other_accounts=false&page=true&min_id=01FCQSQ667XHJ9AV9T27SJJSX5", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies?min_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false", nil)
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
@@ -235,10 +232,10 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	expect := toJSON(map[string]any{
 		"@context":     "https://www.w3.org/ns/activitystreams",
 		"type":         "OrderedCollectionPage",
-		"id":           targetStatus.URI + "/replies?min_id=01FCQSQ667XHJ9AV9T27SJJSX5&only_other_accounts=false",
+		"id":           targetStatus.URI + "/replies?min_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false",
 		"partOf":       targetStatus.URI + "/replies?only_other_accounts=false",
 		"orderedItems": []any{}, // empty
-		"totalItems":   2,
+		"totalItems":   1,
 	})
 	assert.Equal(suite.T(), expect, string(b))
 
