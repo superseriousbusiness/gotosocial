@@ -58,11 +58,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	if parsedLangs, err := language.InitLangs(config.GetInstanceLanguages().TagStrs()); err != nil {
+	parsedLangs, err := language.InitLangs(config.GetInstanceLanguages().TagStrs())
+	if err != nil {
 		return fmt.Errorf("error initializing languages: %w", err)
-	} else {
-		config.SetInstanceLanguages(parsedLangs)
 	}
+	config.SetInstanceLanguages(parsedLangs)
 
 	if err := tracing.Initialize(); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
