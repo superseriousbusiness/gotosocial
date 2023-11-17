@@ -125,6 +125,19 @@ func (p *Processor) StatusRepliesGet(
 	// we carry over from Mastodon, since we aim for compatibility
 	// up to a reasonable point. Ideally here we would just handle
 	// the case of no paging provided, or paging provided.
+	//
+	// Mastodon basically behaves as follows:
+	//
+	// GET https://{$hostname}/user/{$user}/statuses/{$id}/replies
+	// => Collection with only a 'first' pointing to
+	//    /replies?page=true&onlyOtherAccounts=true
+	//
+	// GET https://{$hostname}/user/{$user}/statuses/{$id}/replies?page=true
+	// => CollectionPage with only a 'next' pointing to
+	//    /replies?page=true&onlyOtherAccounts=true
+	//
+	// GET https://{$hostname}/user/{$user}/statuses/{$id}/replies?page=true&onlyOtherAccounts={$v}
+	// => CollectionPages with the *actual* statuses
 
 	case page == nil:
 		// i.e. paging disabled and 'onlyOtherAccounts' not given,
