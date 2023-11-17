@@ -20,7 +20,6 @@ package fedi
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 	"slices"
 	"strconv"
@@ -35,40 +34,43 @@ import (
 
 // StatusGet handles the getting of a fedi/activitypub representation of a local status.
 // It performs appropriate authentication before returning a JSON serializable interface.
-func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, requestedStatusID string) (interface{}, gtserror.WithCode) {
+func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusID string) (interface{}, gtserror.WithCode) {
 	// Authenticate using http signature.
-	requestedAccount, requestingAccount, errWithCode := p.authenticate(ctx, requestedUsername)
+	// Authenticate the incoming request, getting related user accounts.
+	requester, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	status, err := p.state.DB.GetStatusByID(ctx, requestedStatusID)
+	status, err := p.state.DB.GetStatusByID(ctx, statusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if status.AccountID != requestedAccount.ID {
-		err := fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID)
-		return nil, gtserror.NewErrorNotFound(err)
+	if status.AccountID != receiver.ID {
+		const text = "status does not belong to receiving account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, requestingAccount, status)
+	visible, err := p.filter.StatusVisible(ctx, requester, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if !visible {
-		err := fmt.Errorf("status with id %s not visible to user with id %s", status.ID, requestingAccount.ID)
-		return nil, gtserror.NewErrorNotFound(err)
+		const text = "status not vising to requesting account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
 	statusable, err := p.converter.StatusToAS(ctx, status)
 	if err != nil {
+		err := gtserror.Newf("error converting status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	data, err := ap.Serialize(statusable)
 	if err != nil {
+		err := gtserror.Newf("error serializing status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -84,23 +86,24 @@ func (p *Processor) StatusRepliesGet(
 	page *paging.Page,
 	onlyOtherAccounts bool,
 ) (interface{}, gtserror.WithCode) {
-	requested, _, errWithCode := p.authenticate(ctx, requestedUser)
+	// Authenticate the incoming request, getting related user accounts.
+	requester, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	// Get target status and ensure visible to requester.
 	status, errWithCode := p.c.GetVisibleTargetStatus(ctx,
-		requested,
+		requester,
 		statusID,
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	// Ensure status is by requested account.
-	if status.AccountID != requested.ID {
-		const text = "status does not belong to requested account"
+	// Ensure status is by receiving account.
+	if status.AccountID != receiver.ID {
+		const text = "status does not belong to receiving account"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
@@ -127,7 +130,7 @@ func (p *Processor) StatusRepliesGet(
 	}
 
 	// Reslice replies dropping all those invisible to requester.
-	replies, err = p.filter.StatusesVisible(ctx, requested, replies)
+	replies, err = p.filter.StatusesVisible(ctx, requester, replies)
 	if err != nil {
 		err := gtserror.Newf("error filtering status replies: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

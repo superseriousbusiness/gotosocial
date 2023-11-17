@@ -47,8 +47,15 @@ func (p *Processor) InboxPost(ctx context.Context, w http.ResponseWriter, r *htt
 
 // OutboxGet returns the activitypub representation of a local user's outbox.
 // This contains links to PUBLIC posts made by this user.
-func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, page bool, maxID string, minID string) (interface{}, gtserror.WithCode) {
-	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
+func (p *Processor) OutboxGet(
+	ctx context.Context,
+	requestedUser string,
+	page bool,
+	maxID string,
+	minID string,
+) (interface{}, gtserror.WithCode) {
+	// Authenticate the incoming request, getting related user accounts.
+	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -70,7 +77,7 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 				"last": "https://example.org/users/whatever/outbox?min_id=0&page=true"
 			}
 		*/
-		collection, err := p.converter.OutboxToASCollection(ctx, requestedAccount.OutboxURI)
+		collection, err := p.converter.OutboxToASCollection(ctx, receiver.OutboxURI)
 		if err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -85,15 +92,16 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 
 	// scenario 2 -- get the requested page
 	// limit pages to 30 entries per page
-	publicStatuses, err := p.state.DB.GetAccountStatuses(ctx, requestedAccount.ID, 30, true, true, maxID, minID, false, true)
+	publicStatuses, err := p.state.DB.GetAccountStatuses(ctx, receiver.ID, 30, true, true, maxID, minID, false, true)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	outboxPage, err := p.converter.StatusesToASOutboxPage(ctx, requestedAccount.OutboxURI, maxID, minID, publicStatuses)
+	outboxPage, err := p.converter.StatusesToASOutboxPage(ctx, receiver.OutboxURI, maxID, minID, publicStatuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
 	data, err = ap.Serialize(outboxPage)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -104,21 +112,22 @@ func (p *Processor) OutboxGet(ctx context.Context, requestedUsername string, pag
 
 // FollowersGet handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, page *paging.Page) (interface{}, gtserror.WithCode) {
-	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
+func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page *paging.Page) (interface{}, gtserror.WithCode) {
+	// Authenticate the incoming request, getting related user accounts.
+	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	// Parse the collection ID object from account's followers URI.
-	collectionID, err := url.Parse(requestedAccount.FollowersURI)
+	collectionID, err := url.Parse(receiver.FollowersURI)
 	if err != nil {
-		err := gtserror.Newf("error parsing account followers uri %s: %w", requestedAccount.FollowersURI, err)
+		err := gtserror.Newf("error parsing account followers uri %s: %w", receiver.FollowersURI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Calculate total number of followers available for account.
-	total, err := p.state.DB.CountAccountFollowers(ctx, requestedAccount.ID)
+	total, err := p.state.DB.CountAccountFollowers(ctx, receiver.ID)
 	if err != nil {
 		err := gtserror.Newf("error counting followers: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -141,7 +150,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 		// i.e. paging enabled
 
 		// Get the request page of full follower objects with attached accounts.
-		followers, err := p.state.DB.GetAccountFollowers(ctx, requestedAccount.ID, page)
+		followers, err := p.state.DB.GetAccountFollowers(ctx, receiver.ID, page)
 		if err != nil {
 			err := gtserror.Newf("error getting followers: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -203,20 +212,21 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUsername string, 
 // FollowingGet handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
 // authentication before returning a JSON serializable interface to the caller.
 func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page *paging.Page) (interface{}, gtserror.WithCode) {
-	requested, _, errWithCode := p.authenticate(ctx, requestedUser)
+	// Authenticate the incoming request, getting related user accounts.
+	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
 	// Parse collection ID from account's following URI.
-	collectionID, err := url.Parse(requested.FollowingURI)
+	collectionID, err := url.Parse(receiver.FollowingURI)
 	if err != nil {
-		err := gtserror.Newf("error parsing account following uri %s: %w", requested.FollowingURI, err)
+		err := gtserror.Newf("error parsing account following uri %s: %w", receiver.FollowingURI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Calculate total number of following available for account.
-	total, err := p.state.DB.CountAccountFollows(ctx, requested.ID)
+	total, err := p.state.DB.CountAccountFollows(ctx, receiver.ID)
 	if err != nil {
 		err := gtserror.Newf("error counting follows: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -239,7 +249,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 		// i.e. paging enabled
 
 		// Get the request page of full follower objects with attached accounts.
-		follows, err := p.state.DB.GetAccountFollows(ctx, requested.ID, page)
+		follows, err := p.state.DB.GetAccountFollows(ctx, receiver.ID, page)
 		if err != nil {
 			err := gtserror.Newf("error getting follows: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -300,20 +310,21 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 
 // FeaturedCollectionGet returns an ordered collection of the requested username's Pinned posts.
 // The returned collection have an `items` property which contains an ordered list of status URIs.
-func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUsername string) (interface{}, gtserror.WithCode) {
-	requestedAccount, _, errWithCode := p.authenticate(ctx, requestedUsername)
+func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUser string) (interface{}, gtserror.WithCode) {
+	// Authenticate the incoming request, getting related user accounts.
+	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	statuses, err := p.state.DB.GetAccountPinnedStatuses(ctx, requestedAccount.ID)
+	statuses, err := p.state.DB.GetAccountPinnedStatuses(ctx, receiver.ID)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
 
-	collection, err := p.converter.StatusesToASFeaturedCollection(ctx, requestedAccount.FeaturedCollectionURI, statuses)
+	collection, err := p.converter.StatusesToASFeaturedCollection(ctx, receiver.FeaturedCollectionURI, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
