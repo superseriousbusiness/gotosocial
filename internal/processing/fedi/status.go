@@ -31,7 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusGet handles the getting of a fedi/activitypub representation of a local status.
@@ -83,7 +82,7 @@ func (p *Processor) StatusRepliesGet(
 	requestedUser string,
 	statusID string,
 	page *paging.Page,
-	onlyOtherAccounts *bool,
+	onlyOtherAccounts bool,
 ) (interface{}, gtserror.WithCode) {
 	requested, _, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
@@ -102,13 +101,35 @@ func (p *Processor) StatusRepliesGet(
 	// Ensure status is by requested account.
 	if status.AccountID != requested.ID {
 		const text = "status does not belong to requested account"
-		return nil, gtserror.NewErrorNotFound(errors.New(text), text)
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	// Parse replies collection ID from status' URI.
-	collectionID, err := url.Parse(status.URI + "/replies")
+	// Parse replies collection ID from status' URI with onlyOtherAccounts param.
+	onlyOtherAccStr := "only_other_accounts=" + strconv.FormatBool(onlyOtherAccounts)
+	collectionID, err := url.Parse(status.URI + "/replies?" + onlyOtherAccStr)
 	if err != nil {
 		err := gtserror.Newf("error parsing status uri %s: %w", status.URI, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Get *all* available replies for status (i.e. without paging).
+	replies, err := p.state.DB.GetStatusReplies(ctx, status.ID)
+	if err != nil {
+		err := gtserror.Newf("error getting status replies: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if onlyOtherAccounts {
+		// If 'onlyOtherAccounts' is set, drop all by original status author.
+		replies = slices.DeleteFunc(replies, func(reply *gtsmodel.Status) bool {
+			return reply.AccountID == status.AccountID
+		})
+	}
+
+	// Reslice replies dropping all those invisible to requester.
+	replies, err = p.filter.StatusesVisible(ctx, requested, replies)
+	if err != nil {
+		err := gtserror.Newf("error filtering status replies: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -117,86 +138,21 @@ func (p *Processor) StatusRepliesGet(
 	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
+	params.Total = len(replies)
 
-	switch {
-	// NOTE:
-	// the odd behaviour below regarding "paging enabled" and
-	// "onlyOtherAccounts value provided" semantics is something
-	// we carry over from Mastodon, since we aim for compatibility
-	// up to a reasonable point. Ideally here we would just handle
-	// the case of no paging provided, or paging provided.
-	//
-	// Mastodon basically behaves as follows:
-	//
-	// GET https://{$hostname}/user/{$user}/statuses/{$id}/replies
-	// => Collection with only a 'first' pointing to
-	//    /replies?page=true&onlyOtherAccounts=true
-	//
-	// GET https://{$hostname}/user/{$user}/statuses/{$id}/replies?page=true
-	// => CollectionPage with only a 'next' pointing to
-	//    /replies?page=true&onlyOtherAccounts=true
-	//
-	// GET https://{$hostname}/user/{$user}/statuses/{$id}/replies?page=true&onlyOtherAccounts={$v}
-	// => CollectionPages with the *actual* statuses
-	//
+	if page == nil {
+		// i.e. paging disabled, return collection
+		// that links to first page (i.e. path below).
+		params.Query = make(url.Values, 1)
+		params.Query.Set("limit", "20") // enables paging
+		obj = ap.NewASOrderedCollection(params)
+	} else {
+		// i.e. paging enabled
 
-	case page == nil:
-		// i.e. paging disabled and 'onlyOtherAccounts' not given,
-		// return collection linking to first page (i.e. paths below).
-		params.Query = make(url.Values, 2)
-		onlyOtherAccounts := util.PtrValueOr(onlyOtherAccounts, true) // deref ptr.
-		params.Query.Set("onlyOtherAccounts", strconv.FormatBool(onlyOtherAccounts))
-		params.Query.Set("page", "true") // enables paging
-
-		// Build AS collection WITHOUT 'totalItems'.
-		c := ap.NewASOrderedCollection(params)
-		c.SetActivityStreamsTotalItems(nil)
-		obj = c
-
-	case onlyOtherAccounts == nil:
-		// i.e. paging enabled, but 'onlyOtherAccounts' not
-		// provided, so provide page with 'next' including this.
-
-		// Start AS collection page params.
-		var pageParams ap.CollectionPageParams
-		pageParams.CollectionParams = params
-		pageParams.Append = func(int, ap.ItemsPropertyBuilder) {
-			panic("this should not be called!")
-		}
-
-		// Add the 'onlyOtherAccounts' query param.
-		pageParams.Next = page // current page value
-		pageParams.Query = make(url.Values, 1)
-		pageParams.Query.Set("onlyOtherAccounts", "true")
-
-		// Build AS collection page WITHOUT 'totalItems'.
-		p := ap.NewASOrderedCollectionPage(pageParams)
-		p.SetActivityStreamsTotalItems(nil)
-		obj = p
-
-	default:
-		// i.e. paging enabled, with an onlyOtherAccounts param.
-		//
-		// Get all immediate children (replies) of status in question.
-		replies, err := p.state.DB.GetStatusReplies(ctx, status.ID, page)
-		if err != nil {
-			err := gtserror.Newf("error getting status children: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		// Filter replies so we only show those visible to requester.
-		replies, err = p.filter.StatusesVisible(ctx, requested, replies)
-		if err != nil {
-			err := gtserror.Newf("error filtering status children: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		if *onlyOtherAccounts {
-			// If 'onlyOtherAccounts' is set, drop all by the requested account.
-			replies = slices.DeleteFunc(replies, func(status *gtsmodel.Status) bool {
-				return status.AccountID == requested.ID
-			})
-		}
+		// Page and reslice the replies according to given parameters.
+		replies = paging.Page_PageFunc(page, replies, func(reply *gtsmodel.Status) string {
+			return reply.ID
+		})
 
 		// page ID values.
 		var lo, hi string
@@ -211,11 +167,6 @@ func (p *Processor) StatusRepliesGet(
 		// Start AS collection page params.
 		var pageParams ap.CollectionPageParams
 		pageParams.CollectionParams = params
-
-		// Add the 'onlyOtherAccounts' query param.
-		pageParams.Query = make(url.Values, 1)
-		onlyOtherAcc := strconv.FormatBool(*onlyOtherAccounts)
-		pageParams.Query.Set("onlyOtherAccounts", onlyOtherAcc)
 
 		// Current page details.
 		pageParams.Current = page

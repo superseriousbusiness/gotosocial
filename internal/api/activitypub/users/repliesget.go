@@ -119,35 +119,41 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	var onlyOtherAccPtr *bool
+	var onlyOtherAccounts bool
 
-	// Look for 'onlyOtherAccounts' query key, nil = unset.
-	if raw, ok := c.GetQuery("onlyOtherAccounts"); ok {
-		onlyOtherAcc, _ := strconv.ParseBool(raw)
-		onlyOtherAccPtr = &onlyOtherAcc
+	// Look for supplied 'onlyOtherAccounts' query key.
+	if raw, ok := c.GetQuery("only_other_accounts"); ok {
+		onlyOtherAccounts, _ = strconv.ParseBool(raw)
+	} else { // fallback to true.
+		onlyOtherAccounts = true
 	}
 
-	// Look for paging parameters, within min / max values.
-	// A zero value default indicates no paging is supported.
-	page, errWithCode := paging.ParseIDPage(c, 1, 40, 0)
+	// Look for given paging query parameters.
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		40, // max limit
+		0,  // default = disabled
+	)
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	// COMPATIBILITY FIX: 'page=true' enables paging.
 	if page == nil && c.Query("page") == "true" {
 		page = new(paging.Page)
+		page.Max = paging.MaxID("")
 		page.Min = paging.MinID("")
-		page.Limit = 40 // max
+		page.Limit = 20 // default
 	}
 
+	// Fetch serialized status replies response for input status.
 	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(
 		c.Request.Context(),
 		requestedUsername,
 		requestedStatusID,
 		page,
-		onlyOtherAccPtr,
+		onlyOtherAccounts,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

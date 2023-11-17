@@ -21,7 +21,6 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Status contains functions for getting statuses, creating statuses, and checking various other fields on statuses.
@@ -56,8 +55,8 @@ type Status interface {
 	// GetStatusesUsingEmoji fetches all status models using emoji with given ID stored in their 'emojis' column.
 	GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error)
 
-	// GetStatusReplies returns the *direct* (i.e. in_reply_to_id column) replies to this status ID.
-	GetStatusReplies(ctx context.Context, statusID string, page *paging.Page) ([]*gtsmodel.Status, error)
+	// GetStatusReplies returns the *direct* (i.e. in_reply_to_id column) replies to this status ID, ordered DESC by ID.
+	GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
 
 	// CountStatusReplies returns the number of stored *direct* (i.e. in_reply_to_id column) replies to this status ID.
 	CountStatusReplies(ctx context.Context, statusID string) (int, error)

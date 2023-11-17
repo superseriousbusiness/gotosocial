@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
@@ -536,7 +535,7 @@ func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status
 
 func (s *statusDB) GetStatusChildren(ctx context.Context, statusID string) ([]*gtsmodel.Status, error) {
 	// Get all replies for the currently set status.
-	replies, err := s.GetStatusReplies(ctx, statusID, nil)
+	replies, err := s.GetStatusReplies(ctx, statusID)
 	if err != nil {
 		return nil, err
 	}
@@ -549,20 +548,20 @@ func (s *statusDB) GetStatusChildren(ctx context.Context, statusID string) ([]*g
 		children = append(children, status)
 
 		// Further, recursively get all children for this reply.
-		subChildren, err := s.GetStatusChildren(ctx, status.ID)
+		grandChildren, err := s.GetStatusChildren(ctx, status.ID)
 		if err != nil {
 			return nil, err
 		}
 
 		// Append all sub children after status.
-		children = append(children, subChildren...)
+		children = append(children, grandChildren...)
 	}
 
 	return children, nil
 }
 
-func (s *statusDB) GetStatusReplies(ctx context.Context, statusID string, page *paging.Page) ([]*gtsmodel.Status, error) {
-	statusIDs, err := s.getStatusReplyIDs(ctx, statusID, page)
+func (s *statusDB) GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error) {
+	statusIDs, err := s.getStatusReplyIDs(ctx, statusID)
 	if err != nil {
 		return nil, err
 	}
@@ -570,12 +569,12 @@ func (s *statusDB) GetStatusReplies(ctx context.Context, statusID string, page *
 }
 
 func (s *statusDB) CountStatusReplies(ctx context.Context, statusID string) (int, error) {
-	statusIDs, err := s.getStatusReplyIDs(ctx, statusID, nil)
+	statusIDs, err := s.getStatusReplyIDs(ctx, statusID)
 	return len(statusIDs), err
 }
 
-func (s *statusDB) getStatusReplyIDs(ctx context.Context, statusID string, page *paging.Page) ([]string, error) {
-	return loadPagedIDs(s.state.Caches.GTS.InReplyToIDs(), statusID, page, func() ([]string, error) {
+func (s *statusDB) getStatusReplyIDs(ctx context.Context, statusID string) ([]string, error) {
+	return s.state.Caches.GTS.InReplyToIDs().Load(statusID, func() ([]string, error) {
 		var statusIDs []string
 
 		// Status reply IDs not in cache, perform DB query!

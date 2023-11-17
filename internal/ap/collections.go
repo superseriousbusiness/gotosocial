@@ -265,12 +265,19 @@ func buildCollection[C CollectionBuilder](collection C, params CollectionParams)
 	totalItems.Set(params.Total)
 	collection.SetActivityStreamsTotalItems(totalItems)
 
+	// Append paging query params
+	// to those already in ID prop.
+	pageQueryParams := appendQuery(
+		params.Query,
+		params.ID.Query(),
+	)
+
 	// Build the first page link IRI.
 	firstIRI := params.First.ToLinkURL(
 		params.ID.Scheme,
 		params.ID.Host,
 		params.ID.Path,
-		params.Query,
+		pageQueryParams,
 	)
 
 	// Add the collection first IRI property.
@@ -285,12 +292,19 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 	partOfProp.SetIRI(params.ID)
 	collectionPage.SetActivityStreamsPartOf(partOfProp)
 
+	// Append paging query params
+	// to those already in ID prop.
+	pageQueryParams := appendQuery(
+		params.Query,
+		params.ID.Query(),
+	)
+
 	// Build the current page link IRI.
 	currentIRI := params.Current.ToLinkURL(
 		params.ID.Scheme,
 		params.ID.Host,
 		params.ID.Path,
-		params.Query,
+		pageQueryParams,
 	)
 
 	// Add the collection ID property for
@@ -304,7 +318,7 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 		params.ID.Scheme,
 		params.ID.Host,
 		params.ID.Path,
-		params.Query,
+		pageQueryParams,
 	)
 
 	if nextIRI != nil {
@@ -319,7 +333,7 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 		params.ID.Scheme,
 		params.ID.Host,
 		params.ID.Path,
-		params.Query,
+		pageQueryParams,
 	)
 
 	if prevIRI != nil {
@@ -350,11 +364,13 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 	setItems(itemsProp)
 }
 
-// appendQuery appends part to an existing raw
-// query with ampersand, else just returning part.
-func appendQuery(raw, part string) string {
-	if raw != "" {
-		return raw + "&" + part
+// appendQuery appends query values in 'src' to 'dst', returning 'dst'.
+func appendQuery(dst, src url.Values) url.Values {
+	if dst == nil {
+		return src
 	}
-	return part
+	for k, vs := range src {
+		dst[k] = append(dst[k], vs...)
+	}
+	return dst
 }

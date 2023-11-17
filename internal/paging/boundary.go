@@ -132,18 +132,19 @@ func (b Boundary) Find(in []string) int {
 	return -1
 }
 
-// Boundary_FindFunc ...
-// func Boundary_FindFunc[T any](b Boundary, in []T, get func(T) string) int { //nolint:revive
-// 	if get == nil {
-// 		panic("nil function")
-// 	}
-// 	if b.Value == "" {
-// 		return -1
-// 	}
-// 	for i := range in {
-// 		if get(in[i]) == b.Value {
-// 			return i
-// 		}
-// 	}
-// 	return -1
-// }
+// Boundary_FindFunc is functionally equivalent to Boundary{}.Find() but for an arbitrary type with ID.
+// Note: this is not a Boundary{} method as Go generics are not supported in method receiver functions.
+func Boundary_FindFunc[T any](b Boundary, in []T, get func(T) string) int { //nolint:revive
+	if get == nil {
+		panic("nil function")
+	}
+	if b.Value == "" {
+		return -1
+	}
+	for i := range in {
+		if get(in[i]) == b.Value {
+			return i
+		}
+	}
+	return -1
+}

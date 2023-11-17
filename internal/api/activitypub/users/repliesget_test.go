@@ -18,10 +18,10 @@
 package users_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,6 +31,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -49,7 +50,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies?only_other_accounts=false", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
@@ -76,13 +77,26 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
 
+	// Read response body.
 	result := recorder.Result()
 	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"@context":"https://www.w3.org/ns/activitystreams","first":{"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true","next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"},"id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"Collection"}`, string(b))
 
-	// should be a Collection
+	// Indent JSON
+	// for readability.
+	b = indentJSON(b)
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":   "https://www.w3.org/ns/activitystreams",
+		"type":       "OrderedCollection",
+		"id":         targetStatus.URI + "/replies?only_other_accounts=false",
+		"first":      targetStatus.URI + "/replies?limit=20&only_other_accounts=false",
+		"totalItems": 2,
+	})
+	assert.Equal(suite.T(), expect, string(b))
+
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
 	assert.NoError(suite.T(), err)
@@ -90,7 +104,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	t, err := streams.ToType(context.Background(), m)
 	assert.NoError(suite.T(), err)
 
-	_, ok := t.(vocab.ActivityStreamsCollection)
+	_, ok := t.(vocab.ActivityStreamsOrderedCollection)
 	assert.True(suite.T(), ok)
 }
 
@@ -131,14 +145,32 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
 
+	// Read response body.
 	result := recorder.Result()
 	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), `{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true\u0026only_other_accounts=false","items":"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0","next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true\u0026min_id=01FF25D5Q0DH7CHD57CTRS6WK0","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"}`, string(b))
+	// Indent JSON
+	// for readability.
+	b = indentJSON(b)
 
-	// should be a Collection
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"type":     "OrderedCollectionPage",
+		"id":       targetStatus.URI + "/replies?limit=20&only_other_accounts=false",
+		"partOf":   targetStatus.URI + "/replies?only_other_accounts=false",
+		"next":     "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&min_id=01FCQSQ667XHJ9AV9T27SJJSX5&only_other_accounts=false",
+		"prev":     "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&max_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false",
+		"orderedItems": []any{
+			"http://localhost:8080/users/1happyturtle/statuses/01FCQSQ667XHJ9AV9T27SJJSX5",
+			"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+		},
+		"totalItems": 2,
+	})
+	assert.Equal(suite.T(), expect, string(b))
+
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
 	assert.NoError(suite.T(), err)
@@ -149,7 +181,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	page, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
 	assert.True(suite.T(), ok)
 
-	assert.Equal(suite.T(), page.GetActivityStreamsOrderedItems().Len(), 1)
+	assert.Equal(suite.T(), page.GetActivityStreamsOrderedItems().Len(), 2)
 }
 
 func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
@@ -162,7 +194,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies?only_other_accounts=false&page=true&min_id=01FF25D5Q0DH7CHD57CTRS6WK0", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetStatus.URI+"/replies?only_other_accounts=false&page=true&min_id=01FCQSQ667XHJ9AV9T27SJJSX5", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
@@ -189,15 +221,27 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	// check response
 	suite.EqualValues(http.StatusOK, recorder.Code)
 
+	// Read response body.
 	result := recorder.Result()
 	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
 
-	fmt.Println(string(b))
-	assert.Equal(suite.T(), `{"@context":"https://www.w3.org/ns/activitystreams","id":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?page=true\u0026only_other_accounts=false\u0026min_id=01FF25D5Q0DH7CHD57CTRS6WK0","items":[],"next":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?only_other_accounts=false\u0026page=true","partOf":"http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies","type":"CollectionPage"}`, string(b))
+	// Indent JSON
+	// for readability.
+	b = indentJSON(b)
 
-	// should be a Collection
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":     "https://www.w3.org/ns/activitystreams",
+		"type":         "OrderedCollectionPage",
+		"id":           targetStatus.URI + "/replies?min_id=01FCQSQ667XHJ9AV9T27SJJSX5&only_other_accounts=false",
+		"partOf":       targetStatus.URI + "/replies?only_other_accounts=false",
+		"orderedItems": []any{}, // empty
+		"totalItems":   2,
+	})
+	assert.Equal(suite.T(), expect, string(b))
+
 	m := make(map[string]interface{})
 	err = json.Unmarshal(b, &m)
 	assert.NoError(suite.T(), err)
@@ -213,4 +257,31 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 
 func TestRepliesGetTestSuite(t *testing.T) {
 	suite.Run(t, new(RepliesGetTestSuite))
+}
+
+// toJSON will return indented JSON serialized form of 'a'.
+func toJSON(a any) string {
+	v, ok := a.(vocab.Type)
+	if ok {
+		m, err := ap.Serialize(v)
+		if err != nil {
+			panic(err)
+		}
+		a = m
+	}
+	b, err := json.MarshalIndent(a, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
+}
+
+// indentJSON will return indented JSON from raw provided JSON.
+func indentJSON(b []byte) []byte {
+	var dst bytes.Buffer
+	err := json.Indent(&dst, b, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	return dst.Bytes()
 }
