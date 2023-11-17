@@ -667,7 +667,13 @@ func (c *Converter) StatusToWebStatus(
 	webStatus.TmplLanguage = new(langs.Language)
 	if lang := webStatus.Language; lang != nil {
 		tmplLang, err := langs.Parse(*lang)
-		if err == nil {
+		if err != nil {
+			log.Warnf(
+				ctx,
+				"error parsing %s as language tag: %v",
+				*lang, err,
+			)
+		} else {
 			webStatus.TmplLanguage = tmplLang
 		}
 	}
