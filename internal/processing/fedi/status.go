@@ -138,6 +138,7 @@ func (p *Processor) StatusRepliesGet(
 	//
 	// GET https://{$hostname}/user/{$user}/statuses/{$id}/replies?page=true&onlyOtherAccounts={$v}
 	// => CollectionPages with the *actual* statuses
+	//
 
 	case page == nil:
 		// i.e. paging disabled and 'onlyOtherAccounts' not given,
@@ -146,7 +147,11 @@ func (p *Processor) StatusRepliesGet(
 		onlyOtherAccounts := util.PtrValueOr(onlyOtherAccounts, true) // deref ptr.
 		params.Query.Set("onlyOtherAccounts", strconv.FormatBool(onlyOtherAccounts))
 		params.Query.Set("page", "true") // enables paging
-		obj = ap.NewASOrderedCollection(params)
+
+		// Build AS collection WITHOUT 'totalItems'.
+		c := ap.NewASOrderedCollection(params)
+		c.SetActivityStreamsTotalItems(nil)
+		obj = c
 
 	case onlyOtherAccounts == nil:
 		// i.e. paging enabled, but 'onlyOtherAccounts' not
@@ -164,8 +169,10 @@ func (p *Processor) StatusRepliesGet(
 		pageParams.Query = make(url.Values, 1)
 		pageParams.Query.Set("onlyOtherAccounts", "true")
 
-		// Build AS collection page from params.
-		obj = ap.NewASOrderedCollectionPage(pageParams)
+		// Build AS collection page WITHOUT 'totalItems'.
+		p := ap.NewASOrderedCollectionPage(pageParams)
+		p.SetActivityStreamsTotalItems(nil)
+		obj = p
 
 	default:
 		// i.e. paging enabled, with an onlyOtherAccounts param.

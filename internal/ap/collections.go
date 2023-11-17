@@ -169,7 +169,7 @@ type CollectionParams struct {
 	ID *url.URL
 
 	// First page details.
-	First *paging.Page
+	First paging.Page
 	Query url.Values
 
 	// Total no. items.
@@ -227,7 +227,7 @@ type ItemsPropertyBuilder interface {
 // NewASCollection builds and returns a new ActivityStreams Collection from given parameters.
 func NewASCollection(params CollectionParams) vocab.ActivityStreamsCollection {
 	collection := streams.NewActivityStreamsCollection()
-	buildCollection(collection, params, 40)
+	buildCollection(collection, params)
 	return collection
 }
 
@@ -242,7 +242,7 @@ func NewASCollectionPage(params CollectionPageParams) vocab.ActivityStreamsColle
 // NewASOrderedCollection builds and returns a new ActivityStreams OrderedCollection from given parameters.
 func NewASOrderedCollection(params CollectionParams) vocab.ActivityStreamsOrderedCollection {
 	collection := streams.NewActivityStreamsOrderedCollection()
-	buildCollection(collection, params, 40)
+	buildCollection(collection, params)
 	return collection
 }
 
@@ -254,7 +254,7 @@ func NewASOrderedCollectionPage(params CollectionPageParams) vocab.ActivityStrea
 	return collectionPage
 }
 
-func buildCollection[C CollectionBuilder](collection C, params CollectionParams, pageLimit int) {
+func buildCollection[C CollectionBuilder](collection C, params CollectionParams) {
 	// Add the collection ID property.
 	idProp := streams.NewJSONLDIdProperty()
 	idProp.SetIRI(params.ID)
