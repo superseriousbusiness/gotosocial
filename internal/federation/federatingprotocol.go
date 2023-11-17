@@ -232,72 +232,17 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 		}
 	}
 
-	pubKeyOwnerURI := pubKeyAuth.OwnerURI
-
-	// Authentication has passed, check if we need to create a
-	// new instance entry for the Host of the requesting account.
-	if _, err := f.db.GetInstance(ctx, pubKeyOwnerURI.Host); err != nil {
-		if !errors.Is(err, db.ErrNoEntries) {
-			// There's been an actual error.
-			err = gtserror.Newf("error getting instance %s: %w", pubKeyOwnerURI.Host, err)
-			return ctx, false, err
-		}
-
-		// We don't have an entry for this
-		// instance yet; go dereference it.
-		instance, err := f.GetRemoteInstance(
-			gtscontext.SetFastFail(ctx),
-			username,
-			&url.URL{
-				Scheme: pubKeyOwnerURI.Scheme,
-				Host:   pubKeyOwnerURI.Host,
-			},
-		)
-		if err != nil {
-			err = gtserror.Newf("error dereferencing instance %s: %w", pubKeyOwnerURI.Host, err)
-			return nil, false, err
-		}
-
-		if err := f.db.PutInstance(ctx, instance); err != nil && !errors.Is(err, db.ErrAlreadyExists) {
-			err = gtserror.Newf("error inserting instance entry for %s: %w", pubKeyOwnerURI.Host, err)
-			return nil, false, err
-		}
-	}
-
-	// We know the public key owner URI now, so we can
-	// dereference the remote account (or just get it
-	// from the db if we already have it).
-	requestingAccount, _, err := f.GetAccountByURI(
-		gtscontext.SetFastFail(ctx),
-		username,
-		pubKeyOwnerURI,
-	)
-	if err != nil {
-		if gtserror.StatusCode(err) == http.StatusGone {
-			// This is the same case as the http.StatusGone check above.
-			// It can happen here and not there because there's a race
-			// where the sending server starts sending account deletion
-			// notifications out, we start processing, the request above
-			// succeeds, and *then* the profile is removed and starts
-			// returning 410 Gone, at which point _this_ request fails.
-			w.WriteHeader(http.StatusAccepted)
-			return ctx, false, nil
-		}
-
-		err = gtserror.Newf("couldn't get requesting account %s: %w", pubKeyOwnerURI, err)
-		return nil, false, err
-	}
-
-	if !requestingAccount.SuspendedAt.IsZero() {
-		// Account was marked as suspended by a
-		// local admin action. Stop request early.
-		w.WriteHeader(http.StatusForbidden)
+	if pubKeyAuth.Handshaking {
+		// There is a mutal handshake occurring between us and
+		// the owner URI. Return 202 and leave as we can't do
+		// much else until the handshake procedure has finished.
+		w.WriteHeader(http.StatusTooEarly)
 		return ctx, false, nil
 	}
 
 	// We have everything we need now, set the requesting
 	// and receiving accounts on the context for later use.
-	ctx = gtscontext.SetRequestingAccount(ctx, requestingAccount)
+	ctx = gtscontext.SetRequestingAccount(ctx, pubKeyAuth.Owner)
 	ctx = gtscontext.SetReceivingAccount(ctx, receivingAccount)
 	return ctx, true, nil
 }

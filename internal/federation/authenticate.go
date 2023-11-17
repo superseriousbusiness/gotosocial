@@ -67,21 +67,18 @@ type PubKeyAuth struct {
 
 	// OwnerURI is the ActivityPub id of the owner of
 	// the public key used to sign the request we're
-	// now authenticating. This will always be set
-	// even if Owner isn't, so that callers can use
-	// this URI to go fetch the Owner from remote.
+	// now authenticating. This will always be set.
 	OwnerURI *url.URL
 
-	// Owner is the account corresponding to OwnerURI.
-	//
-	// Owner will only be defined if the account who
-	// owns the public key was already cached in the
-	// database when we received the request we're now
-	// authenticating (ie., we've seen it before).
-	//
-	// If it's not defined, callers should use OwnerURI
-	// to go and dereference it.
+	// Owner is the account corresponding to
+	// OwnerURI. This will always be set UNLESS
+	// the PubKeyAuth.Handshaking field is set..
 	Owner *gtsmodel.Account
+
+	// Handshaking indicates that uncached owner
+	// account was NOT dereferenced due to an ongoing
+	// handshake with another instance.
+	Handshaking bool
 }
 
 // AuthenticateFederatedRequest authenticates any kind of incoming federated
@@ -142,7 +139,7 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 
 	var (
 		pubKeyIDStr = pubKeyID.String()
-		local       = (pubKeyID.Host == config.GetHost())
+		isLocal     = (pubKeyID.Host == config.GetHost())
 		pubKeyAuth  *PubKeyAuth
 		errWithCode gtserror.WithCode
 	)
@@ -154,7 +151,7 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 			{"pubKeyID", pubKeyIDStr},
 		}...)
 
-	if local {
+	if isLocal {
 		l.Trace("public key is local, no dereference needed")
 		pubKeyAuth, errWithCode = f.derefPubKeyDBOnly(ctx, pubKeyIDStr)
 	} else {
@@ -166,7 +163,7 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		return nil, errWithCode
 	}
 
-	if local && pubKeyAuth == nil {
+	if isLocal && pubKeyAuth == nil {
 		// We signed this request, apparently, but
 		// local lookup didn't find anything. This
 		// is an almost impossible error condition!
@@ -175,37 +172,63 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Try to authenticate using permitted algorithms in
-	// order of most -> least common, checking each defined
-	// pubKey for this Actor. Return OK as soon as one passes.
-	for _, pubKey := range [2]*rsa.PublicKey{
-		pubKeyAuth.FetchedPubKey,
-		pubKeyAuth.CachedPubKey,
-	} {
-		if pubKey == nil {
-			continue
+	// Attempt to verify auth with both fetched and public keys.
+	if !verifyAuth(&l, verifier, pubKeyAuth.FetchedPubKey) &&
+		!verifyAuth(&l, verifier, pubKeyAuth.CachedPubKey) {
+		text := fmt.Sprintf(
+			"authentication NOT PASSED for public key %s; tried algorithms %+v; signature value was '%s'",
+			pubKeyIDStr, signature, signingAlgorithms,
+		)
+		errWithCode = gtserror.NewErrorUnauthorized(errors.New(text), text)
+		return nil, errWithCode
+	}
+
+	if pubKeyAuth.Owner == nil {
+		// Ensure we have instance stored in
+		// database for the account at URI.
+		err := f.fetchAccountInstance(ctx,
+			requestedUsername,
+			pubKeyAuth.OwnerURI,
+		)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		for _, algo := range signingAlgorithms {
-			l.Tracef("trying %s", algo)
+		// If we're currently handshaking with another instance, return
+		// without derefing the owner, the only possible time we do this.
+		// This prevents deadlocks when GTS instances mutually deref.
+		if f.Handshaking(requestedUsername, pubKeyAuth.OwnerURI) {
+			log.Warnf(ctx, "network race during %s handshake", pubKeyAuth.OwnerURI)
+			pubKeyAuth.Handshaking = true
+			return pubKeyAuth, nil
+		}
 
-			err := verifier.Verify(pubKey, algo)
-			if err == nil {
-				l.Tracef("authentication PASSED with %s", algo)
-				return pubKeyAuth, nil
+		// Dereference the account located at owner URI.
+		pubKeyAuth.Owner, _, err = f.GetAccountByURI(ctx,
+			requestedUsername,
+			pubKeyAuth.OwnerURI,
+		)
+		if err != nil {
+			if gtserror.StatusCode(err) == http.StatusGone {
+				// This can happen here instead of the pubkey 'gone'
+				// checks due to: the server sending account deletion
+				// notifications out, we start processing, the request above
+				// succeeds, and *then* the profile is removed and starts
+				// returning 410 Gone, at which point _this_ request fails.
+				return nil, gtserror.NewErrorGone(err)
 			}
 
-			l.Tracef("authentication NOT PASSED with %s: %q", algo, err)
+			err := gtserror.Newf("error dereferencing account %s: %w", pubKeyAuth.OwnerURI, err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
 
-	// At this point no algorithms passed.
-	err := gtserror.Newf(
-		"authentication NOT PASSED for public key %s; tried algorithms %+v; signature value was '%s'",
-		pubKeyIDStr, signature, signingAlgorithms,
-	)
+	if !pubKeyAuth.Owner.SuspendedAt.IsZero() {
+		const text = "requesting account suspended"
+		return nil, gtserror.NewErrorForbidden(errors.New(text))
+	}
 
-	return nil, gtserror.NewErrorUnauthorized(err, err.Error())
+	return pubKeyAuth, nil
 }
 
 // derefPubKeyDBOnly tries to dereference the given
@@ -218,22 +241,27 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 func (f *Federator) derefPubKeyDBOnly(
 	ctx context.Context,
 	pubKeyIDStr string,
-) (*PubKeyAuth, gtserror.WithCode) {
+) (
+	*PubKeyAuth,
+	gtserror.WithCode,
+) {
+	// Look for pubkey ID owner in the
 	owner, err := f.db.GetAccountByPubkeyID(ctx, pubKeyIDStr)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// We don't have this
-			// account stored (yet).
-			return nil, nil
-		}
-
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting account with pubKeyID %s: %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	if owner == nil {
+		// We don't have this
+		// account stored (yet).
+		return nil, nil
+	}
+
+	// Parse owner account URI as URL obj.
 	ownerURI, err := url.Parse(owner.URI)
 	if err != nil {
-		err = gtserror.Newf("error parsing account uri with pubKeyID %s: %w", pubKeyIDStr, err)
+		err := gtserror.Newf("error parsing account uri with pubKeyID %s: %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -253,7 +281,10 @@ func (f *Federator) derefPubKey(
 	requestedUsername string,
 	pubKeyIDStr string,
 	pubKeyID *url.URL,
-) (*PubKeyAuth, gtserror.WithCode) {
+) (
+	*PubKeyAuth,
+	gtserror.WithCode,
+) {
 	l := log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
@@ -316,7 +347,7 @@ func (f *Federator) derefPubKey(
 	// Extract the key and the owner from the response.
 	pubKey, pubKeyOwner, err := parsePubKeyBytes(ctx, pubKeyBytes, pubKeyID)
 	if err != nil {
-		err := fmt.Errorf("error parsing public key (%s): %w", pubKeyID, err)
+		err := gtserror.Newf("error parsing public key (%s): %w", pubKeyID, err)
 		return nil, gtserror.NewErrorUnauthorized(err)
 	}
 
@@ -337,22 +368,20 @@ func (f *Federator) derefPubKey(
 	// had an owner stored for it locally. Since
 	// we now successfully refreshed the pub key,
 	// we should update the account to reflect that.
-	ownerAcct := pubKeyAuth.Owner
-	ownerAcct.PublicKey = pubKeyAuth.FetchedPubKey
-	ownerAcct.PublicKeyExpiresAt = time.Time{}
-
-	l.Info("obtained a new public key to replace expired key, caching now; " +
-		"authorization for this request will be attempted with both old and new keys")
-
+	owner := pubKeyAuth.Owner
+	owner.PublicKey = pubKeyAuth.FetchedPubKey
+	owner.PublicKeyExpiresAt = time.Time{}
 	if err := f.db.UpdateAccount(
 		ctx,
-		ownerAcct,
+		owner,
 		"public_key",
 		"public_key_expires_at",
 	); err != nil {
 		err := gtserror.Newf("db error updating account with refreshed public key (%s): %w", pubKeyIDStr, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	l.Info("obtained new public key to replace expired; attempting auth with old / new")
 
 	// Return both new and cached (now
 	// expired) keys, authentication
@@ -406,6 +435,47 @@ func (f *Federator) callForPubKey(
 	return nil, gtserror.NewErrorInternalError(err)
 }
 
+// fetchAccountInstance ensures that an instance model exists in
+// the database for the given account URI, deref'ing if necessary.
+func (f *Federator) fetchAccountInstance(
+	ctx context.Context,
+	requestedUsername string,
+	accountURI *url.URL,
+) error {
+	// Look for an existing entry for instance in database.
+	instance, err := f.db.GetInstance(ctx, accountURI.Host)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("error getting instance from database: %w", err)
+	}
+
+	if instance != nil {
+		// already fetched.
+		return nil
+	}
+
+	// We don't have an entry for this
+	// instance yet; go dereference it.
+	instance, err = f.GetRemoteInstance(
+		gtscontext.SetFastFail(ctx),
+		requestedUsername,
+		&url.URL{
+			Scheme: accountURI.Scheme,
+			Host:   accountURI.Host,
+		},
+	)
+	if err != nil {
+		return gtserror.Newf("error dereferencing instance %s: %w", accountURI.Host, err)
+	}
+
+	// Insert new instance into the datbase.
+	err = f.db.PutInstance(ctx, instance)
+	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+		return gtserror.Newf("error inserting instance %s into database: %w", accountURI.Host, err)
+	}
+
+	return nil
+}
+
 // parsePubKeyBytes extracts an rsa public key from the
 // given pubKeyBytes by trying to parse the pubKeyBytes
 // as an ActivityPub type. It will return the public key
@@ -438,4 +508,20 @@ func parsePubKeyBytes(
 	}
 
 	return pubKey, pubKeyOwnerID, nil
+}
+
+// verifyAuth ...
+func verifyAuth(l *log.Entry, verifier httpsig.Verifier, pubKey *rsa.PublicKey) bool {
+	if pubKey == nil || verifier == nil {
+		return false
+	}
+	for _, algo := range signingAlgorithms {
+		if err := verifier.Verify(pubKey, algo); err != nil {
+			l.Tracef("authentication NOT PASSED with %s: %v", algo, err)
+			continue
+		}
+		l.Tracef("authenticated PASSED with %s", algo)
+		return true
+	}
+	return false
 }

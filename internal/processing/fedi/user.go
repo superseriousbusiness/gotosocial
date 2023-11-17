@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -35,7 +34,7 @@ import (
 // performing authentication before returning a JSON serializable interface to the caller.
 func (p *Processor) UserGet(ctx context.Context, requestedUsername string, requestURL *url.URL) (interface{}, gtserror.WithCode) {
 	// (Try to) get the requested local account from the db.
-	requestedAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUsername, "")
+	receiver, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUsername, "")
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			// Account just not found w/ this username.
@@ -54,8 +53,9 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		// the bare minimum user profile needed for the pubkey.
 		//
 		// TODO: https://github.com/superseriousbusiness/gotosocial/issues/1186
-		minimalPerson, err := p.converter.AccountToASMinimal(ctx, requestedAccount)
+		minimalPerson, err := p.converter.AccountToASMinimal(ctx, receiver)
 		if err != nil {
+			err := gtserror.Newf("error converting to minimal account: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
@@ -72,56 +72,39 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 	}
 
 	// Auth passed, generate the proper AP representation.
-	person, err := p.converter.AccountToAS(ctx, requestedAccount)
+	person, err := p.converter.AccountToAS(ctx, receiver)
 	if err != nil {
+		err := gtserror.Newf("error converting account: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// If we are currently handshaking with the remote account
-	// making the request, then don't be coy: just serve the AP
-	// representation of the target account.
-	//
-	// This handshake check ensures that we don't get stuck in
-	// a loop with another GtS instance, where each instance is
-	// trying repeatedly to dereference the other account that's
-	// making the request before it will reveal its own account.
-	//
-	// Instead, we end up in an 'I'll show you mine if you show me
-	// yours' situation, where we sort of agree to reveal each
-	// other's profiles at the same time.
-	if p.federator.Handshaking(requestedUsername, pubKeyAuth.OwnerURI) {
+	if pubKeyAuth.Handshaking {
+		// If we are currently handshaking with the remote account
+		// making the request, then don't be coy: just serve the AP
+		// representation of the target account.
+		//
+		// This handshake check ensures that we don't get stuck in
+		// a loop with another GtS instance, where each instance is
+		// trying repeatedly to dereference the other account that's
+		// making the request before it will reveal its own account.
+		//
+		// Instead, we end up in an 'I'll show you mine if you show me
+		// yours' situation, where we sort of agree to reveal each
+		// other's profiles at the same time.
 		return data(person)
 	}
 
-	// We're not currently handshaking with the requestingAccountURI,
-	// so fetch its details and ensure it's up to date + not blocked.
-	requestingAccount, _, err := p.federator.GetAccountByURI(
-		// On a hot path so fail quickly.
-		gtscontext.SetFastFail(ctx),
-		requestedUsername,
-		pubKeyAuth.OwnerURI,
-	)
-	if err != nil {
-		err := gtserror.Newf("error getting account %s: %w", pubKeyAuth.OwnerURI, err)
-		return nil, gtserror.NewErrorUnauthorized(err)
-	}
+	// Get requester from auth.
+	requester := pubKeyAuth.Owner
 
-	if !requestingAccount.SuspendedAt.IsZero() {
-		// Account was marked as suspended by a
-		// local admin action. Stop request early.
-		err = fmt.Errorf("account %s marked as suspended", requestingAccount.ID)
-		return nil, gtserror.NewErrorForbidden(err)
-	}
-
-	blocked, err := p.state.DB.IsBlocked(ctx, requestedAccount.ID, requestingAccount.ID)
+	// Check that block does not exist between receiver and requester.
+	blocked, err := p.state.DB.IsBlocked(ctx, receiver.ID, requester.ID)
 	if err != nil {
-		err := gtserror.Newf("error checking block from account %s to account %s: %w", requestedAccount.ID, requestingAccount.ID, err)
+		err := gtserror.Newf("error checking block: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if blocked {
-		err := fmt.Errorf("account %s blocks account %s", requestedAccount.ID, requestingAccount.ID)
-		return nil, gtserror.NewErrorForbidden(err)
+	} else if blocked {
+		const text = "block exists between accounts"
+		return nil, gtserror.NewErrorForbidden(errors.New(text))
 	}
 
 	return data(person)

@@ -22,7 +22,6 @@ import (
 	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -45,8 +44,6 @@ func (p *Processor) authenticate(ctx context.Context, requestedUser string) (
 		return nil, nil, gtserror.NewErrorNotFound(err)
 	}
 
-	var requester *gtsmodel.Account
-
 	// Ensure request signed, and use signature URI to
 	// get requesting account, dereferencing if necessary.
 	pubKeyAuth, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUser)
@@ -54,33 +51,23 @@ func (p *Processor) authenticate(ctx context.Context, requestedUser string) (
 		return nil, nil, errWithCode
 	}
 
-	if requester = pubKeyAuth.Owner; requester == nil {
-		requester, _, err = p.federator.GetAccountByURI(
-			gtscontext.SetFastFail(ctx),
-			requestedUser,
-			pubKeyAuth.OwnerURI,
-		)
-		if err != nil {
-			err = gtserror.Newf("error getting account %s: %w", pubKeyAuth.OwnerURI, err)
-			return nil, nil, gtserror.NewErrorUnauthorized(err)
-		}
+	if pubKeyAuth.Handshaking {
+		// This should happen very rarely, we are in the middle of handshaking.
+		err := gtserror.Newf("network race handshaking %s", pubKeyAuth.OwnerURI)
+		return nil, nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if !requester.SuspendedAt.IsZero() {
-		// Account was marked as suspended by a
-		// local admin action. Stop request early.
-		const text = "requesting account is suspended"
-		return nil, nil, gtserror.NewErrorForbidden(errors.New(text))
-	}
+	// Get requester from auth.
+	requester := pubKeyAuth.Owner
 
-	// Ensure no block exists between requester + requested.
-	blocked, err := p.state.DB.IsEitherBlocked(ctx, receiver.ID, requester.ID)
+	// Check that block does not exist between receiver and requester.
+	blocked, err := p.state.DB.IsBlocked(ctx, receiver.ID, requester.ID)
 	if err != nil {
-		err = gtserror.Newf("db error getting checking block: %w", err)
+		err := gtserror.Newf("error checking block: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
-		err = gtserror.Newf("block exists between accounts %s and %s", requester.ID, receiver.ID)
-		return nil, nil, gtserror.NewErrorForbidden(err)
+		const text = "block exists between accounts"
+		return nil, nil, gtserror.NewErrorForbidden(errors.New(text))
 	}
 
 	return requester, receiver, nil
