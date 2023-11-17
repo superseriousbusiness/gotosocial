@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package langs
+package language
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -25,13 +25,13 @@ import (
 
 var namer display.Namer
 
-// InitInstanceLangs parses languages from the
+// InitLangs parses languages from the
 // given slice of tags, and sets the `namer`
 // display.Namer for the instance.
 //
 // This function should only be called once,
 // since setting the namer is not thread safe.
-func InitInstanceLangs(tagStrs []string) (Languages, error) {
+func InitLangs(tagStrs []string) (Languages, error) {
 	var (
 		languages = make(Languages, len(tagStrs))
 		tags      = make([]language.Tag, len(tagStrs))
@@ -71,6 +71,8 @@ func InitInstanceLangs(tagStrs []string) (Languages, error) {
 	return languages, nil
 }
 
+// Language models a BCP47 language tag
+// along with helper strings for the tag.
 type Language struct {
 	// BCP47 language tag
 	Tag language.Tag
@@ -82,10 +84,12 @@ type Language struct {
 	DisplayStr string
 }
 
+// MarshalText implements encoding.TextMarshaler{}.
 func (l *Language) MarshalText() ([]byte, error) {
 	return []byte(l.TagStr), nil
 }
 
+// UnmarshalText implements encoding.TextUnmarshaler{}.
 func (l *Language) UnmarshalText(text []byte) error {
 	lang, err := Parse(string(text))
 	if err != nil {

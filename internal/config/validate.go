@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
-	"github.com/superseriousbusiness/gotosocial/internal/langs"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -74,7 +74,7 @@ func Validate() error {
 	}
 
 	// init / validate instance languages
-	parsedLangs, err := langs.InitInstanceLangs(GetInstanceLanguages().TagStrs())
+	parsedLangs, err := language.InitLangs(GetInstanceLanguages().TagStrs())
 	if err != nil {
 		errs = append(errs, err)
 	} else {

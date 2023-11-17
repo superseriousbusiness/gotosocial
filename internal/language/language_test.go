@@ -15,20 +15,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package langs_test
+package language_test
 
 import (
 	"slices"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/langs"
-	"golang.org/x/text/language"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
+	golanguage "golang.org/x/text/language"
 )
 
 func TestInstanceLangs(t *testing.T) {
 	for i, test := range []struct {
 		InstanceLangs       []string
-		expectedLangs       []language.Tag
+		expectedLangs       []golanguage.Tag
 		expectedLangStrs    []string
 		expectedErr         error
 		parseDisplayLang    string
@@ -36,9 +36,9 @@ func TestInstanceLangs(t *testing.T) {
 	}{
 		{
 			InstanceLangs: []string{"en-us", "fr"},
-			expectedLangs: []language.Tag{
-				language.AmericanEnglish,
-				language.French,
+			expectedLangs: []golanguage.Tag{
+				golanguage.AmericanEnglish,
+				golanguage.French,
 			},
 			expectedLangStrs: []string{
 				"American English",
@@ -49,9 +49,9 @@ func TestInstanceLangs(t *testing.T) {
 		},
 		{
 			InstanceLangs: []string{"fr", "en-us"},
-			expectedLangs: []language.Tag{
-				language.French,
-				language.AmericanEnglish,
+			expectedLangs: []golanguage.Tag{
+				golanguage.French,
+				golanguage.AmericanEnglish,
 			},
 			expectedLangStrs: []string{
 				"français",
@@ -62,15 +62,15 @@ func TestInstanceLangs(t *testing.T) {
 		},
 		{
 			InstanceLangs:       []string{},
-			expectedLangs:       []language.Tag{},
+			expectedLangs:       []golanguage.Tag{},
 			expectedLangStrs:    []string{},
 			parseDisplayLang:    "de",
 			expectedDisplayLang: "German (Deutsch)",
 		},
 		{
 			InstanceLangs: []string{"zh"},
-			expectedLangs: []language.Tag{
-				language.Chinese,
+			expectedLangs: []golanguage.Tag{
+				golanguage.Chinese,
 			},
 			expectedLangStrs: []string{
 				"中文",
@@ -80,9 +80,9 @@ func TestInstanceLangs(t *testing.T) {
 		},
 		{
 			InstanceLangs: []string{"ar", "en"},
-			expectedLangs: []language.Tag{
-				language.Arabic,
-				language.English,
+			expectedLangs: []golanguage.Tag{
+				golanguage.Arabic,
+				golanguage.English,
 			},
 			expectedLangStrs: []string{
 				"العربية",
@@ -93,8 +93,8 @@ func TestInstanceLangs(t *testing.T) {
 		},
 		{
 			InstanceLangs: []string{"en-us"},
-			expectedLangs: []language.Tag{
-				language.AmericanEnglish,
+			expectedLangs: []golanguage.Tag{
+				golanguage.AmericanEnglish,
 			},
 			expectedLangStrs: []string{
 				"American English",
@@ -104,8 +104,8 @@ func TestInstanceLangs(t *testing.T) {
 		},
 		{
 			InstanceLangs: []string{"en-us"},
-			expectedLangs: []language.Tag{
-				language.AmericanEnglish,
+			expectedLangs: []golanguage.Tag{
+				golanguage.AmericanEnglish,
 			},
 			expectedLangStrs: []string{
 				"American English",
@@ -114,7 +114,7 @@ func TestInstanceLangs(t *testing.T) {
 			expectedDisplayLang: "British English",
 		},
 	} {
-		languages, err := langs.InitInstanceLangs(test.InstanceLangs)
+		languages, err := language.InitLangs(test.InstanceLangs)
 		if err != test.expectedErr {
 			t.Errorf("test %d expected error %v, got %v", i, test.expectedErr, err)
 		}
@@ -129,7 +129,7 @@ func TestInstanceLangs(t *testing.T) {
 			t.Errorf("test %d expected language strings %v, got %v", i, test.expectedLangStrs, parsedLangStrs)
 		}
 
-		parsedLang, err := langs.Parse(test.parseDisplayLang)
+		parsedLang, err := language.Parse(test.parseDisplayLang)
 		if err != nil {
 			t.Errorf("unexpected error %v", err)
 			return

@@ -17,7 +17,7 @@
 
 package model
 
-import "github.com/superseriousbusiness/gotosocial/internal/langs"
+import "github.com/superseriousbusiness/gotosocial/internal/language"
 
 // Status models a status or post.
 //
@@ -106,7 +106,7 @@ type Status struct {
 
 	// Template-ready language tag + string, based
 	// on *status.Language. Nil for non-web statuses
-	TmplLanguage *langs.Language `json:"-"`
+	LanguageTag *language.Language `json:"-"`
 }
 
 /*

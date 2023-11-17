@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/langs"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -663,10 +663,10 @@ func (c *Converter) StatusToWebStatus(
 	}
 
 	// Add additional information for template.
-	// Assume empty langs, hope for not empty langs.
-	webStatus.TmplLanguage = new(langs.Language)
+	// Assume empty langs, hope for not empty language.
+	webStatus.LanguageTag = new(language.Language)
 	if lang := webStatus.Language; lang != nil {
-		tmplLang, err := langs.Parse(*lang)
+		langTag, err := language.Parse(*lang)
 		if err != nil {
 			log.Warnf(
 				ctx,
@@ -674,7 +674,7 @@ func (c *Converter) StatusToWebStatus(
 				*lang, err,
 			)
 		} else {
-			webStatus.TmplLanguage = tmplLang
+			webStatus.LanguageTag = langTag
 		}
 	}
 
