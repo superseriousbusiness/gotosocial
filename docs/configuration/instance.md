@@ -9,6 +9,21 @@
 
 # Config pertaining to instance federation settings, pages to hide/expose, etc.
 
+# Array of string. BCP47 language tags to indicate preferred languages of users on this instance.
+#
+# If you provide these, you should provide these in order from most-preferred to least-preferred,
+# but note that leaving out a language from this array doesn't mean it can't be used on this instance,
+# it only means it won't be advertised as a preferred instance language.
+#
+# It is valid to provide no entries here; your instance will then have no particular preferred language.
+#
+# See here for commonly-used tags: https://en.wikipedia.org/wiki/IETF_language_tag#List_of_common_primary_language_subtags
+# See here for all current tags: https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
+#
+# Example: ["nl", "en-gb", "fr"]
+# Default: []
+instance-languages: []
+
 # String. Federation mode to use for this instance.
 #
 # "blocklist" -- open federation by default. Only instances that are explicitly 

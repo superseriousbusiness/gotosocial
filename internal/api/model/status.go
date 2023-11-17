@@ -17,6 +17,8 @@
 
 package model
 
+import "github.com/superseriousbusiness/gotosocial/internal/language"
+
 // Status models a status or post.
 //
 // swagger:model status
@@ -98,6 +100,13 @@ type Status struct {
 	// so the user may redraft from the source text without the client having to reverse-engineer
 	// the original text from the HTML content.
 	Text string `json:"text,omitempty"`
+
+	// Additional fields not exposed via JSON
+	// (used only internally for templating etc).
+
+	// Template-ready language tag + string, based
+	// on *status.Language. Nil for non-web statuses
+	LanguageTag *language.Language `json:"-"`
 }
 
 /*

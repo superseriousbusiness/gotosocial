@@ -82,7 +82,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
   "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
   "email": "someone@example.org",
   "version": "0.0.0-testrig",
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "registrations": true,
   "approval_required": true,
   "invites_enabled": false,
@@ -196,7 +199,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
   "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "registrations": true,
   "approval_required": true,
   "invites_enabled": false,
@@ -310,7 +316,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
   "short_description": "\u003cp\u003eThis is some html, which is \u003cem\u003eallowed\u003c/em\u003e in short descriptions.\u003c/p\u003e",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "registrations": true,
   "approval_required": true,
   "invites_enabled": false,
@@ -475,7 +484,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
   "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
   "email": "",
   "version": "0.0.0-testrig",
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "registrations": true,
   "approval_required": true,
   "invites_enabled": false,
@@ -611,7 +623,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "registrations": true,
   "approval_required": true,
   "invites_enabled": false,
@@ -762,7 +777,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
   "short_description": "\u003cp\u003eThis is the GoToSocial testrig. It doesn't federate or anything.\u003c/p\u003e\u003cp\u003eWhen the testrig is shut down, all data on it will be deleted.\u003c/p\u003e\u003cp\u003eDon't use this in production!\u003c/p\u003e",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
-  "languages": [],
+  "languages": [
+    "nl",
+    "en-gb"
+  ],
   "registrations": true,
   "approval_required": true,
   "invites_enabled": false,

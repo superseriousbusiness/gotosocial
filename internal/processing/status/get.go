@@ -36,6 +36,21 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
+// WebGet gets the given status for web use, taking account of privacy settings.
+func (p *Processor) WebGet(ctx context.Context, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, nil, targetStatusID)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	webStatus, err := p.converter.StatusToWebStatus(ctx, targetStatus, nil)
+	if err != nil {
+		err = gtserror.Newf("error converting status: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	return webStatus, nil
+}
+
 func (p *Processor) contextGet(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,

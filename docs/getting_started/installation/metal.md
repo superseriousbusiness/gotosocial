@@ -61,6 +61,16 @@ Now open the file in your text editor of choice so that you can set some importa
 
 The above options assume you're using SQLite as your database. If you want to use Postgres instead, see [here](../../configuration/database.md) for the config options.
 
+!!! info "Optional configuration"
+    
+    There are many other configuration options documented in the config.yaml file, which you can use to further customize the behavior of your GoToSocial instance. These use sensible defaults where possible, so you don't necessarily need to make any changes to them right now, but here are a few you may be interested in:
+    
+    - `instance-languages`: array of [BCP47 language tags](https://en.wikipedia.org/wiki/IETF_language_tag) which determines the preferred languages of your instance.
+    - `media-remote-cache-days`: number of days to keep remote media cached in storage.
+    - `smtp-*`: settings to allow your GoToSocial instance to connect to an email server and send notification emails.
+
+    If you decide to set/change any of these variables later on, be sure to restart your GoToSocial instance after making the changes.
+
 ## Run the Binary
 
 You can now run the binary.

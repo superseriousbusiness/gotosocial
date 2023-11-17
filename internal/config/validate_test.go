@@ -80,7 +80,7 @@ func (suite *ConfigValidateTestSuite) TestValidateAccountDomainNotSubdomain1() {
 	config.SetAccountDomain("example.com")
 
 	err := config.Validate()
-	suite.EqualError(err, "host was gts.example.org and account-domain was example.com, but gts.example.org is not a valid subdomain of example.com")
+	suite.EqualError(err, "account-domain example.com is not a valid subdomain of host gts.example.org")
 }
 
 func (suite *ConfigValidateTestSuite) TestValidateAccountDomainNotSubdomain2() {
@@ -90,7 +90,7 @@ func (suite *ConfigValidateTestSuite) TestValidateAccountDomainNotSubdomain2() {
 	config.SetAccountDomain("gts.example.org")
 
 	err := config.Validate()
-	suite.EqualError(err, "host was example.org and account-domain was gts.example.org, but example.org is not a valid subdomain of gts.example.org")
+	suite.EqualError(err, "account-domain gts.example.org is not a valid subdomain of host example.org")
 }
 
 func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocol() {
@@ -118,7 +118,7 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigNoProtocolOrHost() {
 	config.SetProtocol("")
 
 	err := config.Validate()
-	suite.EqualError(err, "host must be set; protocol must be set")
+	suite.EqualError(err, "host must be set\nprotocol must be set")
 }
 
 func (suite *ConfigValidateTestSuite) TestValidateConfigBadProtocol() {
@@ -137,7 +137,7 @@ func (suite *ConfigValidateTestSuite) TestValidateConfigBadProtocolNoHost() {
 	config.SetProtocol("foo")
 
 	err := config.Validate()
-	suite.EqualError(err, "host must be set; protocol must be set to either http or https, provided value was foo")
+	suite.EqualError(err, "host must be set\nprotocol must be set to either http or https, provided value was foo")
 }
 
 func TestConfigValidateTestSuite(t *testing.T) {

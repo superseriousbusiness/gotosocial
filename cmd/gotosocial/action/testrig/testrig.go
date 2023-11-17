@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
@@ -56,6 +57,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+
+	parsedLangs, err := language.InitLangs(config.GetInstanceLanguages().TagStrs())
+	if err != nil {
+		return fmt.Errorf("error initializing languages: %w", err)
+	}
+	config.SetInstanceLanguages(parsedLangs)
 
 	if err := tracing.Initialize(); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)

@@ -18,85 +18,131 @@
 package config
 
 import (
-	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/miekg/dns"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Validate validates global config settings which don't have defaults, to make sure they are set sensibly.
+// Validate validates global config settings.
 func Validate() error {
-	errs := []error{}
+	// Gather all validation errors in
+	// easily readable format for admins.
+	var (
+		errs gtserror.MultiError
+		errf = func(format string, a ...any) {
+			errs = append(errs, fmt.Errorf(format, a...))
+		}
+	)
 
-	// host
+	// `host`
 	host := GetHost()
 	if host == "" {
-		errs = append(errs, fmt.Errorf("%s must be set", HostFlag()))
+		errf("%s must be set", HostFlag())
 	}
 
-	// accountDomain; only check if host was set, otherwise there's no point
+	// If `account-domain` and `host`
+	// are set, `host` must be a valid
+	// subdomain of `account-domain`.
 	if host != "" {
-		switch ad := GetAccountDomain(); ad {
-		case "":
+		ad := GetAccountDomain()
+		if ad == "" {
+			// `account-domain` not set, fall
+			// back by setting it to `host`.
 			SetAccountDomain(GetHost())
-		default:
-			if !dns.IsSubDomain(ad, host) {
-				errs = append(errs, fmt.Errorf("%s was %s and %s was %s, but %s is not a valid subdomain of %s", HostFlag(), host, AccountDomainFlag(), ad, host, ad))
-			}
+		} else if !dns.IsSubDomain(ad, host) {
+			errf(
+				"%s %s is not a valid subdomain of %s %s",
+				AccountDomainFlag(), ad, HostFlag(), host,
+			)
 		}
 	}
 
-	// protocol
+	// Ensure `protocol` sensibly set.
 	switch proto := GetProtocol(); proto {
 	case "https":
-		// no problem
-		break
+		// No problem.
+
 	case "http":
-		log.Warnf(nil, "%s was set to 'http'; this should *only* be used for debugging and tests!", ProtocolFlag())
+		log.Warnf(
+			nil,
+			"%s was set to 'http'; this should *only* be used for debugging and tests!",
+			ProtocolFlag(),
+		)
+
 	case "":
-		errs = append(errs, fmt.Errorf("%s must be set", ProtocolFlag()))
+		errf("%s must be set", ProtocolFlag())
+
 	default:
-		errs = append(errs, fmt.Errorf("%s must be set to either http or https, provided value was %s", ProtocolFlag(), proto))
+		errf(
+			"%s must be set to either http or https, provided value was %s",
+			ProtocolFlag(), proto,
+		)
 	}
 
-	// federation mode
-	switch federationMode := GetInstanceFederationMode(); federationMode {
+	// `federation-mode` should be
+	// "blocklist" or "allowlist".
+	switch fediMode := GetInstanceFederationMode(); fediMode {
 	case InstanceFederationModeBlocklist, InstanceFederationModeAllowlist:
-		// no problem
-		break
+		// No problem.
+
 	case "":
-		errs = append(errs, fmt.Errorf("%s must be set", InstanceFederationModeFlag()))
+		errf("%s must be set", InstanceFederationModeFlag())
+
 	default:
-		errs = append(errs, fmt.Errorf("%s must be set to either blocklist or allowlist, provided value was %s", InstanceFederationModeFlag(), federationMode))
+		errf(
+			"%s must be set to either blocklist or allowlist, provided value was %s",
+			InstanceFederationModeFlag(), fediMode,
+		)
 	}
 
+	// Parse `instance-languages`, and
+	// set enriched version into config.
+	parsedLangs, err := language.InitLangs(GetInstanceLanguages().TagStrs())
+	if err != nil {
+		errf(
+			"%s could not be parsed as an array of valid BCP47 language tags: %v",
+			InstanceLanguagesFlag(), err,
+		)
+	} else {
+		// Parsed successfully, put enriched
+		// versions in config immediately.
+		SetInstanceLanguages(parsedLangs)
+	}
+
+	// `web-assets-base-dir`.
 	webAssetsBaseDir := GetWebAssetBaseDir()
 	if webAssetsBaseDir == "" {
-		errs = append(errs, fmt.Errorf("%s must be set", WebAssetBaseDirFlag()))
+		errf("%s must be set", WebAssetBaseDirFlag())
 	}
 
-	tlsChain := GetTLSCertificateChain()
-	tlsKey := GetTLSCertificateKey()
-	tlsChainFlag := TLSCertificateChainFlag()
-	tlsKeyFlag := TLSCertificateKeyFlag()
+	// Custom / LE TLS settings.
+	//
+	// Only one of custom certs or LE can be set,
+	// and if using custom certs then all relevant
+	// values must be provided.
+	var (
+		tlsChain     = GetTLSCertificateChain()
+		tlsKey       = GetTLSCertificateKey()
+		tlsChainFlag = TLSCertificateChainFlag()
+		tlsKeyFlag   = TLSCertificateKeyFlag()
+	)
 
 	if GetLetsEncryptEnabled() && (tlsChain != "" || tlsKey != "") {
-		errs = append(errs, fmt.Errorf("%s cannot be enabled when %s and/or %s are also set", LetsEncryptEnabledFlag(), tlsChainFlag, tlsKeyFlag))
+		errf(
+			"%s cannot be true when %s and/or %s are also set",
+			LetsEncryptEnabledFlag(), tlsChainFlag, tlsKeyFlag,
+		)
 	}
 
 	if (tlsChain != "" && tlsKey == "") || (tlsChain == "" && tlsKey != "") {
-		errs = append(errs, fmt.Errorf("%s and %s need to both be set or unset", tlsChainFlag, tlsKeyFlag))
+		errf(
+			"%s and %s need to both be set or unset",
+			tlsChainFlag, tlsKeyFlag,
+		)
 	}
 
-	if len(errs) > 0 {
-		errStrings := []string{}
-		for _, err := range errs {
-			errStrings = append(errStrings, err.Error())
-		}
-		return errors.New(strings.Join(errStrings, "; "))
-	}
-
-	return nil
+	return errs.Combine()
 }

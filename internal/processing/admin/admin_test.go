@@ -80,7 +80,6 @@ func (suite *AdminStandardTestSuite) SetupSuite() {
 
 func (suite *AdminStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

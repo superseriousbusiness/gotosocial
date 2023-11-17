@@ -398,12 +398,27 @@ main {
 		border-top: 0.15rem solid $toot-info-border;
 		padding: 0.5rem 0.75rem;
 
-		div, time {
+		time {
 			padding-right: 1rem;
 		}
 
 		.stats {
-			display: flex;
+			display: inline-flex;
+			flex: 1;
+			gap: 1rem;
+			
+			.stats-item {
+				span {
+					white-space: nowrap;
+				}
+			}
+
+			.language {
+				margin-left: auto;
+				z-index: 1;
+				cursor: pointer;
+				user-select: none;
+			}
 		}
 
 		grid-column: span 3;

@@ -121,21 +121,17 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	var (
 		maxStatusID    = apiutil.ParseMaxID(c.Query(apiutil.MaxIDKey), "")
 		paging         = maxStatusID != ""
-		pinnedStatuses *apimodel.PageableResponse
+		pinnedStatuses []*apimodel.Status
 	)
 
 	if !paging {
 		// Client opened bare profile (from the top)
 		// so load + display pinned statuses.
-		pinnedStatuses, errWithCode = m.processor.Account().PinnedStatusesGet(ctx, authed.Account, targetAccount.ID)
+		pinnedStatuses, errWithCode = m.processor.Account().WebStatusesGetPinned(ctx, targetAccount.ID)
 		if errWithCode != nil {
 			apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 			return
 		}
-	} else {
-		// Don't load pinned statuses at
-		// the top of profile while paging.
-		pinnedStatuses = new(apimodel.PageableResponse)
 	}
 
 	// Get statuses from maxStatusID onwards (or from top if empty string).
@@ -162,7 +158,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		"robotsMeta":       robotsMeta,
 		"statuses":         statusResp.Items,
 		"statuses_next":    statusResp.NextLink,
-		"pinned_statuses":  pinnedStatuses.Items,
+		"pinned_statuses":  pinnedStatuses,
 		"show_back_to_top": paging,
 		"stylesheets":      stylesheets,
 		"javascript":       []string{distPathPrefix + "/frontend.js"},
