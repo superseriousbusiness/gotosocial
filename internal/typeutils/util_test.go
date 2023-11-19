@@ -69,7 +69,7 @@ func TestContentToContentLanguage(t *testing.T) {
 		},
 		{
 			content: gtsmodel.Content{
-				Content:    "",
+				Content: "",
 				ContentMap: map[string]string{
 					"en": "hello world",
 				},
@@ -79,7 +79,7 @@ func TestContentToContentLanguage(t *testing.T) {
 		},
 		{
 			content: gtsmodel.Content{
-				Content:    "bonjour le monde",
+				Content: "bonjour le monde",
 				ContentMap: map[string]string{
 					"en": "hello world",
 					"fr": "bonjour le monde",
@@ -90,7 +90,7 @@ func TestContentToContentLanguage(t *testing.T) {
 		},
 		{
 			content: gtsmodel.Content{
-				Content:    "bonjour le monde",
+				Content: "bonjour le monde",
 				ContentMap: map[string]string{
 					"en": "hello world",
 				},
