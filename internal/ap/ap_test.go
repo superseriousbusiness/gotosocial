@@ -93,6 +93,12 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	content := streams.NewActivityStreamsContentProperty()
 	content.AppendXMLSchemaString("hey @f0x and @dumpsterqueer")
+	
+	rdfLangString := make(map[string]string)
+	rdfLangString["en"] = "hey @f0x and @dumpsterqueer"
+	rdfLangString["fr"] = "bonjour @f0x et @dumpsterqueer"
+	content.AppendRDFLangString(rdfLangString)
+	
 	note.SetActivityStreamsContent(content)
 
 	return note

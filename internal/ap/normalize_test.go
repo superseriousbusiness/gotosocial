@@ -46,6 +46,9 @@ func (suite *NormalizeTestSuite) getStatusable() (vocab.ActivityStreamsNote, map
 		  "https://example.org/users/someone/followers"
 		],
 		"content": "UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class=\"hashtag\" data-tag=\"twittermigration\" href=\"https://example.org/tag/twittermigration\" rel=\"tag ugc\">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night&#39;s spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.",
+		"contentMap": {
+			"en": "UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class=\"hashtag\" data-tag=\"twittermigration\" href=\"https://example.org/tag/twittermigration\" rel=\"tag ugc\">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night&#39;s spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues."
+		},
 		"context": "https://example.org/contexts/01GX0MSHPER1E0FT022Q209EJZ",
 		"conversation": "https://example.org/contexts/01GX0MSHPER1E0FT022Q209EJZ",
 		"id": "https://example.org/objects/01GX0MT2PA58JNSMK11MCS65YD",
@@ -182,7 +185,15 @@ func (suite *NormalizeTestSuite) getAccountable() (vocab.ActivityStreamsPerson, 
 
 func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
 	note, rawNote := suite.getStatusable()
-	suite.Equal(`update: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" data-tag="twittermigration" href="https://example.org/tag/twittermigration" rel="tag ugc">#TwitterMigration%3C/a%3E.%3Cbr%3E%3Cbr%3EIn%20fact,%20100,000%20new%20accounts%20have%20been%20created%20since%20last%20night.%3Cbr%3E%3Cbr%3ESince%20last%20night&%2339;s%20spike%208,000-12,000%20new%20accounts%20are%20being%20created%20every%20hour.%3Cbr%3E%3Cbr%3EYesterday,%20I%20estimated%20that%20Mastodon%20would%20have%208%20million%20users%20by%20the%20end%20of%20the%20week.%20That%20might%20happen%20a%20lot%20sooner%20if%20this%20trend%20continues.`, ap.ExtractContent(note))
+	content := ap.ExtractContent(note)
+	suite.Equal(
+		`update: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" data-tag="twittermigration" href="https://example.org/tag/twittermigration" rel="tag ugc">#TwitterMigration%3C/a%3E.%3Cbr%3E%3Cbr%3EIn%20fact,%20100,000%20new%20accounts%20have%20been%20created%20since%20last%20night.%3Cbr%3E%3Cbr%3ESince%20last%20night&%2339;s%20spike%208,000-12,000%20new%20accounts%20are%20being%20created%20every%20hour.%3Cbr%3E%3Cbr%3EYesterday,%20I%20estimated%20that%20Mastodon%20would%20have%208%20million%20users%20by%20the%20end%20of%20the%20week.%20That%20might%20happen%20a%20lot%20sooner%20if%20this%20trend%20continues.`,
+		content.Content,
+	)
+
+	// Malformed contentMap entry
+	// will not be extractable yet.
+	suite.Empty(content.ContentMap["en"])
 
 	create := testrig.WrapAPNoteInCreate(
 		testrig.URLMustParse("https://example.org/create_something"),
@@ -192,7 +203,18 @@ func (suite *NormalizeTestSuite) TestNormalizeActivityObject() {
 	)
 
 	ap.NormalizeIncomingActivity(create, map[string]interface{}{"object": rawNote})
-	suite.Equal(`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" href="https://example.org/tag/twittermigration" rel="tag ugc nofollow noreferrer noopener" target="_blank">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night's spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`, ap.ExtractContent(note))
+	content = ap.ExtractContent(note)
+
+	suite.Equal(
+		`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" href="https://example.org/tag/twittermigration" rel="tag ugc nofollow noreferrer noopener" target="_blank">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night's spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`,
+		content.Content,
+	)
+
+	// Content map entry should now be extractable.
+	suite.Equal(
+		`UPDATE: As of this morning there are now more than 7 million Mastodon users, most from the <a class="hashtag" href="https://example.org/tag/twittermigration" rel="tag ugc nofollow noreferrer noopener" target="_blank">#TwitterMigration</a>.<br><br>In fact, 100,000 new accounts have been created since last night.<br><br>Since last night's spike 8,000-12,000 new accounts are being created every hour.<br><br>Yesterday, I estimated that Mastodon would have 8 million users by the end of the week. That might happen a lot sooner if this trend continues.`,
+		content.ContentMap["en"],
+	)
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment() {

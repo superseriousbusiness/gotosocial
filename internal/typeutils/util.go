@@ -31,6 +31,8 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
@@ -183,4 +185,89 @@ func placeholdUnknownAttachments(arr []apimodel.Attachment) (string, []apimodel.
 	aside.WriteString(`</aside>`)
 
 	return text.SanitizeToHTML(aside.String()), arr
+}
+
+// ContentToContentLanguage tries to
+// extract a content string and language
+// tag string from the given intermediary
+// content.
+//
+// Either/both of the returned strings may
+// be empty, depending on how things go.
+func ContentToContentLanguage(
+	ctx context.Context,
+	content gtsmodel.Content,
+) (
+	string, // content
+	string, // language
+) {
+	var (
+		contentStr string
+		langTagStr string
+	)
+
+	switch cMap := content.ContentMap; {
+	// Simplest case: no `contentMap`.
+	// Return `content`, even if empty.
+	case cMap == nil:
+		return content.Content, ""
+
+	// `content` and `contentMap` set.
+	// Try to infer "primary" language.
+	case content.Content != "":
+		// Assume `content` is intended
+		// primary content, and look for
+		// corresponding language tag.
+		contentStr = content.Content
+
+		for t, c := range cMap {
+			if contentStr == c {
+				langTagStr = t
+			}
+		}
+
+	// `content` not set; `contentMap`
+	// is set with only one value.
+	// This must be the "primary" lang.
+	case len(cMap) == 1:
+		// Use an empty loop to
+		// get the values we want.
+		// nolint:revive
+		for langTagStr, contentStr = range cMap {
+		}
+
+	// Only `contentMap` is set, with
+	// more than one value. Map order
+	// is not guaranteed so we can't
+	// know the "primary" language.
+	//
+	// Just stop at the first non-empty
+	// langTag and langCnt we can find.
+	default:
+		for langTagStr, contentStr = range cMap {
+			if langTagStr != "" &&
+				contentStr != "" {
+				break
+			}
+		}
+	}
+
+	if langTagStr != "" {
+		// Found a lang tag for this content,
+		// make sure it's valid / parseable.
+		lang, err := language.Parse(langTagStr)
+		if err != nil {
+			log.Warnf(
+				ctx,
+				"could not parse %s as BCP47 language tag in status contentMap: %v",
+				langTagStr, err,
+			)
+		} else {
+			// Inferred the language!
+			// Use normalized version.
+			langTagStr = lang.TagStr
+		}
+	}
+
+	return contentStr, langTagStr
 }

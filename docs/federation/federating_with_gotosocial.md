@@ -482,3 +482,64 @@ For the convenience of remote servers, GoToSocial will always provide both the `
 GoToSocial tries to parse incoming Mentions in the same way it sends them out: as a `Mention` type entry in the `tag` property. However, when parsing incoming Mentions it's a bit more relaxed with regards to which properties must be set.
 
 GoToSocial will prefer the `href` property, which can be either the ActivityPub ID/URI or the web URL of the target; if `href` is not present, it will fall back to using the `name` property. If neither property is present, the mention will be considered invalid and discarded.
+
+## Content, ContentMap, and Language
+
+In line with other ActivityPub implementations, GoToSocial uses `content` and `contentMap` fields on `Objects` to infer content and language of incoming posts, and to set content and language on outgoing posts.
+
+### Outgoing
+
+If an outgoing `Object` (usually a `Note`) has content, it will be set as stringified HTML on the `content` field.
+
+If the `content` is in a specific user-selected language, then the `Object` will also have the `contentMap` property set to a single-entry key/value map, where the key is a BCP47 language tag, and the value is the same content from the `content` field.
+
+For example, a post written in English (`en`) will look something like this:
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "type": "Note",
+  "attributedTo": "http://example.org/users/i_p_freely",
+  "to": "https://www.w3.org/ns/activitystreams#Public",
+  "cc": "http://example.org/users/i_p_freely/followers",
+  "id": "http://example.org/users/i_p_freely/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+  "url": "http://example.org/@i_p_freely/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+  "published": "2021-11-20T13:32:16Z",
+  "content": "<p>This is an example note.</p>",
+  "contentMap": {
+    "en": "<p>This is an example note.</p>"
+  },
+  "attachment": [],
+  "replies": {...},
+  "sensitive": false,
+  "summary": "",
+  "tag": {...}
+}
+```
+
+GoToSocial will always set the `content` field if the post has content, but it may not always set the `contentMap` field, if an old version of GoToSocial is in use, or the language used by a user is not set or not a recognized BCP47 language tag.
+
+### Incoming
+
+GoToSocial uses both the `content` and the `contentMap` properties on incoming `Object`s to determine the content and infer the intended "primary" language for that content. It uses the following algorithm:
+
+#### Only `content` is set
+
+Take that content only and mark language as unknown.
+
+#### Both `content` and `contentMap` are set
+
+Look for a language tag as key in the `contentMap`, with a value that matches the stringified HTML set in `content`.
+
+If a match is found, use this as the post's language.
+
+If a match is not found, keep content from `content` and mark language as unknown.
+
+#### Only `contentMap` is set
+
+If `contentMap` has only one entry, take the language tag and content value as the "primary" language and content.
+
+If `contentMap` has multiple entries, we have no way of determining the preferred content and language of the post, since map order is not deterministic. In this case, pick a language and content entry at random as the "primary" language and content.
+
+!!! Note
+    In all of the above cases, if the inferred language cannot be parsed as a valid BCP47 language tag, language will fall back to unknown.

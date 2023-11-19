@@ -607,9 +607,17 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	// conversation
 	// TODO
 
-	// content -- the actual post itself
+	// content -- the actual post
+	// itself, plus the language
 	contentProp := streams.NewActivityStreamsContentProperty()
 	contentProp.AppendXMLSchemaString(s.Content)
+
+	if s.Language != "" {
+		contentProp.AppendRDFLangString(map[string]string{
+			s.Language: s.Content,
+		})
+	}
+
 	status.SetActivityStreamsContent(contentProp)
 
 	// attachments

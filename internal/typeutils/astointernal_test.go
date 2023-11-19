@@ -45,6 +45,10 @@ func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
 		suite.FailNow(err.Error())
 	}
 
+	if statusable, ok := t.(ap.Statusable); ok {
+		ap.NormalizeIncomingContent(statusable, m)
+	}
+
 	return t
 }
 
@@ -103,7 +107,8 @@ func (suite *ASToInternalTestSuite) TestParsePublicStatus() {
 	suite.NoError(err)
 
 	suite.Equal("reading: Punishment and Reward in the Corporate University", status.ContentWarning)
-	suite.Equal(`<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>`, status.Content)
+	suite.Equal(`<p>> So we have to examine critical thinking as a signifier, dynamic and ambiguous. It has a normative definition, a tacit definition, and an ideal definition. One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>`, status.Content)
+	suite.Equal("en", status.Language)
 }
 
 func (suite *ASToInternalTestSuite) TestParsePublicStatusNoURL() {
@@ -117,7 +122,7 @@ func (suite *ASToInternalTestSuite) TestParsePublicStatusNoURL() {
 	suite.NoError(err)
 
 	suite.Equal("reading: Punishment and Reward in the Corporate University", status.ContentWarning)
-	suite.Equal(`<p>&gt; So we have to examine critical thinking as a signifier, dynamic and ambiguous.  It has a normative definition, a tacit definition, and an ideal definition.  One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>`, status.Content)
+	suite.Equal(`<p>> So we have to examine critical thinking as a signifier, dynamic and ambiguous. It has a normative definition, a tacit definition, and an ideal definition. One of the hallmarks of graduate training is learning to comprehend those definitions and applying the correct one as needed for professional success.</p>`, status.Content)
 
 	// on statuses with no URL in them (like ones we get from pleroma sometimes) we should use the AP URI of the status as URL
 	suite.Equal("http://fossbros-anonymous.io/users/foss_satan/statuses/108138763199405167", status.URL)

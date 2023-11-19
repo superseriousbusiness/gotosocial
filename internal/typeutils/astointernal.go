@@ -244,9 +244,15 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	}
 
 	// status.Content
+	// status.Language
 	//
-	// The (html-formatted) content of this status.
-	status.Content = ap.ExtractContent(statusable)
+	// Many implementations set both content
+	// and contentMap; we can use these to
+	// infer the language of the status.
+	status.Content, status.Language = ContentToContentLanguage(
+		ctx,
+		ap.ExtractContent(statusable),
+	)
 
 	// status.Attachments
 	//
@@ -395,9 +401,6 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		s := ap.ExtractSensitive(statusable)
 		return &s
 	}()
-
-	// language
-	// TODO: we might be able to extract this from the contentMap field
 
 	// ActivityStreamsType
 	status.ActivityStreamsType = statusable.GetTypeName()
@@ -707,7 +710,7 @@ func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 	// For Mastodon, this will just be a string, or nothing.
 	// In Misskey's case, it may also contain the URLs of
 	// one or more reported statuses, so extract these too.
-	content := ap.ExtractContent(flaggable)
+	content := ap.ExtractContent(flaggable).Content
 	statusURIs := []*url.URL{}
 	inlineURLs := misskeyReportInlineURLs(content)
 	statusURIs = append(statusURIs, inlineURLs...)

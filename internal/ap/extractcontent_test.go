@@ -30,10 +30,11 @@ type ExtractContentTestSuite struct {
 
 func (suite *ExtractContentTestSuite) TestExtractContent1() {
 	note := suite.noteWithMentions1
-
 	content := ap.ExtractContent(note)
 
-	suite.Equal("hey @f0x and @dumpsterqueer", content)
+	suite.Equal("hey @f0x and @dumpsterqueer", content.Content)
+	suite.Equal("bonjour @f0x et @dumpsterqueer", content.ContentMap["fr"])
+	suite.Equal("hey @f0x and @dumpsterqueer", content.ContentMap["en"])
 }
 
 func TestExtractContentTestSuite(t *testing.T) {
