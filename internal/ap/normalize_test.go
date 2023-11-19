@@ -224,12 +224,14 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
 	// the attachment(s) should be all jacked up.
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "attachment": {
-    "mediaType": "image/jpeg",
-    "name": "description: here's \u003c\u003ca\u003e\u003e picture of a #cat,%20it%27s%20cute!%20here%27s%20some%20special%20characters:%20%22%22%20%5C%20weeee%27%27%27%27",
-    "type": "Document",
-    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
-  },
+  "attachment": [
+    {
+      "mediaType": "image/jpeg",
+      "name": "description: here's \u003c\u003ca\u003e\u003e picture of a #cat,%20it%27s%20cute!%20here%27s%20some%20special%20characters:%20%22%22%20%5C%20weeee%27%27%27%27",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    }
+  ],
   "attributedTo": "https://example.org/users/hourlycatbot",
   "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
   "to": "https://www.w3.org/ns/activitystreams#Public",
@@ -244,12 +246,14 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
 	// attachment should no longer be all jacked up.
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "attachment": {
-    "mediaType": "image/jpeg",
-    "name": "DESCRIPTION: here's \u003c\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
-    "type": "Document",
-    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
-  },
+  "attachment": [
+    {
+      "mediaType": "image/jpeg",
+      "name": "DESCRIPTION: here's \u003c\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    }
+  ],
   "attributedTo": "https://example.org/users/hourlycatbot",
   "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
   "to": "https://www.w3.org/ns/activitystreams#Public",
@@ -265,12 +269,14 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
 	// the attachment(s) should be all jacked up.
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "attachment": {
-    "mediaType": "image/jpeg",
-    "name": "description: here's \u003c\u003ca\u003e\u003e picture of a #cat,%20it%27s%20cute!%20here%27s%20some%20special%20characters:%20%22%22%20%5C%20weeee%27%27%27%27",
-    "type": "Document",
-    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
-  },
+  "attachment": [
+    {
+      "mediaType": "image/jpeg",
+      "name": "description: here's \u003c\u003ca\u003e\u003e picture of a #cat,%20it%27s%20cute!%20here%27s%20some%20special%20characters:%20%22%22%20%5C%20weeee%27%27%27%27",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    }
+  ],
   "attributedTo": "https://example.org/users/hourlycatbot",
   "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
   "to": "https://www.w3.org/ns/activitystreams#Public",
@@ -285,12 +291,14 @@ func (suite *NormalizeTestSuite) TestNormalizeStatusableAttachmentsOneAttachment
 	// attachment should no longer be all jacked up.
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "attachment": {
-    "mediaType": "image/jpeg",
-    "name": "DESCRIPTION: here's \u003c\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
-    "type": "Document",
-    "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
-  },
+  "attachment": [
+    {
+      "mediaType": "image/jpeg",
+      "name": "DESCRIPTION: here's \u003c\u003e picture of a #cat, it's cute! here's some special characters: \"\" \\ weeee''''",
+      "type": "Document",
+      "url": "https://files.example.org/media_attachments/files/110/258/459/579/509/026/original/b65392ebe0fb04ef.jpeg"
+    }
+  ],
   "attributedTo": "https://example.org/users/hourlycatbot",
   "id": "https://example.org/users/hourlycatbot/statuses/01GYW48H311PZ78C5G856MGJJJ",
   "to": "https://www.w3.org/ns/activitystreams#Public",

@@ -405,7 +405,7 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 		delete(rawJSON, "content")
 	}
 
-	if content != "" {
+	if contentMap != nil {
 		rawJSON["contentMap"] = contentMap
 	} else {
 		delete(rawJSON, "contentMap")
