@@ -85,74 +85,79 @@ func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interfa
 	}
 }
 
+// normalizeContent normalizes the given content
+// string by sanitizing its HTML and minimizing it.
+//
+// Noop for non-string content.
+func normalizeContent(rawContent interface{}) string {
+	if rawContent == nil {
+		// Nothing to fix.
+		return ""
+	}
+
+	content, ok := rawContent.(string)
+	if !ok {
+		// Not interested in
+		// content slices etc.
+		return ""
+	}
+
+	if content == "" {
+		// Nothing to fix.
+		return ""
+	}
+
+	// Content entries should be HTML encoded by default:
+	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-content
+	//
+	// TODO: sanitize differently based on mediaType.
+	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-mediatype
+	content = text.SanitizeToHTML(content)
+	content = text.MinifyHTML(content)
+	return content
+}
+
 // NormalizeIncomingContent replaces the Content property of the given
-// item with the sanitized version of the raw 'content' and 'contentMap'
+// item with the normalized versions of the raw 'content' and 'contentMap'
 // values from the raw json object map.
 //
 // noop if there was no 'content' or 'contentMap' in the json object map.
 func NormalizeIncomingContent(item WithContent, rawJSON map[string]interface{}) {
 	var (
-		contentProp   = streams.NewActivityStreamsContentProperty()
 		rawContent    = rawJSON["content"]
 		rawContentMap = rawJSON["contentMap"]
-
-		fixContent = func(rawContent interface{}) string {
-			if rawContent == nil {
-				// Nothing to fix.
-				return ""
-			}
-
-			content, ok := rawContent.(string)
-			if !ok {
-				// Not interested in
-				// content slices etc.
-				return ""
-			}
-
-			if content == "" {
-				// Nothing to fix.
-				return ""
-			}
-
-			// Content entries should be HTML encoded by default:
-			// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-content
-			//
-			// TODO: sanitize differently based on mediaType.
-			// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-mediatype
-			content = text.SanitizeToHTML(content)
-			content = text.MinifyHTML(content)
-			return content
-		}
 	)
 
 	if rawContent == nil &&
 		rawContentMap == nil {
-		// Nothing to normalize.
+		// Nothing to normalize,
+		// leave no content on item.
 		return
 	}
 
+	// Create wrapper for normalized content.
+	contentProp := streams.NewActivityStreamsContentProperty()
+
 	// Fix 'content' if applicable.
-	content := fixContent(rawContent)
+	content := normalizeContent(rawContent)
 	if content != "" {
 		contentProp.AppendXMLSchemaString(content)
 	}
 
-	// Fix value of each entry in
-	// 'contentMap' if applicable.
-	if rawContentMap != nil {
-		if contentMap, ok := rawContentMap.(map[string]interface{}); ok {
-			rdfLangString := make(map[string]string, len(contentMap))
+	// Fix 'contentMap' if applicable.
+	contentMap, ok := rawContentMap.(map[string]interface{})
+	if ok {
+		rdfLangString := make(map[string]string, len(contentMap))
 
-			for lang, rawContent := range contentMap {
-				content := fixContent(rawContent)
-				if content != "" {
-					rdfLangString[lang] = content
-				}
+		for lang, rawContent := range contentMap {
+			content := normalizeContent(rawContent)
+			if content != "" {
+				rdfLangString[lang] = content
 			}
+		}
 
-			if len(rdfLangString) != 0 {
-				contentProp.AppendRDFLangString(rdfLangString)
-			}
+		if len(rdfLangString) != 0 {
+			contentProp.AppendRDFLangString(rdfLangString)
 		}
 	}
 
