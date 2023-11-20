@@ -58,7 +58,7 @@ func (m *Module) InstanceInformationGETHandlerV1(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, instance)
+	apiutil.JSON(c, http.StatusOK, instance)
 }
 
 // InstanceInformationGETHandlerV2 swagger:operation GET /api/v2/instance instanceGetV2
@@ -93,5 +93,5 @@ func (m *Module) InstanceInformationGETHandlerV2(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, instance)
+	apiutil.JSON(c, http.StatusOK, instance)
 }

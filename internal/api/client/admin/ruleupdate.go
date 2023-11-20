@@ -123,5 +123,5 @@ func (m *Module) RulePATCHHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, apiRule)
+	apiutil.JSON(c, http.StatusOK, apiRule)
 }

@@ -18,7 +18,6 @@
 package users
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -107,13 +106,13 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	format, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
+	contentType, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if format == string(apiutil.TextHTML) {
+	if contentType == string(apiutil.TextHTML) {
 		// redirect to the status
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername+"/statuses/"+requestedStatusID)
 		return
@@ -161,12 +160,5 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	b, err := json.Marshal(resp)
-	if err != nil {
-		errWithCode := gtserror.NewErrorInternalError(err)
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	c.Data(http.StatusOK, format, b)
+	apiutil.JSONType(c, http.StatusOK, contentType, resp)
 }

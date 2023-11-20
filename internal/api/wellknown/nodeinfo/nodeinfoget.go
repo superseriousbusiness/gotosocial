@@ -55,5 +55,12 @@ func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	// Encode JSON HTTP response.
+	apiutil.EncodeJSONResponse(
+		c.Writer,
+		c.Request,
+		http.StatusOK,
+		apiutil.AppJSON,
+		resp,
+	)
 }

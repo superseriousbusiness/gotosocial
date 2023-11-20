@@ -18,7 +18,6 @@
 package emoji
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -36,7 +35,7 @@ func (m *Module) EmojiGetHandler(c *gin.Context) {
 		return
 	}
 
-	format, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubHeaders...)
+	contentType, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubHeaders...)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -48,11 +47,12 @@ func (m *Module) EmojiGetHandler(c *gin.Context) {
 		return
 	}
 
-	b, err := json.Marshal(resp)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	c.Data(http.StatusOK, format, b)
+	// Encode JSON HTTP response.
+	apiutil.EncodeJSONResponse(
+		c.Writer,
+		c.Request,
+		http.StatusOK,
+		contentType,
+		resp,
+	)
 }

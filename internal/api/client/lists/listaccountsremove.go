@@ -126,5 +126,5 @@ func (m *Module) ListAccountsDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{})
+	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, []byte("{}"))
 }

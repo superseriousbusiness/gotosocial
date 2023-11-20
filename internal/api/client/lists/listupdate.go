@@ -148,5 +148,5 @@ func (m *Module) ListUpdatePUTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, apiList)
+	apiutil.JSON(c, http.StatusOK, apiList)
 }

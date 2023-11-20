@@ -116,5 +116,7 @@ func (m *Module) EmailTestPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"status": "test email sent"})
+	apiutil.JSON(c, http.StatusAccepted, map[string]string{
+		"status": "test email sent",
+	})
 }

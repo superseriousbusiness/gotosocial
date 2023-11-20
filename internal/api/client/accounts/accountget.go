@@ -90,5 +90,5 @@ func (m *Module) AccountGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, acctInfo)
+	apiutil.JSON(c, http.StatusOK, acctInfo)
 }

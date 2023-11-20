@@ -106,5 +106,5 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 		relationships = append(relationships, *r)
 	}
 
-	c.JSON(http.StatusOK, relationships)
+	apiutil.JSON(c, http.StatusOK, relationships)
 }

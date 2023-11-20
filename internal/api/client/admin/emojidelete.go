@@ -105,5 +105,5 @@ func (m *Module) EmojiDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, emoji)
+	apiutil.JSON(c, http.StatusOK, emoji)
 }

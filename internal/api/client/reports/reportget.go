@@ -90,5 +90,5 @@ func (m *Module) ReportGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, report)
+	apiutil.JSON(c, http.StatusOK, report)
 }

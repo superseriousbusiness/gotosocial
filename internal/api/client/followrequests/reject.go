@@ -91,5 +91,5 @@ func (m *Module) FollowRequestRejectPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, relationship)
+	apiutil.JSON(c, http.StatusOK, relationship)
 }

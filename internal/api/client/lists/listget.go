@@ -91,5 +91,5 @@ func (m *Module) ListGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	apiutil.JSON(c, http.StatusOK, resp)
 }

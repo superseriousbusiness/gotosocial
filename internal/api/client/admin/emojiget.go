@@ -95,5 +95,5 @@ func (m *Module) EmojiGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, emoji)
+	apiutil.JSON(c, http.StatusOK, emoji)
 }

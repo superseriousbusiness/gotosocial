@@ -162,5 +162,5 @@ func (m *Module) AccountSearchGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, results)
+	apiutil.JSON(c, http.StatusOK, results)
 }

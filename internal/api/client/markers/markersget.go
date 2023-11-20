@@ -84,7 +84,7 @@ func (m *Module) MarkersGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, marker)
+	apiutil.JSON(c, http.StatusOK, marker)
 }
 
 // parseMarkerNames turns a list of strings into a set of valid marker timeline names, or returns an error.

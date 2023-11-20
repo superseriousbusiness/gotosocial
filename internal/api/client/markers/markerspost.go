@@ -106,5 +106,5 @@ func (m *Module) MarkersPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, marker)
+	apiutil.JSON(c, http.StatusOK, marker)
 }

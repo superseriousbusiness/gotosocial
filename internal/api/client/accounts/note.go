@@ -104,5 +104,5 @@ func (m *Module) AccountNotePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, relationship)
+	apiutil.JSON(c, http.StatusOK, relationship)
 }

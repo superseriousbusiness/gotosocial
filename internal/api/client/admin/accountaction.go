@@ -124,5 +124,7 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "OK"})
+	apiutil.JSON(c, http.StatusOK, map[string]string{
+		"message": "OK",
+	})
 }

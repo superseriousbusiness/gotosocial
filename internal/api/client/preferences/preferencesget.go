@@ -87,5 +87,6 @@ func (m *Module) PreferencesGETHandler(c *gin.Context) {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
-	c.JSON(http.StatusOK, resp)
+
+	apiutil.JSON(c, http.StatusOK, resp)
 }

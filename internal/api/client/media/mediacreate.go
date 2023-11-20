@@ -139,7 +139,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		apiAttachment.URL = nil
 	}
 
-	c.JSON(http.StatusOK, apiAttachment)
+	apiutil.JSON(c, http.StatusOK, apiAttachment)
 }
 
 func validateCreateMedia(form *apimodel.AttachmentRequest) error {

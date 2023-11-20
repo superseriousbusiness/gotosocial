@@ -89,5 +89,5 @@ func (m *Module) AccountLookupGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, account)
+	apiutil.JSON(c, http.StatusOK, account)
 }

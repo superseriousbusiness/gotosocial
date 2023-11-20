@@ -161,7 +161,7 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, i)
+	apiutil.JSON(c, http.StatusOK, i)
 }
 
 func validateInstanceUpdate(form *apimodel.InstanceSettingsUpdateRequest) error {

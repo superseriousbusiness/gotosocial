@@ -71,5 +71,5 @@ func (m *Module) CustomEmojisGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, emojis)
+	apiutil.JSON(c, http.StatusOK, emojis)
 }

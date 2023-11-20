@@ -18,7 +18,6 @@
 package publickey
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -42,13 +41,13 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 		return
 	}
 
-	format, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
+	contentType, err := apiutil.NegotiateAccept(c, apiutil.ActivityPubOrHTMLHeaders...)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if format == string(apiutil.TextHTML) {
+	if contentType == string(apiutil.TextHTML) {
 		// redirect to the user's profile
 		c.Redirect(http.StatusSeeOther, "/@"+requestedUsername)
 		return
@@ -60,11 +59,12 @@ func (m *Module) PublicKeyGETHandler(c *gin.Context) {
 		return
 	}
 
-	b, err := json.Marshal(resp)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	c.Data(http.StatusOK, format, b)
+	// Encode JSON HTTP response.
+	apiutil.EncodeJSONResponse(
+		c.Writer,
+		c.Request,
+		http.StatusOK,
+		contentType,
+		resp,
+	)
 }

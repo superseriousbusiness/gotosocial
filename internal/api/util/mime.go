@@ -17,20 +17,18 @@
 
 package util
 
-// MIME represents a mime-type.
-type MIME string
-
 const (
-	AppJSON           MIME = `application/json`
-	AppXML            MIME = `application/xml`
-	AppXMLXRD         MIME = `application/xrd+xml`
-	AppRSSXML         MIME = `application/rss+xml`
-	AppActivityJSON   MIME = `application/activity+json`
-	AppActivityLDJSON MIME = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
-	AppJRDJSON        MIME = `application/jrd+json` // https://www.rfc-editor.org/rfc/rfc7033#section-10.2
-	AppForm           MIME = `application/x-www-form-urlencoded`
-	MultipartForm     MIME = `multipart/form-data`
-	TextXML           MIME = `text/xml`
-	TextHTML          MIME = `text/html`
-	TextCSS           MIME = `text/css`
+	// Possible GoToSocial mimetypes.
+	AppJSON           = `application/json`
+	AppXML            = `application/xml`
+	AppXMLXRD         = `application/xrd+xml`
+	AppRSSXML         = `application/rss+xml`
+	AppActivityJSON   = `application/activity+json`
+	AppActivityLDJSON = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
+	AppJRDJSON        = `application/jrd+json` // https://www.rfc-editor.org/rfc/rfc7033#section-10.2
+	AppForm           = `application/x-www-form-urlencoded`
+	MultipartForm     = `multipart/form-data`
+	TextXML           = `text/xml`
+	TextHTML          = `text/html`
+	TextCSS           = `text/css`
 )

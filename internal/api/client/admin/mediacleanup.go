@@ -102,5 +102,5 @@ func (m *Module) MediaCleanupPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, remoteCacheDays)
+	apiutil.JSON(c, http.StatusOK, remoteCacheDays)
 }

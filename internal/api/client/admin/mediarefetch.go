@@ -88,5 +88,5 @@ func (m *Module) MediaRefetchPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.Status(http.StatusAccepted)
+	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.StatusAcceptedJSON)
 }

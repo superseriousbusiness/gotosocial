@@ -98,5 +98,5 @@ func (m *Module) RuleGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, rule)
+	apiutil.JSON(c, http.StatusOK, rule)
 }

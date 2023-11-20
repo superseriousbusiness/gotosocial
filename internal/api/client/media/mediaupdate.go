@@ -141,7 +141,7 @@ func (m *Module) MediaPUTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, attachment)
+	apiutil.JSON(c, http.StatusOK, attachment)
 }
 
 func validateUpdateMedia(form *apimodel.AttachmentUpdateRequest) error {

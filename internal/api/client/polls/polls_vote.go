@@ -117,7 +117,7 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, poll)
+	apiutil.JSON(c, http.StatusOK, poll)
 }
 
 func bindChoices(c *gin.Context) ([]int, error) {
