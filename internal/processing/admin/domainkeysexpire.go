@@ -71,9 +71,7 @@ func (p *Processor) domainKeysExpireSideEffects(ctx context.Context, domain stri
 	// the public key and update the account.
 	if err := p.rangeDomainAccounts(ctx, domain, func(account *gtsmodel.Account) {
 		account.PublicKeyExpiresAt = expiresAt
-
-		if err := p.state.DB.UpdateAccount(
-			ctx,
+		if err := p.state.DB.UpdateAccount(ctx,
 			account,
 			"public_key_expires_at",
 		); err != nil {

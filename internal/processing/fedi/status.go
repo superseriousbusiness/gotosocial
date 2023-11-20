@@ -35,7 +35,6 @@ import (
 // StatusGet handles the getting of a fedi/activitypub representation of a local status.
 // It performs appropriate authentication before returning a JSON serializable interface.
 func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusID string) (interface{}, gtserror.WithCode) {
-	// Authenticate using http signature.
 	// Authenticate the incoming request, getting related user accounts.
 	requester, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
