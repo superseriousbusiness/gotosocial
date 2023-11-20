@@ -18,6 +18,7 @@
 package users
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -160,5 +161,12 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	b, err := json.Marshal(resp)
+	if err != nil {
+		errWithCode := gtserror.NewErrorInternalError(err)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	c.Data(http.StatusOK, format, b)
 }
