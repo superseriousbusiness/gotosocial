@@ -645,16 +645,15 @@ func ExtractContent(i WithContent) gtsmodel.Content {
 	for iter := contentProp.Begin(); iter != contentProp.End(); iter = iter.Next() {
 		switch {
 		case iter.IsRDFLangString() &&
-			content.ContentMap == nil &&
 			len(content.ContentMap) == 0:
 			content.ContentMap = iter.GetRDFLangString()
 
-		case content.Content == "" &&
-			iter.IsXMLSchemaString():
+		case iter.IsXMLSchemaString() &&
+			content.Content == "":
 			content.Content = iter.GetXMLSchemaString()
 
-		case content.Content == "" &&
-			iter.IsIRI():
+		case iter.IsIRI() &&
+			content.Content == "":
 			content.Content = iter.GetIRI().String()
 		}
 	}
