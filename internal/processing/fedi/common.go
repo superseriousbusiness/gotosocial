@@ -61,7 +61,7 @@ func (p *Processor) authenticate(ctx context.Context, requestedUser string) (
 	requester := pubKeyAuth.Owner
 
 	// Check that block does not exist between receiver and requester.
-	blocked, err := p.state.DB.IsBlocked(ctx, receiver.ID, requester.ID)
+	blocked, err := p.state.DB.IsEitherBlocked(ctx, receiver.ID, requester.ID)
 	if err != nil {
 		err := gtserror.Newf("error checking block: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)
