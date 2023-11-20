@@ -42,9 +42,11 @@ var (
 	StatusInternalServerErrorJSON = mustJSON(map[string]string{
 		"status": http.StatusText(http.StatusInternalServerError),
 	})
+	EmptyJSONObject = mustJSON("{}")
+	EmptyJSONArray  = mustJSON("[]")
 
 	// write buffer pool.
-	bufPool = sync.Pool{}
+	bufPool sync.Pool
 )
 
 // JSON calls EncodeJSONResponse() using gin.Context{}, with content-type = AppJSON,
@@ -116,20 +118,19 @@ func EncodeJSONResponse(
 	contentType string,
 	data any,
 ) {
-	// Acquire buffer from pool.
-	buf := bufPool.Get().(*byteutil.Buffer)
-
-	if buf == nil {
-		// Alloc new buf if needed.
-		buf = new(byteutil.Buffer)
-		buf.B = make([]byte, 0, 4096)
-	}
+	// Acquire buffer.
+	buf := getBuf()
 
 	// Wrap buffer in JSON encoder.
 	enc := json.NewEncoder(buf)
 
 	// Encode JSON data into byte buffer.
 	if err := enc.Encode(data); err == nil {
+
+		// Drop new-line added by encoder.
+		if buf.B[len(buf.B)-1] == '\n' {
+			buf.B = buf.B[:len(buf.B)-1]
+		}
 
 		// Respond with the now-known
 		// size byte slice within buf.
@@ -149,13 +150,8 @@ func EncodeJSONResponse(
 		)
 	}
 
-	if cap(buf.B) >= int(^uint16(0)) {
-		// drop buffers of large size.
-		return
-	}
-
-	// Release to pool.
-	bufPool.Put(buf)
+	// Release.
+	putBuf(buf)
 }
 
 // EncodeJSONResponse encodes 'data' as XML HTTP response
@@ -167,14 +163,8 @@ func EncodeXMLResponse(
 	contentType string,
 	data any,
 ) {
-	// Acquire buffer from pool.
-	buf := bufPool.Get().(*byteutil.Buffer)
-
-	if buf == nil {
-		// Alloc new buf if needed.
-		buf = new(byteutil.Buffer)
-		buf.B = make([]byte, 0, 4096)
-	}
+	// Acquire buffer.
+	buf := getBuf()
 
 	// Write XML header to buf.
 	buf.WriteString(xml.Header)
@@ -203,13 +193,8 @@ func EncodeXMLResponse(
 		)
 	}
 
-	if cap(buf.B) >= int(^uint16(0)) {
-		// drop buffers of large size.
-		return
-	}
-
-	// Release to pool.
-	bufPool.Put(buf)
+	// Release.
+	putBuf(buf)
 }
 
 // writeResponseUnknownLength handles reading data of unknown legnth
@@ -221,14 +206,8 @@ func writeResponseUnknownLength(
 	contentType string,
 	data io.Reader,
 ) {
-	// Acquire buffer from pool.
-	buf := bufPool.Get().(*byteutil.Buffer)
-
-	if buf == nil {
-		// Alloc new buf if needed.
-		buf = new(byteutil.Buffer)
-		buf.B = make([]byte, 0, 4096)
-	}
+	// Acquire buffer.
+	buf := getBuf()
 
 	// Read content into buffer.
 	err := writeTo(buf, data)
@@ -253,12 +232,33 @@ func writeResponseUnknownLength(
 		)
 	}
 
+	// Release.
+	putBuf(buf)
+}
+
+func getBuf() *byteutil.Buffer {
+	// acquire buffer from pool.
+	buf, _ := bufPool.Get().(*byteutil.Buffer)
+
+	if buf == nil {
+		// alloc new buf if needed.
+		buf = new(byteutil.Buffer)
+		buf.B = make([]byte, 0, 4096)
+	}
+
+	return buf
+}
+
+func putBuf(buf *byteutil.Buffer) {
 	if cap(buf.B) >= int(^uint16(0)) {
 		// drop buffers of large size.
 		return
 	}
 
-	// Release to pool.
+	// ensure empty.
+	buf.Reset()
+
+	// release to pool.
 	bufPool.Put(buf)
 }
 

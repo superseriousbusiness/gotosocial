@@ -116,5 +116,5 @@ func (m *Module) ListAccountsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, []byte("{}"))
+	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONObject)
 }
