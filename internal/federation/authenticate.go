@@ -95,12 +95,12 @@ type PubKeyAuth struct {
 // know that this is the user making the dereferencing request, and they can decide
 // to allow or deny the request depending on their settings.
 //
+// This function will handle dereferencing and storage of any new remote accounts
+// and / or instances. The returned PubKeyAuth{}.Owner account will ONLY ever be
+// nil in the case that there is an ongoing handshake involving this account.
+//
 // Note that it is also valid to pass in an empty string here, in which case the
 // keys of the instance account will be used.
-//
-// Also note that this function *does not* dereference the remote account that
-// the signature key is associated with. Other functions should use the returned
-// URL to dereference the remote account, if required.
 func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedUsername string) (*PubKeyAuth, gtserror.WithCode) {
 	// Thanks to the signature check middleware,
 	// we should already have an http signature
