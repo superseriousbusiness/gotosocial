@@ -20,7 +20,6 @@ package users
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -119,13 +118,14 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	var onlyOtherAccounts bool
-
-	// Look for supplied 'onlyOtherAccounts' query key.
-	if raw, ok := c.GetQuery("only_other_accounts"); ok {
-		onlyOtherAccounts, _ = strconv.ParseBool(raw)
-	} else { // fallback to true.
-		onlyOtherAccounts = true
+	// Look for supplied 'only_other_accounts' query key.
+	onlyOtherAccounts, errWithCode := apiutil.ParseOnlyOtherAccounts(
+		c.Query(apiutil.OnlyOtherAccountsKey),
+		true, // default = enabled
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
 	// Look for given paging query parameters.
