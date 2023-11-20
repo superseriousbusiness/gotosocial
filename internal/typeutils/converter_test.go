@@ -526,7 +526,7 @@ func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
 	mediaManager := testrig.NewTestMediaManager(&suite.state)
 	federator := testrig.NewTestFederator(&suite.state, transportController, mediaManager)
 	emailSender := testrig.NewEmailSender("../../web/template/", nil)
-	
+
 	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, mediaManager)
 	testrig.StartWorkers(&suite.state, processor.Workers())
 

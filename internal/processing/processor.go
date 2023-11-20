@@ -156,23 +156,23 @@ func NewProcessor(
 	//
 	// Start with sub processors that will
 	// be required by the workers processor.
-	commonProcessor := common.New(state, converter, federator, filter)
-	processor.account = account.New(&commonProcessor, state, converter, mediaManager, oauthServer, federator, filter, parseMentionFunc)
+	common := common.New(state, converter, federator, filter)
+	processor.account = account.New(&common, state, converter, mediaManager, oauthServer, federator, filter, parseMentionFunc)
 	processor.media = media.New(state, converter, mediaManager, federator.TransportController())
 	processor.stream = stream.New(state, oauthServer)
 
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
-	processor.account = account.New(&commonProcessor, state, converter, mediaManager, oauthServer, federator, filter, parseMentionFunc)
+	processor.account = account.New(&common, state, converter, mediaManager, oauthServer, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(state, cleaner, converter, mediaManager, federator.TransportController(), emailSender)
-	processor.fedi = fedi.New(state, converter, federator, filter)
+	processor.fedi = fedi.New(state, &common, converter, federator, filter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)
-	processor.polls = polls.New(&commonProcessor, state, converter)
+	processor.polls = polls.New(&common, state, converter)
 	processor.report = report.New(state, converter)
 	processor.timeline = timeline.New(state, converter, filter)
 	processor.search = search.New(state, federator, converter, filter)
-	processor.status = status.New(state, &commonProcessor, &processor.polls, federator, converter, filter, parseMentionFunc)
+	processor.status = status.New(state, &common, &processor.polls, federator, converter, filter, parseMentionFunc)
 	processor.user = user.New(state, emailSender)
 
 	// Workers processor handles asynchronous

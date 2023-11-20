@@ -41,6 +41,10 @@ const (
 	SinceIDKey = "since_id"
 	MinIDKey   = "min_id"
 
+	/* AP endpoint keys */
+
+	OnlyOtherAccountsKey = "only_other_accounts"
+
 	/* Search keys */
 
 	SearchExcludeUnreviewedKey = "exclude_unreviewed"
@@ -65,20 +69,6 @@ const (
 	DomainPermissionExportKey = "export"
 	DomainPermissionImportKey = "import"
 )
-
-// parseError returns gtserror.WithCode set to 400 Bad Request, to indicate
-// to the caller that a key was set to a value that could not be parsed.
-func parseError(key string, value, defaultValue any, err error) gtserror.WithCode {
-	err = fmt.Errorf("error parsing key %s with value %s as %T: %w", key, value, defaultValue, err)
-	return gtserror.NewErrorBadRequest(err, err.Error())
-}
-
-// requiredError returns gtserror.WithCode set to 400 Bad Request, to indicate
-// to the caller a required key value was not provided, or was empty.
-func requiredError(key string) gtserror.WithCode {
-	err := fmt.Errorf("required key %s was not set or had empty value", key)
-	return gtserror.NewErrorBadRequest(err, err.Error())
-}
 
 /*
 	Parse functions for *OPTIONAL* parameters with default values.
@@ -127,6 +117,10 @@ func ParseDomainPermissionExport(value string, defaultValue bool) (bool, gtserro
 
 func ParseDomainPermissionImport(value string, defaultValue bool) (bool, gtserror.WithCode) {
 	return parseBool(value, defaultValue, DomainPermissionImportKey)
+}
+
+func ParseOnlyOtherAccounts(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, OnlyOtherAccountsKey)
 }
 
 /*
@@ -247,4 +241,18 @@ func parseInt(value string, defaultValue int, max int, min int, key string) (int
 	}
 
 	return i, nil
+}
+
+// parseError returns gtserror.WithCode set to 400 Bad Request, to indicate
+// to the caller that a key was set to a value that could not be parsed.
+func parseError(key string, value, defaultValue any, err error) gtserror.WithCode {
+	err = fmt.Errorf("error parsing key %s with value %s as %T: %w", key, value, defaultValue, err)
+	return gtserror.NewErrorBadRequest(err, err.Error())
+}
+
+// requiredError returns gtserror.WithCode set to 400 Bad Request, to indicate
+// to the caller a required key value was not provided, or was empty.
+func requiredError(key string) gtserror.WithCode {
+	err := fmt.Errorf("required key %s was not set or had empty value", key)
+	return gtserror.NewErrorBadRequest(err, err.Error())
 }

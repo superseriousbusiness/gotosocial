@@ -87,6 +87,10 @@ EXPECT=$(cat << "EOF"
     "instance-expose-suspended-web": true,
     "instance-federation-mode": "allowlist",
     "instance-inject-mastodon-version": true,
+    "instance-languages": [
+        "nl",
+        "en-GB"
+    ],
     "landing-page-user": "admin",
     "letsencrypt-cert-dir": "/gotosocial/storage/certs",
     "letsencrypt-email-address": "",
@@ -206,6 +210,7 @@ GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_FEDERATION_MODE='allowlist' \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_INSTANCE_INJECT_MASTODON_VERSION=true \
+GTS_INSTANCE_LANGUAGES="nl,en-gb" \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
 GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \

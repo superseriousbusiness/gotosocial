@@ -39,6 +39,7 @@ func (m *Module) aboutGETHandler(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "about.tmpl", gin.H{
 		"instance":         instance,
+		"languages":        config.GetInstanceLanguages().DisplayStrs(),
 		"ogMeta":           ogBase(instance),
 		"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
 		"stylesheets": []string{

@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
 )
 
 // GetLogLevel safely fetches the Configuration value for state's 'LogLevel' field
@@ -923,6 +924,31 @@ func GetInstanceInjectMastodonVersion() bool { return global.GetInstanceInjectMa
 
 // SetInstanceInjectMastodonVersion safely sets the value for global configuration 'InstanceInjectMastodonVersion' field
 func SetInstanceInjectMastodonVersion(v bool) { global.SetInstanceInjectMastodonVersion(v) }
+
+// GetInstanceLanguages safely fetches the Configuration value for state's 'InstanceLanguages' field
+func (st *ConfigState) GetInstanceLanguages() (v language.Languages) {
+	st.mutex.RLock()
+	v = st.config.InstanceLanguages
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceLanguages safely sets the Configuration value for state's 'InstanceLanguages' field
+func (st *ConfigState) SetInstanceLanguages(v language.Languages) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceLanguages = v
+	st.reloadToViper()
+}
+
+// InstanceLanguagesFlag returns the flag name for the 'InstanceLanguages' field
+func InstanceLanguagesFlag() string { return "instance-languages" }
+
+// GetInstanceLanguages safely fetches the value for global configuration 'InstanceLanguages' field
+func GetInstanceLanguages() language.Languages { return global.GetInstanceLanguages() }
+
+// SetInstanceLanguages safely sets the value for global configuration 'InstanceLanguages' field
+func SetInstanceLanguages(v language.Languages) { global.SetInstanceLanguages(v) }
 
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {

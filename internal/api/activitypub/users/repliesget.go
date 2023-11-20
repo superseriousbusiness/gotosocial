@@ -20,14 +20,13 @@ package users
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // StatusRepliesGETHandler swagger:operation GET /users/{username}/statuses/{status}/replies s2sRepliesGet
@@ -120,36 +119,43 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 		return
 	}
 
-	var page bool
-	if pageString := c.Query(PageKey); pageString != "" {
-		i, err := strconv.ParseBool(pageString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", PageKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		page = i
+	// Look for supplied 'only_other_accounts' query key.
+	onlyOtherAccounts, errWithCode := apiutil.ParseOnlyOtherAccounts(
+		c.Query(apiutil.OnlyOtherAccountsKey),
+		true, // default = enabled
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	onlyOtherAccounts := false
-	onlyOtherAccountsString := c.Query(OnlyOtherAccountsKey)
-	if onlyOtherAccountsString != "" {
-		i, err := strconv.ParseBool(onlyOtherAccountsString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", OnlyOtherAccountsKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		onlyOtherAccounts = i
+	// Look for given paging query parameters.
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		40, // max limit
+		0,  // default = disabled
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	minID := ""
-	minIDString := c.Query(MinIDKey)
-	if minIDString != "" {
-		minID = minIDString
+	// COMPATIBILITY FIX: 'page=true' enables paging.
+	if page == nil && c.Query("page") == "true" {
+		page = new(paging.Page)
+		page.Max = paging.MaxID("")
+		page.Min = paging.MinID("")
+		page.Limit = 20 // default
 	}
 
-	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(c.Request.Context(), requestedUsername, requestedStatusID, page, onlyOtherAccounts, c.Query("only_other_accounts") != "", minID)
+	// Fetch serialized status replies response for input status.
+	resp, errWithCode := m.processor.Fedi().StatusRepliesGet(
+		c.Request.Context(),
+		requestedUsername,
+		requestedStatusID,
+		page,
+		onlyOtherAccounts,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -157,7 +163,8 @@ func (m *Module) StatusRepliesGETHandler(c *gin.Context) {
 
 	b, err := json.Marshal(resp)
 	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+		errWithCode := gtserror.NewErrorInternalError(err)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

@@ -20,7 +20,6 @@ package fedi
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -28,17 +27,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *Processor) authenticate(ctx context.Context, requestedUsername string) (
-	*gtsmodel.Account, // requestedAccount
-	*gtsmodel.Account, // requestingAccount
+func (p *Processor) authenticate(ctx context.Context, requestedUser string) (
+	*gtsmodel.Account, // requester: i.e. user making the request
+	*gtsmodel.Account, // receiver: i.e. the receiving inbox user
 	gtserror.WithCode,
 ) {
-	// Get LOCAL account with the requested username.
-	requestedAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUsername, "")
+	// First get the requested (receiving) LOCAL account with username from database.
+	receiver, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUser, "")
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// Real db error.
-			err = gtserror.Newf("db error getting account %s: %w", requestedUsername, err)
+			err = gtserror.Newf("db error getting account %s: %w", requestedUser, err)
 			return nil, nil, gtserror.NewErrorInternalError(err)
 		}
 
@@ -46,41 +45,43 @@ func (p *Processor) authenticate(ctx context.Context, requestedUsername string) 
 		return nil, nil, gtserror.NewErrorNotFound(err)
 	}
 
+	var requester *gtsmodel.Account
+
 	// Ensure request signed, and use signature URI to
 	// get requesting account, dereferencing if necessary.
-	pubKeyAuth, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUsername)
+	pubKeyAuth, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, nil, errWithCode
 	}
 
-	requestingAccount, _, err := p.federator.GetAccountByURI(
-		gtscontext.SetFastFail(ctx),
-		requestedUsername,
-		pubKeyAuth.OwnerURI,
-	)
-	if err != nil {
-		err = gtserror.Newf("error getting account %s: %w", pubKeyAuth.OwnerURI, err)
-		return nil, nil, gtserror.NewErrorUnauthorized(err)
+	if requester = pubKeyAuth.Owner; requester == nil {
+		requester, _, err = p.federator.GetAccountByURI(
+			gtscontext.SetFastFail(ctx),
+			requestedUser,
+			pubKeyAuth.OwnerURI,
+		)
+		if err != nil {
+			err = gtserror.Newf("error getting account %s: %w", pubKeyAuth.OwnerURI, err)
+			return nil, nil, gtserror.NewErrorUnauthorized(err)
+		}
 	}
 
-	if !requestingAccount.SuspendedAt.IsZero() {
+	if !requester.SuspendedAt.IsZero() {
 		// Account was marked as suspended by a
 		// local admin action. Stop request early.
-		err = fmt.Errorf("account %s marked as suspended", requestingAccount.ID)
-		return nil, nil, gtserror.NewErrorForbidden(err)
+		const text = "requesting account is suspended"
+		return nil, nil, gtserror.NewErrorForbidden(errors.New(text))
 	}
 
 	// Ensure no block exists between requester + requested.
-	blocked, err := p.state.DB.IsEitherBlocked(ctx, requestedAccount.ID, requestingAccount.ID)
+	blocked, err := p.state.DB.IsEitherBlocked(ctx, receiver.ID, requester.ID)
 	if err != nil {
 		err = gtserror.Newf("db error getting checking block: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if blocked {
-		err = fmt.Errorf("block exists between accounts %s and %s", requestedAccount.ID, requestingAccount.ID)
+	} else if blocked {
+		err = gtserror.Newf("block exists between accounts %s and %s", requester.ID, receiver.ID)
 		return nil, nil, gtserror.NewErrorForbidden(err)
 	}
 
-	return requestedAccount, requestingAccount, nil
+	return requester, receiver, nil
 }
