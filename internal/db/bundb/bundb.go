@@ -40,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/uptrace/bun"
@@ -141,6 +142,9 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	db.AddQueryHook(queryHook{})
 	if config.GetTracingEnabled() {
 		db.AddQueryHook(tracing.InstrumentBun())
+	}
+	if config.GetMetricsEnabled() {
+		db.AddQueryHook(metrics.InstrumentBun())
 	}
 
 	// table registration is needed for many-to-many, see:

@@ -38,6 +38,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
@@ -66,6 +67,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	if err := tracing.Initialize(); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
+	}
+
+	if err := metrics.Initialize(); err != nil {
+		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
 	// Initialize caches and database
@@ -142,6 +147,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	if config.GetTracingEnabled() {
 		middlewares = append(middlewares, tracing.InstrumentGin())
 	}
+
+	if config.GetMetricsEnabled() {
+		middlewares = append(middlewares, metrics.InstrumentGin())
+	}
+
 	middlewares = append(middlewares, []gin.HandlerFunc{
 		middleware.Logger(config.GetLogClientIP()),
 		middleware.UserAgent(),

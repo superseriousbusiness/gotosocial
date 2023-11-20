@@ -14,3 +14,4 @@ We consider these topics advanced because applying them incorrectly does have th
 * [Process sandboxing](security/sandboxing.md)
 * [Firewall configuration](security/firewall.md)
 * [Tracing](tracing.md)
+* [Metrics](metrics.md)

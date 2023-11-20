@@ -34,4 +34,20 @@ tracing-endpoint: ""
 # Bool. Disable TLS for the gRPC and HTTP transport protocols.
 # Default: false
 tracing-insecure-transport: false
+
+# Bool. Enable OpenTelemetry based metrics support.
+# Default: false
+metrics-enabled: false
+
+# Bool. Enable HTTP Basic Authentication for Prometheus metrics endpoint.
+# Default: false
+metrics-auth-enabled: false
+
+# String. Username for Prometheus metrics endpoint.
+# Default: ""
+metrics-auth-username: ""
+
+# String. Password for Prometheus metrics endpoint.
+# Default: ""
+metrics-auth-password: ""
 ```

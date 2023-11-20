@@ -33,6 +33,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
@@ -79,6 +80,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Initialize Tracing
 	if err := tracing.Initialize(); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
+	}
+
+	// Initialize Metrics
+	if err := metrics.Initialize(); err != nil {
+		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
 	// Open connection to the database
@@ -213,13 +219,18 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
-
 	middlewares := []gin.HandlerFunc{
 		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
 	}
+
 	if config.GetTracingEnabled() {
 		middlewares = append(middlewares, tracing.InstrumentGin())
 	}
+
+	if config.GetMetricsEnabled() {
+		middlewares = append(middlewares, metrics.InstrumentGin())
+	}
+
 	middlewares = append(middlewares, []gin.HandlerFunc{
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.

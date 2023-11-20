@@ -121,6 +121,9 @@ var Defaults = Configuration{
 	TracingEndpoint:          "",
 	TracingInsecureTransport: false,
 
+	MetricsEnabled:     false,
+	MetricsAuthEnabled: false,
+
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",

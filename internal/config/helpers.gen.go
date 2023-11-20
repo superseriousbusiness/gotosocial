@@ -2100,6 +2100,106 @@ func GetTracingInsecureTransport() bool { return global.GetTracingInsecureTransp
 // SetTracingInsecureTransport safely sets the value for global configuration 'TracingInsecureTransport' field
 func SetTracingInsecureTransport(v bool) { global.SetTracingInsecureTransport(v) }
 
+// GetMetricsEnabled safely fetches the Configuration value for state's 'MetricsEnabled' field
+func (st *ConfigState) GetMetricsEnabled() (v bool) {
+	st.mutex.RLock()
+	v = st.config.MetricsEnabled
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsEnabled safely sets the Configuration value for state's 'MetricsEnabled' field
+func (st *ConfigState) SetMetricsEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsEnabled = v
+	st.reloadToViper()
+}
+
+// MetricsEnabledFlag returns the flag name for the 'MetricsEnabled' field
+func MetricsEnabledFlag() string { return "metrics-enabled" }
+
+// GetMetricsEnabled safely fetches the value for global configuration 'MetricsEnabled' field
+func GetMetricsEnabled() bool { return global.GetMetricsEnabled() }
+
+// SetMetricsEnabled safely sets the value for global configuration 'MetricsEnabled' field
+func SetMetricsEnabled(v bool) { global.SetMetricsEnabled(v) }
+
+// GetMetricsAuthEnabled safely fetches the Configuration value for state's 'MetricsAuthEnabled' field
+func (st *ConfigState) GetMetricsAuthEnabled() (v bool) {
+	st.mutex.RLock()
+	v = st.config.MetricsAuthEnabled
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsAuthEnabled safely sets the Configuration value for state's 'MetricsAuthEnabled' field
+func (st *ConfigState) SetMetricsAuthEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsAuthEnabled = v
+	st.reloadToViper()
+}
+
+// MetricsAuthEnabledFlag returns the flag name for the 'MetricsAuthEnabled' field
+func MetricsAuthEnabledFlag() string { return "metrics-auth-enabled" }
+
+// GetMetricsAuthEnabled safely fetches the value for global configuration 'MetricsAuthEnabled' field
+func GetMetricsAuthEnabled() bool { return global.GetMetricsAuthEnabled() }
+
+// SetMetricsAuthEnabled safely sets the value for global configuration 'MetricsAuthEnabled' field
+func SetMetricsAuthEnabled(v bool) { global.SetMetricsAuthEnabled(v) }
+
+// GetMetricsAuthUsername safely fetches the Configuration value for state's 'MetricsAuthUsername' field
+func (st *ConfigState) GetMetricsAuthUsername() (v string) {
+	st.mutex.RLock()
+	v = st.config.MetricsAuthUsername
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsAuthUsername safely sets the Configuration value for state's 'MetricsAuthUsername' field
+func (st *ConfigState) SetMetricsAuthUsername(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsAuthUsername = v
+	st.reloadToViper()
+}
+
+// MetricsAuthUsernameFlag returns the flag name for the 'MetricsAuthUsername' field
+func MetricsAuthUsernameFlag() string { return "metrics-auth-username" }
+
+// GetMetricsAuthUsername safely fetches the value for global configuration 'MetricsAuthUsername' field
+func GetMetricsAuthUsername() string { return global.GetMetricsAuthUsername() }
+
+// SetMetricsAuthUsername safely sets the value for global configuration 'MetricsAuthUsername' field
+func SetMetricsAuthUsername(v string) { global.SetMetricsAuthUsername(v) }
+
+// GetMetricsAuthPassword safely fetches the Configuration value for state's 'MetricsAuthPassword' field
+func (st *ConfigState) GetMetricsAuthPassword() (v string) {
+	st.mutex.RLock()
+	v = st.config.MetricsAuthPassword
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMetricsAuthPassword safely sets the Configuration value for state's 'MetricsAuthPassword' field
+func (st *ConfigState) SetMetricsAuthPassword(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MetricsAuthPassword = v
+	st.reloadToViper()
+}
+
+// MetricsAuthPasswordFlag returns the flag name for the 'MetricsAuthPassword' field
+func MetricsAuthPasswordFlag() string { return "metrics-auth-password" }
+
+// GetMetricsAuthPassword safely fetches the value for global configuration 'MetricsAuthPassword' field
+func GetMetricsAuthPassword() string { return global.GetMetricsAuthPassword() }
+
+// SetMetricsAuthPassword safely sets the value for global configuration 'MetricsAuthPassword' field
+func SetMetricsAuthPassword(v string) { global.SetMetricsAuthPassword(v) }
+
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
 	st.mutex.RLock()
