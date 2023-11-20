@@ -71,18 +71,18 @@ In order to configure the redirect, you'll need to configure it on the account d
 
 ```nginx
 server {
-  server_name example.org;
+  server_name example.org;                                                      # account-domain
 
   location /.well-known/webfinger {
-    rewrite ^.*$ https://social.example.org/.well-known/webfinger permanent;
+    rewrite ^.*$ https://social.example.org/.well-known/webfinger permanent;    # host
   }
 
   location /.well-known/host-meta {
-      rewrite ^.*$ https://social.example.org/.well-known/host-meta permanent;
+      rewrite ^.*$ https://social.example.org/.well-known/host-meta permanent;  # host
   }
 
   location /.well-known/nodeinfo {
-      rewrite ^.*$ https://social.example.org/.well-known/nodeinfo permanent;
+      rewrite ^.*$ https://social.example.org/.well-known/nodeinfo permanent;   # host
   }
 }
 ```
@@ -96,10 +96,10 @@ myservice:
   image: foo
   # Other stuff
   labels:
-    - 'traefik.http.routers.myservice.rule=Host(`example.org`)'
+    - 'traefik.http.routers.myservice.rule=Host(`example.org`)'                                                                # account-domain
     - 'traefik.http.middlewares.myservice-gts.redirectregex.permanent=true'
-    - 'traefik.http.middlewares.myservice-gts.redirectregex.regex=^https://(.*)/.well-known/(webfinger|nodeinfo|host-meta)$$'
-    - 'traefik.http.middlewares.myservice-gts.redirectregex.replacement=https://social.$${1}/.well-known/$${2}'
+    - 'traefik.http.middlewares.myservice-gts.redirectregex.regex=^https://(.*)/.well-known/(webfinger|nodeinfo|host-meta)$$'  # host
+    - 'traefik.http.middlewares.myservice-gts.redirectregex.replacement=https://social.$${1}/.well-known/$${2}'                # host
     - 'traefik.http.routers.myservice.middlewares=myservice-gts@docker'
 ```
 
@@ -108,10 +108,10 @@ myservice:
 Ensure that the redirect is configured on the account domain in your `Caddyfile`. The following example assumes the account domain as `example.com`, and host domain as `social.example.com`.
 
 ```
-example.com {
-        redir /.well-known/host-meta* https://social.example.com{uri} permanent
-        redir /.well-known/webfinger* https://social.example.com{uri} permanent
-        redir /.well-known/nodeinfo* https://social.example.com{uri} permanent
+example.com {                                                                    # account-domain
+        redir /.well-known/host-meta* https://social.example.com{uri} permanent  # host
+        redir /.well-known/webfinger* https://social.example.com{uri} permanent  # host
+        redir /.well-known/nodeinfo* https://social.example.com{uri} permanent   # host
 }
 ```
 
