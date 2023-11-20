@@ -34,13 +34,13 @@ import (
 //
 // Currently, the following things will be custom serialized:
 //
-//   - OrderedCollection: 'orderedItems' property will always be made into an array.
-//   - Any Accountable type: 'attachment' property will always be made into an array.
-//   - Update: any Accountable 'object's set on an update will be custom serialized as above.
+//   - OrderedCollection:       'orderedItems' property will always be made into an array.
+//   - Any Accountable type:    'attachment' property will always be made into an array.
+//   - Any Statusable type:     'attachment' property will always be made into an array; 'content' and 'contentMap' will be normalized.
+//   - Any Activityable type:   any 'object's set on an activity will be custom serialized as above.
 func Serialize(t vocab.Type) (m map[string]interface{}, e error) {
 	switch tn := t.GetTypeName(); {
-	case tn == ObjectOrderedCollection ||
-		tn == ObjectCollection:
+	case tn == ObjectOrderedCollection:
 		return serializeOrderedCollection(t)
 	case IsAccountable(tn):
 		return serializeAccountable(t, true)

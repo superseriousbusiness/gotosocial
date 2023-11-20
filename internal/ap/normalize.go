@@ -137,11 +137,10 @@ func NormalizeIncomingContent(item WithContent, rawJSON map[string]interface{}) 
 		contentProp.AppendXMLSchemaString(content)
 	}
 
-	// Fix 'contentMap' if applicable.
+	// Fix value of each entry in
+	// 'contentMap' if applicable.
 	if rawContentMap != nil {
 		if contentMap, ok := rawContentMap.(map[string]interface{}); ok {
-			// 'contentMap' was set.
-			// Normalize each entry.
 			rdfLangString := make(map[string]string, len(contentMap))
 
 			for lang, rawContent := range contentMap {
@@ -351,15 +350,35 @@ func NormalizeIncomingPollOptions(item WithOneOf, rawJSON map[string]interface{}
 	to us to dereference something.
 */
 
+// NormalizeOutgoingAttachmentProp replaces single-entry Attachment objects with
+// single-entry arrays, for better compatibility with other AP implementations.
+//
+// Ie:
+//
+//	"attachment": {
+//	  ...
+//	}
+//
+// becomes:
+//
+//	"attachment": [
+//	  {
+//	    ...
+//	  }
+//	]
+//
+// Noop for items with no attachments, or with attachments that are already a slice.
 func NormalizeOutgoingAttachmentProp(item WithAttachment, rawJSON map[string]interface{}) {
 	attachment, ok := rawJSON["attachment"]
 	if !ok {
-		// No 'attachment', nothing to change.
+		// No 'attachment',
+		// nothing to change.
 		return
 	}
 
 	if _, ok := attachment.([]interface{}); ok {
-		// Already slice.
+		// Already slice,
+		// nothing to change.
 		return
 	}
 
@@ -367,6 +386,26 @@ func NormalizeOutgoingAttachmentProp(item WithAttachment, rawJSON map[string]int
 	rawJSON["attachment"] = []interface{}{attachment}
 }
 
+// NormalizeOutgoingContentProp normalizes go-fed's funky formatting of content and
+// contentMap properties to a format better understood by other AP implementations.
+//
+// Ie., incoming "content" property like this:
+//
+//	"content": [
+//	  "hello world!",
+//	  {
+//	    "en": "hello world!"
+//	  }
+//	]
+//
+// Is unpacked to:
+//
+//	"content": "hello world!",
+//	"contentMap": {
+//	  "en": "hello world!"
+//	}
+//
+// Noop if neither content nor contentMap are set.
 func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface{}) {
 	contentProp := item.GetActivityStreamsContent()
 	if contentProp == nil {
@@ -412,6 +451,24 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 	}
 }
 
+// NormalizeOutgoingObjectProp normalizes each Object entry in the rawJSON of the given
+// item by calling custom serialization / normalization functions on them in turn.
+//
+// This function also unnests single-entry arrays, so that:
+//
+//	"object": [
+//	  {
+//	    ...
+//	  }
+//	]
+//
+// Becomes:
+//
+//	"object": {
+//	  ...
+//	}
+//
+// Noop for each Object entry that isn't an Accountable or Statusable.
 func NormalizeOutgoingObjectProp(item WithObject, rawJSON map[string]interface{}) error {
 	objectProp := item.GetActivityStreamsObject()
 	if objectProp == nil {
