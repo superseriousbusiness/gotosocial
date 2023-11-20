@@ -49,6 +49,7 @@ func TestASCollection(t *testing.T) {
 	// Create new collection using builder function.
 	c := ap.NewASCollection(ap.CollectionParams{
 		ID:    parseURI(idURI),
+		Query: url.Values{"limit": []string{"40"}},
 		Total: total,
 	})
 
@@ -56,7 +57,7 @@ func TestASCollection(t *testing.T) {
 	s := toJSON(c)
 
 	// Ensure outputs are equal.
-	assert.Equal(t, s, expect)
+	assert.Equal(t, expect, s)
 }
 
 func TestASCollectionPage(t *testing.T) {
@@ -110,7 +111,7 @@ func TestASCollectionPage(t *testing.T) {
 	s := toJSON(p)
 
 	// Ensure outputs are equal.
-	assert.Equal(t, s, expect)
+	assert.Equal(t, expect, s)
 }
 
 func TestASOrderedCollection(t *testing.T) {
@@ -131,6 +132,7 @@ func TestASOrderedCollection(t *testing.T) {
 	// Create new collection using builder function.
 	c := ap.NewASOrderedCollection(ap.CollectionParams{
 		ID:    parseURI(idURI),
+		Query: url.Values{"limit": []string{"40"}},
 		Total: total,
 	})
 
@@ -138,7 +140,7 @@ func TestASOrderedCollection(t *testing.T) {
 	s := toJSON(c)
 
 	// Ensure outputs are equal.
-	assert.Equal(t, s, expect)
+	assert.Equal(t, expect, s)
 }
 
 func TestASOrderedCollectionPage(t *testing.T) {
@@ -192,7 +194,7 @@ func TestASOrderedCollectionPage(t *testing.T) {
 	s := toJSON(p)
 
 	// Ensure outputs are equal.
-	assert.Equal(t, s, expect)
+	assert.Equal(t, expect, s)
 }
 
 func parseURI(s string) *url.URL {

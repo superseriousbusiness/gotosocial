@@ -20,7 +20,6 @@ package ap
 import (
 	"fmt"
 	"net/url"
-	"strconv"
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -169,6 +168,10 @@ type CollectionParams struct {
 	// ID (i.e. NOT the page).
 	ID *url.URL
 
+	// First page details.
+	First paging.Page
+	Query url.Values
+
 	// Total no. items.
 	Total int
 }
@@ -224,7 +227,7 @@ type ItemsPropertyBuilder interface {
 // NewASCollection builds and returns a new ActivityStreams Collection from given parameters.
 func NewASCollection(params CollectionParams) vocab.ActivityStreamsCollection {
 	collection := streams.NewActivityStreamsCollection()
-	buildCollection(collection, params, 40)
+	buildCollection(collection, params)
 	return collection
 }
 
@@ -239,7 +242,7 @@ func NewASCollectionPage(params CollectionPageParams) vocab.ActivityStreamsColle
 // NewASOrderedCollection builds and returns a new ActivityStreams OrderedCollection from given parameters.
 func NewASOrderedCollection(params CollectionParams) vocab.ActivityStreamsOrderedCollection {
 	collection := streams.NewActivityStreamsOrderedCollection()
-	buildCollection(collection, params, 40)
+	buildCollection(collection, params)
 	return collection
 }
 
@@ -251,7 +254,7 @@ func NewASOrderedCollectionPage(params CollectionPageParams) vocab.ActivityStrea
 	return collectionPage
 }
 
-func buildCollection[C CollectionBuilder](collection C, params CollectionParams, pageLimit int) {
+func buildCollection[C CollectionBuilder](collection C, params CollectionParams) {
 	// Add the collection ID property.
 	idProp := streams.NewJSONLDIdProperty()
 	idProp.SetIRI(params.ID)
@@ -262,15 +265,20 @@ func buildCollection[C CollectionBuilder](collection C, params CollectionParams,
 	totalItems.Set(params.Total)
 	collection.SetActivityStreamsTotalItems(totalItems)
 
-	// Clone the collection ID page
-	// to add first page query data.
-	firstIRI := new(url.URL)
-	*firstIRI = *params.ID
+	// Append paging query params
+	// to those already in ID prop.
+	pageQueryParams := appendQuery(
+		params.Query,
+		params.ID.Query(),
+	)
 
-	// Note that simply adding a limit signals to our
-	// endpoint to use paging (which will start at beginning).
-	limit := "limit=" + strconv.Itoa(pageLimit)
-	firstIRI.RawQuery = appendQuery(firstIRI.RawQuery, limit)
+	// Build the first page link IRI.
+	firstIRI := params.First.ToLinkURL(
+		params.ID.Scheme,
+		params.ID.Host,
+		params.ID.Path,
+		pageQueryParams,
+	)
 
 	// Add the collection first IRI property.
 	first := streams.NewActivityStreamsFirstProperty()
@@ -284,12 +292,19 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 	partOfProp.SetIRI(params.ID)
 	collectionPage.SetActivityStreamsPartOf(partOfProp)
 
+	// Append paging query params
+	// to those already in ID prop.
+	pageQueryParams := appendQuery(
+		params.Query,
+		params.ID.Query(),
+	)
+
 	// Build the current page link IRI.
 	currentIRI := params.Current.ToLinkURL(
 		params.ID.Scheme,
 		params.ID.Host,
 		params.ID.Path,
-		params.Query,
+		pageQueryParams,
 	)
 
 	// Add the collection ID property for
@@ -303,7 +318,7 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 		params.ID.Scheme,
 		params.ID.Host,
 		params.ID.Path,
-		params.Query,
+		pageQueryParams,
 	)
 
 	if nextIRI != nil {
@@ -318,7 +333,7 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 		params.ID.Scheme,
 		params.ID.Host,
 		params.ID.Path,
-		params.Query,
+		pageQueryParams,
 	)
 
 	if prevIRI != nil {
@@ -349,11 +364,13 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 	setItems(itemsProp)
 }
 
-// appendQuery appends part to an existing raw
-// query with ampersand, else just returning part.
-func appendQuery(raw, part string) string {
-	if raw != "" {
-		return raw + "&" + part
+// appendQuery appends query values in 'src' to 'dst', returning 'dst'.
+func appendQuery(dst, src url.Values) url.Values {
+	if dst == nil {
+		return src
 	}
-	return part
+	for k, vs := range src {
+		dst[k] = append(dst[k], vs...)
+	}
+	return dst
 }

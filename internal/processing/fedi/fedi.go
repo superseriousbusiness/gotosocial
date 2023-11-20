@@ -19,21 +19,33 @@ package fedi
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 type Processor struct {
+	// embed common logic
+	c *common.Processor
+
 	state     *state.State
 	federator *federation.Federator
 	converter *typeutils.Converter
 	filter    *visibility.Filter
 }
 
-// New returns a new fedi processor.
-func New(state *state.State, converter *typeutils.Converter, federator *federation.Federator, filter *visibility.Filter) Processor {
+// New returns a
+// new fedi processor.
+func New(
+	state *state.State,
+	common *common.Processor,
+	converter *typeutils.Converter,
+	federator *federation.Federator,
+	filter *visibility.Filter,
+) Processor {
 	return Processor{
+		c:         common,
 		state:     state,
 		federator: federator,
 		converter: converter,

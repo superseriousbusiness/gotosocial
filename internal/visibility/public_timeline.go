@@ -19,11 +19,11 @@ package visibility
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -105,7 +105,7 @@ func (f *Filter) isStatusPublicTimelineable(ctx context.Context, requester *gtsm
 			parentID,
 		)
 		if err != nil {
-			return false, fmt.Errorf("isStatusPublicTimelineable: error getting status parent %s: %w", parentID, err)
+			return false, gtserror.Newf("error getting status parent %s: %w", parentID, err)
 		}
 
 		if parent.AccountID != status.AccountID {

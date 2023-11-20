@@ -19,9 +19,8 @@ package paging
 
 import (
 	"net/url"
+	"slices"
 	"strconv"
-
-	"golang.org/x/exp/slices"
 )
 
 type Page struct {
@@ -117,7 +116,7 @@ func (p *Page) Page(in []string) []string {
 
 			// Output slice must
 			// ALWAYS be descending.
-			in = Reverse(in)
+			slices.Reverse(in)
 		}
 	} else {
 		// Default sort is descending,
@@ -130,6 +129,66 @@ func (p *Page) Page(in []string) []string {
 		}
 
 		if minIdx := p.Min.Find(in); minIdx != -1 {
+			// Reslice stripping past min.
+			in = in[:minIdx]
+		}
+
+		if p.Limit > 0 && p.Limit < len(in) {
+			// Reslice input to limit.
+			in = in[:p.Limit]
+		}
+	}
+
+	return in
+}
+
+// Page_PageFunc is functionally equivalent to Page{}.Page(), but for an arbitrary type with ID.
+// Note: this is not a Page{} method as Go generics are not supported in method receiver functions.
+func Page_PageFunc[WithID any](p *Page, in []WithID, get func(WithID) string) []WithID { //nolint:revive
+	if p == nil {
+		// no paging.
+		return in
+	}
+
+	if p.order().Ascending() {
+		// Sort type is ascending, input
+		// data is assumed to be ascending.
+
+		if minIdx := Boundary_FindFunc(p.Min, in, get); minIdx != -1 {
+			// Reslice skipping up to min.
+			in = in[minIdx+1:]
+		}
+
+		if maxIdx := Boundary_FindFunc(p.Max, in, get); maxIdx != -1 {
+			// Reslice stripping past max.
+			in = in[:maxIdx]
+		}
+
+		if p.Limit > 0 && p.Limit < len(in) {
+			// Reslice input to limit.
+			in = in[:p.Limit]
+		}
+
+		if len(in) > 1 {
+			// Clone input before
+			// any modifications.
+			in = slices.Clone(in)
+
+			// Output slice must
+			// ALWAYS be descending.
+			slices.Reverse(in)
+		}
+	} else {
+		// Default sort is descending,
+		// catching all cases when NOT
+		// ascending (even zero value).
+
+		if maxIdx := Boundary_FindFunc(p.Max, in, get); maxIdx != -1 {
+			// Reslice skipping up to max.
+			in = in[maxIdx+1:]
+		}
+
+		if minIdx := Boundary_FindFunc(p.Min, in, get); minIdx != -1 {
 			// Reslice stripping past min.
 			in = in[:minIdx]
 		}
@@ -225,21 +284,24 @@ func (p *Page) ToLinkURL(proto, host, path string, queryParams url.Values) *url.
 	if queryParams == nil {
 		// Allocate new query parameters.
 		queryParams = make(url.Values)
+	} else {
+		// Before edit clone existing params.
+		queryParams = cloneQuery(queryParams)
 	}
 
 	if p.Min.Value != "" {
 		// A page-minimum query parameter is available.
-		queryParams.Add(p.Min.Name, p.Min.Value)
+		queryParams.Set(p.Min.Name, p.Min.Value)
 	}
 
 	if p.Max.Value != "" {
 		// A page-maximum query parameter is available.
-		queryParams.Add(p.Max.Name, p.Max.Value)
+		queryParams.Set(p.Max.Name, p.Max.Value)
 	}
 
 	if p.Limit > 0 {
 		// A page limit query parameter is available.
-		queryParams.Add("limit", strconv.Itoa(p.Limit))
+		queryParams.Set("limit", strconv.Itoa(p.Limit))
 	}
 
 	// Build URL string.
@@ -249,4 +311,13 @@ func (p *Page) ToLinkURL(proto, host, path string, queryParams url.Values) *url.
 		Path:     path,
 		RawQuery: queryParams.Encode(),
 	}
+}
+
+// cloneQuery clones input map of url values.
+func cloneQuery(src url.Values) url.Values {
+	dst := make(url.Values, len(src))
+	for k, vs := range src {
+		dst[k] = slices.Clone(vs)
+	}
+	return dst
 }
