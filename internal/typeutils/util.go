@@ -236,19 +236,37 @@ func ContentToContentLanguage(
 		for langTagStr, contentStr = range contentMap {
 		}
 
-	// Only `contentMap` is set, with
-	// more than one value. Map order
-	// is not guaranteed so we can't
-	// know the "primary" language.
+	// Only `contentMap` is set, with more
+	// than one value. Map order is not
+	// guaranteed so we can't know the
+	// "primary" language.
 	//
-	// Just stop at the first non-empty
-	// langTag and langCnt we can find.
+	// Try to select using our instance's
+	// configured preferred languages.
+	//
+	// If all else fails, just stop at
+	// the last tag and content we can find.
 	default:
+		instanceLanguages := config.GetInstanceLanguages()
 		for langTagStr, contentStr = range contentMap {
-			if langTagStr != "" &&
-				contentStr != "" {
+			// Check if this language tag
+			// is in our instance languages.
+			found := slices.ContainsFunc(
+				instanceLanguages,
+				func(l *language.Language) bool {
+					return l.TagStr == langTagStr
+				},
+			)
+
+			if found {
+				// Break loop to lock
+				// in this selection.
 				break
 			}
+
+			// Nothing found; loop will either
+			// continue, or end with whatever
+			// random key/value we last selected.
 		}
 	}
 

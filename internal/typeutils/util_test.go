@@ -21,7 +21,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
 )
 
 func TestMisskeyReportContentURLs1(t *testing.T) {
@@ -50,9 +52,10 @@ misskey-formatted`
 
 func TestContentToContentLanguage(t *testing.T) {
 	type testcase struct {
-		content         gtsmodel.Content
-		expectedContent string
-		expectedLang    string
+		content           gtsmodel.Content
+		instanceLanguages language.Languages
+		expectedContent   string
+		expectedLang      string
 	}
 
 	ctx, cncl := context.WithCancel(context.Background())
@@ -98,7 +101,45 @@ func TestContentToContentLanguage(t *testing.T) {
 			expectedContent: "bonjour le monde",
 			expectedLang:    "",
 		},
+		{
+			content: gtsmodel.Content{
+				Content: "",
+				ContentMap: map[string]string{
+					"en": "hello world",
+					"ru": "Привет, мир!",
+					"nl": "hallo wereld!",
+					"ca": "Hola món!",
+				},
+			},
+			instanceLanguages: language.Languages{
+				{TagStr: "en"},
+			},
+			expectedContent: "hello world",
+			expectedLang:    "en",
+		},
+		{
+			content: gtsmodel.Content{
+				Content: "",
+				ContentMap: map[string]string{
+					"en": "hello world",
+					"ru": "Привет, мир!",
+					"nl": "hallo wereld!",
+					"ca": "Hola món!",
+				},
+			},
+			instanceLanguages: language.Languages{
+				{TagStr: "ca"},
+			},
+			expectedContent: "Hola món!",
+			expectedLang:    "ca",
+		},
 	} {
+		langs, err := language.InitLangs(testcase.instanceLanguages.TagStrs())
+		if err != nil {
+			t.Fatal(err)
+		}
+		config.SetInstanceLanguages(langs)
+
 		content, language := ContentToContentLanguage(ctx, testcase.content)
 		if content != testcase.expectedContent {
 			t.Errorf(
