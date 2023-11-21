@@ -206,10 +206,10 @@ func ContentToContentLanguage(
 		langTagStr string
 	)
 
-	switch cMap := content.ContentMap; {
+	switch contentMap := content.ContentMap; {
 	// Simplest case: no `contentMap`.
 	// Return `content`, even if empty.
-	case cMap == nil:
+	case contentMap == nil:
 		return content.Content, ""
 
 	// `content` and `contentMap` set.
@@ -220,7 +220,7 @@ func ContentToContentLanguage(
 		// corresponding language tag.
 		contentStr = content.Content
 
-		for t, c := range cMap {
+		for t, c := range contentMap {
 			if contentStr == c {
 				langTagStr = t
 			}
@@ -229,11 +229,11 @@ func ContentToContentLanguage(
 	// `content` not set; `contentMap`
 	// is set with only one value.
 	// This must be the "primary" lang.
-	case len(cMap) == 1:
+	case len(contentMap) == 1:
 		// Use an empty loop to
 		// get the values we want.
 		// nolint:revive
-		for langTagStr, contentStr = range cMap {
+		for langTagStr, contentStr = range contentMap {
 		}
 
 	// Only `contentMap` is set, with
@@ -244,7 +244,7 @@ func ContentToContentLanguage(
 	// Just stop at the first non-empty
 	// langTag and langCnt we can find.
 	default:
-		for langTagStr, contentStr = range cMap {
+		for langTagStr, contentStr = range contentMap {
 			if langTagStr != "" &&
 				contentStr != "" {
 				break
