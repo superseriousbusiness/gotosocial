@@ -133,6 +133,7 @@
 			</meter>
 			<div class="sr-only">Option {{ increment $index }}: {{ emojify .Emojis (noescape $pollOption.Title) -}}</div>
 			<div class="poll-vote-human-readable">
+				<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
 				<span class="poll-vote-count">
 					{{- if eq $pollOption.VotesCount 1 -}}
 						{{- $pollOption.VotesCount }} vote
@@ -140,7 +141,6 @@
 						{{- $pollOption.VotesCount }} votes
 					{{- end -}}
 				</span>
-				<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
 			</div>
 		</div>
 		{{ end }}
