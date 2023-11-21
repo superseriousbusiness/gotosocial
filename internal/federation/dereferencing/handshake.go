@@ -38,8 +38,11 @@ func (d *Dereferencer) Handshaking(username string, remoteAccountID *url.URL) bo
 		return false
 	}
 
+	// Calculate remote account ID str once.
+	remoteIDStr := remoteAccountID.String()
+
 	for _, id := range remoteIDs {
-		if id.String() == remoteAccountID.String() {
+		if id.String() == remoteIDStr {
 			// We are currently handshaking
 			// with the remote account.
 			return true
