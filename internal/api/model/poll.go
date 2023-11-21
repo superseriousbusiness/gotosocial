@@ -106,9 +106,17 @@ type PollVoteRequest struct {
 }
 
 // WebPollOption models a template-ready poll option entry.
+//
+// swagger:ignore
 type WebPollOption struct {
 	PollOption
-	Emojis       []Emoji
-	VoteShare    float64
+
+	// Emojis contained on parent poll.
+	Emojis []Emoji
+
+	// Share of total votes as a percentage.
+	VoteShare float32
+
+	// String-formatted version of VoteShare.
 	VoteShareStr string
 }

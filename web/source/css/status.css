@@ -399,6 +399,7 @@ main {
 		flex-direction: column;
 		border-radius: $br;
 		padding: 0.5rem;
+		margin: 0;
 		gap: 1rem;
 
 		.poll-option {

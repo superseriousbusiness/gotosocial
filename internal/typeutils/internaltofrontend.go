@@ -685,24 +685,27 @@ func (c *Converter) StatusToWebStatus(
 
 		webPollCounts := make([]apimodel.WebPollOption, len(poll.Options))
 		for i, option := range poll.Options {
-			var voteShare float64
+			var voteShare float32
 			if totalVotes != 0 &&
 				option.VotesCount != 0 {
-				voteShare = (float64(option.VotesCount) / float64(totalVotes)) * 100
+				voteShare = (float32(option.VotesCount) / float32(totalVotes)) * 100
 			}
 
-			var voteShareStr string
-			if voteShare > 0 && voteShare < 100 {
-				// For nicer styling, pad to 5 chars
-				// so that anything between 0% and 100%
-				// is monowidth, eg. "85.33", "05.00".
-				voteShareStr = fmt.Sprintf("%05.2f", voteShare)
-			} else {
-				// Don't pad or bother with precision.
-				// "100" looks nicer than "100.00",
-				// "0" looks nicer than "00.00".
-				voteShareStr = fmt.Sprintf("%.0f", voteShare)
-			}
+			// Format to two decimal points and ditch any
+			// trailing zeroes.
+			//
+			// We want to be precise enough that eg., "1.54%"
+			// is distinct from "1.68%" in polls with loads
+			// of votes.
+			//
+			// However, if we've got eg., a two-option poll
+			// in which each option has half the votes, then
+			// "50%" looks better than "50.00%".
+			//
+			// By the same token, it's pointless to show
+			// "0.00%" or "100.00%".
+			voteShareStr := fmt.Sprintf("%.2f", voteShare)
+			voteShareStr = strings.TrimSuffix(voteShareStr, ".00")
 
 			webPollCount := apimodel.WebPollOption{
 				PollOption:   option,

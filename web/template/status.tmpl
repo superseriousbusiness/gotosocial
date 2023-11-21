@@ -110,56 +110,41 @@
 	</div>
 	{{end}}
 	{{ if .Poll }}
-	<div class="poll">
+	<figure class="poll">
+		<figcaption class="poll-info">
+			<span class="poll-expiry">
+				{{- if .Poll.Expired -}}
+					Poll closed {{.Poll.ExpiresAt | timestampPrecise}}
+				{{- else if .Poll.ExpiresAt -}}
+					Poll open until {{.Poll.ExpiresAt | timestampPrecise}}
+				{{- else -}}
+					Infinite poll (no expiry)
+				{{- end -}}
+			</span>
+			<span class="poll-votes">Total votes: {{ .Poll.VotesCount }}</span>
+		</figcaption>
 		{{ range $index, $pollOption := .WebPollOptions }}
 		<div class="poll-option">
-			<label for="option-{{ $index }}">
-				{{emojify .Emojis (noescape $pollOption.Title)}}
+			<label aria-hidden="true" for="option-{{ increment $index }}">
+				{{- emojify .Emojis (noescape $pollOption.Title) -}}
 			</label>
-			<meter id="option-{{ $index }}" min="0" max="100" value="{{ $pollOption.VoteShare }}">
-				{{ $pollOption.VoteShareStr }}%
+			<meter aria-hidden="true" id="option-{{ increment $index }}" min="0" max="100" value="{{ $pollOption.VoteShare }}">
+				{{- $pollOption.VoteShare }}&#37;
 			</meter>
+			<div class="sr-only">Option {{ increment $index }}: {{ emojify .Emojis (noescape $pollOption.Title) -}}</div>
 			<div class="poll-vote-human-readable">
 				<span class="poll-vote-count">
-					{{ if eq $pollOption.VotesCount 1 }}
-						{{ $pollOption.VotesCount }} vote
-					{{ else }}
-						{{ $pollOption.VotesCount }} votes
-					{{ end }}
+					{{- if eq $pollOption.VotesCount 1 -}}
+						{{- $pollOption.VotesCount }} vote
+					{{- else -}}
+						{{- $pollOption.VotesCount }} votes
+					{{- end -}}
 				</span>
-				<span class="poll-vote-share">
-					{{ $pollOption.VoteShareStr }}%
-				</span>
+				<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
 			</div>
 		</div>
 		{{ end }}
-		<div class="poll-info">
-			<span class="poll-votes">
-				Total:
-				{{ if eq .Poll.VotesCount 0 }}
-					No votes
-				{{ else if eq .Poll.VotesCount 1 }}
-					1 vote
-				{{ else }}
-					{{ .Poll.VotesCount }} votes
-				{{ end }}
-				{{ if .Poll.Multiple }}
-					(multiple choice)
-				{{ end }}
-			</span>
-			<span class="poll-expiry">
-				{{ if .Poll.Expired }}
-					Poll closed
-					<time datetime="{{.Poll.ExpiresAt}}">{{.Poll.ExpiresAt | timestampPrecise}}</time>
-				{{ else if .Poll.ExpiresAt }}
-					Poll open until
-					<time datetime="{{.Poll.ExpiresAt}}">{{.Poll.ExpiresAt | timestampPrecise}}</time>
-				{{ else }}
-					Infinite poll (no expiry)
-				{{ end }}
-			</span>
-		</div>
-	</div>
+	</figure>
 	{{ end }}
 </section>
 <aside class="info">
