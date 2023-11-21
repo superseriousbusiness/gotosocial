@@ -147,17 +147,17 @@ func NormalizeIncomingContent(item WithContent, rawJSON map[string]interface{}) 
 	// Fix 'contentMap' if applicable.
 	contentMap, ok := rawContentMap.(map[string]interface{})
 	if ok {
-		rdfLangString := make(map[string]string, len(contentMap))
+		rdfLangs := make(map[string]string, len(contentMap))
 
 		for lang, rawContent := range contentMap {
 			content := normalizeContent(rawContent)
 			if content != "" {
-				rdfLangString[lang] = content
+				rdfLangs[lang] = content
 			}
 		}
 
-		if len(rdfLangString) != 0 {
-			contentProp.AppendRDFLangString(rdfLangString)
+		if len(rdfLangs) != 0 {
+			contentProp.AppendRDFLangString(rdfLangs)
 		}
 	}
 
