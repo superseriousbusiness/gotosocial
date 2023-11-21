@@ -169,8 +169,8 @@ func EncodeXMLResponse(
 	// Acquire buffer.
 	buf := getBuf()
 
-	// Write XML header to buf.
-	buf.WriteString(xml.Header)
+	// Write XML header string to buf.
+	buf.B = append(buf.B, xml.Header...)
 
 	// Wrap buffer in XML encoder.
 	enc := xml.NewEncoder(buf)
