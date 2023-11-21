@@ -113,6 +113,7 @@ func TestContentToContentLanguage(t *testing.T) {
 			},
 			instanceLanguages: language.Languages{
 				{TagStr: "en"},
+				{TagStr: "ca"},
 			},
 			expectedContent: "hello world",
 			expectedLang:    "en",
@@ -129,6 +130,7 @@ func TestContentToContentLanguage(t *testing.T) {
 			},
 			instanceLanguages: language.Languages{
 				{TagStr: "ca"},
+				{TagStr: "en"},
 			},
 			expectedContent: "Hola món!",
 			expectedLang:    "ca",
