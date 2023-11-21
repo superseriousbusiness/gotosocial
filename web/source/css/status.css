@@ -402,25 +402,33 @@ main {
 		margin: 0;
 		gap: 1rem;
 
-		.poll-option {
+		.poll-options {
+			margin: 0;
+			padding: 0;
 			display: flex;
 			flex-direction: column;
-			gap: 0.1rem;
+			gap: 1rem;
 
-			label {
-				font-weight: bold;
-				cursor: default;
-			}
-
-			meter {
-				width: 100%;
-			}
-
-			.poll-vote-human-readable {
+			.poll-option {
 				display: flex;
-				flex-wrap: wrap;
-				justify-content: space-between;
-				white-space: nowrap;
+				flex-direction: column;
+				gap: 0.1rem;
+	
+				label {
+					font-weight: bold;
+					cursor: default;
+				}
+	
+				meter {
+					width: 100%;
+				}
+	
+				.poll-vote-human-readable {
+					display: flex;
+					flex-wrap: wrap;
+					justify-content: space-between;
+					white-space: nowrap;
+				}
 			}
 		}
 
