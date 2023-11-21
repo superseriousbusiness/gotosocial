@@ -678,6 +678,44 @@ func (c *Converter) StatusToWebStatus(
 		}
 	}
 
+	if poll := webStatus.Poll; poll != nil {
+		// Calculate vote share of each poll option and
+		// format them for easier template consumption.
+		totalVotes := poll.VotesCount
+
+		webPollCounts := make([]apimodel.WebPollOption, len(poll.Options))
+		for i, option := range poll.Options {
+			var voteShare float64
+			if totalVotes != 0 &&
+				option.VotesCount != 0 {
+				voteShare = (float64(option.VotesCount) / float64(totalVotes)) * 100
+			}
+
+			var voteShareStr string
+			if voteShare > 0 && voteShare < 100 {
+				// For nicer styling, pad to 5 chars
+				// so that anything between 0% and 100%
+				// is monowidth, eg. "85.33", "05.00".
+				voteShareStr = fmt.Sprintf("%05.2f", voteShare)
+			} else {
+				// Don't pad or bother with precision.
+				// "100" looks nicer than "100.00",
+				// "0" looks nicer than "00.00".
+				voteShareStr = fmt.Sprintf("%.0f", voteShare)
+			}
+
+			webPollCount := apimodel.WebPollOption{
+				PollOption:   option,
+				Emojis:       webStatus.Emojis,
+				VoteShare:    voteShare,
+				VoteShareStr: voteShareStr,
+			}
+			webPollCounts[i] = webPollCount
+		}
+
+		webStatus.WebPollOptions = webPollCounts
+	}
+
 	return webStatus, nil
 }
 
@@ -1456,10 +1494,17 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		expiresAt = util.FormatISO8601(poll.ExpiresAt)
 	}
 
-	// TODO: emojis used in poll options.
-	// For now init to empty slice to serialize as `[]`.
-	// In future inherit from parent status.
-	emojis = make([]apimodel.Emoji, 0)
+	// Try to inherit emojis
+	// from parent status.
+	if pStatus := poll.Status; pStatus != nil {
+		var err error
+		emojis, err = c.convertEmojisToAPIEmojis(ctx, pStatus.Emojis, pStatus.EmojiIDs)
+		if err != nil {
+			// Fall back to empty slice.
+			log.Errorf(ctx, "error converting emojis from parent status: %v", err)
+			emojis = make([]apimodel.Emoji, 0)
+		}
+	}
 
 	return &apimodel.Poll{
 		ID:          poll.ID,

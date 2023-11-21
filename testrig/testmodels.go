@@ -1862,8 +1862,8 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 		},
 		"local_account_2_status_8": {
 			ID:                       "01HEN2PRXT0TF4YDRA64FZZRN7",
-			URI:                      "http://localhost:8080/users/1happyturtle/statuses/065TKBPE0EJ6X3QDR1AH9DAB8M",
-			URL:                      "http://localhost:8080/@1happyturtle/statuses/065TKBPE0EJ6X3QDR1AH9DAB8M",
+			URI:                      "http://localhost:8080/users/1happyturtle/statuses/01HEN2PRXT0TF4YDRA64FZZRN7",
+			URL:                      "http://localhost:8080/@1happyturtle/statuses/01HEN2PRXT0TF4YDRA64FZZRN7",
 			Content:                  "hey everyone i got stuck in a shed. any ideas for how to get out?",
 			Text:                     "hey everyone i got stuck in a shed. any ideas for how to get out?",
 			AttachmentIDs:            nil,

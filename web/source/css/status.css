@@ -391,6 +391,56 @@ main {
 		}
 	}
 
+	.poll {
+		background-color: $gray2;
+		z-index: 2;
+		
+		display: flex;
+		flex-direction: column;
+		border-radius: $br;
+		padding: 0.5rem;
+		gap: 1rem;
+
+		.poll-option {
+			display: flex;
+			flex-direction: column;
+			gap: 0.1rem;
+
+			label {
+				font-weight: bold;
+				cursor: default;
+			}
+
+			meter {
+				width: 100%;
+			}
+
+			.poll-vote-human-readable {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: space-between;
+				white-space: nowrap;
+			}
+		}
+
+		.poll-info {
+			background-color: $gray4;
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			border-radius: $br-inner;
+			padding: 0.25rem;
+			gap: 0.25rem;
+
+			span {
+				justify-self: center;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+		}
+	}
+
 	.info {
 		display: flex;
 		background: $toot-info-bg;

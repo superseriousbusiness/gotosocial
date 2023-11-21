@@ -105,8 +105,17 @@ type Status struct {
 	// (used only internally for templating etc).
 
 	// Template-ready language tag + string, based
-	// on *status.Language. Nil for non-web statuses
+	// on *status.Language. Nil for non-web statuses.
+	//
+	// swagger:ignore
 	LanguageTag *language.Language `json:"-"`
+
+	// Template-ready poll options with vote shares
+	// calculated as a percentage of total votes.
+	// Nil for non-web statuses.
+	//
+	// swagger:ignore
+	WebPollOptions []WebPollOption `json:"-"`
 }
 
 /*

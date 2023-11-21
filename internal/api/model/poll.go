@@ -104,3 +104,11 @@ type PollVoteRequest struct {
 	// indices. Can be strings or integers.
 	ChoicesI []interface{} `json:"choices"`
 }
+
+// WebPollOption models a template-ready poll option entry.
+type WebPollOption struct {
+	PollOption
+	Emojis       []Emoji
+	VoteShare    float64
+	VoteShareStr string
+}
