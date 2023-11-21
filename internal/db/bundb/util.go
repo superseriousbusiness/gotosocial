@@ -18,6 +18,7 @@
 package bundb
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
@@ -99,7 +100,7 @@ func loadPagedIDs(cache *cache.SliceCache[string], key string, page *paging.Page
 	// order. Depending on the paging requested
 	// this may be an unexpected order.
 	if page.GetOrder().Ascending() {
-		ids = paging.Reverse(ids)
+		slices.Reverse(ids)
 	}
 
 	// Page the resulting IDs.

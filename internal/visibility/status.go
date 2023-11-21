@@ -19,32 +19,26 @@ package visibility
 
 import (
 	"context"
-	"fmt"
+	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // StatusesVisible calls StatusVisible for each status in the statuses slice, and returns a slice of only statuses which are visible to the requester.
 func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Account, statuses []*gtsmodel.Status) ([]*gtsmodel.Status, error) {
-	// Preallocate slice of maximum possible length.
-	filtered := make([]*gtsmodel.Status, 0, len(statuses))
-
-	for _, status := range statuses {
-		// Check whether status is visible to requester.
+	var errs gtserror.MultiError
+	filtered := slices.DeleteFunc(statuses, func(status *gtsmodel.Status) bool {
 		visible, err := f.StatusVisible(ctx, requester, status)
 		if err != nil {
-			return nil, err
+			errs.Append(err)
+			return true
 		}
-
-		if visible {
-			// Add filtered status to ret slice.
-			filtered = append(filtered, status)
-		}
-	}
-
-	return filtered, nil
+		return !visible
+	})
+	return filtered, errs.Combine()
 }
 
 // StatusVisible will check if given status is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users, account blocks and status privacy.
@@ -85,13 +79,13 @@ func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account,
 func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	// Ensure that status is fully populated for further processing.
 	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
-		return false, fmt.Errorf("isStatusVisible: error populating status %s: %w", status.ID, err)
+		return false, gtserror.Newf("error populating status %s: %w", status.ID, err)
 	}
 
 	// Check whether status accounts are visible to the requester.
 	visible, err := f.areStatusAccountsVisible(ctx, requester, status)
 	if err != nil {
-		return false, fmt.Errorf("isStatusVisible: error checking status %s account visibility: %w", status.ID, err)
+		return false, gtserror.Newf("error checking status %s account visibility: %w", status.ID, err)
 	} else if !visible {
 		return false, nil
 	}
@@ -127,7 +121,7 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 			// Boosted status needs its mentions populating, fetch these from database.
 			status.BoostOf.Mentions, err = f.state.DB.GetMentions(ctx, status.BoostOf.MentionIDs)
 			if err != nil {
-				return false, fmt.Errorf("isStatusVisible: error populating boosted status %s mentions: %w", status.BoostOfID, err)
+				return false, gtserror.Newf("error populating boosted status %s mentions: %w", status.BoostOfID, err)
 			}
 		}
 
@@ -145,7 +139,7 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 			status.AccountID,
 		)
 		if err != nil {
-			return false, fmt.Errorf("isStatusVisible: error checking follow %s->%s: %w", requester.ID, status.AccountID, err)
+			return false, gtserror.Newf("error checking follow %s->%s: %w", requester.ID, status.AccountID, err)
 		}
 
 		if !follows {
@@ -162,7 +156,7 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 			status.AccountID,
 		)
 		if err != nil {
-			return false, fmt.Errorf("isStatusVisible: error checking mutual follow %s<->%s: %w", requester.ID, status.AccountID, err)
+			return false, gtserror.Newf("error checking mutual follow %s<->%s: %w", requester.ID, status.AccountID, err)
 		}
 
 		if !mutuals {
@@ -187,7 +181,7 @@ func (f *Filter) areStatusAccountsVisible(ctx context.Context, requester *gtsmod
 	// Check whether status author's account is visible to requester.
 	visible, err := f.AccountVisible(ctx, requester, status.Account)
 	if err != nil {
-		return false, fmt.Errorf("error checking status author visibility: %w", err)
+		return false, gtserror.Newf("error checking status author visibility: %w", err)
 	}
 
 	if !visible {
@@ -206,7 +200,7 @@ func (f *Filter) areStatusAccountsVisible(ctx context.Context, requester *gtsmod
 		// Check whether boosted status author's account is visible to requester.
 		visible, err := f.AccountVisible(ctx, requester, status.BoostOfAccount)
 		if err != nil {
-			return false, fmt.Errorf("error checking boosted author visibility: %w", err)
+			return false, gtserror.Newf("error checking boosted author visibility: %w", err)
 		}
 
 		if !visible {

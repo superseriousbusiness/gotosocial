@@ -19,161 +19,192 @@ package fedi
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/url"
+	"slices"
+	"strconv"
 
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // StatusGet handles the getting of a fedi/activitypub representation of a local status.
 // It performs appropriate authentication before returning a JSON serializable interface.
-func (p *Processor) StatusGet(ctx context.Context, requestedUsername string, requestedStatusID string) (interface{}, gtserror.WithCode) {
+func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusID string) (interface{}, gtserror.WithCode) {
 	// Authenticate using http signature.
-	requestedAccount, requestingAccount, errWithCode := p.authenticate(ctx, requestedUsername)
+	// Authenticate the incoming request, getting related user accounts.
+	requester, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	status, err := p.state.DB.GetStatusByID(ctx, requestedStatusID)
+	status, err := p.state.DB.GetStatusByID(ctx, statusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if status.AccountID != requestedAccount.ID {
-		err := fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID)
-		return nil, gtserror.NewErrorNotFound(err)
+	if status.AccountID != receiver.ID {
+		const text = "status does not belong to receiving account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, requestingAccount, status)
+	visible, err := p.filter.StatusVisible(ctx, requester, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if !visible {
-		err := fmt.Errorf("status with id %s not visible to user with id %s", status.ID, requestingAccount.ID)
-		return nil, gtserror.NewErrorNotFound(err)
+		const text = "status not vising to requesting account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
 	statusable, err := p.converter.StatusToAS(ctx, status)
 	if err != nil {
+		err := gtserror.Newf("error converting status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	data, err := ap.Serialize(statusable)
 	if err != nil {
+		err := gtserror.Newf("error serializing status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return data, nil
 }
 
-// GetStatus handles the getting of a fedi/activitypub representation of replies to a status, performing appropriate
-// authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) StatusRepliesGet(ctx context.Context, requestedUsername string, requestedStatusID string, page bool, onlyOtherAccounts bool, onlyOtherAccountsSet bool, minID string) (interface{}, gtserror.WithCode) {
-	requestedAccount, requestingAccount, errWithCode := p.authenticate(ctx, requestedUsername)
+// GetStatus handles the getting of a fedi/activitypub representation of replies to a status,
+// performing appropriate authentication before returning a JSON serializable interface to the caller.
+func (p *Processor) StatusRepliesGet(
+	ctx context.Context,
+	requestedUser string,
+	statusID string,
+	page *paging.Page,
+	onlyOtherAccounts bool,
+) (interface{}, gtserror.WithCode) {
+	// Authenticate the incoming request, getting related user accounts.
+	requester, receiver, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	status, err := p.state.DB.GetStatusByID(ctx, requestedStatusID)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(err)
+	// Get target status and ensure visible to requester.
+	status, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requester,
+		statusID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	if status.AccountID != requestedAccount.ID {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s does not belong to account with id %s", status.ID, requestedAccount.ID))
+	// Ensure status is by receiving account.
+	if status.AccountID != receiver.ID {
+		const text = "status does not belong to receiving account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, requestedAccount, status)
+	// Parse replies collection ID from status' URI with onlyOtherAccounts param.
+	onlyOtherAccStr := "only_other_accounts=" + strconv.FormatBool(onlyOtherAccounts)
+	collectionID, err := url.Parse(status.URI + "/replies?" + onlyOtherAccStr)
 	if err != nil {
+		err := gtserror.Newf("error parsing status uri %s: %w", status.URI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-	if !visible {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("status with id %s not visible to user with id %s", status.ID, requestingAccount.ID))
+
+	// Get *all* available replies for status (i.e. without paging).
+	replies, err := p.state.DB.GetStatusReplies(ctx, status.ID)
+	if err != nil {
+		err := gtserror.Newf("error getting status replies: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	var data map[string]interface{}
+	if onlyOtherAccounts {
+		// If 'onlyOtherAccounts' is set, drop all by original status author.
+		replies = slices.DeleteFunc(replies, func(reply *gtsmodel.Status) bool {
+			return reply.AccountID == status.AccountID
+		})
+	}
 
-	// now there are three scenarios:
-	// 1. we're asked for the whole collection and not a page -- we can just return the collection, with no items, but a link to 'first' page.
-	// 2. we're asked for a page but only_other_accounts has not been set in the query -- so we should just return the first page of the collection, with no items.
-	// 3. we're asked for a page, and only_other_accounts has been set, and min_id has optionally been set -- so we need to return some actual items!
-	switch {
-	case !page:
-		// scenario 1
-		// get the collection
-		collection, err := p.converter.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
+	// Reslice replies dropping all those invisible to requester.
+	replies, err = p.filter.StatusesVisible(ctx, requester, replies)
+	if err != nil {
+		err := gtserror.Newf("error filtering status replies: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	var obj vocab.Type
+
+	// Start AS collection params.
+	var params ap.CollectionParams
+	params.ID = collectionID
+	params.Total = len(replies)
+
+	if page == nil {
+		// i.e. paging disabled, return collection
+		// that links to first page (i.e. path below).
+		params.Query = make(url.Values, 1)
+		params.Query.Set("limit", "20") // enables paging
+		obj = ap.NewASOrderedCollection(params)
+	} else {
+		// i.e. paging enabled
+
+		// Page and reslice the replies according to given parameters.
+		replies = paging.Page_PageFunc(page, replies, func(reply *gtsmodel.Status) string {
+			return reply.ID
+		})
+
+		// page ID values.
+		var lo, hi string
+
+		if len(replies) > 0 {
+			// Get the lowest and highest
+			// ID values, used for paging.
+			lo = replies[len(replies)-1].ID
+			hi = replies[0].ID
 		}
 
-		data, err = ap.Serialize(collection)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-	case page && !onlyOtherAccountsSet:
-		// scenario 2
-		// get the collection
-		collection, err := p.converter.StatusToASRepliesCollection(ctx, status, onlyOtherAccounts)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		// but only return the first page
-		data, err = ap.Serialize(collection.GetActivityStreamsFirst().GetActivityStreamsCollectionPage())
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-	default:
-		// scenario 3
-		// get immediate children
-		replies, err := p.state.DB.GetStatusChildren(ctx, status, true, minID)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+		// Start AS collection page params.
+		var pageParams ap.CollectionPageParams
+		pageParams.CollectionParams = params
 
-		// filter children and extract URIs
-		replyURIs := map[string]*url.URL{}
-		for _, r := range replies {
-			// only show public or unlocked statuses as replies
-			if r.Visibility != gtsmodel.VisibilityPublic && r.Visibility != gtsmodel.VisibilityUnlocked {
-				continue
-			}
+		// Current page details.
+		pageParams.Current = page
+		pageParams.Count = len(replies)
 
-			// respect onlyOtherAccounts parameter
-			if onlyOtherAccounts && r.AccountID == requestedAccount.ID {
-				continue
-			}
+		// Set linked next/prev parameters.
+		pageParams.Next = page.Next(lo, hi)
+		pageParams.Prev = page.Prev(lo, hi)
 
-			// only show replies that the status owner can see
-			visibleToStatusOwner, err := p.filter.StatusVisible(ctx, requestedAccount, r)
-			if err != nil || !visibleToStatusOwner {
-				continue
-			}
+		// Set the collection item property builder function.
+		pageParams.Append = func(i int, itemsProp ap.ItemsPropertyBuilder) {
+			// Get follower URI at index.
+			status := replies[i]
+			uri := status.URI
 
-			// only show replies that the requester can see
-			visibleToRequester, err := p.filter.StatusVisible(ctx, requestingAccount, r)
-			if err != nil || !visibleToRequester {
-				continue
-			}
-
-			rURI, err := url.Parse(r.URI)
+			// Parse URL object from URI.
+			iri, err := url.Parse(uri)
 			if err != nil {
-				continue
+				log.Errorf(ctx, "error parsing status uri %s: %v", uri, err)
+				return
 			}
 
-			replyURIs[r.ID] = rURI
+			// Add to item property.
+			itemsProp.AppendIRI(iri)
 		}
 
-		repliesPage, err := p.converter.StatusURIsToASRepliesPage(ctx, status, onlyOtherAccounts, minID, replyURIs)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		data, err = ap.Serialize(repliesPage)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+		// Build AS collection page object from params.
+		obj = ap.NewASOrderedCollectionPage(pageParams)
+	}
+
+	// Serialized the prepared object.
+	data, err := ap.Serialize(obj)
+	if err != nil {
+		err := gtserror.Newf("error serializing: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return data, nil

@@ -110,6 +110,10 @@ EXPECT=$(cat << "EOF"
     "media-image-max-size": 420,
     "media-remote-cache-days": 30,
     "media-video-max-size": 420,
+    "metrics-auth-enabled": false,
+    "metrics-auth-password": "",
+    "metrics-auth-username": "",
+    "metrics-enabled": false,
     "oidc-admin-groups": [
         "steamy"
     ],
@@ -219,6 +223,8 @@ GTS_MEDIA_DESCRIPTION_MAX_CHARS=5000 \
 GTS_MEDIA_REMOTE_CACHE_DAYS=30 \
 GTS_MEDIA_EMOJI_LOCAL_MAX_SIZE=420 \
 GTS_MEDIA_EMOJI_REMOTE_MAX_SIZE=420 \
+GTS_METRICS_AUTH_ENABLED=false \
+GTS_METRICS_ENABLED=false \
 GTS_STORAGE_BACKEND='local' \
 GTS_STORAGE_LOCAL_BASE_PATH='/root/store' \
 GTS_STORAGE_S3_ACCESS_KEY='minio' \

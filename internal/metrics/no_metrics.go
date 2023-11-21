@@ -15,29 +15,29 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package paging
+//go:build nometrics
 
-// Reverse will reverse the given input slice.
-func Reverse(in []string) []string {
-	var (
-		// Start at front.
-		i = 0
+package metrics
 
-		// Start at back.
-		j = len(in) - 1
-	)
+import (
+	"errors"
 
-	for i < j {
-		// Swap i,j index values in slice.
-		in[i], in[j] = in[j], in[i]
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/uptrace/bun"
+)
 
-		// incr + decr,
-		// looping until
-		// they meet in
-		// the middle.
-		i++
-		j--
+func Initialize() error {
+	if config.GetMetricsEnabled() {
+		return errors.New("metrics was disabled at build time")
 	}
+	return nil
+}
 
-	return in
+func InstrumentGin() gin.HandlerFunc {
+	return func(c *gin.Context) {}
+}
+
+func InstrumentBun() bun.QueryHook {
+	return nil
 }

@@ -99,6 +99,7 @@ nav:
       - "advanced/security/sandboxing.md"
       - "advanced/security/firewall.md"
     - "advanced/tracing.md"
+    - "advanced/metrics.md"
 
   - "Admin":
       - "admin/settings.md"

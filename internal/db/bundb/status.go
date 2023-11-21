@@ -18,7 +18,6 @@
 package bundb
 
 import (
-	"container/list"
 	"context"
 	"errors"
 	"time"
@@ -515,16 +514,7 @@ func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([
 	return s.GetStatusesByIDs(ctx, statusIDs)
 }
 
-func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status, onlyDirect bool) ([]*gtsmodel.Status, error) {
-	if onlyDirect {
-		// Only want the direct parent, no further than first level
-		parent, err := s.GetStatusByID(ctx, status.InReplyToID)
-		if err != nil {
-			return nil, err
-		}
-		return []*gtsmodel.Status{parent}, nil
-	}
-
+func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status) ([]*gtsmodel.Status, error) {
 	var parents []*gtsmodel.Status
 
 	for id := status.InReplyToID; id != ""; {
@@ -533,7 +523,7 @@ func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status
 			return nil, err
 		}
 
-		// Append parent to slice
+		// Append parent status to slice
 		parents = append(parents, parent)
 
 		// Set the next parent ID
@@ -543,65 +533,31 @@ func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status
 	return parents, nil
 }
 
-func (s *statusDB) GetStatusChildren(ctx context.Context, status *gtsmodel.Status, onlyDirect bool, minID string) ([]*gtsmodel.Status, error) {
-	foundStatuses := &list.List{}
-	foundStatuses.PushFront(status)
-	s.statusChildren(ctx, status, foundStatuses, onlyDirect, minID)
+func (s *statusDB) GetStatusChildren(ctx context.Context, statusID string) ([]*gtsmodel.Status, error) {
+	// Get all replies for the currently set status.
+	replies, err := s.GetStatusReplies(ctx, statusID)
+	if err != nil {
+		return nil, err
+	}
 
-	children := []*gtsmodel.Status{}
-	for e := foundStatuses.Front(); e != nil; e = e.Next() {
-		// only append children, not the overall parent status
-		entry, ok := e.Value.(*gtsmodel.Status)
-		if !ok {
-			log.Panic(ctx, "found status could not be asserted to *gtsmodel.Status")
+	// Make estimated preallocation based on direct replies.
+	children := make([]*gtsmodel.Status, 0, len(replies)*2)
+
+	for _, status := range replies {
+		// Append status to children.
+		children = append(children, status)
+
+		// Further, recursively get all children for this reply.
+		grandChildren, err := s.GetStatusChildren(ctx, status.ID)
+		if err != nil {
+			return nil, err
 		}
 
-		if entry.ID != status.ID {
-			children = append(children, entry)
-		}
+		// Append all sub children after status.
+		children = append(children, grandChildren...)
 	}
 
 	return children, nil
-}
-
-func (s *statusDB) statusChildren(ctx context.Context, status *gtsmodel.Status, foundStatuses *list.List, onlyDirect bool, minID string) {
-	childIDs, err := s.getStatusReplyIDs(ctx, status.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		log.Errorf(ctx, "error getting status %s children: %v", status.ID, err)
-		return
-	}
-
-	for _, id := range childIDs {
-		if id <= minID {
-			continue
-		}
-
-		// Fetch child with ID from database
-		child, err := s.GetStatusByID(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "error getting child status %q: %v", id, err)
-			continue
-		}
-
-	insertLoop:
-		for e := foundStatuses.Front(); e != nil; e = e.Next() {
-			entry, ok := e.Value.(*gtsmodel.Status)
-			if !ok {
-				log.Panic(ctx, "found status could not be asserted to *gtsmodel.Status")
-			}
-
-			if child.InReplyToAccountID != "" && entry.ID == child.InReplyToID {
-				foundStatuses.InsertAfter(child, e)
-				break insertLoop
-			}
-		}
-
-		// if we're not only looking for direct children of status, then do the same children-finding
-		// operation for the found child status too.
-		if !onlyDirect {
-			s.statusChildren(ctx, child, foundStatuses, false, minID)
-		}
-	}
 }
 
 func (s *statusDB) GetStatusReplies(ctx context.Context, statusID string) ([]*gtsmodel.Status, error) {

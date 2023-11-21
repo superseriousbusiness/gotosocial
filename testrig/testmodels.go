@@ -3163,7 +3163,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
-	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies")
+	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false")
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1Replies := ActivityWithSignature{
 		SignatureHeader: sig,
@@ -3179,7 +3179,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
-	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?only_other_accounts=false&page=true&min_id=01FF25D5Q0DH7CHD57CTRS6WK0")
+	target = URLMustParse(statuses["local_account_1_status_1"].URI + "/replies?min_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false")
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceLocalAccount1Status1RepliesLast := ActivityWithSignature{
 		SignatureHeader: sig,

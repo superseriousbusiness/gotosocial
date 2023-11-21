@@ -33,3 +33,11 @@ func EqualPtrs[T comparable](t1, t2 *T) bool {
 func Ptr[T any](t T) *T {
 	return &t
 }
+
+// PtrValueOr returns either value of ptr, or default.
+func PtrValueOr[T any](t *T, _default T) T {
+	if t != nil {
+		return *t
+	}
+	return _default
+}
