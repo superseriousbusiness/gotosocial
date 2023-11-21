@@ -88,7 +88,7 @@ func WriteResponse(
 	rw.Header().Set("Content-Length", strconv.FormatInt(length, 10))
 	rw.WriteHeader(statusCode)
 	if _, err := fastcopy.Copy(rw, data); err != nil {
-		log.Errorf(r.Context(), "%v", err)
+		log.Errorf(r.Context(), "error streaming: %v", err)
 	}
 }
 
@@ -104,8 +104,8 @@ func WriteResponseBytes(
 	rw.Header().Set("Content-Type", contentType)
 	rw.Header().Set("Content-Length", strconv.Itoa(len(data)))
 	rw.WriteHeader(statusCode)
-	if _, err := rw.Write(data); err != nil {
-		log.Errorf(r.Context(), "%v", err)
+	if _, err := rw.Write(data); err != nil && err != io.EOF {
+		log.Errorf(r.Context(), "error writing: %v", err)
 	}
 }
 
@@ -140,8 +140,11 @@ func EncodeJSONResponse(
 			buf.B,
 		)
 	} else {
+		// This will always be a JSON error, we
+		// can't really add any more useful context.
+		log.Error(r.Context(), err)
 
-		// any error returned here is unrecoverable,
+		// Any error returned here is unrecoverable,
 		// set Internal Server Error JSON response.
 		WriteResponseBytes(rw, r,
 			http.StatusInternalServerError,
@@ -183,8 +186,11 @@ func EncodeXMLResponse(
 			buf.B,
 		)
 	} else {
+		// This will always be an XML error, we
+		// can't really add any more useful context.
+		log.Error(r.Context(), err)
 
-		// any error returned here is unrecoverable,
+		// Any error returned here is unrecoverable,
 		// set Internal Server Error JSON response.
 		WriteResponseBytes(rw, r,
 			http.StatusInternalServerError,
@@ -222,8 +228,11 @@ func writeResponseUnknownLength(
 			buf.B,
 		)
 	} else {
+		// This will always be a reader error (non EOF),
+		// but that doesn't mean the writer is closed yet!
+		log.Errorf(r.Context(), "error reading: %v", err)
 
-		// any error returned here is unrecoverable,
+		// Any error returned here is unrecoverable,
 		// set Internal Server Error JSON response.
 		WriteResponseBytes(rw, r,
 			http.StatusInternalServerError,
