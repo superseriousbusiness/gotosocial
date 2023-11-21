@@ -210,7 +210,7 @@ func writeResponseUnknownLength(
 	buf := getBuf()
 
 	// Read content into buffer.
-	err := writeTo(buf, data)
+	_, err := buf.ReadFrom(data)
 
 	if err == nil {
 
@@ -260,27 +260,6 @@ func putBuf(buf *byteutil.Buffer) {
 
 	// release to pool.
 	bufPool.Put(buf)
-}
-
-// writeTo reads data from io.Reader into given byte buffer.
-func writeTo(w *byteutil.Buffer, r io.Reader) error {
-	if w == nil { // nil check outside loop.
-		panic("nil buffer")
-	}
-	for {
-		n, err := r.Read(w.B[len(w.B):cap(w.B)])
-		w.B = w.B[:len(w.B)+n]
-		if err != nil {
-			if err == io.EOF {
-				err = nil
-			}
-			return err
-		}
-		if len(w.B) == cap(w.B) {
-			// Increase cap (let append pick).
-			w.B = append(w.B, 0)[:len(w.B)]
-		}
-	}
 }
 
 // mustJSON converts data to JSON, else panicking.
