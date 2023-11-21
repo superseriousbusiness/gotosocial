@@ -340,6 +340,9 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
   "attributedTo": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
   "content": "hello everyone!",
+  "contentMap": {
+    "en": "hello everyone!"
+  },
   "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "published": "2021-10-20T12:40:37+02:00",
   "replies": {
@@ -379,16 +382,21 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
 	// http://joinmastodon.org/ns, https://www.w3.org/ns/activitystreams --
 	// will appear, so trim them out of the string for consistency
 	trimmed := strings.SplitAfter(string(bytes), `"attachment":`)[1]
-	suite.Equal(` {
-    "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
-    "mediaType": "image/jpeg",
-    "name": "Black and white image of some 50's style text saying: Welcome On Board",
-    "type": "Document",
-    "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
-  },
+	suite.Equal(` [
+    {
+      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
+      "mediaType": "image/jpeg",
+      "name": "Black and white image of some 50's style text saying: Welcome On Board",
+      "type": "Document",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
+    }
+  ],
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": "http://localhost:8080/users/admin/followers",
   "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "contentMap": {
+    "en": "hello world! #welcome ! first post on the instance :rainbow: !"
+  },
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "published": "2021-10-20T11:36:45Z",
   "replies": {
@@ -446,16 +454,21 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
 	// http://joinmastodon.org/ns, https://www.w3.org/ns/activitystreams --
 	// will appear, so trim them out of the string for consistency
 	trimmed := strings.SplitAfter(string(bytes), `"attachment":`)[1]
-	suite.Equal(` {
-    "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
-    "mediaType": "image/jpeg",
-    "name": "Black and white image of some 50's style text saying: Welcome On Board",
-    "type": "Document",
-    "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
-  },
+	suite.Equal(` [
+    {
+      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
+      "mediaType": "image/jpeg",
+      "name": "Black and white image of some 50's style text saying: Welcome On Board",
+      "type": "Document",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
+    }
+  ],
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": "http://localhost:8080/users/admin/followers",
   "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "contentMap": {
+    "en": "hello world! #welcome ! first post on the instance :rainbow: !"
+  },
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "published": "2021-10-20T11:36:45Z",
   "replies": {
@@ -519,6 +532,9 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
     "http://localhost:8080/users/the_mighty_zork"
   ],
   "content": "hi @the_mighty_zork welcome to the instance!",
+  "contentMap": {
+    "en": "hi @the_mighty_zork welcome to the instance!"
+  },
   "id": "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
   "inReplyTo": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "published": "2021-11-20T13:32:16Z",
