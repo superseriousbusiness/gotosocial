@@ -512,15 +512,16 @@ func NormalizeOutgoingObjectProp(item WithObject, rawJSON map[string]interface{}
 		}
 
 		var err error
+
+		// In the below accountable and statusable serialization,
+		// `@context` will be included in the wrapping type already,
+		// so we shouldn't also include it in the object itself.
 		switch tn := objectType.GetTypeName(); {
 		case IsAccountable(tn):
-			// @context will be included in wrapping type already,
-			// we don't need to include it in the object itself.
 			objectSer, err = serializeAccountable(objectType, false)
 
 		case IsStatusable(tn):
-			// @context will be included in wrapping type already,
-			// we don't need to include it in the object itself.
+			// IsStatusable includes Pollable as well.
 			objectSer, err = serializeStatusable(objectType, false)
 
 		default:
