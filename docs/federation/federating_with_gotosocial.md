@@ -539,7 +539,7 @@ If a match is not found, keep content from `content` and mark language as unknow
 
 If `contentMap` has only one entry, take the language tag and content value as the "primary" language and content.
 
-If `contentMap` has multiple entries, we have no way of determining the preferred content and language of the post, since map order is not deterministic. In this case, pick a language and content entry at random as the "primary" language and content.
+If `contentMap` has multiple entries, we have no way of determining the intended preferred content and language of the post, since map order is not deterministic. In this case, try to pick a language and content entry that matches one of the languages configured in the GoToSocial instance's [configured languages](../configuration/instance.md). If no language can be matched this way, pick a language and content entry from the `contentMap` at random as the "primary" language and content.
 
 !!! Note
     In all of the above cases, if the inferred language cannot be parsed as a valid BCP47 language tag, language will fall back to unknown.
