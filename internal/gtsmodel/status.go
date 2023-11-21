@@ -237,3 +237,14 @@ const (
 	// VisibilityDefault is used when no other setting can be found.
 	VisibilityDefault Visibility = VisibilityUnlocked
 )
+
+// Content models the simple string content
+// of a status along with its ContentMap,
+// which contains content entries keyed by
+// BCP47 language tag.
+//
+// Content and/or ContentMap may be zero/nil.
+type Content struct {
+	Content    string
+	ContentMap map[string]string
+}

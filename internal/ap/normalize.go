@@ -20,11 +20,12 @@ package ap
 import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 /*
-	NORMALIZE INCOMING
+	INCOMING NORMALIZATION
 	The below functions should be called to normalize the content
 	of messages *COMING INTO* GoToSocial via the federation API,
 	either as the result of delivery from a remote instance to this
@@ -84,39 +85,84 @@ func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interfa
 	}
 }
 
-// NormalizeIncomingContent replaces the Content of the given item
-// with the sanitized version of the raw 'content' value from the
-// raw json object map.
+// normalizeContent normalizes the given content
+// string by sanitizing its HTML and minimizing it.
 //
-// noop if there was no content in the json object map or the
-// content was not a plain string.
-func NormalizeIncomingContent(item WithContent, rawJSON map[string]interface{}) {
-	rawContent, ok := rawJSON["content"]
-	if !ok {
-		// No content in rawJSON.
-		// TODO: In future we might also
-		// look for "contentMap" property.
-		return
+// Noop for non-string content.
+func normalizeContent(rawContent interface{}) string {
+	if rawContent == nil {
+		// Nothing to fix.
+		return ""
 	}
 
 	content, ok := rawContent.(string)
 	if !ok {
-		// Not interested in content arrays.
-		return
+		// Not interested in
+		// content slices etc.
+		return ""
 	}
 
-	// Content should be HTML encoded by default:
+	if content == "" {
+		// Nothing to fix.
+		return ""
+	}
+
+	// Content entries should be HTML encoded by default:
 	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-content
 	//
 	// TODO: sanitize differently based on mediaType.
 	// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-mediatype
 	content = text.SanitizeToHTML(content)
 	content = text.MinifyHTML(content)
+	return content
+}
 
-	// Set normalized content property from the raw string;
-	// this replaces any existing content property on the item.
+// NormalizeIncomingContent replaces the Content property of the given
+// item with the normalized versions of the raw 'content' and 'contentMap'
+// values from the raw json object map.
+//
+// noop if there was no 'content' or 'contentMap' in the json object map.
+func NormalizeIncomingContent(item WithContent, rawJSON map[string]interface{}) {
+	var (
+		rawContent    = rawJSON["content"]
+		rawContentMap = rawJSON["contentMap"]
+	)
+
+	if rawContent == nil &&
+		rawContentMap == nil {
+		// Nothing to normalize,
+		// leave no content on item.
+		return
+	}
+
+	// Create wrapper for normalized content.
 	contentProp := streams.NewActivityStreamsContentProperty()
-	contentProp.AppendXMLSchemaString(content)
+
+	// Fix 'content' if applicable.
+	content := normalizeContent(rawContent)
+	if content != "" {
+		contentProp.AppendXMLSchemaString(content)
+	}
+
+	// Fix 'contentMap' if applicable.
+	contentMap, ok := rawContentMap.(map[string]interface{})
+	if ok {
+		rdfLangs := make(map[string]string, len(contentMap))
+
+		for lang, rawContent := range contentMap {
+			content := normalizeContent(rawContent)
+			if content != "" {
+				rdfLangs[lang] = content
+			}
+		}
+
+		if len(rdfLangs) != 0 {
+			contentProp.AppendRDFLangString(rdfLangs)
+		}
+	}
+
+	// Replace any existing content property
+	// on the item with normalized version.
 	item.SetActivityStreamsContent(contentProp)
 }
 
@@ -298,4 +344,205 @@ func NormalizeIncomingPollOptions(item WithOneOf, rawJSON map[string]interface{}
 
 		NormalizeIncomingName(choiceable, rawChoice)
 	}
+}
+
+/*
+	OUTGOING NORMALIZATION
+	The below functions should be called to normalize the content
+	of messages *GOING OUT OF* GoToSocial via the federation API,
+	either as the result of delivery to a remote instance from this
+	instance, or as a result of a remote instance doing an http call
+	to us to dereference something.
+*/
+
+// NormalizeOutgoingAttachmentProp replaces single-entry Attachment objects with
+// single-entry arrays, for better compatibility with other AP implementations.
+//
+// Ie:
+//
+//	"attachment": {
+//	  ...
+//	}
+//
+// becomes:
+//
+//	"attachment": [
+//	  {
+//	    ...
+//	  }
+//	]
+//
+// Noop for items with no attachments, or with attachments that are already a slice.
+func NormalizeOutgoingAttachmentProp(item WithAttachment, rawJSON map[string]interface{}) {
+	attachment, ok := rawJSON["attachment"]
+	if !ok {
+		// No 'attachment',
+		// nothing to change.
+		return
+	}
+
+	if _, ok := attachment.([]interface{}); ok {
+		// Already slice,
+		// nothing to change.
+		return
+	}
+
+	// Coerce single-object to slice.
+	rawJSON["attachment"] = []interface{}{attachment}
+}
+
+// NormalizeOutgoingContentProp normalizes go-fed's funky formatting of content and
+// contentMap properties to a format better understood by other AP implementations.
+//
+// Ie., incoming "content" property like this:
+//
+//	"content": [
+//	  "hello world!",
+//	  {
+//	    "en": "hello world!"
+//	  }
+//	]
+//
+// Is unpacked to:
+//
+//	"content": "hello world!",
+//	"contentMap": {
+//	  "en": "hello world!"
+//	}
+//
+// Noop if neither content nor contentMap are set.
+func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface{}) {
+	contentProp := item.GetActivityStreamsContent()
+	if contentProp == nil {
+		// Nothing to do,
+		// bail early.
+		return
+	}
+
+	contentPropLen := contentProp.Len()
+	if contentPropLen == 0 {
+		// Nothing to do,
+		// bail early.
+		return
+	}
+
+	var (
+		content    string
+		contentMap map[string]string
+	)
+
+	for iter := contentProp.Begin(); iter != contentProp.End(); iter = iter.Next() {
+		switch {
+		case iter.IsRDFLangString() &&
+			contentMap == nil:
+			contentMap = iter.GetRDFLangString()
+
+		case content == "" &&
+			iter.IsXMLSchemaString():
+			content = iter.GetXMLSchemaString()
+		}
+	}
+
+	if content != "" {
+		rawJSON["content"] = content
+	} else {
+		delete(rawJSON, "content")
+	}
+
+	if contentMap != nil {
+		rawJSON["contentMap"] = contentMap
+	} else {
+		delete(rawJSON, "contentMap")
+	}
+}
+
+// NormalizeOutgoingObjectProp normalizes each Object entry in the rawJSON of the given
+// item by calling custom serialization / normalization functions on them in turn.
+//
+// This function also unnests single-entry arrays, so that:
+//
+//	"object": [
+//	  {
+//	    ...
+//	  }
+//	]
+//
+// Becomes:
+//
+//	"object": {
+//	  ...
+//	}
+//
+// Noop for each Object entry that isn't an Accountable or Statusable.
+func NormalizeOutgoingObjectProp(item WithObject, rawJSON map[string]interface{}) error {
+	objectProp := item.GetActivityStreamsObject()
+	if objectProp == nil {
+		// Nothing to do,
+		// bail early.
+		return nil
+	}
+
+	objectPropLen := objectProp.Len()
+	if objectPropLen == 0 {
+		// Nothing to do,
+		// bail early.
+		return nil
+	}
+
+	// The thing we already serialized has objects
+	// on it, so we should see if we need to custom
+	// serialize any of those objects, and replace
+	// them on the data map as necessary.
+	objects := make([]interface{}, 0, objectPropLen)
+	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
+		if iter.IsIRI() {
+			// Plain IRIs don't need custom serialization.
+			objects = append(objects, iter.GetIRI().String())
+			continue
+		}
+
+		var (
+			objectType = iter.GetType()
+			objectSer  map[string]interface{}
+		)
+
+		if objectType == nil {
+			// This is awkward.
+			return gtserror.Newf("could not resolve object iter %T to vocab.Type", iter)
+		}
+
+		var err error
+
+		// In the below accountable and statusable serialization,
+		// `@context` will be included in the wrapping type already,
+		// so we shouldn't also include it in the object itself.
+		switch tn := objectType.GetTypeName(); {
+		case IsAccountable(tn):
+			objectSer, err = serializeAccountable(objectType, false)
+
+		case IsStatusable(tn):
+			// IsStatusable includes Pollable as well.
+			objectSer, err = serializeStatusable(objectType, false)
+
+		default:
+			// No custom serializer for this type; serialize as normal.
+			objectSer, err = objectType.Serialize()
+		}
+
+		if err != nil {
+			return err
+		}
+
+		objects = append(objects, objectSer)
+	}
+
+	if objectPropLen == 1 {
+		// Unnest single object.
+		rawJSON["object"] = objects[0]
+	} else {
+		// Array of objects.
+		rawJSON["object"] = objects
+	}
+
+	return nil
 }

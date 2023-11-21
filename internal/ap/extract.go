@@ -631,27 +631,34 @@ func ExtractPublicKey(i WithPublicKey) (
 	return nil, nil, nil, gtserror.New("couldn't find public key")
 }
 
-// ExtractContent returns a string representation of the
-// given interface's Content property, or an empty string
-// if no Content is found.
-func ExtractContent(i WithContent) string {
-	contentProperty := i.GetActivityStreamsContent()
-	if contentProperty == nil {
-		return ""
+// ExtractContent returns an intermediary representation of
+// the given interface's Content and/or ContentMap property.
+func ExtractContent(i WithContent) gtsmodel.Content {
+	content := gtsmodel.Content{}
+
+	contentProp := i.GetActivityStreamsContent()
+	if contentProp == nil {
+		// No content at all.
+		return content
 	}
 
-	for iter := contentProperty.Begin(); iter != contentProperty.End(); iter = iter.Next() {
+	for iter := contentProp.Begin(); iter != contentProp.End(); iter = iter.Next() {
 		switch {
-		// Content may be parsed as IRI, depending on
-		// how it's formatted, so account for this.
-		case iter.IsXMLSchemaString():
-			return iter.GetXMLSchemaString()
-		case iter.IsIRI():
-			return iter.GetIRI().String()
+		case iter.IsRDFLangString() &&
+			len(content.ContentMap) == 0:
+			content.ContentMap = iter.GetRDFLangString()
+
+		case iter.IsXMLSchemaString() &&
+			content.Content == "":
+			content.Content = iter.GetXMLSchemaString()
+
+		case iter.IsIRI() &&
+			content.Content == "":
+			content.Content = iter.GetIRI().String()
 		}
 	}
 
-	return ""
+	return content
 }
 
 // ExtractAttachments attempts to extract barebones MediaAttachment objects from given AS interface type.

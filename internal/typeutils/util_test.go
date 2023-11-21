@@ -18,7 +18,12 @@
 package typeutils
 
 import (
+	"context"
 	"testing"
+
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/language"
 )
 
 func TestMisskeyReportContentURLs1(t *testing.T) {
@@ -42,5 +47,114 @@ misskey-formatted`
 	urls := misskeyReportInlineURLs(content)
 	if l := len(urls); l != 0 {
 		t.Fatalf("wanted 0 urls, got %d", l)
+	}
+}
+
+func TestContentToContentLanguage(t *testing.T) {
+	type testcase struct {
+		content           gtsmodel.Content
+		instanceLanguages language.Languages
+		expectedContent   string
+		expectedLang      string
+	}
+
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	for i, testcase := range []testcase{
+		{
+			content: gtsmodel.Content{
+				Content:    "hello world",
+				ContentMap: nil,
+			},
+			expectedContent: "hello world",
+			expectedLang:    "",
+		},
+		{
+			content: gtsmodel.Content{
+				Content: "",
+				ContentMap: map[string]string{
+					"en": "hello world",
+				},
+			},
+			expectedContent: "hello world",
+			expectedLang:    "en",
+		},
+		{
+			content: gtsmodel.Content{
+				Content: "bonjour le monde",
+				ContentMap: map[string]string{
+					"en": "hello world",
+					"fr": "bonjour le monde",
+				},
+			},
+			expectedContent: "bonjour le monde",
+			expectedLang:    "fr",
+		},
+		{
+			content: gtsmodel.Content{
+				Content: "bonjour le monde",
+				ContentMap: map[string]string{
+					"en": "hello world",
+				},
+			},
+			expectedContent: "bonjour le monde",
+			expectedLang:    "",
+		},
+		{
+			content: gtsmodel.Content{
+				Content: "",
+				ContentMap: map[string]string{
+					"en": "hello world",
+					"ru": "Привет, мир!",
+					"nl": "hallo wereld!",
+					"ca": "Hola món!",
+				},
+			},
+			instanceLanguages: language.Languages{
+				{TagStr: "en"},
+				{TagStr: "ca"},
+			},
+			expectedContent: "hello world",
+			expectedLang:    "en",
+		},
+		{
+			content: gtsmodel.Content{
+				Content: "",
+				ContentMap: map[string]string{
+					"en": "hello world",
+					"ru": "Привет, мир!",
+					"nl": "hallo wereld!",
+					"ca": "Hola món!",
+				},
+			},
+			instanceLanguages: language.Languages{
+				{TagStr: "ca"},
+				{TagStr: "en"},
+			},
+			expectedContent: "Hola món!",
+			expectedLang:    "ca",
+		},
+	} {
+		langs, err := language.InitLangs(testcase.instanceLanguages.TagStrs())
+		if err != nil {
+			t.Fatal(err)
+		}
+		config.SetInstanceLanguages(langs)
+
+		content, language := ContentToContentLanguage(ctx, testcase.content)
+		if content != testcase.expectedContent {
+			t.Errorf(
+				"test %d expected content '%s' got '%s'",
+				i, testcase.expectedContent, content,
+			)
+		}
+
+		if language != testcase.expectedLang {
+			t.Errorf(
+				"test %d expected language '%s' got '%s'",
+				i, testcase.expectedLang, language,
+			)
+		}
 	}
 }
