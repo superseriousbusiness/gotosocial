@@ -709,6 +709,7 @@ func (c *Converter) StatusToWebStatus(
 
 			webPollOption := apimodel.WebPollOption{
 				PollOption:   option,
+				PollID:       poll.ID,
 				Emojis:       webStatus.Emojis,
 				LanguageTag:  webStatus.LanguageTag,
 				VoteShare:    voteShare,

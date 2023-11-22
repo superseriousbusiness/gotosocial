@@ -113,6 +113,9 @@ type PollVoteRequest struct {
 type WebPollOption struct {
 	PollOption
 
+	// ID of the parent poll.
+	PollID string
+
 	// Emojis contained on parent poll.
 	Emojis []Emoji
 

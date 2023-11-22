@@ -38,8 +38,8 @@
 		<ul class="poll-options">
 		{{- range $index, $pollOption := .WebPollOptions }}
 			<li class="poll-option">
-				<label aria-hidden="true" for="option-{{- increment $index -}}" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (noescape $pollOption.Title) -}}</label>
-				<meter aria-hidden="true" id="option-{{- increment $index -}}" min="0" max="100" value="{{- $pollOption.VoteShare -}}">{{- $pollOption.VoteShare -}}&#37;</meter>
+				<label aria-hidden="true" for="poll-{{- $pollOption.PollID -}}-option-{{- increment $index -}}" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (noescape $pollOption.Title) -}}</label>
+				<meter aria-hidden="true" id="poll-{{- $pollOption.PollID -}}-option-{{- increment $index -}}" min="0" max="100" value="{{- $pollOption.VoteShare -}}">{{- $pollOption.VoteShare -}}&#37;</meter>
 				<div class="sr-only">Option {{ increment $index }}:&nbsp;<span lang="{{ .LanguageTag.TagStr }}">{{ emojify .Emojis (noescape $pollOption.Title) -}}</span></div>
 				<div class="poll-vote-summary">
 					<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
