@@ -1,0 +1,57 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- /*
+		Template for rendering a web view of a poll.
+		To use this template, pass a web view status into it.
+*/ -}}
+
+	<figure class="poll">
+		<figcaption class="poll-info">
+			<span class="poll-expiry">
+				{{- if .Poll.Expired -}}
+					Poll closed&nbsp;{{- .Poll.ExpiresAt | timestampPrecise -}}
+				{{- else if .Poll.ExpiresAt -}}
+					Poll open until&nbsp;{{- .Poll.ExpiresAt | timestampPrecise -}}
+				{{- else -}}
+					Infinite poll (no expiry)
+				{{- end -}}
+			</span>
+			<span class="total-votes">Total votes: {{ .Poll.VotesCount }}</span>
+		</figcaption>
+		<ul class="poll-options">
+		{{- range $index, $pollOption := .WebPollOptions }}
+			<li class="poll-option">
+				<label aria-hidden="true" for="option-{{- increment $index -}}" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (noescape $pollOption.Title) -}}</label>
+				<meter aria-hidden="true" id="option-{{- increment $index -}}" min="0" max="100" value="{{- $pollOption.VoteShare -}}">{{- $pollOption.VoteShare -}}&#37;</meter>
+				<div class="sr-only">Option {{ increment $index }}:&nbsp;<span lang="{{ .LanguageTag.TagStr }}">{{ emojify .Emojis (noescape $pollOption.Title) -}}</span></div>
+				<div class="poll-vote-summary">
+					<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
+					<span class="poll-vote-count">
+						{{- if eq $pollOption.VotesCount 1 -}}
+							{{- $pollOption.VotesCount }} vote
+						{{- else -}}
+							{{- $pollOption.VotesCount }} votes
+						{{- end -}}
+					</span>
+				</div>
+			</li>
+		{{- end }}
+		</ul>
+	</figure>

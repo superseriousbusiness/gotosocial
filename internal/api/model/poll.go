@@ -17,6 +17,8 @@
 
 package model
 
+import "github.com/superseriousbusiness/gotosocial/internal/language"
+
 // Poll represents a poll attached to a status.
 //
 // swagger:model poll
@@ -113,6 +115,9 @@ type WebPollOption struct {
 
 	// Emojis contained on parent poll.
 	Emojis []Emoji
+
+	// LanguageTag of parent status.
+	LanguageTag *language.Language
 
 	// Share of total votes as a percentage.
 	VoteShare float32

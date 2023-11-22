@@ -415,7 +415,6 @@ main {
 				gap: 0.1rem;
 	
 				label {
-					font-weight: bold;
 					cursor: default;
 				}
 	
@@ -423,7 +422,7 @@ main {
 					width: 100%;
 				}
 	
-				.poll-vote-human-readable {
+				.poll-vote-summary {
 					display: flex;
 					flex-wrap: wrap;
 					justify-content: space-between;

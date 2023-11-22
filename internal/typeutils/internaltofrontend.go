@@ -683,7 +683,7 @@ func (c *Converter) StatusToWebStatus(
 		// format them for easier template consumption.
 		totalVotes := poll.VotesCount
 
-		webPollCounts := make([]apimodel.WebPollOption, len(poll.Options))
+		webPollOptions := make([]apimodel.WebPollOption, len(poll.Options))
 		for i, option := range poll.Options {
 			var voteShare float32
 			if totalVotes != 0 &&
@@ -707,16 +707,17 @@ func (c *Converter) StatusToWebStatus(
 			voteShareStr := fmt.Sprintf("%.2f", voteShare)
 			voteShareStr = strings.TrimSuffix(voteShareStr, ".00")
 
-			webPollCount := apimodel.WebPollOption{
+			webPollOption := apimodel.WebPollOption{
 				PollOption:   option,
 				Emojis:       webStatus.Emojis,
+				LanguageTag:  webStatus.LanguageTag,
 				VoteShare:    voteShare,
 				VoteShareStr: voteShareStr,
 			}
-			webPollCounts[i] = webPollCount
+			webPollOptions[i] = webPollOption
 		}
 
-		webStatus.WebPollOptions = webPollCounts
+		webStatus.WebPollOptions = webPollOptions
 	}
 
 	return webStatus, nil
