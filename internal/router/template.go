@@ -168,6 +168,10 @@ func acctInstance(acct string) string {
 	return ""
 }
 
+func increment(i int) int {
+	return i + 1
+}
+
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"escape":           escape,
@@ -180,5 +184,6 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"timestampPrecise": timestampPrecise,
 		"emojify":          emojify,
 		"acctInstance":     acctInstance,
+		"increment":        increment,
 	})
 }

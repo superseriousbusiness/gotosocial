@@ -678,6 +678,48 @@ func (c *Converter) StatusToWebStatus(
 		}
 	}
 
+	if poll := webStatus.Poll; poll != nil {
+		// Calculate vote share of each poll option and
+		// format them for easier template consumption.
+		totalVotes := poll.VotesCount
+
+		webPollOptions := make([]apimodel.WebPollOption, len(poll.Options))
+		for i, option := range poll.Options {
+			var voteShare float32
+			if totalVotes != 0 &&
+				option.VotesCount != 0 {
+				voteShare = (float32(option.VotesCount) / float32(totalVotes)) * 100
+			}
+
+			// Format to two decimal points and ditch any
+			// trailing zeroes.
+			//
+			// We want to be precise enough that eg., "1.54%"
+			// is distinct from "1.68%" in polls with loads
+			// of votes.
+			//
+			// However, if we've got eg., a two-option poll
+			// in which each option has half the votes, then
+			// "50%" looks better than "50.00%".
+			//
+			// By the same token, it's pointless to show
+			// "0.00%" or "100.00%".
+			voteShareStr := fmt.Sprintf("%.2f", voteShare)
+			voteShareStr = strings.TrimSuffix(voteShareStr, ".00")
+
+			webPollOption := apimodel.WebPollOption{
+				PollOption:   option,
+				Emojis:       webStatus.Emojis,
+				LanguageTag:  webStatus.LanguageTag,
+				VoteShare:    voteShare,
+				VoteShareStr: voteShareStr,
+			}
+			webPollOptions[i] = webPollOption
+		}
+
+		webStatus.WebPollOptions = webPollOptions
+	}
+
 	return webStatus, nil
 }
 
@@ -1456,10 +1498,17 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		expiresAt = util.FormatISO8601(poll.ExpiresAt)
 	}
 
-	// TODO: emojis used in poll options.
-	// For now init to empty slice to serialize as `[]`.
-	// In future inherit from parent status.
-	emojis = make([]apimodel.Emoji, 0)
+	// Try to inherit emojis
+	// from parent status.
+	if pStatus := poll.Status; pStatus != nil {
+		var err error
+		emojis, err = c.convertEmojisToAPIEmojis(ctx, pStatus.Emojis, pStatus.EmojiIDs)
+		if err != nil {
+			// Fall back to empty slice.
+			log.Errorf(ctx, "error converting emojis from parent status: %v", err)
+			emojis = make([]apimodel.Emoji, 0)
+		}
+	}
 
 	return &apimodel.Poll{
 		ID:          poll.ID,

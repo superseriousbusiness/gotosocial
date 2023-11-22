@@ -109,6 +109,7 @@
 		{{end}}
 	</div>
 	{{end}}
+	{{- if .Poll -}}{{ template "poll.tmpl" . }}{{ end -}}
 </section>
 <aside class="info">
 	<time datetime="{{.CreatedAt}}">{{.CreatedAt | timestampPrecise}}</time>

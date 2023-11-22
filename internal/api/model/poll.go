@@ -17,6 +17,8 @@
 
 package model
 
+import "github.com/superseriousbusiness/gotosocial/internal/language"
+
 // Poll represents a poll attached to a status.
 //
 // swagger:model poll
@@ -103,4 +105,23 @@ type PollVoteRequest struct {
 	// ChoicesI contains poll vote choice
 	// indices. Can be strings or integers.
 	ChoicesI []interface{} `json:"choices"`
+}
+
+// WebPollOption models a template-ready poll option entry.
+//
+// swagger:ignore
+type WebPollOption struct {
+	PollOption
+
+	// Emojis contained on parent poll.
+	Emojis []Emoji
+
+	// LanguageTag of parent status.
+	LanguageTag *language.Language
+
+	// Share of total votes as a percentage.
+	VoteShare float32
+
+	// String-formatted version of VoteShare.
+	VoteShareStr string
 }
