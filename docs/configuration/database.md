@@ -47,8 +47,7 @@ GoToSocial makes use of ULIDs (Universally Unique Lexicographically Sortable Ide
 ## Settings
 
 !!! danger "SQLite cache sizes"
-  
-  More is not necessarily better for caches. They need to be tuned to the workload. The defaults should be plenty for most instances, and you should consult with the developers in the GoToSocial Help channel on Matrix first.
+    More is not necessarily better for caches. They need to be tuned to the workload. The defaults should be plenty for most instances, and you should consult with the developers in the GoToSocial Help channel on Matrix first.
 
 ```yaml
 ############################
