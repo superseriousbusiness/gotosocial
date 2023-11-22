@@ -22,8 +22,8 @@
 		To use this template, pass a web view status into it.
 */ -}}
 
-	<figure class="poll" aria-label="Poll">
-		<figcaption class="poll-info" aria-label="Poll info">
+	<figure class="poll">
+		<figcaption class="poll-info">
 			<span class="poll-expiry">
 				{{- if .Poll.Expired -}}
 					Poll closed&nbsp;{{- .Poll.ExpiresAt | timestampPrecise -}}
@@ -35,7 +35,7 @@
 			</span>
 			<span class="total-votes">Total votes: {{ .Poll.VotesCount }}</span>
 		</figcaption>
-		<ul class="poll-options" aria-label="Poll results">
+		<ul class="poll-options">
 		{{- range $index, $pollOption := .WebPollOptions }}
 			<li class="poll-option">
 				<label aria-hidden="true" for="poll-{{- $pollOption.PollID -}}-option-{{- increment $index -}}" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (noescape $pollOption.Title) -}}</label>
