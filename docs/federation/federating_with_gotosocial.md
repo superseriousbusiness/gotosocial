@@ -543,3 +543,125 @@ If `contentMap` has multiple entries, we have no way of determining the intended
 
 !!! Note
     In all of the above cases, if the inferred language cannot be parsed as a valid BCP47 language tag, language will fall back to unknown.
+
+## Polls
+
+To federate polls in and out, GoToSocial uses the widely-adopted [ActivityStreams `Question` type](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-question). This however, as first introduced and popularised by Mastodon, does slightly vary from the ActivityStreams specification. In the specification the Question type is marked as an extension of "IntransitiveActivity", an "Activity" extension that should be passed without an "Object" and all further details contained implicitly. But in implementation it is passed as an "Object", as part of "Create" or "Update" activities.
+
+It is also worth noting that while GoToSocial internally may treat a poll as a type of status attachment, the ActivityStreams representation treats statuses and statuses-with-polls as 2 different "Object" types. Statuses are federated as "Note" types, and polls as "Question" types.
+
+The "Question" type that GoToSocial transmits (and expects to receive) contain all the typical expected "Note" properties, with a few additions. They expect the following additional (pseudo-)JSON:
+
+```json
+{
+  "@context":[
+    {
+      // toot:votersCount extension which is
+      // used to add the votersCount property.
+      "toot":"http://joinmastodon.org/ns#",
+      "votersCount":"toot:votersCount"
+    },
+  ],
+
+  // oneOf / anyOf contains the the poll options
+  // themselves. Only one of the two will be set,
+  // where "oneOf" indicates a single-choice poll
+  // and "anyOf" indicates multiple-choice.
+  //
+  // Either property contains an array of "Notes",
+  // special in that they contain a "Name" and unset
+  // "Content", where the "Name" represents the actual
+  // poll option string. Additionally they contain
+  // a "replies" property as a "Collection" type,
+  // which represents currently known vote counts
+  // for each poll option via "totalItems".
+  "oneOf" / "anyOf": [
+    {
+      "type": "Note",
+      "name": "option 1",
+      "replies": {
+        "type": "Collection",
+        "totalItems": 0
+      }
+    },
+    {
+      "type": "Note",
+      "name": "option 2",
+      "replies": {
+        "type": "Collection",
+        "totalItems": 0
+      }
+    }
+  ],
+
+  // endTime indicates the date at which this
+  // poll will close. Some server implementations
+  // support endless polls, or use "closed" to
+  // imply "endTime", so may not always be set.
+  "endTime": "2023-01-01T20:04:45Z",
+
+  // closed indicates the date at which this
+  // poll closed. Will be unset until this time.
+  "closed": "2023-01-01T20:04:45Z",
+
+  // votersCount indicates the total number of
+  // participants, which is useful in the case
+  // of multiple choice polls.
+  "votersCount": 10
+}
+```
+
+### Outgoing
+
+You can expect to receive a poll from GoToSocial in the form of a "Question", passed as the object property in either a "Create" or "Update" activity. In the case of an "Update" activity, if anything in the poll but the "votersCount", "replies.totalItems" or "closed" has changed, this indicates that the wrapping status was edited in a way that requires the attached poll to be recreated, and thus, reset. You can expect to receive these activities at the following times:
+
+- "Create": the status with attached poll was just created
+
+- "Update": the poll vote / voter counts have changed, or the poll has just ended
+
+The JSON you can expect from a GoToSocial generated "Question" can be seen in the section above's pseudo-JSON. Following from this the "endTime" field will always be set, (as we do not support creating endless polls), and the "closed" field will only be set when the poll has closed.
+
+### Incoming
+
+GoToSocial expects to receive polls in largely the same manner that it sends them out, with a little more leniency when it comes to parsing the "Question" object.
+
+- if "closed" is provided without an "endTime", this will also be taken as the value for "endTime"
+
+- if neither "closed" nor "endTime" is provided, the poll is assumed to be endless
+
+- any time an "Update" activity with "Question" provides a "closed" time, when there was previously none, the poll will be assumed to have just closed. this triggers client notifications to our local voting users
+
+## Poll Votes
+
+To federate poll votes in and out, GoToSocial uses a specifically formatted version of the [ActivityStreams "Note" type](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-note). This is widely accepted by ActivityPub servers as the way to federate poll votes, only ever attached as an "Object" to "Create" activities.
+
+The "Note" type that GoToSocial transmits (and expects to receive) specifically contains:
+- "name": [exact poll option text]
+- "content": [left unset]
+- "inReplyTo": [IRI of AS Question]
+- "attributedTo": [IRI of vote author]
+- "to": [IRI of poll author]
+
+For example:
+
+```json
+{
+  "type": "Note",
+  "name": "Option 1",
+  "inReplyTo": "https://example.org/users/bobby_tables/statuses/123456",
+  "attributedTo": "https://sample.com/users/willy_nilly",
+  "to": "https://example.org/users/bobby_tables"
+}
+```
+
+### Outgoing
+
+You can expect to receive poll votes from GoToSocial in the form of "Note" objects, as specifically described in the section above. These will only ever be sent out as the object attached to a "Create" activity.
+
+In particular, as described in the section above, GoToSocial will provide the option text in the "name" field, the "content" field unset, and the "inReplyTo" field being an IRI pointing toward a status with poll authored on your instance.
+
+### Incoming
+
+GoToSocial expects to receive poll votes in much the same manner that it sends them out. They will only ever expect to be received as part of a "Create" activity.
+
+In particular, GoToSocial recognizes votes as different to other "Note" objects by the inclusion of a "name" field, missing "content" field, and the "inReplyTo" field being an IRI pointing to a status with attached poll. If any of these conditions are not met, GoToSocial will consider the provided "Note" to be a malformed status object.
