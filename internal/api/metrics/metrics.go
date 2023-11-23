@@ -15,19 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package web
+package metrics
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-const (
-	metricsPath = "/metrics"
-	metricsUser = "metrics"
-)
+type Module struct{}
 
-func (m *Module) metricsGETHandler(c *gin.Context) {
-	h := promhttp.Handler()
-	h.ServeHTTP(c.Writer, c.Request)
+func New() *Module {
+	return &Module{}
+}
+
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, "", func(c *gin.Context) {
+		// Defer all "/metrics" handling to prom.
+		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
+	})
 }
