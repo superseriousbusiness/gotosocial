@@ -317,13 +317,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // fileserver / web templates
 	pkThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // throttle public key endpoint separately
 
-	gzip := middleware.Gzip() // applied to all except fileserver and metrics
+	gzip := middleware.Gzip() // applied to all except fileserver
 
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
 	authModule.Route(router, clLimit, clThrottle, gzip)
 	clientModule.Route(router, clLimit, clThrottle, gzip)
-	metricsModule.Route(router, clLimit, clThrottle)
+	metricsModule.Route(router, clLimit, clThrottle, gzip)
 	fileserverModule.Route(router, fsLimit, fsThrottle)
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)

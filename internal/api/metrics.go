@@ -21,6 +21,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
@@ -38,6 +39,12 @@ func (mt *Metrics) Route(r *router.Router, m ...gin.HandlerFunc) {
 	// Create new group on top level "metrics" prefix.
 	metricsGroup := r.AttachGroup("metrics")
 	metricsGroup.Use(m...)
+	metricsGroup.Use(
+		middleware.CacheControl(middleware.CacheControlConfig{
+			// Never cache metrics responses.
+			Directives: []string{"no-store"},
+		}),
+	)
 
 	// Attach basic auth if enabled.
 	if config.GetMetricsAuthEnabled() {

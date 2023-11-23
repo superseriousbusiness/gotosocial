@@ -21,18 +21,34 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type Module struct{}
+type Module struct {
+	handler http.Handler
+}
 
 func New() *Module {
-	return &Module{}
+	// Use our own gzip handler.
+	opts := promhttp.HandlerOpts{
+		DisableCompression: true,
+	}
+
+	// Instrument handler itself.
+	handler := promhttp.InstrumentMetricHandler(
+		prometheus.DefaultRegisterer,
+		promhttp.HandlerFor(prometheus.DefaultGatherer, opts),
+	)
+
+	return &Module{
+		handler: handler,
+	}
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, "", func(c *gin.Context) {
 		// Defer all "/metrics" handling to prom.
-		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
+		m.handler.ServeHTTP(c.Writer, c.Request)
 	})
 }
