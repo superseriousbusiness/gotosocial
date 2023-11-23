@@ -569,13 +569,13 @@ The "Question" type that GoToSocial transmits (and expects to receive) contain a
   // and "anyOf" indicates multiple-choice.
   //
   // Either property contains an array of "Notes",
-  // special in that they contain a "Name" and unset
-  // "Content", where the "Name" represents the actual
+  // special in that they contain a "name" and unset
+  // "content", where the "name" represents the actual
   // poll option string. Additionally they contain
   // a "replies" property as a "Collection" type,
   // which represents currently known vote counts
   // for each poll option via "totalItems".
-  "oneOf" / "anyOf": [
+  "oneOf": [ // or "anyOf"
     {
       "type": "Note",
       "name": "option 1",
