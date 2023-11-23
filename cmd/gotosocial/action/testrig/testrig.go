@@ -212,6 +212,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	var (
 		authModule        = api.NewAuth(state.DB, processor, idp, routerSession, sessionName) // auth/oauth paths
 		clientModule      = api.NewClient(state.DB, processor)                                // api client endpoints
+		metricsModule     = api.NewMetrics()                                                  // Metrics endpoints
 		fileserverModule  = api.NewFileserver(processor)                                      // fileserver endpoints
 		wellKnownModule   = api.NewWellKnown(processor)                                       // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(processor)                                        // nodeinfo endpoint
@@ -222,6 +223,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// these should be routed in order
 	authModule.Route(router)
 	clientModule.Route(router)
+	metricsModule.Route(router)
 	fileserverModule.Route(router)
 	wellKnownModule.Route(router)
 	nodeInfoModule.Route(router)

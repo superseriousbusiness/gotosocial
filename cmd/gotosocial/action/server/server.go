@@ -293,6 +293,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	var (
 		authModule        = api.NewAuth(dbService, processor, idp, routerSession, sessionName) // auth/oauth paths
 		clientModule      = api.NewClient(dbService, processor)                                // api client endpoints
+		metricsModule     = api.NewMetrics()                                                   // Metrics endpoints
 		fileserverModule  = api.NewFileserver(processor)                                       // fileserver endpoints
 		wellKnownModule   = api.NewWellKnown(processor)                                        // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(processor)                                         // nodeinfo endpoint
@@ -322,6 +323,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// apply throttling *after* rate limiting
 	authModule.Route(router, clLimit, clThrottle, gzip)
 	clientModule.Route(router, clLimit, clThrottle, gzip)
+	metricsModule.Route(router, clLimit, clThrottle, gzip)
 	fileserverModule.Route(router, fsLimit, fsThrottle)
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
