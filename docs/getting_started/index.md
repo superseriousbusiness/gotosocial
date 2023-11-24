@@ -65,6 +65,31 @@ If you decide to use a VPS instead, you can spin yourself up something cheap wit
 
 [Greenhost](https://greenhost.net) is also great: it has zero CO2 emissions, but is a bit more costly.
 
+### Distribution system requirements
+
+Please make sure to check on your distribution system requirments, especially memory. Many distributions have baseline requirements and running them on a system that doesn't meet them will cause problems without further tuning and tweaking on your part.
+
+Linux:
+* [Arch Linux][archreq]: `512MB` RAM
+* [Debian][debreq]: `786MB` RAM
+* [Ubuntu][ubireq]: `1GB` RAM
+* [RHEL 8+][rhelreq] and derivatives: `1.5GB` RAM
+* [Fedora][fedorareq]: `2GB` RAM
+
+The BSD family of distributions don't document memory requirements as much, but anywhere up from `128MB` is expected to be sufficient.
+
+[archreq]: https://wiki.archlinux.org/title/installation_guide
+[debreq]: https://www.debian.org/releases/stable/amd64/ch02s05.en.html
+[ubireq]: https://ubuntu.com/server/docs/installation
+[rhelreq]: https://access.redhat.com/articles/rhel-limits#minimum-required-memory-3
+[fedorareq]: https://docs.fedoraproject.org/en-US/fedora/latest/release-notes/welcome/Hardware_Overview/#hardware_overview-specs
+
+### Swap
+
+Do not turn off swap. If you want to run without swap, ensure you understand the memory allocation patterns of the different workloads on your system and how the memory management subsystem of your kernel will behave under various conditions like memory pressure.
+
+On a small system that only runs GoToSocial with SQLite, 1GB of swap will do just fine. Follow your distribution's recommendations for swap size.
+
 ## Ports
 
 GoToSocial needs ports `80` and `443` open.
