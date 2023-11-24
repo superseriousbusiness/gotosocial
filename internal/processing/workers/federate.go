@@ -194,14 +194,13 @@ func (f *federate) CreatePollVote(ctx context.Context, poll *gtsmodel.Poll, vote
 		return err
 	}
 
-	// Convert votes to AS PollOptionable implementing type.
-	notes, err := f.converter.PollVoteToASOptions(ctx, vote)
+	// Convert vote to AS Create with vote choices as Objects.
+	create, err := f.converter.PollVoteToASCreate(ctx, vote)
 	if err != nil {
 		return gtserror.Newf("error converting to notes: %w", err)
 	}
 
-	// Send a Create activity with PollOptionables via the Actor's outbox.
-	create := typeutils.WrapPollOptionablesInCreate(vote.CreatedAt, notes...)
+	// Send the Create via the Actor's outbox.
 	if _, err := f.FederatingActor().Send(ctx, outboxIRI, create); err != nil {
 		return gtserror.Newf("error sending Create activity via outbox %s: %w", outboxIRI, err)
 	}

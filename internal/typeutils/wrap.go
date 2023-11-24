@@ -19,7 +19,6 @@ package typeutils
 
 import (
 	"net/url"
-	"time"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -88,50 +87,6 @@ func (c *Converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, origi
 func WrapStatusableInCreate(status ap.Statusable, iriOnly bool) vocab.ActivityStreamsCreate {
 	create := streams.NewActivityStreamsCreate()
 	wrapStatusableInActivity(create, status, iriOnly)
-	return create
-}
-
-func WrapPollOptionablesInCreate(
-	publishedAt time.Time,
-	options ...ap.PollOptionable,
-) vocab.ActivityStreamsCreate {
-	if len(options) == 0 {
-		panic("no options")
-	}
-
-	// Extract attributedTo IRI from any option.
-	attribTos := ap.GetAttributedTo(options[0])
-	if len(attribTos) != 1 {
-		panic("invalid attributedTo count")
-	}
-
-	// Extract target status IRI from any option.
-	replyTos := ap.GetInReplyTo(options[0])
-	if len(replyTos) != 1 {
-		panic("invalid inReplyTo count")
-	}
-
-	// Allocate create activity and copy over 'To' property.
-	create := streams.NewActivityStreamsCreate()
-	ap.AppendTo(create, ap.GetTo(options[0])...)
-
-	// Activity ID formatted as: {$voterIRI}/activity#vote/{$statusIRI}.
-	id := attribTos[0].String() + "/activity#vote/" + replyTos[0].String()
-	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), id)
-
-	// Set Create actor appropriately.
-	ap.AppendActor(create, attribTos...)
-
-	// Set publish time for activity.
-	ap.SetPublished(create, publishedAt)
-
-	// Append each poll option as object to activity.
-	// Append actor to Create just once.
-	for _, option := range options {
-		status, _ := ap.ToStatusable(option)
-		appendStatusableToActivity(create, status, false)
-	}
-
 	return create
 }
 
