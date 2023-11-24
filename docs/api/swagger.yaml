@@ -921,6 +921,46 @@ definitions:
         type: object
         x-go-name: Card
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    debugAPUrlResponse:
+        description: |-
+            DebugAPUrlResponse provides detailed debug
+            information for an AP URL dereference request.
+        properties:
+            request_headers:
+                additionalProperties:
+                    items:
+                        type: string
+                    type: array
+                description: HTTP headers used in the outgoing request.
+                type: object
+                x-go-name: RequestHeaders
+            request_url:
+                description: Remote AP URL that was requested.
+                type: string
+                x-go-name: RequestURL
+            response_body:
+                description: |-
+                    Body returned from the remote instance.
+                    Will be stringified bytes; may be JSON,
+                    may be an error, may be both!
+                type: string
+                x-go-name: ResponseBody
+            response_code:
+                description: HTTP response code returned from the remote instance.
+                format: int64
+                type: integer
+                x-go-name: ResponseCode
+            response_headers:
+                additionalProperties:
+                    items:
+                        type: string
+                    type: array
+                description: HTTP headers returned from the remote instance.
+                type: object
+                x-go-name: ResponseHeaders
+        type: object
+        x-go-name: DebugAPUrlResponse
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     domain:
         description: Domain represents a remote domain
         properties:
@@ -4066,6 +4106,39 @@ paths:
             summary: Get a list of existing emoji categories.
             tags:
                 - admin
+    /api/v1/admin/debug/apurl:
+        get:
+            description: Only enabled / exposed if GoToSocial was built and is running with flag DEBUG=1.
+            operationId: debugAPUrl
+            parameters:
+                - description: The URL / ActivityPub ID to dereference. This should be a full URL, including protocol. Eg., `https://example.org/users/someone`
+                  in: query
+                  name: url
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        $ref: '#/definitions/debugAPUrlResponse'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Perform a GET to the specified ActivityPub URL and return detailed debugging information.
+            tags:
+                - debug
     /api/v1/admin/domain_allows:
         get:
             operationId: domainAllowsGet

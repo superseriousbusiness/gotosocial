@@ -46,6 +46,10 @@ type Transport interface {
 		POST functions
 	*/
 
+	// POST will perform given the http request using
+	// transport client, retrying on certain preset errors.
+	POST(*http.Request, []byte) (*http.Response, error)
+
 	// Deliver sends an ActivityStreams object.
 	Deliver(ctx context.Context, b []byte, to *url.URL) error
 
@@ -55,6 +59,10 @@ type Transport interface {
 	/*
 		GET functions
 	*/
+
+	// GET will perform the given http request using
+	// transport client, retrying on certain preset errors.
+	GET(*http.Request) (*http.Response, error)
 
 	// Dereference fetches the ActivityStreams object located at this IRI with a GET request.
 	Dereference(ctx context.Context, iri *url.URL) ([]byte, error)
@@ -81,7 +89,6 @@ type transport struct {
 	signerMu   sync.Mutex
 }
 
-// GET will perform given http request using transport client, retrying on certain preset errors.
 func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	if r.Method != http.MethodGet {
 		return nil, errors.New("must be GET request")
@@ -93,7 +100,6 @@ func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	return t.controller.client.DoSigned(r, t.signGET())
 }
 
-// POST will perform given http request using transport client, retrying on certain preset errors.
 func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 	if r.Method != http.MethodPost {
 		return nil, errors.New("must be POST request")

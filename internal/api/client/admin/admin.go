@@ -20,6 +20,7 @@ package admin
 import (
 	"net/http"
 
+	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
@@ -46,6 +47,8 @@ const (
 	EmailTestPath           = EmailPath + "/test"
 	InstanceRulesPath       = BasePath + "/instance/rules"
 	InstanceRulesPathWithID = InstanceRulesPath + "/:" + IDKey
+	DebugPath               = BasePath + "/debug"
+	DebugAPUrlPath          = DebugPath + "/apurl"
 
 	IDKey                 = "id"
 	FilterQueryKey        = "filter"
@@ -116,4 +119,9 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, InstanceRulesPath, m.RulePOSTHandler)
 	attachHandler(http.MethodPatch, InstanceRulesPathWithID, m.RulePATCHHandler)
 	attachHandler(http.MethodDelete, InstanceRulesPathWithID, m.RuleDELETEHandler)
+
+	// debug stuff
+	if debug.DEBUG {
+		attachHandler(http.MethodGet, DebugAPUrlPath, m.DebugAPUrlHandler)
+	}
 }

@@ -210,3 +210,22 @@ type AdminInstanceRule struct {
 	UpdatedAt string `json:"updated_at"` // when was item last updated
 	Text      string `json:"text"`       // text content of the rule
 }
+
+// DebugAPUrlResponse provides detailed debug
+// information for an AP URL dereference request.
+//
+// swagger:model debugAPUrlResponse
+type DebugAPUrlResponse struct {
+	// Remote AP URL that was requested.
+	RequestURL string `json:"request_url"`
+	// HTTP headers used in the outgoing request.
+	RequestHeaders map[string][]string `json:"request_headers"`
+	// HTTP headers returned from the remote instance.
+	ResponseHeaders map[string][]string `json:"response_headers"`
+	// HTTP response code returned from the remote instance.
+	ResponseCode int `json:"response_code"`
+	// Body returned from the remote instance.
+	// Will be stringified bytes; may be JSON,
+	// may be an error, may be both!
+	ResponseBody string `json:"response_body"`
+}
