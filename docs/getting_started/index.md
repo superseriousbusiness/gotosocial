@@ -70,6 +70,7 @@ If you decide to use a VPS instead, you can spin yourself up something cheap wit
 Please make sure to check on your distribution system requirments, especially memory. Many distributions have baseline requirements and running them on a system that doesn't meet them will cause problems without further tuning and tweaking on your part.
 
 Linux:
+
 * [Arch Linux][archreq]: `512MB` RAM
 * [Debian][debreq]: `786MB` RAM
 * [Ubuntu][ubireq]: `1GB` RAM
