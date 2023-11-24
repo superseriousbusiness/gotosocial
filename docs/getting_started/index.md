@@ -87,7 +87,10 @@ The BSD family of distributions don't document memory requirements as much, but 
 
 ### Swap
 
-Do not turn off swap. If you want to run without swap, ensure you understand the memory allocation patterns of the different workloads on your system and how the memory management subsystem of your kernel will behave under various conditions like memory pressure.
+!!! warning
+    Do not turn off swap.
+
+In order to safely run without swap, you'll need to tune the kernel, system and your workloads accordingly. This requires a good understanding of your kernel's memory management system as well as the memory usage patterns of the workloads you're running.
 
 On a small system that only runs GoToSocial with SQLite, 1GB of swap will do just fine. Follow your distribution's recommendations for swap size.
 
