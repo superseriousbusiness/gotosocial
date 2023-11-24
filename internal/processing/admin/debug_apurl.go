@@ -40,6 +40,9 @@ import (
 // because it's unfair to call them when they can't
 // call us, but because it probably won't work anyway
 // if they try to dereference the calling account.
+//
+// Errors returned from this function should be fairly
+// verbose, to help with debugging.
 func (p *Processor) DebugAPUrl(
 	ctx context.Context,
 	adminAcct *gtsmodel.Account,
@@ -87,6 +90,10 @@ func (p *Processor) DebugAPUrl(
 		gtscontext.SetFastFail(ctx),
 		http.MethodGet, urlStr, nil,
 	)
+	if err != nil {
+		err = gtserror.Newf("error creating request: %w", err)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	}
 
 	req.Header.Add("Accept", string(apiutil.AppActivityLDJSON)+","+string(apiutil.AppActivityJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
