@@ -91,7 +91,10 @@ func WrapStatusableInCreate(status ap.Statusable, iriOnly bool) vocab.ActivitySt
 	return create
 }
 
-func WrapPollOptionablesInCreate(options ...ap.PollOptionable) vocab.ActivityStreamsCreate {
+func WrapPollOptionablesInCreate(
+	publishedAt time.Time,
+	options ...ap.PollOptionable,
+) vocab.ActivityStreamsCreate {
 	if len(options) == 0 {
 		panic("no options")
 	}
@@ -112,14 +115,18 @@ func WrapPollOptionablesInCreate(options ...ap.PollOptionable) vocab.ActivityStr
 	create := streams.NewActivityStreamsCreate()
 	ap.AppendTo(create, ap.GetTo(options[0])...)
 
-	// Activity ID formatted as: {$statusIRI}/activity#vote/{$voterIRI}.
-	id := replyTos[0].String() + "/activity#vote/" + attribTos[0].String()
+	// Activity ID formatted as: {$voterIRI}/activity#vote/{$statusIRI}.
+	id := attribTos[0].String() + "/activity#vote/" + replyTos[0].String()
 	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), id)
 
-	// Set a current publish time for activity.
-	ap.SetPublished(create, time.Now())
+	// Set Create actor appropriately.
+	ap.AppendActor(create, attribTos...)
+
+	// Set publish time for activity.
+	ap.SetPublished(create, publishedAt)
 
 	// Append each poll option as object to activity.
+	// Append actor to Create just once.
 	for _, option := range options {
 		status, _ := ap.ToStatusable(option)
 		appendStatusableToActivity(create, status, false)

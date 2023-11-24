@@ -113,6 +113,50 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 }`, string(bytes))
 }
 
+func (suite *WrapTestSuite) TestWrapPollOptionables() {
+	vote := suite.testPollVotes["remote_account_1_status_2_poll_vote_local_account_1"]
+
+	notes, err := suite.typeconverter.PollVoteToASOptions(context.Background(), vote)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	create := typeutils.WrapPollOptionablesInCreate(vote.CreatedAt, notes...)
+
+	createI, err := ap.Serialize(create)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(createI, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/users/the_mighty_zork/activity#vote/http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
+  "object": [
+    {
+      "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+      "id": "http://localhost:8080/users/the_mighty_zork#01HEN2R65468ZG657C4ZPHJ4EX/votes/1",
+      "inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
+      "name": "tissues",
+      "to": "http://fossbros-anonymous.io/users/foss_satan",
+      "type": "Note"
+    },
+    {
+      "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+      "id": "http://localhost:8080/users/the_mighty_zork#01HEN2R65468ZG657C4ZPHJ4EX/votes/2",
+      "inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
+      "name": "financial times",
+      "to": "http://fossbros-anonymous.io/users/foss_satan",
+      "type": "Note"
+    }
+  ],
+  "published": "2021-09-11T11:45:37+02:00",
+  "to": "http://fossbros-anonymous.io/users/foss_satan",
+  "type": "Create"
+}`, string(bytes))
+}
+
 func TestWrapTestSuite(t *testing.T) {
 	suite.Run(t, new(WrapTestSuite))
 }
