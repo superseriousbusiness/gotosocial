@@ -306,6 +306,20 @@ func (c *GTSCaches) initAccount() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(a1 *gtsmodel.Account) *gtsmodel.Account {
+		a2 := new(gtsmodel.Account)
+		*a2 = *a1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/account.go.
+		a2.AvatarMediaAttachment = nil
+		a2.HeaderMediaAttachment = nil
+		a2.Emojis = nil
+
+		return a2
+	}
+
 	c.account = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
@@ -316,11 +330,7 @@ func (c *GTSCaches) initAccount() {
 		{Name: "OutboxURI"},
 		{Name: "FollowersURI"},
 		{Name: "FollowingURI"},
-	}, func(a1 *gtsmodel.Account) *gtsmodel.Account {
-		a2 := new(gtsmodel.Account)
-		*a2 = *a1
-		return a2
-	}, cap)
+	}, copyF, cap)
 
 	c.account.IgnoreErrors(ignoreErrors)
 }
@@ -334,14 +344,23 @@ func (c *GTSCaches) initAccountNote() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(n1 *gtsmodel.AccountNote) *gtsmodel.AccountNote {
+		n2 := new(gtsmodel.AccountNote)
+		*n2 = *n1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/relationship_note.go.
+		n2.Account = nil
+		n2.TargetAccount = nil
+
+		return n2
+	}
+
 	c.accountNote = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID.TargetAccountID"},
-	}, func(n1 *gtsmodel.AccountNote) *gtsmodel.AccountNote {
-		n2 := new(gtsmodel.AccountNote)
-		*n2 = *n1
-		return n2
-	}, cap)
+	}, copyF, cap)
 
 	c.accountNote.IgnoreErrors(ignoreErrors)
 }
@@ -376,17 +395,26 @@ func (c *GTSCaches) initBlock() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(b1 *gtsmodel.Block) *gtsmodel.Block {
+		b2 := new(gtsmodel.Block)
+		*b2 = *b1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/relationship_block.go.
+		b2.Account = nil
+		b2.TargetAccount = nil
+
+		return b2
+	}
+
 	c.block = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "AccountID.TargetAccountID"},
 		{Name: "AccountID", Multi: true},
 		{Name: "TargetAccountID", Multi: true},
-	}, func(b1 *gtsmodel.Block) *gtsmodel.Block {
-		b2 := new(gtsmodel.Block)
-		*b2 = *b1
-		return b2
-	}, cap)
+	}, copyF, cap)
 
 	c.block.IgnoreErrors(ignoreErrors)
 }
@@ -436,17 +464,25 @@ func (c *GTSCaches) initEmoji() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(e1 *gtsmodel.Emoji) *gtsmodel.Emoji {
+		e2 := new(gtsmodel.Emoji)
+		*e2 = *e1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/emoji.go.
+		e2.Category = nil
+
+		return e2
+	}
+
 	c.emoji = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "Shortcode.Domain", AllowZero: true /* domain can be zero i.e. "" */},
 		{Name: "ImageStaticURL"},
 		{Name: "CategoryID", Multi: true},
-	}, func(e1 *gtsmodel.Emoji) *gtsmodel.Emoji {
-		e2 := new(gtsmodel.Emoji)
-		*e2 = *e1
-		return e2
-	}, cap)
+	}, copyF, cap)
 
 	c.emoji.IgnoreErrors(ignoreErrors)
 }
@@ -481,17 +517,26 @@ func (c *GTSCaches) initFollow() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(f1 *gtsmodel.Follow) *gtsmodel.Follow {
+		f2 := new(gtsmodel.Follow)
+		*f2 = *f1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/relationship_follow.go.
+		f2.Account = nil
+		f2.TargetAccount = nil
+
+		return f2
+	}
+
 	c.follow = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "AccountID.TargetAccountID"},
 		{Name: "AccountID", Multi: true},
 		{Name: "TargetAccountID", Multi: true},
-	}, func(f1 *gtsmodel.Follow) *gtsmodel.Follow {
-		f2 := new(gtsmodel.Follow)
-		*f2 = *f1
-		return f2
-	}, cap)
+	}, copyF, cap)
 
 	c.follow.IgnoreErrors(ignoreErrors)
 }
@@ -519,17 +564,26 @@ func (c *GTSCaches) initFollowRequest() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(f1 *gtsmodel.FollowRequest) *gtsmodel.FollowRequest {
+		f2 := new(gtsmodel.FollowRequest)
+		*f2 = *f1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/relationship_follow_req.go.
+		f2.Account = nil
+		f2.TargetAccount = nil
+
+		return f2
+	}
+
 	c.followRequest = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "AccountID.TargetAccountID"},
 		{Name: "AccountID", Multi: true},
 		{Name: "TargetAccountID", Multi: true},
-	}, func(f1 *gtsmodel.FollowRequest) *gtsmodel.FollowRequest {
-		f2 := new(gtsmodel.FollowRequest)
-		*f2 = *f1
-		return f2
-	}, cap)
+	}, copyF, cap)
 
 	c.followRequest.IgnoreErrors(ignoreErrors)
 }
@@ -571,14 +625,23 @@ func (c *GTSCaches) initInstance() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(i1 *gtsmodel.Instance) *gtsmodel.Instance {
+		i2 := new(gtsmodel.Instance)
+		*i2 = *i1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/instance.go.
+		i2.DomainBlock = nil
+		i2.ContactAccount = nil
+
+		return i1
+	}
+
 	c.instance = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "Domain"},
-	}, func(i1 *gtsmodel.Instance) *gtsmodel.Instance {
-		i2 := new(gtsmodel.Instance)
-		*i2 = *i1
-		return i1
-	}, cap)
+	}, copyF, cap)
 
 	c.instance.IgnoreErrors(ignoreErrors)
 }
@@ -792,17 +855,35 @@ func (c *GTSCaches) initStatus() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(s1 *gtsmodel.Status) *gtsmodel.Status {
+		s2 := new(gtsmodel.Status)
+		*s2 = *s1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/status.go.
+		s2.Account = nil
+		s2.InReplyTo = nil
+		s2.InReplyToAccount = nil
+		s2.BoostOf = nil
+		s2.BoostOfAccount = nil
+		s2.Poll = nil
+		s2.Attachments = nil
+		s2.Tags = nil
+		s2.Mentions = nil
+		s2.Emojis = nil
+		s2.CreatedWithApplication = nil
+
+		return s2
+	}
+
 	c.status = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
 		{Name: "BoostOfID.AccountID"},
 		{Name: "ThreadID", Multi: true},
-	}, func(s1 *gtsmodel.Status) *gtsmodel.Status {
-		s2 := new(gtsmodel.Status)
-		*s2 = *s1
-		return s2
-	}, cap)
+	}, copyF, cap)
 
 	c.status.IgnoreErrors(ignoreErrors)
 }

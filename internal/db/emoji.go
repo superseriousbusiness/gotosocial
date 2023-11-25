@@ -32,13 +32,17 @@ const EmojiAllDomains string = "all"
 type Emoji interface {
 	// PutEmoji puts one emoji in the database.
 	PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) error
+	
 	// UpdateEmoji updates the given columns of one emoji.
 	// If no columns are specified, every column is updated.
 	UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, columns ...string) error
+	
 	// DeleteEmojiByID deletes one emoji by its database ID.
 	DeleteEmojiByID(ctx context.Context, id string) error
+	
 	// GetEmojisByIDs gets emojis for the given IDs.
 	GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Emoji, error)
+	
 	// GetUseableEmojis gets all emojis which are useable by accounts on this instance.
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, error)
 
@@ -53,23 +57,35 @@ type Emoji interface {
 
 	// GetEmojisBy gets emojis based on given parameters. Useful for admin actions.
 	GetEmojisBy(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, error)
+	
 	// GetEmojiByID gets a specific emoji by its database ID.
 	GetEmojiByID(ctx context.Context, id string) (*gtsmodel.Emoji, error)
+	
+	// PopulateEmoji populates the struct pointers on the given emoji.
+	PopulateEmoji(ctx context.Context, emoji *gtsmodel.Emoji) error
+	
 	// GetEmojiByShortcodeDomain gets an emoji based on its shortcode and domain.
 	// For local emoji, domain should be an empty string.
 	GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, error)
+	
 	// GetEmojiByURI returns one emoji based on its ActivityPub URI.
 	GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoji, error)
+	
 	// GetEmojiByStaticURL gets an emoji using the URL of the static version of the emoji image.
 	GetEmojiByStaticURL(ctx context.Context, imageStaticURL string) (*gtsmodel.Emoji, error)
+	
 	// PutEmojiCategory puts one new emoji category in the database.
 	PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) error
+	
 	// GetEmojiCategoriesByIDs gets emoji categories for given IDs.
 	GetEmojiCategoriesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.EmojiCategory, error)
+	
 	// GetEmojiCategories gets a slice of the names of all existing emoji categories.
 	GetEmojiCategories(ctx context.Context) ([]*gtsmodel.EmojiCategory, error)
+	
 	// GetEmojiCategory gets one emoji category by its id.
 	GetEmojiCategory(ctx context.Context, id string) (*gtsmodel.EmojiCategory, error)
+	
 	// GetEmojiCategoryByName gets one emoji category by its name.
 	GetEmojiCategoryByName(ctx context.Context, name string) (*gtsmodel.EmojiCategory, error)
 }
