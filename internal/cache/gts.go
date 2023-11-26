@@ -1073,17 +1073,25 @@ func (c *GTSCaches) initUser() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(u1 *gtsmodel.User) *gtsmodel.User {
+		u2 := new(gtsmodel.User)
+		*u2 = *u1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/user.go.
+		u2.Account = nil
+
+		return u2
+	}
+
 	c.user = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID"},
 		{Name: "Email"},
 		{Name: "ConfirmationToken"},
 		{Name: "ExternalID"},
-	}, func(u1 *gtsmodel.User) *gtsmodel.User {
-		u2 := new(gtsmodel.User)
-		*u2 = *u1
-		return u2
-	}, cap)
+	}, copyF, cap)
 
 	c.user.IgnoreErrors(ignoreErrors)
 }
