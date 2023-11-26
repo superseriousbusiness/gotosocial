@@ -2,6 +2,10 @@
 
 These settings let you tune and configure certain observability related behaviours.
 
+## Metrics
+
+Before enabling metrics, [read the guide](../advanced/metrics.md) and ensure you've taken the appropriate security measures for your setup.
+
 ## Settings
 
 ```yaml
