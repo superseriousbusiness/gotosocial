@@ -37,6 +37,9 @@ type Notification interface {
 	// Since not all notifications are about a status, statusID can be an empty string.
 	GetNotification(ctx context.Context, notificationType gtsmodel.NotificationType, targetAccountID string, originAccountID string, statusID string) (*gtsmodel.Notification, error)
 
+	// PopulateNotification ensures that the notification's struct fields are populated.
+	PopulateNotification(ctx context.Context, notif *gtsmodel.Notification) error
+
 	// PutNotification will insert the given notification into the database.
 	PutNotification(ctx context.Context, notif *gtsmodel.Notification) error
 

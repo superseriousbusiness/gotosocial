@@ -655,13 +655,22 @@ func (c *GTSCaches) initList() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.list = result.New([]result.Lookup{
-		{Name: "ID"},
-	}, func(l1 *gtsmodel.List) *gtsmodel.List {
+	copyF := func(l1 *gtsmodel.List) *gtsmodel.List {
 		l2 := new(gtsmodel.List)
 		*l2 = *l1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/list.go.
+		l2.Account = nil
+		l2.ListEntries = nil
+
 		return l2
-	}, cap)
+	}
+
+	c.list = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, copyF, cap)
 
 	c.list.IgnoreErrors(ignoreErrors)
 }
@@ -675,15 +684,23 @@ func (c *GTSCaches) initListEntry() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(l1 *gtsmodel.ListEntry) *gtsmodel.ListEntry {
+		l2 := new(gtsmodel.ListEntry)
+		*l2 = *l1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/list.go.
+		l2.Follow = nil
+
+		return l2
+	}
+
 	c.listEntry = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "ListID", Multi: true},
 		{Name: "FollowID", Multi: true},
-	}, func(l1 *gtsmodel.ListEntry) *gtsmodel.ListEntry {
-		l2 := new(gtsmodel.ListEntry)
-		*l2 = *l1
-		return l2
-	}, cap)
+	}, copyF, cap)
 
 	c.listEntry.IgnoreErrors(ignoreErrors)
 }
@@ -737,13 +754,23 @@ func (c *GTSCaches) initMention() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.mention = result.New([]result.Lookup{
-		{Name: "ID"},
-	}, func(m1 *gtsmodel.Mention) *gtsmodel.Mention {
+	copyF := func(m1 *gtsmodel.Mention) *gtsmodel.Mention {
 		m2 := new(gtsmodel.Mention)
 		*m2 = *m1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/mention.go.
+		m2.Status = nil
+		m2.OriginAccount = nil
+		m2.TargetAccount = nil
+
 		return m2
-	}, cap)
+	}
+
+	c.mention = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, copyF, cap)
 
 	c.mention.IgnoreErrors(ignoreErrors)
 }
@@ -757,14 +784,24 @@ func (c *GTSCaches) initNotification() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(n1 *gtsmodel.Notification) *gtsmodel.Notification {
+		n2 := new(gtsmodel.Notification)
+		*n2 = *n1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/notification.go.
+		n2.Status = nil
+		n2.OriginAccount = nil
+		n2.TargetAccount = nil
+
+		return n2
+	}
+
 	c.notification = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "NotificationType.TargetAccountID.OriginAccountID.StatusID"},
-	}, func(n1 *gtsmodel.Notification) *gtsmodel.Notification {
-		n2 := new(gtsmodel.Notification)
-		*n2 = *n1
-		return n2
-	}, cap)
+	}, copyF, cap)
 
 	c.notification.IgnoreErrors(ignoreErrors)
 }
@@ -778,14 +815,22 @@ func (c *GTSCaches) initPoll() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(p1 *gtsmodel.Poll) *gtsmodel.Poll {
+		p2 := new(gtsmodel.Poll)
+		*p2 = *p1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/poll.go.
+		p2.Status = nil
+
+		return p2
+	}
+
 	c.poll = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "StatusID"},
-	}, func(p1 *gtsmodel.Poll) *gtsmodel.Poll {
-		p2 := new(gtsmodel.Poll)
-		*p2 = *p1
-		return p2
-	}, cap)
+	}, copyF, cap)
 
 	c.poll.IgnoreErrors(ignoreErrors)
 }
@@ -799,15 +844,24 @@ func (c *GTSCaches) initPollVote() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(v1 *gtsmodel.PollVote) *gtsmodel.PollVote {
+		v2 := new(gtsmodel.PollVote)
+		*v2 = *v1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/poll.go.
+		v2.Account = nil
+		v2.Poll = nil
+
+		return v2
+	}
+
 	c.pollVote = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "PollID.AccountID"},
 		{Name: "PollID", Multi: true},
-	}, func(v1 *gtsmodel.PollVote) *gtsmodel.PollVote {
-		v2 := new(gtsmodel.PollVote)
-		*v2 = *v1
-		return v2
-	}, cap)
+	}, copyF, cap)
 
 	c.pollVote.IgnoreErrors(ignoreErrors)
 }
@@ -835,13 +889,25 @@ func (c *GTSCaches) initReport() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.report = result.New([]result.Lookup{
-		{Name: "ID"},
-	}, func(r1 *gtsmodel.Report) *gtsmodel.Report {
+	copyF := func(r1 *gtsmodel.Report) *gtsmodel.Report {
 		r2 := new(gtsmodel.Report)
 		*r2 = *r1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/report.go.
+		r2.Account = nil
+		r2.TargetAccount = nil
+		r2.Statuses = nil
+		r2.Rules = nil
+		r2.ActionTakenByAccount = nil
+
 		return r2
-	}, cap)
+	}
+
+	c.report = result.New([]result.Lookup{
+		{Name: "ID"},
+	}, copyF, cap)
 
 	c.report.IgnoreErrors(ignoreErrors)
 }
@@ -897,15 +963,25 @@ func (c *GTSCaches) initStatusFave() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(f1 *gtsmodel.StatusFave) *gtsmodel.StatusFave {
+		f2 := new(gtsmodel.StatusFave)
+		*f2 = *f1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/statusfave.go.
+		f2.Account = nil
+		f2.TargetAccount = nil
+		f2.Status = nil
+
+		return f2
+	}
+
 	c.statusFave = result.New([]result.Lookup{
 		{Name: "ID"},
 		{Name: "AccountID.StatusID"},
 		{Name: "StatusID", Multi: true},
-	}, func(f1 *gtsmodel.StatusFave) *gtsmodel.StatusFave {
-		f2 := new(gtsmodel.StatusFave)
-		*f2 = *f1
-		return f2
-	}, cap)
+	}, copyF, cap)
 
 	c.statusFave.IgnoreErrors(ignoreErrors)
 }
