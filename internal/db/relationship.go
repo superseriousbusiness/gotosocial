@@ -184,4 +184,7 @@ type Relationship interface {
 
 	// PutNote creates or updates a private note.
 	PutNote(ctx context.Context, note *gtsmodel.AccountNote) error
+
+	// PopulateNote populates the struct pointers on the given note.
+	PopulateNote(ctx context.Context, note *gtsmodel.AccountNote) error
 }

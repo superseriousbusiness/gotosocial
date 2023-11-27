@@ -130,16 +130,37 @@ func (u *userDB) getUser(ctx context.Context, lookup string, dbQuery func(*gtsmo
 		return nil, err
 	}
 
-	// Fetch the related account model for this user.
-	user.Account, err = u.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		user.AccountID,
-	)
-	if err != nil {
-		return nil, gtserror.Newf("error populating user account: %w", err)
+	if gtscontext.Barebones(ctx) {
+		// Return without populating.
+		return user, nil
+	}
+
+	if err := u.PopulateUser(ctx, user); err != nil {
+		return nil, err
 	}
 
 	return user, nil
+}
+
+// PopulateUser ensures that the user's struct fields are populated.
+func (u *userDB) PopulateUser(ctx context.Context, user *gtsmodel.User) error {
+	var (
+		errs = gtserror.NewMultiError(1)
+		err  error
+	)
+
+	if user.Account == nil {
+		// Fetch the related account model for this user.
+		user.Account, err = u.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			user.AccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating user account: %w", err)
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (u *userDB) GetAllUsers(ctx context.Context) ([]*gtsmodel.User, error) {

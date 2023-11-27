@@ -26,6 +26,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -546,6 +547,25 @@ func (e *emojiDB) getEmoji(ctx context.Context, lookup string, dbQuery func(*gts
 	}
 
 	return emoji, nil
+}
+
+func (e *emojiDB) PopulateEmoji(ctx context.Context, emoji *gtsmodel.Emoji) error {
+	var (
+		errs = gtserror.NewMultiError(1)
+		err  error
+	)
+
+	if emoji.CategoryID != "" && emoji.Category == nil {
+		emoji.Category, err = e.GetEmojiCategory(
+			ctx, // these are already barebones
+			emoji.CategoryID,
+		)
+		if err != nil {
+			errs.Appendf("error populating emoji category: %w", err)
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (e *emojiDB) GetEmojisByIDs(ctx context.Context, emojiIDs []string) ([]*gtsmodel.Emoji, error) {

@@ -19,10 +19,10 @@ package bundb
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
@@ -64,25 +64,43 @@ func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery fun
 		return note, nil
 	}
 
-	// Set the note source account
-	note.Account, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		note.AccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting note source account: %w", err)
-	}
-
-	// Set the note target account
-	note.TargetAccount, err = r.state.DB.GetAccountByID(
-		gtscontext.SetBarebones(ctx),
-		note.TargetAccountID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error getting note target account: %w", err)
+	// Further populate the account fields where applicable.
+	if err := r.PopulateNote(ctx, note); err != nil {
+		return nil, err
 	}
 
 	return note, nil
+}
+
+func (r *relationshipDB) PopulateNote(ctx context.Context, note *gtsmodel.AccountNote) error {
+	var (
+		errs = gtserror.NewMultiError(2)
+		err  error
+	)
+
+	// Ensure note source account set.
+	if note.Account == nil {
+		note.Account, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			note.AccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating note source account: %w", err)
+		}
+	}
+
+	// Ensure note target account set.
+	if note.TargetAccount == nil {
+		note.TargetAccount, err = r.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			note.TargetAccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating note target account: %w", err)
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (r *relationshipDB) PutNote(ctx context.Context, note *gtsmodel.AccountNote) error {

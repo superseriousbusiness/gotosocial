@@ -224,6 +224,51 @@ func (suite *StatusTestSuite) TestUpdateStatus() {
 	suite.True(updated.PinnedAt.IsZero())
 }
 
+func (suite *StatusTestSuite) TestPutPopulatedStatus() {
+	ctx := context.Background()
+
+	targetStatus := &gtsmodel.Status{}
+	*targetStatus = *suite.testStatuses["admin_account_status_1"]
+
+	// Populate fields on the target status.
+	if err := suite.db.PopulateStatus(ctx, targetStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Delete it from the database.
+	if err := suite.db.DeleteStatusByID(ctx, targetStatus.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Reinsert the populated version
+	// so that it becomes cached.
+	if err := suite.db.PutStatus(ctx, targetStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Update the status owner's
+	// account with a new bio.
+	account := &gtsmodel.Account{}
+	*account = *targetStatus.Account
+	account.Note = "new note for this test"
+	if err := suite.db.UpdateAccount(ctx, account, "note"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	dbStatus, err := suite.db.GetStatusByID(ctx, targetStatus.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Account note should be updated,
+	// even though we stored this
+	// status with the old note.
+	suite.Equal(
+		"new note for this test",
+		dbStatus.Account.Note,
+	)
+}
+
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusTestSuite))
 }

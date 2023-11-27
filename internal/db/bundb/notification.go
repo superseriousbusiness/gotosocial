@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -57,7 +58,7 @@ func (n *notificationDB) GetNotification(
 	originAccountID string,
 	statusID string,
 ) (*gtsmodel.Notification, error) {
-	return n.state.Caches.GTS.Notification().Load("NotificationType.TargetAccountID.OriginAccountID.StatusID", func() (*gtsmodel.Notification, error) {
+	notif, err := n.state.Caches.GTS.Notification().Load("NotificationType.TargetAccountID.OriginAccountID.StatusID", func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
 		q := n.db.NewSelect().
@@ -73,6 +74,60 @@ func (n *notificationDB) GetNotification(
 
 		return &notif, nil
 	}, notificationType, targetAccountID, originAccountID, statusID)
+	if err != nil {
+		return nil, err
+	}
+
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return notif, nil
+	}
+
+	// Further populate the notif fields where applicable.
+	if err := n.PopulateNotification(ctx, notif); err != nil {
+		return nil, err
+	}
+
+	return notif, nil
+}
+
+func (n *notificationDB) PopulateNotification(ctx context.Context, notif *gtsmodel.Notification) error {
+	var (
+		errs = gtserror.NewMultiError(2)
+		err  error
+	)
+
+	if notif.TargetAccount == nil {
+		notif.TargetAccount, err = n.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			notif.TargetAccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating notif target account: %w", err)
+		}
+	}
+
+	if notif.OriginAccount == nil {
+		notif.OriginAccount, err = n.state.DB.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			notif.OriginAccountID,
+		)
+		if err != nil {
+			errs.Appendf("error populating notif origin account: %w", err)
+		}
+	}
+
+	if notif.StatusID != "" && notif.Status == nil {
+		notif.Status, err = n.state.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			notif.StatusID,
+		)
+		if err != nil {
+			errs.Appendf("error populating notif status: %w", err)
+		}
+	}
+
+	return errs.Combine()
 }
 
 func (n *notificationDB) GetAccountNotifications(

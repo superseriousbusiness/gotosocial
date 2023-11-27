@@ -173,14 +173,14 @@ func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery fun
 	}
 
 	// Further populate the instance fields where applicable.
-	if err := i.populateInstance(ctx, instance); err != nil {
+	if err := i.PopulateInstance(ctx, instance); err != nil {
 		return nil, err
 	}
 
 	return instance, nil
 }
 
-func (i *instanceDB) populateInstance(ctx context.Context, instance *gtsmodel.Instance) error {
+func (i *instanceDB) PopulateInstance(ctx context.Context, instance *gtsmodel.Instance) error {
 	var (
 		err  error
 		errs = gtserror.NewMultiError(2)

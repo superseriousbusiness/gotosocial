@@ -40,6 +40,9 @@ type Instance interface {
 	// GetInstanceByID returns the instance entry corresponding to the given id, if it exists.
 	GetInstanceByID(ctx context.Context, id string) (*gtsmodel.Instance, error)
 
+	// PopulateInstance populates the struct pointers on the given instance.
+	PopulateInstance(ctx context.Context, instance *gtsmodel.Instance) error
+
 	// PutInstance inserts the given instance into the database.
 	PutInstance(ctx context.Context, instance *gtsmodel.Instance) error
 
