@@ -123,6 +123,7 @@ func EncodeJSONResponse(
 
 	// Wrap buffer in JSON encoder.
 	enc := json.NewEncoder(buf)
+	enc.SetEscapeHTML(false)
 
 	// Encode JSON data into byte buffer.
 	if err := enc.Encode(data); err == nil {
