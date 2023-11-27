@@ -87,12 +87,27 @@ The BSD family of distributions don't document memory requirements as much, but 
 
 ### Swap
 
-!!! warning
-    Do not turn off swap.
+It is possible to run a system without swap. In order to safely do so and ensure consistent performance and service availability, you need to tune the kernel, system and your workloads accordingly. This requires a good understanding of your kernel's memory management system as well as the memory usage patterns of the workloads you're running.
 
-In order to safely run without swap, you'll need to tune the kernel, system and your workloads accordingly. This requires a good understanding of your kernel's memory management system as well as the memory usage patterns of the workloads you're running.
+!!! note
+    Swap is used to ensure the kernel can efficiently reclaim memory. This is useful even when a system is not experiencing memory contention, like freeing up memory that was only used during process startup. This allows more things that are actively used to be cached in memory. Swap is not what makes your application slow. Experiencing memory contention is what makes things slow.
 
-On a small system that only runs GoToSocial with SQLite, 1GB of swap will do just fine. Follow your distribution's recommendations for swap size.
+Unless you're experienced in doing this kind of tuning and troubleshooting the issues that may arise from not having swap, you should follow your distribution or hosting provider's recommendations and configure an appropriate amount of swap. If your distribution or hosting provider doesn't provide guidance, you can use the following rule of thumb for a server:
+
+* less than 2GB of RAM: swap = RAM × 2
+* more than 2GB of RAM: swap = RAM, up to 8G
+
+### Memory and CPU limits
+
+It is possible to limit the amount of memory or CPU your GoToSocial instance can consume. Doing so can be done on Linux using [CGroups v2 resource controllers][cgv2].
+
+You can configure limits for a process using [systemd resource control settings][systemdcgv2], [OpenRC cgroup support][openrccgv2] or the [libcgroup CLI][libcg]. If you want to protect GoToSocial in cases where your system is experiencing memory pressure, look at [`memory.low`][cgv2mem].
+
+[cgv2]: https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
+[systemdcgv2]: https://www.freedesktop.org/software/systemd/man/latest/systemd.resource-control.html
+[openrccgv2]: https://wiki.gentoo.org/wiki/OpenRC/CGroups
+[libcg]: https://github.com/libcgroup/libcgroup/
+[cgv2mem]: https://docs.kernel.org/admin-guide/cgroup-v2.html#memory-interface-files
 
 ## Ports
 
