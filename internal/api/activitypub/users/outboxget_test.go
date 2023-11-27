@@ -209,7 +209,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	suite.NoError(err)
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "id": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026maxID=01F8MHAMCHF6Y650WCRSCP4WMY",
+  "id": "http://localhost:8080/users/the_mighty_zork/outbox?page=true&maxID=01F8MHAMCHF6Y650WCRSCP4WMY",
   "orderedItems": [],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
   "type": "OrderedCollectionPage"
