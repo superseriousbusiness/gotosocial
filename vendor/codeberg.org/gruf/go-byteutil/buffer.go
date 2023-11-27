@@ -7,7 +7,8 @@ import (
 )
 
 var (
-	// ensure we conform to interfaces.
+	// ensure we conform
+	// to interfaces.
 	_ interface {
 		io.Writer
 		io.ByteWriter
@@ -15,6 +16,8 @@ var (
 		io.StringWriter
 		io.WriterAt
 		WriteStringAt(string, int64) (int, error)
+		io.ReaderFrom
+		io.WriterTo
 	} = (*Buffer)(nil)
 
 	// ErrBeyondBufferLen is returned if .WriteAt() is attempted beyond buffer length.
@@ -79,6 +82,43 @@ func (buf *Buffer) WriteStringAt(s string, start int64) (int, error) {
 	}
 	buf.Grow(len(s) - int(int64(len(buf.B))-start))
 	return copy(buf.B[start:], s), nil
+}
+
+// ReadFrom will read bytes from reader into buffer, fulfilling io.ReaderFrom.
+func (buf *Buffer) ReadFrom(r io.Reader) (int64, error) {
+	var nn int64
+
+	// Ensure there's cap
+	// for a first read.
+	buf.Guarantee(512)
+
+	for {
+		// Read into next chunk of buffer.
+		n, err := r.Read(buf.B[len(buf.B):cap(buf.B)])
+
+		// Reslice buf + update count.
+		buf.B = buf.B[:len(buf.B)+n]
+		nn += int64(n)
+
+		if err != nil {
+			if err == io.EOF {
+				// mask EOF.
+				err = nil
+			}
+			return nn, err
+		}
+
+		if len(buf.B) == cap(buf.B) {
+			// Add capacity (let append pick).
+			buf.B = append(buf.B, 0)[:len(buf.B)]
+		}
+	}
+}
+
+// WriteTo will write bytes from buffer into writer, fulfilling io.WriterTo.
+func (buf *Buffer) WriteTo(w io.Writer) (int64, error) {
+	n, err := w.Write(buf.B)
+	return int64(n), err
 }
 
 // Len returns the length of the buffer's underlying byte slice.
