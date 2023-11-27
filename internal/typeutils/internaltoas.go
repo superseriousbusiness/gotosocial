@@ -1659,7 +1659,17 @@ func (c *Converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (voc
 	return flag, nil
 }
 
-func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.PollVote) ([]ap.PollOptionable, error) {
+// PollVoteToASCreate converts a vote on a poll into a Create
+// activity, suitable for federation, with each choice in the
+// vote appended as a Note to the Create's Object field.
+func (c *Converter) PollVoteToASCreate(
+	ctx context.Context,
+	vote *gtsmodel.PollVote,
+) (vocab.ActivityStreamsCreate, error) {
+	if len(vote.Choices) == 0 {
+		panic("no vote.Choices")
+	}
+
 	// Ensure the vote is fully populated (this fetches author).
 	if err := c.state.DB.PopulatePollVote(ctx, vote); err != nil {
 		return nil, gtserror.Newf("error populating vote from db: %w", err)
@@ -1694,11 +1704,22 @@ func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.Poll
 		return nil, gtserror.Newf("invalid account uri: %w", err)
 	}
 
-	// Preallocate the return slice of notes.
-	notes := make([]ap.PollOptionable, len(vote.Choices))
+	// Allocate Create activity and address 'To' poll author.
+	create := streams.NewActivityStreamsCreate()
+	ap.AppendTo(create, pollAuthorIRI)
 
-	for i, choice := range vote.Choices {
-		// Create new note to represent vote.
+	// Create ID formatted as: {$voterIRI}/activity#vote/{$statusIRI}.
+	id := author.URI + "/activity#vote/" + poll.Status.URI
+	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), id)
+
+	// Set Create actor appropriately.
+	ap.AppendActor(create, authorIRI)
+
+	// Set publish time for activity.
+	ap.SetPublished(create, vote.CreatedAt)
+
+	// Parse each choice to a Note and add it to the Create.
+	for _, choice := range vote.Choices {
 		note := streams.NewActivityStreamsNote()
 
 		// For AP IRI generate from author URI + poll ID + vote choice.
@@ -1715,9 +1736,9 @@ func (c *Converter) PollVoteToASOptions(ctx context.Context, vote *gtsmodel.Poll
 		ap.AppendInReplyTo(note, statusIRI)
 		ap.AppendTo(note, pollAuthorIRI)
 
-		// Set note in return slice.
-		notes[i] = note
+		// Append this note as Create Object.
+		appendStatusableToActivity(create, note, false)
 	}
 
-	return notes, nil
+	return create, nil
 }

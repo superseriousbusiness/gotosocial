@@ -656,9 +656,40 @@ For example:
 
 ### Outgoing
 
-You can expect to receive poll votes from GoToSocial in the form of "Note" objects, as specifically described in the section above. These will only ever be sent out as the object attached to a "Create" activity.
+You can expect to receive poll votes from GoToSocial in the form of "Note" objects, as specifically described in the section above. These will only ever be sent out as the object(s) attached to a "Create" activity.
 
 In particular, as described in the section above, GoToSocial will provide the option text in the "name" field, the "content" field unset, and the "inReplyTo" field being an IRI pointing toward a status with poll authored on your instance.
+
+Here's an example of a "Create", in which user "https://sample.com/users/willy_nilly" votes on a multiple-choice poll created by user "https://example.org/users/bobby_tables":
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "https://sample.com/users/willy_nilly",
+  "id": "https://sample.com/users/willy_nilly/activity#vote/https://example.org/users/bobby_tables/statuses/123456",
+  "object": [
+    {
+      "attributedTo": "https://sample.com/users/willy_nilly",
+      "id": "https://sample.com/users/willy_nilly#01HEN2R65468ZG657C4ZPHJ4EX/votes/1",
+      "inReplyTo": "https://example.org/users/bobby_tables/statuses/123456",
+      "name": "tissues",
+      "to": "https://example.org/users/bobby_tables",
+      "type": "Note"
+    },
+    {
+      "attributedTo": "https://sample.com/users/willy_nilly",
+      "id": "https://sample.com/users/willy_nilly#01HEN2R65468ZG657C4ZPHJ4EX/votes/2",
+      "inReplyTo": "https://example.org/users/bobby_tables/statuses/123456",
+      "name": "financial times",
+      "to": "https://example.org/users/bobby_tables",
+      "type": "Note"
+    }
+  ],
+  "published": "2021-09-11T11:45:37+02:00",
+  "to": "https://example.org/users/bobby_tables",
+  "type": "Create"
+}
+```
 
 ### Incoming
 

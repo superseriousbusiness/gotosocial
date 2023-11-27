@@ -480,6 +480,7 @@ type TypeUtilsTestSuite struct {
 	testEmojis      map[string]*gtsmodel.Emoji
 	testReports     map[string]*gtsmodel.Report
 	testMentions    map[string]*gtsmodel.Mention
+	testPollVotes   map[string]*gtsmodel.PollVote
 
 	typeconverter *typeutils.Converter
 }
@@ -502,6 +503,7 @@ func (suite *TypeUtilsTestSuite) SetupTest() {
 	suite.testEmojis = testrig.NewTestEmojis()
 	suite.testReports = testrig.NewTestReports()
 	suite.testMentions = testrig.NewTestMentions()
+	suite.testPollVotes = testrig.NewTestPollVotes()
 	suite.typeconverter = typeutils.NewConverter(&suite.state)
 
 	testrig.StandardDBSetup(suite.db, nil)
