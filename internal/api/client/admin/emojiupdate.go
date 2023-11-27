@@ -161,7 +161,7 @@ func (m *Module) EmojiPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, emoji)
+	apiutil.JSON(c, http.StatusOK, emoji)
 }
 
 // do a first pass on the form here

@@ -71,5 +71,5 @@ func (m *Module) FeaturedTagsGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, []interface{}{})
+	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
 }

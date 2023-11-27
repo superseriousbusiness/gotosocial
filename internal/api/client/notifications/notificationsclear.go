@@ -75,5 +75,5 @@ func (m *Module) NotificationsClearPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, struct{}{})
+	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONObject)
 }

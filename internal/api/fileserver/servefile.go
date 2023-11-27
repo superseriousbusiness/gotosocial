@@ -91,9 +91,8 @@ func (m *Module) ServeFile(c *gin.Context) {
 	}
 
 	if content.URL != nil {
-		// This is a non-local, non-proxied S3 file we're redirecting to.
-		// Derive the max-age value from how long the link has left until
-		// it expires.
+		// This is a non-local, non-proxied S3 file we're redirecting to. Derive
+		// the max-age value from how long the link has left until it expires.
 		maxAge := int(time.Until(content.URL.Expiry).Seconds())
 		c.Header("Cache-Control", "private, max-age="+strconv.Itoa(maxAge)+", immutable")
 		c.Redirect(http.StatusFound, content.URL.String())
@@ -110,7 +109,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 	// TODO: if the requester only accepts text/html we should try to serve them *something*.
 	// This is mostly needed because when sharing a link to a gts-hosted file on something like mastodon, the masto servers will
 	// attempt to look up the content to provide a preview of the link, and they ask for text/html.
-	format, err := apiutil.NegotiateAccept(c, apiutil.MIME(content.ContentType))
+	contentType, err := apiutil.NegotiateAccept(c, content.ContentType)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -118,7 +117,7 @@ func (m *Module) ServeFile(c *gin.Context) {
 
 	// if this is a head request, just return info + throw the reader away
 	if c.Request.Method == http.MethodHead {
-		c.Header("Content-Type", format)
+		c.Header("Content-Type", contentType)
 		c.Header("Content-Length", strconv.FormatInt(content.ContentLength, 10))
 		c.Status(http.StatusOK)
 		return
@@ -128,12 +127,12 @@ func (m *Module) ServeFile(c *gin.Context) {
 	rng := c.GetHeader("Range")
 	if rng == "" {
 		// This is a simple query for the whole file, so do a read from whole reader.
-		c.DataFromReader(http.StatusOK, content.ContentLength, format, content.Content, nil)
+		c.DataFromReader(http.StatusOK, content.ContentLength, contentType, content.Content, nil)
 		return
 	}
 
 	// Set known content-type and serve range.
-	c.Header("Content-Type", format)
+	c.Header("Content-Type", contentType)
 	serveFileRange(
 		c.Writer,
 		c.Request,

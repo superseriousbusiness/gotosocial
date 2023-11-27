@@ -96,5 +96,5 @@ func (m *Module) PollGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, poll)
+	apiutil.JSON(c, http.StatusOK, poll)
 }

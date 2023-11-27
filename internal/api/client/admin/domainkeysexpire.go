@@ -132,7 +132,9 @@ func (m *Module) DomainKeysExpirePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, &apimodel.AdminActionResponse{ActionID: actionID})
+	apiutil.JSON(c, http.StatusOK, &apimodel.AdminActionResponse{
+		ActionID: actionID,
+	})
 }
 
 func validateDomainKeysExpire(form *apimodel.DomainKeysExpireRequest) error {

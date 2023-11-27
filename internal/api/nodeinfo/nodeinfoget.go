@@ -18,7 +18,6 @@
 package nodeinfo
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -55,11 +54,12 @@ func (m *Module) NodeInfo2GETHandler(c *gin.Context) {
 		return
 	}
 
-	b, err := json.Marshal(nodeInfo)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	c.Data(http.StatusOK, NodeInfo2ContentType, b)
+	// Encode JSON HTTP response.
+	apiutil.EncodeJSONResponse(
+		c.Writer,
+		c.Request,
+		http.StatusOK,
+		NodeInfo2ContentType,
+		nodeInfo,
+	)
 }

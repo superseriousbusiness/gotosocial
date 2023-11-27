@@ -55,7 +55,9 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 			"requestID": gtscontext.RequestID(ctx),
 		})
 	default:
-		c.JSON(http.StatusNotFound, gin.H{"error": errWithCode.Safe()})
+		JSON(c, http.StatusNotFound, map[string]string{
+			"error": errWithCode.Safe(),
+		})
 	}
 }
 
@@ -78,7 +80,9 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 			"requestID": gtscontext.RequestID(ctx),
 		})
 	default:
-		c.JSON(errWithCode.Code(), gin.H{"error": errWithCode.Safe()})
+		JSON(c, errWithCode.Code(), map[string]string{
+			"error": errWithCode.Safe(),
+		})
 	}
 }
 
@@ -102,7 +106,7 @@ func ErrorHandler(
 	c *gin.Context,
 	errWithCode gtserror.WithCode,
 	instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode),
-	offers ...MIME,
+	offers ...string,
 ) {
 	if ctxErr := c.Request.Context().Err(); ctxErr != nil {
 		// Context error means either client has left already,
@@ -175,7 +179,7 @@ func OAuthErrorHandler(c *gin.Context, errWithCode gtserror.WithCode) {
 		l.Debug("handling OAuth error")
 	}
 
-	c.JSON(statusCode, gin.H{
+	JSON(c, statusCode, map[string]string{
 		"error":             errWithCode.Error(),
 		"error_description": errWithCode.Safe(),
 	})

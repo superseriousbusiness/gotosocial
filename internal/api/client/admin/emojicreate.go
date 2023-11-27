@@ -131,7 +131,7 @@ func (m *Module) EmojiCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, apiEmoji)
+	apiutil.JSON(c, http.StatusOK, apiEmoji)
 }
 
 func validateCreateEmoji(form *apimodel.EmojiCreateRequest) error {

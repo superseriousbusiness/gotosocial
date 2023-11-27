@@ -170,7 +170,7 @@ func (m *Module) AccountUpdateCredentialsPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, acctSensitive)
+	apiutil.JSON(c, http.StatusOK, acctSensitive)
 }
 
 // fieldsAttributesFormBinding satisfies gin's binding.Binding interface.

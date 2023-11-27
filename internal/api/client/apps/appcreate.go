@@ -121,5 +121,5 @@ func (m *Module) AppsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, apiApp)
+	apiutil.JSON(c, http.StatusOK, apiApp)
 }

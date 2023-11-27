@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type testMIMES []MIME
+type testMIMES []string
 
 func (tm testMIMES) String(t *testing.T) string {
 	t.Helper()

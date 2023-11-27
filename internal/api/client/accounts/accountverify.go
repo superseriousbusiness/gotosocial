@@ -73,5 +73,5 @@ func (m *Module) AccountVerifyGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, acctSensitive)
+	apiutil.JSON(c, http.StatusOK, acctSensitive)
 }

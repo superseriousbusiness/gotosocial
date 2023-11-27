@@ -18,7 +18,6 @@
 package webfinger
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -87,13 +86,12 @@ func (m *Module) WebfingerGETRequest(c *gin.Context) {
 		return
 	}
 
-	b, err := json.Marshal(resp)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	// Always return "application/jrd+json" regardless of negotiated
-	// format. See https://www.rfc-editor.org/rfc/rfc7033#section-10.2
-	c.Data(http.StatusOK, string(apiutil.AppJRDJSON), b)
+	// Encode JSON HTTP response.
+	apiutil.EncodeJSONResponse(
+		c.Writer,
+		c.Request,
+		http.StatusOK,
+		apiutil.AppJRDJSON,
+		resp,
+	)
 }

@@ -142,5 +142,6 @@ func (m *Module) TagTimelineGETHandler(c *gin.Context) {
 	if resp.LinkHeader != "" {
 		c.Header("Link", resp.LinkHeader)
 	}
-	c.JSON(http.StatusOK, resp.Items)
+
+	apiutil.JSON(c, http.StatusOK, resp.Items)
 }

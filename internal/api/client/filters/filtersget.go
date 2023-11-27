@@ -38,5 +38,5 @@ func (m *Module) FiltersGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, []string{})
+	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
 }

@@ -110,5 +110,11 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 
 	c.Header("Cache-Control", "no-store")
 	c.Header("Pragma", "no-cache")
-	c.JSON(http.StatusOK, token)
+	apiutil.EncodeJSONResponse(
+		c.Writer,
+		c.Request,
+		http.StatusOK,
+		apiutil.AppJSON,
+		token,
+	)
 }

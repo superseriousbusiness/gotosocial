@@ -266,11 +266,16 @@ func toJSON(a any) string {
 		}
 		a = m
 	}
-	b, err := json.MarshalIndent(a, "", "  ")
+	var dst bytes.Buffer
+	enc := json.NewEncoder(&dst)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	err := enc.Encode(a)
 	if err != nil {
 		panic(err)
 	}
-	return string(b)
+	dst.Truncate(dst.Len() - 1) // drop new-line
+	return dst.String()
 }
 
 // indentJSON will return indented JSON from raw provided JSON.

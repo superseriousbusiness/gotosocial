@@ -26,7 +26,7 @@ import (
 )
 
 // JSONAcceptHeaders is a slice of offers that just contains application/json types.
-var JSONAcceptHeaders = []MIME{
+var JSONAcceptHeaders = []string{
 	AppJSON,
 }
 
@@ -34,7 +34,7 @@ var JSONAcceptHeaders = []MIME{
 // jrd+json content type, but will be chill and fall back to app/json.
 // This is to be used specifically for webfinger responses.
 // See https://www.rfc-editor.org/rfc/rfc7033#section-10.2
-var WebfingerJSONAcceptHeaders = []MIME{
+var WebfingerJSONAcceptHeaders = []string{
 	AppJRDJSON,
 	AppJSON,
 }
@@ -42,13 +42,13 @@ var WebfingerJSONAcceptHeaders = []MIME{
 // JSONOrHTMLAcceptHeaders is a slice of offers that prefers AppJSON and will
 // fall back to HTML if necessary. This is useful for error handling, since it can
 // be used to serve a nice HTML page if the caller accepts that, or just JSON if not.
-var JSONOrHTMLAcceptHeaders = []MIME{
+var JSONOrHTMLAcceptHeaders = []string{
 	AppJSON,
 	TextHTML,
 }
 
 // HTMLAcceptHeaders is a slice of offers that just contains text/html types.
-var HTMLAcceptHeaders = []MIME{
+var HTMLAcceptHeaders = []string{
 	TextHTML,
 }
 
@@ -57,7 +57,7 @@ var HTMLAcceptHeaders = []MIME{
 // but which should also be able to serve ActivityPub as a fallback.
 //
 // https://www.w3.org/TR/activitypub/#retrieving-objects
-var HTMLOrActivityPubHeaders = []MIME{
+var HTMLOrActivityPubHeaders = []string{
 	TextHTML,
 	AppActivityLDJSON,
 	AppActivityJSON,
@@ -68,7 +68,7 @@ var HTMLOrActivityPubHeaders = []MIME{
 // which a user might also go to in their browser sometimes.
 //
 // https://www.w3.org/TR/activitypub/#retrieving-objects
-var ActivityPubOrHTMLHeaders = []MIME{
+var ActivityPubOrHTMLHeaders = []string{
 	AppActivityLDJSON,
 	AppActivityJSON,
 	TextHTML,
@@ -78,12 +78,12 @@ var ActivityPubOrHTMLHeaders = []MIME{
 // This is useful for URLs should only serve ActivityPub.
 //
 // https://www.w3.org/TR/activitypub/#retrieving-objects
-var ActivityPubHeaders = []MIME{
+var ActivityPubHeaders = []string{
 	AppActivityLDJSON,
 	AppActivityJSON,
 }
 
-var HostMetaHeaders = []MIME{
+var HostMetaHeaders = []string{
 	AppXMLXRD,
 	AppXML,
 }
@@ -109,7 +109,7 @@ var HostMetaHeaders = []MIME{
 // often-used Accept types.
 //
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#server-driven_content_negotiation
-func NegotiateAccept(c *gin.Context, offers ...MIME) (string, error) {
+func NegotiateAccept(c *gin.Context, offers ...string) (string, error) {
 	if len(offers) == 0 {
 		return "", errors.New("no format offered")
 	}

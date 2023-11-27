@@ -96,5 +96,7 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, gin.H{"message": "accepted"})
+	apiutil.JSON(c, http.StatusAccepted, map[string]string{
+		"message": "accepted",
+	})
 }

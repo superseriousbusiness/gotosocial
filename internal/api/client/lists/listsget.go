@@ -77,5 +77,5 @@ func (m *Module) ListsGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, lists)
+	apiutil.JSON(c, http.StatusOK, lists)
 }

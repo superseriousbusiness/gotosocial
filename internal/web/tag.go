@@ -45,7 +45,7 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 	}
 
 	// We only serve text/html at this endpoint.
-	if _, err := apiutil.NegotiateAccept(c, []apiutil.MIME{apiutil.TextHTML}...); err != nil {
+	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
 		return
 	}

@@ -98,5 +98,5 @@ func (m *Module) MediaGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, attachment)
+	apiutil.JSON(c, http.StatusOK, attachment)
 }

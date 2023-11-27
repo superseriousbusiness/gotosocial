@@ -122,7 +122,7 @@ func (m *Module) createDomainPermissions(
 			return
 		}
 
-		c.JSON(http.StatusOK, domainBlock)
+		apiutil.JSON(c, http.StatusOK, domainBlock)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (m *Module) createDomainPermissions(
 		domainPerms = append(domainPerms, entry.Resource)
 	}
 
-	c.JSON(http.StatusOK, domainPerms)
+	apiutil.JSON(c, http.StatusOK, domainPerms)
 }
 
 // deleteDomainPermission deletes a single domain permission (block or allow).
@@ -200,7 +200,7 @@ func (m *Module) deleteDomainPermission(
 		return
 	}
 
-	c.JSON(http.StatusOK, domainPerm)
+	apiutil.JSON(c, http.StatusOK, domainPerm)
 }
 
 // getDomainPermission gets a single domain permission (block or allow).
@@ -248,7 +248,7 @@ func (m *Module) getDomainPermission(
 		return
 	}
 
-	c.JSON(http.StatusOK, domainPerm)
+	apiutil.JSON(c, http.StatusOK, domainPerm)
 }
 
 // getDomainPermissions gets all domain permissions of the given type (block, allow).
@@ -290,5 +290,5 @@ func (m *Module) getDomainPermissions(
 		return
 	}
 
-	c.JSON(http.StatusOK, domainPerm)
+	apiutil.JSON(c, http.StatusOK, domainPerm)
 }

@@ -108,7 +108,7 @@ func (m *Module) RulePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, apiRule)
+	apiutil.JSON(c, http.StatusOK, apiRule)
 }
 
 func validateCreateRule(form *apimodel.InstanceRuleCreateRequest) error {

@@ -47,6 +47,5 @@ func (m *Module) InboxPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// Inbox POST body was Accepted for processing.
-	c.JSON(http.StatusAccepted, gin.H{"status": http.StatusText(http.StatusAccepted)})
+	apiutil.Data(c, http.StatusAccepted, apiutil.AppJSON, apiutil.StatusAcceptedJSON)
 }

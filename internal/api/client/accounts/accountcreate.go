@@ -107,7 +107,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, ti)
+	apiutil.JSON(c, http.StatusOK, ti)
 }
 
 // validateNormalizeCreateAccount checks through all the necessary prerequisites for creating a new account,

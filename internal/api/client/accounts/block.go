@@ -90,5 +90,5 @@ func (m *Module) AccountBlockPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, relationship)
+	apiutil.JSON(c, http.StatusOK, relationship)
 }

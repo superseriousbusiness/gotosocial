@@ -156,5 +156,5 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, data)
+	apiutil.JSON(c, http.StatusOK, data)
 }
