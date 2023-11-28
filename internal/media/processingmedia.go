@@ -29,7 +29,7 @@ import (
 	"codeberg.org/gruf/go-runners"
 	"github.com/disintegration/imaging"
 	"github.com/h2non/filetype"
-	terminator "github.com/superseriousbusiness/exif-terminator"
+	"github.com/superseriousbusiness/exif-terminator"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"

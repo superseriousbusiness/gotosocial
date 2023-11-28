@@ -10,9 +10,8 @@ import (
 	"hash/crc32"
 
 	"github.com/dsoprea/go-exif/v3"
-	"github.com/dsoprea/go-exif/v3/common"
-	"github.com/dsoprea/go-logging"
-	"github.com/dsoprea/go-utility/v2/image"
+	exifcommon "github.com/dsoprea/go-exif/v3/common"
+	riimage "github.com/dsoprea/go-utility/v2/image"
 )
 
 var (
@@ -31,20 +30,19 @@ type ChunkSlice struct {
 	chunks []*Chunk
 }
 
-func NewChunkSlice(chunks []*Chunk) *ChunkSlice {
+func NewChunkSlice(chunks []*Chunk) (*ChunkSlice, error) {
 	if len(chunks) == 0 {
-		log.Panicf("ChunkSlice must be initialized with at least one chunk (IHDR)")
+		err := errors.New("ChunkSlice must be initialized with at least one chunk (IHDR)")
+		return nil, err
 	} else if chunks[0].Type != IHDRChunkType {
-		log.Panicf("first chunk in any ChunkSlice must be an IHDR")
+		err := errors.New("first chunk in any ChunkSlice must be an IHDR")
+		return nil, err
 	}
 
-	return &ChunkSlice{
-		chunks: chunks,
-	}
+	return &ChunkSlice{chunks}, nil
 }
 
-func NewPngChunkSlice() *ChunkSlice {
-
+func NewPngChunkSlice() (*ChunkSlice, error) {
 	ihdrChunk := &Chunk{
 		Type: IHDRChunkType,
 	}
@@ -64,20 +62,17 @@ func (cs *ChunkSlice) Chunks() []*Chunk {
 }
 
 // Write encodes and writes all chunks.
-func (cs *ChunkSlice) WriteTo(w io.Writer) (err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
+func (cs *ChunkSlice) WriteTo(w io.Writer) error {
+	if _, err := w.Write(PngSignature[:]); err != nil {
+		return err
+	}
 
-	_, err = w.Write(PngSignature[:])
-	log.PanicIf(err)
-
-	// TODO(dustin): !! This should respect the safe-to-copy characteristic.
+	// TODO(dustin): !! This should respect
+	// the safe-to-copy characteristic.
 	for _, c := range cs.chunks {
-		_, err := c.WriteTo(w)
-		log.PanicIf(err)
+		if _, err := c.WriteTo(w); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -87,7 +82,7 @@ func (cs *ChunkSlice) WriteTo(w io.Writer) (err error) {
 func (cs *ChunkSlice) Index() (index map[string][]*Chunk) {
 	index = make(map[string][]*Chunk)
 	for _, c := range cs.chunks {
-		if grouped, found := index[c.Type]; found == true {
+		if grouped, found := index[c.Type]; found {
 			index[c.Type] = append(grouped, c)
 		} else {
 			index[c.Type] = []*Chunk{c}
@@ -99,112 +94,96 @@ func (cs *ChunkSlice) Index() (index map[string][]*Chunk) {
 
 // FindExif returns the the segment that hosts the EXIF data.
 func (cs *ChunkSlice) FindExif() (chunk *Chunk, err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
-
 	index := cs.Index()
-
-	if chunks, found := index[EXifChunkType]; found == true {
+	if chunks, found := index[EXifChunkType]; found {
 		return chunks[0], nil
 	}
 
-	log.Panic(exif.ErrNoExif)
-
-	// Never called.
-	return nil, nil
+	return nil, exif.ErrNoExif
 }
 
 // Exif returns an `exif.Ifd` instance with the existing tags.
-func (cs *ChunkSlice) Exif() (rootIfd *exif.Ifd, data []byte, err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
-
+func (cs *ChunkSlice) Exif() (*exif.Ifd, []byte, error) {
 	chunk, err := cs.FindExif()
-	log.PanicIf(err)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	im, err := exifcommon.NewIfdMappingWithStandard()
-	log.PanicIf(err)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	ti := exif.NewTagIndex()
 
-	// TODO(dustin): Refactor and support `exif.GetExifData()`.
-
 	_, index, err := exif.Collect(im, ti, chunk.Data)
-	log.PanicIf(err)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	return index.RootIfd, chunk.Data, nil
 }
 
-// ConstructExifBuilder returns an `exif.IfdBuilder` instance (needed for
-// modifying) preloaded with all existing tags.
-func (cs *ChunkSlice) ConstructExifBuilder() (rootIb *exif.IfdBuilder, err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
-
+// ConstructExifBuilder returns an `exif.IfdBuilder` instance
+// (needed for modifying) preloaded with all existing tags.
+func (cs *ChunkSlice) ConstructExifBuilder() (*exif.IfdBuilder, error) {
 	rootIfd, _, err := cs.Exif()
-	log.PanicIf(err)
+	if err != nil {
+		return nil, err
+	}
 
-	ib := exif.NewIfdBuilderFromExistingChain(rootIfd)
-
-	return ib, nil
+	return exif.NewIfdBuilderFromExistingChain(rootIfd), nil
 }
 
 // SetExif encodes and sets EXIF data into this segment.
-func (cs *ChunkSlice) SetExif(ib *exif.IfdBuilder) (err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
-
+func (cs *ChunkSlice) SetExif(ib *exif.IfdBuilder) error {
 	// Encode.
 
 	ibe := exif.NewIfdByteEncoder()
 
 	exifData, err := ibe.EncodeToExif(ib)
-	log.PanicIf(err)
+	if err != nil {
+		return err
+	}
 
 	// Set.
 
 	exifChunk, err := cs.FindExif()
-	if err == nil {
-		// EXIF chunk already exists.
 
+	switch {
+	case err == nil:
+		// EXIF chunk already exists.
 		exifChunk.Data = exifData
 		exifChunk.Length = uint32(len(exifData))
-	} else {
-		if log.Is(err, exif.ErrNoExif) != true {
-			log.Panic(err)
-		}
 
+	case errors.Is(err, exif.ErrNoExif):
 		// Add a EXIF chunk for the first time.
-
 		exifChunk = &Chunk{
 			Type:   EXifChunkType,
 			Data:   exifData,
 			Length: uint32(len(exifData)),
 		}
 
-		// Insert it after the IHDR chunk (it's a reliably appropriate place to
-		// put it).
-		cs.chunks = append(cs.chunks[:1], append([]*Chunk{exifChunk}, cs.chunks[1:]...)...)
+		// Insert exif after the IHDR chunk; it's
+		// a reliably appropriate place to put it.
+		cs.chunks = append(
+			cs.chunks[:1],
+			append(
+				[]*Chunk{exifChunk},
+				cs.chunks[1:]...,
+			)...,
+		)
+
+	default:
+		return err
 	}
 
 	exifChunk.UpdateCrc32()
-
 	return nil
 }
 
-// PngSplitter hosts the princpal `Split()` method uses by `bufio.Scanner`.
+// PngSplitter hosts the princpal `Split()`
+// method uses by `bufio.Scanner`.
 type PngSplitter struct {
 	chunks        []*Chunk
 	currentOffset int
@@ -213,7 +192,7 @@ type PngSplitter struct {
 	crcErrors  []string
 }
 
-func (ps *PngSplitter) Chunks() *ChunkSlice {
+func (ps *PngSplitter) Chunks() (*ChunkSlice, error) {
 	return NewChunkSlice(ps.chunks)
 }
 
@@ -265,104 +244,100 @@ func (c *Chunk) CheckCrc32() bool {
 }
 
 // Bytes encodes and returns the bytes for this chunk.
-func (c *Chunk) Bytes() []byte {
-	defer func() {
-		if state := recover(); state != nil {
-			err := log.Wrap(state.(error))
-			log.Panic(err)
-		}
-	}()
-
+func (c *Chunk) Bytes() ([]byte, error) {
 	if len(c.Data) != int(c.Length) {
-		log.Panicf("length of data not correct")
+		return nil, errors.New("length of data not correct")
 	}
 
 	preallocated := make([]byte, 0, 4+4+c.Length+4)
 	b := bytes.NewBuffer(preallocated)
 
 	err := binary.Write(b, binary.BigEndian, c.Length)
-	log.PanicIf(err)
-
-	_, err = b.Write([]byte(c.Type))
-	log.PanicIf(err)
-
-	if c.Data != nil {
-		_, err = b.Write(c.Data)
-		log.PanicIf(err)
+	if err != nil {
+		return nil, err
 	}
 
-	err = binary.Write(b, binary.BigEndian, c.Crc)
-	log.PanicIf(err)
+	if _, err := b.Write([]byte(c.Type)); err != nil {
+		return nil, err
+	}
 
-	return b.Bytes()
+	if c.Data != nil {
+		if _, err := b.Write(c.Data); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := binary.Write(b, binary.BigEndian, c.Crc); err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
 
 // Write encodes and writes the bytes for this chunk.
-func (c *Chunk) WriteTo(w io.Writer) (count int, err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
-
+func (c *Chunk) WriteTo(w io.Writer) (int, error) {
 	if len(c.Data) != int(c.Length) {
-		log.Panicf("length of data not correct")
+		return 0, errors.New("length of data not correct")
 	}
 
-	err = binary.Write(w, binary.BigEndian, c.Length)
-	log.PanicIf(err)
+	if err := binary.Write(w, binary.BigEndian, c.Length); err != nil {
+		return 0, err
+	}
 
-	_, err = w.Write([]byte(c.Type))
-	log.PanicIf(err)
+	if _, err := w.Write([]byte(c.Type)); err != nil {
+		return 0, err
+	}
 
-	_, err = w.Write(c.Data)
-	log.PanicIf(err)
+	if _, err := w.Write(c.Data); err != nil {
+		return 0, err
+	}
 
-	err = binary.Write(w, binary.BigEndian, c.Crc)
-	log.PanicIf(err)
+	if err := binary.Write(w, binary.BigEndian, c.Crc); err != nil {
+		return 0, err
+	}
 
 	return 4 + len(c.Type) + len(c.Data) + 4, nil
 }
 
 // readHeader verifies that the PNG header bytes appear next.
-func (ps *PngSplitter) readHeader(r io.Reader) (err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
+func (ps *PngSplitter) readHeader(r io.Reader) error {
+	var (
+		sigLen = len(PngSignature)
+		header = make([]byte, sigLen)
+	)
 
-	len_ := len(PngSignature)
-	header := make([]byte, len_)
+	if _, err := r.Read(header); err != nil {
+		return err
+	}
 
-	_, err = r.Read(header)
-	log.PanicIf(err)
-
-	ps.currentOffset += len_
-
-	if bytes.Compare(header, PngSignature[:]) != 0 {
-		log.Panic(ErrNotPng)
+	ps.currentOffset += sigLen
+	if !bytes.Equal(header, PngSignature[:]) {
+		return ErrNotPng
 	}
 
 	return nil
 }
 
-// Split fulfills the `bufio.SplitFunc` function definition for
-// `bufio.Scanner`.
-func (ps *PngSplitter) Split(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	defer func() {
-		if state := recover(); state != nil {
-			err = log.Wrap(state.(error))
-		}
-	}()
-
-	// We might have more than one chunk's worth, and, if `atEOF` is true, we
-	// won't be called again. We'll repeatedly try to read additional chunks,
-	// but, when we run out of the data we were given then we'll return the
-	// number of bytes fo rthe chunks we've already completely read. Then,
-	// we'll be called again from theend ofthose bytes, at which point we'll
-	// indicate that we don't yet have enough for another chunk, and we should
-	// be then called with more.
+// Split fulfills the `bufio.SplitFunc`
+// function definition for `bufio.Scanner`.
+func (ps *PngSplitter) Split(
+	data []byte,
+	atEOF bool,
+) (
+	advance int,
+	token []byte,
+	err error,
+) {
+	// We might have more than one chunk's worth, and,
+	// if `atEOF` is true, we won't be called again.
+	// We'll repeatedly try to read additional chunks,
+	// but, when we run out of the data we were given
+	// then we'll return the number of bytes for the
+	// chunks we've already completely read. Then, we'll
+	// be called again from the end ofthose bytes, at
+	// which point we'll indicate that we don't yet have
+	// enough for another chunk, and we should be then
+	// called with more.
 	for {
 		len_ := len(data)
 		if len_ < 8 {
@@ -393,11 +368,12 @@ func (ps *PngSplitter) Split(data []byte, atEOF bool) (advance int, token []byte
 
 		ps.chunks = append(ps.chunks, c)
 
-		if c.CheckCrc32() == false {
+		if !c.CheckCrc32() {
 			ps.crcErrors = append(ps.crcErrors, type_)
 
-			if ps.doCheckCrc == true {
-				log.Panic(ErrCrcFailure)
+			if ps.doCheckCrc {
+				err = ErrCrcFailure
+				return
 			}
 		}
 
@@ -406,8 +382,6 @@ func (ps *PngSplitter) Split(data []byte, atEOF bool) (advance int, token []byte
 
 		data = data[chunkSize:]
 	}
-
-	return advance, nil, nil
 }
 
 var (

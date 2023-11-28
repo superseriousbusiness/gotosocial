@@ -22,7 +22,7 @@ import (
 	"encoding/binary"
 	"io"
 
-	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
+	pngstructure "github.com/superseriousbusiness/go-png-image-structure/v2"
 )
 
 type pngVisitor struct {
@@ -45,21 +45,34 @@ func (v *pngVisitor) split(data []byte, atEOF bool) (int, []byte, error) {
 		}
 	}
 
-	// check if the splitter has any new chunks in it that we haven't written yet
-	chunkSlice := v.ps.Chunks()
+	// Check if the splitter now has
+	// any new chunks in it for us.
+	chunkSlice, err := v.ps.Chunks()
+	if err != nil {
+		return advance, token, err
+	}
+
+	// Write each chunk by passing it
+	// through our custom write func,
+	// which strips out exif and fixes
+	// the CRC of each chunk.
 	chunks := chunkSlice.Chunks()
 	for i, chunk := range chunks {
-		// look through all the chunks in the splitter
-		if i > v.lastWrittenChunk {
-			// we've got a chunk we haven't written yet! write it...
-			if err := v.writeChunk(chunk); err != nil {
-				return advance, token, err
-			}
-			// then remove the data
-			chunk.Data = chunk.Data[:0]
-			// and update
-			v.lastWrittenChunk = i
+		if i <= v.lastWrittenChunk {
+			// Skip already
+			// written chunks.
+			continue
 		}
+
+		// Write this new chunk.
+		if err := v.writeChunk(chunk); err != nil {
+			return advance, token, err
+		}
+		v.lastWrittenChunk = i
+
+		// Zero data; here you
+		// go garbage collector.
+		chunk.Data = nil
 	}
 
 	return advance, token, err
@@ -75,16 +88,17 @@ func (v *pngVisitor) writeChunk(chunk *pngstructure.Chunk) error {
 	}
 
 	if chunk.Type == pngstructure.EXifChunkType {
-		blank := make([]byte, len(chunk.Data))
-		if _, err := v.writer.Write(blank); err != nil {
-			return err
-		}
-	} else {
-		if _, err := v.writer.Write(chunk.Data); err != nil {
-			return err
-		}
+		// Replace exif data with zero bytes.
+		zeros := make([]byte, len(chunk.Data))
+		chunk.Data = zeros
 	}
 
+	if _, err := v.writer.Write(chunk.Data); err != nil {
+		return err
+	}
+
+	// Fix CRC of each chunk.
+	chunk.UpdateCrc32()
 	if err := binary.Write(v.writer, binary.BigEndian, chunk.Crc); err != nil {
 		return err
 	}
