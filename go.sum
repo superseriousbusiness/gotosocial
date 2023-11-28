@@ -51,8 +51,8 @@ codeberg.org/gruf/go-cache/v3 v3.5.6/go.mod h1:NbsGQUgEdNFd631WSasvCHIVAaY9ovuiS
 codeberg.org/gruf/go-debug v1.3.0 h1:PIRxQiWUFKtGOGZFdZ3Y0pqyfI0Xr87j224IYe2snZs=
 codeberg.org/gruf/go-debug v1.3.0/go.mod h1:N+vSy9uJBQgpQcJUqjctvqFz7tBHJf+S/PIjLILzpLg=
 codeberg.org/gruf/go-errors/v2 v2.0.0/go.mod h1:ZRhbdhvgoUA3Yw6e56kd9Ox984RrvbEFC2pOXyHDJP4=
-codeberg.org/gruf/go-errors/v2 v2.2.0 h1:CxnTtR4+BqRGeBHuG/FdCKM4m3otMdfPVez6ReBebkM=
-codeberg.org/gruf/go-errors/v2 v2.2.0/go.mod h1:LfzD9nkAAJpEDbkUqOZQ2jdaQ8VrK0pnR36zLOMFq6Y=
+codeberg.org/gruf/go-errors/v2 v2.3.0 h1:i3wfnUBKU/IZ5xzgO8UKHDiLVfDiBZ+ivO5OSLkczJ0=
+codeberg.org/gruf/go-errors/v2 v2.3.0/go.mod h1:LfzD9nkAAJpEDbkUqOZQ2jdaQ8VrK0pnR36zLOMFq6Y=
 codeberg.org/gruf/go-fastcopy v1.1.2 h1:YwmYXPsyOcRBxKEE2+w1bGAZfclHVaPijFsOVOcnNcw=
 codeberg.org/gruf/go-fastcopy v1.1.2/go.mod h1:GDDYR0Cnb3U/AIfGM3983V/L+GN+vuwVMvrmVABo21s=
 codeberg.org/gruf/go-fastpath/v2 v2.0.0 h1:iAS9GZahFhyWEH0KLhFEJR+txx1ZhMXxYzu2q5Qo9c0=

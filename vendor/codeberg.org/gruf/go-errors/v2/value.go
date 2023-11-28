@@ -1,56 +1,50 @@
 package errors
 
-import "errors"
-
 // WithValue wraps err to store given key-value pair, accessible via Value() function.
 func WithValue(err error, key any, value any) error {
 	if err == nil {
 		panic("nil error")
 	}
-	return &errWithValue{
+	var kvs []kv
+	if e := As[*errWithValues](err); e != nil {
+		kvs = e.kvs
+	}
+	return &errWithValues{
 		err: err,
-		key: key,
-		val: value,
+		kvs: append(kvs, kv{key, value}),
 	}
 }
 
 // Value searches for value stored under given key in error chain.
 func Value(err error, key any) any {
-	var e *errWithValue
-
-	if !errors.As(err, &e) {
-		return nil
+	if e := As[*errWithValues](err); e != nil {
+		return e.Value(key)
 	}
-
-	return e.Value(key)
+	return nil
 }
 
-type errWithValue struct {
+// simple key-value type.
+type kv struct{ k, v any }
+
+// errWithValues wraps an error to provide key-value storage.
+type errWithValues struct {
 	err error
-	key any
-	val any
+	kvs []kv
 }
 
-func (e *errWithValue) Error() string {
+func (e *errWithValues) Error() string {
 	return e.err.Error()
 }
 
-func (e *errWithValue) Is(target error) bool {
-	return e.err == target
+func (e *errWithValues) Unwrap() error {
+	return e.err
 }
 
-func (e *errWithValue) Unwrap() error {
-	return Unwrap(e.err)
-}
-
-func (e *errWithValue) Value(key any) any {
-	for {
-		if key == e.key {
-			return e.val
-		}
-
-		if !errors.As(e.err, &e) {
-			return nil
+func (e *errWithValues) Value(key any) any {
+	for i := range e.kvs {
+		if e.kvs[i].k == key {
+			return e.kvs[i].v
 		}
 	}
+	return nil
 }
