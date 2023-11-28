@@ -19,6 +19,7 @@ package streaming_test
 
 import (
 	"bufio"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -227,17 +228,21 @@ func (suite *StreamingTestSuite) TestSecurityHeader() {
 	ctx.Request.Header.Set("Connection", "upgrade")
 	ctx.Request.Header.Set("Upgrade", "websocket")
 	ctx.Request.Header.Set("Sec-Websocket-Version", "13")
-	ctx.Request.Header.Set("Sec-Websocket-Key", "abcd")
+	key := [16]byte{'h', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd'}
+	key64 := base64.StdEncoding.EncodeToString(key[:]) // sec-websocket-key must be base64 encoded and 16 bytes long
+	ctx.Request.Header.Set("Sec-Websocket-Key", key64)
 
 	suite.streamingModule.StreamGETHandler(ctx)
 
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
 	result := recorder.Result()
 	defer result.Body.Close()
-	_, err := ioutil.ReadAll(result.Body)
+	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
+
+	// check response
+	if !suite.EqualValues(http.StatusOK, recorder.Code) {
+		suite.T().Logf("%s", b)
+	}
 }
 
 func TestStreamingTestSuite(t *testing.T) {
