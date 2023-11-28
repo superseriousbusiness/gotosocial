@@ -28,12 +28,6 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		if db.Dialect().Name() != dialect.PG {
-			// This migration is not
-			// needed for sqlite.
-			return nil
-		}
-
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			type spec struct {
 				old     string
@@ -42,119 +36,121 @@ func init() {
 				columns []string
 			}
 
-			log.Info(ctx, "renaming misnamed postgres constraints; this may take some time, please be patient and don't interrupt this!")
+			if db.Dialect().Name() == dialect.PG {
+				log.Info(ctx, "renaming misnamed postgres constraints; this may take some time, please be patient and don't interrupt this!")
 
-			// Some constraints got kept around
-			// in weird versions due to migration
-			// issues; rename these for consistency
-			// (this will also drop and recreate
-			// indexes supporting the constraints).
-			for _, spec := range []spec{
-				{
-					old:     "new_accounts_pkey",
-					new:     "accounts_pkey",
-					table:   "public.accounts",
-					columns: []string{"id"},
-				},
-				{
-					old:     "new_accounts_uri_key",
-					new:     "accounts_uri_key",
-					table:   "public.accounts",
-					columns: []string{"uri"},
-				},
-				{
-					old:     "new_accounts_url_key",
-					new:     "accounts_url_key",
-					table:   "public.accounts",
-					columns: []string{"url"},
-				},
-				{
-					old:     "new_accounts_inbox_uri_key",
-					new:     "accounts_inbox_uri_key",
-					table:   "public.accounts",
-					columns: []string{"inbox_uri"},
-				},
-				{
-					old:     "new_accounts_outbox_uri_key",
-					new:     "accounts_outbox_uri_key",
-					table:   "public.accounts",
-					columns: []string{"outbox_uri"},
-				},
-				{
-					old:     "new_accounts_following_uri_key",
-					new:     "accounts_following_uri_key",
-					table:   "public.accounts",
-					columns: []string{"following_uri"},
-				},
-				{
-					old:     "new_accounts_followers_uri_key",
-					new:     "accounts_followers_uri_key",
-					table:   "public.accounts",
-					columns: []string{"followers_uri"},
-				},
-				{
-					old:     "new_accounts_featured_collection_uri_key",
-					new:     "accounts_featured_collection_uri_key",
-					table:   "public.accounts",
-					columns: []string{"featured_collection_uri"},
-				},
-				{
-					old:     "new_accounts_public_key_uri_key",
-					new:     "accounts_public_key_uri_key",
-					table:   "public.accounts",
-					columns: []string{"public_key_uri"},
-				},
-				{
-					old:     "new_emojis_pkey1",
-					new:     "emojis_pkey",
-					table:   "public.emojis",
-					columns: []string{"id"},
-				},
-				{
-					old:     "new_emojis_uri_key1",
-					new:     "emojis_uri_key",
-					table:   "public.emojis",
-					columns: []string{"uri"},
-				},
-				{
-					old:     "new_status_faves_pkey",
-					new:     "status_faves_pkey",
-					table:   "public.status_faves",
-					columns: []string{"id"},
-				},
-				{
-					old:     "new_status_faves_uri_key",
-					new:     "status_faves_uri_key",
-					table:   "public.status_faves",
-					columns: []string{"uri"},
-				},
-			} {
-				if _, err := tx.ExecContext(
-					ctx,
-					"ALTER TABLE ? DROP CONSTRAINT IF EXISTS ?",
-					bun.Ident(spec.table),
-					bun.Safe(spec.old),
-				); err != nil {
-					return err
-				}
+				// Some constraints got kept around
+				// in weird versions due to migration
+				// issues; rename these for consistency
+				// (this will also drop and recreate
+				// indexes supporting the constraints).
+				for _, spec := range []spec{
+					{
+						old:     "new_accounts_pkey",
+						new:     "accounts_pkey",
+						table:   "public.accounts",
+						columns: []string{"id"},
+					},
+					{
+						old:     "new_accounts_uri_key",
+						new:     "accounts_uri_key",
+						table:   "public.accounts",
+						columns: []string{"uri"},
+					},
+					{
+						old:     "new_accounts_url_key",
+						new:     "accounts_url_key",
+						table:   "public.accounts",
+						columns: []string{"url"},
+					},
+					{
+						old:     "new_accounts_inbox_uri_key",
+						new:     "accounts_inbox_uri_key",
+						table:   "public.accounts",
+						columns: []string{"inbox_uri"},
+					},
+					{
+						old:     "new_accounts_outbox_uri_key",
+						new:     "accounts_outbox_uri_key",
+						table:   "public.accounts",
+						columns: []string{"outbox_uri"},
+					},
+					{
+						old:     "new_accounts_following_uri_key",
+						new:     "accounts_following_uri_key",
+						table:   "public.accounts",
+						columns: []string{"following_uri"},
+					},
+					{
+						old:     "new_accounts_followers_uri_key",
+						new:     "accounts_followers_uri_key",
+						table:   "public.accounts",
+						columns: []string{"followers_uri"},
+					},
+					{
+						old:     "new_accounts_featured_collection_uri_key",
+						new:     "accounts_featured_collection_uri_key",
+						table:   "public.accounts",
+						columns: []string{"featured_collection_uri"},
+					},
+					{
+						old:     "new_accounts_public_key_uri_key",
+						new:     "accounts_public_key_uri_key",
+						table:   "public.accounts",
+						columns: []string{"public_key_uri"},
+					},
+					{
+						old:     "new_emojis_pkey1",
+						new:     "emojis_pkey",
+						table:   "public.emojis",
+						columns: []string{"id"},
+					},
+					{
+						old:     "new_emojis_uri_key1",
+						new:     "emojis_uri_key",
+						table:   "public.emojis",
+						columns: []string{"uri"},
+					},
+					{
+						old:     "new_status_faves_pkey",
+						new:     "status_faves_pkey",
+						table:   "public.status_faves",
+						columns: []string{"id"},
+					},
+					{
+						old:     "new_status_faves_uri_key",
+						new:     "status_faves_uri_key",
+						table:   "public.status_faves",
+						columns: []string{"uri"},
+					},
+				} {
+					if _, err := tx.ExecContext(
+						ctx,
+						"ALTER TABLE ? DROP CONSTRAINT IF EXISTS ?",
+						bun.Ident(spec.table),
+						bun.Safe(spec.old),
+					); err != nil {
+						return err
+					}
 
-				if _, err := tx.ExecContext(
-					ctx,
-					"ALTER TABLE ? ADD CONSTRAINT ? UNIQUE(?)",
-					bun.Ident(spec.table),
-					bun.Safe(spec.new),
-					bun.Safe(strings.Join(spec.columns, ",")),
-				); err != nil {
-					return err
+					if _, err := tx.ExecContext(
+						ctx,
+						"ALTER TABLE ? ADD CONSTRAINT ? UNIQUE(?)",
+						bun.Ident(spec.table),
+						bun.Safe(spec.new),
+						bun.Safe(strings.Join(spec.columns, ",")),
+					); err != nil {
+						return err
+					}
 				}
 			}
 
-			log.Info(ctx, "removing duplicate postgres indexes this may take some time; please be patient and don't interrupt this!")
+			log.Info(ctx, "removing duplicate indexes; this may take some time, please be patient and don't interrupt this!")
 
 			// Remove all indexes which duplicate
 			// or are covered by other indexes,
 			// including unique constraint indexes
-			// created automatically by PG.
+			// created automatically by the db.
 			for _, index := range []string{
 				"account_notes_account_id_target_account_id_idx",
 				"accounts_username_domain_idx",
