@@ -206,10 +206,11 @@ func serveFileRange(rw http.ResponseWriter, r *http.Request, src io.Reader, rng 
 			return
 		}
 
-		if end > size {
+		if end >= size {
 			// According to the http spec if end >= size the server should return the rest of the file
 			// https://www.rfc-editor.org/rfc/rfc9110#section-14.1.2-6
 			end = size - 1
+			endRng = strconv.FormatInt(end, 10)
 		}
 	} else {
 		// No end supplied, implying file end
