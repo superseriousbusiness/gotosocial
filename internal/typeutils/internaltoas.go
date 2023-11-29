@@ -1713,7 +1713,7 @@ func (c *Converter) PollVoteToASCreate(
 	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), id)
 
 	// Set Create actor appropriately.
-	ap.AppendActor(create, authorIRI)
+	ap.AppendActorIRIs(create, authorIRI)
 
 	// Set publish time for activity.
 	ap.SetPublished(create, vote.CreatedAt)

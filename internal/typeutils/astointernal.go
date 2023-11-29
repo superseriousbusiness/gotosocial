@@ -656,7 +656,7 @@ func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 	// For Mastodon, this will just be a string, or nothing.
 	// In Misskey's case, it may also contain the URLs of
 	// one or more reported statuses, so extract these too.
-	content := ap.ExtractContent(flaggable)
+	content := ap.ExtractContent(flaggable).Content
 	statusURIs = misskeyReportInlineURLs(content)
 
 	// Extract account and statuses targeted by the flag / report.
