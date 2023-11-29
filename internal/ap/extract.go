@@ -328,29 +328,6 @@ func ExtractAttributedToURI(i WithAttributedTo) (*url.URL, error) {
 	return nil, gtserror.New("couldn't find iri for attributed to")
 }
 
-// ExtractPublished extracts the published time from the given
-// WithPublished. Will return an error if the published property
-// is not set, is not a time.Time, or is zero.
-func ExtractPublished(i WithPublished) (time.Time, error) {
-	t := time.Time{}
-
-	publishedProp := i.GetActivityStreamsPublished()
-	if publishedProp == nil {
-		return t, gtserror.New("published prop was nil")
-	}
-
-	if !publishedProp.IsXMLSchemaDateTime() {
-		return t, gtserror.New("published prop was not date time")
-	}
-
-	t = publishedProp.Get()
-	if t.IsZero() {
-		return t, gtserror.New("published time was zero")
-	}
-
-	return t, nil
-}
-
 // ExtractIconURI extracts the first URI it can find from
 // the given WithIcon which links to a supported image file.
 // Input will look something like this:

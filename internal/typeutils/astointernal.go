@@ -20,7 +20,6 @@ package typeutils
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 
 	"github.com/miekg/dns"
@@ -38,26 +37,52 @@ import (
 //
 // If accountDomain is provided then this value will be used as the account's Domain, else the AP ID host.
 func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
-	// first check if we actually already know this account
-	uriProp := accountable.GetJSONLDId()
-	if uriProp == nil || !uriProp.IsIRI() {
-		return nil, errors.New("no id property found on person, or id was not an iri")
-	}
-	uri := uriProp.GetIRI()
+	var err error
 
-	// we don't know the account, or we're being told to update it, so we need to generate it from the person -- at least we already have the URI!
-	acct := &gtsmodel.Account{}
+	// Extract URI from accountable
+	uri := ap.GetJSONLDId(accountable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Create DB account with URI
+	var acct gtsmodel.Account
 	acct.URI = uri.String()
 
-	// Username aka preferredUsername
-	// We need this one so bail if it's not set.
-	username, err := ap.ExtractPreferredUsername(accountable)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't extract username: %s", err)
-	}
-	acct.Username = username
+	// Check whether account is a usable actor type.
+	switch acct.ActorType = accountable.GetTypeName(); acct.ActorType {
 
-	// Domain
+	// people, groups, and organizations aren't bots
+	case ap.ActorPerson, ap.ActorGroup, ap.ActorOrganization:
+		acct.Bot = util.Ptr(false)
+
+	// apps and services are
+	case ap.ActorApplication, ap.ActorService:
+		acct.Bot = util.Ptr(true)
+
+	// we don't know what this is!
+	default:
+		err := gtserror.Newf("unusable actor type for %s", uri)
+		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Extract preferredUsername, this is a *requirement*.
+	acct.Username, err = ap.ExtractPreferredUsername(accountable)
+	if err != nil {
+		err := gtserror.Newf("unusable username for %s", uri)
+		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Extract a preferred name (display name), fallback to username.
+	if displayName := ap.ExtractName(accountable); displayName != "" {
+		acct.DisplayName = displayName
+	} else {
+		acct.DisplayName = acct.Username
+	}
+
+	// Check for separaate account
+	// domain to the instance hostname.
 	if accountDomain != "" {
 		acct.Domain = accountDomain
 	} else {
@@ -66,173 +91,144 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// avatar aka icon
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if avatarURL, err := ap.ExtractIconURI(accountable); err == nil {
+	avatarURL, err := ap.ExtractIconURI(accountable)
+	if err == nil {
 		acct.AvatarRemoteURL = avatarURL.String()
 	}
 
 	// header aka image
 	// if this one isn't extractable in a format we recognise we'll just skip it
-	if headerURL, err := ap.ExtractImageURI(accountable); err == nil {
+	headerURL, err := ap.ExtractImageURI(accountable)
+	if err == nil {
 		acct.HeaderRemoteURL = headerURL.String()
 	}
 
-	// display name aka name
-	// we default to the username, but take the more nuanced name property if it exists
-	if displayName := ap.ExtractName(accountable); displayName != "" {
-		acct.DisplayName = displayName
-	} else {
-		acct.DisplayName = username
-	}
-
 	// account emojis (used in bio, display name, fields)
-	if emojis, err := ap.ExtractEmojis(accountable); err != nil {
-		log.Infof(nil, "error extracting account emojis: %s", err)
-	} else {
-		acct.Emojis = emojis
+	acct.Emojis, err = ap.ExtractEmojis(accountable)
+	if err != nil {
+		log.Warnf(ctx, "error(s) extracting account emojis for %s: %v", uri, err)
 	}
 
-	// fields aka attachment array
+	// Extract account attachments (key-value fields).
 	acct.Fields = ap.ExtractFields(accountable)
 
-	// note aka summary
+	// Extract account note (bio / summary).
 	acct.Note = ap.ExtractSummary(accountable)
 
-	// check for bot and actor type
-	switch accountable.GetTypeName() {
-	case ap.ActorPerson, ap.ActorGroup, ap.ActorOrganization:
-		// people, groups, and organizations aren't bots
-		bot := false
-		acct.Bot = &bot
-		// apps and services are
-	case ap.ActorApplication, ap.ActorService:
-		bot := true
-		acct.Bot = &bot
-	default:
-		// we don't know what this is!
-		return nil, fmt.Errorf("type name %s not recognised or not convertible to ap.ActivityStreamsActor", accountable.GetTypeName())
-	}
-	acct.ActorType = accountable.GetTypeName()
+	// Assume:
+	// - memorial (TODO)
+	// - sensitive (TODO)
+	// - hide collections (TODO)
+	acct.Memorial = util.Ptr(false)
+	acct.Sensitive = util.Ptr(false)
+	acct.HideCollections = util.Ptr(false)
 
-	// assume not memorial (todo)
-	memorial := false
-	acct.Memorial = &memorial
-
-	// assume not sensitive (todo)
-	sensitive := false
-	acct.Sensitive = &sensitive
-
-	// assume not hide collections (todo)
-	hideCollections := false
-	acct.HideCollections = &hideCollections
-
-	// locked aka manuallyApprovesFollowers
-	locked := true
-	acct.Locked = &locked // assume locked by default
+	// Extract 'manuallyApprovesFollowers', (i.e. locked account)
 	maf := accountable.GetActivityStreamsManuallyApprovesFollowers()
-	if maf != nil && maf.IsXMLSchemaBoolean() {
-		locked = maf.Get()
+
+	switch {
+	case maf != nil && !maf.IsXMLSchemaBoolean():
+		log.Warnf(ctx, "unusable manuallyApprovesFollowers for %s", uri)
+		fallthrough
+
+	case maf == nil:
+		// None given, use default.
+		acct.Locked = util.Ptr(true)
+
+	default:
+		// Valid bool provided.
+		locked := maf.Get()
 		acct.Locked = &locked
 	}
 
-	// discoverable
-	// default to false -- take custom value if it's set though
-	discoverable := false
+	// Extract account discoverability (default = false).
+	discoverable := ap.GetDiscoverable(accountable)
 	acct.Discoverable = &discoverable
-	d, err := ap.ExtractDiscoverable(accountable)
-	if err == nil {
-		acct.Discoverable = &d
-	}
 
-	// assume not rss feed
-	enableRSS := false
-	acct.EnableRSS = &enableRSS
+	// Assume not an RSS feed.
+	acct.EnableRSS = util.Ptr(false)
 
-	// url property
-	url, err := ap.ExtractURL(accountable)
-	if err == nil {
-		// take the URL if we can find it
-		acct.URL = url.String()
-	} else {
-		// otherwise just take the account URI as the URL
+	// Extract the URL property.
+	urls := ap.GetURL(accountable)
+	if len(urls) == 0 {
+		// just use account uri string
 		acct.URL = uri.String()
+	} else {
+		// else use provided URL string
+		acct.URL = urls[0].String()
 	}
 
-	// InboxURI
-	if accountable.GetActivityStreamsInbox() != nil && accountable.GetActivityStreamsInbox().GetIRI() != nil {
-		acct.InboxURI = accountable.GetActivityStreamsInbox().GetIRI().String()
+	// Extract the inbox IRI property.
+	inboxIRI := ap.GetInbox(accountable)
+	if inboxIRI != nil {
+		acct.InboxURI = inboxIRI.String()
 	}
 
-	// SharedInboxURI:
-	// only trust shared inbox if it has at least two domains,
-	// from the right, in common with the domain of the account
+	// Extract the outbox IRI property.
+	outboxIRI := ap.GetOutbox(accountable)
+	if outboxIRI != nil {
+		acct.OutboxURI = outboxIRI.String()
+	}
+
+	// Extract a SharedInboxURI, but only trust it if a subdomain of account's domain.
 	if sharedInboxURI := ap.ExtractSharedInbox(accountable); // nocollapse
 	sharedInboxURI != nil && dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
 		sharedInbox := sharedInboxURI.String()
 		acct.SharedInboxURI = &sharedInbox
 	}
 
-	// OutboxURI
-	if accountable.GetActivityStreamsOutbox() != nil && accountable.GetActivityStreamsOutbox().GetIRI() != nil {
-		acct.OutboxURI = accountable.GetActivityStreamsOutbox().GetIRI().String()
+	// Extract the following IRI property.
+	followingURI := ap.GetFollowing(accountable)
+	if followingURI != nil {
+		acct.FollowingURI = followingURI.String()
 	}
 
-	// FollowingURI
-	if accountable.GetActivityStreamsFollowing() != nil && accountable.GetActivityStreamsFollowing().GetIRI() != nil {
-		acct.FollowingURI = accountable.GetActivityStreamsFollowing().GetIRI().String()
+	// Extract the following IRI property.
+	followersURI := ap.GetFollowers(accountable)
+	if followersURI != nil {
+		acct.FollowersURI = followersURI.String()
 	}
 
-	// FollowersURI
-	if accountable.GetActivityStreamsFollowers() != nil && accountable.GetActivityStreamsFollowers().GetIRI() != nil {
-		acct.FollowersURI = accountable.GetActivityStreamsFollowers().GetIRI().String()
-	}
-
-	// FeaturedURI aka pinned collection:
-	// Only trust featured URI if it has at least two domains,
-	// from the right, in common with the domain of the account
-	if featured := accountable.GetTootFeatured(); featured != nil && featured.IsIRI() {
-		if featuredURI := featured.GetIRI(); // nocollapse
-		featuredURI != nil && dns.CompareDomainName(acct.Domain, featuredURI.Host) >= 2 {
-			acct.FeaturedCollectionURI = featuredURI.String()
-		}
+	// Extract a FeaturedURI, but only trust it if a subdomain of account's domain.
+	if featuredURI := ap.GetFeatured(accountable); // nocollapse
+	featuredURI != nil && dns.CompareDomainName(acct.Domain, featuredURI.Host) >= 2 {
+		acct.FeaturedCollectionURI = featuredURI.String()
 	}
 
 	// TODO: FeaturedTagsURI
 
 	// TODO: alsoKnownAs
 
-	// publicKey
+	// Extract account public key and verify ownership to account.
 	pkey, pkeyURL, pkeyOwnerID, err := ap.ExtractPublicKey(accountable)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get public key for person %s: %s", uri.String(), err)
-	}
-
-	if pkeyOwnerID.String() != acct.URI {
-		return nil, fmt.Errorf("public key %s was owned by %s and not by %s", pkeyURL, pkeyOwnerID, acct.URI)
+		err := gtserror.Newf("error extracting public key for %s: %w", uri, err)
+		return nil, gtserror.SetMalformed(err)
+	} else if pkeyOwnerID.String() != acct.URI {
+		err := gtserror.Newf("public key not owned by account %s", uri)
+		return nil, gtserror.SetMalformed(err)
 	}
 
 	acct.PublicKey = pkey
 	acct.PublicKeyURI = pkeyURL.String()
 
-	return acct, nil
+	return &acct, nil
 }
 
 // ASStatus converts a remote activitystreams 'status' representation into a gts model status.
 func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusable) (*gtsmodel.Status, error) {
 	var err error
 
-	status := new(gtsmodel.Status)
-
-	// status.URI
-	//
-	// ActivityPub ID/URI of this status.
-	idProp := statusable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, gtserror.New("no id property found, or id was not an iri")
+	// Extract URI from statusable
+	uri := ap.GetJSONLDId(statusable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, gtserror.SetMalformed(err)
 	}
-	status.URI = idProp.GetIRI().String()
 
-	l := log.WithContext(ctx).
-		WithField("statusURI", status.URI)
+	// Create DB status with URI
+	var status gtsmodel.Status
+	status.URI = uri.String()
 
 	// status.URL
 	//
@@ -259,7 +255,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// Media attachments for later dereferencing.
 	status.Attachments, err = ap.ExtractAttachments(statusable)
 	if err != nil {
-		l.Warnf("error(s) extracting attachments: %v", err)
+		log.Warnf(ctx, "error(s) extracting attachments for %s: %v", uri, err)
 	}
 
 	// status.Poll
@@ -269,7 +265,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	if pollable, ok := ap.ToPollable(statusable); ok {
 		status.Poll, err = ap.ExtractPoll(pollable)
 		if err != nil {
-			l.Warnf("error(s) extracting poll: %v", err)
+			log.Warnf(ctx, "error(s) extracting poll for %s: %v", uri, err)
 		}
 	}
 
@@ -277,7 +273,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	//
 	// Hashtags for later dereferencing.
 	if hashtags, err := ap.ExtractHashtags(statusable); err != nil {
-		l.Warnf("error extracting hashtags: %v", err)
+		log.Warnf(ctx, "error extracting hashtags for %s: %v", uri, err)
 	} else {
 		status.Tags = hashtags
 	}
@@ -286,7 +282,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	//
 	// Custom emojis for later dereferencing.
 	if emojis, err := ap.ExtractEmojis(statusable); err != nil {
-		l.Warnf("error extracting emojis: %v", err)
+		log.Warnf(ctx, "error extracting emojis for %s: %v", uri, err)
 	} else {
 		status.Emojis = emojis
 	}
@@ -295,7 +291,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	//
 	// Mentions of other accounts for later dereferencing.
 	if mentions, err := ap.ExtractMentions(statusable); err != nil {
-		l.Warnf("error extracting mentions: %v", err)
+		log.Warnf(ctx, "error extracting mentions for %s: %v", uri, err)
 	} else {
 		status.Mentions = mentions
 	}
@@ -312,14 +308,13 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 	// status.Published
 	//
-	// Publication time of this status. Thanks to
-	// db defaults, will fall back to now if not set.
-	published, err := ap.ExtractPublished(statusable)
-	if err != nil {
-		l.Warnf("error extracting published: %v", err)
+	// Extract published time for the boost,
+	// zero-time will fall back to db defaults.
+	if pub := ap.GetPublished(statusable); !pub.IsZero() {
+		status.CreatedAt = pub
+		status.UpdatedAt = pub
 	} else {
-		status.CreatedAt = published
-		status.UpdatedAt = published
+		log.Warnf(ctx, "unusable published property on %s", uri)
 	}
 
 	// status.AccountURI
@@ -329,20 +324,17 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// Account that created the status. Assume we have
 	// this in the db by the time this function is called,
 	// error if we don't.
-	attributedTo, err := ap.ExtractAttributedToURI(statusable)
+	status.Account, err = c.getASAttributedToAccount(ctx,
+		status.URI,
+		statusable,
+	)
 	if err != nil {
-		return nil, gtserror.Newf("error extracting attributed to uri: %w", err)
-	}
-	accountURI := attributedTo.String()
-
-	account, err := c.state.DB.GetAccountByURI(ctx, accountURI)
-	if err != nil {
-		err = gtserror.Newf("db error getting status author account %s: %w", accountURI, err)
 		return nil, err
 	}
-	status.AccountURI = accountURI
-	status.AccountID = account.ID
-	status.Account = account
+
+	// Set the related status<->account fields.
+	status.AccountURI = status.Account.URI
+	status.AccountID = status.Account.ID
 
 	// status.InReplyToURI
 	// status.InReplyToID
@@ -353,15 +345,17 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// Status that this status replies to, if applicable.
 	// If we don't have this status in the database, we
 	// just set the URI and assume we can deref it later.
-	if uri := ap.ExtractInReplyToURI(statusable); uri != nil {
-		inReplyToURI := uri.String()
+	inReplyTo := ap.GetInReplyTo(statusable)
+	if len(inReplyTo) > 0 {
+
+		// Extract the URI from inReplyTo slice.
+		inReplyToURI := inReplyTo[0].String()
 		status.InReplyToURI = inReplyToURI
 
 		// Check if we already have the replied-to status.
 		inReplyTo, err := c.state.DB.GetStatusByURI(ctx, inReplyToURI)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			// Real database error.
-			err = gtserror.Newf("db error getting replied-to status %s: %w", inReplyToURI, err)
+			err := gtserror.Newf("error getting reply %s from db: %w", inReplyToURI, err)
 			return nil, err
 		}
 
@@ -375,16 +369,15 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		}
 	}
 
-	// status.Visibility
-	visibility, err := ap.ExtractVisibility(
+	// Calculate intended visibility of the status.
+	status.Visibility, err = ap.ExtractVisibility(
 		statusable,
 		status.Account.FollowersURI,
 	)
 	if err != nil {
-		err = gtserror.Newf("error extracting visibility: %w", err)
-		return nil, err
+		err := gtserror.Newf("error extracting status visibility for %s: %w", uri, err)
+		return nil, gtserror.SetMalformed(err)
 	}
-	status.Visibility = visibility
 
 	// Advanced visibility toggles for this status.
 	//
@@ -397,47 +390,39 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	status.Likeable = util.Ptr(true)
 
 	// status.Sensitive
-	status.Sensitive = func() *bool {
-		s := ap.ExtractSensitive(statusable)
-		return &s
-	}()
+	sensitive := ap.ExtractSensitive(statusable)
+	status.Sensitive = &sensitive
 
 	// ActivityStreamsType
 	status.ActivityStreamsType = statusable.GetTypeName()
 
-	return status, nil
+	return &status, nil
 }
 
 // ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
 func (c *Converter) ASFollowToFollowRequest(ctx context.Context, followable ap.Followable) (*gtsmodel.FollowRequest, error) {
-	idProp := followable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, errors.New("no id property set on follow, or was not an iri")
-	}
-	uri := idProp.GetIRI().String()
-
-	origin, err := ap.ExtractActorURI(followable)
-	if err != nil {
-		return nil, errors.New("error extracting actor property from follow")
-	}
-	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
-	if err != nil {
-		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	uri := ap.GetJSONLDId(followable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, gtserror.SetMalformed(err)
 	}
 
-	target, err := ap.ExtractObjectURI(followable)
+	uriStr := uri.String()
+
+	origin, err := c.getASActorAccount(ctx, uriStr, followable)
 	if err != nil {
-		return nil, errors.New("error extracting object property from follow")
+		return nil, err
 	}
-	targetAccount, err := c.state.DB.GetAccountByURI(ctx, target.String())
+
+	target, err := c.getASObjectAccount(ctx, uriStr, followable)
 	if err != nil {
-		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+		return nil, err
 	}
 
 	followRequest := &gtsmodel.FollowRequest{
-		URI:             uri,
-		AccountID:       originAccount.ID,
-		TargetAccountID: targetAccount.ID,
+		URI:             uriStr,
+		AccountID:       origin.ID,
+		TargetAccountID: target.ID,
 	}
 
 	return followRequest, nil
@@ -445,34 +430,28 @@ func (c *Converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 
 // ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
 func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followable) (*gtsmodel.Follow, error) {
-	idProp := followable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, errors.New("no id property set on follow, or was not an iri")
-	}
-	uri := idProp.GetIRI().String()
-
-	origin, err := ap.ExtractActorURI(followable)
-	if err != nil {
-		return nil, errors.New("error extracting actor property from follow")
-	}
-	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
-	if err != nil {
-		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	uri := ap.GetJSONLDId(followable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, gtserror.SetMalformed(err)
 	}
 
-	target, err := ap.ExtractObjectURI(followable)
+	uriStr := uri.String()
+
+	origin, err := c.getASActorAccount(ctx, uriStr, followable)
 	if err != nil {
-		return nil, errors.New("error extracting object property from follow")
+		return nil, err
 	}
-	targetAccount, err := c.state.DB.GetAccountByURI(ctx, target.String())
+
+	target, err := c.getASObjectAccount(ctx, uriStr, followable)
 	if err != nil {
-		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+		return nil, err
 	}
 
 	follow := &gtsmodel.Follow{
-		URI:             uri,
-		AccountID:       originAccount.ID,
-		TargetAccountID: targetAccount.ID,
+		URI:             uriStr,
+		AccountID:       origin.ID,
+		TargetAccountID: target.ID,
 	}
 
 	return follow, nil
@@ -480,86 +459,61 @@ func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 
 // ASLikeToFave converts a remote activitystreams 'like' representation into a gts model status fave.
 func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
-	idProp := likeable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, errors.New("no id property set on like, or was not an iri")
-	}
-	uri := idProp.GetIRI().String()
-
-	origin, err := ap.ExtractActorURI(likeable)
-	if err != nil {
-		return nil, errors.New("error extracting actor property from like")
-	}
-	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
-	if err != nil {
-		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	uri := ap.GetJSONLDId(likeable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, gtserror.SetMalformed(err)
 	}
 
-	target, err := ap.ExtractObjectURI(likeable)
+	uriStr := uri.String()
+
+	origin, err := c.getASActorAccount(ctx, uriStr, likeable)
 	if err != nil {
-		return nil, errors.New("error extracting object property from like")
+		return nil, err
 	}
 
-	targetStatus, err := c.state.DB.GetStatusByURI(ctx, target.String())
+	target, err := c.getASObjectStatus(ctx, uriStr, likeable)
 	if err != nil {
-		return nil, fmt.Errorf("error extracting status with uri %s from the database: %s", target.String(), err)
-	}
-
-	var targetAccount *gtsmodel.Account
-	if targetStatus.Account != nil {
-		targetAccount = targetStatus.Account
-	} else {
-		a, err := c.state.DB.GetAccountByID(ctx, targetStatus.AccountID)
-		if err != nil {
-			return nil, fmt.Errorf("error extracting account with id %s from the database: %s", targetStatus.AccountID, err)
-		}
-		targetAccount = a
+		return nil, err
 	}
 
 	return &gtsmodel.StatusFave{
-		AccountID:       originAccount.ID,
-		Account:         originAccount,
-		TargetAccountID: targetAccount.ID,
-		TargetAccount:   targetAccount,
-		StatusID:        targetStatus.ID,
-		Status:          targetStatus,
-		URI:             uri,
+		AccountID:       origin.ID,
+		Account:         origin,
+		TargetAccountID: target.AccountID,
+		TargetAccount:   target.Account,
+		StatusID:        target.ID,
+		Status:          target,
+		URI:             uriStr,
 	}, nil
 }
 
 // ASBlockToBlock converts a remote activity streams 'block' representation into a gts model block.
 func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) (*gtsmodel.Block, error) {
-	idProp := blockable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, errors.New("ASBlockToBlock: no id property set on block, or was not an iri")
-	}
-	uri := idProp.GetIRI().String()
-
-	origin, err := ap.ExtractActorURI(blockable)
-	if err != nil {
-		return nil, errors.New("ASBlockToBlock: error extracting actor property from block")
-	}
-	originAccount, err := c.state.DB.GetAccountByURI(ctx, origin.String())
-	if err != nil {
-		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+	uri := ap.GetJSONLDId(blockable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, gtserror.SetMalformed(err)
 	}
 
-	target, err := ap.ExtractObjectURI(blockable)
+	uriStr := uri.String()
+
+	origin, err := c.getASActorAccount(ctx, uriStr, blockable)
 	if err != nil {
-		return nil, errors.New("ASBlockToBlock: error extracting object property from block")
+		return nil, err
 	}
 
-	targetAccount, err := c.state.DB.GetAccountByURI(ctx, target.String())
+	target, err := c.getASObjectAccount(ctx, uriStr, blockable)
 	if err != nil {
-		return nil, fmt.Errorf("error extracting account with uri %s from the database: %s", origin.String(), err)
+		return nil, err
 	}
 
 	return &gtsmodel.Block{
-		AccountID:       originAccount.ID,
-		Account:         originAccount,
-		TargetAccountID: targetAccount.ID,
-		TargetAccount:   targetAccount,
-		URI:             uri,
+		AccountID:       origin.ID,
+		Account:         origin,
+		TargetAccountID: target.ID,
+		TargetAccount:   target,
+		URI:             uri.String(),
 	}, nil
 }
 
@@ -586,23 +540,20 @@ func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 // seen before by this instance. If it was, then status.BoostOf should be a
 // fully filled-out status. If not, then only status.BoostOf.URI will be set.
 func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
-	// Ensure item has an ID URI set.
-	_, statusURIStr, err := getURI(announceable)
-	if err != nil {
-		err = gtserror.Newf("error extracting URI: %w", err)
-		return nil, false, err
+	// Extract URI from announcable
+	uri := ap.GetJSONLDId(announceable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, false, gtserror.SetMalformed(err)
 	}
 
-	var (
-		status *gtsmodel.Status
-		isNew  bool
-	)
+	uriStr := uri.String()
+	isNew := false
 
 	// Check if we already have this boost in the database.
-	status, err = c.state.DB.GetStatusByURI(ctx, statusURIStr)
+	status, err := c.state.DB.GetStatusByURI(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		// Real database error.
-		err = gtserror.Newf("db error trying to get status with uri %s: %w", statusURIStr, err)
+		err = gtserror.Newf("db error trying to get status with uri %s: %w", uri, err)
 		return nil, isNew, err
 	}
 
@@ -612,66 +563,55 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 		return status, isNew, nil
 	}
 
-	// If we reach here, we're dealing
-	// with a boost we haven't seen before.
+	// Create DB status with URI
+	status = new(gtsmodel.Status)
+	status.URI = uriStr
 	isNew = true
 
-	// Start assembling the new status
-	// (we already know the URI).
-	status = new(gtsmodel.Status)
-	status.URI = statusURIStr
-
 	// Get the URI of the boosted status.
-	boostOfURI, err := ap.ExtractObjectURI(announceable)
-	if err != nil {
-		err = gtserror.Newf("error extracting Object: %w", err)
-		return nil, isNew, err
+	boostOf := ap.GetObjectIRIs(announceable)
+	if len(boostOf) == 0 {
+		err := gtserror.Newf("unusable object property iri for %s", uri)
+		return nil, isNew, gtserror.SetMalformed(err)
 	}
 
 	// Set the URI of the boosted status on
 	// the new status, for later dereferencing.
-	boostOf := &gtsmodel.Status{
-		URI: boostOfURI.String(),
-	}
-	status.BoostOf = boostOf
+	status.BoostOf = new(gtsmodel.Status)
+	status.BoostOf.URI = boostOf[0].String()
 
-	// Extract published time for the boost.
-	published, err := ap.ExtractPublished(announceable)
+	// Extract published time for the boost,
+	// zero-time will fall back to db defaults.
+	if pub := ap.GetPublished(announceable); !pub.IsZero() {
+		status.CreatedAt = pub
+		status.UpdatedAt = pub
+	} else {
+		log.Warnf(ctx, "unusable published property on %s", uri)
+	}
+
+	// Extract and load the boost actor account,
+	// (this MUST already be in database by now).
+	status.Account, err = c.getASActorAccount(ctx,
+		uriStr,
+		announceable,
+	)
 	if err != nil {
-		err = gtserror.Newf("error extracting published: %w", err)
 		return nil, isNew, err
 	}
-	status.CreatedAt = published
-	status.UpdatedAt = published
 
-	// Extract URI of the boosting account.
-	accountURI, err := ap.ExtractActorURI(announceable)
-	if err != nil {
-		err = gtserror.Newf("error extracting Actor: %w", err)
-		return nil, isNew, err
-	}
-	accountURIStr := accountURI.String()
-
-	// Try to get the boosting account based on the URI.
-	// This should have been dereferenced already before
-	// we hit this point so we can confidently error out
-	// if we don't have it.
-	account, err := c.state.DB.GetAccountByURI(ctx, accountURIStr)
-	if err != nil {
-		err = gtserror.Newf("db error trying to get account with uri %s: %w", accountURIStr, err)
-		return nil, isNew, err
-	}
-	status.AccountID = account.ID
-	status.AccountURI = account.URI
-	status.Account = account
+	// Set the related status<->account fields.
+	status.AccountURI = status.Account.URI
+	status.AccountID = status.Account.ID
 
 	// Calculate intended visibility of the boost.
-	visibility, err := ap.ExtractVisibility(announceable, account.FollowersURI)
+	status.Visibility, err = ap.ExtractVisibility(
+		announceable,
+		status.Account.FollowersURI,
+	)
 	if err != nil {
-		err = gtserror.Newf("error extracting visibility: %w", err)
-		return nil, isNew, err
+		err := gtserror.Newf("error extracting status visibility for %s: %w", uri, err)
+		return nil, isNew, gtserror.SetMalformed(err)
 	}
-	status.Visibility = visibility
 
 	// Below IDs will all be included in the
 	// boosted status, so set them empty here.
@@ -688,32 +628,36 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 
 // ASFlagToReport converts a remote activitystreams 'flag' representation into a gts model report.
 func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (*gtsmodel.Report, error) {
-	// Extract flag uri.
-	idProp := flaggable.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, errors.New("ASFlagToReport: no id property set on flaggable, or was not an iri")
+	uri := ap.GetJSONLDId(flaggable)
+	if uri == nil {
+		err := gtserror.New("unusable iri property")
+		return nil, gtserror.SetMalformed(err)
 	}
-	uri := idProp.GetIRI().String()
 
-	// Extract account that created the flag / report.
-	// This will usually be an instance actor.
-	actor, err := ap.ExtractActorURI(flaggable)
+	uriStr := uri.String()
+
+	// Extract the origin (actor) account for report.
+	origin, err := c.getASActorAccount(ctx, uriStr, flaggable)
 	if err != nil {
-		return nil, fmt.Errorf("ASFlagToReport: error extracting actor: %w", err)
+		return nil, err
 	}
-	account, err := c.state.DB.GetAccountByURI(ctx, actor.String())
-	if err != nil {
-		return nil, fmt.Errorf("ASFlagToReport: error in db fetching account with uri %s: %w", actor.String(), err)
-	}
+
+	var (
+		// Gathered from objects
+		// (+ content for misskey).
+		statusURIs   []*url.URL
+		targetAccURI *url.URL
+
+		// Get current hostname.
+		host = config.GetHost()
+	)
 
 	// Get the content of the report.
 	// For Mastodon, this will just be a string, or nothing.
 	// In Misskey's case, it may also contain the URLs of
 	// one or more reported statuses, so extract these too.
-	content := ap.ExtractContent(flaggable).Content
-	statusURIs := []*url.URL{}
-	inlineURLs := misskeyReportInlineURLs(content)
-	statusURIs = append(statusURIs, inlineURLs...)
+	content := ap.ExtractContent(flaggable)
+	statusURIs = misskeyReportInlineURLs(content)
 
 	// Extract account and statuses targeted by the flag / report.
 	//
@@ -725,86 +669,164 @@ func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 	// maybe some statuses.
 	//
 	// Throw away anything that's not relevant to us.
-	objects, err := ap.ExtractObjectURIs(flaggable)
-	if err != nil {
-		return nil, fmt.Errorf("ASFlagToReport: error extracting objects: %w", err)
-	}
+	objects := ap.GetObjectIRIs(flaggable)
 	if len(objects) == 0 {
-		return nil, errors.New("ASFlagToReport: flaggable objects empty, can't create report")
+		err := gtserror.Newf("unusable object property iris for %s", uri)
+		return nil, gtserror.SetMalformed(err)
 	}
 
-	var targetAccountURI *url.URL
 	for _, object := range objects {
 		switch {
-		case object.Host != config.GetHost():
-			// object doesn't belong to us, just ignore it
+		case object.Host != host:
+			// object doesn't belong
+			// to us, just ignore it
 			continue
+
 		case uris.IsUserPath(object):
-			if targetAccountURI != nil {
-				return nil, errors.New("ASFlagToReport: flaggable objects contained more than one target account uri")
+			if targetAccURI != nil {
+				err := gtserror.Newf("multiple target account uris in %s", uri)
+				return nil, gtserror.SetMalformed(err)
 			}
-			targetAccountURI = object
+			targetAccURI = object
+
 		case uris.IsStatusesPath(object):
 			statusURIs = append(statusURIs, object)
 		}
 	}
 
-	// Make sure we actually have a target account now.
-	if targetAccountURI == nil {
-		return nil, errors.New("ASFlagToReport: flaggable objects contained no recognizable target account uri")
-	}
-	targetAccount, err := c.state.DB.GetAccountByURI(ctx, targetAccountURI.String())
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, fmt.Errorf("ASFlagToReport: account with uri %s could not be found in the db", targetAccountURI.String())
-		}
-		return nil, fmt.Errorf("ASFlagToReport: db error getting account with uri %s: %w", targetAccountURI.String(), err)
+	// Ensure we have a target.
+	if targetAccURI == nil {
+		err := gtserror.New("missing target account uri")
+		return nil, gtserror.SetMalformed(err)
 	}
 
-	// If we got some status URIs, try to get them from the db now
+	// Fetch target account from the database by its URI.
+	targetAcc, err := c.state.DB.GetAccountByURI(ctx, targetAccURI.String())
+	if err != nil {
+		return nil, gtserror.Newf("error getting target account %s from database: %w", targetAccURI, err)
+	}
+
 	var (
+		// Preallocate expected status + IDs slice lengths.
 		statusIDs = make([]string, 0, len(statusURIs))
 		statuses  = make([]*gtsmodel.Status, 0, len(statusURIs))
 	)
-	for _, statusURI := range statusURIs {
-		statusURIString := statusURI.String()
 
-		// try getting this status by URI first, then URL
-		status, err := c.state.DB.GetStatusByURI(ctx, statusURIString)
-		if err != nil {
-			if !errors.Is(err, db.ErrNoEntries) {
-				return nil, fmt.Errorf("ASFlagToReport: db error getting status with uri %s: %w", statusURIString, err)
+	for _, statusURI := range statusURIs {
+		// Rescope as just the URI string.
+		statusURI := statusURI.String()
+
+		// Try getting status by URI from database.
+		status, err := c.state.DB.GetStatusByURI(ctx, statusURI)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("error getting target status %s from database: %w", statusURI, err)
+			return nil, err
+		}
+
+		if status == nil {
+			// Status was not found, try again with URL.
+			status, err = c.state.DB.GetStatusByURL(ctx, statusURI)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				err := gtserror.Newf("error getting target status %s from database: %w", statusURI, err)
+				return nil, err
 			}
 
-			status, err = c.state.DB.GetStatusByURL(ctx, statusURIString)
-			if err != nil {
-				if !errors.Is(err, db.ErrNoEntries) {
-					return nil, fmt.Errorf("ASFlagToReport: db error getting status with url %s: %w", statusURIString, err)
-				}
-
-				log.Warnf(nil, "reported status %s could not be found in the db, skipping it", statusURIString)
+			if status == nil {
+				log.Warnf(ctx, "missing target status %s for report %s", statusURI, uriStr)
 				continue
 			}
 		}
 
-		if status.AccountID != targetAccount.ID {
-			// status doesn't belong to this account, ignore it
+		if status.AccountID != targetAcc.ID {
+			// status doesn't belong
+			// to target, ignore it.
 			continue
 		}
 
+		// Append the discovered status to slices.
 		statusIDs = append(statusIDs, status.ID)
 		statuses = append(statuses, status)
 	}
 
-	// id etc should be handled the caller, so just return what we got
+	// id etc should be handled the caller,
+	// so just return what we got
 	return &gtsmodel.Report{
-		URI:             uri,
-		AccountID:       account.ID,
-		Account:         account,
-		TargetAccountID: targetAccount.ID,
-		TargetAccount:   targetAccount,
+		URI:             uriStr,
+		AccountID:       origin.ID,
+		Account:         origin,
+		TargetAccountID: targetAcc.ID,
+		TargetAccount:   targetAcc,
 		Comment:         content,
 		StatusIDs:       statusIDs,
 		Statuses:        statuses,
 	}, nil
+}
+
+func (c *Converter) getASActorAccount(ctx context.Context, id string, with ap.WithActor) (*gtsmodel.Account, error) {
+	// Get actor IRIs from type.
+	actor := ap.GetActorIRIs(with)
+	if len(actor) == 0 {
+		err := gtserror.Newf("unusable actor property iri for %s", id)
+		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Check for account in database with provided actor URI.
+	account, err := c.state.DB.GetAccountByURI(ctx, actor[0].String())
+	if err != nil {
+		return nil, gtserror.Newf("error getting actor account from database: %w", err)
+	}
+
+	return account, nil
+}
+
+func (c *Converter) getASAttributedToAccount(ctx context.Context, id string, with ap.WithAttributedTo) (*gtsmodel.Account, error) {
+	// Get attribTo IRIs from type.
+	attribTo := ap.GetAttributedTo(with)
+	if len(attribTo) == 0 {
+		err := gtserror.Newf("unusable attributedTo property iri for %s", id)
+		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Check for account in database with provided attributedTo URI.
+	account, err := c.state.DB.GetAccountByURI(ctx, attribTo[0].String())
+	if err != nil {
+		return nil, gtserror.Newf("error getting actor account from database: %w", err)
+	}
+
+	return account, nil
+
+}
+
+func (c *Converter) getASObjectAccount(ctx context.Context, id string, with ap.WithObject) (*gtsmodel.Account, error) {
+	// Get object IRIs from type.
+	object := ap.GetObjectIRIs(with)
+	if len(object) == 0 {
+		err := gtserror.Newf("unusable object property iri for %s", id)
+		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Check for account in database with provided object URI.
+	account, err := c.state.DB.GetAccountByURI(ctx, object[0].String())
+	if err != nil {
+		return nil, gtserror.Newf("error getting object account from database: %w", err)
+	}
+
+	return account, nil
+}
+
+func (c *Converter) getASObjectStatus(ctx context.Context, id string, with ap.WithObject) (*gtsmodel.Status, error) {
+	// Get object IRIs from type.
+	object := ap.GetObjectIRIs(with)
+	if len(object) == 0 {
+		err := gtserror.Newf("unusable object property iri for %s", id)
+		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Check for status in database with provided object URI.
+	status, err := c.state.DB.GetStatusByURI(ctx, object[0].String())
+	if err != nil {
+		return nil, gtserror.Newf("error getting object account from database: %w", err)
+	}
+
+	return status, nil
 }

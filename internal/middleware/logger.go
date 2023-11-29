@@ -20,6 +20,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
@@ -56,7 +57,10 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 				_ = c.Error(err)
 
 				// Dump a stacktrace to error log
-				callers := errors.GetCallers(3, 10)
+				pcs := make([]uintptr, 10)
+				n := runtime.Callers(3, pcs)
+				iter := runtime.CallersFrames(pcs[:n])
+				callers := errors.Callers(gatherFrames(iter, n))
 				log.WithContext(c.Request.Context()).
 					WithField("stacktrace", callers).Error(err)
 			}
@@ -80,8 +84,9 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			}
 
 			// Create log entry with fields
-			l := log.WithContext(c.Request.Context()).
-				WithFields(fields...)
+			l := log.New()
+			l = l.WithContext(c.Request.Context())
+			l = l.WithFields(fields...)
 
 			// Default is info
 			lvl := level.INFO
@@ -118,4 +123,20 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 		// Process request
 		c.Next()
 	}
+}
+
+// gatherFrames gathers runtime frames from a frame iterator.
+func gatherFrames(iter *runtime.Frames, n int) []runtime.Frame {
+	if iter == nil {
+		return nil
+	}
+	frames := make([]runtime.Frame, 0, n)
+	for {
+		f, ok := iter.Next()
+		if !ok {
+			break
+		}
+		frames = append(frames, f)
+	}
+	return frames
 }

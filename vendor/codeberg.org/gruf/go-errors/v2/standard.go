@@ -25,7 +25,18 @@ import (
 //go:linkname Is errors.Is
 func Is(err error, target error) bool
 
-// As finds the first error in err's tree that matches generic parameter type.
+// IsV2 calls Is(err, target) for each target within targets.
+func IsV2(err error, targets ...error) bool {
+	for _, target := range targets {
+		if Is(err, target) {
+			return true
+		}
+	}
+	return false
+}
+
+// As finds the first error in err's tree that matches target, and if one is found, sets
+// target to that error value and returns true. Otherwise, it returns false.
 //
 // The tree consists of err itself, followed by the errors obtained by repeatedly
 // calling Unwrap. When err wraps multiple errors, As examines err followed by a
@@ -38,7 +49,17 @@ func Is(err error, target error) bool
 //
 // An error type might provide an As method so it can be treated as if it were a
 // different error type.
-func As[Type any](err error) Type {
+//
+// As panics if target is not a non-nil pointer to either a type that implements
+// error, or to any interface type.
+//
+//go:linkname As errors.As
+func As(err error, target any) bool
+
+// AsV2 is functionally similar to As(), instead
+// leveraging generics to handle allocation and
+// returning of a concrete generic parameter type.
+func AsV2[Type any](err error) Type {
 	var t Type
 	var ok bool
 	errs := []error{err}
@@ -85,6 +106,20 @@ func As[Type any](err error) Type {
 //
 //go:linkname Unwrap errors.Unwrap
 func Unwrap(err error) error
+
+// UnwrapV2 is functionally similar to Unwrap(), except that
+// it also handles the case of interface{ Unwrap() []error }.
+func UnwrapV2(err error) []error {
+	switch u := err.(type) {
+	case interface{ Unwrap() error }:
+		if e := u.Unwrap(); err != nil {
+			return []error{e}
+		}
+	case interface{ Unwrap() []error }:
+		return u.Unwrap()
+	}
+	return nil
+}
 
 // Join returns an error that wraps the given errors.
 // Any nil error values are discarded.

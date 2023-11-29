@@ -39,13 +39,16 @@ type WithCode interface {
 	// Unwrap returns the original error.
 	// This should *NEVER* be returned to a client as it may contain sensitive information.
 	Unwrap() error
+
 	// Error serializes the original internal error for debugging within the GoToSocial logs.
 	// This should *NEVER* be returned to a client as it may contain sensitive information.
 	Error() string
+
 	// Safe returns the API-safe version of the error for serialization towards a client.
 	// There's not much point logging this internally because it won't contain much helpful information.
 	Safe() string
-	//  Code returns the status code for serving to a client.
+
+	// Code returns the status code for serving to a client.
 	Code() int
 }
 

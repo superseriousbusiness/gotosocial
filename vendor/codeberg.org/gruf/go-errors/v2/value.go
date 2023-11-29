@@ -6,7 +6,7 @@ func WithValue(err error, key any, value any) error {
 		panic("nil error")
 	}
 	var kvs []kv
-	if e := As[*errWithValues](err); e != nil {
+	if e := AsV2[*errWithValues](err); e != nil {
 		kvs = e.kvs
 	}
 	return &errWithValues{
@@ -17,7 +17,7 @@ func WithValue(err error, key any, value any) error {
 
 // Value searches for value stored under given key in error chain.
 func Value(err error, key any) any {
-	if e := As[*errWithValues](err); e != nil {
+	if e := AsV2[*errWithValues](err); e != nil {
 		return e.Value(key)
 	}
 	return nil

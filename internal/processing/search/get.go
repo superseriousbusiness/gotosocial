@@ -382,7 +382,7 @@ func (p *Processor) accountsByNamestring(
 	if err != nil {
 		// Check for semi-expected error types.
 		// On one of these, we can continue.
-		if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
+		if !gtserror.IsUnretrievable(err) && !gtserror.IsWrongType(err) {
 			err = gtserror.Newf("error looking up @%s@%s as account: %w", username, domain, err)
 			return gtserror.NewErrorInternalError(err)
 		}
@@ -491,7 +491,7 @@ func (p *Processor) byURI(
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
-			if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
+			if !gtserror.IsUnretrievable(err) && !gtserror.IsWrongType(err) {
 				err = gtserror.Newf("error looking up %s as account: %w", uri, err)
 				return gtserror.NewErrorInternalError(err)
 			}
@@ -509,7 +509,7 @@ func (p *Processor) byURI(
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
-			if !gtserror.Unretrievable(err) && !gtserror.WrongType(err) {
+			if !gtserror.IsUnretrievable(err) && !gtserror.IsWrongType(err) {
 				err = gtserror.Newf("error looking up %s as status: %w", uri, err)
 				return gtserror.NewErrorInternalError(err)
 			}

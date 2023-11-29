@@ -95,7 +95,7 @@ func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, erro
 
 		defer func() {
 			// This is only done when ctx NOT cancelled.
-			done = err == nil || !errors.Comparable(err,
+			done = err == nil || !errors.IsV2(err,
 				context.Canceled,
 				context.DeadlineExceeded,
 			)

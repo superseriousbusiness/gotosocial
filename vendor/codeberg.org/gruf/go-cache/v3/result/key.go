@@ -43,9 +43,8 @@ func (sk structKeys) generate(a any) []cacheKey {
 		v = v.Elem()
 	}
 
-	// Acquire byte buffer
+	// Acquire buffer
 	buf := getBuf()
-	defer putBuf(buf)
 
 outer:
 	for i := range sk {
@@ -79,6 +78,9 @@ outer:
 			key:  string(buf.B), // copy
 		})
 	}
+
+	// Release buf
+	putBuf(buf)
 
 	return keys
 }
@@ -124,11 +126,12 @@ type structKey struct {
 	unique bool
 
 	// fields is a slice of runtime struct field
-	// indices, of the fields encompassed by this key.
+	// indices, of fields encompassed by this key.
 	fields []structField
 
 	// pkeys is a lookup of stored struct key values
-	// to the primary cache lookup key (int64).
+	// to the primary cache lookup key (int64). this
+	// is protected by the main cache mutex.
 	pkeys map[string][]int64
 }
 
@@ -192,9 +195,8 @@ func (sk *structKey) genKey(parts []any) string {
 		panic(fmt.Sprintf("incorrect no. key parts provided: want=%d received=%d", len(parts), len(sk.fields)))
 	}
 
-	// Acquire byte buffer
+	// Acquire buffer
 	buf := getBuf()
-	defer putBuf(buf)
 	buf.Reset()
 
 	for i, part := range parts {
@@ -210,8 +212,13 @@ func (sk *structKey) genKey(parts []any) string {
 	// Drop last '.'
 	buf.Truncate(1)
 
-	// Return string copy
-	return string(buf.B)
+	// Create str copy
+	str := string(buf.B)
+
+	// Release buf
+	putBuf(buf)
+
+	return str
 }
 
 type structField struct {

@@ -103,7 +103,7 @@ func wrapStatusableInActivity(activity ap.Activityable, status ap.Statusable, ir
 	appendStatusableToActivity(activity, status, iriOnly)
 	ap.AppendTo(activity, ap.GetTo(status)...)
 	ap.AppendCc(activity, ap.GetCc(status)...)
-	ap.AppendActor(activity, ap.GetAttributedTo(status)...)
+	ap.AppendActorIRIs(activity, ap.GetAttributedTo(status)...)
 	ap.SetPublished(activity, ap.GetPublished(status))
 }
 

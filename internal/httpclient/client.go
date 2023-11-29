@@ -294,7 +294,7 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 			_ = rsp.Body.Close()
 			rsp = nil
 
-		} else if errorsv2.Comparable(err,
+		} else if errorsv2.IsV2(err,
 			context.DeadlineExceeded,
 			context.Canceled,
 			ErrBodyTooLarge,

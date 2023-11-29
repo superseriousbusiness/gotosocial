@@ -416,6 +416,12 @@ type WithOutbox interface {
 	SetActivityStreamsOutbox(vocab.ActivityStreamsOutboxProperty)
 }
 
+// WithSharedInbox represents an activity with ActivityStreamsSharedInboxProperty
+type WithSharedInbox interface {
+	GetActivityStreamsSharedInbox() vocab.ActivityStreamsSharedInboxProperty
+	SetActivityStreamsSharedInbox(vocab.ActivityStreamsSharedInboxProperty)
+}
+
 // WithFollowing represents an activity with ActivityStreamsFollowingProperty
 type WithFollowing interface {
 	GetActivityStreamsFollowing() vocab.ActivityStreamsFollowingProperty

@@ -491,6 +491,46 @@ func (suite *InboxPostTestSuite) TestPostEmptyCreate() {
 	)
 }
 
+func (suite *InboxPostTestSuite) TestPostCreateMalformedBlock() {
+	var (
+		blockingAcc = suite.testAccounts["remote_account_1"]
+		blockedAcc  = suite.testAccounts["local_account_1"]
+		activityID  = blockingAcc.URI + "/some-new-activity/01FG9C441MCTW3R2W117V2PQK3"
+	)
+
+	block := streams.NewActivityStreamsBlock()
+
+	// set the actor property to the block-ing account's URI
+	actorProp := streams.NewActivityStreamsActorProperty()
+	actorIRI := testrig.URLMustParse(blockingAcc.URI)
+	actorProp.AppendIRI(actorIRI)
+	block.SetActivityStreamsActor(actorProp)
+
+	// set the ID property to the blocks's URI
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.Set(testrig.URLMustParse(activityID))
+	block.SetJSONLDId(idProp)
+
+	// set the object property with MISSING block-ed URI.
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	block.SetActivityStreamsObject(objectProp)
+
+	// set the TO property to the target account's IRI
+	toProp := streams.NewActivityStreamsToProperty()
+	toIRI := testrig.URLMustParse(blockedAcc.URI)
+	toProp.AppendIRI(toIRI)
+	block.SetActivityStreamsTo(toProp)
+
+	suite.inboxPost(
+		block,
+		blockingAcc,
+		blockedAcc,
+		http.StatusBadRequest,
+		`{"error":"Bad Request: malformed incoming activity"}`,
+		suite.signatureCheck,
+	)
+}
+
 func (suite *InboxPostTestSuite) TestPostFromBlockedAccount() {
 	var (
 		requestingAccount = suite.testAccounts["remote_account_1"]

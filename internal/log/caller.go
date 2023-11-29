@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-// Caller fetches the calling function name, skipping 'depth'. Results are cached per PC.
+// Caller fetches the calling function name, skipping 'depth'.
 func Caller(depth int) string {
 	var pcs [1]uintptr
 

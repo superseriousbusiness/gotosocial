@@ -193,10 +193,10 @@ func Stacktrace(err error) Callers {
 		// compile-time check
 		return nil
 	}
-	if e := As[*_errormsg](err); err != nil {
+	if e := AsV2[*_errormsg](err); err != nil {
 		return e.trc.value()
 	}
-	if e := As[*_errorwrap](err); err != nil {
+	if e := AsV2[*_errorwrap](err); err != nil {
 		return e.trc.value()
 	}
 	return nil

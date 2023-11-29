@@ -175,7 +175,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsername() 
 		"thisaccountdoesnotexist",
 		config.GetHost(),
 	)
-	suite.True(gtserror.Unretrievable(err))
+	suite.True(gtserror.IsUnretrievable(err))
 	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(fetchedAccount)
 }
@@ -189,7 +189,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUsernameDom
 		"thisaccountdoesnotexist",
 		"localhost:8080",
 	)
-	suite.True(gtserror.Unretrievable(err))
+	suite.True(gtserror.IsUnretrievable(err))
 	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(fetchedAccount)
 }
@@ -202,7 +202,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 		fetchingAccount.Username,
 		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
 	)
-	suite.True(gtserror.Unretrievable(err))
+	suite.True(gtserror.IsUnretrievable(err))
 	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(fetchedAccount)
 }

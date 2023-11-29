@@ -113,7 +113,7 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 
 		// If an actor URI has been set, create a new ID
 		// based on actor (i.e. followER not the followEE).
-		if uri := ap.GetActor(follow); len(uri) == 1 {
+		if uri := ap.GetActorIRIs(follow); len(uri) == 1 {
 			if actorAccount, err := f.state.DB.GetAccountByURI(ctx, uri[0].String()); err == nil {
 				newID, err := id.NewRandomULID()
 				if err != nil {

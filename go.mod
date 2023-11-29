@@ -7,15 +7,15 @@ toolchain go1.21.3
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
 	codeberg.org/gruf/go-byteutil v1.2.0
-	codeberg.org/gruf/go-cache/v3 v3.5.6
+	codeberg.org/gruf/go-cache/v3 v3.5.7
 	codeberg.org/gruf/go-debug v1.3.0
-	codeberg.org/gruf/go-errors/v2 v2.3.0
+	codeberg.org/gruf/go-errors/v2 v2.3.1
 	codeberg.org/gruf/go-fastcopy v1.1.2
 	codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f
 	codeberg.org/gruf/go-kv v1.6.4
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.3.1
-	codeberg.org/gruf/go-runners v1.6.1
+	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.4
 	github.com/DmitriyVTitov/size v1.5.0

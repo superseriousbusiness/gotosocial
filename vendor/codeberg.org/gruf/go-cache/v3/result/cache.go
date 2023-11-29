@@ -2,16 +2,12 @@ package result
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"reflect"
 	_ "unsafe"
 
 	"codeberg.org/gruf/go-cache/v3/simple"
 	"codeberg.org/gruf/go-errors/v2"
 )
-
-var ErrUnsupportedZero = errors.New("")
 
 // Lookup represents a struct object lookup method in the cache.
 type Lookup struct {
@@ -58,7 +54,8 @@ func New[T any](lookups []Lookup, copy func(T) T, cap int) *Cache[T] {
 	}
 
 	// Allocate new cache object
-	c := &Cache[T]{copy: copy}
+	c := new(Cache[T])
+	c.copy = copy // use copy fn.
 	c.lookups = make([]structKey, len(lookups))
 
 	for i, lookup := range lookups {
@@ -96,7 +93,7 @@ func (c *Cache[T]) SetEvictionCallback(hook func(T)) {
 		}
 
 		// Free result and call hook.
-		v := getResultValue[T](res)
+		v := res.Value.(T)
 		putResult(res)
 		hook(v)
 	})
@@ -125,7 +122,7 @@ func (c *Cache[T]) SetInvalidateCallback(hook func(T)) {
 		}
 
 		// Free result and call hook.
-		v := getResultValue[T](res)
+		v := res.Value.(T)
 		putResult(res)
 		hook(v)
 	})
@@ -135,11 +132,8 @@ func (c *Cache[T]) SetInvalidateCallback(hook func(T)) {
 func (c *Cache[T]) IgnoreErrors(ignore func(error) bool) {
 	if ignore == nil {
 		ignore = func(err error) bool {
-			return errors.Comparable(
-				err,
-				context.Canceled,
-				context.DeadlineExceeded,
-			)
+			return errors.Is(err, context.Canceled) ||
+				errors.Is(err, context.DeadlineExceeded)
 		}
 	}
 	c.cache.Lock()
@@ -149,99 +143,16 @@ func (c *Cache[T]) IgnoreErrors(ignore func(error) bool) {
 
 // Load will attempt to load an existing result from the cacche for the given lookup and key parts, else calling the provided load function and caching the result.
 func (c *Cache[T]) Load(lookup string, load func() (T, error), keyParts ...any) (T, error) {
-	var zero T
-	var res *result
+	info := c.lookups.get(lookup)
+	key := info.genKey(keyParts)
+	return c.load(info, key, load)
+}
 
-	// Get lookup key info by name.
-	keyInfo := c.lookups.get(lookup)
-	if !keyInfo.unique {
-		panic("non-unique lookup does not support load: " + lookup)
-	}
-
-	// Generate cache key string.
-	ckey := keyInfo.genKey(keyParts)
-
-	// Acquire cache lock
-	c.cache.Lock()
-
-	// Look for primary key for cache key (only accept len=1)
-	if pkeys := keyInfo.pkeys[ckey]; len(pkeys) == 1 {
-		// Fetch the result for primary key
-		entry, ok := c.cache.Cache.Get(pkeys[0])
-
-		if ok {
-			// Since the invalidation / eviction hooks acquire a mutex
-			// lock separately, and only at this point are the pkeys
-			// updated, there is a chance that a primary key may return
-			// no matching entry. Hence we have to check for it here.
-			res = entry.Value.(*result)
-		}
-	}
-
-	// Done with lock
-	c.cache.Unlock()
-
-	if res == nil {
-		// Generate fresh result.
-		value, err := load()
-
-		if err != nil {
-			if c.ignore(err) {
-				// don't cache this error type
-				return zero, err
-			}
-
-			// Alloc result.
-			res = getResult()
-
-			// Store error result.
-			res.Error = err
-
-			// This load returned an error, only
-			// store this item under provided key.
-			res.Keys = []cacheKey{{
-				info: keyInfo,
-				key:  ckey,
-			}}
-		} else {
-			// Alloc result.
-			res = getResult()
-
-			// Store value result.
-			res.Value = value
-
-			// This was a successful load, generate keys.
-			res.Keys = c.lookups.generate(res.Value)
-		}
-
-		var evict func()
-
-		// Lock cache.
-		c.cache.Lock()
-
-		defer func() {
-			// Unlock cache.
-			c.cache.Unlock()
-
-			if evict != nil {
-				// Call evict.
-				evict()
-			}
-		}()
-
-		// Store result in cache.
-		evict = c.store(res)
-	}
-
-	// Catch and return cached error
-	if err := res.Error; err != nil {
-		return zero, err
-	}
-
-	// Copy value from cached result.
-	v := c.copy(getResultValue[T](res))
-
-	return v, nil
+// Has checks the cache for a positive result under the given lookup and key parts.
+func (c *Cache[T]) Has(lookup string, keyParts ...any) bool {
+	info := c.lookups.get(lookup)
+	key := info.genKey(keyParts)
+	return c.has(info, key)
 }
 
 // Store will call the given store function, and on success store the value in the cache as a positive result.
@@ -281,24 +192,120 @@ func (c *Cache[T]) Store(value T, store func() error) error {
 	return nil
 }
 
-// Has checks the cache for a positive result under the given lookup and key parts.
-func (c *Cache[T]) Has(lookup string, keyParts ...any) bool {
-	var res *result
+// Invalidate will invalidate any result from the cache found under given lookup and key parts.
+func (c *Cache[T]) Invalidate(lookup string, keyParts ...any) {
+	info := c.lookups.get(lookup)
+	key := info.genKey(keyParts)
+	c.invalidate(info, key)
+}
 
-	// Get lookup key info by name.
-	keyInfo := c.lookups.get(lookup)
-	if !keyInfo.unique {
-		panic("non-unique lookup does not support has: " + lookup)
+// Clear empties the cache, calling the invalidate callback where necessary.
+func (c *Cache[T]) Clear() { c.Trim(100) }
+
+// Trim ensures the cache stays within percentage of total capacity, truncating where necessary.
+func (c *Cache[T]) Trim(perc float64) { c.cache.Trim(perc) }
+
+func (c *Cache[T]) load(lookup *structKey, key string, load func() (T, error)) (T, error) {
+	if !lookup.unique { // ensure this lookup only returns 1 result
+		panic("non-unique lookup does not support load: " + lookup.name)
 	}
 
-	// Generate cache key string.
-	ckey := keyInfo.genKey(keyParts)
+	var (
+		zero T
+		res  *result
+	)
 
 	// Acquire cache lock
 	c.cache.Lock()
 
 	// Look for primary key for cache key (only accept len=1)
-	if pkeys := keyInfo.pkeys[ckey]; len(pkeys) == 1 {
+	if pkeys := lookup.pkeys[key]; len(pkeys) == 1 {
+		// Fetch the result for primary key
+		entry, ok := c.cache.Cache.Get(pkeys[0])
+
+		if ok {
+			// Since the invalidation / eviction hooks acquire a mutex
+			// lock separately, and only at this point are the pkeys
+			// updated, there is a chance that a primary key may return
+			// no matching entry. Hence we have to check for it here.
+			res = entry.Value.(*result)
+		}
+	}
+
+	// Done with lock
+	c.cache.Unlock()
+
+	if res == nil {
+		// Generate fresh result.
+		value, err := load()
+
+		if err != nil {
+			if c.ignore(err) {
+				// don't cache this error type
+				return zero, err
+			}
+
+			// Alloc result.
+			res = getResult()
+
+			// Store error result.
+			res.Error = err
+
+			// This load returned an error, only
+			// store this item under provided key.
+			res.Keys = []cacheKey{{
+				info: lookup,
+				key:  key,
+			}}
+		} else {
+			// Alloc result.
+			res = getResult()
+
+			// Store value result.
+			res.Value = value
+
+			// This was a successful load, generate keys.
+			res.Keys = c.lookups.generate(res.Value)
+		}
+
+		var evict func()
+
+		// Lock cache.
+		c.cache.Lock()
+
+		defer func() {
+			// Unlock cache.
+			c.cache.Unlock()
+
+			if evict != nil {
+				// Call evict.
+				evict()
+			}
+		}()
+
+		// Store result in cache.
+		evict = c.store(res)
+	}
+
+	// Catch and return cached error
+	if err := res.Error; err != nil {
+		return zero, err
+	}
+
+	// Copy value from cached result.
+	v := c.copy(res.Value.(T))
+
+	return v, nil
+}
+
+func (c *Cache[T]) has(lookup *structKey, key string) bool {
+	var res *result
+
+	// Acquire cache lock
+	c.cache.Lock()
+
+	// Look for primary key for cache key (only accept len=1)
+	if pkeys := lookup.pkeys[key]; len(pkeys) == 1 {
 		// Fetch the result for primary key
 		entry, ok := c.cache.Cache.Get(pkeys[0])
 
@@ -320,31 +327,6 @@ func (c *Cache[T]) Has(lookup string, keyParts ...any) bool {
 	return ok
 }
 
-// Invalidate will invalidate any result from the cache found under given lookup and key parts.
-func (c *Cache[T]) Invalidate(lookup string, keyParts ...any) {
-	// Get lookup key info by name.
-	keyInfo := c.lookups.get(lookup)
-
-	// Generate cache key string.
-	ckey := keyInfo.genKey(keyParts)
-
-	// Look for primary key for cache key
-	c.cache.Lock()
-	pkeys := keyInfo.pkeys[ckey]
-	delete(keyInfo.pkeys, ckey)
-	c.cache.Unlock()
-
-	// Invalidate all primary keys.
-	c.cache.InvalidateAll(pkeys...)
-}
-
-// Clear empties the cache, calling the invalidate callback where necessary.
-func (c *Cache[T]) Clear() { c.Trim(100) }
-
-// Trim ensures the cache stays within percentage of total capacity, truncating where necessary.
-func (c *Cache[T]) Trim(perc float64) { c.cache.Trim(perc) }
-
-// store will cache this result under all of its required cache keys.
 func (c *Cache[T]) store(res *result) (evict func()) {
 	var toEvict []*result
 
@@ -425,6 +407,17 @@ func (c *Cache[T]) store(res *result) (evict func()) {
 	}
 }
 
+func (c *Cache[T]) invalidate(lookup *structKey, key string) {
+	// Look for primary key for cache key
+	c.cache.Lock()
+	pkeys := lookup.pkeys[key]
+	delete(lookup.pkeys, key)
+	c.cache.Unlock()
+
+	// Invalidate all primary keys.
+	c.cache.InvalidateAll(pkeys...)
+}
+
 type result struct {
 	// Result primary key
 	PKey int64
@@ -437,13 +430,4 @@ type result struct {
 
 	// cached error
 	Error error
-}
-
-// getResultValue is a safe way of casting and fetching result value.
-func getResultValue[T any](res *result) T {
-	v, ok := res.Value.(T)
-	if !ok {
-		fmt.Fprintf(os.Stderr, "!! BUG: unexpected value type in result: %T\n", res.Value)
-	}
-	return v
 }

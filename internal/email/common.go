@@ -43,7 +43,7 @@ func (s *sender) sendTemplate(template string, subject string, data any, toAddre
 	}
 
 	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, toAddresses, msg); err != nil {
-		return gtserror.SetType(err, gtserror.TypeSMTP)
+		return gtserror.SetSMTP(err)
 	}
 
 	return nil
