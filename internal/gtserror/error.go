@@ -50,7 +50,7 @@ func IsUnretrievable(err error) bool {
 }
 
 // SetUnretrievable will wrap the given error to store an "unretrievable"
-// flag, returning wrapped error. See "Unretrievable" for example use-cases.
+// flag, returning wrapped error. See Unretrievable() for example use-cases.
 func SetUnretrievable(err error) error {
 	return errors.WithValue(err, unrtrvableKey, struct{}{})
 }
@@ -64,7 +64,7 @@ func IsWrongType(err error) bool {
 }
 
 // SetWrongType will wrap the given error to store a "wrong type" flag,
-// returning wrapped error. See "WrongType" for example use-cases.
+// returning wrapped error. See IsWrongType() for example use-cases.
 func SetWrongType(err error) error {
 	return errors.WithValue(err, wrongTypeKey, struct{}{})
 }
@@ -91,29 +91,33 @@ func IsNotFound(err error) bool {
 }
 
 // SetNotFound will wrap the given error to store a "not found" flag,
-// returning wrapped error. See NotFound() for example use-cases.
+// returning wrapped error. See IsNotFound() for example use-cases.
 func SetNotFound(err error) error {
 	return errors.WithValue(err, notFoundKey, struct{}{})
 }
 
-// IsSMTP ...
+// IsSMTP checks error for a stored "smtp" flag. For
+// example an error from outgoing SMTP email attempt.
 func IsSMTP(err error) bool {
 	_, ok := errors.Value(err, smtpKey).(struct{})
 	return ok
 }
 
-// SetSMTP ...
+// SetSMTP will wrap the given error to store an "smtp" flag,
+// returning wrapped error. See IsSMTP() for example use-cases.
 func SetSMTP(err error) error {
 	return errors.WithValue(err, smtpKey, struct{}{})
 }
 
-// IsMalformed ...
+// IsMalformed checks error for a stored "malformed" flag. For
+// example an error from an incoming ActivityStreams type conversion.
 func IsMalformed(err error) bool {
 	_, ok := errors.Value(err, malformedKey).(struct{})
 	return ok
 }
 
-// SetMalformed ...
+// SetMalformed will wrap the given error to store a "malformed" flag,
+// returning wrapped error. See IsMalformed() for example use-cases.
 func SetMalformed(err error) error {
 	return errors.WithValue(err, malformedKey, struct{}{})
 }
