@@ -251,7 +251,11 @@ func (d *Dereferencer) enrichStatusSafely(
 ) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	uriStr := status.URI
 
-	if status.ID != "" {
+	var isNew bool
+
+	// Check if this is a new status (to us).
+	if isNew = (status.ID == ""); !isNew {
+
 		// This is an existing status, first try to populate it. This
 		// is required by the checks below for existing tags, media etc.
 		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
@@ -265,9 +269,6 @@ func (d *Dereferencer) enrichStatusSafely(
 	unlock := d.state.FedLocks.Lock(uriStr)
 	unlock = doOnce(unlock)
 	defer unlock()
-
-	// This is a NEW status (to us).
-	isNew := (status.ID == "")
 
 	// Perform status enrichment with passed vars.
 	latest, apubStatus, err := d.enrichStatus(ctx,
@@ -292,7 +293,15 @@ func (d *Dereferencer) enrichStatusSafely(
 		// otherwise this indicates WE
 		// enriched the status.
 		apubStatus = nil
-		isNew = false
+
+		// We leave 'isNew' set so that caller
+		// still dereferences parents, otherwise
+		// the version we pass back may not have
+		// these attached as inReplyTos yet (since
+		// those happen OUTSIDE federator lock).
+		//
+		// TODO: performance-wise, this won't be
+		// great. should improve this if we can!
 
 		// DATA RACE! We likely lost out to another goroutine
 		// in a call to db.Put(Status). Look again in DB by URI.
