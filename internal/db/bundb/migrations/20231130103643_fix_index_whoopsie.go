@@ -72,7 +72,7 @@ func init() {
 				{
 					index:   "admin_actions_account_id_idx",
 					table:   "admin_actions",
-					columns: []string{"type"},
+					columns: []string{"account_id"},
 				},
 
 				// Recreate indexes that may have been removed
