@@ -19,7 +19,6 @@ package workers
 
 import (
 	"context"
-	"net/url"
 
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
@@ -167,25 +166,6 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 
 	if err != nil {
 		return gtserror.Newf("error extracting status from federatorMsg: %w", err)
-	}
-
-	if status.Account == nil || status.Account.IsRemote() {
-		// Either no account attached yet, or a remote account.
-		// Both situations we need to parse account URI to fetch it.
-		accountURI, err := url.Parse(status.AccountURI)
-		if err != nil {
-			return gtserror.Newf("error parsing account uri: %w", err)
-		}
-
-		// Ensure that account for this status has been deref'd.
-		status.Account, _, err = p.federate.GetAccountByURI(
-			ctx,
-			fMsg.ReceivingAccount.Username,
-			accountURI,
-		)
-		if err != nil {
-			return gtserror.Newf("error getting account by uri: %w", err)
-		}
 	}
 
 	if status.InReplyToID != "" {
