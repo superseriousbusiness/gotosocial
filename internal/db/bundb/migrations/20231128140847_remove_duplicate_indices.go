@@ -157,7 +157,6 @@ func init() {
 				"accounts_id_idx",
 				"accounts_inbox_uri_idx",
 				"accounts_outbox_uri_idx",
-				"accounts_domain_idx",
 				"accounts_uri_idx",
 				"accounts_url_idx",
 				"accounts_followers_uri_idx",
@@ -169,20 +168,15 @@ func init() {
 				"emojis_uri_idx",
 				"instances_domain_idx",
 				"list_entries_id_idx",
-				"list_entries_list_id_idx",
 				"lists_id_idx",
 				"markers_account_id_name_idx",
 				"media_attachments_id_idx",
 				"status_faves_id_idx",
-				"status_faves_account_id_idx",
-				"status_to_tags_tag_id_idx",
 				"statuses_uri_idx",
-				"statuses_account_id_idx", // <- seems counterintuitive, but other indexes include "account_id" as first column
 				"tags_name_idx",
 				"thread_mutes_id_idx",
 				"thread_mutes_thread_id_account_id_idx",
 				"threads_id_idx",
-				"tombstone_uri_idx",
 				"tombstone_uri_idx",
 			} {
 				if _, err := tx.
