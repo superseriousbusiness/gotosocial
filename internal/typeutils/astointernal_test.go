@@ -363,7 +363,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag3() {
 
 	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
 	suite.Nil(report)
-	suite.EqualError(err, "ASFlagToReport: account with uri http://localhost:8080/users/mr_e_man could not be found in the db")
+	suite.EqualError(err, "ASFlagToReport: error getting target account http://localhost:8080/users/mr_e_man from database: sql: no rows in result set")
 }
 
 func (suite *ASToInternalTestSuite) TestParseFlag4() {
@@ -388,7 +388,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag4() {
 
 	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
 	suite.Nil(report)
-	suite.EqualError(err, "ASFlagToReport: flaggable objects contained no recognizable target account uri")
+	suite.EqualError(err, "ASFlagToReport: missing target account uri for http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d")
 }
 
 func (suite *ASToInternalTestSuite) TestParseFlag5() {

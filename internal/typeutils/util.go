@@ -19,7 +19,6 @@ package typeutils
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -27,7 +26,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -92,22 +90,6 @@ func misskeyReportInlineURLs(content string) []*url.URL {
 		}
 	}
 	return urls
-}
-
-// getURI is a shortcut/util function for extracting
-// the JSONLDId URI of an Activity or Object.
-func getURI(withID ap.WithJSONLDId) (*url.URL, string, error) {
-	idProp := withID.GetJSONLDId()
-	if idProp == nil {
-		return nil, "", errors.New("id prop was nil")
-	}
-
-	if !idProp.IsIRI() {
-		return nil, "", errors.New("id prop was not an IRI")
-	}
-
-	id := idProp.Get()
-	return id, id.String(), nil
 }
 
 // placeholdUnknownAttachments separates any attachments with type `unknown`

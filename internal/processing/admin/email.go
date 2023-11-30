@@ -47,7 +47,7 @@ func (p *Processor) EmailTest(ctx context.Context, account *gtsmodel.Account, to
 	}
 
 	if err := p.emailSender.SendTestEmail(toAddress, testData); err != nil {
-		if errorType := gtserror.Type(err); errorType == gtserror.TypeSMTP {
+		if gtserror.IsSMTP(err) {
 			// An error occurred during the SMTP part.
 			// We should indicate this to the caller, as
 			// it will likely help them debug the issue.

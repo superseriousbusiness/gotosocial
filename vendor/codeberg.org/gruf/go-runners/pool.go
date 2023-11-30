@@ -221,8 +221,15 @@ func worker_run(ctx context.Context, fns <-chan WorkerFunc) bool {
 	defer func() {
 		// Recover and drop any panic
 		if r := recover(); r != nil {
+
+			// Gather calling func frames.
+			pcs := make([]uintptr, 10)
+			n := runtime.Callers(3, pcs)
+			i := runtime.CallersFrames(pcs[:n])
+			c := gatherFrames(i, n)
+
 			const msg = "worker_run: recovered panic: %v\n\n%s\n"
-			fmt.Fprintf(os.Stderr, msg, r, errors.GetCallers(2, 10))
+			fmt.Fprintf(os.Stderr, msg, r, c.String())
 		}
 	}()
 
@@ -243,8 +250,15 @@ func drain_queue(fns <-chan WorkerFunc) bool {
 	defer func() {
 		// Recover and drop any panic
 		if r := recover(); r != nil {
-			const msg = "drain_queue: recovered panic: %v\n\n%s\n"
-			fmt.Fprintf(os.Stderr, msg, r, errors.GetCallers(2, 10))
+
+			// Gather calling func frames.
+			pcs := make([]uintptr, 10)
+			n := runtime.Callers(3, pcs)
+			i := runtime.CallersFrames(pcs[:n])
+			c := gatherFrames(i, n)
+
+			const msg = "worker_run: recovered panic: %v\n\n%s\n"
+			fmt.Fprintf(os.Stderr, msg, r, c.String())
 		}
 	}()
 
@@ -259,4 +273,20 @@ func drain_queue(fns <-chan WorkerFunc) bool {
 			return true
 		}
 	}
+}
+
+// gatherFrames collates runtime frames from a frame iterator.
+func gatherFrames(iter *runtime.Frames, n int) errors.Callers {
+	if iter == nil {
+		return nil
+	}
+	frames := make([]runtime.Frame, 0, n)
+	for {
+		f, ok := iter.Next()
+		if !ok {
+			break
+		}
+		frames = append(frames, f)
+	}
+	return frames
 }

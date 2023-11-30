@@ -55,14 +55,10 @@ func MustSet[W, T any](fn func(W, T) error, with W, value T) {
 // GetJSONLDId returns the ID of 'with', or nil.
 func GetJSONLDId(with WithJSONLDId) *url.URL {
 	idProp := with.GetJSONLDId()
-	if idProp == nil {
+	if idProp == nil || !idProp.IsXMLSchemaAnyURI() {
 		return nil
 	}
-	id := idProp.Get()
-	if id == nil {
-		return nil
-	}
-	return id
+	return idProp.Get()
 }
 
 // SetJSONLDId sets the given URL to the JSONLD ID of 'with'.
@@ -70,9 +66,9 @@ func SetJSONLDId(with WithJSONLDId, id *url.URL) {
 	idProp := with.GetJSONLDId()
 	if idProp == nil {
 		idProp = streams.NewJSONLDIdProperty()
+		with.SetJSONLDId(idProp)
 	}
 	idProp.SetIRI(id)
-	with.SetJSONLDId(idProp)
 }
 
 // SetJSONLDIdStr sets the given string to the JSONLDID of 'with'. Returns error
@@ -139,14 +135,46 @@ func AppendBcc(with WithBcc, bcc ...*url.URL) {
 	}, bcc...)
 }
 
-// GetActor returns the IRIs contained in the Actor property of 'with'. Panics on entries with missing ID.
-func GetActor(with WithActor) []*url.URL {
+// GetURL returns the IRIs contained in the URL property of 'with'.
+func GetURL(with WithURL) []*url.URL {
+	urlProp := with.GetActivityStreamsUrl()
+	if urlProp == nil || urlProp.Len() == 0 {
+		return nil
+	}
+	urls := make([]*url.URL, 0, urlProp.Len())
+	for i := 0; i < urlProp.Len(); i++ {
+		at := urlProp.At(i)
+		if at.IsXMLSchemaAnyURI() {
+			u := at.GetXMLSchemaAnyURI()
+			urls = append(urls, u)
+		}
+	}
+	return urls
+}
+
+// AppendURL appends the given URLs to the URL property of 'with'.
+func AppendURL(with WithURL, url ...*url.URL) {
+	if len(url) == 0 {
+		return
+	}
+	urlProp := with.GetActivityStreamsUrl()
+	if urlProp == nil {
+		urlProp = streams.NewActivityStreamsUrlProperty()
+		with.SetActivityStreamsUrl(urlProp)
+	}
+	for _, u := range url {
+		urlProp.AppendXMLSchemaAnyURI(u)
+	}
+}
+
+// GetActorIRIs returns the IRIs contained in the Actor property of 'with'.
+func GetActorIRIs(with WithActor) []*url.URL {
 	actorProp := with.GetActivityStreamsActor()
 	return getIRIs[vocab.ActivityStreamsActorPropertyIterator](actorProp)
 }
 
-// AppendActor appends the given IRIs to the Actor property of 'with'.
-func AppendActor(with WithActor, actor ...*url.URL) {
+// AppendActorIRIs appends the given IRIs to the Actor property of 'with'.
+func AppendActorIRIs(with WithActor, actor ...*url.URL) {
 	appendIRIs(func() Property[vocab.ActivityStreamsActorPropertyIterator] {
 		actorProp := with.GetActivityStreamsActor()
 		if actorProp == nil {
@@ -157,7 +185,25 @@ func AppendActor(with WithActor, actor ...*url.URL) {
 	}, actor...)
 }
 
-// GetAttributedTo returns the IRIs contained in the AttributedTo property of 'with'. Panics on entries with missing ID.
+// GetObjectIRIs returns the IRIs contained in the Object property of 'with'.
+func GetObjectIRIs(with WithObject) []*url.URL {
+	objectProp := with.GetActivityStreamsObject()
+	return getIRIs[vocab.ActivityStreamsObjectPropertyIterator](objectProp)
+}
+
+// AppendObjectIRIs appends the given IRIs to the Object property of 'with'.
+func AppendObjectIRIs(with WithObject) {
+	appendIRIs(func() Property[vocab.ActivityStreamsObjectPropertyIterator] {
+		objectProp := with.GetActivityStreamsObject()
+		if objectProp == nil {
+			objectProp = streams.NewActivityStreamsObjectProperty()
+			with.SetActivityStreamsObject(objectProp)
+		}
+		return objectProp
+	})
+}
+
+// GetAttributedTo returns the IRIs contained in the AttributedTo property of 'with'.
 func GetAttributedTo(with WithAttributedTo) []*url.URL {
 	attribProp := with.GetActivityStreamsAttributedTo()
 	return getIRIs[vocab.ActivityStreamsAttributedToPropertyIterator](attribProp)
@@ -175,7 +221,7 @@ func AppendAttributedTo(with WithAttributedTo, attribTo ...*url.URL) {
 	}, attribTo...)
 }
 
-// GetInReplyTo returns the IRIs contained in the InReplyTo property of 'with'. Panics on entries with missing ID.
+// GetInReplyTo returns the IRIs contained in the InReplyTo property of 'with'.
 func GetInReplyTo(with WithInReplyTo) []*url.URL {
 	replyProp := with.GetActivityStreamsInReplyTo()
 	return getIRIs[vocab.ActivityStreamsInReplyToPropertyIterator](replyProp)
@@ -193,10 +239,105 @@ func AppendInReplyTo(with WithInReplyTo, replyTo ...*url.URL) {
 	}, replyTo...)
 }
 
+// GetInbox returns the IRI contained in the Inbox property of 'with'.
+func GetInbox(with WithInbox) *url.URL {
+	inboxProp := with.GetActivityStreamsInbox()
+	if inboxProp == nil || !inboxProp.IsIRI() {
+		return nil
+	}
+	return inboxProp.GetIRI()
+}
+
+// SetInbox sets the given IRI on the Inbox property of 'with'.
+func SetInbox(with WithInbox, inbox *url.URL) {
+	inboxProp := with.GetActivityStreamsInbox()
+	if inboxProp == nil {
+		inboxProp = streams.NewActivityStreamsInboxProperty()
+		with.SetActivityStreamsInbox(inboxProp)
+	}
+	inboxProp.SetIRI(inbox)
+}
+
+// GetOutbox returns the IRI contained in the Outbox property of 'with'.
+func GetOutbox(with WithOutbox) *url.URL {
+	outboxProp := with.GetActivityStreamsOutbox()
+	if outboxProp == nil || !outboxProp.IsIRI() {
+		return nil
+	}
+	return outboxProp.GetIRI()
+}
+
+// SetOutbox sets the given IRI on the Outbox property of 'with'.
+func SetOutbox(with WithOutbox, outbox *url.URL) {
+	outboxProp := with.GetActivityStreamsOutbox()
+	if outboxProp == nil {
+		outboxProp = streams.NewActivityStreamsOutboxProperty()
+		with.SetActivityStreamsOutbox(outboxProp)
+	}
+	outboxProp.SetIRI(outbox)
+}
+
+// GetFollowers returns the IRI contained in the Following property of 'with'.
+func GetFollowing(with WithFollowing) *url.URL {
+	followProp := with.GetActivityStreamsFollowing()
+	if followProp == nil || !followProp.IsIRI() {
+		return nil
+	}
+	return followProp.GetIRI()
+}
+
+// SetFollowers sets the given IRI on the Following property of 'with'.
+func SetFollowing(with WithFollowing, following *url.URL) {
+	followProp := with.GetActivityStreamsFollowing()
+	if followProp == nil {
+		followProp = streams.NewActivityStreamsFollowingProperty()
+		with.SetActivityStreamsFollowing(followProp)
+	}
+	followProp.SetIRI(following)
+}
+
+// GetFollowers returns the IRI contained in the Followers property of 'with'.
+func GetFollowers(with WithFollowers) *url.URL {
+	followProp := with.GetActivityStreamsFollowers()
+	if followProp == nil || !followProp.IsIRI() {
+		return nil
+	}
+	return followProp.GetIRI()
+}
+
+// SetFollowers sets the given IRI on the Followers property of 'with'.
+func SetFollowers(with WithFollowers, followers *url.URL) {
+	followProp := with.GetActivityStreamsFollowers()
+	if followProp == nil {
+		followProp = streams.NewActivityStreamsFollowersProperty()
+		with.SetActivityStreamsFollowers(followProp)
+	}
+	followProp.SetIRI(followers)
+}
+
+// GetFeatured returns the IRI contained in the Featured property of 'with'.
+func GetFeatured(with WithFeatured) *url.URL {
+	featuredProp := with.GetTootFeatured()
+	if featuredProp == nil || !featuredProp.IsIRI() {
+		return nil
+	}
+	return featuredProp.GetIRI()
+}
+
+// SetFeatured sets the given IRI on the Featured property of 'with'.
+func SetFeatured(with WithFeatured, featured *url.URL) {
+	featuredProp := with.GetTootFeatured()
+	if featuredProp == nil {
+		featuredProp = streams.NewTootFeaturedProperty()
+		with.SetTootFeatured(featuredProp)
+	}
+	featuredProp.SetIRI(featured)
+}
+
 // GetPublished returns the time contained in the Published property of 'with'.
 func GetPublished(with WithPublished) time.Time {
 	publishProp := with.GetActivityStreamsPublished()
-	if publishProp == nil {
+	if publishProp == nil || !publishProp.IsXMLSchemaDateTime() {
 		return time.Time{}
 	}
 	return publishProp.Get()
@@ -215,7 +356,7 @@ func SetPublished(with WithPublished, published time.Time) {
 // GetEndTime returns the time contained in the EndTime property of 'with'.
 func GetEndTime(with WithEndTime) time.Time {
 	endTimeProp := with.GetActivityStreamsEndTime()
-	if endTimeProp == nil {
+	if endTimeProp == nil || !endTimeProp.IsXMLSchemaDateTime() {
 		return time.Time{}
 	}
 	return endTimeProp.Get()
@@ -240,7 +381,8 @@ func GetClosed(with WithClosed) []time.Time {
 	closed := make([]time.Time, 0, closedProp.Len())
 	for i := 0; i < closedProp.Len(); i++ {
 		at := closedProp.At(i)
-		if t := at.GetXMLSchemaDateTime(); !t.IsZero() {
+		if at.IsXMLSchemaDateTime() {
+			t := at.GetXMLSchemaDateTime()
 			closed = append(closed, t)
 		}
 	}
@@ -265,7 +407,7 @@ func AppendClosed(with WithClosed, closed ...time.Time) {
 // GetVotersCount returns the integer contained in the VotersCount property of 'with', if found.
 func GetVotersCount(with WithVotersCount) int {
 	votersProp := with.GetTootVotersCount()
-	if votersProp == nil {
+	if votersProp == nil || !votersProp.IsXMLSchemaNonNegativeInteger() {
 		return 0
 	}
 	return votersProp.Get()
@@ -279,6 +421,25 @@ func SetVotersCount(with WithVotersCount, count int) {
 		with.SetTootVotersCount(votersProp)
 	}
 	votersProp.Set(count)
+}
+
+// GetDiscoverable returns the boolean contained in the Discoverable property of 'with'.
+func GetDiscoverable(with WithDiscoverable) bool {
+	discoverProp := with.GetTootDiscoverable()
+	if discoverProp == nil || !discoverProp.IsXMLSchemaBoolean() {
+		return false
+	}
+	return discoverProp.Get()
+}
+
+// SetDiscoverable sets the given boolean on the Discoverable property of 'with'.
+func SetDiscoverable(with WithDiscoverable, discoverable bool) {
+	discoverProp := with.GetTootDiscoverable()
+	if discoverProp == nil {
+		discoverProp = streams.NewTootDiscoverableProperty()
+		with.SetTootDiscoverable(discoverProp)
+	}
+	discoverProp.Set(discoverable)
 }
 
 func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {

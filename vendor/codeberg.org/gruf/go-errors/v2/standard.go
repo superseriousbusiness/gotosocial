@@ -1,133 +1,37 @@
 package errors
 
 import (
-	"errors"
-	"reflect"
 	_ "unsafe"
-
-	"codeberg.org/gruf/go-bitutil"
 )
 
-// errtype is a ptr to the error interface type.
-var errtype = reflect.TypeOf((*error)(nil)).Elem()
+// Is reports whether any error in err's tree matches target.
+//
+// The tree consists of err itself, followed by the errors obtained by repeatedly
+// calling Unwrap. When err wraps multiple errors, Is examines err followed by a
+// depth-first traversal of its children.
+//
+// An error is considered to match a target if it is equal to that target or if
+// it implements a method Is(error) bool such that Is(target) returns true.
+//
+// An error type might provide an Is method so it can be treated as equivalent
+// to an existing error. For example, if MyError defines
+//
+//	func (m MyError) Is(target error) bool { return target == fs.ErrExist }
+//
+// then Is(MyError{}, fs.ErrExist) returns true. See [syscall.Errno.Is] for
+// an example in the standard library. An Is method should only shallowly
+// compare err and the target and not call Unwrap on either.
+//
+//go:linkname Is errors.Is
+func Is(err error, target error) bool
 
-// Comparable is functionally equivalent to calling errors.Is() on multiple errors (up to a max of 64).
-func Comparable(err error, targets ...error) bool {
-	var flags bitutil.Flags64
-
-	// Flags only has 64 bit-slots
-	if len(targets) > 64 {
-		panic("too many targets")
-	}
-
-	for i := 0; i < len(targets); {
-		if targets[i] == nil {
-			if err == nil {
-				return true
-			}
-
-			// Drop nil targets from slice.
-			copy(targets[i:], targets[i+1:])
-			targets = targets[:len(targets)-1]
-			continue
+// IsV2 calls Is(err, target) for each target within targets.
+func IsV2(err error, targets ...error) bool {
+	for _, target := range targets {
+		if Is(err, target) {
+			return true
 		}
-
-		// Check if this error is directly comparable
-		if reflect.TypeOf(targets[i]).Comparable() {
-			flags = flags.Set(uint8(i))
-		}
-
-		i++
 	}
-
-	for err != nil {
-		// Check if this layer supports .Is interface
-		is, ok := err.(interface{ Is(error) bool })
-
-		if !ok {
-			// Error does not support interface
-			//
-			// Only try perform direct compare
-			for i := 0; i < len(targets); i++ {
-				// Try directly compare errors
-				if flags.Get(uint8(i)) &&
-					err == targets[i] {
-					return true
-				}
-			}
-		} else {
-			// Error supports the .Is interface
-			//
-			// Perform direct compare AND .Is()
-			for i := 0; i < len(targets); i++ {
-				if (flags.Get(uint8(i)) &&
-					err == targets[i]) ||
-					is.Is(targets[i]) {
-					return true
-				}
-			}
-		}
-
-		// Unwrap to next layer
-		err = errors.Unwrap(err)
-	}
-
-	return false
-}
-
-// Assignable is functionally equivalent to calling errors.As() on multiple errors,
-// except that it only checks assignability as opposed to setting the target.
-func Assignable(err error, targets ...error) bool {
-	if err == nil {
-		// Fastest case.
-		return false
-	}
-
-	for i := 0; i < len(targets); {
-		if targets[i] == nil {
-			// Drop nil targets from slice.
-			copy(targets[i:], targets[i+1:])
-			targets = targets[:len(targets)-1]
-			continue
-		}
-		i++
-	}
-
-	for err != nil {
-		// Check if this layer supports .As interface
-		as, ok := err.(interface{ As(any) bool })
-
-		// Get reflected err type.
-		te := reflect.TypeOf(err)
-
-		if !ok {
-			// Error does not support interface.
-			//
-			// Check assignability using reflection.
-			for i := 0; i < len(targets); i++ {
-				tt := reflect.TypeOf(targets[i])
-				if te.AssignableTo(tt) {
-					return true
-				}
-			}
-		} else {
-			// Error supports the .As interface.
-			//
-			// Check using .As() and reflection.
-			for i := 0; i < len(targets); i++ {
-				if as.As(targets[i]) {
-					return true
-				} else if tt := reflect.TypeOf(targets[i]); // nocollapse
-				te.AssignableTo(tt) {
-					return true
-				}
-			}
-		}
-
-		// Unwrap to next layer.
-		err = errors.Unwrap(err)
-	}
-
 	return false
 }
 
@@ -152,8 +56,79 @@ func Assignable(err error, targets ...error) bool {
 //go:linkname As errors.As
 func As(err error, target any) bool
 
+// AsV2 is functionally similar to As(), instead
+// leveraging generics to handle allocation and
+// returning of a concrete generic parameter type.
+func AsV2[Type any](err error) Type {
+	var t Type
+	var ok bool
+	errs := []error{err}
+	for len(errs) > 0 {
+		// Pop next error to check.
+		err := errs[len(errs)-1]
+		errs = errs[:len(errs)-1]
+
+		// Check direct type.
+		t, ok = err.(Type)
+		if ok {
+			return t
+		}
+
+		// Look for .As() support.
+		as, ok := err.(interface {
+			As(target any) bool
+		})
+
+		if ok {
+			// Attempt .As().
+			if as.As(&t) {
+				return t
+			}
+		}
+
+		// Try unwrap errors.
+		switch u := err.(type) {
+		case interface{ Unwrap() error }:
+			errs = append(errs, u.Unwrap())
+		case interface{ Unwrap() []error }:
+			errs = append(errs, u.Unwrap()...)
+		}
+	}
+	return t
+}
+
 // Unwrap returns the result of calling the Unwrap method on err, if err's
-// type contains an Unwrap method returning error. Otherwise, Unwrap returns nil.
+// type contains an Unwrap method returning error.
+// Otherwise, Unwrap returns nil.
+//
+// Unwrap only calls a method of the form "Unwrap() error".
+// In particular Unwrap does not unwrap errors returned by [Join].
 //
 //go:linkname Unwrap errors.Unwrap
 func Unwrap(err error) error
+
+// UnwrapV2 is functionally similar to Unwrap(), except that
+// it also handles the case of interface{ Unwrap() []error }.
+func UnwrapV2(err error) []error {
+	switch u := err.(type) {
+	case interface{ Unwrap() error }:
+		if e := u.Unwrap(); err != nil {
+			return []error{e}
+		}
+	case interface{ Unwrap() []error }:
+		return u.Unwrap()
+	}
+	return nil
+}
+
+// Join returns an error that wraps the given errors.
+// Any nil error values are discarded.
+// Join returns nil if every value in errs is nil.
+// The error formats as the concatenation of the strings obtained
+// by calling the Error method of each element of errs, with a newline
+// between each string.
+//
+// A non-nil error returned by Join implements the Unwrap() []error method.
+//
+//go:linkname Join errors.Join
+func Join(errs ...error) error

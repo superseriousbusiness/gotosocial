@@ -42,7 +42,7 @@ func (suite *ResolveTestSuite) TestResolveDocumentAsAccountable() {
 	b := []byte(suite.typeToJson(suite.document1))
 
 	accountable, err := ap.ResolveAccountable(context.Background(), b)
-	suite.True(gtserror.WrongType(err))
+	suite.True(gtserror.IsWrongType(err))
 	suite.EqualError(err, "ResolveAccountable: cannot resolve vocab type *typedocument.ActivityStreamsDocument as accountable")
 	suite.Nil(accountable)
 }

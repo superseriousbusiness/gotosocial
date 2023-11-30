@@ -200,13 +200,18 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	//
 	// Post the activity to the Actor's inbox and trigger side effects .
 	if err := f.sideEffectActor.PostInbox(ctx, inboxID, activity); err != nil {
-		// Special case: We know it is a bad request if the object or
-		// target properties needed to be populated, but weren't.
+		// Special case: We know it is a bad request if the object or target
+		// props needed to be populated, or we failed parsing activity details.
 		// Send the rejection to the peer.
-		if errors.Is(err, pub.ErrObjectRequired) || errors.Is(err, pub.ErrTargetRequired) {
-			// Log the original error but return something a bit more generic.
-			log.Warnf(ctx, "malformed incoming activity: %v", err)
-			const text = "malformed activity: missing Object and / or Target"
+		if errors.Is(err, pub.ErrObjectRequired) ||
+			errors.Is(err, pub.ErrTargetRequired) ||
+			gtserror.IsMalformed(err) {
+
+			// Log malformed activities to help debug.
+			l = l.WithField("activity", activity)
+			l.Warnf("malformed incoming activity: %v", err)
+
+			const text = "malformed incoming activity"
 			return false, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
@@ -234,7 +239,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		// This check may be removed when the `Exists()` func
 		// is updated, and/or federating callbacks are handled
 		// properly.
-		if !errorsv2.Comparable(
+		if !errorsv2.IsV2(
 			err,
 			db.ErrAlreadyExists,
 			db.ErrNoEntries,

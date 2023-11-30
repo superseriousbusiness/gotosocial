@@ -92,7 +92,7 @@ func (p *Processor) Lookup(
 		false, // never resolve!
 	)
 	if err != nil {
-		if gtserror.Unretrievable(err) {
+		if gtserror.IsUnretrievable(err) {
 			// ErrNotRetrievable is fine, just wrap it in
 			// a 404 to indicate we couldn't find anything.
 			err := fmt.Errorf("%s not found", query)

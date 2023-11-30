@@ -229,7 +229,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 			l.Warnf("orphaned status: http error dereferencing parent: %v)", err)
 			return nil
 
-		case gtserror.Unretrievable(err):
+		case gtserror.IsUnretrievable(err):
 			// Not retrievable for some other reason, so just
 			// bail for now; we can try again later if necessary.
 			l.Warnf("orphaned status: parent unretrievable: %v)", err)
@@ -354,7 +354,7 @@ stackLoop:
 				//   - any http type error for a new status returns unretrievable
 				_, statusable, _, err := d.getStatusByURI(ctx, username, itemIRI)
 				if err != nil {
-					if !gtserror.Unretrievable(err) {
+					if !gtserror.IsUnretrievable(err) {
 						l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
 					}
 					continue itemLoop

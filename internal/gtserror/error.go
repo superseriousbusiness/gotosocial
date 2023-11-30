@@ -35,39 +35,36 @@ const (
 	errorTypeKey
 	unrtrvableKey
 	wrongTypeKey
-
-	// Types returnable from Type(...).
-	TypeSMTP ErrorType = "smtp" // smtp (mail)
+	smtpKey
+	malformedKey
 )
 
-// Unretrievable checks error for a stored "unretrievable" flag.
-//
-// Unretrievable indicates that a call to retrieve a resource
+// IsUnretrievable indicates that a call to retrieve a resource
 // (account, status, attachment, etc) could not be fulfilled,
 // either because it was not found locally, or because some
 // prerequisite remote resource call failed, making it impossible
 // to return the item.
-func Unretrievable(err error) bool {
+func IsUnretrievable(err error) bool {
 	_, ok := errors.Value(err, unrtrvableKey).(struct{})
 	return ok
 }
 
 // SetUnretrievable will wrap the given error to store an "unretrievable"
-// flag, returning wrapped error. See "Unretrievable" for example use-cases.
+// flag, returning wrapped error. See Unretrievable() for example use-cases.
 func SetUnretrievable(err error) error {
 	return errors.WithValue(err, unrtrvableKey, struct{}{})
 }
 
-// WrongType checks error for a stored "wrong type" flag. Wrong type
+// IsWrongType checks error for a stored "wrong type" flag. Wrong type
 // indicates that an ActivityPub URI returned a type we weren't expecting:
 // Statusable instead of Accountable, or vice versa, for example.
-func WrongType(err error) bool {
+func IsWrongType(err error) bool {
 	_, ok := errors.Value(err, wrongTypeKey).(struct{})
 	return ok
 }
 
 // SetWrongType will wrap the given error to store a "wrong type" flag,
-// returning wrapped error. See "WrongType" for example use-cases.
+// returning wrapped error. See IsWrongType() for example use-cases.
 func SetWrongType(err error) error {
 	return errors.WithValue(err, wrongTypeKey, struct{}{})
 }
@@ -86,29 +83,41 @@ func WithStatusCode(err error, code int) error {
 	return errors.WithValue(err, statusCodeKey, code)
 }
 
-// NotFound checks error for a stored "not found" flag. For example
-// an error from an outgoing HTTP request due to DNS lookup.
-func NotFound(err error) bool {
+// IsNotFound checks error for a stored "not found" flag. For
+// example an error from an outgoing HTTP request due to DNS lookup.
+func IsNotFound(err error) bool {
 	_, ok := errors.Value(err, notFoundKey).(struct{})
 	return ok
 }
 
 // SetNotFound will wrap the given error to store a "not found" flag,
-// returning wrapped error. See NotFound() for example use-cases.
+// returning wrapped error. See IsNotFound() for example use-cases.
 func SetNotFound(err error) error {
 	return errors.WithValue(err, notFoundKey, struct{}{})
 }
 
-// Type checks error for a stored "type" value. For example
-// an error from sending an email may set a value of "smtp"
-// to indicate this was an SMTP error.
-func Type(err error) ErrorType {
-	s, _ := errors.Value(err, errorTypeKey).(ErrorType)
-	return s
+// IsSMTP checks error for a stored "smtp" flag. For
+// example an error from outgoing SMTP email attempt.
+func IsSMTP(err error) bool {
+	_, ok := errors.Value(err, smtpKey).(struct{})
+	return ok
 }
 
-// SetType will wrap the given error to store a "type" value,
-// returning wrapped error. See Type() for example use-cases.
-func SetType(err error, errType ErrorType) error {
-	return errors.WithValue(err, errorTypeKey, errType)
+// SetSMTP will wrap the given error to store an "smtp" flag,
+// returning wrapped error. See IsSMTP() for example use-cases.
+func SetSMTP(err error) error {
+	return errors.WithValue(err, smtpKey, struct{}{})
+}
+
+// IsMalformed checks error for a stored "malformed" flag. For
+// example an error from an incoming ActivityStreams type conversion.
+func IsMalformed(err error) bool {
+	_, ok := errors.Value(err, malformedKey).(struct{})
+	return ok
+}
+
+// SetMalformed will wrap the given error to store a "malformed" flag,
+// returning wrapped error. See IsMalformed() for example use-cases.
+func SetMalformed(err error) error {
+	return errors.WithValue(err, malformedKey, struct{}{})
 }

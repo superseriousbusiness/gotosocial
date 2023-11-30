@@ -61,7 +61,7 @@ func newfAt(calldepth int, msgf string, args ...any) error {
 	}
 }
 
-// caller fetches the calling function name, skipping 'depth'. Results are cached per PC.
+// caller fetches the calling function name, skipping 'depth'.
 func caller(depth int) string {
 	var pcs [1]uintptr
 

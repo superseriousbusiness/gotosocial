@@ -17,37 +17,13 @@
 
 package log
 
-import (
-	"runtime"
-	"strings"
-)
+import "codeberg.org/gruf/go-kv/format"
 
-// Caller fetches the calling function name, skipping 'depth'.
-func Caller(depth int) string {
-	var pcs [1]uintptr
-
-	// Fetch calling function using calldepth
-	_ = runtime.Callers(depth, pcs[:])
-	fn := runtime.FuncForPC(pcs[0])
-
-	if fn == nil {
-		return ""
-	}
-
-	// Get func name.
-	name := fn.Name()
-
-	// Drop all but the package name and function name, no mod path
-	if idx := strings.LastIndex(name, "/"); idx >= 0 {
-		name = name[idx+1:]
-	}
-
-	const params = `[...]`
-
-	// Drop any generic type parameter markers
-	if idx := strings.Index(name, params); idx >= 0 {
-		name = name[:idx] + name[idx+len(params):]
-	}
-
-	return name
+// VarDump returns a serialized, useful log / error output of given variable.
+func VarDump(a any) string {
+	buf := getBuf()
+	format.Appendf(buf, "{:v}", a)
+	s := string(buf.B)
+	putBuf(buf)
+	return s
 }

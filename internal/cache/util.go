@@ -34,7 +34,7 @@ var SentinelError = errors.New("BUG: error should not be returned") //nolint:rev
 // ignoreErrors is an error matching function used to signal which errors
 // the result caches should NOT hold onto. these amount to anything non-permanent.
 func ignoreErrors(err error) bool {
-	return !errorsv2.Comparable(
+	return !errorsv2.IsV2(
 		err,
 
 		// the only cacheable errs,
