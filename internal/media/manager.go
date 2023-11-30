@@ -53,8 +53,7 @@ type Manager struct {
 
 // NewManager returns a media manager with given state.
 func NewManager(state *state.State) *Manager {
-	m := &Manager{state: state}
-	return m
+	return &Manager{state: state}
 }
 
 // PreProcessMedia begins the process of decoding

@@ -152,8 +152,6 @@ github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd h1:l+vLbuxptsC6
 github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd/go.mod h1:7I+3Pe2o/YSU88W0hWlm9S22W7XI1JFNJ86U0zPKMf8=
 github.com/dsoprea/go-photoshop-info-format v0.0.0-20200610045659-121dd752914d h1:dg6UMHa50VI01WuPWXPbNJpO8QSyvIF5T5n2IZiqX3A=
 github.com/dsoprea/go-photoshop-info-format v0.0.0-20200610045659-121dd752914d/go.mod h1:pqKB+ijp27cEcrHxhXVgUUMlSDRuGJJp1E+20Lj5H0E=
-github.com/dsoprea/go-png-image-structure/v2 v2.0.0-20210512210324-29b889a6093d h1:2zNIgrJTspLxUKoJGl0Ln24+hufPKSjP3cu4++5MeSE=
-github.com/dsoprea/go-png-image-structure/v2 v2.0.0-20210512210324-29b889a6093d/go.mod h1:scnx0wQSM7UiCMK66dSdiPZvL2hl6iF5DvpZ7uT59MY=
 github.com/dsoprea/go-utility v0.0.0-20200711062821-fab8125e9bdf/go.mod h1:95+K3z2L0mqsVYd6yveIv1lmtT3tcQQ3dVakPySffW8=
 github.com/dsoprea/go-utility/v2 v2.0.0-20200717064901-2fccff4aa15e h1:IxIbA7VbCNrwumIYjDoMOdf4KOSkMC6NJE4s8oRbE7E=
 github.com/dsoprea/go-utility/v2 v2.0.0-20200717064901-2fccff4aa15e/go.mod h1:uAzdkPTub5Y9yQwXe8W4m2XuP0tK4a9Q/dantD0+uaU=
@@ -505,10 +503,12 @@ github.com/subosito/gotenv v1.4.2/go.mod h1:ayKnFf/c6rvx/2iiLrJUk1e6plDbT3edrFNG
 github.com/sunfish-shogi/bufseekio v0.0.0-20210207115823-a4185644b365/go.mod h1:dEzdXgvImkQ3WLI+0KQpmEx8T/C/ma9KeS3AfmU899I=
 github.com/superseriousbusiness/activity v1.4.0-gts h1:9r95sYy80tuGWWpDDNlLwa/k6dKZdyP/k+rhVA+VjdQ=
 github.com/superseriousbusiness/activity v1.4.0-gts/go.mod h1:AZw0Xb4Oju8rmaJCZ21gc5CPg47MmNgyac+Hx5jo8VM=
-github.com/superseriousbusiness/exif-terminator v0.5.0 h1:57SO/geyaOl2v/lJSQLVcQbdghpyFuK8ZTtaHL81fUQ=
-github.com/superseriousbusiness/exif-terminator v0.5.0/go.mod h1:d5IkskXco/3XRXzOrI73uGYn+wahJEqPlQSSqn6jxSw=
+github.com/superseriousbusiness/exif-terminator v0.6.0 h1:f8FM4R/Au7iB0PGfSKjKAEYMGvM2HHbd1qLxrfmuNFk=
+github.com/superseriousbusiness/exif-terminator v0.6.0/go.mod h1:HjbpsIyuK6PguA/Rla+Hz0+A9pF6iWf9qGLhqpAN68k=
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe h1:ksl2oCx/Qo8sNDc3Grb8WGKBM9nkvhCm25uvlT86azE=
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe/go.mod h1:gH4P6gN1V+wmIw5o97KGaa1RgXB/tVpC2UNzijhg3E4=
+github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB h1:8psprYSK1KdOSH7yQ4PbJq0YYaGQY+gzdW/B0ExDb/8=
+github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB/go.mod h1:ymKGfy9kg4dIdraeZRAdobMS/flzLk3VcRPLpEWOAXg=
 github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8 h1:nTIhuP157oOFcscuoK1kCme1xTeGIzztSw70lX9NrDQ=
 github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8/go.mod h1:uYC/W92oVRJ49Vh1GcvTqpeFqHi+Ovrl2sMllQWRAEo=
 github.com/tdewolff/minify/v2 v2.20.7 h1:NUkuzJ9dvQUNJjSdmmrfELa/ZpnMdyMR/ZKU2bw7N/E=

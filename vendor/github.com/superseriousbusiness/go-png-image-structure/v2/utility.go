@@ -3,8 +3,6 @@ package pngstructure
 import (
 	"bytes"
 	"fmt"
-
-	"github.com/dsoprea/go-logging"
 )
 
 func DumpBytes(data []byte) {
@@ -32,34 +30,38 @@ func DumpBytesClause(data []byte) {
 	fmt.Printf(" }\n")
 }
 
-func DumpBytesToString(data []byte) string {
+func DumpBytesToString(data []byte) (string, error) {
 	b := new(bytes.Buffer)
 
 	for i, x := range data {
-		_, err := b.WriteString(fmt.Sprintf("%02x", x))
-		log.PanicIf(err)
+		if _, err := b.WriteString(fmt.Sprintf("%02x", x)); err != nil {
+			return "", err
+		}
 
 		if i < len(data)-1 {
-			_, err := b.WriteRune(' ')
-			log.PanicIf(err)
+			if _, err := b.WriteRune(' '); err != nil {
+				return "", err
+			}
 		}
 	}
 
-	return b.String()
+	return b.String(), nil
 }
 
-func DumpBytesClauseToString(data []byte) string {
+func DumpBytesClauseToString(data []byte) (string, error) {
 	b := new(bytes.Buffer)
 
 	for i, x := range data {
-		_, err := b.WriteString(fmt.Sprintf("0x%02x", x))
-		log.PanicIf(err)
+		if _, err := b.WriteString(fmt.Sprintf("0x%02x", x)); err != nil {
+			return "", err
+		}
 
 		if i < len(data)-1 {
-			_, err := b.WriteString(", ")
-			log.PanicIf(err)
+			if _, err := b.WriteString(", "); err != nil {
+				return "", err
+			}
 		}
 	}
 
-	return b.String()
+	return b.String(), nil
 }

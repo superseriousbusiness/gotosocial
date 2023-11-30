@@ -25,29 +25,34 @@ import (
 	"fmt"
 	"io"
 
-	pngstructure "github.com/dsoprea/go-png-image-structure/v2"
 	jpegstructure "github.com/superseriousbusiness/go-jpeg-image-structure/v2"
+	pngstructure "github.com/superseriousbusiness/go-png-image-structure/v2"
 )
 
 func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) {
-	// to avoid keeping too much stuff in memory we want to pipe data directly
+	// To avoid keeping too much stuff
+	// in memory we want to pipe data
+	// directly to the reader.
 	pipeReader, pipeWriter := io.Pipe()
 
-	// we don't know ahead of time how long segments might be: they could be as large as
-	// the file itself, so unfortunately we need to allocate a buffer here that'scanner as large
-	// as the file
+	// We don't know ahead of time how long
+	// segments might be: they could be as
+	// large as the file itself, so we need
+	// a buffer with generous overhead.
 	scanner := bufio.NewScanner(in)
 	scanner.Buffer([]byte{}, fileSize)
-	var err error
 
+	var err error
 	switch mediaType {
 	case "image/jpeg", "jpeg", "jpg":
 		err = terminateJpeg(scanner, pipeWriter, fileSize)
+
 	case "image/webp", "webp":
 		err = terminateWebp(scanner, pipeWriter)
+
 	case "image/png", "png":
-		// for pngs we need to skip the header bytes, so read them in
-		// and check we're really dealing with a png here
+		// For pngs we need to skip the header bytes, so read
+		// them in and check we're really dealing with a png.
 		header := make([]byte, len(pngstructure.PngSignature))
 		if _, headerError := in.Read(header); headerError != nil {
 			err = headerError
@@ -67,41 +72,49 @@ func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) 
 	return pipeReader, err
 }
 
-func terminateJpeg(scanner *bufio.Scanner, writer io.WriteCloser, expectedFileSize int) error {
-	// jpeg visitor is where the spicy hack of streaming the de-exifed data is contained
+func terminateJpeg(scanner *bufio.Scanner, writer *io.PipeWriter, expectedFileSize int) error {
 	v := &jpegVisitor{
 		writer:           writer,
 		expectedFileSize: expectedFileSize,
 	}
 
-	// provide the visitor to the splitter so that it triggers on every section scan
+	// Provide the visitor to the splitter so
+	// that it triggers on every section scan.
 	js := jpegstructure.NewJpegSplitter(v)
 
-	// the visitor also needs to read back the list of segments: for this it needs
-	// to know what jpeg splitter it's attached to, so give it a pointer to the splitter
+	// The visitor also needs to read back the
+	// list of segments: for this it needs to
+	// know what jpeg splitter it's attached to,
+	// so give it a pointer to the splitter.
 	v.js = js
 
-	// use the jpeg splitters 'split' function, which satisfies the bufio.SplitFunc interface
+	// Jpeg visitor's 'split' function
+	// satisfies bufio.SplitFunc{}.
 	scanner.Split(js.Split)
 
-	scanAndClose(scanner, writer)
+	go scanAndClose(scanner, writer)
 	return nil
 }
 
-func terminateWebp(scanner *bufio.Scanner, writer io.WriteCloser) error {
+func terminateWebp(scanner *bufio.Scanner, writer *io.PipeWriter) error {
 	v := &webpVisitor{
 		writer: writer,
 	}
 
-	// use the webp visitor's 'split' function, which satisfies the bufio.SplitFunc interface
+	// Webp visitor's 'split' function
+	// satisfies bufio.SplitFunc{}.
 	scanner.Split(v.split)
 
-	scanAndClose(scanner, writer)
+	go scanAndClose(scanner, writer)
 	return nil
 }
 
-func terminatePng(scanner *bufio.Scanner, writer io.WriteCloser) error {
+func terminatePng(scanner *bufio.Scanner, writer *io.PipeWriter) error {
 	ps := pngstructure.NewPngSplitter()
+
+	// Don't bother checking CRC;
+	// we're overwriting it anyway.
+	ps.DoCheckCrc(false)
 
 	v := &pngVisitor{
 		ps:               ps,
@@ -109,26 +122,37 @@ func terminatePng(scanner *bufio.Scanner, writer io.WriteCloser) error {
 		lastWrittenChunk: -1,
 	}
 
-	// use the png visitor's 'split' function, which satisfies the bufio.SplitFunc interface
+	// Png visitor's 'split' function
+	// satisfies bufio.SplitFunc{}.
 	scanner.Split(v.split)
 
-	scanAndClose(scanner, writer)
+	go scanAndClose(scanner, writer)
 	return nil
 }
 
-func scanAndClose(scanner *bufio.Scanner, writer io.WriteCloser) {
-	// scan asynchronously until there's nothing left to scan, and then close the writer
-	// so that the reader on the other side knows that we're done
-	//
-	// due to the nature of io.Pipe, writing won't actually work
-	// until the pipeReader starts being read by the caller, which
-	// is why we do this asynchronously
-	go func() {
-		defer writer.Close()
-		for scanner.Scan() {
-		}
-		if scanner.Err() != nil {
-			logger.Error(scanner.Err())
-		}
+// scanAndClose scans through the given scanner until there's
+// nothing left to scan, and then closes the writer so that the
+// reader on the other side of the pipe knows that we're done.
+//
+// Any error encountered when scanning will be logged by terminator.
+//
+// Due to the nature of io.Pipe, writing won't actually work
+// until the pipeReader starts being read by the caller, which
+// is why this function should always be called asynchronously.
+func scanAndClose(scanner *bufio.Scanner, writer *io.PipeWriter) {
+	var err error
+
+	defer func() {
+		// Always close writer, using returned
+		// scanner error (if any). If err is nil
+		// then the standard io.EOF will be used.
+		// (this will not overwrite existing).
+		writer.CloseWithError(err)
 	}()
+
+	for scanner.Scan() {
+	}
+
+	// Set error on return.
+	err = scanner.Err()
 }
