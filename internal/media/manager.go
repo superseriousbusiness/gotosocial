@@ -25,7 +25,6 @@ import (
 
 	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-store/v2/storage"
-	"github.com/superseriousbusiness/exif-terminator"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -54,7 +53,6 @@ type Manager struct {
 
 // NewManager returns a media manager with given state.
 func NewManager(state *state.State) *Manager {
-	terminator.SetErrorLogger(log.New())
 	return &Manager{state: state}
 }
 

@@ -46,10 +46,10 @@ func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) 
 	switch mediaType {
 	case "image/jpeg", "jpeg", "jpg":
 		err = terminateJpeg(scanner, pipeWriter, fileSize)
-	
+
 	case "image/webp", "webp":
 		err = terminateWebp(scanner, pipeWriter)
-	
+
 	case "image/png", "png":
 		// For pngs we need to skip the header bytes, so read
 		// them in and check we're really dealing with a png.
@@ -72,7 +72,7 @@ func Terminate(in io.Reader, fileSize int, mediaType string) (io.Reader, error) 
 	return pipeReader, err
 }
 
-func terminateJpeg(scanner *bufio.Scanner, writer io.WriteCloser, expectedFileSize int) error {
+func terminateJpeg(scanner *bufio.Scanner, writer *io.PipeWriter, expectedFileSize int) error {
 	v := &jpegVisitor{
 		writer:           writer,
 		expectedFileSize: expectedFileSize,
@@ -96,7 +96,7 @@ func terminateJpeg(scanner *bufio.Scanner, writer io.WriteCloser, expectedFileSi
 	return nil
 }
 
-func terminateWebp(scanner *bufio.Scanner, writer io.WriteCloser) error {
+func terminateWebp(scanner *bufio.Scanner, writer *io.PipeWriter) error {
 	v := &webpVisitor{
 		writer: writer,
 	}
@@ -109,7 +109,7 @@ func terminateWebp(scanner *bufio.Scanner, writer io.WriteCloser) error {
 	return nil
 }
 
-func terminatePng(scanner *bufio.Scanner, writer io.WriteCloser) error {
+func terminatePng(scanner *bufio.Scanner, writer *io.PipeWriter) error {
 	ps := pngstructure.NewPngSplitter()
 
 	// Don't bother checking CRC;
@@ -139,12 +139,20 @@ func terminatePng(scanner *bufio.Scanner, writer io.WriteCloser) error {
 // Due to the nature of io.Pipe, writing won't actually work
 // until the pipeReader starts being read by the caller, which
 // is why this function should always be called asynchronously.
-func scanAndClose(scanner *bufio.Scanner, writer io.WriteCloser) {
-	defer writer.Close()
+func scanAndClose(scanner *bufio.Scanner, writer *io.PipeWriter) {
+	var err error
+
+	defer func() {
+		// Always close writer, using returned
+		// scanner error (if any). If err is nil
+		// then the standard io.EOF will be used.
+		// (this will not overwrite existing).
+		writer.CloseWithError(err)
+	}()
+
 	for scanner.Scan() {
 	}
 
-	if scanner.Err() != nil {
-		logger.Error(scanner.Err())
-	}
+	// Set error on return.
+	err = scanner.Err()
 }

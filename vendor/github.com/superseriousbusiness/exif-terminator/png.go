@@ -19,7 +19,6 @@
 package terminator
 
 import (
-	"encoding/binary"
 	"io"
 
 	pngstructure "github.com/superseriousbusiness/go-png-image-structure/v2"
@@ -79,29 +78,16 @@ func (v *pngVisitor) split(data []byte, atEOF bool) (int, []byte, error) {
 }
 
 func (v *pngVisitor) writeChunk(chunk *pngstructure.Chunk) error {
-	if err := binary.Write(v.writer, binary.BigEndian, chunk.Length); err != nil {
-		return err
-	}
-
-	if _, err := v.writer.Write([]byte(chunk.Type)); err != nil {
-		return err
-	}
-
 	if chunk.Type == pngstructure.EXifChunkType {
-		// Replace exif data with zero bytes.
-		zeros := make([]byte, len(chunk.Data))
-		chunk.Data = zeros
-	}
-
-	if _, err := v.writer.Write(chunk.Data); err != nil {
-		return err
+		// Replace exif data
+		// with zero bytes.
+		clear(chunk.Data)
 	}
 
 	// Fix CRC of each chunk.
 	chunk.UpdateCrc32()
-	if err := binary.Write(v.writer, binary.BigEndian, chunk.Crc); err != nil {
-		return err
-	}
 
-	return nil
+	// finally, write chunk to writer.
+	_, err := chunk.WriteTo(v.writer)
+	return err
 }
