@@ -173,7 +173,7 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.OutboxURI = outboxIRI.String()
 	}
 
-	// Extract a SharedInboxURI, but only trust it if a subdomain of account's domain.
+	// Extract a SharedInboxURI, but only trust if equal to / subdomain of account's domain.
 	if sharedInboxURI := ap.ExtractSharedInbox(accountable); // nocollapse
 	sharedInboxURI != nil && dns.CompareDomainName(acct.Domain, sharedInboxURI.Host) >= 2 {
 		sharedInbox := sharedInboxURI.String()
@@ -192,7 +192,7 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		acct.FollowersURI = followersURI.String()
 	}
 
-	// Extract a FeaturedURI, but only trust it if a subdomain of account's domain.
+	// Extract a FeaturedURI, but only trust if equal to / subdomain of account's domain.
 	if featuredURI := ap.GetFeatured(accountable); // nocollapse
 	featuredURI != nil && dns.CompareDomainName(acct.Domain, featuredURI.Host) >= 2 {
 		acct.FeaturedCollectionURI = featuredURI.String()
