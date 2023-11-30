@@ -297,8 +297,8 @@ func (d *Dereferencer) enrichStatusSafely(
 		// We leave 'isNew' set so that caller
 		// still dereferences parents, otherwise
 		// the version we pass back may not have
-		// these dereferenced yet (since those
-		// happen OUTSIDE the federator lock).
+		// these attached as inReplyTos yet (since
+		// those happen OUTSIDE federator lock).
 		//
 		// TODO: performance-wise, this won't be
 		// great. should improve this if we can!
