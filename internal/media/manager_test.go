@@ -404,7 +404,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
 
 	// Since we're cutting off the byte stream
 	// halfway through, we should get an error here.
-	suite.EqualError(err, "finish: error decoding image: unexpected EOF")
+	suite.EqualError(err, "store: error writing media to storage: scan-data is unbounded; EOI not encountered before EOF")
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
