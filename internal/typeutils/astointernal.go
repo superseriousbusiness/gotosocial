@@ -40,15 +40,18 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	var err error
 
 	// Extract URI from accountable
-	uri := ap.GetJSONLDId(accountable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(accountable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, gtserror.SetMalformed(err)
 	}
 
+	// Stringify URI.
+	uri := _uri.String()
+
 	// Create DB account with URI
 	var acct gtsmodel.Account
-	acct.URI = uri.String()
+	acct.URI = uri
 
 	// Check whether account is a usable actor type.
 	switch acct.ActorType = accountable.GetTypeName(); acct.ActorType {
@@ -86,7 +89,7 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	if accountDomain != "" {
 		acct.Domain = accountDomain
 	} else {
-		acct.Domain = uri.Host
+		acct.Domain = _uri.Host
 	}
 
 	// avatar aka icon
@@ -152,7 +155,7 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	urls := ap.GetURL(accountable)
 	if len(urls) == 0 {
 		// just use account uri string
-		acct.URL = uri.String()
+		acct.URL = uri
 	} else {
 		// else use provided URL string
 		acct.URL = urls[0].String()
@@ -220,15 +223,18 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	var err error
 
 	// Extract URI from statusable
-	uri := ap.GetJSONLDId(statusable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(statusable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, gtserror.SetMalformed(err)
 	}
 
+	// Stringify URI.
+	uri := _uri.String()
+
 	// Create DB status with URI
 	var status gtsmodel.Status
-	status.URI = uri.String()
+	status.URI = uri
 
 	// status.URL
 	//
@@ -401,26 +407,27 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 // ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow request.
 func (c *Converter) ASFollowToFollowRequest(ctx context.Context, followable ap.Followable) (*gtsmodel.FollowRequest, error) {
-	uri := ap.GetJSONLDId(followable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(followable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	uriStr := uri.String()
+	// Stringify URI.
+	uri := _uri.String()
 
-	origin, err := c.getASActorAccount(ctx, uriStr, followable)
+	origin, err := c.getASActorAccount(ctx, uri, followable)
 	if err != nil {
 		return nil, err
 	}
 
-	target, err := c.getASObjectAccount(ctx, uriStr, followable)
+	target, err := c.getASObjectAccount(ctx, uri, followable)
 	if err != nil {
 		return nil, err
 	}
 
 	followRequest := &gtsmodel.FollowRequest{
-		URI:             uriStr,
+		URI:             uri,
 		AccountID:       origin.ID,
 		TargetAccountID: target.ID,
 	}
@@ -430,26 +437,27 @@ func (c *Converter) ASFollowToFollowRequest(ctx context.Context, followable ap.F
 
 // ASFollowToFollowRequest converts a remote activitystreams `follow` representation into gts model follow.
 func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followable) (*gtsmodel.Follow, error) {
-	uri := ap.GetJSONLDId(followable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(followable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	uriStr := uri.String()
+	// Stringify URI.
+	uri := _uri.String()
 
-	origin, err := c.getASActorAccount(ctx, uriStr, followable)
+	origin, err := c.getASActorAccount(ctx, uri, followable)
 	if err != nil {
 		return nil, err
 	}
 
-	target, err := c.getASObjectAccount(ctx, uriStr, followable)
+	target, err := c.getASObjectAccount(ctx, uri, followable)
 	if err != nil {
 		return nil, err
 	}
 
 	follow := &gtsmodel.Follow{
-		URI:             uriStr,
+		URI:             uri,
 		AccountID:       origin.ID,
 		TargetAccountID: target.ID,
 	}
@@ -459,20 +467,21 @@ func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 
 // ASLikeToFave converts a remote activitystreams 'like' representation into a gts model status fave.
 func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gtsmodel.StatusFave, error) {
-	uri := ap.GetJSONLDId(likeable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(likeable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	uriStr := uri.String()
+	// Stringify URI.
+	uri := _uri.String()
 
-	origin, err := c.getASActorAccount(ctx, uriStr, likeable)
+	origin, err := c.getASActorAccount(ctx, uri, likeable)
 	if err != nil {
 		return nil, err
 	}
 
-	target, err := c.getASObjectStatus(ctx, uriStr, likeable)
+	target, err := c.getASObjectStatus(ctx, uri, likeable)
 	if err != nil {
 		return nil, err
 	}
@@ -484,26 +493,27 @@ func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 		TargetAccount:   target.Account,
 		StatusID:        target.ID,
 		Status:          target,
-		URI:             uriStr,
+		URI:             uri,
 	}, nil
 }
 
 // ASBlockToBlock converts a remote activity streams 'block' representation into a gts model block.
 func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) (*gtsmodel.Block, error) {
-	uri := ap.GetJSONLDId(blockable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(blockable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	uriStr := uri.String()
+	// Stringify URI.
+	uri := _uri.String()
 
-	origin, err := c.getASActorAccount(ctx, uriStr, blockable)
+	origin, err := c.getASActorAccount(ctx, uri, blockable)
 	if err != nil {
 		return nil, err
 	}
 
-	target, err := c.getASObjectAccount(ctx, uriStr, blockable)
+	target, err := c.getASObjectAccount(ctx, uri, blockable)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +523,7 @@ func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 		Account:         origin,
 		TargetAccountID: target.ID,
 		TargetAccount:   target,
-		URI:             uri.String(),
+		URI:             uri,
 	}, nil
 }
 
@@ -540,18 +550,18 @@ func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 // seen before by this instance. If it was, then status.BoostOf should be a
 // fully filled-out status. If not, then only status.BoostOf.URI will be set.
 func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
-	// Extract URI from announcable
-	uri := ap.GetJSONLDId(announceable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(announceable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, false, gtserror.SetMalformed(err)
 	}
 
-	uriStr := uri.String()
+	// Stringify URI.
+	uri := _uri.String()
 	isNew := false
 
 	// Check if we already have this boost in the database.
-	status, err := c.state.DB.GetStatusByURI(ctx, uriStr)
+	status, err := c.state.DB.GetStatusByURI(ctx, uri)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error trying to get status with uri %s: %w", uri, err)
 		return nil, isNew, err
@@ -565,7 +575,7 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 
 	// Create DB status with URI
 	status = new(gtsmodel.Status)
-	status.URI = uriStr
+	status.URI = uri
 	isNew = true
 
 	// Get the URI of the boosted status.
@@ -592,7 +602,7 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	// Extract and load the boost actor account,
 	// (this MUST already be in database by now).
 	status.Account, err = c.getASActorAccount(ctx,
-		uriStr,
+		uri,
 		announceable,
 	)
 	if err != nil {
@@ -628,16 +638,17 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 
 // ASFlagToReport converts a remote activitystreams 'flag' representation into a gts model report.
 func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) (*gtsmodel.Report, error) {
-	uri := ap.GetJSONLDId(flaggable)
-	if uri == nil {
+	_uri := ap.GetJSONLDId(flaggable)
+	if _uri == nil {
 		err := gtserror.New("unusable iri property")
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	uriStr := uri.String()
+	// Stringify URI.
+	uri := _uri.String()
 
 	// Extract the origin (actor) account for report.
-	origin, err := c.getASActorAccount(ctx, uriStr, flaggable)
+	origin, err := c.getASActorAccount(ctx, uri, flaggable)
 	if err != nil {
 		return nil, err
 	}
@@ -684,7 +695,7 @@ func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 
 		case uris.IsUserPath(object):
 			if targetAccURI != nil {
-				err := gtserror.Newf("multiple target account uris in %s", uri)
+				err := gtserror.Newf("multiple target account uris for %s", uri)
 				return nil, gtserror.SetMalformed(err)
 			}
 			targetAccURI = object
@@ -696,7 +707,7 @@ func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 
 	// Ensure we have a target.
 	if targetAccURI == nil {
-		err := gtserror.New("missing target account uri")
+		err := gtserror.Newf("missing target account uri for %s", uri)
 		return nil, gtserror.SetMalformed(err)
 	}
 
@@ -732,7 +743,7 @@ func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 			}
 
 			if status == nil {
-				log.Warnf(ctx, "missing target status %s for report %s", statusURI, uriStr)
+				log.Warnf(ctx, "missing target status %s for %s", statusURI, uri)
 				continue
 			}
 		}
@@ -751,7 +762,7 @@ func (c *Converter) ASFlagToReport(ctx context.Context, flaggable ap.Flaggable) 
 	// id etc should be handled the caller,
 	// so just return what we got
 	return &gtsmodel.Report{
-		URI:             uriStr,
+		URI:             uri,
 		AccountID:       origin.ID,
 		Account:         origin,
 		TargetAccountID: targetAcc.ID,
