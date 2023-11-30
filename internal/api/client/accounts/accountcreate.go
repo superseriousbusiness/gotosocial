@@ -76,6 +76,16 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	signupAllowed := config.GetAccountsRegistrationOpen()
+	if authed.User != nil && *authed.User.Admin {
+		signupAllowed = true
+	}
+
+	if !signupAllowed {
+		err := errors.New("registration is not open for this server and token did not belong to an admin")
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	}
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -116,10 +126,6 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 func validateNormalizeCreateAccount(form *apimodel.AccountCreateRequest) error {
 	if form == nil {
 		return errors.New("form was nil")
-	}
-
-	if !config.GetAccountsRegistrationOpen() {
-		return errors.New("registration is not open for this server")
 	}
 
 	if err := validate.Username(form.Username); err != nil {
