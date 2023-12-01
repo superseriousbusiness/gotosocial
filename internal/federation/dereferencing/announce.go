@@ -56,14 +56,6 @@ func (d *Dereferencer) EnrichAnnounce(
 		)
 	}
 
-	// Ensure target status isn't from a blocked host.
-	if blocked, err := d.state.DB.IsDomainBlocked(ctx, targetURIObj.Host); err != nil {
-		return nil, gtserror.Newf("error checking blocked domain: %w", err)
-	} else if blocked {
-		err = gtserror.Newf("%s is blocked", targetURIObj.Host)
-		return nil, gtserror.SetUnretrievable(err)
-	}
-
 	// Fetch/deref status being boosted.
 	var target *gtsmodel.Status
 
@@ -72,6 +64,9 @@ func (d *Dereferencer) EnrichAnnounce(
 		target, err = d.state.DB.GetStatusByURI(ctx, targetURI)
 	} else {
 		// This is a remote status, we need to dereference it.
+		//
+		// d.GetStatusByURI will handle domain block checking for us,
+		// so we don't try to deref an announce target on a blocked host.
 		target, _, err = d.GetStatusByURI(ctx, requestUser, targetURIObj)
 	}
 
