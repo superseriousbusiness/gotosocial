@@ -45,9 +45,7 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	boostingAccount := suite.testAccounts["remote_account_1"]
 	announceStatus := &gtsmodel.Status{}
 	announceStatus.URI = "https://example.org/some-announce-uri"
-	announceStatus.BoostOf = &gtsmodel.Status{
-		URI: boostedStatus.URI,
-	}
+	announceStatus.BoostOfURI = boostedStatus.URI
 	announceStatus.CreatedAt = time.Now()
 	announceStatus.UpdatedAt = time.Now()
 	announceStatus.AccountID = boostingAccount.ID

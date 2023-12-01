@@ -119,6 +119,25 @@ func (p *Processor) GetVisibleTargetStatus(
 	return target, nil
 }
 
+// UnwrapIfBoost "unwraps" the given status if
+// it's a boost wrapper, by returning the boosted
+// status it targets (pending visibility checks).
+//
+// Just returns the input status if it's not a boost.
+func (p *Processor) UnwrapIfBoost(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+) (*gtsmodel.Status, gtserror.WithCode) {
+	if status.BoostOfID == "" {
+		return status, nil
+	}
+
+	return p.GetVisibleTargetStatus(ctx,
+		requester, status.BoostOfID,
+	)
+}
+
 // GetAPIStatus fetches the appropriate API status model for target.
 func (p *Processor) GetAPIStatus(
 	ctx context.Context,

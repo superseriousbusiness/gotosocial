@@ -33,24 +33,46 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *Processor) getFaveableStatus(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, *gtsmodel.StatusFave, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+func (p *Processor) getFaveableStatus(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	targetID string,
+) (
+	*gtsmodel.Status,
+	*gtsmodel.StatusFave,
+	gtserror.WithCode,
+) {
+	// Get target status and ensure it's not a boost.
+	target, errWithCode := p.c.GetVisibleTargetStatus(
+		ctx,
+		requester,
+		targetID,
+	)
 	if errWithCode != nil {
 		return nil, nil, errWithCode
 	}
 
-	if !*targetStatus.Likeable {
+	target, errWithCode = p.c.UnwrapIfBoost(
+		ctx,
+		requester,
+		target,
+	)
+	if errWithCode != nil {
+		return nil, nil, errWithCode
+	}
+
+	if !*target.Likeable {
 		err := errors.New("status is not faveable")
 		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
 	}
 
-	fave, err := p.state.DB.GetStatusFave(ctx, requestingAccount.ID, targetStatusID)
+	fave, err := p.state.DB.GetStatusFave(ctx, requester.ID, target.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("getFaveTarget: error checking existing fave: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return targetStatus, fave, nil
+	return target, fave, nil
 }
 
 // FaveCreate adds a fave for the requestingAccount, targeting the given status (no-op if fave already exists).

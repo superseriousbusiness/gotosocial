@@ -527,29 +527,15 @@ func (c *Converter) ASBlockToBlock(ctx context.Context, blockable ap.Blockable) 
 	}, nil
 }
 
-// ASAnnounceToStatus converts an activitystreams 'announce' into a status.
-//
-// The returned bool indicates whether this status is new (true) or not new (false).
-//
-// In other words, if the status is already in the database with the ID set on the announceable, then that will be returned,
-// the returned bool will be false, and no further processing is necessary. If the returned bool is true, indicating
-// that this is a new announce, then further processing will be necessary, because the returned status will be bareboned and
-// require further dereferencing.
-//
-// This is useful when multiple users on an instance might receive the same boost, and we only want to process the boost once.
-//
-// NOTE -- this is different from one status being boosted multiple times! In this case, new boosts should indeed be created.
-//
-// Implementation note: this function creates and returns a boost WRAPPER
-// status which references the boosted status in its BoostOf field. No
-// dereferencing is done on the boosted status by this function. Callers
-// should look at `status.BoostOf` to see the status being boosted, and do
-// dereferencing on it as appropriate.
-//
-// The returned boolean indicates whether or not the boost has already been
-// seen before by this instance. If it was, then status.BoostOf should be a
-// fully filled-out status. If not, then only status.BoostOf.URI will be set.
-func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Announceable) (*gtsmodel.Status, bool, error) {
+// ASAnnounceToStatus converts an activitystreams 'announce' into a boost
+// wrapper status. The returned bool indicates whether this boost is new
+// (true) or not. If new, callers should use `status.BoostOfURI` to see the
+// status being boosted, and do dereferencing on it as appropriate. If not
+// new, then the boost has already been fully processed and can be ignored.
+func (c *Converter) ASAnnounceToStatus(
+	ctx context.Context,
+	announceable ap.Announceable,
+) (*gtsmodel.Status, bool, error) {
 	// Default assume
 	// we already have.
 	isNew := false
@@ -565,21 +551,21 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	uri := uriObj.String()
 
 	// Check if we already have this boost in the database.
-	status, err := c.state.DB.GetStatusByURI(ctx, uri)
+	boost, err := c.state.DB.GetStatusByURI(ctx, uri)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error trying to get status with uri %s: %w", uri, err)
 		return nil, isNew, err
 	}
 
-	if status != nil {
-		// We already have this status,
+	if boost != nil {
+		// We already have this boost,
 		// no need to proceed further.
-		return status, isNew, nil
+		return boost, isNew, nil
 	}
 
-	// Create DB status with URI
-	status = new(gtsmodel.Status)
-	status.URI = uri
+	// Create boost with URI
+	boost = new(gtsmodel.Status)
+	boost.URI = uri
 	isNew = true
 
 	// Get the URI of the boosted status.
@@ -590,22 +576,21 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	}
 
 	// Set the URI of the boosted status on
-	// the new status, for later dereferencing.
-	status.BoostOf = new(gtsmodel.Status)
-	status.BoostOf.URI = boostOf[0].String()
+	// the boost, for later dereferencing.
+	boost.BoostOfURI = boostOf[0].String()
 
 	// Extract published time for the boost,
 	// zero-time will fall back to db defaults.
 	if pub := ap.GetPublished(announceable); !pub.IsZero() {
-		status.CreatedAt = pub
-		status.UpdatedAt = pub
+		boost.CreatedAt = pub
+		boost.UpdatedAt = pub
 	} else {
 		log.Warnf(ctx, "unusable published property on %s", uri)
 	}
 
 	// Extract and load the boost actor account,
 	// (this MUST already be in database by now).
-	status.Account, err = c.getASActorAccount(ctx,
+	boost.Account, err = c.getASActorAccount(ctx,
 		uri,
 		announceable,
 	)
@@ -614,13 +599,13 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 	}
 
 	// Set the related status<->account fields.
-	status.AccountURI = status.Account.URI
-	status.AccountID = status.Account.ID
+	boost.AccountURI = boost.Account.URI
+	boost.AccountID = boost.Account.ID
 
 	// Calculate intended visibility of the boost.
-	status.Visibility, err = ap.ExtractVisibility(
+	boost.Visibility, err = ap.ExtractVisibility(
 		announceable,
-		status.Account.FollowersURI,
+		boost.Account.FollowersURI,
 	)
 	if err != nil {
 		err := gtserror.Newf("error extracting status visibility for %s: %w", uri, err)
@@ -629,15 +614,15 @@ func (c *Converter) ASAnnounceToStatus(ctx context.Context, announceable ap.Anno
 
 	// Below IDs will all be included in the
 	// boosted status, so set them empty here.
-	status.AttachmentIDs = make([]string, 0)
-	status.TagIDs = make([]string, 0)
-	status.MentionIDs = make([]string, 0)
-	status.EmojiIDs = make([]string, 0)
+	boost.AttachmentIDs = make([]string, 0)
+	boost.TagIDs = make([]string, 0)
+	boost.MentionIDs = make([]string, 0)
+	boost.EmojiIDs = make([]string, 0)
 
-	// Remaining fields on the boost status will be taken
-	// from the boosted status; it's not our job to do all
-	// that dereferencing here.
-	return status, isNew, nil
+	// Remaining fields on the boost will be
+	// taken from the target status; it's not
+	// our job to do all that dereferencing here.
+	return boost, isNew, nil
 }
 
 // ASFlagToReport converts a remote activitystreams 'flag' representation into a gts model report.

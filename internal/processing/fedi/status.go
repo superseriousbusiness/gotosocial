@@ -51,6 +51,11 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusI
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
+	if status.BoostOfID != "" {
+		const text = "status is a boost wrapper"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
+	}
+
 	visible, err := p.filter.StatusVisible(ctx, requester, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
@@ -103,6 +108,11 @@ func (p *Processor) StatusRepliesGet(
 	// Ensure status is by receiving account.
 	if status.AccountID != receiver.ID {
 		const text = "status does not belong to receiving account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
+	}
+
+	if status.BoostOfID != "" {
+		const text = "status is a boost wrapper"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 

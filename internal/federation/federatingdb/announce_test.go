@@ -50,8 +50,10 @@ func (suite *AnnounceTestSuite) TestNewAnnounce() {
 	suite.True(ok)
 	suite.Equal(announcingAccount.ID, boost.AccountID)
 
-	// only the URI will be set on the boosted status because it still needs to be dereferenced
-	suite.NotEmpty(boost.BoostOf.URI)
+	// only the URI will be set for the boosted status
+	// because it still needs to be dereferenced
+	suite.Nil(boost.BoostOf)
+	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", boost.BoostOfURI)
 }
 
 func (suite *AnnounceTestSuite) TestAnnounceTwice() {
@@ -81,8 +83,10 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 		return nil
 	})
 
-	// only the URI will be set on the boosted status because it still needs to be dereferenced
-	suite.NotEmpty(boost.BoostOf.URI)
+	// only the URI will be set for the boosted status
+	// because it still needs to be dereferenced
+	suite.Nil(boost.BoostOf)
+	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", boost.BoostOfURI)
 
 	ctx2 := createTestContext(receivingAccount2, announcingAccount)
 	announce2 := suite.testActivities["announce_forwarded_1_turtle"]

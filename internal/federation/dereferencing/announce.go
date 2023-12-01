@@ -20,66 +20,107 @@ package dereferencing
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (d *Dereferencer) DereferenceAnnounce(ctx context.Context, announce *gtsmodel.Status, requestingUsername string) error {
-	if announce.BoostOf == nil {
-		// we can't do anything unfortunately
-		return errors.New("DereferenceAnnounce: no URI to dereference")
+// EnrichAnnounce enriches the given boost wrapper status
+// by either fetching from the DB or dereferencing the target
+// status, populating the boost wrapper's fields based on the
+// target status, and then storing the wrapper in the database.
+// The wrapper is then returned to the caller.
+//
+// The provided boost wrapper status must have BoostOfURI set.
+func (d *Dereferencer) EnrichAnnounce(
+	ctx context.Context,
+	boost *gtsmodel.Status,
+	requestUser string,
+) (*gtsmodel.Status, error) {
+	targetURI := boost.BoostOfURI
+	if targetURI == "" {
+		// We can't do anything.
+		return nil, gtserror.Newf("no URI to dereference")
 	}
 
-	// Parse the boosted status' URI
-	boostedURI, err := url.Parse(announce.BoostOf.URI)
+	// Parse the boost target status URI.
+	targetURIObj, err := url.Parse(targetURI)
 	if err != nil {
-		return fmt.Errorf("DereferenceAnnounce: couldn't parse boosted status URI %s: %s", announce.BoostOf.URI, err)
+		return nil, gtserror.Newf(
+			"couldn't parse boost target status URI %s: %w",
+			targetURI, err,
+		)
 	}
 
-	// Check whether the originating status is from a blocked host
-	if blocked, err := d.state.DB.IsDomainBlocked(ctx, boostedURI.Host); blocked || err != nil {
-		return fmt.Errorf("DereferenceAnnounce: domain %s is blocked", boostedURI.Host)
-	}
+	// Fetch/deref status being boosted.
+	var target *gtsmodel.Status
 
-	var boostedStatus *gtsmodel.Status
-
-	if boostedURI.Host == config.GetHost() {
+	if targetURIObj.Host == config.GetHost() {
 		// This is a local status, fetch from the database
-		status, err := d.state.DB.GetStatusByURI(ctx, boostedURI.String())
-		if err != nil {
-			return fmt.Errorf("DereferenceAnnounce: error fetching local status %q: %v", announce.BoostOf.URI, err)
-		}
-
-		// Set boosted status
-		boostedStatus = status
+		target, err = d.state.DB.GetStatusByURI(ctx, targetURI)
 	} else {
-		// This is a boost of a remote status, we need to dereference it.
-		status, _, err := d.GetStatusByURI(ctx, requestingUsername, boostedURI)
-		if err != nil {
-			return fmt.Errorf("DereferenceAnnounce: error dereferencing remote status with id %s: %s", announce.BoostOf.URI, err)
-		}
-
-		// Set boosted status
-		boostedStatus = status
+		// This is a remote status, we need to dereference it.
+		//
+		// d.GetStatusByURI will handle domain block checking for us,
+		// so we don't try to deref an announce target on a blocked host.
+		target, _, err = d.GetStatusByURI(ctx, requestUser, targetURIObj)
 	}
 
-	announce.Content = boostedStatus.Content
-	announce.ContentWarning = boostedStatus.ContentWarning
-	announce.ActivityStreamsType = boostedStatus.ActivityStreamsType
-	announce.Sensitive = boostedStatus.Sensitive
-	announce.Language = boostedStatus.Language
-	announce.Text = boostedStatus.Text
-	announce.BoostOfID = boostedStatus.ID
-	announce.BoostOfAccountID = boostedStatus.AccountID
-	announce.Visibility = boostedStatus.Visibility
-	announce.Federated = boostedStatus.Federated
-	announce.Boostable = boostedStatus.Boostable
-	announce.Replyable = boostedStatus.Replyable
-	announce.Likeable = boostedStatus.Likeable
-	announce.BoostOf = boostedStatus
+	if err != nil {
+		return nil, gtserror.Newf(
+			"error getting boost target status %s: %w",
+			targetURI, err,
+		)
+	}
 
-	return nil
+	// Generate an ID for the boost wrapper status.
+	boost.ID, err = id.NewULIDFromTime(boost.CreatedAt)
+	if err != nil {
+		return nil, gtserror.Newf("error generating id: %w", err)
+	}
+
+	// Populate remaining fields on
+	// the boost wrapper using target.
+	boost.Content = target.Content
+	boost.ContentWarning = target.ContentWarning
+	boost.ActivityStreamsType = target.ActivityStreamsType
+	boost.Sensitive = target.Sensitive
+	boost.Language = target.Language
+	boost.Text = target.Text
+	boost.BoostOfID = target.ID
+	boost.BoostOf = target
+	boost.BoostOfAccountID = target.AccountID
+	boost.BoostOfAccount = target.Account
+	boost.Visibility = target.Visibility
+	boost.Federated = target.Federated
+	boost.Boostable = target.Boostable
+	boost.Replyable = target.Replyable
+	boost.Likeable = target.Likeable
+
+	// Store the boost wrapper status.
+	switch err = d.state.DB.PutStatus(ctx, boost); {
+	case err == nil:
+		// All good baby.
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		// DATA RACE! We likely lost out to another goroutine
+		// in a call to db.Put(Status). Look again in DB by URI.
+		boost, err = d.state.DB.GetStatusByURI(ctx, boost.URI)
+		if err != nil {
+			err = gtserror.Newf(
+				"error getting boost wrapper status %s from database after race: %w",
+				boost.URI, err,
+			)
+		}
+
+	default:
+		// Proper database error.
+		err = gtserror.Newf("db error inserting status: %w", err)
+	}
+
+	return boost, err
 }

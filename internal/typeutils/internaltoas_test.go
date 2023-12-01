@@ -724,10 +724,11 @@ func (suite *InternalToASTestSuite) TestSelfBoostFollowersOnlyToAS() {
 	testStatus := suite.testStatuses["local_account_1_status_5"]
 	testAccount := suite.testAccounts["local_account_1"]
 
-	boostWrapperStatus, err := suite.typeconverter.StatusToBoost(ctx, testStatus, testAccount)
+	boostWrapperStatus, err := suite.typeconverter.StatusToBoost(ctx, testStatus, testAccount, "")
 	suite.NoError(err)
 	suite.NotNil(boostWrapperStatus)
 
+	// Set some fields to predictable values for the test.
 	boostWrapperStatus.ID = "01G74JJ1KS331G2JXHRMZCE0ER"
 	boostWrapperStatus.URI = "http://localhost:8080/users/the_mighty_zork/statuses/01G74JJ1KS331G2JXHRMZCE0ER"
 	boostWrapperStatus.CreatedAt = testrig.TimeMustParse("2022-06-09T13:12:00Z")

@@ -20,6 +20,7 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -120,6 +121,13 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	// Ensure status actually belongs to target account.
 	if status.GetAccountID() != targetAccount.ID {
 		err := fmt.Errorf("target account %s does not own status %s", targetUsername, targetStatusID)
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
+		return
+	}
+
+	// Don't render boosts/reblogs as top-level statuses.
+	if status.Reblog != nil {
+		err := errors.New("status is a boost wrapper / reblog")
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
 		return
 	}
