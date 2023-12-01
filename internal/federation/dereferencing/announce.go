@@ -48,11 +48,11 @@ func (d *Dereferencer) EnrichAnnounce(
 	}
 
 	// Parse the boost target status URI.
-	targetURIObj, err := url.Parse(boost.BoostOfURI)
+	targetURIObj, err := url.Parse(targetURI)
 	if err != nil {
 		return nil, gtserror.Newf(
 			"couldn't parse boost target status URI %s: %w",
-			boost.BoostOfURI, err,
+			targetURI, err,
 		)
 	}
 
