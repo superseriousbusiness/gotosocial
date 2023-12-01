@@ -66,7 +66,7 @@ func (p *Processor) getFaveableStatus(
 		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
 	}
 
-	fave, err := p.state.DB.GetStatusFave(ctx, requester.ID, targetID)
+	fave, err := p.state.DB.GetStatusFave(ctx, requester.ID, target.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("getFaveTarget: error checking existing fave: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)
