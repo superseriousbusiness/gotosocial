@@ -30,106 +30,107 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-// BoostCreate processes the boost/reblog of a given status, returning the newly-created boost if all is well.
-func (p *Processor) BoostCreate(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
+// BoostCreate processes the boost/reblog of target
+// status, returning the newly-created boost.
+func (p *Processor) BoostCreate(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	application *gtsmodel.Application,
+	targetID string,
+) (*apimodel.Status, gtserror.WithCode) {
+	// Ensure we're not targeting a boost wrapper status.
+	target, errWithCode := p.c.GetVisibleTargetStatusUnwrapped(
+		ctx,
+		requester,
+		targetID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Ensure valid boost target.
+	boostable, err := p.filter.StatusBoostable(ctx,
+		requester,
+		target,
+	)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
-	}
-	if targetStatus.Account == nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
+		err := gtserror.Newf("error seeing if status %s is boostable: %w", target.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// if targetStatusID refers to a boost, then we should redirect
-	// the target to being the status that was boosted; if we don't
-	// do this, then we end up in weird situations where people
-	// boost boosts, and it looks absolutely bizarre in the UI
-	if targetStatus.BoostOfID != "" {
-		if targetStatus.BoostOf == nil {
-			b, err := p.state.DB.GetStatusByID(ctx, targetStatus.BoostOfID)
-			if err != nil {
-				return nil, gtserror.NewErrorNotFound(fmt.Errorf("couldn't fetch boosted status %s", targetStatus.BoostOfID))
-			}
-			targetStatus.BoostOf = b
-		}
-		targetStatus = targetStatus.BoostOf
+	if !boostable {
+		err := gtserror.New("status is not boostable")
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	boostable, err := p.filter.StatusBoostable(ctx, requestingAccount, targetStatus)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is boostable: %s", targetStatus.ID, err))
-	} else if !boostable {
-		return nil, gtserror.NewErrorNotFound(errors.New("status is not boostable"))
-	}
-
-	// it's visible! it's boostable! so let's boost the FUCK out of it
-	boostWrapperStatus, err := p.converter.StatusToBoost(ctx, targetStatus, requestingAccount)
+	// Status is visible and boostable.
+	boost, err := p.converter.StatusToBoost(ctx,
+		target,
+		requester,
+		application.ID,
+	)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	boostWrapperStatus.CreatedWithApplicationID = application.ID
-	boostWrapperStatus.BoostOfAccount = targetStatus.Account
-
-	// put the boost in the database
-	if err := p.state.DB.PutStatus(ctx, boostWrapperStatus); err != nil {
+	// Store the new boost.
+	if err := p.state.DB.PutStatus(ctx, boost); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// send it back to the processor for async processing
+	// Process side effects asynchronously.
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ActivityAnnounce,
 		APActivityType: ap.ActivityCreate,
-		GTSModel:       boostWrapperStatus,
-		OriginAccount:  requestingAccount,
-		TargetAccount:  targetStatus.Account,
+		GTSModel:       boost,
+		OriginAccount:  requester,
+		TargetAccount:  target.Account,
 	})
 
-	return p.c.GetAPIStatus(ctx, requestingAccount, boostWrapperStatus)
+	return p.c.GetAPIStatus(ctx, requester, boost)
 }
 
-// BoostRemove processes the unboost/unreblog of a given status, returning the status if all is well.
-func (p *Processor) BoostRemove(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, err := p.state.DB.GetStatusByID(ctx, targetStatusID)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error fetching status %s: %s", targetStatusID, err))
-	}
-	if targetStatus.Account == nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("no status owner for status %s", targetStatusID))
+// BoostRemove processes the unboost/unreblog of
+// target status, returning the target status.
+func (p *Processor) BoostRemove(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	application *gtsmodel.Application,
+	targetID string,
+) (*apimodel.Status, gtserror.WithCode) {
+	// Ensure we're not targeting a boost wrapper status.
+	target, errWithCode := p.c.GetVisibleTargetStatusUnwrapped(
+		ctx,
+		requester,
+		targetID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, requestingAccount, targetStatus)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error seeing if status %s is visible: %s", targetStatus.ID, err))
-	}
-	if !visible {
-		return nil, gtserror.NewErrorNotFound(errors.New("status is not visible"))
-	}
-
-	// Check whether the requesting account has boosted the given status ID.
-	boost, err := p.state.DB.GetStatusBoost(ctx, targetStatusID, requestingAccount.ID)
-	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("error checking status boost %s: %w", targetStatusID, err))
+	// Check whether requester has actually
+	// boosted target, by trying to get the boost.
+	boost, err := p.state.DB.GetStatusBoost(ctx,
+		target.ID,
+		requester.ID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = gtserror.Newf("db error getting boost of %s: %w", target.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if boost != nil {
-		// pin some stuff onto the boost while we have it out of the db
-		boost.Account = requestingAccount
-		boost.BoostOf = targetStatus
-		boost.BoostOfAccount = targetStatus.Account
-		boost.BoostOf.Account = targetStatus.Account
-
-		// send it back to the processor for async processing
+		// Status was boosted. Process unboost side effects asynchronously.
 		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityUndo,
 			GTSModel:       boost,
-			OriginAccount:  requestingAccount,
-			TargetAccount:  targetStatus.Account,
+			OriginAccount:  requester,
+			TargetAccount:  target.Account,
 		})
 	}
 
-	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
+	return p.c.GetAPIStatus(ctx, requester, target)
 }
 
 // StatusBoostedBy returns a slice of accounts that have boosted the given status, filtered according to privacy settings.

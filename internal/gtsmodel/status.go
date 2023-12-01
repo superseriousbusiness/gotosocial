@@ -50,6 +50,7 @@ type Status struct {
 	InReplyTo                *Status            `bun:"-"`                                                           // status corresponding to inReplyToID
 	InReplyToAccount         *Account           `bun:"rel:belongs-to"`                                              // account corresponding to inReplyToAccountID
 	BoostOfID                string             `bun:"type:CHAR(26),nullzero"`                                      // id of the status this status is a boost of
+	BoostOfURI               string             `bun:"-"`                                                           // URI of the status this status is a boost of; field not inserted in the db, just for dereferencing purposes.
 	BoostOfAccountID         string             `bun:"type:CHAR(26),nullzero"`                                      // id of the account that owns the boosted status
 	BoostOf                  *Status            `bun:"-"`                                                           // status that corresponds to boostOfID
 	BoostOfAccount           *Account           `bun:"rel:belongs-to"`                                              // account that corresponds to boostOfAccountID

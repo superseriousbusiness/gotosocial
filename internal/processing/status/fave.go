@@ -33,8 +33,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (p *Processor) getFaveableStatus(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, *gtsmodel.StatusFave, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+func (p *Processor) getFaveableStatus(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	targetID string,
+) (
+	*gtsmodel.Status,
+	*gtsmodel.StatusFave,
+	gtserror.WithCode,
+) {
+	// Ensure we're not targeting a boost wrapper status.
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatusUnwrapped(ctx,
+		requester,
+		targetID,
+	)
 	if errWithCode != nil {
 		return nil, nil, errWithCode
 	}
@@ -44,7 +56,7 @@ func (p *Processor) getFaveableStatus(ctx context.Context, requestingAccount *gt
 		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
 	}
 
-	fave, err := p.state.DB.GetStatusFave(ctx, requestingAccount.ID, targetStatusID)
+	fave, err := p.state.DB.GetStatusFave(ctx, requester.ID, targetID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("getFaveTarget: error checking existing fave: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)

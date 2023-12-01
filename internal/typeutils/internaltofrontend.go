@@ -733,11 +733,18 @@ func (c *Converter) statusToFrontend(
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 ) (*apimodel.Status, error) {
+	// Try to populate status struct pointer fields.
+	// We can continue in many cases of partial failure,
+	// but there are some fields we actually need.
 	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
-		// Ensure author account present + correct;
-		// can't really go further without this!
 		if s.Account == nil {
-			return nil, gtserror.Newf("error(s) populating status, cannot continue: %w", err)
+			err = gtserror.Newf("error(s) populating status, cannot continue (status.Account not set): %w", err)
+			return nil, err
+		}
+
+		if s.BoostOfID != "" && s.BoostOf == nil {
+			err = gtserror.Newf("error(s) populating status, cannot continue (status.BoostOfID set, but status.Boost not set): %w", err)
+			return nil, err
 		}
 
 		log.Errorf(ctx, "error(s) populating status, will continue: %v", err)
@@ -794,12 +801,12 @@ func (c *Converter) statusToFrontend(
 	apiStatus := &apimodel.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
-		InReplyToID:        nil,
-		InReplyToAccountID: nil,
+		InReplyToID:        nil, // Set below.
+		InReplyToAccountID: nil, // Set below.
 		Sensitive:          *s.Sensitive,
 		SpoilerText:        s.ContentWarning,
 		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
-		Language:           nil,
+		Language:           nil, // Set below.
 		URI:                s.URI,
 		URL:                s.URL,
 		RepliesCount:       repliesCount,
@@ -811,56 +818,47 @@ func (c *Converter) statusToFrontend(
 		Reblogged:          interacts.Reblogged,
 		Pinned:             interacts.Pinned,
 		Content:            s.Content,
-		Reblog:             nil,
-		Application:        nil,
+		Reblog:             nil, // Set below.
+		Application:        nil, // Set below.
 		Account:            apiAuthorAccount,
 		MediaAttachments:   apiAttachments,
 		Mentions:           apiMentions,
 		Tags:               apiTags,
 		Emojis:             apiEmojis,
 		Card:               nil, // TODO: implement cards
-		Poll:               nil, // TODO: implement polls
 		Text:               s.Text,
 	}
 
 	// Nullable fields.
-
 	if s.InReplyToID != "" {
-		apiStatus.InReplyToID = func() *string { i := s.InReplyToID; return &i }()
+		apiStatus.InReplyToID = util.Ptr(s.InReplyToID)
 	}
 
 	if s.InReplyToAccountID != "" {
-		apiStatus.InReplyToAccountID = func() *string { i := s.InReplyToAccountID; return &i }()
+		apiStatus.InReplyToAccountID = util.Ptr(s.InReplyToAccountID)
 	}
 
 	if s.Language != "" {
-		apiStatus.Language = func() *string { i := s.Language; return &i }()
+		apiStatus.Language = util.Ptr(s.Language)
 	}
 
 	if s.BoostOf != nil {
-		apiBoostOf, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount)
+		reblog, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount)
 		if err != nil {
 			return nil, gtserror.Newf("error converting boosted status: %w", err)
 		}
 
-		apiStatus.Reblog = &apimodel.StatusReblogged{Status: apiBoostOf}
+		apiStatus.Reblog = &apimodel.StatusReblogged{reblog}
 	}
 
-	if appID := s.CreatedWithApplicationID; appID != "" {
-		app := s.CreatedWithApplication
-		if app == nil {
-			app, err = c.state.DB.GetApplicationByID(ctx, appID)
-			if err != nil {
-				return nil, gtserror.Newf("error getting application %s: %w", appID, err)
-			}
-		}
-
-		apiApp, err := c.AppToAPIAppPublic(ctx, app)
+	if app := s.CreatedWithApplication; app != nil {
+		apiStatus.Application, err = c.AppToAPIAppPublic(ctx, app)
 		if err != nil {
-			return nil, gtserror.Newf("error converting application %s: %w", appID, err)
+			return nil, gtserror.Newf(
+				"error converting application %s: %w",
+				s.CreatedWithApplicationID, err,
+			)
 		}
-
-		apiStatus.Application = apiApp
 	}
 
 	if s.Poll != nil {

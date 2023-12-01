@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
@@ -332,45 +331,42 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg messages.FromFediAPI) err
 }
 
 func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI) error {
-	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
+	boost, ok := fMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
 	}
 
 	// Dereference status that this boosts, note
-	// that this will handle dereferencing the status
+	// that this will handle storing the boost in
+	// the db, and dereferencing the target status
 	// ancestors / descendants where appropriate.
-	if err := p.federate.DereferenceAnnounce(ctx,
-		status,
+	if err := p.federate.EnrichAnnounceSafely(
+		ctx,
+		boost,
 		fMsg.ReceivingAccount.Username,
 	); err != nil {
+		if gtserror.IsUnretrievable(err) {
+			// Boosted status domain blocked, nothing to do.
+			log.Debugf(ctx, "skipping announce: %v", err)
+			return nil
+		}
+
+		// Actual error.
 		return gtserror.Newf("error dereferencing announce: %w", err)
 	}
 
-	// Generate an ID for the boost wrapper status.
-	statusID, err := id.NewULIDFromTime(status.CreatedAt)
-	if err != nil {
-		return gtserror.Newf("error generating id: %w", err)
-	}
-	status.ID = statusID
-
-	// Store the boost wrapper status.
-	if err := p.state.DB.PutStatus(ctx, status); err != nil {
-		return gtserror.Newf("db error inserting status: %w", err)
-	}
-
 	// Timeline and notify the announce.
-	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	if err := p.surface.notifyAnnounce(ctx, status); err != nil {
+	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
 		log.Errorf(ctx, "error notifying announce: %v", err)
 	}
 
 	// Interaction counts changed on the original status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
 
 	return nil
 }
