@@ -558,12 +558,12 @@ func (c *Converter) ASAnnounceToStatus(
 	}
 
 	if boost != nil {
-		// We already have this status,
+		// We already have this boost,
 		// no need to proceed further.
 		return boost, isNew, nil
 	}
 
-	// Create status with URI
+	// Create boost with URI
 	boost = new(gtsmodel.Status)
 	boost.URI = uri
 	isNew = true
@@ -576,7 +576,7 @@ func (c *Converter) ASAnnounceToStatus(
 	}
 
 	// Set the URI of the boosted status on
-	// the new status, for later dereferencing.
+	// the boost, for later dereferencing.
 	boost.BoostOfURI = boostOf[0].String()
 
 	// Extract published time for the boost,
@@ -619,9 +619,9 @@ func (c *Converter) ASAnnounceToStatus(
 	boost.MentionIDs = make([]string, 0)
 	boost.EmojiIDs = make([]string, 0)
 
-	// Remaining fields on the boost status will be taken
-	// from the boosted status; it's not our job to do all
-	// that dereferencing here.
+	// Remaining fields on the boost will be
+	// taken from the target status; it's not
+	// our job to do all that dereferencing here.
 	return boost, isNew, nil
 }
 
