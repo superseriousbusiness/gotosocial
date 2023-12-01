@@ -340,11 +340,13 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 	// that this will handle storing the boost in
 	// the db, and dereferencing the target status
 	// ancestors / descendants where appropriate.
-	if err := p.federate.EnrichAnnounceSafely(
+	var err error
+	boost, err = p.federate.EnrichAnnounce(
 		ctx,
 		boost,
 		fMsg.ReceivingAccount.Username,
-	); err != nil {
+	)
+	if err != nil {
 		if gtserror.IsUnretrievable(err) {
 			// Boosted status domain blocked, nothing to do.
 			log.Debugf(ctx, "skipping announce: %v", err)

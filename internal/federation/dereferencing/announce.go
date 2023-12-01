@@ -29,28 +29,28 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-// EnrichAnnounceSafely enriches the given boost wrapper status
+// EnrichAnnounce enriches the given boost wrapper status
 // by either fetching from the DB or dereferencing the target
 // status, populating the boost wrapper's fields based on the
 // target status, and then storing the wrapper in the database.
-// It uses per-URI locks to ensure the boost is only enriched once.
+// The wrapper is then returned to the caller.
 //
 // The provided boost wrapper status must have BoostOfURI set.
-func (d *Dereferencer) EnrichAnnounceSafely(
+func (d *Dereferencer) EnrichAnnounce(
 	ctx context.Context,
 	boost *gtsmodel.Status,
 	requestUser string,
-) error {
+) (*gtsmodel.Status, error) {
 	targetURI := boost.BoostOfURI
 	if targetURI == "" {
 		// We can't do anything.
-		return gtserror.Newf("no URI to dereference")
+		return nil, gtserror.Newf("no URI to dereference")
 	}
 
 	// Parse the boost target status URI.
 	targetURIObj, err := url.Parse(boost.BoostOfURI)
 	if err != nil {
-		return gtserror.Newf(
+		return nil, gtserror.Newf(
 			"couldn't parse boost target status URI %s: %w",
 			boost.BoostOfURI, err,
 		)
@@ -58,18 +58,11 @@ func (d *Dereferencer) EnrichAnnounceSafely(
 
 	// Ensure target status isn't from a blocked host.
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, targetURIObj.Host); err != nil {
-		return gtserror.Newf("error checking blocked domain: %w", err)
+		return nil, gtserror.Newf("error checking blocked domain: %w", err)
 	} else if blocked {
 		err = gtserror.Newf("%s is blocked", targetURIObj.Host)
-		return gtserror.SetUnretrievable(err)
+		return nil, gtserror.SetUnretrievable(err)
 	}
-
-	// Acquire per-URI deref lock; safely defer in
-	// case of panic. Important: use the URI of the
-	// BOOST WRAPPER for this, not the target's URI;
-	// the latter will be locked by d.GetStatusByURI.
-	unlock := d.state.FedLocks.Lock(boost.URI)
-	defer unlock()
 
 	// Fetch/deref status being boosted.
 	var target *gtsmodel.Status
@@ -83,7 +76,7 @@ func (d *Dereferencer) EnrichAnnounceSafely(
 	}
 
 	if err != nil {
-		return gtserror.Newf(
+		return nil, gtserror.Newf(
 			"error getting boost target status %s: %w",
 			targetURI, err,
 		)
@@ -92,7 +85,7 @@ func (d *Dereferencer) EnrichAnnounceSafely(
 	// Generate an ID for the boost wrapper status.
 	boost.ID, err = id.NewULIDFromTime(boost.CreatedAt)
 	if err != nil {
-		return gtserror.Newf("error generating id: %w", err)
+		return nil, gtserror.Newf("error generating id: %w", err)
 	}
 
 	// Populate remaining fields on
@@ -134,5 +127,5 @@ func (d *Dereferencer) EnrichAnnounceSafely(
 		err = gtserror.Newf("db error inserting status: %w", err)
 	}
 
-	return err
+	return boost, err
 }
