@@ -463,6 +463,46 @@ func (suite *ASToInternalTestSuite) TestParseFlag6() {
 	suite.Equal(report.Comment, "misinformation")
 }
 
+func (suite *ASToInternalTestSuite) TestParseAnnounce() {
+	// Boost a status that belongs to a local account
+	boostingAccount := suite.testAccounts["remote_account_1"]
+	targetStatus := suite.testStatuses["local_account_2_status_1"]
+	receivingAccount := suite.testAccounts["local_account_1"]
+
+	raw := `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "` + boostingAccount.URI + `",
+  "id": "http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d",
+  "object": ["` + targetStatus.URI + `"],
+  "type": "Announce",
+  "to": "` + receivingAccount.URI + `"
+  }`
+
+	t := suite.jsonToType(raw)
+	asAnnounce, ok := t.(ap.Announceable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	boost, isNew, err := suite.typeconverter.ASAnnounceToStatus(context.Background(), asAnnounce)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.True(isNew)
+	suite.NotNil(boost)
+	suite.Equal(boostingAccount.ID, boost.AccountID)
+	suite.NotNil(boost.Account)
+
+	// Of the 'BoostOf' fields, only BoostOfURI will be set.
+	// Others are set in dereferencing.EnrichAnnounceSafely.
+	suite.Equal(targetStatus.URI, boost.BoostOfURI)
+	suite.Empty(boost.BoostOfID)
+	suite.Nil(boost.BoostOf)
+	suite.Empty(boost.BoostOfAccountID)
+	suite.Nil(boost.BoostOfAccount)
+}
+
 func TestASToInternalTestSuite(t *testing.T) {
 	suite.Run(t, new(ASToInternalTestSuite))
 }
