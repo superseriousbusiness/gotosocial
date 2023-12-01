@@ -119,34 +119,22 @@ func (p *Processor) GetVisibleTargetStatus(
 	return target, nil
 }
 
-// GetVisibleTargetStatusUnwrapped is like GetVisibleTargetStatus,
-// but if targetID points to a boost wrapper status, that status
-// will be 'unwrapped' to return the boosted status instead.
-func (p *Processor) GetVisibleTargetStatusUnwrapped(
+// UnwrapIfBoost "unwraps" the given status if
+// it's a boost wrapper, by returning the boosted
+// status it targets (pending visibility checks).
+//
+// Just returns the input status if it's not a boost.
+func (p *Processor) UnwrapIfBoost(
 	ctx context.Context,
 	requester *gtsmodel.Account,
-	targetID string,
-) (
 	status *gtsmodel.Status,
-	errWithCode gtserror.WithCode,
-) {
-	target, errWithCode := p.GetVisibleTargetStatus(ctx,
-		requester,
-		targetID,
-	)
-	if errWithCode != nil {
-		return nil, errWithCode
+) (*gtsmodel.Status, gtserror.WithCode) {
+	if status.BoostOfID == "" {
+		return status, nil
 	}
 
-	if target.BoostOfID == "" {
-		// Already unwrapped.
-		return target, nil
-	}
-
-	// Return boosted status.
 	return p.GetVisibleTargetStatus(ctx,
-		requester,
-		target.BoostOfID,
+		requester, status.BoostOfID,
 	)
 }
 

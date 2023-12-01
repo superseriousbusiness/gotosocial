@@ -38,11 +38,20 @@ func (p *Processor) BoostCreate(
 	application *gtsmodel.Application,
 	targetID string,
 ) (*apimodel.Status, gtserror.WithCode) {
-	// Ensure we're not targeting a boost wrapper status.
-	target, errWithCode := p.c.GetVisibleTargetStatusUnwrapped(
+	// Get target status and ensure it's not a boost.
+	target, errWithCode := p.c.GetVisibleTargetStatus(
 		ctx,
 		requester,
 		targetID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	target, errWithCode = p.c.UnwrapIfBoost(
+		ctx,
+		requester,
+		target,
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -98,11 +107,20 @@ func (p *Processor) BoostRemove(
 	application *gtsmodel.Application,
 	targetID string,
 ) (*apimodel.Status, gtserror.WithCode) {
-	// Ensure we're not targeting a boost wrapper status.
-	target, errWithCode := p.c.GetVisibleTargetStatusUnwrapped(
+	// Get target status and ensure it's not a boost.
+	target, errWithCode := p.c.GetVisibleTargetStatus(
 		ctx,
 		requester,
 		targetID,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	target, errWithCode = p.c.UnwrapIfBoost(
+		ctx,
+		requester,
+		target,
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

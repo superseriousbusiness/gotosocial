@@ -42,8 +42,9 @@ func (p *Processor) getFaveableStatus(
 	*gtsmodel.StatusFave,
 	gtserror.WithCode,
 ) {
-	// Ensure we're not targeting a boost wrapper status.
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatusUnwrapped(ctx,
+	// Get target status and ensure it's not a boost.
+	target, errWithCode := p.c.GetVisibleTargetStatus(
+		ctx,
 		requester,
 		targetID,
 	)
@@ -51,7 +52,16 @@ func (p *Processor) getFaveableStatus(
 		return nil, nil, errWithCode
 	}
 
-	if !*targetStatus.Likeable {
+	target, errWithCode = p.c.UnwrapIfBoost(
+		ctx,
+		requester,
+		target,
+	)
+	if errWithCode != nil {
+		return nil, nil, errWithCode
+	}
+
+	if !*target.Likeable {
 		err := errors.New("status is not faveable")
 		return nil, nil, gtserror.NewErrorForbidden(err, err.Error())
 	}
@@ -62,7 +72,7 @@ func (p *Processor) getFaveableStatus(
 		return nil, nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return targetStatus, fave, nil
+	return target, fave, nil
 }
 
 // FaveCreate adds a fave for the requestingAccount, targeting the given status (no-op if fave already exists).
