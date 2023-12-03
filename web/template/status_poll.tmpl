@@ -25,12 +25,17 @@
 	<figure class="poll">
 		<figcaption class="poll-info">
 			<span class="poll-expiry">
-				{{- if .Poll.Expired -}}
-					Poll closed&nbsp;{{- .Poll.ExpiresAt | timestampPrecise -}}
-				{{- else if .Poll.ExpiresAt -}}
-					Poll open until&nbsp;{{- .Poll.ExpiresAt | timestampPrecise -}}
+				{{- if .Poll.Multiple -}}
+				Multiple-choice poll&nbsp;
 				{{- else -}}
-					Infinite poll (no expiry)
+				Poll&nbsp;
+				{{- end -}}
+				{{- if .Poll.Expired -}}
+				closed {{ .Poll.ExpiresAt | timestampPrecise -}}
+				{{- else if .Poll.ExpiresAt -}}
+				open until {{ .Poll.ExpiresAt | timestampPrecise -}}
+				{{- else -}}
+				open forever
 				{{- end -}}
 			</span>
 			<span class="total-votes">Total votes: {{ .Poll.VotesCount }}</span>
