@@ -96,34 +96,23 @@ func Throttle(cpuMultiplier int, retryAfter time.Duration) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		for {
-			// Load no. ongoing requests.
-			n := requestCount.Load()
+		// Always decrement request counter.
+		defer func() { requestCount.Add(-1) }()
 
-			// Check whether the request
-			// count is over queue limit.
-			if n >= int64(queueLimit) {
-				c.Header("Retry-After", retryAfterStr)
-				apiutil.Data(c,
-					http.StatusTooManyRequests,
-					apiutil.AppJSON,
-					apiutil.ErrorCapacityExceeded,
-				)
-				c.Abort()
-				return
-			}
+		// Increment request count.
+		n := requestCount.Add(1)
 
-			// Attempt to secure increment on counter.
-			if requestCount.CompareAndSwap(n, n+1) {
-
-				defer func() {
-					// On return, ensure we
-					// decrement the counter.
-					_ = requestCount.Add(-1)
-				}()
-
-				break
-			}
+		// Check whether the request
+		// count is over queue limit.
+		if n > int64(queueLimit) {
+			c.Header("Retry-After", retryAfterStr)
+			apiutil.Data(c,
+				http.StatusTooManyRequests,
+				apiutil.AppJSON,
+				apiutil.ErrorCapacityExceeded,
+			)
+			c.Abort()
+			return
 		}
 
 		// Sit and wait in the
