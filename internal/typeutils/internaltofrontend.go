@@ -721,6 +721,12 @@ func (c *Converter) StatusToWebStatus(
 		webStatus.WebPollOptions = webPollOptions
 	}
 
+	// Set additional templating
+	// variables on media attachments.
+	for _, a := range webStatus.MediaAttachments {
+		a.Sensitive = webStatus.Sensitive
+	}
+
 	return webStatus, nil
 }
 

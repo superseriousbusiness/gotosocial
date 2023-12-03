@@ -90,6 +90,12 @@ type Attachment struct {
 	// A hash computed by the BlurHash algorithm, for generating colorful preview thumbnails when media has not been downloaded yet.
 	// See https://github.com/woltapp/blurhash
 	Blurhash *string `json:"blurhash"`
+
+	// Additional fields not exposed via JSON
+	// (used only internally for templating etc).
+
+	// Parent status of this media is sensitive.
+	Sensitive bool `json:"-"`
 }
 
 // MediaMeta models media metadata.
