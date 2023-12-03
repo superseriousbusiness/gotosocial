@@ -18,6 +18,7 @@
 package cache
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/cache/headerfilter"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -30,6 +31,12 @@ type Caches struct {
 	// AP provides access to the collection of ActivityPub object caches.
 	// (planned to be used by the typeconverter).
 	AP APCaches
+
+	// PositiveHdrFilters ...
+	PositiveHdrFilters headerfilter.Cache
+
+	// NegativeHdrFilters ...
+	NegativeHdrFilters headerfilter.Cache
 
 	// Visibility provides access to the item visibility cache.
 	// (used by the visibility filter).

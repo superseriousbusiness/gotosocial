@@ -15,40 +15,25 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package gtsmodel
 
 const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+	_                        = iota
+	HeaderFilterTypePositive = 1
+	HeaderFilterTypeNegative = 2
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Domain
-	Emoji
-	HeaderFilter
-	Instance
-	List
-	Marker
-	Media
-	Mention
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+type HeaderFilter struct {
+	ID     string `bun:"VARCHAR(26),pk"`
+	Type   uint8  `bun:","`
+	HdrKey string `bun:","`
+	Regex  string `bun:","`
+}
+
+func (f *HeaderFilter) Positive() bool {
+	return f.Type == HeaderFilterTypePositive
+}
+
+func (f *HeaderFilter) Negative() bool {
+	return f.Type == HeaderFilterTypeNegative
 }

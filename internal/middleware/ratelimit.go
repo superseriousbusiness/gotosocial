@@ -146,7 +146,7 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 			apiutil.Data(c,
 				http.StatusTooManyRequests,
 				apiutil.AppJSON,
-				apiutil.ErrorRateLimitReached,
+				apiutil.ErrorRateLimited,
 			)
 			c.Abort()
 			return

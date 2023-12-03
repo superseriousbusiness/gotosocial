@@ -31,6 +31,9 @@ codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath/v2 v2.0.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath/v2
+# codeberg.org/gruf/go-glob v0.1.1
+## explicit; go 1.14
+codeberg.org/gruf/go-glob
 # codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f
 ## explicit; go 1.19
 codeberg.org/gruf/go-iotools

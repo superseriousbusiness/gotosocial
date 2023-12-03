@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"strings"
 	"sync/atomic"
-	"unsafe"
 
 	"golang.org/x/exp/slices"
 )
@@ -36,18 +35,15 @@ import (
 //
 // The .Clear() function can be used to invalidate the cache,
 // e.g. when an entry is added / deleted from the database.
-type Cache struct {
-	// atomically updated ptr value to the
-	// current domain cache radix trie.
-	rootptr unsafe.Pointer
-}
+type Cache struct{ rootptr atomic.Pointer[root] }
 
 // Matches checks whether domain matches an entry in the cache.
 // If the cache is not currently loaded, then the provided load
 // function is used to hydrate it.
 func (c *Cache) Matches(domain string, load func() ([]string, error)) (bool, error) {
-	// Load the current root pointer value.
-	ptr := atomic.LoadPointer(&c.rootptr)
+	// Load the current
+	// root pointer value.
+	ptr := c.rootptr.Load()
 
 	if ptr == nil {
 		// Cache is not hydrated.
@@ -60,35 +56,32 @@ func (c *Cache) Matches(domain string, load func() ([]string, error)) (bool, err
 
 		// Allocate new radix trie
 		// node to store matches.
-		root := new(root)
+		ptr := new(root)
 
 		// Add each domain to the trie.
 		for _, domain := range domains {
-			root.Add(domain)
+			ptr.Add(domain)
 		}
 
 		// Sort the trie.
-		root.Sort()
+		ptr.Sort()
 
-		// Store the new node ptr.
-		ptr = unsafe.Pointer(root)
-		atomic.StorePointer(&c.rootptr, ptr)
+		// Store new node ptr.
+		c.rootptr.Store(ptr)
 	}
 
-	// Look for a match in the trie node.
-	return (*root)(ptr).Match(domain), nil
+	// Look for match in trie node.
+	return ptr.Match(domain), nil
 }
 
 // Clear will drop the currently loaded domain list,
 // triggering a reload on next call to .Matches().
-func (c *Cache) Clear() {
-	atomic.StorePointer(&c.rootptr, nil)
-}
+func (c *Cache) Clear() { c.rootptr.Store(nil) }
 
 // String returns a string representation of stored domains in cache.
 func (c *Cache) String() string {
-	if ptr := atomic.LoadPointer(&c.rootptr); ptr != nil {
-		return (*root)(ptr).String()
+	if ptr := c.rootptr.Load(); ptr != nil {
+		return ptr.String()
 	}
 	return "<empty>"
 }
