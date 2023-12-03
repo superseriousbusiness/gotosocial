@@ -42,6 +42,12 @@ var (
 	StatusInternalServerErrorJSON = mustJSON(map[string]string{
 		"status": http.StatusText(http.StatusInternalServerError),
 	})
+	ErrorCapacityExceeded = mustJSON(map[string]string{
+		"error": "server capacity exceeded!",
+	})
+	ErrorRateLimitReached = mustJSON(map[string]string{
+		"error": "rate limit reached!",
+	})
 	EmptyJSONObject = mustJSON("{}")
 	EmptyJSONArray  = mustJSON("[]")
 

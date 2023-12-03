@@ -29,6 +29,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
+
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 const rateLimitPeriod = 5 * time.Minute
@@ -141,10 +143,12 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 		if context.Reached {
 			// Return JSON error message for
 			// consistency with other endpoints.
-			c.AbortWithStatusJSON(
+			apiutil.Data(c,
 				http.StatusTooManyRequests,
-				gin.H{"error": "rate limit reached"},
+				apiutil.AppJSON,
+				apiutil.ErrorRateLimitReached,
 			)
+			c.Abort()
 			return
 		}
 
