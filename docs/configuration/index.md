@@ -18,9 +18,9 @@ gotosocial --config-path ./config.yaml server start
 
 The command expects a file in [YAML](https://en.wikipedia.org/wiki/YAML) or [JSON](https://en.wikipedia.org/wiki/JSON) format.
 
-An example configuration file, with an explanation of each of the config fields, with default and example values, can be found [here](https://github.com/superseriousbusiness/gotosocial/blob/main/example/config.yaml).
+An example configuration file, with an explanation of each of the config fields, with default and example values, can be found [here](https://github.com/superseriousbusiness/gotosocial/blob/main/example/config.yaml). This example file is also included in release downloads. 
 
-This example file is included with release downloads, so you can just copy it and edit it to your needs without having to worry too much about what the hell YAML or JSON is.
+It's recommended to create your own configuration file with only the settings you need to change for your installation. This ensures you don't have to reconcile changes to defaults or adding/updating/removing settings from your configuration file that you haven't changed away from the defaults on every release.
 
 ### Environment Variables
 
