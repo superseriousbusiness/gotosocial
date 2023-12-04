@@ -530,6 +530,11 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		}
 	}
 
+	// Notify streams that the status has been edited.
+	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
 	return nil
 }
 

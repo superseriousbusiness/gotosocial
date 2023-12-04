@@ -26,6 +26,9 @@ const (
 	EventTypeUpdate string = "update"
 	// EventTypeDelete -- something should be deleted from a user
 	EventTypeDelete string = "delete"
+	// EventTypeStatusUpdate -- something in the user's timeline has been edited
+	// (yes this is a confusing name, blame Mastodon)
+	EventTypeStatusUpdate string = "status.update"
 )
 
 const (

@@ -416,6 +416,11 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg messages.FromClientAP
 		}
 	}
 
+	// Notify streams that the status has been edited.
+	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
 	return nil
 }
 
