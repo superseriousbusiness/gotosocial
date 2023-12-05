@@ -420,7 +420,7 @@ func (s *surface) timelineStatusUpdate(ctx context.Context, status *gtsmodel.Sta
 		})
 	}
 
-	// Timeline the status for each local follower of this account.
+	// Push to streams for each local follower of this account.
 	if err := s.timelineStatusUpdateForFollowers(ctx, status, follows); err != nil {
 		return gtserror.Newf("error timelining status %s for followers: %w", status.ID, err)
 	}

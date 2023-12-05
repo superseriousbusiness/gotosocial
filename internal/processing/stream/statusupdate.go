@@ -26,7 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-// Update streams the given edited status to any open, appropriate streams belonging to the given account.
+// StatusUpdate streams the given edited status to any open, appropriate
+// streams belonging to the given account.
 func (p *Processor) StatusUpdate(s *apimodel.Status, account *gtsmodel.Account, streamTypes []string) error {
 	bytes, err := json.Marshal(s)
 	if err != nil {
