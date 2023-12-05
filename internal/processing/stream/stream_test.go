@@ -30,6 +30,7 @@ import (
 type StreamTestSuite struct {
 	suite.Suite
 	testAccounts map[string]*gtsmodel.Account
+	testStatuses map[string]*gtsmodel.Status
 	testTokens   map[string]*gtsmodel.Token
 	db           db.DB
 	oauthServer  oauth.Server
@@ -45,6 +46,7 @@ func (suite *StreamTestSuite) SetupTest() {
 	testrig.InitTestConfig()
 
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTokens = testrig.NewTestTokens()
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
