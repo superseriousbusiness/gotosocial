@@ -17,30 +17,30 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-		<!-- footer.tmpl -->
-		</div>
-		<footer>
-			<div id="version">
-				<a name="Source code" href="https://github.com/superseriousbusiness/gotosocial">
-					GoToSocial <span class="accent">{{.instance.Version}}</span>
-				</a>
-			</div>
-			{{ if .instance.ContactAccount }} 
-				<div id="contact">
-					Contact: <a href="{{.instance.ContactAccount.URL}}" class="nounderline">{{.instance.ContactAccount.Username}}</a><br>
-				</div>
-			{{ end }}
-			{{ if .instance.Email }} 
-				<div id="email">
-					Email: <a href="mailto:{{.instance.Email}}" class="nounderline">{{.instance.Email}}</a><br>
-				</div>
-			{{ end }}
-		</footer>
-	</div>
-	{{ if .javascript }}
-	{{ range .javascript }}
-		<script src="{{.}}"></script>
-	{{ end }}
-	{{ end }}
+        <!-- footer.tmpl -->
+        </div>
+        <footer>
+            <div id="version">
+                <a name="Source code" href="https://github.com/superseriousbusiness/gotosocial">
+                    GoToSocial <span class="accent">{{.instance.Version}}</span>
+                </a>
+            </div>
+            {{ if .instance.ContactAccount }} 
+                <div id="contact">
+                    Contact: <a href="{{.instance.ContactAccount.URL}}" class="nounderline">{{.instance.ContactAccount.Username}}</a><br>
+                </div>
+            {{ end }}
+            {{ if .instance.Email }} 
+                <div id="email">
+                    Email: <a href="mailto:{{.instance.Email}}" class="nounderline">{{.instance.Email}}</a><br>
+                </div>
+            {{ end }}
+        </footer>
+    </div>
+    {{ if .javascript }}
+    {{ range .javascript }}
+        <script src="{{.}}"></script>
+    {{ end }}
+    {{ end }}
 </body>
 </html>
