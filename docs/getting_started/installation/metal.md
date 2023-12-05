@@ -43,13 +43,9 @@ This will put the `gotosocial` binary in your current directory, in addition to 
 
 ## Edit Configuration File
 
-Copy the configuration file from the example folder into your current directory:
+Create a new configuration file, based on the `config.yaml` from the `example` folder. You can copy the whole file, but make sure you only retain settings you've changed. This makes it easier to review configuration changes on release upgrades.
 
-```bash
-cp ./example/config.yaml .
-```
-
-Now open the file in your text editor of choice so that you can set some important configuration values. Change the following settings:
+You'll probably need to change the following settings:
 
 - Set `host` to whatever hostname you're going to be running the server on (eg., `example.org`).
 - Set `port` to `443`.
