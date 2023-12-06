@@ -38,9 +38,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	openStream, errWithCode := suite.streamProcessor.Open(context.Background(), account, "user")
 	suite.NoError(errWithCode)
 
-	//followAccount := suite.testAccounts["remote_account_1"]
 	editedStatus := suite.testStatuses["remote_account_1_status_1"]
-	//followAccountAPIModel, err := typeutils.NewConverter(&suite.state).AccountToAPIAccountPublic(context.Background(), followAccount)
 	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(context.Background(), editedStatus, account)
 	suite.NoError(err)
 
