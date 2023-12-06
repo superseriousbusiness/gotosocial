@@ -35,6 +35,10 @@ const (
 	DomainAllowsPath        = BasePath + "/domain_allows"
 	DomainAllowsPathWithID  = DomainAllowsPath + "/:" + IDKey
 	DomainKeysExpirePath    = BasePath + "/domain_keys_expire"
+	HeaderAllowsPath        = BasePath + "/header_allows"
+	HeaderAllowsPathWithID  = HeaderAllowsPath + "/:" + IDKey
+	HeaderBlocksPath        = BasePath + "/header_blocks"
+	HeaderBlocksPathWithID  = HeaderAllowsPath + "/:" + IDKey
 	AccountsPath            = BasePath + "/accounts"
 	AccountsPathWithID      = AccountsPath + "/:" + IDKey
 	AccountsActionPath      = AccountsPathWithID + "/action"
@@ -94,6 +98,16 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, DomainAllowsPath, m.DomainAllowsGETHandler)
 	attachHandler(http.MethodGet, DomainAllowsPathWithID, m.DomainAllowGETHandler)
 	attachHandler(http.MethodDelete, DomainAllowsPathWithID, m.DomainAllowDELETEHandler)
+
+	// header filtering administration routes
+	attachHandler(http.MethodGet, HeaderAllowsPathWithID, m.HeaderFilterAllowGET)
+	attachHandler(http.MethodGet, HeaderBlocksPathWithID, m.HeaderFilterBlockGET)
+	attachHandler(http.MethodGet, HeaderAllowsPath, m.HeaderFilterAllowsGET)
+	attachHandler(http.MethodGet, HeaderBlocksPath, m.HeaderFilterBlocksGET)
+	attachHandler(http.MethodPost, HeaderAllowsPath, m.HeaderFilterAllowPOST)
+	attachHandler(http.MethodPost, HeaderBlocksPath, m.HeaderFilterBlockPOST)
+	attachHandler(http.MethodDelete, HeaderAllowsPathWithID, m.HeaderFilterAllowDELETE)
+	attachHandler(http.MethodDelete, HeaderBlocksPathWithID, m.HeaderFilterBlockDELETE)
 
 	// domain maintenance stuff
 	attachHandler(http.MethodPost, DomainKeysExpirePath, m.DomainKeysExpirePOSTHandler)

@@ -19,13 +19,9 @@ package gtsmodel
 
 import "time"
 
-type HeaderFilterAllow struct{ HeaderFilter }
-
-type HeaderFilterBlock struct{ HeaderFilter }
-
 type HeaderFilter struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    //
-	Key       string    `bun:","`                                                           // Request header key this filter pertains to
+	Header    string    `bun:","`                                                           // Request header this filter pertains to
 	Regex     string    `bun:","`                                                           // Request header value matching regular expression
 	AuthorID  string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this filter
 	Author    *Account  `bun:"-"`                                                           // Account corresponding to AuthorID

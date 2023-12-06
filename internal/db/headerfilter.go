@@ -33,17 +33,29 @@ type HeaderFilter interface {
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
 	HeaderBlock(ctx context.Context, hdr http.Header) (bool, error)
 
+	// GetAllowHeaderFilter ...
+	GetAllowHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error)
+
+	// GetBlockHeaderFilter ...
+	GetBlockHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error)
+
+	// GetAllowHeaderFilters ...
+	GetAllowHeaderFilters(ctx context.Context) ([]*gtsmodel.HeaderFilter, error)
+
+	// GetBlockHeaderFilters ...
+	GetBlockHeaderFilters(ctx context.Context) ([]*gtsmodel.HeaderFilter, error)
+
 	// PutAllowHeaderFilter inserts the given allow header filter into the database.
-	PutAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow) error
+	PutAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter) error
 
 	// PutBlockHeaderFilter inserts the given block header filter into the database.
-	PutBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterBlock) error
+	PutBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter) error
 
 	// UpdateAllowHeaderFilter updates the given allow header filter in the database, only updating given columns if provided.
-	UpdateAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow, cols ...string) error
+	UpdateAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter, cols ...string) error
 
 	// UpdateBlockHeaderFilter updates the given block header filter in the database, only updating given columns if provided.
-	UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterBlock, cols ...string) error
+	UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter, cols ...string) error
 
 	// DeleteAllowHeaderFilter deletes the allow header filter with ID from the database.
 	DeleteAllowHeaderFilter(ctx context.Context, id string) error

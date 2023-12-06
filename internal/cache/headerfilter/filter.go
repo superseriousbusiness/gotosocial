@@ -42,7 +42,7 @@ type Cache struct {
 
 // Allow checks whether header matches positively against filter in the cache. If cache
 // is not currently loaded then the provided load function is called to hydrate it first.
-func (c *Cache) Allow(h http.Header, load func() ([]gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) Allow(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -66,7 +66,7 @@ func (c *Cache) Allow(h http.Header, load func() ([]gtsmodel.HeaderFilter, error
 
 // Block checks whether header matches negatively against filter in the cache. If cache
 // is not currently loaded then the provided load function is called to hydrate it first.
-func (c *Cache) Block(h http.Header, load func() ([]gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) Block(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -97,7 +97,7 @@ func (c *Cache) Stats() map[string]map[string]uint64 {
 }
 
 // loadFilters will load filters from given load callback, creating and parsing raw filters.
-func loadFilters(load func() ([]gtsmodel.HeaderFilter, error)) (headerfilter.Filters, error) {
+func loadFilters(load func() ([]*gtsmodel.HeaderFilter, error)) (headerfilter.Filters, error) {
 	// Load filters from callback.
 	hdrFilters, err := load()
 	if err != nil {
@@ -109,7 +109,7 @@ func loadFilters(load func() ([]gtsmodel.HeaderFilter, error)) (headerfilter.Fil
 
 	// Add all raw expression to filter slice.
 	for _, filter := range hdrFilters {
-		if err := filters.Append(filter.Key, filter.Regex); err != nil {
+		if err := filters.Append(filter.Header, filter.Regex); err != nil {
 			return nil, fmt.Errorf("error appending exprs: %w", err)
 		}
 	}

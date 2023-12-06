@@ -194,7 +194,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			db:    db,
 			state: state,
 		},
-		HeaderFilter: &hdrFilterDB{
+		HeaderFilter: &headerFilterDB{
 			db:    db,
 			state: state,
 		},
