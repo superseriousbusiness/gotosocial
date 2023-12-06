@@ -1,0 +1,52 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- /*
+    OPEN GRAPH META TAGS
+    To enable fancy previews of links to GtS posts/profiles shared via instant
+    messaging, or other social media, parse out provided Open Graph meta tags.
+*/ -}}
+
+{{- with .ogMeta }}
+{{- if .Locale }}
+<meta name="og:locale" content="{{- .Locale -}}">
+{{- end }}
+<meta property="og:type" content="{{- .Type -}}">
+<meta property="og:title" content="{{- .Title -}}">
+<meta property="og:url" content="{{- .URL -}}">
+<meta property="og:site_name" content="{{- .SiteName -}}">
+<meta property="og:description" {{ .Description | noescapeAttr -}}>
+{{- if .ArticlePublisher }}
+<meta property="og:article:publisher" content="{{ .ArticlePublisher }}">
+<meta property="og:article:author" content="{{ .ArticleAuthor }}">
+<meta property="og:article:modified_time" content="{{ .ArticleModifiedTime }}">
+<meta property="og:article:published_time" content="{{ .ArticlePublishedTime }}">
+{{- end }}
+{{- if .ProfileUsername }}
+<meta property="og:profile:username" content="{{- .ProfileUsername -}}">
+{{- end }}
+<meta property="og:image" content="{{- .Image -}}">
+{{- if .ImageAlt }}
+<meta property="og:image:alt" content="{{- .ImageAlt -}}">
+{{- end }}
+{{- if .ImageWidth }}
+<meta property="og:image:width" content="{{ .ImageWidth }}">
+<meta property="og:image:height" content="{{ .ImageHeight }}">
+{{- end }}
+{{- end }}

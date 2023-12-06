@@ -1,0 +1,98 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- /*
+        NESTED TEMPLATE DECLARATIONS
+        If some if/else macro is used multiple times, declare it once here instead.
+        When invoking these nested templates, remember to pass in the values passed
+        to the executing template, ie., use '{{ template "example" . }}' not
+        '{{ template "example" }}', otherwise you'll end up with empty variables.
+*/ -}}
+
+{{- define "thumbnailType" -}}
+{{- if .instance.ThumbnailType -}}
+{{- .instance.ThumbnailType -}}
+{{- else -}}
+image/png
+{{- end -}}
+{{- end -}}
+
+{{- define "instanceTitle" -}}
+{{- if .ogMeta -}}
+{{- .ogMeta.Title -}}
+{{- else -}}
+{{- .instance.Title }} - GoToSocial
+{{- end -}}
+{{- end -}}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="robots" content="{{- if .robotsMeta -}}{{- .robotsMeta -}}{{- else -}}noindex, nofollow{{- end -}}">
+        {{- if .ogMeta }}
+        {{- include "header_ogmeta.tmpl" . | indent 2 | noescape }}
+        {{- end }}
+        {{ if .rssFeed -}}
+        <link rel="alternate" type="application/rss+xml" href="{{- .rssFeed -}}" title="{{- template "instanceTitle" . -}}">
+        {{- end }}
+        <link rel="icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+        <link rel="apple-touch-icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+        <link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+        {{- include "header_stylesheets.tmpl" . | indent 2 | noescape }}
+        <title>{{- template "instanceTitle" . -}}</title>
+    </head>
+    <body>
+        <div class="page">
+            <header>
+                <a aria-label="{{- .instance.Title -}}. Go to instance homepage" href="/" class="nounderline header">
+                    <img src="{{- .instance.Thumbnail -}}" alt="{{- if .instance.ThumbnailDescription -}}{{- .instance.ThumbnailDescription -}}{{- else -}}Instance Logo{{- end -}}"/>
+                    <h1>{{- .instance.Title -}}</h1>
+                </a>
+            </header>
+            <div class="content">
+                {{- include .template | indent 4 | noescape }}
+            </div>
+            <footer>
+                <div id="version">
+                    <a name="Source code" href="https://github.com/superseriousbusiness/gotosocial">
+                        GoToSocial <span class="accent">{{- .instance.Version -}}</span>
+                    </a>
+                </div>
+                {{- if .instance.ContactAccount }} 
+                <div id="contact">
+                    Contact: <a href="{{- .instance.ContactAccount.URL -}}" class="nounderline">{{- .instance.ContactAccount.Username -}}</a>
+                    <br>
+                </div>
+                {{- end }}
+                {{- if .instance.Email }} 
+                <div id="email">
+                    Email: <a href="mailto:{{- .instance.Email -}}" class="nounderline">{{- .instance.Email -}}</a>
+                    <br>
+                </div>
+                {{- end }}
+            </footer>
+        </div>
+        {{- range .javascript }}
+        <script src="{{- . -}}"></script>
+        {{- end }}
+    </body>
+</html>

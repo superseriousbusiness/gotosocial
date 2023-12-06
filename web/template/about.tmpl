@@ -17,105 +17,105 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
+{{- with . }}
 <main>
     <section class="about">
         <h1>About</h1>
-        <div>
-            {{.instance.Description |noescape}}
-        </div>
-
+        <div>{{- .instance.Description | noescape -}}</div>
         <div>
             <h2 id="languages">Languages</h2>
             <p>
-                {{ if .languages }}
-                    This instance prefers the following languages:
-                    <ol>
-                        {{range .languages}}
-                        <li>{{.}}</li>
-                        {{end}}
-                    </ol>
-                {{ else }}
-                    This instance does not have any preferred languages. 
-                {{ end }}
+                {{- if .languages }}
+                 This instance prefers the following languages:
+                 <ol>
+                     {{- range .languages }}
+                     <li>{{- . -}}</li>
+                     {{- end }}
+                 </ol>
+                {{- else }}
+                This instance does not have any preferred languages. 
+                {{- end }}
             </p>
         </div>
-
         <div>
             <h2 id="contact">Admin Contact</h2>
-            {{if .instance.ContactAccount}}
-            <a href="{{.instance.ContactAccount.URL}}" class="account-card">
+            {{- if .instance.ContactAccount }}
+            <a href="{{- .instance.ContactAccount.URL -}}" class="account-card">
                 <img class="avatar" src="{{.instance.ContactAccount.Avatar}}" alt="" />
                 <h3>
-                    {{if .instance.ContactAccount.DisplayName}}{{emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName)}}{{else}}{{.instance.ContactAccount.Username}}{{end}}
+                    {{- if .instance.ContactAccount.DisplayName -}}
+                    {{ emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) }}
+                    {{- else}}
+                    {{ .instance.ContactAccount.Username }}
+                    {{- end }}
                 </h3>
-                <span>@{{.instance.ContactAccount.Username}}</span>
+                <span>@{{- .instance.ContactAccount.Username -}}</span>
             </a><br />
-            {{end}}
-            {{if .instance.Email}}
-            Email: <a href="mailto:{{.instance.Email}}">{{.instance.Email}}</a>
-            {{end}}
+            {{- end }}
+            {{- if .instance.Email -}}
+            Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a>
+            {{- end }}
         </div>
-
         <div>
             <h2 id="rules">Rules</h2>
             <ol>
-                {{range .instance.Rules}}
-                <li>{{.Text}}</li>
-                {{end}}
+                {{- range .instance.Rules }}
+                <li>{{- .Text -}}</li>
+                {{- end }}
             </ol>
         </div>
-
         <div>
             <h2 id="features">Features</h2>
             <ul>
                 <li>
                     Registration is
-                    {{if .instance.Registrations}}
-                    enabled{{if .instance.ApprovalRequired}}, but requires admin approval{{end}}.
-                    {{else}}
+                    {{- if .instance.Registrations }}
+                    enabled.
+                    {{- else }}
                     disabled.
-                    {{end}}
+                    {{- end }}
+                    {{- if .instance.Registrations and .instance.ApprovalRequired }}
+                    Registration requires admin approval.
+                    {{- end }}
                 </li>
-                {{if .instance.Configuration.Accounts.AllowCustomCSS}}
+                {{- if .instance.Configuration.Accounts.AllowCustomCSS }}
                 <li>
-                    Users are allowed to set <a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/"
-                        target="_blank" rel="noopener noreferrer">Custom CSS</a> for their profiles.
+                    Users are allowed to set
+                    <a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/" target="_blank" rel="noopener noreferrer">Custom CSS</a>
+                    for their profiles.
                 </li>
-                {{end}}
+                {{- end }}
                 <li>
-                    Toots can contain up to {{.instance.Configuration.Statuses.MaxCharacters}} characters and
-                    {{.instance.Configuration.Statuses.MaxMediaAttachments}} media attachments.
+                    Toots can contain up to {{ .instance.Configuration.Statuses.MaxCharacters }} characters,
+                    and {{ .instance.Configuration.Statuses.MaxMediaAttachments }} media attachments.
                 </li>
                 <li>
-                    Polls can have up to {{.instance.Configuration.Polls.MaxOptions}} options, with
-                    {{.instance.Configuration.Polls.MaxCharactersPerOption}} characters each.
+                    Polls can have up to {{ .instance.Configuration.Polls.MaxOptions }} options,
+                    with {{ .instance.Configuration.Polls.MaxCharactersPerOption }} characters per option.
                 </li>
             </ul>
         </div>
-
         <div>
             <h2 id="moderated-servers">Moderated servers</h2>
             <p>
                 ActivityPub instances exchange (federate) data with other instances, including accounts and toots.
                 This can be prevented for specific domains by suspending them. None of their content is stored,
                 and interaction with their users is blocked both ways.</br>
-                {{if .blocklistExposed}}
+                {{- if .blocklistExposed }}
                 <a href="/about/suspended">View the list of suspended domains</a>
-                {{else}}
+                {{- else }}
                 This instance does not publically share this list.
-                {{end}}
+                {{- end }}
             </p>
         </div>
-
         <div>
             <h2 id="stats">Instance Statistics</h2>
             <ul>
-                <li>Users: <span class="count">{{.instance.Stats.user_count}}</span></li>
-                <li>Posts: <span class="count">{{.instance.Stats.status_count}}</span></li>
-                <li>Federates with: <span class="count">{{.instance.Stats.domain_count}}</span> instances</li>
+                <li>Users: <span class="count">{{- .instance.Stats.user_count -}}</span></li>
+                <li>Posts: <span class="count">{{- .instance.Stats.status_count -}}</span></li>
+                <li>Federates with: <span class="count">{{- .instance.Stats.domain_count -}}</span> instances</li>
             </ul>
         </div>
     </section>
 </main>
-{{ template "footer.tmpl" .}}
+{{- end }}

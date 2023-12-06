@@ -17,7 +17,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- template "header.tmpl" . }}
 <main>
     <form action="/oauth/authorize" method="POST">
         <h1>Hi {{ .user -}}!</h1>
@@ -37,4 +36,3 @@
         <button type="submit" style="width:200px;">Allow</button>
     </form>
 </main>
-{{- template "footer.tmpl" . }}

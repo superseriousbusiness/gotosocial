@@ -143,7 +143,8 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 			apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
 			return
 		}
-		c.HTML(http.StatusOK, "finalize.tmpl", gin.H{
+		c.HTML(http.StatusOK, "page.tmpl", gin.H{
+			"template":          "finalize.tmpl",
 			"instance":          instance,
 			"name":              claims.Name,
 			"preferredUsername": claims.PreferredUsername,
@@ -177,7 +178,8 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}
-		c.HTML(http.StatusOK, "finalize.tmpl", gin.H{
+		c.HTML(http.StatusOK, "page.tmpl", gin.H{
+			"template":          "finalize.tmpl",
 			"instance":          instance,
 			"name":              form.Name,
 			"preferredUsername": form.Username,

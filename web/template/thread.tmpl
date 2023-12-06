@@ -17,22 +17,22 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
+{{- with . }}
 <main>
     <section data-nosnippet class="thread">
-        {{range .context.Ancestors}}
+        {{- range .context.Ancestors }}
+        <article class="toot" id="{{- .ID -}}">
+            {{- include "status.tmpl" . | indent 3 | noescape }}
+        </article>
+        {{- end }}
+        <article class="toot expanded" id="{{- .status.ID -}}">
+            {{- include "status.tmpl" . | indent 3 | noescape }}
+        </article>
+        {{- range .context.Descendants }}
         <article class="toot" id="{{.ID}}">
-            {{ template "status.tmpl" .}}
+            {{- include "status.tmpl" . | indent 3 | noescape }}
         </article>
-        {{end}}
-        <article class="toot expanded" id="{{.status.ID}}">
-            {{ template "status.tmpl" .status}}
-        </article>
-        {{range .context.Descendants}}
-        <article class="toot" id="{{.ID}}">
-            {{ template "status.tmpl" .}}
-        </article>
-        {{end}}
+        {{- end }}
     </section>
 </main>
-{{ template "footer.tmpl" .}}
+{{- end }}

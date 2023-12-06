@@ -17,21 +17,21 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- /*
+    STYLESHEET STUFF
+    To try to speed up rendering a little bit, offer a preload for each stylesheet.
+    See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/preload.
+*/ -}}
+
 {{- with . }}
-<main>
-    <section class="login">
-        <h1>Login</h1>
-        <form action="/auth/sign_in" method="POST">
-            <div class="labelinput">
-                <label for="email">Email</label>
-                <input type="email" class="form-control" name="username" required placeholder="Please enter your email address">
-            </div>
-            <div class="labelinput">
-                <label for="password">Password</label>
-                <input type="password" class="form-control" name="password" required placeholder="Please enter your password">
-            </div>
-            <button type="submit" class="btn btn-success">Login</button>
-        </form>
-    </section>
-</main>
+<link rel="preload" href="/assets/dist/_colors.css" as="style">
+<link rel="preload" href="/assets/dist/base.css" as="style">
+{{- range .stylesheets }}
+<link rel="preload" href="{{- . -}}" as="style">
+{{- end }}
+<link rel="stylesheet" href="/assets/dist/_colors.css">
+<link rel="stylesheet" href="/assets/dist/base.css">
+{{- range .stylesheets }}
+<link rel="stylesheet" href="{{- . -}}">
+{{- end }}
 {{- end }}

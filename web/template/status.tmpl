@@ -50,7 +50,7 @@
                 {{ emojify .Emojis (noescape .Content) }}
             </div>
             {{- if .Poll }}
-            {{ template "status_poll.tmpl" . }}
+            {{ include "status_poll.tmpl" . | indent 3 | noescape }}
             {{- end }}
         </div>
     </details>
@@ -60,12 +60,12 @@
             {{ emojify .Emojis (noescape .Content) }}
         </div>
         {{- if .Poll }}
-        {{ template "status_poll.tmpl" . }}
+        {{ include "status_poll.tmpl" . | indent 2 | noescape }}
         {{- end }}
     </div>
     {{- end }}
     {{- if .MediaAttachments }}
-    {{ template "status_attachments.tmpl" . }}
+    {{ include "status_attachments.tmpl" . | indent 1 | noescape }}
     {{- end }}
 </section>
 <aside class="info">

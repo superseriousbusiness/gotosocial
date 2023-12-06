@@ -17,9 +17,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
+{{- with . }}
 <main class="lightgray">
-    <div id="root">
-    </div>
+    <div id="root"></div>
 </main>
-{{ template "footer.tmpl" .}}
+{{- end }}

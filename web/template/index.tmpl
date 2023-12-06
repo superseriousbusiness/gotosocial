@@ -17,16 +17,16 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
+{{- with . }}
 <section class="excerpt-top">
-    home to <span class="count">{{.instance.Stats.user_count}}</span> users
-        who posted <span class="count">{{.instance.Stats.status_count}}</span> statuses,
-        federating with  <span class="count">{{.instance.Stats.domain_count}}</span> other instances.
+    home to <span class="count">{{- .instance.Stats.user_count -}}</span> users
+    who posted <span class="count">{{- .instance.Stats.status_count -}}</span> statuses,
+    federating with  <span class="count">{{- .instance.Stats.domain_count -}}</span> other instances.
 </section>
 <main class="lightgray">
     <section>
         <div className="short-description">
-            {{.instance.ShortDescription |noescape}}
+            {{ .instance.ShortDescription | noescape }}
         </div>
     </section>
     <section class="apps">
@@ -74,4 +74,4 @@
         </div>
     </section>
 </main>
-{{ template "footer.tmpl" .}}
+{{- end }}

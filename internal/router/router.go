@@ -83,7 +83,6 @@ func New(ctx context.Context) (*Router, error) {
 
 	// Attach functions used by HTML templating,
 	// and load HTML templates into the engine.
-	LoadTemplateFunctions(engine)
 	if err := LoadTemplates(engine); err != nil {
 		return nil, err
 	}

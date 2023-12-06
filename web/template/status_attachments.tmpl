@@ -23,72 +23,72 @@
 */ -}}
 
 {{ with .MediaAttachments }}
-    <div class="media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{ else if eq (len .) 2 }}double{{- end -}}">
+<div class="media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{ else if eq (len .) 2 }}double{{- end -}}">
     {{- range $index, $media := . }}
-        <div class="media-wrapper">
-            <details class="{{- $media.Type -}}-spoiler media-spoiler" {{- if not $media.Sensitive }} open{{ end -}}>
-                <summary>
-                    <div class="show sensitive button" aria-hidden="true">Show sensitive media</div>
-                    <span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
-                        <i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
-                        <i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
-                    </span>
-                    {{- if eq .Type "video" }}
-                    <video {{- if .Description }} title="{{- $media.Description -}}" {{- end -}}>
-                        <source type="video/mp4" src="{{- $media.URL -}}"/>
-                    </video>
-                    {{- else if eq .Type "image" }}
-                    <img src="{{- $media.PreviewURL -}}" {{- if .Description }} title="{{- $media.Description -}}" {{- end }}/>
-                    {{- end }}
-                </summary>
+    <div class="media-wrapper">
+        <details class="{{- $media.Type -}}-spoiler media-spoiler" {{- if not $media.Sensitive }} open{{ end -}}>
+            <summary>
+                <div class="show sensitive button" aria-hidden="true">Show sensitive media</div>
+                <span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
+                    <i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
+                    <i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
+                </span>
                 {{- if eq .Type "video" }}
-                <video
-                    class="plyr-video photoswipe-slide"
-                    controls
-                    data-pswp-index="{{- $index -}}"
-                    data-pswp-width="{{- $media.Meta.Original.Width -}}px"
-                    data-pswp-height="{{- $media.Meta.Original.Height -}}px"
-                    {{- if .Description }}
-                    alt="{{- $media.Description -}}"
-                    title="{{- $media.Description -}}"
-                    {{- end }}
-                >
+                <video {{- if .Description }} title="{{- $media.Description -}}" {{- end -}}>
                     <source type="video/mp4" src="{{- $media.URL -}}"/>
                 </video>
                 {{- else if eq .Type "image" }}
-                <a
-                    class="photoswipe-slide"
-                    href="{{- $media.URL -}}"
-                    target="_blank"
-                    data-pswp-width="{{- $media.Meta.Original.Width -}}px"
-                    data-pswp-height="{{- $media.Meta.Original.Height -}}px"
-                    data-cropped="true"
-                    {{- if .Description }}
-                    title="{{- $media.Description -}}"
-                    {{- end }}
-                >
-                    <img src="{{$media.PreviewURL}}" {{if .Description}}alt="{{$media.Description}}" {{end}} />
-                </a>
-                {{- else }}
-                <a
-                    class="unknown-attachment"
-                    href="{{- $media.RemoteURL -}}"
-                    target="_blank"
-                    {{- if .Description }}
-                    title="Link to external media: {{ $media.Description -}}&#10;&#13;{{- $media.RemoteURL -}}"
-                    {{- else }}
-                    title="Link to external media.&#10;&#13;{{- $media.RemoteURL -}}"
-                    {{- end }}
-                >
-                    <div class="placeholder" aria-hidden="true">
-                        <i class="placeholder-external-link fa fa-external-link"></i>
-                        <i class="placeholder-icon fa fa-file-text"></i>
-                        <div class="placeholder-link-to">External media</div>
-                    </div>
-                </a>
+                <img src="{{- $media.PreviewURL -}}" {{- if .Description }} title="{{- $media.Description -}}" {{- end }}/>
                 {{- end }}
-            </details>
-        </div>
-    {{- end }}
+            </summary>
+            {{- if eq .Type "video" }}
+            <video
+                class="plyr-video photoswipe-slide"
+                controls
+                data-pswp-index="{{- $index -}}"
+                data-pswp-width="{{- $media.Meta.Original.Width -}}px"
+                data-pswp-height="{{- $media.Meta.Original.Height -}}px"
+                {{- if .Description }}
+                alt="{{- $media.Description -}}"
+                title="{{- $media.Description -}}"
+                {{- end }}
+            >
+                <source type="video/mp4" src="{{- $media.URL -}}"/>
+            </video>
+            {{- else if eq .Type "image" }}
+            <a
+                class="photoswipe-slide"
+                href="{{- $media.URL -}}"
+                target="_blank"
+                data-pswp-width="{{- $media.Meta.Original.Width -}}px"
+                data-pswp-height="{{- $media.Meta.Original.Height -}}px"
+                data-cropped="true"
+                {{- if .Description }}
+                title="{{- $media.Description -}}"
+                {{- end }}
+            >
+                <img src="{{$media.PreviewURL}}" {{if .Description}}alt="{{$media.Description}}" {{end}} />
+            </a>
+            {{- else }}
+            <a
+                class="unknown-attachment"
+                href="{{- $media.RemoteURL -}}"
+                target="_blank"
+                {{- if .Description }}
+                title="Link to external media: {{ $media.Description -}}&#10;&#13;{{- $media.RemoteURL -}}"
+                {{- else }}
+                title="Link to external media.&#10;&#13;{{- $media.RemoteURL -}}"
+                {{- end }}
+            >
+                <div class="placeholder" aria-hidden="true">
+                    <i class="placeholder-external-link fa fa-external-link"></i>
+                    <i class="placeholder-icon fa fa-file-text"></i>
+                    <div class="placeholder-link-to">External media</div>
+                </div>
+            </a>
+            {{- end }}
+        </details>
     </div>
+    {{- end }}
+</div>
 {{- end }}

@@ -147,7 +147,8 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		stylesheets = append(stylesheets, "/@"+targetUsername+"/custom.css")
 	}
 
-	c.HTML(http.StatusOK, "thread.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template":    "thread.tmpl",
 		"instance":    instance,
 		"status":      status,
 		"context":     context,

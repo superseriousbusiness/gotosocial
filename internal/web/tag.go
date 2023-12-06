@@ -62,7 +62,8 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 		distPathPrefix + "/tag.css",
 	}
 
-	c.HTML(http.StatusOK, "tag.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template":    "tag.tmpl",
 		"instance":    instance,
 		"ogMeta":      ogBase(instance),
 		"tagName":     tagName,
