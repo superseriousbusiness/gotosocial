@@ -73,7 +73,7 @@ func (h *hdrFilterDB) PutAllowHeaderFilter(ctx context.Context, filter *gtsmodel
 	return nil
 }
 
-func (h *hdrFilterDB) PutBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow) error {
+func (h *hdrFilterDB) PutBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterBlock) error {
 	if _, err := h.db.NewInsert().
 		Model(filter).
 		Exec(ctx); err != nil {
@@ -94,7 +94,7 @@ func (h *hdrFilterDB) UpdateAllowHeaderFilter(ctx context.Context, filter *gtsmo
 	return nil
 }
 
-func (h *hdrFilterDB) UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow, cols ...string) error {
+func (h *hdrFilterDB) UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterBlock, cols ...string) error {
 	if _, err := h.db.NewUpdate().
 		Model(filter).
 		Column(cols...).

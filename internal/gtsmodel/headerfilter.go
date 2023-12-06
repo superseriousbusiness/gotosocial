@@ -24,11 +24,11 @@ type HeaderFilterAllow struct{ HeaderFilter }
 type HeaderFilterBlock struct{ HeaderFilter }
 
 type HeaderFilter struct {
-	ID          string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    //
-	Key         string    `bun:","`                                                           // Request header key this filter pertains to
-	Regex       string    `bun:","`                                                           // Request header value matching regular expression
-	CreatedByID string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this filter
-	CreatedBy   *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to CreatedByAccountID
-	CreatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    //
+	Key       string    `bun:","`                                                           // Request header key this filter pertains to
+	Regex     string    `bun:","`                                                           // Request header value matching regular expression
+	AuthorID  string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this filter
+	Author    *Account  `bun:"-"`                                                           // Account corresponding to AuthorID
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 }

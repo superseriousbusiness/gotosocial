@@ -87,7 +87,8 @@ func (fs *Filters) Append(key string, expr string) error {
 	return nil
 }
 
-// Allow ...
+// Allow will check http header against filters, returning
+// whether current filters specifically allow these headers.
 func (fs Filters) Allow(h http.Header) bool {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
@@ -107,7 +108,8 @@ func (fs Filters) Allow(h http.Header) bool {
 	return true
 }
 
-// Block ...
+// Block will check http header against filters, returning
+// whether current filters specifically block these headers.
 func (fs Filters) Block(h http.Header) bool {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
