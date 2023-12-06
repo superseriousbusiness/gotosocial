@@ -18,31 +18,25 @@
 package middleware
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
-func RequestHeaderFilter(state *state.State) gin.HandlerFunc {
+// HeaderFilter ...
+func HeaderFilter(state *state.State) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		hdr := c.Request.Header
 
-		var blocked bool
-		var err error
-
 		// First pass through any positive filters, only
 		// requests that *match* here may pass through.
-		blocked, err = state.DB.HeaderMatchPositive(ctx, hdr)
+		allow, err := state.DB.HeaderAllow(ctx, hdr)
 		if err != nil {
 			respondInternalServerError(c, err)
 			return
 		}
 
-		if blocked {
+		if !allow {
 			// Request was blocked,
 			// respond and abort here.
 			respondBlocked(c)
@@ -51,13 +45,13 @@ func RequestHeaderFilter(state *state.State) gin.HandlerFunc {
 
 		// Secondly pass through any negative filters,
 		// *any* requests that match here will be denied.
-		blocked, err = state.DB.HeaderMatchNegative(ctx, hdr)
+		block, err := state.DB.HeaderBlock(ctx, hdr)
 		if err != nil {
 			respondInternalServerError(c, err)
 			return
 		}
 
-		if blocked {
+		if block {
 			// Request was blocked,
 			// respond and abort here.
 			respondBlocked(c)
@@ -68,23 +62,4 @@ func RequestHeaderFilter(state *state.State) gin.HandlerFunc {
 		// next.
 		c.Next()
 	}
-}
-
-func respondBlocked(c *gin.Context) {
-	apiutil.Data(c,
-		http.StatusForbidden,
-		apiutil.AppJSON,
-		apiutil.StatusForbiddenJSON,
-	)
-	c.Abort()
-}
-
-func respondInternalServerError(c *gin.Context, err error) {
-	apiutil.Data(c,
-		http.StatusInternalServerError,
-		apiutil.AppJSON,
-		apiutil.StatusInternalServerErrorJSON,
-	)
-	c.Error(err)
-	c.Abort()
 }

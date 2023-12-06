@@ -40,9 +40,9 @@ type Cache struct {
 	ptr atomic.Pointer[headerfilter.Filters]
 }
 
-// Matches checks whether header matches positively against filter in the cache. If cache
+// Allow checks whether header matches positively against filter in the cache. If cache
 // is not currently loaded then the provided load function is called to hydrate it first.
-func (c *Cache) MatchPositive(h http.Header, load func() ([]gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) Allow(h http.Header, load func() ([]gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -60,13 +60,13 @@ func (c *Cache) MatchPositive(h http.Header, load func() ([]gtsmodel.HeaderFilte
 		c.ptr.Store(ptr)
 	}
 
-	// Dereference ptr and perform match.
-	return ptr.MatchPositive(h), nil
+	// Deref and perform match.
+	return ptr.Allow(h), nil
 }
 
-// Matches checks whether header matches negatively against filter in the cache. If cache
+// Block checks whether header matches negatively against filter in the cache. If cache
 // is not currently loaded then the provided load function is called to hydrate it first.
-func (c *Cache) MatchNegative(h http.Header, load func() ([]gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) Block(h http.Header, load func() ([]gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -84,8 +84,8 @@ func (c *Cache) MatchNegative(h http.Header, load func() ([]gtsmodel.HeaderFilte
 		c.ptr.Store(ptr)
 	}
 
-	// Dereference ptr and perform match.
-	return ptr.MatchNegative(h), nil
+	// Deref and perform match.
+	return ptr.Block(h), nil
 }
 
 // Stats returns match statistics associated with currently cached header filters.
@@ -109,7 +109,7 @@ func loadFilters(load func() ([]gtsmodel.HeaderFilter, error)) (headerfilter.Fil
 
 	// Add all raw expression to filter slice.
 	for _, filter := range hdrFilters {
-		if err := filters.Append(filter.HdrKey, filter.Regex); err != nil {
+		if err := filters.Append(filter.Key, filter.Regex); err != nil {
 			return nil, fmt.Errorf("error appending exprs: %w", err)
 		}
 	}

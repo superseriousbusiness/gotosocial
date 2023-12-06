@@ -31,59 +31,98 @@ type hdrFilterDB struct {
 	state *state.State
 }
 
-func (h *hdrFilterDB) HeaderMatchPositive(ctx context.Context, hdr http.Header) (bool, error) {
-	return h.state.Caches.PositiveHdrFilters.MatchPositive(hdr, func() ([]gtsmodel.HeaderFilter, error) {
-		return h.selectFilters(ctx, gtsmodel.HeaderFilterTypePositive)
+func (h *hdrFilterDB) HeaderAllow(ctx context.Context, hdr http.Header) (bool, error) {
+	return h.state.Caches.AllowHeaderFilters.Allow(hdr, func() ([]gtsmodel.HeaderFilter, error) {
+		var filters []gtsmodel.HeaderFilterAllow
+		if err := h.db.NewSelect().
+			Model(&filters).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+		base := make([]gtsmodel.HeaderFilter, len(filters))
+		for i := range base {
+			base[i] = filters[i].HeaderFilter
+		}
+		return base, nil
 	})
 }
 
-func (h *hdrFilterDB) HeaderMatchNegative(ctx context.Context, hdr http.Header) (bool, error) {
-	return h.state.Caches.NegativeHdrFilters.MatchNegative(hdr, func() ([]gtsmodel.HeaderFilter, error) {
-		return h.selectFilters(ctx, gtsmodel.HeaderFilterTypeNegative)
+func (h *hdrFilterDB) HeaderBlock(ctx context.Context, hdr http.Header) (bool, error) {
+	return h.state.Caches.BlockHeaderFilters.Block(hdr, func() ([]gtsmodel.HeaderFilter, error) {
+		var filters []gtsmodel.HeaderFilterBlock
+		if err := h.db.NewSelect().
+			Model(&filters).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+		base := make([]gtsmodel.HeaderFilter, len(filters))
+		for i := range base {
+			base[i] = filters[i].HeaderFilter
+		}
+		return base, nil
 	})
 }
 
-func (h *hdrFilterDB) selectFilters(ctx context.Context, filterType uint8) ([]gtsmodel.HeaderFilter, error) {
-	var filters []gtsmodel.HeaderFilter
-	if err := h.db.NewSelect().
-		Model(&filters).
-		Where("? = ?", bun.Ident("type"), filterType).
-		Scan(ctx); err != nil {
-		return nil, err
-	}
-	return filters, nil
-}
-
-func (h *hdrFilterDB) PutHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter) error {
+func (h *hdrFilterDB) PutAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow) error {
 	if _, err := h.db.NewInsert().
 		Model(filter).
 		Exec(ctx); err != nil {
 		return err
 	}
-	switch filter.Type {
-	case gtsmodel.HeaderFilterTypePositive:
-		h.state.Caches.PositiveHdrFilters.Clear()
-	case gtsmodel.HeaderFilterTypeNegative:
-		h.state.Caches.NegativeHdrFilters.Clear()
-	}
+	h.state.Caches.AllowHeaderFilters.Clear()
 	return nil
 }
 
-func (h *hdrFilterDB) DeleteHeaderFilterByID(ctx context.Context, id string) error {
-	var filterType uint8
-	if _, err := h.db.NewDelete().
-		Table("header_filters").
-		Where("? = ?", bun.Ident("id"), id).
-		Returning("?", bun.Ident("type")).
-		Exec(ctx, &filterType); err != nil {
+func (h *hdrFilterDB) PutBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow) error {
+	if _, err := h.db.NewInsert().
+		Model(filter).
+		Exec(ctx); err != nil {
 		return err
 	}
-	switch filterType {
-	case gtsmodel.HeaderFilterTypePositive:
-		h.state.Caches.PositiveHdrFilters.Clear()
-	case gtsmodel.HeaderFilterTypeNegative:
-		h.state.Caches.NegativeHdrFilters.Clear()
-	default: // i.e. zero value, does nothing
+	h.state.Caches.BlockHeaderFilters.Clear()
+	return nil
+}
+
+func (h *hdrFilterDB) UpdateAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow, cols ...string) error {
+	if _, err := h.db.NewUpdate().
+		Model(filter).
+		Column(cols...).
+		Exec(ctx); err != nil {
+		return err
 	}
+	h.state.Caches.AllowHeaderFilters.Clear()
+	return nil
+}
+
+func (h *hdrFilterDB) UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow, cols ...string) error {
+	if _, err := h.db.NewUpdate().
+		Model(filter).
+		Column(cols...).
+		Exec(ctx); err != nil {
+		return err
+	}
+	h.state.Caches.BlockHeaderFilters.Clear()
+	return nil
+}
+
+func (h *hdrFilterDB) DeleteAllowHeaderFilter(ctx context.Context, id string) error {
+	if _, err := h.db.NewDelete().
+		Table("allow_header_filters").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx); err != nil {
+		return err
+	}
+	h.state.Caches.AllowHeaderFilters.Clear()
+	return nil
+}
+
+func (h *hdrFilterDB) DeleteBlockHeaderFilter(ctx context.Context, id string) error {
+	if _, err := h.db.NewDelete().
+		Table("block_header_filters").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx); err != nil {
+		return err
+	}
+	h.state.Caches.BlockHeaderFilters.Clear()
 	return nil
 }

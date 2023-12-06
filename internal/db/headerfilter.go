@@ -25,14 +25,29 @@ import (
 )
 
 type HeaderFilter interface {
-	// HeaderMatchPositive performs a positive match of given http headers against stored positive type header filters.
+	// HeaderAllow performs a positive match of given http headers against stored allow header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	HeaderMatchPositive(ctx context.Context, hdr http.Header) (bool, error)
+	HeaderAllow(ctx context.Context, hdr http.Header) (bool, error)
 
-	// HeaderMatchNegative performs a negative match of given http headers against stored negative type header filters.
+	// HeaderBlock performs a negative match of given http headers against stored block header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	HeaderMatchNegative(ctx context.Context, hdr http.Header) (bool, error)
+	HeaderBlock(ctx context.Context, hdr http.Header) (bool, error)
 
-	// PutHeaderFilter inserts the given header filter into the database.
-	PutHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter) error
+	// PutAllowHeaderFilter ...
+	PutAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow) error
+
+	// PutBlockHeaderFilter ...
+	PutBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow) error
+
+	// UpdateAllowHeaderFilter ...
+	UpdateAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow, cols ...string) error
+
+	// UpdateBlockHeaderFilter ...
+	UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilterAllow, cols ...string) error
+
+	// DeleteAllowHeaderFilter ...
+	DeleteAllowHeaderFilter(ctx context.Context, id string) error
+
+	// DeleteBlockHeaderFilter ...
+	DeleteBlockHeaderFilter(ctx context.Context, id string) error
 }

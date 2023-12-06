@@ -87,8 +87,8 @@ func (fs *Filters) Append(key string, expr string) error {
 	return nil
 }
 
-// MatchPositive
-func (fs Filters) MatchPositive(h http.Header) bool {
+// Allow ...
+func (fs Filters) Allow(h http.Header) bool {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
 			// Shorten header value if needed
@@ -97,7 +97,7 @@ func (fs Filters) MatchPositive(h http.Header) bool {
 
 			// Compare against regexprs.
 			for i := range filter.exprs {
-				if filter.exprs[i].MatchString(value) {
+				if !filter.exprs[i].MatchString(value) {
 					filter.exprs[i].n.Add(1)
 					return false
 				}
@@ -107,8 +107,8 @@ func (fs Filters) MatchPositive(h http.Header) bool {
 	return true
 }
 
-// MatchNegative
-func (fs Filters) MatchNegative(h http.Header) bool {
+// Block ...
+func (fs Filters) Block(h http.Header) bool {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
 			// Shorten header value if needed

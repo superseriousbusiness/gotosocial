@@ -17,23 +17,18 @@
 
 package gtsmodel
 
-const (
-	_                        = iota
-	HeaderFilterTypePositive = 1
-	HeaderFilterTypeNegative = 2
-)
+import "time"
+
+type HeaderFilterAllow struct{ HeaderFilter }
+
+type HeaderFilterBlock struct{ HeaderFilter }
 
 type HeaderFilter struct {
-	ID     string `bun:"VARCHAR(26),pk"`
-	Type   uint8  `bun:","`
-	HdrKey string `bun:","`
-	Regex  string `bun:","`
-}
-
-func (f *HeaderFilter) Positive() bool {
-	return f.Type == HeaderFilterTypePositive
-}
-
-func (f *HeaderFilter) Negative() bool {
-	return f.Type == HeaderFilterTypeNegative
+	ID          string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    //
+	Key         string    `bun:","`                                                           // Request header key this filter pertains to
+	Regex       string    `bun:","`                                                           // Request header value matching regular expression
+	CreatedByID string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this filter
+	CreatedBy   *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to CreatedByAccountID
+	CreatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 }

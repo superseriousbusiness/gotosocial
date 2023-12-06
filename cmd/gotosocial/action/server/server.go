@@ -219,14 +219,19 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
-	middlewares := []gin.HandlerFunc{
-		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
-	}
 
+	// Start preparing middleware stack.
+	middlewares := make([]gin.HandlerFunc, 1)
+
+	// RequestID middleware must run before tracing!
+	middlewares[0] = middleware.AddRequestID(config.GetRequestIDHeader())
+
+	// Add tracing middleware if enabled.
 	if config.GetTracingEnabled() {
 		middlewares = append(middlewares, tracing.InstrumentGin())
 	}
 
+	// Add metrics middleware if enabled.
 	if config.GetMetricsEnabled() {
 		middlewares = append(middlewares, metrics.InstrumentGin())
 	}
@@ -312,6 +317,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
 	retryAfter := config.GetAdvancedThrottlingRetryAfter()
+	headerFilter := middleware.HeaderFilter(&state)               // request header filtering
 	clThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // client api
 	s2sThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // server-to-server (AP)
 	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // fileserver / web templates
@@ -321,14 +327,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
-	authModule.Route(router, clLimit, clThrottle, gzip)
-	clientModule.Route(router, clLimit, clThrottle, gzip)
-	metricsModule.Route(router, clLimit, clThrottle, gzip)
-	fileserverModule.Route(router, fsLimit, fsThrottle)
+	authModule.Route(router, clLimit, clThrottle, gzip, headerFilter)
+	clientModule.Route(router, clLimit, clThrottle, gzip, headerFilter)
+	metricsModule.Route(router, clLimit, clThrottle, gzip, headerFilter)
+	fileserverModule.Route(router, fsLimit, fsThrottle, headerFilter)
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
+	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip, headerFilter)
+	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip, headerFilter)
 	webModule.Route(router, fsLimit, fsThrottle, gzip)
 
 	// Start the GoToSocial server.

@@ -32,11 +32,11 @@ type Caches struct {
 	// (planned to be used by the typeconverter).
 	AP APCaches
 
-	// PositiveHdrFilters ...
-	PositiveHdrFilters headerfilter.Cache
+	// AllowHeaderFilters ...
+	AllowHeaderFilters headerfilter.Cache
 
-	// NegativeHdrFilters ...
-	NegativeHdrFilters headerfilter.Cache
+	// BlockHeaderFilters ...
+	BlockHeaderFilters headerfilter.Cache
 
 	// Visibility provides access to the item visibility cache.
 	// (used by the visibility filter).
