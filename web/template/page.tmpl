@@ -58,6 +58,8 @@ image/png
         {{- end }}
         {{- if .account }}
         <link rel="alternate" type="application/activity+json" href="/users/{{- .account.Username -}}">
+        {{- else if .status }}
+        <link rel="alternate" type="application/activity+json" href="/users/{{- .status.Account.Username -}}/statuses/{{- .status.ID -}}">
         {{- else }}
         {{- end }}
         <link rel="icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
