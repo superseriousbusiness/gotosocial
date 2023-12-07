@@ -40,7 +40,8 @@ func (m *Module) baseHandler(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "index.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template": "index.tmpl",
 		"instance": instance,
 		"ogMeta":   ogBase(instance),
 		"stylesheets": []string{

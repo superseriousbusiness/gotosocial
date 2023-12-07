@@ -37,7 +37,8 @@ func (m *Module) aboutGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "about.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template":         "about.tmpl",
 		"instance":         instance,
 		"languages":        config.GetInstanceLanguages().DisplayStrs(),
 		"ogMeta":           ogBase(instance),

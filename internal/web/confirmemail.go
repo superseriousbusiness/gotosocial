@@ -48,7 +48,8 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "confirmed.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template": "confirmed.tmpl",
 		"instance": instance,
 		"email":    user.Email,
 		"username": user.Account.Username,

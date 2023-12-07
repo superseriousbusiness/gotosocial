@@ -49,15 +49,21 @@ image/png
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="robots" content="{{- if .robotsMeta -}}{{- .robotsMeta -}}{{- else -}}noindex, nofollow{{- end -}}">
         {{- if .ogMeta }}
-        {{- include "header_ogmeta.tmpl" . | indent 2 | noescape }}
+        {{- include "page_ogmeta.tmpl" . | indent 2 | noescape }}
+        {{- else }}
         {{- end }}
-        {{ if .rssFeed -}}
+        {{- if .rssFeed }}
         <link rel="alternate" type="application/rss+xml" href="{{- .rssFeed -}}" title="{{- template "instanceTitle" . -}}">
+        {{- else }}
+        {{- end }}
+        {{- if .account }}
+        <link rel="alternate" type="application/activity+json" href="/users/{{- .account.Username -}}">
+        {{- else }}
         {{- end }}
         <link rel="icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
         <link rel="apple-touch-icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
         <link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
-        {{- include "header_stylesheets.tmpl" . | indent 2 | noescape }}
+        {{- include "page_stylesheets.tmpl" . | indent 2 | noescape }}
         <title>{{- template "instanceTitle" . -}}</title>
     </head>
     <body>
@@ -69,30 +75,11 @@ image/png
                 </a>
             </header>
             <div class="content">
-                {{- include .template | indent 4 | noescape }}
+                {{- include .template . | indent 4 | noescape }}
             </div>
             <footer>
-                <div id="version">
-                    <a name="Source code" href="https://github.com/superseriousbusiness/gotosocial">
-                        GoToSocial <span class="accent">{{- .instance.Version -}}</span>
-                    </a>
-                </div>
-                {{- if .instance.ContactAccount }} 
-                <div id="contact">
-                    Contact: <a href="{{- .instance.ContactAccount.URL -}}" class="nounderline">{{- .instance.ContactAccount.Username -}}</a>
-                    <br>
-                </div>
-                {{- end }}
-                {{- if .instance.Email }} 
-                <div id="email">
-                    Email: <a href="mailto:{{- .instance.Email -}}" class="nounderline">{{- .instance.Email -}}</a>
-                    <br>
-                </div>
-                {{- end }}
+                {{- include "page_footer.tmpl" . | indent 4 | noescape }}
             </footer>
         </div>
-        {{- range .javascript }}
-        <script src="{{- . -}}"></script>
-        {{- end }}
     </body>
 </html>

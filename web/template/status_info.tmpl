@@ -1,0 +1,45 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<time datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>
+<div class="stats" role="group">
+    <div class="stats-item">
+        <span aria-hidden="true"><i class="fa fa-reply-all"></i> {{ .RepliesCount -}}</span>
+        <span class="sr-only">{{- .RepliesCount }} {{ if .RepliesCount | eq 1 }}reply{{ else }}replies{{ end -}}</span>
+    </div>
+    <div class="stats-item">
+        <span aria-hidden="true"><i class="fa fa-star"></i> {{ .FavouritesCount -}}</span>
+        <span class="sr-only">{{- .FavouritesCount }} {{ if .FavouritesCount | eq 1 }}favourite{{ else }}favourites{{ end -}}</span>
+    </div>
+    <div class="stats-item">
+        <span aria-hidden="true"><i class="fa fa-retweet"></i> {{ .ReblogsCount -}}</span>
+        <span class="sr-only">{{- .ReblogsCount }} {{ if .ReblogsCount | eq 1 }}boost{{ else }}boosts{{ end -}}</span>
+    </div>
+    {{- if .Pinned }}
+    <div class="stats-item">
+        <i class="fa fa-thumb-tack" aria-hidden="true"></i>
+        <span class="sr-only">pinned</span>
+    </div>
+    {{- end }}
+    {{- if .LanguageTag.DisplayStr }}
+    <div class="stats-item language" title="Language: {{ .LanguageTag.DisplayStr }}">{{ .LanguageTag.TagStr }}</div>
+    {{- end }}
+</div>
+{{- end }}

@@ -150,7 +150,8 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		stylesheets = append(stylesheets, "/@"+targetAccount.Username+"/custom.css")
 	}
 
-	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template":         "profile.tmpl",
 		"instance":         instance,
 		"account":          targetAccount,
 		"ogMeta":           ogBase(instance).withAccount(targetAccount),

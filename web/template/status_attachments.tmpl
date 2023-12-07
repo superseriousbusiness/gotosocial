@@ -22,7 +22,7 @@
         To use this template, pass a web view status into it.
 */ -}}
 
-{{ with .MediaAttachments }}
+{{- with .MediaAttachments }}
 <div class="media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{ else if eq (len .) 2 }}double{{- end -}}">
     {{- range $index, $media := . }}
     <div class="media-wrapper">

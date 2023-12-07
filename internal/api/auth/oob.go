@@ -101,7 +101,8 @@ func (m *Module) OobHandler(c *gin.Context) {
 	// we're done with the session now, so just clear it out
 	m.clearSession(s)
 
-	c.HTML(http.StatusOK, "oob.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template": "oob.tmpl",
 		"instance": instance,
 		"user":     acct.Username,
 		"oobToken": oobToken,

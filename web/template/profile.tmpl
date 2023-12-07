@@ -22,7 +22,7 @@
     <div class="header">
         <div class="header-image">
             {{- if .account.Header }}
-            <img src="{{- .account.Header -}}" alt="" />
+            <img src="{{- .account.Header -}}" alt=""/>
             {{- end }}
         </div>
         <div class="basic-info" aria-hidden="true">
@@ -31,29 +31,22 @@
             </a>
             <span class="displayname text-cutoff">
                 {{- if .account.DisplayName -}}
-                {{ emojify .account.Emojis (escape .account.DisplayName) }}
-                {{- else }}
-                {{ .account.Username }}
-                {{- end }}
+                {{- emojify .account.Emojis (escape .account.DisplayName) -}}
+                {{- else -}}
+                {{- .account.Username -}}
+                {{- end -}}
             </span>
-            <span class="username text-cutoff">@{{.account.Username}}@{{.instance.AccountDomain}}</span>
+            <span class="username text-cutoff">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</span>
             {{- /* Only render account role if 1. it's present and 2. it's not equal to the standard 'user' role */ -}}
             {{- if and (.account.Role) (ne .account.Role.Name "user") }}
-            <div class="role {{ .account.Role.Name -}}">
-                {{ .account.Role.Name }}
-            </div>
+            <div class="role {{ .account.Role.Name -}}">{{- .account.Role.Name -}}</div>
             {{- end }}
         </div>
         <div class="sr-only">
-            Profile for
-            {{- if .account.DisplayName }}
-            {{ .account.DisplayName }}
-            {{- else }}
-            {{ .account.Username }}
-            {{- end }}.
+            Profile for {{ if .account.DisplayName -}}{{- .account.DisplayName -}}{{- else -}}{{- .account.Username -}}{{- end -}}.
             Username @{{- .account.Username -}}, {{ .instance.AccountDomain -}}.
             {{- if and (.account.Role) (ne .account.Role.Name "user") }}
-            Role: {{ .account.Role.Name }}
+            Role: {{ .account.Role.Name -}}.
             {{- end }}
         </div>
     </div>
@@ -79,15 +72,15 @@
             </div>
             <div class="sr-only" role="group">
                 <span>Joined on {{.account.CreatedAt | timestampVague}}.</span>
-                <span>{{.account.StatusesCount}} post{{if .account.StatusesCount | eq 1 | not}}s{{end}}.</span>
-                <span>Followed by {{.account.FollowersCount}}.</span>
-                <span>Following {{.account.FollowingCount}}.</span>
+                <span>{{- .account.StatusesCount }} post{{- if .account.StatusesCount | eq 1 | not -}}s{{- end -}}.</span>
+                <span>Followed by {{ .account.FollowersCount -}}.</span>
+                <span>Following {{ .account.FollowingCount -}}.</span>
             </div>
             <div class="accountstats" aria-hidden="true">
-                <b>Joined</b><time datetime="{{.account.CreatedAt}}">{{.account.CreatedAt | timestampVague}}</time>
-                <b>Posts</b><span>{{.account.StatusesCount}}</span>
-                <b>Followed by</b><span>{{.account.FollowersCount}}</span>
-                <b>Following</b><span>{{.account.FollowingCount}}</span>
+                <b>Joined</b><time datetime="{{- .account.CreatedAt -}}">{{- .account.CreatedAt | timestampVague -}}</time>
+                <b>Posts</b><span>{{- .account.StatusesCount -}}</span>
+                <b>Followed by</b><span>{{- .account.FollowersCount -}}</span>
+                <b>Following</b><span>{{- .account.FollowingCount -}}</span>
             </div>
         </section>
         <section class="toots">
@@ -99,7 +92,7 @@
             <section class="thread">
                 {{- range .pinned_statuses }}
                 <article class="toot expanded" id="{{- .ID -}}">
-                    {{ include "status.tmpl" . | indent 5 | noescape }}
+                    {{- include "status.tmpl" . | indent 5 | noescape }}
                 </article>
                 {{- end }}
             </section>
@@ -118,7 +111,7 @@
                 {{- else }}
                 {{- range .statuses }}
                 <article class="toot expanded" id="{{- .ID -}}">
-                    {{ include "status.tmpl" . | indent 5 | noescape }}
+                    {{- include "status.tmpl" . | indent 5 | noescape }}
                 </article>
                 {{- end }}
                 {{- end }}

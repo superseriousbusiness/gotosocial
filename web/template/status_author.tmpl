@@ -17,16 +17,23 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- with . }}
-<main>
-    <section class="error">
-        <h1>An error occured:</h1>
-        <pre>{{- .error -}}</pre>
-        {{- if .requestID }}
-        <div>
-            <span>Request ID:</span> <code>{{- .requestID -}}</code>
-        </div>
-        {{- end }}
-    </section>
-</main>
+{{- with .Account }}
+<a href="{{- .URL -}}">
+    <img class="avatar" src="{{- .Avatar -}}" alt="">
+    <span aria-hidden="true" class="displayname">
+        {{- if .DisplayName -}}
+        {{- emojify .Emojis (escape .DisplayName) -}}
+        {{- else -}}
+        {{- .Username -}}
+        {{- end -}}
+    </span>
+    <span aria-hidden="true" class="username">@{{- .Username -}}</span>
+    <span class="sr-only">
+        {{- if .DisplayName -}}
+        {{- emojify .Emojis (escape .DisplayName) -}}. Username: @{{- .Acct -}}.
+        {{- else -}}
+        @{{- .Acct -}}.
+        {{- end -}}
+    </span>
+</a>
 {{- end }}

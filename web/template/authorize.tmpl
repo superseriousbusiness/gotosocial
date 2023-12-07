@@ -17,6 +17,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- with . }}
 <main>
     <form action="/oauth/authorize" method="POST">
         <h1>Hi {{ .user -}}!</h1>
@@ -36,3 +37,4 @@
         <button type="submit" style="width:200px;">Allow</button>
     </form>
 </main>
+{{- end }}

@@ -499,15 +499,20 @@ label {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
+	padding: 2rem;
 
-	h2 {
-		margin: 0.5rem 0;
-	}
+	background: $bg-accent;
+	box-shadow: $boxshadow;
+	border: $boxshadow-border;
+	border-radius: $br;
 
-	ul {
+	ul, ol {
 		margin-bottom: 0;
 	}
 
+	h2 {
+		margin-top: 0;
+	}
 }
 
 .account-card {

@@ -17,12 +17,11 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
+{{- with . }}
 <main>
     <section>
         <h1>Email Address Confirmed</h1>
-        <p>Thanks {{.username}}! Your email address <b>{{.email}}</b> has been confirmed.<p>
+        <p>Thanks {{ .username -}}! Your email address <b>{{- .email -}}</b> has been confirmed.<p>
     </section>
 </main>
-
-{{ template "footer.tmpl" .}}
+{{- end }}

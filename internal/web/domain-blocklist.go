@@ -57,7 +57,8 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "domain-blocklist.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template":  "domain-blocklist.tmpl",
 		"instance":  instance,
 		"ogMeta":    ogBase(instance),
 		"blocklist": domainBlocks,

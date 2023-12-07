@@ -56,7 +56,8 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 		}
 
 		// no idp provider, use our own funky little sign in page
-		c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{
+		c.HTML(http.StatusOK, "page.tmpl", gin.H{
+			"template": "sign-in.tmpl",
 			"instance": instance,
 		})
 		return

@@ -32,7 +32,8 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "frontend.tmpl", gin.H{
+	c.HTML(http.StatusOK, "page.tmpl", gin.H{
+		"template": "frontend.tmpl",
 		"instance": instance,
 		"stylesheets": []string{
 			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
