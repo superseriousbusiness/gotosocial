@@ -498,7 +498,7 @@ label {
 .about {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 2rem;
 	padding: 2rem;
 
 	background: $bg-accent;
@@ -507,11 +507,13 @@ label {
 	border-radius: $br;
 
 	ul, ol {
+		margin-top: 0;
 		margin-bottom: 0;
 	}
 
-	h2 {
+	h3 {
 		margin-top: 0;
+		margin-bottom:0.5rem;
 	}
 }
 

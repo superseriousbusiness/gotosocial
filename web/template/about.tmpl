@@ -24,8 +24,8 @@
     federating with <span class="count">{{- .instance.Stats.domain_count -}}</span> other instances.
 </section>
 <main class="about">
-    <h2>About {{ .instance.Title -}}</h2>
     <section>
+        <h3 id="about">About {{ .instance.Title -}}</h3>
         {{- .instance.Description | noescape -}}
     </section>
     <section>
@@ -35,20 +35,18 @@
             <img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt=""/>
             <h3>
                 {{- if .instance.ContactAccount.DisplayName -}}
-                {{ emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) }}
-                {{- else}}
-                {{ .instance.ContactAccount.Username }}
-                {{- end }}
+                {{- emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) -}}
+                {{- else -}}
+                {{- .instance.ContactAccount.Username -}}
+                {{- end -}}
             </h3>
             <span>@{{- .instance.ContactAccount.Username -}}</span>
         </a>
         {{- else }}
         <p>This instance has not yet set a contact account.</p>
         {{- end }}
-        {{- if .instance.Email -}}
-        <p>
-            Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a>
-        </p>
+        {{- if .instance.Email }}
+        <p>Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a></p>
         {{- else }}
         <p>This instance has not yet set a contact email address.</p>
         {{- end }}
@@ -78,14 +76,16 @@
         <h3 id="features">Instance Features</h3>
         <ul>
             <li>
-                Registration is
-                {{- if .instance.Registrations }}
-                enabled.
+                {{- if not .instance.Registrations }}
+                Registration is disabled; new signups are currently closed for this instance.
                 {{- else }}
-                disabled.
+                Registration is enabled; new signups can be submitted to this instance.
+                {{- if .instance.ApprovalRequired }}
+                Admin approval is required for new registrations.
+                {{- else }}
+                Admin approval is not required for registrations;
+                new signups will be automatically approved (pending email confirmation).
                 {{- end }}
-                {{- if and .instance.Registrations .instance.ApprovalRequired }}
-                Registration requires admin approval.
                 {{- end }}
             </li>
             {{- if .instance.Configuration.Accounts.AllowCustomCSS }}
