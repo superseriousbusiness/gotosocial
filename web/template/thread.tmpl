@@ -25,11 +25,13 @@
             {{- include "status.tmpl" . | indent 3 | noescape }}
         </article>
         {{- end }}
-        <article class="toot expanded" id="{{- .status.ID -}}">
+        {{- with .status }}
+        <article class="toot expanded" id="{{- .ID -}}">
             {{- include "status.tmpl" . | indent 3 | noescape }}
         </article>
+        {{- end }}
         {{- range .context.Descendants }}
-        <article class="toot" id="{{.ID}}">
+        <article class="toot" id="{{- .ID -}}">
             {{- include "status.tmpl" . | indent 3 | noescape }}
         </article>
         {{- end }}
