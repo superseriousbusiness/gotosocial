@@ -19,21 +19,46 @@
 
 {{- with . }}
 <div id="about">
-    <a href="/about">About {{ .instance.Title }}</a>
+    <a
+        href="/about"
+        class="nounderline"
+    >
+        About {{ .instance.Title }}
+    </a>
 </div>
 <div id="version">
-    <a name="Source code" href="https://github.com/superseriousbusiness/gotosocial">
-        GoToSocial <span class="accent">{{- .instance.Version -}}</span>
+    Source:
+    <a
+        href="https://github.com/superseriousbusiness/gotosocial"
+        class="nounderline"
+        rel="nofollow noreferrer noopener"
+        target="_blank"
+    >
+        GoToSocial {{ .instance.Version }}
     </a>
 </div>
 {{- if .instance.ContactAccount }} 
 <div id="contact">
-    Contact: <a href="{{- .instance.ContactAccount.URL -}}" class="nounderline">{{- .instance.ContactAccount.Username -}}</a>
+    Contact:
+    <a
+        href="/@{{- .instance.ContactAccount.Username -}}"
+        class="nounderline"
+    >
+        {{ .instance.ContactAccount.Username }}
+    </a>
 </div>
 {{- end }}
 {{- if .instance.Email }} 
 <div id="email">
-    Email: <a href="mailto:{{- .instance.Email -}}" class="nounderline">{{- .instance.Email -}}</a>
+    Email:
+    <a
+        href="mailto:{{- .instance.Email -}}"
+        class="nounderline"
+        rel="nofollow noreferrer noopener"
+        target="_blank"
+    >
+        {{ .instance.Email }}
+    </a>
 </div>
 {{- end }}
 {{- range .javascript }}
