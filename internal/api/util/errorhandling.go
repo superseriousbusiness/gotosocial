@@ -50,7 +50,8 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 			panic(err)
 		}
 
-		c.HTML(http.StatusNotFound, "404.tmpl", gin.H{
+		c.HTML(http.StatusNotFound, "page.tmpl", gin.H{
+			"template":  "404.tmpl",
 			"instance":  instance,
 			"requestID": gtscontext.RequestID(ctx),
 		})
