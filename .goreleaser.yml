@@ -27,6 +27,8 @@ builds:
       - static_build
       - kvformat
       - timetzdata
+      - >-
+        {{ if and (index .Env "DEBUG") (.Env.DEBUG) }}debugenv{{ end }}
     env:
       - CGO_ENABLED=0
     goos:
