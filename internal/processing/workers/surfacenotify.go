@@ -320,7 +320,7 @@ func (s *surface) notifyPollClose(ctx context.Context, status *gtsmodel.Status) 
 		// notify voter that
 		// poll has been closed.
 		if err := s.notify(ctx,
-			gtsmodel.NotificationMention,
+			gtsmodel.NotificationPoll,
 			vote.Account,
 			status.Account,
 			status.ID,
