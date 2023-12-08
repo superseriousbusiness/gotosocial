@@ -30,53 +30,60 @@ import (
 	"github.com/gin-gonic/gin/render"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// LoadHTMLTemplates loads HTML files identified by glob
-// pattern and associates the result with HTML renderer.
-func LoadHTMLTemplates(engine *gin.Engine, pattern string) {
-	var (
-		tmpl = template.New("")
-		err  error
-	)
+func LoadTemplates(engine *gin.Engine) error {
+	templateBaseDir := config.GetWebTemplateBaseDir()
+	if templateBaseDir == "" {
+		return gtserror.Newf(
+			"%s cannot be empty and must be a relative or absolute path",
+			config.WebTemplateBaseDirFlag(),
+		)
+	}
 
-	funcMap := engine.FuncMap
-	funcMap["include"] = func(name string, data interface{}) (string, error) {
+	templateDirAbs, err := filepath.Abs(templateBaseDir)
+	if err != nil {
+		return gtserror.Newf(
+			"error getting absolute path of web-template-base-dir %s: %w",
+			templateBaseDir, err,
+		)
+	}
+
+	indexTmplPath := filepath.Join(templateDirAbs, "index.tmpl")
+	if _, err := os.Stat(indexTmplPath); err != nil {
+		return gtserror.Newf(
+			"cannot find index.tmpl in web template directory %s: %w",
+			templateDirAbs, err,
+		)
+	}
+
+	// Bring base template into scope.
+	tmpl := template.New("base")
+
+	// Set "include" function to render provided
+	// template name using the base template.
+	FuncMap["include"] = func(name string, data any) (string, error) {
 		var buf strings.Builder
 		err := tmpl.ExecuteTemplate(&buf, name, data)
 		return buf.String(), err
 	}
 
-	tmpl, err = tmpl.Funcs(funcMap).ParseGlob(pattern)
+	// Load functions into the base template, and
+	// associate other templates with base template.
+	templateGlob := filepath.Join(templateDirAbs, "*")
+	tmpl, err = tmpl.Funcs(FuncMap).ParseGlob(templateGlob)
 	if err != nil {
-		panic(err)
+		return gtserror.Newf("error loading templates: %w", err)
 	}
 
-	engine.HTMLRender = render.HTMLProduction{Template: tmpl}
-}
-
-// LoadTemplates loads html templates for use by the given engine
-func LoadTemplates(engine *gin.Engine) error {
-
-	templateBaseDir := config.GetWebTemplateBaseDir()
-	if templateBaseDir == "" {
-		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebTemplateBaseDirFlag())
-	}
-
-	templateBaseDir, err := filepath.Abs(templateBaseDir)
-	if err != nil {
-		return fmt.Errorf("error getting absolute path of %s: %s", templateBaseDir, err)
-	}
-
-	if _, err := os.Stat(filepath.Join(templateBaseDir, "index.tmpl")); err != nil {
-		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %w", templateBaseDir, err)
-	}
-
+	// Almost done; teach the
+	// engine how to render.
 	engine.SetFuncMap(FuncMap)
-	LoadHTMLTemplates(engine, filepath.Join(templateBaseDir, "*"))
+	engine.HTMLRender = render.HTMLProduction{Template: tmpl}
 
 	return nil
 }

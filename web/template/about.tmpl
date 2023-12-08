@@ -17,6 +17,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- define "description" -}}
+{{- if .instance.Description }}
+{{ .instance.Description | noescape }}
+{{- else }}
+<p>No description has yet been set for this instance.<p>
+{{- end }}
+{{- end -}}
+
 {{- with . }}
 <section class="excerpt-top">
     home to <span class="count">{{- .instance.Stats.user_count -}}</span> users
@@ -26,7 +34,9 @@
 <main class="about">
     <section>
         <h3 id="about">About {{ .instance.Title -}}</h3>
-        {{- .instance.Description | noescape -}}
+        {{- with . }}
+        {{- include "description" . | indent 2 | noescape }}
+        {{- end }}
     </section>
     <section>
         <h3 id="contact">Admin Contact</h3>

@@ -17,6 +17,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- define "shortDescription" -}}
+{{- if .instance.ShortDescription }}
+{{ .instance.ShortDescription | noescape }}
+{{- else }}
+<p>No short description has yet been set for this instance.<p>
+{{- end }}
+{{- end -}}
+
 {{- with . }}
 <section class="excerpt-top">
     home to <span class="count">{{- .instance.Stats.user_count -}}</span> users
@@ -26,7 +34,9 @@
 <main class="lightgray">
     <section>
         <div className="short-description">
-            {{ .instance.ShortDescription | noescape }}
+            {{- with . }}
+            {{- include "shortDescription" . | indent 3 | noescape }}
+            {{- end }}
         </div>
     </section>
     <section class="apps">
