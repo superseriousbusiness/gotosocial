@@ -32,7 +32,7 @@
 	}
 }
 
-.profile .header {
+.profile .profile-header {
 	background: $profile-bg;
 	border-radius: $br;
 	overflow: hidden;
@@ -141,7 +141,7 @@
 }
 
 @media screen and (max-width: 750px) {
-	.profile .header {
+	.profile .profile-header {
 		.basic-info {
 			grid-template-columns: auto 1fr;
 			grid-template-rows: $avatar-size $name-size auto;
@@ -176,12 +176,33 @@
 	}
 }
 
-.profile .toots {
+.profile .toots-wrapper {
 	flex: 65 25rem; 
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
 	min-width: 0%;
+}
+
+.profile .toots {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+
+	.rss-icon {
+		display: block;
+		margin: -0.25rem 0;
+		
+		.fa {
+			font-size: 2rem;
+			object-fit: contain;
+			vertical-align: middle;
+			color: $orange2;
+			/* can't size a single-color background, so we use a linear-gradient that's effectively white */
+			background: linear-gradient(to right, $white1 100%, transparent 0) no-repeat center center;
+			background-size: 1.2rem 1.4rem;
+		}
+	}
 
 	.col-header {
 		display: grid;
@@ -190,21 +211,6 @@
 
 		a {
 			justify-self: end;
-		}
-
-		.rss-icon {
-			display: block;
-			margin: -0.25rem 0;
-			
-			.fa {
-				font-size: 2rem;
-				object-fit: contain;
-				vertical-align: middle;
-				color: $orange2;
-				/* can't size a single-color background, so we use a linear-gradient that's effectively white */
-				background: linear-gradient(to right, $white1 100%, transparent 0) no-repeat center center;
-				background-size: 1.2rem 1.4rem;
-			}
 		}
 	}
 
@@ -247,6 +253,10 @@
 		padding: 0 0.5rem;
 		padding-top: 0.25rem;
 
+		dl {
+			margin: 0;
+		}
+
 		.field {
 			padding: 0.25rem;
 			display: flex;
@@ -255,6 +265,14 @@
 
 			&:first-child {
 				border-top: 0.1rem solid $gray2;
+			}
+
+			dt {
+				font-weight: bold;
+			}
+
+			dd {
+				margin-left: 0;
 			}
 		}
 	}

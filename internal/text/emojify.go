@@ -42,7 +42,10 @@ func EmojifyWeb(emojis []apimodel.Emoji, html template.HTML) template.HTML {
 			buf.WriteString(`:" class="emoji" `)
 			// Lazy load emojis when
 			// they scroll into view.
-			buf.WriteString(`loading="lazy"/>`)
+			buf.WriteString(`loading="lazy" `)
+			// Limit size to avoid showing
+			// huge emojis when unstyled.
+			buf.WriteString(`width="25" height="25"/>`)
 		},
 	)
 
@@ -64,10 +67,10 @@ func EmojifyRSS(emojis []apimodel.Emoji, text string) string {
 			buf.WriteString(code)
 			buf.WriteString(`:" alt=":`)
 			buf.WriteString(code)
-			buf.WriteString(`:" class="emoji" `)
+			buf.WriteString(`:" `)
 			// Limit size to avoid showing
 			// huge emojis in RSS readers.
-			buf.WriteString(`width="50" height="50"/>`)
+			buf.WriteString(`width="25" height="25"/>`)
 		},
 	)
 }
