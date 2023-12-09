@@ -543,16 +543,16 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
 	apiStatus, err := suite.typeconverter.StatusToWebStatus(context.Background(), testStatus, requestingAccount)
 	suite.NoError(err)
 
-  // MediaAttachments should inherit
-  // the status's sensitive flag.
+	// MediaAttachments should inherit
+	// the status's sensitive flag.
 	for _, a := range apiStatus.MediaAttachments {
 		if !a.Sensitive {
 			suite.FailNow("expected sensitive attachment")
 		}
 	}
 
-  // We don't really serialize web statuses to JSON
-  // ever, but it *is* a nice way of checking it.
+	// We don't really serialize web statuses to JSON
+	// ever, but it *is* a nice way of checking it.
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
 	suite.NoError(err)
 
