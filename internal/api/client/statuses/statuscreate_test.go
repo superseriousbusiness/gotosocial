@@ -385,7 +385,7 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	suite.NoError(err)
 
 	// compare it with what we have now
-	suite.EqualValues(statusResponse.MediaAttachments[0], gtsAttachmentAsapi)
+	suite.EqualValues(*statusResponse.MediaAttachments[0], gtsAttachmentAsapi)
 
 	// the status id of the attachment should now be set to the id of the status we just created
 	suite.Equal(statusResponse.ID, gtsAttachment.StatusID)

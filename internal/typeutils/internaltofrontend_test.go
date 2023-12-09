@@ -452,8 +452,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "created_at": "2023-11-02T10:44:25.000Z",
   "in_reply_to_id": "01F8MH75CBF9JFX4ZAD54N0W0R",
   "in_reply_to_account_id": "01F8MH17FWEB39HZJ76B6VXSKF",
-  "sensitive": false,
-  "spoiler_text": "",
+  "sensitive": true,
+  "spoiler_text": "some unknown media included",
   "visibility": "public",
   "language": "en",
   "uri": "http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5",
@@ -519,6 +519,139 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
       },
       "description": "Photograph of a sloth, Public Domain.",
       "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+    }
+  ],
+  "mentions": [
+    {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "url": "http://localhost:8080/@admin",
+      "acct": "admin"
+    }
+  ],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
+	testStatus := suite.testStatuses["remote_account_2_status_1"]
+	requestingAccount := suite.testAccounts["admin_account"]
+
+	apiStatus, err := suite.typeconverter.StatusToWebStatus(context.Background(), testStatus, requestingAccount)
+	suite.NoError(err)
+
+  // MediaAttachments should inherit
+  // the status's sensitive flag.
+	for _, a := range apiStatus.MediaAttachments {
+		if !a.Sensitive {
+			suite.FailNow("expected sensitive attachment")
+		}
+	}
+
+  // We don't really serialize web statuses to JSON
+  // ever, but it *is* a nice way of checking it.
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01HE7XJ1CG84TBKH5V9XKBVGF5",
+  "created_at": "2023-11-02T10:44:25.000Z",
+  "in_reply_to_id": "01F8MH75CBF9JFX4ZAD54N0W0R",
+  "in_reply_to_account_id": "01F8MH17FWEB39HZJ76B6VXSKF",
+  "sensitive": true,
+  "spoiler_text": "some unknown media included",
+  "visibility": "public",
+  "language": "en",
+  "uri": "http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5",
+  "url": "http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 0,
+  "favourited": false,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": false,
+  "pinned": false,
+  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e",
+  "reblog": null,
+  "account": {
+    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
+    "username": "Some_User",
+    "acct": "Some_User@example.org",
+    "display_name": "some user",
+    "locked": true,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2020-08-10T12:13:28.000Z",
+    "note": "i'm a real son of a gun",
+    "url": "http://example.org/@Some_User",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 1,
+    "last_status_at": "2023-11-02T10:44:25.000Z",
+    "emojis": [],
+    "fields": []
+  },
+  "media_attachments": [
+    {
+      "id": "01HE7Y3C432WRSNS10EZM86SA5",
+      "type": "image",
+      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7Y6G0EMCKST3Q0914WW0MS.jpg",
+      "preview_remote_url": null,
+      "meta": {
+        "original": {
+          "width": 3000,
+          "height": 2000,
+          "size": "3000x2000",
+          "aspect": 1.5
+        },
+        "small": {
+          "width": 512,
+          "height": 341,
+          "size": "512x341",
+          "aspect": 1.5014663
+        },
+        "focus": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "description": "Photograph of a sloth, Public Domain.",
+      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+    },
+    {
+      "id": "01HE7ZFX9GKA5ZZVD4FACABSS9",
+      "type": "unknown",
+      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7ZFX9GKA5ZZVD4FACABSS9.svg",
+      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7ZFX9GKA5ZZVD4FACABSS9.svg",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7ZFX9GKA5ZZVD4FACABSS9.jpg",
+      "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg",
+      "preview_remote_url": null,
+      "meta": null,
+      "description": "SVG line art of a sloth, public domain",
+      "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of"
+    },
+    {
+      "id": "01HE88YG74PVAB81PX2XA9F3FG",
+      "type": "unknown",
+      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
+      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE88YG74PVAB81PX2XA9F3FG.jpg",
+      "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
+      "preview_remote_url": null,
+      "meta": null,
+      "description": "Jolly salsa song, public domain.",
+      "blurhash": null
     }
   ],
   "mentions": [
