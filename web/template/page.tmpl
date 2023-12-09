@@ -35,7 +35,7 @@ image/png
 
 {{- define "instanceTitle" -}}
 {{- if .ogMeta -}}
-{{- .ogMeta.Title -}}
+{{- demojify .ogMeta.Title | noescape -}}
 {{- else -}}
 {{- .instance.Title }} - GoToSocial
 {{- end -}}
@@ -67,7 +67,7 @@ image/png
         <link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
         {{- include "page_stylesheets.tmpl" . | indent 2 | noescape }}
         {{- range .javascript }}
-        <script src="{{- . -}}" defer></script>
+        <script type="text/javascript" src="{{- . -}}" async="" defer=""></script>
         {{- end }}
         <title>{{- template "instanceTitle" . -}}</title>
     </head>

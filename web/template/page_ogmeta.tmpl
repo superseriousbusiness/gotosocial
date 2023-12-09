@@ -29,10 +29,10 @@
 {{- else }}
 {{- end }}
 <meta property="og:type" content="{{- .Type -}}">
-<meta property="og:title" content="{{- .Title -}}">
+<meta property="og:title" content="{{- demojify .Title | noescape -}}">
 <meta property="og:url" content="{{- .URL -}}">
 <meta property="og:site_name" content="{{- .SiteName -}}">
-<meta property="og:description" {{ .Description | noescapeAttr -}}>
+<meta property="og:description" {{ demojify .Description | noescapeAttr -}}>
 {{- if .ArticlePublisher }}
 <meta property="og:article:publisher" content="{{ .ArticlePublisher }}">
 <meta property="og:article:author" content="{{ .ArticleAuthor }}">

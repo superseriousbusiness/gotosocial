@@ -36,6 +36,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// LoadTemplates loads templates found at `web-template-base-dir`
+// into the Gin engine, or errors if templates cannot be loaded.
 func LoadTemplates(engine *gin.Engine) error {
 	templateBaseDir := config.GetWebTemplateBaseDir()
 	if templateBaseDir == "" {
@@ -66,7 +68,7 @@ func LoadTemplates(engine *gin.Engine) error {
 
 	// Set "include" function to render provided
 	// template name using the base template.
-	FuncMap["include"] = func(name string, data any) (string, error) {
+	funcMap["include"] = func(name string, data any) (string, error) {
 		var buf strings.Builder
 		err := tmpl.ExecuteTemplate(&buf, name, data)
 		return buf.String(), err
@@ -75,17 +77,65 @@ func LoadTemplates(engine *gin.Engine) error {
 	// Load functions into the base template, and
 	// associate other templates with base template.
 	templateGlob := filepath.Join(templateDirAbs, "*")
-	tmpl, err = tmpl.Funcs(FuncMap).ParseGlob(templateGlob)
+	tmpl, err = tmpl.Funcs(funcMap).ParseGlob(templateGlob)
 	if err != nil {
 		return gtserror.Newf("error loading templates: %w", err)
 	}
 
 	// Almost done; teach the
 	// engine how to render.
-	engine.SetFuncMap(FuncMap)
+	engine.SetFuncMap(funcMap)
 	engine.HTMLRender = render.HTMLProduction{Template: tmpl}
 
 	return nil
+}
+
+var funcMap = template.FuncMap{
+	"acctInstance":     acctInstance,
+	"demojify":         demojify,
+	"emojify":          emojify,
+	"escape":           escape,
+	"increment":        increment,
+	"indent":           indent,
+	"noescapeAttr":     noescapeAttr,
+	"noescape":         noescape,
+	"oddOrEven":        oddOrEven,
+	"timestampPrecise": timestampPrecise,
+	"timestamp":        timestamp,
+	"timestampVague":   timestampVague,
+	"visibilityIcon":   visibilityIcon,
+}
+
+func oddOrEven(n int) string {
+	if n%2 == 0 {
+		return "even"
+	}
+	return "odd"
+}
+
+// escape HTML escapes the given string,
+// returning a trusted template.
+func escape(str string) template.HTML {
+	/* #nosec G203 */
+	return template.HTML(template.HTMLEscapeString(str))
+}
+
+// noescape marks the given string as a
+// trusted template. The provided string
+// MUST have already passed through a
+// template or escaping function.
+func noescape(str string) template.HTML {
+	/* #nosec G203 */
+	return template.HTML(str)
+}
+
+// noescapeAttr marks the given string as a
+// trusted HTML attribute. The provided string
+// MUST have already passed through a template
+// or escaping function.
+func noescapeAttr(str string) template.HTMLAttr {
+	/* #nosec G203 */
+	return template.HTMLAttr(str)
 }
 
 const (
@@ -96,43 +146,6 @@ const (
 	monthYear    = "Jan, 2006"
 	badTimestamp = "bad timestamp"
 )
-
-var FuncMap = template.FuncMap{
-	"escape":           escape,
-	"noescape":         noescape,
-	"noescapeAttr":     noescapeAttr,
-	"oddOrEven":        oddOrEven,
-	"visibilityIcon":   visibilityIcon,
-	"timestamp":        timestamp,
-	"timestampVague":   timestampVague,
-	"timestampPrecise": timestampPrecise,
-	"emojify":          emojify,
-	"acctInstance":     acctInstance,
-	"increment":        increment,
-	"indent":           indent,
-}
-
-func oddOrEven(n int) string {
-	if n%2 == 0 {
-		return "even"
-	}
-	return "odd"
-}
-
-func escape(str string) template.HTML {
-	/* #nosec G203 */
-	return template.HTML(template.HTMLEscapeString(str))
-}
-
-func noescape(str string) template.HTML {
-	/* #nosec G203 */
-	return template.HTML(str)
-}
-
-func noescapeAttr(str string) template.HTMLAttr {
-	/* #nosec G203 */
-	return template.HTMLAttr(str)
-}
 
 func timestamp(stamp string) string {
 	t, err := util.ParseISO8601(stamp)
@@ -206,17 +219,24 @@ func visibilityIcon(visibility apimodel.Visibility) template.HTML {
 	))
 }
 
-// text is a template.HTML to affirm that the
-// input of this function is already escaped.
+// emojify replaces emojis in the given
+// html fragment with suitable <img> tags.
+//
+// The provided input must have been
+// escaped / templated already!
 func emojify(
 	emojis []apimodel.Emoji,
-	input template.HTML,
+	html template.HTML,
 ) template.HTML {
-	out := text.Emojify(emojis, string(input))
+	return text.EmojifyWeb(emojis, html)
+}
 
-	/* #nosec G203 */
-	// (this is escaped above)
-	return template.HTML(out)
+// demojify replaces emoji shortcodes in
+// the given fragment with empty strings.
+//
+// Output must then be escaped as appropriate.
+func demojify(input string) string {
+	return text.Demojify(input)
 }
 
 func acctInstance(acct string) string {
@@ -228,6 +248,8 @@ func acctInstance(acct string) string {
 	return ""
 }
 
+// increment adds 1
+// to the given int.
 func increment(i int) int {
 	return i + 1
 }
