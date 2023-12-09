@@ -19,7 +19,7 @@
 
 {{- with .Account }}
 <a href="{{- .URL -}}">
-    <img class="avatar" src="{{- .Avatar -}}" alt="">
+    <img class="avatar" src="{{- .Avatar -}}" alt="" loading="lazy">
     <span aria-hidden="true" class="displayname">
         {{- if .DisplayName -}}
         {{- emojify .Emojis (escape .DisplayName) -}}

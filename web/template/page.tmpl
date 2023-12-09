@@ -66,6 +66,9 @@ image/png
         <link rel="apple-touch-icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
         <link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
         {{- include "page_stylesheets.tmpl" . | indent 2 | noescape }}
+        {{- range .javascript }}
+        <script src="{{- . -}}" defer></script>
+        {{- end }}
         <title>{{- template "instanceTitle" . -}}</title>
     </head>
     <body>

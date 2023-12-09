@@ -38,7 +38,7 @@
                     <source type="video/mp4" src="{{- $media.URL -}}"/>
                 </video>
                 {{- else if eq .Type "image" }}
-                <img src="{{- $media.PreviewURL -}}" {{- if .Description }} title="{{- $media.Description -}}" {{- end }}/>
+                <img src="{{- $media.PreviewURL -}}" loading="lazy" {{- if .Description }} title="{{- $media.Description -}}"{{- end -}}/>
                 {{- end }}
             </summary>
             {{- if eq .Type "video" }}
@@ -67,7 +67,7 @@
                 title="{{- $media.Description -}}"
                 {{- end }}
             >
-                <img src="{{$media.PreviewURL}}" {{if .Description}}alt="{{$media.Description}}" {{end}} />
+                <img src="{{- $media.PreviewURL -}}" loading="lazy" {{- if .Description }} alt="{{- $media.Description -}}"{{- end -}}/>
             </a>
             {{- else }}
             <a
