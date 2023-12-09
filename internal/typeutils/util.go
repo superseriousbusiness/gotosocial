@@ -111,11 +111,11 @@ func misskeyReportInlineURLs(content string) []*url.URL {
 //	      </ul>
 //	   </p>
 //	</aside>
-func placeholdUnknownAttachments(arr []apimodel.Attachment) (string, []apimodel.Attachment) {
+func placeholdUnknownAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Attachment) {
 	// Extract unknown-type attachments into a separate
 	// slice, deleting them from arr in the process.
-	var unknowns []apimodel.Attachment
-	arr = slices.DeleteFunc(arr, func(elem apimodel.Attachment) bool {
+	var unknowns []*apimodel.Attachment
+	arr = slices.DeleteFunc(arr, func(elem *apimodel.Attachment) bool {
 		unknown := elem.Type == "unknown"
 		if unknown {
 			// Set aside unknown-type attachment.

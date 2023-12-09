@@ -1530,7 +1530,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 }
 
 // convertAttachmentsToAPIAttachments will convert a slice of GTS model attachments to frontend API model attachments, falling back to IDs if no GTS models supplied.
-func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]apimodel.Attachment, error) {
+func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]*apimodel.Attachment, error) {
 	var errs gtserror.MultiError
 
 	if len(attachments) == 0 {
@@ -1551,7 +1551,7 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 	}
 
 	// Preallocate expected frontend slice
-	apiAttachments := make([]apimodel.Attachment, 0, len(attachments))
+	apiAttachments := make([]*apimodel.Attachment, 0, len(attachments))
 
 	// Convert GTS models to frontend models
 	for _, attachment := range attachments {
@@ -1560,7 +1560,7 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 			errs.Appendf("error converting attchment %s to api attachment: %v", attachment.ID, err)
 			continue
 		}
-		apiAttachments = append(apiAttachments, apiAttachment)
+		apiAttachments = append(apiAttachments, &apiAttachment)
 	}
 
 	return apiAttachments, errs.Combine()
