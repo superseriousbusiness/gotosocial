@@ -83,7 +83,7 @@ type Status struct {
 	// The account that authored this status.
 	Account *Account `json:"account"`
 	// Media that is attached to this status.
-	MediaAttachments []Attachment `json:"media_attachments"`
+	MediaAttachments []*Attachment `json:"media_attachments"`
 	// Mentions of users within the status content.
 	Mentions []Mention `json:"mentions"`
 	// Hashtags used within the status content.
