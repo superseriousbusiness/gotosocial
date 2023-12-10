@@ -69,7 +69,15 @@
 	{{- end }}
 </section>
 <aside class="info">
-	<time datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>
+	<dl class="sr-only">
+		<dt>Published<dt>
+		<dd>{{- .CreatedAt | timestampPrecise -}}</dd>
+		{{- if .LanguageTag.DisplayStr }}
+		<dt>Language</dt>
+		<dd>{{ .LanguageTag.DisplayStr }}</dd>
+		{{- end }}
+	</dl>
+	<time aria-hidden="true" datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>
 	<div class="stats" role="group">
 		<div class="stats-item">
 			<span aria-hidden="true"><i class="fa fa-reply-all"></i> {{ .RepliesCount -}}</span>
@@ -90,7 +98,7 @@
 		</div>
 		{{- end }}
 		{{- if .LanguageTag.DisplayStr }}
-		<div class="stats-item language" title="Language: {{ .LanguageTag.DisplayStr }}">{{ .LanguageTag.TagStr }}</div>
+		<div aria-hidden="true" class="stats-item language" title="Language: {{ .LanguageTag.DisplayStr }}">{{ .LanguageTag.TagStr }}</div>
 		{{- end }}
 	</div>
 </aside>
