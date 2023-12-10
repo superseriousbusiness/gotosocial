@@ -155,6 +155,7 @@ main {
 		.content {
 			word-break: break-word;
 			line-height: 1.6rem;
+			width: 100%;
 
 			h1 {
 				margin: 0;

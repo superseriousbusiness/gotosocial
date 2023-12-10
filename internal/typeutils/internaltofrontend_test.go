@@ -58,8 +58,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 6,
-  "last_status_at": "2022-05-20T11:41:10.000Z",
+  "statuses_count": 7,
+  "last_status_at": "2023-12-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "enable_rss": true,
@@ -100,8 +100,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 6,
-  "last_status_at": "2022-05-20T11:41:10.000Z",
+  "statuses_count": 7,
+  "last_status_at": "2023-12-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -148,8 +148,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 6,
-  "last_status_at": "2022-05-20T11:41:10.000Z",
+  "statuses_count": 7,
+  "last_status_at": "2023-12-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -192,8 +192,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 6,
-  "last_status_at": "2022-05-20T11:41:10.000Z",
+  "statuses_count": 7,
+  "last_status_at": "2023-12-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "source": {
@@ -896,7 +896,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 18,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",
