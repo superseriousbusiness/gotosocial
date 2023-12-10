@@ -202,20 +202,24 @@ main {
 
 			pre, code {
 				background-color: $gray2;
-				white-space: pre;
 			}
 
 			code {
+				/* Just code on its own inside status
+				content, ie, `here is some code` */
 				padding: 0.25rem;
 				border-radius: $br-inner;
+				white-space: pre-wrap;
 			}
 
 			pre, pre[class*="language-"] {
-				display: flex;
 				border-radius: $br;
 				padding: 0.5rem;
+				white-space: pre;
 
 				code {
+					/* Code inside a pre block, ie.,
+					```\nhere is some code\n``` */
 					width: 100%;
 					padding: 0.5rem;
 					overflow-x: auto;

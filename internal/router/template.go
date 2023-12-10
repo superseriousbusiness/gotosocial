@@ -270,7 +270,7 @@ func indent(n int, input string) string {
 
 var (
 	pre = regexp.MustCompile(fmt.Sprintf(
-		`(?sm)^^((?:%s)+)<pre>.*</pre>`, indentStr),
+		`(?mU)(?sm)^^((?:%s)+)<pre>.*</pre>`, indentStr),
 	)
 )
 
