@@ -90,7 +90,8 @@
 		</div>
 		{{- end }}
 		{{- if .LanguageTag.DisplayStr }}
-		<div class="stats-item language" title="Language: {{ .LanguageTag.DisplayStr }}">{{ .LanguageTag.TagStr }}</div>
+		<div aria-hidden="true" class="stats-item language" title="Language: {{ .LanguageTag.DisplayStr }}">{{ .LanguageTag.TagStr }}</div>
+		<div class="sr-only">Language: {{ .LanguageTag.DisplayStr -}}</div>
 		{{- end }}
 	</div>
 </aside>
