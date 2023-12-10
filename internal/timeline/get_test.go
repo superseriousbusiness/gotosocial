@@ -228,7 +228,7 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossible() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(statuses, id.Highest, id.Lowest, 18)
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 19)
 }
 
 func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossiblePageUp() {
@@ -255,7 +255,7 @@ func (suite *GetTestSuite) TestGetNewTimelineMoreThanPossiblePageUp() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(statuses, id.Highest, id.Lowest, 18)
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 19)
 }
 
 func (suite *GetTestSuite) TestGetNewTimelineNoFollowing() {
@@ -284,7 +284,7 @@ func (suite *GetTestSuite) TestGetNewTimelineNoFollowing() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(statuses, id.Highest, id.Lowest, 6)
+	suite.checkStatuses(statuses, id.Highest, id.Lowest, 7)
 
 	for _, s := range statuses {
 		if s.GetAccountID() != testAccount.ID {

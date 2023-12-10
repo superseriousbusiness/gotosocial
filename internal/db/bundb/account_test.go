@@ -42,33 +42,33 @@ type AccountTestSuite struct {
 func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false)
 	suite.NoError(err)
-	suite.Len(statuses, 6)
+	suite.Len(statuses, 7)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
 	// get the first page
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, "", "", false, false)
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, "", "", false, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Len(statuses, 2)
+	suite.Len(statuses, 3)
 
 	// get the second page
-	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Len(statuses, 2)
+	suite.Len(statuses, 3)
 
 	// get the third page
-	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Len(statuses, 2)
+	suite.Len(statuses, 1)
 
 	// try to get the last page (should be empty)
-	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 2, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Empty(statuses)
 }
@@ -76,13 +76,13 @@ func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false)
 	suite.NoError(err)
-	suite.Len(statuses, 6)
+	suite.Len(statuses, 7)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPublicOnly() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, true)
 	suite.NoError(err)
-	suite.Len(statuses, 1)
+	suite.Len(statuses, 2)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
@@ -306,13 +306,13 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 func (suite *AccountTestSuite) TestGetAccountLastPosted() {
 	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, false)
 	suite.NoError(err)
-	suite.EqualValues(1653046870, lastPosted.Unix())
+	suite.EqualValues(1702200240, lastPosted.Unix())
 }
 
 func (suite *AccountTestSuite) TestGetAccountLastPostedWebOnly() {
 	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, true)
 	suite.NoError(err)
-	suite.EqualValues(1634726437, lastPosted.Unix())
+	suite.EqualValues(1702200240, lastPosted.Unix())
 }
 
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {

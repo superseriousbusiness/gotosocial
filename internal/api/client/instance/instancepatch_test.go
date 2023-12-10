@@ -133,7 +133,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 18,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",
@@ -250,7 +250,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 18,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",
@@ -367,7 +367,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 18,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",
@@ -535,7 +535,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 18,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",
@@ -674,7 +674,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 18,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
@@ -828,7 +828,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 18,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",
