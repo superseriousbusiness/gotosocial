@@ -222,6 +222,7 @@ main {
 					```\nhere is some code\n``` */
 					width: 100%;
 					padding: 0.5rem;
+					white-space: pre;
 					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
 				}
