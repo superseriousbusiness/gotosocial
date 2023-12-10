@@ -18,6 +18,7 @@
 package router
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"os"
@@ -32,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -97,6 +99,7 @@ var funcMap = template.FuncMap{
 	"escape":           escape,
 	"increment":        increment,
 	"indent":           indent,
+	"outdentPre":       outdentPre,
 	"noescapeAttr":     noescapeAttr,
 	"noescape":         noescape,
 	"oddOrEven":        oddOrEven,
@@ -263,4 +266,36 @@ var (
 
 func indent(n int, input string) string {
 	return indentRegex.ReplaceAllString(input, indents[:n*indentStrLen])
+}
+
+var (
+	pre = regexp.MustCompile(fmt.Sprintf(
+		`(?sm)^^((?:%s)+)<pre>.*</pre>`, indentStr),
+	)
+)
+
+func outdentPre(html template.HTML) template.HTML {
+	input := string(html)
+	output := regexes.ReplaceAllStringFunc(pre, input,
+		func(match string, buf *bytes.Buffer) string {
+			// Reuse the regex to pull out submatches.
+			matches := pre.FindAllStringSubmatch(match, -1)
+			if len(matches) != 1 {
+				return match
+			}
+
+			var (
+				indented = matches[0][0]
+				indent   = matches[0][1]
+			)
+
+			// Outdent everything in the inner match, add
+			// a newline at the end to make it a bit neater.
+			outdented := strings.ReplaceAll(indented, indent, "")
+
+			// Replace original match with the outdented version.
+			return strings.ReplaceAll(match, indented, outdented)
+		},
+	)
+	return noescape(output)
 }

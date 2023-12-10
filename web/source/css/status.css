@@ -19,6 +19,7 @@
 @import "photoswipe/dist/photoswipe.css";
 @import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
 @import "plyr/dist/plyr.css";
+@import "./prism.css";
 
 main {
 	background: transparent;
@@ -196,10 +197,12 @@ main {
 
 			hr {
 				border: 1px dashed $border-accent;
+				padding: 0.5rem;
 			} 
 
 			pre, code {
 				background-color: $gray2;
+				white-space: pre;
 			}
 
 			code {
@@ -207,15 +210,14 @@ main {
 				border-radius: $br-inner;
 			}
 
-			pre {
+			pre, pre[class*="language-"] {
 				display: flex;
 				border-radius: $br;
 				padding: 0.5rem;
 
-				code {	
+				code {
+					width: 100%;
 					padding: 0.5rem;
-					white-space: pre;
-					border-radius: 0;
 					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
 				}

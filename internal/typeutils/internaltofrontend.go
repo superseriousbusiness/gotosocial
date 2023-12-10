@@ -662,6 +662,10 @@ func (c *Converter) StatusToWebStatus(
 		return nil, err
 	}
 
+	// Whack a newline before and after each "pre" to make it easier to outdent it.
+	webStatus.Content = strings.ReplaceAll(webStatus.Content, "<pre>", "\n<pre>")
+	webStatus.Content = strings.ReplaceAll(webStatus.Content, "</pre>", "</pre>\n")
+
 	// Add additional information for template.
 	// Assume empty langs, hope for not empty language.
 	webStatus.LanguageTag = new(language.Language)

@@ -91,7 +91,7 @@ Instance Logo
                 </a>
             </header>
             <div class="content">
-                {{- include .template . | indent 4 | noescape }}
+                {{- include .template . | indent 4 | noescape | outdentPre }}
             </div>
             <footer>
                 {{- include "page_footer.tmpl" . | indent 4 | noescape }}

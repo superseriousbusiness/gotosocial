@@ -17,6 +17,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- define "statusContent" -}}
+{{- with .Content }}
+<div class="content" lang="{{- $.LanguageTag.TagStr -}}">
+    {{ noescape . | emojify $.Emojis }}
+</div>
+{{- end }}
+{{- end -}}
+
 {{- with . }}
 <section class="author">
     {{- include "status_author.tmpl" . | indent 1 | noescape }}
@@ -29,9 +37,9 @@
             <span class="button" role="button" tabindex="0">Toggle visibility</span>
         </summary>
         <div class="text">
-            <div class="content" lang="{{- .LanguageTag.TagStr -}}">
-                {{ emojify .Emojis (noescape .Content) }}
-            </div>
+            {{- with . }}
+            {{- include "statusContent" . | indent 3 | noescape }}
+            {{- end }}
             {{- if .Poll }}
             {{- include "status_poll.tmpl" . | indent 3 | noescape }}
             {{- end }}
@@ -39,9 +47,9 @@
     </details>
     {{- else }}
     <div class="text">
-        <div class="content" lang="{{- .LanguageTag.TagStr -}}">
-            {{ emojify .Emojis (noescape .Content) }}
-        </div>
+        {{- with . }}
+        {{- include "statusContent" . | indent 2 | noescape }}
+        {{- end }}
         {{- if .Poll }}
         {{- include "status_poll.tmpl" . | indent 2 | noescape }}
         {{- end }}
