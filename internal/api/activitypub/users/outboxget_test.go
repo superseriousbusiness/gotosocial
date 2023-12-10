@@ -140,16 +140,26 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "id": "http://localhost:8080/users/the_mighty_zork/outbox?page=true",
   "next": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
-  "orderedItems": {
-    "actor": "http://localhost:8080/users/the_mighty_zork",
-    "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-    "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",
-    "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
-    "to": "https://www.w3.org/ns/activitystreams#Public",
-    "type": "Create"
-  },
+  "orderedItems": [
+    {
+      "actor": "http://localhost:8080/users/the_mighty_zork",
+      "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+      "id": "http://localhost:8080/users/the_mighty_zork/statuses/01HH9KYNQPA416TNJ53NSATP40/activity#Create",
+      "object": "http://localhost:8080/users/the_mighty_zork/statuses/01HH9KYNQPA416TNJ53NSATP40",
+      "to": "https://www.w3.org/ns/activitystreams#Public",
+      "type": "Create"
+    },
+    {
+      "actor": "http://localhost:8080/users/the_mighty_zork",
+      "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+      "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",
+      "object": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+      "to": "https://www.w3.org/ns/activitystreams#Public",
+      "type": "Create"
+    }
+  ],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026min_id=01F8MHAMCHF6Y650WCRSCP4WMY",
+  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026min_id=01HH9KYNQPA416TNJ53NSATP40",
   "type": "OrderedCollectionPage"
 }`, dst.String())
 
@@ -237,22 +247,32 @@ func checkDropPublished(t *testing.T, b []byte, at ...string) []byte {
 	if err := json.Unmarshal(b, &m); err != nil {
 		t.Fatalf("error unmarshaling json into map: %v", err)
 	}
-	mm := m
+
+	entries := make([]map[string]any, 0)
 	for _, key := range at {
-		switch vt := mm[key].(type) {
-		case map[string]any:
-			mm = vt
+		switch vt := m[key].(type) {
+		case []interface{}:
+			for _, t := range vt {
+				if entry, ok := t.(map[string]any); ok {
+					entries = append(entries, entry)
+				}
+			}
 		}
 	}
-	if s, ok := mm["published"].(string); !ok {
-		t.Fatal("missing published data on json")
-	} else if _, err := time.Parse(time.RFC3339, s); err != nil {
-		t.Fatalf("error parsing published time: %v", err)
+
+	for _, entry := range entries {
+		if s, ok := entry["published"].(string); !ok {
+			t.Fatal("missing published data on json")
+		} else if _, err := time.Parse(time.RFC3339, s); err != nil {
+			t.Fatalf("error parsing published time: %v", err)
+		}
+		delete(entry, "published")
 	}
-	delete(mm, "published")
+
 	b, err := json.Marshal(m)
 	if err != nil {
 		t.Fatalf("error remarshaling json: %v", err)
 	}
+
 	return b
 }

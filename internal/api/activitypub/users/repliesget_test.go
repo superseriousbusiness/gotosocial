@@ -163,7 +163,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 		"partOf":       targetStatus.URI + "/replies?only_other_accounts=false",
 		"next":         "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&min_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false",
 		"prev":         "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/replies?limit=20&max_id=01FF25D5Q0DH7CHD57CTRS6WK0&only_other_accounts=false",
-		"orderedItems": "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
+		"orderedItems": []string{"http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0"},
 		"totalItems":   1,
 	})
 	assert.Equal(suite.T(), expect, string(b))
