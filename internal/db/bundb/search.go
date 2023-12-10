@@ -67,7 +67,7 @@ type searchDB struct {
 //	WHERE (("account"."domain" IS NULL) OR ("account"."domain" != "account"."username"))
 //	AND ("account"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
 //	AND ("account"."id" IN (SELECT "target_account_id" FROM "follows" WHERE ("account_id" = '016T5Q3SQKBT337DAKVSKNXXW1')))
-//	AND ((SELECT LOWER("account"."username" || COALESCE("account"."display_name", '') || COALESCE("account"."note", '')) AS "account_text") LIKE '%turtle%' ESCAPE '\')
+//	AND ((SELECT "account"."username" || COALESCE("account"."display_name", '') || COALESCE("account"."note", '') AS "account_text") LIKE '%turtle%' ESCAPE '\')
 //	ORDER BY "account"."id" DESC LIMIT 10
 func (s *searchDB) SearchForAccounts(
 	ctx context.Context,
@@ -128,12 +128,20 @@ func (s *searchDB) SearchForAccounts(
 		)
 	}
 
-	// Select account text as subquery.
-	accountTextSubq := s.accountText(following)
-
-	// Search using LIKE for matches of query
-	// string within accountText subquery.
-	q = whereLike(q, accountTextSubq, query)
+	if strings.HasPrefix(query, "@") {
+		// Query looks a bit like a username.
+		// Normalize it and just look for
+		// usernames that start with query.
+		query = query[1:]
+		subQ := s.accountUsername()
+		q = whereStartsLike(q, subQ, query)
+	} else {
+		// Query looks like arbitrary string.
+		// Search using LIKE for matches of query
+		// string within accountText subquery.
+		subQ := s.accountText(following)
+		q = whereLike(q, subQ, query)
+	}
 
 	if limit > 0 {
 		// Limit amount of accounts returned.
@@ -191,7 +199,15 @@ func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
 		Where("? = ?", bun.Ident("follow.account_id"), accountID)
 }
 
-// statusText returns a subquery that selects a concatenation
+// accountUsername returns a subquery that just selects
+// from account usernames, without concatenation.
+func (s *searchDB) accountUsername() *bun.SelectQuery {
+	return s.db.
+		NewSelect().
+		Column("account.username")
+}
+
+// accountText returns a subquery that selects a concatenation
 // of account username and display name as "account_text". If
 // `following` is true, then account note will also be included
 // in the concatenation.
@@ -226,14 +242,17 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	// different number of placeholders depending on
 	// following/not following. COALESCE calls ensure
 	// that we're not trying to concatenate null values.
+	//
+	// SQLite search is case insensitive.
+	// Postgres searches get lowercased.
 	d := s.db.Dialect().Name()
 	switch {
 
 	case d == dialect.SQLite && following:
-		query = "LOWER(? || COALESCE(?, ?) || COALESCE(?, ?)) AS ?"
+		query = "? || COALESCE(?, ?) || COALESCE(?, ?) AS ?"
 
 	case d == dialect.SQLite && !following:
-		query = "LOWER(? || COALESCE(?, ?)) AS ?"
+		query = "? || COALESCE(?, ?) AS ?"
 
 	case d == dialect.PG && following:
 		query = "LOWER(CONCAT(?, COALESCE(?, ?), COALESCE(?, ?))) AS ?"
@@ -255,7 +274,7 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 //	WHERE ("status"."boost_of_id" IS NULL)
 //	AND (("status"."account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF') OR ("status"."in_reply_to_account_id" = '01F8MH1H7YV1Z7D2C8K2730QBF'))
 //	AND ("status"."id" < 'ZZZZZZZZZZZZZZZZZZZZZZZZZZ')
-//	AND ((SELECT LOWER("status"."content" || COALESCE("status"."content_warning", '')) AS "status_text") LIKE '%hello%' ESCAPE '\')
+//	AND ((SELECT "status"."content" || COALESCE("status"."content_warning", '') AS "status_text") LIKE '%hello%' ESCAPE '\')
 //	ORDER BY "status"."id" DESC LIMIT 10
 func (s *searchDB) SearchForStatuses(
 	ctx context.Context,
@@ -366,11 +385,14 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 
 	// SQLite and Postgres use different
 	// syntaxes for concatenation.
+	//
+	// SQLite search is case insensitive.
+	// Postgres searches get lowercased.
 	switch s.db.Dialect().Name() {
 
 	case dialect.SQLite:
 		statusText = statusText.ColumnExpr(
-			"LOWER(? || COALESCE(?, ?)) AS ?",
+			"? || COALESCE(?, ?) AS ?",
 			bun.Ident("status.content"), bun.Ident("status.content_warning"), "",
 			bun.Ident("status_text"))
 

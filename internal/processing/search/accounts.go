@@ -74,13 +74,6 @@ func (p *Processor) Accounts(
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	// Be nice and normalize query by prepending '@'.
-	// This will make it easier for accountsByNamestring
-	// to pick this up as a valid namestring.
-	if query[0] != '@' {
-		query = "@" + query
-	}
-
 	log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
@@ -107,9 +100,7 @@ func (p *Processor) Accounts(
 
 	// See if we have something that looks like a namestring.
 	username, domain, err := util.ExtractNamestringParts(query)
-	if err != nil {
-		log.Warnf(ctx, "couldn't parse '%s' as namestring: %v", query, err)
-	} else {
+	if err == nil {
 		if domain != "" {
 			// Search was an exact namestring;
 			// we can safely assume caller is
@@ -121,7 +112,7 @@ func (p *Processor) Accounts(
 
 		// Get all accounts we can find
 		// that match the provided query.
-		if err := p.accountsByNamestring(
+		if err := p.accountsByUsernameDomain(
 			ctx,
 			requestingAccount,
 			id.Highest,
@@ -135,6 +126,23 @@ func (p *Processor) Accounts(
 			appendAccount,
 		); err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err = gtserror.Newf("error searching by namestring: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	} else {
+		// Query Doesn't look like a
+		// namestring, use text search.
+		if err := p.accountsByText(
+			ctx,
+			requestingAccount.ID,
+			id.Highest,
+			id.Lowest,
+			limit,
+			offset,
+			query,
+			following,
+			appendAccount,
+		); err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = gtserror.Newf("error searching by text: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}

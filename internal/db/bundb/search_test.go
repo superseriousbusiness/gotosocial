@@ -37,6 +37,24 @@ func (suite *SearchTestSuite) TestSearchAccountsTurtleAny() {
 	suite.Len(accounts, 1)
 }
 
+func (suite *SearchTestSuite) TestSearchAccounts1HappyWithPrefix() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	// Query will just look for usernames that start with "1happy".
+	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "@1happy", "", "", 10, false, 0)
+	suite.NoError(err)
+	suite.Len(accounts, 1)
+}
+
+func (suite *SearchTestSuite) TestSearchAccounts1HappyNoPrefix() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	// Query will do the full coalesce.
+	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "1happy", "", "", 10, false, 0)
+	suite.NoError(err)
+	suite.Len(accounts, 1)
+}
+
 func (suite *SearchTestSuite) TestSearchAccountsTurtleFollowing() {
 	testAccount := suite.testAccounts["local_account_1"]
 
