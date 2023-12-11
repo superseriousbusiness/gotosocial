@@ -21,7 +21,7 @@ func FromCgroup() (uint64, error) {
 	case cgroups.Legacy:
 		return FromCgroupV1()
 	case cgroups.Hybrid:
-		return fromCgroupHybrid()
+		return FromCgroupHybrid()
 	case cgroups.Unified:
 		return FromCgroupV2()
 	}
@@ -49,10 +49,9 @@ func FromCgroupV1() (uint64, error) {
 	return 0, ErrNoLimit
 }
 
-// fromCgroupHybrid returns the memory limit from the cgroup v1 or v2.
+// FromCgroupHybrid returns the memory limit from the cgroup v1 or v2.
 // It checks the cgroup v2 first, and if it fails, it falls back to cgroup v1.
-// TODO: make this function public in the next minor version.
-func fromCgroupHybrid() (uint64, error) {
+func FromCgroupHybrid() (uint64, error) {
 	limit, err := fromCgroupV2(filepath.Join(cgroupMountPoint, "unified"))
 	if err == nil {
 		return limit, nil
