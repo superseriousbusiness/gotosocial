@@ -824,6 +824,11 @@ func (c *GTSCaches) initPoll() {
 		// See internal/db/bundb/poll.go.
 		p2.Status = nil
 
+		// Don't include ephemeral fields
+		// which are only expected to be
+		// set on ONE poll instance.
+		p2.Closing = false
+
 		return p2
 	}
 
