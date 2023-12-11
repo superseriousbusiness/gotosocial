@@ -19,47 +19,90 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // HeaderFilter ...
 func HeaderFilter(state *state.State) gin.HandlerFunc {
+	switch mode := config.GetInstanceFederationMode(); mode {
+
+	case config.InstanceFederationModeAllowlist:
+		return headerFilterAllowMode(state)
+
+	case config.InstanceFederationModeBlocklist:
+		return headerFilterBlockMode(state)
+
+	default:
+		panic("unrecognized federation mode: " + mode)
+	}
+}
+
+func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
+	// Allowlist mode: explicit block takes
+	// precedence over explicit allow.
+	//
+	// Headers that have neither block
+	// or allow entries are blocked.
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		hdr := c.Request.Header
 
-		// First pass through any positive filters, only
-		// requests that *match* here may pass through.
-		allow, err := state.DB.HeaderAllow(ctx, hdr)
-		if err != nil {
-			respondInternalServerError(c, err)
-			return
-		}
-
-		if !allow {
-			// Request was blocked,
-			// respond and abort here.
-			respondBlocked(c)
-			return
-		}
-
-		// Secondly pass through any negative filters,
-		// *any* requests that match here will be denied.
-		block, err := state.DB.HeaderBlock(ctx, hdr)
+		block, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
 		if err != nil {
 			respondInternalServerError(c, err)
 			return
 		}
 
 		if block {
-			// Request was blocked,
-			// respond and abort here.
 			respondBlocked(c)
 			return
 		}
 
-		// Pass to
-		// next.
+		allow, err := state.DB.AllowHeaderInverseMatch(ctx, hdr)
+		if err != nil {
+			respondInternalServerError(c, err)
+			return
+		}
+
+		if !allow {
+			respondBlocked(c)
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
+	// Blocklist/default mode: explicit allow
+	// takes precedence over explicit block.
+	//
+	// Headers that have neither block
+	// or allow entries are allowed.
+	return func(c *gin.Context) {
+		ctx := c.Request.Context()
+		hdr := c.Request.Header
+
+		allow, err := state.DB.AllowHeaderRegularMatch(ctx, hdr)
+		if err != nil {
+			respondInternalServerError(c, err)
+			return
+		}
+
+		if !allow {
+			block, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
+			if err != nil {
+				respondInternalServerError(c, err)
+				return
+			}
+
+			if block {
+				respondBlocked(c)
+				return
+			}
+		}
+
 		c.Next()
 	}
 }

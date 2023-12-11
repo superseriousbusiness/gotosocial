@@ -31,15 +31,27 @@ type headerFilterDB struct {
 	state *state.State
 }
 
-func (h *headerFilterDB) HeaderAllow(ctx context.Context, hdr http.Header) (bool, error) {
-	return h.state.Caches.AllowHeaderFilters.Allow(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
+func (h *headerFilterDB) AllowHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error) {
+	return h.state.Caches.AllowHeaderFilters.RegularMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
 		return h.GetAllowHeaderFilters(ctx)
 	})
 }
 
-func (h *headerFilterDB) HeaderBlock(ctx context.Context, hdr http.Header) (bool, error) {
-	return h.state.Caches.BlockHeaderFilters.Block(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
-		return h.GetBlockHeaderFilters(ctx)
+func (h *headerFilterDB) AllowHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error) {
+	return h.state.Caches.AllowHeaderFilters.InverseMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
+		return h.GetAllowHeaderFilters(ctx)
+	})
+}
+
+func (h *headerFilterDB) BlockHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error) {
+	return h.state.Caches.AllowHeaderFilters.RegularMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
+		return h.GetAllowHeaderFilters(ctx)
+	})
+}
+
+func (h *headerFilterDB) BlockHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error) {
+	return h.state.Caches.AllowHeaderFilters.InverseMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
+		return h.GetAllowHeaderFilters(ctx)
 	})
 }
 

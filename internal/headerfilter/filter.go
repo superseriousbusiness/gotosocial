@@ -87,30 +87,8 @@ func (fs *Filters) Append(key string, expr string) error {
 	return nil
 }
 
-// Allow will check http header against filters, returning
-// whether current filters specifically allow these headers.
-func (fs Filters) Allow(h http.Header) bool {
-	for _, filter := range fs {
-		for _, value := range h[filter.key] {
-			// Shorten header value if needed
-			// to mitigate denial of service.
-			value = safeHeaderValue(value)
-
-			// Compare against regexprs.
-			for i := range filter.exprs {
-				if !filter.exprs[i].MatchString(value) {
-					filter.exprs[i].n.Add(1)
-					return false
-				}
-			}
-		}
-	}
-	return true
-}
-
-// Block will check http header against filters, returning
-// whether current filters specifically block these headers.
-func (fs Filters) Block(h http.Header) bool {
+// RegularMatch ...
+func (fs Filters) RegularMatch(h http.Header) bool {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
 			// Shorten header value if needed
@@ -120,6 +98,26 @@ func (fs Filters) Block(h http.Header) bool {
 			// Compare against regexprs.
 			for i := range filter.exprs {
 				if filter.exprs[i].MatchString(value) {
+					filter.exprs[i].n.Add(1)
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// InverseMatch ...
+func (fs Filters) InverseMatch(h http.Header) bool {
+	for _, filter := range fs {
+		for _, value := range h[filter.key] {
+			// Shorten header value if needed
+			// to mitigate denial of service.
+			value = safeHeaderValue(value)
+
+			// Compare against regexprs.
+			for i := range filter.exprs {
+				if !filter.exprs[i].MatchString(value) {
 					filter.exprs[i].n.Add(1)
 					return true
 				}

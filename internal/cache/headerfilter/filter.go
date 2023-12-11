@@ -40,9 +40,9 @@ type Cache struct {
 	ptr atomic.Pointer[headerfilter.Filters]
 }
 
-// Allow checks whether header matches positively against filter in the cache. If cache
+// RegularMatch checks whether header matches against filter in the cache. If cache
 // is not currently loaded then the provided load function is called to hydrate it first.
-func (c *Cache) Allow(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -60,13 +60,13 @@ func (c *Cache) Allow(h http.Header, load func() ([]*gtsmodel.HeaderFilter, erro
 		c.ptr.Store(ptr)
 	}
 
-	// Deref and perform match.
-	return ptr.Allow(h), nil
+	// Dereference and perform match.
+	return ptr.RegularMatch(h), nil
 }
 
-// Block checks whether header matches negatively against filter in the cache. If cache
+// InverseMatch checks whether header matches inversely against filter in the cache. If cache
 // is not currently loaded then the provided load function is called to hydrate it first.
-func (c *Cache) Block(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) InverseMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -84,8 +84,8 @@ func (c *Cache) Block(h http.Header, load func() ([]*gtsmodel.HeaderFilter, erro
 		c.ptr.Store(ptr)
 	}
 
-	// Deref and perform match.
-	return ptr.Block(h), nil
+	// Dereference and perform match.
+	return ptr.InverseMatch(h), nil
 }
 
 // Stats returns match statistics associated with currently cached header filters.

@@ -27,11 +27,17 @@ import (
 type HeaderFilter interface {
 	// HeaderAllow performs a positive match of given http headers against stored allow header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	HeaderAllow(ctx context.Context, hdr http.Header) (bool, error)
 
 	// HeaderBlock performs a negative match of given http headers against stored block header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	HeaderBlock(ctx context.Context, hdr http.Header) (bool, error)
+
+	AllowHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
+
+	AllowHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
+
+	BlockHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
+
+	BlockHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
 
 	// GetAllowHeaderFilter ...
 	GetAllowHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error)
