@@ -40,8 +40,8 @@
                 <dt class="sr-only">Username</dt>
                 <dd class="username text-cutoff">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
                 {{- if and (.account.Role) (ne .account.Role.Name "user") }}
-                <dd class="sr-only">Role</dd>
-                <dt class="role {{ .account.Role.Name -}}">{{- .account.Role.Name -}}</dt>
+                <dt class="sr-only">Role</dt>
+                <dd class="role {{ .account.Role.Name -}}">{{- .account.Role.Name -}}</dd>
                 {{- end }}
             </dl>
         </div>
@@ -49,7 +49,7 @@
     <div class="column-split">
         <section class="about-user">
             <div class="col-header">
-                <h3>About<span class="sr-only">{{- .account.Username -}}</span></h3>
+                <h3>About<span class="sr-only">&nbsp;{{- .account.Username -}}</span></h3>
             </div>
             {{- if .account.Fields }}
             {{- include "profile_fields.tmpl" . | indent 3 | noescape }}
