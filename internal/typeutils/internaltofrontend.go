@@ -1432,7 +1432,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	var (
 		options     []apimodel.PollOption
 		totalVotes  int
-		totalVoters int
+		totalVoters *int
 		voted       *bool
 		ownChoices  *[]int
 		isAuthor    bool
@@ -1465,7 +1465,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 			// Update default totals in the
 			// case that counts are hidden.
 			totalVotes = len(vote.Choices)
-			totalVoters = 1
+			totalVoters = util.Ptr(1)
 			for _, choice := range *ownChoices {
 				options[choice].VotesCount++
 			}
@@ -1483,11 +1483,10 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	}
 
 	if isAuthor || !*poll.HideCounts {
-		// A remote status,
-		// the simple route!
+		// A remote status.
 		//
 		// Pull cached remote values.
-		totalVoters = (*poll.Voters)
+		totalVoters = poll.Voters
 
 		// When this is status author, or hide counts
 		// is disabled, set the counts known per vote,
@@ -1498,21 +1497,28 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		}
 	}
 
+	if !*poll.Multiple {
+		// Total number of voters
+		// should ONLY be set when
+		// it is multiple choice.
+		totalVoters = nil
+	}
+
 	if !poll.ExpiresAt.IsZero() {
 		// Calculate poll expiry string (if set).
 		expiresAt = util.FormatISO8601(poll.ExpiresAt)
 	}
 
-	// Try to inherit emojis
-	// from parent status.
-	if pStatus := poll.Status; pStatus != nil {
-		var err error
-		emojis, err = c.convertEmojisToAPIEmojis(ctx, pStatus.Emojis, pStatus.EmojiIDs)
-		if err != nil {
-			// Fall back to empty slice.
-			log.Errorf(ctx, "error converting emojis from parent status: %v", err)
-			emojis = make([]apimodel.Emoji, 0)
-		}
+	var err error
+
+	// Try to inherit emojis from parent status.
+	emojis, err = c.convertEmojisToAPIEmojis(ctx,
+		poll.Status.Emojis,
+		poll.Status.EmojiIDs,
+	)
+	if err != nil {
+		log.Errorf(ctx, "error converting emojis from parent status: %v", err)
+		emojis = []apimodel.Emoji{} // fallback to empty slice.
 	}
 
 	return &apimodel.Poll{
