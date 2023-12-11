@@ -26,10 +26,10 @@
 {{- end -}}
 
 {{- with . }}
-<section class="author">
+<header class="status-author">
     {{- include "status_author.tmpl" . | indent 1 | noescape }}
-</section>
-<section class="body">
+</header>
+<section class="status-body">
     {{- if .SpoilerText }}
     <details class="text-spoiler">
         <summary>
@@ -59,8 +59,8 @@
     {{- include "status_attachments.tmpl" . | indent 1 | noescape }}
     {{- end }}
 </section>
-<aside class="info">
+<aside class="status-info">
     {{- include "status_info.tmpl" . | indent 1 | noescape }}
 </aside>
-<a data-nosnippet href="{{- .URL -}}" class="toot-link">Open thread</a>
+<a data-nosnippet href="{{- .URL -}}" class="status-link">Open thread</a>
 {{- end }}

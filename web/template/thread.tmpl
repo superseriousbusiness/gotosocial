@@ -18,23 +18,21 @@
 */ -}}
 
 {{- with . }}
-<main>
-    <section data-nosnippet class="thread">
-        {{- range .context.Ancestors }}
-        <article class="toot" id="{{- .ID -}}">
-            {{- include "status.tmpl" . | indent 3 | noescape }}
-        </article>
-        {{- end }}
-        {{- with .status }}
-        <article class="toot expanded" id="{{- .ID -}}">
-            {{- include "status.tmpl" . | indent 3 | noescape }}
-        </article>
-        {{- end }}
-        {{- range .context.Descendants }}
-        <article class="toot" id="{{- .ID -}}">
-            {{- include "status.tmpl" . | indent 3 | noescape }}
-        </article>
-        {{- end }}
-    </section>
+<main data-nosnippet class="thread">
+    {{- range .context.Ancestors }}
+    <article class="status" id="{{- .ID -}}">
+        {{- include "status.tmpl" . | indent 2 | noescape }}
+    </article>
+    {{- end }}
+    {{- with .status }}
+    <article class="status expanded" id="{{- .ID -}}">
+        {{- include "status.tmpl" . | indent 2 | noescape }}
+    </article>
+    {{- end }}
+    {{- range .context.Descendants }}
+    <article class="status" id="{{- .ID -}}">
+        {{- include "status.tmpl" . | indent 2 | noescape }}
+    </article>
+    {{- end }}
 </main>
 {{- end }}

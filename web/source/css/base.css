@@ -85,21 +85,21 @@ a {
 	color: $link-fg;
 }
 
-header, footer {
+.page-header, .page-footer {
 	grid-column: 1 / span 3;
 }
 
-.content {
+.page-content {
 	grid-column: 2;
 	align-self: start;
 }
 
-header {
+.page-header {
 	display: flex;
 	justify-content: center;
 }
 
-header a {
+.page-header a {
 	display: flex;
 	flex-wrap: wrap;
 	margin: 1.5rem;
@@ -333,31 +333,36 @@ hr {
 	border-bottom: 0.02rem solid $border-accent;
 }
 
-footer {
+.page-footer {
 	align-self: end;
-	padding: 2rem 0 1rem 0;
 
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
+	nav ul {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-around;
+		
+		/* Override list styling */
+		list-style-type: none;
+		padding-left: 0;
 
-	div {
-		text-align: center;
-		padding: 1rem;
-		flex-grow: 1;
-	}
+		li {
+			text-align: center;
+			padding: 1rem;
+			flex-grow: 1;
 
-	a {
-		font-weight: bold;
+			a {
+				font-weight: bold;
+			}
+		}
 	}
 }
 
 @media screen and (max-width: 600px) {
-	header {
+	.page-header {
 		text-align: center;
 	}
 
-	footer {
+	.page-footer {
 		grid-template-columns: 1fr;
 
 		div {
@@ -560,7 +565,7 @@ label {
 		align-items: center;
 		color: $fg;
 		text-decoration: none;
-		background: $toot-bg;
+		background: $status-bg;
 		padding: 1rem;
 		margin: 0.5rem 0;
 		border-radius: $br;
@@ -604,5 +609,13 @@ label {
 	.domain-blocklist .entry {
 		grid-template-columns: 1fr;
 		gap: 0;
+	}
+}
+
+dl {
+	margin: 0;
+
+	dd {
+		margin-left: 0;
 	}
 }

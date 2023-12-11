@@ -18,47 +18,50 @@
 */ -}}
 
 {{- with . }}
-<div id="about">
-    <a
-        href="/about"
-        class="nounderline"
-    >
-        About {{ .instance.Title }}
-    </a>
-</div>
-<div id="version">
-    Slothware:
-    <a
-        href="https://github.com/superseriousbusiness/gotosocial"
-        class="nounderline"
-        rel="nofollow noreferrer noopener"
-        target="_blank"
-    >
-        🦥 GoToSocial {{ .instance.Version }}
-    </a>
-</div>
-{{- if .instance.ContactAccount }} 
-<div id="contact">
-    Contact:
-    <a
-        href="/@{{- .instance.ContactAccount.Username -}}"
-        class="nounderline"
-    >
-        {{ .instance.ContactAccount.Username }}
-    </a>
-</div>
-{{- end }}
-{{- if .instance.Email }} 
-<div id="email">
-    Email:
-    <a
-        href="mailto:{{- .instance.Email -}}"
-        class="nounderline"
-        rel="nofollow noreferrer noopener"
-        target="_blank"
-    >
-        {{ .instance.Email }}
-    </a>
-</div>
-{{- end }}
+<nav>
+    <ul>
+        <li id="about">
+            <a
+                href="/about"
+                class="nounderline"
+            >
+                About {{ .instance.Title }}
+            </a>
+        </li>
+        <li id="version">
+            <a
+                href="https://github.com/superseriousbusiness/gotosocial"
+                class="nounderline"
+                rel="nofollow noreferrer noopener"
+                target="_blank"
+            >
+                <span aria-hidden="true">🦥</span>
+                Source - GoToSocial {{ .instance.Version }}
+                <span aria-hidden="true">🦥</span>
+            </a>
+        </li>
+        {{- if .instance.ContactAccount }} 
+        <li id="contact">
+            <a
+                href="/@{{- .instance.ContactAccount.Username -}}"
+                class="nounderline"
+            >
+                Contact account - {{ .instance.ContactAccount.Username }}
+            </a>
+        </li>
+        {{- end }}
+        {{- if .instance.Email }} 
+        <li id="email">
+            <a
+                href="mailto:{{- .instance.Email -}}"
+                class="nounderline"
+                rel="nofollow noreferrer noopener"
+                target="_blank"
+            >
+                Email - {{ .instance.Email }}
+            </a>
+        </li>
+        {{- end }}
+    </ul>
+</nav>
 {{- end }}

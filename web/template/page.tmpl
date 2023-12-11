@@ -81,7 +81,7 @@ Instance Logo
     </head>
     <body>
         <div class="page">
-            <header>
+            <header class="page-header">
                 <a aria-label="{{- .instance.Title -}}. Go to instance homepage" href="/" class="nounderline header">
                     <img
                         src="{{- .instance.Thumbnail -}}"
@@ -90,10 +90,10 @@ Instance Logo
                     <h1>{{- .instance.Title -}}</h1>
                 </a>
             </header>
-            <div class="content">
+            <div class="page-content">
                 {{- include .template . | indent 4 | noescape | outdentPre }}
             </div>
-            <footer>
+            <footer class="page-footer">
                 {{- include "page_footer.tmpl" . | indent 4 | noescape }}
             </footer>
         </div>

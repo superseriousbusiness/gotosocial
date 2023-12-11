@@ -38,7 +38,7 @@
 	overflow: hidden;
 	margin-bottom: 1rem;
 
-	.header-image {
+	.header-image-wrapper {
 		position: relative;
 		padding-top: 33.33%; /* aspect-ratio 1/3 */
 
@@ -71,8 +71,8 @@
 		grid-template-rows: $overlap $name-size auto;
 		grid-template-areas:
 			"avatar . ."
-			"avatar displayname displayname"
-			"avatar username role";
+			"avatar namerole namerole"
+			"avatar namerole namerole";
 
 		margin: 1rem;
 		margin-top: calc(-1 * $overlap);
@@ -93,48 +93,61 @@
 			}
 		}
 
-		.displayname {
-			grid-area: displayname;
-			line-height: $name-size;
-			font-size: 1.5rem;
-			font-weight: bold;
-		}
+		.namerole {
+			grid-area: namerole;
 
-		.username {
-			min-width: 0;
-			grid-area: username;
-			line-height: $username-size;
+			display: grid;
+			gap: 0 1rem;
+			box-sizing: border-box;
+			grid-template-columns: auto 1fr;
+			grid-template-rows: $name-size auto;
+			grid-template-areas:
+				"displayname displayname"
+				"username role";
 
-			font-size: 1rem;
-			font-weight: bold;
-			color: $fg-accent;
-			user-select: all;
-		}
-
-		.role {
-			background: $bg;
-			color: $fg;
-			border: 0.13rem solid $bg;
-
-			grid-area: role;
-			align-self: center;
-			justify-self: start;
-			border-radius: $br;
-			padding: 0.3rem;
-			
-			line-height: 1.1rem;
-			font-size: 0.9rem;
-			font-variant: small-caps;
-			font-weight: bold;
-
-			&.admin {
-				color: $role-admin;
-				border-color: $role-admin;
+			.displayname {
+				grid-area: displayname;
+				line-height: $name-size;
+				font-size: 1.5rem;
+				font-weight: bold;
 			}
-
-			&.moderator {
-				color: $role-mod;
-				border-color: $role-mod;
+	
+			.username {
+				min-width: 0;
+				grid-area: username;
+				line-height: $username-size;
+	
+				font-size: 1rem;
+				font-weight: bold;
+				color: $fg-accent;
+				user-select: all;
+			}
+	
+			.role {
+				background: $bg;
+				color: $fg;
+				border: 0.13rem solid $bg;
+	
+				grid-area: role;
+				align-self: center;
+				justify-self: start;
+				border-radius: $br;
+				padding: 0.3rem;
+				
+				line-height: 1.1rem;
+				font-size: 0.9rem;
+				font-variant: small-caps;
+				font-weight: bold;
+	
+				&.admin {
+					color: $role-admin;
+					border-color: $role-admin;
+				}
+	
+				&.moderator {
+					color: $role-mod;
+					border-color: $role-mod;
+				}
 			}
 		}
 	}
@@ -147,11 +160,19 @@
 			grid-template-rows: $avatar-size $name-size auto;
 			grid-template-areas:
 				"avatar avatar"
-				"displayname displayname"
-				"username role";
-
-			.displayname {
-				font-size: 1.4rem;
+				"namerole namerole"
+				"namerole namerole";
+			
+			.namerole {
+				grid-template-columns: 1fr;
+				grid-template-rows: $name-size auto;
+				grid-template-areas:
+					"displayname displayname"
+					"username role";
+				
+				.displayname {
+					font-size: 1.4rem;
+				}
 			}
 		}
 	}
@@ -169,14 +190,14 @@
 	border-top-right-radius: $br;
 	padding: 0.75rem;
 
-	h1, h2 {
+	h1, h2, h3, h4 {
 		font-size: 1.2rem;
 		line-height: 1.3rem;
 		margin: 0;
 	}
 }
 
-.profile .toots-wrapper {
+.profile .statuses-wrapper {
 	flex: 65 25rem; 
 	display: flex;
 	flex-direction: column;
@@ -184,7 +205,7 @@
 	min-width: 0%;
 }
 
-.profile .toots {
+.profile .statuses {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
@@ -214,10 +235,10 @@
 		}
 	}
 
-	.toot {
+	.status {
 		border-radius: 0;
 
-		.info {
+		.status-info {
 			padding: 0.3rem 0.75rem;
 		}
 
@@ -246,16 +267,16 @@
 		margin-bottom: -0.25rem;
 	}
 
+	dt {
+		font-weight: bold;
+	}
+
 	.fields {
 		background: $profile-bg;
 		display: flex;
 		flex-direction: column;
 		padding: 0 0.5rem;
 		padding-top: 0.25rem;
-
-		dl {
-			margin: 0;
-		}
 
 		.field {
 			padding: 0.25rem;
@@ -265,14 +286,6 @@
 
 			&:first-child {
 				border-top: 0.1rem solid $gray2;
-			}
-
-			dt {
-				font-weight: bold;
-			}
-
-			dd {
-				margin-left: 0;
 			}
 		}
 	}

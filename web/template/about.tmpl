@@ -106,7 +106,7 @@
             </li>
             {{- end }}
             <li>
-                Toots can contain up to {{ .instance.Configuration.Statuses.MaxCharacters }} characters,
+                Statuses can contain up to {{ .instance.Configuration.Statuses.MaxCharacters }} characters,
                 and {{ .instance.Configuration.Statuses.MaxMediaAttachments }} media attachments.
             </li>
             <li>
@@ -119,8 +119,8 @@
         <h3 id="moderated-servers">Moderated servers</h3>
         <p>
             ActivityPub instances exchange (federate) data with other instances,
-            including accounts and toots. This can be prevented for specific domains
-            by suspending aka blocking them. None of their content is stored, and
+            including accounts and statuses. This can be prevented for specific domains
+            by suspending (aka blocking) them. None of their content is stored, and
             interaction with their users is blocked both ways.
         </p>
         <p>

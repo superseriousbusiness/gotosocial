@@ -17,23 +17,31 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- with .Account }}
-<a href="{{- .URL -}}">
-    <img class="avatar" src="{{- .Avatar -}}" alt="" loading="lazy">
-    <span aria-hidden="true" class="displayname">
-        {{- if .DisplayName -}}
+{{- define "displayName" -}}
+    {{- if .DisplayName -}}
         {{- emojify .Emojis (escape .DisplayName) -}}
-        {{- else -}}
+    {{- else -}}
         {{- .Username -}}
-        {{- end -}}
-    </span>
-    <span aria-hidden="true" class="username">@{{- .Username -}}</span>
-    <span class="sr-only">
-        {{- if .DisplayName -}}
-        {{- emojify .Emojis (escape .DisplayName) -}}. Username: @{{- .Acct -}}.
-        {{- else -}}
-        @{{- .Acct -}}.
-        {{- end -}}
-    </span>
-</a>
+    {{- end -}}
+{{- end -}}
+
+{{- with .Account }}
+<h4 class="sr-only">Post by</h4>
+<address>
+    <a rel="author" href="{{- .URL -}}">
+        <img
+            class="avatar"
+            aria-hidden="true"
+            src="{{- .Avatar -}}"
+            alt=""
+            loading="lazy"
+        >
+        <dl class="author-strap">
+            <dt class="sr-only">Display name</dt>
+            <dl class="displayname text-cutoff">{{- template "displayName" . -}}</dl>
+            <dt class="sr-only">Username</dt>
+            <dl class="username text-cutoff">@{{- .Username -}}</dl>
+        </dl>
+    </a>
+</address>
 {{- end }}
