@@ -212,6 +212,28 @@ main {
 				white-space: pre-wrap;
 			}
 
+			.code-toolbar .toolbar {
+				margin-right: 0.5rem;
+				display: flex;
+				gap: 0.25rem;
+
+				.toolbar-item {
+					span, button {
+						color: $button-fg;
+						background: $button-bg;
+						font-weight: bold;
+					}
+
+					.copy-to-clipboard-button, span {
+						box-shadow: $boxshadow;
+					}
+
+					.copy-to-clipboard-button:hover, .copy-to-clipboard-button:hover span {
+						background: $button-hover-bg;
+					}
+				}
+			}
+
 			pre, pre[class*="language-"] {
 				border-radius: $br;
 				padding: 0.5rem;
@@ -221,7 +243,7 @@ main {
 					/* Code inside a pre block, ie.,
 					```\nhere is some code\n``` */
 					width: 100%;
-					padding: 0.5rem;
+					padding: 0;
 					white-space: pre;
 					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
