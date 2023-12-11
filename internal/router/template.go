@@ -22,9 +22,9 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -173,14 +173,11 @@ func increment(i int) int {
 	return i + 1
 }
 
-// isNil returns true if given
-// value is a nil pointer.
-func isNil(value any) bool {
-	vOf := reflect.ValueOf(value)
-	if vOf.Kind() != reflect.Pointer {
-		return false
-	}
-	return vOf.IsNil()
+// isNil will safely check if 'v' is nil without
+// dealing with weird Go interface nil bullshit.
+func isNil(i interface{}) bool {
+	type eface struct{ _, data unsafe.Pointer }
+	return (*eface)(unsafe.Pointer(&i)).data == nil
 }
 
 func LoadTemplateFunctions(engine *gin.Engine) {
