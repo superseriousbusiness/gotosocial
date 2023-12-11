@@ -11,7 +11,7 @@ func FromCgroupV1() (uint64, error) {
 	return 0, ErrCgroupsNotSupported
 }
 
-func fromCgroupHybrid() (uint64, error) {
+func FromCgroupHybrid() (uint64, error) {
 	return 0, ErrCgroupsNotSupported
 }
 

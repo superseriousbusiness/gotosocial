@@ -19,7 +19,7 @@ require (
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.4
 	github.com/DmitriyVTitov/size v1.5.0
-	github.com/KimMachineGun/automemlimit v0.3.0
+	github.com/KimMachineGun/automemlimit v0.4.0
 	github.com/abema/go-mp4 v1.1.1
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.9.0

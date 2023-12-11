@@ -104,14 +104,14 @@ func SetGoMemLimitWithOpts(opts ...Option) (_ int64, _err error) {
 
 	if val, ok := os.LookupEnv(envGOMEMLIMIT); ok {
 		cfg.logger.Printf("GOMEMLIMIT is set already, skipping: %s\n", val)
-		return
+		return 0, nil
 	}
 
 	ratio := cfg.ratio
 	if val, ok := os.LookupEnv(envAUTOMEMLIMIT); ok {
 		if val == "off" {
 			cfg.logger.Printf("AUTOMEMLIMIT is set to off, skipping\n")
-			return
+			return 0, nil
 		}
 		_ratio, err := strconv.ParseFloat(val, 64)
 		if err != nil {
@@ -119,11 +119,8 @@ func SetGoMemLimitWithOpts(opts ...Option) (_ int64, _err error) {
 		}
 		ratio = _ratio
 	}
-	if ratio <= 0 || ratio > 1 {
-		return 0, fmt.Errorf("invalid AUTOMEMLIMIT: %f", ratio)
-	}
 
-	limit, err := SetGoMemLimitWithProvider(cfg.provider, ratio)
+	limit, err := setGoMemLimit(ApplyRatio(cfg.provider, ratio))
 	if err != nil {
 		return 0, fmt.Errorf("failed to set GOMEMLIMIT: %w", err)
 	}
@@ -145,33 +142,27 @@ func SetGoMemLimitWithEnv() {
 
 // SetGoMemLimit sets GOMEMLIMIT with the value from the cgroup's memory limit and given ratio.
 func SetGoMemLimit(ratio float64) (int64, error) {
-	return SetGoMemLimitWithProvider(FromCgroup, ratio)
+	return SetGoMemLimitWithOpts(WithRatio(ratio))
 }
-
-// Provider is a function that returns the memory limit.
-type Provider func() (uint64, error)
 
 // SetGoMemLimitWithProvider sets GOMEMLIMIT with the value from the given provider and ratio.
 func SetGoMemLimitWithProvider(provider Provider, ratio float64) (int64, error) {
+	return SetGoMemLimitWithOpts(WithProvider(provider), WithRatio(ratio))
+}
+
+func setGoMemLimit(provider Provider) (int64, error) {
 	limit, err := provider()
 	if err != nil {
 		return 0, err
 	}
-	goMemLimit := cappedFloat2Int(float64(limit) * ratio)
-	debug.SetMemoryLimit(goMemLimit)
-	return goMemLimit, nil
+	capped := cappedU64ToI64(limit)
+	debug.SetMemoryLimit(capped)
+	return capped, nil
 }
 
-func cappedFloat2Int(f float64) int64 {
-	if f > math.MaxInt64 {
+func cappedU64ToI64(limit uint64) int64 {
+	if limit > math.MaxInt64 {
 		return math.MaxInt64
 	}
-	return int64(f)
-}
-
-// Limit is a helper Provider function that returns the given limit.
-func Limit(limit uint64) func() (uint64, error) {
-	return func() (uint64, error) {
-		return limit, nil
-	}
+	return int64(limit)
 }

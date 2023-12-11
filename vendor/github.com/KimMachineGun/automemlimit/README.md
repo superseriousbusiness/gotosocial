@@ -42,6 +42,7 @@ func init() {
 	memlimit.SetGoMemLimitWithProvider(memlimit.Limit(1024*1024), 0.9)
 	memlimit.SetGoMemLimitWithProvider(memlimit.FromCgroup, 0.9)
 	memlimit.SetGoMemLimitWithProvider(memlimit.FromCgroupV1, 0.9)
+	memlimit.SetGoMemLimitWithProvider(memlimit.FromCgroupHybrid, 0.9)
 	memlimit.SetGoMemLimitWithProvider(memlimit.FromCgroupV2, 0.9)
 }
 ```
