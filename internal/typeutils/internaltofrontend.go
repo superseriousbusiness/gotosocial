@@ -686,9 +686,9 @@ func (c *Converter) StatusToWebStatus(
 		webPollOptions := make([]apimodel.WebPollOption, len(poll.Options))
 		for i, option := range poll.Options {
 			var voteShare float32
-			if totalVotes != 0 &&
-				option.VotesCount != 0 {
-				voteShare = (float32(option.VotesCount) / float32(totalVotes)) * 100
+
+			if totalVotes != 0 && option.VotesCount != nil {
+				voteShare = float32(*option.VotesCount) / float32(totalVotes) * 100
 			}
 
 			// Format to two decimal points and ditch any
@@ -1433,10 +1433,10 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		options     []apimodel.PollOption
 		totalVotes  int
 		totalVoters *int
-		voted       *bool
+		hasVoted    *bool
 		ownChoices  *[]int
 		isAuthor    bool
-		expiresAt   string
+		expiresAt   *string
 		emojis      []apimodel.Emoji
 	)
 
@@ -1462,51 +1462,50 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 			// Set choices by requester.
 			ownChoices = &vote.Choices
 
-			// Update default totals in the
-			// case that counts are hidden.
+			// Update default total in the
+			// case that counts are hidden
+			// (so we just show our own).
 			totalVotes = len(vote.Choices)
-			totalVoters = util.Ptr(1)
-			for _, choice := range *ownChoices {
-				options[choice].VotesCount++
-			}
 		} else {
-			// Requester is defined but hasn't made
-			// a choice. Init slice to serialize as `[]`.
-			ownChoices = util.Ptr(make([]int, 0))
+			// Requester hasn't yet voted, use
+			// empty slice to serialize as `[]`.
+			ownChoices = &[]int{}
 		}
 
 		// Check if requester is author of source status.
 		isAuthor = (requester.ID == poll.Status.AccountID)
 
-		// Requester is defined so voted should be defined too.
-		voted = util.Ptr((isAuthor || len(*ownChoices) > 0))
+		// Set whether requester has voted in poll (or = author).
+		hasVoted = util.Ptr((isAuthor || len(*ownChoices) > 0))
 	}
 
 	if isAuthor || !*poll.HideCounts {
-		// A remote status.
-		//
-		// Pull cached remote values.
-		totalVoters = poll.Voters
+		// Only in the case that hide counts is
+		// disabled, or the requester is the author
+		// do we actually populate the vote counts.
 
-		// When this is status author, or hide counts
-		// is disabled, set the counts known per vote,
-		// and accumulate all the vote totals.
+		if *poll.Multiple {
+			// The total number of voters are only
+			// provided in the case of a multiple
+			// choice poll. All else leaves it nil.
+			totalVoters = poll.Voters
+		}
+
+		// Populate per-vote counts
+		// and overall total vote count.
 		for i, count := range poll.Votes {
-			options[i].VotesCount = count
+			if options[i].VotesCount == nil {
+				options[i].VotesCount = new(int)
+			}
+			(*options[i].VotesCount) += count
 			totalVotes += count
 		}
 	}
 
-	if !*poll.Multiple {
-		// Total number of voters
-		// should ONLY be set when
-		// it is multiple choice.
-		totalVoters = nil
-	}
-
 	if !poll.ExpiresAt.IsZero() {
 		// Calculate poll expiry string (if set).
-		expiresAt = util.FormatISO8601(poll.ExpiresAt)
+		str := util.FormatISO8601(poll.ExpiresAt)
+		expiresAt = &str
 	}
 
 	var err error
@@ -1528,7 +1527,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		Multiple:    (*poll.Multiple),
 		VotesCount:  totalVotes,
 		VotersCount: totalVoters,
-		Voted:       voted,
+		Voted:       hasVoted,
 		OwnVotes:    ownChoices,
 		Options:     options,
 		Emojis:      emojis,

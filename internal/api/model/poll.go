@@ -28,7 +28,7 @@ type Poll struct {
 	ID string `json:"id"`
 
 	// When the poll ends. (ISO 8601 Datetime).
-	ExpiresAt string `json:"expires_at"`
+	ExpiresAt *string `json:"expires_at,omitempty"`
 
 	// Is the poll currently expired?
 	Expired bool `json:"expired"`
@@ -68,7 +68,7 @@ type PollOption struct {
 	Title string `json:"title"`
 
 	// The number of received votes for this option.
-	VotesCount int `json:"votes_count"`
+	VotesCount *int `json:"votes_count,omitempty"`
 }
 
 // PollRequest models a request to create a poll.

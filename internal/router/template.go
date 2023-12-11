@@ -22,6 +22,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -172,6 +173,16 @@ func increment(i int) int {
 	return i + 1
 }
 
+// isNil returns true if given
+// value is a nil pointer.
+func isNil(value any) bool {
+	vOf := reflect.ValueOf(value)
+	if vOf.Kind() != reflect.Pointer {
+		return false
+	}
+	return vOf.IsNil()
+}
+
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"escape":           escape,
@@ -185,5 +196,6 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"emojify":          emojify,
 		"acctInstance":     acctInstance,
 		"increment":        increment,
+		"isNil":            isNil,
 	})
 }
