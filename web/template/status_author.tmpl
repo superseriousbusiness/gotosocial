@@ -17,14 +17,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- define "displayName" -}}
-    {{- if .DisplayName -}}
-        {{- emojify .Emojis (escape .DisplayName) -}}
-    {{- else -}}
-        {{- .Username -}}
-    {{- end -}}
-{{- end -}}
-
 {{- with .Account }}
 <h4 class="sr-only">Post by</h4>
 <address>
@@ -38,7 +30,13 @@
         >
         <dl class="author-strap">
             <dt class="sr-only">Display name</dt>
-            <dl class="displayname text-cutoff">{{- template "displayName" . -}}</dl>
+            <dl class="displayname text-cutoff">
+                {{- if .DisplayName -}}
+                {{- emojify .Emojis (escape .DisplayName) -}}
+                {{- else -}}
+                {{- .Username -}}
+                {{- end -}}
+            </dl>
             <dt class="sr-only">Username</dt>
             <dl class="username text-cutoff">@{{- .Username -}}</dl>
         </dl>

@@ -17,14 +17,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- define "displayName" -}}
-    {{- if .account.DisplayName -}}
-        {{- emojify .account.Emojis (escape .account.DisplayName) -}}
-    {{- else -}}
-        {{- .account.Username -}}
-    {{- end -}}
-{{- end -}}
-
 {{- with . }}
 <main class="profile">
     <header class="profile-header">
@@ -38,7 +30,13 @@
             </a>
             <dl class="namerole">
                 <dt class="sr-only">Display name</dt>
-                <dd class="displayname text-cutoff">{{- template "displayName" . -}}</dd>
+                <dd class="displayname text-cutoff">
+                    {{- if .account.DisplayName -}}
+                    {{- emojify .account.Emojis (escape .account.DisplayName) -}}
+                    {{- else -}}
+                    {{- .account.Username -}}
+                    {{- end -}}
+                </dd>
                 <dt class="sr-only">Username</dt>
                 <dd class="username text-cutoff">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
                 {{- if and (.account.Role) (ne .account.Role.Name "user") }}
