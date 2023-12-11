@@ -40,7 +40,7 @@ type Poll struct {
 	VotesCount int `json:"votes_count"`
 
 	// How many unique accounts have voted on a multiple-choice poll.
-	VotersCount int `json:"voters_count"`
+	VotersCount int `json:"voters_count,omitempty"`
 
 	// When called with a user token, has the authorized user voted?
 	//
