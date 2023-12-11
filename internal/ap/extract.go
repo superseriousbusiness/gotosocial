@@ -1102,17 +1102,9 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 	var closed time.Time
 
 	// Extract the options (votes if any) and 'multiple choice' flag.
-	options, votes, multi, err := ExtractPollOptions(poll)
+	options, multi, hideCounts, err := extractPollOptions(poll)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if counts have been hidden from us.
-	hideCounts := len(options) != len(votes)
-
-	if hideCounts {
-		// Simply provide zeroed slice.
-		votes = make([]int, len(options))
 	}
 
 	// Extract the poll closed time,
@@ -1138,53 +1130,87 @@ func ExtractPoll(poll Pollable) (*gtsmodel.Poll, error) {
 	voters := GetVotersCount(poll)
 
 	return &gtsmodel.Poll{
-		Options:    options,
+		Options:    optionNames(options),
 		Multiple:   &multi,
 		HideCounts: &hideCounts,
-		Votes:      votes,
+		Votes:      optionVotes(options),
 		Voters:     &voters,
 		ExpiresAt:  endTime,
 		ClosedAt:   closed,
 	}, nil
 }
 
-// ExtractPollOptions extracts poll option name strings, and the 'multiple choice flag' property value from Pollable.
-func ExtractPollOptions(poll Pollable) (names []string, votes []int, multi bool, err error) {
+// pollOption is a simple type
+// to unify a poll option name
+// with the number of votes.
+type pollOption struct {
+	Name  string
+	Votes int
+}
+
+// optionNames extracts name strings from a slice of poll options.
+func optionNames(in []pollOption) []string {
+	out := make([]string, len(in))
+	for i := range in {
+		out[i] = in[i].Name
+	}
+	return out
+}
+
+// optionVotes extracts vote counts from a slice of poll options.
+func optionVotes(in []pollOption) []int {
+	out := make([]int, len(in))
+	for i := range in {
+		out[i] = in[i].Votes
+	}
+	return out
+}
+
+// extractPollOptions extracts poll option name strings, the 'multiple choice flag', and 'hideCounts' intrinsic flag properties value from Pollable.
+func extractPollOptions(poll Pollable) (options []pollOption, multi bool, hide bool, err error) {
 	var errs gtserror.MultiError
 
 	// Iterate the oneOf property and gather poll single-choice options.
 	IterateOneOf(poll, func(iter vocab.ActivityStreamsOneOfPropertyIterator) {
-		name, count, err := extractPollOption(iter.GetType())
+		name, votes, err := extractPollOption(iter.GetType())
 		if err != nil {
 			errs.Append(err)
 			return
 		}
-		names = append(names, name)
-		if count != nil {
-			votes = append(votes, *count)
+		if votes == nil {
+			hide = true
+			votes = new(int)
 		}
+		options = append(options, pollOption{
+			Name:  name,
+			Votes: *votes,
+		})
 	})
-	if len(names) > 0 || len(errs) > 0 {
-		return names, votes, false, errs.Combine()
+	if len(options) > 0 || len(errs) > 0 {
+		return options, false, hide, errs.Combine()
 	}
 
 	// Iterate the anyOf property and gather poll multi-choice options.
 	IterateAnyOf(poll, func(iter vocab.ActivityStreamsAnyOfPropertyIterator) {
-		name, count, err := extractPollOption(iter.GetType())
+		name, votes, err := extractPollOption(iter.GetType())
 		if err != nil {
 			errs.Append(err)
 			return
 		}
-		names = append(names, name)
-		if count != nil {
-			votes = append(votes, *count)
+		if votes == nil {
+			hide = true
+			votes = new(int)
 		}
+		options = append(options, pollOption{
+			Name:  name,
+			Votes: *votes,
+		})
 	})
-	if len(names) > 0 || len(errs) > 0 {
-		return names, votes, true, errs.Combine()
+	if len(options) > 0 || len(errs) > 0 {
+		return options, true, hide, errs.Combine()
 	}
 
-	return nil, nil, false, errors.New("poll without options")
+	return nil, false, false, errors.New("poll without options")
 }
 
 // IterateOneOf will attempt to extract oneOf property from given interface, and passes each iterated item to function.
