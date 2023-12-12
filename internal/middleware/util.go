@@ -46,6 +46,6 @@ func respondInternalServerError(c *gin.Context, err error) {
 		apiutil.AppJSON,
 		apiutil.StatusInternalServerErrorJSON,
 	)
-	c.Error(err)
+	_ = c.Error(err)
 	c.Abort()
 }

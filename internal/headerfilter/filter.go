@@ -22,7 +22,6 @@ import (
 	"net/http"
 	"net/textproto"
 	"regexp"
-	"slices"
 	"sync/atomic"
 )
 
@@ -156,17 +155,4 @@ func safeHeaderValue(value string) string {
 		return value
 	}
 	return value[:mid] + value[len(value)-1-mid:]
-}
-
-// dedupeExprs removes duplicates from a passed
-// slice of string regular expressions using a map.
-func deduplicateExprs(exprs []string) []string {
-	dedupe := make(map[string]struct{}, len(exprs))
-	return slices.DeleteFunc(exprs, func(expr string) bool {
-		if _, ok := dedupe[expr]; ok {
-			return true
-		}
-		dedupe[expr] = struct{}{}
-		return false
-	})
 }
