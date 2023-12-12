@@ -50,10 +50,12 @@
             <div class="poll-vote-summary">
                 <span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
                 <span class="poll-vote-count">
-                    {{- if eq $pollOption.VotesCount 1 -}}
-                        {{- $pollOption.VotesCount }} vote
+                    {{- if isNil $pollOption.VotesCount -}}
+                    Results not yet published.
+                    {{- else if eq $pollOption.VotesCount 1 -}}
+                    {{- $pollOption.VotesCount }} vote
                     {{- else -}}
-                        {{- $pollOption.VotesCount }} votes
+                    {{- $pollOption.VotesCount }} votes
                     {{- end -}}
                 </span>
             </div>

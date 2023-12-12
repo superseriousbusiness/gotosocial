@@ -26,6 +26,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
@@ -99,6 +100,7 @@ var funcMap = template.FuncMap{
 	"escape":           escape,
 	"increment":        increment,
 	"indent":           indent,
+	"isNil":            isNil,
 	"outdentPre":       outdentPre,
 	"noescapeAttr":     noescapeAttr,
 	"noescape":         noescape,
@@ -298,4 +300,11 @@ func outdentPre(html template.HTML) template.HTML {
 		},
 	)
 	return noescape(output)
+}
+
+// isNil will safely check if 'v' is nil without
+// dealing with weird Go interface nil bullshit.
+func isNil(i interface{}) bool {
+	type eface struct{ _, data unsafe.Pointer }
+	return (*eface)(unsafe.Pointer(&i)).data == nil
 }
