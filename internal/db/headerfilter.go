@@ -31,12 +31,16 @@ type HeaderFilter interface {
 	// HeaderBlock performs a negative match of given http headers against stored block header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
 
+	// AllowHeaderRegularMatch ...
 	AllowHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
 
+	// AllowHeaderInverseMatch ...
 	AllowHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
 
+	// BlockHeaderRegularMatch ...
 	BlockHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
 
+	// BlockHeaderInverseMatch ...
 	BlockHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
 
 	// GetAllowHeaderFilter ...

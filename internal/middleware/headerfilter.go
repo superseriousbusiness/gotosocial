@@ -48,6 +48,7 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 		ctx := c.Request.Context()
 		hdr := c.Request.Header
 
+		// Perform an explicit block match, this skips allow match.
 		block, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
 		if err != nil {
 			respondInternalServerError(c, err)
@@ -59,17 +60,19 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 			return
 		}
 
-		allow, err := state.DB.AllowHeaderInverseMatch(ctx, hdr)
+		// Headers not explicitly blocked, check for allow NON-matches.
+		notAllow, err := state.DB.AllowHeaderInverseMatch(ctx, hdr)
 		if err != nil {
 			respondInternalServerError(c, err)
 			return
 		}
 
-		if !allow {
+		if notAllow {
 			respondBlocked(c)
 			return
 		}
 
+		// Allowed!
 		c.Next()
 	}
 }
@@ -84,6 +87,7 @@ func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
 		ctx := c.Request.Context()
 		hdr := c.Request.Header
 
+		// Perform an explicit allow match, this skips block match.
 		allow, err := state.DB.AllowHeaderRegularMatch(ctx, hdr)
 		if err != nil {
 			respondInternalServerError(c, err)
@@ -91,6 +95,7 @@ func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
 		}
 
 		if !allow {
+			// Headers were not explicitly allowed, perform block match.
 			block, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
 			if err != nil {
 				respondInternalServerError(c, err)
@@ -103,6 +108,7 @@ func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
 			}
 		}
 
+		// Allowed!
 		c.Next()
 	}
 }

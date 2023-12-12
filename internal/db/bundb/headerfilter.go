@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"net/http"
+	"unsafe"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -44,59 +45,59 @@ func (h *headerFilterDB) AllowHeaderInverseMatch(ctx context.Context, hdr http.H
 }
 
 func (h *headerFilterDB) BlockHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error) {
-	return h.state.Caches.AllowHeaderFilters.RegularMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
-		return h.GetAllowHeaderFilters(ctx)
+	return h.state.Caches.BlockHeaderFilters.RegularMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
+		return h.GetBlockHeaderFilters(ctx)
 	})
 }
 
 func (h *headerFilterDB) BlockHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error) {
-	return h.state.Caches.AllowHeaderFilters.InverseMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
-		return h.GetAllowHeaderFilters(ctx)
+	return h.state.Caches.BlockHeaderFilters.InverseMatch(hdr, func() ([]*gtsmodel.HeaderFilter, error) {
+		return h.GetBlockHeaderFilters(ctx)
 	})
 }
 
 func (h *headerFilterDB) GetAllowHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error) {
-	var filter gtsmodel.HeaderFilter
+	filter := new(gtsmodel.HeaderFilterAllow)
 	if err := h.db.NewSelect().
-		Table("header_filter_allows").
+		Model(&filter).
 		Where("? = ?", bun.Ident("id"), id).
-		Scan(ctx, &filter); err != nil {
+		Scan(ctx); err != nil {
 		return nil, err
 	}
-	return &filter, nil
+	return fromAllowFilter(filter), nil
 }
 
 func (h *headerFilterDB) GetBlockHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error) {
-	var filter gtsmodel.HeaderFilter
+	filter := new(gtsmodel.HeaderFilterBlock)
 	if err := h.db.NewSelect().
-		Table("header_filter_blocks").
+		Model(&filter).
 		Where("? = ?", bun.Ident("id"), id).
-		Scan(ctx, &filter); err != nil {
+		Scan(ctx); err != nil {
 		return nil, err
 	}
-	return &filter, nil
+	return fromBlockFilter(filter), nil
 }
 
 func (h *headerFilterDB) GetAllowHeaderFilters(ctx context.Context) ([]*gtsmodel.HeaderFilter, error) {
-	var filters []*gtsmodel.HeaderFilter
+	var filters []*gtsmodel.HeaderFilterAllow
 	err := h.db.NewSelect().
-		Table("header_filter_allows").
+		Model(&filters).
 		Scan(ctx, &filters)
-	return filters, err
+	return fromAllowFilters(filters), err
 }
 
 func (h *headerFilterDB) GetBlockHeaderFilters(ctx context.Context) ([]*gtsmodel.HeaderFilter, error) {
-	var filters []*gtsmodel.HeaderFilter
+	var filters []*gtsmodel.HeaderFilterBlock
 	err := h.db.NewSelect().
-		Table("header_filter_blocks").
+		Model(&filters).
 		Scan(ctx, &filters)
-	return filters, err
+	return fromBlockFilters(filters), err
 }
 
 func (h *headerFilterDB) PutAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter) error {
 	if _, err := h.db.NewInsert().
-		Table("header_filter_allows").
-		Exec(ctx, filter); err != nil {
+		Model(toAllowFilter(filter)).
+		Exec(ctx); err != nil {
 		return err
 	}
 	h.state.Caches.AllowHeaderFilters.Clear()
@@ -105,8 +106,8 @@ func (h *headerFilterDB) PutAllowHeaderFilter(ctx context.Context, filter *gtsmo
 
 func (h *headerFilterDB) PutBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter) error {
 	if _, err := h.db.NewInsert().
-		Table("header_filter_blocks").
-		Exec(ctx, filter); err != nil {
+		Model(toBlockFilter(filter)).
+		Exec(ctx); err != nil {
 		return err
 	}
 	h.state.Caches.BlockHeaderFilters.Clear()
@@ -115,7 +116,7 @@ func (h *headerFilterDB) PutBlockHeaderFilter(ctx context.Context, filter *gtsmo
 
 func (h *headerFilterDB) UpdateAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter, cols ...string) error {
 	if _, err := h.db.NewUpdate().
-		Table("header_filter_allows").
+		Model(toAllowFilter(filter)).
 		Column(cols...).
 		Exec(ctx, filter); err != nil {
 		return err
@@ -126,7 +127,7 @@ func (h *headerFilterDB) UpdateAllowHeaderFilter(ctx context.Context, filter *gt
 
 func (h *headerFilterDB) UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter, cols ...string) error {
 	if _, err := h.db.NewUpdate().
-		Table("header_filter_blocks").
+		Model(toBlockFilter(filter)).
 		Column(cols...).
 		Exec(ctx, filter); err != nil {
 		return err
@@ -155,4 +156,28 @@ func (h *headerFilterDB) DeleteBlockHeaderFilter(ctx context.Context, id string)
 	}
 	h.state.Caches.BlockHeaderFilters.Clear()
 	return nil
+}
+
+func toAllowFilter(filter *gtsmodel.HeaderFilter) *gtsmodel.HeaderFilterAllow {
+	return (*gtsmodel.HeaderFilterAllow)(unsafe.Pointer(filter))
+}
+
+func toBlockFilter(filter *gtsmodel.HeaderFilter) *gtsmodel.HeaderFilterBlock {
+	return (*gtsmodel.HeaderFilterBlock)(unsafe.Pointer(filter))
+}
+
+func fromAllowFilter(filter *gtsmodel.HeaderFilterAllow) *gtsmodel.HeaderFilter {
+	return (*gtsmodel.HeaderFilter)(unsafe.Pointer(filter))
+}
+
+func fromBlockFilter(filter *gtsmodel.HeaderFilterBlock) *gtsmodel.HeaderFilter {
+	return (*gtsmodel.HeaderFilter)(unsafe.Pointer(filter))
+}
+
+func fromAllowFilters(filters []*gtsmodel.HeaderFilterAllow) []*gtsmodel.HeaderFilter {
+	return *(*[]*gtsmodel.HeaderFilter)(unsafe.Pointer(&filters))
+}
+
+func fromBlockFilters(filters []*gtsmodel.HeaderFilterBlock) []*gtsmodel.HeaderFilter {
+	return *(*[]*gtsmodel.HeaderFilter)(unsafe.Pointer(&filters))
 }
