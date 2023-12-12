@@ -47,6 +47,9 @@
 				<meter aria-hidden="true" id="poll-{{- $pollOption.PollID -}}-option-{{- increment $index -}}" min="0" max="100" value="{{- $pollOption.VoteShare -}}">{{- $pollOption.VoteShare -}}&#37;</meter>
 				<div class="sr-only">Option {{ increment $index }}:&nbsp;<span lang="{{ .LanguageTag.TagStr }}">{{ emojify .Emojis (noescape $pollOption.Title) -}}</span></div>
 				<div class="poll-vote-summary">
+					{{- if isNil $pollOption.VotesCount }}
+					Results not yet published.
+					{{- else -}}
 					<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
 					<span class="poll-vote-count">
 						{{- if eq $pollOption.VotesCount 1 -}}
@@ -55,6 +58,7 @@
 							{{- $pollOption.VotesCount }} votes
 						{{- end -}}
 					</span>
+					{{- end -}}
 				</div>
 			</li>
 		{{- end }}

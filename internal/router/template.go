@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -172,6 +173,13 @@ func increment(i int) int {
 	return i + 1
 }
 
+// isNil will safely check if 'v' is nil without
+// dealing with weird Go interface nil bullshit.
+func isNil(i interface{}) bool {
+	type eface struct{ _, data unsafe.Pointer }
+	return (*eface)(unsafe.Pointer(&i)).data == nil
+}
+
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"escape":           escape,
@@ -185,5 +193,6 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"emojify":          emojify,
 		"acctInstance":     acctInstance,
 		"increment":        increment,
+		"isNil":            isNil,
 	})
 }

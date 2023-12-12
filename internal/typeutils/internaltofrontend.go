@@ -686,9 +686,9 @@ func (c *Converter) StatusToWebStatus(
 		webPollOptions := make([]apimodel.WebPollOption, len(poll.Options))
 		for i, option := range poll.Options {
 			var voteShare float32
-			if totalVotes != 0 &&
-				option.VotesCount != 0 {
-				voteShare = (float32(option.VotesCount) / float32(totalVotes)) * 100
+
+			if totalVotes != 0 && option.VotesCount != nil {
+				voteShare = float32(*option.VotesCount) / float32(totalVotes) * 100
 			}
 
 			// Format to two decimal points and ditch any
@@ -1432,11 +1432,11 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 	var (
 		options     []apimodel.PollOption
 		totalVotes  int
-		totalVoters int
-		voted       *bool
+		totalVoters *int
+		hasVoted    *bool
 		ownChoices  *[]int
 		isAuthor    bool
-		expiresAt   string
+		expiresAt   *string
 		emojis      []apimodel.Emoji
 	)
 
@@ -1462,57 +1462,62 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 			// Set choices by requester.
 			ownChoices = &vote.Choices
 
-			// Update default totals in the
-			// case that counts are hidden.
+			// Update default total in the
+			// case that counts are hidden
+			// (so we just show our own).
 			totalVotes = len(vote.Choices)
-			totalVoters = 1
-			for _, choice := range *ownChoices {
-				options[choice].VotesCount++
-			}
 		} else {
-			// Requester is defined but hasn't made
-			// a choice. Init slice to serialize as `[]`.
-			ownChoices = util.Ptr(make([]int, 0))
+			// Requester hasn't yet voted, use
+			// empty slice to serialize as `[]`.
+			ownChoices = &[]int{}
 		}
 
 		// Check if requester is author of source status.
 		isAuthor = (requester.ID == poll.Status.AccountID)
 
-		// Requester is defined so voted should be defined too.
-		voted = util.Ptr((isAuthor || len(*ownChoices) > 0))
+		// Set whether requester has voted in poll (or = author).
+		hasVoted = util.Ptr((isAuthor || len(*ownChoices) > 0))
 	}
 
 	if isAuthor || !*poll.HideCounts {
-		// A remote status,
-		// the simple route!
-		//
-		// Pull cached remote values.
-		totalVoters = (*poll.Voters)
+		// Only in the case that hide counts is
+		// disabled, or the requester is the author
+		// do we actually populate the vote counts.
 
-		// When this is status author, or hide counts
-		// is disabled, set the counts known per vote,
-		// and accumulate all the vote totals.
+		if *poll.Multiple {
+			// The total number of voters are only
+			// provided in the case of a multiple
+			// choice poll. All else leaves it nil.
+			totalVoters = poll.Voters
+		}
+
+		// Populate per-vote counts
+		// and overall total vote count.
 		for i, count := range poll.Votes {
-			options[i].VotesCount = count
+			if options[i].VotesCount == nil {
+				options[i].VotesCount = new(int)
+			}
+			(*options[i].VotesCount) += count
 			totalVotes += count
 		}
 	}
 
 	if !poll.ExpiresAt.IsZero() {
 		// Calculate poll expiry string (if set).
-		expiresAt = util.FormatISO8601(poll.ExpiresAt)
+		str := util.FormatISO8601(poll.ExpiresAt)
+		expiresAt = &str
 	}
 
-	// Try to inherit emojis
-	// from parent status.
-	if pStatus := poll.Status; pStatus != nil {
-		var err error
-		emojis, err = c.convertEmojisToAPIEmojis(ctx, pStatus.Emojis, pStatus.EmojiIDs)
-		if err != nil {
-			// Fall back to empty slice.
-			log.Errorf(ctx, "error converting emojis from parent status: %v", err)
-			emojis = make([]apimodel.Emoji, 0)
-		}
+	var err error
+
+	// Try to inherit emojis from parent status.
+	emojis, err = c.convertEmojisToAPIEmojis(ctx,
+		poll.Status.Emojis,
+		poll.Status.EmojiIDs,
+	)
+	if err != nil {
+		log.Errorf(ctx, "error converting emojis from parent status: %v", err)
+		emojis = []apimodel.Emoji{} // fallback to empty slice.
 	}
 
 	return &apimodel.Poll{
@@ -1522,7 +1527,7 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		Multiple:    (*poll.Multiple),
 		VotesCount:  totalVotes,
 		VotersCount: totalVoters,
-		Voted:       voted,
+		Voted:       hasVoted,
 		OwnVotes:    ownChoices,
 		Options:     options,
 		Emojis:      emojis,
