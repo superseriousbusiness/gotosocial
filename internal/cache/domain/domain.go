@@ -56,7 +56,7 @@ func (c *Cache) Matches(domain string, load func() ([]string, error)) (bool, err
 
 		// Allocate new radix trie
 		// node to store matches.
-		ptr := new(root)
+		ptr = new(root)
 
 		// Add each domain to the trie.
 		for _, domain := range domains {
