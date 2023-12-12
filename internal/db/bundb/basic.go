@@ -22,7 +22,6 @@ import (
 	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
@@ -118,39 +117,6 @@ func (b *basicDB) UpdateWhere(ctx context.Context, where []db.Where, key string,
 func (b *basicDB) CreateTable(ctx context.Context, i interface{}) error {
 	_, err := b.db.NewCreateTable().Model(i).IfNotExists().Exec(ctx)
 	return err
-}
-
-func (b *basicDB) CreateAllTables(ctx context.Context) error {
-	models := []interface{}{
-		&gtsmodel.Account{},
-		&gtsmodel.Application{},
-		&gtsmodel.Block{},
-		&gtsmodel.DomainBlock{},
-		&gtsmodel.EmailDomainBlock{},
-		&gtsmodel.Follow{},
-		&gtsmodel.FollowRequest{},
-		&gtsmodel.MediaAttachment{},
-		&gtsmodel.Mention{},
-		&gtsmodel.Status{},
-		&gtsmodel.StatusToEmoji{},
-		&gtsmodel.StatusFave{},
-		&gtsmodel.StatusBookmark{},
-		&gtsmodel.ThreadMute{},
-		&gtsmodel.Tag{},
-		&gtsmodel.User{},
-		&gtsmodel.Emoji{},
-		&gtsmodel.Instance{},
-		&gtsmodel.Notification{},
-		&gtsmodel.RouterSession{},
-		&gtsmodel.Token{},
-		&gtsmodel.Client{},
-	}
-	for _, i := range models {
-		if err := b.CreateTable(ctx, i); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (b *basicDB) DropTable(ctx context.Context, i interface{}) error {
