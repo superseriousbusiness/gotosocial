@@ -28,7 +28,7 @@ type Poll struct {
 	ID string `json:"id"`
 
 	// When the poll ends. (ISO 8601 Datetime).
-	ExpiresAt string `json:"expires_at"`
+	ExpiresAt *string `json:"expires_at"`
 
 	// Is the poll currently expired?
 	Expired bool `json:"expired"`
@@ -40,7 +40,7 @@ type Poll struct {
 	VotesCount int `json:"votes_count"`
 
 	// How many unique accounts have voted on a multiple-choice poll.
-	VotersCount int `json:"voters_count"`
+	VotersCount *int `json:"voters_count"`
 
 	// When called with a user token, has the authorized user voted?
 	//
@@ -68,7 +68,7 @@ type PollOption struct {
 	Title string `json:"title"`
 
 	// The number of received votes for this option.
-	VotesCount int `json:"votes_count"`
+	VotesCount *int `json:"votes_count"`
 }
 
 // PollRequest models a request to create a poll.

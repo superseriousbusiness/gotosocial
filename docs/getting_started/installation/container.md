@@ -38,14 +38,14 @@ nano docker-compose.yaml
 
 ### Version
 
-If desired, update the GoToSocial Docker image tag to the version of GtS you want to use.
+If desired, update the GoToSocial Docker image tag to the version of GtS you want to use:
 
-`latest`   - the default. This points to the latest stable release of GoToSocial.
-
-`snapshot` - points to whatever code is currently on the main branch. Not guaranteed to be stable, and may often be broken. Use with caution.
+* `latest`: the default. This points to the latest stable release of GoToSocial.
+* `snapshot`: points to whatever code is currently on the main branch. Not guaranteed to be stable, and may often be broken. Use with caution.
+* `vX.Y.Z`: release tag. This points to a specific, stable, release of GoToSocial.
 
 !!! tip
-    You can also replace `latest` with a specific GoToSocial version number. This is recommended when you want to make sure that you don't update your GoToSocial version by accident, which can cause problems. The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top. Replace `latest` in the docker-compose.yaml with the number of the desired release (without the leading `v` or trailing version name).
+    Both the `latest` and `snapshot` tags are moving tags, whereas the `vX.Y.Z` tags are immutable. The result of pulling a moving tag might change from day to day. `latest` on one system might not be the same `latest` on a different system. It's recommended to use the `vX.Y.Z` tags instead so you always know exactly which version of GoToSocial you're running. The list of releases can be found [right here](https://github.com/superseriousbusiness/gotosocial/releases), with the newest release at the top.
 
 ### Host
 

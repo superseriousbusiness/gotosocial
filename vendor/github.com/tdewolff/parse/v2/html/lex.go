@@ -184,6 +184,10 @@ func (l *Lexer) Next() (TokenType, []byte) {
 			} else if c == '!' {
 				l.r.Move(2)
 				return l.readMarkup()
+			} else if 0 < len(l.tmplBegin) && l.at(l.tmplBegin...) {
+				l.r.Move(len(l.tmplBegin))
+				l.moveTemplate()
+				l.hasTmpl = true
 			} else if c == '?' {
 				l.r.Move(1)
 				return CommentToken, l.shiftBogusComment()

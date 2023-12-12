@@ -165,13 +165,15 @@ func (p *Processor) Get(
 			// We managed to parse query as a namestring.
 			// If domain was set, this is a very specific
 			// search for a particular account, so show
-			// that account to the caller even if they
-			// have it blocked. They might be looking
-			// for it to unblock it again!
+			// that account to the caller even if it's an
+			// instance account and/or even if they have
+			// it blocked. They might be looking for it
+			// to unblock it again!
 			domainSet := (domain != "")
+			includeInstanceAccounts = domainSet
 			includeBlockedAccounts = domainSet
 
-			err = p.accountsByNamestring(
+			err = p.accountsByUsernameDomain(
 				ctx,
 				account,
 				maxID,
@@ -189,24 +191,21 @@ func (p *Processor) Get(
 				return nil, gtserror.NewErrorInternalError(err)
 			}
 
-			// If domain was set, we know this is
-			// a full namestring, and not a url or
-			// just a username, so we should stop
-			// looking now and just return what we
-			// have (if anything). Otherwise we'll
-			// let the search keep going.
-			if domainSet {
-				return p.packageSearchResult(
-					ctx,
-					account,
-					foundAccounts,
-					foundStatuses,
-					foundTags,
-					req.APIv1,
-					includeInstanceAccounts,
-					includeBlockedAccounts,
-				)
-			}
+			// Namestrings are a pretty unique format, so
+			// it's very unlikely that the caller was
+			// searching for anything except an account.
+			// As such, return early without falling
+			// through to broader search.
+			return p.packageSearchResult(
+				ctx,
+				account,
+				foundAccounts,
+				foundStatuses,
+				foundTags,
+				req.APIv1,
+				includeInstanceAccounts,
+				includeBlockedAccounts,
+			)
 		}
 	}
 
@@ -331,12 +330,12 @@ func (p *Processor) Get(
 	)
 }
 
-// accountsByNamestring searches for accounts using the
-// provided username and domain. If domain is not set,
+// accountsByUsernameDomain searches for accounts using
+// the provided username and domain. If domain is not set,
 // it may return more than one result by doing a text
 // search in the database for accounts matching the query.
 // Otherwise, it tries to return an exact match.
-func (p *Processor) accountsByNamestring(
+func (p *Processor) accountsByUsernameDomain(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	maxID string,
@@ -350,10 +349,10 @@ func (p *Processor) accountsByNamestring(
 	appendAccount func(*gtsmodel.Account),
 ) error {
 	if domain == "" {
-		// No error, but no domain set. That means the query
-		// looked like '@someone' which is not an exact search.
-		// Try to search for any accounts that match the query
-		// string, and let the caller know they should stop.
+		// No domain set. That means the query looked
+		// like '@someone' which is not an exact search,
+		// but is still a username search. Look for any
+		// usernames that start with the query string.
 		return p.accountsByText(
 			ctx,
 			requestingAccount.ID,
@@ -361,15 +360,16 @@ func (p *Processor) accountsByNamestring(
 			minID,
 			limit,
 			offset,
-			// OK to assume username is set now. Use
-			// it instead of query to omit leading '@'.
-			username,
+			// Add @ prefix back in to indicate
+			// to search function that we want
+			// an account by its username.
+			"@"+username,
 			following,
 			appendAccount,
 		)
 	}
 
-	// No error, and domain and username were both set.
+	// Domain and username were both set.
 	// Caller is likely trying to search for an exact
 	// match, from either a remote instance or local.
 	foundAccount, err := p.accountByUsernameDomain(
