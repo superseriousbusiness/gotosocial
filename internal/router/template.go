@@ -24,6 +24,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"reflect"
 	"strings"
 	"time"
 	"unsafe"
@@ -96,6 +97,7 @@ func LoadTemplates(engine *gin.Engine) error {
 var funcMap = template.FuncMap{
 	"acctInstance":     acctInstance,
 	"demojify":         demojify,
+	"deref":            deref,
 	"emojify":          emojify,
 	"escape":           escape,
 	"increment":        increment,
@@ -307,4 +309,17 @@ func outdentPre(html template.HTML) template.HTML {
 func isNil(i interface{}) bool {
 	type eface struct{ _, data unsafe.Pointer }
 	return (*eface)(unsafe.Pointer(&i)).data == nil
+}
+
+// deref returns the dereferenced value of
+// its input. To ensure you don't pass nil
+// pointers into this func, use isNil first.
+func deref(i any) any {
+	vOf := reflect.ValueOf(i)
+	if vOf.Kind() != reflect.Pointer {
+		// Not a pointer.
+		return i
+	}
+
+	return vOf.Elem()
 }
