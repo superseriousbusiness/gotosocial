@@ -22,6 +22,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 	"unsafe"
@@ -180,6 +181,19 @@ func isNil(i interface{}) bool {
 	return (*eface)(unsafe.Pointer(&i)).data == nil
 }
 
+// deref returns the dereferenced value of
+// its input. To ensure you don't pass nil
+// pointers into this func, use isNil first.
+func deref(i any) any {
+	vOf := reflect.ValueOf(i)
+	if vOf.Kind() != reflect.Pointer {
+		// Not a pointer.
+		return i
+	}
+
+	return vOf.Elem()
+}
+
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"escape":           escape,
@@ -194,5 +208,6 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"acctInstance":     acctInstance,
 		"increment":        increment,
 		"isNil":            isNil,
+		"deref":            deref,
 	})
 }

@@ -50,15 +50,17 @@
 					{{- if isNil $pollOption.VotesCount }}
 					Results not yet published.
 					{{- else -}}
+					{{- with deref $pollOption.VotesCount }}
 					<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
 					<span class="poll-vote-count">
-						{{- if eq $pollOption.VotesCount 1 -}}
-							{{- $pollOption.VotesCount }} vote
+						{{- if eq . 1 -}}
+							{{- . }} vote
 						{{- else -}}
-							{{- $pollOption.VotesCount }} votes
+							{{- . }} votes
 						{{- end -}}
 					</span>
 					{{- end -}}
+					{{- end }}
 				</div>
 			</li>
 		{{- end }}
