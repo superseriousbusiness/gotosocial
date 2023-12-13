@@ -25,34 +25,32 @@ import (
 )
 
 type HeaderFilter interface {
-	// HeaderAllow performs a positive match of given http headers against stored allow header filters.
+	// AllowHeaderRegularMatch performs an headerfilter.Filter.RegularMatch() on cached allow header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-
-	// HeaderBlock performs a negative match of given http headers against stored block header filters.
-	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-
-	// AllowHeaderRegularMatch ...
 	AllowHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
 
-	// AllowHeaderInverseMatch ...
+	// AllowHeaderInverseMatch performs an headerfilter.Filter.InverseMatch() on cached allow header filters.
+	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
 	AllowHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
 
-	// BlockHeaderRegularMatch ...
+	// BlockHeaderRegularMatch performs an headerfilter.Filter.RegularMatch() on cached block header filters.
+	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
 	BlockHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
 
-	// BlockHeaderInverseMatch ...
+	// BlockHeaderInverseMatch performs an headerfilter.Filter.InverseMatch() on cached block header filters.
+	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
 	BlockHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
 
-	// GetAllowHeaderFilter ...
+	// GetAllowHeaderFilter fetches the allow header filter with ID from the database.
 	GetAllowHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error)
 
-	// GetBlockHeaderFilter ...
+	// GetBlockHeaderFilter fetches the block header filter with ID from the database.
 	GetBlockHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error)
 
-	// GetAllowHeaderFilters ...
+	// GetAllowHeaderFilters fetches all allow header filters from the database.
 	GetAllowHeaderFilters(ctx context.Context) ([]*gtsmodel.HeaderFilter, error)
 
-	// GetBlockHeaderFilters ...
+	// GetBlockHeaderFilters fetches all block header filters from the database.
 	GetBlockHeaderFilters(ctx context.Context) ([]*gtsmodel.HeaderFilter, error)
 
 	// PutAllowHeaderFilter inserts the given allow header filter into the database.
