@@ -32,42 +32,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// GetAllowHeaderFilter ...
+// GetAllowHeaderFilter fetches allow HTTP header filter with provided ID from the database.
 func (p *Processor) GetAllowHeaderFilter(ctx context.Context, id string) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilter(ctx, id, p.state.DB.GetAllowHeaderFilter)
 }
 
-// GetBlockHeaderFilter ...
+// GetBlockHeaderFilter fetches block HTTP header filter with provided ID from the database.
 func (p *Processor) GetBlockHeaderFilter(ctx context.Context, id string) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilter(ctx, id, p.state.DB.GetBlockHeaderFilter)
 }
 
-// GetAllowHeaderFilters ...
+// GetAllowHeaderFilters fetches all allow HTTP header filters stored in the database.
 func (p *Processor) GetAllowHeaderFilters(ctx context.Context) ([]*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilters(ctx, p.state.DB.GetAllowHeaderFilters)
 }
 
-// GetBlockHeaderFilters ...
+// GetBlockHeaderFilters fetches all block HTTP header filters stored in the database.
 func (p *Processor) GetBlockHeaderFilters(ctx context.Context) ([]*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilters(ctx, p.state.DB.GetBlockHeaderFilters)
 }
 
-// CreateAllowHeaderFilter ...
+// CreateAllowHeaderFilter inserts the incoming allow HTTP header filter into the database, marking as authored by provided admin account.
 func (p *Processor) CreateAllowHeaderFilter(ctx context.Context, admin *gtsmodel.Account, request *apimodel.HeaderFilterRequest) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.createHeaderFilter(ctx, admin, request, p.state.DB.PutAllowHeaderFilter)
 }
 
-// CreateBlockHeaderFilter ...
+// CreateBlockHeaderFilter inserts the incoming block HTTP header filter into the database, marking as authored by provided admin account.
 func (p *Processor) CreateBlockHeaderFilter(ctx context.Context, admin *gtsmodel.Account, request *apimodel.HeaderFilterRequest) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.createHeaderFilter(ctx, admin, request, p.state.DB.PutBlockHeaderFilter)
 }
 
-// DeleteAllowHeaderFilter ...
+// DeleteAllowHeaderFilter deletes the allowing HTTP header filter with provided ID from the database.
 func (p *Processor) DeleteAllowHeaderFilter(ctx context.Context, id string) gtserror.WithCode {
 	return p.deleteHeaderFilter(ctx, id, p.state.DB.DeleteAllowHeaderFilter)
 }
 
-// DeleteBlockHeaderFilter ...
+// DeleteBlockHeaderFilter deletes the blocking HTTP header filter with provided ID from the database.
 func (p *Processor) DeleteBlockHeaderFilter(ctx context.Context, id string) gtserror.WithCode {
 	return p.deleteHeaderFilter(ctx, id, p.state.DB.DeleteBlockHeaderFilter)
 }
