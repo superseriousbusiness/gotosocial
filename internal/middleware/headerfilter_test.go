@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -193,9 +192,8 @@ func testHeaderFilter(t *testing.T, allow, block []headerfilter, input http.Head
 	middleware := middleware.HeaderFilter(&state)
 	e.Use(middleware)
 
-	// Set the blocking gin handler.
-	handler := blockingHandler()
-	e.Handle("GET", "/", handler)
+	// Set the empty gin handler (always returns okay).
+	e.Handle("GET", "/", func(ctx *gin.Context) { ctx.Status(200) })
 
 	// Prepare a gin test context.
 	r := httptest.NewRequest("GET", "/", nil)
@@ -204,15 +202,9 @@ func testHeaderFilter(t *testing.T, allow, block []headerfilter, input http.Head
 	// Set input headers.
 	r.Header = input
 
-	// Wrap request with new cancel context.
-	ctx, cncl = context.WithCancel(ctx)
-	r = r.WithContext(ctx)
-	defer cncl()
-
 	// Pass req through
 	// engine handler.
-	go e.ServeHTTP(rw, r)
-	time.Sleep(time.Millisecond)
+	e.ServeHTTP(rw, r)
 
 	// Get http result.
 	res := rw.Result()
