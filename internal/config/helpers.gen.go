@@ -950,6 +950,31 @@ func GetInstanceLanguages() language.Languages { return global.GetInstanceLangua
 // SetInstanceLanguages safely sets the value for global configuration 'InstanceLanguages' field
 func SetInstanceLanguages(v language.Languages) { global.SetInstanceLanguages(v) }
 
+// GetRequestHeaderFilterMode safely fetches the Configuration value for state's 'RequestHeaderFilterMode' field
+func (st *ConfigState) GetRequestHeaderFilterMode() (v string) {
+	st.mutex.RLock()
+	v = st.config.RequestHeaderFilterMode
+	st.mutex.RUnlock()
+	return
+}
+
+// SetRequestHeaderFilterMode safely sets the Configuration value for state's 'RequestHeaderFilterMode' field
+func (st *ConfigState) SetRequestHeaderFilterMode(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.RequestHeaderFilterMode = v
+	st.reloadToViper()
+}
+
+// RequestHeaderFilterModeFlag returns the flag name for the 'RequestHeaderFilterMode' field
+func RequestHeaderFilterModeFlag() string { return "request-header-filter-mode" }
+
+// GetRequestHeaderFilterMode safely fetches the value for global configuration 'RequestHeaderFilterMode' field
+func GetRequestHeaderFilterMode() string { return global.GetRequestHeaderFilterMode() }
+
+// SetRequestHeaderFilterMode safely sets the value for global configuration 'RequestHeaderFilterMode' field
+func SetRequestHeaderFilterMode(v string) { global.SetRequestHeaderFilterMode(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.RLock()

@@ -47,7 +47,7 @@ func TestHeaderFilter(t *testing.T) {
 		expect bool
 	}{
 		{
-			mode: config.InstanceFederationModeAllowlist,
+			mode: config.RequestHeaderFilterModeAllow,
 			allow: []headerfilter{
 				{"User-Agent", ".*Firefox.*"},
 			},
@@ -58,7 +58,7 @@ func TestHeaderFilter(t *testing.T) {
 			expect: true,
 		},
 		{
-			mode: config.InstanceFederationModeAllowlist,
+			mode: config.RequestHeaderFilterModeAllow,
 			allow: []headerfilter{
 				{"User-Agent", ".*Firefox.*"},
 			},
@@ -69,7 +69,7 @@ func TestHeaderFilter(t *testing.T) {
 			expect: false,
 		},
 		{
-			mode:  config.InstanceFederationModeBlocklist,
+			mode:  config.RequestHeaderFilterModeBlock,
 			allow: []headerfilter{},
 			block: []headerfilter{
 				{"User-Agent", ".*Firefox.*"},
@@ -80,7 +80,7 @@ func TestHeaderFilter(t *testing.T) {
 			expect: false,
 		},
 		{
-			mode:  config.InstanceFederationModeBlocklist,
+			mode:  config.RequestHeaderFilterModeBlock,
 			allow: []headerfilter{},
 			block: []headerfilter{
 				{"User-Agent", ".*Firefox.*"},
@@ -99,8 +99,8 @@ func TestHeaderFilter(t *testing.T) {
 			test.expect,
 		)
 
-		// Update federation mode to test case.
-		config.SetInstanceFederationMode(test.mode)
+		// Update header filter mode to test case.
+		config.SetRequestHeaderFilterMode(test.mode)
 
 		// Run this particular test case.
 		ok := t.Run(name, func(t *testing.T) {
