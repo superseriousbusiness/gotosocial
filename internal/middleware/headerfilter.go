@@ -23,9 +23,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
-// HeaderFilter ...
+// HeaderFilter returns a gin middleware handler that provides HTTP
+// request blocking (filtering) based on database allow / block filters.
 func HeaderFilter(state *state.State) gin.HandlerFunc {
 	switch mode := config.GetInstanceFederationMode(); mode {
+	case "": // disabled
+		return func(ctx *gin.Context) {}
 
 	case config.InstanceFederationModeAllowlist:
 		return headerFilterAllowMode(state)
@@ -34,7 +37,7 @@ func HeaderFilter(state *state.State) gin.HandlerFunc {
 		return headerFilterBlockMode(state)
 
 	default:
-		panic("unrecognized federation mode: " + mode)
+		panic("unrecognized header filter mode: " + mode)
 	}
 }
 

@@ -40,8 +40,7 @@ type Cache struct {
 	ptr atomic.Pointer[headerfilter.Filters]
 }
 
-// RegularMatch checks whether header matches against filter in the cache. If cache
-// is not currently loaded then the provided load function is called to hydrate it first.
+// RegularMatch performs .RegularMatch() on cached headerfilter.Filters, loading using callback if necessary.
 func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
@@ -64,8 +63,7 @@ func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilte
 	return ptr.RegularMatch(h), nil
 }
 
-// InverseMatch checks whether header matches inversely against filter in the cache. If cache
-// is not currently loaded then the provided load function is called to hydrate it first.
+// InverseMatch performs .InverseMatch() on cached headerfilter.Filters, loading using callback if necessary.
 func (c *Cache) InverseMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()

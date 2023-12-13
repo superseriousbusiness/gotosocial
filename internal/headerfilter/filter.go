@@ -86,7 +86,8 @@ func (fs *Filters) Append(key string, expr string) error {
 	return nil
 }
 
-// RegularMatch ...
+// RegularMatch returns whether any values in http header
+// matches any of the receiving filter regular expressions.
 func (fs Filters) RegularMatch(h http.Header) bool {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
@@ -106,7 +107,8 @@ func (fs Filters) RegularMatch(h http.Header) bool {
 	return false
 }
 
-// InverseMatch ...
+// InverseMatch returns whether any values in http header do
+// NOT match any of the receiving filter regular expressions.
 func (fs Filters) InverseMatch(h http.Header) bool {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {

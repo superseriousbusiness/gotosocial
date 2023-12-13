@@ -158,6 +158,15 @@ func (h *headerFilterDB) DeleteBlockHeaderFilter(ctx context.Context, id string)
 	return nil
 }
 
+// NOTE:
+// all of the below unsafe cast functions
+// are only possible because HeaderFilterAllow{},
+// HeaderFilterBlock{}, HeaderFilter{} while
+// different types in source, have exactly the
+// same size and layout in memory. the unsafe
+// cast simply changes the type associated with
+// that block of memory.
+
 func toAllowFilter(filter *gtsmodel.HeaderFilter) *gtsmodel.HeaderFilterAllow {
 	return (*gtsmodel.HeaderFilterAllow)(unsafe.Pointer(filter))
 }

@@ -23,17 +23,28 @@ import (
 )
 
 func init() {
-	if unsafe.Sizeof(HeaderFilterAllow{}) != unsafe.Sizeof(HeaderFilterBlock{}) {
-		panic("HeaderFilterAllow{} and HeaderFilterBlock{} must be in sync")
+	// Note that since all of the below calculations are
+	// constant, these should be optimized out of builds.
+	const filterSz = unsafe.Sizeof(HeaderFilter{})
+	if unsafe.Sizeof(HeaderFilterAllow{}) != filterSz {
+		panic("HeaderFilterAllow{} needs to have the same in-memory size / layout as HeaderFilter{}")
+	}
+	if unsafe.Sizeof(HeaderFilterBlock{}) != filterSz {
+		panic("HeaderFilterBlock{} needs to have the same in-memory size / layout as HeaderFilter{}")
 	}
 }
 
+// HeaderFilterAllow represents an allow HTTP header filter in the database.
 type HeaderFilterAllow struct{ HeaderFilter }
 
+// HeaderFilterBlock represents a block HTTP header filter in the database.
 type HeaderFilterBlock struct{ HeaderFilter }
 
+// HeaderFilter represents an HTTP request filter in
+// the database, with a header to match against, value
+// matching regex, and details about its creation.
 type HeaderFilter struct {
-	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    //
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // ID of this item in the database
 	Header    string    `bun:",nullzero,notnull"`                                           // Request header this filter pertains to
 	Regex     string    `bun:",nullzero,notnull"`                                           // Request header value matching regular expression
 	AuthorID  string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this filter
