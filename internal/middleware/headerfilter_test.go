@@ -90,6 +90,25 @@ func TestHeaderFilter(t *testing.T) {
 			},
 			expect: true,
 		},
+		{
+			mode: config.RequestHeaderFilterModeDisabled,
+			allow: []headerfilter{
+				{"Key1", "only-this"},
+				{"Key2", "only-this"},
+				{"Key3", "only-this"},
+			},
+			block: []headerfilter{
+				{"Key1", "Value"},
+				{"Key2", "Value"},
+				{"Key3", "Value"},
+			},
+			input: http.Header{
+				"Key1": []string{"Value"},
+				"Key2": []string{"Value"},
+				"Key3": []string{"Value"},
+			},
+			expect: true,
+		},
 	} {
 		// Generate a unique name for this test case.
 		name := fmt.Sprintf("%s allow=%v block=%v => expect=%v",
