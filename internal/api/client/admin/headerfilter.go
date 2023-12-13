@@ -62,6 +62,7 @@ func (m *Module) HeaderFilterBlockDELETE(c *gin.Context) {
 	m.deleteHeaderFilter(c, m.processor.Admin().DeleteAllowHeaderFilter)
 }
 
+// getHeaderFilter is a gin handler function that returns details of an HTTP header filter with provided ID, using given get function.
 func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, string) (*apimodel.HeaderFilter, gtserror.WithCode)) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
@@ -100,6 +101,7 @@ func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, strin
 	apiutil.JSON(c, http.StatusOK, filter)
 }
 
+// getHeaderFilters is a gin handler function that returns details of all HTTP header filters using given get function.
 func (m *Module) getHeaderFilters(c *gin.Context, get func(context.Context) ([]*apimodel.HeaderFilter, gtserror.WithCode)) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
@@ -130,6 +132,7 @@ func (m *Module) getHeaderFilters(c *gin.Context, get func(context.Context) ([]*
 	apiutil.JSON(c, http.StatusOK, filters)
 }
 
+// createHeaderFilter is a gin handler function that creates a HTTP header filter entry using provided form data, passing to given create function.
 func (m *Module) createHeaderFilter(c *gin.Context, create func(context.Context, *gtsmodel.Account, *apimodel.HeaderFilterRequest) (*apimodel.HeaderFilter, gtserror.WithCode)) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
@@ -172,6 +175,7 @@ func (m *Module) createHeaderFilter(c *gin.Context, create func(context.Context,
 	apiutil.JSON(c, http.StatusOK, filter)
 }
 
+// deleteHeaderFilter is a gin handler function that deletes an HTTP header filter with provided ID, using given delete function.
 func (m *Module) deleteHeaderFilter(c *gin.Context, delete func(context.Context, string) gtserror.WithCode) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

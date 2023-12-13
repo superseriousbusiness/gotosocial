@@ -32,38 +32,49 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// GetAllowHeaderFilter ...
 func (p *Processor) GetAllowHeaderFilter(ctx context.Context, id string) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilter(ctx, id, p.state.DB.GetAllowHeaderFilter)
 }
 
+// GetBlockHeaderFilter ...
 func (p *Processor) GetBlockHeaderFilter(ctx context.Context, id string) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilter(ctx, id, p.state.DB.GetBlockHeaderFilter)
 }
 
+// GetAllowHeaderFilters ...
 func (p *Processor) GetAllowHeaderFilters(ctx context.Context) ([]*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilters(ctx, p.state.DB.GetAllowHeaderFilters)
 }
 
+// GetBlockHeaderFilters ...
 func (p *Processor) GetBlockHeaderFilters(ctx context.Context) ([]*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.getHeaderFilters(ctx, p.state.DB.GetBlockHeaderFilters)
 }
 
+// CreateAllowHeaderFilter ...
 func (p *Processor) CreateAllowHeaderFilter(ctx context.Context, admin *gtsmodel.Account, request *apimodel.HeaderFilterRequest) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.createHeaderFilter(ctx, admin, request, p.state.DB.PutAllowHeaderFilter)
 }
 
+// CreateBlockHeaderFilter ...
 func (p *Processor) CreateBlockHeaderFilter(ctx context.Context, admin *gtsmodel.Account, request *apimodel.HeaderFilterRequest) (*apimodel.HeaderFilter, gtserror.WithCode) {
 	return p.createHeaderFilter(ctx, admin, request, p.state.DB.PutBlockHeaderFilter)
 }
 
+// DeleteAllowHeaderFilter ...
 func (p *Processor) DeleteAllowHeaderFilter(ctx context.Context, id string) gtserror.WithCode {
 	return p.deleteHeaderFilter(ctx, id, p.state.DB.DeleteAllowHeaderFilter)
 }
 
+// DeleteBlockHeaderFilter ...
 func (p *Processor) DeleteBlockHeaderFilter(ctx context.Context, id string) gtserror.WithCode {
 	return p.deleteHeaderFilter(ctx, id, p.state.DB.DeleteBlockHeaderFilter)
 }
 
+// getHeaderFilter fetches an HTTP header filter with
+// provided ID, using given get function, converting the
+// resulting filter to returnable frontend API model.
 func (p *Processor) getHeaderFilter(
 	ctx context.Context,
 	id string,
@@ -92,6 +103,9 @@ func (p *Processor) getHeaderFilter(
 	}
 }
 
+// getHeaderFilters fetches all HTTP header filters
+// using given get function, converting the resulting
+// filters to returnable frontend API models.
 func (p *Processor) getHeaderFilters(
 	ctx context.Context,
 	get func(context.Context) ([]*gtsmodel.HeaderFilter, error),
@@ -117,6 +131,9 @@ func (p *Processor) getHeaderFilters(
 	return apiFilters, nil
 }
 
+// createHeaderFilter inserts the given HTTP header
+// filter into database, marking as authored by the
+// provided admin, using the given insert function.
 func (p *Processor) createHeaderFilter(
 	ctx context.Context,
 	admin *gtsmodel.Account,
@@ -153,6 +170,8 @@ func (p *Processor) createHeaderFilter(
 	return toAPIHeaderFilter(&filter), nil
 }
 
+// deleteHeaderFilter deletes the HTTP header filter
+// with provided ID, using the given delete function.
 func (p *Processor) deleteHeaderFilter(
 	ctx context.Context,
 	id string,
@@ -165,6 +184,7 @@ func (p *Processor) deleteHeaderFilter(
 	return nil
 }
 
+// toAPIFilter performs a simple conversion of database model HeaderFilter to API model.
 func toAPIHeaderFilter(filter *gtsmodel.HeaderFilter) *apimodel.HeaderFilter {
 	return &apimodel.HeaderFilter{
 		ID:        filter.ID,
@@ -175,16 +195,17 @@ func toAPIHeaderFilter(filter *gtsmodel.HeaderFilter) *apimodel.HeaderFilter {
 	}
 }
 
-func validateHeaderFilter(headerKey, valueExpr string) gtserror.WithCode {
+// validateHeaderFilter validates incoming filter's header key, and regular expression.
+func validateHeaderFilter(header, regex string) gtserror.WithCode {
 	// Canonicalize the mime header key and check validity.
-	headerKey = textproto.CanonicalMIMEHeaderKey(headerKey)
-	if headerKey == "" || len(headerKey) > 1024 {
+	header = textproto.CanonicalMIMEHeaderKey(header)
+	if header == "" || len(header) > 1024 {
 		const text = "invalid request header key (empty or too long)"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	// Ensure value regexp validity.
-	_, err := regexp.Compile(valueExpr)
+	// Ensure this is compilable regex.
+	_, err := regexp.Compile(regex)
 	if err != nil {
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}

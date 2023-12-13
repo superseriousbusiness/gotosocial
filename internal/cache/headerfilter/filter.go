@@ -94,6 +94,10 @@ func (c *Cache) Stats() map[string]map[string]uint64 {
 	return nil
 }
 
+// Clear will drop the currently loaded filters,
+// triggering a reload on next call to ._Match().
+func (c *Cache) Clear() { c.ptr.Store(nil) }
+
 // loadFilters will load filters from given load callback, creating and parsing raw filters.
 func loadFilters(load func() ([]*gtsmodel.HeaderFilter, error)) (headerfilter.Filters, error) {
 	// Load filters from callback.
@@ -114,7 +118,3 @@ func loadFilters(load func() ([]*gtsmodel.HeaderFilter, error)) (headerfilter.Fi
 
 	return filters, nil
 }
-
-// Clear will drop the currently loaded filters,
-// triggering a reload on next call to .Matches().
-func (c *Cache) Clear() { c.ptr.Store(nil) }
