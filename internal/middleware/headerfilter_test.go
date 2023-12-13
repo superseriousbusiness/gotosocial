@@ -226,10 +226,3 @@ type headerfilter struct {
 func (hf *headerfilter) String() string {
 	return fmt.Sprintf("%s=%q", hf.header, hf.regex)
 }
-
-func blockingHandler() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		<-ctx.Done()
-		ctx.Status(201) // specifically not 200
-	}
-}
