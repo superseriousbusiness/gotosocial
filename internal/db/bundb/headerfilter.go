@@ -59,7 +59,7 @@ func (h *headerFilterDB) BlockHeaderInverseMatch(ctx context.Context, hdr http.H
 func (h *headerFilterDB) GetAllowHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error) {
 	filter := new(gtsmodel.HeaderFilterAllow)
 	if err := h.db.NewSelect().
-		Model(&filter).
+		Model(filter).
 		Where("? = ?", bun.Ident("id"), id).
 		Scan(ctx); err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (h *headerFilterDB) GetAllowHeaderFilter(ctx context.Context, id string) (*
 func (h *headerFilterDB) GetBlockHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error) {
 	filter := new(gtsmodel.HeaderFilterBlock)
 	if err := h.db.NewSelect().
-		Model(&filter).
+		Model(filter).
 		Where("? = ?", bun.Ident("id"), id).
 		Scan(ctx); err != nil {
 		return nil, err
