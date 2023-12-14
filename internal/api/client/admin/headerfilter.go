@@ -159,12 +159,6 @@ func (m *Module) deleteHeaderFilter(c *gin.Context, delete func(context.Context,
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
 	filterID := c.Param("id")
 	if filterID == "" {
 		const text = "no filter id specified"
