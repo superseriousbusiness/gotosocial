@@ -30,38 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (m *Module) HeaderFilterAllowGET(c *gin.Context) {
-	m.getHeaderFilter(c, m.processor.Admin().GetAllowHeaderFilter)
-}
-
-func (m *Module) HeaderFilterBlockGET(c *gin.Context) {
-	m.getHeaderFilter(c, m.processor.Admin().GetBlockHeaderFilter)
-}
-
-func (m *Module) HeaderFilterAllowsGET(c *gin.Context) {
-	m.getHeaderFilters(c, m.processor.Admin().GetAllowHeaderFilters)
-}
-
-func (m *Module) HeaderFilterBlocksGET(c *gin.Context) {
-	m.getHeaderFilters(c, m.processor.Admin().GetBlockHeaderFilters)
-}
-
-func (m *Module) HeaderFilterAllowPOST(c *gin.Context) {
-	m.createHeaderFilter(c, m.processor.Admin().CreateAllowHeaderFilter)
-}
-
-func (m *Module) HeaderFilterBlockPOST(c *gin.Context) {
-	m.createHeaderFilter(c, m.processor.Admin().CreateBlockHeaderFilter)
-}
-
-func (m *Module) HeaderFilterAllowDELETE(c *gin.Context) {
-	m.deleteHeaderFilter(c, m.processor.Admin().DeleteAllowHeaderFilter)
-}
-
-func (m *Module) HeaderFilterBlockDELETE(c *gin.Context) {
-	m.deleteHeaderFilter(c, m.processor.Admin().DeleteAllowHeaderFilter)
-}
-
 // getHeaderFilter is a gin handler function that returns details of an HTTP header filter with provided ID, using given get function.
 func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, string) (*apimodel.HeaderFilter, gtserror.WithCode)) {
 	authed, err := oauth.Authed(c, true, true, true, true)
@@ -210,4 +178,6 @@ func (m *Module) deleteHeaderFilter(c *gin.Context, delete func(context.Context,
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
+
+	c.Status(http.StatusAccepted)
 }
