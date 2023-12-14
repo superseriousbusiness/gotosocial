@@ -171,7 +171,7 @@ func (d *Dereferencer) RefreshStatus(
 	force bool,
 ) (*gtsmodel.Status, ap.Statusable, error) {
 	// Check whether status needs update.
-	if !force && statusUpToDate(status, force) {
+	if statusUpToDate(status, force) {
 		return status, nil, nil
 	}
 
@@ -216,7 +216,7 @@ func (d *Dereferencer) RefreshStatusAsync(
 	force bool,
 ) {
 	// Check whether status needs update.
-	if !force && statusUpToDate(status, force) {
+	if statusUpToDate(status, force) {
 		return
 	}
 
