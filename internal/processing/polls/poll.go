@@ -21,7 +21,6 @@ import (
 	"context"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
@@ -34,7 +33,6 @@ type Processor struct {
 	c *common.Processor
 
 	state     *state.State
-	federator *federation.Federator
 	converter *typeutils.Converter
 }
 
