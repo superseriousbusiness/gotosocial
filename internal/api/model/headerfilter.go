@@ -17,20 +17,39 @@
 
 package model
 
+// HeaderFilter represents a regex value filter applied to one particular HTTP header (allow / block).
 type HeaderFilter struct {
+	// The ID of the header filter.
+	// example: 01FBW21XJA09XYX51KV5JVBW0F
+	// readonly: true
 	ID string `json:"id"`
 
+	// The HTTP header to match against.
+	// example: User-Agent
 	Header string `json:"header"`
 
+	// The header value matching regular expression.
+	// example: .*Firefox.*
 	Regex string `json:"regex"`
 
-	CreatedBy string `json:"created_by,omitempty"`
+	// The ID of the admin account that created this header filter.
+	// example: 01FBW2758ZB6PBR200YPDDJK4C
+	// readonly: true
+	CreatedBy string `json:"created_by"`
 
-	CreatedAt string `json:"created_at,omitempty"`
+	// Time at which the header filter was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	// readonly: true
+	CreatedAt string `json:"created_at"`
 }
 
+// HeaderFilterRequest is the form submitted as a POST to create a new header filter entry (allow / block).
+//
+// swagger:model headerFilterCreateRequest
 type HeaderFilterRequest struct {
+	// The HTTP header to match against (e.g. User-Agent).
 	Header string `form:"header" json:"header" xml:"header"`
 
+	// The header value matching regular expression.
 	Regex string `form:"regex" json:"regex" xml:"regex"`
 }
