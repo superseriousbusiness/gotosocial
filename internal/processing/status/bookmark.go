@@ -30,7 +30,11 @@ import (
 )
 
 func (p *Processor) getBookmarkableStatus(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, string, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		false, // upToDate
+	)
 	if errWithCode != nil {
 		return nil, "", errWithCode
 	}

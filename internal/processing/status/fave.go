@@ -47,6 +47,7 @@ func (p *Processor) getFaveableStatus(
 		ctx,
 		requester,
 		targetID,
+		false, // upToDate
 	)
 	if errWithCode != nil {
 		return nil, nil, errWithCode
@@ -149,7 +150,11 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 
 // FavedBy returns a slice of accounts that have liked the given status, filtered according to privacy settings.
 func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.Account, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		false, // upToDate
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}

@@ -19,11 +19,9 @@ package polls
 
 import (
 	"context"
-	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
@@ -36,6 +34,7 @@ type Processor struct {
 	c *common.Processor
 
 	state     *state.State
+	federator *federation.Federator
 	converter *typeutils.Converter
 }
 
@@ -48,35 +47,24 @@ func New(common *common.Processor, state *state.State, converter *typeutils.Conv
 }
 
 // getTargetPoll fetches a target poll ID for requesting account, taking visibility of the poll's originating status into account.
-func (p *Processor) getTargetPoll(ctx context.Context, requestingAccount *gtsmodel.Account, targetID string) (*gtsmodel.Poll, gtserror.WithCode) {
-	// Load the requested poll with ID.
-	// (barebones as we fetch status below)
-	poll, err := p.state.DB.GetPollByID(
-		gtscontext.SetBarebones(ctx),
-		targetID,
+func (p *Processor) getTargetPoll(ctx context.Context, requester *gtsmodel.Account, targetID string) (*gtsmodel.Poll, gtserror.WithCode) {
+	// Load the status the poll is attached to by the poll ID,
+	// checking for visibility and ensuring it is up-to-date.
+	status, errWithCode := p.c.GetVisibleTargetStatusBy(ctx,
+		requester,
+		func() (*gtsmodel.Status, error) {
+			return p.state.DB.GetStatusByPollID(ctx, targetID)
+		},
+		true, // upToDate
 	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if poll == nil {
-		// No poll could be found for given ID.
-		const text = "target poll not found"
-		return nil, gtserror.NewErrorNotFound(
-			errors.New(text),
-			text,
-		)
-	}
-
-	// Check that we can see + fetch the originating status for requesting account.
-	status, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, poll.StatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	// Update poll status.
+	// Return most up-to-date
+	// copy of the status poll.
+	poll := status.Poll
 	poll.Status = status
-
 	return poll, nil
 }
 

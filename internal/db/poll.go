@@ -27,9 +27,6 @@ type Poll interface {
 	// GetPollByID fetches the Poll with given ID from the database.
 	GetPollByID(ctx context.Context, id string) (*gtsmodel.Poll, error)
 
-	// GetPollByStatusID fetches the Poll with given status ID column value from the database.
-	GetPollByStatusID(ctx context.Context, statusID string) (*gtsmodel.Poll, error)
-
 	// GetOpenPolls fetches all local Polls in the database with an unset `closed_at` column.
 	GetOpenPolls(ctx context.Context) ([]*gtsmodel.Poll, error)
 

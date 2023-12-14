@@ -40,7 +40,7 @@ import (
 
 // statusUpToDate returns whether the given status model is both updateable
 // (i.e. remote status) and whether it needs an update based on `fetched_at`.
-func statusUpToDate(status *gtsmodel.Status) bool {
+func statusUpToDate(status *gtsmodel.Status, force bool) bool {
 	if *status.Local {
 		// Can't update local statuses.
 		return true
@@ -50,10 +50,10 @@ func statusUpToDate(status *gtsmodel.Status) bool {
 	// statuses to be refreshed.
 	limit := 2 * time.Hour
 
-	if status.PollID != "" {
+	if force || status.PollID != "" {
 		// We specifically allow statuses with
-		// polls to be refreshed on a much shorter
-		// time to ensure up-to-date poll info.
+		// polls (or with 'force' flag set) to be
+		// refreshed on a much shorter time frame.
 		limit = 5 * time.Minute
 	}
 
@@ -136,7 +136,7 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 	}
 
 	// Check whether needs update.
-	if statusUpToDate(status) {
+	if statusUpToDate(status, false) {
 		// This is existing up-to-date status, ensure it is populated.
 		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
 			log.Errorf(ctx, "error populating existing status: %v", err)
@@ -170,8 +170,8 @@ func (d *Dereferencer) RefreshStatus(
 	statusable ap.Statusable,
 	force bool,
 ) (*gtsmodel.Status, ap.Statusable, error) {
-	// Check whether needs update.
-	if !force && statusUpToDate(status) {
+	// Check whether status needs update.
+	if !force && statusUpToDate(status, force) {
 		return status, nil, nil
 	}
 
@@ -215,8 +215,8 @@ func (d *Dereferencer) RefreshStatusAsync(
 	statusable ap.Statusable,
 	force bool,
 ) {
-	// Check whether needs update.
-	if !force && statusUpToDate(status) {
+	// Check whether status needs update.
+	if !force && statusUpToDate(status, force) {
 		return
 	}
 

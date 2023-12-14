@@ -100,6 +100,7 @@ func (p *Processor) StatusRepliesGet(
 	status, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		requester,
 		statusID,
+		false, // upToDate
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

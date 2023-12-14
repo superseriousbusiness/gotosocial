@@ -947,6 +947,7 @@ func (c *GTSCaches) initStatus() {
 		{Name: "ID"},
 		{Name: "URI"},
 		{Name: "URL"},
+		{Name: "PollID"},
 		{Name: "BoostOfID.AccountID"},
 		{Name: "ThreadID", Multi: true},
 	}, copyF, cap)

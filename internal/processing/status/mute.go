@@ -41,7 +41,11 @@ func (p *Processor) getMuteableStatus(
 	requestingAccount *gtsmodel.Account,
 	targetStatusID string,
 ) (*gtsmodel.Status, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		false, // upToDate
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}

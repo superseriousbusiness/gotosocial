@@ -50,20 +50,6 @@ func (p *pollDB) GetPollByID(ctx context.Context, id string) (*gtsmodel.Poll, er
 	)
 }
 
-func (p *pollDB) GetPollByStatusID(ctx context.Context, statusID string) (*gtsmodel.Poll, error) {
-	return p.getPoll(
-		ctx,
-		"StatusID",
-		func(poll *gtsmodel.Poll) error {
-			return p.db.NewSelect().
-				Model(poll).
-				Where("? = ?", bun.Ident("poll.status_id"), statusID).
-				Scan(ctx)
-		},
-		statusID,
-	)
-}
-
 func (p *pollDB) getPoll(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Poll) error, keyParts ...any) (*gtsmodel.Poll, error) {
 	// Fetch poll from database cache with loader callback
 	poll, err := p.state.Caches.GTS.Poll().Load(lookup, func() (*gtsmodel.Poll, error) {
