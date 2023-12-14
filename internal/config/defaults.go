@@ -64,6 +64,7 @@ var Defaults = Configuration{
 	InstanceExposeSuspendedWeb:     false,
 	InstanceDeliverToSharedInboxes: true,
 	InstanceLanguages:              make(language.Languages, 0),
+	RequestHeaderFilterMode:        RequestHeaderFilterModeDisabled,
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
