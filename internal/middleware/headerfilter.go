@@ -20,6 +20,8 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/headerfilter"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -53,7 +55,14 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 
 		// Perform an explicit block match, this skips allow match.
 		block, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
-		if err != nil {
+		switch err {
+		case nil:
+
+		case headerfilter.ErrLargeHeaderValue:
+			log.Warn(ctx, "large header value")
+			block = true // always block
+
+		default:
 			respondInternalServerError(c, err)
 			return
 		}
@@ -65,7 +74,14 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 
 		// Headers not explicitly blocked, check for allow NON-matches.
 		notAllow, err := state.DB.AllowHeaderInverseMatch(ctx, hdr)
-		if err != nil {
+		switch err {
+		case nil:
+
+		case headerfilter.ErrLargeHeaderValue:
+			log.Warn(ctx, "large header value")
+			notAllow = true // always block
+
+		default:
 			respondInternalServerError(c, err)
 			return
 		}
@@ -92,7 +108,15 @@ func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
 
 		// Perform an explicit allow match, this skips block match.
 		allow, err := state.DB.AllowHeaderRegularMatch(ctx, hdr)
-		if err != nil {
+		switch err {
+		case nil:
+
+		case headerfilter.ErrLargeHeaderValue:
+			log.Warn(ctx, "large header value")
+			respondBlocked(c) // always block
+			return
+
+		default:
 			respondInternalServerError(c, err)
 			return
 		}
@@ -100,7 +124,14 @@ func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
 		if !allow {
 			// Headers were not explicitly allowed, perform block match.
 			block, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
-			if err != nil {
+			switch err {
+			case nil:
+
+			case headerfilter.ErrLargeHeaderValue:
+				log.Warn(ctx, "large header value")
+				block = true // always block
+
+			default:
 				respondInternalServerError(c, err)
 				return
 			}

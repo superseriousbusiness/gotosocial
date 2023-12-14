@@ -51,8 +51,8 @@ func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilte
 		c.ptr.Store(ptr)
 	}
 
-	// Dereference and perform match.
-	return ptr.RegularMatch(h), nil
+	// Deref and perform match.
+	return ptr.RegularMatch(h)
 }
 
 // InverseMatch performs .InverseMatch() on cached headerfilter.Filters, loading using callback if necessary.
@@ -74,8 +74,8 @@ func (c *Cache) InverseMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilte
 		c.ptr.Store(ptr)
 	}
 
-	// Dereference and perform match.
-	return ptr.InverseMatch(h), nil
+	// Deref and perform match.
+	return ptr.InverseMatch(h)
 }
 
 // Stats returns match statistics associated with currently cached header filters.

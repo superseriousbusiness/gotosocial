@@ -22,12 +22,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/headerfilter"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -40,37 +42,58 @@ func TestHeaderFilter(t *testing.T) {
 
 	for _, test := range []struct {
 		mode   string
-		allow  []headerfilter
-		block  []headerfilter
+		allow  []filter
+		block  []filter
 		input  http.Header
 		expect bool
 	}{
 		{
+			// Allow mode with expected 200 OK.
 			mode: config.RequestHeaderFilterModeAllow,
-			allow: []headerfilter{
+			allow: []filter{
 				{"User-Agent", ".*Firefox.*"},
 			},
-			block: []headerfilter{},
+			block: []filter{},
 			input: http.Header{
 				"User-Agent": []string{"Firefox v169.42; Extra Tracking Info"},
 			},
 			expect: true,
 		},
 		{
+			// Allow mode with expected 403 Forbidden.
 			mode: config.RequestHeaderFilterModeAllow,
-			allow: []headerfilter{
+			allow: []filter{
 				{"User-Agent", ".*Firefox.*"},
 			},
-			block: []headerfilter{},
+			block: []filter{},
 			input: http.Header{
 				"User-Agent": []string{"Chromium v169.42; Extra Tracking Info"},
 			},
 			expect: false,
 		},
 		{
+			// Allow mode with too long header value expecting 403 Forbidden.
+			mode: config.RequestHeaderFilterModeAllow,
+			allow: []filter{
+				{"User-Agent", ".*"},
+			},
+			block: []filter{},
+			input: http.Header{
+				"User-Agent": []string{func() string {
+					var buf strings.Builder
+					for i := 0; i < headerfilter.MaxHeaderValue+1; i++ {
+						buf.WriteByte(' ')
+					}
+					return buf.String()
+				}()},
+			},
+			expect: false,
+		},
+		{
+			// Block mode with an expected 403 Forbidden.
 			mode:  config.RequestHeaderFilterModeBlock,
-			allow: []headerfilter{},
-			block: []headerfilter{
+			allow: []filter{},
+			block: []filter{
 				{"User-Agent", ".*Firefox.*"},
 			},
 			input: http.Header{
@@ -79,9 +102,10 @@ func TestHeaderFilter(t *testing.T) {
 			expect: false,
 		},
 		{
+			// Block mode with an expected 200 OK.
 			mode:  config.RequestHeaderFilterModeBlock,
-			allow: []headerfilter{},
-			block: []headerfilter{
+			allow: []filter{},
+			block: []filter{
 				{"User-Agent", ".*Firefox.*"},
 			},
 			input: http.Header{
@@ -90,13 +114,32 @@ func TestHeaderFilter(t *testing.T) {
 			expect: true,
 		},
 		{
+			// Block mode with too long header value expecting 403 Forbidden.
+			mode:  config.RequestHeaderFilterModeAllow,
+			allow: []filter{},
+			block: []filter{
+				{"User-Agent", "none"},
+			},
+			input: http.Header{
+				"User-Agent": []string{func() string {
+					var buf strings.Builder
+					for i := 0; i < headerfilter.MaxHeaderValue+1; i++ {
+						buf.WriteByte(' ')
+					}
+					return buf.String()
+				}()},
+			},
+			expect: false,
+		},
+		{
+			// Disabled mode with an expected 200 OK.
 			mode: config.RequestHeaderFilterModeDisabled,
-			allow: []headerfilter{
+			allow: []filter{
 				{"Key1", "only-this"},
 				{"Key2", "only-this"},
 				{"Key3", "only-this"},
 			},
-			block: []headerfilter{
+			block: []filter{
 				{"Key1", "Value"},
 				{"Key2", "Value"},
 				{"Key3", "Value"},
@@ -136,7 +179,7 @@ func TestHeaderFilter(t *testing.T) {
 	}
 }
 
-func testHeaderFilter(t *testing.T, allow, block []headerfilter, input http.Header, expect bool) {
+func testHeaderFilter(t *testing.T, allow, block []filter, input http.Header, expect bool) {
 	var err error
 
 	// Create test context with cancel.
@@ -218,11 +261,11 @@ func testHeaderFilter(t *testing.T, allow, block []headerfilter, input http.Head
 	}
 }
 
-type headerfilter struct {
+type filter struct {
 	header string
 	regex  string
 }
 
-func (hf *headerfilter) String() string {
+func (hf *filter) String() string {
 	return fmt.Sprintf("%s=%q", hf.header, hf.regex)
 }

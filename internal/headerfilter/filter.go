@@ -18,12 +18,21 @@
 package headerfilter
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/textproto"
 	"regexp"
 	"sync/atomic"
 )
+
+// Maximum header value size before we return
+// an instant negative match. They shouldn't
+// go beyond this size in most cases anywho.
+const MaxHeaderValue = 1024
+
+// ErrLargeHeaderValue is returned on attempting to match on a value > MaxHeaderValue.
+var ErrLargeHeaderValue = errors.New("header value too large")
 
 // Filters represents a set of http.Header regular
 // expression filters built-in statistic tracking.
@@ -88,44 +97,48 @@ func (fs *Filters) Append(key string, expr string) error {
 
 // RegularMatch returns whether any values in http header
 // matches any of the receiving filter regular expressions.
-func (fs Filters) RegularMatch(h http.Header) bool {
+func (fs Filters) RegularMatch(h http.Header) (bool, error) {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
-			// Shorten header value if needed
-			// to mitigate denial of service.
-			value = safeHeaderValue(value)
+			// Don't perform match on large values
+			// to mitigate denial of service attacks.
+			if len(value) > MaxHeaderValue {
+				return false, ErrLargeHeaderValue
+			}
 
 			// Compare against regexprs.
 			for i := range filter.exprs {
 				if filter.exprs[i].MatchString(value) {
 					filter.exprs[i].n.Add(1)
-					return true
+					return true, nil
 				}
 			}
 		}
 	}
-	return false
+	return false, nil
 }
 
 // InverseMatch returns whether any values in http header do
 // NOT match any of the receiving filter regular expressions.
-func (fs Filters) InverseMatch(h http.Header) bool {
+func (fs Filters) InverseMatch(h http.Header) (bool, error) {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
-			// Shorten header value if needed
-			// to mitigate denial of service.
-			value = safeHeaderValue(value)
+			// Don't perform match on large values
+			// to mitigate denial of service attacks.
+			if len(value) > MaxHeaderValue {
+				return false, ErrLargeHeaderValue
+			}
 
 			// Compare against regexprs.
 			for i := range filter.exprs {
 				if !filter.exprs[i].MatchString(value) {
 					filter.exprs[i].n.Add(1)
-					return true
+					return true, nil
 				}
 			}
 		}
 	}
-	return false
+	return false, nil
 }
 
 // Stats compiles each of the filters and their match counts into
@@ -145,16 +158,4 @@ func (fs Filters) Stats() map[string]map[string]uint64 {
 		}
 	}
 	return stats
-}
-
-// safeHeaderValue returns a header value checked against
-// a constant max length, else returning a subset of value
-// amounting to header[:max/2] + header[len(header)+max/2:].
-func safeHeaderValue(value string) string {
-	const max = 1024
-	const mid = max / 2
-	if len(value) <= max {
-		return value
-	}
-	return value[:mid] + value[len(value)-1-mid:]
 }
