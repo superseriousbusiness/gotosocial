@@ -361,6 +361,24 @@ instance-deliver-to-shared-inboxes: true
 # Default: false
 instance-inject-mastodon-version: false
 
+# String. HTTP request header filtering mode to use for this instance.
+#
+# "block" -- only requests that are explicitly blocked by header filters
+#            will be denied (unless they are also explicitly allowed).
+#
+# "allow" -- only requests that are explicitly allowed by header filters
+#            will be accepted (unless they are also explicitly blocked).
+#
+#   ""    -- request header filtering disabled.
+#
+# For more details on block and allow modes, check the documentation at:
+# https://docs.gotosocial.org/en/latest/admin/header_filtering_modes
+#
+# Options: ["block", "allow", ""]
+# Default: ""
+request-header-filtering-mode: ""
+
+
 ###########################
 ##### ACCOUNTS CONFIG #####
 ###########################
