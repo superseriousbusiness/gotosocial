@@ -90,6 +90,20 @@ func TestHeaderFilter(t *testing.T) {
 			expect: false,
 		},
 		{
+			// Allow mode with explicit block expecting 403 Forbidden.
+			mode: config.RequestHeaderFilterModeAllow,
+			allow: []filter{
+				{"User-Agent", ".*Firefox.*"},
+			},
+			block: []filter{
+				{"User-Agent", ".*Firefox v169\\.42.*"},
+			},
+			input: http.Header{
+				"User-Agent": []string{"Firefox v169.42; Extra Tracking Info"},
+			},
+			expect: false,
+		},
+		{
 			// Block mode with an expected 403 Forbidden.
 			mode:  config.RequestHeaderFilterModeBlock,
 			allow: []filter{},
@@ -115,7 +129,7 @@ func TestHeaderFilter(t *testing.T) {
 		},
 		{
 			// Block mode with too long header value expecting 403 Forbidden.
-			mode:  config.RequestHeaderFilterModeAllow,
+			mode:  config.RequestHeaderFilterModeBlock,
 			allow: []filter{},
 			block: []filter{
 				{"User-Agent", "none"},
@@ -130,6 +144,20 @@ func TestHeaderFilter(t *testing.T) {
 				}()},
 			},
 			expect: false,
+		},
+		{
+			// Block mode with explicit allow expecting 200 OK.
+			mode: config.RequestHeaderFilterModeBlock,
+			allow: []filter{
+				{"User-Agent", ".*Firefox.*"},
+			},
+			block: []filter{
+				{"User-Agent", ".*Firefox v169\\.42.*"},
+			},
+			input: http.Header{
+				"User-Agent": []string{"Firefox v169.42; Extra Tracking Info"},
+			},
+			expect: true,
 		},
 		{
 			// Disabled mode with an expected 200 OK.
