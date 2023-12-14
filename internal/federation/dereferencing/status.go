@@ -50,10 +50,10 @@ func statusUpToDate(status *gtsmodel.Status, force bool) bool {
 	// statuses to be refreshed.
 	limit := 2 * time.Hour
 
-	if force || status.PollID != "" {
-		// We specifically allow statuses with
-		// polls (or with 'force' flag set) to be
-		// refreshed on a much shorter time frame.
+	if force {
+		// We specifically allow the force flag
+		// to force an early refresh (on a much
+		// smaller cooldown period).
 		limit = 5 * time.Minute
 	}
 
