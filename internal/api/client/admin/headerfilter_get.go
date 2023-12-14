@@ -19,18 +19,146 @@ package admin
 
 import "github.com/gin-gonic/gin"
 
+// HeaderFilterAllowGET swagger:operation GET /api/v1/admin/header_allows/{id} headerFilterAllowGet
+//
+// Get "allow" header filter with the given ID.
+//
+//	---
+//	tags:
+//	- admin
+//
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Target header filter ID.
+//		in: path
+//		required: true
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
+//
+//	responses:
+//		'200':
+//			description: The requested "allow" header filter.
+//			schema:
+//				"$ref": "#/definitions/headerFilter"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'500':
+//			description: internal server error
 func (m *Module) HeaderFilterAllowGET(c *gin.Context) {
 	m.getHeaderFilter(c, m.processor.Admin().GetAllowHeaderFilter)
 }
 
+// HeaderFilterBlockGET swagger:operation GET /api/v1/admin/header_blocks/{id} headerFilterBlockGet
+//
+// Get "block" header filter with the given ID.
+//
+//	---
+//	tags:
+//	- admin
+//
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Target header filter ID.
+//		in: path
+//		required: true
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
+//
+//	responses:
+//		'200':
+//			description: The requested "block" header filter.
+//			schema:
+//				"$ref": "#/definitions/headerFilter"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'500':
+//			description: internal server error
 func (m *Module) HeaderFilterBlockGET(c *gin.Context) {
 	m.getHeaderFilter(c, m.processor.Admin().GetBlockHeaderFilter)
 }
 
+// HeaderFilterAllowsGET swagger:operation GET /api/v1/admin/header_allows headerFilterAllowsGet
+//
+// Get all "allow" header filters currently in place.
+//
+//	---
+//	tags:
+//	- admin
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
+//
+//	responses:
+//		'200':
+//			description: All "allow" header filters currently in place.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/headerFilter"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'500':
+//			description: internal server error
 func (m *Module) HeaderFilterAllowsGET(c *gin.Context) {
 	m.getHeaderFilters(c, m.processor.Admin().GetAllowHeaderFilters)
 }
 
+// HeaderFilterBlocksGET swagger:operation GET /api/v1/admin/header_blocks headerFilterBlocksGet
+//
+// Get all "allow" header filters currently in place.
+//
+//	---
+//	tags:
+//	- admin
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
+//
+//	responses:
+//		'200':
+//			description: All "block" header filters currently in place.
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/headerFilter"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'403':
+//			description: forbidden
+//		'404':
+//			description: not found
+//		'500':
+//			description: internal server error
 func (m *Module) HeaderFilterBlocksGET(c *gin.Context) {
 	m.getHeaderFilters(c, m.processor.Admin().GetBlockHeaderFilters)
 }

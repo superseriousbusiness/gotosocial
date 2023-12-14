@@ -46,8 +46,7 @@ import (
 //
 //	responses:
 //		'200':
-//			description: >-
-//				The newly created allow header filter.
+//			description: The newly created "allow" header filter.
 //			schema:
 //				"$ref": "#/definitions/headerFilter"
 //		'400':
@@ -87,8 +86,7 @@ func (m *Module) HeaderFilterAllowPOST(c *gin.Context) {
 //
 //	responses:
 //		'200':
-//			description: >-
-//				The newly created block header filter.
+//			description: The newly created "block" header filter.
 //			schema:
 //				"$ref": "#/definitions/headerFilter"
 //		'400':
