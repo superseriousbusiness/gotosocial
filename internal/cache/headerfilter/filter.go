@@ -26,16 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/headerfilter"
 )
 
-// Cache provides a means of caching domains in memory to reduce
-// load on an underlying storage mechanism, e.g. a database.
-//
-// The in-memory domain list is kept up-to-date by means of a passed
-// loader function during every call to .Matches(). In the case of
-// a nil internal domain list, the loader function is called to hydrate
-// the cache with the latest list of domains.
-//
-// The .Clear() function can be used to invalidate the cache,
-// e.g. when an entry is added / deleted from the database.
+// Cache provides a means of caching headerfilter.Filters in
+// memory to reduce load on an underlying storage mechanism.
 type Cache struct {
 	ptr atomic.Pointer[headerfilter.Filters]
 }

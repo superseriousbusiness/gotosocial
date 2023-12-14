@@ -24,22 +24,20 @@ import (
 )
 
 type Caches struct {
-	// GTS provides access to the collection of gtsmodel object caches.
-	// (used by the database).
+	// GTS provides access to the collection of
+	// gtsmodel object caches. (used by the database).
 	GTS GTSCaches
 
-	// AP provides access to the collection of ActivityPub object caches.
-	// (planned to be used by the typeconverter).
-	AP APCaches
-
-	// AllowHeaderFilters ...
+	// AllowHeaderFilters provides access to
+	// the allow []headerfilter.Filter cache.
 	AllowHeaderFilters headerfilter.Cache
 
-	// BlockHeaderFilters ...
+	// BlockHeaderFilters provides access to
+	// the block []headerfilter.Filter cache.
 	BlockHeaderFilters headerfilter.Cache
 
-	// Visibility provides access to the item visibility cache.
-	// (used by the visibility filter).
+	// Visibility provides access to the item visibility
+	// cache. (used by the visibility filter).
 	Visibility VisibilityCache
 
 	// prevent pass-by-value.
@@ -52,7 +50,6 @@ func (c *Caches) Init() {
 	log.Infof(nil, "init: %p", c)
 
 	c.GTS.Init()
-	c.AP.Init()
 	c.Visibility.Init()
 
 	// Setup cache invalidate hooks.
@@ -65,7 +62,6 @@ func (c *Caches) Start() {
 	log.Infof(nil, "start: %p", c)
 
 	c.GTS.Start()
-	c.AP.Start()
 	c.Visibility.Start()
 }
 
@@ -74,7 +70,6 @@ func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
 	c.GTS.Stop()
-	c.AP.Stop()
 	c.Visibility.Stop()
 }
 
