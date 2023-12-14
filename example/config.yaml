@@ -372,7 +372,7 @@ instance-inject-mastodon-version: false
 #   ""    -- request header filtering disabled.
 #
 # For more details on block and allow modes, check the documentation at:
-# https://docs.gotosocial.org/en/latest/admin/header_filtering_modes
+# https://docs.gotosocial.org/en/latest/admin/request_filtering_modes
 #
 # Options: ["block", "allow", ""]
 # Default: ""
