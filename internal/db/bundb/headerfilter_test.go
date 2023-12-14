@@ -18,6 +18,7 @@ func (suite *HeaderFilterTestSuite) TestAllowHeaderFilterGetPutUpdateDelete() {
 		suite.db.GetAllowHeaderFilter,
 		suite.db.GetAllowHeaderFilters,
 		suite.db.PutAllowHeaderFilter,
+		suite.db.UpdateAllowHeaderFilter,
 		suite.db.DeleteAllowHeaderFilter,
 	)
 }
@@ -27,6 +28,7 @@ func (suite *HeaderFilterTestSuite) TestBlockHeaderFilterGetPutUpdateDelete() {
 		suite.db.GetBlockHeaderFilter,
 		suite.db.GetBlockHeaderFilters,
 		suite.db.PutBlockHeaderFilter,
+		suite.db.UpdateBlockHeaderFilter,
 		suite.db.DeleteBlockHeaderFilter,
 	)
 }
@@ -35,6 +37,7 @@ func (suite *HeaderFilterTestSuite) testHeaderFilterGetPutUpdateDelete(
 	get func(context.Context, string) (*gtsmodel.HeaderFilter, error),
 	getAll func(context.Context) ([]*gtsmodel.HeaderFilter, error),
 	put func(context.Context, *gtsmodel.HeaderFilter) error,
+	update func(context.Context, *gtsmodel.HeaderFilter, ...string) error,
 	delete func(context.Context, string) error,
 ) {
 	t := suite.T()
@@ -78,6 +81,15 @@ func (suite *HeaderFilterTestSuite) testHeaderFilterGetPutUpdateDelete(
 	// Ensure contains example.
 	suite.Equal(len(all), 1)
 	suite.Equal(all[0].ID, filter.ID)
+
+	// Update the header filter regex value.
+	check.Regex = "new regex value"
+	if err := update(ctx, check); err != nil {
+		t.Fatalf("error updating header filter: %v", err)
+	}
+
+	// Ensure 'updated_at' was updated on check model.
+	suite.True(check.UpdatedAt.After(filter.UpdatedAt))
 
 	// Now delete the header filter from db.
 	if err := delete(ctx, filter.ID); err != nil {

@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"net/http"
+	"time"
 	"unsafe"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -115,10 +116,17 @@ func (h *headerFilterDB) PutBlockHeaderFilter(ctx context.Context, filter *gtsmo
 }
 
 func (h *headerFilterDB) UpdateAllowHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter, cols ...string) error {
+	filter.UpdatedAt = time.Now()
+	if len(cols) > 0 {
+		// If we're updating by column,
+		// ensure "updated_at" is included.
+		cols = append(cols, "updated_at")
+	}
 	if _, err := h.db.NewUpdate().
 		Model(toAllowFilter(filter)).
 		Column(cols...).
-		Exec(ctx, filter); err != nil {
+		Where("? = ?", bun.Ident("id"), filter.ID).
+		Exec(ctx); err != nil {
 		return err
 	}
 	h.state.Caches.AllowHeaderFilters.Clear()
@@ -126,10 +134,17 @@ func (h *headerFilterDB) UpdateAllowHeaderFilter(ctx context.Context, filter *gt
 }
 
 func (h *headerFilterDB) UpdateBlockHeaderFilter(ctx context.Context, filter *gtsmodel.HeaderFilter, cols ...string) error {
+	filter.UpdatedAt = time.Now()
+	if len(cols) > 0 {
+		// If we're updating by column,
+		// ensure "updated_at" is included.
+		cols = append(cols, "updated_at")
+	}
 	if _, err := h.db.NewUpdate().
 		Model(toBlockFilter(filter)).
 		Column(cols...).
-		Exec(ctx, filter); err != nil {
+		Where("? = ?", bun.Ident("id"), filter.ID).
+		Exec(ctx); err != nil {
 		return err
 	}
 	h.state.Caches.BlockHeaderFilters.Clear()
