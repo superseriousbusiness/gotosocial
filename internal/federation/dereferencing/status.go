@@ -46,8 +46,19 @@ func statusUpToDate(status *gtsmodel.Status) bool {
 		return true
 	}
 
-	// If this status was updated recently (last interval), we return as-is.
-	if next := status.FetchedAt.Add(2 * time.Hour); time.Now().Before(next) {
+	// Default limit we allow
+	// statuses to be refreshed.
+	limit := 2 * time.Hour
+
+	if status.PollID != "" {
+		// We specifically allow statuses with
+		// polls to be refreshed on a much shorter
+		// time to ensure up-to-date poll info.
+		limit = 5 * time.Minute
+	}
+
+	// If this status was updated recently (within limit), return as-is.
+	if next := status.FetchedAt.Add(limit); time.Now().Before(next) {
 		return true
 	}
 
