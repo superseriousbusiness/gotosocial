@@ -64,12 +64,15 @@ func (p *Processor) GetTargetStatusBy(
 
 	if requester != nil && visible {
 		// Ensure remote status is up-to-date.
-		p.federator.RefreshStatus(ctx,
+		_, _, err := p.federator.RefreshStatus(ctx,
 			requester.Username,
 			target,
 			nil,
 			upToDate,
 		)
+		if err != nil {
+			log.Errorf(ctx, "error refreshing status: %v", err)
+		}
 	}
 
 	return target, visible, nil
