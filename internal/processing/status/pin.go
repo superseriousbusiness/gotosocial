@@ -39,7 +39,11 @@ const allowedPinnedCount = 10
 //   - Status is public, unlisted, or followers-only.
 //   - Status is not a boost.
 func (p *Processor) getPinnableStatus(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		false, // refresh
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
