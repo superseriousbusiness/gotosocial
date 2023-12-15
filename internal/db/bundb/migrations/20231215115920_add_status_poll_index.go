@@ -33,7 +33,6 @@ func init() {
 			}
 
 			for _, spec := range []spec{
-				// Rename the admin actions indexes.
 				{
 					index:   "statuses_poll_id_idx",
 					table:   "statuses",
