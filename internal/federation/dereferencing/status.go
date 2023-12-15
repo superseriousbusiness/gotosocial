@@ -40,14 +40,25 @@ import (
 
 // statusUpToDate returns whether the given status model is both updateable
 // (i.e. remote status) and whether it needs an update based on `fetched_at`.
-func statusUpToDate(status *gtsmodel.Status) bool {
+func statusUpToDate(status *gtsmodel.Status, force bool) bool {
 	if *status.Local {
 		// Can't update local statuses.
 		return true
 	}
 
-	// If this status was updated recently (last interval), we return as-is.
-	if next := status.FetchedAt.Add(2 * time.Hour); time.Now().Before(next) {
+	// Default limit we allow
+	// statuses to be refreshed.
+	limit := 2 * time.Hour
+
+	if force {
+		// We specifically allow the force flag
+		// to force an early refresh (on a much
+		// smaller cooldown period).
+		limit = 5 * time.Minute
+	}
+
+	// If this status was updated recently (within limit), return as-is.
+	if next := status.FetchedAt.Add(limit); time.Now().Before(next) {
 		return true
 	}
 
@@ -125,7 +136,7 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 	}
 
 	// Check whether needs update.
-	if statusUpToDate(status) {
+	if statusUpToDate(status, false) {
 		// This is existing up-to-date status, ensure it is populated.
 		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
 			log.Errorf(ctx, "error populating existing status: %v", err)
@@ -159,8 +170,8 @@ func (d *Dereferencer) RefreshStatus(
 	statusable ap.Statusable,
 	force bool,
 ) (*gtsmodel.Status, ap.Statusable, error) {
-	// Check whether needs update.
-	if !force && statusUpToDate(status) {
+	// Check whether status needs update.
+	if statusUpToDate(status, force) {
 		return status, nil, nil
 	}
 
@@ -204,8 +215,8 @@ func (d *Dereferencer) RefreshStatusAsync(
 	statusable ap.Statusable,
 	force bool,
 ) {
-	// Check whether needs update.
-	if !force && statusUpToDate(status) {
+	// Check whether status needs update.
+	if statusUpToDate(status, force) {
 		return
 	}
 

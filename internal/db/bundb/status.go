@@ -87,6 +87,17 @@ func (s *statusDB) GetStatusByURL(ctx context.Context, url string) (*gtsmodel.St
 	)
 }
 
+func (s *statusDB) GetStatusByPollID(ctx context.Context, pollID string) (*gtsmodel.Status, error) {
+	return s.getStatus(
+		ctx,
+		"PollID",
+		func(status *gtsmodel.Status) error {
+			return s.db.NewSelect().Model(status).Where("? = ?", bun.Ident("status.poll_id"), pollID).Scan(ctx)
+		},
+		pollID,
+	)
+}
+
 func (s *statusDB) GetStatusBoost(ctx context.Context, boostOfID string, byAccountID string) (*gtsmodel.Status, error) {
 	return s.getStatus(
 		ctx,

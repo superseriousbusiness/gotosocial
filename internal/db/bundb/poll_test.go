@@ -67,10 +67,6 @@ func (suite *PollTestSuite) TestGetPollBy() {
 			"id": func() (*gtsmodel.Poll, error) {
 				return suite.db.GetPollByID(ctx, poll.ID)
 			},
-
-			"status_id": func() (*gtsmodel.Poll, error) {
-				return suite.db.GetPollByStatusID(ctx, poll.StatusID)
-			},
 		} {
 
 			// Clear database caches.
@@ -286,10 +282,6 @@ func (suite *PollTestSuite) TestDeletePoll() {
 
 		// Ensure that afterwards we cannot fetch poll.
 		_, err = suite.db.GetPollByID(ctx, poll.ID)
-		suite.ErrorIs(err, db.ErrNoEntries)
-
-		// Or again by the status it's attached to.
-		_, err = suite.db.GetPollByStatusID(ctx, poll.StatusID)
 		suite.ErrorIs(err, db.ErrNoEntries)
 	}
 }

@@ -28,7 +28,11 @@ import (
 
 // Get gets the given status, taking account of privacy settings and blocks etc.
 func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		false, // refresh
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -38,7 +42,11 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 
 // WebGet gets the given status for web use, taking account of privacy settings.
 func (p *Processor) WebGet(ctx context.Context, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, nil, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		nil, // requester
+		targetStatusID,
+		false, // refresh
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -57,7 +65,11 @@ func (p *Processor) contextGet(
 	targetStatusID string,
 	convert func(context.Context, *gtsmodel.Status, *gtsmodel.Account) (*apimodel.Status, error),
 ) (*apimodel.Context, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		false, // refresh
+	)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}

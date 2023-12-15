@@ -25,14 +25,17 @@ import (
 
 // Status contains functions for getting statuses, creating statuses, and checking various other fields on statuses.
 type Status interface {
-	// GetStatusByID returns one status from the database, with no rel fields populated, only their linking ID / URIs
+	// GetStatusByID fetches the status from the database with matching id column.
 	GetStatusByID(ctx context.Context, id string) (*gtsmodel.Status, error)
 
-	// GetStatusByURI returns one status from the database, with no rel fields populated, only their linking ID / URIs
+	// GetStatusByURI fetches the status from the database with matching uri column.
 	GetStatusByURI(ctx context.Context, uri string) (*gtsmodel.Status, error)
 
-	// GetStatusByURL returns one status from the database, with no rel fields populated, only their linking ID / URIs
+	// GetStatusByURL fetches the status from the database with matching url column.
 	GetStatusByURL(ctx context.Context, uri string) (*gtsmodel.Status, error)
+
+	// GetStatusByPollID fetches the status from the database with matching poll_id column.
+	GetStatusByPollID(ctx context.Context, pollID string) (*gtsmodel.Status, error)
 
 	// GetStatusBoost fetches the status whose boost_of_id column refers to boostOfID, authored by given account ID.
 	GetStatusBoost(ctx context.Context, boostOfID string, byAccountID string) (*gtsmodel.Status, error)
