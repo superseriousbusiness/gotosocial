@@ -63,15 +63,30 @@ func (p *Processor) GetTargetStatusBy(
 	}
 
 	if requester != nil && visible {
-		// Ensure remote status is up-to-date.
-		_, _, err := p.federator.RefreshStatus(ctx,
-			requester.Username,
-			target,
-			nil,
-			refresh,
-		)
-		if err != nil {
-			log.Errorf(ctx, "error refreshing status: %v", err)
+		// We only bother refreshing if this status
+		// is visible to requester, AND there *is*
+		// a requester (i.e. request is authorized)
+		// to prevent a possible DOS vector.
+
+		if refresh {
+			// Refresh required, forcibly do synchronously.
+			_, _, err := p.federator.RefreshStatus(ctx,
+				requester.Username,
+				target,
+				nil,
+				true,
+			)
+			if err != nil {
+				log.Errorf(ctx, "error refreshing status: %v", err)
+			}
+		} else {
+			// Only refresh async *if* out-of-date.
+			p.federator.RefreshStatusAsync(ctx,
+				requester.Username,
+				target,
+				nil,
+				true,
+			)
 		}
 	}
 
