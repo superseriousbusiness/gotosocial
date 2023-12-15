@@ -22,8 +22,10 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -172,6 +174,26 @@ func increment(i int) int {
 	return i + 1
 }
 
+// isNil will safely check if 'v' is nil without
+// dealing with weird Go interface nil bullshit.
+func isNil(i interface{}) bool {
+	type eface struct{ _, data unsafe.Pointer }
+	return (*eface)(unsafe.Pointer(&i)).data == nil
+}
+
+// deref returns the dereferenced value of
+// its input. To ensure you don't pass nil
+// pointers into this func, use isNil first.
+func deref(i any) any {
+	vOf := reflect.ValueOf(i)
+	if vOf.Kind() != reflect.Pointer {
+		// Not a pointer.
+		return i
+	}
+
+	return vOf.Elem()
+}
+
 func LoadTemplateFunctions(engine *gin.Engine) {
 	engine.SetFuncMap(template.FuncMap{
 		"escape":           escape,
@@ -185,5 +207,7 @@ func LoadTemplateFunctions(engine *gin.Engine) {
 		"emojify":          emojify,
 		"acctInstance":     acctInstance,
 		"increment":        increment,
+		"isNil":            isNil,
+		"deref":            deref,
 	})
 }
