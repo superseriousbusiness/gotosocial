@@ -74,7 +74,7 @@ func (p *Processor) GetTargetStatusBy(
 				requester.Username,
 				target,
 				nil,
-				true,
+				true, // force
 			)
 			if err != nil {
 				log.Errorf(ctx, "error refreshing status: %v", err)
@@ -85,7 +85,7 @@ func (p *Processor) GetTargetStatusBy(
 				requester.Username,
 				target,
 				nil,
-				true,
+				false, // force
 			)
 		}
 	}
