@@ -47,7 +47,7 @@ func (p *Processor) getFaveableStatus(
 		ctx,
 		requester,
 		targetID,
-		false, // upToDate
+		false, // refresh
 	)
 	if errWithCode != nil {
 		return nil, nil, errWithCode
@@ -153,7 +153,7 @@ func (p *Processor) FavedBy(ctx context.Context, requestingAccount *gtsmodel.Acc
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		requestingAccount,
 		targetStatusID,
-		false, // upToDate
+		false, // refresh
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

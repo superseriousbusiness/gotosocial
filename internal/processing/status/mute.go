@@ -44,7 +44,7 @@ func (p *Processor) getMuteableStatus(
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		requestingAccount,
 		targetStatusID,
-		false, // upToDate
+		false, // refresh
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

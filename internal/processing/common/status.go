@@ -30,12 +30,12 @@ import (
 
 // GetTargetStatusBy fetches the target status with db load function, given the authorized (or, nil) requester's
 // account. This returns an approprate gtserror.WithCode accounting for not found and visibility to requester.
-// The upToDate argument allows specifying whether the returned copy MUST be up-to-date.
+// The refresh argument allows specifying whether the returned copy should be force refreshed.
 func (p *Processor) GetTargetStatusBy(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	getTargetFromDB func() (*gtsmodel.Status, error),
-	upToDate bool,
+	refresh bool,
 ) (
 	status *gtsmodel.Status,
 	visible bool,
@@ -68,7 +68,7 @@ func (p *Processor) GetTargetStatusBy(
 			requester.Username,
 			target,
 			nil,
-			upToDate,
+			refresh,
 		)
 		if err != nil {
 			log.Errorf(ctx, "error refreshing status: %v", err)
@@ -84,7 +84,7 @@ func (p *Processor) GetVisibleTargetStatusBy(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	getTargetFromDB func() (*gtsmodel.Status, error),
-	upToDate bool,
+	refresh bool,
 ) (
 	status *gtsmodel.Status,
 	errWithCode gtserror.WithCode,
@@ -93,7 +93,7 @@ func (p *Processor) GetVisibleTargetStatusBy(
 	target, visible, errWithCode := p.GetTargetStatusBy(ctx,
 		requester,
 		getTargetFromDB,
-		upToDate,
+		refresh,
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -117,14 +117,14 @@ func (p *Processor) GetVisibleTargetStatus(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	targetID string,
-	upToDate bool,
+	refresh bool,
 ) (
 	status *gtsmodel.Status,
 	errWithCode gtserror.WithCode,
 ) {
 	return p.GetVisibleTargetStatusBy(ctx, requester, func() (*gtsmodel.Status, error) {
 		return p.state.DB.GetStatusByID(ctx, targetID)
-	}, upToDate)
+	}, refresh)
 }
 
 // UnwrapIfBoost "unwraps" the given status if

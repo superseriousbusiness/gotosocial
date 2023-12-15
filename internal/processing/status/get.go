@@ -31,7 +31,7 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		requestingAccount,
 		targetStatusID,
-		false, // upToDate
+		false, // refresh
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -45,7 +45,7 @@ func (p *Processor) WebGet(ctx context.Context, targetStatusID string) (*apimode
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		nil, // requester
 		targetStatusID,
-		false, // upToDate
+		false, // refresh
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -68,7 +68,7 @@ func (p *Processor) contextGet(
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		requestingAccount,
 		targetStatusID,
-		false, // upToDate
+		false, // refresh
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
