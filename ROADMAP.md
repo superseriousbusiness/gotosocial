@@ -51,8 +51,8 @@ What follows is a rough timeline of features that will be implemented on the roa
 
 ### Mid/late 2023
 
-- [ ] **Polls** -- implementing parsing, creating, and voting in polls.
-- [ ] **Mute posts/threads** -- opt-out of notifications for replies to a thread; no longer show a given post in your timeline.
+- [x] **Polls** -- implementing parsing, creating, and voting in polls.
+- [x] **Mute posts/threads** -- opt-out of notifications for replies to a thread; no longer show a given post in your timeline.
 - [x] **Limited peering/allowlists** -- allow instance admins to limit federation with other instances by default. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2200)
 
 ### Late 2023
