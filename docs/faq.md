@@ -40,10 +40,8 @@ Right now the only way to create an account is by the server's admin to run a co
 
 Take a look at the [list of open bugs](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and the [roadmap](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md) for a more detailed rundown, but the main missing features at the time of this writing are:
 
-- muting conversations
 - backfill of posts
 - web-based signup
-- polls
 - scheduling posts
 - account migration
 - shared block lists across servers
