@@ -29,9 +29,12 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 // token represents a request that is being processed.
@@ -80,55 +83,61 @@ func Throttle(cpuMultiplier int, retryAfter time.Duration) gin.HandlerFunc {
 	}
 
 	var (
-		limit              = runtime.GOMAXPROCS(0) * cpuMultiplier
-		backlogLimit       = limit * cpuMultiplier
-		backlogChannelSize = limit + backlogLimit
-		tokens             = make(chan token, limit)
-		backlogTokens      = make(chan token, backlogChannelSize)
-		retryAfterStr      = strconv.FormatUint(uint64(retryAfter/time.Second), 10)
+		limit         = runtime.GOMAXPROCS(0) * cpuMultiplier
+		queueLimit    = limit * cpuMultiplier
+		tokens        = make(chan token, limit)
+		requestCount  = atomic.Int64{}
+		retryAfterStr = strconv.FormatUint(uint64(retryAfter/time.Second), 10)
 	)
 
-	// prefill token channels
+	// prefill token channel
 	for i := 0; i < limit; i++ {
 		tokens <- token{}
 	}
-	for i := 0; i < backlogChannelSize; i++ {
-		backlogTokens <- token{}
-	}
 
 	return func(c *gin.Context) {
-		// inside this select, the caller tries to get a backlog token
-		select {
-		case <-c.Request.Context().Done():
-			// request context has been canceled already
+		// Always decrement request counter.
+		defer func() { requestCount.Add(-1) }()
+
+		// Increment request count.
+		n := requestCount.Add(1)
+
+		// Check whether the request
+		// count is over queue limit.
+		if n > int64(queueLimit) {
+			c.Header("Retry-After", retryAfterStr)
+			apiutil.Data(c,
+				http.StatusTooManyRequests,
+				apiutil.AppJSON,
+				apiutil.ErrorCapacityExceeded,
+			)
+			c.Abort()
 			return
-		case btok := <-backlogTokens:
+		}
+
+		// Sit and wait in the
+		// queue for free token.
+		select {
+
+		case <-c.Request.Context().Done():
+			// request context has
+			// been canceled already.
+			return
+
+		case tok := <-tokens:
+			// caller has successfully
+			// received a token, allowing
+			// request to be processed.
+
 			defer func() {
-				// when we're finished, return the backlog token to the bucket
-				backlogTokens <- btok
+				// when we're finished, return
+				// this token to the bucket.
+				tokens <- tok
 			}()
 
-			// inside *this* select, the caller has a backlog token,
-			// and they're waiting for their turn to be processed
-			select {
-			case <-c.Request.Context().Done():
-				// the request context has been canceled already
-				return
-			case tok := <-tokens:
-				// the caller gets a token, so their request can now be processed
-				defer func() {
-					// whatever happens to the request, put the
-					// token back in the bucket when we're finished
-					tokens <- tok
-				}()
-				c.Next() // <- finally process the caller's request
-			}
-
-		default:
-			// we don't have space in the backlog queue
-			c.Header("Retry-After", retryAfterStr)
-			c.JSON(http.StatusTooManyRequests, gin.H{"error": "server capacity exceeded"})
-			c.Abort()
+			// Process
+			// request!
+			c.Next()
 		}
 	}
 }
