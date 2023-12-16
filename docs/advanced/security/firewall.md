@@ -108,7 +108,7 @@ table netdev filter {
     chain ingress {
         set baddiesv4 {
             type ipv4_addr
-	        flags interval
+            flags interval
             elements = { \
                 1.0.0.0/8, \
                 2.2.2.2/32 \
@@ -116,7 +116,7 @@ table netdev filter {
         }
         set baddiesv6 {
             type ipv6_addr
-	        flags interval
+            flags interval
             elements = { \
                 2620:4f:8000::/48, \
                 fc00::/7 \
