@@ -88,3 +88,58 @@ For fail2ban, you can use the following regex, which triggers fail2ban on failed
 ```regex
 statusCode=401 path=/auth/sign_in clientIP=<HOST> .* msg=\"Unauthorized:
 ```
+
+## IP blocking
+
+GoToSocial implements rate-limiting in order to try and protect your instance from one party taking up all your processing capacity. However, if you know this traffic isn't legitimate or coming from an instance you don't wish to federate with anyway, you can block the IP(s) the traffic is originating from instead and spare GoToSocial from having to do any work.
+
+### Linux
+
+Blocking IPs is done with iptables or nftables. If you're using a firewall frontend like UFW or firewalld, use their facilities to block an IP.
+
+In iptables, people tend to add a `DROP` rule for an IP in the `filter` table on the `INPUT` chain. On nftables, it's often done on a table with a chain with the `ip` or `ip6` address family.
+
+In both those cases the kernel has already done a lot of unnecessary processing of the incoming traffic, just for it to then be blocked by an IP match. You can do this more efficiently by using the `mangle` table with the `PREROUTING` chain in iptables, or blocking using [the `netdev` family in nftables][nftnetdev].
+
+You can read this blog post on [how to do this with iptables][iptblock]. For nftables, you can use something like:
+
+```
+table netdev filter {
+    chain ingress {
+        set baddiesv4 {
+            type ipv4_addr
+	        flags interval
+            elements = { \
+                1.0.0.0/8, \
+                2.2.2.2/32 \
+            }
+        }
+        set baddiesv6 {
+            type ipv6_addr
+	        flags interval
+            elements = { \
+                2620:4f:8000::/48, \
+                fc00::/7 \
+            }
+        }
+
+        type filter hook ingress device <interface name> priority -500;
+        ip saddr @baddiesv4 drop
+        ip6 saddr @baddiesv6 drop
+    }
+}
+```
+
+When using iptables, adding many rules slows things down significantly, including reloading the firewall when adding/removing rules. Since you may wish to block many IP addresses, use [the `ipset` module][ipset] and add a single block rule for the set instead: `-m set --match-set <set name>`.
+
+[nftnetdev]: https://wiki.nftables.org/wiki-nftables/index.php/Nftables_families#netdev
+[iptblock]: https://javapipe.com/blog/iptables-ddos-protection/
+[ipset]: https://wiki.archlinux.org/title/Ipset
+
+### BSDs
+
+When using pf, you can create a persistent table, typically named `<badhosts>`, to which you add the IP addresses you want to block. Tables can also read from other files, so it's possible to keep the list of IPs outside of your main `pf.conf`.
+
+An example of how to do this can be found [in the pf manual][manpf].
+
+[manpf]: https://man.openbsd.org/pf.conf#TABLES
