@@ -42,7 +42,7 @@ If you're in doubt about any of the names of these environment variables, just c
     
     If you need to use an environment variable to set a configuration option that accepts an array, provide each value in a comma-separated list.
     
-    For example, `instance-languages` may be set in the config.yaml file as an array like so: `["nl", "de", "fr", "en"]`. To set the same values as an environment variable, use: `GTS_INSTANCE_LANGUAGES="nl,de,fr,en"`
+    For example, `instance-languages` may be set in the config.yaml file as an array like so: `["nl", "de", "fr", "en"]`. To set the same values as an environment variable, use: `GTS_INSTANCE_LANGUAGES: "nl,de,fr,en"`
 
 ### Command Line Flags
 
