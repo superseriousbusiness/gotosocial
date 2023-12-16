@@ -1484,6 +1484,9 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 		// disabled, or the requester is the author
 		// do we actually populate the vote counts.
 
+		// If we voted in this poll, we'll have set totalVotes
+		// earlier. Reset here to avoid double counting.
+		totalVotes = 0
 		if *poll.Multiple {
 			// The total number of voters are only
 			// provided in the case of a multiple
