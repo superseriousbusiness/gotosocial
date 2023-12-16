@@ -44,6 +44,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
@@ -113,6 +114,14 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 	}
 
 	log.Infof(ctx, "MIGRATED DATABASE TO %s", group)
+
+	if db.Dialect().Name() == dialect.SQLite {
+		log.Info(ctx, "running ANALYZE to update table and index statistics")
+		_, err := db.ExecContext(ctx, "ANALYZE")
+		if err != nil {
+			log.Warnf(ctx, "ANALYZE failed, query planner may make poor life choices: %s", err)
+		}
+	}
 	return nil
 }
 
