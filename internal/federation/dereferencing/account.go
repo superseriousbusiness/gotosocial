@@ -552,6 +552,16 @@ func (d *Dereferencer) enrichAccount(
 		}
 	}
 
+	if latestAcc.Domain == "" {
+		// ensure we have a domain set by this point,
+		// otherwise it gets stored as a local user!
+		//
+		// TODO: there is probably a more granular way
+		// way of checking this in each of the above parts,
+		// and honestly it could do with a smol refactor.
+		return nil, nil, gtserror.Newf("empty domain for %s", uri)
+	}
+
 	// Ensure ID is set and update fetch time.
 	latestAcc.ID = account.ID
 	latestAcc.FetchedAt = time.Now()
