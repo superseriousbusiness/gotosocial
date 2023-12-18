@@ -34,7 +34,7 @@ type Cache struct {
 }
 
 // RegularMatch performs .RegularMatch() on cached headerfilter.Filters, loading using callback if necessary.
-func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (string, string, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -43,7 +43,7 @@ func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilte
 		// Load filters from callback.
 		filters, err := loadFilters(load)
 		if err != nil {
-			return false, err
+			return "", "", err
 		}
 
 		// Store the new
@@ -57,7 +57,7 @@ func (c *Cache) RegularMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilte
 }
 
 // InverseMatch performs .InverseMatch() on cached headerfilter.Filters, loading using callback if necessary.
-func (c *Cache) InverseMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (bool, error) {
+func (c *Cache) InverseMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilter, error)) (string, string, error) {
 	// Load ptr value.
 	ptr := c.ptr.Load()
 
@@ -66,7 +66,7 @@ func (c *Cache) InverseMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilte
 		// Load filters from callback.
 		filters, err := loadFilters(load)
 		if err != nil {
-			return false, err
+			return "", "", err
 		}
 
 		// Store the new
@@ -77,14 +77,6 @@ func (c *Cache) InverseMatch(h http.Header, load func() ([]*gtsmodel.HeaderFilte
 
 	// Deref and perform match.
 	return ptr.InverseMatch(h)
-}
-
-// Stats returns match statistics associated with currently cached header filters.
-func (c *Cache) Stats() map[string]map[string]uint64 {
-	if ptr := c.ptr.Load(); ptr != nil {
-		return ptr.Stats()
-	}
-	return nil
 }
 
 // Clear will drop the currently loaded filters,

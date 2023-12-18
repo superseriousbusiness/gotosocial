@@ -27,19 +27,19 @@ import (
 type HeaderFilter interface {
 	// AllowHeaderRegularMatch performs an headerfilter.Filter.RegularMatch() on cached allow header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	AllowHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
+	AllowHeaderRegularMatch(ctx context.Context, hdr http.Header) (string, string, error)
 
 	// AllowHeaderInverseMatch performs an headerfilter.Filter.InverseMatch() on cached allow header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	AllowHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
+	AllowHeaderInverseMatch(ctx context.Context, hdr http.Header) (string, string, error)
 
 	// BlockHeaderRegularMatch performs an headerfilter.Filter.RegularMatch() on cached block header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	BlockHeaderRegularMatch(ctx context.Context, hdr http.Header) (bool, error)
+	BlockHeaderRegularMatch(ctx context.Context, hdr http.Header) (string, string, error)
 
 	// BlockHeaderInverseMatch performs an headerfilter.Filter.InverseMatch() on cached block header filters.
 	// (Note: the actual matching code can be found under ./internal/headerfilter/ ).
-	BlockHeaderInverseMatch(ctx context.Context, hdr http.Header) (bool, error)
+	BlockHeaderInverseMatch(ctx context.Context, hdr http.Header) (string, string, error)
 
 	// GetAllowHeaderFilter fetches the allow header filter with ID from the database.
 	GetAllowHeaderFilter(ctx context.Context, id string) (*gtsmodel.HeaderFilter, error)

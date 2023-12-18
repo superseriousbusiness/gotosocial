@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"net/textproto"
 	"regexp"
-	"sync/atomic"
 )
 
 // Maximum header value size before we return
@@ -45,17 +44,7 @@ type headerfilter struct {
 
 	// exprs contains regular expressions to
 	// match values against for this header key.
-	exprs []regexpr
-}
-
-// regexpr wraps a regular expression
-// with an atomically updated uint64 in
-// order to count no. positive matches.
-type regexpr struct {
-	*regexp.Regexp
-
-	// match count.
-	n atomic.Uint64
+	exprs []*regexp.Regexp
 }
 
 // Append will add new header filter expression under given header key.
@@ -89,80 +78,59 @@ func (fs *Filters) Append(key string, expr string) error {
 	}
 
 	// Compile regular expression.
-	regExpr, err := regexp.Compile(expr)
+	reg, err := regexp.Compile(expr)
 	if err != nil {
 		return fmt.Errorf("error compiling regexp %q: %w", expr, err)
 	}
 
-	// Append wrapped expression type to filter.
-	filter.exprs = append(filter.exprs, regexpr{
-		Regexp: regExpr,
-	})
+	// Append regular expression to filter.
+	filter.exprs = append(filter.exprs, reg)
 
 	return nil
 }
 
 // RegularMatch returns whether any values in http header
 // matches any of the receiving filter regular expressions.
-func (fs Filters) RegularMatch(h http.Header) (bool, error) {
+// This returns the matched header key, and matching regexp.
+func (fs Filters) RegularMatch(h http.Header) (string, string, error) {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
 			// Don't perform match on large values
 			// to mitigate denial of service attacks.
 			if len(value) > MaxHeaderValue {
-				return false, ErrLargeHeaderValue
+				return "", "", ErrLargeHeaderValue
 			}
 
-			// Compare against regexprs.
-			for i := range filter.exprs {
-				if filter.exprs[i].MatchString(value) {
-					filter.exprs[i].n.Add(1)
-					return true, nil
+			// Compare against regular exprs.
+			for _, expr := range filter.exprs {
+				if expr.MatchString(value) {
+					return filter.key, expr.String(), nil
 				}
 			}
 		}
 	}
-	return false, nil
+	return "", "", nil
 }
 
 // InverseMatch returns whether any values in http header do
 // NOT match any of the receiving filter regular expressions.
-func (fs Filters) InverseMatch(h http.Header) (bool, error) {
+// This returns the matched header key, and matching regexp.
+func (fs Filters) InverseMatch(h http.Header) (string, string, error) {
 	for _, filter := range fs {
 		for _, value := range h[filter.key] {
 			// Don't perform match on large values
 			// to mitigate denial of service attacks.
 			if len(value) > MaxHeaderValue {
-				return false, ErrLargeHeaderValue
+				return "", "", ErrLargeHeaderValue
 			}
 
-			// Compare against regexprs.
-			for i := range filter.exprs {
-				if !filter.exprs[i].MatchString(value) {
-					filter.exprs[i].n.Add(1)
-					return true, nil
+			// Compare against regular exprs.
+			for _, expr := range filter.exprs {
+				if !expr.MatchString(value) {
+					return filter.key, expr.String(), nil
 				}
 			}
 		}
 	}
-	return false, nil
-}
-
-// Stats compiles each of the filters and their match counts into
-// a readable set of HeaderKey:{ValueExpr: MatchCount} statistics.
-// TODO: may be worth updating this to be more prometheus readable
-func (fs Filters) Stats() map[string]map[string]uint64 {
-	stats := make(map[string]map[string]uint64, len(fs))
-	for _, filter := range fs {
-		// Allocate and append map for this filter's stats.
-		fstats := make(map[string]uint64, len(filter.exprs))
-		stats[filter.key] = fstats
-
-		// Append all expression stats.
-		for i := range filter.exprs {
-			e := &(filter.exprs[i])
-			fstats[e.String()] = e.n.Load()
-		}
-	}
-	return stats
+	return "", "", nil
 }
