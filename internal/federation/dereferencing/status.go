@@ -135,12 +135,13 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 		}, nil)
 	}
 
-	// Check whether needs update.
 	if statusUpToDate(status, false) {
-		// This is existing up-to-date status, ensure it is populated.
+		// This is an existing status that is up-to-date,
+		// before returning ensure it is fully populated.
 		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
 			log.Errorf(ctx, "error populating existing status: %v", err)
 		}
+
 		return status, nil, false, nil
 	}
 
@@ -170,8 +171,10 @@ func (d *Dereferencer) RefreshStatus(
 	statusable ap.Statusable,
 	force bool,
 ) (*gtsmodel.Status, ap.Statusable, error) {
-	// Check whether status needs update.
-	if statusUpToDate(status, force) {
+	// If no incoming data is provided,
+	// check whether status needs update.
+	if statusable == nil &&
+		statusUpToDate(status, force) {
 		return status, nil, nil
 	}
 
@@ -215,8 +218,10 @@ func (d *Dereferencer) RefreshStatusAsync(
 	statusable ap.Statusable,
 	force bool,
 ) {
-	// Check whether status needs update.
-	if statusUpToDate(status, force) {
+	// If no incoming data is provided,
+	// check whether status needs update.
+	if statusable == nil &&
+		statusUpToDate(status, force) {
 		return
 	}
 
