@@ -22,7 +22,6 @@ import (
 	"errors"
 	"net/textproto"
 	"regexp"
-	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -153,7 +152,6 @@ func (p *Processor) createHeaderFilter(
 
 	// Create new database model with ID.
 	var filter gtsmodel.HeaderFilter
-	filter.CreatedAt = time.Now()
 	filter.ID = id.NewULID()
 	filter.Header = request.Header
 	filter.Regex = request.Regex
