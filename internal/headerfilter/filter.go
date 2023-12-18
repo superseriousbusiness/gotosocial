@@ -77,8 +77,14 @@ func (fs *Filters) Append(key string, expr string) error {
 	if filter == nil {
 		// No existing filter found, create new.
 
+		// Append new header filter to slice.
 		(*fs) = append((*fs), headerfilter{})
+
+		// Then take ptr to this new filter
+		// at the last index in the slice.
 		filter = &((*fs)[len((*fs))-1])
+
+		// Setup new key.
 		filter.key = key
 	}
 
