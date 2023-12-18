@@ -38,7 +38,7 @@ const (
 	HeaderAllowsPath        = BasePath + "/header_allows"
 	HeaderAllowsPathWithID  = HeaderAllowsPath + "/:" + IDKey
 	HeaderBlocksPath        = BasePath + "/header_blocks"
-	HeaderBlocksPathWithID  = HeaderAllowsPath + "/:" + IDKey
+	HeaderBlocksPathWithID  = HeaderBlocksPath + "/:" + IDKey
 	AccountsPath            = BasePath + "/accounts"
 	AccountsPathWithID      = AccountsPath + "/:" + IDKey
 	AccountsActionPath      = AccountsPathWithID + "/action"
