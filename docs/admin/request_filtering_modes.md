@@ -15,7 +15,7 @@ When `request-header-filtering-mode` is set to `""`, i.e. an empty string, all r
 
 ## Block filtering mode
 
-When `request-header-filtering-mode` is set to `"block"`, your instance will openly accept HTTP requests, without restriction, with the exception of matching block header filters you have explicitly created via the settings panel.
+When `request-header-filtering-mode` is set to `"block"`, your instance will accept HTTP requests as normal (pending API token checks, HTTP signature checks etc), with the exception of matching block header filters you have explicitly created via the settings panel.
 
 In block mode, an allow header filter can be used to override an existing block filter, providing an extra level of granularity.
 
