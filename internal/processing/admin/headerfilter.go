@@ -150,6 +150,9 @@ func (p *Processor) createHeaderFilter(
 		return nil, errWithCode
 	}
 
+	// Convert header to canonical mime header format before insert.
+	request.Header = textproto.CanonicalMIMEHeaderKey(request.Header)
+
 	// Create new database model with ID.
 	var filter gtsmodel.HeaderFilter
 	filter.ID = id.NewULID()

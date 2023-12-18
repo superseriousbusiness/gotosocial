@@ -62,7 +62,7 @@ type regexpr struct {
 func (fs *Filters) Append(key string, expr string) error {
 	var filter *headerfilter
 
-	// Get key in canonical mime header format.
+	// Ensure in canonical mime header format.
 	key = textproto.CanonicalMIMEHeaderKey(key)
 
 	// Look for existing filter
@@ -76,6 +76,7 @@ func (fs *Filters) Append(key string, expr string) error {
 
 	if filter == nil {
 		// No existing filter found, create new.
+
 		(*fs) = append((*fs), headerfilter{})
 		filter = &((*fs)[len((*fs))-1])
 		filter.key = key
