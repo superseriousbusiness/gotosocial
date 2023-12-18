@@ -52,10 +52,8 @@ func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, strin
 		return
 	}
 
-	filterID := c.Param("id")
-	if filterID == "" {
-		const text = "no filter id specified"
-		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
+	filterID, errWithCode := apiutil.ParseID(c.Param("ID"))
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
@@ -159,15 +157,13 @@ func (m *Module) deleteHeaderFilter(c *gin.Context, delete func(context.Context,
 		return
 	}
 
-	filterID := c.Param("id")
-	if filterID == "" {
-		const text = "no filter id specified"
-		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
+	filterID, errWithCode := apiutil.ParseID(c.Param("ID"))
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	errWithCode := delete(c.Request.Context(), filterID)
+	errWithCode = delete(c.Request.Context(), filterID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
