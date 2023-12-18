@@ -12,6 +12,7 @@ EXPECT=$(cat << "EOF"
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
     "advanced-csp-extra-uris": [],
+    "advanced-header-filter-mode": "",
     "advanced-rate-limit-exceptions": [
         "192.0.2.0/24",
         "127.0.0.1/32"
@@ -133,7 +134,6 @@ EXPECT=$(cat << "EOF"
     "port": 6969,
     "protocol": "http",
     "remote-only": false,
-    "request-header-filter-mode": "",
     "request-id-header": "X-Trace-Id",
     "smtp-disclose-recipients": true,
     "smtp-from": "queen.rip.in.piss@terfisland.org",
