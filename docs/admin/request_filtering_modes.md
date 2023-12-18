@@ -28,3 +28,6 @@ When `request-header-filtering-mode` is set to `"allow"`, your instance will onl
 In allow mode, a block header filter can be used to override an existing allow filter, providing an extra level of granularity.
 
 A request in allow mode will only be accepted if it is EXPLICITLY ALLOWED AND NOT EXPLICITLY BLOCKED.
+
+!!! danger
+    Allow filtering mode is an extremely restrictive mode that will almost certainly prevent many (legitimate) clients from being able to access your instance, including yourself. You should only enable this mode if you know exactly what you're trying to achieve.
