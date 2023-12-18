@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/headerfilter"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -142,6 +143,9 @@ func (p *Processor) createHeaderFilter(
 	*apimodel.HeaderFilter,
 	gtserror.WithCode,
 ) {
+	// Convert header key to canonical mime header format.
+	request.Header = textproto.CanonicalMIMEHeaderKey(request.Header)
+
 	// Validate incoming header filter.
 	if errWithCode := validateHeaderFilter(
 		request.Header,
@@ -149,9 +153,6 @@ func (p *Processor) createHeaderFilter(
 	); errWithCode != nil {
 		return nil, errWithCode
 	}
-
-	// Convert header to canonical mime header format before insert.
-	request.Header = textproto.CanonicalMIMEHeaderKey(request.Header)
 
 	// Create new database model with ID.
 	var filter gtsmodel.HeaderFilter
@@ -198,9 +199,8 @@ func toAPIHeaderFilter(filter *gtsmodel.HeaderFilter) *apimodel.HeaderFilter {
 
 // validateHeaderFilter validates incoming filter's header key, and regular expression.
 func validateHeaderFilter(header, regex string) gtserror.WithCode {
-	// Canonicalize the mime header key and check validity.
-	header = textproto.CanonicalMIMEHeaderKey(header)
-	if header == "" || len(header) > 1024 {
+	// Check header validity (within our own bound checks).
+	if header == "" || len(header) > headerfilter.MaxHeaderValue {
 		const text = "invalid request header key (empty or too long)"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
