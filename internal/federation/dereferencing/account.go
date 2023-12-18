@@ -41,7 +41,7 @@ import (
 
 // accountUpToDate returns whether the given account model is both updateable (i.e.
 // non-instance remote account) and whether it needs an update based on `fetched_at`.
-func accountUpToDate(account *gtsmodel.Account) bool {
+func accountUpToDate(account *gtsmodel.Account, force bool) bool {
 	if !account.SuspendedAt.IsZero() {
 		// Can't update suspended accounts.
 		return true
@@ -57,8 +57,19 @@ func accountUpToDate(account *gtsmodel.Account) bool {
 		return true
 	}
 
-	// If this account was updated recently (last interval), we return as-is.
-	if next := account.FetchedAt.Add(6 * time.Hour); time.Now().Before(next) {
+	// Default limit we allow
+	// statuses to be refreshed.
+	limit := 6 * time.Hour
+
+	if force {
+		// We specifically allow the force flag
+		// to force an early refresh (on a much
+		// smaller cooldown period).
+		limit = 5 * time.Minute
+	}
+
+	// If account was updated recently (within limit), we return as-is.
+	if next := account.FetchedAt.Add(limit); time.Now().Before(next) {
 		return true
 	}
 
@@ -134,12 +145,13 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 		}, nil)
 	}
 
-	// Check whether needs update.
-	if accountUpToDate(account) {
-		// This is existing up-to-date account, ensure it is populated.
+	if accountUpToDate(account, false) {
+		// This is an existing account that is up-to-date,
+		// before returning ensure it is fully populated.
 		if err := d.state.DB.PopulateAccount(ctx, account); err != nil {
 			log.Errorf(ctx, "error populating existing account: %v", err)
 		}
+
 		return account, nil, nil
 	}
 
@@ -253,12 +265,22 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 	return latest, apubAcc, nil
 }
 
-// RefreshAccount updates the given account if remote and last_fetched is beyond fetch interval, or if force is set. An updated account model is returned,
-// but in the case of dereferencing, some low-priority account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
+// RefreshAccount updates the given account if remote and last_fetched is
+// beyond fetch interval, or if force is set. An updated account model is
+// returned, but in the case of dereferencing, some low-priority account info
+// may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
 // An ActivityPub object indicates the account was dereferenced (i.e. updated).
-func (d *Dereferencer) RefreshAccount(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) (*gtsmodel.Account, ap.Accountable, error) {
-	// Check whether needs update (and not forced).
-	if accountUpToDate(account) && !force {
+func (d *Dereferencer) RefreshAccount(
+	ctx context.Context,
+	requestUser string,
+	account *gtsmodel.Account,
+	accountable ap.Accountable,
+	force bool,
+) (*gtsmodel.Account, ap.Accountable, error) {
+	// If no incoming data is provided,
+	// check whether account needs update.
+	if accountable == nil &&
+		accountUpToDate(account, force) {
 		return account, nil, nil
 	}
 
@@ -269,18 +291,18 @@ func (d *Dereferencer) RefreshAccount(ctx context.Context, requestUser string, a
 	}
 
 	// Try to update + deref passed account model.
-	latest, apubAcc, err := d.enrichAccountSafely(ctx,
+	latest, accountable, err := d.enrichAccountSafely(ctx,
 		requestUser,
 		uri,
 		account,
-		apubAcc,
+		accountable,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
 		return nil, nil, gtserror.Newf("error enriching remote account: %w", err)
 	}
 
-	if apubAcc != nil {
+	if accountable != nil {
 		// This account was updated, enqueue re-dereference featured posts.
 		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
@@ -289,14 +311,24 @@ func (d *Dereferencer) RefreshAccount(ctx context.Context, requestUser string, a
 		})
 	}
 
-	return latest, apubAcc, nil
+	return latest, accountable, nil
 }
 
-// RefreshAccountAsync enqueues the given account for an asychronous update fetching, if last_fetched is beyond fetch interval, or if forcc is set.
-// This is a more optimized form of manually enqueueing .UpdateAccount() to the federation worker, since it only enqueues update if necessary.
-func (d *Dereferencer) RefreshAccountAsync(ctx context.Context, requestUser string, account *gtsmodel.Account, apubAcc ap.Accountable, force bool) {
-	// Check whether needs update (and not forced).
-	if accountUpToDate(account) && !force {
+// RefreshAccountAsync enqueues the given account for an asychronous
+// update fetching, if last_fetched is beyond fetch interval, or if force
+// is set. This is a more optimized form of manually enqueueing .UpdateAccount()
+// to the federation worker, since it only enqueues update if necessary.
+func (d *Dereferencer) RefreshAccountAsync(
+	ctx context.Context,
+	requestUser string,
+	account *gtsmodel.Account,
+	accountable ap.Accountable,
+	force bool,
+) {
+	// If no incoming data is provided,
+	// check whether account needs update.
+	if accountable == nil &&
+		accountUpToDate(account, force) {
 		return
 	}
 
@@ -309,13 +341,13 @@ func (d *Dereferencer) RefreshAccountAsync(ctx context.Context, requestUser stri
 
 	// Enqueue a worker function to enrich this account async.
 	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
-		latest, apubAcc, err := d.enrichAccountSafely(ctx, requestUser, uri, account, apubAcc)
+		latest, accountable, err := d.enrichAccountSafely(ctx, requestUser, uri, account, accountable)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote account: %v", err)
 			return
 		}
 
-		if apubAcc != nil {
+		if accountable != nil {
 			// This account was updated, enqueue re-dereference featured posts.
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
@@ -332,7 +364,7 @@ func (d *Dereferencer) enrichAccountSafely(
 	requestUser string,
 	uri *url.URL,
 	account *gtsmodel.Account,
-	apubAcc ap.Accountable,
+	accountable ap.Accountable,
 ) (*gtsmodel.Account, ap.Accountable, error) {
 	// Noop if account has been suspended.
 	if !account.SuspendedAt.IsZero() {
@@ -360,7 +392,7 @@ func (d *Dereferencer) enrichAccountSafely(
 		requestUser,
 		uri,
 		account,
-		apubAcc,
+		accountable,
 	)
 
 	if gtserror.StatusCode(err) >= 400 {
