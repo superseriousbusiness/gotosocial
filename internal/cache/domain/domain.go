@@ -35,7 +35,10 @@ import (
 //
 // The .Clear() function can be used to invalidate the cache,
 // e.g. when an entry is added / deleted from the database.
-type Cache struct{ rootptr atomic.Pointer[root] }
+type Cache struct {
+	// current domain cache radix trie.
+	rootptr atomic.Pointer[root]
+}
 
 // Matches checks whether domain matches an entry in the cache.
 // If the cache is not currently loaded, then the provided load

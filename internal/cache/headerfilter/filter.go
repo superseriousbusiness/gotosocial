@@ -29,6 +29,7 @@ import (
 // Cache provides a means of caching headerfilter.Filters in
 // memory to reduce load on an underlying storage mechanism.
 type Cache struct {
+	// current cached header filters slice.
 	ptr atomic.Pointer[headerfilter.Filters]
 }
 
