@@ -24,16 +24,28 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
-// UserAgent returns a gin middleware which aborts requests with
-// empty user agent strings, returning code 418 - I'm a teapot.
-func UserAgent() gin.HandlerFunc {
-	// todo: make this configurable
-	var rsp = []byte(`{"error": "I'm a teapot: no user-agent sent with request"}`)
-	return func(c *gin.Context) {
-		if ua := c.Request.UserAgent(); ua == "" {
-			apiutil.Data(c,
-				http.StatusTeapot, apiutil.AppJSON, rsp)
-			c.Abort()
-		}
-	}
+// respondBlocked responds to the given gin context with
+// status forbidden, and a generic forbidden JSON response,
+// finally aborting the gin handler chain.
+func respondBlocked(c *gin.Context) {
+	apiutil.Data(c,
+		http.StatusForbidden,
+		apiutil.AppJSON,
+		apiutil.StatusForbiddenJSON,
+	)
+	c.Abort()
+}
+
+// respondInternalServerError responds to the given gin context
+// with status internal server error, a generic internal server
+// error JSON response, sets the given error on the gin context
+// for later logging, finally aborting the gin handler chain.
+func respondInternalServerError(c *gin.Context, err error) {
+	apiutil.Data(c,
+		http.StatusInternalServerError,
+		apiutil.AppJSON,
+		apiutil.StatusInternalServerErrorJSON,
+	)
+	_ = c.Error(err)
+	c.Abort()
 }

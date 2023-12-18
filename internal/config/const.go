@@ -17,10 +17,16 @@
 
 package config
 
-// Instance federation mode determines how this
-// instance federates with others (if at all).
 const (
+	// Instance federation mode determines how this
+	// instance federates with others (if at all).
 	InstanceFederationModeBlocklist = "blocklist"
 	InstanceFederationModeAllowlist = "allowlist"
 	InstanceFederationModeDefault   = InstanceFederationModeBlocklist
+
+	// Request header filter mode determines how
+	// this instance will perform request filtering.
+	RequestHeaderFilterModeAllow    = "allow"
+	RequestHeaderFilterModeBlock    = "block"
+	RequestHeaderFilterModeDisabled = ""
 )

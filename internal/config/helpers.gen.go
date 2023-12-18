@@ -2600,6 +2600,31 @@ func GetAdvancedCSPExtraURIs() []string { return global.GetAdvancedCSPExtraURIs(
 // SetAdvancedCSPExtraURIs safely sets the value for global configuration 'AdvancedCSPExtraURIs' field
 func SetAdvancedCSPExtraURIs(v []string) { global.SetAdvancedCSPExtraURIs(v) }
 
+// GetAdvancedHeaderFilterMode safely fetches the Configuration value for state's 'AdvancedHeaderFilterMode' field
+func (st *ConfigState) GetAdvancedHeaderFilterMode() (v string) {
+	st.mutex.RLock()
+	v = st.config.AdvancedHeaderFilterMode
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAdvancedHeaderFilterMode safely sets the Configuration value for state's 'AdvancedHeaderFilterMode' field
+func (st *ConfigState) SetAdvancedHeaderFilterMode(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedHeaderFilterMode = v
+	st.reloadToViper()
+}
+
+// AdvancedHeaderFilterModeFlag returns the flag name for the 'AdvancedHeaderFilterMode' field
+func AdvancedHeaderFilterModeFlag() string { return "advanced-header-filter-mode" }
+
+// GetAdvancedHeaderFilterMode safely fetches the value for global configuration 'AdvancedHeaderFilterMode' field
+func GetAdvancedHeaderFilterMode() string { return global.GetAdvancedHeaderFilterMode() }
+
+// SetAdvancedHeaderFilterMode safely sets the value for global configuration 'AdvancedHeaderFilterMode' field
+func SetAdvancedHeaderFilterMode(v string) { global.SetAdvancedHeaderFilterMode(v) }
+
 // GetHTTPClientAllowIPs safely fetches the Configuration value for state's 'HTTPClient.AllowIPs' field
 func (st *ConfigState) GetHTTPClientAllowIPs() (v []string) {
 	st.mutex.RLock()

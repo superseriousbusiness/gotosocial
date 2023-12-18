@@ -219,14 +219,19 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
-	middlewares := []gin.HandlerFunc{
-		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
-	}
 
+	// Start preparing middleware stack.
+	middlewares := make([]gin.HandlerFunc, 1)
+
+	// RequestID middleware must run before tracing!
+	middlewares[0] = middleware.AddRequestID(config.GetRequestIDHeader())
+
+	// Add tracing middleware if enabled.
 	if config.GetTracingEnabled() {
 		middlewares = append(middlewares, tracing.InstrumentGin())
 	}
 
+	// Add metrics middleware if enabled.
 	if config.GetMetricsEnabled() {
 		middlewares = append(middlewares, metrics.InstrumentGin())
 	}
@@ -235,6 +240,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.
 		middleware.Logger(config.GetLogClientIP()),
+		middleware.HeaderFilter(&state),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),

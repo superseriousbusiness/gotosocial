@@ -1193,6 +1193,20 @@ definitions:
         type: object
         x-go-name: Field
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    headerFilterCreateRequest:
+        properties:
+            header:
+                description: The HTTP header to match against (e.g. User-Agent).
+                type: string
+                x-go-name: Header
+            regex:
+                description: The header value matching regular expression.
+                type: string
+                x-go-name: Regex
+        title: HeaderFilterRequest is the form submitted as a POST to create a new header filter entry (allow / block).
+        type: object
+        x-go-name: HeaderFilterRequest
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     hostmeta:
         description: 'See: https://www.rfc-editor.org/rfc/rfc6415.html#section-3'
         properties:
@@ -2108,13 +2122,17 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     pollRequest:
         properties:
-            expires_in:
+            ExpiresIn:
                 description: |-
                     Duration the poll should be open, in seconds.
                     If provided, media_ids cannot be used, and poll[options] must be provided.
                 format: int64
                 type: integer
-                x-go-name: ExpiresIn
+            expires_in:
+                description: |-
+                    Duration the poll should be open, in seconds.
+                    If provided, media_ids cannot be used, and poll[options] must be provided.
+                x-go-name: ExpiresInI
             hide_totals:
                 description: Hide vote counts until the poll ends.
                 type: boolean
@@ -4561,6 +4579,232 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Send a generic test email to a specified email address.
+            tags:
+                - admin
+    /api/v1/admin/header_allows:
+        get:
+            operationId: headerFilterAllowsGet
+            responses:
+                "200":
+                    description: All "allow" header filters currently in place.
+                    schema:
+                        items:
+                            $ref: '#/definitions/headerFilter'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get all "allow" header filters currently in place.
+            tags:
+                - admin
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            description: |-
+                The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+                The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
+            operationId: headerFilterAllowCreate
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created "allow" header filter.
+                    schema:
+                        $ref: '#/definitions/headerFilter'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create new "allow" HTTP request header filter.
+            tags:
+                - admin
+    /api/v1/admin/header_allows/{id}:
+        delete:
+            operationId: headerFilterAllowDelete
+            parameters:
+                - description: Target header filter ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            responses:
+                "202":
+                    description: Accepted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Delete the "allow" header filter with the given ID.
+            tags:
+                - admin
+        get:
+            operationId: headerFilterAllowGet
+            parameters:
+                - description: Target header filter ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: The requested "allow" header filter.
+                    schema:
+                        $ref: '#/definitions/headerFilter'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get "allow" header filter with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/header_blocks:
+        get:
+            operationId: headerFilterBlocksGet
+            responses:
+                "200":
+                    description: All "block" header filters currently in place.
+                    schema:
+                        items:
+                            $ref: '#/definitions/headerFilter'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get all "allow" header filters currently in place.
+            tags:
+                - admin
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            description: |-
+                The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+                The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
+            operationId: headerFilterBlockCreate
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created "block" header filter.
+                    schema:
+                        $ref: '#/definitions/headerFilter'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create new "block" HTTP request header filter.
+            tags:
+                - admin
+    /api/v1/admin/header_blocks/{id}:
+        delete:
+            operationId: headerFilterBlockDelete
+            parameters:
+                - description: Target header filter ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            responses:
+                "202":
+                    description: Accepted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Delete the "block" header filter with the given ID.
+            tags:
+                - admin
+        get:
+            operationId: headerFilterBlockGet
+            parameters:
+                - description: Target header filter ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: The requested "block" header filter.
+                    schema:
+                        $ref: '#/definitions/headerFilter'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get "block" header filter with the given ID.
             tags:
                 - admin
     /api/v1/admin/instance/rules:

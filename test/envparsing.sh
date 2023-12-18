@@ -12,6 +12,7 @@ EXPECT=$(cat << "EOF"
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
     "advanced-csp-extra-uris": [],
+    "advanced-header-filter-mode": "",
     "advanced-rate-limit-exceptions": [
         "192.0.2.0/24",
         "127.0.0.1/32"
