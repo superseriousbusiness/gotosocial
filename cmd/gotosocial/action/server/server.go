@@ -240,6 +240,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.
 		middleware.Logger(config.GetLogClientIP()),
+		middleware.HeaderFilter(&state),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
@@ -317,7 +318,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
 	retryAfter := config.GetAdvancedThrottlingRetryAfter()
-	headerFilter := middleware.HeaderFilter(&state)               // request header filtering
 	clThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // client api
 	s2sThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // server-to-server (AP)
 	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // fileserver / web templates
@@ -327,14 +327,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
-	authModule.Route(router, clLimit, clThrottle, gzip, headerFilter)
-	clientModule.Route(router, clLimit, clThrottle, gzip, headerFilter)
-	metricsModule.Route(router, clLimit, clThrottle, gzip, headerFilter)
-	fileserverModule.Route(router, fsLimit, fsThrottle, headerFilter)
+	authModule.Route(router, clLimit, clThrottle, gzip)
+	clientModule.Route(router, clLimit, clThrottle, gzip)
+	metricsModule.Route(router, clLimit, clThrottle, gzip)
+	fileserverModule.Route(router, fsLimit, fsThrottle)
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip, headerFilter)
-	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip, headerFilter)
+	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
 	webModule.Route(router, fsLimit, fsThrottle, gzip)
 
 	// Start the GoToSocial server.
