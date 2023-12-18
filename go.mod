@@ -34,7 +34,7 @@ require (
 	github.com/gorilla/feeds v1.1.2
 	github.com/gorilla/websocket v1.5.1
 	github.com/h2non/filetype v1.1.3
-	github.com/jackc/pgx/v5 v5.5.0
+	github.com/jackc/pgx/v5 v5.5.1
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/miekg/dns v1.1.57
 	github.com/minio/minio-go/v7 v7.0.65
