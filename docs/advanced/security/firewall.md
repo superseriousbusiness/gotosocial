@@ -97,11 +97,45 @@ GoToSocial implements rate-limiting in order to try and protect your instance fr
 
 Blocking IPs is done with iptables or nftables. If you're using a firewall frontend like UFW or firewalld, use their facilities to block an IP.
 
-In iptables, people tend to add a `DROP` rule for an IP in the `filter` table on the `INPUT` chain. On nftables, it's often done on a table with a chain with the `ip` or `ip6` address family.
+In iptables, people tend to add a `DROP` rule for an IP in the `filter` table on the `INPUT` chain. On nftables, it's often done on a table with a chain with the `ip` or `ip6` address family. In both those cases the kernel has already done a lot of unnecessary processing of the incoming traffic, just for it to then be blocked by an IP match.
 
-In both those cases the kernel has already done a lot of unnecessary processing of the incoming traffic, just for it to then be blocked by an IP match. You can do this more efficiently by using the `mangle` table with the `PREROUTING` chain in iptables, or blocking using [the `netdev` family in nftables][nftnetdev].
+When using iptables, this can be done more effectively using the `mangle` table and the `PREROUTING` chain. You can check this blog post on [how that works in iptables][iptblock]. For nftables, you want to block using [the `netdev` family][nftnetdev] instead.
 
-You can read this blog post on [how to do this with iptables][iptblock]. For nftables, you can use something like:
+[iptblock]: https://javapipe.com/blog/iptables-ddos-protection/
+[nftnetdev]: https://wiki.nftables.org/wiki-nftables/index.php/Nftables_families#netdev
+
+#### iptables
+
+An example of blocking an IP using `iptables`:
+
+```
+iptables -t mangle -A PREROUTING -s 1.0.0.0/8 -j DROP
+ip6tables -t mangle -A PREROUTING -s fc00::/7 -j DROP
+```
+
+When using iptables, adding many rules slows things down significantly, including reloading the firewall when adding/removing rules. Since you may wish to block many IP addresses, use [the `ipset` module][ipset] and add a single block rule for the set instead.
+
+[ipset]: https://ipset.netfilter.org/ipset.man.html
+
+Start by creating your sets and adding some IPs to them:
+
+```
+ipset create baddiesv4 hash:ip family inet
+ipset create baddiesv6 hash:ip family inet6
+
+ipset add baddiesv4 1.0.0.0/8
+ipset add baddiesv6 fc00::/7
+```
+
+Then, update your iptables rules to target the set instead:
+```
+iptables -t mangle -A PREROUTING -m set --match-set baddiesv4 src -j DROP
+ip6tables -t mangle -A PREROUTING -m set --match-set baddiesv6 src -j DROP
+```
+
+#### nftables
+
+For nftables, you can use something like:
 
 ```
 table netdev filter {
@@ -129,12 +163,6 @@ table netdev filter {
     }
 }
 ```
-
-When using iptables, adding many rules slows things down significantly, including reloading the firewall when adding/removing rules. Since you may wish to block many IP addresses, use [the `ipset` module][ipset] and add a single block rule for the set instead: `-m set --match-set <set name>`.
-
-[nftnetdev]: https://wiki.nftables.org/wiki-nftables/index.php/Nftables_families#netdev
-[iptblock]: https://javapipe.com/blog/iptables-ddos-protection/
-[ipset]: https://wiki.archlinux.org/title/Ipset
 
 ### BSDs
 
