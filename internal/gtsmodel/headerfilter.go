@@ -45,8 +45,8 @@ type HeaderFilterBlock struct{ HeaderFilter }
 // matching regex, and details about its creation.
 type HeaderFilter struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // ID of this item in the database
-	Header    string    `bun:",nullzero,notnull"`                                           // Request header this filter pertains to
-	Regex     string    `bun:",nullzero,notnull"`                                           // Request header value matching regular expression
+	Header    string    `bun:",nullzero,notnull,unique:header_regex"`                       // Request header this filter pertains to
+	Regex     string    `bun:",nullzero,notnull,unique:header_regex"`                       // Request header value matching regular expression
 	AuthorID  string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this filter
 	Author    *Account  `bun:"-"`                                                           // Account corresponding to AuthorID
 	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
