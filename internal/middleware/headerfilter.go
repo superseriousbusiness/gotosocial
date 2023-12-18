@@ -28,7 +28,7 @@ import (
 // HeaderFilter returns a gin middleware handler that provides HTTP
 // request blocking (filtering) based on database allow / block filters.
 func HeaderFilter(state *state.State) gin.HandlerFunc {
-	switch mode := config.GetRequestHeaderFilterMode(); mode {
+	switch mode := config.GetAdvancedHeaderFilterMode(); mode {
 	case config.RequestHeaderFilterModeDisabled:
 		return func(ctx *gin.Context) {}
 

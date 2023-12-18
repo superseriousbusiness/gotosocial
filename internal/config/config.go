@@ -85,7 +85,6 @@ type Configuration struct {
 	InstanceDeliverToSharedInboxes bool               `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
 	InstanceInjectMastodonVersion  bool               `name:"instance-inject-mastodon-version" usage:"This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection"`
 	InstanceLanguages              language.Languages `name:"instance-languages" usage:"BCP47 language tags for the instance. Used to indicate the preferred languages of instance residents (in order from most-preferred to least-preferred)."`
-	RequestHeaderFilterMode        string             `name:"request-header-filter-mode" usage:"Set incoming request header filtering mode."`
 
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
 	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`
@@ -164,6 +163,7 @@ type Configuration struct {
 	AdvancedThrottlingRetryAfter time.Duration `name:"advanced-throttling-retry-after" usage:"Retry-After duration response to send for throttled requests."`
 	AdvancedSenderMultiplier     int           `name:"advanced-sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
 	AdvancedCSPExtraURIs         []string      `name:"advanced-csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
+	AdvancedHeaderFilterMode     string        `name:"advanced-header-filter-mode" usage:"Set incoming request header filtering mode."`
 
 	// HTTPClient configuration vars.
 	HTTPClient HTTPClientConfiguration `name:"http-client"`

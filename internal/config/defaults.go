@@ -64,7 +64,6 @@ var Defaults = Configuration{
 	InstanceExposeSuspendedWeb:     false,
 	InstanceDeliverToSharedInboxes: true,
 	InstanceLanguages:              make(language.Languages, 0),
-	RequestHeaderFilterMode:        RequestHeaderFilterModeDisabled,
 
 	AccountsRegistrationOpen: true,
 	AccountsApprovalRequired: true,
@@ -136,6 +135,7 @@ var Defaults = Configuration{
 	AdvancedThrottlingRetryAfter: time.Second * 30,
 	AdvancedSenderMultiplier:     2, // 2 senders per CPU
 	AdvancedCSPExtraURIs:         []string{},
+	AdvancedHeaderFilterMode:     RequestHeaderFilterModeDisabled,
 
 	Cache: CacheConfiguration{
 		// Rough memory target that the total

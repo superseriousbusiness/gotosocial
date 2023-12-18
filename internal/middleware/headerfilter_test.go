@@ -189,7 +189,7 @@ func TestHeaderFilter(t *testing.T) {
 		)
 
 		// Update header filter mode to test case.
-		config.SetRequestHeaderFilterMode(test.mode)
+		config.SetAdvancedHeaderFilterMode(test.mode)
 
 		// Run this particular test case.
 		ok := t.Run(name, func(t *testing.T) {
