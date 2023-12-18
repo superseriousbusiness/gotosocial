@@ -19,7 +19,6 @@ package migrations
 
 import (
 	"context"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
@@ -35,7 +34,7 @@ func init() {
 				IfNotExists().
 				Model(model).
 				Exec(ctx)
-			if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+			if err != nil {
 				return err
 			}
 		}
