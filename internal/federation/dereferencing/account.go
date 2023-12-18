@@ -81,7 +81,7 @@ func accountUpToDate(account *gtsmodel.Account, force bool) bool {
 // may be enqueued for asynchronous fetching, e.g. featured account statuses (pins). An ActivityPub object indicates the account was dereferenced.
 func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
 	// Fetch and dereference account if necessary.
-	account, apubAcc, err := d.getAccountByURI(ctx,
+	account, accountable, err := d.getAccountByURI(ctx,
 		requestUser,
 		uri,
 	)
@@ -89,7 +89,7 @@ func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, 
 		return nil, nil, err
 	}
 
-	if apubAcc != nil {
+	if accountable != nil {
 		// This account was updated, enqueue re-dereference featured posts.
 		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
@@ -98,7 +98,7 @@ func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, 
 		})
 	}
 
-	return account, apubAcc, nil
+	return account, accountable, nil
 }
 
 // getAccountByURI is a package internal form of .GetAccountByURI() that doesn't bother dereferencing featured posts on update.
@@ -156,7 +156,7 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 	}
 
 	// Try to update existing account model.
-	latest, apubAcc, err := d.enrichAccountSafely(ctx,
+	latest, accountable, err := d.enrichAccountSafely(ctx,
 		requestUser,
 		uri,
 		account,
@@ -169,14 +169,14 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 		return account, nil, nil
 	}
 
-	return latest, apubAcc, nil
+	return latest, accountable, nil
 }
 
 // GetAccountByUsernameDomain will attempt to fetch an accounts by its username@domain, first checking the database. In the case of a newly-met remote model,
 // or a remote model whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority
 // account information may be enqueued for asynchronous fetching, e.g. featured account statuses (pins). An ActivityPub object indicates the account was dereferenced.
 func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUser string, username string, domain string) (*gtsmodel.Account, ap.Accountable, error) {
-	account, apubAcc, err := d.getAccountByUsernameDomain(
+	account, accountable, err := d.getAccountByUsernameDomain(
 		ctx,
 		requestUser,
 		username,
@@ -186,7 +186,7 @@ func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUs
 		return nil, nil, err
 	}
 
-	if apubAcc != nil {
+	if accountable != nil {
 		// This account was updated, enqueue re-dereference featured posts.
 		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
@@ -195,12 +195,11 @@ func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUs
 		})
 	}
 
-	return account, apubAcc, nil
+	return account, accountable, nil
 }
 
-// getAccountByUsernameDomain is a package internal form
-// of .GetAccountByUsernameDomain() that doesn't bother
-// dereferencing featured posts.
+// getAccountByUsernameDomain is a package internal form of
+// GetAccountByUsernameDomain() that doesn't bother deref of featured posts.
 func (d *Dereferencer) getAccountByUsernameDomain(
 	ctx context.Context,
 	requestUser string,
@@ -231,7 +230,7 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
-		account, apubAcc, err := d.enrichAccountSafely(ctx, requestUser, nil, &gtsmodel.Account{
+		account, accountable, err := d.enrichAccountSafely(ctx, requestUser, nil, &gtsmodel.Account{
 			ID:       id.NewULID(),
 			Username: username,
 			Domain:   domain,
@@ -240,11 +239,11 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 			return nil, nil, err
 		}
 
-		return account, apubAcc, nil
+		return account, accountable, nil
 	}
 
 	// Try to update existing account model.
-	latest, apubAcc, err := d.RefreshAccount(ctx,
+	latest, accountable, err := d.RefreshAccount(ctx,
 		requestUser,
 		account,
 		nil,
@@ -255,14 +254,14 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 		return account, nil, nil //nolint
 	}
 
-	if apubAcc == nil {
+	if accountable == nil {
 		// This is existing up-to-date account, ensure it is populated.
 		if err := d.state.DB.PopulateAccount(ctx, latest); err != nil {
 			log.Errorf(ctx, "error populating existing account: %v", err)
 		}
 	}
 
-	return latest, apubAcc, nil
+	return latest, accountable, nil
 }
 
 // RefreshAccount updates the given account if remote and last_fetched is
