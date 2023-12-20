@@ -42,7 +42,7 @@ module.exports = function FakeProfile({ avatar, header, display_name, username, 
 									<dd className="sr-only">Role</dd>
 									<dt className={`role ${role.name}`}>{role.name}</dt>
 								</>
-							: null
+								: null
 						}
 					</dl>
 				</div>
