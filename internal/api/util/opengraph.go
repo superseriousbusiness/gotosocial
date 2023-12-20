@@ -85,7 +85,7 @@ func OGBase(instance *apimodel.InstanceV1) *OGMeta {
 // struct specific to that account. It's suitable for serving
 // at account profile pages.
 func (og *OGMeta) WithAccount(account *apimodel.Account) *OGMeta {
-	og.Title = ParseTitle(account, og.SiteName)
+	og.Title = AccountTitle(account, og.SiteName)
 	og.Type = "profile"
 	og.URL = account.URL
 	if account.Note != "" {
@@ -106,7 +106,7 @@ func (og *OGMeta) WithAccount(account *apimodel.Account) *OGMeta {
 // struct specific to that status. It's suitable for serving
 // at status pages.
 func (og *OGMeta) WithStatus(status *apimodel.Status) *OGMeta {
-	og.Title = "Post by " + ParseTitle(status.Account, og.SiteName)
+	og.Title = "Post by " + AccountTitle(status.Account, og.SiteName)
 	og.Type = "article"
 	if status.Language != nil {
 		og.Locale = *status.Language
@@ -147,15 +147,15 @@ func (og *OGMeta) WithStatus(status *apimodel.Status) *OGMeta {
 	return og
 }
 
-// ParseTitle parses a page title from account and accountDomain
-func ParseTitle(account *apimodel.Account, accountDomain string) string {
+// AccountTitle parses a page title from account and accountDomain
+func AccountTitle(account *apimodel.Account, accountDomain string) string {
 	user := "@" + account.Acct + "@" + accountDomain
 
 	if len(account.DisplayName) == 0 {
 		return user
 	}
 
-	return account.DisplayName + " (" + user + ")"
+	return account.DisplayName + ", " + user
 }
 
 // ParseDescription returns a string description which is
@@ -166,13 +166,13 @@ func ParseDescription(in string) string {
 	i = strings.Join(strings.Fields(i), " ")
 	i = html.EscapeString(i)
 	i = strings.ReplaceAll(i, `\`, "&bsol;")
-	i = trim(i, maxOGDescriptionLength)
+	i = truncate(i, maxOGDescriptionLength)
 	return `content="` + i + `"`
 }
 
-// trim trims given string to
+// truncate trims given string to
 // specified length (in runes).
-func trim(s string, l int) string {
+func truncate(s string, l int) string {
 	r := []rune(s)
 	if len(r) < l {
 		// No need
