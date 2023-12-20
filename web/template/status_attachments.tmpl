@@ -27,6 +27,7 @@
     src="{{- .PreviewURL -}}"
     loading="lazy"
     {{- if .Description }}
+    alt="{{- .Description -}}"
     title="{{- .Description -}}"
     {{- end }}
     width="{{- .Meta.Original.Width -}}"
@@ -37,6 +38,7 @@
 {{- define "videoPreview" }}
 <video
     {{- if .Description }}
+    alt="{{- .Description -}}"
     title="{{- .Description -}}"
     {{- end }}
     width="{{- .Meta.Original.Width -}}"
@@ -100,6 +102,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                 data-pswp-height="{{- $media.Meta.Original.Height -}}px"
                 data-cropped="true"
                 {{- if .Description }}
+                alt="{{- $media.Description -}}"
                 title="{{- $media.Description -}}"
                 {{- end }}
             >
@@ -111,11 +114,12 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
             <a
                 class="unknown-attachment"
                 href="{{- $media.RemoteURL -}}"
+                rel="nofollow noreferrer noopener"
                 target="_blank"
                 {{- if .Description }}
-                title="Link to external media: {{ $media.Description -}}&#10;&#13;{{- $media.RemoteURL -}}"
+                title="Open external media: {{ $media.Description -}}&#10;&#13;{{- $media.RemoteURL -}}"
                 {{- else }}
-                title="Link to external media.&#10;&#13;{{- $media.RemoteURL -}}"
+                title="Open external media.&#10;&#13;{{- $media.RemoteURL -}}"
                 {{- end }}
             >
                 <div class="placeholder" aria-hidden="true">
