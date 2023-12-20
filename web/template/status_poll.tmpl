@@ -40,24 +40,30 @@
             Poll&nbsp;
             {{- end -}}
             {{- if .Poll.Expired -}}
-            closed <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>.
+            closed <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
             {{- else if .Poll.ExpiresAt -}}
-            open until <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>.
+            open until <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
             {{- else -}}
-            open forever.
+            open forever
             {{- end -}}
         </span>
-        <span class="total-votes">{{- template "votes" .Poll.VotesCount -}}&nbsp;total.</span>
+        <span class="sr-only">,</span>
+        <span class="total-votes">
+            {{- template "votes" .Poll.VotesCount -}}&nbsp;
+            {{- if .Poll.Expired -}}
+                total
+            {{- else -}}
+                so far
+            {{- end -}}
+        </span>
     </figcaption>
     <ul class="poll-options">
     {{- range $index, $pollOption := .WebPollOptions }}
         <li class="poll-option">
-            <label lang="{{- .LanguageTag.TagStr -}}">
-                <span class="sr-only">Option {{ increment $index }}:</span>
-                {{ emojify .Emojis (noescape $pollOption.Title) }}
-                <br/>
-                <meter aria-hidden="true" min="0" max="100" value="{{- $pollOption.VoteShare -}}"></meter>
-            </label>
+            <span class="sr-only">Option {{ increment $index }},</span>
+            <span lang="{{- .LanguageTag.TagStr -}}">{{ emojify .Emojis (noescape $pollOption.Title) }}</span>
+            <br/>
+            <meter aria-hidden="true" min="0" max="100" value="{{- $pollOption.VoteShare -}}"></meter>
             <div class="poll-vote-summary">
                 {{- if isNil $pollOption.VotesCount }}
                 Results not yet published.
