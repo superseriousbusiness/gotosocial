@@ -121,7 +121,7 @@ type Status struct {
 	// Always false for non-web statuses.
 	//
 	// swagger:ignore
-	Local bool
+	Local bool `json:"-"`
 }
 
 /*
