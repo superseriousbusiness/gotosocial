@@ -42,6 +42,11 @@ import (
 
 // LoadTemplates loads templates found at `web-template-base-dir`
 // into the Gin engine, or errors if templates cannot be loaded.
+//
+// The special function "include" will be added to the template
+// funcMap for use in any template. Use the "include" function
+// when you need to pass a template through a pipeline. Otherwise,
+// prefer the built-in "template" function.
 func LoadTemplates(engine *gin.Engine) error {
 	templateBaseDir := config.GetWebTemplateBaseDir()
 	if templateBaseDir == "" {
@@ -72,10 +77,13 @@ func LoadTemplates(engine *gin.Engine) error {
 
 	// Set "include" function to render provided
 	// template name using the base template.
-	funcMap["include"] = func(name string, data any) (string, error) {
+	funcMap["include"] = func(name string, data any) (template.HTML, error) {
 		var buf strings.Builder
 		err := tmpl.ExecuteTemplate(&buf, name, data)
-		return buf.String(), err
+
+		// Template was already escaped by
+		// ExecuteTemplate so we can trust it.
+		return noescape(buf.String()), err
 	}
 
 	// Load functions into the base template, and
@@ -278,24 +286,28 @@ var (
 	indentStr    = "    "
 	indentStrLen = len(indentStr)
 	indents      = strings.Repeat(indentStr, 12)
+	indentPre    = regexp.MustCompile(fmt.Sprintf(`(?Ums)^((?:%s)+)<pre>.*</pre>`, indentStr))
 )
 
-func indent(n int, input string) string {
-	return indentRegex.ReplaceAllString(input, indents[:n*indentStrLen])
+// indent appropriately indents the given html
+// by prepending each line with the indentStr.
+func indent(n int, html template.HTML) template.HTML {
+	out := indentRegex.ReplaceAllString(
+		string(html),
+		indents[:n*indentStrLen],
+	)
+	return noescape(out)
 }
 
-var (
-	pre = regexp.MustCompile(fmt.Sprintf(
-		`(?mU)(?sm)^^((?:%s)+)<pre>.*</pre>`, indentStr),
-	)
-)
-
+// outdentPre outdents all `<pre></pre>` tags in the
+// given HTML so that they render correctly in code
+// blocks, even if they were indented before.
 func outdentPre(html template.HTML) template.HTML {
 	input := string(html)
-	output := regexes.ReplaceAllStringFunc(pre, input,
+	output := regexes.ReplaceAllStringFunc(indentPre, input,
 		func(match string, buf *bytes.Buffer) string {
 			// Reuse the regex to pull out submatches.
-			matches := pre.FindAllStringSubmatch(match, -1)
+			matches := indentPre.FindAllStringSubmatch(match, -1)
 			if len(matches) != 1 {
 				return match
 			}

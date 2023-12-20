@@ -60,7 +60,7 @@
                 <h3 id="about-header">About<span class="sr-only">&nbsp;{{- .account.Username -}}</span></h3>
             </div>
             {{- if .account.Fields }}
-            {{- include "profile_fields.tmpl" . | indent 3 | noescape }}
+            {{- include "profile_fields.tmpl" . | indent 3 }}
             {{- end }}
             <h4 class="sr-only">Bio</h4>
             <div class="bio">
@@ -91,8 +91,8 @@
                 </div>
                 <div class="thread">
                     {{- range .pinned_statuses }}
-                    <article class="status expanded" aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}">
-                        {{- include "status.tmpl" . | indent 6 | noescape }}
+                    <article class="status expanded" aria-label="{{- template "status_summary.tmpl" . -}}">
+                        {{- include "status.tmpl" . | indent 6 }}
                     </article>
                     {{- end }}
                 </div>
@@ -112,8 +112,8 @@
                     <div data-nosnippet class="nothinghere">Nothing here!</div>
                     {{- else }}
                     {{- range .statuses }}
-                    <article class="status expanded" aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}">
-                        {{- include "status.tmpl" . | indent 6 | noescape }}
+                    <article class="status expanded" aria-label="{{- template "status_summary.tmpl" . -}}">
+                        {{- include "status.tmpl" . | indent 6 }}
                     </article>
                     {{- end }}
                     {{- end }}

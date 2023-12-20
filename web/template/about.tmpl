@@ -30,7 +30,7 @@
     <section class="about-section" role="region" aria-labelledby="about">
         <h3 id="about">About {{ .instance.Title -}}</h3>
         {{- with . }}
-        {{- include "description" . | indent 2 | noescape }}
+        {{- include "description" . | indent 2 }}
         {{- end }}
     </section>
     <section class="about-section" role="region" aria-labelledby="contact">

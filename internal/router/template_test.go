@@ -23,7 +23,7 @@ import (
 )
 
 func TestOutdentPre(t *testing.T) {
-	const str = `
+	const html = template.HTML(`
         <div class="text">
             <div class="content" lang="en">                
                 <p>Here's a bunch of HTML, read it and weep, weep then!</p>
@@ -66,9 +66,51 @@ func TestOutdentPre(t *testing.T) {
                 <p>There, hope you liked that!</p>
             </div>
         </div>
-`
+        <div class="text">
+            <div class="content" lang="en">                
+                <p>Here's a bunch of HTML, read it and weep, weep then!</p>
+                <pre><code class="language-html">&lt;section class=&#34;about-user&#34;&gt;
+                    &lt;div class=&#34;col-header&#34;&gt;
+                        &lt;h2&gt;About&lt;/h2&gt;
+                    &lt;/div&gt;            
+                    &lt;div class=&#34;fields&#34;&gt;
+                        &lt;h3 class=&#34;sr-only&#34;&gt;Fields&lt;/h3&gt;
+                        &lt;dl&gt;
+                            &lt;div class=&#34;field&#34;&gt;
+                                &lt;dt&gt;should you follow me?&lt;/dt&gt;
+                                &lt;dd&gt;maybe!&lt;/dd&gt;
+                            &lt;/div&gt;
+                            &lt;div class=&#34;field&#34;&gt;
+                                &lt;dt&gt;age&lt;/dt&gt;
+                                &lt;dd&gt;120&lt;/dd&gt;
+                            &lt;/div&gt;
+                        &lt;/dl&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&#34;bio&#34;&gt;
+                        &lt;h3 class=&#34;sr-only&#34;&gt;Bio&lt;/h3&gt;
+                        &lt;p&gt;i post about things that concern me&lt;/p&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&#34;sr-only&#34; role=&#34;group&#34;&gt;
+                        &lt;h3 class=&#34;sr-only&#34;&gt;Stats&lt;/h3&gt;
+                        &lt;span&gt;Joined in Jun, 2022.&lt;/span&gt;
+                        &lt;span&gt;8 posts.&lt;/span&gt;
+                        &lt;span&gt;Followed by 1.&lt;/span&gt;
+                        &lt;span&gt;Following 1.&lt;/span&gt;
+                    &lt;/div&gt;
+                    &lt;div class=&#34;accountstats&#34; aria-hidden=&#34;true&#34;&gt;
+                        &lt;b&gt;Joined&lt;/b&gt;&lt;time datetime=&#34;2022-06-04T13:12:00.000Z&#34;&gt;Jun, 2022&lt;/time&gt;
+                        &lt;b&gt;Posts&lt;/b&gt;&lt;span&gt;8&lt;/span&gt;
+                        &lt;b&gt;Followed by&lt;/b&gt;&lt;span&gt;1&lt;/span&gt;
+                        &lt;b&gt;Following&lt;/b&gt;&lt;span&gt;1&lt;/span&gt;
+                    &lt;/div&gt;
+                &lt;/section&gt;
+                </code></pre>
+                <p>There, hope you liked that!</p>
+            </div>
+        </div>
+`)
 
-	const expected = `
+	const expected = template.HTML(`
         <div class="text">
             <div class="content" lang="en">                
                 <p>Here's a bunch of HTML, read it and weep, weep then!</p>
@@ -111,9 +153,51 @@ func TestOutdentPre(t *testing.T) {
                 <p>There, hope you liked that!</p>
             </div>
         </div>
-`
+        <div class="text">
+            <div class="content" lang="en">                
+                <p>Here's a bunch of HTML, read it and weep, weep then!</p>
+<pre><code class="language-html">&lt;section class=&#34;about-user&#34;&gt;
+    &lt;div class=&#34;col-header&#34;&gt;
+        &lt;h2&gt;About&lt;/h2&gt;
+    &lt;/div&gt;            
+    &lt;div class=&#34;fields&#34;&gt;
+        &lt;h3 class=&#34;sr-only&#34;&gt;Fields&lt;/h3&gt;
+        &lt;dl&gt;
+            &lt;div class=&#34;field&#34;&gt;
+&lt;dt&gt;should you follow me?&lt;/dt&gt;
+&lt;dd&gt;maybe!&lt;/dd&gt;
+            &lt;/div&gt;
+            &lt;div class=&#34;field&#34;&gt;
+&lt;dt&gt;age&lt;/dt&gt;
+&lt;dd&gt;120&lt;/dd&gt;
+            &lt;/div&gt;
+        &lt;/dl&gt;
+    &lt;/div&gt;
+    &lt;div class=&#34;bio&#34;&gt;
+        &lt;h3 class=&#34;sr-only&#34;&gt;Bio&lt;/h3&gt;
+        &lt;p&gt;i post about things that concern me&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class=&#34;sr-only&#34; role=&#34;group&#34;&gt;
+        &lt;h3 class=&#34;sr-only&#34;&gt;Stats&lt;/h3&gt;
+        &lt;span&gt;Joined in Jun, 2022.&lt;/span&gt;
+        &lt;span&gt;8 posts.&lt;/span&gt;
+        &lt;span&gt;Followed by 1.&lt;/span&gt;
+        &lt;span&gt;Following 1.&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&#34;accountstats&#34; aria-hidden=&#34;true&#34;&gt;
+        &lt;b&gt;Joined&lt;/b&gt;&lt;time datetime=&#34;2022-06-04T13:12:00.000Z&#34;&gt;Jun, 2022&lt;/time&gt;
+        &lt;b&gt;Posts&lt;/b&gt;&lt;span&gt;8&lt;/span&gt;
+        &lt;b&gt;Followed by&lt;/b&gt;&lt;span&gt;1&lt;/span&gt;
+        &lt;b&gt;Following&lt;/b&gt;&lt;span&gt;1&lt;/span&gt;
+    &lt;/div&gt;
+&lt;/section&gt;
+</code></pre>
+                <p>There, hope you liked that!</p>
+            </div>
+        </div>
+`)
 
-	out := outdentPre(template.HTML(str))
+	out := outdentPre(html)
 	if out != expected {
 		t.Fatalf("unexpected output:\n`%s`\n", out)
 	}

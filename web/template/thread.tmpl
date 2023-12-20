@@ -38,9 +38,9 @@
         class="status"
         id="{{- .ID -}}"
         role="region"
-        aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}"
+        aria-label="{{- template "status_summary.tmpl" . -}}"
     >
-        {{- include "status.tmpl" . | indent 2 | noescape }}
+        {{- include "status.tmpl" . | indent 2 }}
     </article>
     {{- end }}
     {{- with .status }}
@@ -48,9 +48,9 @@
         class="status expanded"
         id="{{- .ID -}}"
         role="region"
-        aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}"
+        aria-label="{{- template "status_summary.tmpl" . -}}"
     >
-        {{- include "status.tmpl" . | indent 2 | noescape }}
+        {{- include "status.tmpl" . | indent 2 }}
     </article>
     {{- end }}
     {{- range .context.Descendants }}
@@ -58,9 +58,9 @@
         class="status"
         id="{{- .ID -}}"
         role="region"
-        aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}"
+        aria-label="{{- template "status_summary.tmpl" . -}}"
     >
-        {{- include "status.tmpl" . | indent 2 | noescape }}
+        {{- include "status.tmpl" . | indent 2 }}
     </article>
     {{- end }}
 </main>

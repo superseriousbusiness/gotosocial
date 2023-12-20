@@ -60,9 +60,9 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
 
 {{- with .MediaAttachments }}
 <div
-    class="{{- include "galleryClass" . | noescapeAttr -}}"
+    class="{{- template "galleryClass" . -}}"
     role="group"
-    aria-label="{{- include "attachmentsLength" . | noescapeAttr -}}"
+    aria-label="{{- template "attachmentsLength" . -}}"
 >
     {{- range $index, $media := . }}
     <div class="media-wrapper">
@@ -74,9 +74,9 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                     <i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
                 </span>
                 {{- if eq .Type "video" }}
-                {{- include "videoPreview" $media | indent 4 | noescape }}
+                {{- include "videoPreview" $media | indent 4 }}
                 {{- else if eq .Type "image" }}
-                {{- include "imagePreview" $media | indent 4 | noescape }}
+                {{- include "imagePreview" $media | indent 4 }}
                 {{- end }}
             </summary>
             {{- if eq .Type "video" }}
@@ -107,7 +107,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                 {{- end }}
             >
                 {{- with $media }}
-                {{- include "imagePreview" . | indent 4 | noescape }}
+                {{- include "imagePreview" . | indent 4 }}
                 {{- end }}
             </a>
             {{- else }}

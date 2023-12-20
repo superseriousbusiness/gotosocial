@@ -32,7 +32,7 @@
 
 {{- with . }}
 <header class="status-header">
-    {{- include "status_header.tmpl" . | indent 1 | noescape }}
+    {{- include "status_header.tmpl" . | indent 1 }}
 </header>
 <div class="status-body">
     {{- if .SpoilerText }}
@@ -43,29 +43,29 @@
         </summary>
         <div class="text">
             {{- with . }}
-            {{- include "statusContent" . | indent 3 | noescape }}
+            {{- include "statusContent" . | indent 3 }}
             {{- end }}
             {{- if .Poll }}
-            {{- include "status_poll.tmpl" . | indent 3 | noescape }}
+            {{- include "status_poll.tmpl" . | indent 3 }}
             {{- end }}
         </div>
     </details>
     {{- else }}
     <div class="text">
         {{- with . }}
-        {{- include "statusContent" . | indent 2 | noescape }}
+        {{- include "statusContent" . | indent 2 }}
         {{- end }}
         {{- if .Poll }}
-        {{- include "status_poll.tmpl" . | indent 2 | noescape }}
+        {{- include "status_poll.tmpl" . | indent 2 }}
         {{- end }}
     </div>
     {{- end }}
     {{- if .MediaAttachments }}
-    {{- include "status_attachments.tmpl" . | indent 1 | noescape }}
+    {{- include "status_attachments.tmpl" . | indent 1 }}
     {{- end }}
 </div>
 <aside class="status-info">
-    {{- include "status_info.tmpl" . | indent 1 | noescape }}
+    {{- include "status_info.tmpl" . | indent 1 }}
 </aside>
 {{- if .Local }}
 <a

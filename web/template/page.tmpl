@@ -49,7 +49,7 @@ image/png
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="robots" content="{{- if .robotsMeta -}}{{- .robotsMeta -}}{{- else -}}noindex, nofollow{{- end -}}">
         {{- if .ogMeta }}
-        {{- include "page_ogmeta.tmpl" . | indent 2 | noescape }}
+        {{- include "page_ogmeta.tmpl" . | indent 2 }}
         {{- else }}
         {{- end }}
         {{- if .rssFeed }}
@@ -65,7 +65,7 @@ image/png
         <link rel="icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
         <link rel="apple-touch-icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
         <link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
-        {{- include "page_stylesheets.tmpl" . | indent 2 | noescape }}
+        {{- include "page_stylesheets.tmpl" . | indent 2 }}
         {{- range .javascript }}
         <script type="text/javascript" src="{{- . -}}" async="" defer=""></script>
         {{- end }}
@@ -73,13 +73,13 @@ image/png
     </head>
     <body class="page">
         <header class="page-header">
-            {{- include "page_header.tmpl" . | indent 3 | noescape }}
+            {{- include "page_header.tmpl" . | indent 3 }}
         </header>
         <div class="page-content">
-            {{- include .pageContent . | indent 3 | noescape | outdentPre }}
+            {{- include .pageContent . | indent 3 | outdentPre }}
         </div>
         <footer class="page-footer">
-            {{- include "page_footer.tmpl" . | indent 3 | noescape }}
+            {{- include "page_footer.tmpl" . | indent 3 }}
         </footer>
     </body>
 </html>

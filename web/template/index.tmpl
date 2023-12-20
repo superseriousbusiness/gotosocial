@@ -17,17 +17,21 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- define "shortDescription" -}}
+{{- if .instance.ShortDescription }}
+{{ .instance.ShortDescription | noescape }}
+{{- else }}
+<p>No short description has yet been set for this instance.<p>
+{{- end }}
+{{- end -}}
+
 {{- with . }}
 <main class="about">
     <section class="about-section" role="region" aria-labelledby="about">
         <h3 id="about">About this instance</h3>
-        {{- if .instance.ShortDescription }}
-        {{ .instance.ShortDescription | noescape }}
-        {{- else }}
-        <p>No short description has yet been set for this instance.<p>
-        {{- end }}
-        <a href="/about">Instance details</a>
+        {{- include "shortDescription" . | indent 2 }}
+        <a href="/about">See more details</a>
     </section>
-    {{- include "index_apps.tmpl" . | indent 1 | noescape }}
+    {{- include "index_apps.tmpl" . | indent 1 }}
 </main>
 {{- end }}
