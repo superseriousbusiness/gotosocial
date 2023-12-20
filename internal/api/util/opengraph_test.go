@@ -60,7 +60,7 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 	})
 
 	suite.EqualValues(OGMeta{
-		Title:                "example person!! (@example_account@example.org)",
+		Title:                "example person!!, @example_account@example.org",
 		Type:                 "profile",
 		Locale:               "en",
 		URL:                  "https://example.org/@example_account",
@@ -93,7 +93,7 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 	})
 
 	suite.EqualValues(OGMeta{
-		Title:                "example person!! (@example_account@example.org)",
+		Title:                "example person!!, @example_account@example.org",
 		Type:                 "profile",
 		Locale:               "en",
 		URL:                  "https://example.org/@example_account",
