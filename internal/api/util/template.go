@@ -15,21 +15,43 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package testrig
+package util
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
-// CreateGinTextContext creates a new gin.Context suitable for a test, with an instantiated gin.Engine.
-func CreateGinTestContext(rw http.ResponseWriter, r *http.Request) (*gin.Context, *gin.Engine) {
-	ctx, eng := gin.CreateTestContext(rw)
-	if err := router.LoadTemplates(eng); err != nil {
-		panic(err)
+// TemplatePage renders the given HTML template
+// inside of the standard GtS "page" template.
+//
+// ogMeta, stylesheets, javascript, and any extra
+// properties will be provided to the template if
+// set, but can all be nil.
+func TemplatePage(
+	c *gin.Context,
+	template string,
+	instance *apimodel.InstanceV1,
+	ogMeta *OGMeta,
+	stylesheets []string,
+	javascript []string,
+	extra map[string]any,
+) {
+	const page = "page.tmpl"
+
+	obj := gin.H{
+		"pageContent": template,
+		"instance":    instance,
+		"ogMeta":      ogMeta,
+		"stylesheets": stylesheets,
+		"javascript":  javascript,
 	}
-	ctx.Request = r
-	return ctx, eng
+
+	for k, v := range extra {
+		obj[k] = v
+	}
+
+	c.HTML(http.StatusOK, page, obj)
 }

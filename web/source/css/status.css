@@ -19,25 +19,19 @@
 @import "photoswipe/dist/photoswipe.css";
 @import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
 @import "plyr/dist/plyr.css";
+@import "./prism.css";
 
 main {
 	background: transparent;
 	grid-auto-rows: auto;
 }
 
-.thread {
-	display: flex;
-	flex-direction: column;
-	border-radius: $br;
-}
-
-.toot {
-	background: $toot-bg;
+.status {
+	background: $status-bg;
 	box-shadow: $boxshadow;
 	border: $boxshadow-border;
 	border-radius: $br;
 	position: relative;
-	margin-bottom: $br;
 	padding-top: 0.75rem;
 
 	a {
@@ -47,66 +41,75 @@ main {
 		text-decoration: none;
 	}
 
-	.author > a {
-		padding: 0 0.75rem;
-		display: grid;
-		grid-template-columns: 3.5rem 1fr auto;
-		grid-template-rows: auto auto;
-		grid-template-areas:
-			"avatar display date"
-			"avatar user .";
-		gap: 0 0.5rem;
+	.status-header > address {
+		/*
+			Avoid stretching so wide that user
+			can't click on open thread link that's
+			behind the status header link.
+		*/
+		width: fit-content;
 
-		.avatar {
-			grid-area: avatar;
-			height: 3.5rem;
-			width: 3.5rem;
-			object-fit: cover;
-
-			border: 0.15rem solid $avatar-border;
-			border-radius: $br;
-			overflow: hidden; /* hides corners from img overflowing */
-
-			img {
-				height: 100%;
-				width: 100%;
-				object-fit: cover;
-				background: $bg;
-			}
-		}
-
-		.displayname, .username {
-			justify-self: start;
-			align-self: start;
-		
-			max-width: 100%;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
-		}
+		> a {
+			padding: 0 0.75rem;
+			display: grid;
+			grid-template-columns: 3.5rem 1fr auto;
+			grid-template-rows: auto auto;
+			grid-template-areas:
+				"avatar author-strap author-strap"
+				"avatar author-strap author-strap";
+			gap: 0 0.5rem;
+			font-style: normal;
 	
-		.displayname {
-			grid-area: display;
-			font-weight: bold;
-			font-size: 1rem;
-			line-height: 1.3rem;
-			/* margin-top: -0.5rem; */
-		}
-
-		.username {
-			grid-area: user;
-			color: $link-fg;
-			font-size: 1rem;
-			line-height: 1.3rem;
-		}
-
-		.timestamp {
-			grid-area: date;
-			color: $fg-reduced;
+			.avatar {
+				grid-area: avatar;
+				height: 3.5rem;
+				width: 3.5rem;
+				object-fit: cover;
+	
+				border: 0.15rem solid $avatar-border;
+				border-radius: $br;
+				overflow: hidden; /* hides corners from img overflowing */
+	
+				img {
+					height: 100%;
+					width: 100%;
+					object-fit: cover;
+					background: $bg;
+				}
+			}
+	
+			.author-strap {
+				grid-area: author-strap;
+				display: grid;
+				grid-template-columns: 1fr auto;
+				grid-template-rows: auto;
+				grid-template-areas:
+					"display display"
+					"user    user";
+				gap: 0 0.5rem;
+	
+				.displayname, .username {
+					justify-self: start;
+					align-self: start;
+					max-width: 100%;
+					font-size: 1rem;
+					line-height: 1.3rem;
+				}
+			
+				.displayname {
+					grid-area: display;
+					font-weight: bold;
+				}
+		
+				.username {
+					grid-area: user;
+					color: $link-fg;
+				}
+			}
 		}
 	}
 
-	.body {
+	.status-body {
 		padding: 0.5rem 0.75rem;
 		display: flex;
 		flex-direction: column;
@@ -157,6 +160,28 @@ main {
 			line-height: 1.6rem;
 			width: 100%;
 
+			/*
+				Restyle lists; remove left-padding,
+				replace dot with orange dot.
+			*/
+			ul {
+				padding-left: 1rem;
+				list-style: none;
+			}
+			
+			ul li::before {
+				content: "\2022";
+				color: $border-accent;
+				font-weight: bold;
+				display: inline-block;
+				width: 1rem;
+				margin-left: -1rem;
+			}
+
+			/*
+				Normalize header sizes to fit better
+				with the line-height we use for statuses.
+			*/
 			h1 {
 				margin: 0;
 				font-size: 1.8rem;
@@ -187,6 +212,10 @@ main {
 				line-height: initial;
 			}
 
+			/*
+				Outdent block quotes a bit; use
+				orange stripe for left border.
+			*/
 			blockquote {
 				padding: 0.5rem 0 0.5rem 0.5rem;
 				border-left: 0.2rem solid $border-accent;
@@ -194,28 +223,71 @@ main {
 				font-style: italic;
 			}
 
+			/*
+				Nice dashed orange line for horizontal rules.
+			*/
 			hr {
-				border: 1px dashed $border-accent;
-			} 
+				border-top: 1px dashed $border-accent;
+				padding: 0.5rem;
+			}
 
 			pre, code {
 				background-color: $gray2;
 			}
 
+			/*
+				Just code on its own inside status
+				content, ie, `here is some code`.
+			*/
 			code {
 				padding: 0.25rem;
 				border-radius: $br-inner;
+				white-space: pre-wrap;
 			}
 
-			pre {
+			/*
+				Restyle Prism code highlighting toolbar
+				plugin buttons to our own button style. 
+			*/
+			.code-toolbar .toolbar {
+				margin-right: 0.5rem;
 				display: flex;
+				gap: 0.25rem;
+
+				.toolbar-item {
+					span, button {
+						color: $button-fg;
+						background: $button-bg;
+						font-weight: bold;
+					}
+
+					.copy-to-clipboard-button, span {
+						box-shadow: $boxshadow;
+					}
+
+					.copy-to-clipboard-button:hover, .copy-to-clipboard-button:hover span {
+						background: $button-hover-bg;
+					}
+				}
+			}
+
+			pre, pre[class*="language-"] {
 				border-radius: $br;
 				padding: 0.5rem;
+				white-space: pre;
+				overflow-x: auto;
 
-				code {	
-					padding: 0.5rem;
+				/* 
+					Code inside a pre block, ie.,
+					
+					```
+					here is some code
+					```
+				*/
+				code {
+					width: 100%;
+					padding: 0;
 					white-space: pre;
-					border-radius: 0;
 					overflow-x: auto;
 					-webkit-overflow-scrolling: touch;
 				}
@@ -228,18 +300,6 @@ main {
 			img[alt~="!center"] {
 				display: block;
 			}
-		}
-
-		.emoji {
-			transition: 0.1s;
-		}
-
-		.emoji:hover, .emoji:active {
-			transform: scale(2);
-			background-color: $bg;
-			box-shadow: $boxshadow;
-			border: $boxshadow-border;
-			border-radius: $br-inner;
 		}
 
 		.poll {
@@ -451,41 +511,41 @@ main {
 		}
 	}
 
-	.info {
-		display: flex;
-		background: $toot-info-bg;
+	.status-info {
+		background: $status-info-bg;
 		color: $fg-reduced;
-		border-top: 0.15rem solid $toot-info-border;
+		border-top: 0.15rem solid $status-info-border;
 		padding: 0.5rem 0.75rem;
 
-		time {
-			padding-right: 1rem;
-		}
-
-		.stats {
-			display: inline-flex;
-			flex: 1;
+		.status-stats {
+			display: flex;
 			gap: 1rem;
-			
+
+			.stats-grouping {
+				display: flex;
+				flex-wrap: wrap;
+				column-gap: 1rem;
+			}
+
 			.stats-item {
-				span {
-					white-space: nowrap;
-				}
+				display: flex;
+				gap: 0.4rem;
+			}
+
+			.stats-item:not(.published-at) {
+				z-index: 1;
+				user-select: none;
 			}
 
 			.language {
 				margin-left: auto;
-				z-index: 1;
-				cursor: pointer;
-				user-select: none;
 			}
 		}
 
 		grid-column: span 3;
-		flex-wrap: wrap;
 	}
 
-	.toot-link {
+	.status-link {
 		top: 0;
 		right: 0;
 		bottom: 0;
@@ -508,15 +568,12 @@ main {
 		/* bottom left, bottom right */
 		border-bottom-left-radius: $br;
 		border-bottom-right-radius: $br;
-		margin-bottom: 0;
 	}
 
 	&.expanded {
-		background: $toot-focus-bg;
-		padding-bottom: 0;
-
-		.info {
-			background: $toot-focus-info-bg;
+		background: $status-focus-bg;
+		.status-info {
+			background: $status-focus-info-bg;
 		}
 	}
 }

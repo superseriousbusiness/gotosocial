@@ -27,7 +27,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -141,28 +140,33 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
-	stylesheets := []string{
-		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-		distPathPrefix + "/status.css",
-		distPathPrefix + "/profile.css",
-	}
-	if config.GetAccountsAllowCustomCSS() {
-		stylesheets = append(stylesheets, "/@"+targetAccount.Username+"/custom.css")
-	}
+	var (
+		ogMeta = apiutil.OGBase(instance).WithAccount(targetAccount)
 
-	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
-		"instance":         instance,
-		"account":          targetAccount,
-		"ogMeta":           ogBase(instance).withAccount(targetAccount),
-		"rssFeed":          rssFeed,
-		"robotsMeta":       robotsMeta,
-		"statuses":         statusResp.Items,
-		"statuses_next":    statusResp.NextLink,
-		"pinned_statuses":  pinnedStatuses,
-		"show_back_to_top": paging,
-		"stylesheets":      stylesheets,
-		"javascript":       []string{distPathPrefix + "/frontend.js"},
-	})
+		stylesheets = []string{
+			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+			distPathPrefix + "/status.css",
+			distPathPrefix + "/thread.css",
+			distPathPrefix + "/profile.css",
+			"/@" + targetAccount.Username + "/custom.css",
+		}
+
+		javascript = []string{
+			distPathPrefix + "/frontend.js",
+		}
+
+		extra = map[string]any{
+			"account":          targetAccount,
+			"rssFeed":          rssFeed,
+			"robotsMeta":       robotsMeta,
+			"statuses":         statusResp.Items,
+			"statuses_next":    statusResp.NextLink,
+			"pinned_statuses":  pinnedStatuses,
+			"show_back_to_top": paging,
+		}
+	)
+
+	apiutil.TemplatePage(c, "profile.tmpl", instance, ogMeta, stylesheets, javascript, extra)
 }
 
 // returnAPAccount returns an ActivityPub representation of

@@ -17,22 +17,51 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
-<main>
-	<section data-nosnippet class="thread">
-		{{range .context.Ancestors}}
-		<article class="toot" id="{{.ID}}">
-			{{ template "status.tmpl" .}}
-		</article>
-		{{end}}
-		<article class="toot expanded" id="{{.status.ID}}">
-			{{ template "status.tmpl" .status}}
-		</article>
-		{{range .context.Descendants}}
-		<article class="toot" id="{{.ID}}">
-			{{ template "status.tmpl" .}}
-		</article>
-		{{end}}
-	</section>
+{{- define "threadLength" -}}
+    {{- with $length := add (len $.context.Ancestors) (len $.context.Descendants) | increment -}}
+        {{- if eq $length 1 -}}
+            {{- $length }} post
+        {{- else -}}
+            {{- $length }} posts
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- with . }}
+<main data-nosnippet class="thread">
+    <div class="col-header">
+        <h2>Thread with {{ template "threadLength" . -}}</h2>
+        <a href="#{{- .status.ID -}}">Jump to selected post</a>
+    </div>
+    {{- range .context.Ancestors }}
+    <article
+        class="status"
+        id="{{- .ID -}}"
+        role="region"
+        aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}"
+    >
+        {{- include "status.tmpl" . | indent 2 | noescape }}
+    </article>
+    {{- end }}
+    {{- with .status }}
+    <article
+        class="status expanded"
+        id="{{- .ID -}}"
+        role="region"
+        aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}"
+    >
+        {{- include "status.tmpl" . | indent 2 | noescape }}
+    </article>
+    {{- end }}
+    {{- range .context.Descendants }}
+    <article
+        class="status"
+        id="{{- .ID -}}"
+        role="region"
+        aria-label="{{- include "status_summary.tmpl" . | noescapeAttr -}}"
+    >
+        {{- include "status.tmpl" . | indent 2 | noescape }}
+    </article>
+    {{- end }}
 </main>
-{{ template "footer.tmpl" .}}
+{{- end }}

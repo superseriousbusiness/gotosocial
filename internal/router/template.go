@@ -18,50 +18,101 @@
 package router
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 	"unsafe"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/render"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-const (
-	justTime     = "15:04"
-	dateYear     = "Jan 02, 2006"
-	dateTime     = "Jan 02, 15:04"
-	dateYearTime = "Jan 02, 2006, 15:04"
-	monthYear    = "Jan, 2006"
-	badTimestamp = "bad timestamp"
-)
-
-// LoadTemplates loads html templates for use by the given engine
+// LoadTemplates loads templates found at `web-template-base-dir`
+// into the Gin engine, or errors if templates cannot be loaded.
 func LoadTemplates(engine *gin.Engine) error {
 	templateBaseDir := config.GetWebTemplateBaseDir()
 	if templateBaseDir == "" {
-		return fmt.Errorf("%s cannot be empty and must be a relative or absolute path", config.WebTemplateBaseDirFlag())
+		return gtserror.Newf(
+			"%s cannot be empty and must be a relative or absolute path",
+			config.WebTemplateBaseDirFlag(),
+		)
 	}
 
-	templateBaseDir, err := filepath.Abs(templateBaseDir)
+	templateDirAbs, err := filepath.Abs(templateBaseDir)
 	if err != nil {
-		return fmt.Errorf("error getting absolute path of %s: %s", templateBaseDir, err)
+		return gtserror.Newf(
+			"error getting absolute path of web-template-base-dir %s: %w",
+			templateBaseDir, err,
+		)
 	}
 
-	if _, err := os.Stat(filepath.Join(templateBaseDir, "index.tmpl")); err != nil {
-		return fmt.Errorf("%s doesn't seem to contain the templates; index.tmpl is missing: %w", templateBaseDir, err)
+	indexTmplPath := filepath.Join(templateDirAbs, "index.tmpl")
+	if _, err := os.Stat(indexTmplPath); err != nil {
+		return gtserror.Newf(
+			"cannot find index.tmpl in web template directory %s: %w",
+			templateDirAbs, err,
+		)
 	}
 
-	engine.LoadHTMLGlob(filepath.Join(templateBaseDir, "*"))
+	// Bring base template into scope.
+	tmpl := template.New("base")
+
+	// Set "include" function to render provided
+	// template name using the base template.
+	funcMap["include"] = func(name string, data any) (string, error) {
+		var buf strings.Builder
+		err := tmpl.ExecuteTemplate(&buf, name, data)
+		return buf.String(), err
+	}
+
+	// Load functions into the base template, and
+	// associate other templates with base template.
+	templateGlob := filepath.Join(templateDirAbs, "*")
+	tmpl, err = tmpl.Funcs(funcMap).ParseGlob(templateGlob)
+	if err != nil {
+		return gtserror.Newf("error loading templates: %w", err)
+	}
+
+	// Almost done; teach the
+	// engine how to render.
+	engine.SetFuncMap(funcMap)
+	engine.HTMLRender = render.HTMLProduction{Template: tmpl}
+
 	return nil
+}
+
+var funcMap = template.FuncMap{
+	"add":              add,
+	"acctInstance":     acctInstance,
+	"demojify":         demojify,
+	"deref":            deref,
+	"emojify":          emojify,
+	"escape":           escape,
+	"increment":        increment,
+	"indent":           indent,
+	"isNil":            isNil,
+	"outdentPre":       outdentPre,
+	"noescapeAttr":     noescapeAttr,
+	"noescape":         noescape,
+	"oddOrEven":        oddOrEven,
+	"subtract":         subtract,
+	"timestampPrecise": timestampPrecise,
+	"timestamp":        timestamp,
+	"timestampVague":   timestampVague,
+	"visibilityIcon":   visibilityIcon,
 }
 
 func oddOrEven(n int) string {
@@ -71,20 +122,39 @@ func oddOrEven(n int) string {
 	return "odd"
 }
 
+// escape HTML escapes the given string,
+// returning a trusted template.
 func escape(str string) template.HTML {
 	/* #nosec G203 */
 	return template.HTML(template.HTMLEscapeString(str))
 }
 
+// noescape marks the given string as a
+// trusted template. The provided string
+// MUST have already passed through a
+// template or escaping function.
 func noescape(str string) template.HTML {
 	/* #nosec G203 */
 	return template.HTML(str)
 }
 
+// noescapeAttr marks the given string as a
+// trusted HTML attribute. The provided string
+// MUST have already passed through a template
+// or escaping function.
 func noescapeAttr(str string) template.HTMLAttr {
 	/* #nosec G203 */
 	return template.HTMLAttr(str)
 }
+
+const (
+	justTime     = "15:04"
+	dateYear     = "Jan 02, 2006"
+	dateTime     = "Jan 02, 15:04"
+	dateYearTime = "Jan 02, 2006, 15:04"
+	monthYear    = "Jan, 2006"
+	badTimestamp = "bad timestamp"
+)
 
 func timestamp(stamp string) string {
 	t, err := util.ParseISO8601(stamp)
@@ -127,38 +197,55 @@ func timestampVague(stamp string) string {
 	return t.Format(monthYear)
 }
 
-type iconWithLabel struct {
-	faIcon string
-	label  string
-}
-
 func visibilityIcon(visibility apimodel.Visibility) template.HTML {
-	var icon iconWithLabel
+	var (
+		label string
+		icon  string
+	)
 
 	switch visibility {
 	case apimodel.VisibilityPublic:
-		icon = iconWithLabel{"globe", "public"}
+		label = "public"
+		icon = "globe"
 	case apimodel.VisibilityUnlisted:
-		icon = iconWithLabel{"unlock", "unlisted"}
+		label = "unlisted"
+		icon = "unlock"
 	case apimodel.VisibilityPrivate:
-		icon = iconWithLabel{"lock", "private"}
+		label = "private"
+		icon = "lock"
 	case apimodel.VisibilityMutualsOnly:
-		icon = iconWithLabel{"handshake-o", "mutuals only"}
+		label = "mutuals-only"
+		icon = "handshake-o"
 	case apimodel.VisibilityDirect:
-		icon = iconWithLabel{"envelope", "direct"}
+		label = "direct"
+		icon = "envelope"
 	}
 
 	/* #nosec G203 */
-	return template.HTML(fmt.Sprintf(`<i aria-label="Visibility: %v" class="fa fa-%v"></i>`, icon.label, icon.faIcon))
+	return template.HTML(fmt.Sprintf(
+		`<i aria-label="Visibility: %s" class="fa fa-%s"></i>`,
+		label, icon,
+	))
 }
 
-// text is a template.HTML to affirm that the input of this function is already escaped
-func emojify(emojis []apimodel.Emoji, inputText template.HTML) template.HTML {
-	out := text.Emojify(emojis, string(inputText))
+// emojify replaces emojis in the given
+// html fragment with suitable <img> tags.
+//
+// The provided input must have been
+// escaped / templated already!
+func emojify(
+	emojis []apimodel.Emoji,
+	html template.HTML,
+) template.HTML {
+	return text.EmojifyWeb(emojis, html)
+}
 
-	/* #nosec G203 */
-	// (this is escaped above)
-	return template.HTML(out)
+// demojify replaces emoji shortcodes in
+// the given fragment with empty strings.
+//
+// Output must then be escaped as appropriate.
+func demojify(input string) string {
+	return text.Demojify(input)
 }
 
 func acctInstance(acct string) string {
@@ -170,8 +257,63 @@ func acctInstance(acct string) string {
 	return ""
 }
 
+// increment adds 1
+// to the given int.
 func increment(i int) int {
 	return i + 1
+}
+
+// add adds n2 to n1.
+func add(n1 int, n2 int) int {
+	return n1 + n2
+}
+
+// subtract subtracts n2 from n1.
+func subtract(n1 int, n2 int) int {
+	return n1 - n2
+}
+
+var (
+	indentRegex  = regexp.MustCompile(`(?m)^`)
+	indentStr    = "    "
+	indentStrLen = len(indentStr)
+	indents      = strings.Repeat(indentStr, 12)
+)
+
+func indent(n int, input string) string {
+	return indentRegex.ReplaceAllString(input, indents[:n*indentStrLen])
+}
+
+var (
+	pre = regexp.MustCompile(fmt.Sprintf(
+		`(?mU)(?sm)^^((?:%s)+)<pre>.*</pre>`, indentStr),
+	)
+)
+
+func outdentPre(html template.HTML) template.HTML {
+	input := string(html)
+	output := regexes.ReplaceAllStringFunc(pre, input,
+		func(match string, buf *bytes.Buffer) string {
+			// Reuse the regex to pull out submatches.
+			matches := pre.FindAllStringSubmatch(match, -1)
+			if len(matches) != 1 {
+				return match
+			}
+
+			var (
+				indented = matches[0][0]
+				indent   = matches[0][1]
+			)
+
+			// Outdent everything in the inner match, add
+			// a newline at the end to make it a bit neater.
+			outdented := strings.ReplaceAll(indented, indent, "")
+
+			// Replace original match with the outdented version.
+			return strings.ReplaceAll(match, indented, outdented)
+		},
+	)
+	return noescape(output)
 }
 
 // isNil will safely check if 'v' is nil without
@@ -192,22 +334,4 @@ func deref(i any) any {
 	}
 
 	return vOf.Elem()
-}
-
-func LoadTemplateFunctions(engine *gin.Engine) {
-	engine.SetFuncMap(template.FuncMap{
-		"escape":           escape,
-		"noescape":         noescape,
-		"noescapeAttr":     noescapeAttr,
-		"oddOrEven":        oddOrEven,
-		"visibilityIcon":   visibilityIcon,
-		"timestamp":        timestamp,
-		"timestampVague":   timestampVague,
-		"timestampPrecise": timestampPrecise,
-		"emojify":          emojify,
-		"acctInstance":     acctInstance,
-		"increment":        increment,
-		"isNil":            isNil,
-		"deref":            deref,
-	})
 }

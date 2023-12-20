@@ -17,105 +17,124 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
-<main>
-	<section class="about">
-		<h1>About</h1>
-		<div>
-			{{.instance.Description |noescape}}
-		</div>
+{{- define "description" -}}
+{{- if .instance.Description }}
+{{ .instance.Description | noescape }}
+{{- else }}
+<p>No description has yet been set for this instance.<p>
+{{- end }}
+{{- end -}}
 
-		<div>
-			<h2 id="languages">Languages</h2>
-			<p>
-				{{ if .languages }}
-					This instance prefers the following languages:
-					<ol>
-						{{range .languages}}
-						<li>{{.}}</li>
-						{{end}}
-					</ol>
-				{{ else }}
-					This instance does not have any preferred languages. 
-				{{ end }}
-			</p>
-		</div>
-
-		<div>
-			<h2 id="contact">Admin Contact</h2>
-			{{if .instance.ContactAccount}}
-			<a href="{{.instance.ContactAccount.URL}}" class="account-card">
-				<img class="avatar" src="{{.instance.ContactAccount.Avatar}}" alt="" />
-				<h3>
-					{{if .instance.ContactAccount.DisplayName}}{{emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName)}}{{else}}{{.instance.ContactAccount.Username}}{{end}}
-				</h3>
-				<span>@{{.instance.ContactAccount.Username}}</span>
-			</a><br />
-			{{end}}
-			{{if .instance.Email}}
-			Email: <a href="mailto:{{.instance.Email}}">{{.instance.Email}}</a>
-			{{end}}
-		</div>
-
-		<div>
-			<h2 id="rules">Rules</h2>
-			<ol>
-				{{range .instance.Rules}}
-				<li>{{.Text}}</li>
-				{{end}}
-			</ol>
-		</div>
-
-		<div>
-			<h2 id="features">Features</h2>
-			<ul>
-				<li>
-					Registration is
-					{{if .instance.Registrations}}
-					enabled{{if .instance.ApprovalRequired}}, but requires admin approval{{end}}.
-					{{else}}
-					disabled.
-					{{end}}
-				</li>
-				{{if .instance.Configuration.Accounts.AllowCustomCSS}}
-				<li>
-					Users are allowed to set <a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/"
-						target="_blank" rel="noopener noreferrer">Custom CSS</a> for their profiles.
-				</li>
-				{{end}}
-				<li>
-					Toots can contain up to {{.instance.Configuration.Statuses.MaxCharacters}} characters and
-					{{.instance.Configuration.Statuses.MaxMediaAttachments}} media attachments.
-				</li>
-				<li>
-					Polls can have up to {{.instance.Configuration.Polls.MaxOptions}} options, with
-					{{.instance.Configuration.Polls.MaxCharactersPerOption}} characters each.
-				</li>
-			</ul>
-		</div>
-
-		<div>
-			<h2 id="moderated-servers">Moderated servers</h2>
-			<p>
-				ActivityPub instances exchange (federate) data with other instances, including accounts and toots.
-				This can be prevented for specific domains by suspending them. None of their content is stored,
-				and interaction with their users is blocked both ways.</br>
-				{{if .blocklistExposed}}
-				<a href="/about/suspended">View the list of suspended domains</a>
-				{{else}}
-				This instance does not publically share this list.
-				{{end}}
-			</p>
-		</div>
-
-		<div>
-			<h2 id="stats">Instance Statistics</h2>
-			<ul>
-				<li>Users: <span class="count">{{.instance.Stats.user_count}}</span></li>
-				<li>Posts: <span class="count">{{.instance.Stats.status_count}}</span></li>
-				<li>Federates with: <span class="count">{{.instance.Stats.domain_count}}</span> instances</li>
-			</ul>
-		</div>
-	</section>
+{{- with . }}
+<main class="about">
+    <section class="about-section" role="region" aria-labelledby="about">
+        <h3 id="about">About {{ .instance.Title -}}</h3>
+        {{- with . }}
+        {{- include "description" . | indent 2 | noescape }}
+        {{- end }}
+    </section>
+    <section class="about-section" role="region" aria-labelledby="contact">
+        <h3 id="contact">Admin Contact</h3>
+        {{- if .instance.ContactAccount }}
+        <a href="{{- .instance.ContactAccount.URL -}}" class="account-card">
+            <img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt=""/>
+            <h3>
+                {{- if .instance.ContactAccount.DisplayName -}}
+                {{- emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) -}}
+                {{- else -}}
+                {{- .instance.ContactAccount.Username -}}
+                {{- end -}}
+            </h3>
+            <span>@{{- .instance.ContactAccount.Username -}}</span>
+        </a>
+        {{- else }}
+        <p>This instance has not yet set a contact account.</p>
+        {{- end }}
+        {{- if .instance.Email }}
+        <p>Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a></p>
+        {{- else }}
+        <p>This instance has not yet set a contact email address.</p>
+        {{- end }}
+    </section>
+    <section class="about-section" role="region" aria-labelledby="languages">
+        <h3 id="languages">Languages</h3>
+        {{- if .languages }}
+        <p>This instance prefers the following languages:</p>
+        <ol>
+            {{- range .languages }}
+            <li>{{- . -}}</li>
+            {{- end }}
+        </ol>
+        {{- else }}
+        <p>This instance does not have any preferred languages.</p> 
+        {{- end }}
+    </section>
+    <section class="about-section" role="region" aria-labelledby="rules">
+        <h3 id="rules">Instance Rules</h3>
+        <p>This instance has the following rules:</p>
+        {{- if .instance.Rules }}
+        <ol>
+            {{- range .instance.Rules }}
+            <li>{{- .Text -}}</li>
+            {{- end }}
+        </ol>
+        {{- else }}
+        <p>This instance has not yet set any rules.</p>
+        {{- end }}
+    </section>
+    <section class="about-section" role="region" aria-labelledby="features">
+        <h3 id="features">Instance Features</h3>
+        <ul>
+            <li>
+                {{- if not .instance.Registrations }}
+                Registration is disabled; new signups are currently closed for this instance.
+                {{- else }}
+                Registration is enabled; new signups can be submitted to this instance.
+                {{- if .instance.ApprovalRequired }}
+                Admin approval is required for new registrations.
+                {{- else }}
+                Admin approval is not required for registrations;
+                new signups will be automatically approved (pending email confirmation).
+                {{- end }}
+                {{- end }}
+            </li>
+            {{- if .instance.Configuration.Accounts.AllowCustomCSS }}
+            <li>
+                Users are allowed to set
+                <a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/" target="_blank" rel="noopener noreferrer">Custom CSS</a>
+                for their profiles.
+            </li>
+            {{- end }}
+            <li>
+                Statuses can contain up to {{ .instance.Configuration.Statuses.MaxCharacters }} characters,
+                and {{ .instance.Configuration.Statuses.MaxMediaAttachments }} media attachments.
+            </li>
+            <li>
+                Polls can have up to {{ .instance.Configuration.Polls.MaxOptions }} options,
+                with {{ .instance.Configuration.Polls.MaxCharactersPerOption }} characters per option.
+            </li>
+        </ul>
+    </section>
+    <section class="about-section" role="region" aria-labelledby="moderated-servers">
+        <h3 id="moderated-servers">Moderated servers</h3>
+        <p>
+            ActivityPub instances federate with other instances by exchanging data with them over the network.
+            Exchanged data includes things like accounts, statuses, likes, boosts, and media attachments.
+            This exchange of data can prevented for instances on specific domains via a domain block created
+            by an instance admin. When an instance is domain blocked by another instance:
+        </p>
+        <ul>
+            <li>Any existing data from the blocked instance is deleted from the storage of the instance doing the blocking.</li>
+            <li>Interaction between the two instances is cut off in both directions; neither instance can interact with the other.</li>
+            <li>No new data from the blocked instance will be created on the instance that blocks it.</li>
+        </ul>
+        <p>
+            {{- if .blocklistExposed }}
+            <a href="/about/suspended">View the list of domains blocked by this instance</a>
+            {{- else }}
+            This instance does not publically share their list of blocked domains.
+            {{- end }}
+        </p>
+    </section>
 </main>
-{{ template "footer.tmpl" .}}
+{{- end }}

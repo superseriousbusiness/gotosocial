@@ -17,16 +17,17 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- with . }}
-<main>
-    <section class="error">
-        <h1>An error occured:</h1>
-        <pre>{{- .error -}}</pre>
-        {{- if .requestID }}
-        <div>
-            <span>Request ID:</span> <code>{{- .requestID -}}</code>
-        </div>
-        {{- end }}
-    </section>
-</main>
-{{- end }}
+{{- with . -}}
+Post by {{ .Account.Acct -}}
+    {{- if .MediaAttachments -}}
+    , has media
+    {{- end -}}
+    {{- if .RepliesCount -}}
+        {{- if eq .RepliesCount 1 -}}
+        , 1 reply
+        {{- else -}}
+        , {{ .RepliesCount }} replies
+        {{- end -}}
+    {{- end -}}
+    , {{ timestamp .CreatedAt -}}
+{{- end -}}

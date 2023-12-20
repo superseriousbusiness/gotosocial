@@ -19,14 +19,17 @@ package web
 
 import (
 	"context"
+	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (m *Module) SettingsPanelHandler(c *gin.Context) {
+func (m *Module) indexHandler(c *gin.Context) {
 	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -45,19 +48,25 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 		return
 	}
 
+	// If a landingPageUser is set in the config, redirect to
+	// that user's profile instead of rendering landing/index page.
+	if landingPageUser := config.GetLandingPageUser(); landingPageUser != "" {
+		c.Redirect(http.StatusFound, "/@"+strings.ToLower(landingPageUser))
+		return
+	}
+
 	var (
+		ogMeta = apiutil.OGBase(instance)
+
 		stylesheets = []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-			distPathPrefix + "/profile.css", // Used for rendering stub/fake profiles.
-			distPathPrefix + "/status.css",  // Used for rendering stub/fake statuses.
-			distPathPrefix + "/settings-style.css",
+			distPathPrefix + "/about.css",
+			distPathPrefix + "/index.css",
 		}
 
-		javascript = []string{
-			// Settings panel React application.
-			distPathPrefix + "/settings.js",
+		extra = map[string]any{
+			"showStrap": true,
 		}
 	)
 
-	apiutil.TemplatePage(c, "frontend.tmpl", instance, nil, stylesheets, javascript, nil)
+	apiutil.TemplatePage(c, "index.tmpl", instance, ogMeta, stylesheets, nil, extra)
 }

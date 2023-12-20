@@ -1,0 +1,94 @@
+/*
+	GoToSocial
+	Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+.about {
+	display: flex;
+	flex-direction: column;
+	gap: 2rem;
+	padding: 2rem;
+
+	background: $bg-accent;
+	box-shadow: $boxshadow;
+	border: $boxshadow-border;
+	border-radius: $br;
+
+	.about-section {
+		ul, ol {
+			margin-top: 0;
+		}
+	
+		h3, h4 {
+			margin-top: 0;
+		}
+
+		p:last-child, ol:last-child, ul:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	.instance-rules {
+		list-style-position: inside;
+		margin: 0;
+		padding: 0;
+	
+		a.rule {
+			display: grid;
+			grid-template-columns: 1fr auto;
+			align-items: center;
+			color: $fg;
+			text-decoration: none;
+			background: $status-bg;
+			padding: 1rem;
+			margin: 0.5rem 0;
+			border-radius: $br;
+			line-height: 2rem;
+			position: relative;
+	
+			&:hover {
+				color: $fg-accent;
+	
+				.edit-icon {
+					display: inline;
+				}
+			}
+	
+			.edit-icon {
+				display: none;
+				font-size: 1rem;
+				line-height: 1.5rem;
+			}
+	
+			li {
+				font-size: 1.75rem;
+				padding: 0;
+				margin: 0;
+	
+				h2 {
+					margin: 0;
+					margin-top: 0 !important;
+					display: inline-block;
+					font-size: 1.5rem;
+				}
+			}
+	
+			span {
+				color: $fg-reduced;
+			}
+		}
+	}
+}

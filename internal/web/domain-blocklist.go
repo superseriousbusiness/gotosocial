@@ -18,14 +18,14 @@
 package web
 
 import (
+	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 const (
@@ -33,37 +33,51 @@ const (
 )
 
 func (m *Module) domainBlockListGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, false, false, false, false)
-	if err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if !config.GetInstanceExposeSuspendedWeb() && (authed.Account == nil || authed.User == nil) {
-		err := fmt.Errorf("this instance does not expose the list of suspended domains publicly")
-		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	instance, err := m.processor.InstanceGetV1(c.Request.Context())
-	if err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	domainBlocks, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), true, false, false)
+	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.HTML(http.StatusOK, "domain-blocklist.tmpl", gin.H{
-		"instance":  instance,
-		"ogMeta":    ogBase(instance),
-		"blocklist": domainBlocks,
-		"stylesheets": []string{
+	// Return instance we already got from the db,
+	// don't try to fetch it again when erroring.
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+		return instance, nil
+	}
+
+	// We only serve text/html at this endpoint.
+	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
+		return
+	}
+
+	if !config.GetInstanceExposeSuspendedWeb() {
+		err := fmt.Errorf("this instance does not publicy expose its blocklist")
+		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), instanceGet)
+		return
+	}
+
+	domainBlocks, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), true, false, false)
+	if errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
+		return
+	}
+
+	var (
+		ogMeta = apiutil.OGBase(instance)
+
+		stylesheets = []string{
 			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-		},
-		"javascript": []string{distPathPrefix + "/frontend.js"},
-	})
+		}
+
+		javascript = []string{
+			distPathPrefix + "/frontend.js",
+		}
+
+		extra = map[string]any{
+			"blocklist": domainBlocks,
+		}
+	)
+
+	apiutil.TemplatePage(c, "domain-blocklist.tmpl", instance, ogMeta, stylesheets, javascript, extra)
 }

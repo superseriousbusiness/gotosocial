@@ -147,14 +147,15 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	// the authorize template will display a form to the user where they can get some information
 	// about the app that's trying to authorize, and the scope of the request.
 	// They can then approve it if it looks OK to them, which will POST to the AuthorizePOSTHandler
-	c.HTML(http.StatusOK, "authorize.tmpl", gin.H{
+	extra := map[string]any{
 		"appname":    app.Name,
 		"appwebsite": app.Website,
 		"redirect":   redirect,
 		"scope":      scope,
 		"user":       acct.Username,
-		"instance":   instance,
-	})
+	}
+
+	apiutil.TemplatePage(c, "authorize.tmpl", instance, nil, nil, nil, extra)
 }
 
 // AuthorizePOSTHandler should be served as POST at https://example.org/oauth/authorize

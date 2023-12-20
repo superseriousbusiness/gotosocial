@@ -18,39 +18,54 @@
 package web
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (m *Module) confirmEmailGETHandler(c *gin.Context) {
-	ctx := c.Request.Context()
-
-	// if there's no token in the query, just serve the 404 web handler
-	token := c.Query(tokenParam)
-	if token == "" {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), m.processor.InstanceGetV1)
-		return
-	}
-
-	user, errWithCode := m.processor.User().EmailConfirm(ctx, token)
+	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	instance, err := m.processor.InstanceGetV1(ctx)
-	if err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+	// Return instance we already got from the db,
+	// don't try to fetch it again when erroring.
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+		return instance, nil
+	}
+
+	// We only serve text/html at this endpoint.
+	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
 		return
 	}
 
-	c.HTML(http.StatusOK, "confirmed.tmpl", gin.H{
-		"instance": instance,
+	// If there's no token in the query,
+	// just serve the 404 web handler.
+	token := c.Query(tokenParam)
+	if token == "" {
+		errWithCode := gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound)))
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
+		return
+	}
+
+	user, errWithCode := m.processor.User().EmailConfirm(c.Request.Context(), token)
+	if errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
+		return
+	}
+
+	extra := map[string]any{
 		"email":    user.Email,
 		"username": user.Account.Username,
-	})
+	}
+
+	apiutil.TemplatePage(c, "confirmed.tmpl", instance, nil, nil, nil, extra)
 }

@@ -1,0 +1,117 @@
+/*
+	GoToSocial
+	Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+main {
+	p:first-child {
+		margin-top: 0;
+	}
+
+	p:last-child {
+		margin-bottom: 0;
+	}
+}
+
+.page {
+	display: grid;
+	min-height: 100vh;
+
+	grid-template-columns: 1fr minmax(auto, 50rem) 1fr;
+	grid-template-columns: 1fr min(92%, 50rem) 1fr;
+	grid-template-rows: auto 1fr auto;
+}
+
+.page-header, .page-footer {
+	grid-column: 1 / span 3;
+}
+
+.page-content {
+	grid-column: 2;
+	align-self: start;
+}
+
+.page-header {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 1.5rem;
+	gap: 1rem;
+
+	a {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		justify-content: center;
+	
+		img {
+			align-self: center;
+		}
+	
+		h1 {
+			align-self: center;
+			text-align: center;
+	
+			font-size: 1.5rem;
+			line-height: 1.5rem;
+			word-wrap: anywhere;
+			color: $fg;
+		}
+	}
+
+	aside {
+		margin: 0;
+		font-style: italic;
+		font-weight: normal;
+		text-align: center;
+		font-size: 1.2rem;
+	
+		.count {
+			font-weight: bold;
+			color: $fg-accent;
+		}
+	}
+}
+
+.page-footer {
+	align-self: end;
+
+	nav ul {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-around;
+		
+		/* Override list styling */
+		list-style-type: none;
+		padding-left: 0;
+
+		li {
+			text-align: center;
+			padding: 1rem;
+			flex-grow: 1;
+
+			a {
+				font-weight: bold;
+			}
+		}
+	}
+}
+
+@media screen and (max-width: 600px) {
+	.page-header {
+		text-align: center;
+	}
+}

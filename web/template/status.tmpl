@@ -17,88 +17,74 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-<a data-nosnippet href="{{- .URL -}}" class="toot-link">Open thread</a>
-<section class="author">
-	<a href="{{- .Account.URL -}}">
-		<img class="avatar" src="{{- .Account.Avatar -}}" alt="">
-		<span aria-hidden="true" class="displayname">
-			{{- if .Account.DisplayName -}}
-			{{- emojify .Account.Emojis (escape .Account.DisplayName) -}}
-			{{- else -}}
-			{{- .Account.Username -}}
-			{{- end -}}
-		</span>
-		<span aria-hidden="true" class="username">@{{- .Account.Username -}}</span>
-		<span class="sr-only">
-			{{- if .Account.DisplayName -}}
-			{{- emojify .Account.Emojis (escape .Account.DisplayName) -}}. Username: @{{ .Account.Acct -}}.
-			{{- else -}}
-			@{{- .Account.Acct -}}.
-			{{- end -}}
-		</span>
-	</a>
-</section>
-<section class="body">
-	{{- if .SpoilerText }}
-	<details class="text-spoiler">
-		<summary>
-			<span class="spoiler-text" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
-			<span class="button" role="button" tabindex="0">Toggle visibility</span>
-		</summary>
-		<div class="text">
-			<div class="content" lang="{{- .LanguageTag.TagStr -}}">
-				{{ emojify .Emojis (noescape .Content) }}
-			</div>
-			{{- if .Poll }}
-			{{ template "status_poll.tmpl" . }}
-			{{- end }}
-		</div>
-	</details>
-	{{- else }}
-	<div class="text">
-		<div class="content" lang="{{- .LanguageTag.TagStr -}}">
-			{{ emojify .Emojis (noescape .Content) }}
-		</div>
-		{{- if .Poll }}
-		{{ template "status_poll.tmpl" . }}
-		{{- end }}
-	</div>
-	{{- end }}
-	{{- if .MediaAttachments }}
-	{{ template "status_attachments.tmpl" . }}
-	{{- end }}
-</section>
-<aside class="info">
-	<dl class="sr-only">
-		<dt>Published<dt>
-		<dd>{{- .CreatedAt | timestampPrecise -}}</dd>
-		{{- if .LanguageTag.DisplayStr }}
-		<dt>Language</dt>
-		<dd>{{ .LanguageTag.DisplayStr }}</dd>
-		{{- end }}
-	</dl>
-	<time aria-hidden="true" datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>
-	<div class="stats" role="group">
-		<div class="stats-item">
-			<span aria-hidden="true"><i class="fa fa-reply-all"></i> {{ .RepliesCount -}}</span>
-			<span class="sr-only">{{- .RepliesCount }} {{ if .RepliesCount | eq 1 }}reply{{ else }}replies{{ end -}}</span>
-		</div>
-		<div class="stats-item">
-			<span aria-hidden="true"><i class="fa fa-star"></i> {{ .FavouritesCount -}}</span>
-			<span class="sr-only">{{- .FavouritesCount }} {{ if .FavouritesCount | eq 1 }}favourite{{ else }}favourites{{ end -}}</span>
-		</div>
-		<div class="stats-item">
-			<span aria-hidden="true"><i class="fa fa-retweet"></i> {{ .ReblogsCount -}}</span>
-			<span class="sr-only">{{- .ReblogsCount }} {{ if .ReblogsCount | eq 1 }}boost{{ else }}boosts{{ end -}}</span>
-		</div>
-		{{- if .Pinned }}
-		<div class="stats-item">
-			<i class="fa fa-thumb-tack" aria-hidden="true"></i>
-			<span class="sr-only">pinned</span>
-		</div>
-		{{- end }}
-		{{- if .LanguageTag.DisplayStr }}
-		<div aria-hidden="true" class="stats-item language" title="Language: {{ .LanguageTag.DisplayStr }}">{{ .LanguageTag.TagStr }}</div>
-		{{- end }}
-	</div>
+{{- define "statusContent" -}}
+{{- with .Content }}
+<div class="content" lang="{{- $.LanguageTag.TagStr -}}">
+    {{ noescape . | emojify $.Emojis }}
+</div>
+{{- end }}
+{{- end -}}
+
+{{- /*
+    When including this template, always wrap
+    it in an appropriate <article></article>!
+*/ -}}
+
+{{- with . }}
+<header class="status-header">
+    {{- include "status_header.tmpl" . | indent 1 | noescape }}
+</header>
+<div class="status-body">
+    {{- if .SpoilerText }}
+    <details class="text-spoiler">
+        <summary>
+            <span class="spoiler-text" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
+            <span class="button" role="button" tabindex="0">Toggle visibility</span>
+        </summary>
+        <div class="text">
+            {{- with . }}
+            {{- include "statusContent" . | indent 3 | noescape }}
+            {{- end }}
+            {{- if .Poll }}
+            {{- include "status_poll.tmpl" . | indent 3 | noescape }}
+            {{- end }}
+        </div>
+    </details>
+    {{- else }}
+    <div class="text">
+        {{- with . }}
+        {{- include "statusContent" . | indent 2 | noescape }}
+        {{- end }}
+        {{- if .Poll }}
+        {{- include "status_poll.tmpl" . | indent 2 | noescape }}
+        {{- end }}
+    </div>
+    {{- end }}
+    {{- if .MediaAttachments }}
+    {{- include "status_attachments.tmpl" . | indent 1 | noescape }}
+    {{- end }}
+</div>
+<aside class="status-info">
+    {{- include "status_info.tmpl" . | indent 1 | noescape }}
 </aside>
+{{- if .Local }}
+<a
+    href="{{- .URL -}}"
+    class="status-link"
+    data-nosnippet
+    title="Open thread at this post"
+>
+    Open thread at this post
+</a>
+{{- else }}
+<a
+    href="{{- .URL -}}"
+    class="status-link"
+    data-nosnippet
+    rel="nofollow noreferrer noopener" target="_blank"
+    title="Open remote post (opens in a new window)"
+>
+    Open remote post (opens in a new window)
+</a>
+{{- end }}
+{{- end }}

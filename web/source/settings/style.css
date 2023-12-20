@@ -20,26 +20,9 @@ body {
 	grid-template-rows: auto 1fr;
 }
 
-.content {
+.page-content {
 	grid-column: 1 / span 3; /* stretch entire width, to fit panel + sidebar nav */
 	width: 100%;
-}
-
-header {
-	justify-content: start;
-
-	a {
-		margin: 1.5rem;
-		gap: 1rem;
-
-		h1 {
-			font-size: 1.5rem;
-		}
-
-		img {
-			height: 3rem;
-		}
-	}
 }
 
 #root {

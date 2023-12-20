@@ -20,26 +20,27 @@
 
 /* noto-sans-regular - latin */
 @font-face {
-  font-family: "Noto Sans";
-  font-weight: 400;
-  font-display: swap;
-  font-style: normal;
-  src: url('../fonts/noto-sans-v27-latin-regular.woff2') format('woff2'),
-       url('../fonts/noto-sans-v27-latin-regular.woff') format('woff');
+	font-family: "Noto Sans";
+	font-weight: 400;
+	font-display: swap;
+	font-style: normal;
+	src: url('../fonts/noto-sans-v27-latin-regular.woff2') format('woff2'),
+		 url('../fonts/noto-sans-v27-latin-regular.woff') format('woff');
 }
 
 /* noto-sans-700 - latin */
 @font-face {
-  font-family: "Noto Sans";
-  font-weight: 700;
-  font-display: swap;
-  font-style: normal;
-  src: url('../fonts/noto-sans-v27-latin-700.woff2') format('woff2'),
-       url('../fonts/noto-sans-v27-latin-700.woff') format('woff');
+	font-family: "Noto Sans";
+	font-weight: 700;
+	font-display: swap;
+	font-style: normal;
+	src: url('../fonts/noto-sans-v27-latin-700.woff2') format('woff2'),
+		 url('../fonts/noto-sans-v27-latin-700.woff') format('woff');
 }
 
 /* standard border radius for nice squircles */
 $br: 0.4rem;
+
 /* border radius for items that are framed/bordered
    inside something with $br, eg avatar, header img */
 $br-inner: 0.2rem; 
@@ -63,86 +64,12 @@ body {
 	position: relative;
 }
 
-.hidden {
-	display: none;
-}
-
-.page {
-	display: grid;
-	min-height: 100vh;
-
-	grid-template-columns: 1fr minmax(auto, 50rem) 1fr;
-	grid-template-columns: 1fr min(92%, 50rem) 1fr;
-	grid-template-rows: auto 1fr auto;
-}
-
-h1 {
-	margin: 0;
-	line-height: 2.4rem;
-}
-
 a {
 	color: $link-fg;
 }
 
-header, footer {
-	grid-column: 1 / span 3;
-}
-
-.content {
-	grid-column: 2;
-	align-self: start;
-}
-
-header {
-	display: flex;
-	justify-content: center;
-}
-
-header a {
-	display: flex;
-	flex-wrap: wrap;
-	margin: 1.5rem;
-	gap: 1rem;
-	justify-content: center;
-
-	img {
-		align-self: center;
-		height: 3rem;
-	}
-
-	h1 {
-		flex-grow: 1;
-		align-self: center;
-		text-align: center;
-
-		font-size: 1.5rem;
-		word-wrap: anywhere;
-		color: $fg;
-	}
-}
-
-.excerpt-top {
-	margin-bottom: 2rem;
-	font-style: italic;
-	font-weight: normal;
-	text-align: center;
-	font-size: 1.2rem;
-
-	.count {
-		font-weight: bold;
-		color: $fg-accent;
-	}
-}
-
-main {
-	p:first-child {
-		margin-top: 0;
-	}
-
-	p:last-child {
-		margin-bottom: 0;
-	}
+.hidden {
+	display: none;
 }
 
 .button, button {
@@ -192,57 +119,7 @@ main {
 	color: $acc1;
 }
 
-.logo {
-	justify-self: center;
-	img {
-		height: 30vh;
-	}
-}
-
-section.apps {
-	align-self: start;
-
-	.applist {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		grid-gap: 0.5rem;
-		align-content: start;
-
-		.entry {
-			display: grid;
-			grid-template-columns: 25% 1fr;
-			gap: 1.5rem;
-			padding: 0.5rem;
-			background: $bg-accent;
-			border-radius: 0.5rem;
-
-			.logo {
-				align-self: center;
-				width: 100%;
-				object-fit: contain;
-				flex: 1 1 auto;
-			}
-
-			.logo.redraw {
-				fill: $fg;
-				stroke: $fg;
-			}
-
-			a {
-				font-weight: bold;
-			}
-
-			div {
-				padding: 0;
-				h3 {
-					margin-top: 0;
-				}
-			}
-		}
-	}
-}
-
-section.login {
+section.sign-in {
 	form {
 		display: flex;
 		flex-direction: column;
@@ -291,13 +168,6 @@ section.oob-token {
 	}
 }
 
-.error-text {
-	color: $error1;
-	background: $error2;
-	border-radius: 0.1rem;
-	font-weight: bold;
-}
-
 input, select, textarea, .input {
 	box-sizing: border-box;
 	border: 0.15rem solid $input-border;
@@ -327,56 +197,28 @@ input, select, textarea, .input {
 	color: $fg-reduced
 }
 
-hr {
-	color: transparent;
-	width: 100%;
-	border-bottom: 0.02rem solid $border-accent;
-}
-
-footer {
-	align-self: end;
-	padding: 2rem 0 1rem 0;
-
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-
-	div {
-		text-align: center;
-		padding: 1rem;
-		flex-grow: 1;
-	}
-
-	a {
-		font-weight: bold;
-	}
-}
-
-@media screen and (max-width: 600px) {
-	header {
-		text-align: center;
-	}
-
-	footer {
-		grid-template-columns: 1fr;
-
-		div {
-			text-align: initial;
-			width: 100%;
-		}
-	}
-
-	section.apps .applist {
-		grid-template-columns: 1fr;
-	}
-}
-
+/*
+	Squeeze emojis so they fit inline in text.
+*/
 .emoji {
 	width: 1.45em;
 	height: 1.45em;
 	margin: -0.2em 0.02em 0;
 	object-fit: contain;
 	vertical-align: middle;
+	transition: 0.1s;
+}
+
+/*
+	Enlarge emojis on hover to give
+	viewer a good look at them.
+*/
+.emoji:hover, .emoji:active {
+	transform: scale(2);
+	background-color: $bg;
+	box-shadow: $boxshadow;
+	border: $boxshadow-border;
+	border-radius: $br-inner;
 }
 
 .monospace {
@@ -495,21 +337,6 @@ label {
 	}
 }
 
-.about {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-
-	h2 {
-		margin: 0.5rem 0;
-	}
-
-	ul {
-		margin-bottom: 0;
-	}
-
-}
-
 .account-card {
 	display: inline-grid;
 	grid-template-columns: auto 1fr;
@@ -542,60 +369,46 @@ label {
 	}
 }
 
-.instance-rules {
-	list-style-position: inside;
-	margin: 0;
-	padding: 0;
-
-	a.rule {
-		display: grid;
-		grid-template-columns: 1fr auto;
-		align-items: center;
-		color: $fg;
-		text-decoration: none;
-		background: $toot-bg;
-		padding: 1rem;
-		margin: 0.5rem 0;
-		border-radius: $br;
-		line-height: 2rem;
-		position: relative;
-
-		&:hover {
-			color: $fg-accent;
-
-			.edit-icon {
-				display: inline;
-			}
-		}
-
-		.edit-icon {
-			display: none;
-			font-size: 1rem;
-			line-height: 1.5rem;
-		}
-
-		li {
-			font-size: 1.75rem;
-			padding: 0;
-			margin: 0;
-
-			h2 {
-				margin: 0;
-				margin-top: 0 !important;
-				display: inline-block;
-				font-size: 1.5rem;
-			}
-		}
-
-		span {
-			color: $fg-reduced;
-		}
-	}
-}
-
 @media screen and (max-width: 30rem) {
 	.domain-blocklist .entry {
 		grid-template-columns: 1fr;
 		gap: 0;
+	}
+}
+
+/*
+	Don't indent definition
+	lists and definitions.
+*/
+dl {
+	margin: 0;
+
+	dd {
+		margin-left: 0;
+	}
+}
+
+.col-header {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 1rem;
+
+	justify-content: start;
+	align-items: center; 
+
+	margin: 0;
+	background: $profile-bg;
+	border-top-left-radius: $br;
+	border-top-right-radius: $br;
+	padding: 0.75rem;
+
+	a {
+		justify-self: end;
+	}
+
+	h1, h2, h3, h4 {
+		font-size: 1.2rem;
+		line-height: 1.3rem;
+		margin: 0;
 	}
 }

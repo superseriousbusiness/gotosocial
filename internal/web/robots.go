@@ -71,7 +71,7 @@ Crawl-delay: 500
 # API endpoints.
 Disallow: /api/
 
-# Auth/login endpoints.
+# Auth/Sign in endpoints.
 Disallow: /auth/
 Disallow: /oauth/
 Disallow: /check_your_email

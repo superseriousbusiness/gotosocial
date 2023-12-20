@@ -1,0 +1,41 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- /*
+    Order of stylesheet loading is important: _colors and base should always be loaded
+    before any other provided sheets, since the latter cascade from the former.
+
+    To try to speed up rendering a little bit, offer a preload for each stylesheet.
+    See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/preload.
+*/ -}}
+
+{{- with . }}
+<link rel="preload" href="/assets/dist/_colors.css" as="style">
+<link rel="preload" href="/assets/dist/base.css" as="style">
+<link rel="preload" href="/assets/dist/page.css" as="style">
+{{- range .stylesheets }}
+<link rel="preload" href="{{- . -}}" as="style">
+{{- end }}
+<link rel="stylesheet" href="/assets/dist/_colors.css">
+<link rel="stylesheet" href="/assets/dist/base.css">
+<link rel="stylesheet" href="/assets/dist/page.css">
+{{- range .stylesheets }}
+<link rel="stylesheet" href="{{- . -}}">
+{{- end }}
+{{- end }}

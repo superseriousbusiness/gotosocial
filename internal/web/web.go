@@ -99,7 +99,7 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	profileGroup.Handle(http.MethodGet, statusPath, m.threadGETHandler)
 
 	// Attach individual web handlers which require no specific middlewares
-	r.AttachHandler(http.MethodGet, "/", m.baseHandler) // front-page
+	r.AttachHandler(http.MethodGet, "/", m.indexHandler) // front-page
 	r.AttachHandler(http.MethodGet, settingsPathPrefix, m.SettingsPanelHandler)
 	r.AttachHandler(http.MethodGet, settingsPanelGlob, m.SettingsPanelHandler)
 	r.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)

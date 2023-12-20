@@ -18,9 +18,7 @@
 package web
 
 import (
-	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -31,29 +29,27 @@ import (
 const textCSSUTF8 = string(apiutil.TextCSS + "; charset=utf-8")
 
 func (m *Module) customCSSGETHandler(c *gin.Context) {
-	if !config.GetAccountsAllowCustomCSS() {
-		err := errors.New("accounts-allow-custom-css is not enabled on this instance")
-		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), m.processor.InstanceGetV1)
-		return
-	}
-
 	if _, err := apiutil.NegotiateAccept(c, apiutil.TextCSS); err != nil {
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	// usernames on our instance will always be lowercase
-	username := strings.ToLower(c.Param(usernameKey))
-	if username == "" {
-		err := errors.New("no account username specified")
-		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	customCSS, errWithCode := m.processor.Account().GetCustomCSSForUsername(c.Request.Context(), username)
+	targetUsername, errWithCode := apiutil.ParseWebUsername(c.Param(apiutil.WebUsernameKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
+	}
+
+	// Retrieve customCSS if enabled on the instance.
+	// Else use an empty string, to help with caching
+	// when custom CSS gets toggled on or off.
+	var customCSS string
+	if config.GetAccountsAllowCustomCSS() {
+		customCSS, errWithCode = m.processor.Account().GetCustomCSSForUsername(c.Request.Context(), targetUsername)
+		if errWithCode != nil {
+			apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+			return
+		}
 	}
 
 	c.Header(cacheControlHeader, cacheControlNoCache)

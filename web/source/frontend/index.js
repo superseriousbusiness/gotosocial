@@ -21,6 +21,10 @@ const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
 const Plyr = require("plyr");
+const Prism = require("./prism.js");
+
+Prism.manual = true;
+Prism.highlightAll();
 
 let [_, _user, type, id] = window.location.pathname.split("/");
 if (type == "statuses") {

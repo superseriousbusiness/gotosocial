@@ -1,0 +1,85 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- /*
+        NESTED TEMPLATE DECLARATIONS
+        If some if/else macro is used multiple times, declare it once here instead.
+        When invoking these nested templates, remember to pass in the values passed
+        to the executing template, ie., use '{{ template "example" . }}' not
+        '{{ template "example" }}', otherwise you'll end up with empty variables.
+*/ -}}
+
+{{- define "thumbnailType" -}}
+{{- if .instance.ThumbnailType -}}
+{{- .instance.ThumbnailType -}}
+{{- else -}}
+image/png
+{{- end -}}
+{{- end -}}
+
+{{- define "instanceTitle" -}}
+{{- if .ogMeta -}}
+{{- demojify .ogMeta.Title | noescape -}}
+{{- else -}}
+{{- .instance.Title }} - GoToSocial
+{{- end -}}
+{{- end -}}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="robots" content="{{- if .robotsMeta -}}{{- .robotsMeta -}}{{- else -}}noindex, nofollow{{- end -}}">
+        {{- if .ogMeta }}
+        {{- include "page_ogmeta.tmpl" . | indent 2 | noescape }}
+        {{- else }}
+        {{- end }}
+        {{- if .rssFeed }}
+        <link rel="alternate" type="application/rss+xml" href="{{- .rssFeed -}}" title="{{- template "instanceTitle" . -}}">
+        {{- else }}
+        {{- end }}
+        {{- if .account }}
+        <link rel="alternate" type="application/activity+json" href="/users/{{- .account.Username -}}">
+        {{- else if .status }}
+        <link rel="alternate" type="application/activity+json" href="/users/{{- .status.Account.Username -}}/statuses/{{- .status.ID -}}">
+        {{- else }}
+        {{- end }}
+        <link rel="icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+        <link rel="apple-touch-icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+        <link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+        {{- include "page_stylesheets.tmpl" . | indent 2 | noescape }}
+        {{- range .javascript }}
+        <script type="text/javascript" src="{{- . -}}" async="" defer=""></script>
+        {{- end }}
+        <title>{{- template "instanceTitle" . -}}</title>
+    </head>
+    <body class="page">
+        <header class="page-header">
+            {{- include "page_header.tmpl" . | indent 3 | noescape }}
+        </header>
+        <div class="page-content">
+            {{- include .pageContent . | indent 3 | noescape | outdentPre }}
+        </div>
+        <footer class="page-footer">
+            {{- include "page_footer.tmpl" . | indent 3 | noescape }}
+        </footer>
+    </body>
+</html>

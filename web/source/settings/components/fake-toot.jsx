@@ -29,20 +29,27 @@ module.exports = function FakeToot({ children }) {
 	} } = query.useVerifyCredentialsQuery();
 
 	return (
-		<article className="toot expanded">
-			<section className="author">
-				<a>
-					<img className="avatar" src={account.avatar} alt="" />
-					<span className="displayname">
-						{account.display_name.trim().length > 0 ? account.display_name : account.username}
-						<span className="sr-only">.</span>
-					</span>
-					<span className="username">@{account.username}</span>
-				</a>
-			</section>
-			<section className="body">
+		<article className="status expanded">
+			<header className="status-header">
+				<address>
+					<a style={{margin: 0}}>
+						<img className="avatar" src={account.avatar} alt="" />
+						<dl className="author-strap">
+							<dt className="sr-only">Display name</dt>
+							<dd className="displayname text-cutoff">
+								{account.display_name.trim().length > 0 ? account.display_name : account.username}
+							</dd>
+							<dt className="sr-only">Username</dt>
+							<dd className="username text-cutoff">@{account.username}</dd>
+						</dl>
+					</a>
+				</address>
+			</header>
+			<section className="status-body">
 				<div className="text">
-					{children}
+					<div className="content">
+						{children}
+					</div>
 				</div>
 			</section>
 		</article>

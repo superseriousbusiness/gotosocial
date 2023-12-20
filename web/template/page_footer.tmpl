@@ -1,0 +1,67 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<nav>
+    <ul>
+        <li id="about">
+            <a
+                href="/about"
+                class="nounderline"
+            >
+                About {{ .instance.Title }}
+            </a>
+        </li>
+        <li id="version">
+            <a
+                href="https://github.com/superseriousbusiness/gotosocial"
+                class="nounderline"
+                rel="nofollow noreferrer noopener"
+                target="_blank"
+            >
+                <span aria-hidden="true">🦥</span>
+                Source - GoToSocial {{ .instance.Version }}
+                <span aria-hidden="true">🦥</span>
+            </a>
+        </li>
+        {{- if .instance.ContactAccount }} 
+        <li id="contact">
+            <a
+                href="/@{{- .instance.ContactAccount.Username -}}"
+                class="nounderline"
+            >
+                Contact account - {{ .instance.ContactAccount.Username }}
+            </a>
+        </li>
+        {{- end }}
+        {{- if .instance.Email }} 
+        <li id="email">
+            <a
+                href="mailto:{{- .instance.Email -}}"
+                class="nounderline"
+                rel="nofollow noreferrer noopener"
+                target="_blank"
+            >
+                Email - {{ .instance.Email }}
+            </a>
+        </li>
+        {{- end }}
+    </ul>
+</nav>
+{{- end }}
