@@ -64,7 +64,7 @@
     {{- include "status_attachments.tmpl" . | indent 1 }}
     {{- end }}
 </div>
-<aside class="status-info">
+<aside class="status-info" aria-hidden="true">
     {{- include "status_info.tmpl" . | indent 1 }}
 </aside>
 {{- if .Local }}
