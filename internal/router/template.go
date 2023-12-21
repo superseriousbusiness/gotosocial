@@ -43,10 +43,10 @@ import (
 // LoadTemplates loads templates found at `web-template-base-dir`
 // into the Gin engine, or errors if templates cannot be loaded.
 //
-// The special function "include" will be added to the template
-// funcMap for use in any template. Use the "include" function
-// when you need to pass a template through a pipeline. Otherwise,
-// prefer the built-in "template" function.
+// The special functions "include" and "includeAttr" will be added
+// to the template funcMap for use in any template. Use these "include"
+// functions when you need to pass a template through a pipeline.
+// Otherwise, prefer the built-in "template" function.
 func LoadTemplates(engine *gin.Engine) error {
 	templateBaseDir := config.GetWebTemplateBaseDir()
 	if templateBaseDir == "" {
@@ -75,8 +75,8 @@ func LoadTemplates(engine *gin.Engine) error {
 	// Bring base template into scope.
 	tmpl := template.New("base")
 
-	// Set "include" function to render provided
-	// template name using the base template.
+	// Set additional "include" functions to render
+	// provided template name using the base template.
 	funcMap["include"] = func(name string, data any) (template.HTML, error) {
 		var buf strings.Builder
 		err := tmpl.ExecuteTemplate(&buf, name, data)
@@ -84,6 +84,15 @@ func LoadTemplates(engine *gin.Engine) error {
 		// Template was already escaped by
 		// ExecuteTemplate so we can trust it.
 		return noescape(buf.String()), err
+	}
+
+	funcMap["includeAttr"] = func(name string, data any) (template.HTMLAttr, error) {
+		var buf strings.Builder
+		err := tmpl.ExecuteTemplate(&buf, name, data)
+
+		// Template was already escaped by
+		// ExecuteTemplate so we can trust it.
+		return noescapeAttr(buf.String()), err
 	}
 
 	// Load functions into the base template, and
@@ -111,6 +120,7 @@ var funcMap = template.FuncMap{
 	"escape":           escape,
 	"increment":        increment,
 	"indent":           indent,
+	"indentAttr":       indentAttr,
 	"isNil":            isNil,
 	"outdentPre":       outdentPre,
 	"noescapeAttr":     noescapeAttr,
@@ -297,6 +307,16 @@ func indent(n int, html template.HTML) template.HTML {
 		indents[:n*indentStrLen],
 	)
 	return noescape(out)
+}
+
+// indentAttr appropriately indents the given html
+// attribute by prepending each line with the indentStr.
+func indentAttr(n int, html template.HTMLAttr) template.HTMLAttr {
+	out := indentRegex.ReplaceAllString(
+		string(html),
+		indents[:n*indentStrLen],
+	)
+	return noescapeAttr(out)
 }
 
 // outdentPre outdents all `<pre></pre>` tags in the

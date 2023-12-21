@@ -28,17 +28,15 @@
 {{- end -}}
 
 {{- with . }}
-<main data-nosnippet class="thread">
+<main data-nosnippet class="thread" aria-labelledby="thread-summary">
     <div class="col-header">
-        <h2>Thread with {{ template "threadLength" . -}}</h2>
-        <a href="#{{- .status.ID -}}">Jump to selected post</a>
+        <h2 id="thread-summary">Thread with {{ template "threadLength" . -}}</h2>
+        <a href="#{{- .status.ID -}}">jump to expanded post</a>
     </div>
     {{- range .context.Ancestors }}
     <article
         class="status"
-        id="{{- .ID -}}"
-        role="region"
-        aria-label="{{- template "status_summary.tmpl" . -}}"
+        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2 }}
     >
         {{- include "status.tmpl" . | indent 2 }}
     </article>
@@ -46,9 +44,7 @@
     {{- with .status }}
     <article
         class="status expanded"
-        id="{{- .ID -}}"
-        role="region"
-        aria-label="{{- template "status_summary.tmpl" . -}}"
+        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2  }}
     >
         {{- include "status.tmpl" . | indent 2 }}
     </article>
@@ -56,9 +52,7 @@
     {{- range .context.Descendants }}
     <article
         class="status"
-        id="{{- .ID -}}"
-        role="region"
-        aria-label="{{- template "status_summary.tmpl" . -}}"
+        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2 }}
     >
         {{- include "status.tmpl" . | indent 2 }}
     </article>

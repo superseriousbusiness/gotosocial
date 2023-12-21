@@ -91,7 +91,10 @@
                 </div>
                 <div class="thread">
                     {{- range .pinned_statuses }}
-                    <article class="status expanded" aria-label="{{- template "status_summary.tmpl" . -}}">
+                    <article
+                        class="status expanded"
+                        {{- includeAttr "status_attributes.tmpl" . | indentAttr 6  }}
+                    >
                         {{- include "status.tmpl" . | indent 6 }}
                     </article>
                     {{- end }}
@@ -112,7 +115,10 @@
                     <div data-nosnippet class="nothinghere">Nothing here!</div>
                     {{- else }}
                     {{- range .statuses }}
-                    <article class="status expanded" aria-label="{{- template "status_summary.tmpl" . -}}">
+                    <article
+                        class="status expanded"
+                        {{- includeAttr "status_attributes.tmpl" . | indentAttr 6  }}
+                    >
                         {{- include "status.tmpl" . | indent 6 }}
                     </article>
                     {{- end }}

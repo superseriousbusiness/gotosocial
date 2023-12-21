@@ -21,9 +21,23 @@
 	flex-direction: column;
 	gap: 0.4rem;
 
+	/*
+		This column header might contain
+		quite some info, so let it wrap.
+	*/
 	.col-header {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		column-gap: 1rem;
+		row-gap: 0.5rem;
+
 		box-shadow: $boxshadow;
 		border: $boxshadow-border;
+
+		h2 {
+			margin-right: auto;
+		}
 	}
 
 	.status {
