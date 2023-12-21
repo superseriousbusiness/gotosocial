@@ -39,10 +39,7 @@ func TemplatePage(
 	javascript []string,
 	extra map[string]any,
 ) {
-	const page = "page.tmpl"
-
-	obj := gin.H{
-		"pageContent": template,
+	obj := map[string]any{
 		"instance":    instance,
 		"ogMeta":      ogMeta,
 		"stylesheets": stylesheets,
@@ -53,5 +50,58 @@ func TemplatePage(
 		obj[k] = v
 	}
 
-	c.HTML(http.StatusOK, page, obj)
+	templatePage(c, template, http.StatusOK, obj)
+}
+
+// templatePageError renders the given
+// HTTP code, error, and request ID
+// within the standard error template.
+func templatePageError(
+	c *gin.Context,
+	instance *apimodel.InstanceV1,
+	code int,
+	err string,
+	requestID string,
+) {
+	const errorTmpl = "error.tmpl"
+
+	obj := map[string]any{
+		"instance":  instance,
+		"code":      code,
+		"error":     err,
+		"requestID": requestID,
+	}
+
+	templatePage(c, errorTmpl, code, obj)
+}
+
+// templatePageNotFound renders
+// a standard 404 page.
+func templatePageNotFound(
+	c *gin.Context,
+	instance *apimodel.InstanceV1,
+	requestID string,
+) {
+	const notFoundTmpl = "404.tmpl"
+
+	obj := map[string]any{
+		"instance":  instance,
+		"requestID": requestID,
+	}
+
+	templatePage(c, notFoundTmpl, http.StatusNotFound, obj)
+}
+
+// render the given template inside
+// "page.tmpl" with the provided
+// code and template object.
+func templatePage(
+	c *gin.Context,
+	template string,
+	code int,
+	obj map[string]any,
+) {
+	const pageTmpl = "page.tmpl"
+	obj["pageContent"] = template
+	c.HTML(code, pageTmpl, obj)
 }

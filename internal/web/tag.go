@@ -69,5 +69,5 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 		}
 	)
 
-	apiutil.TemplatePage(c, "page.tmpl", instance, ogMeta, stylesheets, nil, extra)
+	apiutil.TemplatePage(c, "tag.tmpl", instance, ogMeta, stylesheets, nil, extra)
 }
