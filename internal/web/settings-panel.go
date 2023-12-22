@@ -45,19 +45,17 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		stylesheets = []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-			distPathPrefix + "/profile.css", // Used for rendering stub/fake profiles.
-			distPathPrefix + "/status.css",  // Used for rendering stub/fake statuses.
-			distPathPrefix + "/settings-style.css",
-		}
+	page := apiutil.WebPage{
+		Template: "frontend.tmpl",
+		Instance: instance,
+		Stylesheets: []string{
+			cssFA,
+			cssProfile, // Used for rendering stub/fake profiles.
+			cssStatus,  // Used for rendering stub/fake statuses.
+			cssSettings,
+		},
+		Javascript: []string{jsSettings},
+	}
 
-		javascript = []string{
-			// Settings panel React application.
-			distPathPrefix + "/settings.js",
-		}
-	)
-
-	apiutil.TemplatePage(c, "frontend.tmpl", instance, nil, stylesheets, javascript, nil)
+	apiutil.TemplateWebPage(c, page)
 }

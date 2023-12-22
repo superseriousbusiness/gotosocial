@@ -100,11 +100,15 @@ func (m *Module) OobHandler(c *gin.Context) {
 	// we're done with the session now, so just clear it out
 	m.clearSession(s)
 
-	extra := map[string]any{
-		"user":     acct.Username,
-		"oobToken": oobToken,
-		"scope":    scope,
+	page := apiutil.WebPage{
+		Template: "oob.tmpl",
+		Instance: instance,
+		Extra: map[string]any{
+			"user":     acct.Username,
+			"oobToken": oobToken,
+			"scope":    scope,
+		},
 	}
 
-	apiutil.TemplatePage(c, "oob.tmpl", instance, nil, nil, nil, extra)
+	apiutil.TemplateWebPage(c, page)
 }

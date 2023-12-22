@@ -49,7 +49,7 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 
 	// If there's no token in the query,
 	// just serve the 404 web handler.
-	token := c.Query(tokenParam)
+	token := c.Query("token")
 	if token == "" {
 		errWithCode := gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound)))
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
@@ -62,10 +62,14 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 		return
 	}
 
-	extra := map[string]any{
-		"email":    user.Email,
-		"username": user.Account.Username,
+	page := apiutil.WebPage{
+		Template: "confirmed.tmpl",
+		Instance: instance,
+		Extra: map[string]any{
+			"email":    user.Email,
+			"username": user.Account.Username,
+		},
 	}
 
-	apiutil.TemplatePage(c, "confirmed.tmpl", instance, nil, nil, nil, extra)
+	apiutil.TemplateWebPage(c, page)
 }

@@ -55,7 +55,12 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 			return
 		}
 
-		apiutil.TemplatePage(c, "sign-in.tmpl", instance, nil, nil, nil, nil)
+		page := apiutil.WebPage{
+			Template: "sign-in.tmpl",
+			Instance: instance,
+		}
+
+		apiutil.TemplateWebPage(c, page)
 		return
 	}
 

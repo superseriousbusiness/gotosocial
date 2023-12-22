@@ -24,39 +24,67 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
-// TemplatePage renders the given HTML template
-// inside of the standard GtS "page" template.
+// WebPage encapsulates variables for
+// rendering an HTML template within
+// a standard GtS "page" template.
+type WebPage struct {
+	// Name of the template for rendering
+	// the page. Eg., "example.tmpl".
+	Template string
+
+	// Instance model for rendering header,
+	// footer, and "about" information.
+	Instance *apimodel.InstanceV1
+
+	// OGMeta for rendering page
+	// "meta:og*" tags. Can be nil.
+	OGMeta *OGMeta
+
+	// Paths to CSS files to add to
+	// the page as "stylesheet" entries.
+	// Can be nil.
+	Stylesheets []string
+
+	// Paths to JS files to add to
+	// the page as "script" entries.
+	// Can be nil.
+	Javascript []string
+
+	// Extra parameters to pass to
+	// the template for rendering,
+	// eg., "account": *Account etc.
+	// Can be nil.
+	Extra map[string]any
+}
+
+// TemplateWebPage renders the given HTML template and
+// page params within the standard GtS "page" template.
 //
 // ogMeta, stylesheets, javascript, and any extra
 // properties will be provided to the template if
 // set, but can all be nil.
-func TemplatePage(
+func TemplateWebPage(
 	c *gin.Context,
-	template string,
-	instance *apimodel.InstanceV1,
-	ogMeta *OGMeta,
-	stylesheets []string,
-	javascript []string,
-	extra map[string]any,
+	page WebPage,
 ) {
 	obj := map[string]any{
-		"instance":    instance,
-		"ogMeta":      ogMeta,
-		"stylesheets": stylesheets,
-		"javascript":  javascript,
+		"instance":    page.Instance,
+		"ogMeta":      page.OGMeta,
+		"stylesheets": page.Stylesheets,
+		"javascript":  page.Javascript,
 	}
 
-	for k, v := range extra {
+	for k, v := range page.Extra {
 		obj[k] = v
 	}
 
-	templatePage(c, template, http.StatusOK, obj)
+	templatePage(c, page.Template, http.StatusOK, obj)
 }
 
-// templatePageError renders the given
+// templateErrorPage renders the given
 // HTTP code, error, and request ID
 // within the standard error template.
-func templatePageError(
+func templateErrorPage(
 	c *gin.Context,
 	instance *apimodel.InstanceV1,
 	code int,
@@ -75,9 +103,9 @@ func templatePageError(
 	templatePage(c, errorTmpl, code, obj)
 }
 
-// templatePageNotFound renders
+// template404Page renders
 // a standard 404 page.
-func templatePageNotFound(
+func template404Page(
 	c *gin.Context,
 	instance *apimodel.InstanceV1,
 	requestID string,

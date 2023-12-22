@@ -55,19 +55,13 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		ogMeta = apiutil.OGBase(instance)
+	page := apiutil.WebPage{
+		Template:    "tag.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance),
+		Stylesheets: []string{cssFA, cssThread, cssTag},
+		Extra:       map[string]any{"tagName": tagName},
+	}
 
-		stylesheets = []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-			distPathPrefix + "/thread.css",
-			distPathPrefix + "/tag.css",
-		}
-
-		extra = map[string]any{
-			"tagName": tagName,
-		}
-	)
-
-	apiutil.TemplatePage(c, "tag.tmpl", instance, ogMeta, stylesheets, nil, extra)
+	apiutil.TemplateWebPage(c, page)
 }

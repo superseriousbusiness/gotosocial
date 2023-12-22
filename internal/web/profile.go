@@ -140,22 +140,17 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		ogMeta = apiutil.OGBase(instance).WithAccount(targetAccount)
-
-		stylesheets = []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-			distPathPrefix + "/status.css",
-			distPathPrefix + "/thread.css",
-			distPathPrefix + "/profile.css",
+	page := apiutil.WebPage{
+		Template: "profile.tmpl",
+		Instance: instance,
+		OGMeta:   apiutil.OGBase(instance).WithAccount(targetAccount),
+		Stylesheets: []string{
+			cssFA, cssStatus, cssThread, cssProfile,
+			// Custom CSS for this user last in cascade.
 			"/@" + targetAccount.Username + "/custom.css",
-		}
-
-		javascript = []string{
-			distPathPrefix + "/frontend.js",
-		}
-
-		extra = map[string]any{
+		},
+		Javascript: []string{jsFrontend},
+		Extra: map[string]any{
 			"account":          targetAccount,
 			"rssFeed":          rssFeed,
 			"robotsMeta":       robotsMeta,
@@ -163,10 +158,10 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 			"statuses_next":    statusResp.NextLink,
 			"pinned_statuses":  pinnedStatuses,
 			"show_back_to_top": paging,
-		}
-	)
+		},
+	}
 
-	apiutil.TemplatePage(c, "profile.tmpl", instance, ogMeta, stylesheets, javascript, extra)
+	apiutil.TemplateWebPage(c, page)
 }
 
 // returnAPAccount returns an ActivityPub representation of

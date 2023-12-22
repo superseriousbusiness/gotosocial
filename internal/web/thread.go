@@ -138,25 +138,23 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		ogMeta = apiutil.OGBase(instance).WithStatus(status)
-
-		stylesheets = []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-			distPathPrefix + "/status.css",
-			distPathPrefix + "/thread.css",
+	page := apiutil.WebPage{
+		Template: "thread.tmpl",
+		Instance: instance,
+		OGMeta:   apiutil.OGBase(instance).WithStatus(status),
+		Stylesheets: []string{
+			cssFA, cssStatus, cssThread,
+			// Custom CSS for this user last in cascade.
 			"/@" + targetUsername + "/custom.css",
-		}
-
-		javascript = []string{distPathPrefix + "/frontend.js"}
-
-		extra = map[string]any{
+		},
+		Javascript: []string{jsFrontend},
+		Extra: map[string]any{
 			"status":  status,
 			"context": context,
-		}
-	)
+		},
+	}
 
-	apiutil.TemplatePage(c, "thread.tmpl", instance, ogMeta, stylesheets, javascript, extra)
+	apiutil.TemplateWebPage(c, page)
 }
 
 // returnAPStatus returns an ActivityPub representation of target status,

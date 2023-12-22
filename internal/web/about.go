@@ -50,19 +50,17 @@ func (m *Module) aboutGETHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		ogMeta = apiutil.OGBase(instance)
-
-		stylesheets = []string{
-			distPathPrefix + "/about.css",
-		}
-
-		extra = map[string]any{
+	page := apiutil.WebPage{
+		Template:    "about.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance),
+		Stylesheets: []string{cssAbout},
+		Extra: map[string]any{
 			"showStrap":        true,
 			"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
 			"languages":        config.GetInstanceLanguages().DisplayStrs(),
-		}
-	)
+		},
+	}
 
-	apiutil.TemplatePage(c, "about.tmpl", instance, ogMeta, stylesheets, nil, extra)
+	apiutil.TemplateWebPage(c, page)
 }

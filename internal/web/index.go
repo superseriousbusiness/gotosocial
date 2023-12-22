@@ -55,18 +55,13 @@ func (m *Module) indexHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		ogMeta = apiutil.OGBase(instance)
+	page := apiutil.WebPage{
+		Template:    "index.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance),
+		Stylesheets: []string{cssAbout, cssIndex},
+		Extra:       map[string]any{"showStrap": true},
+	}
 
-		stylesheets = []string{
-			distPathPrefix + "/about.css",
-			distPathPrefix + "/index.css",
-		}
-
-		extra = map[string]any{
-			"showStrap": true,
-		}
-	)
-
-	apiutil.TemplatePage(c, "index.tmpl", instance, ogMeta, stylesheets, nil, extra)
+	apiutil.TemplateWebPage(c, page)
 }

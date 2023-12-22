@@ -50,7 +50,7 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 			panic(err)
 		}
 
-		templatePageNotFound(c,
+		template404Page(c,
 			instance,
 			gtscontext.RequestID(ctx),
 		)
@@ -73,7 +73,7 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 			panic(err)
 		}
 
-		templatePageError(c,
+		templateErrorPage(c,
 			instance,
 			errWithCode.Code(),
 			errWithCode.Safe(),

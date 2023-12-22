@@ -37,7 +37,7 @@ import (
 
 const (
 	confirmEmailPath   = "/" + uris.ConfirmEmailPath
-	profileGroupPath   = "/@:" + usernameKey
+	profileGroupPath   = "/@:username"
 	statusPath         = "/statuses/:" + apiutil.WebStatusIDKey // leave out the '/@:username' prefix as this will be served within the profile group
 	tagsPath           = "/tags/:" + apiutil.TagNameKey
 	customCSSPath      = profileGroupPath + "/custom.css"
@@ -49,15 +49,24 @@ const (
 	userPanelPath      = settingsPathPrefix + "/user"
 	adminPanelPath     = settingsPathPrefix + "/admin"
 
-	tokenParam  = "token"
-	usernameKey = "username"
-
 	cacheControlHeader    = "Cache-Control"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 	cacheControlNoCache   = "no-cache"          // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#response_directives
 	ifModifiedSinceHeader = "If-Modified-Since" // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
 	ifNoneMatchHeader     = "If-None-Match"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-None-Match
 	eTagHeader            = "ETag"              // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
 	lastModifiedHeader    = "Last-Modified"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
+
+	cssFA       = assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css"
+	cssAbout    = distPathPrefix + "/about.css"
+	cssIndex    = distPathPrefix + "/index.css"
+	cssStatus   = distPathPrefix + "/status.css"
+	cssThread   = distPathPrefix + "/thread.css"
+	cssProfile  = distPathPrefix + "/profile.css"
+	cssSettings = distPathPrefix + "/settings-style.css"
+	cssTag      = distPathPrefix + "/tag.css"
+
+	jsFrontend = distPathPrefix + "/frontend.js" // Progressive enhancement frontend JS.
+	jsSettings = distPathPrefix + "/settings.js" // Settings panel React application.
 )
 
 type Module struct {

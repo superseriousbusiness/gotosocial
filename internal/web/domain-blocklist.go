@@ -63,21 +63,14 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		ogMeta = apiutil.OGBase(instance)
+	page := apiutil.WebPage{
+		Template:    "domain-blocklist.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance),
+		Stylesheets: []string{cssFA},
+		Javascript:  []string{jsFrontend},
+		Extra:       map[string]any{"blocklist": domainBlocks},
+	}
 
-		stylesheets = []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-		}
-
-		javascript = []string{
-			distPathPrefix + "/frontend.js",
-		}
-
-		extra = map[string]any{
-			"blocklist": domainBlocks,
-		}
-	)
-
-	apiutil.TemplatePage(c, "domain-blocklist.tmpl", instance, ogMeta, stylesheets, javascript, extra)
+	apiutil.TemplateWebPage(c, page)
 }

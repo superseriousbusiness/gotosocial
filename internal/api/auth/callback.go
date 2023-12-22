@@ -144,12 +144,16 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 			return
 		}
 
-		extra := map[string]any{
-			"name":              claims.Name,
-			"preferredUsername": claims.PreferredUsername,
+		page := apiutil.WebPage{
+			Template: "finalize.tmpl",
+			Instance: instance,
+			Extra: map[string]any{
+				"name":              claims.Name,
+				"preferredUsername": claims.PreferredUsername,
+			},
 		}
 
-		apiutil.TemplatePage(c, "finalize.tmpl", instance, nil, nil, nil, extra)
+		apiutil.TemplateWebPage(c, page)
 		return
 	}
 	s.Set(sessionUserID, user.ID)
@@ -180,13 +184,17 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 			return
 		}
 
-		extra := map[string]any{
-			"name":              form.Name,
-			"preferredUsername": form.Username,
-			"error":             err,
+		page := apiutil.WebPage{
+			Template: "finalize.tmpl",
+			Instance: instance,
+			Extra: map[string]any{
+				"name":              form.Name,
+				"preferredUsername": form.Username,
+				"error":             err,
+			},
 		}
 
-		apiutil.TemplatePage(c, "finalize.tmpl", instance, nil, nil, nil, extra)
+		apiutil.TemplateWebPage(c, page)
 	}
 
 	// check if the username conforms to the spec
