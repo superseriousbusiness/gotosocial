@@ -161,24 +161,6 @@ main {
 			width: 100%;
 
 			/*
-				Restyle lists; remove left-padding,
-				replace dot with orange dot.
-			*/
-			ul {
-				padding-left: 1rem;
-				list-style: none;
-			}
-			
-			ul li::before {
-				content: "\2022";
-				color: $border-accent;
-				font-weight: bold;
-				display: inline-block;
-				width: 1rem;
-				margin-left: -1rem;
-			}
-
-			/*
 				Normalize header sizes to fit better
 				with the line-height we use for statuses.
 			*/
@@ -210,25 +192,6 @@ main {
 				margin: 0;
 				font-size: 1rem;
 				line-height: initial;
-			}
-
-			/*
-				Outdent block quotes a bit; use
-				orange stripe for left border.
-			*/
-			blockquote {
-				padding: 0.5rem 0 0.5rem 0.5rem;
-				border-left: 0.2rem solid $border-accent;
-				margin: 0;
-				font-style: italic;
-			}
-
-			/*
-				Nice dashed orange line for horizontal rules.
-			*/
-			hr {
-				border-top: 1px dashed $border-accent;
-				padding: 0.5rem;
 			}
 
 			pre, code {

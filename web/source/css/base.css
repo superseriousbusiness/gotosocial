@@ -38,17 +38,33 @@
 		 url('../fonts/noto-sans-v27-latin-700.woff') format('woff');
 }
 
-/* standard border radius for nice squircles */
+/*************************************
+***** SECTION 1: HANDY VARIABLES *****
+**************************************/
+
+/*
+	Standard border radius
+	for nice squircles.
+*/
 $br: 0.4rem;
 
-/* border radius for items that are framed/bordered
-   inside something with $br, eg avatar, header img */
+/*
+	Border radius for items that
+	are framed/bordered inside
+	something with $br, eg avatar,
+	header img, etc.
+*/
 $br-inner: 0.2rem; 
 
-/* Fork-Awesome 'fa-fw' fixed icon width 
-   keep in sync with https://github.com/ForkAwesome/Fork-Awesome/blob/a99579ae3e735ee70e51ed62dfcee3172b5b2db7/css/fork-awesome.css#L50
+/*
+	Fork-Awesome 'fa-fw' fixed icon width;
+	keep in sync with https://github.com/ForkAwesome/Fork-Awesome/blob/a99579ae3e735ee70e51ed62dfcee3172b5b2db7/css/fork-awesome.css#L50
 */
 $fa-fw: 1.28571429em;
+
+/******************************************
+***** SECTION 2: BASIC GLOBAL STYLING *****
+*******************************************/
 
 html, body {
 	padding: 0;
@@ -68,12 +84,8 @@ a {
 	color: $link-fg;
 }
 
-.hidden {
-	display: none;
-}
-
 .button, button {
-	border-radius: 0.2rem;
+	border-radius: $br-inner;
 	color: $button-fg;
 	background: $button-bg;
 	box-shadow: $boxshadow;
@@ -111,63 +123,9 @@ a {
 	}
 }
 
-.nounderline {
-	text-decoration: none;
-}
-
-.accent {
-	color: $acc1;
-}
-
-section.sign-in {
-	form {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-
-
-		padding-bottom: 1rem;
-		padding-top: 1rem;
-
-		label, input {
-			padding-left: 0.2rem;
-		}
-
-		.labelinput {
-			display: flex;
-			flex-direction: column;
-			gap: 0.4rem;
-		}
-
-		.btn {
-			margin-top: 1rem;
-		}
-	}
-}
-
-section.error {
-	word-break: break-word;
-	margin-bottom: 0.5rem;
-
-	pre {
-		border: 1px solid #ff000080;
-		padding: 0.5rem;
-		border-radius: 0.5em;
-		background-color: #ff000010;
-		font-size: 1.3em;
-		white-space: pre-wrap;
-	}
-}
-
-section.oob-token {
-	code {
-		background: $gray1;
-		padding: 0.5rem;
-		margin: 0;
-		border-radius: 0.3rem;
-	}
-}
-
+/*
+	Form styling - used in settings frontend as well.
+*/
 input, select, textarea, .input {
 	box-sizing: border-box;
 	border: 0.15rem solid $input-border;
@@ -221,10 +179,203 @@ input, select, textarea, .input {
 	border-radius: $br-inner;
 }
 
-.monospace {
-	font-family: monospace;
+/*
+	Restyle unordered lists; outdent
+	and replace dot with orange dot.
+*/
+ul {
+	padding-left: 1rem;
+	list-style: none;
 }
 
+ul li::before {
+	content: "\2022";
+	color: $border-accent;
+	font-weight: bold;
+	display: inline-block;
+	width: 1rem;
+	margin-left: -1rem;
+}
+
+/*
+	Mirror the same styling for ordered
+	lists but don't change markers to
+	orange; it looks dreadful.
+*/ 
+ol {
+	padding-left: 1rem;
+}
+
+ol li::marker {
+	font-weight: bold;
+}
+
+/*
+	Outdent block quotes a bit; use
+	orange stripe for left border.
+*/
+blockquote {
+	padding: 0.5rem 0 0.5rem 0.5rem;
+	border-left: 0.2rem solid $border-accent;
+	margin: 0;
+	font-style: italic;
+}
+
+/*
+	Nice dashed orange line
+	for horizontal rules.
+*/
+hr {
+	border: 0;
+	border-top: 1px dashed $border-accent;
+}
+
+/*
+	Don't indent definition
+	lists and definitions.
+*/
+dl {
+	margin: 0;
+
+	dd {
+		margin-left: 0;
+	}
+}
+
+label {
+	cursor: pointer;
+}
+
+/*************************************
+***** SECTION 3: UTILITY CLASSES *****
+**************************************/
+
+/*
+	Column header that appears at the top
+	of threads, at the top of sections of
+	profiles (About, Pinned Posts, etc).
+*/
+.col-header {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 1rem;
+
+	justify-content: start;
+	align-items: center; 
+
+	margin: 0;
+	background: $profile-bg;
+	border-top-left-radius: $br;
+	border-top-right-radius: $br;
+	padding: 0.75rem;
+
+	a {
+		justify-self: end;
+	}
+
+	h1, h2, h3, h4 {
+		font-size: 1.2rem;
+		line-height: 1.3rem;
+		margin: 0;
+	}
+}
+
+.hidden {
+	display: none;
+}
+
+.nounderline {
+	text-decoration: none;
+}
+
+.accent {
+	color: $acc1;
+}
+
+.text-cutoff {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+/* 
+	Class for lists that don't
+	want the orange dot.
+*/
+.nodot {
+	li::before {
+		content: initial;
+	}
+}
+
+/***********************************
+***** SECTION 4: SHAMEFUL MESS *****
+************************************/
+
+/*
+	EVERYTHING BELOW THIS POINT:
+	Should be moved somewhere else
+	to avoid cluttering up this file.
+*/
+
+/*
+	Below section stylings are used
+	in transient/error templates.
+*/
+section.sign-in {
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+
+
+		padding-bottom: 1rem;
+		padding-top: 1rem;
+
+		label, input {
+			padding-left: 0.2rem;
+		}
+
+		.labelinput {
+			display: flex;
+			flex-direction: column;
+			gap: 0.4rem;
+		}
+
+		.btn {
+			margin-top: 1rem;
+		}
+	}
+}
+
+section.error {
+	word-break: break-word;
+	margin-bottom: 0.5rem;
+
+	pre {
+		border: 1px solid #ff000080;
+		padding: 0.5rem;
+		border-radius: 0.5em;
+		background-color: #ff000010;
+		font-size: 1.3em;
+		white-space: pre-wrap;
+	}
+}
+
+section.oob-token {
+	code {
+		background: $gray1;
+		padding: 0.5rem;
+		margin: 0;
+		border-radius: 0.3rem;
+	}
+}
+
+/*
+	TODO: This is only used in the "finalize"
+	template for new signups; move this elsewhere
+	when that stuff is finished up.
+*/
 .callout {
 	margin: 1.5rem 0;
 	border: .05rem solid $border-accent;
@@ -239,22 +390,11 @@ input, select, textarea, .input {
 	}
 }
 
-label {
-	cursor: pointer;
-}
-
-@media (prefers-reduced-motion) {
-	.fa-spin {
-		animation: none;
-	}
-}
-
-.text-cutoff {
-	text-overflow: ellipsis;
-	overflow: hidden;
-	white-space: nowrap;
-}
-
+/*
+	TODO: list and blocklist are only used
+	in settings panel and on blocklist page;
+	consider moving them somewhere else.
+*/
 .list {
 	display: flex;
 	flex-direction: column;
@@ -337,6 +477,18 @@ label {
 	}
 }
 
+@media screen and (max-width: 30rem) {
+	.domain-blocklist .entry {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+}
+
+/*
+	TODO: this is only used on About
+	page and in settings application;
+	consider moving it somewhere else.
+*/
 .account-card {
 	display: inline-grid;
 	grid-template-columns: auto 1fr;
@@ -366,49 +518,5 @@ label {
 		height: 5rem;
 		object-fit: cover;
 		grid-row: 1 / span 2;
-	}
-}
-
-@media screen and (max-width: 30rem) {
-	.domain-blocklist .entry {
-		grid-template-columns: 1fr;
-		gap: 0;
-	}
-}
-
-/*
-	Don't indent definition
-	lists and definitions.
-*/
-dl {
-	margin: 0;
-
-	dd {
-		margin-left: 0;
-	}
-}
-
-.col-header {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 1rem;
-
-	justify-content: start;
-	align-items: center; 
-
-	margin: 0;
-	background: $profile-bg;
-	border-top-left-radius: $br;
-	border-top-right-radius: $br;
-	padding: 0.75rem;
-
-	a {
-		justify-self: end;
-	}
-
-	h1, h2, h3, h4 {
-		font-size: 1.2rem;
-		line-height: 1.3rem;
-		margin: 0;
 	}
 }

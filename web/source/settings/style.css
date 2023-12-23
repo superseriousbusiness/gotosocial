@@ -25,6 +25,11 @@ body {
 	width: 100%;
 }
 
+/* Don't inherit orange dot from base.css. */
+ul li::before {
+	content: initial;
+}
+
 #root {
 	box-sizing: border-box;
 	display: flex;
@@ -1145,4 +1150,14 @@ button.with-padding {
 	to {
 		opacity: 0;
 	}
+}
+
+@media (prefers-reduced-motion) {
+	.fa-spin {
+		animation: none;
+	}
+}
+
+.monospace {
+	font-family: monospace;
 }
