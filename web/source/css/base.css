@@ -84,6 +84,22 @@ a {
 	color: $link-fg;
 }
 
+/*
+	Normalize margins of first and last children.
+	We generally don't want to open a paragraph or
+	paragraph-like element with a top margin or
+	close it with a bottom margin.
+*/
+main {
+	p:first-child, ol:first-child, ul:first-child {
+		margin-top: 0;
+	}
+
+	p:last-child, ol:last-child, ul:last-child {
+		margin-bottom: 0;
+	}
+}
+
 .button, button {
 	border-radius: $br-inner;
 	color: $button-fg;
@@ -148,11 +164,11 @@ input, select, textarea, .input {
 	&:disabled {
 		background: transparent;
 	}
-}
 
-::placeholder {
-	opacity: 1;
-	color: $fg-reduced
+	&::placeholder {
+		opacity: 1;
+		color: $fg-reduced
+	}
 }
 
 /*
@@ -165,18 +181,18 @@ input, select, textarea, .input {
 	object-fit: contain;
 	vertical-align: middle;
 	transition: 0.1s;
-}
 
-/*
-	Enlarge emojis on hover to give
-	viewer a good look at them.
-*/
-.emoji:hover, .emoji:active {
-	transform: scale(2);
-	background-color: $bg;
-	box-shadow: $boxshadow;
-	border: $boxshadow-border;
-	border-radius: $br-inner;
+	/*
+		Enlarge emojis on hover to give
+		viewer a good look at them.
+	*/
+	&:hover, &:active {
+		transform: scale(2);
+		background-color: $bg;
+		box-shadow: $boxshadow;
+		border: $boxshadow-border;
+		border-radius: $br-inner;
+	}
 }
 
 /*
@@ -184,30 +200,29 @@ input, select, textarea, .input {
 	and replace dot with orange dot.
 */
 ul {
-	padding-left: 1rem;
+	padding-left: 2.5rem;
 	list-style: none;
-}
 
-ul li::before {
-	content: "\2022";
-	color: $border-accent;
-	font-weight: bold;
-	display: inline-block;
-	width: 1rem;
-	margin-left: -1rem;
+	li::before {
+		content: "\2022";
+		color: $border-accent;
+		font-weight: bold;
+		display: inline-block;
+		width: 1.5rem;
+		margin-left: -1.5rem;
+	}
 }
 
 /*
-	Mirror the same styling for ordered
-	lists but don't change markers to
-	orange; it looks dreadful.
+	Mirror the same styling a little bit
+	for ordered lists by making marker bold.
 */ 
 ol {
-	padding-left: 1rem;
-}
+	padding-left: 2.5rem;
 
-ol li::marker {
-	font-weight: bold;
+	li::marker {
+		font-weight: bold;
+	}
 }
 
 /*
