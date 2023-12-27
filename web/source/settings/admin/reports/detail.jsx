@@ -140,18 +140,23 @@ function ReportedToot({ toot }) {
 	const account = toot.account;
 
 	return (
-		<article className="toot expanded">
-			<section className="author">
-				<a>
-					<img className="avatar" src={account.avatar} alt="" />
-					<span className="displayname">
-						{account.display_name.trim().length > 0 ? account.display_name : account.username}
-						<span className="sr-only">.</span>
-					</span>
-					<span className="username">@{account.username}</span>
-				</a>
-			</section>
-			<section className="body">
+		<article className="status expanded">
+			<header className="status-header">
+				<address>
+					<a style={{margin: 0}}>
+						<img className="avatar" src={account.avatar} alt="" />
+						<dl className="author-strap">
+							<dt className="sr-only">Display name</dt>
+							<dd className="displayname text-cutoff">
+								{account.display_name.trim().length > 0 ? account.display_name : account.username}
+							</dd>
+							<dt className="sr-only">Username</dt>
+							<dd className="username text-cutoff">@{account.username}</dd>
+						</dl>
+					</a>
+				</address>
+			</header>
+			<section className="status-body">
 				<div className="text">
 					<div className="content">
 						{toot.spoiler_text?.length > 0
@@ -164,8 +169,17 @@ function ReportedToot({ toot }) {
 					<TootMedia media={toot.media_attachments} sensitive={toot.sensitive} />
 				}
 			</section>
-			<aside className="info">
-				<time dateTime={toot.created_at}>{new Date(toot.created_at).toLocaleString()}</time>
+			<aside className="status-info">
+				<dl class="status-stats">
+					<div class="stats-grouping">
+						<div class="stats-item published-at text-cutoff">
+							<dt class="sr-only">Published</dt>
+							<dd>
+								<time dateTime={toot.created_at}>{new Date(toot.created_at).toLocaleString()}</time>
+							</dd>
+						</div>
+					</div>
+				</dl>
 			</aside>
 		</article>
 	);

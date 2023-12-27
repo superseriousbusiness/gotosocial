@@ -995,7 +995,7 @@ button.with-padding {
 			grid-template-columns: 1fr auto;
 			gap: 0.5rem;
 
-			.status {
+			.report-status {
 				color: $border-accent;
 			}
 		}
@@ -1017,7 +1017,7 @@ button.with-padding {
 			color: $fg-reduced;
 			border-left: 0.4rem solid $bg;
 
-			.byline .status {
+			.byline .report-status {
 				color: $fg-reduced;
 			}
 			
@@ -1184,7 +1184,7 @@ button.with-padding {
 	.reports .report .byline {
 		grid-template-columns: 1fr;
 
-		.status {
+		.report-status {
 			grid-row: 1;
 		}
 	}

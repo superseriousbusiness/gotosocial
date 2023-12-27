@@ -83,7 +83,7 @@ function ReportEntry({ report }) {
 					<div className="usernames">
 						<Username user={from} link={false} /> reported <Username user={target} link={false} />
 					</div>
-					<h3 className="status">
+					<h3 className="report-status">
 						{report.action_taken ? "Resolved" : "Open"}
 					</h3>
 				</div>
