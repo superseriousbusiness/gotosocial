@@ -50,10 +50,10 @@ func NotFoundHandler(c *gin.Context, instanceGet func(ctx context.Context) (*api
 			panic(err)
 		}
 
-		c.HTML(http.StatusNotFound, "404.tmpl", gin.H{
-			"instance":  instance,
-			"requestID": gtscontext.RequestID(ctx),
-		})
+		template404Page(c,
+			instance,
+			gtscontext.RequestID(ctx),
+		)
 	default:
 		JSON(c, http.StatusNotFound, map[string]string{
 			"error": errWithCode.Safe(),
@@ -73,12 +73,12 @@ func genericErrorHandler(c *gin.Context, instanceGet func(ctx context.Context) (
 			panic(err)
 		}
 
-		c.HTML(errWithCode.Code(), "error.tmpl", gin.H{
-			"instance":  instance,
-			"code":      errWithCode.Code(),
-			"error":     errWithCode.Safe(),
-			"requestID": gtscontext.RequestID(ctx),
-		})
+		templateErrorPage(c,
+			instance,
+			errWithCode.Code(),
+			errWithCode.Safe(),
+			gtscontext.RequestID(ctx),
+		)
 	default:
 		JSON(c, errWithCode.Code(), map[string]string{
 			"error": errWithCode.Safe(),

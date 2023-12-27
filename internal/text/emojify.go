@@ -20,18 +20,76 @@ package text
 import (
 	"bytes"
 	"html"
+	"html/template"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
-// Emojify replaces shortcodes in `inputText` with the emoji in `emojis`.
-//
-// Callers should ensure that inputText and resulting text are escaped
-// appropriately depending on what they're used for.
-func Emojify(emojis []apimodel.Emoji, inputText string) string {
-	emojisMap := make(map[string]apimodel.Emoji, len(emojis))
+// EmojifyWeb replaces emoji shortcodes like `:example:` in the given HTML
+// fragment with `<img>` tags suitable for rendering on the web frontend.
+func EmojifyWeb(emojis []apimodel.Emoji, html template.HTML) template.HTML {
+	out := emojify(
+		emojis,
+		string(html),
+		func(url, code string, buf *bytes.Buffer) {
+			buf.WriteString(`<img src="`)
+			buf.WriteString(url)
+			buf.WriteString(`" title=":`)
+			buf.WriteString(code)
+			buf.WriteString(`:" alt=":`)
+			buf.WriteString(code)
+			buf.WriteString(`:" class="emoji" `)
+			// Lazy load emojis when
+			// they scroll into view.
+			buf.WriteString(`loading="lazy" `)
+			// Limit size to avoid showing
+			// huge emojis when unstyled.
+			buf.WriteString(`width="25" height="25"/>`)
+		},
+	)
 
+	// If input was safe,
+	// we can trust output.
+	return template.HTML(out) // #nosec G203
+}
+
+// EmojifyRSS replaces emoji shortcodes like `:example:` in the given text
+// fragment with `<img>` tags suitable for rendering as RSS content.
+func EmojifyRSS(emojis []apimodel.Emoji, text string) string {
+	return emojify(
+		emojis,
+		text,
+		func(url, code string, buf *bytes.Buffer) {
+			buf.WriteString(`<img src="`)
+			buf.WriteString(url)
+			buf.WriteString(`" title=":`)
+			buf.WriteString(code)
+			buf.WriteString(`:" alt=":`)
+			buf.WriteString(code)
+			buf.WriteString(`:" `)
+			// Limit size to avoid showing
+			// huge emojis in RSS readers.
+			buf.WriteString(`width="25" height="25"/>`)
+		},
+	)
+}
+
+// Demojify replaces emoji shortcodes like `:example:` in the given text
+// fragment with empty strings, essentially stripping them from the text.
+// This is useful for text used in OG Meta headers.
+func Demojify(text string) string {
+	return regexes.EmojiFinder.ReplaceAllString(text, "")
+}
+
+func emojify(
+	emojis []apimodel.Emoji,
+	input string,
+	write func(url, code string, buf *bytes.Buffer),
+) string {
+	// Build map of shortcodes. Normalize each
+	// shortcode by readding closing colons.
+	emojisMap := make(map[string]apimodel.Emoji, len(emojis))
 	for _, emoji := range emojis {
 		shortcode := ":" + emoji.Shortcode + ":"
 		emojisMap[shortcode] = emoji
@@ -39,27 +97,20 @@ func Emojify(emojis []apimodel.Emoji, inputText string) string {
 
 	return regexes.ReplaceAllStringFunc(
 		regexes.EmojiFinder,
-		inputText,
+		input,
 		func(shortcode string, buf *bytes.Buffer) string {
-			// Look for emoji according to this shortcode
+			// Look for emoji with this shortcode.
 			emoji, ok := emojisMap[shortcode]
 			if !ok {
 				return shortcode
 			}
 
-			// Escape raw emoji content
-			safeURL := html.EscapeString(emoji.URL)
-			safeCode := html.EscapeString(emoji.Shortcode)
+			// Escape raw emoji content.
+			url := html.EscapeString(emoji.URL)
+			code := html.EscapeString(emoji.Shortcode)
 
-			// Write HTML emoji repr to buffer
-			buf.WriteString(`<img src="`)
-			buf.WriteString(safeURL)
-			buf.WriteString(`" title=":`)
-			buf.WriteString(safeCode)
-			buf.WriteString(`:" alt=":`)
-			buf.WriteString(safeCode)
-			buf.WriteString(`:" class="emoji"/>`)
-
+			// Write emoji repr to buffer.
+			write(url, code, buf)
 			return buf.String()
 		},
 	)

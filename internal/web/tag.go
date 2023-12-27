@@ -19,7 +19,6 @@ package web
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -56,16 +55,13 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 		return
 	}
 
-	stylesheets := []string{
-		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-		distPathPrefix + "/status.css",
-		distPathPrefix + "/tag.css",
+	page := apiutil.WebPage{
+		Template:    "tag.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance),
+		Stylesheets: []string{cssFA, cssThread, cssTag},
+		Extra:       map[string]any{"tagName": tagName},
 	}
 
-	c.HTML(http.StatusOK, "tag.tmpl", gin.H{
-		"instance":    instance,
-		"ogMeta":      ogBase(instance),
-		"tagName":     tagName,
-		"stylesheets": stylesheets,
-	})
+	apiutil.TemplateWebPage(c, page)
 }

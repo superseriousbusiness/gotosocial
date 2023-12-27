@@ -116,6 +116,12 @@ type Status struct {
 	//
 	// swagger:ignore
 	WebPollOptions []WebPollOption `json:"-"`
+
+	// Status is from a local account.
+	// Always false for non-web statuses.
+	//
+	// swagger:ignore
+	Local bool `json:"-"`
 }
 
 /*

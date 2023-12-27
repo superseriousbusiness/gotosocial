@@ -151,7 +151,7 @@ func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 			apiEmojis = append(apiEmojis, apiEmoji)
 		}
 	}
-	content := text.Emojify(apiEmojis, s.Content)
+	content := text.EmojifyRSS(apiEmojis, s.Content)
 
 	return &feeds.Item{
 		Title:       title,

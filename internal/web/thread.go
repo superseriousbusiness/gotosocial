@@ -28,7 +28,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -139,22 +138,23 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
-	stylesheets := []string{
-		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-		distPathPrefix + "/status.css",
-	}
-	if config.GetAccountsAllowCustomCSS() {
-		stylesheets = append(stylesheets, "/@"+targetUsername+"/custom.css")
+	page := apiutil.WebPage{
+		Template: "thread.tmpl",
+		Instance: instance,
+		OGMeta:   apiutil.OGBase(instance).WithStatus(status),
+		Stylesheets: []string{
+			cssFA, cssStatus, cssThread,
+			// Custom CSS for this user last in cascade.
+			"/@" + targetUsername + "/custom.css",
+		},
+		Javascript: []string{jsFrontend},
+		Extra: map[string]any{
+			"status":  status,
+			"context": context,
+		},
 	}
 
-	c.HTML(http.StatusOK, "thread.tmpl", gin.H{
-		"instance":    instance,
-		"status":      status,
-		"context":     context,
-		"ogMeta":      ogBase(instance).withStatus(status),
-		"stylesheets": stylesheets,
-		"javascript":  []string{distPathPrefix + "/frontend.js"},
-	})
+	apiutil.TemplateWebPage(c, page)
 }
 
 // returnAPStatus returns an ActivityPub representation of target status,

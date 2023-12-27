@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -101,10 +100,15 @@ func (m *Module) OobHandler(c *gin.Context) {
 	// we're done with the session now, so just clear it out
 	m.clearSession(s)
 
-	c.HTML(http.StatusOK, "oob.tmpl", gin.H{
-		"instance": instance,
-		"user":     acct.Username,
-		"oobToken": oobToken,
-		"scope":    scope,
-	})
+	page := apiutil.WebPage{
+		Template: "oob.tmpl",
+		Instance: instance,
+		Extra: map[string]any{
+			"user":     acct.Username,
+			"oobToken": oobToken,
+			"scope":    scope,
+		},
+	}
+
+	apiutil.TemplateWebPage(c, page)
 }

@@ -27,7 +27,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
@@ -141,28 +140,28 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
-	stylesheets := []string{
-		assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
-		distPathPrefix + "/status.css",
-		distPathPrefix + "/profile.css",
-	}
-	if config.GetAccountsAllowCustomCSS() {
-		stylesheets = append(stylesheets, "/@"+targetAccount.Username+"/custom.css")
+	page := apiutil.WebPage{
+		Template: "profile.tmpl",
+		Instance: instance,
+		OGMeta:   apiutil.OGBase(instance).WithAccount(targetAccount),
+		Stylesheets: []string{
+			cssFA, cssStatus, cssThread, cssProfile,
+			// Custom CSS for this user last in cascade.
+			"/@" + targetAccount.Username + "/custom.css",
+		},
+		Javascript: []string{jsFrontend},
+		Extra: map[string]any{
+			"account":          targetAccount,
+			"rssFeed":          rssFeed,
+			"robotsMeta":       robotsMeta,
+			"statuses":         statusResp.Items,
+			"statuses_next":    statusResp.NextLink,
+			"pinned_statuses":  pinnedStatuses,
+			"show_back_to_top": paging,
+		},
 	}
 
-	c.HTML(http.StatusOK, "profile.tmpl", gin.H{
-		"instance":         instance,
-		"account":          targetAccount,
-		"ogMeta":           ogBase(instance).withAccount(targetAccount),
-		"rssFeed":          rssFeed,
-		"robotsMeta":       robotsMeta,
-		"statuses":         statusResp.Items,
-		"statuses_next":    statusResp.NextLink,
-		"pinned_statuses":  pinnedStatuses,
-		"show_back_to_top": paging,
-		"stylesheets":      stylesheets,
-		"javascript":       []string{distPathPrefix + "/frontend.js"},
-	})
+	apiutil.TemplateWebPage(c, page)
 }
 
 // returnAPAccount returns an ActivityPub representation of

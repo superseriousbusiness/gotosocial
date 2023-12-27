@@ -32,8 +32,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// login just wraps a form-submitted username (we want an email) and password
-type login struct {
+// signIn just wraps a form-submitted username (we want an email) and password
+type signIn struct {
 	Email    string `form:"username"`
 	Password string `form:"password"`
 }
@@ -55,10 +55,12 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 			return
 		}
 
-		// no idp provider, use our own funky little sign in page
-		c.HTML(http.StatusOK, "sign-in.tmpl", gin.H{
-			"instance": instance,
-		})
+		page := apiutil.WebPage{
+			Template: "sign-in.tmpl",
+			Instance: instance,
+		}
+
+		apiutil.TemplateWebPage(c, page)
 		return
 	}
 
@@ -83,7 +85,7 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 func (m *Module) SignInPOSTHandler(c *gin.Context) {
 	s := sessions.Default(c)
 
-	form := &login{}
+	form := &signIn{}
 	if err := c.ShouldBind(form); err != nil {
 		m.clearSession(s)
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
@@ -129,7 +131,7 @@ func (m *Module) ValidatePassword(ctx context.Context, email string, password st
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password)); err != nil {
-		err := fmt.Errorf("password hash didn't match for user %s during login attempt: %s", user.Email, err)
+		err := fmt.Errorf("password hash didn't match for user %s during sign in attempt: %s", user.Email, err)
 		return incorrectPassword(err)
 	}
 

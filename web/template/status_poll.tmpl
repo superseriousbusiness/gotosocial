@@ -18,51 +18,64 @@
 */ -}}
 
 {{- /*
-		Template for rendering a web view of a poll.
-		To use this template, pass a web view status into it.
+        Template for rendering a web view of a poll.
+        To use this template, pass a web view status into it.
 */ -}}
 
-	<figure class="poll">
-		<figcaption class="poll-info">
-			<span class="poll-expiry">
-				{{- if .Poll.Multiple -}}
-				Multiple-choice poll&nbsp;
-				{{- else -}}
-				Poll&nbsp;
-				{{- end -}}
-				{{- if .Poll.Expired -}}
-				closed {{ .Poll.ExpiresAt | timestampPrecise -}}
-				{{- else if .Poll.ExpiresAt -}}
-				open until {{ .Poll.ExpiresAt | timestampPrecise -}}
-				{{- else -}}
-				open forever
-				{{- end -}}
-			</span>
-			<span class="total-votes">Total votes: {{ .Poll.VotesCount }}</span>
-		</figcaption>
-		<ul class="poll-options">
-		{{- range $index, $pollOption := .WebPollOptions }}
-			<li class="poll-option">
-				<label aria-hidden="true" for="poll-{{- $pollOption.PollID -}}-option-{{- increment $index -}}" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (noescape $pollOption.Title) -}}</label>
-				<meter aria-hidden="true" id="poll-{{- $pollOption.PollID -}}-option-{{- increment $index -}}" min="0" max="100" value="{{- $pollOption.VoteShare -}}">{{- $pollOption.VoteShare -}}&#37;</meter>
-				<div class="sr-only">Option {{ increment $index }}:&nbsp;<span lang="{{ .LanguageTag.TagStr }}">{{ emojify .Emojis (noescape $pollOption.Title) -}}</span></div>
-				<div class="poll-vote-summary">
-					{{- if isNil $pollOption.VotesCount }}
-					Results not yet published.
-					{{- else -}}
-					{{- with deref $pollOption.VotesCount }}
-					<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
-					<span class="poll-vote-count">
-						{{- if eq . 1 -}}
-							{{- . }} vote
-						{{- else -}}
-							{{- . }} votes
-						{{- end -}}
-					</span>
-					{{- end -}}
-					{{- end }}
-				</div>
-			</li>
-		{{- end }}
-		</ul>
-	</figure>
+{{- define "votes" -}}
+    {{- if eq . 1 -}}
+        {{- . -}}&nbsp;vote
+    {{- else -}}
+        {{- . }}&nbsp;votes
+    {{- end -}}
+{{- end -}}
+
+{{- with . }}
+<figure class="poll">
+    <figcaption class="poll-info">
+        <span class="poll-expiry">
+            {{- if .Poll.Multiple -}}
+            Multiple-choice poll&nbsp;
+            {{- else -}}
+            Poll&nbsp;
+            {{- end -}}
+            {{- if .Poll.Expired -}}
+            closed <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
+            {{- else if .Poll.ExpiresAt -}}
+            open until <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
+            {{- else -}}
+            open forever
+            {{- end -}}
+        </span>
+        <span class="sr-only">,</span>
+        <span class="total-votes">
+            {{- template "votes" .Poll.VotesCount -}}&nbsp;
+            {{- if .Poll.Expired -}}
+                total
+            {{- else -}}
+                so far
+            {{- end -}}
+        </span>
+    </figcaption>
+    <ul class="poll-options nodot">
+    {{- range $index, $pollOption := .WebPollOptions }}
+        <li class="poll-option">
+            <span class="sr-only">Option {{ increment $index }},</span>
+            <span lang="{{- .LanguageTag.TagStr -}}">{{ emojify .Emojis (noescape $pollOption.Title) }}</span>
+            <meter aria-hidden="true" min="0" max="100" value="{{- $pollOption.VoteShare -}}"></meter>
+            <div class="poll-vote-summary">
+                {{- if isNil $pollOption.VotesCount }}
+                Results not yet published.
+                {{- else }}
+                {{- with deref $pollOption.VotesCount }}
+                <span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
+                <span class="sr-only">,</span>
+                <span class="poll-vote-count">{{- template "votes" . -}}</span>
+                {{- end }}
+                {{- end }}
+            </div>
+        </li>
+    {{- end }}
+    </ul>
+</figure>
+{{- end }}

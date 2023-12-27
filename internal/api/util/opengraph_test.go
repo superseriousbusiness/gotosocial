@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package web
+package util
 
 import (
 	"fmt"
@@ -40,18 +40,18 @@ func (suite *OpenGraphTestSuite) TestParseDescription() {
 	for _, tt := range tests {
 		tt := tt
 		suite.Run(tt.name, func() {
-			suite.Equal(fmt.Sprintf("content=\"%s\"", tt.exp), parseDescription(tt.in))
+			suite.Equal(fmt.Sprintf("content=\"%s\"", tt.exp), ParseDescription(tt.in))
 		})
 	}
 }
 
 func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
-	baseMeta := ogBase(&apimodel.InstanceV1{
+	baseMeta := OGBase(&apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
 	})
 
-	accountMeta := baseMeta.withAccount(&apimodel.Account{
+	accountMeta := baseMeta.WithAccount(&apimodel.Account{
 		Acct:        "example_account",
 		DisplayName: "example person!!",
 		URL:         "https://example.org/@example_account",
@@ -59,8 +59,8 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 		Username:    "example_account",
 	})
 
-	suite.EqualValues(ogMeta{
-		Title:                "example person!! (@example_account@example.org)",
+	suite.EqualValues(OGMeta{
+		Title:                "example person!!, @example_account@example.org",
 		Type:                 "profile",
 		Locale:               "en",
 		URL:                  "https://example.org/@example_account",
@@ -79,12 +79,12 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 }
 
 func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
-	baseMeta := ogBase(&apimodel.InstanceV1{
+	baseMeta := OGBase(&apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
 	})
 
-	accountMeta := baseMeta.withAccount(&apimodel.Account{
+	accountMeta := baseMeta.WithAccount(&apimodel.Account{
 		Acct:        "example_account",
 		DisplayName: "example person!!",
 		URL:         "https://example.org/@example_account",
@@ -92,8 +92,8 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 		Username:    "example_account",
 	})
 
-	suite.EqualValues(ogMeta{
-		Title:                "example person!! (@example_account@example.org)",
+	suite.EqualValues(OGMeta{
+		Title:                "example person!!, @example_account@example.org",
 		Type:                 "profile",
 		Locale:               "en",
 		URL:                  "https://example.org/@example_account",

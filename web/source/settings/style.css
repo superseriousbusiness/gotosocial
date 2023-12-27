@@ -20,26 +20,14 @@ body {
 	grid-template-rows: auto 1fr;
 }
 
-.content {
+.page-content {
 	grid-column: 1 / span 3; /* stretch entire width, to fit panel + sidebar nav */
 	width: 100%;
 }
 
-header {
-	justify-content: start;
-
-	a {
-		margin: 1.5rem;
-		gap: 1rem;
-
-		h1 {
-			font-size: 1.5rem;
-		}
-
-		img {
-			height: 3rem;
-		}
-	}
+/* Don't inherit orange dot from base.css. */
+ul li::before {
+	content: initial;
 }
 
 #root {
@@ -1007,7 +995,7 @@ button.with-padding {
 			grid-template-columns: 1fr auto;
 			gap: 0.5rem;
 
-			.status {
+			.report-status {
 				color: $border-accent;
 			}
 		}
@@ -1029,7 +1017,7 @@ button.with-padding {
 			color: $fg-reduced;
 			border-left: 0.4rem solid $bg;
 
-			.byline .status {
+			.byline .report-status {
 				color: $fg-reduced;
 			}
 			
@@ -1141,11 +1129,62 @@ button.with-padding {
 	}
 }
 
+.instance-rules {
+	list-style-position: inside;
+	margin: 0;
+	padding: 0;
+
+	a.rule {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		align-items: center;
+		color: $fg;
+		text-decoration: none;
+		background: $status-bg;
+		padding: 1rem;
+		margin: 0.5rem 0;
+		border-radius: $br;
+		line-height: 2rem;
+		position: relative;
+
+		&:hover {
+			color: $fg-accent;
+
+			.edit-icon {
+				display: inline;
+			}
+		}
+
+		.edit-icon {
+			display: none;
+			font-size: 1rem;
+			line-height: 1.5rem;
+		}
+
+		li {
+			font-size: 1.75rem;
+			padding: 0;
+			margin: 0;
+
+			h2 {
+				margin: 0;
+				margin-top: 0 !important;
+				display: inline-block;
+				font-size: 1.5rem;
+			}
+		}
+
+		span {
+			color: $fg-reduced;
+		}
+	}
+}
+
 @media screen and (orientation: portrait) {
 	.reports .report .byline {
 		grid-template-columns: 1fr;
 
-		.status {
+		.report-status {
 			grid-row: 1;
 		}
 	}
@@ -1162,4 +1201,14 @@ button.with-padding {
 	to {
 		opacity: 0;
 	}
+}
+
+@media (prefers-reduced-motion) {
+	.fa-spin {
+		animation: none;
+	}
+}
+
+.monospace {
+	font-family: monospace;
 }

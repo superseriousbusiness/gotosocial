@@ -56,8 +56,8 @@ const (
 	OOBTokenPath = "/oauth/oob" // #nosec G101 else we get a hardcoded credentials warning
 	// HelpfulAdvice is a handy hint to users;
 	// particularly important during the login flow
-	HelpfulAdvice      = "If you arrived at this error during a login/oauth flow, please try clearing your session cookies and logging in again; if problems persist, make sure you're using the correct credentials"
-	HelpfulAdviceGrant = "If you arrived at this error during a login/oauth flow, your client is trying to use an unsupported OAuth grant type. Supported grant types are: authorization_code, client_credentials; please reach out to developer of your client"
+	HelpfulAdvice      = "If you arrived at this error during a sign in/oauth flow, please try clearing your session cookies and signing in again; if problems persist, make sure you're using the correct credentials"
+	HelpfulAdviceGrant = "If you arrived at this error during a sign in/oauth flow, your client is trying to use an unsupported OAuth grant type. Supported grant types are: authorization_code, client_credentials; please reach out to developer of your client"
 )
 
 // Server wraps some oauth2 server functions in an interface, exposing only what is needed

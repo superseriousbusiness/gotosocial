@@ -18,9 +18,10 @@
 package web
 
 import (
-	"net/http"
+	"context"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -31,20 +32,35 @@ const (
 )
 
 func (m *Module) aboutGETHandler(c *gin.Context) {
-	instance, err := m.processor.InstanceGetV1(c.Request.Context())
-	if err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
+	if errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.HTML(http.StatusOK, "about.tmpl", gin.H{
-		"instance":         instance,
-		"languages":        config.GetInstanceLanguages().DisplayStrs(),
-		"ogMeta":           ogBase(instance),
-		"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
-		"stylesheets": []string{
-			assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css",
+	// Return instance we already got from the db,
+	// don't try to fetch it again when erroring.
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+		return instance, nil
+	}
+
+	// We only serve text/html at this endpoint.
+	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
+		return
+	}
+
+	page := apiutil.WebPage{
+		Template:    "about.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance),
+		Stylesheets: []string{cssAbout},
+		Extra: map[string]any{
+			"showStrap":        true,
+			"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
+			"languages":        config.GetInstanceLanguages().DisplayStrs(),
 		},
-		"javascript": []string{distPathPrefix + "/frontend.js"},
-	})
+	}
+
+	apiutil.TemplateWebPage(c, page)
 }

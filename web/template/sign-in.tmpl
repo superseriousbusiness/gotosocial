@@ -17,10 +17,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
+{{- with . }}
 <main>
-    <section class="login">
-        <h1>Login</h1>
+    <section class="sign-in" aria-labelledby="sign-in">
+        <h2 id="sign-in">Sign in</h2>
         <form action="/auth/sign_in" method="POST">
             <div class="labelinput">
                 <label for="email">Email</label>
@@ -30,8 +30,8 @@
                 <label for="password">Password</label>
                 <input type="password" class="form-control" name="password" required placeholder="Please enter your password">
             </div>
-            <button type="submit" class="btn btn-success">Login</button>
+            <button type="submit" class="btn btn-success">Sign in</button>
         </form>
     </section>
 </main>
-{{ template "footer.tmpl" .}}
+{{- end }}

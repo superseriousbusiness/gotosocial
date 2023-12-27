@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package web
+package util
 
 import (
 	"html"
@@ -28,10 +28,10 @@ import (
 
 const maxOGDescriptionLength = 300
 
-// ogMeta represents supported OpenGraph Meta tags
+// OGMeta represents supported OpenGraph Meta tags
 //
 // see eg https://ogp.me/
-type ogMeta struct {
+type OGMeta struct {
 	// vanilla og tags
 	Title       string // og:title
 	Type        string // og:type
@@ -56,23 +56,23 @@ type ogMeta struct {
 	ProfileUsername string // profile:username
 }
 
-// ogBase returns an *ogMeta suitable for serving at
+// OGBase returns an *ogMeta suitable for serving at
 // the base root of an instance. It also serves as a
 // foundation for building account / status ogMeta on
 // top of.
-func ogBase(instance *apimodel.InstanceV1) *ogMeta {
+func OGBase(instance *apimodel.InstanceV1) *OGMeta {
 	var locale string
 	if len(instance.Languages) > 0 {
 		locale = instance.Languages[0]
 	}
 
-	og := &ogMeta{
+	og := &OGMeta{
 		Title:       text.SanitizeToPlaintext(instance.Title) + " - GoToSocial",
 		Type:        "website",
 		Locale:      locale,
 		URL:         instance.URI,
 		SiteName:    instance.AccountDomain,
-		Description: parseDescription(instance.ShortDescription),
+		Description: ParseDescription(instance.ShortDescription),
 
 		Image:    instance.Thumbnail,
 		ImageAlt: instance.ThumbnailDescription,
@@ -81,15 +81,15 @@ func ogBase(instance *apimodel.InstanceV1) *ogMeta {
 	return og
 }
 
-// withAccount uses the given account to build an ogMeta
+// WithAccount uses the given account to build an ogMeta
 // struct specific to that account. It's suitable for serving
 // at account profile pages.
-func (og *ogMeta) withAccount(account *apimodel.Account) *ogMeta {
-	og.Title = parseTitle(account, og.SiteName)
+func (og *OGMeta) WithAccount(account *apimodel.Account) *OGMeta {
+	og.Title = AccountTitle(account, og.SiteName)
 	og.Type = "profile"
 	og.URL = account.URL
 	if account.Note != "" {
-		og.Description = parseDescription(account.Note)
+		og.Description = ParseDescription(account.Note)
 	} else {
 		og.Description = `content="This GoToSocial user hasn't written a bio yet!"`
 	}
@@ -102,11 +102,11 @@ func (og *ogMeta) withAccount(account *apimodel.Account) *ogMeta {
 	return og
 }
 
-// withStatus uses the given status to build an ogMeta
+// WithStatus uses the given status to build an ogMeta
 // struct specific to that status. It's suitable for serving
 // at status pages.
-func (og *ogMeta) withStatus(status *apimodel.Status) *ogMeta {
-	og.Title = "Post by " + parseTitle(status.Account, og.SiteName)
+func (og *OGMeta) WithStatus(status *apimodel.Status) *OGMeta {
+	og.Title = "Post by " + AccountTitle(status.Account, og.SiteName)
 	og.Type = "article"
 	if status.Language != nil {
 		og.Locale = *status.Language
@@ -114,9 +114,9 @@ func (og *ogMeta) withStatus(status *apimodel.Status) *ogMeta {
 	og.URL = status.URL
 	switch {
 	case status.SpoilerText != "":
-		og.Description = parseDescription("CW: " + status.SpoilerText)
+		og.Description = ParseDescription("CW: " + status.SpoilerText)
 	case status.Text != "":
-		og.Description = parseDescription(status.Text)
+		og.Description = ParseDescription(status.Text)
 	default:
 		og.Description = og.Title
 	}
@@ -147,34 +147,38 @@ func (og *ogMeta) withStatus(status *apimodel.Status) *ogMeta {
 	return og
 }
 
-// parseTitle parses a page title from account and accountDomain
-func parseTitle(account *apimodel.Account, accountDomain string) string {
+// AccountTitle parses a page title from account and accountDomain
+func AccountTitle(account *apimodel.Account, accountDomain string) string {
 	user := "@" + account.Acct + "@" + accountDomain
 
 	if len(account.DisplayName) == 0 {
 		return user
 	}
 
-	return account.DisplayName + " (" + user + ")"
+	return account.DisplayName + ", " + user
 }
 
-// parseDescription returns a string description which is
+// ParseDescription returns a string description which is
 // safe to use as a template.HTMLAttr inside templates.
-func parseDescription(in string) string {
+func ParseDescription(in string) string {
 	i := text.SanitizeToPlaintext(in)
 	i = strings.ReplaceAll(i, "\n", " ")
 	i = strings.Join(strings.Fields(i), " ")
 	i = html.EscapeString(i)
 	i = strings.ReplaceAll(i, `\`, "&bsol;")
-	i = trim(i, maxOGDescriptionLength)
+	i = truncate(i, maxOGDescriptionLength)
 	return `content="` + i + `"`
 }
 
-// trim strings trim s to specified length
-func trim(s string, length int) string {
-	if len(s) < length {
+// truncate trims given string to
+// specified length (in runes).
+func truncate(s string, l int) string {
+	r := []rune(s)
+	if len(r) < l {
+		// No need
+		// to trim.
 		return s
 	}
 
-	return s[:length]
+	return string(r[:l]) + "..."
 }

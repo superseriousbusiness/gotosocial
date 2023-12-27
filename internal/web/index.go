@@ -18,33 +18,50 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (m *Module) baseHandler(c *gin.Context) {
-	// if a landingPageUser is set in the config, redirect to that user's profile
+func (m *Module) indexHandler(c *gin.Context) {
+	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
+	if errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	// Return instance we already got from the db,
+	// don't try to fetch it again when erroring.
+	instanceGet := func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
+		return instance, nil
+	}
+
+	// We only serve text/html at this endpoint.
+	if _, err := apiutil.NegotiateAccept(c, apiutil.TextHTML); err != nil {
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
+		return
+	}
+
+	// If a landingPageUser is set in the config, redirect to
+	// that user's profile instead of rendering landing/index page.
 	if landingPageUser := config.GetLandingPageUser(); landingPageUser != "" {
 		c.Redirect(http.StatusFound, "/@"+strings.ToLower(landingPageUser))
 		return
 	}
 
-	instance, err := m.processor.InstanceGetV1(c.Request.Context())
-	if err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
+	page := apiutil.WebPage{
+		Template:    "index.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance),
+		Stylesheets: []string{cssAbout, cssIndex},
+		Extra:       map[string]any{"showStrap": true},
 	}
 
-	c.HTML(http.StatusOK, "index.tmpl", gin.H{
-		"instance": instance,
-		"ogMeta":   ogBase(instance),
-		"stylesheets": []string{
-			distPathPrefix + "/index.css",
-		},
-	})
+	apiutil.TemplateWebPage(c, page)
 }

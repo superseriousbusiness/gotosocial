@@ -17,11 +17,13 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{ template "header.tmpl" .}}
-
-<main class="thread">
-	<h2 id="tag-name" tabindex="-1">#{{.tagName}}</h2>
-	<p>There's nothing here yet!</p>
+{{- with . }}
+<main>
+    <h2 id="tag-name" tabindex="-1">#{{- .tagName -}}</h2>
+    <p>There's nothing here!</p>
+    <p>
+        For privacy reasons, GoToSocial doesn't (yet) implement public web views of tag timelines.
+        To soften the blow, here's a tongue twister: "I squeeze the soft sloth often in the mothy loft" 🦥
+    </p>
 </main>
-
-{{ template "footer.tmpl" .}}
+{{- end }}
