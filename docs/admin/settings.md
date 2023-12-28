@@ -96,6 +96,68 @@ Through the 'remote' section, you can look up a link to any remote toots (provid
 
 ### Instance Settings
 
-![Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings](../assets/admin-settings.png)
+![Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings](../assets/admin-settings-instance.png)
 
-Here you can set various metadata for your instance, like the displayed name/title, thumbnail image, description (HTML accepted), and contact username and email.
+Here you can set various metadata for your instance, like the displayed name/title, thumbnail image, (short) description, and contact info.
+
+#### Instance Appearance
+
+These settings primary affect how your instance appears to others and on the web.
+
+Your **instance title** will appear at the top of every web page on your instance, and in OpenGraph meta tags, so pick something that represents the vibe of your instance.
+
+The **instance avatar** is sort of like the mascot of your instance. It will appear next to the instance title at the top of every page, and as the preview image in browser tabs, OpenGraph links, and that sort of thing.
+
+If you set an instance avatar, we highly recommend setting the **avatar image description** as well. This will provide alt text for the image you set as avatar, helping screenreader users to understand what's depicted in the image. Keep it short and sweet.
+
+#### Instance Descriptors
+
+You can use these fields to set short and full descriptions of your instance, as well as to provide terms and conditions for current and prospective users of your instance.
+
+The **short description** will be shown on the instance home page, right near the top, and in response to `/api/v1/instance` queries.
+
+It's a good idea to provide something pithy in here, to give visitors to your instance an immediate impression of what you're all about. For example:
+
+> This is an instance for enthusiasts of classic synthesizers.
+>
+> Sick beats are for life, and not just for Christmas!
+
+or:
+
+> This is a single-user instance just for me!
+>
+> Here's my profile: @your_username
+
+The **full description** will appear on your instance's /about page, and in response to `/api/v1/instance` queries.
+
+You can use this to provide info like:
+
+- your instance's history, ethos, attitude, and vibe
+- the kinds of things your instance denizens tend to post about
+- how to get an account on your instance (if it's possible at all)
+- a list of users with accounts on the instance, who want to be found more easily
+
+The **terms and conditions** box also appears on your instance's /about page, and in response to `/api/v1/instance` queries.
+
+Use it for filling in stuff like:
+
+- legal jargon (imprint, GDPR, or links thereto)
+- federation policy
+- data policy
+- account deletion/suspension policy
+
+All of the above fields accept **markdown** input, so you can write proper lists, codeblocks, horizontal rules, block quotes, or whatever you like.
+
+You can also mention accounts using the standard `@user[@domain]` format.
+
+Have a look at the [markdown cheat sheet](https://markdownguide.offshoot.io/cheat-sheet/) to see what else you can do.
+
+### Instance Contact Info
+
+In this section, you can provide visitors to your instance with a convenient way of reaching your instance admin.
+
+Links to the set contact account and/or email address will appear on the footer of every web page of your instance, on the /about page in the "contact" section, and in response to `/api/v1/instance` queries.
+
+The selected **contact user** must be an active (not suspended) admin and/or moderator on the instance.
+
+If you're on a single-user instance and you give admin privileges to your main account, you can just fill in your own username here; you don't need to make a separate admin account just for this.

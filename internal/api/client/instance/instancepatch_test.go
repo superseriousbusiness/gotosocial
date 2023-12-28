@@ -78,8 +78,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
   "uri": "http://localhost:8080",
   "account_domain": "localhost:8080",
   "title": "Example Instance",
-  "description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "description": "<p>Here's a fuller description of the GoToSocial testrig instance.</p><p>This instance is for testing purposes only. It doesn't federate at all. Go check out <a href=\"https://github.com/superseriousbusiness/gotosocial/tree/main/testrig\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/tree/main/testrig</a> and <a href=\"https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing</a></p><p>Users on this instance:</p><ul><li><span class=\"h-card\"><a href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>admin</span></a></span> (admin!).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span> (posts about turtles, we don't know why).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span> (who knows).</li></ul><p>If you need to edit the models for the testrig, you can do so at <code>internal/testmodels.go</code>.</p>",
+  "description_text": "Here's a fuller description of the GoToSocial testrig instance.\n\nThis instance is for testing purposes only. It doesn't federate at all. Go check out https://github.com/superseriousbusiness/gotosocial/tree/main/testrig and https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\n\nUsers on this instance:\n\n- @admin (admin!).\n- @1happyturtle (posts about turtles, we don't know why).\n- @the_mighty_zork (who knows).\n\nIf you need to edit the models for the testrig, you can do so at `+"`"+`internal/testmodels.go`+"`"+`.",
   "short_description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "short_description_text": "This is the GoToSocial testrig. It doesn't federate or anything.\n\nWhen the testrig is shut down, all data on it will be deleted.\n\nDon't use this in production!",
   "email": "someone@example.org",
   "version": "0.0.0-testrig",
   "languages": [
@@ -173,7 +175,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
       "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
       "text": "Do crime"
     }
-  ]
+  ],
+  "terms": "<p>This is where a list of terms and conditions might go.</p><p>For example:</p><p>If you want to sign up on this instance, you oughta know that we:</p><ol><li>Will sell your data to whoever offers.</li><li>Secure the server with password <code>password</code> wherever possible.</li></ol>",
+  "terms_text": "This is where a list of terms and conditions might go.\n\nFor example:\n\nIf you want to sign up on this instance, you oughta know that we:\n\n1. Will sell your data to whoever offers.\n2. Secure the server with password `+"`"+`password`+"`"+` wherever possible."
 }`, dst.String())
 }
 
@@ -195,8 +199,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
   "uri": "http://localhost:8080",
   "account_domain": "localhost:8080",
   "title": "Geoff's Instance",
-  "description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "description": "<p>Here's a fuller description of the GoToSocial testrig instance.</p><p>This instance is for testing purposes only. It doesn't federate at all. Go check out <a href=\"https://github.com/superseriousbusiness/gotosocial/tree/main/testrig\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/tree/main/testrig</a> and <a href=\"https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing</a></p><p>Users on this instance:</p><ul><li><span class=\"h-card\"><a href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>admin</span></a></span> (admin!).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span> (posts about turtles, we don't know why).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span> (who knows).</li></ul><p>If you need to edit the models for the testrig, you can do so at <code>internal/testmodels.go</code>.</p>",
+  "description_text": "Here's a fuller description of the GoToSocial testrig instance.\n\nThis instance is for testing purposes only. It doesn't federate at all. Go check out https://github.com/superseriousbusiness/gotosocial/tree/main/testrig and https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\n\nUsers on this instance:\n\n- @admin (admin!).\n- @1happyturtle (posts about turtles, we don't know why).\n- @the_mighty_zork (who knows).\n\nIf you need to edit the models for the testrig, you can do so at `+"`"+`internal/testmodels.go`+"`"+`.",
   "short_description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "short_description_text": "This is the GoToSocial testrig. It doesn't federate or anything.\n\nWhen the testrig is shut down, all data on it will be deleted.\n\nDon't use this in production!",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
   "languages": [
@@ -290,13 +296,15 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
       "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
       "text": "Do crime"
     }
-  ]
+  ],
+  "terms": "<p>This is where a list of terms and conditions might go.</p><p>For example:</p><p>If you want to sign up on this instance, you oughta know that we:</p><ol><li>Will sell your data to whoever offers.</li><li>Secure the server with password <code>password</code> wherever possible.</li></ol>",
+  "terms_text": "This is where a list of terms and conditions might go.\n\nFor example:\n\nIf you want to sign up on this instance, you oughta know that we:\n\n1. Will sell your data to whoever offers.\n2. Secure the server with password `+"`"+`password`+"`"+` wherever possible."
 }`, dst.String())
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch3() {
 	code, b := suite.instancePatch("", "", map[string][]string{
-		"short_description": {"<p>This is some html, which is <em>allowed</em> in short descriptions.</p>"},
+		"short_description": {"This is some html, which is <em>allowed</em> in short descriptions."},
 	})
 
 	if expectedCode := http.StatusOK; code != expectedCode {
@@ -312,8 +320,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
   "uri": "http://localhost:8080",
   "account_domain": "localhost:8080",
   "title": "GoToSocial Testrig Instance",
-  "description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "description": "<p>Here's a fuller description of the GoToSocial testrig instance.</p><p>This instance is for testing purposes only. It doesn't federate at all. Go check out <a href=\"https://github.com/superseriousbusiness/gotosocial/tree/main/testrig\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/tree/main/testrig</a> and <a href=\"https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing</a></p><p>Users on this instance:</p><ul><li><span class=\"h-card\"><a href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>admin</span></a></span> (admin!).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span> (posts about turtles, we don't know why).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span> (who knows).</li></ul><p>If you need to edit the models for the testrig, you can do so at <code>internal/testmodels.go</code>.</p>",
+  "description_text": "Here's a fuller description of the GoToSocial testrig instance.\n\nThis instance is for testing purposes only. It doesn't federate at all. Go check out https://github.com/superseriousbusiness/gotosocial/tree/main/testrig and https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\n\nUsers on this instance:\n\n- @admin (admin!).\n- @1happyturtle (posts about turtles, we don't know why).\n- @the_mighty_zork (who knows).\n\nIf you need to edit the models for the testrig, you can do so at `+"`"+`internal/testmodels.go`+"`"+`.",
   "short_description": "<p>This is some html, which is <em>allowed</em> in short descriptions.</p>",
+  "short_description_text": "This is some html, which is <em>allowed</em> in short descriptions.",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
   "languages": [
@@ -407,7 +417,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
       "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
       "text": "Do crime"
     }
-  ]
+  ],
+  "terms": "<p>This is where a list of terms and conditions might go.</p><p>For example:</p><p>If you want to sign up on this instance, you oughta know that we:</p><ol><li>Will sell your data to whoever offers.</li><li>Secure the server with password <code>password</code> wherever possible.</li></ol>",
+  "terms_text": "This is where a list of terms and conditions might go.\n\nFor example:\n\nIf you want to sign up on this instance, you oughta know that we:\n\n1. Will sell your data to whoever offers.\n2. Secure the server with password `+"`"+`password`+"`"+` wherever possible."
 }`, dst.String())
 }
 
@@ -480,8 +492,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
   "uri": "http://localhost:8080",
   "account_domain": "localhost:8080",
   "title": "GoToSocial Testrig Instance",
-  "description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "description": "<p>Here's a fuller description of the GoToSocial testrig instance.</p><p>This instance is for testing purposes only. It doesn't federate at all. Go check out <a href=\"https://github.com/superseriousbusiness/gotosocial/tree/main/testrig\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/tree/main/testrig</a> and <a href=\"https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing</a></p><p>Users on this instance:</p><ul><li><span class=\"h-card\"><a href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>admin</span></a></span> (admin!).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span> (posts about turtles, we don't know why).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span> (who knows).</li></ul><p>If you need to edit the models for the testrig, you can do so at <code>internal/testmodels.go</code>.</p>",
+  "description_text": "Here's a fuller description of the GoToSocial testrig instance.\n\nThis instance is for testing purposes only. It doesn't federate at all. Go check out https://github.com/superseriousbusiness/gotosocial/tree/main/testrig and https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\n\nUsers on this instance:\n\n- @admin (admin!).\n- @1happyturtle (posts about turtles, we don't know why).\n- @the_mighty_zork (who knows).\n\nIf you need to edit the models for the testrig, you can do so at `+"`"+`internal/testmodels.go`+"`"+`.",
   "short_description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "short_description_text": "This is the GoToSocial testrig. It doesn't federate or anything.\n\nWhen the testrig is shut down, all data on it will be deleted.\n\nDon't use this in production!",
   "email": "",
   "version": "0.0.0-testrig",
   "languages": [
@@ -575,7 +589,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
       "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
       "text": "Do crime"
     }
-  ]
+  ],
+  "terms": "<p>This is where a list of terms and conditions might go.</p><p>For example:</p><p>If you want to sign up on this instance, you oughta know that we:</p><ol><li>Will sell your data to whoever offers.</li><li>Secure the server with password <code>password</code> wherever possible.</li></ol>",
+  "terms_text": "This is where a list of terms and conditions might go.\n\nFor example:\n\nIf you want to sign up on this instance, you oughta know that we:\n\n1. Will sell your data to whoever offers.\n2. Secure the server with password `+"`"+`password`+"`"+` wherever possible."
 }`, dst.String())
 }
 
@@ -619,8 +635,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   "uri": "http://localhost:8080",
   "account_domain": "localhost:8080",
   "title": "GoToSocial Testrig Instance",
-  "description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "description": "<p>Here's a fuller description of the GoToSocial testrig instance.</p><p>This instance is for testing purposes only. It doesn't federate at all. Go check out <a href=\"https://github.com/superseriousbusiness/gotosocial/tree/main/testrig\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/tree/main/testrig</a> and <a href=\"https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing</a></p><p>Users on this instance:</p><ul><li><span class=\"h-card\"><a href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>admin</span></a></span> (admin!).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span> (posts about turtles, we don't know why).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span> (who knows).</li></ul><p>If you need to edit the models for the testrig, you can do so at <code>internal/testmodels.go</code>.</p>",
+  "description_text": "Here's a fuller description of the GoToSocial testrig instance.\n\nThis instance is for testing purposes only. It doesn't federate at all. Go check out https://github.com/superseriousbusiness/gotosocial/tree/main/testrig and https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\n\nUsers on this instance:\n\n- @admin (admin!).\n- @1happyturtle (posts about turtles, we don't know why).\n- @the_mighty_zork (who knows).\n\nIf you need to edit the models for the testrig, you can do so at `+"`"+`internal/testmodels.go`+"`"+`.",
   "short_description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "short_description_text": "This is the GoToSocial testrig. It doesn't federate or anything.\n\nWhen the testrig is shut down, all data on it will be deleted.\n\nDon't use this in production!",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
   "languages": [
@@ -716,7 +734,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
       "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
       "text": "Do crime"
     }
-  ]
+  ],
+  "terms": "<p>This is where a list of terms and conditions might go.</p><p>For example:</p><p>If you want to sign up on this instance, you oughta know that we:</p><ol><li>Will sell your data to whoever offers.</li><li>Secure the server with password <code>password</code> wherever possible.</li></ol>",
+  "terms_text": "This is where a list of terms and conditions might go.\n\nFor example:\n\nIf you want to sign up on this instance, you oughta know that we:\n\n1. Will sell your data to whoever offers.\n2. Secure the server with password `+"`"+`password`+"`"+` wherever possible."
 }`, dst.String())
 
 	// extra bonus: check the v2 model thumbnail after the patch
@@ -773,8 +793,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
   "uri": "http://localhost:8080",
   "account_domain": "localhost:8080",
   "title": "GoToSocial Testrig Instance",
-  "description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "description": "<p>Here's a fuller description of the GoToSocial testrig instance.</p><p>This instance is for testing purposes only. It doesn't federate at all. Go check out <a href=\"https://github.com/superseriousbusiness/gotosocial/tree/main/testrig\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/tree/main/testrig</a> and <a href=\"https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing</a></p><p>Users on this instance:</p><ul><li><span class=\"h-card\"><a href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>admin</span></a></span> (admin!).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span> (posts about turtles, we don't know why).</li><li><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span> (who knows).</li></ul><p>If you need to edit the models for the testrig, you can do so at <code>internal/testmodels.go</code>.</p>",
+  "description_text": "Here's a fuller description of the GoToSocial testrig instance.\n\nThis instance is for testing purposes only. It doesn't federate at all. Go check out https://github.com/superseriousbusiness/gotosocial/tree/main/testrig and https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md#testing\n\nUsers on this instance:\n\n- @admin (admin!).\n- @1happyturtle (posts about turtles, we don't know why).\n- @the_mighty_zork (who knows).\n\nIf you need to edit the models for the testrig, you can do so at `+"`"+`internal/testmodels.go`+"`"+`.",
   "short_description": "<p>This is the GoToSocial testrig. It doesn't federate or anything.</p><p>When the testrig is shut down, all data on it will be deleted.</p><p>Don't use this in production!</p>",
+  "short_description_text": "This is the GoToSocial testrig. It doesn't federate or anything.\n\nWhen the testrig is shut down, all data on it will be deleted.\n\nDon't use this in production!",
   "email": "admin@example.org",
   "version": "0.0.0-testrig",
   "languages": [
@@ -868,7 +890,9 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
       "id": "01GP3DFY9XQ1TJMZT5BGAZPXX3",
       "text": "Do crime"
     }
-  ]
+  ],
+  "terms": "<p>This is where a list of terms and conditions might go.</p><p>For example:</p><p>If you want to sign up on this instance, you oughta know that we:</p><ol><li>Will sell your data to whoever offers.</li><li>Secure the server with password <code>password</code> wherever possible.</li></ol>",
+  "terms_text": "This is where a list of terms and conditions might go.\n\nFor example:\n\nIf you want to sign up on this instance, you oughta know that we:\n\n1. Will sell your data to whoever offers.\n2. Secure the server with password `+"`"+`password`+"`"+` wherever possible."
 }`, dst.String())
 }
 

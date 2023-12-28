@@ -33,6 +33,8 @@ const { RoleContext } = require("./lib/navigation/util");
 const DomainPerms = require("./admin/domain-permissions").default;
 const DomainPermsImportExport = require("./admin/domain-permissions/import-export").default;
 
+const InstanceSettings = require("./admin/settings").default;
+
 require("./style.css");
 
 const { Sidebar, ViewRouter } = createNavigation("/settings", [
@@ -66,7 +68,7 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 			Item("Remote", { icon: "fa-cloud" }, require("./admin/emoji/remote"))
 		]),
 		Menu("Settings", { icon: "fa-sliders" }, [
-			Item("Settings", { icon: "fa-sliders", url: "" }, require("./admin/settings")),
+			Item("Settings", { icon: "fa-sliders", url: "" }, InstanceSettings),
 			Item("Rules", { icon: "fa-dot-circle-o", wildcard: true }, require("./admin/settings/rules"))
 		]),
 	])

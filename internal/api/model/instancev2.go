@@ -49,6 +49,8 @@ type InstanceV2 struct {
 	//
 	// This should be displayed on the 'about' page for an instance.
 	Description string `json:"description"`
+	// Raw (unparsed) version of description.
+	DescriptionText string `json:"description_text,omitempty"`
 	// Basic anonymous usage data for this instance.
 	Usage InstanceV2Usage `json:"usage"`
 	// An image used to represent this instance.
@@ -66,6 +68,8 @@ type InstanceV2 struct {
 	Rules []InstanceRule `json:"rules"`
 	// Terms and conditions for accounts on this instance.
 	Terms string `json:"terms,omitempty"`
+	// Raw (unparsed) version of terms.
+	TermsText string `json:"terms_text,omitempty"`
 }
 
 // Usage data for this instance.

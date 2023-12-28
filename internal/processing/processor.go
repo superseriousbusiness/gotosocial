@@ -21,6 +21,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	mm "github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
@@ -39,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
@@ -54,6 +56,13 @@ type Processor struct {
 	converter   *typeutils.Converter
 	oauthServer oauth.Server
 	state       *state.State
+
+	/*
+		Required for instance description / terms updating.
+	*/
+
+	formatter        *text.Formatter
+	parseMentionFunc gtsmodel.ParseMentionFunc
 
 	/*
 		SUB-PROCESSORS
@@ -147,9 +156,11 @@ func NewProcessor(
 	)
 
 	processor := &Processor{
-		converter:   converter,
-		oauthServer: oauthServer,
-		state:       state,
+		converter:        converter,
+		oauthServer:      oauthServer,
+		state:            state,
+		formatter:        text.NewFormatter(state.DB),
+		parseMentionFunc: parseMentionFunc,
 	}
 
 	// Instantiate sub processors.
