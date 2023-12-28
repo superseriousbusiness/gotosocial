@@ -39,7 +39,7 @@ export default function AdminSettings() {
 			DataForm={AdminSettingsForm}
 		/>
 	);
-};
+}
 
 interface AdminSettingsFormProps{
 	data: InstanceV1;
