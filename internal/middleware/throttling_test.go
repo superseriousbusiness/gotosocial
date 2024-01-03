@@ -129,7 +129,7 @@ func testThrottlingMiddleware(t *testing.T, cpuMulti int, retryAfter time.Durati
 		// Pass req through
 		// engine handler.
 		go e.ServeHTTP(rw, r)
-		time.Sleep(time.Millisecond)
+		time.Sleep(5 * time.Millisecond)
 
 		// Get http result.
 		res := rw.Result()
