@@ -93,7 +93,7 @@ module.exports = function NewEmojiForm() {
 			<form onSubmit={submitForm} className="form-flex">
 				<FileInput
 					field={image}
-					accept="image/png,image/gif"
+					accept="image/png,image/gif,image/webp"
 				/>
 
 				<TextInput

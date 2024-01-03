@@ -303,6 +303,67 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
 	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
 }
 
+func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/nb-flag-original.webp")
+		if err != nil {
+			panic(err)
+		}
+		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+	}
+
+	emojiID := "01GDQ9G782X42BAMFASKP64343"
+	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
+
+	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "nb-flag", emojiID, emojiURI, nil, false)
+	suite.NoError(err)
+
+	// do a blocking call to fetch the emoji
+	emoji, err := processingEmoji.LoadEmoji(ctx)
+	suite.NoError(err)
+	suite.NotNil(emoji)
+
+	// make sure it's got the stuff set on it that we expect
+	suite.Equal(emojiID, emoji.ID)
+
+	// file meta should be correctly derived from the image
+	suite.Equal("image/webp", emoji.ImageContentType)
+	suite.Equal("image/png", emoji.ImageStaticContentType)
+	suite.Equal(294, emoji.ImageFileSize)
+
+	// now make sure the emoji is in the database
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	suite.NoError(err)
+	suite.NotNil(dbEmoji)
+
+	// make sure the processed emoji file is in storage
+	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytes)
+
+	// load the processed bytes from our test folder, to compare
+	processedFullBytesExpected, err := os.ReadFile("./test/nb-flag-original.webp")
+	suite.NoError(err)
+	suite.NotEmpty(processedFullBytesExpected)
+
+	// the bytes in storage should be what we expected
+	suite.Equal(processedFullBytesExpected, processedFullBytes)
+
+	// now do the same for the thumbnail and make sure it's what we expected
+	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytes)
+
+	processedStaticBytesExpected, err := os.ReadFile("./test/nb-flag-static.png")
+	suite.NoError(err)
+	suite.NotEmpty(processedStaticBytesExpected)
+
+	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+}
+
 func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	ctx := context.Background()
 
