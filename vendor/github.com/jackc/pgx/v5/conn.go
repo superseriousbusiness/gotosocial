@@ -338,17 +338,26 @@ func (c *Conn) Prepare(ctx context.Context, name, sql string) (sd *pgconn.Statem
 	return sd, nil
 }
 
-// Deallocate releases a prepared statement.
+// Deallocate releases a prepared statement. Calling Deallocate on a non-existent prepared statement will succeed.
 func (c *Conn) Deallocate(ctx context.Context, name string) error {
 	var psName string
-	if sd, ok := c.preparedStatements[name]; ok {
-		delete(c.preparedStatements, name)
+	sd := c.preparedStatements[name]
+	if sd != nil {
 		psName = sd.Name
 	} else {
 		psName = name
 	}
-	_, err := c.pgConn.Exec(ctx, "deallocate "+quoteIdentifier(psName)).ReadAll()
-	return err
+
+	err := c.pgConn.Deallocate(ctx, psName)
+	if err != nil {
+		return err
+	}
+
+	if sd != nil {
+		delete(c.preparedStatements, name)
+	}
+
+	return nil
 }
 
 // DeallocateAll releases all previously prepared statements from the server and client, where it also resets the statement and description cache.
@@ -466,7 +475,7 @@ optionLoop:
 	if queryRewriter != nil {
 		sql, arguments, err = queryRewriter.RewriteQuery(ctx, c, sql, arguments)
 		if err != nil {
-			return pgconn.CommandTag{}, fmt.Errorf("rewrite query failed: %v", err)
+			return pgconn.CommandTag{}, fmt.Errorf("rewrite query failed: %w", err)
 		}
 	}
 
@@ -733,7 +742,7 @@ optionLoop:
 		sql, args, err = queryRewriter.RewriteQuery(ctx, c, sql, args)
 		if err != nil {
 			rows := c.getRows(ctx, originalSQL, originalArgs)
-			err = fmt.Errorf("rewrite query failed: %v", err)
+			err = fmt.Errorf("rewrite query failed: %w", err)
 			rows.fatal(err)
 			return rows, err
 		}
@@ -893,8 +902,6 @@ func (c *Conn) SendBatch(ctx context.Context, b *Batch) (br BatchResults) {
 		return &batchResults{ctx: ctx, conn: c, err: err}
 	}
 
-	mode := c.config.DefaultQueryExecMode
-
 	for _, bi := range b.queuedQueries {
 		var queryRewriter QueryRewriter
 		sql := bi.query
@@ -902,6 +909,7 @@ func (c *Conn) SendBatch(ctx context.Context, b *Batch) (br BatchResults) {
 
 	optionLoop:
 		for len(arguments) > 0 {
+			// Update Batch.Queue function comment when additional options are implemented
 			switch arg := arguments[0].(type) {
 			case QueryRewriter:
 				queryRewriter = arg
@@ -915,7 +923,7 @@ func (c *Conn) SendBatch(ctx context.Context, b *Batch) (br BatchResults) {
 			var err error
 			sql, arguments, err = queryRewriter.RewriteQuery(ctx, c, sql, arguments)
 			if err != nil {
-				return &batchResults{ctx: ctx, conn: c, err: fmt.Errorf("rewrite query failed: %v", err)}
+				return &batchResults{ctx: ctx, conn: c, err: fmt.Errorf("rewrite query failed: %w", err)}
 			}
 		}
 
@@ -923,6 +931,8 @@ func (c *Conn) SendBatch(ctx context.Context, b *Batch) (br BatchResults) {
 		bi.arguments = arguments
 	}
 
+	// TODO: changing mode per batch? Update Batch.Queue function comment when implemented
+	mode := c.config.DefaultQueryExecMode
 	if mode == QueryExecModeSimpleProtocol {
 		return c.sendBatchQueryExecModeSimpleProtocol(ctx, b)
 	}

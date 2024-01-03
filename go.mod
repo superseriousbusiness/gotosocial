@@ -30,14 +30,14 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-fed/httpsig v1.1.0
 	github.com/go-playground/form/v4 v4.2.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/gorilla/feeds v1.1.2
 	github.com/gorilla/websocket v1.5.1
 	github.com/h2non/filetype v1.1.3
-	github.com/jackc/pgx/v5 v5.5.0
+	github.com/jackc/pgx/v5 v5.5.1
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/miekg/dns v1.1.57
-	github.com/minio/minio-go/v7 v7.0.65
+	github.com/minio/minio-go/v7 v7.0.66
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.17.0
@@ -65,7 +65,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.21.0
 	go.opentelemetry.io/otel/trace v1.21.0
 	go.uber.org/automaxprocs v1.5.3
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 	golang.org/x/image v0.14.0
 	golang.org/x/net v0.19.0
@@ -73,7 +73,7 @@ require (
 	golang.org/x/text v0.14.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.27.0
+	modernc.org/sqlite v1.28.0
 	mvdan.cc/xurls/v2 v2.5.0
 )
 
@@ -132,8 +132,8 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.17.2 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
+	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect

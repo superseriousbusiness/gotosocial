@@ -813,6 +813,9 @@ type StatementDescription struct {
 
 // Prepare creates a prepared statement. If the name is empty, the anonymous prepared statement will be used. This
 // allows Prepare to also to describe statements without creating a server-side prepared statement.
+//
+// Prepare does not send a PREPARE statement to the server. It uses the PostgreSQL Parse and Describe protocol messages
+// directly.
 func (pgConn *PgConn) Prepare(ctx context.Context, name, sql string, paramOIDs []uint32) (*StatementDescription, error) {
 	if err := pgConn.lock(); err != nil {
 		return nil, err
@@ -867,6 +870,52 @@ readloop:
 		return nil, parseErr
 	}
 	return psd, nil
+}
+
+// Deallocate deallocates a prepared statement.
+//
+// Deallocate does not send a DEALLOCATE statement to the server. It uses the PostgreSQL Close protocol message
+// directly. This has slightly different behavior than executing DEALLOCATE statement.
+//   - Deallocate can succeed in an aborted transaction.
+//   - Deallocating a non-existent prepared statement is not an error.
+func (pgConn *PgConn) Deallocate(ctx context.Context, name string) error {
+	if err := pgConn.lock(); err != nil {
+		return err
+	}
+	defer pgConn.unlock()
+
+	if ctx != context.Background() {
+		select {
+		case <-ctx.Done():
+			return newContextAlreadyDoneError(ctx)
+		default:
+		}
+		pgConn.contextWatcher.Watch(ctx)
+		defer pgConn.contextWatcher.Unwatch()
+	}
+
+	pgConn.frontend.SendClose(&pgproto3.Close{ObjectType: 'S', Name: name})
+	pgConn.frontend.SendSync(&pgproto3.Sync{})
+	err := pgConn.flushWithPotentialWriteReadDeadlock()
+	if err != nil {
+		pgConn.asyncClose()
+		return err
+	}
+
+	for {
+		msg, err := pgConn.receiveMessage()
+		if err != nil {
+			pgConn.asyncClose()
+			return normalizeTimeoutError(ctx, err)
+		}
+
+		switch msg := msg.(type) {
+		case *pgproto3.ErrorResponse:
+			return ErrorResponseToPgError(msg)
+		case *pgproto3.ReadyForQuery:
+			return nil
+		}
+	}
 }
 
 // ErrorResponseToPgError converts a wire protocol error message to a *PgError.

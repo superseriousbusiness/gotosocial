@@ -1844,17 +1844,32 @@ func (b *Backup) Finish() error {
 	}
 }
 
+type ExecQuerierContext interface {
+	driver.ExecerContext
+	driver.QueryerContext
+}
+
+// ConnectionHookFn function type for a connection hook on the Driver. Connection
+// hooks are called after the connection has been set up.
+type ConnectionHookFn func(
+	conn ExecQuerierContext,
+	dsn string,
+) error
+
 // Driver implements database/sql/driver.Driver.
 type Driver struct {
 	// user defined functions that are added to every new connection on Open
 	udfs map[string]*userDefinedFunction
 	// collations that are added to every new connection on Open
 	collations map[string]*collation
+	// connection hooks are called after a connection is opened
+	connectionHooks []ConnectionHookFn
 }
 
 var d = &Driver{
-	udfs:       make(map[string]*userDefinedFunction, 0),
-	collations: make(map[string]*collation, 0),
+	udfs:            make(map[string]*userDefinedFunction, 0),
+	collations:      make(map[string]*collation, 0),
+	connectionHooks: make([]ConnectionHookFn, 0),
 }
 
 func newDriver() *Driver { return d }
@@ -1907,6 +1922,12 @@ func (d *Driver) Open(name string) (conn driver.Conn, err error) {
 		if err = c.createCollationInternal(coll); err != nil {
 			c.Close()
 			return nil, err
+		}
+	}
+	for _, connHookFn := range d.connectionHooks {
+		if err = connHookFn(c, name); err != nil {
+			c.Close()
+			return nil, fmt.Errorf("connection hook: %w", err)
 		}
 	}
 	return c, nil
@@ -2061,6 +2082,18 @@ func registerFunction(
 	d.udfs[zFuncName] = udf
 
 	return nil
+}
+
+// RegisterConnectionHook registers a function to be called after each connection
+// is opened. This is called after all the connection has been set up.
+func (d *Driver) RegisterConnectionHook(fn ConnectionHookFn) {
+	d.connectionHooks = append(d.connectionHooks, fn)
+}
+
+// RegisterConnectionHook registers a function to be called after each connection
+// is opened. This is called after all the connection has been set up.
+func RegisterConnectionHook(fn ConnectionHookFn) {
+	d.RegisterConnectionHook(fn)
 }
 
 func origin(skip int) string {
