@@ -44,7 +44,7 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 		return nil, gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 
 	// Poll has already closed, no more voting!
-	case !poll.ClosedAt.IsZero():
+	case poll.Closed():
 		const text = "poll already closed"
 		return nil, gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 
