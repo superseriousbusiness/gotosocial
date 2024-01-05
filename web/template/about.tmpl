@@ -21,7 +21,15 @@
 {{- if .instance.Description }}
 {{ .instance.Description | noescape }}
 {{- else }}
-<p>No description has yet been set for this instance.<p>
+<p>No description has yet been set for this instance.</p>
+{{- end }}
+{{- end -}}
+
+{{- define "termsAndConditions" -}}
+{{- if .instance.Terms }}
+{{ .instance.Terms | noescape }}
+{{- else }}
+<p>No terms and conditions have yet been set for this instance.</p>
 {{- end }}
 {{- end -}}
 
@@ -60,90 +68,124 @@ Polls can have up to&nbsp;
 
 {{- with . }}
 <main class="about">
+    <nav class="about-section" aria-labelledby="toc">
+        <h3 id="toc">Table of Contents</h3>
+        <div class="about-section-contents">
+            <ol>
+                <li><a href="#about">About {{ .instance.Title -}}</a></li>
+                <li><a href="#contact">Contact</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#languages">Languages</a></li>
+                <li><a href="#rules">Rules</a></li>
+                <li><a href="#terms">Terms and Conditions</a></li>
+                <li><a href="#moderated-servers">Moderated Servers</a></li>
+            </ol>
+        </div>
+    </nav>
     <section class="about-section" role="region" aria-labelledby="about">
         <h3 id="about">About {{ .instance.Title -}}</h3>
-        {{- with . }}
-        {{- include "description" . | indent 2 }}
-        {{- end }}
+        <div class="about-section-contents">
+            {{- with . }}
+            {{- include "description" . | indent 3 }}
+            {{- end }}
+        </div>
     </section>
     <section class="about-section" role="region" aria-labelledby="contact">
         <h3 id="contact">Admin Contact</h3>
-        {{- if .instance.ContactAccount }}
-        <a href="{{- .instance.ContactAccount.URL -}}" class="account-card">
-            <img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt=""/>
-            <h3>
-                {{- if .instance.ContactAccount.DisplayName -}}
-                {{- emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) -}}
-                {{- else -}}
-                {{- .instance.ContactAccount.Username -}}
-                {{- end -}}
-            </h3>
-            <span>@{{- .instance.ContactAccount.Username -}}</span>
-        </a>
-        {{- else }}
-        <p>This instance has not yet set a contact account.</p>
-        {{- end }}
-        {{- if .instance.Email }}
-        <p>Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a></p>
-        {{- else }}
-        <p>This instance has not yet set a contact email address.</p>
-        {{- end }}
-    </section>
-    <section class="about-section" role="region" aria-labelledby="languages">
-        <h3 id="languages">Languages</h3>
-        {{- if .languages }}
-        <p>This instance prefers the following languages:</p>
-        <ol>
-            {{- range .languages }}
-            <li>{{- . -}}</li>
+        <div class="about-section-contents">
+            {{- if .instance.ContactAccount }}
+            <a href="{{- .instance.ContactAccount.URL -}}" class="account-card">
+                <img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt=""/>
+                <h3>
+                    {{- if .instance.ContactAccount.DisplayName -}}
+                    {{- emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) -}}
+                    {{- else -}}
+                    {{- .instance.ContactAccount.Username -}}
+                    {{- end -}}
+                </h3>
+                <span>@{{- .instance.ContactAccount.Username -}}</span>
+            </a>
+            {{- else }}
+            <p>This instance has not yet set a contact account.</p>
             {{- end }}
-        </ol>
-        {{- else }}
-        <p>This instance does not have any preferred languages.</p> 
-        {{- end }}
-    </section>
-    <section class="about-section" role="region" aria-labelledby="rules">
-        <h3 id="rules">Instance Rules</h3>
-        <p>This instance has the following rules:</p>
-        {{- if .instance.Rules }}
-        <ol>
-            {{- range .instance.Rules }}
-            <li>{{- .Text -}}</li>
+            {{- if .instance.Email }}
+            <p>Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a></p>
+            {{- else }}
+            <p>This instance has not yet set a contact email address.</p>
             {{- end }}
-        </ol>
-        {{- else }}
-        <p>This instance has not yet set any rules.</p>
-        {{- end }}
+        </div>
     </section>
     <section class="about-section" role="region" aria-labelledby="features">
         <h3 id="features">Instance Features</h3>
-        <ul>
-            <li>{{- template "registrationLimits" . -}}</li>
-            <li>{{- template "customCSSLimits" . -}}</li>
-            <li>{{- template "statusLimits" . -}}</li>
-            <li>{{- template "pollLimits" . -}}</li>
-        </ul>
+        <div class="about-section-contents">
+            <ul>
+                <li>{{- template "registrationLimits" . -}}</li>
+                <li>{{- template "customCSSLimits" . -}}</li>
+                <li>{{- template "statusLimits" . -}}</li>
+                <li>{{- template "pollLimits" . -}}</li>
+            </ul>
+        </div>
+    </section>
+    <section class="about-section" role="region" aria-labelledby="languages">
+        <h3 id="languages">Languages</h3>
+        <div class="about-section-contents">
+            {{- if .languages }}
+            <p>This instance prefers the following languages:</p>
+            <ol>
+                {{- range .languages }}
+                <li>{{- . -}}</li>
+                {{- end }}
+            </ol>
+            {{- else }}
+            <p>This instance does not have any preferred languages.</p> 
+            {{- end }}
+        </div>
+    </section>
+    <section class="about-section" role="region" aria-labelledby="rules">
+        <h3 id="rules">Instance Rules</h3>
+        <div class="about-section-contents">
+            <p>This instance has the following rules:</p>
+            {{- if .instance.Rules }}
+            <ol>
+                {{- range .instance.Rules }}
+                <li>{{- .Text -}}</li>
+                {{- end }}
+            </ol>
+            {{- else }}
+            <p>This instance has not yet set any rules.</p>
+            {{- end }}
+        </div>
+    </section>
+    <section class="about-section" role="region" aria-labelledby="terms">
+        <h3 id="terms">Terms and Conditions</h3>
+        <div class="about-section-contents">
+            {{- with . }}
+            {{- include "termsAndConditions" . | indent 3 }}
+            {{- end }}
+        </div>
     </section>
     <section class="about-section" role="region" aria-labelledby="moderated-servers">
         <h3 id="moderated-servers">Moderated servers</h3>
-        <p>
-            ActivityPub instances federate with other instances by exchanging data with them over the network.
-            Exchanged data includes things like accounts, statuses, likes, boosts, and media attachments.
-            This exchange of data can prevented for instances on specific domains via a domain block created
-            by an instance admin. When an instance is domain blocked by another instance:
-        </p>
-        <ul>
-            <li>Any existing data from the blocked instance is deleted from the storage of the instance doing the blocking.</li>
-            <li>Interaction between the two instances is cut off in both directions; neither instance can interact with the other.</li>
-            <li>No new data from the blocked instance will be created on the instance that blocks it.</li>
-        </ul>
-        <p>
-            {{- if .blocklistExposed }}
-            <a href="/about/suspended">View the list of domains blocked by this instance</a>
-            {{- else }}
-            This instance does not publically share their list of blocked domains.
-            {{- end }}
-        </p>
+        <div class="about-section-contents">
+            <p>
+                ActivityPub instances federate with other instances by exchanging data with them over the network.
+                Exchanged data includes things like accounts, statuses, likes, boosts, and media attachments.
+                This exchange of data can prevented for instances on specific domains via a domain block created
+                by an instance admin. When an instance is domain blocked by another instance:
+            </p>
+            <ul>
+                <li>Any existing data from the blocked instance is deleted from the storage of the instance doing the blocking.</li>
+                <li>Interaction between the two instances is cut off in both directions; neither instance can interact with the other.</li>
+                <li>No new data from the blocked instance will be created on the instance that blocks it.</li>
+            </ul>
+            <p>
+                {{- if .blocklistExposed }}
+                <a href="/about/suspended">View the list of domains blocked by this instance</a>
+                {{- else }}
+                This instance does not publically share their list of blocked domains.
+                {{- end }}
+            </p>
+        </div>
     </section>
 </main>
 {{- end }}

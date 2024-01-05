@@ -18,24 +18,28 @@
 */
 
 export interface InstanceV1 {
-    uri:               string;
-    account_domain:    string;
-    title:             string;
-    description:       string;
-    short_description: string;
-    email:             string;
-    version:           string;
-    languages:         any[]; // TODO: define this
-    registrations:     boolean;
-    approval_required: boolean;
-    invites_enabled:   boolean;
-    configuration:     InstanceConfiguration;
-    urls:              InstanceUrls;
-    stats:             InstanceStats;
-    thumbnail:         string;
-    contact_account:   Object; // TODO: define this.
-    max_toot_chars:    number;
-    rules:             any[]; // TODO: define this
+    uri:                    string;
+    account_domain:         string;
+    title:                  string;
+    description:            string;
+    description_text?:       string;
+    short_description:      string;
+    short_description_text?: string;
+    email:                  string;
+    version:                string;
+    languages:              any[]; // TODO: define this
+    registrations:          boolean;
+    approval_required:      boolean;
+    invites_enabled:        boolean;
+    configuration:          InstanceConfiguration;
+    urls:                   InstanceUrls;
+    stats:                  InstanceStats;
+    thumbnail:              string;
+    contact_account:        Object; // TODO: define this.
+    max_toot_chars:         number;
+    rules:                  any[]; // TODO: define this
+    terms?:                 string;
+    terms_text?:             string;
 }
 
 export interface InstanceConfiguration {

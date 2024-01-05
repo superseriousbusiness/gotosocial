@@ -19,7 +19,6 @@
 @import "photoswipe/dist/photoswipe.css";
 @import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
 @import "plyr/dist/plyr.css";
-@import "./prism.css";
 
 main {
 	background: transparent;
@@ -192,68 +191,6 @@ main {
 				margin: 0;
 				font-size: 1rem;
 				line-height: initial;
-			}
-
-			pre, code {
-				background-color: $gray2;
-			}
-
-			/*
-				Just code on its own inside status
-				content, ie, `here is some code`.
-			*/
-			code {
-				padding: 0.25rem;
-				border-radius: $br-inner;
-				white-space: pre-wrap;
-			}
-
-			/*
-				Restyle Prism code highlighting toolbar
-				plugin buttons to our own button style. 
-			*/
-			.code-toolbar .toolbar {
-				margin-right: 0.5rem;
-				display: flex;
-				gap: 0.25rem;
-
-				.toolbar-item {
-					span, button {
-						color: $button-fg;
-						background: $button-bg;
-						font-weight: bold;
-					}
-
-					.copy-to-clipboard-button, span {
-						box-shadow: $boxshadow;
-					}
-
-					.copy-to-clipboard-button:hover, .copy-to-clipboard-button:hover span {
-						background: $button-hover-bg;
-					}
-				}
-			}
-
-			pre, pre[class*="language-"] {
-				border-radius: $br;
-				padding: 0.5rem;
-				white-space: pre;
-				overflow-x: auto;
-
-				/* 
-					Code inside a pre block, ie.,
-					
-					```
-					here is some code
-					```
-				*/
-				code {
-					width: 100%;
-					padding: 0;
-					white-space: pre;
-					overflow-x: auto;
-					-webkit-overflow-scrolling: touch;
-				}
 			}
 
 			img {

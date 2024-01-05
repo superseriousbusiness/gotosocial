@@ -33,15 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (p *Processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
-	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
-	if err != nil {
-		return nil, err
-	}
-
-	return instance, nil
-}
-
 func (p *Processor) InstanceGetV1(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode) {
 	i, err := p.getThisInstance(ctx)
 	if err != nil {
@@ -146,67 +137,55 @@ func (p *Processor) InstanceGetRules(ctx context.Context) ([]apimodel.InstanceRu
 }
 
 func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
-	// fetch the instance entry from the db for processing
-	host := config.GetHost()
-
-	instance, err := p.state.DB.GetInstance(ctx, host)
+	// Fetch this instance from the db for processing.
+	instance, err := p.getThisInstance(ctx)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance %s: %s", host, err))
+		err = fmt.Errorf("db error fetching instance: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// fetch the instance account from the db for processing
-	ia, err := p.state.DB.GetInstanceAccount(ctx, "")
+	// Fetch this instance account from the db for processing.
+	instanceAcc, err := p.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance account %s: %s", host, err))
+		err = fmt.Errorf("db error fetching instance account: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	updatingColumns := []string{}
+	// Columns to update
+	// in the database.
+	var columns []string
 
-	// validate & update site title if it's set on the form
+	// Validate & update site
+	// title if set on the form.
 	if form.Title != nil {
-		if err := validate.SiteTitle(*form.Title); err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("site title invalid: %s", err))
+		title := *form.Title
+		if err := validate.SiteTitle(title); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		updatingColumns = append(updatingColumns, "title")
-		instance.Title = text.SanitizeToPlaintext(*form.Title) // don't allow html in site title
+
+		// Don't allow html in site title.
+		instance.Title = text.SanitizeToPlaintext(title)
+		columns = append(columns, "title")
 	}
 
-	// validate & update site contact account if it's set on the form
+	// Validate & update site contact
+	// account if set on the form.
+	//
+	// Empty username unsets contact.
 	if form.ContactUsername != nil {
-		// make sure the account with the given username exists in the db
-		contactAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, *form.ContactUsername, "")
+		contactAccountID, err := p.contactAccountIDForUsername(ctx, *form.ContactUsername)
 		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("account with username %s not retrievable", *form.ContactUsername))
-		}
-		// make sure it has a user associated with it
-		contactUser, err := p.state.DB.GetUserByAccountID(ctx, contactAccount.ID)
-		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, fmt.Sprintf("user for account with username %s not retrievable", *form.ContactUsername))
-		}
-		// suspended accounts cannot be contact accounts
-		if !contactAccount.SuspendedAt.IsZero() {
-			err := fmt.Errorf("selected contact account %s is suspended", contactAccount.Username)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		// unconfirmed or unapproved users cannot be contacts
-		if contactUser.ConfirmedAt.IsZero() {
-			err := fmt.Errorf("user of selected contact account %s is not confirmed", contactAccount.Username)
-			return nil, gtserror.NewErrorBadRequest(err, err.Error())
-		}
-		if !*contactUser.Approved {
-			err := fmt.Errorf("user of selected contact account %s is not approved", contactAccount.Username)
-			return nil, gtserror.NewErrorBadRequest(err, err.Error())
-		}
-		// contact account user must be admin or moderator otherwise what's the point of contacting them
-		if !*contactUser.Admin && !*contactUser.Moderator {
-			err := fmt.Errorf("user of selected contact account %s is neither admin nor moderator", contactAccount.Username)
-			return nil, gtserror.NewErrorBadRequest(err, err.Error())
-		}
-		updatingColumns = append(updatingColumns, "contact_account_id")
-		instance.ContactAccountID = contactAccount.ID
+
+		columns = append(columns, "contact_account_id")
+		instance.ContactAccountID = contactAccountID
 	}
 
-	// validate & update site contact email if it's set on the form
+	// Validate & update contact
+	// email if set on the form.
+	//
+	// Empty email unsets contact.
 	if form.ContactEmail != nil {
 		contactEmail := *form.ContactEmail
 		if contactEmail != "" {
@@ -214,87 +193,162 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 		}
-		updatingColumns = append(updatingColumns, "contact_email")
+
+		columns = append(columns, "contact_email")
 		instance.ContactEmail = contactEmail
 	}
 
-	// validate & update site short description if it's set on the form
+	// Validate & update site short
+	// description if set on the form.
 	if form.ShortDescription != nil {
-		if err := validate.SiteShortDescription(*form.ShortDescription); err != nil {
+		shortDescription := *form.ShortDescription
+		if err := validate.SiteShortDescription(shortDescription); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		updatingColumns = append(updatingColumns, "short_description")
-		instance.ShortDescription = text.SanitizeToHTML(*form.ShortDescription) // html is OK in site description, but we should sanitize it
+
+		// Parse description as Markdown, keep
+		// the raw version for later editing.
+		instance.ShortDescriptionText = shortDescription
+		instance.ShortDescription = p.formatter.FromMarkdown(ctx, p.parseMentionFunc, instanceAcc.ID, "", shortDescription).HTML
+		columns = append(columns, []string{"short_description", "short_description_text"}...)
 	}
 
 	// validate & update site description if it's set on the form
 	if form.Description != nil {
-		if err := validate.SiteDescription(*form.Description); err != nil {
+		description := *form.Description
+		if err := validate.SiteDescription(description); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		updatingColumns = append(updatingColumns, "description")
-		instance.Description = text.SanitizeToHTML(*form.Description) // html is OK in site description, but we should sanitize it
+
+		// Parse description as Markdown, keep
+		// the raw version for later editing.
+		instance.DescriptionText = description
+		instance.Description = p.formatter.FromMarkdown(ctx, p.parseMentionFunc, instanceAcc.ID, "", description).HTML
+		columns = append(columns, []string{"description", "description_text"}...)
 	}
 
-	// validate & update site terms if it's set on the form
+	// Validate & update site
+	// terms if set on the form.
 	if form.Terms != nil {
-		if err := validate.SiteTerms(*form.Terms); err != nil {
+		terms := *form.Terms
+		if err := validate.SiteTerms(terms); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		updatingColumns = append(updatingColumns, "terms")
-		instance.Terms = text.SanitizeToHTML(*form.Terms) // html is OK in site terms, but we should sanitize it
+
+		// Parse terms as Markdown, keep
+		// the raw version for later editing.
+		instance.TermsText = terms
+		instance.Terms = p.formatter.FromMarkdown(ctx, p.parseMentionFunc, "", "", terms).HTML
+		columns = append(columns, []string{"terms", "terms_text"}...)
 	}
 
 	var updateInstanceAccount bool
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		// process instance avatar image + description
-		avatarInfo, err := p.account.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, ia.ID)
+		// Process instance avatar image + description.
+		avatarInfo, err := p.account.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, instanceAcc.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
 		}
-		ia.AvatarMediaAttachmentID = avatarInfo.ID
-		ia.AvatarMediaAttachment = avatarInfo
+		instanceAcc.AvatarMediaAttachmentID = avatarInfo.ID
+		instanceAcc.AvatarMediaAttachment = avatarInfo
 		updateInstanceAccount = true
-	} else if form.AvatarDescription != nil && ia.AvatarMediaAttachment != nil {
-		// process just the description for the existing avatar
-		ia.AvatarMediaAttachment.Description = *form.AvatarDescription
-		if err := p.state.DB.UpdateAttachment(ctx, ia.AvatarMediaAttachment, "description"); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance avatar description: %s", err))
+	} else if form.AvatarDescription != nil && instanceAcc.AvatarMediaAttachment != nil {
+		// Process just the description for the existing avatar.
+		instanceAcc.AvatarMediaAttachment.Description = *form.AvatarDescription
+		if err := p.state.DB.UpdateAttachment(ctx, instanceAcc.AvatarMediaAttachment, "description"); err != nil {
+			err = fmt.Errorf("db error updating instance avatar description: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
 		// process instance header image
-		headerInfo, err := p.account.UpdateHeader(ctx, form.Header, nil, ia.ID)
+		headerInfo, err := p.account.UpdateHeader(ctx, form.Header, nil, instanceAcc.ID)
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
 		}
-		ia.HeaderMediaAttachmentID = headerInfo.ID
-		ia.HeaderMediaAttachment = headerInfo
+		instanceAcc.HeaderMediaAttachmentID = headerInfo.ID
+		instanceAcc.HeaderMediaAttachment = headerInfo
 		updateInstanceAccount = true
 	}
 
 	if updateInstanceAccount {
-		// if either avatar or header is updated, we need
-		// to update the instance account that stores them
-		if err := p.state.DB.UpdateAccount(ctx, ia); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance account: %s", err))
+		// If either avatar or header is updated, we need
+		// to update the instance account that stores them.
+		if err := p.state.DB.UpdateAccount(ctx, instanceAcc); err != nil {
+			err = fmt.Errorf("db error updating instance account: %w", err)
+			return nil, gtserror.NewErrorInternalError(err, err.Error())
 		}
 	}
 
-	if len(updatingColumns) != 0 {
-		if err := p.state.DB.UpdateInstance(ctx, instance, updatingColumns...); err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error updating instance %s: %s", host, err))
+	if len(columns) != 0 {
+		if err := p.state.DB.UpdateInstance(ctx, instance, columns...); err != nil {
+			err = fmt.Errorf("db error updating instance: %w", err)
+			return nil, gtserror.NewErrorInternalError(err, err.Error())
 		}
 	}
 
-	ai, err := p.converter.InstanceToAPIV1Instance(ctx, instance)
+	return p.InstanceGetV1(ctx)
+}
+
+func (p *Processor) getThisInstance(ctx context.Context) (*gtsmodel.Instance, error) {
+	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting instance to api representation: %s", err))
+		return nil, err
 	}
 
-	return ai, nil
+	return instance, nil
+}
+
+func (p *Processor) contactAccountIDForUsername(ctx context.Context, username string) (string, error) {
+	if username == "" {
+		// Easy: unset
+		// contact account.
+		return "", nil
+	}
+
+	// Make sure local account with the given username exists in the db.
+	contactAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, "")
+	if err != nil {
+		err = fmt.Errorf("db error getting selected contact account with username %s: %w", username, err)
+		return "", err
+	}
+
+	// Make sure account corresponds to a user.
+	contactUser, err := p.state.DB.GetUserByAccountID(ctx, contactAccount.ID)
+	if err != nil {
+		err = fmt.Errorf("db error getting user for selected contact account %s: %w", username, err)
+		return "", err
+	}
+
+	// Ensure account/user is:
+	//
+	// - confirmed and approved
+	// - not suspended
+	// - an admin or a moderator
+	if contactUser.ConfirmedAt.IsZero() {
+		err := fmt.Errorf("user of selected contact account %s is not confirmed", contactAccount.Username)
+		return "", err
+	}
+
+	if !*contactUser.Approved {
+		err := fmt.Errorf("user of selected contact account %s is not approved", contactAccount.Username)
+		return "", err
+	}
+
+	if !contactAccount.SuspendedAt.IsZero() {
+		err := fmt.Errorf("selected contact account %s is suspended", contactAccount.Username)
+		return "", err
+	}
+
+	if !*contactUser.Admin && !*contactUser.Moderator {
+		err := fmt.Errorf("user of selected contact account %s is neither admin nor moderator", contactAccount.Username)
+		return "", err
+	}
+
+	// All good!
+	return contactAccount.ID, nil
 }
 
 func obfuscate(domain string) string {

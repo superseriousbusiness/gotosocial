@@ -31,8 +31,11 @@ type Instance struct {
 	DomainBlockID          string       `bun:"type:CHAR(26),nullzero"`                                      // ID of any existing domain block for this instance in the database
 	DomainBlock            *DomainBlock `bun:"rel:belongs-to"`                                              // Domain block corresponding to domainBlockID
 	ShortDescription       string       `bun:""`                                                            // Short description of this instance
-	Description            string       `bun:""`                                                            // Longer description of this instance
-	Terms                  string       `bun:""`                                                            // Terms and conditions of this instance
+	ShortDescriptionText   string       `bun:""`                                                            // Raw text version of short description (before parsing).
+	Description            string       `bun:""`                                                            // Longer description of this instance.
+	DescriptionText        string       `bun:""`                                                            // Raw text version of long description (before parsing).
+	Terms                  string       `bun:""`                                                            // Terms and conditions of this instance.
+	TermsText              string       `bun:""`                                                            // Raw text version of terms (before parsing).
 	ContactEmail           string       `bun:""`                                                            // Contact email address for this instance
 	ContactAccountUsername string       `bun:",nullzero"`                                                   // Username of the contact account for this instance
 	ContactAccountID       string       `bun:"type:CHAR(26),nullzero"`                                      // Contact account ID in the database for this instance
