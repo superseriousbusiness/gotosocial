@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"slices"
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-errors/v2"
@@ -57,7 +58,6 @@ func (p *ProcessingEmoji) EmojiID() string {
 func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error) {
 	// Attempt to load synchronously.
 	emoji, done, err := p.load(ctx)
-
 	if err == nil {
 		// No issue, return media.
 		return emoji, nil
@@ -209,12 +209,8 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		return gtserror.Newf("error parsing file type: %w", err)
 	}
 
-	switch info.Extension {
-	// only supported emoji types
-	case "gif", "png":
-
-	// unhandled
-	default:
+	// Ensure supported emoji img type.
+	if !slices.Contains(SupportedEmojiMIMETypes, info.MIME.Value) {
 		return gtserror.Newf("unsupported emoji filetype: %s", info.Extension)
 	}
 
