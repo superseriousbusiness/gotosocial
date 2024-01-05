@@ -103,7 +103,8 @@ func misskeyReportInlineURLs(content string) []*url.URL {
 //
 // Example:
 //
-//	<p>Note from your.instance.com: 2 attachments in this status could not be downloaded. Treat the following external links with care:</p>
+//	<hr>
+//	<p><i lang="en">ℹ️ Note from your.instance.com: 2 attachments in this status could not be downloaded. Treat the following external links with care:</i></p>
 //	<ul>
 //	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg" rel="nofollow noreferrer noopener" target="_blank">01HE7ZGJYTSYMXF927GF9353KR.svg</a> [SVG line art of a sloth, public domain]</li>
 //	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3" rel="nofollow noreferrer noopener" target="_blank">01HE892Y8ZS68TQCNPX7J888P3.mp3</a> [Jolly salsa song, public domain.]</li>
@@ -144,9 +145,10 @@ func placeholdUnknownAttachments(arr []*apimodel.Attachment) (string, []*apimode
 	}
 
 	var note strings.Builder
-	note.WriteString(`<p>`)
-	note.WriteString(`Note from ` + config.GetHost() + `: ` + attachments + ` in this status could not be downloaded. Treat the following external ` + links + ` with care:`)
-	note.WriteString(`</p>`)
+	note.WriteString(`<hr>`)
+	note.WriteString(`<p><i lang="en">`)
+	note.WriteString(`ℹ️ Note from ` + config.GetHost() + `: ` + attachments + ` in this status could not be downloaded. Treat the following external ` + links + ` with care:`)
+	note.WriteString(`</i></p>`)
 	note.WriteString(`<ul>`)
 	for _, a := range unknowns {
 		var (
