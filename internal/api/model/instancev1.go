@@ -38,12 +38,16 @@ type InstanceV1 struct {
 	//
 	// This should be displayed on the 'about' page for an instance.
 	Description string `json:"description"`
+	// Raw (unparsed) version of description.
+	DescriptionText string `json:"description_text,omitempty"`
 	// A shorter description of the instance.
 	//
 	// Should be HTML formatted, but might be plaintext.
 	//
 	// This should be displayed on the instance splash/landing page.
 	ShortDescription string `json:"short_description"`
+	// Raw (unparsed) version of short description.
+	ShortDescriptionText string `json:"short_description_text,omitempty"`
 	// An email address that may be used for inquiries.
 	// example: admin@example.org
 	Email string `json:"email"`
@@ -92,6 +96,8 @@ type InstanceV1 struct {
 	Rules []InstanceRule `json:"rules"`
 	// Terms and conditions for accounts on this instance.
 	Terms string `json:"terms,omitempty"`
+	// Raw (unparsed) version of terms.
+	TermsRaw string `json:"terms_text,omitempty"`
 }
 
 // InstanceV1URLs models instance-relevant URLs for client application consumption.

@@ -941,20 +941,23 @@ func (c *Converter) InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.Admin
 // InstanceToAPIV1Instance converts a gts instance into its api equivalent for serving at /api/v1/instance
 func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV1, error) {
 	instance := &apimodel.InstanceV1{
-		URI:              i.URI,
-		AccountDomain:    config.GetAccountDomain(),
-		Title:            i.Title,
-		Description:      i.Description,
-		ShortDescription: i.ShortDescription,
-		Email:            i.ContactEmail,
-		Version:          config.GetSoftwareVersion(),
-		Languages:        config.GetInstanceLanguages().TagStrs(),
-		Registrations:    config.GetAccountsRegistrationOpen(),
-		ApprovalRequired: config.GetAccountsApprovalRequired(),
-		InvitesEnabled:   false, // todo: not supported yet
-		MaxTootChars:     uint(config.GetStatusesMaxChars()),
-		Rules:            c.InstanceRulesToAPIRules(i.Rules),
-		Terms:            i.Terms,
+		URI:                  i.URI,
+		AccountDomain:        config.GetAccountDomain(),
+		Title:                i.Title,
+		Description:          i.Description,
+		DescriptionText:      i.DescriptionText,
+		ShortDescription:     i.ShortDescription,
+		ShortDescriptionText: i.ShortDescriptionText,
+		Email:                i.ContactEmail,
+		Version:              config.GetSoftwareVersion(),
+		Languages:            config.GetInstanceLanguages().TagStrs(),
+		Registrations:        config.GetAccountsRegistrationOpen(),
+		ApprovalRequired:     config.GetAccountsApprovalRequired(),
+		InvitesEnabled:       false, // todo: not supported yet
+		MaxTootChars:         uint(config.GetStatusesMaxChars()),
+		Rules:                c.InstanceRulesToAPIRules(i.Rules),
+		Terms:                i.Terms,
+		TermsRaw:             i.TermsText,
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {
@@ -1050,16 +1053,18 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 // InstanceToAPIV2Instance converts a gts instance into its api equivalent for serving at /api/v2/instance
 func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Instance) (*apimodel.InstanceV2, error) {
 	instance := &apimodel.InstanceV2{
-		Domain:        i.Domain,
-		AccountDomain: config.GetAccountDomain(),
-		Title:         i.Title,
-		Version:       config.GetSoftwareVersion(),
-		SourceURL:     instanceSourceURL,
-		Description:   i.Description,
-		Usage:         apimodel.InstanceV2Usage{}, // todo: not implemented
-		Languages:     config.GetInstanceLanguages().TagStrs(),
-		Rules:         c.InstanceRulesToAPIRules(i.Rules),
-		Terms:         i.Terms,
+		Domain:          i.Domain,
+		AccountDomain:   config.GetAccountDomain(),
+		Title:           i.Title,
+		Version:         config.GetSoftwareVersion(),
+		SourceURL:       instanceSourceURL,
+		Description:     i.Description,
+		DescriptionText: i.DescriptionText,
+		Usage:           apimodel.InstanceV2Usage{}, // todo: not implemented
+		Languages:       config.GetInstanceLanguages().TagStrs(),
+		Rules:           c.InstanceRulesToAPIRules(i.Rules),
+		Terms:           i.Terms,
+		TermsText:       i.TermsText,
 	}
 
 	if config.GetInstanceInjectMastodonVersion() {

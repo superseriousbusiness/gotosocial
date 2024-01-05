@@ -45,6 +45,7 @@ var SupportedMIMETypes = []string{
 var SupportedEmojiMIMETypes = []string{
 	mimeImageGif,
 	mimeImagePng,
+	mimeImageWebp,
 }
 
 type Manager struct {

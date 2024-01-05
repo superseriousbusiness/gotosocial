@@ -16,7 +16,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/***************************************
+***** SECTION 0: IMPORTS AND FONTS *****
+****************************************/
+
 @import "modern-normalize/modern-normalize.css";
+@import "./prism.css";
 
 /* noto-sans-regular - latin */
 @font-face {
@@ -259,6 +264,77 @@ dl {
 
 label {
 	cursor: pointer;
+}
+
+/*
+	Set our own nice background for
+	monospace code and pre blocks.
+*/
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background-color: $gray2;
+}
+
+/*
+	Just code on its own inside status
+	content, ie, `here is some code`.
+*/
+code {
+	padding: 0.25rem;
+	border-radius: $br-inner;
+	white-space: pre-wrap;
+}
+
+/*
+	Restyle Prism code highlighting toolbar
+	plugin buttons to our own button style.
+	
+	We have to use really specific selectors
+	because of how specific prism.css is.
+*/
+div.code-toolbar > div.toolbar {
+	margin-right: 0.5rem;
+	display: flex;
+	gap: 0.25rem;
+
+	> div.toolbar-item {
+		> span, > button {
+			color: $button-fg;
+			background: $button-bg;
+			font-weight: bold;
+			box-shadow: $boxshadow;
+
+			&:hover, &:focus {
+				color: $button-fg;
+			}
+		}
+
+		.copy-to-clipboard-button:hover {
+			background: $button-hover-bg;
+		}
+	}
+}
+
+pre, pre[class*="language-"] {
+	border-radius: $br;
+	padding: 0.5rem;
+	white-space: pre;
+	overflow-x: auto;
+
+	/* 
+		Code inside a pre block, ie.,
+		
+		```
+		here is some code
+		```
+	*/
+	code {
+		width: 100%;
+		padding: 0;
+		white-space: pre;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
 }
 
 /*************************************
