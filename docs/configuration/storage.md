@@ -121,7 +121,13 @@ This step is only needed if you have a running instance. Ignore this if you are 
 We have provided [s3cmd](https://github.com/s3tools/s3cmd) command for the copy operation.
 
 ```bash
-s3cmd sync --add-header="Cache-Control:public, max-age=315576000, immutable" ./ s3://<bucket name>
+s3cmd sync --acl-public --add-header="Cache-Control:public, max-age=315576000, immutable" ./ s3://<bucket name>
+```
+
+If you've omitted the public permission, you can set this permission afterwards.
+
+```bash
+s3cmd setacl s3://<bucket name> --acl-public --recursive
 ```
 
 
