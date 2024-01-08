@@ -126,6 +126,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				}
 				w.Write(t.Data)
 			}
+			omitSpace = false
 		case html.MathToken:
 			if err := m.MinifyMimetype(mathMimeBytes, w, buffer.NewReader(t.Data), nil); err != nil {
 				if err != minify.ErrNotExist {
@@ -133,6 +134,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				}
 				w.Write(t.Data)
 			}
+			omitSpace = false
 		case html.TextToken:
 			if t.HasTemplate {
 				w.Write(t.Data)
