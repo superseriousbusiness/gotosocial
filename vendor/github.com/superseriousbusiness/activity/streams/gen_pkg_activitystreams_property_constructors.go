@@ -5,6 +5,7 @@ package streams
 import (
 	propertyaccuracy "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_accuracy"
 	propertyactor "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_actor"
+	propertyalsoknownas "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_alsoknownas"
 	propertyaltitude "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_altitude"
 	propertyanyof "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_anyof"
 	propertyattachment "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_attachment"
@@ -44,6 +45,7 @@ import (
 	propertylongitude "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_longitude"
 	propertymanuallyapprovesfollowers "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers"
 	propertymediatype "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_mediatype"
+	propertymovedto "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_movedto"
 	propertyname "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_name"
 	propertynext "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_next"
 	propertyobject "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_object"
@@ -91,6 +93,12 @@ func NewActivityStreamsAccuracyProperty() vocab.ActivityStreamsAccuracyProperty 
 // ActivityStreamsActorProperty
 func NewActivityStreamsActorProperty() vocab.ActivityStreamsActorProperty {
 	return propertyactor.NewActivityStreamsActorProperty()
+}
+
+// NewActivityStreamsActivityStreamsAlsoKnownAsProperty creates a new
+// ActivityStreamsAlsoKnownAsProperty
+func NewActivityStreamsAlsoKnownAsProperty() vocab.ActivityStreamsAlsoKnownAsProperty {
+	return propertyalsoknownas.NewActivityStreamsAlsoKnownAsProperty()
 }
 
 // NewActivityStreamsActivityStreamsAltitudeProperty creates a new
@@ -325,6 +333,12 @@ func NewActivityStreamsManuallyApprovesFollowersProperty() vocab.ActivityStreams
 // ActivityStreamsMediaTypeProperty
 func NewActivityStreamsMediaTypeProperty() vocab.ActivityStreamsMediaTypeProperty {
 	return propertymediatype.NewActivityStreamsMediaTypeProperty()
+}
+
+// NewActivityStreamsActivityStreamsMovedToProperty creates a new
+// ActivityStreamsMovedToProperty
+func NewActivityStreamsMovedToProperty() vocab.ActivityStreamsMovedToProperty {
+	return propertymovedto.NewActivityStreamsMovedToProperty()
 }
 
 // NewActivityStreamsActivityStreamsNameProperty creates a new

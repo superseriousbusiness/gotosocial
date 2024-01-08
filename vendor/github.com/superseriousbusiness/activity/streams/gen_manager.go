@@ -5,6 +5,7 @@ package streams
 import (
 	propertyaccuracy "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_accuracy"
 	propertyactor "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_actor"
+	propertyalsoknownas "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_alsoknownas"
 	propertyaltitude "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_altitude"
 	propertyanyof "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_anyof"
 	propertyattachment "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_attachment"
@@ -44,6 +45,7 @@ import (
 	propertylongitude "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_longitude"
 	propertymanuallyapprovesfollowers "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers"
 	propertymediatype "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_mediatype"
+	propertymovedto "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_movedto"
 	propertyname "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_name"
 	propertynext "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_next"
 	propertyobject "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_object"
@@ -217,6 +219,19 @@ func (this Manager) DeserializeActorPropertyActivityStreams() func(map[string]in
 func (this Manager) DeserializeAddActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAdd, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsAdd, error) {
 		i, err := typeadd.DeserializeAdd(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeAlsoKnownAsPropertyActivityStreams returns the deserialization
+// method for the "ActivityStreamsAlsoKnownAsProperty" non-functional property
+// in the vocabulary "ActivityStreams"
+func (this Manager) DeserializeAlsoKnownAsPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAlsoKnownAsProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsAlsoKnownAsProperty, error) {
+		i, err := propertyalsoknownas.DeserializeAlsoKnownAsProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1173,6 +1188,19 @@ func (this Manager) DeserializeMentionActivityStreams() func(map[string]interfac
 func (this Manager) DeserializeMoveActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsMove, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsMove, error) {
 		i, err := typemove.DeserializeMove(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeMovedToPropertyActivityStreams returns the deserialization method
+// for the "ActivityStreamsMovedToProperty" non-functional property in the
+// vocabulary "ActivityStreams"
+func (this Manager) DeserializeMovedToPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsMovedToProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsMovedToProperty, error) {
+		i, err := propertymovedto.DeserializeMovedToProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
