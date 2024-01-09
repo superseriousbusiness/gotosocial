@@ -138,7 +138,6 @@ func (r *root) String() string {
 type node struct {
 	part  string
 	child []*node
-	match bool
 }
 
 func (n *node) Add(parts []string) {
