@@ -28,10 +28,13 @@ func TestCache(t *testing.T) {
 	c := new(domain.Cache)
 
 	cachedDomains := []string{
-		"google.com",
-		"mail.google.com",
-		"google.co.uk",
-		"pleroma.bad.host",
+		"google.com",               //
+		"mail.google.com",          // should be ignored since covered above
+		"dev.mail.google.com",      // same again
+		"google.co.uk",             //
+		"mail.google.co.uk",        //
+		"pleroma.bad.host",         //
+		"pleroma.still.a.bad.host", //
 	}
 
 	loader := func() ([]string, error) {
@@ -39,14 +42,17 @@ func TestCache(t *testing.T) {
 		return cachedDomains, nil
 	}
 
-	// Check a list of known cached domains.
+	// Check a list of known matching domains.
 	for _, domain := range []string{
 		"google.com",
 		"mail.google.com",
+		"dev.mail.google.com",
 		"google.co.uk",
 		"mail.google.co.uk",
 		"pleroma.bad.host",
 		"dev.pleroma.bad.host",
+		"pleroma.still.a.bad.host",
+		"dev.pleroma.still.a.bad.host",
 	} {
 		t.Logf("checking domain matches: %s", domain)
 		if b, _ := c.Matches(domain, loader); !b {
@@ -54,7 +60,7 @@ func TestCache(t *testing.T) {
 		}
 	}
 
-	// Check a list of known uncached domains.
+	// Check a list of known unmatched domains.
 	for _, domain := range []string{
 		"askjeeves.com",
 		"ask-kim.co.uk",
@@ -62,6 +68,7 @@ func TestCache(t *testing.T) {
 		"mail.google.ie",
 		"gts.bad.host",
 		"mastodon.bad.host",
+		"akkoma.still.a.bad.host",
 	} {
 		t.Logf("checking domain isn't matched: %s", domain)
 		if b, _ := c.Matches(domain, loader); b {
