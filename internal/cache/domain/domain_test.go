@@ -29,6 +29,7 @@ func TestCache(t *testing.T) {
 
 	cachedDomains := []string{
 		"google.com",
+		"mail.google.com",
 		"google.co.uk",
 		"pleroma.bad.host",
 	}
@@ -49,7 +50,7 @@ func TestCache(t *testing.T) {
 	} {
 		t.Logf("checking domain matches: %s", domain)
 		if b, _ := c.Matches(domain, loader); !b {
-			t.Errorf("domain should be matched: %s", domain)
+			t.Fatalf("domain should be matched: %s", domain)
 		}
 	}
 
@@ -64,7 +65,7 @@ func TestCache(t *testing.T) {
 	} {
 		t.Logf("checking domain isn't matched: %s", domain)
 		if b, _ := c.Matches(domain, loader); b {
-			t.Errorf("domain should not be matched: %s", domain)
+			t.Fatalf("domain should not be matched: %s", domain)
 		}
 	}
 
@@ -80,6 +81,6 @@ func TestCache(t *testing.T) {
 		t.Log("load: returning known error")
 		return nil, knownErr
 	}); !errors.Is(err, knownErr) {
-		t.Errorf("matches did not return expected error: %v", err)
+		t.Fatalf("matches did not return expected error: %v", err)
 	}
 }
