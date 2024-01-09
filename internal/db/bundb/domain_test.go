@@ -19,6 +19,7 @@ package bundb_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
 
@@ -210,6 +211,67 @@ func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII2() {
 	blocked, err = suite.db.IsDomainBlocked(ctx, "xn--80aaa1bbb1h.com")
 	suite.NoError(err)
 	suite.True(blocked)
+}
+
+func (suite *DomainTestSuite) TestIsOtherDomainBlockedWildcardAndExplicit() {
+	ctx := context.Background()
+
+	blocks := []*gtsmodel.DomainBlock{
+		{
+			ID:                 "01G204214Y9TNJEBX39C7G88SW",
+			Domain:             "bad.apples",
+			CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+			CreatedByAccount:   suite.testAccounts["admin_account"],
+		},
+		{
+			ID:                 "01HKPSVQ864FQ2JJ01CDGPHHMJ",
+			Domain:             "some.bad.apples",
+			CreatedByAccountID: suite.testAccounts["admin_account"].ID,
+			CreatedByAccount:   suite.testAccounts["admin_account"],
+		},
+	}
+
+	for _, block := range blocks {
+		if err := suite.db.CreateDomainBlock(ctx, block); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	// Ensure each block created
+	// above is now present in the db.
+	dbBlocks, err := suite.db.GetDomainBlocks(ctx)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	for _, block := range blocks {
+		if !slices.ContainsFunc(
+			dbBlocks,
+			func(dbBlock *gtsmodel.DomainBlock) bool {
+				return block.Domain == dbBlock.Domain
+			},
+		) {
+			suite.FailNow("", "stored blocks did not contain %s", block.Domain)
+		}
+	}
+
+	// All domains and subdomains
+	// should now be blocked, even
+	// ones without an explicit block.
+	for _, domain := range []string{
+		"bad.apples",
+		"some.bad.apples",
+		"other.bad.apples",
+	} {
+		blocked, err := suite.db.IsDomainBlocked(ctx, domain)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		if !blocked {
+			suite.Fail("", "domain %s should be blocked", domain)
+		}
+	}
 }
 
 func TestDomainTestSuite(t *testing.T) {
