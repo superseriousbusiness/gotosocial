@@ -93,24 +93,22 @@ func misskeyReportInlineURLs(content string) []*url.URL {
 }
 
 // placeholdUnknownAttachments separates any attachments with type `unknown`
-// out of the given slice, and returns an `<aside>` tag containing links to
+// out of the given slice, and returns a piece of text containing links to
 // those attachments, as well as the slice of remaining "known" attachments.
 // If there are no unknown-type attachments in the provided slice, an empty
 // string and the original slice will be returned.
 //
-// If an aside is created, it will be run through the sanitizer before being
-// returned, to ensure that malicious links don't cause issues.
+// Returned text will be run through the sanitizer before being returned, to
+// ensure that malicious links don't cause issues.
 //
 // Example:
 //
-//	<aside>
-//	   <p>Note from your.instance.com: 2 attachments in this status could not be downloaded. Treat the following external links with care:
-//	      <ul>
-//	         <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg" rel="nofollow noreferrer noopener" target="_blank">01HE7ZGJYTSYMXF927GF9353KR.svg</a> [SVG line art of a sloth, public domain]</li>
-//	         <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3" rel="nofollow noreferrer noopener" target="_blank">01HE892Y8ZS68TQCNPX7J888P3.mp3</a> [Jolly salsa song, public domain.]</li>
-//	      </ul>
-//	   </p>
-//	</aside>
+//	<hr>
+//	<p><i lang="en">ℹ️ Note from your.instance.com: 2 attachments in this status could not be downloaded. Treat the following external links with care:</i></p>
+//	<ul>
+//	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg" rel="nofollow noreferrer noopener" target="_blank">01HE7ZGJYTSYMXF927GF9353KR.svg</a> [SVG line art of a sloth, public domain]</li>
+//	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3" rel="nofollow noreferrer noopener" target="_blank">01HE892Y8ZS68TQCNPX7J888P3.mp3</a> [Jolly salsa song, public domain.]</li>
+//	</ul>
 func placeholdUnknownAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Attachment) {
 	// Extract unknown-type attachments into a separate
 	// slice, deleting them from arr in the process.
@@ -146,11 +144,12 @@ func placeholdUnknownAttachments(arr []*apimodel.Attachment) (string, []*apimode
 		links = "links"
 	}
 
-	var aside strings.Builder
-	aside.WriteString(`<aside>`)
-	aside.WriteString(`<p>`)
-	aside.WriteString(`Note from ` + config.GetHost() + `: ` + attachments + ` in this status could not be downloaded. Treat the following external ` + links + ` with care:`)
-	aside.WriteString(`<ul>`)
+	var note strings.Builder
+	note.WriteString(`<hr>`)
+	note.WriteString(`<p><i lang="en">`)
+	note.WriteString(`ℹ️ Note from ` + config.GetHost() + `: ` + attachments + ` in this status could not be downloaded. Treat the following external ` + links + ` with care:`)
+	note.WriteString(`</i></p>`)
+	note.WriteString(`<ul>`)
 	for _, a := range unknowns {
 		var (
 			remoteURL = *a.RemoteURL
@@ -160,13 +159,11 @@ func placeholdUnknownAttachments(arr []*apimodel.Attachment) (string, []*apimode
 		if d := a.Description; d != nil && *d != "" {
 			entry += ` [` + *d + `]`
 		}
-		aside.WriteString(`<li>` + entry + `</li>`)
+		note.WriteString(`<li>` + entry + `</li>`)
 	}
-	aside.WriteString(`</ul>`)
-	aside.WriteString(`</p>`)
-	aside.WriteString(`</aside>`)
+	note.WriteString(`</ul>`)
 
-	return text.SanitizeToHTML(aside.String()), arr
+	return text.SanitizeToHTML(note.String()), arr
 }
 
 // ContentToContentLanguage tries to
