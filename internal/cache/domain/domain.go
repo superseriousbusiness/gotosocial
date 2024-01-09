@@ -195,13 +195,11 @@ func (n *node) Match(parts []string) bool {
 
 		if nn == nil {
 			// No match :(
-			fmt.Println("no match")
 			return false
 		}
 
 		if len(nn.child) == 0 {
 			// It's a match!
-			fmt.Println("match!")
 			return true
 		}
 
