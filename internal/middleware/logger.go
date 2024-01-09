@@ -28,6 +28,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -77,15 +78,24 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			fields[2] = kv.Field{"method", c.Request.Method}
 			fields[3] = kv.Field{"statusCode", code}
 			fields[4] = kv.Field{"path", path}
+
+			// Set optional request logging fields.
 			if logClientIP {
 				fields = append(fields, kv.Field{
 					"clientIP", c.ClientIP(),
 				})
 			}
 
+			ctx := c.Request.Context()
+			if pubKeyID := gtscontext.HTTPSignaturePubKeyID(ctx); pubKeyID != nil {
+				fields = append(fields, kv.Field{
+					"pubKeyID", pubKeyID.String(),
+				})
+			}
+
 			// Create log entry with fields
 			l := log.New()
-			l = l.WithContext(c.Request.Context())
+			l = l.WithContext(ctx)
 			l = l.WithFields(fields...)
 
 			// Default is info
