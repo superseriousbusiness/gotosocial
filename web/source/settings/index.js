@@ -30,6 +30,10 @@ const Loading = require("./components/loading");
 const UserLogoutCard = require("./components/user-logout-card");
 const { RoleContext } = require("./lib/navigation/util");
 
+const UserProfile = require("./user/profile").default;
+const UserSettings = require("./user/settings").default;
+const UserMigration = require("./user/migration").default;
+
 const DomainPerms = require("./admin/domain-permissions").default;
 const DomainPermsImportExport = require("./admin/domain-permissions/import-export").default;
 
@@ -39,8 +43,9 @@ require("./style.css");
 
 const { Sidebar, ViewRouter } = createNavigation("/settings", [
 	Menu("User", [
-		Item("Profile", { icon: "fa-user" }, require("./user/profile")),
-		Item("Settings", { icon: "fa-cogs" }, require("./user/settings")),
+		Item("Profile", { icon: "fa-user" }, UserProfile),
+		Item("Settings", { icon: "fa-cogs" }, UserSettings),
+		Item("Migration", { icon: "fa-exchange" }, UserMigration),
 	]),
 	Menu("Moderation", {
 		url: "admin",

@@ -34,7 +34,7 @@ export default function getFormMutations(
 		}
 		
 		if ("selectedValues" in field) {
-			// FieldArrayInputHook.
+			// (Field)ArrayInputHook.
 			const selected = field.selectedValues();
 			if (!changedOnly || selected.length > 0) {
 				updatedFields.push(field);

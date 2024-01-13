@@ -26,6 +26,7 @@ import bool from "./bool";
 import radio from "./radio";
 import combobox from "./combo-box";
 import checklist from "./check-list";
+import array from "./array";
 import fieldarray from "./field-array";
 
 import type {
@@ -37,8 +38,9 @@ import type {
 	FileFormInputHook,
 	BoolFormInputHook,
 	ComboboxFormInputHook,
-	FieldArrayInputHook,
 	ChecklistInputHook,
+	FieldArrayInputHook,
+	ArrayInputHook,
 } from "./types";
 
 function capitalizeFirst(str: string) {
@@ -110,5 +112,6 @@ export const useBoolInput = inputHook(bool) as (_name: string, _opts?: HookOpts<
 export const useRadioInput = inputHook(radio) as (_name: string, _opts?: HookOpts<string>) => RadioFormInputHook;
 export const useComboBoxInput = inputHook(combobox) as (_name: string, _opts?: HookOpts<string>) => ComboboxFormInputHook;
 export const useCheckListInput = inputHook(checklist) as (_name: string, _opts?: HookOpts<boolean>) => ChecklistInputHook;
+export const useArrayInput = inputHook(array) as (_name: string, _opts?: HookOpts<string[]>) => ArrayInputHook;
 export const useFieldArrayInput = inputHook(fieldarray) as (_name: string, _opts?: HookOpts<string>) => FieldArrayInputHook;
 export const useValue = value as <T>(_name: string, _initialValue: T) => FormInputHook<T>;

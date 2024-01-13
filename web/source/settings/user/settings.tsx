@@ -17,35 +17,28 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-const query = require("../lib/query");
+import query from "../lib/query";
 
-const {
-	useTextInput,
-	useBoolInput
-} = require("../lib/form");
+import { useTextInput, useBoolInput } from "../lib/form";
 
-const useFormSubmit = require("../lib/form/submit").default;
+import useFormSubmit from "../lib/form/submit";
 
-const {
-	Select,
-	TextInput,
-	Checkbox
-} = require("../components/form/inputs");
+import { Select, TextInput, Checkbox } from "../components/form/inputs";
 
-const FormWithData = require("../lib/form/form-with-data").default;
-const Languages = require("../components/languages");
-const MutationButton = require("../components/form/mutation-button");
+import FormWithData from "../lib/form/form-with-data";
+import Languages from "../components/languages";
+import MutationButton from "../components/form/mutation-button";
 
-module.exports = function UserSettings() {
+export default function UserSettings() {
 	return (
 		<FormWithData
 			dataQuery={query.useVerifyCredentialsQuery}
 			DataForm={UserSettingsForm}
 		/>
 	);
-};
+}
 
 function UserSettingsForm({ data }) {
 	/* form keys
@@ -94,11 +87,13 @@ function UserSettingsForm({ data }) {
 					label="Mark my posts as sensitive by default"
 				/>
 
-				<MutationButton label="Save settings" result={result} />
+				<MutationButton
+					disabled={false}
+					label="Save settings"
+					result={result}
+				/>
 			</form>
-			<div>
-				<PasswordChange />
-			</div>
+			<PasswordChange />
 		</>
 	);
 }
@@ -148,7 +143,11 @@ function PasswordChange() {
 				field={verifyNewPassword}
 				label="Confirm new password"
 			/>
-			<MutationButton label="Change password" result={result} />
+			<MutationButton
+				disabled={false}
+				label="Change password"
+				result={result}
+			/>
 		</form>
 	);
 }

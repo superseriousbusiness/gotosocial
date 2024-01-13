@@ -19,14 +19,13 @@
 
 import { useRef, useMemo } from "react";
 
-import getFormMutations from "./get-form-mutations";
-
 import type {
 	CreateHookNames,
 	HookOpts,
-	FieldArrayInputHook,
+	ArrayInputHook,
 	HookedForm,
 } from "./types";
+import getFormMutations from "./get-form-mutations";
 
 function parseFields(entries: HookedForm[], length: number): HookedForm[] {
 	const fields: HookedForm[] = [];
@@ -42,13 +41,13 @@ function parseFields(entries: HookedForm[], length: number): HookedForm[] {
 	return fields;
 }
 
-export default function useFieldArrayInput(
+export default function useArrayInput(
 	{ name }: CreateHookNames,
 	{
 		initialValue,
 		length = 0,
 	}: HookOpts,
-): FieldArrayInputHook {
+): ArrayInputHook {
 	const _default: HookedForm[] = Array(length);
 	const fields = useRef<HookedForm[]>(_default);
 
@@ -57,7 +56,7 @@ export default function useFieldArrayInput(
 		[initialValue, length],
 	);
 
-	function hasUpdate() {		
+	function hasUpdate() {
 		return Object.values(fields.current).some((fieldSet) => {
 			const { updatedFields } = getFormMutations(fieldSet, { changedOnly: true });
 			return updatedFields.length > 0;
@@ -74,9 +73,17 @@ export default function useFieldArrayInput(
 		hasChanged: hasUpdate,
 		selectedValues() {
 			if (hasUpdate()) {
-				return Object.values(fields.current).map((fieldSet) => {
-					return getFormMutations(fieldSet, { changedOnly: false }).mutationData;
-				});
+				return Object.values(fields.current)
+					// Extract all form fields.
+					.flatMap((fieldSet) => {
+						return getFormMutations(
+							fieldSet,
+							{ changedOnly: false },
+						).updatedFields
+					})
+					// Get just value from each
+					// field, discarding name.
+					.map((field) => field.value);
 			} else {
 				return [];
 			}

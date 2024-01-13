@@ -141,6 +141,10 @@ interface _withNew {
 }
 
 interface _withSelectedValues {
+	selectedValues: () => string[];
+}
+
+interface _withSelectedFieldValues {
 	selectedValues: () => {
 		[_: string]: any;
 	}[]
@@ -200,8 +204,13 @@ export interface ComboboxFormInputHook extends FormInputHook<string>,
 	_withNew,
 	_withReset {}
 
-export interface FieldArrayInputHook extends FormInputHook<HookedForm[]>,
+export interface ArrayInputHook extends FormInputHook<HookedForm[]>,
 	_withSelectedValues,
+	_withMaxLength,
+	_withCtx {}
+
+export interface FieldArrayInputHook extends FormInputHook<HookedForm[]>,
+	_withSelectedFieldValues,
 	_withMaxLength,
 	_withCtx {}
 
@@ -213,7 +222,7 @@ export interface Checkable {
 export interface ChecklistInputHook<T = Checkable> extends FormInputHook<{[k: string]: T}>,
 	_withReset,
 	_withToggleAll,
-	_withSelectedValues,
+	_withSelectedFieldValues,
 	_withSomeSelected,
 	_withUpdateMultiple {
 		// Uses its own funky onChange handler.
