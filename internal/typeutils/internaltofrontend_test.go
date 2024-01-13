@@ -88,8 +88,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
-  // moved and also_known_as_uris
-  // should both be set now.
+	// moved and also_known_as_uris
+	// should both be set now.
 	b, err := json.MarshalIndent(apiAccount, "", "  ")
 	suite.NoError(err)
 	suite.Equal(`{

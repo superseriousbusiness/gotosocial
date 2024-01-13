@@ -97,7 +97,7 @@ func (suite *AliasTestSuite) TestAliasAccount() {
 		},
 		// Try to alias to self (won't do anything).
 		{
-			newAliases:  []string{
+			newAliases: []string{
 				"http://localhost:8080/users/the_mighty_zork",
 			},
 			expectedAliases: []string{},
@@ -105,7 +105,7 @@ func (suite *AliasTestSuite) TestAliasAccount() {
 		// Try to alias to self and admin
 		// (only non-self alias will work).
 		{
-			newAliases:  []string{
+			newAliases: []string{
 				"http://localhost:8080/users/the_mighty_zork",
 				"http://localhost:8080/users/admin",
 			},
