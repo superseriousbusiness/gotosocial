@@ -86,8 +86,8 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 	suite.Empty(a.Note)
 	suite.Empty(a.NoteRaw)
 	suite.False(*a.Memorial)
-	suite.Empty(a.AlsoKnownAs)
-	suite.Empty(a.MovedToAccountID)
+	suite.Empty(a.AlsoKnownAsURIs)
+	suite.Empty(a.MovedToURI)
 	suite.False(*a.Bot)
 	suite.Empty(a.Reason)
 	// Locked is especially important, since it's a bool that defaults

@@ -96,6 +96,9 @@ type Account struct {
 	// Role of the account on this instance.
 	// Omitted for remote accounts.
 	Role *AccountRole `json:"role,omitempty"`
+	// If set, indicates that this account is currently inactive, and has migrated to the given account.
+	// Omitted for accounts that haven't moved, and for suspended accounts.
+	Moved *Account `json:"moved,omitempty"`
 }
 
 // AccountCreateRequest models account creation parameters.
@@ -211,6 +214,23 @@ type AccountFollowRequest struct {
 type AccountDeleteRequest struct {
 	// Password of the account's user, for confirmation.
 	Password string `form:"password" json:"password" xml:"password"`
+}
+
+// AccountMoveRequest models a request to Move an account.
+//
+// swagger:ignore
+type AccountMoveRequest struct {
+	// Password of the account's user, for confirmation.
+	Password string `form:"password" json:"password" xml:"password"`
+	// ActivityPub URI of the account that's being moved to.
+	MovedToURI string `form:"moved_to_uri" json:"moved_to_uri" xml:"moved_to_uri"`
+}
+
+// AccountAliasRequest models a request
+// to set an account's alsoKnownAs URIs.
+type AccountAliasRequest struct {
+	// ActivityPub URIs of any accounts that this one is being aliased to.
+	AlsoKnownAsURIs []string `form:"also_known_as_uris" json:"also_known_as_uris" xml:"also_known_as_uris"`
 }
 
 // AccountRole models the role of an account.

@@ -52,8 +52,10 @@ type Account struct {
 	Note                    string           `bun:""`                               // A note that this account has on their profile (ie., the account's bio/description of themselves)
 	NoteRaw                 string           `bun:""`                               // The raw contents of .Note without conversion to HTML, only available when requester = target
 	Memorial                *bool            `bun:",default:false"`                 // Is this a memorial account, ie., has the user passed away?
-	AlsoKnownAs             string           `bun:"type:CHAR(26),nullzero"`         // This account is associated with x account id (TODO: migrate to be AlsoKnownAsID)
-	MovedToAccountID        string           `bun:"type:CHAR(26),nullzero"`         // This account has moved this account id in the database
+	AlsoKnownAsURIs         []string         `bun:"also_known_as_uris,nullzero"`    // This account is associated with these account URIs.
+	AlsoKnownAs             []*Account       `bun:"-"`                              // This account is associated with these accounts (field not stored in the db).
+	MovedToURI              string           `bun:",nullzero"`                      // This account has moved to this account URI.
+	MovedTo                 *Account         `bun:"-"`                              // This account has moved to this account (field not stored in the db).
 	Bot                     *bool            `bun:",default:false"`                 // Does this account identify itself as a bot?
 	Reason                  string           `bun:""`                               // What reason was given for signing up when this account was created?
 	Locked                  *bool            `bun:",default:true"`                  // Does this account need an approval for new followers?
@@ -109,7 +111,8 @@ func (a *Account) IsInstance() bool {
 		a.Username == "instance.actor" // <- misskey
 }
 
-// EmojisPopulated returns whether emojis are populated according to current EmojiIDs.
+// EmojisPopulated returns whether emojis are
+// populated according to current EmojiIDs.
 func (a *Account) EmojisPopulated() bool {
 	if len(a.EmojiIDs) != len(a.Emojis) {
 		// this is the quickest indicator.
@@ -123,6 +126,28 @@ func (a *Account) EmojisPopulated() bool {
 			continue
 		}
 		if a.Emojis[i].ID != id {
+			return false
+		}
+	}
+
+	return true
+}
+
+// AlsoKnownAsPopulated returns whether alsoKnownAs accounts
+// are populated according to current AlsoKnownAsURIs.
+func (a *Account) AlsoKnownAsPopulated() bool {
+	if len(a.AlsoKnownAsURIs) != len(a.AlsoKnownAs) {
+		// this is the quickest indicator.
+		return false
+	}
+
+	// Accounts must be in same order.
+	for i, uri := range a.AlsoKnownAsURIs {
+		if a.AlsoKnownAs[i] == nil {
+			log.Warnf(nil, "nil account in alsoKnownAs slice for account %s", a.URI)
+			continue
+		}
+		if a.AlsoKnownAs[i].URI != uri {
 			return false
 		}
 	}

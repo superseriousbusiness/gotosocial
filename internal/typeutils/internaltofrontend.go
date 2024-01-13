@@ -90,6 +90,7 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		Note:                a.NoteRaw,
 		Fields:              c.fieldsToAPIFields(a.FieldsRaw),
 		FollowRequestsCount: frc,
+		AlsoKnownAsURIs:     a.AlsoKnownAsURIs,
 	}
 
 	return apiAccount, nil
@@ -111,27 +112,27 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 
 	followersCount, err := c.state.DB.CountAccountFollowers(ctx, a.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting followers: %w", err)
+		return nil, gtserror.Newf("error counting followers: %w", err)
 	}
 
 	followingCount, err := c.state.DB.CountAccountFollows(ctx, a.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting following: %w", err)
+		return nil, gtserror.Newf("error counting following: %w", err)
 	}
 
 	statusesCount, err := c.state.DB.CountAccountStatuses(ctx, a.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting statuses: %w", err)
+		return nil, gtserror.Newf("error counting statuses: %w", err)
 	}
 
 	var lastStatusAt *string
 	lastPosted, err := c.state.DB.GetAccountLastPosted(ctx, a.ID, false)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, fmt.Errorf("AccountToAPIAccountPublic: error counting statuses: %w", err)
+		return nil, gtserror.Newf("error getting last posted: %w", err)
 	}
 
 	if !lastPosted.IsZero() {
-		lastStatusAt = func() *string { t := util.FormatISO8601(lastPosted); return &t }()
+		lastStatusAt = util.Ptr(util.FormatISO8601(lastPosted))
 	}
 
 	// Profile media + nice extras:
@@ -180,7 +181,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		// de-punify it just in case.
 		d, err := util.DePunify(a.Domain)
 		if err != nil {
-			return nil, fmt.Errorf("AccountToAPIAccountPublic: error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
+			return nil, gtserror.Newf("error de-punifying domain %s for account id %s: %w", a.Domain, a.ID, err)
 		}
 
 		acct = a.Username + "@" + d
@@ -191,7 +192,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		if !a.IsInstance() {
 			user, err := c.state.DB.GetUserByAccountID(ctx, a.ID)
 			if err != nil {
-				return nil, fmt.Errorf("AccountToAPIAccountPublic: error getting user from database for account id %s: %w", a.ID, err)
+				return nil, gtserror.Newf("error getting user from database for account id %s: %w", a.ID, err)
 			}
 
 			switch {
@@ -205,6 +206,15 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		}
 
 		acct = a.Username // omit domain
+	}
+
+	// Populate moved.
+	var moved *apimodel.Account
+	if a.MovedTo != nil {
+		moved, err = c.AccountToAPIAccountPublic(ctx, a.MovedTo)
+		if err != nil {
+			log.Errorf(ctx, "error converting account movedTo: %v", err)
+		}
 	}
 
 	// Remaining properties are simple and
@@ -235,6 +245,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		CustomCSS:      a.CustomCSS,
 		EnableRSS:      *a.EnableRSS,
 		Role:           role,
+		Moved:          moved,
 	}
 
 	// Bodge default avatar + header in,

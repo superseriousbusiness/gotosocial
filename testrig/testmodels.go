@@ -297,7 +297,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Note:                    "",
 			NoteRaw:                 "",
 			Memorial:                util.Ptr(false),
-			MovedToAccountID:        "",
+			MovedToURI:              "",
 			CreatedAt:               TimeMustParse("2020-05-17T13:10:59Z"),
 			UpdatedAt:               TimeMustParse("2020-05-17T13:10:59Z"),
 			Bot:                     util.Ptr(false),
@@ -317,7 +317,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:            "http://localhost:8080/users/localhost:8080/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/localhost:8080/collections/featured",
 			ActorType:               ap.ActorPerson,
-			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
 			SensitizedAt:            time.Time{},
@@ -336,7 +335,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Fields:                  []*gtsmodel.Field{},
 			Note:                    "",
 			Memorial:                util.Ptr(false),
-			MovedToAccountID:        "",
+			MovedToURI:              "",
 			CreatedAt:               TimeMustParse("2022-06-04T13:12:00Z"),
 			UpdatedAt:               TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                     util.Ptr(false),
@@ -355,7 +354,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:            "http://localhost:8080/users/weed_lord420/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/weed_lord420/collections/featured",
 			ActorType:               ap.ActorPerson,
-			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
 			PublicKeyURI:            "http://localhost:8080/users/weed_lord420#main-key",
@@ -376,7 +374,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Note:                    "",
 			NoteRaw:                 "",
 			Memorial:                util.Ptr(false),
-			MovedToAccountID:        "",
+			MovedToURI:              "",
 			CreatedAt:               TimeMustParse("2022-05-17T13:10:59Z"),
 			UpdatedAt:               TimeMustParse("2022-05-17T13:10:59Z"),
 			Bot:                     util.Ptr(false),
@@ -396,7 +394,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:            "http://localhost:8080/users/admin/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/admin/collections/featured",
 			ActorType:               ap.ActorPerson,
-			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
 			SensitizedAt:            time.Time{},
@@ -416,7 +413,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Note:                    "<p>hey yo this is my profile!</p>",
 			NoteRaw:                 "hey yo this is my profile!",
 			Memorial:                util.Ptr(false),
-			MovedToAccountID:        "",
+			MovedToURI:              "",
 			CreatedAt:               TimeMustParse("2022-05-20T11:09:18Z"),
 			UpdatedAt:               TimeMustParse("2022-05-20T11:09:18Z"),
 			Bot:                     util.Ptr(false),
@@ -435,7 +432,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:            "http://localhost:8080/users/the_mighty_zork/following",
 			FeaturedCollectionURI:   "http://localhost:8080/users/the_mighty_zork/collections/featured",
 			ActorType:               ap.ActorPerson,
-			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
 			PublicKeyURI:            "http://localhost:8080/users/the_mighty_zork/main-key",
@@ -475,7 +471,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Note:                  "<p>i post about things that concern me</p>",
 			NoteRaw:               "i post about things that concern me",
 			Memorial:              util.Ptr(false),
-			MovedToAccountID:      "",
+			MovedToURI:            "",
 			CreatedAt:             TimeMustParse("2022-06-04T13:12:00Z"),
 			UpdatedAt:             TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                   util.Ptr(false),
@@ -494,7 +490,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:          "http://localhost:8080/users/1happyturtle/following",
 			FeaturedCollectionURI: "http://localhost:8080/users/1happyturtle/collections/featured",
 			ActorType:             ap.ActorPerson,
-			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
 			PublicKeyURI:          "http://localhost:8080/users/1happyturtle#main-key",
@@ -513,7 +508,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Fields:                []*gtsmodel.Field{},
 			Note:                  "i post about like, i dunno, stuff, or whatever!!!!",
 			Memorial:              util.Ptr(false),
-			MovedToAccountID:      "",
+			MovedToURI:            "",
 			CreatedAt:             TimeMustParse("2021-09-26T12:52:36+02:00"),
 			UpdatedAt:             TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                   util.Ptr(false),
@@ -531,7 +526,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:          "http://fossbros-anonymous.io/users/foss_satan/following",
 			FeaturedCollectionURI: "http://fossbros-anonymous.io/users/foss_satan/collections/featured",
 			ActorType:             ap.ActorPerson,
-			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
 			PublicKeyURI:          "http://fossbros-anonymous.io/users/foss_satan/main-key",
@@ -550,7 +544,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Fields:                []*gtsmodel.Field{},
 			Note:                  "i'm a real son of a gun",
 			Memorial:              util.Ptr(false),
-			MovedToAccountID:      "",
+			MovedToURI:            "",
 			CreatedAt:             TimeMustParse("2020-08-10T14:13:28+02:00"),
 			UpdatedAt:             TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                   util.Ptr(false),
@@ -568,7 +562,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:          "http://example.org/users/Some_User/following",
 			FeaturedCollectionURI: "http://example.org/users/Some_User/collections/featured",
 			ActorType:             ap.ActorPerson,
-			AlsoKnownAs:           "",
 			PrivateKey:            &rsa.PrivateKey{},
 			PublicKey:             &rsa.PublicKey{},
 			PublicKeyURI:          "http://example.org/users/Some_User#main-key",
@@ -587,7 +580,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Fields:                  []*gtsmodel.Field{},
 			Note:                    "if i die blame charles don't let that fuck become king",
 			Memorial:                util.Ptr(false),
-			MovedToAccountID:        "",
+			MovedToURI:              "",
 			CreatedAt:               TimeMustParse("2020-08-10T14:13:28+02:00"),
 			UpdatedAt:               TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                     util.Ptr(false),
@@ -605,7 +598,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:            "http://thequeenisstillalive.technology/users/her_fuckin_maj/following",
 			FeaturedCollectionURI:   "http://thequeenisstillalive.technology/users/her_fuckin_maj/collections/featured",
 			ActorType:               ap.ActorPerson,
-			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
 			PublicKeyURI:            "http://thequeenisstillalive.technology/users/her_fuckin_maj#main-key",
@@ -624,7 +616,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			DisplayName:             "",
 			Note:                    "",
 			Memorial:                util.Ptr(false),
-			MovedToAccountID:        "",
+			MovedToURI:              "",
 			CreatedAt:               TimeMustParse("2020-08-10T14:13:28+02:00"),
 			UpdatedAt:               TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                     util.Ptr(false),
@@ -642,7 +634,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			FollowingURI:            "https://xn--xample-ova.org/users/%C3%BCser/following",
 			FeaturedCollectionURI:   "https://xn--xample-ova.org/users/%C3%BCser/collections/featured",
 			ActorType:               ap.ActorPerson,
-			AlsoKnownAs:             "",
 			PrivateKey:              &rsa.PrivateKey{},
 			PublicKey:               &rsa.PublicKey{},
 			PublicKeyURI:            "https://xn--xample-ova.org/users/%C3%BCser#main-key",
@@ -2808,6 +2799,8 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			nil,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/outbox"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/collections/featured"),
+			nil,
+			nil,
 			"brand_new_person",
 			"Geoff Brando New Personson",
 			"hey I'm a new person, your instance hasn't seen me yet uwu",
@@ -2829,6 +2822,8 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://turnip.farm/sharedInbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/outbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/collections/featured"),
+			nil,
+			nil,
 			"turniplover6969",
 			"Turnip Lover 6969",
 			"I just think they're neat",
@@ -2850,6 +2845,8 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://example.org/sharedInbox"),
 			URLMustParse("https://example.org/users/Some_User/outbox"),
 			URLMustParse("https://example.org/users/Some_User/collections/featured"),
+			nil,
+			nil,
 			"Some_User",
 			"just some user, don't mind me",
 			"Peepee poo poo",
@@ -3344,6 +3341,8 @@ func newAPPerson(
 	sharedInboxIRI *url.URL,
 	outboxURI *url.URL,
 	featuredURI *url.URL,
+	movedToURI *url.URL,
+	alsoKnownAsURIs []*url.URL,
 	username string,
 	displayName string,
 	note string,
@@ -3453,9 +3452,15 @@ func newAPPerson(
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
 
-	// alsoKnownAs
+	// alsoKnownAs, movedTo
 	// Required for Move activity.
-	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+	if len(alsoKnownAsURIs) != 0 {
+		ap.SetAlsoKnownAs(person, alsoKnownAsURIs)
+	}
+
+	if movedToURI != nil {
+		ap.SetMovedTo(person, movedToURI)
+	}
 
 	// publicKey
 	// Required for signatures.
@@ -3637,7 +3642,7 @@ func newAPGroup(
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
 
-	// alsoKnownAs
+	// AlsoKnownAsURI
 	// Required for Move activity.
 	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
 
@@ -3821,7 +3826,7 @@ func newAPService(
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
 
-	// alsoKnownAs
+	// AlsoKnownAsURI
 	// Required for Move activity.
 	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
 

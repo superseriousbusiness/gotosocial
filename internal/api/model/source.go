@@ -38,4 +38,9 @@ type Source struct {
 	Fields []Field `json:"fields"`
 	// The number of pending follow requests.
 	FollowRequestsCount int `json:"follow_requests_count"`
+	// This account is aliased to / also known as accounts at the
+	// given ActivityPub URIs. To set this, use `/api/v1/accounts/alias`.
+	//
+	// Omitted from json if empty / not set.
+	AlsoKnownAsURIs []string `json:"also_known_as_uris,omitempty"`
 }
