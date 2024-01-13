@@ -83,7 +83,7 @@ function UserMigrationForm({ data: profile }) {
 			<AliasForm data={profile} />
 			<MoveForm data={profile} />
 		</>
-	)
+	);
 }
 
 function AliasForm({ data: profile }) {
@@ -97,7 +97,7 @@ function AliasForm({ data: profile }) {
 			),
 			length: 5,
 		}),
-	}
+	};
 
 	const [submitForm, result] = useFormSubmit(form, useAliasAccountMutation());
 	
@@ -123,7 +123,7 @@ function AliasForm({ data: profile }) {
 				result={result}
 			/>
 		</form>
-	)
+	);
 }
 
 function AlsoKnownAsURIs({ field: formField }) {	
@@ -143,7 +143,7 @@ function AlsoKnownAsURIs({ field: formField }) {
 }
 
 function AlsoKnownAsURI({ index, data }) {	
-	const name = `${index}`
+	const name = `${index}`;
 	const form = useWithFormContext(index, {
 		alsoKnownAsURI: useTextInput(
 			name,
@@ -168,7 +168,7 @@ function MoveForm({ data: profile }) {
 			valueSelector: (p) => p.moved?.uri },
 		),
 		password: useTextInput("password"),
-	}
+	};
 
 	const [submitForm, result] = useFormSubmit(form, useMoveAccountMutation());
 	
@@ -202,5 +202,5 @@ function MoveForm({ data: profile }) {
 				result={result}
 			/>
 		</form>
-	)
+	);
 }

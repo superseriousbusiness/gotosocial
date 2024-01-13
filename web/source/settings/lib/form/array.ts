@@ -79,7 +79,7 @@ export default function useArrayInput(
 						return getFormMutations(
 							fieldSet,
 							{ changedOnly: false },
-						).updatedFields
+						).updatedFields;
 					})
 					// Get just value from each
 					// field, discarding name.

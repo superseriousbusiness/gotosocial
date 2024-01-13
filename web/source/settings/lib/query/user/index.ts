@@ -47,13 +47,13 @@ const extended = gtsApi.injectEndpoints({
 					if (entry) {
 						entries.push(entry);
 					}
-				})
+				});
 
 				return fetchWithBQ({
 					method: "POST",
 					url: `/api/v1/accounts/alias`,
 					body: { also_known_as_uris: entries },
-				})
+				});
 			}
 		}),
 		moveAccount: build.mutation({
