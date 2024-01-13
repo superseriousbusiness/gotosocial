@@ -163,7 +163,7 @@ function AlsoKnownAsURI({ index, data }) {
 
 function MoveForm({ data: profile }) {
 	const form = {
-		moveToURI: useTextInput("moved_to_uri", {
+		movedToURI: useTextInput("moved_to_uri", {
 			source: profile,
 			valueSelector: (p) => p.moved?.uri },
 		),
@@ -186,7 +186,7 @@ function MoveForm({ data: profile }) {
 				</a>
 			</div>
 			<TextInput
-				field={form.moveToURI}
+				field={form.movedToURI}
 				label="Move target URI"
 				placeholder="https://example.org/users/my_new_account"
 			/>
