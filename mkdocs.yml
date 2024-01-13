@@ -19,7 +19,7 @@ theme:
         name: Switch to dark mode
 repo_url: https://github.com/superseriousbusiness/gotosocial
 edit_uri: edit/main/docs/
-copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) 2021-2023 GoToSocial Authors admin@gotosocial.org
+copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) GoToSocial Authors admin@gotosocial.org
 plugins:
   - search:
       lang: en
