@@ -26,15 +26,39 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		for _, model := range []any{
-			&gtsmodel.HeaderFilterAllow{},
-			&gtsmodel.HeaderFilterBlock{},
+		for filterType, model := range map[string]any{
+			"allows": &gtsmodel.HeaderFilterAllow{},
+			"blocks": &gtsmodel.HeaderFilterBlock{},
 		} {
+			// Create table itself.
 			_, err := db.NewCreateTable().
 				IfNotExists().
 				Model(model).
 				Exec(ctx)
 			if err != nil {
+				return err
+			}
+
+			// Add unique constraint for this filter type.
+			//
+			// Separate constraint creation per filter type
+			// is needed because Postgres wants constraints
+			// to be uniquely named across all tables.
+			//
+			// Produced query looks like:
+			//
+			//	ALTER TABLE "header_filter_allows" ADD CONSTRAINT allows_header_regex UNIQUE(header,regex)
+			//
+			// or:
+			//
+			//	ALTER TABLE "header_filter_blocks" ADD CONSTRAINT blocks_header_regex UNIQUE(header,regex)
+			if _, err := db.ExecContext(
+				ctx,
+				"ALTER TABLE ? ADD CONSTRAINT ? UNIQUE(?)",
+				bun.Ident("header_filter_"+filterType),
+				bun.Safe(filterType+"_header_regex"),
+				bun.Safe("header,regex"),
+			); err != nil {
 				return err
 			}
 		}
