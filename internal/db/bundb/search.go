@@ -202,9 +202,27 @@ func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
 // accountUsername returns a subquery that just selects
 // from account usernames, without concatenation.
 func (s *searchDB) accountUsername() *bun.SelectQuery {
-	return s.db.
-		NewSelect().
-		Column("account.username")
+	var q *bun.SelectQuery
+
+	// SQLite search is case insensitive.
+	// Postgres searches get lowercased.
+	switch d := s.db.Dialect().Name(); d {
+
+	case dialect.SQLite:
+		return s.db.
+			NewSelect().
+			Column("account.username")
+
+	case dialect.PG:
+		return s.db.
+			NewSelect().
+			ColumnExpr("LOWER(?)", bun.Ident("account.username"))
+
+	default:
+		log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
+	}
+
+	return q
 }
 
 // accountText returns a subquery that selects a concatenation
@@ -245,8 +263,8 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	//
 	// SQLite search is case insensitive.
 	// Postgres searches get lowercased.
-	d := s.db.Dialect().Name()
-	switch {
+
+	switch d := s.db.Dialect().Name(); {
 
 	case d == dialect.SQLite && following:
 		query = "? || COALESCE(?, ?) || COALESCE(?, ?) AS ?"
@@ -261,7 +279,7 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 		query = "LOWER(CONCAT(?, COALESCE(?, ?))) AS ?"
 
 	default:
-		panic("db conn was neither pg not sqlite")
+		log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
 	}
 
 	return accountText.ColumnExpr(query, args...)
@@ -388,7 +406,7 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 	//
 	// SQLite search is case insensitive.
 	// Postgres searches get lowercased.
-	switch s.db.Dialect().Name() {
+	switch d := s.db.Dialect().Name(); d {
 
 	case dialect.SQLite:
 		statusText = statusText.ColumnExpr(
@@ -403,7 +421,7 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 			bun.Ident("status_text"))
 
 	default:
-		panic("db conn was neither pg not sqlite")
+		log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
 	}
 
 	return statusText

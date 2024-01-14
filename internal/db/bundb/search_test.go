@@ -46,6 +46,15 @@ func (suite *SearchTestSuite) TestSearchAccounts1HappyWithPrefix() {
 	suite.Len(accounts, 1)
 }
 
+func (suite *SearchTestSuite) TestSearchAccounts1HappyWithPrefixUpper() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	// Query will just look for usernames that start with "1HAPPY".
+	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "@1HAPPY", "", "", 10, false, 0)
+	suite.NoError(err)
+	suite.Len(accounts, 1)
+}
+
 func (suite *SearchTestSuite) TestSearchAccounts1HappyNoPrefix() {
 	testAccount := suite.testAccounts["local_account_1"]
 

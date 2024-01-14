@@ -37,6 +37,24 @@ var likeEscaper = strings.NewReplacer(
 	`_`, `\_`, // Exactly one char.
 )
 
+// prepareSearchString prepares a query
+// string for use in a LIKE search.
+func prepareSearchString(search string) string {
+	// Lowercase the query string. This
+	// doesn't make a difference for the
+	// case-insensitive SQLite, but for
+	// Postgres it matches the LOWER()
+	// function calls that should be used
+	// in the LIKE subquery.
+	search = strings.ToLower(search)
+
+	// Escape existing wildcard + escape
+	// chars in the search query string.
+	search = likeEscaper.Replace(search)
+
+	return search
+}
+
 // whereLike appends a WHERE clause to the
 // given SelectQuery, which searches for
 // matches of `search` in the given subQuery
@@ -46,9 +64,8 @@ func whereLike(
 	subject interface{},
 	search string,
 ) *bun.SelectQuery {
-	// Escape existing wildcard + escape
-	// chars in the search query string.
-	search = likeEscaper.Replace(search)
+	// Normalize + escape query string.
+	search = prepareSearchString(search)
 
 	// Add our own wildcards back in; search
 	// zero or more chars around the query.
@@ -70,9 +87,8 @@ func whereStartsLike(
 	subject interface{},
 	search string,
 ) *bun.SelectQuery {
-	// Escape existing wildcard + escape
-	// chars in the search query string.
-	search = likeEscaper.Replace(search)
+	// Normalize + escape query string.
+	search = prepareSearchString(search)
 
 	// Add our own wildcards back in; search
 	// zero or more chars after the query.
