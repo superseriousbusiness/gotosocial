@@ -377,7 +377,6 @@ func (t *Table) newField(f reflect.StructField, prefix string, index []int) *Fie
 	}
 	if s, ok := tag.Option("default"); ok {
 		field.SQLDefault = s
-		field.NullZero = true
 	}
 	if s, ok := field.Tag.Option("type"); ok {
 		field.UserSQLType = s
@@ -477,7 +476,7 @@ func (t *Table) belongsToRelation(field *Field) *Relation {
 	}
 
 	rel := &Relation{
-		Type:      HasOneRelation,
+		Type:      BelongsToRelation,
 		Field:     field,
 		JoinTable: joinTable,
 	}
@@ -571,7 +570,7 @@ func (t *Table) hasOneRelation(field *Field) *Relation {
 
 	joinTable := t.dialect.Tables().Ref(field.IndirectType)
 	rel := &Relation{
-		Type:      BelongsToRelation,
+		Type:      HasOneRelation,
 		Field:     field,
 		JoinTable: joinTable,
 	}
