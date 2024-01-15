@@ -16,7 +16,8 @@ Big thank you to all of our [Open Collective](https://opencollective.com/gotosoc
   - [Mid/late 2023](#midlate-2023)
   - [Late 2023](#late-2023)
   - [Early 2024](#early-2024)
-  - [And then...](#and-then)
+  - [BETA Milestone](#beta-milestone)
+  - [Remainder 2024 - early 2025](#remainder-2024---early-2025)
 
 ## Beta Aims
 
@@ -46,8 +47,6 @@ What follows is a rough timeline of features that will be implemented on the roa
 ### Mid 2023
 
 - [x] **Hashtags** -- implement federating hashtags and viewing hashtags to allow users to discover posts that they might be interested in. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2032).
-- [ ] **Block list subscriptions** -- allow instance admins to subscribe their instance to plaintext domain block lists (much of the work for this is already in place).
-- [ ] **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
 
 ### Mid/late 2023
 
@@ -55,15 +54,26 @@ What follows is a rough timeline of features that will be implemented on the roa
 - [x] **Mute posts/threads** -- opt-out of notifications for replies to a thread; no longer show a given post in your timeline. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2278)
 - [x] **Limited peering/allowlists** -- allow instance admins to limit federation with other instances by default. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2200)
 
-### Late 2023
+### Early 2024
 
 - [ ] **Move activity** -- use the ActivityPub `Move` activity to support migration of a user's profile across servers.
 - [ ] **Sign-up flow** -- allow users to submit a sign-up request to an instance; allow admins to moderate sign-up requests.
 
-### Early 2024
+### BETA milestone
+
+Completion of all above features indicates that we are now in the BETA phase of GoToSocial. We foresee this happening around Feb/March 2024.
+
+### Remainder 2024 - early 2025
+
+These are provided in no specific order.
 
 - [ ] **Non-replyable posts** -- design a non-replyable post path for GoToSocial based on https://github.com/mastodon/mastodon/issues/14762#issuecomment-1196889788; allow users to create non-replyable posts.
+- [ ] **Block list subscriptions** -- allow instance admins to subscribe their instance to plaintext domain block lists (much of the work for this is already in place).
+- [ ] **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
+- [ ] **Oauth token management** -- create / view / invalidate OAuth tokens via the settings panel.
+- [ ] **Status EDIT support** -- edit statuses that you've created, without having to delete + redraft. Federate edits out properly.
+- [ ] **Fediverse relay support** -- publish posts to relays, pull posts from relays.
+- [ ] **Two factor authentication (2fa)** -- allow users to enable 2FA for their account via the settings panel, enforce 2FA on login.
+- [ ] **Moderation: Append content warning / mark-as-sensitive all content from an instance/account**.
 
-### And then...
-
-BETA TIME baby!
+More tbd!
