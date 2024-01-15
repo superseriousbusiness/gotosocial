@@ -36,7 +36,7 @@ type mentionDB struct {
 }
 
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, error) {
-	mention, err := m.state.Caches.GTS.Mention().Load("ID", func() (*gtsmodel.Mention, error) {
+	mention, err := m.state.Caches.GTS.Mention.LoadOne("ID", func() (*gtsmodel.Mention, error) {
 		var mention gtsmodel.Mention
 
 		q := m.db.
@@ -63,21 +63,61 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 }
 
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error) {
-	mentions := make([]*gtsmodel.Mention, 0, len(ids))
+	// Preallocate at-worst possible length.
+	uncached := make([]string, 0, len(ids))
 
-	for _, id := range ids {
-		// Attempt fetch from DB
-		mention, err := m.GetMention(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "error getting mention %q: %v", id, err)
-			continue
+	// Load all mention IDs via cache loader callbacks.
+	mentions, err := m.state.Caches.GTS.Mention.Load("ID",
+
+		// Load cached + check for uncached.
+		func(load func(keyParts ...any) bool) {
+			for _, id := range ids {
+				if !load(id) {
+					uncached = append(uncached, id)
+				}
+			}
+		},
+
+		// Uncached mention loader function.
+		func() ([]*gtsmodel.Mention, error) {
+			// Preallocate expected length of uncached mentions.
+			mentions := make([]*gtsmodel.Mention, 0, len(uncached))
+
+			// Perform database query scanning
+			// the remaining (uncached) IDs.
+			if err := m.db.NewSelect().
+				Model(&mentions).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return mentions, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reorder the mentions by their
+	// IDs to ensure in correct order.
+	getID := func(m *gtsmodel.Mention) string { return m.ID }
+	orderByIDs(mentions, ids, getID)
+
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return mentions, nil
+	}
+
+	// Populate all loaded blocks.
+	for _, mention := range mentions {
+		if err := m.PopulateMention(ctx, mention); err != nil {
+			log.Errorf(ctx, "error populating mention %s: %v", mention.ID, err)
 		}
-
-		// Append mention
-		mentions = append(mentions, mention)
 	}
 
 	return mentions, nil
+
 }
 
 func (m *mentionDB) PopulateMention(ctx context.Context, mention *gtsmodel.Mention) (err error) {
@@ -120,14 +160,14 @@ func (m *mentionDB) PopulateMention(ctx context.Context, mention *gtsmodel.Menti
 }
 
 func (m *mentionDB) PutMention(ctx context.Context, mention *gtsmodel.Mention) error {
-	return m.state.Caches.GTS.Mention().Store(mention, func() error {
+	return m.state.Caches.GTS.Mention.Store(mention, func() error {
 		_, err := m.db.NewInsert().Model(mention).Exec(ctx)
 		return err
 	})
 }
 
 func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
-	defer m.state.Caches.GTS.Mention().Invalidate("ID", id)
+	defer m.state.Caches.GTS.Mention.Invalidate("ID", id)
 
 	// Load mention into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate

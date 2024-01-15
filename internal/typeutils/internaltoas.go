@@ -491,7 +491,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 
 	// tag -- mentions
 	mentions := s.Mentions
-	if len(s.MentionIDs) > len(mentions) {
+	if len(s.MentionIDs) != len(mentions) {
 		mentions, err = c.state.DB.GetMentions(ctx, s.MentionIDs)
 		if err != nil {
 			return nil, gtserror.Newf("error getting mentions: %w", err)
@@ -507,14 +507,10 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 
 	// tag -- emojis
 	emojis := s.Emojis
-	if len(s.EmojiIDs) > len(emojis) {
-		emojis = []*gtsmodel.Emoji{}
-		for _, emojiID := range s.EmojiIDs {
-			emoji, err := c.state.DB.GetEmojiByID(ctx, emojiID)
-			if err != nil {
-				return nil, gtserror.Newf("error getting emoji %s from database: %w", emojiID, err)
-			}
-			emojis = append(emojis, emoji)
+	if len(s.EmojiIDs) != len(emojis) {
+		emojis, err = c.state.DB.GetEmojisByIDs(ctx, s.EmojiIDs)
+		if err != nil {
+			return nil, gtserror.Newf("error getting emojis from database: %w", err)
 		}
 	}
 	for _, emoji := range emojis {
@@ -527,7 +523,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 
 	// tag -- hashtags
 	hashtags := s.Tags
-	if len(s.TagIDs) > len(hashtags) {
+	if len(s.TagIDs) != len(hashtags) {
 		hashtags, err = c.state.DB.GetTags(ctx, s.TagIDs)
 		if err != nil {
 			return nil, gtserror.Newf("error getting tags: %w", err)
@@ -623,14 +619,10 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	// attachments
 	attachmentProp := streams.NewActivityStreamsAttachmentProperty()
 	attachments := s.Attachments
-	if len(s.AttachmentIDs) > len(attachments) {
-		attachments = []*gtsmodel.MediaAttachment{}
-		for _, attachmentID := range s.AttachmentIDs {
-			attachment, err := c.state.DB.GetAttachmentByID(ctx, attachmentID)
-			if err != nil {
-				return nil, gtserror.Newf("error getting attachment %s from database: %w", attachmentID, err)
-			}
-			attachments = append(attachments, attachment)
+	if len(s.AttachmentIDs) != len(attachments) {
+		attachments, err = c.state.DB.GetAttachmentsByIDs(ctx, s.AttachmentIDs)
+		if err != nil {
+			return nil, gtserror.Newf("error getting attachments from database: %w", err)
 		}
 	}
 	for _, a := range attachments {

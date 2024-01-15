@@ -33,6 +33,9 @@ type Notification interface {
 	// GetNotification returns one notification according to its id.
 	GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, error)
 
+	// GetNotificationsByIDs returns a slice of notifications of the the provided IDs.
+	GetNotificationsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Notification, error)
+
 	// GetNotification gets one notification according to the provided parameters, if it exists.
 	// Since not all notifications are about a status, statusID can be an empty string.
 	GetNotification(ctx context.Context, notificationType gtsmodel.NotificationType, targetAccountID string, originAccountID string, statusID string) (*gtsmodel.Notification, error)

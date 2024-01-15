@@ -229,6 +229,7 @@ func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.Advanced
 
 	attachments := []*gtsmodel.MediaAttachment{}
 	attachmentIDs := []string{}
+
 	for _, mediaID := range form.MediaIDs {
 		attachment, err := p.state.DB.GetAttachmentByID(ctx, mediaID)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {

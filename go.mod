@@ -1,8 +1,8 @@
 module github.com/superseriousbusiness/gotosocial
 
-go 1.21
+go 1.21.4
 
-toolchain go1.21.3
+toolchain go1.21.5
 
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
@@ -18,6 +18,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.4
+	codeberg.org/gruf/go-structr v0.0.0-20240111111729-3fdce3926243
 	codeberg.org/superseriousbusiness/exif-terminator v0.7.0
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.4.0

@@ -27,6 +27,9 @@ type List interface {
 	// GetListByID gets one list with the given id.
 	GetListByID(ctx context.Context, id string) (*gtsmodel.List, error)
 
+	// GetListsByIDs fetches all lists with the provided IDs.
+	GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.List, error)
+
 	// GetListsForAccountID gets all lists owned by the given accountID.
 	GetListsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error)
 
@@ -45,6 +48,9 @@ type List interface {
 
 	// GetListEntryByID gets one list entry with the given ID.
 	GetListEntryByID(ctx context.Context, id string) (*gtsmodel.ListEntry, error)
+
+	// GetListEntriesyIDs fetches all list entries with the provided IDs.
+	GetListEntriesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.ListEntry, error)
 
 	// GetListEntries gets list entries from the given listID, using the given parameters.
 	GetListEntries(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.ListEntry, error)

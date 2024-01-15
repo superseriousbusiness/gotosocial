@@ -42,7 +42,7 @@ func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Acc
 		requesterID = owner.ID
 	}
 
-	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
+	visibility, err := f.state.Caches.Visibility.LoadOne("Type,RequesterID,ItemID", func() (*cache.CachedVisibility, error) {
 		// Visibility not yet cached, perform timeline visibility lookup.
 		visible, err := f.isStatusHomeTimelineable(ctx, owner, status)
 		if err != nil {

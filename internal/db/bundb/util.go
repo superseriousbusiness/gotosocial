@@ -185,3 +185,88 @@ func parseWhere(w db.Where) (query string, args []interface{}) {
 	args = []interface{}{bun.Ident(w.Key), w.Value}
 	return
 }
+
+// dropIDs drops given ID string from IDs slice.
+func dropID(ids []string, id string) []string {
+	for i := 0; i < len(ids); {
+		if ids[i] == id {
+			// Remove this reference.
+			copy(ids[i:], ids[i+1:])
+			ids = ids[:len(ids)-1]
+			continue
+		}
+		i++
+	}
+	return ids
+}
+
+// collate will collect the values of type T from an expected slice of length 'len',
+// passing the expected index to each call of 'get' and deduplicating the end result.
+func collate[T comparable](get func(int) T, len int) []T {
+	ts := make([]T, 0, len)
+	tm := make(map[T]struct{}, len)
+
+	for i := 0; i < len; i++ {
+		// Get next.
+		t := get(i)
+
+		if _, ok := tm[t]; !ok {
+			// New value, add
+			// to map + slice.
+			ts = append(ts, t)
+			tm[t] = struct{}{}
+		}
+	}
+
+	return ts
+}
+
+// orderByIDs orders a slice of database models by the provided slice of IDs.
+func orderByIDs[T any](models []T, ids []string, getID func(T) string) {
+	var (
+		start  int
+		offset int
+	)
+
+	for i := 0; i < len(ids); i++ {
+		var (
+			// ID at index.
+			id = ids[i]
+
+			// sentinel
+			// idx value.
+			idx = -1
+		)
+
+		// Look for model with ID in slice.
+		for j := start; j < len(models); j++ {
+			if getID(models[j]) == id {
+				idx = j
+				break
+			}
+		}
+
+		if idx == -1 {
+			// model with ID
+			// was not found.
+			offset++
+			continue
+		}
+
+		// Update
+		// start
+		start++
+
+		// Expected ID index.
+		exp := i - offset
+
+		if idx == exp {
+			// Model is in expected
+			// location, keep going.
+			continue
+		}
+
+		// Swap models at the current and expected indices.
+		models[idx], models[exp] = models[exp], models[idx]
+	}
+}

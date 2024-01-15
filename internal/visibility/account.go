@@ -39,7 +39,7 @@ func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account
 		requesterID = requester.ID
 	}
 
-	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
+	visibility, err := f.state.Caches.Visibility.LoadOne("Type,RequesterID,ItemID", func() (*cache.CachedVisibility, error) {
 		// Visibility not yet cached, perform visibility lookup.
 		visible, err := f.isAccountVisibleTo(ctx, requester, account)
 		if err != nil {

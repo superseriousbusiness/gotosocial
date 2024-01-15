@@ -1566,17 +1566,12 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 	if len(attachments) == 0 {
 		// GTS model attachments were not populated
 
-		// Preallocate expected GTS slice
-		attachments = make([]*gtsmodel.MediaAttachment, 0, len(attachmentIDs))
+		var err error
 
 		// Fetch GTS models for attachment IDs
-		for _, id := range attachmentIDs {
-			attachment, err := c.state.DB.GetAttachmentByID(ctx, id)
-			if err != nil {
-				errs.Appendf("error fetching attachment %s from database: %v", id, err)
-				continue
-			}
-			attachments = append(attachments, attachment)
+		attachments, err = c.state.DB.GetAttachmentsByIDs(ctx, attachmentIDs)
+		if err != nil {
+			errs.Appendf("error fetching attachments from database: %v", err)
 		}
 	}
 
@@ -1603,17 +1598,12 @@ func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsm
 	if len(emojis) == 0 {
 		// GTS model attachments were not populated
 
-		// Preallocate expected GTS slice
-		emojis = make([]*gtsmodel.Emoji, 0, len(emojiIDs))
+		var err error
 
 		// Fetch GTS models for emoji IDs
-		for _, id := range emojiIDs {
-			emoji, err := c.state.DB.GetEmojiByID(ctx, id)
-			if err != nil {
-				errs.Appendf("error fetching emoji %s from database: %v", id, err)
-				continue
-			}
-			emojis = append(emojis, emoji)
+		emojis, err = c.state.DB.GetEmojisByIDs(ctx, emojiIDs)
+		if err != nil {
+			errs.Appendf("error fetching emojis from database: %v", err)
 		}
 	}
 
