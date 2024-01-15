@@ -1,8 +1,8 @@
 module github.com/superseriousbusiness/gotosocial
 
-go 1.21.4
+go 1.21
 
-toolchain go1.21.5
+toolchain go1.21.3
 
 require (
 	codeberg.org/gruf/go-bytesize v1.0.2
