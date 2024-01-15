@@ -21,6 +21,12 @@ func Open(driverName, dsn string, opts ...Option) (*sql.DB, error) {
 
 func patchDB(db *sql.DB, dsn string, opts ...Option) (*sql.DB, error) {
 	dbDriver := db.Driver()
+
+	// Close the db since we are about to open a new one.
+	if err := db.Close(); err != nil {
+		return nil, err
+	}
+
 	d := newDriver(dbDriver, opts)
 
 	if _, ok := dbDriver.(driver.DriverContext); ok {
