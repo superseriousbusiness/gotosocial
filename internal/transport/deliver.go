@@ -82,7 +82,7 @@ func (t *transport) BatchDeliver(ctx context.Context, b []byte, recipients []*ur
 				// Attempt to deliver data to recipient.
 				if err := t.deliver(ctx, b, to); err != nil {
 					mutex.Lock() // safely append err to accumulator.
-					errs.Appendf("error delivering to %s: %v", to, err)
+					errs.Appendf("error delivering to %s: %w", to, err)
 					mutex.Unlock()
 				}
 			}
