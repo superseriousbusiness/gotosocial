@@ -45,7 +45,7 @@ type HeaderFilterBlock struct{ HeaderFilter }
 // matching regex, and details about its creation.
 type HeaderFilter struct {
 	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // ID of this item in the database
-	Header    string    `bun:",nullzero,notnull,unique"`                                    // Canonical request header this filter pertains to.
+	Header    string    `bun:",nullzero,notnull"`                                           // Canonical request header this filter pertains to.
 	Regex     string    `bun:",nullzero,notnull"`                                           // Request header value matching regular expression.
 	AuthorID  string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this filter
 	Author    *Account  `bun:"-"`                                                           // Account corresponding to AuthorID
