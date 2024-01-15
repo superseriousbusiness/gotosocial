@@ -27,9 +27,9 @@ import (
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
+	"codeberg.org/superseriousbusiness/exif-terminator"
 	"github.com/disintegration/imaging"
 	"github.com/h2non/filetype"
-	"github.com/superseriousbusiness/exif-terminator"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
