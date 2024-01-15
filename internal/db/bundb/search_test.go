@@ -72,6 +72,14 @@ func (suite *SearchTestSuite) TestSearchAccountsTurtleFollowing() {
 	suite.Len(accounts, 1)
 }
 
+func (suite *SearchTestSuite) TestSearchAccountsTurtleFollowingUpper() {
+	testAccount := suite.testAccounts["local_account_1"]
+
+	accounts, err := suite.db.SearchForAccounts(context.Background(), testAccount.ID, "TURTLE", "", "", 10, true, 0)
+	suite.NoError(err)
+	suite.Len(accounts, 1)
+}
+
 func (suite *SearchTestSuite) TestSearchAccountsPostFollowing() {
 	testAccount := suite.testAccounts["local_account_1"]
 

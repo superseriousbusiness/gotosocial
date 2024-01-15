@@ -133,8 +133,7 @@ func (s *searchDB) SearchForAccounts(
 		// Normalize it and just look for
 		// usernames that start with query.
 		query = query[1:]
-		subQ := s.accountUsername()
-		q = whereStartsLike(q, subQ, query)
+		q = whereStartsLike(q, bun.Ident("account.username"), query)
 	} else {
 		// Query looks like arbitrary string.
 		// Search using LIKE for matches of query
@@ -199,32 +198,6 @@ func (s *searchDB) followedAccounts(accountID string) *bun.SelectQuery {
 		Where("? = ?", bun.Ident("follow.account_id"), accountID)
 }
 
-// accountUsername returns a subquery that just selects
-// from account usernames, without concatenation.
-func (s *searchDB) accountUsername() *bun.SelectQuery {
-	var q *bun.SelectQuery
-
-	// SQLite search is case insensitive.
-	// Postgres searches get lowercased.
-	switch d := s.db.Dialect().Name(); d {
-
-	case dialect.SQLite:
-		return s.db.
-			NewSelect().
-			Column("account.username")
-
-	case dialect.PG:
-		return s.db.
-			NewSelect().
-			ColumnExpr("LOWER(?)", bun.Ident("account.username"))
-
-	default:
-		log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
-	}
-
-	return q
-}
-
 // accountText returns a subquery that selects a concatenation
 // of account username and display name as "account_text". If
 // `following` is true, then account note will also be included
@@ -260,9 +233,6 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 	// different number of placeholders depending on
 	// following/not following. COALESCE calls ensure
 	// that we're not trying to concatenate null values.
-	//
-	// SQLite search is case insensitive.
-	// Postgres searches get lowercased.
 
 	switch d := s.db.Dialect().Name(); {
 
@@ -273,10 +243,10 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 		query = "? || COALESCE(?, ?) AS ?"
 
 	case d == dialect.PG && following:
-		query = "LOWER(CONCAT(?, COALESCE(?, ?), COALESCE(?, ?))) AS ?"
+		query = "CONCAT(?, COALESCE(?, ?), COALESCE(?, ?)) AS ?"
 
 	case d == dialect.PG && !following:
-		query = "LOWER(CONCAT(?, COALESCE(?, ?))) AS ?"
+		query = "CONCAT(?, COALESCE(?, ?)) AS ?"
 
 	default:
 		log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
@@ -403,9 +373,6 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 
 	// SQLite and Postgres use different
 	// syntaxes for concatenation.
-	//
-	// SQLite search is case insensitive.
-	// Postgres searches get lowercased.
 	switch d := s.db.Dialect().Name(); d {
 
 	case dialect.SQLite:
@@ -416,7 +383,7 @@ func (s *searchDB) statusText() *bun.SelectQuery {
 
 	case dialect.PG:
 		statusText = statusText.ColumnExpr(
-			"LOWER(CONCAT(?, COALESCE(?, ?))) AS ?",
+			"CONCAT(?, COALESCE(?, ?)) AS ?",
 			bun.Ident("status.content"), bun.Ident("status.content_warning"), "",
 			bun.Ident("status_text"))
 
