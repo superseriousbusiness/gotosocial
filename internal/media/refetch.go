@@ -53,8 +53,10 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 	for {
 		// Fetch next block of emojis from database
 		emojis, err := m.state.DB.GetEmojisBy(ctx, domain, false, true, "", maxShortcodeDomain, "", 20)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			log.Errorf(ctx, "error fetching emojis from database: %s", err)
+		if err != nil {
+			if !errors.Is(err, db.ErrNoEntries) {
+				log.Errorf(ctx, "error fetching emojis from database: %s", err)
+			}
 			break
 		}
 
