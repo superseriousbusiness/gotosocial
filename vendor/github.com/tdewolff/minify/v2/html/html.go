@@ -3,6 +3,7 @@ package html
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 
 	"github.com/tdewolff/minify/v2"
@@ -52,6 +53,7 @@ var PHPTemplateDelims = [2]string{"<?", "?>"}
 type Minifier struct {
 	KeepComments            bool
 	KeepConditionalComments bool
+	KeepSpecialComments     bool
 	KeepDefaultAttrVals     bool
 	KeepDocumentTags        bool
 	KeepEndTags             bool
@@ -69,6 +71,11 @@ func Minify(m *minify.M, w io.Writer, r io.Reader, params map[string]string) err
 func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]string) error {
 	var rawTagHash Hash
 	var rawTagMediatype []byte
+
+	if o.KeepConditionalComments {
+		fmt.Println("DEPRECATED: KeepConditionalComments is replaced by KeepSpecialComments")
+		o.KeepSpecialComments = true
+	}
 
 	omitSpace := true // if true the next leading space is omitted
 	inPre := false
@@ -97,27 +104,29 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 		case html.CommentToken:
 			if o.KeepComments {
 				w.Write(t.Data)
-			} else if o.KeepConditionalComments && 6 < len(t.Text) && (bytes.HasPrefix(t.Text, []byte("[if ")) || bytes.HasSuffix(t.Text, []byte("[endif]")) || bytes.HasSuffix(t.Text, []byte("[endif]--"))) {
-				// [if ...] is always 7 or more characters, [endif] is only encountered for downlevel-revealed
-				// see https://msdn.microsoft.com/en-us/library/ms537512(v=vs.85).aspx#syntax
-				if bytes.HasPrefix(t.Data, []byte("<!--[if ")) && bytes.HasSuffix(t.Data, []byte("<![endif]-->")) { // downlevel-hidden
-					begin := bytes.IndexByte(t.Data, '>') + 1
-					end := len(t.Data) - len("<![endif]-->")
-					if begin < end {
-						w.Write(t.Data[:begin])
-						if err := o.Minify(m, w, buffer.NewReader(t.Data[begin:end]), nil); err != nil {
-							return minify.UpdateErrorPosition(err, z, t.Offset)
+			} else if o.KeepSpecialComments {
+				if 6 < len(t.Text) && (bytes.HasPrefix(t.Text, []byte("[if ")) || bytes.HasSuffix(t.Text, []byte("[endif]")) || bytes.HasSuffix(t.Text, []byte("[endif]--"))) {
+					// [if ...] is always 7 or more characters, [endif] is only encountered for downlevel-revealed
+					// see https://msdn.microsoft.com/en-us/library/ms537512(v=vs.85).aspx#syntax
+					if bytes.HasPrefix(t.Data, []byte("<!--[if ")) && bytes.HasSuffix(t.Data, []byte("<![endif]-->")) { // downlevel-hidden
+						begin := bytes.IndexByte(t.Data, '>') + 1
+						end := len(t.Data) - len("<![endif]-->")
+						if begin < end {
+							w.Write(t.Data[:begin])
+							if err := o.Minify(m, w, buffer.NewReader(t.Data[begin:end]), nil); err != nil {
+								return minify.UpdateErrorPosition(err, z, t.Offset)
+							}
+							w.Write(t.Data[end:])
+						} else {
+							w.Write(t.Data) // malformed
 						}
-						w.Write(t.Data[end:])
 					} else {
-						w.Write(t.Data) // malformed
+						w.Write(t.Data) // downlevel-revealed or short downlevel-hidden
 					}
-				} else {
-					w.Write(t.Data) // downlevel-revealed or short downlevel-hidden
+				} else if 1 < len(t.Text) && t.Text[0] == '#' {
+					// SSI tags
+					w.Write(t.Data)
 				}
-			} else if 1 < len(t.Text) && t.Text[0] == '#' {
-				// SSI tags
-				w.Write(t.Data)
 			}
 		case html.SvgToken:
 			if err := m.MinifyMimetype(svgMimeBytes, w, buffer.NewReader(t.Data), nil); err != nil {
