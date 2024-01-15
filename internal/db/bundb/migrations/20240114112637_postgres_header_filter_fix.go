@@ -85,16 +85,16 @@ func init() {
 		// tx and stop the second query from running.
 		if db.Dialect().Name() == dialect.PG {
 			for _, table := range []string{
-				"header_filter_allows",
-				"header_filter_blocks",
+				"public.header_filter_allows",
+				"public.header_filter_blocks",
 			} {
 				// Just swallow any errors
 				// here, we're not bothered.
 				_, _ = db.ExecContext(
 					ctx,
 					"ALTER TABLE ? DROP CONSTRAINT IF EXISTS ?",
-					bun.Ident("public."+table),
-					bun.Safe(table+"_header_regex_key"),
+					bun.Ident(table),
+					bun.Safe("header_regex"),
 				)
 			}
 		}
