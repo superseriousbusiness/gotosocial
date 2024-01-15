@@ -80,9 +80,10 @@ func init() {
 		// https://www.postgresql.org/docs/16/sql-altertable.html#SQL-ALTERTABLE-DESC-DROP-CONSTRAINT
 		//
 		// We run this part outside of a transaction
-		// because we expect errors, and we don't want
-		// an error in the first query to foul the
-		// tx and stop the second query from running.
+		// because we don't check for errors, and we
+		// don't want an error in the first query to
+		// foul the transaction and stop the second
+		// query from running.
 		if db.Dialect().Name() == dialect.PG {
 			for _, table := range []string{
 				"public.header_filter_allows",
