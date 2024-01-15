@@ -66,7 +66,7 @@ import (
   "io"
   "os"
 
-  terminator "github.com/superseriousbusiness/exif-terminator"
+  terminator "codeberg.org/superseriousbusiness/exif-terminator"
 )
 
 func main() {
@@ -119,4 +119,4 @@ func main() {
 
 `exif-terminator` is free software, licensed under the [GNU AGPL v3 LICENSE](LICENSE).
 
-Copyright (C) 2022 SuperSeriousBusiness.
+Copyright (C) 2022-2024 SuperSeriousBusiness.
