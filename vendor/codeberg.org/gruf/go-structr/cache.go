@@ -674,12 +674,11 @@ func (c *Cache[T]) store(index *Index[T], key string, value T, err error) {
 		// Acquire buf.
 		buf := getBuf()
 
-		already := index
 		for i := range c.indices {
 			// Get current index ptr.
-			index := &(c.indices[i])
+			idx := &(c.indices[i])
 
-			if index == already {
+			if idx == index {
 				// Already stored under
 				// this index, ignore.
 				continue
@@ -688,7 +687,7 @@ func (c *Cache[T]) store(index *Index[T], key string, value T, err error) {
 			// Generate key from reflect value,
 			// (this ignores zero value keys).
 			buf.Reset() // reset buf first
-			if !index.keygen.appendFromRValue(buf, rvalue) {
+			if !idx.keygen.appendFromRValue(buf, rvalue) {
 				continue
 			}
 
@@ -696,7 +695,7 @@ func (c *Cache[T]) store(index *Index[T], key string, value T, err error) {
 			key := string(buf.B)
 
 			// Append result to index at key.
-			index_append(c, index, key, res)
+			index_append(c, idx, key, res)
 		}
 
 		// Done with buf.
