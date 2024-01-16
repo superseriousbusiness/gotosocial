@@ -1,0 +1,79 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package gtsmodel
+
+import (
+	"crypto/rsa"
+	"time"
+)
+
+// Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
+type Account struct {
+	ID                      string          `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt               time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created.
+	UpdatedAt               time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item was last updated.
+	FetchedAt               time.Time       `bun:"type:timestamptz,nullzero"`                                   // when was item (remote) last fetched.
+	Username                string          `bun:",nullzero,notnull,unique:usernamedomain"`                     // Username of the account, should just be a string of [a-zA-Z0-9_]. Can be added to domain to create the full username in the form ``[username]@[domain]`` eg., ``user_96@example.org``. Username and domain should be unique *with* each other
+	Domain                  string          `bun:",nullzero,unique:usernamedomain"`                             // Domain of the account, will be null if this is a local account, otherwise something like ``example.org``. Should be unique with username.
+	AvatarMediaAttachmentID string          `bun:"type:CHAR(26),nullzero"`                                      // Database ID of the media attachment, if present
+	AvatarRemoteURL         string          `bun:",nullzero"`                                                   // For a non-local account, where can the header be fetched?
+	HeaderMediaAttachmentID string          `bun:"type:CHAR(26),nullzero"`                                      // Database ID of the media attachment, if present
+	HeaderRemoteURL         string          `bun:",nullzero"`                                                   // For a non-local account, where can the header be fetched?
+	DisplayName             string          `bun:""`                                                            // DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
+	EmojiIDs                []string        `bun:"emojis,array"`                                                // Database IDs of any emojis used in this account's bio, display name, etc
+	Fields                  []*Field        // A slice of of fields that this account has added to their profile.
+	Note                    string          `bun:""`                               // A note that this account has on their profile (ie., the account's bio/description of themselves)
+	NoteRaw                 string          `bun:""`                               // The raw contents of .Note without conversion to HTML, only available when requester = target
+	Memorial                *bool           `bun:",default:false"`                 // Is this a memorial account, ie., has the user passed away?
+	AlsoKnownAs             string          `bun:",nullzero"`                      // This account is associated with x account URI.
+	MovedToAccountID        string          `bun:",nullzero"`                      // This account has moved to this account URI.
+	Bot                     *bool           `bun:",default:false"`                 // Does this account identify itself as a bot?
+	Reason                  string          `bun:""`                               // What reason was given for signing up when this account was created?
+	Locked                  *bool           `bun:",default:true"`                  // Does this account need an approval for new followers?
+	Discoverable            *bool           `bun:",default:false"`                 // Should this account be shown in the instance's profile directory?
+	Privacy                 string          `bun:",nullzero"`                      // Default post privacy for this account
+	Sensitive               *bool           `bun:",default:false"`                 // Set posts from this account to sensitive by default?
+	Language                string          `bun:",nullzero,notnull,default:'en'"` // What language does this account post in?
+	StatusContentType       string          `bun:",nullzero"`                      // What is the default format for statuses posted by this account (only for local accounts).
+	CustomCSS               string          `bun:",nullzero"`                      // Custom CSS that should be displayed for this Account's profile and statuses.
+	URI                     string          `bun:",nullzero,notnull,unique"`       // ActivityPub URI for this account.
+	URL                     string          `bun:",nullzero,unique"`               // Web URL for this account's profile
+	InboxURI                string          `bun:",nullzero,unique"`               // Address of this account's ActivityPub inbox, for sending activity to
+	SharedInboxURI          *string         `bun:""`                               // Address of this account's ActivityPub sharedInbox. Gotcha warning: this is a string pointer because it has three possible states: 1. We don't know yet if the account has a shared inbox -- null. 2. We know it doesn't have a shared inbox -- empty string. 3. We know it does have a shared inbox -- url string.
+	OutboxURI               string          `bun:",nullzero,unique"`               // Address of this account's activitypub outbox
+	FollowingURI            string          `bun:",nullzero,unique"`               // URI for getting the following list of this account
+	FollowersURI            string          `bun:",nullzero,unique"`               // URI for getting the followers list of this account
+	FeaturedCollectionURI   string          `bun:",nullzero,unique"`               // URL for getting the featured collection list of this account
+	ActorType               string          `bun:",nullzero,notnull"`              // What type of activitypub actor is this account?
+	PrivateKey              *rsa.PrivateKey `bun:""`                               // Privatekey for signing activitypub requests, will only be defined for local accounts
+	PublicKey               *rsa.PublicKey  `bun:",notnull"`                       // Publickey for authorizing signed activitypub requests, will be defined for both local and remote accounts
+	PublicKeyURI            string          `bun:",nullzero,notnull,unique"`       // Web-reachable location of this account's public key
+	PublicKeyExpiresAt      time.Time       `bun:"type:timestamptz,nullzero"`      // PublicKey will expire/has expired at given time, and should be fetched again as appropriate. Only ever set for remote accounts.
+	SensitizedAt            time.Time       `bun:"type:timestamptz,nullzero"`      // When was this account set to have all its media shown as sensitive?
+	SilencedAt              time.Time       `bun:"type:timestamptz,nullzero"`      // When was this account silenced (eg., statuses only visible to followers, not public)?
+	SuspendedAt             time.Time       `bun:"type:timestamptz,nullzero"`      // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
+	HideCollections         *bool           `bun:",default:false"`                 // Hide this account's collections
+	SuspensionOrigin        string          `bun:"type:CHAR(26),nullzero"`         // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
+	EnableRSS               *bool           `bun:",default:false"`                 // enable RSS feed subscription for this account's public posts at [URL]/feed
+}
+
+type Field struct {
+	Name       string    `validate:"required"`          // Name of this field.
+	Value      string    `validate:"required"`          // Value of this field.
+	VerifiedAt time.Time `validate:"-" bun:",nullzero"` // This field was verified at (optional).
+}

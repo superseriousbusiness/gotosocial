@@ -65,7 +65,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeleteLocal() {
 	suite.Zero(updatedAccount.Note)
 	suite.Zero(updatedAccount.NoteRaw)
 	suite.False(*updatedAccount.Memorial)
-	suite.Zero(updatedAccount.AlsoKnownAs)
+	suite.Empty(updatedAccount.AlsoKnownAsURIs)
 	suite.Zero(updatedAccount.Reason)
 	suite.False(*updatedAccount.Discoverable)
 	suite.Zero(updatedAccount.StatusContentType)

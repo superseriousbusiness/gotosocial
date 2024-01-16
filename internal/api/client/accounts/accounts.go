@@ -53,6 +53,8 @@ const (
 	UnfollowPath      = BasePathWithID + "/unfollow"
 	UpdatePath        = BasePath + "/update_credentials"
 	VerifyPath        = BasePath + "/verify_credentials"
+	MovePath          = BasePath + "/move"
+	AliasPath         = BasePath + "/alias"
 )
 
 type Module struct {
@@ -108,4 +110,8 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	// search for accounts
 	attachHandler(http.MethodGet, SearchPath, m.AccountSearchGETHandler)
 	attachHandler(http.MethodGet, LookupPath, m.AccountLookupGETHandler)
+
+	// migration handlers
+	attachHandler(http.MethodPost, AliasPath, m.AccountAliasPOSTHandler)
+	attachHandler(http.MethodPost, MovePath, m.AccountMovePOSTHandler)
 }

@@ -69,6 +69,105 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
 }`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved() {
+	// Take zork for this test.
+	var testAccount = new(gtsmodel.Account)
+	*testAccount = *suite.testAccounts["local_account_1"]
+
+	// Update zork to indicate that he's moved to turtle.
+	// This is a bit weird but it's just for this test.
+	movedTo := suite.testAccounts["local_account_2"]
+	testAccount.MovedToURI = movedTo.URI
+	testAccount.AlsoKnownAsURIs = []string{movedTo.URI}
+
+	if err := suite.state.DB.UpdateAccount(context.Background(), testAccount, "moved_to_uri"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountSensitive(context.Background(), testAccount)
+	suite.NoError(err)
+	suite.NotNil(apiAccount)
+
+	// moved and also_known_as_uris
+	// should both be set now.
+	b, err := json.MarshalIndent(apiAccount, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`{
+  "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+  "username": "the_mighty_zork",
+  "acct": "the_mighty_zork",
+  "display_name": "original zork (he/they)",
+  "locked": false,
+  "discoverable": true,
+  "bot": false,
+  "created_at": "2022-05-20T11:09:18.000Z",
+  "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+  "url": "http://localhost:8080/@the_mighty_zork",
+  "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "followers_count": 2,
+  "following_count": 2,
+  "statuses_count": 7,
+  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "emojis": [],
+  "fields": [],
+  "source": {
+    "privacy": "public",
+    "sensitive": false,
+    "language": "en",
+    "status_content_type": "text/plain",
+    "note": "hey yo this is my profile!",
+    "fields": [],
+    "follow_requests_count": 0,
+    "also_known_as_uris": [
+      "http://localhost:8080/users/1happyturtle"
+    ]
+  },
+  "enable_rss": true,
+  "role": {
+    "name": "user"
+  },
+  "moved": {
+    "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "username": "1happyturtle",
+    "acct": "1happyturtle",
+    "display_name": "happy little turtle :3",
+    "locked": true,
+    "discoverable": false,
+    "bot": false,
+    "created_at": "2022-06-04T13:12:00.000Z",
+    "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+    "url": "http://localhost:8080/@1happyturtle",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 8,
+    "last_status_at": "2021-07-28T08:40:37.000Z",
+    "emojis": [],
+    "fields": [
+      {
+        "name": "should you follow me?",
+        "value": "maybe!",
+        "verified_at": null
+      },
+      {
+        "name": "age",
+        "value": "120",
+        "verified_at": null
+      }
+    ],
+    "role": {
+      "name": "user"
+    }
+  }
+}`, string(b))
+}
+
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct() {
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test

@@ -516,8 +516,8 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 	account.Note = ""
 	account.NoteRaw = ""
 	account.Memorial = util.Ptr(false)
-	account.AlsoKnownAs = ""
-	account.MovedToAccountID = ""
+	account.AlsoKnownAsURIs = nil
+	account.MovedToURI = ""
 	account.Reason = ""
 	account.Discoverable = util.Ptr(false)
 	account.StatusContentType = ""
@@ -539,8 +539,8 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 		"note",
 		"note_raw",
 		"memorial",
-		"also_known_as",
-		"moved_to_account_id",
+		"also_known_as_uris",
+		"moved_to_uri",
 		"reason",
 		"discoverable",
 		"status_content_type",

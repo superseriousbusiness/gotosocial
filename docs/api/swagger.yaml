@@ -111,6 +111,16 @@ definitions:
     Source:
         description: Returned as an additional entity when verifying and updated credentials, as an attribute of Account.
         properties:
+            also_known_as_uris:
+                description: |-
+                    This account is aliased to / also known as accounts at the
+                    given ActivityPub URIs. To set this, use `/api/v1/accounts/alias`.
+
+                    Omitted from json if empty / not set.
+                items:
+                    type: string
+                type: array
+                x-go-name: AlsoKnownAsURIs
             fields:
                 description: Metadata about the account.
                 items:
@@ -246,6 +256,8 @@ definitions:
                 description: Account manually approves follow requests.
                 type: boolean
                 x-go-name: Locked
+            moved:
+                $ref: '#/definitions/account'
             mute_expires_at:
                 description: If this account has been muted, when will the mute expire (ISO 8601 Datetime).
                 example: "2021-07-30T09:20:25+00:00"
@@ -1419,6 +1431,10 @@ definitions:
                     This should be displayed on the 'about' page for an instance.
                 type: string
                 x-go-name: Description
+            description_text:
+                description: Raw (unparsed) version of description.
+                type: string
+                x-go-name: DescriptionText
             email:
                 description: An email address that may be used for inquiries.
                 example: admin@example.org
@@ -1463,6 +1479,10 @@ definitions:
                     This should be displayed on the instance splash/landing page.
                 type: string
                 x-go-name: ShortDescription
+            short_description_text:
+                description: Raw (unparsed) version of short description.
+                type: string
+                x-go-name: ShortDescriptionText
             stats:
                 additionalProperties:
                     format: int64
@@ -1474,6 +1494,10 @@ definitions:
                 description: Terms and conditions for accounts on this instance.
                 type: string
                 x-go-name: Terms
+            terms_text:
+                description: Raw (unparsed) version of terms.
+                type: string
+                x-go-name: TermsRaw
             thumbnail:
                 description: URL of the instance avatar/banner image.
                 example: https://example.org/files/instance/thumbnail.jpeg
@@ -1565,6 +1589,10 @@ definitions:
                     This should be displayed on the 'about' page for an instance.
                 type: string
                 x-go-name: Description
+            description_text:
+                description: Raw (unparsed) version of description.
+                type: string
+                x-go-name: DescriptionText
             domain:
                 description: The domain of the instance.
                 example: gts.example.org
@@ -1595,6 +1623,10 @@ definitions:
                 description: Terms and conditions for accounts on this instance.
                 type: string
                 x-go-name: Terms
+            terms_text:
+                description: Raw (unparsed) version of terms.
+                type: string
+                x-go-name: TermsText
             thumbnail:
                 $ref: '#/definitions/instanceV2Thumbnail'
             title:
@@ -3509,6 +3541,47 @@ paths:
             summary: Unfollow account with id.
             tags:
                 - accounts
+    /api/v1/accounts/alias:
+        post:
+            consumes:
+                - multipart/form-data
+            description: |-
+                This is useful when you want to move from another account this this account.
+
+                In such cases, you should set the alsoKnownAs of this account to the URI of
+                the account you want to move from.
+            operationId: accountAlias
+            parameters:
+                - description: |-
+                    ActivityPub URI/IDs of target accounts to which this account is being aliased. Eg., `["https://example.org/users/some_account"]`.
+                    Use an empty array to unset alsoKnownAs, clearing the aliases.
+                  in: formData
+                  name: also_known_as_uris
+                  required: true
+                  type: string
+            responses:
+                "200":
+                    description: The newly updated account.
+                    schema:
+                        $ref: '#/definitions/account'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: Unprocessable. Check the response body for more details.
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Alias your account to another account by setting alsoKnownAs to the given URI.
+            tags:
+                - accounts
     /api/v1/accounts/delete:
         post:
             consumes:
@@ -3569,6 +3642,43 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: Quickly lookup a username to see if it is available, skipping WebFinger resolution.
+            tags:
+                - accounts
+    /api/v1/accounts/move:
+        post:
+            consumes:
+                - multipart/form-data
+            operationId: accountMove
+            parameters:
+                - description: Password of the account user, for confirmation.
+                  in: formData
+                  name: password
+                  required: true
+                  type: string
+                - description: ActivityPub URI/ID of the target account. Eg., `https://example.org/users/some_account`. The target account must be alsoKnownAs the requesting account in order for the move to be successful.
+                  in: formData
+                  name: moved_to_uri
+                  required: true
+                  type: string
+            responses:
+                "202":
+                    description: The account move has been accepted and the account will be moved.
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: Unprocessable. Check the response body for more details.
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Move your account to another account.
             tags:
                 - accounts
     /api/v1/accounts/relationships:

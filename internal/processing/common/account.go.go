@@ -162,6 +162,23 @@ func (p *Processor) GetAPIAccountBlocked(
 	return apiAccount, nil
 }
 
+// GetAPIAccountSensitive fetches the "sensitive" account model for the given target.
+// *BE CAREFUL!* Only return a sensitive account if targetAcc == account making the request.
+func (p *Processor) GetAPIAccountSensitive(
+	ctx context.Context,
+	targetAcc *gtsmodel.Account,
+) (
+	apiAcc *apimodel.Account,
+	errWithCode gtserror.WithCode,
+) {
+	apiAccount, err := p.converter.AccountToAPIAccountSensitive(ctx, targetAcc)
+	if err != nil {
+		err = gtserror.Newf("error converting account: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	return apiAccount, nil
+}
+
 // GetVisibleAPIAccounts converts an array of gtsmodel.Accounts (inputted by next function) into
 // public API model accounts, checking first for visibility. Please note that all errors will be
 // logged at ERROR level, but will not be returned. Callers are likely to run into show-stopping

@@ -254,7 +254,7 @@ func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(
 func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Account) error {
 	var (
 		err  error
-		errs = gtserror.NewMultiError(3)
+		errs = gtserror.NewMultiError(5)
 	)
 
 	if account.AvatarMediaAttachment == nil && account.AvatarMediaAttachmentID != "" {
@@ -276,6 +276,37 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 		)
 		if err != nil {
 			errs.Appendf("error populating account header: %w", err)
+		}
+	}
+
+	if !account.AlsoKnownAsPopulated() {
+		// Account alsoKnownAs accounts are
+		// out-of-date with URIs, repopulate.
+		alsoKnownAs := make([]*gtsmodel.Account, 0)
+		for _, uri := range account.AlsoKnownAsURIs {
+			akaAcct, err := a.state.DB.GetAccountByURI(
+				gtscontext.SetBarebones(ctx),
+				uri,
+			)
+			if err != nil {
+				errs.Appendf("error populating also known as account %s: %w", uri, err)
+				continue
+			}
+
+			alsoKnownAs = append(alsoKnownAs, akaAcct)
+		}
+
+		account.AlsoKnownAs = alsoKnownAs
+	}
+
+	if account.MovedTo == nil && account.MovedToURI != "" {
+		// Account movedTo is not set, fetch from database.
+		account.MovedTo, err = a.state.DB.GetAccountByURI(
+			gtscontext.SetBarebones(ctx),
+			account.MovedToURI,
+		)
+		if err != nil {
+			errs.Appendf("error populating moved to account: %w", err)
 		}
 	}
 
