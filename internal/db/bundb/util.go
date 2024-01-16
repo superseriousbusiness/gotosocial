@@ -23,8 +23,10 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 // likeEscaper is a thread-safe string replacer which escapes
@@ -37,10 +39,29 @@ var likeEscaper = strings.NewReplacer(
 	`_`, `\_`, // Exactly one char.
 )
 
+// likeOperator returns an appropriate LIKE or
+// ILIKE operator for the given query's dialect.
+func likeOperator(query *bun.SelectQuery) string {
+	const (
+		like  = "LIKE"
+		ilike = "ILIKE"
+	)
+
+	d := query.Dialect().Name()
+	if d == dialect.SQLite {
+		return like
+	} else if d == dialect.PG {
+		return ilike
+	}
+
+	log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
+	return ""
+}
+
 // whereLike appends a WHERE clause to the
 // given SelectQuery, which searches for
 // matches of `search` in the given subQuery
-// using LIKE.
+// using LIKE (SQLite) or ILIKE (Postgres).
 func whereLike(
 	query *bun.SelectQuery,
 	subject interface{},
@@ -54,11 +75,14 @@ func whereLike(
 	// zero or more chars around the query.
 	search = `%` + search + `%`
 
+	// Get appropriate operator.
+	like := likeOperator(query)
+
 	// Append resulting WHERE
 	// clause to the main query.
 	return query.Where(
-		"(?) LIKE ? ESCAPE ?",
-		subject, search, `\`,
+		"(?) ? ? ESCAPE ?",
+		subject, bun.Safe(like), search, `\`,
 	)
 }
 
@@ -78,11 +102,14 @@ func whereStartsLike(
 	// zero or more chars after the query.
 	search += `%`
 
+	// Get appropriate operator.
+	like := likeOperator(query)
+
 	// Append resulting WHERE
 	// clause to the main query.
 	return query.Where(
-		"(?) LIKE ? ESCAPE ?",
-		subject, search, `\`,
+		"(?) ? ? ESCAPE ?",
+		subject, bun.Safe(like), search, `\`,
 	)
 }
 
