@@ -113,6 +113,25 @@ func (suite *AliasTestSuite) TestAliasAccount() {
 				"http://localhost:8080/users/admin",
 			},
 		},
+		// Alias zork to turtle AND admin,
+		// duplicates should be removed.
+		{
+			newAliases: []string{
+				"http://localhost:8080/users/1happyturtle",
+				"http://localhost:8080/users/admin",
+				"http://localhost:8080/users/1happyturtle",
+				"http://localhost:8080/users/admin",
+				"http://localhost:8080/users/1happyturtle",
+				"http://localhost:8080/users/1happyturtle",
+				"http://localhost:8080/users/1happyturtle",
+				"http://localhost:8080/users/admin",
+				"http://localhost:8080/users/admin",
+			},
+			expectedAliases: []string{
+				"http://localhost:8080/users/1happyturtle",
+				"http://localhost:8080/users/admin",
+			},
+		},
 	} {
 		var (
 			ctx      = context.Background()
