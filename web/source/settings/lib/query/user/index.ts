@@ -19,6 +19,10 @@
 
 import { replaceCacheOnMutation } from "../query-modifiers";
 import { gtsApi } from "../gts-api";
+import type {
+	MoveAccountFormData,
+	UpdateAliasesFormData
+} from "../../types/migration";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -38,6 +42,30 @@ const extended = gtsApi.injectEndpoints({
 				url: `/api/v1/user/password_change`,
 				body: data
 			})
+		}),
+		aliasAccount: build.mutation<any, UpdateAliasesFormData>({
+			async queryFn(formData, _api, _extraOpts, fetchWithBQ) {
+				// Pull entries out from the hooked form.
+				const entries: String[] = [];
+				formData.also_known_as_uris.forEach(entry => {
+					if (entry) {
+						entries.push(entry);
+					}
+				});
+
+				return fetchWithBQ({
+					method: "POST",
+					url: `/api/v1/accounts/alias`,
+					body: { also_known_as_uris: entries },
+				});
+			}
+		}),
+		moveAccount: build.mutation<any, MoveAccountFormData>({
+			query: (data) => ({
+				method: "POST",
+				url: `/api/v1/accounts/move`,
+				body: data
+			})
 		})
 	})
 });
@@ -45,4 +73,6 @@ const extended = gtsApi.injectEndpoints({
 export const {
 	useUpdateCredentialsMutation,
 	usePasswordChangeMutation,
+	useAliasAccountMutation,
+	useMoveAccountMutation,
 } = extended;

@@ -51,7 +51,8 @@ ul li::before {
 		border-radius: $br;
 		max-width: 100%;
 
-		& > div, & > form {
+		& > div,
+		& > form {
 			border-left: 0.2rem solid $border-accent;
 			padding-left: 0.4rem;
 			display: flex;
@@ -59,13 +60,14 @@ ul li::before {
 			gap: 0.5rem;
 			margin: 1rem 0;
 
-			h2 {
+			h1, h2 {
 				margin: 0;
 				margin-top: 0.1rem;
 			}
 
 			&:only-child {
 				border-left: none;
+				padding-left: none;
 			}
 
 			&:first-child {
@@ -76,7 +78,8 @@ ul li::before {
 				margin-bottom: 0;
 			}
 
-			&.without-border {
+			&.without-border,
+			.without-border {
 				border-left: 0;
 				padding-left: 0;
 			}
@@ -410,6 +413,19 @@ section.with-sidebar > div, section.with-sidebar > form {
 	}
 }
 
+/*
+	Normalize mock profile and make profile
+	header preview pop a bit nicer.
+*/
+.profile {
+	padding: 0;
+
+	& > .profile-header {
+		margin-bottom: 0;
+		border: 0.1rem solid $gray1;
+	}
+}
+
 .user-profile {
 	.overview {
 		display: grid;
@@ -417,14 +433,6 @@ section.with-sidebar > div, section.with-sidebar > form {
 		grid-template-columns: 70% 30%;
 		grid-template-rows: 100%;
 		gap: 1rem;
-
-		.profile {
-			padding: 0;
-
-			.header {
-				border: 0.1rem solid $gray1;
-			}
-		}
 
 		.files {
 			width: 100%;
@@ -448,6 +456,36 @@ section.with-sidebar > div, section.with-sidebar > form {
 			display: flex;
 			gap: 0.5rem;
 		}
+	}
+}
+
+.migration-details {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+
+	background-color: $gray2;
+	padding: 1rem;
+	max-width: fit-content;
+	border-radius: $br;
+
+	& > div {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+
+		& > dd {
+			font-weight: bold;
+			word-wrap: anywhere;
+		}
+	}
+}
+
+.user-migration-alias {
+	.aliases {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 	}
 }
 
