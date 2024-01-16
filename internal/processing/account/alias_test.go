@@ -93,7 +93,7 @@ func (suite *AliasTestSuite) TestAliasAccount() {
 		// Set bad alias.
 		{
 			newAliases:  []string{"oh no"},
-			expectedErr: "Alias: invalid also_known_as_uri (oh no) provided in account alias request: uri must not be empty and scheme must be http or https",
+			expectedErr: "invalid also_known_as_uri (oh no) provided in account alias request: uri must not be empty and scheme must be http or https",
 		},
 		// Try to alias to self (won't do anything).
 		{

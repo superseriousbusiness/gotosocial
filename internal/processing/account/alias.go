@@ -20,16 +20,12 @@ package account
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-)
-
-const (
-	aliasTargetSuspended = "target account %s is suspended from this instance; you will not be able to set alsoKnownAs to that account; if you believe this is an error, please contact your instance admin"
-	aliasBadURI          = "invalid also_known_as_uri (%s) provided in account alias request: %w"
 )
 
 func (p *Processor) Alias(
@@ -71,13 +67,19 @@ func (p *Processor) Alias(
 		for _, rawURI := range newAKAURIs {
 			alsoKnownAsURI, err := url.Parse(rawURI)
 			if err != nil {
-				err := gtserror.Newf(aliasBadURI, rawURI, err)
+				err := fmt.Errorf(
+					"invalid also_known_as_uri (%s) provided in account alias request: %w",
+					rawURI, err,
+				)
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 
 			// We only deref http or https, so check this.
-			if alsoKnownAsURI == nil || (alsoKnownAsURI.Scheme != "https" && alsoKnownAsURI.Scheme != "http") {
-				err := gtserror.Newf(aliasBadURI, rawURI, errors.New("uri must not be empty and scheme must be http or https"))
+			if alsoKnownAsURI.Scheme != "https" && alsoKnownAsURI.Scheme != "http" {
+				err := fmt.Errorf(
+					"invalid also_known_as_uri (%s) provided in account alias request: %w",
+					rawURI, errors.New("uri must not be empty and scheme must be http or https"),
+				)
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 
@@ -104,13 +106,20 @@ func (p *Processor) Alias(
 			// representation of the target account.
 			targetAccount, _, err := p.federator.GetAccountByURI(ctx, account.Username, alsoKnownAsURI)
 			if err != nil {
-				err := gtserror.Newf("error dereferencing also_known_as_uri (%s) account: %w", rawURI, err)
+				err := fmt.Errorf(
+					"error dereferencing also_known_as_uri (%s) account: %w",
+					rawURI, err,
+				)
 				return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 			}
 
 			// Alias target must not be suspended.
 			if !targetAccount.SuspendedAt.IsZero() {
-				err := gtserror.Newf(aliasTargetSuspended, alsoKnownAsURIStr)
+				err := fmt.Errorf(
+					"target account %s is suspended from this instance; "+
+						"you will not be able to set alsoKnownAs to that account",
+					alsoKnownAsURIStr,
+				)
 				return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 			}
 

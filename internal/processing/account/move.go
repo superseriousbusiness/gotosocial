@@ -19,6 +19,8 @@ package account
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/url"
 	"slices"
 
@@ -32,12 +34,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	moveTargetSuspended  = "target account %s is suspended from this instance; you will not be able to Move to that account; if you believe this is an error, please contact your instance admin"
-	moveTargetNotAliased = "target account %s is not aliased to this account via alsoKnownAs; to Move to the target account from this one, you must log in to the target account and set alsoKnownAs to %s; if you only just changed it, please wait five minutes and try this action again"
-	moveTargetMoved      = "target account %s has already Moved somewhere else (%s); you will not be able to Move to that account"
-)
-
 func (p *Processor) MoveSelf(
 	ctx context.Context,
 	authed *oauth.Auth,
@@ -45,24 +41,24 @@ func (p *Processor) MoveSelf(
 ) gtserror.WithCode {
 	// Ensure valid MovedToURI.
 	if form.MovedToURI == "" {
-		err := gtserror.New("no moved_to_uri provided in account Move request")
+		err := errors.New("no moved_to_uri provided in account Move request")
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	movedToURI, err := url.Parse(form.MovedToURI)
 	if err != nil {
-		err := gtserror.Newf("invalid moved_to_uri provided in account Move request: %w", err)
+		err := fmt.Errorf("invalid moved_to_uri provided in account Move request: %w", err)
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	if movedToURI == nil || (movedToURI.Scheme != "https" && movedToURI.Scheme != "http") {
-		err := gtserror.New("invalid moved_to_uri provided in account Move request: uri scheme must be http or https")
+	if movedToURI.Scheme != "https" && movedToURI.Scheme != "http" {
+		err := errors.New("invalid moved_to_uri provided in account Move request: uri scheme must be http or https")
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	// Self account Move requires password to ensure it's for real.
 	if form.Password == "" {
-		err := gtserror.New("no password provided in account Move request")
+		err := errors.New("no password provided in account Move request")
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
@@ -70,7 +66,7 @@ func (p *Processor) MoveSelf(
 		[]byte(authed.User.EncryptedPassword),
 		[]byte(form.Password),
 	); err != nil {
-		err := gtserror.New("invalid password provided in account Move request")
+		err := errors.New("invalid password provided in account Move request")
 		return gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
@@ -100,7 +96,7 @@ func (p *Processor) MoveSelf(
 	default:
 		// Account already moved, and now
 		// trying to move somewhere else.
-		err := gtserror.Newf(
+		err := fmt.Errorf(
 			"account %s is already Moved to %s, cannot also Move to %s",
 			account.URI, account.MovedToURI, form.MovedToURI,
 		)
@@ -110,26 +106,38 @@ func (p *Processor) MoveSelf(
 	// Ensure we have a valid, up-to-date representation of the target account.
 	targetAccount, _, err = p.federator.GetAccountByURI(ctx, account.Username, movedToURI)
 	if err != nil {
-		err := gtserror.Newf("error dereferencing moved_to_uri account: %w", err)
+		err := fmt.Errorf("error dereferencing moved_to_uri account: %w", err)
 		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
 	if !targetAccount.SuspendedAt.IsZero() {
-		err := gtserror.Newf(moveTargetSuspended, targetAccount.URI)
+		err := fmt.Errorf(
+			"target account %s is suspended from this instance; "+
+				"you will not be able to Move to that account",
+			targetAccount.URI,
+		)
 		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
 	// Target account MUST be aliased to this
 	// account for this to be a valid Move.
 	if !slices.Contains(targetAccount.AlsoKnownAsURIs, account.URI) {
-		err := gtserror.Newf(moveTargetNotAliased, targetAccount.URI, account.URI)
+		err := fmt.Errorf(
+			"target account %s is not aliased to this account via alsoKnownAs; "+
+				"if you just changed it, wait five minutes and try the Move again",
+			targetAccount.URI,
+		)
 		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
 	// Target account cannot itself have
 	// already Moved somewhere else.
 	if targetAccount.MovedToURI != "" {
-		err := gtserror.Newf(moveTargetMoved, targetAccount.URI, targetAccount.MovedToURI)
+		err := fmt.Errorf(
+			"target account %s has already Moved somewhere else (%s); "+
+				"you will not be able to Move to that account",
+			targetAccount.URI, targetAccount.MovedToURI,
+		)
 		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
