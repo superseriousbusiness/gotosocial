@@ -284,7 +284,7 @@ func parseFieldsAttributesFromJSON(jsonFieldsAttributes *map[string]apimodel.Upd
 
 	// Sort slice by the key each field was submitted with.
 	slices.SortFunc(fieldsAttributes, func(a, b apimodel.UpdateField) int {
-		const k = -1
+		const k = +1
 		switch {
 		case a.Key > b.Key:
 			return +k

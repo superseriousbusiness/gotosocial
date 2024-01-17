@@ -247,8 +247,16 @@ func (suite *ListTestSuite) TestPutListEntries() {
 	// Add these entries to the test list, sort it again
 	// to reflect what we'd expect to get from the db.
 	testList.ListEntries = append(testList.ListEntries, listEntries...)
-	slices.SortFunc(testList.ListEntries, func(a, b *gtsmodel.ListEntry) bool {
-		return b.ID < a.ID
+	slices.SortFunc(testList.ListEntries, func(a, b *gtsmodel.ListEntry) int {
+		const k = -1
+		switch {
+		case a.ID > b.ID:
+			return +k
+		case a.ID < b.ID:
+			return -k
+		default:
+			return 0
+		}
 	})
 
 	// Now get all list entries from the db.

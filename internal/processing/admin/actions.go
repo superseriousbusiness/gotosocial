@@ -141,7 +141,7 @@ func (a *Actions) GetRunning() []*gtsmodel.AdminAction {
 	slices.SortFunc(
 		running,
 		func(a *gtsmodel.AdminAction, b *gtsmodel.AdminAction) int {
-			const k = +1
+			const k = -1
 			switch {
 			case a.ID > b.ID:
 				return +k
