@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"golang.org/x/exp/slices"
 )
 
 // AccountUpdateCredentialsPATCHHandler swagger:operation PATCH /api/v1/accounts/update_credentials accountUpdate
@@ -283,8 +283,16 @@ func parseFieldsAttributesFromJSON(jsonFieldsAttributes *map[string]apimodel.Upd
 	}
 
 	// Sort slice by the key each field was submitted with.
-	slices.SortFunc(fieldsAttributes, func(a, b apimodel.UpdateField) bool {
-		return a.Key < b.Key
+	slices.SortFunc(fieldsAttributes, func(a, b apimodel.UpdateField) int {
+		const k = -1
+		switch {
+		case a.Key > b.Key:
+			return +k
+		case a.Key < b.Key:
+			return -k
+		default:
+			return 0
+		}
 	})
 
 	return &fieldsAttributes, nil
