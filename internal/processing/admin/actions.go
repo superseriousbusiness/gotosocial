@@ -19,6 +19,7 @@ package admin
 
 import (
 	"context"
+	"slices"
 	"sync"
 	"time"
 
@@ -26,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"golang.org/x/exp/slices"
 )
 
 func errActionConflict(action *gtsmodel.AdminAction) gtserror.WithCode {
@@ -140,8 +140,16 @@ func (a *Actions) GetRunning() []*gtsmodel.AdminAction {
 	// Order by ID descending (creation date).
 	slices.SortFunc(
 		running,
-		func(a *gtsmodel.AdminAction, b *gtsmodel.AdminAction) bool {
-			return a.ID > b.ID
+		func(a *gtsmodel.AdminAction, b *gtsmodel.AdminAction) int {
+			const k = -1
+			switch {
+			case a.ID > b.ID:
+				return +k
+			case a.ID < b.ID:
+				return -k
+			default:
+				return 0
+			}
 		},
 	)
 

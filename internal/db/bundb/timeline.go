@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -31,7 +32,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
-	"golang.org/x/exp/slices"
 )
 
 type timelineDB struct {
@@ -311,8 +311,16 @@ func (t *timelineDB) GetFavedTimeline(ctx context.Context, accountID string, max
 	}
 
 	// Sort by favourite ID rather than status ID
-	slices.SortFunc(faves, func(a, b *gtsmodel.StatusFave) bool {
-		return a.ID > b.ID
+	slices.SortFunc(faves, func(a, b *gtsmodel.StatusFave) int {
+		const k = -1
+		switch {
+		case a.ID > b.ID:
+			return +k
+		case a.ID < b.ID:
+			return -k
+		default:
+			return 0
+		}
 	})
 
 	statuses := make([]*gtsmodel.Status, 0, len(faves))

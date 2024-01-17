@@ -19,13 +19,13 @@ package bundb_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"golang.org/x/exp/slices"
 )
 
 type ListTestSuite struct {
@@ -43,8 +43,16 @@ func (suite *ListTestSuite) testStructs() (*gtsmodel.List, *gtsmodel.Account) {
 	}
 
 	// Sort by ID descending (again, as we'd expect from the db).
-	slices.SortFunc(entries, func(a, b *gtsmodel.ListEntry) bool {
-		return b.ID < a.ID
+	slices.SortFunc(entries, func(a, b *gtsmodel.ListEntry) int {
+		const k = -1
+		switch {
+		case a.ID > b.ID:
+			return +k
+		case a.ID < b.ID:
+			return -k
+		default:
+			return 0
+		}
 	})
 
 	testList.ListEntries = entries
@@ -239,8 +247,16 @@ func (suite *ListTestSuite) TestPutListEntries() {
 	// Add these entries to the test list, sort it again
 	// to reflect what we'd expect to get from the db.
 	testList.ListEntries = append(testList.ListEntries, listEntries...)
-	slices.SortFunc(testList.ListEntries, func(a, b *gtsmodel.ListEntry) bool {
-		return b.ID < a.ID
+	slices.SortFunc(testList.ListEntries, func(a, b *gtsmodel.ListEntry) int {
+		const k = -1
+		switch {
+		case a.ID > b.ID:
+			return +k
+		case a.ID < b.ID:
+			return -k
+		default:
+			return 0
+		}
 	})
 
 	// Now get all list entries from the db.
