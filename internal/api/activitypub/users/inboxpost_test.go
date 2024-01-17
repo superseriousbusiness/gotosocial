@@ -478,15 +478,17 @@ func (suite *InboxPostTestSuite) TestPostEmptyCreate() {
 		targetAccount     = suite.testAccounts["local_account_1"]
 	)
 
-	// Post a create with no object.
+	// Post a create with no object, this
+	// should get accepted and silently dropped
+	// as the lack of ID marks it as transient.
 	create := streams.NewActivityStreamsCreate()
 
 	suite.inboxPost(
 		create,
 		requestingAccount,
 		targetAccount,
-		http.StatusBadRequest,
-		`{"error":"Bad Request: missing ActivityStreams id property"}`,
+		http.StatusAccepted,
+		`{"status":"Accepted"}`,
 		suite.signatureCheck,
 	)
 }
