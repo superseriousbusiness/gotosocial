@@ -143,10 +143,12 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 		have not yet applied authorization (ie., blocks).
 	*/
 
-	// Obtain the activity; reject unknown activities.
-	activity, errWithCode := ap.ResolveIncomingActivity(r)
+	// Resolve the activity, rejecting badly formatted / transient.
+	activity, ok, errWithCode := ap.ResolveIncomingActivity(r)
 	if errWithCode != nil {
 		return false, errWithCode
+	} else if !ok { // transient
+		return false, nil
 	}
 
 	// Set additional context data. Primarily this means

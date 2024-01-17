@@ -56,8 +56,9 @@ func putMap(m map[string]any) {
 	mapPool.Put(m)
 }
 
-// ResolveActivity is a util function for pulling a pub.Activity type out of an incoming request body.
-func ResolveIncomingActivity(r *http.Request) (pub.Activity, gtserror.WithCode) {
+// ResolveActivity is a util function for pulling a pub.Activity type out of an incoming request body,
+// returning the resolved activity type, error and whether to accept activity (false = transient i.e. ignore).
+func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.WithCode) {
 	// Get "raw" map
 	// destination.
 	raw := getMap()
@@ -68,7 +69,7 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, gtserror.WithCode) 
 	// Decode the JSON body stream into "raw" map.
 	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
 		err := gtserror.Newf("error decoding json: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
+		return nil, false, gtserror.NewErrorInternalError(err)
 	}
 
 	// Resolve "raw" JSON to vocab.Type.
@@ -76,25 +77,29 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, gtserror.WithCode) 
 	if err != nil {
 		if !streams.IsUnmatchedErr(err) {
 			err := gtserror.Newf("error matching json to type: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
+			return nil, false, gtserror.NewErrorInternalError(err)
 		}
 
 		// Respond with bad request; we just couldn't
 		// match the type to one that we know about.
 		const text = "body json not resolvable as ActivityStreams type"
-		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+		return nil, false, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
 	// Ensure this is an Activity type.
 	activity, ok := t.(pub.Activity)
 	if !ok {
 		text := fmt.Sprintf("cannot resolve vocab type %T as pub.Activity", t)
-		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+		return nil, false, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
 	if activity.GetJSONLDId() == nil {
-		const text = "missing ActivityStreams id property"
-		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+		// missing ID indicates a transient ID as per:
+		//
+		// all objects distributed by the ActivityPub protocol MUST have unique global identifiers,
+		// unless they are intentionally transient (short lived activities that are not intended to
+		// be able to be looked up, such as some kinds of chat messages or game notifications).
+		return nil, false, nil
 	}
 
 	// Normalize any Statusable, Accountable, Pollable fields found.
@@ -104,7 +109,7 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, gtserror.WithCode) 
 	// Release.
 	putMap(raw)
 
-	return activity, nil
+	return activity, true, nil
 }
 
 // ResolveStatusable tries to resolve the given bytes into an ActivityPub Statusable representation.
