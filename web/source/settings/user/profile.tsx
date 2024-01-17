@@ -17,41 +17,41 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-const {
+import {
 	useTextInput,
 	useFileInput,
 	useBoolInput,
 	useFieldArrayInput
-} = require("../lib/form");
+} from "../lib/form";
 
-const useFormSubmit = require("../lib/form/submit").default;
-const { useWithFormContext, FormContext } = require("../lib/form/context");
+import useFormSubmit from "../lib/form/submit";
+import { useWithFormContext, FormContext } from "../lib/form/context";
 
-const {
+import {
 	TextInput,
 	TextArea,
 	FileInput,
 	Checkbox
-} = require("../components/form/inputs");
+} from "../components/form/inputs";
 
-const FormWithData = require("../lib/form/form-with-data").default;
-const FakeProfile = require("../components/fake-profile");
-const MutationButton = require("../components/form/mutation-button");
+import FormWithData from "../lib/form/form-with-data";
+import FakeProfile from "../components/fake-profile";
+import MutationButton from "../components/form/mutation-button";
 
-const { useInstanceV1Query } = require("../lib/query");
-const { useUpdateCredentialsMutation } = require("../lib/query/user");
-const { useVerifyCredentialsQuery } = require("../lib/query/oauth");
+import { useInstanceV1Query } from "../lib/query";
+import { useUpdateCredentialsMutation } from "../lib/query/user";
+import { useVerifyCredentialsQuery } from "../lib/query/oauth";
 
-module.exports = function UserProfile() {
+export default function UserProfile() {
 	return (
 		<FormWithData
 			dataQuery={useVerifyCredentialsQuery}
 			DataForm={UserProfileForm}
 		/>
 	);
-};
+}
 
 function UserProfileForm({ data: profile }) {
 	/*
@@ -91,6 +91,7 @@ function UserProfileForm({ data: profile }) {
 	};
 
 	const [submitForm, result] = useFormSubmit(form, useUpdateCredentialsMutation(), {
+		changedOnly: true,
 		onFinish: () => {
 			form.avatar.reset();
 			form.header.reset();
@@ -195,7 +196,11 @@ function UserProfileForm({ data: profile }) {
 				rows={8}
 				disabled={!instanceConfig.allowCustomCSS}
 			/>
-			<MutationButton label="Save profile info" result={result} />
+			<MutationButton
+				disabled={false}
+				label="Save profile info"
+				result={result}
+			/>
 		</form>
 	);
 }

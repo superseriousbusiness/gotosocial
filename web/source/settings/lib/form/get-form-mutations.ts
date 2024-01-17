@@ -22,7 +22,12 @@ import { FormInputHook, HookedForm } from "./types";
 export default function getFormMutations(
 	form: HookedForm,
 	{ changedOnly }: { changedOnly: boolean },
-) {
+): {
+	updatedFields: FormInputHook<any>[];
+	mutationData: {
+		[k: string]: any;
+	};
+} {
 	const updatedFields: FormInputHook[] = [];
 	const mutationData: Array<[string, any]> = [];
 	
@@ -34,7 +39,7 @@ export default function getFormMutations(
 		}
 		
 		if ("selectedValues" in field) {
-			// FieldArrayInputHook.
+			// (Field)ArrayInputHook.
 			const selected = field.selectedValues();
 			if (!changedOnly || selected.length > 0) {
 				updatedFields.push(field);
