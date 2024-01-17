@@ -18,8 +18,9 @@
 package cache
 
 import (
+	"slices"
+
 	"codeberg.org/gruf/go-cache/v3/simple"
-	"golang.org/x/exp/slices"
 )
 
 // SliceCache wraps a simple.Cache to provide simple loader-callback

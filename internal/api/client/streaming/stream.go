@@ -19,6 +19,7 @@ package streaming
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"codeberg.org/gruf/go-kv"
@@ -28,7 +29,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	streampkg "github.com/superseriousbusiness/gotosocial/internal/stream"
-	"golang.org/x/exp/slices"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
