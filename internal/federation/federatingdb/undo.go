@@ -78,7 +78,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 		}
 	}
 
-	return nil
+	return errs.Combine()
 }
 
 func (f *federatingDB) undoFollow(
