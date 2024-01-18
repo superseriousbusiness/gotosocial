@@ -45,16 +45,11 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 		return nil // Already processed.
 	}
 
-	rejectObject := reject.GetActivityStreamsObject()
-	if rejectObject == nil {
-		return errors.New("Reject: no object set on vocab.ActivityStreamsReject")
-	}
+	for _, obj := range ap.ExtractObjects(reject) {
 
-	for iter := rejectObject.Begin(); iter != rejectObject.End(); iter = iter.Next() {
-		// check if the object is an IRI
-		if iter.IsIRI() {
+		if obj.IsIRI() {
 			// we have just the URI of whatever is being rejected, so we need to find out what it is
-			rejectedObjectIRI := iter.GetIRI()
+			rejectedObjectIRI := obj.GetIRI()
 			if uris.IsFollowPath(rejectedObjectIRI) {
 				// REJECT FOLLOW
 				followReq, err := f.state.DB.GetFollowRequestByURI(ctx, rejectedObjectIRI.String())
@@ -78,15 +73,10 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 			}
 		}
 
-		// check if iter is an AP object / type
-		if iter.GetType() == nil {
-			continue
-		}
-
-		if iter.GetType().GetTypeName() == ap.ActivityFollow {
+		if t := obj.GetType(); t != nil {
 			// we have the whole object so we can figure out what we're rejecting
 			// REJECT FOLLOW
-			asFollow, ok := iter.GetType().(vocab.ActivityStreamsFollow)
+			asFollow, ok := t.(vocab.ActivityStreamsFollow)
 			if !ok {
 				return errors.New("Reject: couldn't parse follow into vocab.ActivityStreamsFollow")
 			}
