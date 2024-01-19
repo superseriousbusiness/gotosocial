@@ -662,7 +662,7 @@ func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, ids []string) ([]
 			}
 		},
 
-		// Uncached follow req loader function.
+		// Uncached emoji loader function.
 		func() ([]*gtsmodel.EmojiCategory, error) {
 			// Preallocate expected length of uncached categories.
 			categories := make([]*gtsmodel.EmojiCategory, 0, len(uncached))
