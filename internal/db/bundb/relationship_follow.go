@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -125,7 +126,7 @@ func (r *relationshipDB) GetFollowsByIDs(ctx context.Context, ids []string) ([]*
 
 	// Populate all loaded follows, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	follows = util.DeleteIf(follows, func(follow *gtsmodel.Follow) bool {
+	follows = slices.DeleteFunc(follows, func(follow *gtsmodel.Follow) bool {
 		if err := r.PopulateFollow(ctx, follow); err != nil {
 			log.Errorf(ctx, "error populating follow %s: %v", follow.ID, err)
 			return true

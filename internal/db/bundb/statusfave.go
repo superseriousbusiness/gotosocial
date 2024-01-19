@@ -22,6 +22,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -160,7 +161,7 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 
 	// Populate all loaded faves, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	faves = util.DeleteIf(faves, func(fave *gtsmodel.StatusFave) bool {
+	faves = slices.DeleteFunc(faves, func(fave *gtsmodel.StatusFave) bool {
 		if err := s.PopulateStatusFave(ctx, fave); err != nil {
 			log.Errorf(ctx, "error populating fave %s: %v", fave.ID, err)
 			return true

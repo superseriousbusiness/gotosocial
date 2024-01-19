@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -124,7 +125,7 @@ func (r *relationshipDB) GetFollowRequestsByIDs(ctx context.Context, ids []strin
 
 	// Populate all loaded followreqs, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	follows = util.DeleteIf(follows, func(follow *gtsmodel.FollowRequest) bool {
+	follows = slices.DeleteFunc(follows, func(follow *gtsmodel.FollowRequest) bool {
 		if err := r.PopulateFollowRequest(ctx, follow); err != nil {
 			log.Errorf(ctx, "error populating follow request %s: %v", follow.ID, err)
 			return true

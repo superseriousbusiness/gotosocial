@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -317,7 +318,7 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 
 	// Populate all loaded votes, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	votes = util.DeleteIf(votes, func(vote *gtsmodel.PollVote) bool {
+	votes = slices.DeleteFunc(votes, func(vote *gtsmodel.PollVote) bool {
 		if err := p.PopulatePollVote(ctx, vote); err != nil {
 			log.Errorf(ctx, "error populating vote %s: %v", vote.ID, err)
 			return true

@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -151,7 +152,7 @@ func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string
 
 	// Populate all loaded notifs, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	notifs = util.DeleteIf(notifs, func(notif *gtsmodel.Notification) bool {
+	notifs = slices.DeleteFunc(notifs, func(notif *gtsmodel.Notification) bool {
 		if err := n.PopulateNotification(ctx, notif); err != nil {
 			log.Errorf(ctx, "error populating notif %s: %v", notif.ID, err)
 			return true

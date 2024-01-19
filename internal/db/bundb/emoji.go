@@ -627,7 +627,7 @@ func (e *emojiDB) GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel
 
 	// Populate all loaded emojis, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	emojis = util.DeleteIf(emojis, func(emoji *gtsmodel.Emoji) bool {
+	emojis = slices.DeleteFunc(emojis, func(emoji *gtsmodel.Emoji) bool {
 		if err := e.PopulateEmoji(ctx, emoji); err != nil {
 			log.Errorf(ctx, "error populating emoji %s: %v", emoji.ID, err)
 			return true

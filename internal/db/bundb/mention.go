@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -112,7 +113,7 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 
 	// Populate all loaded mentions, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	mentions = util.DeleteIf(mentions, func(mention *gtsmodel.Mention) bool {
+	mentions = slices.DeleteFunc(mentions, func(mention *gtsmodel.Mention) bool {
 		if err := m.PopulateMention(ctx, mention); err != nil {
 			log.Errorf(ctx, "error populating mention %s: %v", mention.ID, err)
 			return true

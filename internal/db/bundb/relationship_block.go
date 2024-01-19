@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -148,7 +149,7 @@ func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*g
 
 	// Populate all loaded blocks, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	blocks = util.DeleteIf(blocks, func(block *gtsmodel.Block) bool {
+	blocks = slices.DeleteFunc(blocks, func(block *gtsmodel.Block) bool {
 		if err := r.PopulateBlock(ctx, block); err != nil {
 			log.Errorf(ctx, "error populating block %s: %v", block.ID, err)
 			return true

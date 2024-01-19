@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -388,7 +389,7 @@ func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.L
 
 	// Populate all loaded lists, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	lists = util.DeleteIf(lists, func(list *gtsmodel.List) bool {
+	lists = slices.DeleteFunc(lists, func(list *gtsmodel.List) bool {
 		if err := l.PopulateList(ctx, list); err != nil {
 			log.Errorf(ctx, "error populating list %s: %v", list.ID, err)
 			return true
@@ -448,7 +449,7 @@ func (l *listDB) GetListEntriesByIDs(ctx context.Context, ids []string) ([]*gtsm
 
 	// Populate all loaded entries, removing those we fail to
 	// populate (removes needing so many nil checks everywhere).
-	entries = util.DeleteIf(entries, func(entry *gtsmodel.ListEntry) bool {
+	entries = slices.DeleteFunc(entries, func(entry *gtsmodel.ListEntry) bool {
 		if err := l.PopulateListEntry(ctx, entry); err != nil {
 			log.Errorf(ctx, "error populating entry %s: %v", entry.ID, err)
 			return true
