@@ -19,12 +19,15 @@ package admin_test
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -49,7 +52,10 @@ type domainPermAction struct {
 	// permission action on each
 	// account on the target domain.
 	// Eg., suite.Zero(account.SuspendedAt)
-	expected func(*gtsmodel.Account) bool
+	expected func(
+		context.Context,
+		*gtsmodel.Account,
+	) bool
 }
 
 type domainPermTest struct {
@@ -76,6 +82,9 @@ func (suite *DomainBlockTestSuite) runDomainPermTest(t domainPermTest) {
 	config.SetInstanceFederationMode(t.instanceFederationMode)
 
 	for _, action := range t.actions {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		// Run the desired action.
 		var actionID string
 		switch action.createOrDelete {
@@ -102,7 +111,7 @@ func (suite *DomainBlockTestSuite) runDomainPermTest(t domainPermTest) {
 		}
 
 		for _, account := range accounts {
-			if !action.expected(account) {
+			if !action.expected(ctx, account) {
 				suite.T().FailNow()
 			}
 		}
@@ -193,6 +202,42 @@ func (suite *DomainBlockTestSuite) awaitAction(actionID string) {
 	suite.Empty(adminAction.Errors)
 }
 
+// shortcut to look up an account
+// using the Search processor.
+func (suite *DomainBlockTestSuite) lookupAccount(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+) (*apimodel.Account, gtserror.WithCode) {
+	return suite.processor.Search().Lookup(
+		ctx,
+		requestingAccount,
+		"@"+targetAccount.Username+"@"+targetAccount.Domain,
+	)
+}
+
+// shortcut to look up target account's
+// statuses using the Account processor.
+func (suite *DomainBlockTestSuite) getStatuses(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
+	return suite.processor.Account().StatusesGet(
+		ctx,
+		requestingAccount,
+		targetAccount.ID,
+		0,          // unlimited
+		false,      // include replies
+		false,      // include reblogs
+		id.Highest, // max ID
+		id.Lowest,  // min ID
+		false,      // don't filter on pinned
+		false,      // don't filter on media
+		false,      // don't filter on public
+	)
+}
+
 func (suite *DomainBlockTestSuite) TestBlockAndUnblockDomain() {
 	const domain = "fossbros-anonymous.io"
 
@@ -203,7 +248,7 @@ func (suite *DomainBlockTestSuite) TestBlockAndUnblockDomain() {
 				createOrDelete: "create",
 				permissionType: gtsmodel.DomainPermissionBlock,
 				domain:         domain,
-				expected: func(account *gtsmodel.Account) bool {
+				expected: func(_ context.Context, account *gtsmodel.Account) bool {
 					// Domain was blocked, so each
 					// account should now be suspended.
 					return suite.NotZero(account.SuspendedAt)
@@ -213,7 +258,7 @@ func (suite *DomainBlockTestSuite) TestBlockAndUnblockDomain() {
 				createOrDelete: "delete",
 				permissionType: gtsmodel.DomainPermissionBlock,
 				domain:         domain,
-				expected: func(account *gtsmodel.Account) bool {
+				expected: func(_ context.Context, account *gtsmodel.Account) bool {
 					// Domain was unblocked, so each
 					// account should now be unsuspended.
 					return suite.Zero(account.SuspendedAt)
@@ -226,6 +271,9 @@ func (suite *DomainBlockTestSuite) TestBlockAndUnblockDomain() {
 func (suite *DomainBlockTestSuite) TestBlockAndAllowDomain() {
 	const domain = "fossbros-anonymous.io"
 
+	// Use zork for checks within test.
+	var testAccount = suite.testAccounts["local_account_1"]
+
 	suite.runDomainPermTest(domainPermTest{
 		instanceFederationMode: config.InstanceFederationModeBlocklist,
 		actions: []domainPermAction{
@@ -233,42 +281,246 @@ func (suite *DomainBlockTestSuite) TestBlockAndAllowDomain() {
 				createOrDelete: "create",
 				permissionType: gtsmodel.DomainPermissionBlock,
 				domain:         domain,
-				expected: func(account *gtsmodel.Account) bool {
+				expected: func(ctx context.Context, account *gtsmodel.Account) bool {
 					// Domain was blocked, so each
 					// account should now be suspended.
-					return suite.NotZero(account.SuspendedAt)
+					if account.SuspendedAt.IsZero() {
+						suite.T().Logf("account %s should be suspended", account.Username)
+						return false
+					}
+
+					// Local account 1 should be able to see
+					// no statuses from suspended account.
+					statuses, err := suite.getStatuses(ctx, testAccount, account)
+					if err != nil {
+						suite.FailNow(err.Error())
+					}
+					if l := len(statuses.Items); l != 0 {
+						suite.T().Logf("expected statuses of len 0, was %d", l)
+						return false
+					}
+
+					// Lookup for this account should return 404.
+					lookupAcct, err := suite.lookupAccount(ctx, testAccount, account)
+					if err == nil || err.Code() != http.StatusNotFound {
+						suite.T().Logf("expected 404 error, got %v", err)
+						return false
+					}
+					if lookupAcct != nil {
+						suite.T().Logf("expected nil account lookup, got %v", lookupAcct)
+						return false
+					}
+
+					return true
 				},
 			},
 			{
 				createOrDelete: "create",
 				permissionType: gtsmodel.DomainPermissionAllow,
 				domain:         domain,
-				expected: func(account *gtsmodel.Account) bool {
+				expected: func(ctx context.Context, account *gtsmodel.Account) bool {
 					// Domain was explicitly allowed, so each
 					// account should now be unsuspended, since
 					// the allow supercedes the block.
-					return suite.Zero(account.SuspendedAt)
+					if !account.SuspendedAt.IsZero() {
+						suite.T().Logf("account %s should not be suspended", account.Username)
+						return false
+					}
+
+					// Local account 1 should be able to see
+					// no statuses from account, because any
+					// statuses were deleted by the block above.
+					statuses, err := suite.getStatuses(ctx, testAccount, account)
+					if err != nil {
+						suite.FailNow(err.Error())
+					}
+					if l := len(statuses.Items); l != 0 {
+						suite.T().Logf("expected statuses of len 0, was %d", l)
+						return false
+					}
+
+					// Lookup for this account should return OK.
+					lookupAcct, err := suite.lookupAccount(ctx, testAccount, account)
+					if err != nil {
+						suite.T().Logf("expected no error, got %v", err)
+						return false
+					}
+					if lookupAcct == nil {
+						suite.T().Log("expected not nil account lookup")
+						return false
+					}
+
+					return true
 				},
 			},
 			{
 				createOrDelete: "delete",
 				permissionType: gtsmodel.DomainPermissionAllow,
 				domain:         domain,
-				expected: func(account *gtsmodel.Account) bool {
+				expected: func(ctx context.Context, account *gtsmodel.Account) bool {
 					// Deleting the allow now, while there's
 					// still a block in place, should cause
 					// the block to take effect again.
-					return suite.NotZero(account.SuspendedAt)
+					if account.SuspendedAt.IsZero() {
+						suite.T().Logf("account %s should be suspended", account.Username)
+						return false
+					}
+
+					// Lookup for this account should return 404.
+					lookupAcct, err := suite.lookupAccount(ctx, testAccount, account)
+					if err == nil || err.Code() != http.StatusNotFound {
+						suite.T().Logf("expected 404 error, got %v", err)
+						return false
+					}
+					if lookupAcct != nil {
+						suite.T().Logf("expected nil account lookup, got %v", lookupAcct)
+						return false
+					}
+
+					return true
 				},
 			},
 			{
 				createOrDelete: "delete",
 				permissionType: gtsmodel.DomainPermissionBlock,
 				domain:         domain,
-				expected: func(account *gtsmodel.Account) bool {
+				expected: func(ctx context.Context, account *gtsmodel.Account) bool {
 					// Deleting the block now should
 					// unsuspend the accounts again.
-					return suite.Zero(account.SuspendedAt)
+					if !account.SuspendedAt.IsZero() {
+						suite.T().Logf("account %s should not be suspended", account.Username)
+						return false
+					}
+
+					// Lookup for this account should return OK.
+					lookupAcct, err := suite.lookupAccount(ctx, testAccount, account)
+					if err != nil {
+						suite.T().Logf("expected no error, got %v", err)
+						return false
+					}
+					if lookupAcct == nil {
+						suite.T().Log("expected not nil account lookup")
+						return false
+					}
+
+					return true
+				},
+			},
+		},
+	})
+}
+
+
+func (suite *DomainBlockTestSuite) TestAllowAndBlockDomain() {
+	const domain = "fossbros-anonymous.io"
+
+	// Use zork for checks within test.
+	var testAccount = suite.testAccounts["local_account_1"]
+
+	suite.runDomainPermTest(domainPermTest{
+		instanceFederationMode: config.InstanceFederationModeBlocklist,
+		actions: []domainPermAction{
+			{
+				createOrDelete: "create",
+				permissionType: gtsmodel.DomainPermissionAllow,
+				domain:         domain,
+				expected: func(ctx context.Context, account *gtsmodel.Account) bool {
+					// Domain was explicitly allowed,
+					// nothing should be suspended.
+					if !account.SuspendedAt.IsZero() {
+						suite.T().Logf("account %s should not be suspended", account.Username)
+						return false
+					}
+
+					// Local account 1 should be able
+					// to see statuses from account.
+					statuses, err := suite.getStatuses(ctx, testAccount, account)
+					if err != nil {
+						suite.FailNow(err.Error())
+					}
+					if l := len(statuses.Items); l == 0 {
+						suite.T().Log("expected some statuses, but length was 0")
+						return false
+					}
+
+					// Lookup for this account should return OK.
+					lookupAcct, err := suite.lookupAccount(ctx, testAccount, account)
+					if err != nil {
+						suite.T().Logf("expected no error, got %v", err)
+						return false
+					}
+					if lookupAcct == nil {
+						suite.T().Log("expected not nil account lookup")
+						return false
+					}
+
+					return true
+				},
+			},
+			{
+				createOrDelete: "create",
+				permissionType: gtsmodel.DomainPermissionBlock,
+				domain:         domain,
+				expected: func(ctx context.Context, account *gtsmodel.Account) bool {
+					// Create a block. An allow existed, so
+					// block side effects should be witheld.
+					// In other words, we should have the same
+					// results as before we added the block.
+					if !account.SuspendedAt.IsZero() {
+						suite.T().Logf("account %s should not be suspended", account.Username)
+						return false
+					}
+
+					// Local account 1 should be able
+					// to see statuses from account.
+					statuses, err := suite.getStatuses(ctx, testAccount, account)
+					if err != nil {
+						suite.FailNow(err.Error())
+					}
+					if l := len(statuses.Items); l == 0 {
+						suite.T().Log("expected some statuses, but length was 0")
+						return false
+					}
+
+					// Lookup for this account should return OK.
+					lookupAcct, err := suite.lookupAccount(ctx, testAccount, account)
+					if err != nil {
+						suite.T().Logf("expected no error, got %v", err)
+						return false
+					}
+					if lookupAcct == nil {
+						suite.T().Log("expected not nil account lookup")
+						return false
+					}
+
+					return true
+				},
+			},
+			{
+				createOrDelete: "delete",
+				permissionType: gtsmodel.DomainPermissionAllow,
+				domain:         domain,
+				expected: func(ctx context.Context, account *gtsmodel.Account) bool {
+					// Deleting the allow now, while there's
+					// a block in place, should cause the
+					// block to take effect.
+					if account.SuspendedAt.IsZero() {
+						suite.T().Logf("account %s should be suspended", account.Username)
+						return false
+					}
+
+					// Lookup for this account should return 404.
+					lookupAcct, err := suite.lookupAccount(ctx, testAccount, account)
+					if err == nil || err.Code() != http.StatusNotFound {
+						suite.T().Logf("expected 404 error, got %v", err)
+						return false
+					}
+					if lookupAcct != nil {
+						suite.T().Logf("expected nil account lookup, got %v", lookupAcct)
+						return false
+					}
+
+					return true
 				},
 			},
 		},

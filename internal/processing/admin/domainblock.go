@@ -26,6 +26,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -92,6 +93,15 @@ func (p *Processor) createDomainBlock(
 				{"actionID", actionID},
 			}...).WithContext(ctx)
 
+			skip, err := p.skipBlockSideEffects(ctx, domain)
+			if err != nil {
+				return err
+			}
+			if skip != "" {
+				l.Infof("skipping domain block side effects: %s", skip)
+				return nil
+			}
+
 			l.Info("processing domain block side effects")
 			defer func() { l.Info("finished processing domain block side effects") }()
 
@@ -107,6 +117,54 @@ func (p *Processor) createDomainBlock(
 	}
 
 	return apiDomainBlock, actionID, nil
+}
+
+// skipBlockSideEffects checks if side effects of block creation
+// should be skipped for the given domain, taking account of
+// instance federation mode, and existence of any allows
+// which ought to "shield" this domain from being blocked.
+//
+// If the caller should skip, the returned string will be non-zero
+// and will be set to a reason why side effects should be skipped.
+//
+//   - blocklist mode + allow exists: "..." (skip)
+//   - blocklist mode + no allow:     ""    (don't skip)
+//   - allowlist mode + allow exists: ""    (don't skip)
+//   - allowlist mode + no allow:     ""    (don't skip)
+func (p *Processor) skipBlockSideEffects(
+	ctx context.Context,
+	domain string,
+) (string, gtserror.MultiError) {
+	var (
+		skip string // Assume "" (don't skip).
+		errs gtserror.MultiError
+	)
+
+	// Never skip block side effects in allowlist mode.
+	fediMode := config.GetInstanceFederationMode()
+	if fediMode == config.InstanceFederationModeAllowlist {
+		return skip, errs
+	}
+
+	// We know we're in blocklist mode.
+	//
+	// We want to skip domain block side
+	// effects if an allow is already
+	// in place which overrides the block.
+
+	// Check if an explicit allow exists for this domain.
+	domainAllow, err := p.state.DB.GetDomainAllow(ctx, domain)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		errs.Appendf("error getting domain allow: %w", err)
+		return skip, errs
+	}
+
+	if domainAllow != nil {
+		skip = "running in blocklist mode, and an explicit allow exists for this domain"
+		return skip, errs
+	}
+
+	return skip, errs
 }
 
 // domainBlockSideEffects processes the side effects of a domain block:
