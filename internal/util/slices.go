@@ -82,3 +82,53 @@ func Collate[T any, K comparable](in []T, get func(T) K) []K {
 
 	return ks
 }
+
+// OrderBy orders a slice of given type by the provided alternative slice of comparable type.
+func OrderBy[T any, K comparable](in []T, keys []K, key func(T) K) {
+	var (
+		start  int
+		offset int
+	)
+
+	for i := 0; i < len(keys); i++ {
+		var (
+			// key at index.
+			k = keys[i]
+
+			// sentinel
+			// idx value.
+			idx = -1
+		)
+
+		// Look for model with key in slice.
+		for j := start; j < len(in); j++ {
+			if key(in[j]) == k {
+				idx = j
+				break
+			}
+		}
+
+		if idx == -1 {
+			// model with ID
+			// was not found.
+			offset++
+			continue
+		}
+
+		// Update
+		// start
+		start++
+
+		// Expected ID index.
+		exp := i - offset
+
+		if idx == exp {
+			// Model is in expected
+			// location, keep going.
+			continue
+		}
+
+		// Swap models at current and expected.
+		in[idx], in[exp] = in[exp], in[idx]
+	}
+}

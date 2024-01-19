@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -307,7 +308,7 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 	// Reorder the poll votes by their
 	// IDs to ensure in correct order.
 	getID := func(v *gtsmodel.PollVote) string { return v.ID }
-	orderByIDs(votes, voteIDs, getID)
+	util.OrderBy(votes, voteIDs, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

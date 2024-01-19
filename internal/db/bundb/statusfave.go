@@ -151,7 +151,7 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 	// Reorder the statuses by their
 	// IDs to ensure in correct order.
 	getID := func(f *gtsmodel.StatusFave) string { return f.ID }
-	orderByIDs(faves, faveIDs, getID)
+	util.OrderBy(faves, faveIDs, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

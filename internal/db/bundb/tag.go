@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -109,7 +110,7 @@ func (t *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, err
 	// Reorder the tags by their
 	// IDs to ensure in correct order.
 	getID := func(t *gtsmodel.Tag) string { return t.ID }
-	orderByIDs(tags, ids, getID)
+	util.OrderBy(tags, ids, getID)
 
 	return tags, nil
 }

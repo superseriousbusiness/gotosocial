@@ -379,7 +379,7 @@ func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.L
 	// Reorder the lists by their
 	// IDs to ensure in correct order.
 	getID := func(l *gtsmodel.List) string { return l.ID }
-	orderByIDs(lists, ids, getID)
+	util.OrderBy(lists, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -436,7 +436,7 @@ func (l *listDB) GetListEntriesByIDs(ctx context.Context, ids []string) ([]*gtsm
 	// Reorder the entries by their
 	// IDs to ensure in correct order.
 	getID := func(e *gtsmodel.ListEntry) string { return e.ID }
-	orderByIDs(entries, ids, getID)
+	util.OrderBy(entries, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
