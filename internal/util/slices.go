@@ -62,8 +62,9 @@ func DeduplicateFunc[T any, C comparable](in []T, key func(v T) C) []T {
 	return deduped
 }
 
-// Collate will collect the values of type T from a provided slice,
-// passing each slice item to 'get' and deduplicating the end result.
+// Collate will collect the values of type K from input type []T,
+// passing each item to 'get' and deduplicating the end result.
+// Compared to Deduplicate() this returns []K, NOT input type []T.
 func Collate[T any, K comparable](in []T, get func(T) K) []K {
 	ks := make([]K, 0, len(in))
 	km := make(map[K]struct{}, len(in))
