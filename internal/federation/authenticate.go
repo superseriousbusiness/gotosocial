@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-kv"
-	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -37,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/httpsig"
 )
 
 var (
@@ -509,24 +509,62 @@ var signingAlgorithms = []httpsig.Algorithm{
 	httpsig.ED25519,    // Try ED25519 as a long shot.
 }
 
-// verifyAuth verifies auth using generated verifier, according to pubkey and our supported signing algorithms.
-func verifyAuth(l *log.Entry, verifier httpsig.Verifier, pubKey *rsa.PublicKey) bool {
+// Cheeky type to wrap a signing option with a
+// description of that option for logging purposes.
+type signingOption struct {
+	desc   string                  // Description of this options set.
+	sigOpt httpsig.SignatureOption // The options themselves.
+}
+
+var signingOptions = []signingOption{
+	{
+		// Prefer include query params.
+		desc: "include query params",
+		sigOpt: httpsig.SignatureOption{
+			ExcludeQueryStringFromPathPseudoHeader: false,
+		},
+	},
+	{
+		// Fall back to exclude query params.
+		desc: "exclude query params",
+		sigOpt: httpsig.SignatureOption{
+			ExcludeQueryStringFromPathPseudoHeader: true,
+		},
+	},
+}
+
+// verifyAuth verifies auth using generated verifier,
+// according to pubkey, our supported signing algorithms,
+// and signature options. The loops in the function are
+// arranged in such a way that the most common combos are
+// tried first, so that we can hopefully succeed quickly
+// without wasting too many CPU cycles.
+func verifyAuth(
+	l *log.Entry,
+	verifier httpsig.VerifierWithOptions,
+	pubKey *rsa.PublicKey,
+) bool {
 	if pubKey == nil {
 		return false
 	}
 
-	// Loop through all supported algorithms.
+	// Loop through supported algorithms.
 	for _, algo := range signingAlgorithms {
 
-		// Verify according to pubkey and algo.
-		err := verifier.Verify(pubKey, algo)
-		if err != nil {
-			l.Tracef("authentication NOT PASSED with %s: %v", algo, err)
-			continue
-		}
+		// Loop through signing options.
+		for _, opt := range signingOptions {
 
-		l.Tracef("authenticated PASSED with %s", algo)
-		return true
+			// Try to verify according to this pubkey,
+			// algo, and signing options combination.
+			err := verifier.VerifyWithOptions(pubKey, algo, opt.sigOpt)
+			if err != nil {
+				l.Tracef("authentication NOT PASSED with %s (%s): %v", algo, opt.desc, err)
+				continue
+			}
+
+			l.Tracef("authenticated PASSED with %s (%s)", algo, opt.desc)
+			return true
+		}
 	}
 
 	return false

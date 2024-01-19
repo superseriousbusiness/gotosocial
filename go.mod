@@ -30,7 +30,6 @@ require (
 	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
-	github.com/go-fed/httpsig v1.1.0
 	github.com/go-playground/form/v4 v4.2.1
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/feeds v1.1.2
@@ -47,6 +46,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	github.com/superseriousbusiness/activity v1.4.0-gts
+	github.com/superseriousbusiness/httpsig v0.0.0-20240119150151-a22573ddf4e5
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.20.14
 	github.com/technologize/otel-go-contrib v1.1.0
@@ -107,6 +107,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.4.1 // indirect
+	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/go-jose/go-jose/v3 v3.0.1 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

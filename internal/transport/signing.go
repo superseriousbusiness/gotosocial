@@ -18,7 +18,7 @@
 package transport
 
 import (
-	"github.com/go-fed/httpsig"
+	"github.com/superseriousbusiness/httpsig"
 )
 
 var (

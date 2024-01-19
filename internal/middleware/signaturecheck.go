@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-fed/httpsig"
+	"github.com/superseriousbusiness/httpsig"
 )
 
 const (
