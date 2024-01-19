@@ -133,7 +133,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		time.Time{},   // start
 		time.Minute,   // freq
 		func(context.Context, time.Time) {
-			state.Caches.Sweep(80)
+			state.Caches.Sweep(60)
 		},
 	)
 

@@ -1563,20 +1563,15 @@ func (c *Converter) PollToAPIPoll(ctx context.Context, requester *gtsmodel.Accou
 func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, attachments []*gtsmodel.MediaAttachment, attachmentIDs []string) ([]*apimodel.Attachment, error) {
 	var errs gtserror.MultiError
 
-	if len(attachments) == 0 {
+	if len(attachments) == 0 && len(attachmentIDs) > 0 {
 		// GTS model attachments were not populated
 
-		// Preallocate expected GTS slice
-		attachments = make([]*gtsmodel.MediaAttachment, 0, len(attachmentIDs))
+		var err error
 
 		// Fetch GTS models for attachment IDs
-		for _, id := range attachmentIDs {
-			attachment, err := c.state.DB.GetAttachmentByID(ctx, id)
-			if err != nil {
-				errs.Appendf("error fetching attachment %s from database: %v", id, err)
-				continue
-			}
-			attachments = append(attachments, attachment)
+		attachments, err = c.state.DB.GetAttachmentsByIDs(ctx, attachmentIDs)
+		if err != nil {
+			errs.Appendf("error fetching attachments from database: %w", err)
 		}
 	}
 
@@ -1587,7 +1582,7 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 	for _, attachment := range attachments {
 		apiAttachment, err := c.AttachmentToAPIAttachment(ctx, attachment)
 		if err != nil {
-			errs.Appendf("error converting attchment %s to api attachment: %v", attachment.ID, err)
+			errs.Appendf("error converting attchment %s to api attachment: %w", attachment.ID, err)
 			continue
 		}
 		apiAttachments = append(apiAttachments, &apiAttachment)
@@ -1600,20 +1595,15 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]apimodel.Emoji, error) {
 	var errs gtserror.MultiError
 
-	if len(emojis) == 0 {
+	if len(emojis) == 0 && len(emojiIDs) > 0 {
 		// GTS model attachments were not populated
 
-		// Preallocate expected GTS slice
-		emojis = make([]*gtsmodel.Emoji, 0, len(emojiIDs))
+		var err error
 
 		// Fetch GTS models for emoji IDs
-		for _, id := range emojiIDs {
-			emoji, err := c.state.DB.GetEmojiByID(ctx, id)
-			if err != nil {
-				errs.Appendf("error fetching emoji %s from database: %v", id, err)
-				continue
-			}
-			emojis = append(emojis, emoji)
+		emojis, err = c.state.DB.GetEmojisByIDs(ctx, emojiIDs)
+		if err != nil {
+			errs.Appendf("error fetching emojis from database: %w", err)
 		}
 	}
 
@@ -1624,7 +1614,7 @@ func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsm
 	for _, emoji := range emojis {
 		apiEmoji, err := c.EmojiToAPIEmoji(ctx, emoji)
 		if err != nil {
-			errs.Appendf("error converting emoji %s to api emoji: %v", emoji.ID, err)
+			errs.Appendf("error converting emoji %s to api emoji: %w", emoji.ID, err)
 			continue
 		}
 		apiEmojis = append(apiEmojis, apiEmoji)
@@ -1637,7 +1627,7 @@ func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsm
 func (c *Converter) convertMentionsToAPIMentions(ctx context.Context, mentions []*gtsmodel.Mention, mentionIDs []string) ([]apimodel.Mention, error) {
 	var errs gtserror.MultiError
 
-	if len(mentions) == 0 {
+	if len(mentions) == 0 && len(mentionIDs) > 0 {
 		var err error
 
 		// GTS model mentions were not populated
@@ -1645,7 +1635,7 @@ func (c *Converter) convertMentionsToAPIMentions(ctx context.Context, mentions [
 		// Fetch GTS models for mention IDs
 		mentions, err = c.state.DB.GetMentions(ctx, mentionIDs)
 		if err != nil {
-			errs.Appendf("error fetching mentions from database: %v", err)
+			errs.Appendf("error fetching mentions from database: %w", err)
 		}
 	}
 
@@ -1656,7 +1646,7 @@ func (c *Converter) convertMentionsToAPIMentions(ctx context.Context, mentions [
 	for _, mention := range mentions {
 		apiMention, err := c.MentionToAPIMention(ctx, mention)
 		if err != nil {
-			errs.Appendf("error converting mention %s to api mention: %v", mention.ID, err)
+			errs.Appendf("error converting mention %s to api mention: %w", mention.ID, err)
 			continue
 		}
 		apiMentions = append(apiMentions, apiMention)
@@ -1669,12 +1659,12 @@ func (c *Converter) convertMentionsToAPIMentions(ctx context.Context, mentions [
 func (c *Converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.Tag, tagIDs []string) ([]apimodel.Tag, error) {
 	var errs gtserror.MultiError
 
-	if len(tags) == 0 {
+	if len(tags) == 0 && len(tagIDs) > 0 {
 		var err error
 
 		tags, err = c.state.DB.GetTags(ctx, tagIDs)
 		if err != nil {
-			errs.Appendf("error fetching tags from database: %v", err)
+			errs.Appendf("error fetching tags from database: %w", err)
 		}
 	}
 
@@ -1685,7 +1675,7 @@ func (c *Converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 	for _, tag := range tags {
 		apiTag, err := c.TagToAPITag(ctx, tag, false)
 		if err != nil {
-			errs.Appendf("error converting tag %s to api tag: %v", tag.ID, err)
+			errs.Appendf("error converting tag %s to api tag: %w", tag.ID, err)
 			continue
 		}
 		apiTags = append(apiTags, apiTag)

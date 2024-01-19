@@ -40,7 +40,7 @@ func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmod
 		requesterID = requester.ID
 	}
 
-	visibility, err := f.state.Caches.Visibility.Load("Type.RequesterID.ItemID", func() (*cache.CachedVisibility, error) {
+	visibility, err := f.state.Caches.Visibility.LoadOne("Type,RequesterID,ItemID", func() (*cache.CachedVisibility, error) {
 		// Visibility not yet cached, perform timeline visibility lookup.
 		visible, err := f.isStatusPublicTimelineable(ctx, requester, status)
 		if err != nil {

@@ -107,19 +107,21 @@ func (d *Dereferencer) EnrichAnnounce(
 		// All good baby.
 
 	case errors.Is(err, db.ErrAlreadyExists):
+		uri := boost.URI
+
 		// DATA RACE! We likely lost out to another goroutine
 		// in a call to db.Put(Status). Look again in DB by URI.
-		boost, err = d.state.DB.GetStatusByURI(ctx, boost.URI)
+		boost, err = d.state.DB.GetStatusByURI(ctx, uri)
 		if err != nil {
-			err = gtserror.Newf(
+			return nil, gtserror.Newf(
 				"error getting boost wrapper status %s from database after race: %w",
-				boost.URI, err,
+				uri, err,
 			)
 		}
 
 	default:
 		// Proper database error.
-		err = gtserror.Newf("db error inserting status: %w", err)
+		return nil, gtserror.Newf("db error inserting status: %w", err)
 	}
 
 	return boost, err

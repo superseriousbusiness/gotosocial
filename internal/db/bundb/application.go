@@ -53,7 +53,7 @@ func (a *applicationDB) GetApplicationByClientID(ctx context.Context, clientID s
 }
 
 func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Application) error, keyParts ...any) (*gtsmodel.Application, error) {
-	return a.state.Caches.GTS.Application().Load(lookup, func() (*gtsmodel.Application, error) {
+	return a.state.Caches.GTS.Application.LoadOne(lookup, func() (*gtsmodel.Application, error) {
 		var app gtsmodel.Application
 
 		// Not cached! Perform database query.
@@ -66,7 +66,7 @@ func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQue
 }
 
 func (a *applicationDB) PutApplication(ctx context.Context, app *gtsmodel.Application) error {
-	return a.state.Caches.GTS.Application().Store(app, func() error {
+	return a.state.Caches.GTS.Application.Store(app, func() error {
 		_, err := a.db.NewInsert().Model(app).Exec(ctx)
 		return err
 	})
@@ -91,7 +91,7 @@ func (a *applicationDB) DeleteApplicationByClientID(ctx context.Context, clientI
 	//
 
 	// Clear application from the cache.
-	a.state.Caches.GTS.Application().Invalidate("ClientID", clientID)
+	a.state.Caches.GTS.Application.Invalidate("ClientID", clientID)
 
 	return nil
 }

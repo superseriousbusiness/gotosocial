@@ -36,7 +36,8 @@ import (
 func (t *transport) webfingerURLFor(targetDomain string) (string, bool) {
 	url := "https://" + targetDomain + "/.well-known/webfinger"
 
-	wc := t.controller.state.Caches.GTS.Webfinger()
+	wc := t.controller.state.Caches.GTS.Webfinger
+
 	// We're doing the manual locking/unlocking here to be able to
 	// safely call Cache.Get instead of Get, as the latter updates the
 	// item expiry which we don't want to do here
@@ -95,7 +96,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 			// If we got a response we consider successful on a cached URL, i.e one set
 			// by us later on when a host-meta based webfinger request succeeded, set it
 			// again here to renew the TTL
-			t.controller.state.Caches.GTS.Webfinger().Set(targetDomain, url)
+			t.controller.state.Caches.GTS.Webfinger.Set(targetDomain, url)
 		}
 		if rsp.StatusCode == http.StatusGone {
 			return nil, fmt.Errorf("account has been deleted/is gone")
@@ -151,7 +152,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 		// we asked for is gone. This means the endpoint itself is valid and we should
 		// cache it for future queries to the same domain
 		if rsp.StatusCode == http.StatusGone {
-			t.controller.state.Caches.GTS.Webfinger().Set(targetDomain, host)
+			t.controller.state.Caches.GTS.Webfinger.Set(targetDomain, host)
 			return nil, fmt.Errorf("account has been deleted/is gone")
 		}
 		// We've reached the end of the line here, both the original request
@@ -162,7 +163,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 	// Set the URL in cache here, since host-meta told us this should be the
 	// valid one, it's different from the default and our request to it did
 	// not fail in any manner
-	t.controller.state.Caches.GTS.Webfinger().Set(targetDomain, host)
+	t.controller.state.Caches.GTS.Webfinger.Set(targetDomain, host)
 
 	return io.ReadAll(rsp.Body)
 }

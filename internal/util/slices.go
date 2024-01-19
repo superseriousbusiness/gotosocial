@@ -61,3 +61,75 @@ func DeduplicateFunc[T any, C comparable](in []T, key func(v T) C) []T {
 
 	return deduped
 }
+
+// Collate will collect the values of type K from input type []T,
+// passing each item to 'get' and deduplicating the end result.
+// Compared to Deduplicate() this returns []K, NOT input type []T.
+func Collate[T any, K comparable](in []T, get func(T) K) []K {
+	ks := make([]K, 0, len(in))
+	km := make(map[K]struct{}, len(in))
+
+	for i := 0; i < len(in); i++ {
+		// Get next k.
+		k := get(in[i])
+
+		if _, ok := km[k]; !ok {
+			// New value, add
+			// to map + slice.
+			ks = append(ks, k)
+			km[k] = struct{}{}
+		}
+	}
+
+	return ks
+}
+
+// OrderBy orders a slice of given type by the provided alternative slice of comparable type.
+func OrderBy[T any, K comparable](in []T, keys []K, key func(T) K) {
+	var (
+		start  int
+		offset int
+	)
+
+	for i := 0; i < len(keys); i++ {
+		var (
+			// key at index.
+			k = keys[i]
+
+			// sentinel
+			// idx value.
+			idx = -1
+		)
+
+		// Look for model with key in slice.
+		for j := start; j < len(in); j++ {
+			if key(in[j]) == k {
+				idx = j
+				break
+			}
+		}
+
+		if idx == -1 {
+			// model with key
+			// was not found.
+			offset++
+			continue
+		}
+
+		// Update
+		// start
+		start++
+
+		// Expected ID index.
+		exp := i - offset
+
+		if idx == exp {
+			// Model is in expected
+			// location, keep going.
+			continue
+		}
+
+		// Swap models at current and expected.
+		in[idx], in[exp] = in[exp], in[idx]
+	}
+}

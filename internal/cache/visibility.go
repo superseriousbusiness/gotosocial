@@ -18,18 +18,16 @@
 package cache
 
 import (
-	"codeberg.org/gruf/go-cache/v3/result"
+	"codeberg.org/gruf/go-structr"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type VisibilityCache struct {
-	*result.Cache[*CachedVisibility]
+	structr.Cache[*CachedVisibility]
 }
 
-// Init will initialize the visibility cache in this collection.
-// NOTE: the cache MUST NOT be in use anywhere, this is not thread-safe.
-func (c *VisibilityCache) Init() {
+func (c *Caches) initVisibility() {
 	// Calculate maximum cache size.
 	cap := calculateResultCacheMax(
 		sizeofVisibility(), // model in-mem size.
@@ -38,25 +36,22 @@ func (c *VisibilityCache) Init() {
 
 	log.Infof(nil, "Visibility cache size = %d", cap)
 
-	c.Cache = result.New([]result.Lookup{
-		{Name: "ItemID", Multi: true},
-		{Name: "RequesterID", Multi: true},
-		{Name: "Type.RequesterID.ItemID"},
-	}, func(v1 *CachedVisibility) *CachedVisibility {
+	copyF := func(v1 *CachedVisibility) *CachedVisibility {
 		v2 := new(CachedVisibility)
 		*v2 = *v1
 		return v2
-	}, cap)
+	}
 
-	c.Cache.IgnoreErrors(ignoreErrors)
-}
-
-// Start will attempt to start the visibility cache, or panic.
-func (c *VisibilityCache) Start() {
-}
-
-// Stop will attempt to stop the visibility cache, or panic.
-func (c *VisibilityCache) Stop() {
+	c.Visibility.Init(structr.Config[*CachedVisibility]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ItemID", Multiple: true},
+			{Fields: "RequesterID", Multiple: true},
+			{Fields: "Type,RequesterID,ItemID"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		CopyValue: copyF,
+	})
 }
 
 // VisibilityType represents a visibility lookup type.

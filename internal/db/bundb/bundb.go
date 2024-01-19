@@ -258,7 +258,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Tag: &tagDB{
-			conn:  db,
+			db:    db,
 			state: state,
 		},
 		Thread: &threadDB{

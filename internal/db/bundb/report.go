@@ -120,7 +120,7 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 
 func (r *reportDB) getReport(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Report) error, keyParts ...any) (*gtsmodel.Report, error) {
 	// Fetch report from database cache with loader callback
-	report, err := r.state.Caches.GTS.Report().Load(lookup, func() (*gtsmodel.Report, error) {
+	report, err := r.state.Caches.GTS.Report.LoadOne(lookup, func() (*gtsmodel.Report, error) {
 		var report gtsmodel.Report
 
 		// Not cached! Perform database query
@@ -215,7 +215,7 @@ func (r *reportDB) PopulateReport(ctx context.Context, report *gtsmodel.Report) 
 }
 
 func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) error {
-	return r.state.Caches.GTS.Report().Store(report, func() error {
+	return r.state.Caches.GTS.Report.Store(report, func() error {
 		_, err := r.db.NewInsert().Model(report).Exec(ctx)
 		return err
 	})
@@ -237,12 +237,12 @@ func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, co
 		return nil, err
 	}
 
-	r.state.Caches.GTS.Report().Invalidate("ID", report.ID)
+	r.state.Caches.GTS.Report.Invalidate("ID", report.ID)
 	return report, nil
 }
 
 func (r *reportDB) DeleteReportByID(ctx context.Context, id string) error {
-	defer r.state.Caches.GTS.Report().Invalidate("ID", id)
+	defer r.state.Caches.GTS.Report.Invalidate("ID", id)
 
 	// Load status into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate

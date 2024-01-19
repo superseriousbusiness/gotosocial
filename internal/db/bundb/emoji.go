@@ -21,6 +21,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 	"strings"
 	"time"
 
@@ -30,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -40,7 +42,7 @@ type emojiDB struct {
 }
 
 func (e *emojiDB) PutEmoji(ctx context.Context, emoji *gtsmodel.Emoji) error {
-	return e.state.Caches.GTS.Emoji().Store(emoji, func() error {
+	return e.state.Caches.GTS.Emoji.Store(emoji, func() error {
 		_, err := e.db.NewInsert().Model(emoji).Exec(ctx)
 		return err
 	})
@@ -54,7 +56,7 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 	}
 
 	// Update the emoji model in the database.
-	return e.state.Caches.GTS.Emoji().Store(emoji, func() error {
+	return e.state.Caches.GTS.Emoji.Store(emoji, func() error {
 		_, err := e.db.
 			NewUpdate().
 			Model(emoji).
@@ -74,21 +76,21 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 	defer func() {
 		// Invalidate cached emoji.
 		e.state.Caches.GTS.
-			Emoji().
+			Emoji.
 			Invalidate("ID", id)
 
-		for _, id := range accountIDs {
+		for _, accountID := range accountIDs {
 			// Invalidate cached account.
 			e.state.Caches.GTS.
-				Account().
-				Invalidate("ID", id)
+				Account.
+				Invalidate("ID", accountID)
 		}
 
-		for _, id := range statusIDs {
+		for _, statusID := range statusIDs {
 			// Invalidate cached account.
 			e.state.Caches.GTS.
-				Status().
-				Invalidate("ID", id)
+				Status.
+				Invalidate("ID", statusID)
 		}
 	}()
 
@@ -129,26 +131,28 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			return err
 		}
 
-		for _, id := range statusIDs {
+		for _, statusID := range statusIDs {
 			var emojiIDs []string
 
 			// Select statuses with ID.
 			if _, err := tx.NewSelect().
 				Table("statuses").
 				Column("emojis").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), statusID).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
 			}
 
-			// Drop ID from account emojis.
-			emojiIDs = dropID(emojiIDs, id)
+			// Delete all instances of this emoji ID from status emojis.
+			emojiIDs = slices.DeleteFunc(emojiIDs, func(emojiID string) bool {
+				return emojiID == id
+			})
 
 			// Update status emoji IDs.
 			if _, err := tx.NewUpdate().
 				Table("statuses").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), statusID).
 				Set("emojis = ?", emojiIDs).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
@@ -156,26 +160,28 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			}
 		}
 
-		for _, id := range accountIDs {
+		for _, accountID := range accountIDs {
 			var emojiIDs []string
 
 			// Select account with ID.
 			if _, err := tx.NewSelect().
 				Table("accounts").
 				Column("emojis").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), accountID).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
 			}
 
-			// Drop ID from account emojis.
-			emojiIDs = dropID(emojiIDs, id)
+			// Delete all instances of this emoji ID from account emojis.
+			emojiIDs = slices.DeleteFunc(emojiIDs, func(emojiID string) bool {
+				return emojiID == id
+			})
 
 			// Update account emoji IDs.
 			if _, err := tx.NewUpdate().
 				Table("accounts").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), accountID).
 				Set("emojis = ?", emojiIDs).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
@@ -431,7 +437,7 @@ func (e *emojiDB) GetEmojiByURI(ctx context.Context, uri string) (*gtsmodel.Emoj
 func (e *emojiDB) GetEmojiByShortcodeDomain(ctx context.Context, shortcode string, domain string) (*gtsmodel.Emoji, error) {
 	return e.getEmoji(
 		ctx,
-		"Shortcode.Domain",
+		"Shortcode,Domain",
 		func(emoji *gtsmodel.Emoji) error {
 			q := e.db.
 				NewSelect().
@@ -468,7 +474,7 @@ func (e *emojiDB) GetEmojiByStaticURL(ctx context.Context, imageStaticURL string
 }
 
 func (e *emojiDB) PutEmojiCategory(ctx context.Context, emojiCategory *gtsmodel.EmojiCategory) error {
-	return e.state.Caches.GTS.EmojiCategory().Store(emojiCategory, func() error {
+	return e.state.Caches.GTS.EmojiCategory.Store(emojiCategory, func() error {
 		_, err := e.db.NewInsert().Model(emojiCategory).Exec(ctx)
 		return err
 	})
@@ -520,7 +526,7 @@ func (e *emojiDB) GetEmojiCategoryByName(ctx context.Context, name string) (*gts
 
 func (e *emojiDB) getEmoji(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Emoji) error, keyParts ...any) (*gtsmodel.Emoji, error) {
 	// Fetch emoji from database cache with loader callback
-	emoji, err := e.state.Caches.GTS.Emoji().Load(lookup, func() (*gtsmodel.Emoji, error) {
+	emoji, err := e.state.Caches.GTS.Emoji.LoadOne(lookup, func() (*gtsmodel.Emoji, error) {
 		var emoji gtsmodel.Emoji
 
 		// Not cached! Perform database query
@@ -568,28 +574,72 @@ func (e *emojiDB) PopulateEmoji(ctx context.Context, emoji *gtsmodel.Emoji) erro
 	return errs.Combine()
 }
 
-func (e *emojiDB) GetEmojisByIDs(ctx context.Context, emojiIDs []string) ([]*gtsmodel.Emoji, error) {
-	if len(emojiIDs) == 0 {
+func (e *emojiDB) GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Emoji, error) {
+	if len(ids) == 0 {
 		return nil, db.ErrNoEntries
 	}
 
-	emojis := make([]*gtsmodel.Emoji, 0, len(emojiIDs))
+	// Preallocate at-worst possible length.
+	uncached := make([]string, 0, len(ids))
 
-	for _, id := range emojiIDs {
-		emoji, err := e.GetEmojiByID(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "emojisFromIDs: error getting emoji %q: %v", id, err)
-			continue
-		}
+	// Load all emoji IDs via cache loader callbacks.
+	emojis, err := e.state.Caches.GTS.Emoji.Load("ID",
 
-		emojis = append(emojis, emoji)
+		// Load cached + check for uncached.
+		func(load func(keyParts ...any) bool) {
+			for _, id := range ids {
+				if !load(id) {
+					uncached = append(uncached, id)
+				}
+			}
+		},
+
+		// Uncached emoji loader function.
+		func() ([]*gtsmodel.Emoji, error) {
+			// Preallocate expected length of uncached emojis.
+			emojis := make([]*gtsmodel.Emoji, 0, len(uncached))
+
+			// Perform database query scanning
+			// the remaining (uncached) IDs.
+			if err := e.db.NewSelect().
+				Model(&emojis).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return emojis, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	// Reorder the emojis by their
+	// IDs to ensure in correct order.
+	getID := func(e *gtsmodel.Emoji) string { return e.ID }
+	util.OrderBy(emojis, ids, getID)
+
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return emojis, nil
+	}
+
+	// Populate all loaded emojis, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	emojis = slices.DeleteFunc(emojis, func(emoji *gtsmodel.Emoji) bool {
+		if err := e.PopulateEmoji(ctx, emoji); err != nil {
+			log.Errorf(ctx, "error populating emoji %s: %v", emoji.ID, err)
+			return true
+		}
+		return false
+	})
 
 	return emojis, nil
 }
 
 func (e *emojiDB) getEmojiCategory(ctx context.Context, lookup string, dbQuery func(*gtsmodel.EmojiCategory) error, keyParts ...any) (*gtsmodel.EmojiCategory, error) {
-	return e.state.Caches.GTS.EmojiCategory().Load(lookup, func() (*gtsmodel.EmojiCategory, error) {
+	return e.state.Caches.GTS.EmojiCategory.LoadOne(lookup, func() (*gtsmodel.EmojiCategory, error) {
 		var category gtsmodel.EmojiCategory
 
 		// Not cached! Perform database query
@@ -601,36 +651,51 @@ func (e *emojiDB) getEmojiCategory(ctx context.Context, lookup string, dbQuery f
 	}, keyParts...)
 }
 
-func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, emojiCategoryIDs []string) ([]*gtsmodel.EmojiCategory, error) {
-	if len(emojiCategoryIDs) == 0 {
+func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.EmojiCategory, error) {
+	if len(ids) == 0 {
 		return nil, db.ErrNoEntries
 	}
 
-	emojiCategories := make([]*gtsmodel.EmojiCategory, 0, len(emojiCategoryIDs))
+	// Preallocate at-worst possible length.
+	uncached := make([]string, 0, len(ids))
 
-	for _, id := range emojiCategoryIDs {
-		emojiCategory, err := e.GetEmojiCategory(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "error getting emoji category %q: %v", id, err)
-			continue
-		}
+	// Load all category IDs via cache loader callbacks.
+	categories, err := e.state.Caches.GTS.EmojiCategory.Load("ID",
 
-		emojiCategories = append(emojiCategories, emojiCategory)
+		// Load cached + check for uncached.
+		func(load func(keyParts ...any) bool) {
+			for _, id := range ids {
+				if !load(id) {
+					uncached = append(uncached, id)
+				}
+			}
+		},
+
+		// Uncached emoji loader function.
+		func() ([]*gtsmodel.EmojiCategory, error) {
+			// Preallocate expected length of uncached categories.
+			categories := make([]*gtsmodel.EmojiCategory, 0, len(uncached))
+
+			// Perform database query scanning
+			// the remaining (uncached) IDs.
+			if err := e.db.NewSelect().
+				Model(&categories).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return categories, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return emojiCategories, nil
-}
+	// Reorder the categories by their
+	// IDs to ensure in correct order.
+	getID := func(c *gtsmodel.EmojiCategory) string { return c.ID }
+	util.OrderBy(categories, ids, getID)
 
-// dropIDs drops given ID string from IDs slice.
-func dropID(ids []string, id string) []string {
-	for i := 0; i < len(ids); {
-		if ids[i] == id {
-			// Remove this reference.
-			copy(ids[i:], ids[i+1:])
-			ids = ids[:len(ids)-1]
-			continue
-		}
-		i++
-	}
-	return ids
+	return categories, nil
 }

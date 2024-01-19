@@ -16,7 +16,6 @@ codeberg.org/gruf/go-byteutil
 # codeberg.org/gruf/go-cache/v3 v3.5.7
 ## explicit; go 1.19
 codeberg.org/gruf/go-cache/v3
-codeberg.org/gruf/go-cache/v3/result
 codeberg.org/gruf/go-cache/v3/simple
 codeberg.org/gruf/go-cache/v3/ttl
 # codeberg.org/gruf/go-debug v1.3.0
@@ -60,6 +59,9 @@ codeberg.org/gruf/go-sched
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
+# codeberg.org/gruf/go-structr v0.1.1
+## explicit; go 1.21
+codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/exif-terminator v0.7.0
 ## explicit; go 1.21
 codeberg.org/superseriousbusiness/exif-terminator

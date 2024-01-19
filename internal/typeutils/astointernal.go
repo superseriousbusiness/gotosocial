@@ -794,7 +794,6 @@ func (c *Converter) getASAttributedToAccount(ctx context.Context, id string, wit
 	}
 
 	return account, nil
-
 }
 
 func (c *Converter) getASObjectAccount(ctx context.Context, id string, with ap.WithObject) (*gtsmodel.Account, error) {

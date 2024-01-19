@@ -20,14 +20,15 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -51,25 +52,52 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 }
 
 func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.MediaAttachment, error) {
-	attachments := make([]*gtsmodel.MediaAttachment, 0, len(ids))
+	// Preallocate at-worst possible length.
+	uncached := make([]string, 0, len(ids))
 
-	for _, id := range ids {
-		// Attempt fetch from DB
-		attachment, err := m.GetAttachmentByID(ctx, id)
-		if err != nil {
-			log.Errorf(ctx, "error getting attachment %q: %v", id, err)
-			continue
-		}
+	// Load all media IDs via cache loader callbacks.
+	media, err := m.state.Caches.GTS.Media.Load("ID",
 
-		// Append attachment
-		attachments = append(attachments, attachment)
+		// Load cached + check for uncached.
+		func(load func(keyParts ...any) bool) {
+			for _, id := range ids {
+				if !load(id) {
+					uncached = append(uncached, id)
+				}
+			}
+		},
+
+		// Uncached media loader function.
+		func() ([]*gtsmodel.MediaAttachment, error) {
+			// Preallocate expected length of uncached media attachments.
+			media := make([]*gtsmodel.MediaAttachment, 0, len(uncached))
+
+			// Perform database query scanning
+			// the remaining (uncached) IDs.
+			if err := m.db.NewSelect().
+				Model(&media).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return media, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	return attachments, nil
+	// Reorder the media by their
+	// IDs to ensure in correct order.
+	getID := func(m *gtsmodel.MediaAttachment) string { return m.ID }
+	util.OrderBy(media, ids, getID)
+
+	return media, nil
 }
 
 func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func(*gtsmodel.MediaAttachment) error, keyParts ...any) (*gtsmodel.MediaAttachment, error) {
-	return m.state.Caches.GTS.Media().Load(lookup, func() (*gtsmodel.MediaAttachment, error) {
+	return m.state.Caches.GTS.Media.LoadOne(lookup, func() (*gtsmodel.MediaAttachment, error) {
 		var attachment gtsmodel.MediaAttachment
 
 		// Not cached! Perform database query
@@ -82,7 +110,7 @@ func (m *mediaDB) getAttachment(ctx context.Context, lookup string, dbQuery func
 }
 
 func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) error {
-	return m.state.Caches.GTS.Media().Store(media, func() error {
+	return m.state.Caches.GTS.Media.Store(media, func() error {
 		_, err := m.db.NewInsert().Model(media).Exec(ctx)
 		return err
 	})
@@ -95,7 +123,7 @@ func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAtt
 		columns = append(columns, "updated_at")
 	}
 
-	return m.state.Caches.GTS.Media().Store(media, func() error {
+	return m.state.Caches.GTS.Media.Store(media, func() error {
 		_, err := m.db.NewUpdate().
 			Model(media).
 			Where("? = ?", bun.Ident("media_attachment.id"), media.ID).
@@ -119,7 +147,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	}
 
 	// On return, ensure that media with ID is invalidated.
-	defer m.state.Caches.GTS.Media().Invalidate("ID", id)
+	defer m.state.Caches.GTS.Media.Invalidate("ID", id)
 
 	// Delete media attachment in new transaction.
 	err = m.db.RunInTx(ctx, func(tx Tx) error {
@@ -171,8 +199,12 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				return gtserror.Newf("error selecting status: %w", err)
 			}
 
-			if updatedIDs := dropID(status.AttachmentIDs, id); // nocollapse
-			len(updatedIDs) != len(status.AttachmentIDs) {
+			// Delete all instances of this deleted media ID from status attachments.
+			updatedIDs := slices.DeleteFunc(status.AttachmentIDs, func(s string) bool {
+				return s == id
+			})
+
+			if len(updatedIDs) != len(status.AttachmentIDs) {
 				// Note: this handles not found.
 				//
 				// Attachments changed, update the status.
