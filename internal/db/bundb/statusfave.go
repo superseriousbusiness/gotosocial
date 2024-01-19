@@ -126,7 +126,7 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 			}
 		},
 
-		// Uncached statuses loader function.
+		// Uncached status faves loader function.
 		func() ([]*gtsmodel.StatusFave, error) {
 			// Preallocate expected length of uncached faves.
 			faves := make([]*gtsmodel.StatusFave, 0, len(uncached))

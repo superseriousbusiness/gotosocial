@@ -588,7 +588,7 @@ func (e *emojiDB) GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel
 			}
 		},
 
-		// Uncached follow req loader function.
+		// Uncached emoji loader function.
 		func() ([]*gtsmodel.Emoji, error) {
 			// Preallocate expected length of uncached emojis.
 			emojis := make([]*gtsmodel.Emoji, 0, len(uncached))

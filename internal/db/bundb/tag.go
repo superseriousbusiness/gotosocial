@@ -85,7 +85,7 @@ func (t *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, err
 			}
 		},
 
-		// Uncached block loader function.
+		// Uncached tag loader function.
 		func() ([]*gtsmodel.Tag, error) {
 			// Preallocate expected length of uncached tags.
 			tags := make([]*gtsmodel.Tag, 0, len(uncached))

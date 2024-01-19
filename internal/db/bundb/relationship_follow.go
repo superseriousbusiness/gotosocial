@@ -91,7 +91,7 @@ func (r *relationshipDB) GetFollowsByIDs(ctx context.Context, ids []string) ([]*
 			}
 		},
 
-		// Uncached follow req loader function.
+		// Uncached follow loader function.
 		func() ([]*gtsmodel.Follow, error) {
 			// Preallocate expected length of uncached follows.
 			follows := make([]*gtsmodel.Follow, 0, len(uncached))

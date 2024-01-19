@@ -109,7 +109,7 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 		return mentions, nil
 	}
 
-	// Populate all loaded blocks.
+	// Populate all loaded mentions.
 	for _, mention := range mentions {
 		if err := m.PopulateMention(ctx, mention); err != nil {
 			log.Errorf(ctx, "error populating mention %s: %v", mention.ID, err)
