@@ -109,7 +109,7 @@ func OrderBy[T any, K comparable](in []T, keys []K, key func(T) K) {
 		}
 
 		if idx == -1 {
-			// model with ID
+			// model with key
 			// was not found.
 			offset++
 			continue
@@ -131,4 +131,26 @@ func OrderBy[T any, K comparable](in []T, keys []K, key func(T) K) {
 		// Swap models at current and expected.
 		in[idx], in[exp] = in[exp], in[idx]
 	}
+}
+
+// DeleteIf iterates through each element in a slice, passing each
+// to delete to determine whether to remove. Returns resulting slice.
+func DeleteIf[T any](in []T, delete func(T) bool) []T {
+	for i := 0; i < len(in); {
+
+		// Check if item
+		// needs deleting.
+		if delete(in[i]) {
+
+			// Remove from slice by
+			// shifting all down 1.
+			copy(in[i:], in[i+1:])
+			in = in[:len(in)-1]
+			continue
+		}
+
+		// Iter.
+		i++
+	}
+	return in
 }

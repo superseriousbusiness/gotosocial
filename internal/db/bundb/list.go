@@ -386,12 +386,15 @@ func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.L
 		return lists, nil
 	}
 
-	// Populate all loaded lists.
-	for _, list := range lists {
+	// Populate all loaded lists, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	lists = util.DeleteIf(lists, func(list *gtsmodel.List) bool {
 		if err := l.PopulateList(ctx, list); err != nil {
 			log.Errorf(ctx, "error populating list %s: %v", list.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return lists, nil
 }
@@ -443,12 +446,15 @@ func (l *listDB) GetListEntriesByIDs(ctx context.Context, ids []string) ([]*gtsm
 		return entries, nil
 	}
 
-	// Populate all loaded entries.
-	for _, entry := range entries {
+	// Populate all loaded entries, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	entries = util.DeleteIf(entries, func(entry *gtsmodel.ListEntry) bool {
 		if err := l.PopulateListEntry(ctx, entry); err != nil {
-			log.Errorf(ctx, "error populating list entry %s: %v", entry.ID, err)
+			log.Errorf(ctx, "error populating entry %s: %v", entry.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return entries, nil
 }

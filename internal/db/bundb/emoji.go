@@ -625,12 +625,15 @@ func (e *emojiDB) GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel
 		return emojis, nil
 	}
 
-	// Populate all loaded emojis.
-	for _, emoji := range emojis {
+	// Populate all loaded emojis, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	emojis = util.DeleteIf(emojis, func(emoji *gtsmodel.Emoji) bool {
 		if err := e.PopulateEmoji(ctx, emoji); err != nil {
 			log.Errorf(ctx, "error populating emoji %s: %v", emoji.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return emojis, nil
 }

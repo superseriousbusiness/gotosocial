@@ -149,12 +149,15 @@ func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string
 		return notifs, nil
 	}
 
-	// Populate all loaded notifs.
-	for _, notif := range notifs {
+	// Populate all loaded notifs, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	notifs = util.DeleteIf(notifs, func(notif *gtsmodel.Notification) bool {
 		if err := n.PopulateNotification(ctx, notif); err != nil {
-			log.Errorf(ctx, "error populating notification %s: %v", notif.ID, err)
+			log.Errorf(ctx, "error populating notif %s: %v", notif.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return notifs, nil
 }

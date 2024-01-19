@@ -158,12 +158,15 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 		return faves, nil
 	}
 
-	// Populate all loaded faves.
-	for _, fave := range faves {
+	// Populate all loaded faves, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	faves = util.DeleteIf(faves, func(fave *gtsmodel.StatusFave) bool {
 		if err := s.PopulateStatusFave(ctx, fave); err != nil {
 			log.Errorf(ctx, "error populating fave %s: %v", fave.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return faves, nil
 }

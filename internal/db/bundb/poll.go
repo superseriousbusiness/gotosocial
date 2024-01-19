@@ -315,12 +315,15 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 		return votes, nil
 	}
 
-	// Populate all loaded poll votes.
-	for _, vote := range votes {
+	// Populate all loaded votes, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	votes = util.DeleteIf(votes, func(vote *gtsmodel.PollVote) bool {
 		if err := p.PopulatePollVote(ctx, vote); err != nil {
 			log.Errorf(ctx, "error populating vote %s: %v", vote.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return votes, nil
 }

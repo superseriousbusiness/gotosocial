@@ -146,12 +146,15 @@ func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*g
 		return blocks, nil
 	}
 
-	// Populate all loaded blocks.
-	for _, block := range blocks {
+	// Populate all loaded blocks, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	blocks = util.DeleteIf(blocks, func(block *gtsmodel.Block) bool {
 		if err := r.PopulateBlock(ctx, block); err != nil {
 			log.Errorf(ctx, "error populating block %s: %v", block.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return blocks, nil
 }

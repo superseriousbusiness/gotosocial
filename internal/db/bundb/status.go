@@ -95,12 +95,15 @@ func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmo
 		return statuses, nil
 	}
 
-	// Populate all loaded statuses.
-	for _, status := range statuses {
+	// Populate all loaded statuses, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	statuses = util.DeleteIf(statuses, func(status *gtsmodel.Status) bool {
 		if err := s.PopulateStatus(ctx, status); err != nil {
 			log.Errorf(ctx, "error populating status %s: %v", status.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return statuses, nil
 }

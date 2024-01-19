@@ -123,12 +123,15 @@ func (r *relationshipDB) GetFollowsByIDs(ctx context.Context, ids []string) ([]*
 		return follows, nil
 	}
 
-	// Populate all loaded follows.
-	for _, follow := range follows {
+	// Populate all loaded follows, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	follows = util.DeleteIf(follows, func(follow *gtsmodel.Follow) bool {
 		if err := r.PopulateFollow(ctx, follow); err != nil {
 			log.Errorf(ctx, "error populating follow %s: %v", follow.ID, err)
+			return true
 		}
-	}
+		return false
+	})
 
 	return follows, nil
 }
