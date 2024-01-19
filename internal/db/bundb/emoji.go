@@ -21,6 +21,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 	"strings"
 	"time"
 
@@ -77,18 +78,18 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			Emoji.
 			Invalidate("ID", id)
 
-		for _, id := range accountIDs {
+		for _, accountID := range accountIDs {
 			// Invalidate cached account.
 			e.state.Caches.GTS.
 				Account.
-				Invalidate("ID", id)
+				Invalidate("ID", accountID)
 		}
 
-		for _, id := range statusIDs {
+		for _, statusID := range statusIDs {
 			// Invalidate cached account.
 			e.state.Caches.GTS.
 				Status.
-				Invalidate("ID", id)
+				Invalidate("ID", statusID)
 		}
 	}()
 
@@ -129,26 +130,28 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			return err
 		}
 
-		for _, id := range statusIDs {
+		for _, statusID := range statusIDs {
 			var emojiIDs []string
 
 			// Select statuses with ID.
 			if _, err := tx.NewSelect().
 				Table("statuses").
 				Column("emojis").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), statusID).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
 			}
 
-			// Drop ID from account emojis.
-			emojiIDs = dropID(emojiIDs, id)
+			// Delete all instances of this emoji ID from status emojis.
+			emojiIDs = slices.DeleteFunc(emojiIDs, func(emojiID string) bool {
+				return emojiID == id
+			})
 
 			// Update status emoji IDs.
 			if _, err := tx.NewUpdate().
 				Table("statuses").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), statusID).
 				Set("emojis = ?", emojiIDs).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
@@ -156,26 +159,28 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 			}
 		}
 
-		for _, id := range accountIDs {
+		for _, accountID := range accountIDs {
 			var emojiIDs []string
 
 			// Select account with ID.
 			if _, err := tx.NewSelect().
 				Table("accounts").
 				Column("emojis").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), accountID).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
 			}
 
-			// Drop ID from account emojis.
-			emojiIDs = dropID(emojiIDs, id)
+			// Delete all instances of this emoji ID from account emojis.
+			emojiIDs = slices.DeleteFunc(emojiIDs, func(emojiID string) bool {
+				return emojiID == id
+			})
 
 			// Update account emoji IDs.
 			if _, err := tx.NewUpdate().
 				Table("accounts").
-				Where("? = ?", bun.Ident("id"), id).
+				Where("? = ?", bun.Ident("id"), accountID).
 				Set("emojis = ?", emojiIDs).
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {

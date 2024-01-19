@@ -186,20 +186,6 @@ func parseWhere(w db.Where) (query string, args []interface{}) {
 	return
 }
 
-// dropIDs drops given ID string from IDs slice.
-func dropID(ids []string, id string) []string {
-	for i := 0; i < len(ids); {
-		if ids[i] == id {
-			// Remove this reference.
-			copy(ids[i:], ids[i+1:])
-			ids = ids[:len(ids)-1]
-			continue
-		}
-		i++
-	}
-	return ids
-}
-
 // collate will collect the values of type T from an expected slice of length 'len',
 // passing the expected index to each call of 'get' and deduplicating the end result.
 func collate[T comparable](get func(int) T, len int) []T {

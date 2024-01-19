@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -197,8 +198,12 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 				return gtserror.Newf("error selecting status: %w", err)
 			}
 
-			if updatedIDs := dropID(status.AttachmentIDs, id); // nocollapse
-			len(updatedIDs) != len(status.AttachmentIDs) {
+			// Delete all instances of this deleted media ID from status attachments.
+			updatedIDs := slices.DeleteFunc(status.AttachmentIDs, func(s string) bool {
+				return s == id
+			})
+
+			if len(updatedIDs) != len(status.AttachmentIDs) {
 				// Note: this handles not found.
 				//
 				// Attachments changed, update the status.
