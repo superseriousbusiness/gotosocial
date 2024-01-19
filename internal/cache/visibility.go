@@ -54,14 +54,6 @@ func (c *Caches) initVisibility() {
 	})
 }
 
-// Start will attempt to start the visibility cache, or panic.
-func (c *VisibilityCache) Start() {
-}
-
-// Stop will attempt to stop the visibility cache, or panic.
-func (c *VisibilityCache) Stop() {
-}
-
 // VisibilityType represents a visibility lookup type.
 // We use a byte type here to improve performance in the
 // result cache when generating the key.

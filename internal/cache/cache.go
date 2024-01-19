@@ -18,6 +18,8 @@
 package cache
 
 import (
+	"time"
+
 	"github.com/superseriousbusiness/gotosocial/internal/cache/headerfilter"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -85,20 +87,22 @@ func (c *Caches) Init() {
 	c.initVisibility()
 }
 
-// Start will start both the GTS and AP cache collections.
+// Start will start any caches that require a background
+// routine, which usually means any kind of TTL caches.
 func (c *Caches) Start() {
 	log.Infof(nil, "start: %p", c)
 
-	c.GTS.Start()
-	c.Visibility.Start()
+	tryUntil("starting *gtsmodel.Webfinger cache", 5, func() bool {
+		return c.GTS.Webfinger.Start(5 * time.Minute)
+	})
 }
 
-// Stop will stop both the GTS and AP cache collections.
+// Stop will stop any caches that require a background
+// routine, which usually means any kind of TTL caches.
 func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
-	c.GTS.Stop()
-	c.Visibility.Stop()
+	tryUntil("stopping *gtsmodel.Webfinger cache", 5, c.GTS.Webfinger.Stop)
 }
 
 // Sweep will sweep all the available caches to ensure none

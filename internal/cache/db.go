@@ -142,18 +142,6 @@ type GTSCaches struct {
 	Webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
 }
 
-// Start will attempt to start all of the gtsmodel caches, or panic.
-func (c *GTSCaches) Start() {
-	tryUntil("starting *gtsmodel.Webfinger cache", 5, func() bool {
-		return c.Webfinger.Start(5 * time.Minute)
-	})
-}
-
-// Stop will attempt to stop all of the gtsmodel caches, or panic.
-func (c *GTSCaches) Stop() {
-	tryUntil("stopping *gtsmodel.Webfinger cache", 5, c.Webfinger.Stop)
-}
-
 // NOTE:
 // all of the below init functions
 // are receivers to the main cache
