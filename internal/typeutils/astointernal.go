@@ -126,23 +126,9 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	acct.Sensitive = util.Ptr(false)
 	acct.HideCollections = util.Ptr(false)
 
-	// Extract 'manuallyApprovesFollowers', (i.e. locked account)
-	maf := accountable.GetActivityStreamsManuallyApprovesFollowers()
-
-	switch {
-	case maf != nil && !maf.IsXMLSchemaBoolean():
-		log.Warnf(ctx, "unusable manuallyApprovesFollowers for %s", uri)
-		fallthrough
-
-	case maf == nil:
-		// None given, use default.
-		acct.Locked = util.Ptr(true)
-
-	default:
-		// Valid bool provided.
-		locked := maf.Get()
-		acct.Locked = &locked
-	}
+	// Extract 'manuallyApprovesFollowers' aka locked account (default = true).
+	manuallyApprovesFollowers := ap.GetManuallyApprovesFollowers(accountable)
+	acct.Locked = &manuallyApprovesFollowers
 
 	// Extract account discoverability (default = false).
 	discoverable := ap.GetDiscoverable(accountable)
