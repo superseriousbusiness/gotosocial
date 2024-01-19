@@ -61,3 +61,24 @@ func DeduplicateFunc[T any, C comparable](in []T, key func(v T) C) []T {
 
 	return deduped
 }
+
+// Collate will collect the values of type T from a provided slice,
+// passing each slice item to 'get' and deduplicating the end result.
+func Collate[T any, K comparable](in []T, get func(T) K) []K {
+	ks := make([]K, 0, len(in))
+	km := make(map[K]struct{}, len(in))
+
+	for i := 0; i < len(in); i++ {
+		// Get next k.
+		k := get(in[i])
+
+		if _, ok := km[k]; !ok {
+			// New value, add
+			// to map + slice.
+			ks = append(ks, k)
+			km[k] = struct{}{}
+		}
+	}
+
+	return ks
+}

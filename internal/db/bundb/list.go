@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -493,10 +494,10 @@ func (l *listDB) PopulateListEntry(ctx context.Context, listEntry *gtsmodel.List
 
 func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEntry) error {
 	defer func() {
-		// Collect unique list IDs from the entries.
-		listIDs := collate(func(i int) string {
-			return entries[i].ListID
-		}, len(entries))
+		// Collect unique list IDs from the provided entries.
+		listIDs := util.Collate(entries, func(e *gtsmodel.ListEntry) string {
+			return e.ListID
+		})
 
 		for _, id := range listIDs {
 			// Invalidate the timeline for the list this entry belongs to.

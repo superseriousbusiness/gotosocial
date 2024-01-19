@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -310,10 +311,8 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 		return err
 	}
 
-	// Collate (deduplicating) status IDs.
-	statusIDs = collate(func(i int) string {
-		return statusIDs[i]
-	}, len(statusIDs))
+	// Deduplicate determined status IDs.
+	statusIDs = util.Deduplicate(statusIDs)
 
 	for _, id := range statusIDs {
 		// Invalidate any cached status faves for this status.

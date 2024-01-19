@@ -186,27 +186,6 @@ func parseWhere(w db.Where) (query string, args []interface{}) {
 	return
 }
 
-// collate will collect the values of type T from an expected slice of length 'len',
-// passing the expected index to each call of 'get' and deduplicating the end result.
-func collate[T comparable](get func(int) T, len int) []T {
-	ts := make([]T, 0, len)
-	tm := make(map[T]struct{}, len)
-
-	for i := 0; i < len; i++ {
-		// Get next.
-		t := get(i)
-
-		if _, ok := tm[t]; !ok {
-			// New value, add
-			// to map + slice.
-			ts = append(ts, t)
-			tm[t] = struct{}{}
-		}
-	}
-
-	return ts
-}
-
 // orderByIDs orders a slice of database models by the provided slice of IDs.
 func orderByIDs[T any](models []T, ids []string, getID func(T) string) {
 	var (
