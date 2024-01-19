@@ -336,6 +336,7 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	suite.Equal("en", newAccount.Language)
 	suite.WithinDuration(time.Now(), newAccount.CreatedAt, 30*time.Second)
 	suite.WithinDuration(time.Now(), newAccount.UpdatedAt, 30*time.Second)
+	suite.True(*newAccount.Locked)
 	suite.False(*newAccount.Memorial)
 	suite.False(*newAccount.Bot)
 	suite.False(*newAccount.Discoverable)

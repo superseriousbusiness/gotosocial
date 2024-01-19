@@ -424,6 +424,8 @@ func SetVotersCount(with WithVotersCount, count int) {
 }
 
 // GetDiscoverable returns the boolean contained in the Discoverable property of 'with'.
+//
+// Returns default 'false' if property unusable or not set.
 func GetDiscoverable(with WithDiscoverable) bool {
 	discoverProp := with.GetTootDiscoverable()
 	if discoverProp == nil || !discoverProp.IsXMLSchemaBoolean() {
@@ -440,6 +442,27 @@ func SetDiscoverable(with WithDiscoverable, discoverable bool) {
 		with.SetTootDiscoverable(discoverProp)
 	}
 	discoverProp.Set(discoverable)
+}
+
+// GetManuallyApprovesFollowers returns the boolean contained in the ManuallyApprovesFollowers property of 'with'.
+//
+// Returns default 'true' if property unusable or not set.
+func GetManuallyApprovesFollowers(with WithManuallyApprovesFollowers) bool {
+	mafProp := with.GetActivityStreamsManuallyApprovesFollowers()
+	if mafProp == nil || !mafProp.IsXMLSchemaBoolean() {
+		return true
+	}
+	return mafProp.Get()
+}
+
+// SetManuallyApprovesFollowers sets the given boolean on the ManuallyApprovesFollowers property of 'with'.
+func SetManuallyApprovesFollowers(with WithManuallyApprovesFollowers, manuallyApprovesFollowers bool) {
+	mafProp := with.GetActivityStreamsManuallyApprovesFollowers()
+	if mafProp == nil {
+		mafProp = streams.NewActivityStreamsManuallyApprovesFollowersProperty()
+		with.SetActivityStreamsManuallyApprovesFollowers(mafProp)
+	}
+	mafProp.Set(manuallyApprovesFollowers)
 }
 
 func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {

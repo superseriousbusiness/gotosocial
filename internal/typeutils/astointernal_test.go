@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
@@ -35,6 +36,17 @@ type ASToInternalTestSuite struct {
 }
 
 func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
+	ctx := context.Background()
+	b := []byte(in)
+
+	if accountable, err := ap.ResolveAccountable(ctx, b); err == nil {
+		return accountable
+	}
+
+	if statusable, err := ap.ResolveStatusable(ctx, b); err == nil {
+		return statusable
+	}
+
 	m := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(in), &m); err != nil {
 		suite.FailNow(err.Error())
@@ -43,10 +55,6 @@ func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
 	t, err := streams.ToType(context.Background(), m)
 	if err != nil {
 		suite.FailNow(err.Error())
-	}
-
-	if statusable, ok := t.(ap.Statusable); ok {
-		ap.NormalizeIncomingContent(statusable, m)
 	}
 
 	return t
@@ -195,7 +203,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	suite.Equal("https://owncast.example.org/logo/external", acct.AvatarRemoteURL)
 	suite.Equal("https://owncast.example.org/logo/external", acct.HeaderRemoteURL)
 	suite.Equal("Rob's Owncast Server", acct.DisplayName)
-	suite.Equal("linux audio stuff ", acct.Note)
+	suite.Equal("linux audio stuff", acct.Note)
 	suite.True(*acct.Bot)
 	suite.False(*acct.Locked)
 	suite.True(*acct.Discoverable)
@@ -501,6 +509,145 @@ func (suite *ASToInternalTestSuite) TestParseAnnounce() {
 	suite.Nil(boost.BoostOf)
 	suite.Empty(boost.BoostOfAccountID)
 	suite.Nil(boost.BoostOfAccount)
+}
+
+func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
+	// Hopefully comprehensive checks for
+	// https://github.com/superseriousbusiness/gotosocial/issues/2527.
+
+	const honk_user = `{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "chatKeyV0": "vIT5wj9bJqGkvwBxhmaz4Lh4eZIeOKnsSIQifShmJUY=",
+  "followers": "https://honk.example.org/u/honk_user/followers",
+  "following": "https://honk.example.org/u/honk_user/following",
+  "icon": {
+    "mediaType": "image/png",
+    "type": "Image",
+    "url": "https://honk.example.org/a?a=https%3A%2F%2Fhonk.example.org%2Fu%2Fhonk_user"
+  },
+  "id": "https://honk.example.org/u/honk_user",
+  "inbox": "https://honk.example.org/u/honk_user/inbox",
+  "name": "honk_user",
+  "outbox": "https://honk.example.org/u/honk_user/outbox",
+  "preferredUsername": "honk_user",
+  "publicKey": {
+    "id": "https://honk.example.org/u/honk_user#key",
+    "owner": "https://honk.example.org/u/honk_user",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA593GZ9TYrvWgMaMKQ6k6\ngkItUapUgNnNXzU9J63GRtYZ7CE/Zi39Kgpsxu77hHBj34vwjr1Oc9AMrVDIMfu9\nEirW1RWxPvrjThBU56VgkpkAXVsieaffJo80BA00QzV4x69Jgat6OT7ox/HMvMxR\nyZ6CXNCPKQALYqQF6v1fX1kO9lhIA+mPd0JN/qMKvZfd1NXABEk9nORUneH7Audt\nIHNdJzKMHC6wPSQWC7SmXT0/nq6o5mR2SgvwTI/JUx6T5r8NDrwSaqB69e+EMJqR\nxKOh9N4A1ba/AQOQZbO/YkFyYY2VE4HWbvS9XpYL74yT9D6Fp4cUovJiXC+ziam0\nNwIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "summary": "<p>Honk account</p>",
+  "type": "Person",
+  "url": "https://honk.example.org/u/honk_user"
+}`
+
+	t := suite.jsonToType(honk_user)
+	rep, ok := t.(ap.Accountable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "")
+	suite.NoError(err)
+	suite.Equal("https://honk.example.org/u/honk_user/followers", acct.FollowersURI)
+	suite.Equal("https://honk.example.org/u/honk_user/following", acct.FollowingURI)
+	suite.Equal(`https://honk.example.org/a?a=https%3A%2F%2Fhonk.example.org%2Fu%2Fhonk_user`, acct.AvatarRemoteURL)
+	suite.Equal("<p>Honk account</p>", acct.Note)
+	suite.Equal("https://honk.example.org/u/honk_user", acct.URI)
+	suite.Equal("https://honk.example.org/u/honk_user", acct.URL)
+	suite.Equal("honk_user", acct.Username)
+	suite.Equal("honk.example.org", acct.Domain)
+	suite.True(*acct.Locked)
+	suite.False(*acct.Discoverable)
+
+	// Store the account representation.
+	acct.ID = "01HMGRMAVQMYQC3DDQ29TPQKJ3" // <- needs an ID
+	ctx := context.Background()
+	if err := suite.db.PutAccount(ctx, acct); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Double check fields.
+	suite.Equal("https://honk.example.org/u/honk_user/followers", acct.FollowersURI)
+	suite.Equal("https://honk.example.org/u/honk_user/following", acct.FollowingURI)
+	suite.Equal(`https://honk.example.org/a?a=https%3A%2F%2Fhonk.example.org%2Fu%2Fhonk_user`, acct.AvatarRemoteURL)
+	suite.Equal("<p>Honk account</p>", acct.Note)
+	suite.Equal("https://honk.example.org/u/honk_user", acct.URI)
+	suite.Equal("https://honk.example.org/u/honk_user", acct.URL)
+	suite.Equal("honk_user", acct.Username)
+	suite.Equal("honk.example.org", acct.Domain)
+	suite.True(*acct.Locked)
+	suite.False(*acct.Discoverable)
+
+	// Check DB version.
+	dbAcct, err := suite.db.GetAccountByID(ctx, acct.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal("https://honk.example.org/u/honk_user/followers", dbAcct.FollowersURI)
+	suite.Equal("https://honk.example.org/u/honk_user/following", dbAcct.FollowingURI)
+	suite.Equal(`https://honk.example.org/a?a=https%3A%2F%2Fhonk.example.org%2Fu%2Fhonk_user`, dbAcct.AvatarRemoteURL)
+	suite.Equal("<p>Honk account</p>", dbAcct.Note)
+	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URI)
+	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URL)
+	suite.Equal("honk_user", dbAcct.Username)
+	suite.Equal("honk.example.org", dbAcct.Domain)
+	suite.True(*dbAcct.Locked)
+	suite.False(*dbAcct.Discoverable)
+
+	// Update the account.
+	if err := suite.db.UpdateAccount(ctx, acct); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Double check fields.
+	suite.Equal("https://honk.example.org/u/honk_user/followers", acct.FollowersURI)
+	suite.Equal("https://honk.example.org/u/honk_user/following", acct.FollowingURI)
+	suite.Equal(`https://honk.example.org/a?a=https%3A%2F%2Fhonk.example.org%2Fu%2Fhonk_user`, acct.AvatarRemoteURL)
+	suite.Equal("<p>Honk account</p>", acct.Note)
+	suite.Equal("https://honk.example.org/u/honk_user", acct.URI)
+	suite.Equal("https://honk.example.org/u/honk_user", acct.URL)
+	suite.Equal("honk_user", acct.Username)
+	suite.Equal("honk.example.org", acct.Domain)
+	suite.True(*acct.Locked)
+	suite.False(*acct.Discoverable)
+
+	// Check DB version.
+	dbAcct, err = suite.db.GetAccountByID(ctx, acct.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal("https://honk.example.org/u/honk_user/followers", dbAcct.FollowersURI)
+	suite.Equal("https://honk.example.org/u/honk_user/following", dbAcct.FollowingURI)
+	suite.Equal(`https://honk.example.org/a?a=https%3A%2F%2Fhonk.example.org%2Fu%2Fhonk_user`, dbAcct.AvatarRemoteURL)
+	suite.Equal("<p>Honk account</p>", dbAcct.Note)
+	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URI)
+	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URL)
+	suite.Equal("honk_user", dbAcct.Username)
+	suite.Equal("honk.example.org", dbAcct.Domain)
+	suite.True(*dbAcct.Locked)
+	suite.False(*dbAcct.Discoverable)
+
+	// Clear caches.
+	suite.state.Caches.GTS = cache.GTSCaches{}
+	suite.state.Caches.GTS.Init()
+
+	dbAcct, err = suite.db.GetAccountByID(ctx, acct.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal("https://honk.example.org/u/honk_user/followers", dbAcct.FollowersURI)
+	suite.Equal("https://honk.example.org/u/honk_user/following", dbAcct.FollowingURI)
+	suite.Equal(`https://honk.example.org/a?a=https%3A%2F%2Fhonk.example.org%2Fu%2Fhonk_user`, dbAcct.AvatarRemoteURL)
+	suite.Equal("<p>Honk account</p>", dbAcct.Note)
+	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URI)
+	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URL)
+	suite.Equal("honk_user", dbAcct.Username)
+	suite.Equal("honk.example.org", dbAcct.Domain)
+	suite.True(*dbAcct.Locked)
+	suite.False(*dbAcct.Discoverable)
 }
 
 func TestASToInternalTestSuite(t *testing.T) {

@@ -217,6 +217,31 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		}
 	}
 
+	// Bool ptrs should be set, but warn
+	// and use a default if they're not.
+	var boolPtrDef = func(
+		pName string,
+		p *bool,
+		d bool,
+	) bool {
+		if p != nil {
+			return *p
+		}
+
+		log.Warnf(ctx,
+			"%s ptr was nil, using default %t",
+			pName, d,
+		)
+		return d
+	}
+
+	var (
+		locked       = boolPtrDef("locked", a.Locked, true)
+		discoverable = boolPtrDef("discoverable", a.Discoverable, false)
+		bot          = boolPtrDef("bot", a.Bot, false)
+		enableRSS    = boolPtrDef("enableRSS", a.EnableRSS, false)
+	)
+
 	// Remaining properties are simple and
 	// can be populated directly below.
 
@@ -225,9 +250,9 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Username:       a.Username,
 		Acct:           acct,
 		DisplayName:    a.DisplayName,
-		Locked:         *a.Locked,
-		Discoverable:   *a.Discoverable,
-		Bot:            *a.Bot,
+		Locked:         locked,
+		Discoverable:   discoverable,
+		Bot:            bot,
 		CreatedAt:      util.FormatISO8601(a.CreatedAt),
 		Note:           a.Note,
 		URL:            a.URL,
@@ -243,7 +268,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Fields:         fields,
 		Suspended:      !a.SuspendedAt.IsZero(),
 		CustomCSS:      a.CustomCSS,
-		EnableRSS:      *a.EnableRSS,
+		EnableRSS:      enableRSS,
 		Role:           role,
 		Moved:          moved,
 	}

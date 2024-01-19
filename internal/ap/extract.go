@@ -492,18 +492,6 @@ func ExtractFields(i WithAttachment) []*gtsmodel.Field {
 	return fields
 }
 
-// ExtractDiscoverable extracts the Discoverable boolean
-// of the given WithDiscoverable interface. Will return
-// an error if Discoverable was nil.
-func ExtractDiscoverable(i WithDiscoverable) (bool, error) {
-	discoverableProp := i.GetTootDiscoverable()
-	if discoverableProp == nil {
-		return false, gtserror.New("discoverable was nil")
-	}
-
-	return discoverableProp.Get(), nil
-}
-
 // ExtractURL extracts the first URI it can find from the
 // given WithURL interface, or an error if no URL was set.
 // The ID of a type will not work, this function wants a URI
