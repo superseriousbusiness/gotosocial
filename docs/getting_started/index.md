@@ -12,6 +12,11 @@ Before deploying GoToSocial, it's important to think through a few things as som
 
 GoToSocial supports both SQLite and Postgres and you can start using either. We do not currently have tooling to support migrating from SQLite to Postgres or vice-versa, but it is possible in theory.
 
+For databases to perform properly, they should be run on fast storage that operates with low and stable latency. It is possible to run databases on network attached storage, but this adds variable latency and network congestion to the mix, as well as potential I/O contention on the origin storage.
+
+!!! danger
+    The performance of Hetzner Cloud Volumes is not guaranteed and seems to have very volatile latency. You're going to have a bad time running your database on those with extremely poor query performance for even the most basic operations. Before filing performance issues against GoToSocial, make sure the problems reproduce with local storage.
+
 SQLite is great for a single-user instance. If you're planning on hosting multiple people it's advisable to use Postgres instead. You can always use Postgres regardless of the instance size.
 
 !!! tip
