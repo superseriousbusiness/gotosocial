@@ -102,6 +102,12 @@ Unless you're experienced in doing this kind of tuning and troubleshooting the i
 * less than 2GB of RAM: swap = RAM × 2
 * more than 2GB of RAM: swap = RAM, up to 8G
 
+Linux swaps pretty early. This tends to not be necessary on servers and in the case of databases can cause unnecessary latency. Though it's good to let your system swap if it needs to, it can help to tell it to be a little more conservative about how early it swaps. Configuring this on Linux is done by changing the `vm.swappiness` [sysctl][sysctl] value.
+
+By default it's `60`. You can lower that to `10` for starters and keep an eye out. It's possible to run with even lower values, but it's likely unnecessary. To make the value persistent, you'll need to drop a configuration file in `/etc/sysctl.d/`.
+
+[sysctl]: https://man7.org/linux/man-pages/man8/sysctl.8.html
+
 ### Memory and CPU limits
 
 It is possible to limit the amount of memory or CPU your GoToSocial instance can consume. Doing so can be done on Linux using [CGroups v2 resource controllers][cgv2].
