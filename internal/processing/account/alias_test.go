@@ -132,6 +132,17 @@ func (suite *AliasTestSuite) TestAliasAccount() {
 				"http://localhost:8080/users/admin",
 			},
 		},
+		// Alias zork to turtle using both URI and URL
+		// for turtle. Only URI should end up being used.
+		{
+			newAliases: []string{
+				"http://localhost:8080/users/1happyturtle",
+				"http://localhost:8080/@1happyturtle",
+			},
+			expectedAliases: []string{
+				"http://localhost:8080/users/1happyturtle",
+			},
+		},
 	} {
 		var (
 			ctx      = context.Background()
