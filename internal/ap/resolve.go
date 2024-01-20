@@ -27,6 +27,7 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -54,6 +55,35 @@ func putMap(m map[string]any) {
 		delete(m, k)
 	}
 	mapPool.Put(m)
+}
+
+// bytesToType tries to parse the given bytes slice
+// as a JSON ActivityPub type, failing if the input
+// bytes are not parseable as JSON, or do not parse
+// to an ActivityPub that we can understand.
+//
+// The given map pointer will also be populated with
+// the parsed JSON, to allow further processing.
+func bytesToType(
+	ctx context.Context,
+	b []byte,
+	raw *map[string]any,
+) (vocab.Type, error) {
+	// Unmarshal the raw JSON bytes into a "raw" map.
+	// This will fail if the input is not parseable
+	// as JSON; eg., a remote has returned HTML as a
+	// fallback response to an ActivityPub JSON request.
+	if err := json.Unmarshal(b, raw); err != nil {
+		return nil, gtserror.NewfAt(3, "error unmarshalling bytes into json: %w", err)
+	}
+
+	// Resolve an ActivityStreams type.
+	t, err := streams.ToType(ctx, *raw)
+	if err != nil {
+		return nil, gtserror.NewfAt(3, "error resolving json into ap vocab type: %w", err)
+	}
+
+	return t, nil
 }
 
 // ResolveActivity is a util function for pulling a pub.Activity type out of an incoming request body,
@@ -121,15 +151,11 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	// destination.
 	raw := getMap()
 
-	// Unmarshal the raw JSON data in a "raw" JSON map.
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return nil, gtserror.Newf("error unmarshalling bytes into json: %w", err)
-	}
-
-	// Resolve an ActivityStreams type from JSON.
-	t, err := streams.ToType(ctx, raw)
+	// Convert raw bytes to an AP type.
+	// This will also populate the map.
+	t, err := bytesToType(ctx, b, &raw)
 	if err != nil {
-		return nil, gtserror.Newf("error resolving json into ap vocab type: %w", err)
+		return nil, gtserror.SetWrongType(err)
 	}
 
 	// Attempt to cast as Statusable.
@@ -166,15 +192,11 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 	// destination.
 	raw := getMap()
 
-	// Unmarshal the raw JSON data in a "raw" JSON map.
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return nil, gtserror.Newf("error unmarshalling bytes into json: %w", err)
-	}
-
-	// Resolve an ActivityStreams type from JSON.
-	t, err := streams.ToType(ctx, raw)
+	// Convert raw bytes to an AP type.
+	// This will also populate the map.
+	t, err := bytesToType(ctx, b, &raw)
 	if err != nil {
-		return nil, gtserror.Newf("error resolving json into ap vocab type: %w", err)
+		return nil, gtserror.SetWrongType(err)
 	}
 
 	// Attempt to cast as Statusable.
