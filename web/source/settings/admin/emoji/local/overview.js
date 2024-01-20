@@ -64,6 +64,11 @@ module.exports = function EmojiOverview({ }) {
 				You can either upload them here directly, or copy from those already
 				present on other (known) instances through the <Link to={`./remote`}>Remote Emoji</Link> page.
 			</p>
+			<p>
+				<strong>Be warned!</strong> If you upload more than about 300-400 custom emojis in
+				total on your instance, this may lead to rate-limiting issues for users and clients
+				if they try to load all the emoji images at once (which is what many clients do).
+			</p>
 			{content}
 		</>
 	);
