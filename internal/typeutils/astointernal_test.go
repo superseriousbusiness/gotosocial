@@ -631,7 +631,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 
 	// Clear caches.
 	suite.state.Caches.GTS = cache.GTSCaches{}
-	suite.state.Caches.GTS.Init()
+	suite.state.Caches.Init()
 
 	dbAcct, err = suite.db.GetAccountByID(ctx, acct.ID)
 	if err != nil {
