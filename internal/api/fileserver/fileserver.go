@@ -33,8 +33,8 @@ const (
 	MediaSizeKey = "media_size"
 	// FileNameKey is the actual filename being sought. Will usually be a UUID then something like .jpeg
 	FileNameKey = "file_name"
-	// FileServePath is the fileserve path minus the 'fileserver' prefix.
-	FileServePath = "/:" + AccountIDKey + "/:" + MediaTypeKey + "/:" + MediaSizeKey + "/:" + FileNameKey
+	// FileServePath is the fileserve path minus the 'fileserver/:account_id/:media_type' prefix.
+	FileServePath = "/:" + MediaSizeKey + "/:" + FileNameKey
 )
 
 type Module struct {

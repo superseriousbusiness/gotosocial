@@ -104,6 +104,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
+	// Get the instance account
+	// (we'll need this later).
+	instanceAccount, err := dbService.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return fmt.Errorf("error retrieving instance account: %w", err)
+	}
+
 	// Open the storage backend
 	storage, err := gtsstorage.AutoConfig()
 	if err != nil {
@@ -311,16 +318,17 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// rate limiting
 	rlLimit := config.GetAdvancedRateLimitRequests()
 	rlExceptions := config.GetAdvancedRateLimitExceptions()
-	clLimit := middleware.RateLimit(rlLimit, rlExceptions)  // client api
-	s2sLimit := middleware.RateLimit(rlLimit, rlExceptions) // server-to-server (AP)
-	fsLimit := middleware.RateLimit(rlLimit, rlExceptions)  // fileserver / web templates
+	clLimit := middleware.RateLimit(rlLimit, rlExceptions)        // client api
+	s2sLimit := middleware.RateLimit(rlLimit, rlExceptions)       // server-to-server (AP)
+	fsMainLimit := middleware.RateLimit(rlLimit, rlExceptions)    // fileserver / web templates
+	fsEmojiLimit := middleware.RateLimit(rlLimit*2, rlExceptions) // fileserver (emojis only, use high limit)
 
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
 	retryAfter := config.GetAdvancedThrottlingRetryAfter()
 	clThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // client api
 	s2sThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // server-to-server (AP)
-	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // fileserver / web templates
+	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // fileserver / web templates / emojis
 	pkThrottle := middleware.Throttle(cpuMultiplier, retryAfter)  // throttle public key endpoint separately
 
 	gzip := middleware.Gzip() // applied to all except fileserver
@@ -330,12 +338,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	authModule.Route(router, clLimit, clThrottle, gzip)
 	clientModule.Route(router, clLimit, clThrottle, gzip)
 	metricsModule.Route(router, clLimit, clThrottle, gzip)
-	fileserverModule.Route(router, fsLimit, fsThrottle)
+	fileserverModule.Route(router, fsMainLimit, fsThrottle)
+	fileserverModule.RouteEmojis(router, instanceAccount.ID, fsEmojiLimit, fsThrottle)
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
 	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
 	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
-	webModule.Route(router, fsLimit, fsThrottle, gzip)
+	webModule.Route(router, fsMainLimit, fsThrottle, gzip)
 
 	// Start the GoToSocial server.
 	server := gotosocial.NewServer(dbService, router, cleaner)
