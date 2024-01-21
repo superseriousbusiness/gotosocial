@@ -52,7 +52,7 @@ type Account struct {
 	Note                    string           `bun:""`                               // A note that this account has on their profile (ie., the account's bio/description of themselves)
 	NoteRaw                 string           `bun:""`                               // The raw contents of .Note without conversion to HTML, only available when requester = target
 	Memorial                *bool            `bun:",default:false"`                 // Is this a memorial account, ie., has the user passed away?
-	AlsoKnownAsURIs         []string         `bun:"also_known_as_uris,nullzero"`    // This account is associated with these account URIs.
+	AlsoKnownAsURIs         []string         `bun:"also_known_as_uris,array"`       // This account is associated with these account URIs.
 	AlsoKnownAs             []*Account       `bun:"-"`                              // This account is associated with these accounts (field not stored in the db).
 	MovedToURI              string           `bun:",nullzero"`                      // This account has moved to this account URI.
 	MovedTo                 *Account         `bun:"-"`                              // This account has moved to this account (field not stored in the db).
