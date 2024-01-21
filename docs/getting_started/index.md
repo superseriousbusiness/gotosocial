@@ -12,6 +12,11 @@ Before deploying GoToSocial, it's important to think through a few things as som
 
 GoToSocial supports both SQLite and Postgres and you can start using either. We do not currently have tooling to support migrating from SQLite to Postgres or vice-versa, but it is possible in theory.
 
+For databases to perform properly, they should be run on fast storage that operates with low and stable latency. It is possible to run databases on network attached storage, but this adds variable latency and network congestion to the mix, as well as potential I/O contention on the origin storage.
+
+!!! danger
+    The performance of Hetzner Cloud Volumes is not guaranteed and seems to have very volatile latency. You're going to have a bad time running your database on those with extremely poor query performance for even the most basic operations. Before filing performance issues against GoToSocial, make sure the problems reproduce with local storage.
+
 SQLite is great for a single-user instance. If you're planning on hosting multiple people it's advisable to use Postgres instead. You can always use Postgres regardless of the instance size.
 
 !!! tip
@@ -96,6 +101,12 @@ Unless you're experienced in doing this kind of tuning and troubleshooting the i
 
 * less than 2GB of RAM: swap = RAM × 2
 * more than 2GB of RAM: swap = RAM, up to 8G
+
+Linux swaps pretty early. This tends to not be necessary on servers and in the case of databases can cause unnecessary latency. Though it's good to let your system swap if it needs to, it can help to tell it to be a little more conservative about how early it swaps. Configuring this on Linux is done by changing the `vm.swappiness` [sysctl][sysctl] value.
+
+By default it's `60`. You can lower that to `10` for starters and keep an eye out. It's possible to run with even lower values, but it's likely unnecessary. To make the value persistent, you'll need to drop a configuration file in `/etc/sysctl.d/`.
+
+[sysctl]: https://man7.org/linux/man-pages/man8/sysctl.8.html
 
 ### Memory and CPU limits
 
