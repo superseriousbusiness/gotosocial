@@ -67,18 +67,18 @@ func putMap(m map[string]any) {
 func bytesToType(
 	ctx context.Context,
 	b []byte,
-	raw *map[string]any,
+	raw map[string]any,
 ) (vocab.Type, error) {
 	// Unmarshal the raw JSON bytes into a "raw" map.
 	// This will fail if the input is not parseable
 	// as JSON; eg., a remote has returned HTML as a
 	// fallback response to an ActivityPub JSON request.
-	if err := json.Unmarshal(b, raw); err != nil {
+	if err := json.Unmarshal(b, &raw); err != nil {
 		return nil, gtserror.NewfAt(3, "error unmarshalling bytes into json: %w", err)
 	}
 
 	// Resolve an ActivityStreams type.
-	t, err := streams.ToType(ctx, *raw)
+	t, err := streams.ToType(ctx, raw)
 	if err != nil {
 		return nil, gtserror.NewfAt(3, "error resolving json into ap vocab type: %w", err)
 	}
@@ -153,7 +153,7 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 
 	// Convert raw bytes to an AP type.
 	// This will also populate the map.
-	t, err := bytesToType(ctx, b, &raw)
+	t, err := bytesToType(ctx, b, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -194,7 +194,7 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 
 	// Convert raw bytes to an AP type.
 	// This will also populate the map.
-	t, err := bytesToType(ctx, b, &raw)
+	t, err := bytesToType(ctx, b, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
