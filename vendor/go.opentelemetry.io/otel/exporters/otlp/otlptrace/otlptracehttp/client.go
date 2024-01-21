@@ -177,11 +177,8 @@ func (d *client) UploadTraces(ctx context.Context, protoSpans []*tracepb.Resourc
 			if _, err := io.Copy(&respData, resp.Body); err != nil {
 				return err
 			}
-			if respData.Len() == 0 {
-				return nil
-			}
 
-			if resp.Header.Get("Content-Type") == "application/x-protobuf" {
+			if respData.Len() != 0 {
 				var respProto coltracepb.ExportTraceServiceResponse
 				if err := proto.Unmarshal(respData.Bytes(), &respProto); err != nil {
 					return err
