@@ -297,7 +297,7 @@ instance-languages: []
 
 # String. Federation mode to use for this instance.
 #
-# "blocklist" -- open federation by default. Only instances that are explicitly 
+# "blocklist" -- open federation by default. Only instances that are explicitly
 #                blocked will be denied (unless they are also explicitly allowed).
 #
 # "allowlist" -- closed federation by default. Only instances that are explicitly
@@ -469,7 +469,7 @@ media-remote-cache-days: 7
 
 # String. 24hr time of day formatted as hh:mm.
 # Examples: ["14:30", "00:00", "04:00"]
-# Default: "00:00" (midnight). 
+# Default: "00:00" (midnight).
 media-cleanup-from: "00:00"
 
 # Duration. Period between media cleanup runs.
@@ -875,7 +875,7 @@ http-client:
   #
   # THIS SETTING SHOULD BE USED FOR TESTING ONLY! IF YOU TURN THIS
   # ON WHILE RUNNING IN PRODUCTION YOU ARE LEAVING YOUR SERVER WIDE
-  # OPEN TO MAN IN THE MIDDLE ATTACKS! DO NOT CHANGE THIS SETTING 
+  # OPEN TO MAN IN THE MIDDLE ATTACKS! DO NOT CHANGE THIS SETTING
   # UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING AND WHY YOU'RE DOING IT.
   #
   # Default: false
@@ -1030,7 +1030,7 @@ advanced-sender-multiplier: 2
 # generate a correct Content-Security-Policy, you probably won't need
 # to ever touch this setting, but it's included in the 'spirit of more
 # configurable (usually) means more good'.
-# 
+#
 # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
 #
 # Example: ["s3.example.org", "some-bucket-name.s3.example.org"]
