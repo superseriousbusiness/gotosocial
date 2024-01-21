@@ -32,10 +32,11 @@ log-client-ip: true
 # If set to the empty string, the timestamp will be
 # ommitted from the logs entirely.
 #
-# The format must be compatible with Go's time.Layout, as
-# documented on https://pkg.go.dev/time#pkg-constants.
+# This uses the timestamp template format of the golang
+# time.Layout standard library, which is documented at:
+# https://pkg.go.dev/time#pkg-constants
 #
-# Examples: [true, false]
+# Examples: ["2006-01-02T15:04:05.000Z07:00", ""]
 # Default: "02/01/2006 15:04:05.000"
 log-timestamp-format: "02/01/2006 15:04:05.000"
 
