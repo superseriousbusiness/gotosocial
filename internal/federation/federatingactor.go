@@ -40,7 +40,7 @@ import (
 // - application/activity+json
 // - application/ld+json;profile=https://w3.org/ns/activitystreams
 //
-// Where for the above we are leniant with whitespace and quotes.
+// Where for the above we are leniant with whitespace, quotes, and charset.
 func IsASMediaType(ct string) bool {
 	var (
 		// First content-type part,
@@ -48,7 +48,8 @@ func IsASMediaType(ct string) bool {
 		p1 string = ct //nolint:revive
 
 		// Second content-type part,
-		// contains AS IRI if provided
+		// contains AS IRI or charset
+		// if provided.
 		p2 string
 	)
 
@@ -56,7 +57,11 @@ func IsASMediaType(ct string) bool {
 	sep := strings.IndexByte(ct, ';')
 	if sep >= 0 {
 		p1 = ct[:sep]
+
+		// Trim all start/end
+		// space of second part.
 		p2 = ct[sep+1:]
+		p2 = strings.Trim(p2, " ")
 	}
 
 	// Trim any ending space from the
@@ -65,12 +70,12 @@ func IsASMediaType(ct string) bool {
 
 	switch p1 {
 	case "application/activity+json":
-		return p2 == ""
+		// Accept with or without charset.
+		// This should be case insensitive.
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type#charset
+		return p2 == "" || strings.EqualFold(p2, "charset=utf-8")
 
 	case "application/ld+json":
-		// Trim all start/end space.
-		p2 = strings.Trim(p2, " ")
-
 		// Drop any quotes around the URI str.
 		p2 = strings.ReplaceAll(p2, "\"", "")
 
@@ -121,7 +126,8 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// https://www.w3.org/TR/activitypub/#server-to-server-interactions
 	if ct := r.Header.Get("Content-Type"); !IsASMediaType(ct) {
 		const ct1 = "application/activity+json"
-		const ct2 = "application/ld+json;profile=https://w3.org/ns/activitystreams"
+		const ct2 = "application/activity+json;charset=utf-8"
+		const ct3 = "application/ld+json;profile=https://w3.org/ns/activitystreams"
 		err := fmt.Errorf("Content-Type %s not acceptable, this endpoint accepts: [%q %q]", ct, ct1, ct2)
 		return false, gtserror.NewErrorNotAcceptable(err)
 	}

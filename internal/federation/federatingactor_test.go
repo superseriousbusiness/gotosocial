@@ -165,6 +165,22 @@ func TestIsASMediaType(t *testing.T) {
 			Expect: true,
 		},
 		{
+			Input:  "application/activity+json; charset=utf-8",
+			Expect: true,
+		},
+		{
+			Input:  "application/activity+json;charset=utf-8",
+			Expect: true,
+		},
+		{
+			Input:  "application/activity+json ;charset=utf-8",
+			Expect: true,
+		},
+		{
+			Input:  "application/activity+json ; charset=utf-8",
+			Expect: true,
+		},
+		{
 			Input:  "application/ld+json;profile=https://www.w3.org/ns/activitystreams",
 			Expect: true,
 		},
@@ -195,6 +211,10 @@ func TestIsASMediaType(t *testing.T) {
 		{
 			Input:  "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"",
 			Expect: true,
+		},
+		{
+			Input:  "application/ld+json",
+			Expect: false,
 		},
 	} {
 		if federation.IsASMediaType(test.Input) != test.Expect {
