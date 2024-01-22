@@ -21,7 +21,7 @@ require (
 	codeberg.org/gruf/go-structr v0.1.1
 	codeberg.org/superseriousbusiness/exif-terminator v0.7.0
 	github.com/DmitriyVTitov/size v1.5.0
-	github.com/KimMachineGun/automemlimit v0.4.0
+	github.com/KimMachineGun/automemlimit v0.5.0
 	github.com/abema/go-mp4 v1.1.1
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.9.0
@@ -143,6 +143,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/opencontainers/runtime-spec v1.0.2 // indirect
+	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
