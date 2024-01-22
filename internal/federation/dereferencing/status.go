@@ -20,6 +20,7 @@ package dereferencing
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/url"
 	"slices"
@@ -294,10 +295,28 @@ func (d *Dereferencer) enrichStatusSafely(
 		apubStatus,
 	)
 
-	if gtserror.StatusCode(err) >= 400 {
-		// Update fetch-at to slow re-attempts.
+	if code := gtserror.StatusCode(err); code >= 400 {
+		err = fmt.Errorf("status enrichment failed with status code %d: %w", code, err)
+		log.Info(ctx, err)
+
+		if isNew {
+			// This was a new status enrich
+			// attempt which failed before we
+			// got to store it, so we can't
+			// return anything useful.
+			return nil, nil, isNew, err
+		}
+
+		// We had this status stored already
+		// before this enrichment attempt.
+		//
+		// Update fetched_at to slow re-attempts
+		// but don't return early. We can still
+		// return the model we had stored already.
 		status.FetchedAt = time.Now()
-		_ = d.state.DB.UpdateStatus(ctx, status, "fetched_at")
+		if updateErr := d.state.DB.UpdateStatus(ctx, status, "fetched_at"); updateErr != nil {
+			log.Errorf(ctx, "error updating status fetched_at: %v", updateErr)
+		}
 	}
 
 	// Unlock now
@@ -388,16 +407,21 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
 
-	// Use existing status ID.
-	latestStatus.ID = status.ID
-	if latestStatus.ID == "" {
-
-		// Generate new status ID from the provided creation date.
+	// Check if we've previously
+	// stored this status in the DB.
+	// If we have, it'll be ID'd.
+	var isNew = (status.ID == "")
+	if isNew {
+		// No ID, we haven't stored this status before.
+		// Generate new status ID from the status publication time.
 		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
 		if err != nil {
 			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
 			latestStatus.ID = id.NewULID() // just use "now"
 		}
+	} else {
+		// Reuse existing status ID.
+		latestStatus.ID = status.ID
 	}
 
 	// Carry-over values and set fetch time.
@@ -436,10 +460,7 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating emojis for status %s: %w", uri, err)
 	}
 
-	if status.CreatedAt.IsZero() {
-		// CreatedAt will be zero if no local copy was
-		// found in one of the GetStatusBy___() functions.
-		//
+	if isNew {
 		// This is new, put the status in the database.
 		err := d.state.DB.PutStatus(ctx, latestStatus)
 		if err != nil {

@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/url"
 	"time"
@@ -52,7 +53,7 @@ func accountUpToDate(account *gtsmodel.Account, force bool) bool {
 		return true
 	}
 
-	if !account.CreatedAt.IsZero() && account.IsInstance() {
+	if account.IsInstance() && !account.IsNew() {
 		// Existing instance account. No need for update.
 		return true
 	}
@@ -232,8 +233,8 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 		// Create and pass-through a new bare-bones model for dereferencing.
 		account, accountable, err := d.enrichAccountSafely(ctx, requestUser, nil, &gtsmodel.Account{
 			ID:       id.NewULID(),
-			Username: username,
 			Domain:   domain,
+			Username: username,
 		}, nil)
 		if err != nil {
 			return nil, nil, err
@@ -372,17 +373,18 @@ func (d *Dereferencer) enrichAccountSafely(
 
 	// By default use account.URI
 	// as the per-URI deref lock.
-	uriStr := account.URI
-
-	if uriStr == "" {
+	var lockKey string
+	if account.URI != "" {
+		lockKey = account.URI
+	} else {
 		// No URI is set yet, instead generate a faux-one from user+domain.
-		uriStr = "https://" + account.Domain + "/user/" + account.Username
+		lockKey = "https://" + account.Domain + "/users/" + account.Username
 	}
 
 	// Acquire per-URI deref lock, wraping unlock
 	// to safely defer in case of panic, while still
 	// performing more granular unlocks when needed.
-	unlock := d.state.FedLocks.Lock(uriStr)
+	unlock := d.state.FedLocks.Lock(lockKey)
 	unlock = doOnce(unlock)
 	defer unlock()
 
@@ -394,10 +396,28 @@ func (d *Dereferencer) enrichAccountSafely(
 		accountable,
 	)
 
-	if gtserror.StatusCode(err) >= 400 {
-		// Update fetch-at to slow re-attempts.
+	if code := gtserror.StatusCode(err); code >= 400 {
+		err = fmt.Errorf("account enrichment failed with status code %d: %w", code, err)
+		log.Info(ctx, err)
+
+		if account.IsNew() {
+			// This was a new account enrich
+			// attempt which failed before we
+			// got to store it, so we can't
+			// return anything useful.
+			return nil, nil, err
+		}
+
+		// We had this account stored already
+		// before this enrichment attempt.
+		//
+		// Update fetched_at to slow re-attempts
+		// but don't return early. We can still
+		// return the model we had stored already.
 		account.FetchedAt = time.Now()
-		_ = d.state.DB.UpdateAccount(ctx, account, "fetched_at")
+		if updateErr := d.state.DB.UpdateAccount(ctx, account, "fetched_at"); updateErr != nil {
+			log.Errorf(ctx, "error updating account fetched_at: %v", updateErr)
+		}
 	}
 
 	// Unlock now
@@ -414,7 +434,7 @@ func (d *Dereferencer) enrichAccountSafely(
 		// in a call to db.Put(Account). Look again in DB by URI.
 		latest, err = d.state.DB.GetAccountByURI(ctx, account.URI)
 		if err != nil {
-			err = gtserror.Newf("error getting account %s from database after race: %w", uriStr, err)
+			err = gtserror.Newf("error getting account %s from database after race: %w", lockKey, err)
 		}
 	}
 
@@ -440,32 +460,44 @@ func (d *Dereferencer) enrichAccount(
 	if account.Username != "" {
 		// A username was provided so we can attempt a webfinger, this ensures up-to-date accountdomain info.
 		accDomain, accURI, err := d.fingerRemoteAccount(ctx, tsport, account.Username, account.Domain)
-		if err != nil {
-			if account.URI == "" {
-				// this is a new account (to us) with username@domain
-				// but failed webfinger, nothing more we can do.
-				err := gtserror.Newf("error webfingering account: %w", err)
-				return nil, nil, gtserror.SetUnretrievable(err)
+		switch {
+
+		case err != nil && account.URI == "":
+			// This is a new account (to us) with username@domain
+			// but failed webfinger, nothing more we can do.
+			err := gtserror.Newf("error webfingering account: %w", err)
+			return nil, nil, gtserror.SetUnretrievable(err)
+
+		case err != nil:
+			// Simply log this error and move on,
+			// we already have an account URI.
+			log.Errorf(ctx,
+				"error webfingering[1] remote account %s@%s: %v",
+				account.Username, account.Domain, err,
+			)
+
+		case err == nil && account.Domain != accDomain:
+			// After webfinger, we now have correct account domain from which we can do a final DB check.
+			alreadyAcct, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return nil, nil, gtserror.Newf("db err looking for account again after webfinger: %w", err)
 			}
 
-			// Simply log this error and move on, we already have an account URI.
-			log.Errorf(ctx, "error webfingering[1] remote account %s@%s: %v", account.Username, account.Domain, err)
-		}
-
-		if err == nil {
-			if account.Domain != accDomain {
-				// After webfinger, we now have correct account domain from which we can do a final DB check.
-				alreadyAccount, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
-				if err != nil && !errors.Is(err, db.ErrNoEntries) {
-					return nil, nil, gtserror.Newf("db err looking for account again after webfinger: %w", err)
-				}
-
-				if alreadyAccount != nil {
-					// Enrich existing account.
-					account = alreadyAccount
-				}
+			if alreadyAcct != nil {
+				// We had this account stored under
+				// the discovered accountDomain.
+				// Proceed with this account.
+				account = alreadyAcct
 			}
 
+			// Whether we had the account or not, we
+			// now have webfinger info relevant to the
+			// account, so fallthrough to set webfinger
+			// info on either the account we just found,
+			// or the stub account we were passed.
+			fallthrough
+
+		case err == nil:
 			// Update account with latest info.
 			account.URI = accURI.String()
 			account.Domain = accDomain
@@ -474,12 +506,30 @@ func (d *Dereferencer) enrichAccount(
 	}
 
 	if uri == nil {
-		// No URI provided / found, must parse from account.
+		// No URI provided / found,
+		// must parse from account.
 		uri, err = url.Parse(account.URI)
 		if err != nil {
-			return nil, nil, gtserror.Newf("invalid uri %q: %w", account.URI, err)
+			return nil, nil, gtserror.Newf(
+				"invalid uri %q: %w",
+				account.URI, gtserror.SetUnretrievable(err),
+			)
+		}
+
+		if uri.Scheme != "http" && uri.Scheme != "https" {
+			err = errors.New("account URI scheme must be http or https")
+			return nil, nil, gtserror.Newf(
+				"invalid uri %q: %w",
+				account.URI, gtserror.SetUnretrievable(err),
+			)
 		}
 	}
+
+	/*
+		BY THIS POINT we must have an account URI set,
+		either provided, pinned to the account, or
+		obtained via webfinger call.
+	*/
 
 	// Check whether this account URI is a blocked domain / subdomain.
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, uri.Host); err != nil {
@@ -493,27 +543,45 @@ func (d *Dereferencer) enrichAccount(
 	defer d.stopHandshake(requestUser, uri)
 
 	if apubAcc == nil {
+		// We were not given any (partial) ActivityPub
+		// version of this account as a parameter.
 		// Dereference latest version of the account.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			err := gtserror.Newf("error deferencing %s: %w", uri, err)
+			err := gtserror.Newf("error dereferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
 		// Attempt to resolve ActivityPub acc from data.
 		apubAcc, err = ap.ResolveAccountable(ctx, b)
 		if err != nil {
-			return nil, nil, gtserror.Newf("error resolving accountable from data for account %s: %w", uri, err)
+			// ResolveAccountable will set Unretrievable/WrongType
+			// on the returned error, so we don't need to do it here.
+			err = gtserror.Newf("error resolving accountable from data for account %s: %w", uri, err)
+			return nil, nil, err
 		}
 	}
 
+	/*
+		BY THIS POINT we must have the ActivityPub
+		representation of the account, either provided,
+		or obtained via a dereference call.
+	*/
+
 	// Convert the dereferenced AP account object to our GTS model.
+	//
+	// We put this in the variable latestAcc because we might want
+	// to compare the provided account model with this fresh version,
+	// in order to check if anything changed since we last saw it.
 	latestAcc, err := d.converter.ASRepresentationToAccount(ctx,
 		apubAcc,
 		account.Domain,
 	)
 	if err != nil {
-		return nil, nil, gtserror.Newf("error converting accountable to gts model for account %s: %w", uri, err)
+		// ASRepresentationToAccount will set Malformed on the
+		// returned error, so we don't need to do it here.
+		err = gtserror.Newf("error converting accountable to gts model for account %s: %w", uri, err)
+		return nil, nil, err
 	}
 
 	if account.Username == "" {
@@ -528,14 +596,15 @@ func (d *Dereferencer) enrichAccount(
 		// from example.org to somewhere.else: we want to take somewhere.else
 		// as the accountDomain then, not the example.org we were redirected from.
 
-		// Assume the host from the returned ActivityPub representation.
-		idProp := apubAcc.GetJSONLDId()
-		if idProp == nil || !idProp.IsIRI() {
+		// Assume the host from the returned
+		// ActivityPub representation.
+		id := ap.GetJSONLDId(apubAcc)
+		if id == nil {
 			return nil, nil, gtserror.New("no id property found on person, or id was not an iri")
 		}
 
 		// Get IRI host value.
-		accHost := idProp.GetIRI().Host
+		accHost := id.Host
 
 		latestAcc.Domain, _, err = d.fingerRemoteAccount(ctx,
 			tsport,
@@ -553,7 +622,7 @@ func (d *Dereferencer) enrichAccount(
 	}
 
 	if latestAcc.Domain == "" {
-		// ensure we have a domain set by this point,
+		// Ensure we have a domain set by this point,
 		// otherwise it gets stored as a local user!
 		//
 		// TODO: there is probably a more granular way
@@ -562,7 +631,16 @@ func (d *Dereferencer) enrichAccount(
 		return nil, nil, gtserror.Newf("empty domain for %s", uri)
 	}
 
-	// Ensure ID is set and update fetch time.
+	/*
+		BY THIS POINT we have more or less a fullly-formed
+		representation of the target account, derived from
+		a combination of webfinger lookups and dereferencing.
+		Further fetching beyond this point is for peripheral
+		things like account avatar, header, emojis.
+	*/
+
+	// Ensure internal db ID is
+	// set and update fetch time.
 	latestAcc.ID = account.ID
 	latestAcc.FetchedAt = time.Now()
 
@@ -581,12 +659,29 @@ func (d *Dereferencer) enrichAccount(
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
 
-	if account.CreatedAt.IsZero() {
-		// CreatedAt will be zero if no local copy was
-		// found in one of the GetAccountBy___() functions.
-		//
-		// Set time of creation from the last-fetched date.
-		latestAcc.CreatedAt = latestAcc.FetchedAt
+	// Derive remote creation time of this account
+	// from the published property if available.
+	//
+	// This allows us to set CreatedAt properly for
+	// a remote account, rather than assuming it was
+	// created at the moment we first saw it.
+	//
+	// DON'T set CreatedAt on the latestAcc outside
+	// of the subsequent IsNew() check, since that
+	// uses CreatedAt to check if we already had an
+	// account in our database.
+	published := ap.GetPublished(apubAcc)
+
+	if account.IsNew() {
+		// Derive published/created time from
+		// apubAcc, fall back to FetchedAt value.
+		if published.IsZero() {
+			latestAcc.CreatedAt = published
+		} else {
+			latestAcc.CreatedAt = latestAcc.FetchedAt
+		}
+
+		// Set time of update from the last-fetched date.
 		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// This is new, put it in the database.
@@ -595,11 +690,18 @@ func (d *Dereferencer) enrichAccount(
 			return nil, nil, gtserror.Newf("error putting in database: %w", err)
 		}
 	} else {
+		// Derive published time from apubAcc,
+		// fall back to previous stored value.
+		if published.IsZero() {
+			latestAcc.CreatedAt = published
+		} else {
+			latestAcc.CreatedAt = account.CreatedAt
+		}
+
 		// Set time of update from the last-fetched date.
 		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
-		// Use existing account values.
-		latestAcc.CreatedAt = account.CreatedAt
+		// Carry over existing account language.
 		latestAcc.Language = account.Language
 
 		// This is an existing account, update the model in the database.

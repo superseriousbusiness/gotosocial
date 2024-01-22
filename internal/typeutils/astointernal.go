@@ -300,7 +300,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 	// status.Published
 	//
-	// Extract published time for the boost,
+	// Extract published time for the status,
 	// zero-time will fall back to db defaults.
 	if pub := ap.GetPublished(statusable); !pub.IsZero() {
 		status.CreatedAt = pub
