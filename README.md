@@ -135,7 +135,7 @@ GoToSocial plays nice with lower-powered machines like Raspberry Pi, old laptops
 - Built-in, automatic support for secure HTTPS with [Let's Encrypt](https://letsencrypt.org/).
 - Strict privacy enforcement for posts and strict blocking logic.
 - Import and export allow lists and deny lists. Subscribe to community-created block lists (think Ad blocker, but for federation!).
-- HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://tools.ietf.org/id/draft-cavage-http-signatures-01.html) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
+- HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
 
 ### Various federation modes
 
