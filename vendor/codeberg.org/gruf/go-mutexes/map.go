@@ -3,7 +3,6 @@ package mutexes
 import (
 	"sync"
 	"sync/atomic"
-	"unsafe"
 )
 
 const (
@@ -249,38 +248,4 @@ func (mu *rwmutex) WaitRelock(outer *sync.Mutex) {
 
 	// Relock!
 	outer.Lock()
-}
-
-// unused fields left
-// un-named for safety.
-type notifyList struct {
-	_      uint32         // wait   uint32
-	notify uint32         // notify uint32
-	_      uintptr        // lock   mutex
-	_      unsafe.Pointer // head   *sudog
-	_      unsafe.Pointer // tail   *sudog
-}
-
-// See runtime/sema.go for documentation.
-//
-//go:linkname runtime_notifyListAdd sync.runtime_notifyListAdd
-func runtime_notifyListAdd(l *notifyList) uint32
-
-// See runtime/sema.go for documentation.
-//
-//go:linkname runtime_notifyListWait sync.runtime_notifyListWait
-func runtime_notifyListWait(l *notifyList, t uint32)
-
-// See runtime/sema.go for documentation.
-//
-//go:linkname runtime_notifyListNotifyAll sync.runtime_notifyListNotifyAll
-func runtime_notifyListNotifyAll(l *notifyList)
-
-// Ensure that sync and runtime agree on size of notifyList.
-//
-//go:linkname runtime_notifyListCheck sync.runtime_notifyListCheck
-func runtime_notifyListCheck(size uintptr)
-func init() {
-	var n notifyList
-	runtime_notifyListCheck(unsafe.Sizeof(n))
 }
