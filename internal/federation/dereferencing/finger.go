@@ -81,10 +81,6 @@ func (d *Dereferencer) fingerRemoteAccount(
 		return "", nil, err
 	}
 
-	if accountDomain == "" {
-		
-	}
-
 	// Look through links for the first
 	// one that matches what we need:
 	//
