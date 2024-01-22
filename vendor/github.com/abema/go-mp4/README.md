@@ -6,8 +6,13 @@ go-mp4
 [![Coverage Status](https://coveralls.io/repos/github/abema/go-mp4/badge.svg)](https://coveralls.io/github/abema/go-mp4)
 [![Go Report Card](https://goreportcard.com/badge/github.com/abema/go-mp4)](https://goreportcard.com/report/github.com/abema/go-mp4)
 
-go-mp4 is Go library and CLI tool which provide low-level I/O interfaces of MP4.
+go-mp4 is Go library which provides low-level I/O interfaces of MP4.
 This library supports you to parse or build any MP4 boxes(atoms) directly.
+
+go-mp4 provides very flexible interfaces for reading boxes.
+If you want to read only specific parts of MP4 file, this library extracts those boxes via io.ReadSeeker interface.
+
+On the other hand, this library is not suitable for complex data conversions.
 
 ## Integration with your Go application
 
