@@ -675,7 +675,7 @@ func (d *Dereferencer) enrichAccount(
 	if account.IsNew() {
 		// Derive published/created time from
 		// apubAcc, fall back to FetchedAt value.
-		if published.IsZero() {
+		if !published.IsZero() {
 			latestAcc.CreatedAt = published
 		} else {
 			latestAcc.CreatedAt = latestAcc.FetchedAt
@@ -692,7 +692,7 @@ func (d *Dereferencer) enrichAccount(
 	} else {
 		// Derive published time from apubAcc,
 		// fall back to previous stored value.
-		if published.IsZero() {
+		if !published.IsZero() {
 			latestAcc.CreatedAt = published
 		} else {
 			latestAcc.CreatedAt = account.CreatedAt
