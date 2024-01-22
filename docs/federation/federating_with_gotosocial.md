@@ -114,7 +114,7 @@ For more information on acceptable content types, see [the server-to-server inte
 
 GoToSocial will return HTTP status code [202 - Accepted](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/202) in response to validly-formed and signed Inbox POST requests.
 
-Invalidly-formed Inbox POST requests will receive a [400 - Bad Request](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/202) HTTP status code in response. The response body may contain more information on why the GoToSocial server considered the request content to be badly formed. Other servers should not retry delivery of the Activity in case of a code `400` response.
+Invalidly-formed Inbox POST requests will receive a [400 - Bad Request](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400) HTTP status code in response. The response body may contain more information on why the GoToSocial server considered the request content to be badly formed. Other servers should not retry delivery of the Activity in case of a code `400` response.
 
 Even if GoToSocial returns a `202` status code, it may not continue processing the Activity delivered, depending on the originator(s), target(s) and type of the Activity. ActivityPub is an extensive protocol, and GoToSocial does not cover every combination of Activity and Object.
 
