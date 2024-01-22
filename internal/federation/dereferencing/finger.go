@@ -59,8 +59,8 @@ func (d *Dereferencer) fingerRemoteAccount(
 		return "", nil, err
 	}
 
-	var resp = new(apimodel.WellKnownResponse)
-	if err := json.Unmarshal(b, resp); err != nil {
+	var resp apimodel.WellKnownResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
 		err = gtserror.Newf("error parsing response as JSON for %s: %w", target, err)
 		return "", nil, err
 	}
