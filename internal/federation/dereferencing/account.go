@@ -372,18 +372,18 @@ func (d *Dereferencer) enrichAccountSafely(
 
 	// By default use account.URI
 	// as the per-URI deref lock.
-	var lockKey string
+	var uriStr string
 	if account.URI != "" {
-		lockKey = account.URI
+		uriStr = account.URI
 	} else {
 		// No URI is set yet, instead generate a faux-one from user+domain.
-		lockKey = "https://" + account.Domain + "/users/" + account.Username
+		uriStr = "https://" + account.Domain + "/users/" + account.Username
 	}
 
 	// Acquire per-URI deref lock, wraping unlock
 	// to safely defer in case of panic, while still
 	// performing more granular unlocks when needed.
-	unlock := d.state.FedLocks.Lock(lockKey)
+	unlock := d.state.FedLocks.Lock(uriStr)
 	unlock = doOnce(unlock)
 	defer unlock()
 
@@ -395,12 +395,7 @@ func (d *Dereferencer) enrichAccountSafely(
 		accountable,
 	)
 
-	if code := gtserror.StatusCode(err); code >= 400 {
-		// No matter what, log the error
-		// so instance admins have an idea
-		// why something isn't working.
-		log.Info(ctx, err)
-
+	if gtserror.StatusCode(err) >= 400 {
 		if account.IsNew() {
 			// This was a new account enrich
 			// attempt which failed before we
@@ -417,7 +412,7 @@ func (d *Dereferencer) enrichAccountSafely(
 		// return the model we had stored already.
 		account.FetchedAt = time.Now()
 		if err := d.state.DB.UpdateAccount(ctx, account, "fetched_at"); err != nil {
-			log.Errorf(ctx, "error updating account fetched_at: %v", err)
+			log.Error(ctx, "error updating %s fetched_at: %v", uriStr, err)
 		}
 	}
 
@@ -435,7 +430,7 @@ func (d *Dereferencer) enrichAccountSafely(
 		// in a call to db.Put(Account). Look again in DB by URI.
 		latest, err = d.state.DB.GetAccountByURI(ctx, account.URI)
 		if err != nil {
-			err = gtserror.Newf("error getting account %s from database after race: %w", lockKey, err)
+			err = gtserror.Newf("error getting account %s from database after race: %w", uriStr, err)
 		}
 	}
 

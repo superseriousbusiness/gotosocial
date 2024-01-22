@@ -294,12 +294,7 @@ func (d *Dereferencer) enrichStatusSafely(
 		apubStatus,
 	)
 
-	if code := gtserror.StatusCode(err); code >= 400 {
-		// No matter what, log the error
-		// so instance admins have an idea
-		// why something isn't working.
-		log.Info(ctx, err)
-
+	if gtserror.StatusCode(err) >= 400 {
 		if isNew {
 			// This was a new status enrich
 			// attempt which failed before we
@@ -316,7 +311,7 @@ func (d *Dereferencer) enrichStatusSafely(
 		// return the model we had stored already.
 		status.FetchedAt = time.Now()
 		if err := d.state.DB.UpdateStatus(ctx, status, "fetched_at"); err != nil {
-			log.Errorf(ctx, "error updating status fetched_at: %v", err)
+			log.Error(ctx, "error updating %s fetched_at: %v", uriStr, err)
 		}
 	}
 
@@ -408,19 +403,21 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
 
-	// Check if we've previously
-	// stored this status in the DB.
-	// If we have, it'll be ID'd.
-	var isNew = (status.ID == "")
-	if isNew {
-		// No ID, we haven't stored this status before.
-		// Generate new status ID from the status publication time.
+	// Based on the original provided
+	// status model, determine whether
+	// this is a new insert / update.
+	var isNew bool
+
+	if isNew = (status.ID == ""); isNew {
+
+		// Generate new status ID from the provided creation date.
 		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
 		if err != nil {
 			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
 			latestStatus.ID = id.NewULID() // just use "now"
 		}
 	} else {
+
 		// Reuse existing status ID.
 		latestStatus.ID = status.ID
 	}
