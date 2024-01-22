@@ -126,8 +126,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// https://www.w3.org/TR/activitypub/#server-to-server-interactions
 	if ct := r.Header.Get("Content-Type"); !IsASMediaType(ct) {
 		const ct1 = "application/activity+json"
-		const ct2 = "application/activity+json;charset=utf-8"
-		const ct3 = "application/ld+json;profile=https://w3.org/ns/activitystreams"
+		const ct2 = "application/ld+json;profile=https://w3.org/ns/activitystreams"
 		err := fmt.Errorf("Content-Type %s not acceptable, this endpoint accepts: [%q %q]", ct, ct1, ct2)
 		return false, gtserror.NewErrorNotAcceptable(err)
 	}
