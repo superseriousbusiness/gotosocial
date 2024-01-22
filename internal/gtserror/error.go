@@ -55,9 +55,15 @@ func SetUnretrievable(err error) error {
 	return errors.WithValue(err, unrtrvableKey, struct{}{})
 }
 
-// IsWrongType checks error for a stored "wrong type" flag. Wrong type
-// indicates that an ActivityPub URI returned a type we weren't expecting:
-// Statusable instead of Accountable, or vice versa, for example.
+// IsWrongType checks error for a stored "wrong type" flag.
+// Wrong type indicates that an ActivityPub URI returned a
+// type we weren't expecting. For example:
+//
+//   - HTML instead of JSON.
+//   - Normal JSON instead of ActivityPub JSON.
+//   - Statusable instead of Accountable.
+//   - Accountable instead of Statusable.
+//   - etc.
 func IsWrongType(err error) bool {
 	_, ok := errors.Value(err, wrongTypeKey).(struct{})
 	return ok
