@@ -64,6 +64,18 @@ func readBoxStructureFromInternal(r io.ReadSeeker, bi *BoxInfo, path BoxPath, ha
 		}
 	}
 
+	// parse numbered ilst items after keys box by saving EntryCount field to context
+	if bi.Type == BoxTypeKeys() {
+		var keys Keys
+		if _, err := Unmarshal(r, bi.Size-bi.HeaderSize, &keys, bi.Context); err != nil {
+			return nil, err
+		}
+		bi.QuickTimeKeysMetaEntryCount = int(keys.EntryCount)
+		if _, err := bi.SeekToPayload(r); err != nil {
+			return nil, err
+		}
+	}
+
 	ctx := bi.Context
 	if bi.Type == BoxTypeWave() {
 		ctx.UnderWave = true
@@ -171,6 +183,11 @@ func readBoxStructure(r io.ReadSeeker, totalSize uint64, isRoot bool, path BoxPa
 
 		if bi.IsQuickTimeCompatible {
 			ctx.IsQuickTimeCompatible = true
+		}
+
+		// preserve keys entry count on context for subsequent ilst number item box
+		if bi.Type == BoxTypeKeys() {
+			ctx.QuickTimeKeysMetaEntryCount = bi.QuickTimeKeysMetaEntryCount
 		}
 	}
 
