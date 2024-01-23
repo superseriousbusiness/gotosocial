@@ -117,10 +117,21 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// Add this status's parent URI to map of deref'd.
 		derefdStatuses[current.InReplyToURI] = struct{}{}
 
+		var (
+			// the fetched up-to-date
+			// status parent to use.
+			parent *gtsmodel.Status
+
+			// the updated statusable
+			// model (only set if parent
+			// status was dereferenced).
+			update ap.Statusable
+		)
+
 		if current.InReplyTo != nil {
 			// We already have the parent for current status,
 			// ensure we have an up-to-date copy by enriching.
-			current.InReplyTo, _, _, err = d.enrichStatusSafely(ctx,
+			parent, update, _, err = d.enrichStatusSafely(ctx,
 				username,
 				uri,
 				current.InReplyTo,
@@ -129,7 +140,13 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		} else {
 			// Fetch the parent status by its URI, this handles case
 			// of existing parent we already deref'd, or updating it!
-			current.InReplyTo, _, _, err = d.getStatusByURI(ctx, username, uri)
+			parent, update, _, err = d.getStatusByURI(ctx, username, uri)
+		}
+
+		if err == nil && update == nil {
+			// A parent status already existed
+			// and was up-to-date, return here.
+			return nil
 		}
 
 		// Check for a returned HTTP code via error.
@@ -150,6 +167,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 			); err != nil {
 				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
 			}
+			return nil
 
 		// An error was returned for a status during
 		// an attempted NEW dereference, return here.
@@ -158,27 +176,32 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 
 		// An error was returned for an existing parent,
 		// we simply treat this as a temporary situation.
+		// (we fallback to using existing parent status).
 		case err != nil:
 			l.Errorf("error getting parent: %v", err)
-
-		// -> by this point, err == nil
 
 		// The ID has changed for currently stored parent ID
 		// (which may be empty, if new!) and fetched version.
 		//
 		// Update the current's inReplyTo fields to parent.
-		case current.InReplyToID != current.InReplyTo.ID:
-			current.InReplyToID = current.InReplyTo.ID
-			current.InReplyToAccountID = current.InReplyTo.AccountID
-			current.InReplyToAccount = current.InReplyTo.Account
+		case current.InReplyToID != parent.ID:
+			current.InReplyToAccountID = parent.AccountID
+			current.InReplyToAccount = parent.Account
+			current.InReplyToURI = parent.URI
+			current.InReplyToID = parent.ID
+			current.InReplyTo = parent
 			if err := d.state.DB.UpdateStatus(ctx,
 				current,
 				"in_reply_to_id",
+				"in_reply_to_uri",
 				"in_reply_to_account_id",
 			); err != nil {
 				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
 			}
 		}
+
+		// Set next parent to use.
+		current = current.InReplyTo
 	}
 
 	return gtserror.Newf("reached %d ancestor iterations for %q", maxIter, status.URI)
