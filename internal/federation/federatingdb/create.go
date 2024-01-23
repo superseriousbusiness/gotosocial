@@ -303,27 +303,9 @@ func (f *federatingDB) createStatusable(
 	statusable ap.Statusable,
 	forwarded bool,
 ) error {
-	// If we do have a forward, we should ignore the content
-	// and instead deref based on the URI of the statusable.
-	//
-	// In other words, don't automatically trust whoever sent
-	// this status to us, but fetch the authentic article from
-	// the server it originated from.
-	if forwarded {
-		// Pass the statusable URI (APIri) into the processor
-		// worker and do the rest of the processing asynchronously.
-		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:     ap.ObjectNote,
-			APActivityType:   ap.ActivityCreate,
-			APIri:            ap.GetJSONLDId(statusable),
-			APObjectModel:    nil,
-			GTSModel:         nil,
-			ReceivingAccount: receiver,
-		})
-		return nil
-	}
 
-	// Check whether we should accept this new status.
+	// Check whether we should accept this new status,
+	// we do this BEFORE even handling forwards to us.
 	accept, err := f.shouldAcceptStatusable(ctx,
 		receiver,
 		requester,
@@ -340,6 +322,27 @@ func (f *federatingDB) createStatusable(
 		//
 		// We just pretend that all is fine (dog with cuppa, flames everywhere)
 		log.Trace(ctx, "status failed acceptability check")
+		return nil
+	}
+
+	// If we do have a forward, we should ignore the content
+	// and instead deref based on the URI of the statusable.
+	//
+	// In other words, don't automatically trust whoever sent
+	// this status to us, but fetch the authentic article from
+	// the server it originated from.
+	if forwarded {
+
+		// Pass the statusable URI (APIri) into the processor
+		// worker and do the rest of the processing asynchronously.
+		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
+			APObjectType:     ap.ObjectNote,
+			APActivityType:   ap.ActivityCreate,
+			APIri:            ap.GetJSONLDId(statusable),
+			APObjectModel:    nil,
+			GTSModel:         nil,
+			ReceivingAccount: receiver,
+		})
 		return nil
 	}
 
@@ -371,13 +374,11 @@ func (f *federatingDB) shouldAcceptStatusable(ctx context.Context, receiver *gts
 		name := mention.NameString
 
 		switch {
-		case accURI != "":
-			if accURI == receiver.URI ||
-				accURI == receiver.URL {
-				// Mention target is receiver,
-				// they are mentioned in status.
-				return true, nil
-			}
+		case accURI != "" &&
+			accURI == receiver.URI || accURI == receiver.URL:
+			// Mention target is receiver,
+			// they are mentioned in status.
+			return true, nil
 
 		case accURI == "" && name != "":
 			// Only a name was provided, extract the user@domain parts.
