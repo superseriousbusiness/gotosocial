@@ -101,8 +101,8 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 	var (
 		next      = status
 		oneAuthor = true // Assume one author until proven otherwise.
-		included  bool
-		converstn bool
+		// visible bool
+		notVisible bool
 	)
 
 	for {
@@ -116,21 +116,26 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 			next.MentionsAccount(owner.ID) {
 			// Owner is in / mentioned in
 			// this status thread. They can
-			// see all future visible statuses.
-			included = true
+			// see future visible statuses.
+			visible = true
 			break
 		}
 
-		// Check whether this should be a visible conversation, i.e.
-		// is it between accounts on owner timeline that they follow?
-		converstn, err = f.isVisibleConversation(ctx, owner, next)
+		// Check whether status in conversation is explicitly relevant to timeline
+		// owner (i.e. includes mutals), or is explicitly invisible (i.e. blocked).
+		visible, notVisible, err = f.isVisibleConversation(ctx, owner, next)
 		if err != nil {
 			return false, gtserror.Newf("error checking conversation visibility: %w", err)
 		}
 
-		if converstn {
-			// Owner is relevant to this conversation,
-			// i.e. between follows / mutuals they know.
+		if notVisible {
+			log.Tracef(ctx, "conversation not visible to timeline owner")
+			return false, nil
+		}
+
+		if visible {
+			// Conversation relevant
+			// to timeline owner!
 			break
 		}
 
@@ -144,23 +149,23 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 			break
 		}
 
-		// Fetch next parent in thread.
-		parentID := next.InReplyToID
-		if parentID == "" {
+		// Check parent is deref'd.
+		if next.InReplyToID == "" {
 			log.Warnf(ctx, "status not yet deref'd: %s", next.InReplyToURI)
 			return false, cache.SentinelError
 		}
 
+		// Fetch next parent in conversation.
 		next, err = f.state.DB.GetStatusByID(
 			gtscontext.SetBarebones(ctx),
-			parentID,
+			next.InReplyToID,
 		)
 		if err != nil {
-			return false, gtserror.Newf("error getting status parent %s: %w", parentID, err)
+			return false, gtserror.Newf("error getting status parent %s: %w", next.InReplyToID, err)
 		}
 	}
 
-	if next != status && !oneAuthor && !included && !converstn {
+	if next != status && !oneAuthor && !visible {
 		log.Trace(ctx, "ignoring visible reply in conversation irrelevant to owner")
 		return false, nil
 	}
@@ -193,17 +198,25 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 	return true, nil
 }
 
-func (f *Filter) isVisibleConversation(ctx context.Context, owner *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+func (f *Filter) isVisibleConversation(
+	ctx context.Context,
+	owner *gtsmodel.Account,
+	status *gtsmodel.Status,
+) (
+	bool, // explicitly IS visible
+	bool, // explicitly NOT visible
+	error, // err
+) {
 	// Check if status is visible to the timeline owner.
 	visible, err := f.StatusVisible(ctx, owner, status)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
 	if !visible {
-		// Invisible to
-		// timeline owner.
-		return false, nil
+		// Explicitly NOT visible
+		// to the timeline owner.
+		return false, true, nil
 	}
 
 	if status.Visibility == gtsmodel.VisibilityUnlocked ||
@@ -212,37 +225,50 @@ func (f *Filter) isVisibleConversation(ctx context.Context, owner *gtsmodel.Acco
 		// direct / follow-only / mutual-only visibility statuses
 		// as the above visibility check already handles this.
 
-		// Check if owner follows the status author.
-		followAuthor, err := f.state.DB.IsFollowing(ctx,
+		// Check owner follows the status author.
+		follow, err := f.state.DB.IsFollowing(ctx,
 			owner.ID,
 			status.AccountID,
 		)
 		if err != nil {
-			return false, gtserror.Newf("error checking follow %s->%s: %w", owner.ID, status.AccountID, err)
+			return false, false, gtserror.Newf("error checking follow %s->%s: %w", owner.ID, status.AccountID, err)
 		}
 
-		if !followAuthor {
-			// Not a visible status
-			// in conversation thread.
-			return false, nil
+		if !follow {
+			// Not explicitly visible
+			// status to timeline owner.
+			return false, false, nil
 		}
 	}
 
+	var follow bool
+
 	for _, mention := range status.Mentions {
-		// Check if timeline owner follows target.
-		follow, err := f.state.DB.IsFollowing(ctx,
+		// Check block between timeline owner and mention.
+		block, err := f.state.DB.IsEitherBlocked(ctx,
 			owner.ID,
 			mention.TargetAccountID,
 		)
 		if err != nil {
-			return false, gtserror.Newf("error checking mention follow %s->%s: %w", owner.ID, mention.TargetAccountID, err)
+			return false, false, gtserror.Newf("error checking mention block %s<->%s: %w", owner.ID, mention.TargetAccountID, err)
 		}
 
-		if follow {
-			// Confirmed conversation.
-			return true, nil
+		if block {
+			// Invisible conversation.
+			return false, true, nil
+		}
+
+		if !follow {
+			// See if tl owner follows any of mentions.
+			follow, err = f.state.DB.IsFollowing(ctx,
+				owner.ID,
+				mention.TargetAccountID,
+			)
+			if err != nil {
+				return false, false, gtserror.Newf("error checking mention follow %s->%s: %w", owner.ID, mention.TargetAccountID, err)
+			}
 		}
 	}
 
-	return false, nil
+	return follow, false, nil
 }
