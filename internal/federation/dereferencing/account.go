@@ -659,25 +659,10 @@ func (d *Dereferencer) enrichAccount(
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
 
-	// Derive remote creation time of this account
-	// from the published property if available.
-	//
-	// This allows us to set CreatedAt properly for
-	// a remote account, rather than assuming it was
-	// created at the moment we first saw it.
-	//
-	// DON'T set CreatedAt on the latestAcc outside
-	// of the subsequent IsNew() check, since that
-	// uses CreatedAt to check if we already had an
-	// account in our database.
-	published := ap.GetPublished(apubAcc)
-
 	if account.IsNew() {
-		// Derive published/created time from
+		// Prefer published/created time from
 		// apubAcc, fall back to FetchedAt value.
-		if !published.IsZero() {
-			latestAcc.CreatedAt = published
-		} else {
+		if latestAcc.CreatedAt.IsZero() {
 			latestAcc.CreatedAt = latestAcc.FetchedAt
 		}
 
@@ -690,11 +675,9 @@ func (d *Dereferencer) enrichAccount(
 			return nil, nil, gtserror.Newf("error putting in database: %w", err)
 		}
 	} else {
-		// Derive published time from apubAcc,
+		// Prefer published time from apubAcc,
 		// fall back to previous stored value.
-		if !published.IsZero() {
-			latestAcc.CreatedAt = published
-		} else {
+		if latestAcc.CreatedAt.IsZero() {
 			latestAcc.CreatedAt = account.CreatedAt
 		}
 
