@@ -296,7 +296,7 @@ func (d *Dereferencer) enrichStatusSafely(
 	)
 
 	if code := gtserror.StatusCode(err); code >= 400 {
-		err = fmt.Errorf("status enrichment failed with status code %d: %w", code, err)
+		err = fmt.Errorf("status enrichment failed: %w", err)
 		log.Info(ctx, err)
 
 		if isNew {
@@ -377,7 +377,7 @@ func (d *Dereferencer) enrichStatus(
 		// Dereference latest version of the status.
 		b, err := tsport.Dereference(ctx, uri)
 		if err != nil {
-			err := gtserror.Newf("error deferencing %s: %w", uri, err)
+			err := gtserror.Newf("error dereferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 

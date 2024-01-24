@@ -397,7 +397,7 @@ func (d *Dereferencer) enrichAccountSafely(
 	)
 
 	if code := gtserror.StatusCode(err); code >= 400 {
-		err = fmt.Errorf("account enrichment failed with status code %d: %w", code, err)
+		err = fmt.Errorf("account enrichment failed: %w", err)
 		log.Info(ctx, err)
 
 		if account.IsNew() {
