@@ -21,6 +21,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -30,36 +31,98 @@ type Fileserver struct {
 	fileserver *fileserver.Module
 }
 
-func (f *Fileserver) Route(r *router.Router, m ...gin.HandlerFunc) {
-	fileserverGroup := r.AttachGroup("fileserver")
-
-	// Attach middlewares appropriate for this group.
-	fileserverGroup.Use(m...)
-	// If we're using local storage or proxying s3, we can set a
-	// long max-age + immutable on all file requests to reflect
-	// that we never host different files at the same URL (since
-	// ULIDs are generated per piece of media), so we can
-	// easily prevent clients having to fetch files repeatedly.
+// Attach cache middleware appropriate for file serving.
+func useFSCacheMiddleware(grp *gin.RouterGroup) {
+	// If we're using local storage or proxying s3 (ie., serving
+	// from here) we can set a long max-age + immutable on file
+	// requests to reflect that we never host different files at
+	// the same URL (since ULIDs are generated per piece of media),
+	// so we can prevent clients having to fetch files repeatedly.
 	//
-	// If we *are* using non-proxying s3, however, the max age
-	// must be set dynamically within the request handler,
-	// based on how long the signed URL has left to live before
-	// it expires. This ensures that clients won't cache expired
-	// links. This is done within fileserver/servefile.go, so we
-	// should not set the middleware here in that case.
+	// If we *are* using non-proxying s3, however (ie., not serving
+	// from here) the max age must be set dynamically within the
+	// request handler, based on how long the signed URL has left
+	// to live before it expires. This ensures that clients won't
+	// cache expired links. This is done within fileserver/servefile.go
+	// so we should not set the middleware here in that case.
 	//
 	// See:
 	//
 	// - https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#avoiding_revalidation
 	// - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#immutable
-	if config.GetStorageBackend() == "local" || config.GetStorageS3Proxy() {
-		fileserverGroup.Use(middleware.CacheControl(middleware.CacheControlConfig{
-			Directives: []string{"private", "max-age=604800", "immutable"},
-			Vary:       []string{"Range"}, // Cache partial ranges separately.
-		}))
+	servingFromHere := config.GetStorageBackend() == "local" || config.GetStorageS3Proxy()
+	if !servingFromHere {
+		return
 	}
 
-	f.fileserver.Route(fileserverGroup.Handle)
+	grp.Use(middleware.CacheControl(middleware.CacheControlConfig{
+		Directives: []string{"private", "max-age=604800", "immutable"},
+		Vary:       []string{"Range"}, // Cache partial ranges separately.
+	}))
+}
+
+// Route the "main" fileserver group
+// that handles everything except emojis.
+func (f *Fileserver) Route(
+	r *router.Router,
+	m ...gin.HandlerFunc,
+) {
+	const fsGroupPath = "fileserver" +
+		"/:" + fileserver.AccountIDKey +
+		"/:" + fileserver.MediaTypeKey
+	fsGroup := r.AttachGroup(fsGroupPath)
+
+	// Attach provided +
+	// cache middlewares.
+	fsGroup.Use(m...)
+	useFSCacheMiddleware(fsGroup)
+
+	f.fileserver.Route(fsGroup.Handle)
+}
+
+// Route the "emojis" fileserver
+// group to handle emojis specifically.
+//
+// instanceAccount ID is required because
+// that is the ID under which all emoji
+// files are stored, and from which all
+// emoji file requests are therefore served.
+func (f *Fileserver) RouteEmojis(
+	r *router.Router,
+	instanceAcctID string,
+	m ...gin.HandlerFunc,
+) {
+	var fsEmojiGroupPath = "fileserver" +
+		"/" + instanceAcctID +
+		"/" + string(media.TypeEmoji)
+	fsEmojiGroup := r.AttachGroup(fsEmojiGroupPath)
+
+	// Inject the instance account and emoji media
+	// type params into the gin context manually,
+	// since we know we're only going to be serving
+	// emojis (stored under the instance account ID)
+	// from this group. This allows us to use the
+	// same handler functions for both the "main"
+	// fileserver handler and the emojis handler.
+	fsEmojiGroup.Use(func(c *gin.Context) {
+		c.Params = append(c.Params, []gin.Param{
+			{
+				Key:   fileserver.AccountIDKey,
+				Value: instanceAcctID,
+			},
+			{
+				Key:   fileserver.MediaTypeKey,
+				Value: string(media.TypeEmoji),
+			},
+		}...)
+	})
+
+	// Attach provided +
+	// cache middlewares.
+	fsEmojiGroup.Use(m...)
+	useFSCacheMiddleware(fsEmojiGroup)
+
+	f.fileserver.Route(fsEmojiGroup.Handle)
 }
 
 func NewFileserver(p *processing.Processor) *Fileserver {
