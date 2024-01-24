@@ -119,13 +119,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 
 		// Fetch parent status by current's reply URI, this handles
 		// case of existing (updating if necessary) or a new status.
-		parent, update, _, err := d.getStatusByURI(ctx, username, uri)
-
-		if err == nil && update == nil {
-			// A parent status already existed
-			// and was up-to-date, return here.
-			return nil
-		}
+		parent, _, _, err := d.getStatusByURI(ctx, username, uri)
 
 		// Check for a returned HTTP code via error.
 		switch code := gtserror.StatusCode(err); {
@@ -170,7 +164,6 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 			current.InReplyToAccount = parent.Account
 			current.InReplyToURI = parent.URI
 			current.InReplyToID = parent.ID
-			current.InReplyTo = parent
 			if err := d.state.DB.UpdateStatus(ctx,
 				current,
 				"in_reply_to_id",
@@ -182,6 +175,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		}
 
 		// Set next parent to use.
+		current.InReplyTo = parent
 		current = current.InReplyTo
 	}
 
