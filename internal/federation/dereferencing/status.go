@@ -314,8 +314,8 @@ func (d *Dereferencer) enrichStatusSafely(
 		// but don't return early. We can still
 		// return the model we had stored already.
 		status.FetchedAt = time.Now()
-		if updateErr := d.state.DB.UpdateStatus(ctx, status, "fetched_at"); updateErr != nil {
-			log.Errorf(ctx, "error updating status fetched_at: %v", updateErr)
+		if err := d.state.DB.UpdateStatus(ctx, status, "fetched_at"); err != nil {
+			log.Errorf(ctx, "error updating status fetched_at: %v", err)
 		}
 	}
 

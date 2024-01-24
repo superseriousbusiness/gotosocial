@@ -415,8 +415,8 @@ func (d *Dereferencer) enrichAccountSafely(
 		// but don't return early. We can still
 		// return the model we had stored already.
 		account.FetchedAt = time.Now()
-		if updateErr := d.state.DB.UpdateAccount(ctx, account, "fetched_at"); updateErr != nil {
-			log.Errorf(ctx, "error updating account fetched_at: %v", updateErr)
+		if err := d.state.DB.UpdateAccount(ctx, account, "fetched_at"); err != nil {
+			log.Errorf(ctx, "error updating account fetched_at: %v", err)
 		}
 	}
 
