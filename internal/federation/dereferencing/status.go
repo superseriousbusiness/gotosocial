@@ -41,7 +41,7 @@ import (
 // statusUpToDate returns whether the given status model is both updateable
 // (i.e. remote status) and whether it needs an update based on `fetched_at`.
 func statusUpToDate(status *gtsmodel.Status, force bool) bool {
-	if *status.Local {
+	if status.Local != nil && *status.Local {
 		// Can't update local statuses.
 		return true
 	}
