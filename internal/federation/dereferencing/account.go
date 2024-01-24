@@ -1065,11 +1065,17 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 		// we still know it was *meant* to be pinned.
 		statusURIs = append(statusURIs, statusURI)
 
+		// Search for status by URI. Note this may return an existing model
+		// we have stored with an error from attempted update, so check both.
 		status, _, _, err := d.getStatusByURI(ctx, requestUser, statusURI)
 		if err != nil {
-			// We couldn't get the status, bummer. Just log + move on, we can try later.
 			log.Errorf(ctx, "error getting status from featured collection %s: %v", statusURI, err)
-			continue
+
+			if status == nil {
+				// This is only unactionable
+				// if no status was returned.
+				continue
+			}
 		}
 
 		// If the status was already pinned, we don't need to do anything.

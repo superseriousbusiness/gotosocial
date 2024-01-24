@@ -19,7 +19,6 @@ package dereferencing
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/url"
 
@@ -27,11 +26,9 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // maxIter defines how many iterations of descendants or
@@ -120,31 +117,9 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// Add this status's parent URI to map of deref'd.
 		derefdStatuses[current.InReplyToURI] = struct{}{}
 
-		if current.InReplyToID != "" && current.InReplyTo == nil {
-			// Look for an existing parent status stored under current.in_reply_to_uri.
-			current.InReplyTo, err = d.state.DB.GetStatusByURI(ctx, current.InReplyToURI)
-			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return gtserror.Newf("db error getting status %s: %w", current.InReplyToURI, err)
-			}
-		}
-
-		if current.InReplyTo == nil {
-			// Create bare-bones model to pass
-			// into enrichStatusSafely(), which it
-			// will further populate and insert.
-			current.InReplyTo = new(gtsmodel.Status)
-			current.InReplyTo.Local = util.Ptr(false)
-			current.InReplyTo.URI = current.InReplyToURI
-		}
-
-		// Enrich the parent status, handling case of new
-		// status, existing and updating stale if necessary.
-		parent, update, _, err := d.enrichStatusSafely(ctx,
-			username,
-			uri,
-			current.InReplyTo,
-			nil,
-		)
+		// Fetch parent status by current's reply URI, this handles
+		// case of existing (updating if necessary) or a new status.
+		parent, update, _, err := d.getStatusByURI(ctx, username, uri)
 
 		if err == nil && update == nil {
 			// A parent status already existed
@@ -158,6 +133,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// Status codes 404 and 410 incicate the status does not exist anymore.
 		// Gone (410) is the preferred for deletion, but we accept NotFound too.
 		case code == http.StatusNotFound || code == http.StatusGone:
+			l.Trace("status orphaned")
 			current.InReplyToID = ""
 			current.InReplyToURI = ""
 			current.InReplyToAccountID = ""
@@ -176,7 +152,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// An error was returned for a status during
 		// an attempted NEW dereference, return here.
 		case err != nil && current.InReplyToID == "":
-			return gtserror.Newf("error dereferencing new %s: %w", uri, err)
+			return gtserror.Newf("error dereferencing new %s: %w", current.InReplyToURI, err)
 
 		// An error was returned for an existing parent,
 		// we simply treat this as a temporary situation.
@@ -189,6 +165,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		//
 		// Update the current's inReplyTo fields to parent.
 		case current.InReplyToID != parent.ID:
+			l.Tracef("parent changed %s => %s", current.InReplyToID, parent.ID)
 			current.InReplyToAccountID = parent.AccountID
 			current.InReplyToAccount = parent.Account
 			current.InReplyToURI = parent.URI
@@ -321,9 +298,7 @@ stackLoop:
 				//   - any http type error for a new status returns unretrievable
 				_, statusable, _, err := d.getStatusByURI(ctx, username, itemIRI)
 				if err != nil {
-					if !gtserror.IsUnretrievable(err) {
-						l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
-					}
+					l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
 					continue itemLoop
 				}
 
