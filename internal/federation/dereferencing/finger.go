@@ -20,7 +20,6 @@ package dereferencing
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/url"
 	"strings"
 
@@ -112,8 +111,8 @@ func (d *Dereferencer) fingerRemoteAccount(
 
 		if uri.Scheme != "http" && uri.Scheme != "https" {
 			log.Warnf(ctx,
-				"invalid href for ActivityPub self link %s for %s: %v",
-				link.Href, target, errors.New("schema must be http or https"),
+				"invalid href for ActivityPub self link %s for %s: schema must be http or https",
+				link.Href, target,
 			)
 
 			// Can't handle this
