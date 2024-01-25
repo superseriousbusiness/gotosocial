@@ -84,33 +84,31 @@ GoToSocial by default creates signed URL's which means we don't need to change a
 
 1. Create a [new user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) with programatic API access
 2. Add an inline policy on this user, replacing `<bucketname>` with your bucket name
-
-```json
-{
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": "s3:ListAllMyBuckets",
-            "Resource": "arn:aws:s3:::*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "s3:*",
-            "Resource": [
-                "arn:aws:s3:::<bucket_name>",
-                "arn:aws:s3:::<bucket_name>/*"
-            ]
-        }
-    ]
-}
-```
+    ```json
+    {
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": "s3:ListAllMyBuckets",
+                "Resource": "arn:aws:s3:::*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": "s3:*",
+                "Resource": [
+                    "arn:aws:s3:::<bucket_name>",
+                    "arn:aws:s3:::<bucket_name>/*"
+                ]
+            }
+        ]
+    }
+    ```
 3. Create an [access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html) for this user
 4. Provide the values in config above
-  
-  * `storage-s3-endpoint` -> S3 API endpoint for your region, for example: `s3.ap-southeast-1.amazonaws.com`
-  * `storage-s3-access-key` -> Access key ID you obtained for the user created above
-  * `storage-s3-secret-key` -> Secret key you obtained for the user created above
-  * `storage-s3-bucket` -> The `<bucketname>` that you created just now
+    * `storage-s3-endpoint` -> S3 API endpoint for your region, for example: `s3.ap-southeast-1.amazonaws.com`
+    * `storage-s3-access-key` -> Access key ID you obtained for the user created above
+    * `storage-s3-secret-key` -> Secret key you obtained for the user created above
+    * `storage-s3-bucket` -> The `<bucketname>` that you created just now
 
 ## Storage migration
 
