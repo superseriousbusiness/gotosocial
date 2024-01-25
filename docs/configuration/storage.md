@@ -83,7 +83,7 @@ GoToSocial by default creates signed URL's which means we don't need to change a
 ### IAM Configuration
 
 1. Create a [new user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) with programatic API access
-2. Add an inline policy on this user, replacing <bucketname> with your bucket name
+2. Add an inline policy on this user, replacing `<bucketname>` with your bucket name
 
 ```json
 {
@@ -110,7 +110,7 @@ GoToSocial by default creates signed URL's which means we don't need to change a
   * `storage-s3-endpoint` -> S3 API endpoint for your region, for example: `s3.ap-southeast-1.amazonaws.com`
   * `storage-s3-access-key` -> Access key ID you obtained for the user created above
   * `storage-s3-secret-key` -> Secret key you obtained for the user created above
-  * `storage-s3-bucket` -> The <bucketname> that you created just now
+  * `storage-s3-bucket` -> The `<bucketname>` that you created just now
 
 ## Storage migration
 
