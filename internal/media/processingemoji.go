@@ -158,7 +158,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	var maxSize bytesize.Size
 
-	if p.emoji.Domain == "" {
+	if p.emoji.IsLocal() {
 		// this is a local emoji upload
 		maxSize = config.GetMediaEmojiLocalMaxSize()
 	} else {

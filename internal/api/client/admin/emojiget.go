@@ -89,7 +89,7 @@ func (m *Module) EmojiGETHandler(c *gin.Context) {
 		return
 	}
 
-	emoji, errWithCode := m.processor.Admin().EmojiGet(c.Request.Context(), authed.Account, authed.User, emojiID)
+	emoji, errWithCode := m.processor.Admin().EmojiGet(c.Request.Context(), authed.Account, emojiID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

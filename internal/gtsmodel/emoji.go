@@ -44,3 +44,10 @@ type Emoji struct {
 	CategoryID             string         `bun:"type:CHAR(26),nullzero"`                                      // ID of the category this emoji belongs to.
 	Cached                 *bool          `bun:",nullzero,notnull,default:false"`
 }
+
+// IsLocal returns true if the emoji is
+// local to this instance., ie., it did
+// not originate from a remote instance.
+func (e *Emoji) IsLocal() bool {
+	return e.Domain == ""
+}
