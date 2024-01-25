@@ -100,7 +100,7 @@ Though most apps that implement the Mastodon API should work, GoToSocial works r
 
 * [Tusky](https://tusky.app/) for Android
 * [Semaphore](https://semaphore.social/) in the browser
-* [Feditext](https://fedi.software/@Feditext) (beta) on iOS, iPadOS and macOS
+* [Feditext](https://github.com/feditext/feditext) (beta) on iOS, iPadOS and macOS
 
 If you've used Mastodon with any of these apps before, you'll find using GoToSocial a breeze.
 
