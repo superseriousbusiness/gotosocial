@@ -69,22 +69,21 @@ storage-s3-secret-key: ""
 storage-s3-bucket: ""
 ```
 
-### AWS S3 Bucket Configuration
+## AWS S3 Configuration
 
-#### Bucket Created
-GoToSocial by default creates signed URL's which means we dont need to change anything major on the policies of the bucket.
-Here are the steps to follow for bucket creation
+### Creating a bucket
+
+GoToSocial by default creates signed URL's which means we don't need to change anything major on the policies of the bucket.
 
 1. Login to AWS -> select S3 as service.
 2. click Create Bucket
 3. Provide a unique name and avoid adding "." in the name
 4. Do not change the public access settings (Let them be on "block public access" mode)
 
-#### AWS ACCESS KEY Configuration
+### IAM Configuration
 
-1. In AWS Console -> IAM (under Security, Identity, & Compliance)
-2. Add a user with programatic api's access
-3. We recommend setting up below listed policy, replace <bucketname> with your buckets name
+1. Create a [new user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) with programatic API access
+2. Add an inline policy on this user, replacing <bucketname> with your bucket name
 
 ```json
 {
@@ -105,42 +104,55 @@ Here are the steps to follow for bucket creation
     ]
 }
 ```
-
+3. Create an [access key](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html) for this user
 4. Provide the values in config above
   
-  * storage-s3-endpoint -> should be your bucket location say `s3.ap-southeast-1.amazonaws.com`
-  * storage-s3-access-key -> Access key you obtained for the user created above
-  * storage-s3-secret-key -> Secret key you obtained for the user created above
-  * storage-s3-bucket -> Keep this as the <bucketname> that you created just now.
+  * `storage-s3-endpoint` -> S3 API endpoint for your region, for example: `s3.ap-southeast-1.amazonaws.com`
+  * `storage-s3-access-key` -> Access key ID you obtained for the user created above
+  * `storage-s3-secret-key` -> Secret key you obtained for the user created above
+  * `storage-s3-bucket` -> The <bucketname> that you created just now
 
+## Storage migration
 
+Migration between backends is freely possible. To do so, you only have to move the directories (and their contents) between the different implementations.
 
-#### Migrating data from local storage to AWS s3 bucket
+When moving from one backend to another, the database will still contain references to headers and avatars from remote accounts pointing to the old storage backend which may result in them not loading correctly in clients. This will resolve itself over time, but you can force GoToSocial to refetch the avatar and header the next time you interact with a remote account by running the following SQL query on your database:
 
-This step is only needed if you have a running instance. Ignore this if you are setting up a fresh instance. 
-We have provided [s3cmd](https://github.com/s3tools/s3cmd) command for the copy operation.
-
-```bash
-s3cmd sync --add-header="Cache-Control:public, max-age=315576000, immutable" ./ s3://<bucket name>
+```sql
+UPDATE accounts SET (avatar_media_attachment_id, avatar_remote_url, header_media_attachment_id, header_remote_url, fetched_at) = (null, null, null, null, null) WHERE domain IS NOT null;
 ```
 
+### From local to AWS S3
 
-### Migrating between backends
+There are multiple tools available that can help you copy the data from your filesystem to an AWS S3 bucket.
 
-Currently, migration between backends is freely possible. To do so, you only
-have to move the directories (and their contents) between the different implementations.
+#### AWS CLI
 
-One way to do so, is by utilizing the [MinIO
-Client](https://docs.min.io/docs/minio-client-complete-guide.html). The
-migration process might look something like this:
+With the official [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide)
 
-```bash
-# 1. Change the GoToSocial configuration to the new backend (and restart)
-# 2. Register the S3 Backend with the MinIO client
+```sh
+aws s3 sync <storage-local-base-path> s3://<bucket name>
+```
+
+#### s3cmd
+
+With [s3cmd](https://github.com/s3tools/s3cmd), you can use the following command:
+
+```sh
+s3cmd sync --add-header="Cache-Control:public, max-age=315576000, immutable" <storage-local-base-path> s3://<bucket name>
+```
+
+### From local to S3-compatible
+
+This works for any S3-compatible store, including AWS S3 itself.
+
+#### Minio CLI
+
+You can use the [MinIO Client](https://docs.min.io/docs/minio-client-complete-guide.html). To perform the migration, you need to register your S3 compatible backend with the client and then ask it to copy the files:
+
+```sh
 mc alias set scw https://s3.nl-ams.scw.cloud
-# 3. Mirror the folder structure to the remote bucket
-mc mirror /gotosocial/storage/ scw/example-bucket/
-# 4. Aaaand we're done!
+mc mirror <storage-local-base-path> scw/example-bucket/
 ```
 
 If you want to migrate back, switch around the arguments of the `mc mirror` command.
