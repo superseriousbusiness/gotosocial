@@ -557,15 +557,17 @@ func (p *Processor) emojiUpdateModify(
 	// Only update category
 	// if it's changed.
 	var (
+		newCategory      *gtsmodel.EmojiCategory
 		newCategoryID    string
 		updateCategoryID bool
 	)
 
 	if category != nil {
-		c := *category
-		if c != "" {
+		catName := *category
+		if catName != "" {
 			// Set new category.
-			newCategory, err := p.getOrCreateEmojiCategory(ctx, c)
+			var err error
+			newCategory, err = p.getOrCreateEmojiCategory(ctx, catName)
 			if err != nil {
 				err := gtserror.Newf("error getting or creating category: %w", err)
 				return nil, gtserror.NewErrorInternalError(err)
@@ -588,9 +590,10 @@ func (p *Processor) emojiUpdateModify(
 	}
 
 	if updateCategoryID && !updateImage {
-		// Only updating categoryID; we only
+		// Only updating category; we only
 		// need to do a db update for this.
 		emoji.CategoryID = newCategoryID
+		emoji.Category = newCategory
 		if err := p.state.DB.UpdateEmoji(ctx, emoji, "category_id"); err != nil {
 			err := gtserror.Newf("db error updating emoji %s: %w", emoji.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
