@@ -15,20 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package filter
+package v1
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"net/http"
 )
 
 const (
+	// IDKey is for filter UUIDs
+	IDKey = "id"
 	// BasePath is the base path for serving the filters API, minus the 'api' prefix
 	BasePath = "/v1/filters"
+	// BasePathWithID is the base path with the ID key in it, for operations on an existing filter.
+	BasePathWithID = BasePath + "/:" + IDKey
 )
 
+// Module implements APIs for client-side aka "v1" filtering.
 type Module struct {
 	processor *processing.Processor
 }
@@ -41,4 +45,8 @@ func New(processor *processing.Processor) *Module {
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, BasePath, m.FiltersGETHandler)
+	attachHandler(http.MethodPost, BasePath, m.FilterPOSTHandler)
+	attachHandler(http.MethodGet, BasePathWithID, m.FilterGETHandler)
+	attachHandler(http.MethodPut, BasePathWithID, m.FilterPUTHandler)
+	attachHandler(http.MethodDelete, BasePathWithID, m.FilterDELETEHandler)
 }

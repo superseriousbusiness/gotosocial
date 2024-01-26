@@ -15,28 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package filter
+package v1
 
 import (
-	"net/http"
+	"context"
+	"fmt"
 
-	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// FiltersGETHandler returns a list of filters set by/for the authed account
-func (m *Module) FiltersGETHandler(c *gin.Context) {
-	if _, err := oauth.Authed(c, true, true, true, true); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
+// apiFilter is a shortcut to return the API v1 filter version of the given
+// filter keyword, or return an appropriate error if conversion fails.
+func (p *Processor) apiFilter(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) (*apimodel.FilterV1, gtserror.WithCode) {
+	apiFilter, err := p.converter.FilterKeywordToAPIFilterV1(ctx, filterKeyword)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting filter keyword to API v1 filter: %w", err))
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
+	return apiFilter, nil
 }

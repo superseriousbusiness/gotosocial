@@ -201,6 +201,9 @@ type CacheConfiguration struct {
 	BoostOfIDsMemRatio       float64       `name:"boost-of-ids-mem-ratio"`
 	EmojiMemRatio            float64       `name:"emoji-mem-ratio"`
 	EmojiCategoryMemRatio    float64       `name:"emoji-category-mem-ratio"`
+	FilterMemRatio           float64       `name:"filter-mem-ratio"`
+	FilterKeywordMemRatio    float64       `name:"filter-keyword-mem-ratio"`
+	FilterStatusMemRatio     float64       `name:"filter-status-mem-ratio"`
 	FollowMemRatio           float64       `name:"follow-mem-ratio"`
 	FollowIDsMemRatio        float64       `name:"follow-ids-mem-ratio"`
 	FollowRequestMemRatio    float64       `name:"follow-request-mem-ratio"`

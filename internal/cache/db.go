@@ -67,6 +67,15 @@ type GTSCaches struct {
 	// EmojiCategory provides access to the gtsmodel EmojiCategory database cache.
 	EmojiCategory structr.Cache[*gtsmodel.EmojiCategory]
 
+	// Filter provides access to the gtsmodel Filter database cache.
+	Filter structr.Cache[*gtsmodel.Filter]
+
+	// FilterKeyword provides access to the gtsmodel FilterKeyword database cache.
+	FilterKeyword structr.Cache[*gtsmodel.FilterKeyword]
+
+	// FilterStatus provides access to the gtsmodel FilterStatus database cache.
+	FilterStatus structr.Cache[*gtsmodel.FilterStatus]
+
 	// Follow provides access to the gtsmodel Follow database cache.
 	Follow structr.Cache[*gtsmodel.Follow]
 
@@ -406,6 +415,105 @@ func (c *Caches) initEmojiCategory() {
 		IgnoreErr:  ignoreErrors,
 		CopyValue:  copyF,
 		Invalidate: c.OnInvalidateEmojiCategory,
+	})
+}
+
+func (c *Caches) initFilter() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofFilter(), // model in-mem size.
+		config.GetCacheFilterMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(filter1 *gtsmodel.Filter) *gtsmodel.Filter {
+		filter2 := new(gtsmodel.Filter)
+		*filter2 = *filter1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/filter.go.
+		filter2.Keywords = nil
+		filter2.Statuses = nil
+
+		return filter2
+	}
+
+	c.GTS.Filter.Init(structr.Config[*gtsmodel.Filter]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "AccountID", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		CopyValue: copyF,
+	})
+}
+
+func (c *Caches) initFilterKeyword() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofFilterKeyword(), // model in-mem size.
+		config.GetCacheFilterKeywordMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(filterKeyword1 *gtsmodel.FilterKeyword) *gtsmodel.FilterKeyword {
+		filterKeyword2 := new(gtsmodel.FilterKeyword)
+		*filterKeyword2 = *filterKeyword1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/filter.go.
+		filterKeyword2.Filter = nil
+
+		return filterKeyword2
+	}
+
+	c.GTS.FilterKeyword.Init(structr.Config[*gtsmodel.FilterKeyword]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "AccountID", Multiple: true},
+			{Fields: "FilterID", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		CopyValue: copyF,
+	})
+}
+
+func (c *Caches) initFilterStatus() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofFilterStatus(), // model in-mem size.
+		config.GetCacheFilterStatusMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(filterStatus1 *gtsmodel.FilterStatus) *gtsmodel.FilterStatus {
+		filterStatus2 := new(gtsmodel.FilterStatus)
+		*filterStatus2 = *filterStatus1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/filter.go.
+		filterStatus2.Filter = nil
+
+		return filterStatus2
+	}
+
+	c.GTS.FilterStatus.Init(structr.Config[*gtsmodel.FilterStatus]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "AccountID", Multiple: true},
+			{Fields: "FilterID", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		CopyValue: copyF,
 	})
 }
 

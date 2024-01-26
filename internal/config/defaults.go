@@ -157,6 +157,7 @@ var Defaults = Configuration{
 		// when TODO items in the size.go source
 		// file have been addressed, these should
 		// be able to make some more sense :D
+		// TODO: (Vyr) filter cache mem ratios. what is a mem ratio anyway
 		AccountMemRatio:          5,
 		AccountNoteMemRatio:      1,
 		ApplicationMemRatio:      0.1,
@@ -165,6 +166,9 @@ var Defaults = Configuration{
 		BoostOfIDsMemRatio:       3,
 		EmojiMemRatio:            3,
 		EmojiCategoryMemRatio:    0.1,
+		FilterMemRatio:           1,
+		FilterKeywordMemRatio:    1,
+		FilterStatusMemRatio:     1,
 		FollowMemRatio:           2,
 		FollowIDsMemRatio:        4,
 		FollowRequestMemRatio:    2,

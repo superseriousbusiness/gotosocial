@@ -1209,6 +1209,67 @@ definitions:
         type: object
         x-go-name: Field
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    filterContext:
+        description: v1 and v2 filter APIs use the same set of contexts.
+        title: FilterContext represents the context in which to apply a filter.
+        type: string
+        x-go-name: FilterContext
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    filterV1:
+        description: |-
+            Note that v1 filters are mapped to v2 filters and v2 filter keywords internally.
+            If whole_word is true, client app should do:
+            Define ‘word constituent character’ for your app. In the official implementation, it’s [A-Za-z0-9_] in JavaScript, and [[:word:]] in Ruby.
+            Ruby uses the POSIX character class (Letter | Mark | Decimal_Number | Connector_Punctuation).
+            If the phrase starts with a word character, and if the previous character before matched range is a word character, its matched range should be treated to not match.
+            If the phrase ends with a word character, and if the next character after matched range is a word character, its matched range should be treated to not match.
+            Please check app/javascript/mastodon/selectors/index.js and app/lib/feed_manager.rb in the Mastodon source code for more details.
+        properties:
+            context:
+                description: The contexts in which the filter should be applied.
+                example:
+                    - home
+                    - public
+                items:
+                    $ref: '#/definitions/filterContext'
+                minLength: 1
+                type: array
+                uniqueItems: true
+                x-go-name: Context
+            expires_at:
+                description: When the filter should no longer be applied. Not present if the filter does not expire.
+                example: "2024-02-01T02:57:49Z"
+                type: string
+                x-go-name: ExpiresAt
+            id:
+                description: The ID of the filter in the database.
+                type: string
+                x-go-name: ID
+            irreversible:
+                description: Should matching entities be removed from the user's timelines/views, instead of hidden?
+                example: false
+                type: boolean
+                x-go-name: Irreversible
+            phrase:
+                description: The text to be filtered.
+                example: fnord
+                type: string
+                x-go-name: Phrase
+            whole_word:
+                description: Should the filter consider word boundaries?
+                example: true
+                type: boolean
+                x-go-name: WholeWord
+        required:
+            - id
+            - phrase
+            - context
+            - whole_word
+            - irreversible
+        title: FilterV1 represents a user-defined filter for determining which statuses should not be shown to the user.
+        type: object
+        x-go-name: FilterV1
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     headerFilterCreateRequest:
         properties:
             header:
@@ -5570,6 +5631,246 @@ paths:
             summary: Get an array of all hashtags that you currently have featured on your profile.
             tags:
                 - featured_tags
+    /api/v1/filters:
+        get:
+            operationId: filtersV1Get
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filters.
+                    schema:
+                        $ref: '#/definitions/filterV1'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Get all filters for the authenticated account.
+            tags:
+                - filters
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: filterV1Post
+            parameters:
+                - description: The text to be filtered.
+                  example: fnord
+                  in: formData
+                  maxLength: 40
+                  name: phrase
+                  required: true
+                  type: string
+                - description: The contexts in which the filter should be applied.
+                  enum:
+                    - home
+                    - notifications
+                    - public
+                    - thread
+                    - account
+                  example:
+                    - home
+                    - public
+                  in: formData
+                  items:
+                    $ref: '#/definitions/filterContext'
+                  minLength: 1
+                  name: context
+                  required: true
+                  type: array
+                  uniqueItems: true
+                - description: Number of seconds from now that the filter should expire. If omitted, filter never expires.
+                  example: 86400
+                  in: formData
+                  name: expires_in
+                  type: number
+                - default: false
+                  description: Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
+                  example: false
+                  in: formData
+                  name: irreversible
+                  type: boolean
+                - default: false
+                  description: Should the filter consider word boundaries?
+                  example: true
+                  in: formData
+                  name: whole_word
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: New filter.
+                    schema:
+                        $ref: '#/definitions/filterV1'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Create a single filter.
+            tags:
+                - filters
+    /api/v1/filters/{id}:
+        delete:
+            operationId: filterV1Delete
+            parameters:
+                - description: ID of the list
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: filter deleted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:lists
+            summary: Delete a single filter with the given ID.
+            tags:
+                - filters
+        get:
+            operationId: filterV1Get
+            parameters:
+                - description: ID of the filter
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filter.
+                    schema:
+                        $ref: '#/definitions/filterV1'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Get a single filter with the given ID.
+            tags:
+                - filters
+        put:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: filterV1Put
+            parameters:
+                - description: ID of the filter.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: The text to be filtered.
+                  example: fnord
+                  in: formData
+                  maxLength: 40
+                  name: phrase
+                  required: true
+                  type: string
+                - description: The contexts in which the filter should be applied.
+                  enum:
+                    - home
+                    - notifications
+                    - public
+                    - thread
+                    - account
+                  example:
+                    - home
+                    - public
+                  in: formData
+                  items:
+                    $ref: '#/definitions/filterContext'
+                  minLength: 1
+                  name: context
+                  required: true
+                  type: array
+                  uniqueItems: true
+                - description: Number of seconds from now that the filter should expire. If omitted, filter never expires.
+                  example: 86400
+                  in: formData
+                  name: expires_in
+                  type: number
+                - default: false
+                  description: Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
+                  example: false
+                  in: formData
+                  name: irreversible
+                  type: boolean
+                - default: false
+                  description: Should the filter consider word boundaries?
+                  example: true
+                  in: formData
+                  name: whole_word
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Updated filter.
+                    schema:
+                        $ref: '#/definitions/filterV1'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Update a single filter with the given ID.
+            tags:
+                - filters
     /api/v1/follow_requests:
         get:
             description: |-
@@ -7971,6 +8272,7 @@ securityDefinitions:
             read:blocks: grant read access to blocks
             read:custom_emojis: grant read access to custom_emojis
             read:favourites: grant read access to favourites
+            read:filters: grant read access to filters
             read:follows: grant read access to follows
             read:lists: grant read access to lists
             read:media: grant read access to media
@@ -7983,6 +8285,7 @@ securityDefinitions:
             write: grants write access to everything
             write:accounts: grants write access to accounts
             write:blocks: grants write access to blocks
+            write:filters: grants write access to filters
             write:follows: grants write access to follows
             write:lists: grants write access to lists
             write:media: grants write access to media

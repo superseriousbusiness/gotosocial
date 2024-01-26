@@ -3263,6 +3263,95 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 	}
 }
 
+func NewTestFilters() map[string]*gtsmodel.Filter {
+	return map[string]*gtsmodel.Filter{
+		"local_account_1_filter_1": {
+			ID:            "01HN26VM6KZTW1ANNRVSBMA461",
+			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			UpdatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Title:         "fnord",
+			Action:        gtsmodel.FilterActionWarn,
+			ContextHome:   true,
+			ContextPublic: true,
+		},
+		"local_account_1_filter_2": {
+			ID:            "01HN277FSPQAWXZXK92QPPYF79",
+			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			UpdatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Title:         "metasyntactic variables",
+			Action:        gtsmodel.FilterActionWarn,
+			ContextHome:   true,
+			ContextPublic: true,
+		},
+		"local_account_2_filter_1": {
+			ID:            "01HNGFYJBED9FS0VWRVMY4TKXH",
+			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			UpdatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			AccountID:     "01F8MH1VYJAE00TVVGMM5JNJ8X",
+			Title:         "gamer words",
+			Action:        gtsmodel.FilterActionWarn,
+			ContextHome:   true,
+			ContextPublic: true,
+		},
+	}
+}
+
+func NewTestFilterKeywords() map[string]*gtsmodel.FilterKeyword {
+	return map[string]*gtsmodel.FilterKeyword{
+		"local_account_1_filter_1_keyword_1": {
+			FilterEntry: gtsmodel.FilterEntry{
+				ID:        "01HN272TAVWAXX72ZX4M8JZ0PS",
+				CreatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				UpdatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				AccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+				FilterID:  "01HN26VM6KZTW1ANNRVSBMA461",
+			},
+			Keyword:   "fnord",
+			WholeWord: true,
+		},
+		"local_account_1_filter_2_keyword_1": {
+			FilterEntry: gtsmodel.FilterEntry{
+				ID:        "01HN277Y11ENG4EC1ERMAC9FH4",
+				CreatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				UpdatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				AccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+				FilterID:  "01HN277FSPQAWXZXK92QPPYF79",
+			},
+			Keyword:   "foo",
+			WholeWord: true,
+		},
+		"local_account_1_filter_2_keyword_2": {
+			FilterEntry: gtsmodel.FilterEntry{
+				ID:        "01HN278494N88BA2FY4DZ5JTNS",
+				CreatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				UpdatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				AccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+				FilterID:  "01HN277FSPQAWXZXK92QPPYF79",
+			},
+			Keyword:   "bar",
+			WholeWord: true,
+		},
+		"local_account_2_filter_1_keyword_1": {
+			FilterEntry: gtsmodel.FilterEntry{
+				ID:        "01HNGG51HV2JT67XQ5MQ7RA1WE",
+				CreatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				UpdatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+				AccountID: "01F8MH1VYJAE00TVVGMM5JNJ8X",
+				FilterID:  "01HNGFYJBED9FS0VWRVMY4TKXH",
+			},
+			Keyword:   "Virtual Boy",
+			WholeWord: true,
+		},
+	}
+}
+
+func NewTestFilterStatuses() map[string]*gtsmodel.FilterStatus {
+	// FUTURE: (filters v2) test filter statuses
+	return map[string]*gtsmodel.FilterStatus{}
+}
+
 // GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.
 func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// convert the activity into json bytes

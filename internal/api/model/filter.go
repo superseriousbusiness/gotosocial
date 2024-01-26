@@ -17,29 +17,23 @@
 
 package model
 
-// Filter represents a user-defined filter for determining which statuses should not be shown to the user.
-// If whole_word is true , client app should do:
-// Define ‘word constituent character’ for your app. In the official implementation, it’s [A-Za-z0-9_] in JavaScript, and [[:word:]] in Ruby.
-// Ruby uses the POSIX character class (Letter | Mark | Decimal_Number | Connector_Punctuation).
-// If the phrase starts with a word character, and if the previous character before matched range is a word character, its matched range should be treated to not match.
-// If the phrase ends with a word character, and if the next character after matched range is a word character, its matched range should be treated to not match.
-// Please check app/javascript/mastodon/selectors/index.js and app/lib/feed_manager.rb in the Mastodon source code for more details.
-type Filter struct {
-	// The ID of the filter in the database.
-	ID string `json:"id"`
-	// The text to be filtered.
-	Phrase string `json:"text"`
-	// The contexts in which the filter should be applied.
-	// Array of String (Enumerable anyOf)
-	// 	home = home timeline and lists
-	// 	notifications = notifications timeline
-	// 	public = public timelines
-	// 	thread = expanded thread of a detailed status
-	Context []string `json:"context"`
-	// Should the filter consider word boundaries?
-	WholeWord bool `json:"whole_word"`
-	// When the filter should no longer be applied (ISO 8601 Datetime), or null if the filter does not expire
-	ExpiresAt string `json:"expires_at,omitempty"`
-	// Should matching entities in home and notifications be dropped by the server?
-	Irreversible bool `json:"irreversible"`
-}
+// FilterContext represents the context in which to apply a filter.
+// v1 and v2 filter APIs use the same set of contexts.
+//
+// swagger:model filterContext
+type FilterContext string
+
+const (
+	// FilterContextHome means this filter should be applied to the home timeline and lists.
+	FilterContextHome FilterContext = "home"
+	// FilterContextNotifications means this filter should be applied to the notifications timeline.
+	FilterContextNotifications FilterContext = "notifications"
+	// FilterContextPublic means this filter should be applied to public timelines.
+	FilterContextPublic FilterContext = "public"
+	// FilterContextThread means this filter should be applied to the expanded thread of a detailed status.
+	FilterContextThread FilterContext = "thread"
+	// FilterContextAccount means this filter should be applied when viewing a profile.
+	FilterContextAccount FilterContext = "account"
+
+	FilterContextNumValues = 5
+)
