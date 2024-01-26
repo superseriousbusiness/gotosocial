@@ -57,20 +57,22 @@ const (
 		Path parts / capture.
 	*/
 
-	userPathPrefix = `^/?` + users + `/(` + usernameRelaxed + `)`
-	userPath       = userPathPrefix + `$`
-	publicKeyPath  = userPathPrefix + `/` + publicKey + `$`
-	inboxPath      = userPathPrefix + `/` + inbox + `$`
-	outboxPath     = userPathPrefix + `/` + outbox + `$`
-	followersPath  = userPathPrefix + `/` + followers + `$`
-	followingPath  = userPathPrefix + `/` + following + `$`
-	likedPath      = userPathPrefix + `/` + liked + `$`
-	followPath     = userPathPrefix + `/` + follow + `/(` + ulid + `)$`
-	likePath       = userPathPrefix + `/` + liked + `/(` + ulid + `)$`
-	statusesPath   = userPathPrefix + `/` + statuses + `/(` + ulid + `)$`
-	blockPath      = userPathPrefix + `/` + blocks + `/(` + ulid + `)$`
-	reportPath     = `^/?` + reports + `/(` + ulid + `)$`
-	filePath       = `^/?(` + ulid + `)/([a-z]+)/([a-z]+)/(` + ulid + `)\.([a-z0-9]+)$`
+	userPathPrefix    = `^/?` + users + `/(` + usernameRelaxed + `)`
+	userPath          = userPathPrefix + `$`
+	userWebPathPrefix = `^/?` + `@(` + usernameRelaxed + `)`
+	userWebPath       = userWebPathPrefix + `$`
+	publicKeyPath     = userPathPrefix + `/` + publicKey + `$`
+	inboxPath         = userPathPrefix + `/` + inbox + `$`
+	outboxPath        = userPathPrefix + `/` + outbox + `$`
+	followersPath     = userPathPrefix + `/` + followers + `$`
+	followingPath     = userPathPrefix + `/` + following + `$`
+	likedPath         = userPathPrefix + `/` + liked + `$`
+	followPath        = userPathPrefix + `/` + follow + `/(` + ulid + `)$`
+	likePath          = userPathPrefix + `/` + liked + `/(` + ulid + `)$`
+	statusesPath      = userPathPrefix + `/` + statuses + `/(` + ulid + `)$`
+	blockPath         = userPathPrefix + `/` + blocks + `/(` + ulid + `)$`
+	reportPath        = `^/?` + reports + `/(` + ulid + `)$`
+	filePath          = `^/?(` + ulid + `)/([a-z]+)/([a-z]+)/(` + ulid + `)\.([a-z0-9]+)$`
 )
 
 var (
@@ -109,6 +111,9 @@ var (
 
 	// UserPath validates and captures the username part from eg /users/example_username.
 	UserPath = regexp.MustCompile(userPath)
+
+	// UserWebPath validates and captures the username part from eg /@example_username.
+	UserWebPath = regexp.MustCompile(userWebPath)
 
 	// PublicKeyPath parses a path that validates and captures the username part from eg /users/example_username/main-key
 	PublicKeyPath = regexp.MustCompile(publicKeyPath)

@@ -94,6 +94,12 @@ func (a *Account) IsRemote() bool {
 	return !a.IsLocal()
 }
 
+// IsNew returns whether an account is "new" in the sense
+// that it has not been previously stored in the database.
+func (a *Account) IsNew() bool {
+	return a.CreatedAt.IsZero()
+}
+
 // IsInstance returns whether account is an instance internal actor account.
 func (a *Account) IsInstance() bool {
 	if a.IsLocal() {

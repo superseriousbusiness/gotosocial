@@ -18,7 +18,6 @@
 package util_test
 
 import (
-	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -39,11 +38,26 @@ func (suite *NamestringSuite) TestExtractWebfingerParts() {
 		{in: "stonerkitty.monster@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
 		{in: "stonerkitty.monster@stonerkitty.monster:8080", username: "stonerkitty.monster", domain: "stonerkitty.monster:8080"},
 		{in: "@stonerkitty.monster@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
-		{in: "acct:@@stonerkitty.monster@stonerkitty.monster", err: "failed to extract user and domain from: acct:@@stonerkitty.monster@stonerkitty.monster"},
-		{in: "acct:@stonerkitty.monster@@stonerkitty.monster", err: "failed to extract user and domain from: acct:@stonerkitty.monster@@stonerkitty.monster"},
-		{in: "@@stonerkitty.monster@stonerkitty.monster", err: "failed to extract user and domain from: @@stonerkitty.monster@stonerkitty.monster"},
-		{in: "@stonerkitty.monster@@stonerkitty.monster", err: "failed to extract user and domain from: @stonerkitty.monster@@stonerkitty.monster"},
-		{in: "s3:stonerkitty.monster@stonerkitty.monster", err: "unsupported scheme: s3 for resource: s3:stonerkitty.monster@stonerkitty.monster"},
+		{in: "acct:@@stonerkitty.monster@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "acct:@stonerkitty.monster@@stonerkitty.monster", err: "couldn't match namestring @stonerkitty.monster@@stonerkitty.monster"},
+		{in: "@@stonerkitty.monster@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "@stonerkitty.monster@@stonerkitty.monster", err: "couldn't match namestring @stonerkitty.monster@@stonerkitty.monster"},
+		{in: "s3:stonerkitty.monster@stonerkitty.monster", err: "unsupported scheme s3 for resource s3:stonerkitty.monster@stonerkitty.monster"},
+		{in: "https://stonerkitty.monster/users/stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "https://stonerkitty.monster/users/@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "https://stonerkitty.monster/@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "https://stonerkitty.monster/@@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "https://stonerkitty.monster:8080/users/stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster:8080"},
+		{in: "https://stonerkitty.monster/users/stonerkitty.monster/evil", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "https://stonerkitty.monster/@stonerkitty.monster/evil", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
+		{in: "/@stonerkitty.monster", err: "no scheme for resource /@stonerkitty.monster"},
+		{in: "/users/stonerkitty.monster", err: "no scheme for resource /users/stonerkitty.monster"},
+		{in: "@stonerkitty.monster", err: "failed to extract domain from: @stonerkitty.monster"},
+		{in: "users/stonerkitty.monster", err: "couldn't match namestring @users/stonerkitty.monster"},
+		{in: "https://stonerkitty.monster/users/", err: "failed to extract username from: https://stonerkitty.monster/users/"},
+		{in: "https://stonerkitty.monster/users/@", err: "failed to extract username from: https://stonerkitty.monster/users/@"},
+		{in: "https://stonerkitty.monster/@", err: "failed to extract username from: https://stonerkitty.monster/@"},
+		{in: "https://stonerkitty.monster/", err: "failed to extract username from: https://stonerkitty.monster/"},
 	}
 
 	for _, tt := range tests {
@@ -56,45 +70,9 @@ func (suite *NamestringSuite) TestExtractWebfingerParts() {
 				suite.Equal(tt.username, username)
 				suite.Equal(tt.domain, domain)
 			} else {
-				suite.EqualError(err, tt.err)
-			}
-		})
-	}
-}
-
-func (suite *NamestringSuite) TestExtractWebfingerPartsFromURI() {
-	tests := []struct {
-		in, username, domain, err string
-	}{
-		{in: "https://stonerkitty.monster/users/stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
-		{in: "https://stonerkitty.monster/users/@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
-		{in: "https://stonerkitty.monster/@stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
-		{in: "https://stonerkitty.monster/@@stonerkitty.monster", username: "@stonerkitty.monster", domain: "stonerkitty.monster"},
-		{in: "https://stonerkitty.monster:8080/users/stonerkitty.monster", username: "stonerkitty.monster", domain: "stonerkitty.monster:8080"},
-		{in: "https://stonerkitty.monster/users/stonerkitty.monster/evil", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
-		{in: "https://stonerkitty.monster/@stonerkitty.monster/evil", username: "stonerkitty.monster", domain: "stonerkitty.monster"},
-		{in: "/@stonerkitty.monster", err: "failed to extract domain from: /@stonerkitty.monster"},
-		{in: "/users/stonerkitty.monster", err: "failed to extract domain from: /users/stonerkitty.monster"},
-		{in: "@stonerkitty.monster", err: "failed to extract domain from: @stonerkitty.monster"},
-		{in: "users/stonerkitty.monster", err: "failed to extract domain from: users/stonerkitty.monster"},
-		{in: "https://stonerkitty.monster/users/", err: "failed to extract username from: https://stonerkitty.monster/users/"},
-		{in: "https://stonerkitty.monster/users/@", err: "failed to extract username from: https://stonerkitty.monster/users/@"},
-		{in: "https://stonerkitty.monster/@", err: "failed to extract username from: https://stonerkitty.monster/@"},
-		{in: "https://stonerkitty.monster/", err: "failed to extract username from: https://stonerkitty.monster/"},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		suite.Run(tt.in, func() {
-			suite.T().Parallel()
-			uri, _ := url.Parse(tt.in)
-			username, domain, err := util.ExtractWebfingerPartsFromURI(uri)
-			if tt.err == "" {
-				suite.NoError(err)
-				suite.Equal(tt.username, username)
-				suite.Equal(tt.domain, domain)
-			} else {
-				suite.EqualError(err, tt.err)
+				if !suite.EqualError(err, tt.err) {
+					suite.T().Logf("expected error %s", tt.err)
+				}
 			}
 		})
 	}
@@ -107,7 +85,7 @@ func (suite *NamestringSuite) TestExtractNamestring() {
 		{in: "@stonerkitty.monster@stonerkitty.monster", username: "stonerkitty.monster", host: "stonerkitty.monster"},
 		{in: "@stonerkitty.monster", username: "stonerkitty.monster"},
 		{in: "@someone@somewhere", username: "someone", host: "somewhere"},
-		{in: "", err: "couldn't match mention "},
+		{in: "", err: "couldn't match namestring "},
 	}
 
 	for _, tt := range tests {

@@ -77,6 +77,18 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		return nil, gtserror.SetMalformed(err)
 	}
 
+	// Extract published time if possible.
+	//
+	// This denotes original creation time
+	// of the account on the remote instance.
+	//
+	// Not every implementation uses this property;
+	// so don't bother warning if we can't find it.
+	if pub := ap.GetPublished(accountable); !pub.IsZero() {
+		acct.CreatedAt = pub
+		acct.UpdatedAt = pub
+	}
+
 	// Extract a preferred name (display name), fallback to username.
 	if displayName := ap.ExtractName(accountable); displayName != "" {
 		acct.DisplayName = displayName
@@ -314,7 +326,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 	// status.Published
 	//
-	// Extract published time for the boost,
+	// Extract published time for the status,
 	// zero-time will fall back to db defaults.
 	if pub := ap.GetPublished(statusable); !pub.IsZero() {
 		status.CreatedAt = pub
