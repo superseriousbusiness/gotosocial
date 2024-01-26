@@ -163,6 +163,7 @@ type Accountable interface {
 	WithManuallyApprovesFollowers
 	WithEndpoints
 	WithTag
+	WithPublished
 }
 
 // Statusable represents the minimum activitypub interface for representing a 'status'.

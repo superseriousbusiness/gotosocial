@@ -20,54 +20,109 @@ package dereferencing
 import (
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/url"
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (d *Dereferencer) fingerRemoteAccount(ctx context.Context, transport transport.Transport, targetUsername string, targetHost string) (accountDomain string, accountURI *url.URL, err error) {
-	b, err := transport.Finger(ctx, targetUsername, targetHost)
+// fingerRemoteAccount performs a webfinger call for the
+// given username and host, using the provided transport.
+//
+// The webfinger response will be parsed, and the subject
+// domain and AP URI will be extracted and returned.
+//
+// In case the response cannot be parsed, or the response
+// does not contain a valid subject string or AP URI, an
+// error will be returned instead.
+func (d *Dereferencer) fingerRemoteAccount(
+	ctx context.Context,
+	transport transport.Transport,
+	username string,
+	host string,
+) (
+	string, // discovered account domain
+	*url.URL, // discovered account URI
+	error,
+) {
+	// Assemble target namestring for logging.
+	var target = "@" + username + "@" + host
+
+	b, err := transport.Finger(ctx, username, host)
 	if err != nil {
-		err = fmt.Errorf("fingerRemoteAccount: error fingering @%s@%s: %s", targetUsername, targetHost, err)
-		return
+		err = gtserror.Newf("error webfingering %s: %w", target, err)
+		return "", nil, err
 	}
 
-	resp := &apimodel.WellKnownResponse{}
-	if err = json.Unmarshal(b, resp); err != nil {
-		err = fmt.Errorf("fingerRemoteAccount: could not unmarshal server response as WebfingerAccountResponse while dereferencing @%s@%s: %s", targetUsername, targetHost, err)
-		return
+	var resp apimodel.WellKnownResponse
+	if err := json.Unmarshal(b, &resp); err != nil {
+		err = gtserror.Newf("error parsing response as JSON for %s: %w", target, err)
+		return "", nil, err
 	}
 
 	if len(resp.Links) == 0 {
-		err = fmt.Errorf("fingerRemoteAccount: no links found in webfinger response %s", string(b))
-		return
+		err = gtserror.Newf("no links found in response for %s", target)
+		return "", nil, err
 	}
 
 	if resp.Subject == "" {
-		err = fmt.Errorf("fingerRemoteAccount: no subject found in webfinger response %s", string(b))
-		return
+		err = gtserror.Newf("no subject found in response for %s", target)
+		return "", nil, err
 	}
 
-	_, accountDomain, err = util.ExtractWebfingerParts(resp.Subject)
+	_, accountDomain, err := util.ExtractWebfingerParts(resp.Subject)
 	if err != nil {
-		err = fmt.Errorf("fingerRemoteAccount: error extracting webfinger subject parts: %s", err)
+		err = gtserror.Newf("error extracting subject parts for %s: %w", target, err)
+		return "", nil, err
 	}
 
-	// look through the links for the first one that matches what we need
-	for _, l := range resp.Links {
-		if l.Rel == "self" && (strings.EqualFold(l.Type, "application/activity+json") || strings.EqualFold(l.Type, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")) {
-			if uri, thiserr := url.Parse(l.Href); thiserr == nil && (uri.Scheme == "http" || uri.Scheme == "https") {
-				// found it!
-				accountURI = uri
-				return
-			}
+	// Look through links for the first
+	// one that matches what we need:
+	//
+	//   - Must be self link.
+	//   - Must be AP type.
+	//   - Valid https/http URI.
+	for _, link := range resp.Links {
+		if link.Rel != "self" {
+			// Not self link, ignore.
+			continue
 		}
+
+		if !strings.EqualFold(link.Type, "application/activity+json") &&
+			!strings.EqualFold(link.Type, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
+			// Not an AP type, ignore.
+			continue
+		}
+
+		uri, err := url.Parse(link.Href)
+		if err != nil {
+			log.Warnf(ctx,
+				"invalid href for ActivityPub self link %s for %s: %v",
+				link.Href, target, err,
+			)
+
+			// Funky URL, ignore.
+			continue
+		}
+
+		if uri.Scheme != "http" && uri.Scheme != "https" {
+			log.Warnf(ctx,
+				"invalid href for ActivityPub self link %s for %s: schema must be http or https",
+				link.Href, target,
+			)
+
+			// Can't handle this
+			// schema, ignore.
+			continue
+		}
+
+		// All looks good, return happily!
+		return accountDomain, uri, nil
 	}
 
-	return "", nil, errors.New("fingerRemoteAccount: no match found in webfinger response")
+	return "", nil, gtserror.Newf("no suitable self, AP-type link found in webfinger response for %s", target)
 }
