@@ -7,8 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"codeberg.org/gruf/go-byteutil"
-	"codeberg.org/gruf/go-mangler"
+	"github.com/zeebo/xxh3"
 )
 
 // findField will search for a struct field with given set of names, where names is a len > 0 slice of names account for nesting.
@@ -68,22 +67,8 @@ func findField(t reflect.Type, names []string, allowZero bool) (sfield structfie
 		t = field.Type
 	}
 
-	// Get final type mangler func.
-	sfield.mangler = mangler.Get(t)
-
-	if allowZero {
-		var buf []byte
-
-		// Allocate field instance.
-		v := reflect.New(field.Type)
-		v = v.Elem()
-
-		// Serialize this zero value into buf.
-		buf = sfield.mangler(buf, v.Interface())
-
-		// Set zero value str.
-		sfield.zero = string(buf)
-	}
+	// Get final type hash func.
+	sfield.hasher = hasher(t)
 
 	return
 }
@@ -93,26 +78,21 @@ func panicf(format string, args ...any) {
 	panic(fmt.Sprintf(format, args...))
 }
 
-// bufpool provides a memory pool of byte
-// buffers used when encoding key types.
-var bufPool sync.Pool
+// hashPool provides a memory pool of xxh3
+// hasher objects used indexing field vals.
+var hashPool sync.Pool
 
-// getBuf fetches buffer from memory pool.
-func getBuf() *byteutil.Buffer {
-	v := bufPool.Get()
+// gethashbuf fetches hasher from memory pool.
+func getHasher() *xxh3.Hasher {
+	v := hashPool.Get()
 	if v == nil {
-		buf := new(byteutil.Buffer)
-		buf.B = make([]byte, 0, 512)
-		v = buf
+		v = new(xxh3.Hasher)
 	}
-	return v.(*byteutil.Buffer)
+	return v.(*xxh3.Hasher)
 }
 
-// putBuf replaces buffer in memory pool.
-func putBuf(buf *byteutil.Buffer) {
-	if buf.Cap() > int(^uint16(0)) {
-		return // drop large bufs
-	}
-	buf.Reset()
-	bufPool.Put(buf)
+// putHasher replaces hasher in memory pool.
+func putHasher(h *xxh3.Hasher) {
+	h.Reset()
+	hashPool.Put(h)
 }
