@@ -20,7 +20,6 @@ package dereferencing
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"slices"
@@ -296,7 +295,9 @@ func (d *Dereferencer) enrichStatusSafely(
 	)
 
 	if code := gtserror.StatusCode(err); code >= 400 {
-		err = fmt.Errorf("status enrichment failed: %w", err)
+		// No matter what, log the error
+		// so instance admins have an idea
+		// why something isn't working.
 		log.Info(ctx, err)
 
 		if isNew {

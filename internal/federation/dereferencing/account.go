@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/url"
 	"time"
@@ -397,7 +396,9 @@ func (d *Dereferencer) enrichAccountSafely(
 	)
 
 	if code := gtserror.StatusCode(err); code >= 400 {
-		err = fmt.Errorf("account enrichment failed: %w", err)
+		// No matter what, log the error
+		// so instance admins have an idea
+		// why something isn't working.
 		log.Info(ctx, err)
 
 		if account.IsNew() {
