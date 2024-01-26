@@ -275,15 +275,16 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
 - [go-swagger/go-swagger](https://github.com/go-swagger/go-swagger); Swagger OpenAPI spec generation. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - gruf:
   - [gruf/go-bytesize](https://codeberg.org/gruf/go-bytesize); byte size parsing / formatting. [MIT License](https://spdx.org/licenses/MIT.html).
-  - [gruf/go-cache](https://codeberg.org/gruf/go-cache); object & result caching. [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-cache](https://codeberg.org/gruf/go-cache); LRU and TTL caches. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-debug](https://codeberg.org/gruf/go-debug); debug build tag. [MIT License](https://spdx.org/licenses/MIT.html).
-  - [gruf/go-errors](https://codeberg.org/gruf/go-errors); performant multi-error checking [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-errors](https://codeberg.org/gruf/go-errors); context-like error w/ value wrapping  [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-fastcopy](https://codeberg.org/gruf/go-fastcopy); performant pooled I/O copying [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-kv](https://codeberg.org/gruf/go-kv); log field formatting. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); safemutex & mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-runners](https://codeberg.org/gruf/go-runners); workerpools and synchronization. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-sched](https://codeberg.org/gruf/go-sched); task scheduler. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-store](https://codeberg.org/gruf/go-store); file storage backend (local & s3). [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-structr](https://codeberg.org/gruf/go-cache); struct caching w/ automated multiple indexing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [h2non/filetype](https://github.com/h2non/filetype); filetype checking. [MIT License](https://spdx.org/licenses/MIT.html).
 - jackc:
   - [jackc/pgx](https://github.com/jackc/pgconn); Postgres driver. [MIT License](https://spdx.org/licenses/MIT.html).
