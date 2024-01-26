@@ -44,7 +44,7 @@ func (p *Processor) EmojiCreate(
 	// Ensure emoji with this shortcode
 	// doesn't already exist on the instance.
 	maybeExisting, err := p.state.DB.GetEmojiByShortcodeDomain(ctx, form.Shortcode, "")
-	if err != nil && errors.Is(err, db.ErrNoEntries) {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("error checking existence of emoji with shortcode %s: %w", form.Shortcode, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -264,7 +264,7 @@ func (p *Processor) EmojiDelete(
 
 	if !emoji.IsLocal() {
 		err := fmt.Errorf("emoji with id %s was not a local emoji, will not delete", id)
-		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
 	// Convert to admin emoji before deletion,
