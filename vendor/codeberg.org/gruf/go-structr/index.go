@@ -45,12 +45,12 @@ type Index[StructType any] struct {
 	// string value of contained fields.
 	name string
 
-	// struct field key serializer.
-	keygen KeyGen[StructType]
+	// struct field key hasher.
+	hasher Hasher[StructType]
 
 	// backing in-memory data store of
 	// generated index keys to result lists.
-	data map[string]*list[*result[StructType]]
+	data map[uint64]*list[*result[StructType]]
 
 	// whether to allow
 	// multiple results
@@ -59,20 +59,20 @@ type Index[StructType any] struct {
 }
 
 // init initializes this index with the given configuration.
-func (i *Index[T]) init(config IndexConfig) {
+func (i *Index[T]) init(config IndexConfig, max int) {
 	fields := strings.Split(config.Fields, ",")
 	i.name = config.Fields
-	i.keygen = NewKeyGen[T](fields, config.AllowZero)
+	i.hasher = NewHasher[T](fields, config.AllowZero)
 	i.unique = !config.Multiple
-	i.data = make(map[string]*list[*result[T]])
+	i.data = make(map[uint64]*list[*result[T]], max+1)
 }
 
-// KeyGen returns the key generator associated with this index.
-func (i *Index[T]) KeyGen() *KeyGen[T] {
-	return &i.keygen
+// Hasher returns the hash checksummer associated with this index.
+func (i *Index[T]) Hasher() *Hasher[T] {
+	return &i.hasher
 }
 
-func index_append[T any](c *Cache[T], i *Index[T], key string, res *result[T]) {
+func index_append[T any](c *Cache[T], i *Index[T], key uint64, res *result[T]) {
 	// Acquire + setup indexkey.
 	ikey := indexkey_acquire(c)
 	ikey.entry.Value = res
@@ -138,7 +138,7 @@ func index_deleteOne[T any](c *Cache[T], i *Index[T], ikey *indexkey[T]) {
 	}
 }
 
-func index_delete[T any](c *Cache[T], i *Index[T], key string, fn func(*result[T])) {
+func index_delete[T any](c *Cache[T], i *Index[T], key uint64, fn func(*result[T])) {
 	if fn == nil {
 		panic("nil fn")
 	}
@@ -180,7 +180,7 @@ type indexkey[T any] struct {
 	// key is the generated index key
 	// the related result is indexed
 	// under, in the below index.
-	key string
+	key uint64
 
 	// index is the index that the
 	// related result is indexed in.
@@ -205,7 +205,7 @@ func indexkey_acquire[T any](c *Cache[T]) *indexkey[T] {
 func indexkey_release[T any](c *Cache[T], ikey *indexkey[T]) {
 	// Reset indexkey.
 	ikey.entry.Value = nil
-	ikey.key = ""
+	ikey.key = 0
 	ikey.index = nil
 
 	// Release indexkey to memory pool.

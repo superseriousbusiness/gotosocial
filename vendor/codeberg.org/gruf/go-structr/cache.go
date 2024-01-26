@@ -111,8 +111,8 @@ func (c *Cache[T]) Init(config Config[T]) {
 	// provided config.
 	c.mutex.Lock()
 	c.indices = make([]Index[T], len(config.Indices))
-	for i, config := range config.Indices {
-		c.indices[i].init(config)
+	for i, cfg := range config.Indices {
+		c.indices[i].init(cfg, config.MaxSize)
 	}
 	c.ignore = config.IgnoreErr
 	c.copy = config.CopyValue
@@ -138,7 +138,7 @@ func (c *Cache[T]) GetOne(index string, keyParts ...any) (T, bool) {
 	idx := c.Index(index)
 
 	// Generate index key from provided parts.
-	key, ok := idx.keygen.FromParts(keyParts...)
+	key, ok := idx.hasher.FromParts(keyParts...)
 	if !ok {
 		var zero T
 		return zero, false
@@ -149,7 +149,7 @@ func (c *Cache[T]) GetOne(index string, keyParts ...any) (T, bool) {
 }
 
 // GetOneBy fetches value from cache stored under index, using precalculated index key.
-func (c *Cache[T]) GetOneBy(index *Index[T], key string) (T, bool) {
+func (c *Cache[T]) GetOneBy(index *Index[T], key uint64) (T, bool) {
 	if index == nil {
 		panic("no index given")
 	} else if !index.unique {
@@ -170,37 +170,33 @@ func (c *Cache[T]) Get(index string, keysParts ...[]any) []T {
 	idx := c.Index(index)
 
 	// Preallocate expected keys slice length.
-	keys := make([]string, 0, len(keysParts))
+	keys := make([]uint64, 0, len(keysParts))
 
-	// Acquire buf.
-	buf := getBuf()
+	// Acquire hasher.
+	h := getHasher()
 
 	for _, parts := range keysParts {
-		// Reset buf.
-		buf.Reset()
+		h.Reset()
 
 		// Generate key from provided parts into buffer.
-		if !idx.keygen.AppendFromParts(buf, parts...) {
+		key, ok := idx.hasher.fromParts(h, parts...)
+		if !ok {
 			continue
 		}
 
-		// Get string copy of
-		// genarated idx key.
-		key := string(buf.B)
-
-		// Append key to keys.
+		// Append hash sum to keys.
 		keys = append(keys, key)
 	}
 
-	// Done with buf.
-	putBuf(buf)
+	// Done with h.
+	putHasher(h)
 
 	// Continue fetching values.
 	return c.GetBy(idx, keys...)
 }
 
 // GetBy fetches values from the cache stored under index, using precalculated index keys.
-func (c *Cache[T]) GetBy(index *Index[T], keys ...string) []T {
+func (c *Cache[T]) GetBy(index *Index[T], keys ...uint64) []T {
 	if index == nil {
 		panic("no index given")
 	}
@@ -265,7 +261,7 @@ func (c *Cache[T]) Put(values ...T) {
 
 	// Store all the passed values.
 	for _, value := range values {
-		c.store(nil, "", value, nil)
+		c.store(nil, 0, value, nil)
 	}
 
 	// Done with lock.
@@ -288,7 +284,7 @@ func (c *Cache[T]) LoadOne(index string, load func() (T, error), keyParts ...any
 	idx := c.Index(index)
 
 	// Generate cache from from provided parts.
-	key, _ := idx.keygen.FromParts(keyParts...)
+	key, _ := idx.hasher.FromParts(keyParts...)
 
 	// Continue loading this result.
 	return c.LoadOneBy(idx, load, key)
@@ -296,7 +292,7 @@ func (c *Cache[T]) LoadOne(index string, load func() (T, error), keyParts ...any
 
 // LoadOneBy fetches one result from the cache stored under index, using precalculated index key.
 // In the case that no result is found, provided load callback will be used to hydrate the cache.
-func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key string) (T, error) {
+func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key uint64) (T, error) {
 	if index == nil {
 		panic("no index given")
 	} else if !index.unique {
@@ -421,26 +417,21 @@ func (c *Cache[T]) LoadBy(index *Index[T], get func(load func(keyParts ...any) b
 		}
 	}()
 
-	// Acquire buf.
-	buf := getBuf()
+	// Acquire hasher.
+	h := getHasher()
 
 	// Pass cache check to user func.
 	get(func(keyParts ...any) bool {
-
-		// Reset buf.
-		buf.Reset()
+		h.Reset()
 
 		// Generate index key from provided key parts.
-		if !index.keygen.AppendFromParts(buf, keyParts...) {
+		key, ok := index.hasher.fromParts(h, keyParts...)
+		if !ok {
 			return false
 		}
 
-		// Get temp generated key str,
-		// (not needed after return).
-		keyStr := buf.String()
-
 		// Get all indexed results.
-		list := index.data[keyStr]
+		list := index.data[key]
 
 		if list != nil && list.len > 0 {
 			// Value length before
@@ -471,8 +462,8 @@ func (c *Cache[T]) LoadBy(index *Index[T], get func(load func(keyParts ...any) b
 		return false
 	})
 
-	// Done with buf.
-	putBuf(buf)
+	// Done with h.
+	putHasher(h)
 
 	// Done with lock.
 	c.mutex.Unlock()
@@ -528,7 +519,7 @@ func (c *Cache[T]) Invalidate(index string, keyParts ...any) {
 	idx := c.Index(index)
 
 	// Generate cache from from provided parts.
-	key, ok := idx.keygen.FromParts(keyParts...)
+	key, ok := idx.hasher.FromParts(keyParts...)
 	if !ok {
 		return
 	}
@@ -538,7 +529,7 @@ func (c *Cache[T]) Invalidate(index string, keyParts ...any) {
 }
 
 // InvalidateBy invalidates all results stored under index key.
-func (c *Cache[T]) InvalidateBy(index *Index[T], key string) {
+func (c *Cache[T]) InvalidateBy(index *Index[T], key uint64) {
 	if index == nil {
 		panic("no index given")
 	}
@@ -639,7 +630,7 @@ func (c *Cache[T]) Cap() int {
 
 // store will store the given value / error result in the cache, storing it under the
 // already provided index + key if provided, else generating keys from provided value.
-func (c *Cache[T]) store(index *Index[T], key string, value T, err error) {
+func (c *Cache[T]) store(index *Index[T], key uint64, value T, err error) {
 	// Acquire new result.
 	res := result_acquire(c)
 
@@ -671,8 +662,8 @@ func (c *Cache[T]) store(index *Index[T], key string, value T, err error) {
 		// value, used during cache key gen.
 		rvalue := reflect.ValueOf(value)
 
-		// Acquire buf.
-		buf := getBuf()
+		// Acquire hasher.
+		h := getHasher()
 
 		for i := range c.indices {
 			// Get current index ptr.
@@ -684,22 +675,20 @@ func (c *Cache[T]) store(index *Index[T], key string, value T, err error) {
 				continue
 			}
 
-			// Generate key from reflect value,
+			// Generate hash from reflect value,
 			// (this ignores zero value keys).
-			buf.Reset() // reset buf first
-			if !idx.keygen.appendFromRValue(buf, rvalue) {
+			h.Reset() // reset buf first
+			key, ok := idx.hasher.fromRValue(h, rvalue)
+			if !ok {
 				continue
 			}
-
-			// Alloc key copy.
-			key := string(buf.B)
 
 			// Append result to index at key.
 			index_append(c, idx, key, res)
 		}
 
-		// Done with buf.
-		putBuf(buf)
+		// Done with h.
+		putHasher(h)
 	}
 
 	if c.lruList.len > c.maxSize {
