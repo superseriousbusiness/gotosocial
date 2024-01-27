@@ -123,6 +123,56 @@ For more information on Markdown, see [The Markdown Guide](https://www.markdowng
 
 For a quick reference on Markdown syntax, see the [Markdown Cheat Sheet](https://www.markdownguide.org/cheat-sheet).
 
+## Media Attachments
+
+GoToSocial allows you to attach media files to your posts, which most clients will then render in a gallery view at the bottom of your post. By default, you can attach 6 pieces of media to a post, but this may vary depending on the client that you're using, and the configuration of your instance.
+
+The following file types are (currently) supported:
+
+- image/jpeg
+- image/gif
+- image/png
+- image/webp
+- video/mp4 (most types)
+
+By default, the size limit of uploaded media is 40MB, but again this may vary depending on your instance configuration.
+
+### Image Descriptions (alt text)
+
+When you attach a piece of media to a post, like an image or a video, most clients will give you the option to provide a description of what the image or video depicts. This description will be provided as alt text for all users viewing the media. This is useful for everyone, but especially for blind or partially-sighted folks. Without an image description, it may be unclear what is contained in a piece of media, and why it was attached to a given post.
+
+Writing a good image description can be difficult, but it is worthwhile!
+
+> image descriptions are a gesture of care and an essential part of accessibility. Without them, content would be completely unavailable to Blind/low vision folks. By writing image descriptions, we show support of cross-disability solidarity and cross-movement solidarity.
+
+-- Alex Chen, [How to write an image description](https://uxdesign.cc/how-to-write-an-image-description-2f30d3bf5546).
+
+### Exif Data
+
+When a photo or video is taken, most traditional cameras and phone cameras encode [Exif data tags](https://en.wikipedia.org/wiki/Exif) into the resulting media as metadata. This Exif data contains things like:
+
+- Make and model of the camera.
+- Color and pixel information for the image or video.
+- Dimensions and orientation of the image or video.
+- Data and time information.
+- Location information (if enabled).
+
+Traditionally, these Exif data points are used by photographers to help them catalogue their own images. Unfortunately, though, they also have [privacy and security implications](https://en.wikipedia.org/wiki/Exif#Privacy_and_security), especially where location data is concerned. If you've ever posted an image online to a platform like Facebook, you may have wondered how Facebook knows where and when the image was taken; this is largely thanks to the location information and timestamp embedded in the Exif data, which Facebook reads from the image in order to assemble a timeline of "places you've been".
+
+To avoid leaking information about your location, GoToSocial makes a best-effort attempt to remove Exif information from media when you upload it, by zeroing out Exif data points.
+
+!!! danger
+    For your convenience and privacy, GoToSocial currently removes Exif tags from image files when they are uploaded. However, **automated removal of Exif data from mp4 videos is not currently supported** (see [#2577](https://github.com/superseriousbusiness/gotosocial/issues/2577)).
+    
+    Before you upload a video to GoToSocial, we recommend ensuring that Exif data tags are already removed from the video. You can find various tools and services online for doing this.
+    
+    To prevent Exif location data being encoded into an image or video in the first place, you can also turn off location tagging (often called geotagging) in the camera app of your device.
+
+!!! tip
+    Even if you fully remove all Exif metadata from an image or video before uploading it, there are many ways that malicious jerks can infer your location anyway based on the contents of the media itself.
+    
+    If you are part of an organization that has an operational requirement for secrecy, or if you are being stalked or surveilled, you may want to consider not posting any media that could contain clues as to your whereabouts.
+
 ## Formatting
 
 When a post is submitted in `plain` format, GoToSocial automatically does some tidying up and formatting of the post in order to convert it to HTML, as described below.
