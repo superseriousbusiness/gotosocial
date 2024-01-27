@@ -51,8 +51,8 @@ var (
 	ErrorRateLimited = mustJSON(map[string]string{
 		"error": "rate limit reached",
 	})
-	EmptyJSONObject = mustJSON("{}")
-	EmptyJSONArray  = mustJSON("[]")
+	EmptyJSONObject = []byte{'{', '}'}
+	EmptyJSONArray  = []byte{'[', ']'}
 
 	// write buffer pool.
 	bufPool sync.Pool
