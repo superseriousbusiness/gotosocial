@@ -114,7 +114,7 @@ GoToSocial by default creates signed URL's which means we don't need to change a
 
 Migration between backends is freely possible. To do so, you only have to move the directories (and their contents) between the different implementations.
 
-When moving from one backend to another, the database will still contain references to headers and avatars from remote accounts pointing to the old storage backend which may result in them not loading correctly in clients. This will resolve itself over time, but you can force GoToSocial to refetch the avatar and header the next time you interact with a remote account by running the following SQL query on your database:
+When moving from one backend to another, the database will still contain references to headers and avatars from remote accounts pointing to the old storage backend which may result in them not loading correctly in clients. This will resolve itself over time, but you can force GoToSocial to refetch the avatar and header the next time you interact with a remote account. Execute the following query on your database when GoToSocial is not running, or restart GoToSocial after doing so. This will ensure the caches are cleared out too.
 
 ```sql
 UPDATE accounts SET (avatar_media_attachment_id, avatar_remote_url, header_media_attachment_id, header_remote_url, fetched_at) = (null, null, null, null, null) WHERE domain IS NOT null;
