@@ -1,49 +1,55 @@
 package structr
 
-// elem represents an element
+import (
+	"sync"
+	"unsafe"
+)
+
+var list_pool sync.Pool
+
+// elem represents an elem
 // in a doubly-linked list.
-type elem[T any] struct {
-	next  *elem[T]
-	prev  *elem[T]
-	Value T
+type list_elem struct {
+	next *list_elem
+	prev *list_elem
+
+	// data is a ptr to the
+	// value this linked list
+	// element is embedded-in.
+	data unsafe.Pointer
 }
 
 // list implements a doubly-linked list, where:
 // - head = index 0   (i.e. the front)
 // - tail = index n-1 (i.e. the back)
-type list[T any] struct {
-	head *elem[T]
-	tail *elem[T]
+type list struct {
+	head *list_elem
+	tail *list_elem
 	len  int
 }
 
-func list_acquire[T any](c *Cache[T]) *list[*result[T]] {
-	var l *list[*result[T]]
-
-	if len(c.llsPool) == 0 {
-		// Allocate new list.
-		l = new(list[*result[T]])
-	} else {
-		// Pop list from pool slice.
-		l = c.llsPool[len(c.llsPool)-1]
-		c.llsPool = c.llsPool[:len(c.llsPool)-1]
+func list_acquire() *list {
+	// Acquire from pool.
+	v := list_pool.Get()
+	if v == nil {
+		v = new(list)
 	}
 
-	return l
+	// Cast list value.
+	return v.(*list)
 }
 
-func list_release[T any](c *Cache[T], l *list[*result[T]]) {
+func list_release(l *list) {
 	// Reset list.
 	l.head = nil
 	l.tail = nil
 	l.len = 0
 
-	// Release list to memory pool.
-	c.llsPool = append(c.llsPool, l)
+	// Release to pool.
+	list_pool.Put(l)
 }
 
-// pushFront pushes new 'elem' to front of list.
-func (l *list[T]) pushFront(elem *elem[T]) {
+func list_push_front(l *list, elem *list_elem) {
 	if l.len == 0 {
 		// Set new tail + head
 		l.head = elem
@@ -71,14 +77,12 @@ func (l *list[T]) pushFront(elem *elem[T]) {
 	l.len++
 }
 
-// moveFront calls remove() on elem, followed by pushFront().
-func (l *list[T]) moveFront(elem *elem[T]) {
-	l.remove(elem)
-	l.pushFront(elem)
+func list_move_front(l *list, elem *list_elem) {
+	list_remove(l, elem)
+	list_push_front(l, elem)
 }
 
-// remove removes the 'elem' from the list.
-func (l *list[T]) remove(elem *elem[T]) {
+func list_remove(l *list, elem *list_elem) {
 	if l.len <= 1 {
 		// Drop elem's links
 		elem.next = nil
@@ -117,8 +121,7 @@ func (l *list[T]) remove(elem *elem[T]) {
 	l.len--
 }
 
-// rangefn ranges all the elements in the list, passing each to fn.
-func (l *list[T]) rangefn(fn func(*elem[T])) {
+func list_rangefn(l *list, fn func(*list_elem)) {
 	if fn == nil {
 		panic("nil fn")
 	}

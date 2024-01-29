@@ -2,10 +2,49 @@ package structr
 
 import (
 	"reflect"
+	"sync"
 	"unsafe"
 
 	"github.com/zeebo/xxh3"
 )
+
+var hash_pool sync.Pool
+
+func get_hasher() *xxh3.Hasher {
+	v := hash_pool.Get()
+	if v == nil {
+		v = new(xxh3.Hasher)
+	}
+	return v.(*xxh3.Hasher)
+}
+
+func hash_sum(fields []structfield, h *xxh3.Hasher, key []any) (Hash, bool) {
+	if len(key) != len(fields) {
+		panicf("incorrect number key parts: want=%d received=%d",
+			len(key),
+			len(fields),
+		)
+	}
+	var zero bool
+	h.Reset()
+	for i, part := range key {
+		zero = fields[i].hasher(h, part) || zero
+	}
+	// See: https://github.com/Cyan4973/xxHash/issues/453#issuecomment-696838445
+	//
+	// In order to extract 32-bit from a good 64-bit hash result,
+	// there are many possible choices, which are all valid.
+	// I would typically grab the lower 32-bit and call it a day.
+	//
+	// Grabbing any other 32-bit (the upper part for example) is fine too.
+	//
+	// xoring higher and lower bits makes more sense whenever the produced hash offers dubious quality.
+	// FNV, for example, has poor mixing in its lower bits, so it's better to mix with the higher bits.
+	//
+	// XXH3 already performs significant output mixing before returning the data,
+	// so it's not beneficial to add another xorfold stage.
+	return uint64ToHash(h.Sum64()), zero
+}
 
 func hasher(t reflect.Type) func(*xxh3.Hasher, any) bool {
 	switch t.Kind() {
@@ -137,13 +176,13 @@ func hasher(t reflect.Type) func(*xxh3.Hasher, any) bool {
 }
 
 func hash8bit(h *xxh3.Hasher, a any) bool {
-	u := *(*uint8)(iface_value(a))
+	u := *(*uint8)(data_ptr(a))
 	_, _ = h.Write([]byte{u})
 	return u == 0
 }
 
 func hash8bitptr(h *xxh3.Hasher, a any) bool {
-	u := (*uint8)(iface_value(a))
+	u := (*uint8)(data_ptr(a))
 	if u == nil {
 		_, _ = h.Write([]byte{
 			0,
@@ -159,13 +198,13 @@ func hash8bitptr(h *xxh3.Hasher, a any) bool {
 }
 
 func hash8bitslice(h *xxh3.Hasher, a any) bool {
-	b := *(*[]byte)(iface_value(a))
+	b := *(*[]byte)(data_ptr(a))
 	_, _ = h.Write(b)
 	return b == nil
 }
 
 func hash16bit(h *xxh3.Hasher, a any) bool {
-	u := *(*uint16)(iface_value(a))
+	u := *(*uint16)(data_ptr(a))
 	_, _ = h.Write([]byte{
 		byte(u),
 		byte(u >> 8),
@@ -174,7 +213,7 @@ func hash16bit(h *xxh3.Hasher, a any) bool {
 }
 
 func hash16bitptr(h *xxh3.Hasher, a any) bool {
-	u := (*uint16)(iface_value(a))
+	u := (*uint16)(data_ptr(a))
 	if u == nil {
 		_, _ = h.Write([]byte{
 			0,
@@ -191,7 +230,7 @@ func hash16bitptr(h *xxh3.Hasher, a any) bool {
 }
 
 func hash16bitslice(h *xxh3.Hasher, a any) bool {
-	u := *(*[]uint16)(iface_value(a))
+	u := *(*[]uint16)(data_ptr(a))
 	for i := range u {
 		_, _ = h.Write([]byte{
 			byte(u[i]),
@@ -202,7 +241,7 @@ func hash16bitslice(h *xxh3.Hasher, a any) bool {
 }
 
 func hash32bit(h *xxh3.Hasher, a any) bool {
-	u := *(*uint32)(iface_value(a))
+	u := *(*uint32)(data_ptr(a))
 	_, _ = h.Write([]byte{
 		byte(u),
 		byte(u >> 8),
@@ -213,7 +252,7 @@ func hash32bit(h *xxh3.Hasher, a any) bool {
 }
 
 func hash32bitptr(h *xxh3.Hasher, a any) bool {
-	u := (*uint32)(iface_value(a))
+	u := (*uint32)(data_ptr(a))
 	if u == nil {
 		_, _ = h.Write([]byte{
 			0,
@@ -232,7 +271,7 @@ func hash32bitptr(h *xxh3.Hasher, a any) bool {
 }
 
 func hash32bitslice(h *xxh3.Hasher, a any) bool {
-	u := *(*[]uint32)(iface_value(a))
+	u := *(*[]uint32)(data_ptr(a))
 	for i := range u {
 		_, _ = h.Write([]byte{
 			byte(u[i]),
@@ -245,7 +284,7 @@ func hash32bitslice(h *xxh3.Hasher, a any) bool {
 }
 
 func hash64bit(h *xxh3.Hasher, a any) bool {
-	u := *(*uint64)(iface_value(a))
+	u := *(*uint64)(data_ptr(a))
 	_, _ = h.Write([]byte{
 		byte(u),
 		byte(u >> 8),
@@ -260,7 +299,7 @@ func hash64bit(h *xxh3.Hasher, a any) bool {
 }
 
 func hash64bitptr(h *xxh3.Hasher, a any) bool {
-	u := (*uint64)(iface_value(a))
+	u := (*uint64)(data_ptr(a))
 	if u == nil {
 		_, _ = h.Write([]byte{
 			0,
@@ -283,7 +322,7 @@ func hash64bitptr(h *xxh3.Hasher, a any) bool {
 }
 
 func hash64bitslice(h *xxh3.Hasher, a any) bool {
-	u := *(*[]uint64)(iface_value(a))
+	u := *(*[]uint64)(data_ptr(a))
 	for i := range u {
 		_, _ = h.Write([]byte{
 			byte(u[i]),
@@ -300,13 +339,13 @@ func hash64bitslice(h *xxh3.Hasher, a any) bool {
 }
 
 func hashstring(h *xxh3.Hasher, a any) bool {
-	s := *(*string)(iface_value(a))
+	s := *(*string)(data_ptr(a))
 	_, _ = h.WriteString(s)
 	return s == ""
 }
 
 func hashstringptr(h *xxh3.Hasher, a any) bool {
-	s := (*string)(iface_value(a))
+	s := (*string)(data_ptr(a))
 	if s == nil {
 		_, _ = h.Write([]byte{
 			0,
@@ -322,7 +361,7 @@ func hashstringptr(h *xxh3.Hasher, a any) bool {
 }
 
 func hashstringslice(h *xxh3.Hasher, a any) bool {
-	s := *(*[]string)(iface_value(a))
+	s := *(*[]string)(data_ptr(a))
 	for i := range s {
 		_, _ = h.WriteString(s[i])
 	}
@@ -362,9 +401,4 @@ func hashjsonmarshaler(h *xxh3.Hasher, a any) bool {
 	b, _ := i.MarshalJSON()
 	_, _ = h.Write(b)
 	return b == nil
-}
-
-func iface_value(a any) unsafe.Pointer {
-	type eface struct{ _, v unsafe.Pointer }
-	return (*eface)(unsafe.Pointer(&a)).v
 }
