@@ -5,6 +5,7 @@ go 1.21
 toolchain go1.21.3
 
 require (
+	codeberg.org/gruf/go-bytes v1.0.2
 	codeberg.org/gruf/go-bytesize v1.0.2
 	codeberg.org/gruf/go-byteutil v1.2.0
 	codeberg.org/gruf/go-cache/v3 v3.5.7
@@ -18,7 +19,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.4
-	codeberg.org/gruf/go-structr v0.2.0
+	codeberg.org/gruf/go-structr v0.3.0
 	codeberg.org/superseriousbusiness/exif-terminator v0.7.0
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.5.0
@@ -80,7 +81,6 @@ require (
 require (
 	codeberg.org/gruf/go-atomics v1.1.0 // indirect
 	codeberg.org/gruf/go-bitutil v1.1.0 // indirect
-	codeberg.org/gruf/go-bytes v1.0.2 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect

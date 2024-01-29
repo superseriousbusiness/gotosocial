@@ -2,6 +2,8 @@
 
 A performant struct caching library with automated indexing by arbitrary combinations of fields, including support for negative results (errors!). An example use case is in database lookups.
 
+Under the hood, go-structr maintains a hashmap per index, where each hashmap is a hashmap keyed with either 32bit, 48bit or 64bit (default) hash checksum of the inputted raw index keys. The hash checksum size can be controlled by the following Go build-tags: `structr_32bit_hash` `structr_48bit_hash`
+
 Some example code of how you can use `go-structr` in your application:
 ```golang
 type Cached struct {
