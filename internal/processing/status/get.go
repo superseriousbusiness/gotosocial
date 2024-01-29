@@ -109,8 +109,7 @@ func (p *Processor) contextGet(
 		}
 	}
 
-	// Topologically sort descendants.
-	topoSort(descendants, targetStatus.AccountID)
+	TopoSort(descendants, targetStatus.AccountID)
 
 	context := &apimodel.Context{
 		Ancestors:   make([]apimodel.Status, 0, len(ancestors)),
@@ -126,10 +125,10 @@ func (p *Processor) contextGet(
 	return context, nil
 }
 
-// Sort statuses topologically. Break ties by sorting by ID.
+// TopoSort sorts statuses topologically, by self-reply, and by ID.
 // Can handle cycles but the output order will be arbitrary.
 // (But if there are cycles, something went wrong upstream.)
-func topoSort(apiStatuses []*apimodel.Status, targetAccountID string) {
+func TopoSort(apiStatuses []*apimodel.Status, targetAccountID string) {
 	if len(apiStatuses) == 0 {
 		return
 	}

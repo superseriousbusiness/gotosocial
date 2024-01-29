@@ -15,11 +15,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package status
+package status_test
 
 import (
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"testing"
 )
 
@@ -49,7 +50,7 @@ func (suite *topoSortTestSuite) TestBranched() {
 
 	expected := statusIDs([]*apimodel.Status{f, b, a, d, c, e, g, i, h})
 	list := []*apimodel.Status{a, b, c, d, e, f, g, h, i}
-	topoSort(list, "")
+	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
 	suite.Equal(expected, actual)
@@ -114,7 +115,7 @@ func (suite *topoSortTestSuite) TestBranchedWithSelfReplyChain() {
 
 	expected := statusIDs([]*apimodel.Status{f, b, d, e, c, a, g, i, h})
 	list := []*apimodel.Status{a, b, c, d, e, f, g, h, i}
-	topoSort(list, targetAccount.ID)
+	status.TopoSort(list, targetAccount.ID)
 	actual := statusIDs(list)
 
 	suite.Equal(expected, actual)
@@ -128,7 +129,7 @@ func (suite *topoSortTestSuite) TestDisconnected() {
 
 	expected := statusIDs([]*apimodel.Status{e, f, b})
 	list := []*apimodel.Status{b, e, f}
-	topoSort(list, "")
+	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
 	suite.Equal(expected, actual)
@@ -140,7 +141,7 @@ func (suite *topoSortTestSuite) TestTrivialCycle() {
 
 	expected := statusIDs([]*apimodel.Status{x})
 	list := []*apimodel.Status{x}
-	topoSort(list, "")
+	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
 	suite.ElementsMatch(expected, actual)
@@ -153,7 +154,7 @@ func (suite *topoSortTestSuite) TestCycle() {
 
 	expected := statusIDs([]*apimodel.Status{x, y})
 	list := []*apimodel.Status{x, y}
-	topoSort(list, "")
+	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
 	suite.ElementsMatch(expected, actual)
@@ -167,7 +168,7 @@ func (suite *topoSortTestSuite) TestMixedCycle() {
 
 	expected := statusIDs([]*apimodel.Status{x, y, z})
 	list := []*apimodel.Status{x, y, z}
-	topoSort(list, "")
+	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
 	suite.ElementsMatch(expected, actual)
@@ -176,7 +177,7 @@ func (suite *topoSortTestSuite) TestMixedCycle() {
 func (suite *topoSortTestSuite) TestEmpty() {
 	expected := statusIDs([]*apimodel.Status{})
 	list := []*apimodel.Status{}
-	topoSort(list, "")
+	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
 	suite.Equal(expected, actual)
@@ -185,7 +186,7 @@ func (suite *topoSortTestSuite) TestEmpty() {
 func (suite *topoSortTestSuite) TestNil() {
 	expected := statusIDs(nil)
 	var list []*apimodel.Status
-	topoSort(list, "")
+	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
 	suite.Equal(expected, actual)
