@@ -111,6 +111,7 @@ func (p *Processor) contextGet(
 
 	TopoSort(descendants, targetStatus.AccountID)
 
+	//goland:noinspection GoImportUsedAsName
 	context := &apimodel.Context{
 		Ancestors:   make([]apimodel.Status, 0, len(ancestors)),
 		Descendants: make([]apimodel.Status, 0, len(descendants)),
@@ -134,14 +135,14 @@ func TopoSort(apiStatuses []*apimodel.Status, targetAccountID string) {
 	}
 
 	// Map of status IDs to statuses.
-	lookup := map[string]*apimodel.Status{}
+	lookup := make(map[string]*apimodel.Status, len(apiStatuses))
 	for _, apiStatus := range apiStatuses {
 		lookup[apiStatus.ID] = apiStatus
 	}
 
 	// Tree of statuses to their children.
 	// The nil status may have children: any who don't have a parent, or whose parent isn't in the input.
-	tree := map[*apimodel.Status][]*apimodel.Status{}
+	tree := make(map[*apimodel.Status][]*apimodel.Status, len(apiStatuses))
 	for _, apiStatus := range apiStatuses {
 		var parent *apimodel.Status
 		if apiStatus.InReplyToID != nil {
@@ -187,7 +188,7 @@ func TopoSort(apiStatuses []*apimodel.Status, targetAccountID string) {
 			continue
 		}
 
-		// Remove the last child entry (the first in ID order).
+		// Remove the last child entry (the first in sorted order).
 		child := children[len(children)-1]
 		tree[parent] = children[:len(children)-1]
 
