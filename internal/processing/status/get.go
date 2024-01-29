@@ -110,24 +110,7 @@ func (p *Processor) contextGet(
 	}
 
 	// Topologically sort descendants.
-	topoSort(descendants)
-
-	// Move self-replies to the top of descendants.
-	slices.SortStableFunc(descendants, func(lhs, rhs *apimodel.Status) int {
-		lhsIsContextSelfReply := lhs.GetAccountID() == targetStatus.AccountID &&
-			lhs.InReplyToAccountID != nil &&
-			*lhs.InReplyToAccountID == targetStatus.AccountID
-		rhsIsContextSelfReply := rhs.GetAccountID() == targetStatus.AccountID &&
-			rhs.InReplyToAccountID != nil &&
-			*rhs.InReplyToAccountID == targetStatus.AccountID
-		if lhsIsContextSelfReply && !rhsIsContextSelfReply {
-			return -1
-		} else if !lhsIsContextSelfReply && rhsIsContextSelfReply {
-			return 1
-		}
-
-		return strings.Compare(lhs.ID, rhs.ID)
-	})
+	topoSort(descendants, targetStatus.AccountID)
 
 	context := &apimodel.Context{
 		Ancestors:   make([]apimodel.Status, 0, len(ancestors)),
@@ -146,7 +129,7 @@ func (p *Processor) contextGet(
 // Sort statuses topologically. Break ties by sorting by ID.
 // Can handle cycles but the output order will be arbitrary.
 // (But if there are cycles, something went wrong upstream.)
-func topoSort(apiStatuses []*apimodel.Status) {
+func topoSort(apiStatuses []*apimodel.Status, targetAccountID string) {
 	if len(apiStatuses) == 0 {
 		return
 	}
@@ -168,9 +151,23 @@ func topoSort(apiStatuses []*apimodel.Status) {
 		tree[parent] = append(tree[parent], apiStatus)
 	}
 
-	// Sort children of each status by ID *in reverse*.
+	// Sort children of each status by self-reply status and then ID, *in reverse*.
+	isSelfReply := func(apiStatus *apimodel.Status) bool {
+		return apiStatus.GetAccountID() == targetAccountID &&
+			apiStatus.InReplyToAccountID != nil &&
+			*apiStatus.InReplyToAccountID == targetAccountID
+	}
 	for id, children := range tree {
 		slices.SortFunc(children, func(lhs, rhs *apimodel.Status) int {
+			lhsIsContextSelfReply := isSelfReply(lhs)
+			rhsIsContextSelfReply := isSelfReply(rhs)
+
+			if lhsIsContextSelfReply && !rhsIsContextSelfReply {
+				return 1
+			} else if !lhsIsContextSelfReply && rhsIsContextSelfReply {
+				return -1
+			}
+
 			return -strings.Compare(lhs.ID, rhs.ID)
 		})
 		tree[id] = children
