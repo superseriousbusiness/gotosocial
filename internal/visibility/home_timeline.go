@@ -99,10 +99,13 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 	}
 
 	var (
-		next      = status
-		oneAuthor = true // Assume one author until proven otherwise.
-		// visible bool
-		notVisible bool
+		// iterated-over
+		// loop status.
+		next = status
+
+		// assume one author
+		// until proven otherwise.
+		oneAuthor = true
 	)
 
 	for {
@@ -120,6 +123,8 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 			visible = true
 			break
 		}
+
+		var notVisible bool
 
 		// Check whether status in conversation is explicitly relevant to timeline
 		// owner (i.e. includes mutals), or is explicitly invisible (i.e. blocked).
