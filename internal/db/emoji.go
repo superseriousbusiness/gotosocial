@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // EmojiAllDomains can be used as the `domain` value in a GetEmojis
@@ -47,10 +48,10 @@ type Emoji interface {
 	GetUseableEmojis(ctx context.Context) ([]*gtsmodel.Emoji, error)
 
 	// GetEmojis fetches all emojis with IDs less than 'maxID', up to a maximum of 'limit' emojis.
-	GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
+	GetEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error)
 
 	// GetRemoteEmojis fetches all remote emojis with IDs less than 'maxID', up to a maximum of 'limit' emojis.
-	GetRemoteEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error)
+	GetRemoteEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error)
 
 	// GetCachedEmojisOlderThan fetches all cached remote emojis with 'updated_at' greater than 'olderThan', up to a maximum of 'limit' emojis.
 	GetCachedEmojisOlderThan(ctx context.Context, olderThan time.Time, limit int) ([]*gtsmodel.Emoji, error)

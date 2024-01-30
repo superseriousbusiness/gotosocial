@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
@@ -232,7 +233,10 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	return err
 }
 
-func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
+func (m *mediaDB) GetAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
+	maxID := page.GetMax()
+	limit := page.GetLimit()
+
 	attachmentIDs := make([]string, 0, limit)
 
 	q := m.db.NewSelect().
@@ -255,7 +259,10 @@ func (m *mediaDB) GetAttachments(ctx context.Context, maxID string, limit int) (
 	return m.GetAttachmentsByIDs(ctx, attachmentIDs)
 }
 
-func (m *mediaDB) GetRemoteAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error) {
+func (m *mediaDB) GetRemoteAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error) {
+	maxID := page.GetMax()
+	limit := page.GetLimit()
+
 	attachmentIDs := make([]string, 0, limit)
 
 	q := m.db.NewSelect().

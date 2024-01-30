@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -128,23 +129,30 @@ func (m *Media) PruneOrphaned(ctx context.Context) (int, error) {
 func (m *Media) PruneUnused(ctx context.Context) (int, error) {
 	var (
 		total int
-		maxID string
+		page  paging.Page
 	)
 
+	// Set page select limit.
+	page.Limit = selectLimit
+
 	for {
-		// Fetch the next batch of media attachments up to next max ID.
-		attachments, err := m.state.DB.GetAttachments(ctx, maxID, selectLimit)
+		// Fetch the next batch of media attachments to next maxID.
+		attachments, err := m.state.DB.GetAttachments(ctx, &page)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return total, gtserror.Newf("error getting attachments: %w", err)
 		}
 
-		if len(attachments) == 0 {
-			// reached end.
+		// Get current max ID.
+		maxID := page.Max.Value
+
+		// If no attachments or the same group is returned, we reached the end.
+		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
 			break
 		}
 
 		// Use last ID as the next 'maxID' value.
 		maxID = attachments[len(attachments)-1].ID
+		page.Max = paging.MaxID(maxID)
 
 		for _, media := range attachments {
 			// Check / prune unused media attachment.
@@ -183,8 +191,9 @@ func (m *Media) UncacheRemote(ctx context.Context, olderThan time.Time) (int, er
 			return total, gtserror.Newf("error getting remote attachments: %w", err)
 		}
 
-		if len(attachments) == 0 {
-			// reached end.
+		// If no attachments / same group is returned, we reached the end.
+		if len(attachments) == 0 ||
+			olderThan.Equal(attachments[len(attachments)-1].CreatedAt) {
 			break
 		}
 
@@ -215,23 +224,29 @@ func (m *Media) UncacheRemote(ctx context.Context, olderThan time.Time) (int, er
 func (m *Media) FixCacheStates(ctx context.Context) (int, error) {
 	var (
 		total int
-		maxID string
+		page  paging.Page
 	)
+
+	// Set page select limit.
+	page.Limit = selectLimit
 
 	for {
 		// Fetch the next batch of media attachments up to next max ID.
-		attachments, err := m.state.DB.GetRemoteAttachments(ctx, maxID, selectLimit)
+		attachments, err := m.state.DB.GetRemoteAttachments(ctx, &page)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return total, gtserror.Newf("error getting remote attachments: %w", err)
 		}
+		// Get current max ID.
+		maxID := page.Max.Value
 
-		if len(attachments) == 0 {
-			// reached end.
+		// If no attachments or the same group is returned, we reached the end.
+		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
 			break
 		}
 
 		// Use last ID as the next 'maxID' value.
 		maxID = attachments[len(attachments)-1].ID
+		page.Max = paging.MaxID(maxID)
 
 		for _, media := range attachments {
 			// Check / fix required media cache states.

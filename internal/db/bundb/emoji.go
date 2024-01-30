@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
@@ -326,8 +327,11 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 	return e.GetEmojisByIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
-	var emojiIDs []string
+func (e *emojiDB) GetEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error) {
+	maxID := page.GetMax()
+	limit := page.GetLimit()
+
+	emojiIDs := make([]string, 0, limit)
 
 	q := e.db.NewSelect().
 		Table("emojis").
@@ -349,8 +353,11 @@ func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gt
 	return e.GetEmojisByIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetRemoteEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
-	var emojiIDs []string
+func (e *emojiDB) GetRemoteEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error) {
+	maxID := page.GetMax()
+	limit := page.GetLimit()
+
+	emojiIDs := make([]string, 0, limit)
 
 	q := e.db.NewSelect().
 		Table("emojis").

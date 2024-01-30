@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Media contains functions related to creating/getting/removing media attachments.
@@ -42,10 +43,10 @@ type Media interface {
 	DeleteAttachment(ctx context.Context, id string) error
 
 	// GetAttachments fetches media attachments up to a given max ID, and at most limit.
-	GetAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error)
+	GetAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error)
 
 	// GetRemoteAttachments fetches media attachments with a non-empty domain, up to a given max ID, and at most limit.
-	GetRemoteAttachments(ctx context.Context, maxID string, limit int) ([]*gtsmodel.MediaAttachment, error)
+	GetRemoteAttachments(ctx context.Context, page *paging.Page) ([]*gtsmodel.MediaAttachment, error)
 
 	// GetCachedAttachmentsOlderThan gets limit n remote attachments (including avatars and headers) older than
 	// the given time. These will be returned in order of attachment.created_at descending (i.e. newest to oldest).
