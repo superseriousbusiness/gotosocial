@@ -20,15 +20,18 @@
 package metrics
 
 import (
+	"context"
 	"errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/technologize/otel-go-contrib/otelginmetrics"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/extra/bunotel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/prometheus"
+	"go.opentelemetry.io/otel/metric"
 	sdk "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
@@ -38,7 +41,8 @@ const (
 	serviceName = "GoToSocial"
 )
 
-func Initialize() error {
+func Initialize(db db.DB) error {
+
 	if !config.GetMetricsEnabled() {
 		return nil
 	}
@@ -54,6 +58,7 @@ func Initialize() error {
 		resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceName(serviceName),
+			semconv.ServiceVersion(config.GetSoftwareVersion()),
 		),
 	)
 
@@ -66,7 +71,63 @@ func Initialize() error {
 		sdk.WithResource(r),
 		sdk.WithReader(prometheusExporter),
 	)
+
 	otel.SetMeterProvider(meterProvider)
+
+	meter := meterProvider.Meter(serviceName)
+
+	thisInstance := config.GetHost()
+
+	_, err = meter.Int64ObservableGauge(
+		"gotosocial.instance.total_users",
+		metric.WithDescription("Total number of users on this instance"),
+		metric.WithInt64Callback(func(c context.Context, o metric.Int64Observer) error {
+			userCount, err := db.CountInstanceUsers(c, thisInstance)
+			if err != nil {
+				return err
+			}
+			o.Observe(int64(userCount))
+			return nil
+		}),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = meter.Int64ObservableGauge(
+		"gotosocial.instance.total_statuses",
+		metric.WithDescription("Total number of statuses on this instance"),
+		metric.WithInt64Callback(func(c context.Context, o metric.Int64Observer) error {
+			statusCount, err := db.CountInstanceStatuses(c, thisInstance)
+			if err != nil {
+				return err
+			}
+			o.Observe(int64(statusCount))
+			return nil
+		}),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = meter.Int64ObservableGauge(
+		"gotosocial.instance.total_federating_instances",
+		metric.WithDescription("Total number of other instances this instance is federating with"),
+		metric.WithInt64Callback(func(c context.Context, o metric.Int64Observer) error {
+			federatingCount, err := db.CountInstanceDomains(c, thisInstance)
+			if err != nil {
+				return err
+			}
+			o.Observe(int64(federatingCount))
+			return nil
+		}),
+	)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

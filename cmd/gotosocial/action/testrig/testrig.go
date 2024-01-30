@@ -69,10 +69,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
 
-	if err := metrics.Initialize(); err != nil {
-		return fmt.Errorf("error initializing metrics: %w", err)
-	}
-
 	// Initialize caches and database
 	state.DB = testrig.NewTestDB(&state)
 
@@ -142,6 +138,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	processor := testrig.NewTestProcessor(&state, federator, emailSender, mediaManager)
+
+	// Initialize metrics.
+	if err := metrics.Initialize(state.DB); err != nil {
+		return fmt.Errorf("error initializing metrics: %w", err)
+	}
 
 	/*
 		HTTP router initialization

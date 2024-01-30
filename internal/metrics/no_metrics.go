@@ -24,10 +24,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/uptrace/bun"
 )
 
-func Initialize() error {
+func Initialize(db db.DB) error {
 	if config.GetMetricsEnabled() {
 		return errors.New("metrics was disabled at build time")
 	}

@@ -82,11 +82,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
 
-	// Initialize Metrics
-	if err := metrics.Initialize(); err != nil {
-		return fmt.Errorf("error initializing metrics: %w", err)
-	}
-
 	// Open connection to the database
 	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
@@ -216,6 +211,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Schedule tasks for all existing poll expiries.
 	if err := processor.Polls().ScheduleAll(ctx); err != nil {
 		return fmt.Errorf("error scheduling poll expiries: %w", err)
+	}
+
+	// Initialize metrics.
+	if err := metrics.Initialize(state.DB); err != nil {
+		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
 	/*
