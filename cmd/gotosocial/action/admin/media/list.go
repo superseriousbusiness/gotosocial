@@ -31,14 +31,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 type list struct {
 	dbService  db.DB
 	state      *state.State
-	maxID      string
-	limit      int
+	page       paging.Page
 	localOnly  bool
 	remoteOnly bool
 	out        *bufio.Writer
@@ -47,11 +47,25 @@ type list struct {
 // Get a list of attachment using a custom filter
 func (l *list) GetAllAttachmentPaths(ctx context.Context, filter func(*gtsmodel.MediaAttachment) string) ([]string, error) {
 	res := make([]string, 0, 100)
+
 	for {
-		attachments, err := l.dbService.GetAttachments(ctx, l.maxID, l.limit)
-		if err != nil {
+		// Get the next page of media attachments up to max ID.
+		attachments, err := l.dbService.GetAttachments(ctx, &l.page)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, fmt.Errorf("failed to retrieve media metadata from database: %w", err)
 		}
+
+		// Get current max ID.
+		maxID := l.page.Max.Value
+
+		// If no attachments or the same group is returned, we reached the end.
+		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
+			break
+		}
+
+		// Use last ID as the next 'maxID' value.
+		maxID = attachments[len(attachments)-1].ID
+		l.page.Max = paging.MaxID(maxID)
 
 		for _, a := range attachments {
 			v := filter(a)
@@ -59,19 +73,6 @@ func (l *list) GetAllAttachmentPaths(ctx context.Context, filter func(*gtsmodel.
 				res = append(res, v)
 			}
 		}
-
-		// If we got less results than our limit, we've reached the
-		// last page to retrieve and we can break the loop. If the
-		// last batch happens to contain exactly the same amount of
-		// items as the limit we'll end up doing one extra query.
-		if len(attachments) < l.limit {
-			break
-		}
-
-		// Grab the last ID from the batch and set it as the maxID
-		// that'll be used in the next iteration so we don't get items
-		// we've already seen.
-		l.maxID = attachments[len(attachments)-1].ID
 	}
 	return res, nil
 }
@@ -80,10 +81,23 @@ func (l *list) GetAllAttachmentPaths(ctx context.Context, filter func(*gtsmodel.
 func (l *list) GetAllEmojisPaths(ctx context.Context, filter func(*gtsmodel.Emoji) string) ([]string, error) {
 	res := make([]string, 0, 100)
 	for {
-		attachments, err := l.dbService.GetEmojis(ctx, l.maxID, l.limit)
+		// Get the next page of emoji media up to max ID.
+		attachments, err := l.dbService.GetEmojis(ctx, &l.page)
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve media metadata from database: %w", err)
 		}
+
+		// Get current max ID.
+		maxID := l.page.Max.Value
+
+		// If no attachments or the same group is returned, we reached the end.
+		if len(attachments) == 0 || maxID == attachments[len(attachments)-1].ID {
+			break
+		}
+
+		// Use last ID as the next 'maxID' value.
+		maxID = attachments[len(attachments)-1].ID
+		l.page.Max = paging.MaxID(maxID)
 
 		for _, a := range attachments {
 			v := filter(a)
@@ -91,19 +105,6 @@ func (l *list) GetAllEmojisPaths(ctx context.Context, filter func(*gtsmodel.Emoj
 				res = append(res, v)
 			}
 		}
-
-		// If we got less results than our limit, we've reached the
-		// last page to retrieve and we can break the loop. If the
-		// last batch happens to contain exactly the same amount of
-		// items as the limit we'll end up doing one extra query.
-		if len(attachments) < l.limit {
-			break
-		}
-
-		// Grab the last ID from the batch and set it as the maxID
-		// that'll be used in the next iteration so we don't get items
-		// we've already seen.
-		l.maxID = attachments[len(attachments)-1].ID
 	}
 	return res, nil
 }
@@ -137,8 +138,7 @@ func setupList(ctx context.Context) (*list, error) {
 	return &list{
 		dbService:  dbService,
 		state:      &state,
-		limit:      200,
-		maxID:      "",
+		page:       paging.Page{Limit: 200},
 		localOnly:  localOnly,
 		remoteOnly: remoteOnly,
 		out:        bufio.NewWriter(os.Stdout),
