@@ -27,12 +27,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/go-fed/httpsig"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
+	"github.com/superseriousbusiness/httpsig"
 )
 
 type FederatingProtocolTestSuite struct {

@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/go-fed/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/httpsig"
 )
 
 // package private context key type.
@@ -129,8 +129,8 @@ func SetOtherIRIs(ctx context.Context, iris []*url.URL) context.Context {
 
 // HTTPSignatureVerifier returns an http signature verifier for the current ActivityPub
 // request chain. This verifier can be called to authenticate the current request.
-func HTTPSignatureVerifier(ctx context.Context) httpsig.Verifier {
-	verifier, _ := ctx.Value(httpSigVerifierKey).(httpsig.Verifier)
+func HTTPSignatureVerifier(ctx context.Context) httpsig.VerifierWithOptions {
+	verifier, _ := ctx.Value(httpSigVerifierKey).(httpsig.VerifierWithOptions)
 	return verifier
 }
 
