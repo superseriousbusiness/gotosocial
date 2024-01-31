@@ -47,7 +47,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	github.com/superseriousbusiness/activity v1.4.0-gts
-	github.com/superseriousbusiness/httpsig v0.0.0-20240119150151-a22573ddf4e5
+	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.20.14
 	github.com/technologize/otel-go-contrib v1.1.0

@@ -160,7 +160,7 @@ type Signer interface {
 type SignerWithOptions interface {
 	Signer
 
-	// SignRequest signs the request using a private key. The public key id
+	// SignRequestWithOptions signs the request using a private key. The public key id
 	// is used by the HTTP server to identify which key to use to verify the
 	// signature.
 	//
@@ -176,7 +176,7 @@ type SignerWithOptions interface {
 	// HTTP Signature will then ensure both the Digest and body are not both
 	// modified to maliciously represent different content.
 	SignRequestWithOptions(pKey crypto.PrivateKey, pubKeyId string, r *http.Request, body []byte, opts SignatureOption) error
-	// SignResponse signs the response using a private key. The public key
+	// SignResponseWithOptions signs the response using a private key. The public key
 	// id is used by the HTTP client to identify which key to use to verify
 	// the signature.
 	//
