@@ -19,7 +19,6 @@ package dereferencing
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/url"
 
@@ -27,8 +26,6 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -101,144 +98,85 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 			return nil
 		}
 
-		// Add new log fields for this iteration.
-		l = l.WithFields(kv.Fields{
-			{"current", current.URI},
-			{"parent", current.InReplyToURI},
-		}...)
-		l.Trace("following status ancestors")
+		l = l.WithField("parent", current.InReplyToURI)
+		l.Trace("following status ancestor")
 
-		// Check whether this parent has already been deref'd.
-		if _, ok := derefdStatuses[current.InReplyToURI]; ok {
-			l.Warn("self referencing status ancestors")
+		// Parse status parent URI for later use.
+		uri, err := url.Parse(current.InReplyToURI)
+		if err != nil {
+			l.Warnf("invalid uri: %v", err)
 			return nil
 		}
 
-		// Add this status URI to map of deref'd.
-		derefdStatuses[current.URI] = struct{}{}
-
-		if current.InReplyToID != "" {
-			// We already have an InReplyToID set. This means
-			// the status's parent has, at some point, been
-			// inserted into the database, either because it
-			// is a status from our instance, or a status from
-			// remote that we've dereferenced before, or found
-			// out about in some other way.
-			//
-			// Working on this assumption, check if the parent
-			// status exists, either as a copy pinned on the
-			// current status, or in the database.
-
-			if current.InReplyTo != nil {
-				// We have the parent already, and the child
-				// doesn't need to be updated; keep iterating
-				// from this parent upwards.
-				current = current.InReplyTo
-				continue
-			}
-
-			// Parent isn't pinned to this status (yet), see
-			// if we can get it from the db (we should be
-			// able to, since it has an ID already).
-			parent, err := d.state.DB.GetStatusByID(
-				gtscontext.SetBarebones(ctx),
-				current.InReplyToID,
-			)
-			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				// Real db error, stop.
-				return gtserror.Newf("db error getting status %s: %w", current.InReplyToID, err)
-			}
-
-			if parent != nil {
-				// We got the parent from the db, and the child
-				// doesn't need to be updated; keep iterating
-				// from this parent upwards.
-				current.InReplyTo = parent
-				current = parent
-				continue
-			}
-
-			// If we arrive here, we know this child *did* have
-			// a parent at some point, but it no longer exists in
-			// the database, presumably because it's been deleted
-			// by another action.
-			//
-			// TODO: clean this up in a nightly task.
-			l.Warn("orphaned status (parent no longer exists)")
-			return nil // Cannot iterate further.
+		// Check whether this parent has already been deref'd.
+		if _, ok := derefdStatuses[current.InReplyToURI]; ok {
+			l.Warn("self referencing status ancestor")
+			return nil
 		}
 
-		// If we reach this point, we know the status has
-		// an InReplyToURI set, but it doesn't yet have an
-		// InReplyToID, which means that the parent status
-		// has not yet been dereferenced.
-		inReplyToURI, err := url.Parse(current.InReplyToURI)
-		if err != nil || inReplyToURI == nil {
-			// Parent URI is not something we can handle.
-			l.Warn("orphaned status (invalid InReplyToURI)")
-			return nil //nolint:nilerr
-		}
+		// Add this status's parent URI to map of deref'd.
+		derefdStatuses[current.InReplyToURI] = struct{}{}
 
-		// Parent URI is valid, try to get it.
-		// getStatusByURI guards against the following conditions:
-		//   - refetching recently fetched statuses (recursion!)
-		//   - remote domain is blocked (will return unretrievable)
-		//   - any http type error for a new status returns unretrievable
-		parent, _, _, err := d.getStatusByURI(ctx, username, inReplyToURI)
-		if err == nil {
-			// We successfully fetched the parent.
-			// Update current status with new info.
-			current.InReplyToID = parent.ID
-			current.InReplyToAccountID = parent.AccountID
-			if err := d.state.DB.UpdateStatus(
-				ctx, current,
+		// Fetch parent status by current's reply URI, this handles
+		// case of existing (updating if necessary) or a new status.
+		parent, _, _, err := d.getStatusByURI(ctx, username, uri)
+
+		// Check for a returned HTTP code via error.
+		switch code := gtserror.StatusCode(err); {
+
+		// Status codes 404 and 410 incicate the status does not exist anymore.
+		// Gone (410) is the preferred for deletion, but we accept NotFound too.
+		case code == http.StatusNotFound || code == http.StatusGone:
+			l.Trace("status orphaned")
+			current.InReplyToID = ""
+			current.InReplyToURI = ""
+			current.InReplyToAccountID = ""
+			current.InReplyTo = nil
+			current.InReplyToAccount = nil
+			if err := d.state.DB.UpdateStatus(ctx,
+				current,
 				"in_reply_to_id",
+				"in_reply_to_uri",
 				"in_reply_to_account_id",
 			); err != nil {
 				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
 			}
+			return nil
 
-			// Mark parent as next status to
-			// work on, and keep iterating.
-			current = parent
-			continue
-		}
+		// An error was returned for a status during
+		// an attempted NEW dereference, return here.
+		case err != nil && current.InReplyToID == "":
+			return gtserror.Newf("error dereferencing new %s: %w", current.InReplyToURI, err)
 
-		// We could not fetch the parent, check if we can do anything
-		// useful with the error. For example, HTTP status code returned
-		// from remote may indicate that the parent has been deleted.
-		switch code := gtserror.StatusCode(err); {
-		case code == http.StatusGone:
-			// 410 means the status has definitely been deleted.
-			// Update this status to reflect that, then bail.
-			l.Debug("orphaned status: parent returned 410 Gone")
+		// An error was returned for an existing parent,
+		// we simply treat this as a temporary situation.
+		// (we fallback to using existing parent status).
+		case err != nil:
+			l.Errorf("error getting parent: %v", err)
 
-			current.InReplyToURI = ""
-			if err := d.state.DB.UpdateStatus(
-				ctx, current,
+		// The ID has changed for currently stored parent ID
+		// (which may be empty, if new!) and fetched version.
+		//
+		// Update the current's inReplyTo fields to parent.
+		case current.InReplyToID != parent.ID:
+			l.Tracef("parent changed %s => %s", current.InReplyToID, parent.ID)
+			current.InReplyToAccountID = parent.AccountID
+			current.InReplyToAccount = parent.Account
+			current.InReplyToURI = parent.URI
+			current.InReplyToID = parent.ID
+			if err := d.state.DB.UpdateStatus(ctx,
+				current,
+				"in_reply_to_id",
 				"in_reply_to_uri",
+				"in_reply_to_account_id",
 			); err != nil {
 				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
 			}
-
-			return nil
-
-		case code != 0:
-			// We had a code, but not one indicating deletion, log the code
-			// but don't return error or update the status; we can try again later.
-			l.Warnf("orphaned status: http error dereferencing parent: %v)", err)
-			return nil
-
-		case gtserror.IsUnretrievable(err):
-			// Not retrievable for some other reason, so just
-			// bail for now; we can try again later if necessary.
-			l.Warnf("orphaned status: parent unretrievable: %v)", err)
-			return nil
-
-		default:
-			// Some other error that stops us in our tracks.
-			return gtserror.Newf("error dereferencing parent %s: %w", current.InReplyToURI, err)
 		}
+
+		// Set next parent to use.
+		current.InReplyTo = parent
+		current = current.InReplyTo
 	}
 
 	return gtserror.Newf("reached %d ancestor iterations for %q", maxIter, status.URI)
@@ -336,7 +274,7 @@ stackLoop:
 					break itemLoop
 				}
 
-				// Check for available IRI on item
+				// Check for available IRI.
 				itemIRI, _ := pub.ToId(next)
 				if itemIRI == nil {
 					continue itemLoop
@@ -354,9 +292,7 @@ stackLoop:
 				//   - any http type error for a new status returns unretrievable
 				_, statusable, _, err := d.getStatusByURI(ctx, username, itemIRI)
 				if err != nil {
-					if !gtserror.IsUnretrievable(err) {
-						l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
-					}
+					l.Errorf("error dereferencing remote status %s: %v", itemIRI, err)
 					continue itemLoop
 				}
 

@@ -41,7 +41,7 @@ import (
 // statusUpToDate returns whether the given status model is both updateable
 // (i.e. remote status) and whether it needs an update based on `fetched_at`.
 func statusUpToDate(status *gtsmodel.Status, force bool) bool {
-	if *status.Local {
+	if status.Local != nil && *status.Local {
 		// Can't update local statuses.
 		return true
 	}
@@ -69,16 +69,24 @@ func statusUpToDate(status *gtsmodel.Status, force bool) bool {
 // is beyond a certain interval, the status will be dereferenced. In the case of dereferencing, some low-priority status information may be enqueued for asynchronous fetching,
 // e.g. dereferencing the status thread. Param 'syncParent' = true indicates to fetch status ancestors synchronously. An ActivityPub object indicates the status was dereferenced.
 func (d *Dereferencer) GetStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, error) {
-	// Fetch and dereference status if necessary.
+
+	// Fetch and dereference / update status if necessary.
 	status, statusable, isNew, err := d.getStatusByURI(ctx,
 		requestUser,
 		uri,
 	)
-	if err != nil {
-		return nil, nil, err
-	}
 
-	if statusable != nil {
+	if err != nil {
+		if status == nil {
+			// err with no existing
+			// status for fallback.
+			return nil, nil, err
+		}
+
+		log.Errorf(ctx, "error updating status %s: %v", uri, err)
+
+	} else if statusable != nil {
+
 		// Deref parents + children.
 		d.dereferenceThread(ctx,
 			requestUser,
@@ -92,7 +100,7 @@ func (d *Dereferencer) GetStatusByURI(ctx context.Context, requestUser string, u
 	return status, statusable, nil
 }
 
-// getStatusByURI is a package internal form of .GetStatusByURI() that doesn't bother dereferencing the whole thread on update.
+// getStatusByURI is a package internal form of .GetStatusByURI() that doesn't dereference thread on update, and may return an existing status with error on failed re-fetch.
 func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	var (
 		status *gtsmodel.Status
@@ -100,8 +108,9 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 		err    error
 	)
 
-	// Search the database for existing status with URI.
+	// Search the database for existing by URI.
 	status, err = d.state.DB.GetStatusByURI(
+
 		// request a barebones object, it may be in the
 		// db but with related models not yet dereferenced.
 		gtscontext.SetBarebones(ctx),
@@ -112,7 +121,7 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 	}
 
 	if status == nil {
-		// Else, search the database for existing by URL.
+		// Else, search database for existing by URL.
 		status, err = d.state.DB.GetStatusByURL(
 			gtscontext.SetBarebones(ctx),
 			uriStr,
@@ -123,14 +132,16 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 	}
 
 	if status == nil {
-		// Ensure that this isn't a search for a local status.
-		if uri.Host == config.GetHost() || uri.Host == config.GetAccountDomain() {
-			return nil, nil, false, gtserror.SetUnretrievable(err) // this will be db.ErrNoEntries
+		// Ensure not a failed search for a local
+		// status, if so we know it doesn't exist.
+		if uri.Host == config.GetHost() ||
+			uri.Host == config.GetAccountDomain() {
+			return nil, nil, false, gtserror.SetUnretrievable(err)
 		}
 
 		// Create and pass-through a new bare-bones model for deref.
 		return d.enrichStatusSafely(ctx, requestUser, uri, &gtsmodel.Status{
-			Local: func() *bool { var false bool; return &false }(),
+			Local: util.Ptr(false),
 			URI:   uriStr,
 		}, nil)
 	}
@@ -145,21 +156,22 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 		return status, nil, false, nil
 	}
 
-	// Try to update + deref existing status model.
+	// Try to deref and update existing status model.
 	latest, statusable, isNew, err := d.enrichStatusSafely(ctx,
 		requestUser,
 		uri,
 		status,
 		nil,
 	)
-	if err != nil {
-		log.Errorf(ctx, "error enriching remote status: %v", err)
 
-		// Fallback to existing status.
-		return status, nil, false, nil
+	if err != nil {
+		// fallback to the
+		// existing status.
+		latest = status
+		statusable = nil
 	}
 
-	return latest, statusable, isNew, nil
+	return latest, statusable, isNew, err
 }
 
 // RefreshStatus is functionally equivalent to GetStatusByURI(), except that it requires a pre
@@ -294,12 +306,7 @@ func (d *Dereferencer) enrichStatusSafely(
 		apubStatus,
 	)
 
-	if code := gtserror.StatusCode(err); code >= 400 {
-		// No matter what, log the error
-		// so instance admins have an idea
-		// why something isn't working.
-		log.Info(ctx, err)
-
+	if gtserror.StatusCode(err) >= 400 {
 		if isNew {
 			// This was a new status enrich
 			// attempt which failed before we
@@ -316,7 +323,7 @@ func (d *Dereferencer) enrichStatusSafely(
 		// return the model we had stored already.
 		status.FetchedAt = time.Now()
 		if err := d.state.DB.UpdateStatus(ctx, status, "fetched_at"); err != nil {
-			log.Errorf(ctx, "error updating status fetched_at: %v", err)
+			log.Error(ctx, "error updating %s fetched_at: %v", uriStr, err)
 		}
 	}
 
@@ -408,19 +415,21 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
 
-	// Check if we've previously
-	// stored this status in the DB.
-	// If we have, it'll be ID'd.
-	var isNew = (status.ID == "")
-	if isNew {
-		// No ID, we haven't stored this status before.
-		// Generate new status ID from the status publication time.
+	// Based on the original provided
+	// status model, determine whether
+	// this is a new insert / update.
+	var isNew bool
+
+	if isNew = (status.ID == ""); isNew {
+
+		// Generate new status ID from the provided creation date.
 		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
 		if err != nil {
 			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
 			latestStatus.ID = id.NewULID() // just use "now"
 		}
 	} else {
+
 		// Reuse existing status ID.
 		latestStatus.ID = status.ID
 	}
