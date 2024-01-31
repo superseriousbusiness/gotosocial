@@ -146,6 +146,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "")
 	suite.NoError(err)
 	suite.Equal("https://mastodon.social/inbox", *acct.SharedInboxURI)
+	suite.Equal(int64(1458086400), acct.CreatedAt.Unix())
 }
 
 func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
@@ -631,7 +632,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 
 	// Clear caches.
 	suite.state.Caches.GTS = cache.GTSCaches{}
-	suite.state.Caches.GTS.Init()
+	suite.state.Caches.Init()
 
 	dbAcct, err = suite.db.GetAccountByID(ctx, acct.ID)
 	if err != nil {

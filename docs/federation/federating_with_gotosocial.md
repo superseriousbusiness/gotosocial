@@ -10,7 +10,7 @@ GoToSocial will also sign all outgoing `GET` and `POST` requests that it makes t
 
 This behavior is the equivalent of Mastodon's [AUTHORIZED_FETCH / "secure mode"](https://docs.joinmastodon.org/admin/config/#authorized_fetch).
 
-GoToSocial uses the [superseriousbusiness/httpsig](https://github.com/superseriousbusiness/httpsig) library for signing outgoing requests, and for parsing and validating the signatures of incoming requests. This library strictly follows the [Cavage http signature RFC](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures), which is the same RFC used by other implementations like Mastodon, Pixelfed, Akkoma/Pleroma, etc. (This RFC has since been superceded by the [httpbis http signature RFC](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-message-signatures), but this is not yet widely implemented.)
+GoToSocial uses the [superseriousbusiness/httpsig](https://github.com/superseriousbusiness/httpsign) library (forked from go-fed) for signing outgoing requests, and for parsing and validating the signatures of incoming requests. This library strictly follows the [Cavage http signature RFC](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12), which is the same RFC used by other implementations like Mastodon, Pixelfed, Akkoma/Pleroma, etc. (This RFC has since been superceded by the [httpbis http signature RFC](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-message-signatures), but this is not yet widely implemented.)
 
 ### Incoming Requests
 
@@ -91,6 +91,32 @@ GoToSocial applies http request throttling and rate limiting to the ActivityPub 
 This ensures that remote servers cannot flood a GoToSocial instance with spurious requests. Instead, remote servers making GET or POST requests to the ActivityPub API endpoints should respect 429 and 503 http codes, and take account of the `retry-after` http response header.
 
 For more details on request throttling and rate limiting behavior, please see the [throttling](../api/throttling.md) and [rate limiting](../api/ratelimiting.md) documents.
+
+## Inbox
+
+GoToSocial implements Inboxes for Actors following the ActivityPub specification [here](https://www.w3.org/TR/activitypub/#inbox).
+
+Remote servers should deliver Activities to a GoToSocial server by making an HTTP POST request to each Inbox of the desired audience of an Activity, as described [here](https://www.w3.org/TR/activitypub/#delivery).
+
+GoToSocial accounts do not currently implement a [sharedInbox](https://www.w3.org/TR/activitypub/#shared-inbox-delivery) endpoint, though this is subject to change. Deduplication of delivered Activities, in case more than one Actor on a GoToSocial server is in the audience for an Activity, is handled on GoToSocial's side.
+
+POSTs to a GoToSocial Actor's inbox must be appropriately [http-signed](#http-signatures) by the delivering Actor.
+
+Accepted Inbox POST `Content-Type` headers are:
+
+- `application/activity+json`
+- `application/activity+json; charset=utf-8`
+- `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
+
+Inbox POST requests that do not use one of the above `Content-Type` headers will be rejected with HTTP status code [406 - Not Acceptable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/406).
+
+For more information on acceptable content types, see [the server-to-server interactions](https://www.w3.org/TR/activitypub/#server-to-server-interactions) section of the ActivityPub protocol.
+
+GoToSocial will return HTTP status code [202 - Accepted](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/202) in response to validly-formed and signed Inbox POST requests.
+
+Invalidly-formed Inbox POST requests will receive a [400 - Bad Request](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400) HTTP status code in response. The response body may contain more information on why the GoToSocial server considered the request content to be badly formed. Other servers should not retry delivery of the Activity in case of a code `400` response.
+
+Even if GoToSocial returns a `202` status code, it may not continue processing the Activity delivered, depending on the originator(s), target(s) and type of the Activity. ActivityPub is an extensive protocol, and GoToSocial does not cover every combination of Activity and Object.
 
 ## Outbox
 

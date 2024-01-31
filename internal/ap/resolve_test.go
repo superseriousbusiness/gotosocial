@@ -47,6 +47,29 @@ func (suite *ResolveTestSuite) TestResolveDocumentAsAccountable() {
 	suite.Nil(accountable)
 }
 
+func (suite *ResolveTestSuite) TestResolveHTMLAsAccountable() {
+	b := []byte(`<!DOCTYPE html>
+	<title>.</title>`)
+
+	accountable, err := ap.ResolveAccountable(context.Background(), b)
+	suite.True(gtserror.IsWrongType(err))
+	suite.EqualError(err, "ResolveAccountable: error unmarshalling bytes into json: invalid character '<' looking for beginning of value")
+	suite.Nil(accountable)
+}
+
+func (suite *ResolveTestSuite) TestResolveNonAPJSONAsAccountable() {
+	b := []byte(`{
+  "@context": "definitely a legit context muy lord",
+  "type": "definitely an account muy lord",
+  "pee pee":"poo poo"
+}`)
+
+	accountable, err := ap.ResolveAccountable(context.Background(), b)
+	suite.True(gtserror.IsWrongType(err))
+	suite.EqualError(err, "ResolveAccountable: error resolving json into ap vocab type: activity stream did not match any known types")
+	suite.Nil(accountable)
+}
+
 func TestResolveTestSuite(t *testing.T) {
 	suite.Run(t, &ResolveTestSuite{})
 }

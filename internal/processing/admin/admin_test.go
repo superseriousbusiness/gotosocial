@@ -62,6 +62,7 @@ type AdminStandardTestSuite struct {
 	testFollows      map[string]*gtsmodel.Follow
 	testAttachments  map[string]*gtsmodel.MediaAttachment
 	testStatuses     map[string]*gtsmodel.Status
+	testEmojis       map[string]*gtsmodel.Emoji
 
 	// module being tested
 	adminProcessor *admin.Processor
@@ -76,6 +77,7 @@ func (suite *AdminStandardTestSuite) SetupSuite() {
 	suite.testFollows = testrig.NewTestFollows()
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testEmojis = testrig.NewTestEmojis()
 }
 
 func (suite *AdminStandardTestSuite) SetupTest() {

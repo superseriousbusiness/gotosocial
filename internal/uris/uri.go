@@ -248,6 +248,11 @@ func IsUserPath(id *url.URL) bool {
 	return regexes.UserPath.MatchString(id.Path)
 }
 
+// IsUserWebPath returns true if the given URL path corresponds to eg /@example_username
+func IsUserWebPath(id *url.URL) bool {
+	return regexes.UserWebPath.MatchString(id.Path)
+}
+
 // IsInboxPath returns true if the given URL path corresponds to eg /users/example_username/inbox
 func IsInboxPath(id *url.URL) bool {
 	return regexes.InboxPath.MatchString(id.Path)
@@ -318,6 +323,17 @@ func ParseStatusesPath(id *url.URL) (username string, ulid string, err error) {
 // ParseUserPath returns the username from a path such as /users/example_username
 func ParseUserPath(id *url.URL) (username string, err error) {
 	matches := regexes.UserPath.FindStringSubmatch(id.Path)
+	if len(matches) != 2 {
+		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
+		return
+	}
+	username = matches[1]
+	return
+}
+
+// ParseUserPath returns the username from a path such as /@example_username
+func ParseUserWebPath(id *url.URL) (username string, err error) {
+	matches := regexes.UserWebPath.FindStringSubmatch(id.Path)
 	if len(matches) != 2 {
 		err = fmt.Errorf("expected 2 matches but matches length was %d", len(matches))
 		return

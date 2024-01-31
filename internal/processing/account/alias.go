@@ -96,26 +96,21 @@ func (p *Processor) Alias(
 		newAKAs[i].str = newAKAURI.String()
 	}
 
-	// Dedupe the URI/string pairs.
-	newAKAs = util.DeduplicateFunc(
-		newAKAs,
-		func(v uri) string {
-			return v.str
-		},
-	)
-
 	// For each deduped entry, get and
 	// check the target account, and set.
 	for _, newAKA := range newAKAs {
 		// Don't let account do anything
 		// daft by aliasing to itself.
-		if newAKA.str == account.URI {
+		if newAKA.str == account.URI ||
+			newAKA.str == account.URL {
 			continue
 		}
 
-		// Ensure we have a valid, up-to-date
-		// representation of the target account.
-		targetAccount, _, err := p.federator.GetAccountByURI(ctx, account.Username, newAKA.uri)
+		// Ensure we have account dereferenced.
+		targetAccount, _, err := p.federator.GetAccountByURI(ctx,
+			account.Username,
+			newAKA.uri,
+		)
 		if err != nil {
 			err := fmt.Errorf(
 				"error dereferencing also_known_as_uri (%s) account: %w",
@@ -124,7 +119,7 @@ func (p *Processor) Alias(
 			return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 		}
 
-		// Alias target must not be suspended.
+		// Target must not be suspended.
 		if !targetAccount.SuspendedAt.IsZero() {
 			err := fmt.Errorf(
 				"target account %s is suspended from this instance; "+
@@ -135,9 +130,20 @@ func (p *Processor) Alias(
 		}
 
 		// Alrighty-roo, looks good, add this one.
-		account.AlsoKnownAsURIs = append(account.AlsoKnownAsURIs, newAKA.str)
+		account.AlsoKnownAsURIs = append(account.AlsoKnownAsURIs, targetAccount.URI)
 		account.AlsoKnownAs = append(account.AlsoKnownAs, targetAccount)
 	}
+
+	// Dedupe URIs + accounts, in case someone
+	// provided both an account URL and an
+	// account URI above, for the same account.
+	account.AlsoKnownAsURIs = util.Deduplicate(account.AlsoKnownAsURIs)
+	account.AlsoKnownAs = util.DeduplicateFunc(
+		account.AlsoKnownAs,
+		func(a *gtsmodel.Account) string {
+			return a.URI
+		},
+	)
 
 	err := p.state.DB.UpdateAccount(ctx, account, "also_known_as_uris")
 	if err != nil {

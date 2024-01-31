@@ -339,7 +339,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableLocalEmoji() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: emojiUpdateDisable: emoji 01F8MH9H8E4VG3KDYJR9EGPXCQ is not a remote emoji, cannot disable it via this endpoint"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: emoji 01F8MH9H8E4VG3KDYJR9EGPXCQ is not a remote emoji, cannot disable it via this endpoint"}`, string(b))
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyRemoteEmoji() {
@@ -372,7 +372,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyRemoteEmoji() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: emojiUpdateModify: emoji 01GD5KP5CQEE1R3X43Y1EHS2CW is not a local emoji, cannot do a modify action on it"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: emoji 01GD5KP5CQEE1R3X43Y1EHS2CW is not a local emoji, cannot update it via this endpoint"}`, string(b))
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyNoParams() {
@@ -439,7 +439,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyLocalToLocal() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: emojiUpdateCopy: emoji 01F8MH9H8E4VG3KDYJR9EGPXCQ is not a remote emoji, cannot copy it to local"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: emoji 01F8MH9H8E4VG3KDYJR9EGPXCQ is not a remote emoji, cannot copy it to local"}`, string(b))
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyEmptyShortcode() {
@@ -540,7 +540,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyShortcodeAlreadyInUse() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Conflict: emojiUpdateCopy: emoji 01GD5KP5CQEE1R3X43Y1EHS2CW could not be copied, emoji with shortcode rainbow already exists on this instance"}`, string(b))
+	suite.Equal(`{"error":"Conflict: emoji with shortcode rainbow already exists on this instance"}`, string(b))
 }
 
 func TestEmojiUpdateTestSuite(t *testing.T) {

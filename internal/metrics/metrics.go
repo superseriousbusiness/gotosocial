@@ -31,7 +31,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	sdk "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
 const (

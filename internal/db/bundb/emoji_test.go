@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -158,6 +159,16 @@ func (suite *EmojiTestSuite) TestGetEmojiCategory() {
 	category, err := suite.db.GetEmojiCategory(context.Background(), testrig.NewTestEmojiCategories()["reactions"].ID)
 	suite.NoError(err)
 	suite.NotNil(category)
+}
+
+func (suite *EmojiTestSuite) TestUpdateEmojiCategory() {
+	testEmoji := new(gtsmodel.Emoji)
+	*testEmoji = *suite.testEmojis["rainbow"]
+
+	testEmoji.CategoryID = ""
+
+	err := suite.db.UpdateEmoji(context.Background(), testEmoji, "category_id")
+	suite.NoError(err)
 }
 
 func TestEmojiTestSuite(t *testing.T) {

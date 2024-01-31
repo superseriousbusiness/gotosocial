@@ -17,6 +17,8 @@
 
 package util
 
+import "slices"
+
 // Deduplicate deduplicates entries in the given slice.
 func Deduplicate[T comparable](in []T) []T {
 	var (
@@ -47,6 +49,10 @@ func DeduplicateFunc[T any, C comparable](in []T, key func(v T) C) []T {
 		deduped = make([]T, 0, inL)
 	)
 
+	if key == nil {
+		panic("nil func")
+	}
+
 	for _, v := range in {
 		k := key(v)
 
@@ -66,6 +72,10 @@ func DeduplicateFunc[T any, C comparable](in []T, key func(v T) C) []T {
 // passing each item to 'get' and deduplicating the end result.
 // Compared to Deduplicate() this returns []K, NOT input type []T.
 func Collate[T any, K comparable](in []T, get func(T) K) []K {
+	if get == nil {
+		panic("nil func")
+	}
+
 	ks := make([]K, 0, len(in))
 	km := make(map[K]struct{}, len(in))
 
@@ -86,50 +96,25 @@ func Collate[T any, K comparable](in []T, get func(T) K) []K {
 
 // OrderBy orders a slice of given type by the provided alternative slice of comparable type.
 func OrderBy[T any, K comparable](in []T, keys []K, key func(T) K) {
-	var (
-		start  int
-		offset int
-	)
-
-	for i := 0; i < len(keys); i++ {
-		var (
-			// key at index.
-			k = keys[i]
-
-			// sentinel
-			// idx value.
-			idx = -1
-		)
-
-		// Look for model with key in slice.
-		for j := start; j < len(in); j++ {
-			if key(in[j]) == k {
-				idx = j
-				break
-			}
-		}
-
-		if idx == -1 {
-			// model with key
-			// was not found.
-			offset++
-			continue
-		}
-
-		// Update
-		// start
-		start++
-
-		// Expected ID index.
-		exp := i - offset
-
-		if idx == exp {
-			// Model is in expected
-			// location, keep going.
-			continue
-		}
-
-		// Swap models at current and expected.
-		in[idx], in[exp] = in[exp], in[idx]
+	if key == nil {
+		panic("nil func")
 	}
+
+	// Create lookup of keys->idx.
+	m := make(map[K]int, len(in))
+	for i, k := range keys {
+		m[k] = i
+	}
+
+	// Sort according to the reverse lookup.
+	slices.SortFunc(in, func(a, b T) int {
+		ai := m[key(a)]
+		bi := m[key(b)]
+		if ai < bi {
+			return -1
+		} else if bi < ai {
+			return +1
+		}
+		return 0
+	})
 }

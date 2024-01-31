@@ -83,6 +83,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	testrig.StandardDBSetup(state.DB, nil)
 
+	// Get the instance account
+	// (we'll need this later).
+	instanceAccount, err := state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return fmt.Errorf("error retrieving instance account: %w", err)
+	}
+
 	if os.Getenv("GTS_STORAGE_BACKEND") == "s3" {
 		var err error
 		state.Storage, err = storage.NewS3Storage()
@@ -225,6 +232,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	clientModule.Route(router)
 	metricsModule.Route(router)
 	fileserverModule.Route(router)
+	fileserverModule.RouteEmojis(router, instanceAccount.ID)
 	wellKnownModule.Route(router)
 	nodeInfoModule.Route(router)
 	activityPubModule.Route(router)

@@ -61,7 +61,7 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		}
 
 		for _, emoji := range emojis {
-			if emoji.Domain == "" {
+			if emoji.IsLocal() {
 				// never try to refetch local emojis
 				continue
 			}

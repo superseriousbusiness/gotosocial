@@ -100,7 +100,7 @@ Though most apps that implement the Mastodon API should work, GoToSocial works r
 
 * [Tusky](https://tusky.app/) for Android
 * [Semaphore](https://semaphore.social/) in the browser
-* [Feditext](https://fedi.software/@Feditext) (beta) on iOS, iPadOS and macOS
+* [Feditext](https://github.com/feditext/feditext) (beta) on iOS, iPadOS and macOS
 
 If you've used Mastodon with any of these apps before, you'll find using GoToSocial a breeze.
 
@@ -135,7 +135,7 @@ GoToSocial plays nice with lower-powered machines like Raspberry Pi, old laptops
 - Built-in, automatic support for secure HTTPS with [Let's Encrypt](https://letsencrypt.org/).
 - Strict privacy enforcement for posts and strict blocking logic.
 - Import and export allow lists and deny lists. Subscribe to community-created block lists (think Ad blocker, but for federation!).
-- HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://tools.ietf.org/id/draft-cavage-http-signatures-01.html) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
+- HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
 
 ### Various federation modes
 
@@ -274,15 +274,16 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
 - [go-swagger/go-swagger](https://github.com/go-swagger/go-swagger); Swagger OpenAPI spec generation. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - gruf:
   - [gruf/go-bytesize](https://codeberg.org/gruf/go-bytesize); byte size parsing / formatting. [MIT License](https://spdx.org/licenses/MIT.html).
-  - [gruf/go-cache](https://codeberg.org/gruf/go-cache); object & result caching. [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-cache](https://codeberg.org/gruf/go-cache); LRU and TTL caches. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-debug](https://codeberg.org/gruf/go-debug); debug build tag. [MIT License](https://spdx.org/licenses/MIT.html).
-  - [gruf/go-errors](https://codeberg.org/gruf/go-errors); performant multi-error checking [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-errors](https://codeberg.org/gruf/go-errors); context-like error w/ value wrapping  [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-fastcopy](https://codeberg.org/gruf/go-fastcopy); performant pooled I/O copying [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-kv](https://codeberg.org/gruf/go-kv); log field formatting. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); safemutex & mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-runners](https://codeberg.org/gruf/go-runners); workerpools and synchronization. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-sched](https://codeberg.org/gruf/go-sched); task scheduler. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-store](https://codeberg.org/gruf/go-store); file storage backend (local & s3). [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-structr](https://codeberg.org/gruf/go-structr); struct caching w/ automated multiple indexing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [h2non/filetype](https://github.com/h2non/filetype); filetype checking. [MIT License](https://spdx.org/licenses/MIT.html).
 - jackc:
   - [jackc/pgx](https://github.com/jackc/pgconn); Postgres driver. [MIT License](https://spdx.org/licenses/MIT.html).

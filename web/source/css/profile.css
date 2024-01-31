@@ -244,6 +244,10 @@
 			flex-direction: column;
 			border-bottom: 0.1rem solid $gray2;
 
+			> dt, > dd {
+				word-break: break-word;
+			}
+
 			&:first-child {
 				border-top: 0.1rem solid $gray2;
 			}

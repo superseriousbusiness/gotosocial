@@ -612,7 +612,7 @@ func (c *Converter) EmojiToAdminAPIEmoji(ctx context.Context, e *gtsmodel.Emoji)
 		return nil, err
 	}
 
-	if e.Domain != "" {
+	if !e.IsLocal() {
 		// Domain may be in Punycode,
 		// de-punify it just in case.
 		var err error

@@ -2,7 +2,7 @@
 
 ## Where's the user interface?
 
-GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Semaphore](https://semaphore.social/) in the browser, [Tusky](https://tusky.app/) for Android and [Feditext](https://fedi.software/@Feditext) for iOS, iPadOS and macOS are the best-supported. Anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly through GoToSocial as well as the settings panel, but most interaction goes through the apps.
+GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Semaphore](https://semaphore.social/) in the browser, [Tusky](https://tusky.app/) for Android and [Feditext](https://github.com/feditext/feditext) for iOS, iPadOS and macOS are the best-supported. Anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly through GoToSocial as well as the settings panel, but most interaction goes through the apps.
 
 ## Why aren't my posts showing up on my profile page?
 
@@ -45,3 +45,15 @@ Take a look at the [list of open bugs](https://github.com/superseriousbusiness/g
 - scheduling posts
 - account migration
 - shared block lists across servers
+
+## Warnings “authentication NOT PASSED for public key” in the log
+
+These warnings are caused by Mastodon forgetting to take query parameters into account when signing HTTP requests. Fixes on both Mastodon and GoToSocial sides are in the works, and other instance software is expected to follow.
+
+## Warnings “status not yet deref'd” in the logs
+
+The warning is mostly to say that the derived visibility of the given status may not be entirely accurate due to a parent not being dereferenced yet, so do not worry about it.
+
+## Will you support tables in Markdown?
+
+Not at the moment, as most clients handle them terribly.

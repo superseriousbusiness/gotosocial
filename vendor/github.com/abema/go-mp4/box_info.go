@@ -12,6 +12,9 @@ type Context struct {
 	// IsQuickTimeCompatible represents whether ftyp.compatible_brands contains "qt  ".
 	IsQuickTimeCompatible bool
 
+	// QuickTimeKeysMetaEntryCount the expected number of items under the ilst box as observed from the keys box
+	QuickTimeKeysMetaEntryCount int
+
 	// UnderWave represents whether current box is under the wave box.
 	UnderWave bool
 

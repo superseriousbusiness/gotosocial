@@ -410,7 +410,6 @@ func (suite *DomainBlockTestSuite) TestBlockAndAllowDomain() {
 	})
 }
 
-
 func (suite *DomainBlockTestSuite) TestAllowAndBlockDomain() {
 	const domain = "fossbros-anonymous.io"
 

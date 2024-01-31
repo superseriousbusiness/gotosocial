@@ -26,6 +26,8 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type CreateTestSuite struct {
@@ -60,7 +62,20 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 
 	create := suite.testActivities["forwarded_message"].Activity
 
-	err := suite.federatingDB.Create(ctx, create)
+	// ensure a follow exists between requesting
+	// and receiving account, this ensures the forward
+	// will be seen as "relevant" and not get dropped.
+	err := suite.db.PutFollow(ctx, &gtsmodel.Follow{
+		ID:              id.NewULID(),
+		URI:             "https://this.is.a.url",
+		AccountID:       receivingAccount.ID,
+		TargetAccountID: requestingAccount.ID,
+		ShowReblogs:     util.Ptr(true),
+		Notify:          util.Ptr(false),
+	})
+	suite.NoError(err)
+
+	err = suite.federatingDB.Create(ctx, create)
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here

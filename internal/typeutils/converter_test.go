@@ -279,6 +279,8 @@ const (
 		"url": "https://mastodon.social/@Gargron",
 		"manuallyApprovesFollowers": false,
 		"discoverable": true,
+		"indexable": true,
+		"published": "2016-03-16T00:00:00Z",
 		"devices": "https://mastodon.social/users/Gargron/collections/devices",
 		"alsoKnownAs": [
 		  "https://tooting.ai/users/Gargron"

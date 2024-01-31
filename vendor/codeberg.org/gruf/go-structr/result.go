@@ -1,75 +1,77 @@
 package structr
 
-type result[T any] struct {
-	// linked list entry this result is
+import (
+	"sync"
+	"unsafe"
+)
+
+var result_pool sync.Pool
+
+type result struct {
+	// linked list elem this result is
 	// stored under in Cache.lruList.
-	entry elem[*result[T]]
+	elem list_elem
 
-	// keys tracks the indices
-	// result is stored under.
-	keys []*indexkey[T]
+	// indexed stores the indices
+	// this result is stored under.
+	indexed []*index_entry
 
-	// cached value.
-	value T
-
-	// cached error.
-	err error
+	// cached data (we maintain
+	// the type data here using
+	// an interface as any one
+	// instance can be T / error).
+	data interface{}
 }
 
-func result_acquire[T any](c *Cache[T]) *result[T] {
-	var res *result[T]
-
-	if len(c.resPool) == 0 {
-		// Allocate new result.
-		res = new(result[T])
-	} else {
-		// Pop result from pool slice.
-		res = c.resPool[len(c.resPool)-1]
-		c.resPool = c.resPool[:len(c.resPool)-1]
+func result_acquire[T any](c *Cache[T]) *result {
+	// Acquire from pool.
+	v := result_pool.Get()
+	if v == nil {
+		v = new(result)
 	}
 
-	// Push to front of LRU list.
-	c.lruList.pushFront(&res.entry)
-	res.entry.Value = res
+	// Cast result value.
+	res := v.(*result)
+
+	// Push result elem to front of LRU list.
+	list_push_front(&c.lruList, &res.elem)
+	res.elem.data = unsafe.Pointer(res)
 
 	return res
 }
 
-func result_release[T any](c *Cache[T], res *result[T]) {
-	// Remove from the LRU list.
-	c.lruList.remove(&res.entry)
-	res.entry.Value = nil
-
-	var zero T
+func result_release[T any](c *Cache[T], res *result) {
+	// Remove result elem from LRU list.
+	list_remove(&c.lruList, &res.elem)
+	res.elem.data = nil
 
 	// Reset all result fields.
-	res.keys = res.keys[:0]
-	res.value = zero
-	res.err = nil
+	res.indexed = res.indexed[:0]
+	res.data = nil
 
-	// Release result to memory pool.
-	c.resPool = append(c.resPool, res)
+	// Release to pool.
+	result_pool.Put(res)
 }
 
-func result_dropIndex[T any](c *Cache[T], res *result[T], index *Index[T]) {
-	for i := 0; i < len(res.keys); i++ {
+func result_drop_index[T any](res *result, index *Index[T]) {
+	for i := 0; i < len(res.indexed); i++ {
 
-		if res.keys[i].index != index {
+		if res.indexed[i].index != unsafe.Pointer(index) {
 			// Prof. Obiwan:
 			// this is not the index
 			// we are looking for.
 			continue
 		}
 
-		// Get index key ptr.
-		ikey := res.keys[i]
+		// Get index entry ptr.
+		entry := res.indexed[i]
 
-		// Move all index keys down + reslice.
-		copy(res.keys[i:], res.keys[i+1:])
-		res.keys = res.keys[:len(res.keys)-1]
+		// Move all index entries down + reslice.
+		copy(res.indexed[i:], res.indexed[i+1:])
+		res.indexed = res.indexed[:len(res.indexed)-1]
 
-		// Release ikey to memory pool.
-		indexkey_release(c, ikey)
+		// Release to memory pool.
+		index_entry_release(entry)
 
 		return
 	}

@@ -3,7 +3,6 @@ package structr
 import (
 	"context"
 	"errors"
-	"reflect"
 	"sync"
 )
 
@@ -63,12 +62,7 @@ type Cache[StructType any] struct {
 
 	// keeps track of all indexed results,
 	// in order of last recently used (LRU).
-	lruList list[*result[StructType]]
-
-	// memory pools of common types.
-	llsPool []*list[*result[StructType]]
-	resPool []*result[StructType]
-	keyPool []*indexkey[StructType]
+	lruList list
 
 	// max cache size, imposes size
 	// limit on the lruList in order
@@ -84,7 +78,6 @@ type Cache[StructType any] struct {
 	// - Cache{}.lruList
 	// - Index{}.data
 	// - Cache{} hook fns
-	// - Cache{} pools
 	mutex sync.Mutex
 }
 
@@ -111,8 +104,8 @@ func (c *Cache[T]) Init(config Config[T]) {
 	// provided config.
 	c.mutex.Lock()
 	c.indices = make([]Index[T], len(config.Indices))
-	for i, config := range config.Indices {
-		c.indices[i].init(config)
+	for i, cfg := range config.Indices {
+		init_index(&c.indices[i], cfg, config.MaxSize)
 	}
 	c.ignore = config.IgnoreErr
 	c.copy = config.CopyValue
@@ -133,26 +126,15 @@ func (c *Cache[T]) Index(name string) *Index[T] {
 
 // GetOne fetches one value from the cache stored under index, using key generated from key parts.
 // Note that given number of key parts MUST match expected number and types of the given index name.
-func (c *Cache[T]) GetOne(index string, keyParts ...any) (T, bool) {
-	// Get index with name.
-	idx := c.Index(index)
-
-	// Generate index key from provided parts.
-	key, ok := idx.keygen.FromParts(keyParts...)
-	if !ok {
-		var zero T
-		return zero, false
-	}
-
-	// Fetch one value for key.
-	return c.GetOneBy(idx, key)
+func (c *Cache[T]) GetOne(index string, key ...any) (T, bool) {
+	return c.GetOneBy(c.Index(index), key...)
 }
 
 // GetOneBy fetches value from cache stored under index, using precalculated index key.
-func (c *Cache[T]) GetOneBy(index *Index[T], key string) (T, bool) {
+func (c *Cache[T]) GetOneBy(index *Index[T], key ...any) (T, bool) {
 	if index == nil {
 		panic("no index given")
-	} else if !index.unique {
+	} else if !is_unique(index.flags) {
 		panic("cannot get one by non-unique index")
 	}
 	values := c.GetBy(index, key)
@@ -165,48 +147,18 @@ func (c *Cache[T]) GetOneBy(index *Index[T], key string) (T, bool) {
 
 // Get fetches values from the cache stored under index, using keys generated from given key parts.
 // Note that each number of key parts MUST match expected number and types of the given index name.
-func (c *Cache[T]) Get(index string, keysParts ...[]any) []T {
-	// Get index with name.
-	idx := c.Index(index)
-
-	// Preallocate expected keys slice length.
-	keys := make([]string, 0, len(keysParts))
-
-	// Acquire buf.
-	buf := getBuf()
-
-	for _, parts := range keysParts {
-		// Reset buf.
-		buf.Reset()
-
-		// Generate key from provided parts into buffer.
-		if !idx.keygen.AppendFromParts(buf, parts...) {
-			continue
-		}
-
-		// Get string copy of
-		// genarated idx key.
-		key := string(buf.B)
-
-		// Append key to keys.
-		keys = append(keys, key)
-	}
-
-	// Done with buf.
-	putBuf(buf)
-
-	// Continue fetching values.
-	return c.GetBy(idx, keys...)
+func (c *Cache[T]) Get(index string, keys ...[]any) []T {
+	return c.GetBy(c.Index(index), keys...)
 }
 
 // GetBy fetches values from the cache stored under index, using precalculated index keys.
-func (c *Cache[T]) GetBy(index *Index[T], keys ...string) []T {
+func (c *Cache[T]) GetBy(index *Index[T], keys ...[]any) []T {
 	if index == nil {
 		panic("no index given")
 	}
 
-	// Preallocate a slice of est. len.
-	values := make([]T, 0, len(keys))
+	// Acquire hasher.
+	h := get_hasher()
 
 	// Acquire lock.
 	c.mutex.Lock()
@@ -217,33 +169,52 @@ func (c *Cache[T]) GetBy(index *Index[T], keys ...string) []T {
 		panic("not initialized")
 	}
 
-	// Check index for all keys.
+	// Preallocate expected ret slice.
+	values := make([]T, 0, len(keys))
+
 	for _, key := range keys {
 
-		// Get indexed results.
-		list := index.data[key]
+		// Generate sum from provided key.
+		sum, ok := index_hash(index, h, key)
+		if !ok {
+			continue
+		}
 
-		if list != nil {
-			// Concatenate all results with values.
-			list.rangefn(func(e *elem[*result[T]]) {
-				if e.Value.err != nil {
-					return
-				}
+		// Get indexed results list at key.
+		list := index_get(index, sum, key)
+		if list == nil {
+			continue
+		}
 
-				// Append a copy of value.
-				value := c.copy(e.Value.value)
+		// Concatenate all *values* from non-err cached results.
+		list_rangefn(list, func(e *list_elem) {
+			entry := (*index_entry)(e.data)
+			res := entry.result
+
+			switch value := res.data.(type) {
+			case T:
+				// Append value COPY.
+				value = c.copy(value)
 				values = append(values, value)
 
-				// Push to front of LRU list, USING
-				// THE RESULT'S LRU ENTRY, NOT THE
-				// INDEX KEY ENTRY. VERY IMPORTANT!!
-				c.lruList.moveFront(&e.Value.entry)
-			})
-		}
+			case error:
+				// Don't bump
+				// for errors.
+				return
+			}
+
+			// Push to front of LRU list, USING
+			// THE RESULT'S LRU ENTRY, NOT THE
+			// INDEX KEY ENTRY. VERY IMPORTANT!!
+			list_move_front(&c.lruList, &res.elem)
+		})
 	}
 
 	// Done with lock.
 	c.mutex.Unlock()
+
+	// Done with h.
+	hash_pool.Put(h)
 
 	return values
 }
@@ -251,6 +222,8 @@ func (c *Cache[T]) GetBy(index *Index[T], keys ...string) []T {
 // Put will insert the given values into cache,
 // calling any invalidate hook on each value.
 func (c *Cache[T]) Put(values ...T) {
+	var z Hash
+
 	// Acquire lock.
 	c.mutex.Lock()
 
@@ -265,7 +238,7 @@ func (c *Cache[T]) Put(values ...T) {
 
 	// Store all the passed values.
 	for _, value := range values {
-		c.store(nil, "", value, nil)
+		c.store_value(nil, z, nil, value)
 	}
 
 	// Done with lock.
@@ -283,23 +256,16 @@ func (c *Cache[T]) Put(values ...T) {
 // LoadOne fetches one result from the cache stored under index, using key generated from key parts.
 // In the case that no result is found, the provided load callback will be used to hydrate the cache.
 // Note that given number of key parts MUST match expected number and types of the given index name.
-func (c *Cache[T]) LoadOne(index string, load func() (T, error), keyParts ...any) (T, error) {
-	// Get index with name.
-	idx := c.Index(index)
-
-	// Generate cache from from provided parts.
-	key, _ := idx.keygen.FromParts(keyParts...)
-
-	// Continue loading this result.
-	return c.LoadOneBy(idx, load, key)
+func (c *Cache[T]) LoadOne(index string, load func() (T, error), key ...any) (T, error) {
+	return c.LoadOneBy(c.Index(index), load, key...)
 }
 
 // LoadOneBy fetches one result from the cache stored under index, using precalculated index key.
 // In the case that no result is found, provided load callback will be used to hydrate the cache.
-func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key string) (T, error) {
+func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key ...any) (T, error) {
 	if index == nil {
 		panic("no index given")
-	} else if !index.unique {
+	} else if !is_unique(index.flags) {
 		panic("cannot get one by non-unique index")
 	}
 
@@ -315,6 +281,15 @@ func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key string
 		err error
 	)
 
+	// Acquire hasher.
+	h := get_hasher()
+
+	// Generate sum from provided key.
+	sum, _ := index_hash(index, h, key)
+
+	// Done with h.
+	hash_pool.Put(h)
+
 	// Acquire lock.
 	c.mutex.Lock()
 
@@ -328,26 +303,26 @@ func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key string
 		panic("not initialized")
 	}
 
-	// Get indexed results.
-	list := index.data[key]
+	// Get indexed list at hash key.
+	list := index_get(index, sum, key)
 
-	if ok = (list != nil && list.head != nil); ok {
-		e := list.head
+	if ok = (list != nil); ok {
+		entry := (*index_entry)(list.head.data)
+		res := entry.result
 
-		// Extract val / err.
-		val = e.Value.value
-		err = e.Value.err
-
-		if err == nil {
-			// We only ever ret
-			// a COPY of value.
-			val = c.copy(val)
+		switch data := res.data.(type) {
+		case T:
+			// Return value COPY.
+			val = c.copy(data)
+		case error:
+			// Return error.
+			err = data
 		}
 
 		// Push to front of LRU list, USING
 		// THE RESULT'S LRU ENTRY, NOT THE
 		// INDEX KEY ENTRY. VERY IMPORTANT!!
-		c.lruList.moveFront(&e.Value.entry)
+		list_move_front(&c.lruList, &res.elem)
 	}
 
 	// Done with lock.
@@ -374,7 +349,11 @@ func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key string
 	// Note this handles copying of
 	// the provided value, so it is
 	// safe for us to return as-is.
-	c.store(index, key, val, err)
+	if err != nil {
+		c.store_error(index, sum, key, err)
+	} else {
+		c.store_value(index, sum, key, val)
+	}
 
 	// Done with lock.
 	c.mutex.Unlock()
@@ -388,7 +367,7 @@ func (c *Cache[T]) LoadOneBy(index *Index[T], load func() (T, error), key string
 // callback to hydrate the cache with any other values. Example usage here is that you may see which values are cached using 'get', and load
 // the remaining uncached values using 'load', to minimize database queries. Cached error results are not included or returned by this func.
 // Note that given number of key parts MUST match expected number and types of the given index name, in those provided to the get callback.
-func (c *Cache[T]) Load(index string, get func(load func(keyParts ...any) bool), load func() ([]T, error)) (values []T, err error) {
+func (c *Cache[T]) Load(index string, get func(load func(key ...any) bool), load func() ([]T, error)) (values []T, err error) {
 	return c.LoadBy(c.Index(index), get, load)
 }
 
@@ -398,10 +377,13 @@ func (c *Cache[T]) Load(index string, get func(load func(keyParts ...any) bool),
 // to hydrate the cache with any other values. Example usage here is that you may see which values are cached using 'get', and load the
 // remaining uncached values using 'load', to minimize database queries. Cached error results are not included or returned by this func.
 // Note that given number of key parts MUST match expected number and types of the given index name, in those provided to the get callback.
-func (c *Cache[T]) LoadBy(index *Index[T], get func(load func(keyParts ...any) bool), load func() ([]T, error)) (values []T, err error) {
+func (c *Cache[T]) LoadBy(index *Index[T], get func(load func(key ...any) bool), load func() ([]T, error)) (values []T, err error) {
 	if index == nil {
 		panic("no index given")
 	}
+
+	// Acquire hasher.
+	h := get_hasher()
 
 	// Acquire lock.
 	c.mutex.Lock()
@@ -421,62 +403,59 @@ func (c *Cache[T]) LoadBy(index *Index[T], get func(load func(keyParts ...any) b
 		}
 	}()
 
-	// Acquire buf.
-	buf := getBuf()
+	// Pass loader to user func.
+	get(func(key ...any) bool {
 
-	// Pass cache check to user func.
-	get(func(keyParts ...any) bool {
-
-		// Reset buf.
-		buf.Reset()
-
-		// Generate index key from provided key parts.
-		if !index.keygen.AppendFromParts(buf, keyParts...) {
+		// Generate sum from provided key.
+		sum, ok := index_hash(index, h, key)
+		if !ok {
 			return false
 		}
 
-		// Get temp generated key str,
-		// (not needed after return).
-		keyStr := buf.String()
-
-		// Get all indexed results.
-		list := index.data[keyStr]
-
-		if list != nil && list.len > 0 {
-			// Value length before
-			// any below appends.
-			before := len(values)
-
-			// Concatenate all results with values.
-			list.rangefn(func(e *elem[*result[T]]) {
-				if e.Value.err != nil {
-					return
-				}
-
-				// Append a copy of value.
-				value := c.copy(e.Value.value)
-				values = append(values, value)
-
-				// Push to front of LRU list, USING
-				// THE RESULT'S LRU ENTRY, NOT THE
-				// INDEX KEY ENTRY. VERY IMPORTANT!!
-				c.lruList.moveFront(&e.Value.entry)
-			})
-
-			// Only if values changed did
-			// we actually find anything.
-			return len(values) != before
+		// Get indexed results at hash key.
+		list := index_get(index, sum, key)
+		if list == nil {
+			return false
 		}
 
-		return false
-	})
+		// Value length before
+		// any below appends.
+		before := len(values)
 
-	// Done with buf.
-	putBuf(buf)
+		// Concatenate all *values* from non-err cached results.
+		list_rangefn(list, func(e *list_elem) {
+			entry := (*index_entry)(e.data)
+			res := entry.result
+
+			switch value := res.data.(type) {
+			case T:
+				// Append value COPY.
+				value = c.copy(value)
+				values = append(values, value)
+
+			case error:
+				// Don't bump
+				// for errors.
+				return
+			}
+
+			// Push to front of LRU list, USING
+			// THE RESULT'S LRU ENTRY, NOT THE
+			// INDEX KEY ENTRY. VERY IMPORTANT!!
+			list_move_front(&c.lruList, &res.elem)
+		})
+
+		// Only if values changed did
+		// we actually find anything.
+		return len(values) != before
+	})
 
 	// Done with lock.
 	c.mutex.Unlock()
 	unlocked = true
+
+	// Done with h.
+	hash_pool.Put(h)
 
 	// Load uncached values.
 	uncached, err := load()
@@ -523,24 +502,27 @@ func (c *Cache[T]) Store(value T, store func() error) error {
 }
 
 // Invalidate generates index key from parts and invalidates all stored under it.
-func (c *Cache[T]) Invalidate(index string, keyParts ...any) {
-	// Get index with name.
-	idx := c.Index(index)
-
-	// Generate cache from from provided parts.
-	key, ok := idx.keygen.FromParts(keyParts...)
-	if !ok {
-		return
-	}
-
-	// Continue invalidation.
-	c.InvalidateBy(idx, key)
+func (c *Cache[T]) Invalidate(index string, key ...any) {
+	c.InvalidateBy(c.Index(index), key...)
 }
 
 // InvalidateBy invalidates all results stored under index key.
-func (c *Cache[T]) InvalidateBy(index *Index[T], key string) {
+func (c *Cache[T]) InvalidateBy(index *Index[T], key ...any) {
 	if index == nil {
 		panic("no index given")
+	}
+
+	// Acquire hasher.
+	h := get_hasher()
+
+	// Generate sum from provided key.
+	sum, ok := index_hash(index, h, key)
+
+	// Done with h.
+	hash_pool.Put(h)
+
+	if !ok {
+		return
 	}
 
 	var values []T
@@ -553,9 +535,13 @@ func (c *Cache[T]) InvalidateBy(index *Index[T], key string) {
 
 	// Delete all results under key from index, collecting
 	// value results and dropping them from all their indices.
-	index_delete(c, index, key, func(del *result[T]) {
-		if del.err == nil {
-			values = append(values, del.value)
+	index_delete(c, index, sum, key, func(del *result) {
+		switch value := del.data.(type) {
+		case T:
+			// Append value COPY.
+			value = c.copy(value)
+			values = append(values, value)
+		case error:
 		}
 		c.delete(del)
 	})
@@ -601,7 +587,8 @@ func (c *Cache[T]) Trim(perc float64) {
 		}
 
 		// Drop oldest from cache.
-		c.delete(oldest.Value)
+		res := (*result)(oldest.data)
+		c.delete(res)
 	}
 
 	// Done with lock.
@@ -610,16 +597,6 @@ func (c *Cache[T]) Trim(perc float64) {
 
 // Clear empties the cache by calling .Trim(0).
 func (c *Cache[T]) Clear() { c.Trim(0) }
-
-// Clean drops unused items from its memory pools.
-// Useful to free memory if cache has downsized.
-func (c *Cache[T]) Clean() {
-	c.mutex.Lock()
-	c.llsPool = nil
-	c.resPool = nil
-	c.keyPool = nil
-	c.mutex.Unlock()
-}
 
 // Len returns the current length of cache.
 func (c *Cache[T]) Len() int {
@@ -637,93 +614,93 @@ func (c *Cache[T]) Cap() int {
 	return m
 }
 
-// store will store the given value / error result in the cache, storing it under the
-// already provided index + key if provided, else generating keys from provided value.
-func (c *Cache[T]) store(index *Index[T], key string, value T, err error) {
+func (c *Cache[T]) store_value(index *Index[T], hash Hash, key []any, value T) {
 	// Acquire new result.
 	res := result_acquire(c)
 
 	if index != nil {
-		// Append result to the provided
-		// precalculated key and its index.
-		index_append(c, index, key, res)
-
-	} else if err != nil {
-
-		// This is an error result without
-		// an index provided, nothing we
-		// can do here so release result.
-		result_release(c, res)
-		return
+		// Append result to the provided index
+		// with precalculated key / its hash.
+		index_append(c, index, hash, key, res)
 	}
 
-	// Set and check the result error.
-	if res.err = err; res.err == nil {
+	// Create COPY of value.
+	value = c.copy(value)
+	res.data = value
 
-		// This is value result, we need to
-		// store it under all other indices
-		// other than the provided.
-		//
-		// Create COPY of value.
-		res.value = c.copy(value)
+	// Acquire hasher.
+	h := get_hasher()
 
-		// Get reflected value of incoming
-		// value, used during cache key gen.
-		rvalue := reflect.ValueOf(value)
+	for i := range c.indices {
+		// Get current index ptr.
+		idx := &(c.indices[i])
 
-		// Acquire buf.
-		buf := getBuf()
-
-		for i := range c.indices {
-			// Get current index ptr.
-			idx := &(c.indices[i])
-
-			if idx == index {
-				// Already stored under
-				// this index, ignore.
-				continue
-			}
-
-			// Generate key from reflect value,
-			// (this ignores zero value keys).
-			buf.Reset() // reset buf first
-			if !idx.keygen.appendFromRValue(buf, rvalue) {
-				continue
-			}
-
-			// Alloc key copy.
-			key := string(buf.B)
-
-			// Append result to index at key.
-			index_append(c, idx, key, res)
+		if idx == index {
+			// Already stored under
+			// this index, ignore.
+			continue
 		}
 
-		// Done with buf.
-		putBuf(buf)
+		// Get key and hash sum for this index.
+		key, sum, ok := index_key(idx, h, value)
+		if !ok {
+			continue
+		}
+
+		// Append result to index at key.
+		index_append(c, idx, sum, key, res)
 	}
+
+	// Done with h.
+	hash_pool.Put(h)
 
 	if c.lruList.len > c.maxSize {
 		// Cache has hit max size!
 		// Drop the oldest element.
-		res := c.lruList.tail.Value
+		ptr := c.lruList.tail.data
+		res := (*result)(ptr)
+		c.delete(res)
+	}
+}
+
+func (c *Cache[T]) store_error(index *Index[T], hash Hash, key []any, err error) {
+	if index == nil {
+		// nothing we
+		// can do here.
+		return
+	}
+
+	// Acquire new result.
+	res := result_acquire(c)
+	res.data = err
+
+	// Append result to the provided index
+	// with precalculated key / its hash.
+	index_append(c, index, hash, key, res)
+
+	if c.lruList.len > c.maxSize {
+		// Cache has hit max size!
+		// Drop the oldest element.
+		ptr := c.lruList.tail.data
+		res := (*result)(ptr)
 		c.delete(res)
 	}
 }
 
 // delete will delete the given result from the cache, deleting
 // it from all indices it is stored under, and main LRU list.
-func (c *Cache[T]) delete(res *result[T]) {
-	for len(res.keys) != 0 {
+func (c *Cache[T]) delete(res *result) {
+	for len(res.indexed) != 0 {
 
-		// Pop indexkey at end of list.
-		ikey := res.keys[len(res.keys)-1]
-		res.keys = res.keys[:len(res.keys)-1]
+		// Pop last indexed entry from list.
+		entry := res.indexed[len(res.indexed)-1]
+		res.indexed = res.indexed[:len(res.indexed)-1]
 
-		// Drop this result from list at key.
-		index_deleteOne(c, ikey.index, ikey)
+		// Drop entry from index.
+		index_delete_entry(c, entry)
 
-		// Release ikey to pool.
-		indexkey_release(c, ikey)
+		// Release to memory pool.
+		index_entry_release(entry)
 	}
 
 	// Release res to pool.

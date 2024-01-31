@@ -40,13 +40,10 @@ codeberg.org/gruf/go-kv/format
 # codeberg.org/gruf/go-logger/v2 v2.2.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-logger/v2/level
-# codeberg.org/gruf/go-mangler v1.2.3
-## explicit; go 1.19
-codeberg.org/gruf/go-mangler
 # codeberg.org/gruf/go-maps v1.0.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-maps
-# codeberg.org/gruf/go-mutexes v1.3.1
+# codeberg.org/gruf/go-mutexes v1.4.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-runners v1.6.2
@@ -59,7 +56,7 @@ codeberg.org/gruf/go-sched
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
-# codeberg.org/gruf/go-structr v0.1.1
+# codeberg.org/gruf/go-structr v0.3.0
 ## explicit; go 1.21
 codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/exif-terminator v0.7.0
@@ -68,11 +65,11 @@ codeberg.org/superseriousbusiness/exif-terminator
 # github.com/DmitriyVTitov/size v1.5.0
 ## explicit; go 1.14
 github.com/DmitriyVTitov/size
-# github.com/KimMachineGun/automemlimit v0.4.0
+# github.com/KimMachineGun/automemlimit v0.5.0
 ## explicit; go 1.19
 github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
-# github.com/abema/go-mp4 v1.1.1
+# github.com/abema/go-mp4 v1.2.0
 ## explicit; go 1.14
 github.com/abema/go-mp4
 github.com/abema/go-mp4/internal/bitio
@@ -418,6 +415,9 @@ github.com/oklog/ulid
 # github.com/opencontainers/runtime-spec v1.0.2
 ## explicit
 github.com/opencontainers/runtime-spec/specs-go
+# github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58
+## explicit; go 1.16
+github.com/pbnjay/memory
 # github.com/pelletier/go-toml/v2 v2.1.1
 ## explicit; go 1.16
 github.com/pelletier/go-toml/v2
@@ -752,7 +752,7 @@ github.com/uptrace/bun/dialect/pgdialect
 # github.com/uptrace/bun/dialect/sqlitedialect v1.1.17
 ## explicit; go 1.19
 github.com/uptrace/bun/dialect/sqlitedialect
-# github.com/uptrace/bun/extra/bunotel v1.1.17
+# github.com/uptrace/bun/extra/bunotel v1.1.16
 ## explicit; go 1.19
 github.com/uptrace/bun/extra/bunotel
 # github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.3
@@ -781,7 +781,10 @@ github.com/yuin/goldmark/renderer
 github.com/yuin/goldmark/renderer/html
 github.com/yuin/goldmark/text
 github.com/yuin/goldmark/util
-# go.opentelemetry.io/otel v1.21.0
+# github.com/zeebo/xxh3 v1.0.2
+## explicit; go 1.17
+github.com/zeebo/xxh3
+# go.opentelemetry.io/otel v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel
 go.opentelemetry.io/otel/attribute
@@ -796,38 +799,37 @@ go.opentelemetry.io/otel/semconv/internal
 go.opentelemetry.io/otel/semconv/internal/v4
 go.opentelemetry.io/otel/semconv/v1.10.0
 go.opentelemetry.io/otel/semconv/v1.12.0
-go.opentelemetry.io/otel/semconv/v1.17.0
 go.opentelemetry.io/otel/semconv/v1.20.0
 go.opentelemetry.io/otel/semconv/v1.20.0/httpconv
 go.opentelemetry.io/otel/semconv/v1.21.0
 go.opentelemetry.io/otel/semconv/v1.7.0
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.21.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/exporters/otlp/otlptrace
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/internal/tracetransform
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.21.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/envconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/otlpconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/retry
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.21.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/envconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/otlpconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/retry
-# go.opentelemetry.io/otel/exporters/prometheus v0.44.0
+# go.opentelemetry.io/otel/exporters/prometheus v0.43.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/exporters/prometheus
-# go.opentelemetry.io/otel/metric v1.21.0
+# go.opentelemetry.io/otel/metric v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
 go.opentelemetry.io/otel/metric/noop
-# go.opentelemetry.io/otel/sdk v1.21.0
+# go.opentelemetry.io/otel/sdk v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
@@ -835,13 +837,13 @@ go.opentelemetry.io/otel/sdk/internal
 go.opentelemetry.io/otel/sdk/internal/env
 go.opentelemetry.io/otel/sdk/resource
 go.opentelemetry.io/otel/sdk/trace
-# go.opentelemetry.io/otel/sdk/metric v1.21.0
+# go.opentelemetry.io/otel/sdk/metric v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/sdk/metric
 go.opentelemetry.io/otel/sdk/metric/internal
 go.opentelemetry.io/otel/sdk/metric/internal/aggregate
 go.opentelemetry.io/otel/sdk/metric/metricdata
-# go.opentelemetry.io/otel/trace v1.21.0
+# go.opentelemetry.io/otel/trace v1.20.0
 ## explicit; go 1.20
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded

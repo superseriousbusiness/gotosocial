@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
@@ -132,28 +133,32 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 		}
 
 		for _, statusID := range statusIDs {
-			var emojiIDs []string
+			status := new(gtsmodel.Status)
 
-			// Select statuses with ID.
-			if _, err := tx.NewSelect().
-				Table("statuses").
+			// Select status emoji IDs.
+			if err := tx.NewSelect().
+				Model(status).
 				Column("emojis").
 				Where("? = ?", bun.Ident("id"), statusID).
-				Exec(ctx); err != nil &&
+				Scan(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
 			}
 
-			// Delete all instances of this emoji ID from status emojis.
-			emojiIDs = slices.DeleteFunc(emojiIDs, func(emojiID string) bool {
-				return emojiID == id
-			})
+			// Delete all instances of this
+			// emoji ID from status emoji IDs.
+			status.EmojiIDs = slices.DeleteFunc(
+				status.EmojiIDs,
+				func(emojiID string) bool {
+					return emojiID == id
+				},
+			)
 
 			// Update status emoji IDs.
 			if _, err := tx.NewUpdate().
-				Table("statuses").
+				Model(status).
 				Where("? = ?", bun.Ident("id"), statusID).
-				Set("emojis = ?", emojiIDs).
+				Column("emojis").
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
@@ -161,35 +166,39 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 		}
 
 		for _, accountID := range accountIDs {
-			var emojiIDs []string
+			account := new(gtsmodel.Account)
 
-			// Select account with ID.
-			if _, err := tx.NewSelect().
-				Table("accounts").
+			// Select account emoji IDs.
+			if err := tx.NewSelect().
+				Model(account).
 				Column("emojis").
 				Where("? = ?", bun.Ident("id"), accountID).
-				Exec(ctx); err != nil &&
+				Scan(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
 			}
 
-			// Delete all instances of this emoji ID from account emojis.
-			emojiIDs = slices.DeleteFunc(emojiIDs, func(emojiID string) bool {
-				return emojiID == id
-			})
+			// Delete all instances of this
+			// emoji ID from account emoji IDs.
+			account.EmojiIDs = slices.DeleteFunc(
+				account.EmojiIDs,
+				func(emojiID string) bool {
+					return emojiID == id
+				},
+			)
 
 			// Update account emoji IDs.
 			if _, err := tx.NewUpdate().
-				Table("accounts").
+				Model(account).
 				Where("? = ?", bun.Ident("id"), accountID).
-				Set("emojis = ?", emojiIDs).
+				Column("emojis").
 				Exec(ctx); err != nil &&
 				err != sql.ErrNoRows {
 				return err
 			}
 		}
 
-		// Delete emoji from database.
+		// Finally, delete emoji from database.
 		if _, err := tx.NewDelete().
 			Table("emojis").
 			Where("? = ?", bun.Ident("id"), id).
@@ -318,8 +327,11 @@ func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisable
 	return e.GetEmojisByIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
-	var emojiIDs []string
+func (e *emojiDB) GetEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error) {
+	maxID := page.GetMax()
+	limit := page.GetLimit()
+
+	emojiIDs := make([]string, 0, limit)
 
 	q := e.db.NewSelect().
 		Table("emojis").
@@ -341,8 +353,11 @@ func (e *emojiDB) GetEmojis(ctx context.Context, maxID string, limit int) ([]*gt
 	return e.GetEmojisByIDs(ctx, emojiIDs)
 }
 
-func (e *emojiDB) GetRemoteEmojis(ctx context.Context, maxID string, limit int) ([]*gtsmodel.Emoji, error) {
-	var emojiIDs []string
+func (e *emojiDB) GetRemoteEmojis(ctx context.Context, page *paging.Page) ([]*gtsmodel.Emoji, error) {
+	maxID := page.GetMax()
+	limit := page.GetLimit()
+
+	emojiIDs := make([]string, 0, limit)
 
 	q := e.db.NewSelect().
 		Table("emojis").

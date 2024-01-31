@@ -36,7 +36,7 @@ func (p *Processor) EmojiGet(ctx context.Context, requestedEmojiID string) (inte
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("database error getting emoji with id %s: %s", requestedEmojiID, err))
 	}
 
-	if requestedEmoji.Domain != "" {
+	if !requestedEmoji.IsLocal() {
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("emoji with id %s doesn't belong to this instance (domain %s)", requestedEmojiID, requestedEmoji.Domain))
 	}
 

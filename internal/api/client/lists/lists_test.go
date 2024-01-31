@@ -55,6 +55,7 @@ type ListsStandardTestSuite struct {
 	testEmojis          map[string]*gtsmodel.Emoji
 	testEmojiCategories map[string]*gtsmodel.EmojiCategory
 	testLists           map[string]*gtsmodel.List
+	testListEntries     map[string]*gtsmodel.ListEntry
 
 	// module being tested
 	listsModule *lists.Module
@@ -71,6 +72,7 @@ func (suite *ListsStandardTestSuite) SetupSuite() {
 	suite.testEmojis = testrig.NewTestEmojis()
 	suite.testEmojiCategories = testrig.NewTestEmojiCategories()
 	suite.testLists = testrig.NewTestLists()
+	suite.testListEntries = testrig.NewTestListEntries()
 }
 
 func (suite *ListsStandardTestSuite) SetupTest() {
