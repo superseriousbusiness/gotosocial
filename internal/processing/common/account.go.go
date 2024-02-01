@@ -201,9 +201,6 @@ func (p *Processor) GetVisibleAPIAccountsPaged(
 	length int,
 ) []interface{} {
 	accounts := p.getVisibleAPIAccounts(ctx, 3, requester, next, length)
-	if len(accounts) == 0 {
-		return nil
-	}
 	items := make([]interface{}, len(accounts))
 	for i, account := range accounts {
 		items[i] = account
