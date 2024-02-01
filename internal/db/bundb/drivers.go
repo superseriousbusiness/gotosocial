@@ -22,7 +22,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"time"
-	"unsafe"
+	_ "unsafe"
 
 	// ensure driver map filled.
 	_ "github.com/jackc/pgx/v5"
@@ -223,22 +223,6 @@ type conn interface {
 	driver.ExecerContext
 	driver.QueryerContext
 	driver.ConnBeginTx
-}
-
-// updateRowError updates an sql.Row's internal error field using the unsafe package.
-func updateRowError(sqlrow *sql.Row, err error) {
-	type row struct {
-		err  error
-		rows *sql.Rows
-	}
-
-	// compile-time check to ensure sql.Row not changed.
-	if unsafe.Sizeof(row{}) != unsafe.Sizeof(sql.Row{}) {
-		panic("sql.Row has changed definition")
-	}
-
-	// this code is awful and i must be shamed for this.
-	(*row)(unsafe.Pointer(sqlrow)).err = err
 }
 
 // retryOnBusy will retry given function on returned 'errBusy'.
