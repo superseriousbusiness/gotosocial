@@ -22,11 +22,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"time"
-	_ "unsafe"
-
-	// ensure driver map filled.
-	_ "github.com/jackc/pgx/v5"
-	_ "modernc.org/sqlite"
+	_ "unsafe" // linkname shenanigans
 
 	pgx "github.com/jackc/pgx/v5/stdlib"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
