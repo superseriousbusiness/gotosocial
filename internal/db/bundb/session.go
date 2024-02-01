@@ -24,10 +24,11 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/uptrace/bun"
 )
 
 type sessionDB struct {
-	db *DB
+	db *bun.DB
 }
 
 func (s *sessionDB) GetSession(ctx context.Context) (*gtsmodel.RouterSession, error) {

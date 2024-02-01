@@ -28,7 +28,7 @@ import (
 )
 
 type tagDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

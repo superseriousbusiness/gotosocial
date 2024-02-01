@@ -57,7 +57,7 @@ import (
 // This isn't ideal, of course, but at least we could cover the most common use case of
 // a caller paging down through results.
 type searchDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

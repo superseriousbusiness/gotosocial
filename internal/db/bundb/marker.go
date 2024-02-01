@@ -30,7 +30,7 @@ import (
 )
 
 type markerDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -85,7 +85,7 @@ func (m *markerDB) UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) er
 		// Optimistic concurrency control: start a transaction, try to update a row with a previously retrieved version.
 		// If the update in the transaction fails to actually change anything, another update happened concurrently, and
 		// this update should be retried by the caller, which in this case involves sending HTTP 409 to the API client.
-		return m.db.RunInTx(ctx, func(tx Tx) error {
+		return m.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			result, err := tx.NewUpdate().
 				Model(marker).
 				WherePK().

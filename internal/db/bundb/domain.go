@@ -31,7 +31,7 @@ import (
 )
 
 type domainDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

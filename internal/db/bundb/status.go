@@ -34,7 +34,7 @@ import (
 )
 
 type statusDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -330,7 +330,7 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
-		return s.db.RunInTx(ctx, func(tx Tx) error {
+		return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// create links between this status and any emojis it uses
 			for _, i := range status.EmojiIDs {
 				if _, err := tx.
@@ -414,7 +414,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
-		return s.db.RunInTx(ctx, func(tx Tx) error {
+		return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// create links between this status and any emojis it uses
 			for _, i := range status.EmojiIDs {
 				if _, err := tx.
@@ -509,7 +509,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
 	// On return ensure status invalidated from cache.
 	defer s.state.Caches.GTS.Status.Invalidate("ID", id)
 
-	return s.db.RunInTx(ctx, func(tx Tx) error {
+	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// delete links between this status and any emojis it uses
 		if _, err := tx.
 			NewDelete().
@@ -697,6 +697,5 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Where("? = ?", bun.Ident("status_bookmark.status_id"), status.ID).
 		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
-
-	return s.db.Exists(ctx, q)
+	return exists(ctx, q)
 }
