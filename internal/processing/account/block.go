@@ -151,6 +151,11 @@ func (p *Processor) BlocksGet(
 		return util.EmptyPageableResponse(), nil
 	}
 
+	// Get the lowest and highest
+	// ID values, used for paging.
+	lo := blocks[count-1].ID
+	hi := blocks[0].ID
+
 	items := make([]interface{}, 0, count)
 
 	for _, block := range blocks {
@@ -164,11 +169,6 @@ func (p *Processor) BlocksGet(
 		// Append target to return items.
 		items = append(items, account)
 	}
-
-	// Get the lowest and highest
-	// ID values, used for paging.
-	lo := blocks[count-1].ID
-	hi := blocks[0].ID
 
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: items,
