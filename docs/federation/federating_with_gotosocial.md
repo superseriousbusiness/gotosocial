@@ -722,3 +722,114 @@ Here's an example of a "Create", in which user "https://sample.com/users/willy_n
 GoToSocial expects to receive poll votes in much the same manner that it sends them out. They will only ever expect to be received as part of a "Create" activity.
 
 In particular, GoToSocial recognizes votes as different to other "Note" objects by the inclusion of a "name" field, missing "content" field, and the "inReplyTo" field being an IRI pointing to a status with attached poll. If any of these conditions are not met, GoToSocial will consider the provided "Note" to be a malformed status object.
+
+## Actor Migration / Aliasing
+
+GoToSocial supports account migration from one instance/server to another through a combination of the `Move` activity, and the Actor Object properties `alsoKnownAs` and `movedTo`.
+
+### `alsoKnownAs`
+
+GoToSocial supports account aliasing using the `alsoKnownAs` Actor property, which is an [accepted ActivityPub extension](https://www.w3.org/wiki/Activity_Streams_extensions#as:alsoKnownAs_property).
+
+#### Incoming
+
+On incoming AP messages, GoToSocial looks for the `alsoKnownAs` property on an Actor to be an array of ActivityPub IDs/URIs of other Actors by which the Actor is also known.
+
+For example:
+
+```json
+{
+  "@context": [
+    "http://joinmastodon.org/ns",
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    "http://schema.org"
+  ],
+  "featured": "http://example.org/users/1happyturtle/collections/featured",
+  "followers": "http://example.org/users/1happyturtle/followers",
+  "following": "http://example.org/users/1happyturtle/following",
+  "id": "http://example.org/users/1happyturtle",
+  "inbox": "http://example.org/users/1happyturtle/inbox",
+  "manuallyApprovesFollowers": true,
+  "name": "happy little turtle :3",
+  "outbox": "http://example.org/users/1happyturtle/outbox",
+  "preferredUsername": "1happyturtle",
+  "publicKey": {...},
+  "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+  "type": "Person",
+  "url": "http://example.org/@1happyturtle",
+  "alsoKnownAs": [
+    "https://another-server.com/users/1happyturtle",
+    "https://somewhere-else.org/users/originalTurtle"
+  ]
+}
+```
+
+In the above AP JSON, the Actor `http://example.org/users/1happyturtle` is aliased to the other Actors `https://another-server.com/users/1happyturtle` and `https://somewhere-else.org/users/originalTurtle`.
+
+GoToSocial will store incoming `alsoKnownAs` URIs in the database, but does not (currently) use them for anything except verifying a `Move` Activity (see below).
+
+#### Outgoing
+
+GoToSocial users can set multiple `alsoKnownAs` URIs on their account via the GoToSocial client API. GoToSocial will verify that these `alsoKnownAs` aliases are valid Actor URIs before storing them in the database and before serializing them in outgoing AP messages.
+
+However, GoToSocial does not verify *ownership* of those `alsoKnownAs` URIs by the user setting the aliases before serializing them in outgoing messages; it expects remote servers to do their own verification before trusting any transmitted `alsoKnownAs` values.
+
+As an example, the user `http://example.org/users/1happyturtle`, from their GoToSocial instance, might set `alsoKnownAs: [ "https://unrelated-server.com/users/someone_else" ]` on their account, and GoToSocial will duly transmit this alias to other servers.
+
+In this case, though, `https://unrelated-server.com/users/someone_else` may not be the same person as `1happyturtle`. `1happyturtle` may have set this alias by mistake, or maliciously. To properly verify ownership of `someone_else` by `1happyturtle`, a remote server should check that the `alsoKnownAs` property of the Actor `https://unrelated-server.com/users/someone_else` contains an entry `http://example.org/users/1happyturtle`.
+
+In other words, remote servers should not trust `alsoKnownAs` aliases by default, and should instead ensure that a **two-way alias** exists between Actors before treating the alias as valid.
+
+!!! info
+    The reason that GoToSocial does not perform verification of `alsoKnownAs` values before sending them out to other servers is to avoid a chicken and egg problem. Say that `1happyturtle` and `someone_else` *are* the same person, one of the two Actors must be able to set `alsoKnownAs` first, so that the instance of the other Actor can begin processing the alias. If both servers prevent an unverified alias from being serialized in the `alsoKnownAs` property, then it becomes impossible for either `1happyturtle` or `someone_else` to alias to one another.
+
+### `movedTo`
+
+GoToSocial marks accounts as moved using the `movedTo` property. Unlike `alsoKnownAs` this is not an accepted ActivityPub extension, but it has been widely popularized by Mastodon, which also uses it in connection with the `Move` activity. [See the Mastodon docs for more info](https://documentation.sig.gy/spec/activitypub/#namespaces).
+
+#### Incoming
+
+For incoming AP messages, GoToSocial looks for the `movedTo` property on an Actor to be set to a single ActivityPub Actor URI/ID.
+
+For example:
+
+```json
+{
+  "@context": [
+    "http://joinmastodon.org/ns",
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    "http://schema.org"
+  ],
+  "featured": "http://example.org/users/1happyturtle/collections/featured",
+  "followers": "http://example.org/users/1happyturtle/followers",
+  "following": "http://example.org/users/1happyturtle/following",
+  "id": "http://example.org/users/1happyturtle",
+  "inbox": "http://example.org/users/1happyturtle/inbox",
+  "manuallyApprovesFollowers": true,
+  "name": "happy little turtle :3",
+  "outbox": "http://example.org/users/1happyturtle/outbox",
+  "preferredUsername": "1happyturtle",
+  "publicKey": {...},
+  "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+  "type": "Person",
+  "url": "http://example.org/@1happyturtle",
+  "alsoKnownAs": [
+    "https://another-server.com/users/1happyturtle"
+  ],
+  "movedTo": "https://another-server.com/users/1happyturtle"
+}
+```
+
+In the above JSON, the Actor `http://example.org/users/1happyturtle` has been aliased to the Actor `https://another-server.com/users/1happyturtle` and has also moved/migrated to that account.
+
+GoToSocial stores incoming `movedTo` values in the database, but does not consider an account migration to have been processed unless the Actor doing the Move had previously transmitted a Move activity (see below).
+
+#### Outgoing
+
+GoToSocial will only set `movedTo` on outgoing Actors when an account `Move` has been verified and processed.
+
+### `Move` Activity
+
+TODO: document how `Move` works!
