@@ -10,6 +10,9 @@ package vocab
 //     "type": "Person"
 //   }
 type ActivityStreamsPerson interface {
+	// GetActivityStreamsAlsoKnownAs returns the "alsoKnownAs" property if it
+	// exists, and nil otherwise.
+	GetActivityStreamsAlsoKnownAs() ActivityStreamsAlsoKnownAsProperty
 	// GetActivityStreamsAltitude returns the "altitude" property if it
 	// exists, and nil otherwise.
 	GetActivityStreamsAltitude() ActivityStreamsAltitudeProperty
@@ -83,6 +86,9 @@ type ActivityStreamsPerson interface {
 	// GetActivityStreamsMediaType returns the "mediaType" property if it
 	// exists, and nil otherwise.
 	GetActivityStreamsMediaType() ActivityStreamsMediaTypeProperty
+	// GetActivityStreamsMovedTo returns the "movedTo" property if it exists,
+	// and nil otherwise.
+	GetActivityStreamsMovedTo() ActivityStreamsMovedToProperty
 	// GetActivityStreamsName returns the "name" property if it exists, and
 	// nil otherwise.
 	GetActivityStreamsName() ActivityStreamsNameProperty
@@ -170,6 +176,8 @@ type ActivityStreamsPerson interface {
 	// Serialize converts this into an interface representation suitable for
 	// marshalling into a text or binary format.
 	Serialize() (map[string]interface{}, error)
+	// SetActivityStreamsAlsoKnownAs sets the "alsoKnownAs" property.
+	SetActivityStreamsAlsoKnownAs(i ActivityStreamsAlsoKnownAsProperty)
 	// SetActivityStreamsAltitude sets the "altitude" property.
 	SetActivityStreamsAltitude(i ActivityStreamsAltitudeProperty)
 	// SetActivityStreamsAttachment sets the "attachment" property.
@@ -219,6 +227,8 @@ type ActivityStreamsPerson interface {
 	SetActivityStreamsManuallyApprovesFollowers(i ActivityStreamsManuallyApprovesFollowersProperty)
 	// SetActivityStreamsMediaType sets the "mediaType" property.
 	SetActivityStreamsMediaType(i ActivityStreamsMediaTypeProperty)
+	// SetActivityStreamsMovedTo sets the "movedTo" property.
+	SetActivityStreamsMovedTo(i ActivityStreamsMovedToProperty)
 	// SetActivityStreamsName sets the "name" property.
 	SetActivityStreamsName(i ActivityStreamsNameProperty)
 	// SetActivityStreamsObject sets the "object" property.

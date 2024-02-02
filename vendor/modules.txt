@@ -507,12 +507,13 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.4.0-gts
+# github.com/superseriousbusiness/activity v1.6.0-gts
 ## explicit; go 1.18
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_accuracy
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_actor
+github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_alsoknownas
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_altitude
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_anyof
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_attachment
@@ -552,6 +553,7 @@ github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_l
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_longitude
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_mediatype
+github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_movedto
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_name
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_next
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_object
