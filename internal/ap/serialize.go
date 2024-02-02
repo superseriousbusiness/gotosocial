@@ -90,13 +90,12 @@ func serializeWithOrderedItems(t vocab.Type) (map[string]interface{}, error) {
 }
 
 // SerializeAccountable is a custom serializer for any Accountable type.
-// This serializer rewrites the 'attachment' value of the Accountable, if
-// present, to always be an array/slice.
+// This serializer rewrites certain values of the Accountable, if present,
+// to always be an array/slice.
 //
-// While this is not strictly necessary in json-ld terms, most other fedi
-// implementations look for attachment to be an array of PropertyValue (field)
-// entries, and will not parse single-entry, non-array attachments on accounts
-// properly.
+// While this may not always be strictly necessary in json-ld terms, most other
+// fedi implementations look for certain fields to be an array and will not parse
+// single-entry, non-array fields on accounts properly.
 //
 // If the accountable is being serialized as a top-level object (eg., for serving
 // in response to an account dereference request), then includeContext should be
@@ -126,6 +125,7 @@ func serializeAccountable(t vocab.Type, includeContext bool) (map[string]interfa
 	}
 
 	NormalizeOutgoingAttachmentProp(accountable, data)
+	NormalizeOutgoingAlsoKnownAsProp(accountable, data)
 
 	return data, nil
 }

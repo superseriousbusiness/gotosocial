@@ -171,7 +171,30 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 
 	// alsoKnownAs
 	// Required for Move activity.
-	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+	if l := len(a.AlsoKnownAsURIs); l != 0 {
+		alsoKnownAsURIs := make([]*url.URL, l)
+		for i, rawURL := range a.AlsoKnownAsURIs {
+			uri, err := url.Parse(rawURL)
+			if err != nil {
+				return nil, err
+			}
+
+			alsoKnownAsURIs[i] = uri
+		}
+
+		ap.SetAlsoKnownAs(person, alsoKnownAsURIs)
+	}
+
+	// movedTo
+	// Required for Move activity.
+	if a.MovedToURI != "" {
+		movedTo, err := url.Parse(a.MovedToURI)
+		if err != nil {
+			return nil, err
+		}
+
+		ap.SetMovedTo(person, movedTo)
+	}
 
 	// publicKey
 	// Required for signatures.

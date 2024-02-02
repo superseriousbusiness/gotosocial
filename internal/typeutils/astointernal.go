@@ -198,7 +198,17 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 
 	// TODO: FeaturedTagsURI
 
-	// TODO: alsoKnownAs
+	// Moved and AlsoKnownAsURIs,
+	// needed for account migrations.
+	movedToURI := ap.GetMovedTo(accountable)
+	if movedToURI != nil {
+		acct.MovedToURI = movedToURI.String()
+	}
+
+	alsoKnownAsURIs := ap.GetAlsoKnownAs(accountable)
+	for _, uri := range alsoKnownAsURIs {
+		acct.AlsoKnownAsURIs = append(acct.AlsoKnownAsURIs, uri.String())
+	}
 
 	// Extract account public key and verify ownership to account.
 	pkey, pkeyURL, pkeyOwnerID, err := ap.ExtractPublicKey(accountable)
