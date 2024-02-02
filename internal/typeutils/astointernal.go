@@ -206,7 +206,15 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	}
 
 	alsoKnownAsURIs := ap.GetAlsoKnownAs(accountable)
-	for _, uri := range alsoKnownAsURIs {
+	for i, uri := range alsoKnownAsURIs {
+		// Don't store more than
+		// 20 AKA URIs for remotes,
+		// to prevent people playing
+		// silly buggers.
+		if i >= 20 {
+			break
+		}
+
 		acct.AlsoKnownAsURIs = append(acct.AlsoKnownAsURIs, uri.String())
 	}
 
