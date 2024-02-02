@@ -5,6 +5,7 @@ package streams
 import (
 	propertyaccuracy "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_accuracy"
 	propertyactor "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_actor"
+	propertyalsoknownas "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_alsoknownas"
 	propertyaltitude "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_altitude"
 	propertyanyof "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_anyof"
 	propertyattachment "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_attachment"
@@ -44,6 +45,7 @@ import (
 	propertylongitude "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_longitude"
 	propertymanuallyapprovesfollowers "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_manuallyapprovesfollowers"
 	propertymediatype "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_mediatype"
+	propertymovedto "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_movedto"
 	propertyname "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_name"
 	propertynext "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_next"
 	propertyobject "github.com/superseriousbusiness/activity/streams/impl/activitystreams/property_object"
@@ -165,6 +167,7 @@ func init() {
 	mgr = &Manager{}
 	propertyaccuracy.SetManager(mgr)
 	propertyactor.SetManager(mgr)
+	propertyalsoknownas.SetManager(mgr)
 	propertyaltitude.SetManager(mgr)
 	propertyanyof.SetManager(mgr)
 	propertyattachment.SetManager(mgr)
@@ -204,6 +207,7 @@ func init() {
 	propertylongitude.SetManager(mgr)
 	propertymanuallyapprovesfollowers.SetManager(mgr)
 	propertymediatype.SetManager(mgr)
+	propertymovedto.SetManager(mgr)
 	propertyname.SetManager(mgr)
 	propertynext.SetManager(mgr)
 	propertyobject.SetManager(mgr)

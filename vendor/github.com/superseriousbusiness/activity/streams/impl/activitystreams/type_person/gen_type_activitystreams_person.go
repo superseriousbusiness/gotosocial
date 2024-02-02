@@ -16,6 +16,7 @@ import (
 //     "type": "Person"
 //   }
 type ActivityStreamsPerson struct {
+	ActivityStreamsAlsoKnownAs               vocab.ActivityStreamsAlsoKnownAsProperty
 	ActivityStreamsAltitude                  vocab.ActivityStreamsAltitudeProperty
 	ActivityStreamsAttachment                vocab.ActivityStreamsAttachmentProperty
 	ActivityStreamsAttributedTo              vocab.ActivityStreamsAttributedToProperty
@@ -43,6 +44,7 @@ type ActivityStreamsPerson struct {
 	ActivityStreamsLocation                  vocab.ActivityStreamsLocationProperty
 	ActivityStreamsManuallyApprovesFollowers vocab.ActivityStreamsManuallyApprovesFollowersProperty
 	ActivityStreamsMediaType                 vocab.ActivityStreamsMediaTypeProperty
+	ActivityStreamsMovedTo                   vocab.ActivityStreamsMovedToProperty
 	ActivityStreamsName                      vocab.ActivityStreamsNameProperty
 	ActivityStreamsObject                    vocab.ActivityStreamsObjectProperty
 	ActivityStreamsOutbox                    vocab.ActivityStreamsOutboxProperty
@@ -115,6 +117,11 @@ func DeserializePerson(m map[string]interface{}, aliasMap map[string]string) (*A
 		return nil, fmt.Errorf("\"type\" property is unrecognized type: %T", typeValue)
 	}
 	// Begin: Known property deserialization
+	if p, err := mgr.DeserializeAlsoKnownAsPropertyActivityStreams()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.ActivityStreamsAlsoKnownAs = p
+	}
 	if p, err := mgr.DeserializeAltitudePropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
@@ -250,6 +257,11 @@ func DeserializePerson(m map[string]interface{}, aliasMap map[string]string) (*A
 	} else if p != nil {
 		this.ActivityStreamsMediaType = p
 	}
+	if p, err := mgr.DeserializeMovedToPropertyActivityStreams()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.ActivityStreamsMovedTo = p
+	}
 	if p, err := mgr.DeserializeNamePropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
@@ -350,7 +362,9 @@ func DeserializePerson(m map[string]interface{}, aliasMap map[string]string) (*A
 	// Begin: Unknown deserialization
 	for k, v := range m {
 		// Begin: Code that ensures a property name is unknown
-		if k == "altitude" {
+		if k == "alsoKnownAs" {
+			continue
+		} else if k == "altitude" {
 			continue
 		} else if k == "attachment" {
 			continue
@@ -405,6 +419,8 @@ func DeserializePerson(m map[string]interface{}, aliasMap map[string]string) (*A
 		} else if k == "manuallyApprovesFollowers" {
 			continue
 		} else if k == "mediaType" {
+			continue
+		} else if k == "movedTo" {
 			continue
 		} else if k == "name" {
 			continue
@@ -497,6 +513,12 @@ func PersonIsDisjointWith(other vocab.Type) bool {
 func PersonIsExtendedBy(other vocab.Type) bool {
 	// Shortcut implementation: is not extended by anything.
 	return false
+}
+
+// GetActivityStreamsAlsoKnownAs returns the "alsoKnownAs" property if it exists,
+// and nil otherwise.
+func (this ActivityStreamsPerson) GetActivityStreamsAlsoKnownAs() vocab.ActivityStreamsAlsoKnownAsProperty {
+	return this.ActivityStreamsAlsoKnownAs
 }
 
 // GetActivityStreamsAltitude returns the "altitude" property if it exists, and
@@ -640,6 +662,12 @@ func (this ActivityStreamsPerson) GetActivityStreamsManuallyApprovesFollowers() 
 // nil otherwise.
 func (this ActivityStreamsPerson) GetActivityStreamsMediaType() vocab.ActivityStreamsMediaTypeProperty {
 	return this.ActivityStreamsMediaType
+}
+
+// GetActivityStreamsMovedTo returns the "movedTo" property if it exists, and nil
+// otherwise.
+func (this ActivityStreamsPerson) GetActivityStreamsMovedTo() vocab.ActivityStreamsMovedToProperty {
+	return this.ActivityStreamsMovedTo
 }
 
 // GetActivityStreamsName returns the "name" property if it exists, and nil
@@ -795,6 +823,7 @@ func (this ActivityStreamsPerson) IsExtending(other vocab.Type) bool {
 // alias used to import the type and its properties.
 func (this ActivityStreamsPerson) JSONLDContext() map[string]string {
 	m := map[string]string{"https://www.w3.org/ns/activitystreams": this.alias}
+	m = this.helperJSONLDContext(this.ActivityStreamsAlsoKnownAs, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsAltitude, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsAttachment, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsAttributedTo, m)
@@ -822,6 +851,7 @@ func (this ActivityStreamsPerson) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.ActivityStreamsLocation, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsManuallyApprovesFollowers, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsMediaType, m)
+	m = this.helperJSONLDContext(this.ActivityStreamsMovedTo, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsName, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsObject, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsOutbox, m)
@@ -849,6 +879,20 @@ func (this ActivityStreamsPerson) JSONLDContext() map[string]string {
 // determination.
 func (this ActivityStreamsPerson) LessThan(o vocab.ActivityStreamsPerson) bool {
 	// Begin: Compare known properties
+	// Compare property "alsoKnownAs"
+	if lhs, rhs := this.ActivityStreamsAlsoKnownAs, o.GetActivityStreamsAlsoKnownAs(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
 	// Compare property "altitude"
 	if lhs, rhs := this.ActivityStreamsAltitude, o.GetActivityStreamsAltitude(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
@@ -1227,6 +1271,20 @@ func (this ActivityStreamsPerson) LessThan(o vocab.ActivityStreamsPerson) bool {
 		// Anything else is greater than nil
 		return false
 	} // Else: Both are nil
+	// Compare property "movedTo"
+	if lhs, rhs := this.ActivityStreamsMovedTo, o.GetActivityStreamsMovedTo(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
 	// Compare property "name"
 	if lhs, rhs := this.ActivityStreamsName, o.GetActivityStreamsName(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
@@ -1516,6 +1574,14 @@ func (this ActivityStreamsPerson) Serialize() (map[string]interface{}, error) {
 	}
 	m["type"] = typeName
 	// Begin: Serialize known properties
+	// Maybe serialize property "alsoKnownAs"
+	if this.ActivityStreamsAlsoKnownAs != nil {
+		if i, err := this.ActivityStreamsAlsoKnownAs.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.ActivityStreamsAlsoKnownAs.Name()] = i
+		}
+	}
 	// Maybe serialize property "altitude"
 	if this.ActivityStreamsAltitude != nil {
 		if i, err := this.ActivityStreamsAltitude.Serialize(); err != nil {
@@ -1732,6 +1798,14 @@ func (this ActivityStreamsPerson) Serialize() (map[string]interface{}, error) {
 			m[this.ActivityStreamsMediaType.Name()] = i
 		}
 	}
+	// Maybe serialize property "movedTo"
+	if this.ActivityStreamsMovedTo != nil {
+		if i, err := this.ActivityStreamsMovedTo.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.ActivityStreamsMovedTo.Name()] = i
+		}
+	}
 	// Maybe serialize property "name"
 	if this.ActivityStreamsName != nil {
 		if i, err := this.ActivityStreamsName.Serialize(); err != nil {
@@ -1898,6 +1972,11 @@ func (this ActivityStreamsPerson) Serialize() (map[string]interface{}, error) {
 	return m, nil
 }
 
+// SetActivityStreamsAlsoKnownAs sets the "alsoKnownAs" property.
+func (this *ActivityStreamsPerson) SetActivityStreamsAlsoKnownAs(i vocab.ActivityStreamsAlsoKnownAsProperty) {
+	this.ActivityStreamsAlsoKnownAs = i
+}
+
 // SetActivityStreamsAltitude sets the "altitude" property.
 func (this *ActivityStreamsPerson) SetActivityStreamsAltitude(i vocab.ActivityStreamsAltitudeProperty) {
 	this.ActivityStreamsAltitude = i
@@ -2017,6 +2096,11 @@ func (this *ActivityStreamsPerson) SetActivityStreamsManuallyApprovesFollowers(i
 // SetActivityStreamsMediaType sets the "mediaType" property.
 func (this *ActivityStreamsPerson) SetActivityStreamsMediaType(i vocab.ActivityStreamsMediaTypeProperty) {
 	this.ActivityStreamsMediaType = i
+}
+
+// SetActivityStreamsMovedTo sets the "movedTo" property.
+func (this *ActivityStreamsPerson) SetActivityStreamsMovedTo(i vocab.ActivityStreamsMovedToProperty) {
+	this.ActivityStreamsMovedTo = i
 }
 
 // SetActivityStreamsName sets the "name" property.

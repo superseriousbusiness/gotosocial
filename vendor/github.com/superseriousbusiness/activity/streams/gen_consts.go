@@ -188,6 +188,9 @@ var ActivityStreamsAccuracyPropertyName string = "accuracy"
 // ActivityStreamsActorPropertyName is the string literal of the name for the actor property in the ActivityStreams vocabulary.
 var ActivityStreamsActorPropertyName string = "actor"
 
+// ActivityStreamsAlsoKnownAsPropertyName is the string literal of the name for the alsoKnownAs property in the ActivityStreams vocabulary.
+var ActivityStreamsAlsoKnownAsPropertyName string = "alsoKnownAs"
+
 // ActivityStreamsAltitudePropertyName is the string literal of the name for the altitude property in the ActivityStreams vocabulary.
 var ActivityStreamsAltitudePropertyName string = "altitude"
 
@@ -316,6 +319,9 @@ var ActivityStreamsManuallyApprovesFollowersPropertyName string = "manuallyAppro
 
 // ActivityStreamsMediaTypePropertyName is the string literal of the name for the mediaType property in the ActivityStreams vocabulary.
 var ActivityStreamsMediaTypePropertyName string = "mediaType"
+
+// ActivityStreamsMovedToPropertyName is the string literal of the name for the movedTo property in the ActivityStreams vocabulary.
+var ActivityStreamsMovedToPropertyName string = "movedTo"
 
 // ActivityStreamsNamePropertyName is the string literal of the name for the name property in the ActivityStreams vocabulary.
 var ActivityStreamsNamePropertyName string = "name"

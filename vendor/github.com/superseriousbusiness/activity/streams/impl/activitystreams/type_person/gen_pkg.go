@@ -11,6 +11,10 @@ var typePropertyConstructor func() vocab.JSONLDTypeProperty
 // privateManager abstracts the code-generated manager that provides access to
 // concrete implementations.
 type privateManager interface {
+	// DeserializeAlsoKnownAsPropertyActivityStreams returns the
+	// deserialization method for the "ActivityStreamsAlsoKnownAsProperty"
+	// non-functional property in the vocabulary "ActivityStreams"
+	DeserializeAlsoKnownAsPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAlsoKnownAsProperty, error)
 	// DeserializeAltitudePropertyActivityStreams returns the deserialization
 	// method for the "ActivityStreamsAltitudeProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
@@ -121,6 +125,10 @@ type privateManager interface {
 	// method for the "ActivityStreamsMediaTypeProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeMediaTypePropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsMediaTypeProperty, error)
+	// DeserializeMovedToPropertyActivityStreams returns the deserialization
+	// method for the "ActivityStreamsMovedToProperty" non-functional
+	// property in the vocabulary "ActivityStreams"
+	DeserializeMovedToPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsMovedToProperty, error)
 	// DeserializeNamePropertyActivityStreams returns the deserialization
 	// method for the "ActivityStreamsNameProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
