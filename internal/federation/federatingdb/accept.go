@@ -41,7 +41,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		l.Debug("entering Accept")
 	}
 
-	receivingAccount, _, internal := extractFromCtx(ctx)
+	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
 	if internal {
 		return nil // Already processed.
 	}
@@ -63,9 +63,16 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
 				}
 
-				// make sure the addressee of the original follow is the same as whatever inbox this landed in
+				// Make sure the creator of the original follow
+				// is the same as whatever inbox this landed in.
 				if gtsFollow.AccountID != receivingAccount.ID {
-					return errors.New("ACCEPT: follow object account and inbox account were not the same")
+					return errors.New("ACCEPT: follow account and inbox account were not the same")
+				}
+
+				// Make sure the target of the original follow
+				// is the same as the account making the request.
+				if gtsFollow.TargetAccountID != requestingAccount.ID {
+					return errors.New("ACCEPT: follow target account and requesting account were not the same")
 				}
 
 				follow, err := f.state.DB.AcceptFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
@@ -103,9 +110,16 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", iriStr, err)
 			}
 
-			// make sure the addressee of the original follow is the same as whatever inbox this landed in
+			// Make sure the creator of the original follow
+			// is the same as whatever inbox this landed in.
 			if followReq.AccountID != receivingAccount.ID {
-				return errors.New("ACCEPT: follow object account and inbox account were not the same")
+				return errors.New("ACCEPT: follow account and inbox account were not the same")
+			}
+
+			// Make sure the target of the original follow
+			// is the same as the account making the request.
+			if followReq.TargetAccountID != requestingAccount.ID {
+				return errors.New("ACCEPT: follow target account and requesting account were not the same")
 			}
 
 			follow, err := f.state.DB.AcceptFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)

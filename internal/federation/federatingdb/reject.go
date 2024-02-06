@@ -40,7 +40,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 		l.Debug("entering Reject")
 	}
 
-	receivingAccount, _, internal := extractFromCtx(ctx)
+	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
 	if internal {
 		return nil // Already processed.
 	}
@@ -62,9 +62,16 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 					return fmt.Errorf("Reject: couldn't get follow request with id %s from the database: %s", rejectedObjectIRI.String(), err)
 				}
 
-				// make sure the addressee of the original follow is the same as whatever inbox this landed in
+				// Make sure the creator of the original follow
+				// is the same as whatever inbox this landed in.
 				if followReq.AccountID != receivingAccount.ID {
-					return errors.New("Reject: follow object account and inbox account were not the same")
+					return errors.New("Reject: follow account and inbox account were not the same")
+				}
+
+				// Make sure the target of the original follow
+				// is the same as the account making the request.
+				if followReq.TargetAccountID != requestingAccount.ID {
+					return errors.New("Reject: follow target account and requesting account were not the same")
 				}
 
 				return f.state.DB.RejectFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
@@ -90,9 +97,16 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 				return fmt.Errorf("Reject: error converting asfollow to gtsfollow: %s", err)
 			}
 
-			// make sure the addressee of the original follow is the same as whatever inbox this landed in
+			// Make sure the creator of the original follow
+			// is the same as whatever inbox this landed in.
 			if gtsFollow.AccountID != receivingAccount.ID {
-				return errors.New("Reject: follow object account and inbox account were not the same")
+				return errors.New("Reject: follow account and inbox account were not the same")
+			}
+
+			// Make sure the target of the original follow
+			// is the same as the account making the request.
+			if gtsFollow.TargetAccountID != requestingAccount.ID {
+				return errors.New("Reject: follow target account and requesting account were not the same")
 			}
 
 			return f.state.DB.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
