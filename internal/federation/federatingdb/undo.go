@@ -44,7 +44,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 		l.Debug("entering Undo")
 	}
 
-	receivingAccount, _, internal := extractFromCtx(ctx)
+	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
 	if internal {
 		return nil // Already processed.
 	}
@@ -61,18 +61,18 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 
 		switch objType.GetTypeName() {
 		case ap.ActivityFollow:
-			if err := f.undoFollow(ctx, receivingAccount, undo, objType); err != nil {
+			if err := f.undoFollow(ctx, receivingAccount, requestingAccount, undo, objType); err != nil {
 				errs.Appendf("error undoing follow: %w", err)
 			}
 		case ap.ActivityLike:
-			if err := f.undoLike(ctx, receivingAccount, undo, objType); err != nil {
+			if err := f.undoLike(ctx, receivingAccount, requestingAccount, undo, objType); err != nil {
 				errs.Appendf("error undoing like: %w", err)
 			}
 		case ap.ActivityAnnounce:
 			// TODO: actually handle this !
 			log.Warn(ctx, "skipped undo announce")
 		case ap.ActivityBlock:
-			if err := f.undoBlock(ctx, receivingAccount, undo, objType); err != nil {
+			if err := f.undoBlock(ctx, receivingAccount, requestingAccount, undo, objType); err != nil {
 				errs.Appendf("error undoing block: %w", err)
 			}
 		}
@@ -84,6 +84,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 func (f *federatingDB) undoFollow(
 	ctx context.Context,
 	receivingAccount *gtsmodel.Account,
+	requestingAccount *gtsmodel.Account,
 	undo vocab.ActivityStreamsUndo,
 	t vocab.Type,
 ) error {
@@ -109,6 +110,12 @@ func (f *federatingDB) undoFollow(
 		return nil
 	}
 
+	// Ensure requester is follow origin.
+	if follow.AccountID != requestingAccount.ID {
+		// Ignore this Activity.
+		return nil
+	}
+
 	// Delete any existing follow with this URI.
 	if err := f.state.DB.DeleteFollowByURI(ctx, follow.URI); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return fmt.Errorf("undoFollow: db error removing follow: %w", err)
@@ -126,6 +133,7 @@ func (f *federatingDB) undoFollow(
 func (f *federatingDB) undoLike(
 	ctx context.Context,
 	receivingAccount *gtsmodel.Account,
+	requestingAccount *gtsmodel.Account,
 	undo vocab.ActivityStreamsUndo,
 	t vocab.Type,
 ) error {
@@ -147,6 +155,12 @@ func (f *federatingDB) undoLike(
 
 	// Ensure addressee is fave target.
 	if fave.TargetAccountID != receivingAccount.ID {
+		// Ignore this Activity.
+		return nil
+	}
+
+	// Ensure requester is fave origin.
+	if fave.AccountID != requestingAccount.ID {
 		// Ignore this Activity.
 		return nil
 	}
@@ -179,6 +193,7 @@ func (f *federatingDB) undoLike(
 func (f *federatingDB) undoBlock(
 	ctx context.Context,
 	receivingAccount *gtsmodel.Account,
+	requestingAccount *gtsmodel.Account,
 	undo vocab.ActivityStreamsUndo,
 	t vocab.Type,
 ) error {
@@ -200,6 +215,12 @@ func (f *federatingDB) undoBlock(
 
 	// Ensure addressee is block target.
 	if block.TargetAccountID != receivingAccount.ID {
+		// Ignore this Activity.
+		return nil
+	}
+
+	// Ensure requester is block origin.
+	if block.AccountID != requestingAccount.ID {
 		// Ignore this Activity.
 		return nil
 	}
