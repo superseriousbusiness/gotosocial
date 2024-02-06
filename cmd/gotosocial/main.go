@@ -77,6 +77,7 @@ func main() {
 }
 
 // version will build a version string from binary's stored build information.
+// It is SemVer-compatible so long as Version is SemVer-compatible.
 func version() string {
 	// Read build information from binary
 	build, ok := godebug.ReadBuildInfo()
@@ -115,5 +116,5 @@ func version() string {
 		}
 	}
 
-	return strings.Join(info, " ")
+	return strings.Join(info, "+")
 }
