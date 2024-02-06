@@ -214,6 +214,17 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 			err := gtserror.Newf("error dereferencing account %s: %w", pubKeyAuth.OwnerURI, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
+
+		// Catch a possible (but very rare) race condition where
+		// we've fetched a key, then fetched the Actor who owns the
+		// key, but the Key of the Actor has changed in the meantime.
+		if !pubKeyAuth.Owner.PublicKey.Equal(pubKeyAuth.FetchedPubKey) {
+			err := gtserror.Newf(
+				"key mismatch: fetched key %s does not match pubkey of fetched Actor %s",
+				pubKeyID, pubKeyAuth.Owner.URI,
+			)
+			return nil, gtserror.NewErrorUnauthorized(err)
+		}
 	}
 
 	if !pubKeyAuth.Owner.SuspendedAt.IsZero() {

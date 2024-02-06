@@ -19,6 +19,8 @@ package federatingdb
 
 import (
 	"context"
+	"net/url"
+	"slices"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -39,9 +41,23 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		l.Debug("entering Announce")
 	}
 
-	receivingAccount, _, internal := extractFromCtx(ctx)
+	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
 	if internal {
 		return nil // Already processed.
+	}
+
+	// Ensure requestingAccount is among
+	// the Actors doing the Announce.
+	//
+	// We don't support Announce forwards.
+	actorIRIs := ap.GetActorIRIs(announce)
+	if !slices.ContainsFunc(actorIRIs, func(actorIRI *url.URL) bool {
+		return actorIRI.String() == requestingAccount.URI
+	}) {
+		return gtserror.Newf(
+			"requestingAccount %s was not among Announce Actors",
+			requestingAccount.URI,
+		)
 	}
 
 	boost, isNew, err := f.converter.ASAnnounceToStatus(ctx, announce)

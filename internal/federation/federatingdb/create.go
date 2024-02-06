@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-logger/v2/level"
+	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -101,6 +102,20 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 	block, err := f.converter.ASBlockToBlock(ctx, blockable)
 	if err != nil {
 		return fmt.Errorf("activityBlock: could not convert Block to gts model block")
+	}
+
+	if block.AccountID != requestingAccount.ID {
+		return fmt.Errorf(
+			"activityBlock: requestingAccount %s is not Block actor account %s",
+			requestingAccount.URI, block.Account.URI,
+		)
+	}
+
+	if block.TargetAccountID != receiving.ID {
+		return fmt.Errorf(
+			"activityBlock: inbox account %s is not Block object account %s",
+			receiving.URI, block.TargetAccount.URI,
+		)
 	}
 
 	block.ID = id.NewULID()
@@ -421,6 +436,20 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 		return fmt.Errorf("activityFollow: could not convert Follow to follow request: %s", err)
 	}
 
+	if followRequest.AccountID != requestingAccount.ID {
+		return fmt.Errorf(
+			"activityFollow: requestingAccount %s is not Follow actor account %s",
+			requestingAccount.URI, followRequest.Account.URI,
+		)
+	}
+
+	if followRequest.TargetAccountID != receivingAccount.ID {
+		return fmt.Errorf(
+			"activityFollow: inbox account %s is not Follow object account %s",
+			receivingAccount.URI, followRequest.TargetAccount.URI,
+		)
+	}
+
 	followRequest.ID = id.NewULID()
 
 	if err := f.state.DB.PutFollowRequest(ctx, followRequest); err != nil {
@@ -450,6 +479,13 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 	fave, err := f.converter.ASLikeToFave(ctx, like)
 	if err != nil {
 		return fmt.Errorf("activityLike: could not convert Like to fave: %w", err)
+	}
+
+	if fave.AccountID != requestingAccount.ID {
+		return fmt.Errorf(
+			"activityLike: requestingAccount %s is not Like actor account %s",
+			requestingAccount.URI, fave.Account.URI,
+		)
 	}
 
 	fave.ID = id.NewULID()
@@ -487,6 +523,26 @@ func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, rece
 	report, err := f.converter.ASFlagToReport(ctx, flag)
 	if err != nil {
 		return fmt.Errorf("activityFlag: could not convert Flag to report: %w", err)
+	}
+
+	// Requesting account must have at
+	// least two domains from the right
+	// in common with reporting account.
+	if dns.CompareDomainName(
+		requestingAccount.Domain,
+		report.Account.Domain,
+	) < 2 {
+		return fmt.Errorf(
+			"activityFlag: requesting account %s does not share a domain with Flag Actor account %s",
+			requestingAccount.URI, report.Account.URI,
+		)
+	}
+
+	if report.TargetAccountID != receivingAccount.ID {
+		return fmt.Errorf(
+			"activityFlag: inbox account %s is not Flag object account %s",
+			receivingAccount.URI, report.TargetAccount.URI,
+		)
 	}
 
 	report.ID = id.NewULID()
