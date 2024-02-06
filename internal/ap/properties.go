@@ -102,7 +102,7 @@ func AppendTo(with WithTo, to ...*url.URL) {
 // GetCc returns the IRIs contained in the Cc property of 'with'. Panics on entries with missing ID.
 func GetCc(with WithCc) []*url.URL {
 	ccProp := with.GetActivityStreamsCc()
-	return getIRIs[vocab.ActivityStreamsCcPropertyIterator](ccProp)
+	return extractIRIs[vocab.ActivityStreamsCcPropertyIterator](ccProp)
 }
 
 // AppendCc appends the given IRIs to the Cc property of 'with'.
@@ -120,7 +120,7 @@ func AppendCc(with WithCc, cc ...*url.URL) {
 // GetBcc returns the IRIs contained in the Bcc property of 'with'. Panics on entries with missing ID.
 func GetBcc(with WithBcc) []*url.URL {
 	bccProp := with.GetActivityStreamsBcc()
-	return getIRIs[vocab.ActivityStreamsBccPropertyIterator](bccProp)
+	return extractIRIs[vocab.ActivityStreamsBccPropertyIterator](bccProp)
 }
 
 // AppendBcc appends the given IRIs to the Bcc property of 'with'.
@@ -170,7 +170,7 @@ func AppendURL(with WithURL, url ...*url.URL) {
 // GetActorIRIs returns the IRIs contained in the Actor property of 'with'.
 func GetActorIRIs(with WithActor) []*url.URL {
 	actorProp := with.GetActivityStreamsActor()
-	return getIRIs[vocab.ActivityStreamsActorPropertyIterator](actorProp)
+	return extractIRIs[vocab.ActivityStreamsActorPropertyIterator](actorProp)
 }
 
 // AppendActorIRIs appends the given IRIs to the Actor property of 'with'.
@@ -188,7 +188,7 @@ func AppendActorIRIs(with WithActor, actor ...*url.URL) {
 // GetObjectIRIs returns the IRIs contained in the Object property of 'with'.
 func GetObjectIRIs(with WithObject) []*url.URL {
 	objectProp := with.GetActivityStreamsObject()
-	return getIRIs[vocab.ActivityStreamsObjectPropertyIterator](objectProp)
+	return extractIRIs[vocab.ActivityStreamsObjectPropertyIterator](objectProp)
 }
 
 // AppendObjectIRIs appends the given IRIs to the Object property of 'with'.
@@ -203,10 +203,28 @@ func AppendObjectIRIs(with WithObject) {
 	})
 }
 
+// GetTargetIRIs returns the IRIs contained in the Target property of 'with'.
+func GetTargetIRIs(with WithTarget) []*url.URL {
+	targetProp := with.GetActivityStreamsTarget()
+	return extractIRIs[vocab.ActivityStreamsTargetPropertyIterator](targetProp)
+}
+
+// AppendTargetIRIs appends the given IRIs to the Target property of 'with'.
+func AppendTargetIRIs(with WithTarget) {
+	appendIRIs(func() Property[vocab.ActivityStreamsTargetPropertyIterator] {
+		targetProp := with.GetActivityStreamsTarget()
+		if targetProp == nil {
+			targetProp = streams.NewActivityStreamsTargetProperty()
+			with.SetActivityStreamsTarget(targetProp)
+		}
+		return targetProp
+	})
+}
+
 // GetAttributedTo returns the IRIs contained in the AttributedTo property of 'with'.
 func GetAttributedTo(with WithAttributedTo) []*url.URL {
 	attribProp := with.GetActivityStreamsAttributedTo()
-	return getIRIs[vocab.ActivityStreamsAttributedToPropertyIterator](attribProp)
+	return extractIRIs[vocab.ActivityStreamsAttributedToPropertyIterator](attribProp)
 }
 
 // AppendAttributedTo appends the given IRIs to the AttributedTo property of 'with'.
@@ -224,7 +242,7 @@ func AppendAttributedTo(with WithAttributedTo, attribTo ...*url.URL) {
 // GetInReplyTo returns the IRIs contained in the InReplyTo property of 'with'.
 func GetInReplyTo(with WithInReplyTo) []*url.URL {
 	replyProp := with.GetActivityStreamsInReplyTo()
-	return getIRIs[vocab.ActivityStreamsInReplyToPropertyIterator](replyProp)
+	return extractIRIs[vocab.ActivityStreamsInReplyToPropertyIterator](replyProp)
 }
 
 // AppendInReplyTo appends the given IRIs to the InReplyTo property of 'with'.
@@ -332,6 +350,43 @@ func SetFeatured(with WithFeatured, featured *url.URL) {
 		with.SetTootFeatured(featuredProp)
 	}
 	featuredProp.SetIRI(featured)
+}
+
+// GetMovedTo returns the IRI contained in the movedTo property of 'with'.
+func GetMovedTo(with WithMovedTo) *url.URL {
+	movedToProp := with.GetActivityStreamsMovedTo()
+	if movedToProp == nil || !movedToProp.IsIRI() {
+		return nil
+	}
+	return movedToProp.GetIRI()
+}
+
+// SetMovedTo sets the given IRI on the movedTo property of 'with'.
+func SetMovedTo(with WithMovedTo, movedTo *url.URL) {
+	movedToProp := with.GetActivityStreamsMovedTo()
+	if movedToProp == nil {
+		movedToProp = streams.NewActivityStreamsMovedToProperty()
+		with.SetActivityStreamsMovedTo(movedToProp)
+	}
+	movedToProp.SetIRI(movedTo)
+}
+
+// GetAlsoKnownAs returns the IRI contained in the alsoKnownAs property of 'with'.
+func GetAlsoKnownAs(with WithAlsoKnownAs) []*url.URL {
+	alsoKnownAsProp := with.GetActivityStreamsAlsoKnownAs()
+	return getIRIs[vocab.ActivityStreamsAlsoKnownAsPropertyIterator](alsoKnownAsProp)
+}
+
+// SetAlsoKnownAs sets the given IRIs on the alsoKnownAs property of 'with'.
+func SetAlsoKnownAs(with WithAlsoKnownAs, alsoKnownAs []*url.URL) {
+	appendIRIs(func() Property[vocab.ActivityStreamsAlsoKnownAsPropertyIterator] {
+		alsoKnownAsProp := with.GetActivityStreamsAlsoKnownAs()
+		if alsoKnownAsProp == nil {
+			alsoKnownAsProp = streams.NewActivityStreamsAlsoKnownAsProperty()
+			with.SetActivityStreamsAlsoKnownAs(alsoKnownAsProp)
+		}
+		return alsoKnownAsProp
+	}, alsoKnownAs...)
 }
 
 // GetPublished returns the time contained in the Published property of 'with'.
@@ -465,7 +520,12 @@ func SetManuallyApprovesFollowers(with WithManuallyApprovesFollowers, manuallyAp
 	mafProp.Set(manuallyApprovesFollowers)
 }
 
-func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
+// extractIRIs extracts just the AP IRIs from an iterable
+// property that may contain types (with IRIs) or just IRIs.
+//
+// If you know the property contains only IRIs and no types,
+// then use getIRIs instead, since it's slightly faster.
+func extractIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
 	if prop == nil || prop.Len() == 0 {
 		return nil
 	}
@@ -490,7 +550,29 @@ func getIRIs[T TypeOrIRI](prop Property[T]) []*url.URL {
 	return ids
 }
 
-func appendIRIs[T TypeOrIRI](getProp func() Property[T], iri ...*url.URL) {
+// getIRIs gets AP IRIs from an iterable property of IRIs.
+//
+// Types will be ignored; to extract IRIs from an iterable
+// that may contain types too, use extractIRIs.
+func getIRIs[T WithIRI](prop Property[T]) []*url.URL {
+	if prop == nil || prop.Len() == 0 {
+		return nil
+	}
+	ids := make([]*url.URL, 0, prop.Len())
+	for i := 0; i < prop.Len(); i++ {
+		at := prop.At(i)
+		if at.IsIRI() {
+			id := at.GetIRI()
+			if id != nil {
+				ids = append(ids, id)
+				continue
+			}
+		}
+	}
+	return ids
+}
+
+func appendIRIs[T WithIRI](getProp func() Property[T], iri ...*url.URL) {
 	if len(iri) == 0 {
 		return
 	}

@@ -2799,6 +2799,8 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			nil,
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/outbox"),
 			URLMustParse("https://unknown-instance.com/users/brand_new_person/collections/featured"),
+			nil,
+			nil,
 			"brand_new_person",
 			"Geoff Brando New Personson",
 			"hey I'm a new person, your instance hasn't seen me yet uwu",
@@ -2820,6 +2822,8 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("https://turnip.farm/sharedInbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/outbox"),
 			URLMustParse("https://turnip.farm/users/turniplover6969/collections/featured"),
+			nil,
+			nil,
 			"turniplover6969",
 			"Turnip Lover 6969",
 			"I just think they're neat",
@@ -2841,6 +2845,8 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			URLMustParse("http://example.org/sharedInbox"),
 			URLMustParse("http://example.org/users/Some_User/outbox"),
 			URLMustParse("http://example.org/users/Some_User/collections/featured"),
+			nil,
+			nil,
 			"Some_User",
 			"just some user, don't mind me",
 			"Peepee poo poo",
@@ -3335,6 +3341,8 @@ func newAPPerson(
 	sharedInboxIRI *url.URL,
 	outboxURI *url.URL,
 	featuredURI *url.URL,
+	movedToURI *url.URL,
+	alsoKnownAsURIs []*url.URL,
 	username string,
 	displayName string,
 	note string,
@@ -3444,9 +3452,15 @@ func newAPPerson(
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
 
-	// alsoKnownAs
+	// alsoKnownAs, movedTo
 	// Required for Move activity.
-	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
+	if len(alsoKnownAsURIs) != 0 {
+		ap.SetAlsoKnownAs(person, alsoKnownAsURIs)
+	}
+
+	if movedToURI != nil {
+		ap.SetMovedTo(person, movedToURI)
+	}
 
 	// publicKey
 	// Required for signatures.
@@ -3628,7 +3642,7 @@ func newAPGroup(
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
 
-	// alsoKnownAs
+	// AlsoKnownAsURI
 	// Required for Move activity.
 	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
 
@@ -3812,7 +3826,7 @@ func newAPService(
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
 
-	// alsoKnownAs
+	// AlsoKnownAsURI
 	// Required for Move activity.
 	// TODO: NOT IMPLEMENTED **YET** -- this needs to be added as an activitypub extension to https://github.com/go-fed/activity, see https://github.com/go-fed/activity/tree/master/astool
 

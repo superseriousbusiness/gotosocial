@@ -160,6 +160,8 @@ type Accountable interface {
 	WithFollowing
 	WithFollowers
 	WithFeatured
+	WithMovedTo
+	WithAlsoKnownAs
 	WithManuallyApprovesFollowers
 	WithEndpoints
 	WithTag
@@ -327,7 +329,7 @@ type TypeOrIRI interface {
 }
 
 // Property represents the minimum interface for an ActivityStreams property with IRIs.
-type Property[T TypeOrIRI] interface {
+type Property[T WithIRI] interface {
 	Len() int
 	At(int) T
 
@@ -441,6 +443,18 @@ type WithFeatured interface {
 	SetTootFeatured(vocab.TootFeaturedProperty)
 }
 
+// WithMovedTo represents an Object with ActivityStreamsMovedToProperty.
+type WithMovedTo interface {
+	GetActivityStreamsMovedTo() vocab.ActivityStreamsMovedToProperty
+	SetActivityStreamsMovedTo(vocab.ActivityStreamsMovedToProperty)
+}
+
+// WithAlsoKnownAs represents an Object with ActivityStreamsAlsoKnownAsProperty.
+type WithAlsoKnownAs interface {
+	GetActivityStreamsAlsoKnownAs() vocab.ActivityStreamsAlsoKnownAsProperty
+	SetActivityStreamsAlsoKnownAs(vocab.ActivityStreamsAlsoKnownAsProperty)
+}
+
 // WithAttributedTo represents an activity with ActivityStreamsAttributedToProperty
 type WithAttributedTo interface {
 	GetActivityStreamsAttributedTo() vocab.ActivityStreamsAttributedToProperty
@@ -549,6 +563,12 @@ type WithActor interface {
 type WithObject interface {
 	GetActivityStreamsObject() vocab.ActivityStreamsObjectProperty
 	SetActivityStreamsObject(vocab.ActivityStreamsObjectProperty)
+}
+
+// WithTarget represents an activity with ActivityStreamsTargetProperty
+type WithTarget interface {
+	GetActivityStreamsTarget() vocab.ActivityStreamsTargetProperty
+	SetActivityStreamsTarget(vocab.ActivityStreamsTargetProperty)
 }
 
 // WithNext represents an activity with ActivityStreamsNextProperty

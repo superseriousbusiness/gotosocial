@@ -391,6 +391,36 @@ func NormalizeOutgoingAttachmentProp(item WithAttachment, rawJSON map[string]int
 	rawJSON["attachment"] = []interface{}{attachment}
 }
 
+// NormalizeOutgoingAlsoKnownAsProp replaces single-entry alsoKnownAs values with
+// single-entry arrays, for better compatibility with other AP implementations.
+//
+// Ie:
+//
+//	"alsoKnownAs": "https://example.org/users/some_user"
+//
+// becomes:
+//
+//	"alsoKnownAs": ["https://example.org/users/some_user"]
+//
+// Noop for items with no attachments, or with attachments that are already a slice.
+func NormalizeOutgoingAlsoKnownAsProp(item WithAlsoKnownAs, rawJSON map[string]interface{}) {
+	alsoKnownAs, ok := rawJSON["alsoKnownAs"]
+	if !ok {
+		// No 'alsoKnownAs',
+		// nothing to change.
+		return
+	}
+
+	if _, ok := alsoKnownAs.([]interface{}); ok {
+		// Already slice,
+		// nothing to change.
+		return
+	}
+
+	// Coerce single-object to slice.
+	rawJSON["alsoKnownAs"] = []interface{}{alsoKnownAs}
+}
+
 // NormalizeOutgoingContentProp normalizes go-fed's funky formatting of content and
 // contentMap properties to a format better understood by other AP implementations.
 //

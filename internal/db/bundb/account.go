@@ -279,7 +279,12 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 		}
 	}
 
-	if !account.AlsoKnownAsPopulated() {
+	// Only try to populate AlsoKnownAs for local accounts,
+	// since those are the only accounts to which it's relevant.
+	//
+	// AKA from remotes might have loads of random-ass values
+	// set here, and we don't want to do lots of failing DB calls.
+	if account.IsLocal() && !account.AlsoKnownAsPopulated() {
 		// Account alsoKnownAs accounts are
 		// out-of-date with URIs, repopulate.
 		alsoKnownAs := make([]*gtsmodel.Account, 0)
