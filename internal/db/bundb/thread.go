@@ -28,7 +28,7 @@ import (
 )
 
 type threadDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

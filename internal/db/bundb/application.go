@@ -26,7 +26,7 @@ import (
 )
 
 type applicationDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

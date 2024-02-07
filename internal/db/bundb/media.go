@@ -34,7 +34,7 @@ import (
 )
 
 type mediaDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -151,7 +151,7 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 	defer m.state.Caches.GTS.Media.Invalidate("ID", id)
 
 	// Delete media attachment in new transaction.
-	err = m.db.RunInTx(ctx, func(tx Tx) error {
+	err = m.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if media.AccountID != "" {
 			var account gtsmodel.Account
 

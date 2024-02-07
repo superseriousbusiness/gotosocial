@@ -45,7 +45,7 @@ import (
 const rsaKeyBits = 2048
 
 type adminDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -56,7 +56,7 @@ func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (boo
 		Column("account.id").
 		Where("? = ?", bun.Ident("account.username"), username).
 		Where("? IS NULL", bun.Ident("account.domain"))
-	return a.db.NotExists(ctx, q)
+	return notExists(ctx, q)
 }
 
 func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, error) {
@@ -73,7 +73,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, err
 		TableExpr("? AS ?", bun.Ident("email_domain_blocks"), bun.Ident("email_domain_block")).
 		Column("email_domain_block.id").
 		Where("? = ?", bun.Ident("email_domain_block.domain"), domain)
-	emailDomainBlocked, err := a.db.Exists(ctx, emailDomainBlockedQ)
+	emailDomainBlocked, err := exists(ctx, emailDomainBlockedQ)
 	if err != nil {
 		return false, err
 	}
@@ -88,7 +88,7 @@ func (a *adminDB) IsEmailAvailable(ctx context.Context, email string) (bool, err
 		Column("user.id").
 		Where("? = ?", bun.Ident("user.email"), email).
 		WhereOr("? = ?", bun.Ident("user.unconfirmed_email"), email)
-	return a.db.NotExists(ctx, q)
+	return notExists(ctx, q)
 }
 
 func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (*gtsmodel.User, error) {
@@ -229,7 +229,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) error {
 		Where("? = ?", bun.Ident("account.username"), username).
 		Where("? IS NULL", bun.Ident("account.domain"))
 
-	exists, err := a.db.Exists(ctx, q)
+	exists, err := exists(ctx, q)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance")).
 		Where("? = ?", bun.Ident("instance.domain"), host)
 
-	exists, err := a.db.Exists(ctx, q)
+	exists, err := exists(ctx, q)
 	if err != nil {
 		return err
 	}

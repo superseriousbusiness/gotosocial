@@ -34,7 +34,7 @@ import (
 )
 
 type pollDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -154,7 +154,7 @@ func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...st
 	poll.CheckVotes()
 
 	return p.state.Caches.GTS.Poll.Store(poll, func() error {
-		return p.db.RunInTx(ctx, func(tx Tx) error {
+		return p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// Update the status' "updated_at" field.
 			if _, err := tx.NewUpdate().
 				Table("statuses").
@@ -362,7 +362,7 @@ func (p *pollDB) PopulatePollVote(ctx context.Context, vote *gtsmodel.PollVote) 
 
 func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
 	return p.state.Caches.GTS.PollVote.Store(vote, func() error {
-		return p.db.RunInTx(ctx, func(tx Tx) error {
+		return p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// Try insert vote into database.
 			if _, err := tx.NewInsert().
 				Model(vote).
@@ -398,7 +398,7 @@ func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 }
 
 func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
-	err := p.db.RunInTx(ctx, func(tx Tx) error {
+	err := p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Delete all votes in poll.
 		res, err := tx.NewDelete().
 			Table("poll_votes").
@@ -469,7 +469,7 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 }
 
 func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID string) error {
-	err := p.db.RunInTx(ctx, func(tx Tx) error {
+	err := p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Slice should only ever be of length
 		// 0 or 1; it's a slice of slices only
 		// because we can't LIMIT deletes to 1.
@@ -569,7 +569,7 @@ func (p *pollDB) DeletePollVotesByAccountID(ctx context.Context, accountID strin
 }
 
 // newSelectPollVotes returns a new select query for all rows in the poll_votes table with poll_id = pollID.
-func newSelectPollVotes(db *DB, pollID string) *bun.SelectQuery {
+func newSelectPollVotes(db *bun.DB, pollID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("poll_votes")).
 		ColumnExpr("?", bun.Ident("id")).

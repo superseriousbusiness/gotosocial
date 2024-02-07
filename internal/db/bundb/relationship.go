@@ -31,7 +31,7 @@ import (
 )
 
 type relationshipDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -299,7 +299,7 @@ func (r *relationshipDB) getAccountBlockIDs(ctx context.Context, accountID strin
 }
 
 // newSelectFollowRequests returns a new select query for all rows in the follow_requests table with target_account_id = accountID.
-func newSelectFollowRequests(db *DB, accountID string) *bun.SelectQuery {
+func newSelectFollowRequests(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
@@ -308,7 +308,7 @@ func newSelectFollowRequests(db *DB, accountID string) *bun.SelectQuery {
 }
 
 // newSelectFollowRequesting returns a new select query for all rows in the follow_requests table with account_id = accountID.
-func newSelectFollowRequesting(db *DB, accountID string) *bun.SelectQuery {
+func newSelectFollowRequesting(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
@@ -317,7 +317,7 @@ func newSelectFollowRequesting(db *DB, accountID string) *bun.SelectQuery {
 }
 
 // newSelectFollows returns a new select query for all rows in the follows table with account_id = accountID.
-func newSelectFollows(db *DB, accountID string) *bun.SelectQuery {
+func newSelectFollows(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -327,7 +327,7 @@ func newSelectFollows(db *DB, accountID string) *bun.SelectQuery {
 
 // newSelectLocalFollows returns a new select query for all rows in the follows table with
 // account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollows(db *DB, accountID string) *bun.SelectQuery {
+func newSelectLocalFollows(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -344,7 +344,7 @@ func newSelectLocalFollows(db *DB, accountID string) *bun.SelectQuery {
 }
 
 // newSelectFollowers returns a new select query for all rows in the follows table with target_account_id = accountID.
-func newSelectFollowers(db *DB, accountID string) *bun.SelectQuery {
+func newSelectFollowers(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -354,7 +354,7 @@ func newSelectFollowers(db *DB, accountID string) *bun.SelectQuery {
 
 // newSelectLocalFollowers returns a new select query for all rows in the follows table with
 // target_account_id = accountID where the corresponding account ID has a NULL domain (i.e. is local).
-func newSelectLocalFollowers(db *DB, accountID string) *bun.SelectQuery {
+func newSelectLocalFollowers(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		Table("follows").
 		Column("id").
@@ -371,7 +371,7 @@ func newSelectLocalFollowers(db *DB, accountID string) *bun.SelectQuery {
 }
 
 // newSelectBlocks returns a new select query for all rows in the blocks table with account_id = accountID.
-func newSelectBlocks(db *DB, accountID string) *bun.SelectQuery {
+func newSelectBlocks(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("blocks")).
 		ColumnExpr("?", bun.Ident("id")).

@@ -32,7 +32,7 @@ import (
 )
 
 type ruleDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

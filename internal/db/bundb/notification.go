@@ -34,7 +34,7 @@ import (
 )
 
 type notificationDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

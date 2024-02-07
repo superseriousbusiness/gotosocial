@@ -33,7 +33,7 @@ import (
 )
 
 type mentionDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

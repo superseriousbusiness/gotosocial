@@ -37,7 +37,7 @@ import (
 )
 
 type accountDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -334,7 +334,7 @@ func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) e
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
-		return a.db.RunInTx(ctx, func(tx Tx) error {
+		return a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// create links between this account and any emojis it uses
 			for _, i := range account.EmojiIDs {
 				if _, err := tx.NewInsert().Model(&gtsmodel.AccountToEmoji{
@@ -363,7 +363,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
-		return a.db.RunInTx(ctx, func(tx Tx) error {
+		return a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// create links between this account and any emojis it uses
 			// first clear out any old emoji links
 			if _, err := tx.
@@ -411,7 +411,7 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
 		return err
 	}
 
-	return a.db.RunInTx(ctx, func(tx Tx) error {
+	return a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// clear out any emoji links
 		if _, err := tx.
 			NewDelete().

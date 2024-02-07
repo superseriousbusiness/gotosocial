@@ -32,7 +32,7 @@ import (
 )
 
 type reportDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 

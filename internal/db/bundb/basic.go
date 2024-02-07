@@ -27,7 +27,7 @@ import (
 )
 
 type basicDB struct {
-	db *DB
+	db *bun.DB
 }
 
 func (b *basicDB) Put(ctx context.Context, i interface{}) error {

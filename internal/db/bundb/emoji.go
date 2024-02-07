@@ -38,7 +38,7 @@ import (
 )
 
 type emojiDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -109,7 +109,7 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	return e.db.RunInTx(ctx, func(tx Tx) error {
+	return e.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Delete relational links between this emoji
 		// and any statuses using it, returning the
 		// status IDs so we can later update them.

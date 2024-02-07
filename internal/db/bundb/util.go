@@ -18,6 +18,8 @@
 package bundb
 
 import (
+	"context"
+	"database/sql"
 	"slices"
 	"strings"
 
@@ -111,6 +113,25 @@ func whereStartsLike(
 		"(?) ? ? ESCAPE ?",
 		subject, bun.Safe(like), search, `\`,
 	)
+}
+
+// exists checks the results of a SelectQuery for the existence of the data in question, masking ErrNoEntries errors.
+func exists(ctx context.Context, query *bun.SelectQuery) (bool, error) {
+	exists, err := query.Exists(ctx)
+	switch err {
+	case nil:
+		return exists, nil
+	case sql.ErrNoRows:
+		return false, nil
+	default:
+		return false, err
+	}
+}
+
+// notExists checks the results of a SelectQuery for the non-existence of the data in question, masking ErrNoEntries errors.
+func notExists(ctx context.Context, query *bun.SelectQuery) (bool, error) {
+	exists, err := exists(ctx, query)
+	return !exists, err
 }
 
 // loadPagedIDs loads a page of IDs from given SliceCache by `key`, resorting to `loadDESC` if required. Uses `page` to sort + page resulting IDs.

@@ -35,7 +35,7 @@ import (
 )
 
 type listDB struct {
-	db    *DB
+	db    *bun.DB
 	state *state.State
 }
 
@@ -198,7 +198,7 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 		}
 	}()
 
-	return l.db.RunInTx(ctx, func(tx Tx) error {
+	return l.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Delete all entries attached to list.
 		if _, err := tx.NewDelete().
 			Table("list_entries").
@@ -515,7 +515,7 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 	}()
 
 	// Finally, insert each list entry into the database.
-	return l.db.RunInTx(ctx, func(tx Tx) error {
+	return l.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		for _, entry := range entries {
 			entry := entry // rescope
 			if err := l.state.Caches.GTS.ListEntry.Store(entry, func() error {
