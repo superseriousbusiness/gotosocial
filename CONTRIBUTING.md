@@ -110,6 +110,8 @@ When adding a new page, you need to include it in the [`mkdocs.yml`](mkdocs.yml)
 
 If you don't use Conda, you can read the `docs/environment.yml` to see which dependencies are required and `pip install` them manually. It's advisable to do this in a virtual environment, which you can create with something like `python3 -m venv /path-to/store-the-venv`. You can then call `/path-to/store-the-venv/bin/pip`, `/path-to/store-the-venv/bin/mkdocs` etc.
 
+In order to upgrade dependencies, use `conda update --update-all` in the activated environment. You can then update the `environment.yml` with `conda env export --from-history -f ./docs/environment.yml`, though you'll need to fix the `channels`. Beware that `conda env export` will also drop the `pip` dependencies, so make sure to add those back.
+
 ## Development
 
 ### Golang forking quirks
