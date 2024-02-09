@@ -311,6 +311,7 @@ func retryOnBusySlow(ctx context.Context, fn func() error) error {
 		select {
 		// Context cancelled.
 		case <-ctx.Done():
+			return ctx.Err()
 
 		// Backoff for some time.
 		case <-time.After(backoff):
