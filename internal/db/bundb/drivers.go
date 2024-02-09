@@ -66,7 +66,10 @@ func (c *PostgreSQLConn) Begin() (driver.Tx, error) {
 func (c *PostgreSQLConn) BeginTx(ctx context.Context, opts driver.TxOptions) (driver.Tx, error) {
 	tx, err := c.conn.BeginTx(ctx, opts)
 	err = processPostgresError(err)
-	return tx, err
+	if err != nil {
+		return nil, err
+	}
+	return &PostgreSQLTx{tx}, nil
 }
 
 func (c *PostgreSQLConn) Prepare(query string) (driver.Stmt, error) {
