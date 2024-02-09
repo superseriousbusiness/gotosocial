@@ -22,6 +22,38 @@ An example configuration file, with an explanation of each of the config fields,
 
 It's recommended to create your own configuration file with only the settings you need to change for your installation. This ensures you don't have to reconcile changes to defaults or adding/updating/removing settings from your configuration file that you haven't changed away from the defaults on every release.
 
+#### Mounting in container
+
+It can be necessary to have a `config.yaml` in a container, as some settings aren't easily managed with environment variables or command line flags.
+
+To do so, create the `config.yaml` on host, and then mount it anywhere you please inside the container. Then, set the `command` to pass the location of the configuration file. For `docker-compose.yaml`, you can amend it like so:
+
+```yaml
+services:
+  gotosocial:
+    command: ["--config-path", "/gotosocial/config.yaml"]
+    volumes:
+      - type: bind
+        source: /path/on/the/host/to/config.yaml
+        target: /gotosocial/config.yaml
+        read_only: true
+```
+
+For the Docker or Podman command line, pass a mount specification like so:
+
+```sh
+--mount type=bind,source=/path/on/the/host/config.yaml,destination=/gotosocial/config.yaml,readonly
+```
+
+Then when using `docker run` or `podman run`, pass `--config-path /gotosocial/config.yaml` as the command, for example:
+
+```sh
+podman container run \
+    --mount ... \
+    docker.io/superseriousbusiness/gotosocial:latest \
+    --config-path /gotosocial/config.yaml
+```
+
 ### Environment Variables
 
 You can also configure GoToSocial by setting [environment variables](https://en.wikipedia.org/wiki/Environment_variable). These environment variables follow the format:
