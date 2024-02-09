@@ -209,7 +209,7 @@ func (c *Caches) initAccountCounts() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.GTS.AccountCounts.Init(0, c.GTS.Account.Cap())
+	c.GTS.AccountCounts.Init(0, cap)
 }
 
 func (c *Caches) initAccountNote() {
