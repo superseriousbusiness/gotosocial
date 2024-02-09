@@ -23,17 +23,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// doOnce wraps a function to only perform it once.
-func doOnce(fn func()) func() {
-	var once int32
-	return func() {
-		if once == 0 {
-			fn()
-			once = 1
-		}
-	}
-}
-
 // pollChanged returns whether a poll has changed in way that
 // indicates that this should be an entirely new poll. i.e. if
 // the available options have changed, or the expiry has increased.

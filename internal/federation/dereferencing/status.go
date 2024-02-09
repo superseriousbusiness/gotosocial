@@ -295,7 +295,7 @@ func (d *Dereferencer) enrichStatusSafely(
 	// to safely defer in case of panic, while still
 	// performing more granular unlocks when needed.
 	unlock := d.state.FedLocks.Lock(uriStr)
-	unlock = doOnce(unlock)
+	unlock = util.DoOnce(unlock)
 	defer unlock()
 
 	// Perform status enrichment with passed vars.

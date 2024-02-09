@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
@@ -44,7 +45,7 @@ func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername st
 
 	// Acquire lock for derefs map.
 	unlock := d.state.FedLocks.Lock(remoteURL)
-	unlock = doOnce(unlock)
+	unlock = util.DoOnce(unlock)
 	defer unlock()
 
 	// first check if we're already processing this emoji

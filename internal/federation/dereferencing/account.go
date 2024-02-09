@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // accountUpToDate returns whether the given account model is both updateable (i.e.
@@ -384,7 +385,7 @@ func (d *Dereferencer) enrichAccountSafely(
 	// to safely defer in case of panic, while still
 	// performing more granular unlocks when needed.
 	unlock := d.state.FedLocks.Lock(uriStr)
-	unlock = doOnce(unlock)
+	unlock = util.DoOnce(unlock)
 	defer unlock()
 
 	// Perform status enrichment with passed vars.
@@ -735,7 +736,7 @@ func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport tran
 
 	// Acquire lock for derefs map.
 	unlock := d.state.FedLocks.Lock(latestAcc.AvatarRemoteURL)
-	unlock = doOnce(unlock)
+	unlock = util.DoOnce(unlock)
 	defer unlock()
 
 	// Look for an existing dereference in progress.
@@ -821,7 +822,7 @@ func (d *Dereferencer) fetchRemoteAccountHeader(ctx context.Context, tsport tran
 
 	// Acquire lock for derefs map.
 	unlock := d.state.FedLocks.Lock(latestAcc.HeaderRemoteURL)
-	unlock = doOnce(unlock)
+	unlock = util.DoOnce(unlock)
 	defer unlock()
 
 	// Look for an existing dereference in progress.
