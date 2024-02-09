@@ -141,6 +141,9 @@ func (c *SQLiteConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx dri
 		err = processSQLiteError(err)
 		return err
 	})
+	if err != nil {
+		return nil, err
+	}
 	return &SQLiteTx{Context: ctx, Tx: tx}, nil
 }
 
