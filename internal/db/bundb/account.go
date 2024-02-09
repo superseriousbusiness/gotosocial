@@ -555,7 +555,7 @@ func (a *accountDB) getAccountStatusCounts(ctx context.Context, accountID string
 		var err error
 
 		// Scan database for account statuses.
-		counts.Statuses, err = a.db.NewSelect().
+		counts.Statuses, err = tx.NewSelect().
 			Table("statuses").
 			Where("? = ?", bun.Ident("account_id"), accountID).
 			Count(ctx)
@@ -564,7 +564,7 @@ func (a *accountDB) getAccountStatusCounts(ctx context.Context, accountID string
 		}
 
 		// Scan database for pinned statuses.
-		counts.Pinned, err = a.db.NewSelect().
+		counts.Pinned, err = tx.NewSelect().
 			Table("statuses").
 			Where("? = ?", bun.Ident("account_id"), accountID).
 			Where("? IS NOT NULL", bun.Ident("pinned_at")).
