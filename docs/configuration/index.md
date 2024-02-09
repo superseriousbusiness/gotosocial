@@ -26,7 +26,9 @@ It's recommended to create your own configuration file with only the settings yo
 
 It can be necessary to have a `config.yaml` in a container, as some settings aren't easily managed with environment variables or command line flags.
 
-To do so, create the `config.yaml` on host, and then mount it anywhere you please inside the container. Then, set the `command` to pass the location of the configuration file. For `docker-compose.yaml`, you can amend it like so:
+To do so, create a `config.yaml` on the host, mount it in the container and then tell GoToSocial to pickup the configuration file. The latter can be done by either setting the command the container is run with to `--config-path /path/inside/container/to/config.yaml` or using the `GTS_CONFIG_PATH` environment variable.
+
+For a compose file, you can amend the configuration like so:
 
 ```yaml
 services:
@@ -39,19 +41,38 @@ services:
         read_only: true
 ```
 
-For the Docker or Podman command line, pass a mount specification like so:
+Or, for the environment variable:
 
-```sh
---mount type=bind,source=/path/on/the/host/config.yaml,destination=/gotosocial/config.yaml,readonly
+```yaml
+services:
+  gotosocial:
+    environment:
+      GTS_CONFIG_PATH: /gotosocial/config.yaml
+    volumes:
+      - type: bind
+        source: /path/on/the/host/to/config.yaml
+        target: /gotosocial/config.yaml
+        read_only: true
 ```
+
+For the Docker or Podman command line, pass a [mount specification](https://docs.podman.io/en/latest/markdown/podman-run.1.html#mount-type-type-type-specific-option).
 
 Then when using `docker run` or `podman run`, pass `--config-path /gotosocial/config.yaml` as the command, for example:
 
 ```sh
-podman container run \
-    --mount ... \
+podman run \
+    --mount type=bind,source=/path/on/the/host/to/config.yaml,destination=/gotosocial/config.yaml,readonly \
     docker.io/superseriousbusiness/gotosocial:latest \
     --config-path /gotosocial/config.yaml
+```
+
+Using the `GTS_CONFIG_PATH` environment variable instead:
+
+```sh
+podman run \
+    --mount type=bind,source=/path/on/the/host/to/config.yaml,destination=/gotosocial/config.yaml,readonly \
+    --env 'GTS_CONFIG_PATH=/gotosocial/config.yaml' \
+    docker.io/superseriousbusiness/gotosocial:latest
 ```
 
 ### Environment Variables
