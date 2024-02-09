@@ -77,9 +77,12 @@ func (c *PostgreSQLConn) Prepare(query string) (driver.Stmt, error) {
 }
 
 func (c *PostgreSQLConn) PrepareContext(ctx context.Context, query string) (driver.Stmt, error) {
-	stmt, err := c.conn.PrepareContext(ctx, query)
+	st, err := c.conn.PrepareContext(ctx, query)
 	err = processPostgresError(err)
-	return stmt, err
+	if err != nil {
+		return nil, err
+	}
+	return &PostgreSQLStmt{st.(stmt)}, nil
 }
 
 func (c *PostgreSQLConn) Exec(query string, args []driver.NamedValue) (driver.Result, error) {
@@ -118,6 +121,20 @@ func (tx *PostgreSQLTx) Rollback() error {
 	return processPostgresError(err)
 }
 
+type PostgreSQLStmt struct{ stmt }
+
+func (stmt *PostgreSQLStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
+	res, err := stmt.stmt.ExecContext(ctx, args)
+	err = processSQLiteError(err)
+	return res, err
+}
+
+func (stmt *PostgreSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
+	rows, err := stmt.stmt.QueryContext(ctx, args)
+	err = processSQLiteError(err)
+	return rows, err
+}
+
 // SQLiteDriver is our own wrapper around the
 // sqlite.Driver{} type in order to wrap further
 // SQL driver types with our own functionality,
@@ -154,13 +171,16 @@ func (c *SQLiteConn) Prepare(query string) (driver.Stmt, error) {
 	return c.PrepareContext(context.Background(), query)
 }
 
-func (c *SQLiteConn) PrepareContext(ctx context.Context, query string) (stmt driver.Stmt, err error) {
+func (c *SQLiteConn) PrepareContext(ctx context.Context, query string) (st driver.Stmt, err error) {
 	err = retryOnBusy(ctx, func() error {
-		stmt, err = c.conn.PrepareContext(ctx, query)
+		st, err = c.conn.PrepareContext(ctx, query)
 		err = processSQLiteError(err)
 		return err
 	})
-	return
+	if err != nil {
+		return nil, err
+	}
+	return &SQLiteStmt{Context: ctx, stmt: st.(stmt)}, nil
 }
 
 func (c *SQLiteConn) Exec(query string, args []driver.NamedValue) (driver.Result, error) {
@@ -219,6 +239,29 @@ func (tx *SQLiteTx) Rollback() (err error) {
 	return
 }
 
+type SQLiteStmt struct {
+	context.Context
+	stmt
+}
+
+func (stmt *SQLiteStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res driver.Result, err error) {
+	err = retryOnBusy(stmt.Context, func() error {
+		res, err = stmt.stmt.ExecContext(ctx, args)
+		err = processSQLiteError(err)
+		return err
+	})
+	return
+}
+
+func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (rows driver.Rows, err error) {
+	err = retryOnBusy(stmt.Context, func() error {
+		rows, err = stmt.stmt.QueryContext(ctx, args)
+		err = processSQLiteError(err)
+		return err
+	})
+	return
+}
+
 type conn interface {
 	driver.Conn
 	driver.ConnPrepareContext
@@ -227,21 +270,26 @@ type conn interface {
 	driver.ConnBeginTx
 }
 
+type stmt interface {
+	driver.Stmt
+	driver.StmtExecContext
+	driver.StmtQueryContext
+}
+
 // retryOnBusy will retry given function on returned 'errBusy'.
 func retryOnBusy(ctx context.Context, fn func() error) error {
+	if err := fn(); err != errBusy {
+		return err
+	}
+	return retryOnBusySlow(ctx, fn)
+}
+
+// retryOnBusySlow is the outlined form of retryOnBusy, to allow the fast path (i.e. only
+// 1 attempt) to be inlined, leaving the slow retry loop to be a separate function call.
+func retryOnBusySlow(ctx context.Context, fn func() error) error {
 	var backoff time.Duration
 
 	for i := 0; ; i++ {
-		// Perform func.
-		err := fn()
-
-		if err != errBusy {
-			// May be nil, or may be
-			// some other error, either
-			// way return here.
-			return err
-		}
-
 		// backoff according to a multiplier of 2ms * 2^2n,
 		// up to a maximum possible backoff time of 5 minutes.
 		//
@@ -266,6 +314,16 @@ func retryOnBusy(ctx context.Context, fn func() error) error {
 
 		// Backoff for some time.
 		case <-time.After(backoff):
+		}
+
+		// Perform func.
+		err := fn()
+
+		if err != errBusy {
+			// May be nil, or may be
+			// some other error, either
+			// way return here.
+			return err
 		}
 	}
 
