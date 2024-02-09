@@ -23,19 +23,24 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// GetTargetStatusBy fetches the target status with db load function, given the authorized (or, nil) requester's
-// account. This returns an approprate gtserror.WithCode accounting for not found and visibility to requester.
-// The refresh argument allows specifying whether the returned copy should be force refreshed.
+// GetTargetStatusBy fetches the target status with db load
+// function, given the authorized (or, nil) requester's
+// account. This returns an approprate gtserror.WithCode
+// accounting for not found and visibility to requester.
+//
+// window can be used to force refresh of the target if it's
+// deemed to be stale. Falls back to default window if nil.
 func (p *Processor) GetTargetStatusBy(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	getTargetFromDB func() (*gtsmodel.Status, error),
-	refresh bool,
+	window *dereferencing.FreshnessWindow,
 ) (
 	status *gtsmodel.Status,
 	visible bool,
@@ -68,13 +73,15 @@ func (p *Processor) GetTargetStatusBy(
 		// a requester (i.e. request is authorized)
 		// to prevent a possible DOS vector.
 
-		if refresh {
-			// Refresh required, forcibly do synchronously.
+		if window != nil {
+			// Window is explicitly set, so likely
+			// tighter than the default window.
+			// Do refresh synchronously.
 			_, _, err := p.federator.RefreshStatus(ctx,
 				requester.Username,
 				target,
 				nil,
-				true, // force
+				window,
 			)
 			if err != nil {
 				log.Errorf(ctx, "error refreshing status: %v", err)
@@ -85,7 +92,7 @@ func (p *Processor) GetTargetStatusBy(
 				requester.Username,
 				target,
 				nil,
-				false, // force
+				nil,
 			)
 		}
 	}
@@ -95,11 +102,14 @@ func (p *Processor) GetTargetStatusBy(
 
 // GetVisibleTargetStatus calls GetTargetStatusBy(),
 // but converts a non-visible result to not-found error.
+//
+// window can be used to force refresh of the target if it's
+// deemed to be stale. Falls back to default window if nil.
 func (p *Processor) GetVisibleTargetStatusBy(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	getTargetFromDB func() (*gtsmodel.Status, error),
-	refresh bool,
+	window *dereferencing.FreshnessWindow,
 ) (
 	status *gtsmodel.Status,
 	errWithCode gtserror.WithCode,
@@ -108,7 +118,7 @@ func (p *Processor) GetVisibleTargetStatusBy(
 	target, visible, errWithCode := p.GetTargetStatusBy(ctx,
 		requester,
 		getTargetFromDB,
-		refresh,
+		window,
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -128,18 +138,21 @@ func (p *Processor) GetVisibleTargetStatusBy(
 
 // GetVisibleTargetStatus calls GetVisibleTargetStatusBy(),
 // passing in a database function that fetches by status ID.
+//
+// window can be used to force refresh of the target if it's
+// deemed to be stale. Falls back to default window if nil.
 func (p *Processor) GetVisibleTargetStatus(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	targetID string,
-	refresh bool,
+	window *dereferencing.FreshnessWindow,
 ) (
 	status *gtsmodel.Status,
 	errWithCode gtserror.WithCode,
 ) {
 	return p.GetVisibleTargetStatusBy(ctx, requester, func() (*gtsmodel.Status, error) {
 		return p.state.DB.GetStatusByID(ctx, targetID)
-	}, refresh)
+	}, window)
 }
 
 // UnwrapIfBoost "unwraps" the given status if
@@ -158,7 +171,7 @@ func (p *Processor) UnwrapIfBoost(
 	return p.GetVisibleTargetStatus(ctx,
 		requester,
 		status.BoostOfID,
-		false,
+		nil,
 	)
 }
 

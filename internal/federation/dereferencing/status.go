@@ -38,31 +38,41 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// statusUpToDate returns whether the given status model is both updateable
-// (i.e. remote status) and whether it needs an update based on `fetched_at`.
-func statusUpToDate(status *gtsmodel.Status, force bool) bool {
-	if status.Local != nil && *status.Local {
-		// Can't update local statuses.
+// statusFresh returns true if the given status is still
+// considered "fresh" according to the desired freshness
+// window (falls back to default status freshness if nil).
+//
+// Local statuses will always be considered fresh,
+// because there's no remote state that may have changed.
+//
+// Return value of false indicates that the status
+// is not fresh and should be refreshed from remote.
+func statusFresh(
+	status *gtsmodel.Status,
+	window *FreshnessWindow,
+) bool {
+	// Take default if no
+	// freshness window preferred.
+	if window == nil {
+		window = DefaultStatusFreshness
+	}
+
+	if status.IsLocal() {
+		// Can't refresh
+		// local statuses.
 		return true
 	}
 
-	// Default limit we allow
-	// statuses to be refreshed.
-	limit := 2 * time.Hour
+	// Moment when the status is
+	// considered stale according to
+	// desired freshness window.
+	staleAt := status.FetchedAt.Add(
+		time.Duration(*window),
+	)
 
-	if force {
-		// We specifically allow the force flag
-		// to force an early refresh (on a much
-		// smaller cooldown period).
-		limit = 5 * time.Minute
-	}
-
-	// If this status was updated recently (within limit), return as-is.
-	if next := status.FetchedAt.Add(limit); time.Now().Before(next) {
-		return true
-	}
-
-	return false
+	// It's still fresh if the time now
+	// is not past the point of staleness.
+	return !time.Now().After(staleAt)
 }
 
 // GetStatusByURI will attempt to fetch a status by its URI, first checking the database. In the case of a newly-met remote model, or a remote model whose 'last_fetched' date
@@ -146,7 +156,7 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 		}, nil)
 	}
 
-	if statusUpToDate(status, false) {
+	if statusFresh(status, DefaultStatusFreshness) {
 		// This is an existing status that is up-to-date,
 		// before returning ensure it is fully populated.
 		if err := d.state.DB.PopulateStatus(ctx, status); err != nil {
@@ -181,12 +191,12 @@ func (d *Dereferencer) RefreshStatus(
 	requestUser string,
 	status *gtsmodel.Status,
 	statusable ap.Statusable,
-	force bool,
+	window *FreshnessWindow,
 ) (*gtsmodel.Status, ap.Statusable, error) {
 	// If no incoming data is provided,
 	// check whether status needs update.
 	if statusable == nil &&
-		statusUpToDate(status, force) {
+		statusFresh(status, window) {
 		return status, nil, nil
 	}
 
@@ -228,12 +238,12 @@ func (d *Dereferencer) RefreshStatusAsync(
 	requestUser string,
 	status *gtsmodel.Status,
 	statusable ap.Statusable,
-	force bool,
+	window *FreshnessWindow,
 ) {
 	// If no incoming data is provided,
 	// check whether status needs update.
 	if statusable == nil &&
-		statusUpToDate(status, force) {
+		statusFresh(status, window) {
 		return
 	}
 

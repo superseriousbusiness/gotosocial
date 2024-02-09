@@ -205,6 +205,12 @@ func (s *Status) BelongsToAccount(accountID string) bool {
 	return s.AccountID == accountID
 }
 
+// IsLocal returns true if this is a local
+// status (ie., originating from this instance).
+func (s *Status) IsLocal() bool {
+	return s.Local != nil && *s.Local
+}
+
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
 	StatusID string  `bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`

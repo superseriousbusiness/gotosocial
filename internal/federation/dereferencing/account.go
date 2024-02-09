@@ -39,41 +39,55 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 )
 
-// accountUpToDate returns whether the given account model is both updateable (i.e.
-// non-instance remote account) and whether it needs an update based on `fetched_at`.
-func accountUpToDate(account *gtsmodel.Account, force bool) bool {
-	if !account.SuspendedAt.IsZero() {
-		// Can't update suspended accounts.
-		return true
+// accountFresh returns true if the given account is
+// still considered "fresh" according to the desired
+// freshness window (falls back to default if nil).
+//
+// Local accounts will always be considered fresh because
+// there's no remote state that could have changed.
+//
+// True is also returned for suspended accounts, since
+// we'll never want to try to refresh one of these.
+//
+// Return value of false indicates that the account
+// is not fresh and should be refreshed from remote.
+func accountFresh(
+	account *gtsmodel.Account,
+	window *FreshnessWindow,
+) bool {
+	if window == nil {
+		window = DefaultAccountFreshness
 	}
 
 	if account.IsLocal() {
-		// Can't update local accounts.
+		// Can't refresh
+		// local accounts.
 		return true
 	}
 
-	if account.IsInstance() && !account.IsNew() {
-		// Existing instance account. No need for update.
+	if !account.SuspendedAt.IsZero() {
+		// Can't refresh
+		// suspended accounts.
 		return true
 	}
 
-	// Default limit we allow
-	// statuses to be refreshed.
-	limit := 6 * time.Hour
-
-	if force {
-		// We specifically allow the force flag
-		// to force an early refresh (on a much
-		// smaller cooldown period).
-		limit = 5 * time.Minute
-	}
-
-	// If account was updated recently (within limit), we return as-is.
-	if next := account.FetchedAt.Add(limit); time.Now().Before(next) {
+	if account.IsInstance() &&
+		!account.IsNew() {
+		// Existing instance account.
+		// No need for refresh.
 		return true
 	}
 
-	return false
+	// Moment when the account is
+	// considered stale according to
+	// desired freshness window.
+	staleAt := account.FetchedAt.Add(
+		time.Duration(*window),
+	)
+
+	// It's still fresh if the time now
+	// is not past the point of staleness.
+	return !time.Now().After(staleAt)
 }
 
 // GetAccountByURI will attempt to fetch an accounts by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
@@ -145,7 +159,7 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 		}, nil)
 	}
 
-	if accountUpToDate(account, false) {
+	if accountFresh(account, nil) {
 		// This is an existing account that is up-to-date,
 		// before returning ensure it is fully populated.
 		if err := d.state.DB.PopulateAccount(ctx, account); err != nil {
@@ -247,7 +261,7 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 		requestUser,
 		account,
 		nil,
-		false,
+		nil,
 	)
 	if err != nil {
 		// Fallback to existing.
@@ -264,22 +278,28 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 	return latest, accountable, nil
 }
 
-// RefreshAccount updates the given account if remote and last_fetched is
-// beyond fetch interval, or if force is set. An updated account model is
-// returned, but in the case of dereferencing, some low-priority account info
-// may be enqueued for asynchronous fetching, e.g. featured account statuses (pins).
-// An ActivityPub object indicates the account was dereferenced (i.e. updated).
+// RefreshAccount updates the given account if it's a
+// remote account, and considered stale / not fresh
+// based on Account.FetchedAt and desired freshness.
+//
+// An updated account model is returned, but in the
+// case of dereferencing, some low-priority account
+// info may be enqueued for asynchronous fetching,
+// e.g. featured account statuses (pins).
+//
+// An ActivityPub object indicates the account was
+// dereferenced (i.e. updated).
 func (d *Dereferencer) RefreshAccount(
 	ctx context.Context,
 	requestUser string,
 	account *gtsmodel.Account,
 	accountable ap.Accountable,
-	force bool,
+	window *FreshnessWindow,
 ) (*gtsmodel.Account, ap.Accountable, error) {
 	// If no incoming data is provided,
-	// check whether account needs update.
+	// check whether account needs refresh.
 	if accountable == nil &&
-		accountUpToDate(account, force) {
+		accountFresh(account, window) {
 		return account, nil, nil
 	}
 
@@ -313,21 +333,25 @@ func (d *Dereferencer) RefreshAccount(
 	return latest, accountable, nil
 }
 
-// RefreshAccountAsync enqueues the given account for an asychronous
-// update fetching, if last_fetched is beyond fetch interval, or if force
-// is set. This is a more optimized form of manually enqueueing .UpdateAccount()
-// to the federation worker, since it only enqueues update if necessary.
+// RefreshAccountAsync enqueues the given account for
+// an asychronous update fetching, if it's a remote
+// account, and considered stale / not fresh based on
+// Account.FetchedAt and desired freshness.
+//
+// This is a more optimized form of manually enqueueing
+// .UpdateAccount() to the federation worker, since it
+// only enqueues update if necessary.
 func (d *Dereferencer) RefreshAccountAsync(
 	ctx context.Context,
 	requestUser string,
 	account *gtsmodel.Account,
 	accountable ap.Accountable,
-	force bool,
+	window *FreshnessWindow,
 ) {
 	// If no incoming data is provided,
-	// check whether account needs update.
+	// check whether account needs refresh.
 	if accountable == nil &&
-		accountUpToDate(account, force) {
+		accountFresh(account, window) {
 		return
 	}
 

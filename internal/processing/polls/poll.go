@@ -53,7 +53,7 @@ func (p *Processor) getTargetPoll(ctx context.Context, requester *gtsmodel.Accou
 		func() (*gtsmodel.Status, error) {
 			return p.state.DB.GetStatusByPollID(ctx, targetID)
 		},
-		true, // refresh
+		nil, // default freshness
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

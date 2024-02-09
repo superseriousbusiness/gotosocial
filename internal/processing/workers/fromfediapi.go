@@ -23,6 +23,8 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -179,7 +181,8 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 			fMsg.ReceivingAccount.Username,
 			bareStatus,
 			statusable,
-			true,
+			// Force refresh within 5min window.
+			dereferencing.Fresh,
 		)
 		if err != nil {
 			return gtserror.Newf("error processing new status %s: %w", bareStatus.URI, err)
@@ -487,7 +490,8 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) 
 		fMsg.ReceivingAccount.Username,
 		account,
 		apubAcc,
-		true, // Force refresh.
+		// Force refresh within 5min window.
+		dereferencing.Fresh,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error refreshing account: %v", err)
@@ -512,7 +516,8 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		fMsg.ReceivingAccount.Username,
 		existing,
 		apStatus,
-		true,
+		// Force refresh within 5min window.
+		dereferencing.Fresh,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error refreshing status: %v", err)
