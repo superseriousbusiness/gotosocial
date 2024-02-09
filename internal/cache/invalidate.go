@@ -151,6 +151,9 @@ func (c *Caches) OnInvalidatePollVote(vote *gtsmodel.PollVote) {
 }
 
 func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
+	// Invalidate status counts for this account.
+	c.GTS.AccountCounts.Invalidate(status.AccountID)
+
 	// Invalidate status ID cached visibility.
 	c.Visibility.Invalidate("ItemID", status.ID)
 
