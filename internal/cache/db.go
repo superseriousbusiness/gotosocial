@@ -38,7 +38,7 @@ type GTSCaches struct {
 
 	// TEMPORARY CACHE TO ALLEVIATE SLOW COUNT QUERIES,
 	// (in time will be removed when these IDs are cached).
-	AccountCounts simple.Cache[string, struct {
+	AccountCounts *simple.Cache[string, struct {
 		Statuses int
 		Pinned   int
 	}]
@@ -209,7 +209,10 @@ func (c *Caches) initAccountCounts() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.GTS.AccountCounts.Init(0, cap)
+	c.GTS.AccountCounts = simple.New[string, struct {
+		Statuses int
+		Pinned   int
+	}](0, cap)
 }
 
 func (c *Caches) initAccountNote() {
