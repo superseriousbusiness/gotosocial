@@ -20,11 +20,49 @@ package dereferencing
 import (
 	"net/url"
 	"sync"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+)
+
+// FreshnessWindow represents a duration in which a
+// Status or Account is still considered to be "fresh"
+// (ie., not in need of a refresh from remote), if its
+// last FetchedAt value falls within the window.
+//
+// For example, if an Account was FetchedAt 09:00, and it
+// is now 12:00, then it would be considered "fresh"
+// according to DefaultAccountFreshness, but not according
+// to Fresh, which would indicate that the Account requires
+// refreshing from remote.
+type FreshnessWindow time.Duration
+
+var (
+	// 6 hours.
+	//
+	// Default window for doing a
+	// fresh dereference of an Account.
+	DefaultAccountFreshness = util.Ptr(FreshnessWindow(6 * time.Hour))
+
+	// 2 hours.
+	//
+	// Default window for doing a
+	// fresh dereference of a Status.
+	DefaultStatusFreshness = util.Ptr(FreshnessWindow(2 * time.Hour))
+
+	// 5 minutes.
+	//
+	// Fresh is useful when you're wanting
+	// a more up-to-date model of something
+	// that exceeds default freshness windows.
+	//
+	// This is tuned to be quite fresh without
+	// causing loads of dereferencing calls.
+	Fresh = util.Ptr(FreshnessWindow(5 * time.Minute))
 )
 
 // Dereferencer wraps logic and functionality for doing dereferencing

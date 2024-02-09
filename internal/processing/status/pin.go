@@ -42,7 +42,7 @@ func (p *Processor) getPinnableStatus(ctx context.Context, requestingAccount *gt
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		requestingAccount,
 		targetStatusID,
-		false, // refresh
+		nil, // default freshness
 	)
 	if errWithCode != nil {
 		return nil, errWithCode

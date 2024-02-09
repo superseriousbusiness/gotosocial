@@ -33,7 +33,7 @@ func (p *Processor) getBookmarkableStatus(ctx context.Context, requestingAccount
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
 		requestingAccount,
 		targetStatusID,
-		false, // refresh
+		nil, // default freshness
 	)
 	if errWithCode != nil {
 		return nil, "", errWithCode

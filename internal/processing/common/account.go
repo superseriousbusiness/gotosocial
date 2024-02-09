@@ -66,7 +66,7 @@ func (p *Processor) GetTargetAccountBy(
 			requester.Username,
 			target,
 			nil,
-			false,
+			nil,
 		)
 	}
 

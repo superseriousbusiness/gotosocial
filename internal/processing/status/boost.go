@@ -43,7 +43,7 @@ func (p *Processor) BoostCreate(
 		ctx,
 		requester,
 		targetID,
-		false, // refresh
+		nil, // default freshness
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
@@ -113,7 +113,7 @@ func (p *Processor) BoostRemove(
 		ctx,
 		requester,
 		targetID,
-		false, // refresh
+		nil, // default freshness
 	)
 	if errWithCode != nil {
 		return nil, errWithCode
