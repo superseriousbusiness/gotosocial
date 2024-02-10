@@ -41,13 +41,13 @@ For example, to download a version for running on 64-bit Linux:
 ```bash
 GTS_VERSION=X.Y.Z # replace this
 GTS_TARGET=linux_amd64
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v$GTS_VERSION/gotosocial_$GTS_VERSION_$GTS_TARGET.tar.gz
+wget https://github.com/superseriousbusiness/gotosocial/releases/download/v${GTS_VERSION}/gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
 ```
 
 Then extract it:
 
 ```bash
-tar -xzf gotosocial_$GTS_VERSION_$GTS_TARGET.tar.gz
+tar -xzf gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
 ```
 
 This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
