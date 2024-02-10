@@ -17,7 +17,7 @@ If this is a documentation change, only the first checkbox must be filled (you c
 
 - [ ] I/we have read the [GoToSocial contribution guidelines](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md).
 - [ ] I/we have discussed the proposed changes already, either in an issue on the repository, or in the Matrix chat.
-- [ ] I/we have not included AI generated code.
+- [ ] I/we have not leveraged AI to create the proposed changes.
 - [ ] I/we have performed a self-review of added code.
 - [ ] I/we have written code that is legible and maintainable by others.
 - [ ] I/we have commented the added code, particularly in hard-to-understand areas.
