@@ -36,13 +36,13 @@ var (
 	sqliteDriver   = getSQLiteDriver()
 )
 
+//go:linkname getSQLiteDriver modernc.org/sqlite.newDriver
+func getSQLiteDriver() *sqlite.Driver
+
 func init() {
 	sql.Register("pgx-gts", &PostgreSQLDriver{})
 	sql.Register("sqlite-gts", &SQLiteDriver{})
 }
-
-//go:linkname getSQLiteDriver modernc.org/sqlite.newDriver
-func getSQLiteDriver() *sqlite.Driver
 
 // PostgreSQLDriver is our own wrapper around the
 // pgx/stdlib.Driver{} type in order to wrap further
@@ -82,11 +82,11 @@ func (c *PostgreSQLConn) PrepareContext(ctx context.Context, query string) (driv
 	if err != nil {
 		return nil, err
 	}
-	return &PostgreSQLStmt{st.(stmt)}, nil
+	return &PostgreSQLStmt{stmt: st.(stmt)}, nil
 }
 
-func (c *PostgreSQLConn) Exec(query string, args []driver.NamedValue) (driver.Result, error) {
-	return c.ExecContext(context.Background(), query, args)
+func (c *PostgreSQLConn) Exec(query string, args []driver.Value) (driver.Result, error) {
+	return c.ExecContext(context.Background(), query, toNamedValues(args))
 }
 
 func (c *PostgreSQLConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
@@ -95,8 +95,8 @@ func (c *PostgreSQLConn) ExecContext(ctx context.Context, query string, args []d
 	return result, err
 }
 
-func (c *PostgreSQLConn) Query(query string, args []driver.NamedValue) (driver.Rows, error) {
-	return c.QueryContext(context.Background(), query, args)
+func (c *PostgreSQLConn) Query(query string, args []driver.Value) (driver.Rows, error) {
+	return c.QueryContext(context.Background(), query, toNamedValues(args))
 }
 
 func (c *PostgreSQLConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
@@ -123,10 +123,18 @@ func (tx *PostgreSQLTx) Rollback() error {
 
 type PostgreSQLStmt struct{ stmt }
 
+func (stmt *PostgreSQLStmt) Exec(args []driver.Value) (driver.Result, error) {
+	return stmt.ExecContext(context.Background(), toNamedValues(args))
+}
+
 func (stmt *PostgreSQLStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
 	res, err := stmt.stmt.ExecContext(ctx, args)
 	err = processSQLiteError(err)
 	return res, err
+}
+
+func (stmt *PostgreSQLStmt) Query(args []driver.Value) (driver.Rows, error) {
+	return stmt.QueryContext(context.Background(), toNamedValues(args))
 }
 
 func (stmt *PostgreSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
@@ -180,11 +188,11 @@ func (c *SQLiteConn) PrepareContext(ctx context.Context, query string) (st drive
 	if err != nil {
 		return nil, err
 	}
-	return &SQLiteStmt{Context: ctx, stmt: st.(stmt)}, nil
+	return &SQLiteStmt{st.(stmt)}, nil
 }
 
-func (c *SQLiteConn) Exec(query string, args []driver.NamedValue) (driver.Result, error) {
-	return c.ExecContext(context.Background(), query, args)
+func (c *SQLiteConn) Exec(query string, args []driver.Value) (driver.Result, error) {
+	return c.ExecContext(context.Background(), query, toNamedValues(args))
 }
 
 func (c *SQLiteConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (result driver.Result, err error) {
@@ -196,8 +204,8 @@ func (c *SQLiteConn) ExecContext(ctx context.Context, query string, args []drive
 	return
 }
 
-func (c *SQLiteConn) Query(query string, args []driver.NamedValue) (driver.Rows, error) {
-	return c.QueryContext(context.Background(), query, args)
+func (c *SQLiteConn) Query(query string, args []driver.Value) (driver.Rows, error) {
+	return c.QueryContext(context.Background(), query, toNamedValues(args))
 }
 
 func (c *SQLiteConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
@@ -239,13 +247,14 @@ func (tx *SQLiteTx) Rollback() (err error) {
 	return
 }
 
-type SQLiteStmt struct {
-	context.Context
-	stmt
+type SQLiteStmt struct{ stmt }
+
+func (stmt *SQLiteStmt) Exec(args []driver.Value) (driver.Result, error) {
+	return stmt.ExecContext(context.Background(), toNamedValues(args))
 }
 
 func (stmt *SQLiteStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res driver.Result, err error) {
-	err = retryOnBusy(stmt.Context, func() error {
+	err = retryOnBusy(ctx, func() error {
 		res, err = stmt.stmt.ExecContext(ctx, args)
 		err = processSQLiteError(err)
 		return err
@@ -253,8 +262,12 @@ func (stmt *SQLiteStmt) ExecContext(ctx context.Context, args []driver.NamedValu
 	return
 }
 
+func (stmt *SQLiteStmt) Query(args []driver.Value) (driver.Rows, error) {
+	return stmt.QueryContext(context.Background(), toNamedValues(args))
+}
+
 func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (rows driver.Rows, err error) {
-	err = retryOnBusy(stmt.Context, func() error {
+	err = retryOnBusy(ctx, func() error {
 		rows, err = stmt.stmt.QueryContext(ctx, args)
 		err = processSQLiteError(err)
 		return err
@@ -265,7 +278,9 @@ func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedVal
 type conn interface {
 	driver.Conn
 	driver.ConnPrepareContext
+	driver.Execer
 	driver.ExecerContext
+	driver.Queryer
 	driver.QueryerContext
 	driver.ConnBeginTx
 }
@@ -329,4 +344,19 @@ func retryOnBusySlow(ctx context.Context, fn func() error) error {
 	}
 
 	return gtserror.Newf("%w (waited > %s)", db.ErrBusyTimeout, backoff)
+}
+
+// toNamedValues converts older driver.Value types to driver.NamedValue types.
+func toNamedValues(args []driver.Value) []driver.NamedValue {
+	if args == nil {
+		return nil
+	}
+	args2 := make([]driver.NamedValue, len(args))
+	for i := range args {
+		args2[i] = driver.NamedValue{
+			Ordinal: i + 1,
+			Value:   args[i],
+		}
+	}
+	return args2
 }
