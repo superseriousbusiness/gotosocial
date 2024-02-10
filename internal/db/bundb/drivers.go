@@ -278,9 +278,9 @@ func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedVal
 type conn interface {
 	driver.Conn
 	driver.ConnPrepareContext
-	driver.Execer
+	driver.Execer //nolint:staticcheck
 	driver.ExecerContext
-	driver.Queryer
+	driver.Queryer //nolint:staticcheck
 	driver.QueryerContext
 	driver.ConnBeginTx
 }
