@@ -4,17 +4,28 @@ This guide walks you through getting GoToSocial up and running on bare metal usi
 
 ## Prepare VPS
 
-In a terminal on the VPS or your homeserver, make the directory that GoToSocial will run from, the directory it will use as storage, and the directory it will store LetsEncrypt certificates in:
+In a terminal on the VPS or your homeserver, make the directory that GoToSocial will run from, the directory it will use as storage, and the directory it will store LetsEncrypt certificates in.
+
+This means we need the following hierarchy:
+
+```
+.
+└── gotosocial
+    └── storage
+        └── certs
+```
+
+You can create that in one go with:
 
 ```bash
-mkdir /gotosocial && mkdir /gotosocial/storage && mkdir /gotosocial/storage/certs
+mkdir -p /gotosocial/storage/certs
 ```
 
 If you don't have root permissions on the machine, use something like `~/gotosocial` instead.
 
 ## Download Release
 
-In a terminal on the VPS or your homeserver, cd into the base directory for GoToSocial you just created above:
+In a terminal on the VPS or your homeserver, change into the base directory for GoToSocial you just created above:
 
 ```bash
 cd /gotosocial
@@ -22,24 +33,27 @@ cd /gotosocial
 
 Now, download the latest GoToSocial release archive corresponding to the operating system and architecture you're running on.
 
-(You can find the list of releases [right here](https://github.com/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.)
+!!! tip
+    You can find the list of releases [right here](https://github.com/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.
 
-For example, to download version 0.5.2 for running on 64-bit Linux:
+For example, to download a version for running on 64-bit Linux:
 
 ```bash
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v0.5.2/gotosocial_0.5.2_linux_amd64.tar.gz
+GTS_VERSION=X.Y.Z # replace this
+GTS_TARGET=linux_amd64
+wget https://github.com/superseriousbusiness/gotosocial/releases/download/v${GTS_VERSION}/gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
 ```
 
 Then extract it:
 
 ```bash
-tar -xzf gotosocial_0.5.2_linux_amd64.tar.gz
+tar -xzf gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
 ```
 
 This will put the `gotosocial` binary in your current directory, in addition to the `web` folder, which contains assets for the web frontend, and an `example` folder, which contains a sample configuration file.
 
 !!! danger
-    If you prefer to use a snapshot build of GoToSocial based on whatever code is currently on main, you can download recent binary .tar.gz files from https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots (keyed by commit hash). Only do this if you know what you're doing, otherwise just take a stable release.
+    If you prefer to use a snapshot build of GoToSocial based on whatever code is currently on main, you can download [recent binary .tar.gz files from here](https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots) (keyed by commit hash). Only do this if you know what you're doing, otherwise just take a stable release.
 
 ## Edit Configuration File
 
