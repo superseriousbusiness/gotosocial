@@ -354,10 +354,13 @@ func (m *Module) writeToWSConn(
 
 	for {
 		// Wrap stream context with timeout to send a ping.
-		ctx, _ := context.WithTimeout(stream.Context(), ping)
+		ctx, cncl := context.WithTimeout(stream.Context(), ping)
 
 		// Block on receipt of next message.
 		msg, ok, open := stream.Recv(ctx)
+
+		// Stop timer.
+		cncl()
 
 		if !open {
 			// Stream was
