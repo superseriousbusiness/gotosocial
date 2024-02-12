@@ -202,7 +202,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	// functions pass messages into a channel, which we can
 	// then read from and put into a websockets connection.
 	stream, errWithCode := m.processor.Stream().Open(
-		c.Request.Context(),
+		context.Background(), // use new ctx for async Stream{}
 		account,
 		streamType,
 	)
