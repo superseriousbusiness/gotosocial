@@ -36,6 +36,13 @@ type GTSCaches struct {
 	// AccountNote provides access to the gtsmodel Note database cache.
 	AccountNote structr.Cache[*gtsmodel.AccountNote]
 
+	// TEMPORARY CACHE TO ALLEVIATE SLOW COUNT QUERIES,
+	// (in time will be removed when these IDs are cached).
+	AccountCounts *simple.Cache[string, struct {
+		Statuses int
+		Pinned   int
+	}]
+
 	// Application provides access to the gtsmodel Application database cache.
 	Application structr.Cache[*gtsmodel.Application]
 
@@ -190,6 +197,22 @@ func (c *Caches) initAccount() {
 		CopyValue:  copyF,
 		Invalidate: c.OnInvalidateAccount,
 	})
+}
+
+func (c *Caches) initAccountCounts() {
+	// Simply use size of accounts cache,
+	// as this cache will be very small.
+	cap := c.GTS.Account.Cap()
+	if cap == 0 {
+		panic("must be initialized before accounts")
+	}
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.GTS.AccountCounts = simple.New[string, struct {
+		Statuses int
+		Pinned   int
+	}](0, cap)
 }
 
 func (c *Caches) initAccountNote() {

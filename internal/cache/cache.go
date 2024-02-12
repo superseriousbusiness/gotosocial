@@ -51,6 +51,7 @@ func (c *Caches) Init() {
 	log.Infof(nil, "init: %p", c)
 
 	c.initAccount()
+	c.initAccountCounts()
 	c.initAccountNote()
 	c.initApplication()
 	c.initBlock()
