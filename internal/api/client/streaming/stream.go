@@ -247,11 +247,17 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 func (m *Module) handleWSConn(l *log.Entry, wsConn *websocket.Conn, stream *streampkg.Stream) {
 	// Read messages coming from the Websocket
 	// client connection into the server.
-	go m.readFromWSConn(wsConn, stream, l)
+	go func() {
+		defer stream.Close()
+		m.readFromWSConn(wsConn, stream, l)
+	}()
 
 	// Write messages coming from the processor
 	// into the Websocket client connection.
-	go m.writeToWSConn(wsConn, stream, m.dTicker, l)
+	go func() {
+		defer stream.Close()
+		m.writeToWSConn(wsConn, stream, m.dTicker, l)
+	}()
 
 	// Wait for stream to close.
 	<-stream.Context().Done()
