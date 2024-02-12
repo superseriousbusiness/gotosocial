@@ -18,20 +18,24 @@
 package stream
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 
+	"codeberg.org/gruf/go-byteutil"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 // Update streams the given update to any open, appropriate streams belonging to the given account.
-func (p *Processor) Update(s *apimodel.Status, account *gtsmodel.Account, streamTypes []string) error {
-	bytes, err := json.Marshal(s)
+func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, status *apimodel.Status, streamType string) {
+	b, err := json.Marshal(status)
 	if err != nil {
-		return fmt.Errorf("error marshalling status to json: %s", err)
+		panic(err) // this should never happen
 	}
-
-	return p.toAccount(string(bytes), stream.EventTypeUpdate, streamTypes, account.ID)
+	p.streams.Post(ctx, account.ID, stream.Message{
+		Payload: byteutil.B2S(b),
+		Event:   stream.EventTypeUpdate,
+		Stream:  []string{streamType},
+	})
 }

@@ -17,33 +17,56 @@
 
 package stream
 
-import "sync"
-
-const (
-	// EventTypeNotification -- a user should be shown a notification
-	EventTypeNotification string = "notification"
-	// EventTypeUpdate -- a user should be shown an update in their timeline
-	EventTypeUpdate string = "update"
-	// EventTypeDelete -- something should be deleted from a user
-	EventTypeDelete string = "delete"
-	// EventTypeStatusUpdate -- something in the user's timeline has been edited
-	// (yes this is a confusing name, blame Mastodon)
-	EventTypeStatusUpdate string = "status.update"
+import (
+	"context"
+	"maps"
+	"slices"
+	"sync"
+	"sync/atomic"
 )
 
 const (
-	// TimelineLocal -- public statuses from the LOCAL timeline.
-	TimelineLocal string = "public:local"
-	// TimelinePublic -- public statuses, including federated ones.
-	TimelinePublic string = "public"
-	// TimelineHome -- statuses for a user's Home timeline.
-	TimelineHome string = "user"
+	// EventTypeNotification -- a user
+	// should be shown a notification.
+	EventTypeNotification = "notification"
+
+	// EventTypeUpdate -- a user should
+	// be shown an update in their timeline.
+	EventTypeUpdate = "update"
+
+	// EventTypeDelete -- something
+	// should be deleted from a user.
+	EventTypeDelete = "delete"
+
+	// EventTypeStatusUpdate -- something in the
+	// user's timeline has been edited (yes this
+	// is a confusing name, blame Mastodon ...).
+	EventTypeStatusUpdate = "status.update"
+)
+
+const (
+	// TimelineLocal -- public
+	// statuses from the LOCAL timeline.
+	TimelineLocal = "public:local"
+
+	// TimelinePublic -- public
+	// statuses, including federated.
+	TimelinePublic = "public"
+
+	// TimelineHome -- statuses
+	// for a user's Home timeline.
+	TimelineHome = "user"
+
 	// TimelineNotifications -- notification events.
-	TimelineNotifications string = "user:notification"
-	// TimelineDirect -- statuses sent to a user directly.
-	TimelineDirect string = "direct"
-	// TimelineList -- statuses for a user's list timeline.
-	TimelineList string = "list"
+	TimelineNotifications = "user:notification"
+
+	// TimelineDirect -- statuses
+	// sent to a user directly.
+	TimelineDirect = "direct"
+
+	// TimelineList -- statuses
+	// for a user's list timeline.
+	TimelineList = "list"
 )
 
 // AllStatusTimelines contains all Timelines that a status could conceivably be delivered to -- useful for doing deletes.
@@ -55,38 +78,292 @@ var AllStatusTimelines = []string{
 	TimelineList,
 }
 
-// StreamsForAccount is a wrapper for the multiple streams that one account can have running at the same time.
-// TODO: put a limit on this
-type StreamsForAccount struct {
-	// The currently held streams for this account
-	Streams []*Stream
-	// Mutex to lock/unlock when modifying the slice of streams.
-	sync.Mutex
+type Streams struct {
+	streams map[string][]*Stream
+	mutex   sync.Mutex
 }
 
-// Stream represents one open stream for a client.
+// Open will open open a new Stream for given account ID and stream types, the given context will be passed to Stream.
+func (s *Streams) Open(ctx context.Context, accountID string, streamTypes ...string) *Stream {
+	if len(streamTypes) == 0 {
+		panic("no stream types given")
+	}
+
+	// Prep new Stream.
+	str := new(Stream)
+	str.msgCh = make(chan Message, 50) // TODO: make configurable
+	for _, streamType := range streamTypes {
+		str.Subscribe(streamType)
+	}
+
+	// Wrap the provided context with cancel
+	// to ensure calling .Close() will close
+	// the underlying Stream{} context too.
+	ctx, cncl := context.WithCancel(ctx)
+	str.ctx, str.cncl = ctx, cncl
+
+	// TODO: add configurable
+	// max streams per account.
+
+	// Acquire lock.
+	s.mutex.Lock()
+
+	if s.streams == nil {
+		// Main stream-map needs allocating.
+		s.streams = make(map[string][]*Stream)
+	}
+
+	// Add new stream for account.
+	strs := s.streams[accountID]
+	strs = append(strs, str)
+	s.streams[accountID] = strs
+
+	// Register close callback
+	// to remove stream from our
+	// internal map for this account.
+	str.close = func() {
+		s.mutex.Lock()
+		strs := s.streams[accountID]
+		strs = slices.DeleteFunc(strs, func(s *Stream) bool {
+			return s == str // remove 'str' ptr
+		})
+		s.streams[accountID] = strs
+		s.mutex.Unlock()
+	}
+
+	// Done with lock.
+	s.mutex.Unlock()
+
+	return str
+}
+
+// Post will post the given message to all streams of given account ID matching type.
+func (s *Streams) Post(ctx context.Context, accountID string, msg Message) (bool, bool) {
+	// Acquire lock.
+	s.mutex.Lock()
+
+	// Look for open streams.
+	strs := s.streams[accountID]
+
+	if len(strs) == 0 {
+		// No streams for
+		// given account ID.
+		s.mutex.Unlock()
+		return true, true
+	}
+
+	// Create new slice of supported streams
+	// which we use as a concurrency safe copy
+	// of []Stream that support message type.
+	support := make([]*Stream, 0, len(strs))
+	for _, str := range strs {
+		if str.Supports(msg.Stream...) {
+			support = append(support, str)
+		}
+	}
+
+	// Done with lock.
+	s.mutex.Unlock()
+
+	var ok bool
+
+	// Send message to supported stream
+	// types OUTSIDE of main Streams{} mutex
+	// lock so we don't risk blocking / slow
+	// access to the main Streams{} mutex.
+	for _, str := range support {
+		argCtx, strCtx := str.Send(ctx, msg)
+		if !argCtx {
+			return argCtx, ok
+		}
+		ok = ok && strCtx
+	}
+
+	return true, ok
+}
+
+// PostAll will post the given message to all streams with matching types.
+func (s *Streams) PostAll(ctx context.Context, msg Message) {
+	// Acquire lock.
+	s.mutex.Lock()
+
+	// Create new slice of supported streams
+	// which we use as a concurrency safe copy
+	// of []Stream that support message type.
+	support := make([]*Stream, 0, len(s.streams))
+	for _, strs := range s.streams {
+		for _, str := range strs {
+			if str.Supports(msg.Stream...) {
+				support = append(support, str)
+			}
+		}
+	}
+
+	// Done with lock.
+	s.mutex.Unlock()
+
+	// Send message to supported stream
+	// types OUTSIDE of main Streams{} mutex
+	// lock so we don't risk blocking / slow
+	// access to the main Streams{} mutex.
+	for _, str := range support {
+		str.Send(ctx, msg)
+	}
+}
+
+// Stream represents one
+// open stream for a client.
 type Stream struct {
-	// ID of this stream, generated during creation.
-	ID string
-	// A set of types subscribed to by this stream: user/public/etc.
-	// It's a map to ensure no duplicates; the value is ignored.
-	StreamTypes map[string]any
-	// Channel of messages for the client to read from
-	Messages chan *Message
-	// Channel to close when the client drops away
-	Hangup chan interface{}
-	// Only put messages in the stream when Connected
-	Connected bool
-	// Mutex to lock/unlock when inserting messages, hanging up, changing the connected state etc.
-	sync.Mutex
+
+	// atomically updated ptr to a read-only copy
+	// of supported stream types in a hashmap. this
+	// gets updated via CAS operations in .cas()
+	types atomic.Pointer[map[string]struct{}]
+
+	// underlying stream ctx.
+	ctx  context.Context
+	cncl func()
+
+	// inbound msg ch.
+	msgCh chan Message
+
+	// close hook to remove
+	// stream from Streams{}.
+	close func()
 }
 
-// Message represents one streamed message.
+// Supports returns whether Stream supports given any of stream types.
+func (s *Stream) Supports(streamTypes ...string) bool {
+	if ptr := s.types.Load(); ptr != nil {
+		for _, streamType := range streamTypes {
+			if _, ok := (*ptr)[streamType]; ok {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Subscribe will add given type to given types this stream supports.
+func (s *Stream) Subscribe(streamType string) {
+	s.cas(func(m map[string]struct{}) bool {
+		if _, ok := m[streamType]; ok {
+			return false
+		}
+		m[streamType] = struct{}{}
+		return true
+	})
+}
+
+// Unsubscribe will remove given type (if found) from types this stream supports.
+func (s *Stream) Unsubscribe(streamType string) {
+	s.cas(func(m map[string]struct{}) bool {
+		if _, ok := m[streamType]; !ok {
+			return false
+		}
+		delete(m, streamType)
+		return true
+	})
+}
+
+// Context provides access to the underlying Stream context.
+func (s *Stream) Context() context.Context {
+	return s.ctx
+}
+
+// Send will block on posting a new Message{}, returning either value false in
+// the case that Stream has already been closed, or provided context is closed.
+func (s *Stream) Send(ctx context.Context, msg Message) (argCtx bool, strCtx bool) {
+	select {
+	case <-s.ctx.Done():
+		return true, false
+	case <-ctx.Done():
+		return false, true
+	case s.msgCh <- msg:
+		return true, true
+	}
+}
+
+// Recv will block on receiving Message{}, returning either value false in
+// the case that Stream has already been closed, or provided ctx is closed.
+func (s *Stream) Recv(ctx context.Context) (msg Message, argCtx bool, strCtx bool) {
+	select {
+	case <-s.ctx.Done():
+		return Message{}, true, false
+	case <-ctx.Done():
+		return Message{}, false, true
+	case msg = <-s.msgCh:
+		return msg, true, true
+	}
+}
+
+// Close will close the underlying context, finally
+// removing it from the parent Streams per-account-map.
+func (s *Stream) Close() {
+	select {
+	case <-s.ctx.Done():
+	default:
+		s.cncl()
+		s.close()
+	}
+}
+
+// IsOpen returns whether Stream's open,
+// i.e. is underlying context closed.
+func (s *Stream) IsOpen() bool {
+	select {
+	case <-s.ctx.Done():
+		return false
+	default:
+		return true
+	}
+}
+
+// cas will perform a Compare And Swap operation on s.types using modifier func.
+func (s *Stream) cas(fn func(map[string]struct{}) bool) {
+	if fn == nil {
+		panic("nil function")
+	}
+	for {
+		var m map[string]struct{}
+
+		// Get current value.
+		ptr := s.types.Load()
+
+		if ptr == nil {
+			// Allocate new types map.
+			m = make(map[string]struct{})
+		} else {
+			// Clone r-only map.
+			m = maps.Clone(*ptr)
+		}
+
+		// Apply
+		// changes.
+		if !fn(m) {
+			return
+		}
+
+		// Attempt to Compare And Swap ptr.
+		if s.types.CompareAndSwap(ptr, &m) {
+			return
+		}
+	}
+}
+
+// Message represents
+// one streamed message.
 type Message struct {
-	// All the stream types this message should be delivered to.
+
+	// All the stream types this
+	// message should be delivered to.
 	Stream []string `json:"stream"`
-	// The event type of the message (update/delete/notification etc)
+
+	// The event type of the message
+	// (update/delete/notification etc)
 	Event string `json:"event"`
-	// The actual payload of the message. In case of an update or notification, this will be a JSON string.
+
+	// The actual payload of the message. In case of an
+	// update or notification, this will be a JSON string.
 	Payload string `json:"payload"`
 }

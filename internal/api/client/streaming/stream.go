@@ -22,10 +22,10 @@ import (
 	"slices"
 	"time"
 
-	"codeberg.org/gruf/go-kv"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	streampkg "github.com/superseriousbusiness/gotosocial/internal/stream"
@@ -213,10 +213,8 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 
 	l := log.
 		WithContext(c.Request.Context()).
-		WithFields(kv.Fields{
-			{"username", account.Username},
-			{"streamID", stream.ID},
-		}...)
+		WithField("streamID", id.NewULID()).
+		WithField("username", account.Username)
 
 	// Upgrade the incoming HTTP request. This hijacks the
 	// underlying connection and reuses it for the websocket
@@ -227,7 +225,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	wsConn, err := m.wsUpgrade.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		l.Errorf("error upgrading websocket connection: %v", err)
-		close(stream.Hangup)
+		stream.Close()
 		return
 	}
 
@@ -238,7 +236,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	// This prevents the upgrade handler from holding open any
 	// throttle / rate-limit request tokens which could become
 	// problematic on instances with multiple users.
-	go m.handleWSConn(account.Username, wsConn, stream)
+	go m.handleWSConn(&l, wsConn, stream)
 }
 
 // handleWSConn handles a two-way websocket streaming connection.
@@ -246,47 +244,22 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 // into the connection. If any errors are encountered while reading
 // or writing (including expected errors like clients leaving), the
 // connection will be closed.
-func (m *Module) handleWSConn(username string, wsConn *websocket.Conn, stream *streampkg.Stream) {
-	// Create new context for the lifetime of this connection.
-	ctx, cancel := context.WithCancel(context.Background())
+func (m *Module) handleWSConn(l *log.Entry, wsConn *websocket.Conn, stream *streampkg.Stream) {
+	// Read messages coming from the Websocket
+	// client connection into the server.
+	go m.readFromWSConn(wsConn, stream, l)
 
-	l := log.
-		WithContext(ctx).
-		WithFields(kv.Fields{
-			{"username", username},
-			{"streamID", stream.ID},
-		}...)
+	// Write messages coming from the processor
+	// into the Websocket client connection.
+	go m.writeToWSConn(wsConn, stream, m.dTicker, l)
 
-	// Create ticker to send keepalive pings
-	pinger := time.NewTicker(m.dTicker)
-
-	// Read messages coming from the Websocket client connection into the server.
-	go func() {
-		defer cancel()
-		m.readFromWSConn(ctx, username, wsConn, stream)
-	}()
-
-	// Write messages coming from the processor into the Websocket client connection.
-	go func() {
-		defer cancel()
-		m.writeToWSConn(ctx, username, wsConn, stream, pinger)
-	}()
-
-	// Wait for either the read or write functions to close, to indicate
-	// that the client has left, or something else has gone wrong.
-	<-ctx.Done()
+	// Wait for stream to close.
+	<-stream.Context().Done()
 
 	// Tidy up underlying websocket connection.
 	if err := wsConn.Close(); err != nil {
 		l.Errorf("error closing websocket connection: %v", err)
 	}
-
-	// Close processor channel so the processor knows
-	// not to send any more messages to this stream.
-	close(stream.Hangup)
-
-	// Stop ping ticker (tiny resource saving).
-	pinger.Stop()
 
 	l.Info("closed websocket connection")
 }
@@ -298,86 +271,61 @@ func (m *Module) handleWSConn(username string, wsConn *websocket.Conn, stream *s
 // This is a blocking function; will return only on read error or
 // if the given context is canceled.
 func (m *Module) readFromWSConn(
-	ctx context.Context,
-	username string,
 	wsConn *websocket.Conn,
 	stream *streampkg.Stream,
+	l *log.Entry,
 ) {
-	l := log.
-		WithContext(ctx).
-		WithFields(kv.Fields{
-			{"username", username},
-			{"streamID", stream.ID},
-		}...)
+	// Check still open.
+	for stream.IsOpen() {
 
-readLoop:
-	for {
-		select {
-		case <-ctx.Done():
-			// Connection closed.
-			break readLoop
+		var msg struct {
+			Type   string `json:"type"`
+			Stream string `json:"stream"`
+			List   string `json:"list,omitempty"`
+		}
 
+		// Read JSON objects from the client and act on them.
+		if err := wsConn.ReadJSON(&msg); err != nil {
+			// Only log an error if something weird happened.
+			// See: https://www.rfc-editor.org/rfc/rfc6455.html#section-11.7
+			if websocket.IsUnexpectedCloseError(err, []int{
+				websocket.CloseNormalClosure,
+				websocket.CloseGoingAway,
+				websocket.CloseNoStatusReceived,
+			}...) {
+				l.Errorf("error reading from websocket: %v", err)
+			}
+
+			// The connection is gone; no
+			// further streaming possible.
+			break
+		}
+
+		// Messages *from* the WS connection are infrequent
+		// and usually interesting, so log this at info.
+		l.Infof("received message from websocket: %v", msg)
+
+		// Ignore if the updateStreamType is unknown (or missing),
+		// so a bad client can't cause extra memory allocations
+		if !slices.Contains(streampkg.AllStatusTimelines, msg.Stream) {
+			l.Warnf("unknown 'stream' field: %v", msg)
+			continue
+		}
+
+		if msg.List != "" {
+			// If a list is given, add this to
+			// the stream name as this is how we
+			// we track stream types internally.
+			msg.Stream += ":" + msg.List
+		}
+
+		switch msg.Type {
+		case "subscribe":
+			stream.Subscribe(msg.Stream)
+		case "unsubscribe":
+			stream.Unsubscribe(msg.Stream)
 		default:
-			// Read JSON objects from the client and act on them.
-			var msg map[string]string
-			if err := wsConn.ReadJSON(&msg); err != nil {
-				// Only log an error if something weird happened.
-				// See: https://www.rfc-editor.org/rfc/rfc6455.html#section-11.7
-				if websocket.IsUnexpectedCloseError(err, []int{
-					websocket.CloseNormalClosure,
-					websocket.CloseGoingAway,
-					websocket.CloseNoStatusReceived,
-				}...) {
-					l.Errorf("error reading from websocket: %v", err)
-				}
-
-				// The connection is gone; no
-				// further streaming possible.
-				break readLoop
-			}
-
-			// Messages *from* the WS connection are infrequent
-			// and usually interesting, so log this at info.
-			l.Infof("received message from websocket: %v", msg)
-
-			// If the message contains 'stream' and 'type' fields, we can
-			// update the set of timelines that are subscribed for events.
-			updateType, ok := msg["type"]
-			if !ok {
-				l.Warn("'type' field not provided")
-				continue
-			}
-
-			updateStream, ok := msg["stream"]
-			if !ok {
-				l.Warn("'stream' field not provided")
-				continue
-			}
-
-			// Ignore if the updateStreamType is unknown (or missing),
-			// so a bad client can't cause extra memory allocations
-			if !slices.Contains(streampkg.AllStatusTimelines, updateStream) {
-				l.Warnf("unknown 'stream' field: %v", msg)
-				continue
-			}
-
-			updateList, ok := msg["list"]
-			if ok {
-				updateStream += ":" + updateList
-			}
-
-			switch updateType {
-			case "subscribe":
-				stream.Lock()
-				stream.StreamTypes[updateStream] = true
-				stream.Unlock()
-			case "unsubscribe":
-				stream.Lock()
-				delete(stream.StreamTypes, updateStream)
-				stream.Unlock()
-			default:
-				l.Warnf("invalid 'type' field: %v", msg)
-			}
+			l.Warnf("invalid 'type' field: %v", msg)
 		}
 	}
 
@@ -392,45 +340,40 @@ readLoop:
 // This is a blocking function; will return only on write error or
 // if the given context is canceled.
 func (m *Module) writeToWSConn(
-	ctx context.Context,
-	username string,
 	wsConn *websocket.Conn,
 	stream *streampkg.Stream,
-	pinger *time.Ticker,
+	ping time.Duration,
+	l *log.Entry,
 ) {
-	l := log.
-		WithContext(ctx).
-		WithFields(kv.Fields{
-			{"username", username},
-			{"streamID", stream.ID},
-		}...)
 
-writeLoop:
 	for {
-		select {
-		case <-ctx.Done():
-			// Connection closed.
-			break writeLoop
+		// Wrap stream context with timeout to send a ping.
+		ctx, _ := context.WithTimeout(stream.Context(), ping)
 
-		case msg := <-stream.Messages:
-			// Received a new message from the processor.
-			l.Tracef("writing message to websocket: %+v", msg)
-			if err := wsConn.WriteJSON(msg); err != nil {
-				l.Debugf("error writing json to websocket: %v", err)
-				break writeLoop
-			}
+		// Block on receipt of next message.
+		msg, ok, open := stream.Recv(ctx)
 
-			// Reset pinger on successful send, since
-			// we know the connection is still there.
-			pinger.Reset(m.dTicker)
+		if !open {
+			// Stream was
+			// closed.
+			return
+		}
 
-		case <-pinger.C:
-			// Time to send a keep-alive "ping".
+		if !ok {
+			// Wrapped context time-out, send a keep-alive "ping".
 			l.Trace("writing ping control message to websocket")
 			if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
 				l.Debugf("error writing ping to websocket: %v", err)
-				break writeLoop
+				break
 			}
+			continue
+		}
+
+		// Received a new message from the processor.
+		l.Tracef("writing message to websocket: %+v", msg)
+		if err := wsConn.WriteJSON(msg); err != nil {
+			l.Debugf("error writing json to websocket: %v", err)
+			break
 		}
 	}
 

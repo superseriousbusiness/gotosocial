@@ -42,10 +42,11 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(context.Background(), editedStatus, account)
 	suite.NoError(err)
 
-	err = suite.streamProcessor.StatusUpdate(apiStatus, account, []string{stream.TimelineHome})
-	suite.NoError(err)
+	suite.streamProcessor.StatusUpdate(context.Background(), account, apiStatus, stream.TimelineHome)
 
-	msg := <-openStream.Messages
+	msg, argCtx, strCtx := openStream.Recv(context.Background())
+	suite.True(argCtx && strCtx)
+
 	dst := new(bytes.Buffer)
 	err = json.Indent(dst, []byte(msg.Payload), "", "  ")
 	suite.NoError(err)
