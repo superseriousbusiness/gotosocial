@@ -64,55 +64,55 @@ In the above `sudoedit` command, replace `example.com` with the hostname of your
 
 The file you're about to create should look a bit like this:
 
-```apache
-MDomain example.com auto
-MDCertificateAgreement accepted
+=== "2.4.47+"
+    ```apache
+    MDomain example.com auto
+    MDCertificateAgreement accepted
 
-<VirtualHost *:80 >
-  ServerName example.com
-</VirtualHost>
+    <VirtualHost *:80 >
+      ServerName example.com
+    </VirtualHost>
 
-<VirtualHost *:443>
-  ServerName example.com
+    <VirtualHost *:443>
+      ServerName example.com
 
-  RewriteEngine On
-  RewriteCond %{HTTP:Upgrade} websocket [NC]
-  RewriteCond %{HTTP:Connection} upgrade [NC]
-  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
-  RewriteRule ^/?(.*) "ws://127.0.0.1:8080/$1" [P,L]
+      SSLEngine On
+      ProxyPreserveHost On
+      # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+      ProxyPass / http://127.0.0.1:8080/ upgrade=websocket
+      ProxyPassReverse / http://127.0.0.1:8080/
 
-  SSLEngine On
-  ProxyPreserveHost On
-  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
-  ProxyPass / http://127.0.0.1:8080/
-  ProxyPassReverse / http://127.0.0.1:8080/
+      RequestHeader set "X-Forwarded-Proto" expr=https
+    </VirtualHost>
+    ```
 
-  RequestHeader set "X-Forwarded-Proto" expr=https
-</VirtualHost>
-```
+=== "older versions"
+    ```apache
+    MDomain example.com auto
+    MDCertificateAgreement accepted
 
-or, if you have [Apache httpd 2.4.47+](https://httpd.apache.org/docs/2.4/mod/mod_proxy.html#protoupgrade), you can get rid of both `mod_rewrite` and `mod_proxy_wstunnel` and simplify the whole config to:
+    <VirtualHost *:80 >
+      ServerName example.com
+    </VirtualHost>
 
-```apache
-MDomain example.com auto
-MDCertificateAgreement accepted
+    <VirtualHost *:443>
+      ServerName example.com
 
-<VirtualHost *:80 >
-  ServerName example.com
-</VirtualHost>
+      RewriteEngine On
+      RewriteCond %{HTTP:Upgrade} websocket [NC]
+      RewriteCond %{HTTP:Connection} upgrade [NC]
+      # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+      RewriteRule ^/?(.*) "ws://127.0.0.1:8080/$1" [P,L]
 
-<VirtualHost *:443>
-  ServerName example.com
+      SSLEngine On
+      ProxyPreserveHost On
+      # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+      ProxyPass / http://127.0.0.1:8080/
+      ProxyPassReverse / http://127.0.0.1:8080/
 
-  SSLEngine On
-  ProxyPreserveHost On
-  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
-  ProxyPass / http://127.0.0.1:8080/ upgrade=websocket
-  ProxyPassReverse / http://127.0.0.1:8080/
-
-  RequestHeader set "X-Forwarded-Proto" expr=https
-</VirtualHost>
-```
+      RequestHeader set "X-Forwarded-Proto" expr=https
+    </VirtualHost>
+    ```
 
 Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
 
@@ -182,23 +182,36 @@ In the above `sudoedit` command, replace `example.com` with the hostname of your
 
 The file you're about to create should look initially for both 80 (required) and 443 ports (optional) a bit like this:
 
-```apache
-<VirtualHost *:80>
-  ServerName example.com
+=== "2.4.47+"
+    ```apache
+    <VirtualHost *:80>
+      ServerName example.com
 
-  RewriteEngine On
-  RewriteCond %{HTTP:Upgrade} websocket [NC]
-  RewriteCond %{HTTP:Connection} upgrade [NC]
-  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
-  RewriteRule ^/?(.*) "ws://127.0.0.1:8080/$1" [P,L]
+      ProxyPreserveHost On
+      # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+      ProxyPass / http://127.0.0.1:8080/ upgrade=websocket
+      ProxyPassReverse / http://127.0.0.1:8080/
+    </VirtualHost>
+    ```
 
-  ProxyPreserveHost On
-  # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
-  ProxyPass / http://127.0.0.1:8080/
-  ProxyPassReverse / http://127.0.0.1:8080/
+=== "older versions"
+    ```apache
+    <VirtualHost *:80>
+      ServerName example.com
 
-</VirtualHost>
-```
+      RewriteEngine On
+      RewriteCond %{HTTP:Upgrade} websocket [NC]
+      RewriteCond %{HTTP:Connection} upgrade [NC]
+      # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+      RewriteRule ^/?(.*) "ws://127.0.0.1:8080/$1" [P,L]
+
+      ProxyPreserveHost On
+      # set to 127.0.0.1 instead of localhost to work around https://stackoverflow.com/a/52550758
+      ProxyPass / http://127.0.0.1:8080/
+      ProxyPassReverse / http://127.0.0.1:8080/
+
+    </VirtualHost>
+    ```
 
 Again, replace occurrences of `example.com` in the above config file with the hostname of your GtS server. If your domain name is `gotosocial.example.com`, then `gotosocial.example.com` would be the correct value.
 
