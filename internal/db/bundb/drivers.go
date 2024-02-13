@@ -34,6 +34,13 @@ var (
 	// global SQL driver instances.
 	postgresDriver = pgx.GetDefaultDriver()
 	sqliteDriver   = getSQLiteDriver()
+
+	// check the postgres connection
+	// conforms to our conn{} interface.
+	// (note SQLite doesn't export their
+	// conn type, and gets checked in
+	// tests very regularly anywho).
+	_ conn = (*pgx.Conn)(nil)
 )
 
 //go:linkname getSQLiteDriver modernc.org/sqlite.newDriver
@@ -278,9 +285,7 @@ func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedVal
 type conn interface {
 	driver.Conn
 	driver.ConnPrepareContext
-	driver.Execer //nolint:staticcheck
 	driver.ExecerContext
-	driver.Queryer //nolint:staticcheck
 	driver.QueryerContext
 	driver.ConnBeginTx
 }
