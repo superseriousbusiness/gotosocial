@@ -425,9 +425,9 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
 
+	// Ensure final status isn't attempting
+	// to claim being authored by local user.
 	if latestStatus.Account.IsLocal() {
-		// Ensure the final parsed status isn't attempting
-		// to masquerade as being authored by a local user.
 		return nil, nil, gtserror.Newf(
 			"dereferenced status %s claiming to be local",
 			latestStatus.URI,
