@@ -19,6 +19,7 @@ package dereferencing_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -216,6 +217,28 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
 	a := &gtsmodel.MediaAttachment{}
 	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "status_id", Value: status.ID}}, a)
 	suite.NoError(err)
+}
+
+func (suite *StatusTestSuite) TestDereferenceStatusWithNonMatchingURI() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	const (
+		remoteURI    = "https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"
+		remoteAltURI = "https://turnip.farm/users/turniphater420/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"
+	)
+
+	// Create a copy of this remote account at alternative URI.
+	remoteStatus := suite.client.TestRemoteStatuses[remoteURI]
+	suite.client.TestRemoteStatuses[remoteAltURI] = remoteStatus
+
+	// Attempt to fetch account at alternative URI, it should fail!
+	fetchedStatus, _, err := suite.dereferencer.GetStatusByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		testrig.URLMustParse(remoteAltURI),
+	)
+	suite.Equal(err.Error(), fmt.Sprintf("enrichStatus: dereferenced status uri %s does not match %s", remoteURI, remoteAltURI))
+	suite.Nil(fetchedStatus)
 }
 
 func TestStatusTestSuite(t *testing.T) {

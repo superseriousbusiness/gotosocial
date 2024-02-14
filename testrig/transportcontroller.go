@@ -245,9 +245,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			StatusCode:    responseCode,
 			Body:          readCloser,
 			ContentLength: int64(responseContentLength),
-			Header: http.Header{
-				"content-type": {responseContentType},
-			},
+			Header:        http.Header{"Content-Type": {responseContentType}},
 		}, nil
 	}
 
