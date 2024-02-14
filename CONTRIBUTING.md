@@ -146,6 +146,8 @@ In case this post disappears, here are the steps (slightly modified):
 > `git remote add origin git@github.com/yourgithubname/gotosocial`
 >
 
+Be sure to run `git fetch` before building the project for the first time.
+
 ### Building GoToSocial
 
 #### Binary
@@ -157,6 +159,8 @@ Once you've got go installed, clone this repository into your Go path. Normally,
 Once you've installed the prerequisites, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary.
 
 If there are no errors, great, you're good to go!
+
+If you see the error `fatal: No names found, cannot describe anything.`, you need to run `git fetch`.
 
 For automatic re-compiling during development, you can use [nodemon](https://www.npmjs.com/package/nodemon):
 
