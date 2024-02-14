@@ -101,8 +101,15 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	}
 	defer resp.Body.Close()
 
+	// Ensure a non-error status response.
 	if resp.StatusCode != http.StatusOK {
 		return nil, gtserror.NewFromResponse(resp)
+	}
+
+	// Ensure that the incoming request content-type is expected.
+	if ct := resp.Header.Get("Content-Type"); !apiutil.JSONContentType(ct) {
+		err := gtserror.Newf("non json response type: %s", ct)
+		return nil, gtserror.SetMalformed(err)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -251,20 +258,27 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	}
 	defer resp.Body.Close()
 
+	// Ensure a non-error status response.
 	if resp.StatusCode != http.StatusOK {
 		return nil, gtserror.NewFromResponse(resp)
+	}
+
+	// Ensure that the incoming request content-type is expected.
+	if ct := resp.Header.Get("Content-Type"); !apiutil.JSONContentType(ct) {
+		err := gtserror.Newf("non json response type: %s", ct)
+		return nil, gtserror.SetMalformed(err)
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	} else if len(b) == 0 {
-		return nil, errors.New("callNodeInfoWellKnown: response bytes was len 0")
+		return nil, gtserror.New("response bytes was len 0")
 	}
 
 	wellKnownResp := &apimodel.WellKnownResponse{}
 	if err := json.Unmarshal(b, wellKnownResp); err != nil {
-		return nil, fmt.Errorf("callNodeInfoWellKnown: could not unmarshal server response as WellKnownResponse: %s", err)
+		return nil, gtserror.Newf("could not unmarshal server response as WellKnownResponse: %w", err)
 	}
 
 	// look through the links for the first one that matches the nodeinfo schema, this is what we need
@@ -275,11 +289,11 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 		}
 		nodeinfoHref, err = url.Parse(l.Href)
 		if err != nil {
-			return nil, fmt.Errorf("callNodeInfoWellKnown: couldn't parse url %s: %s", l.Href, err)
+			return nil, gtserror.Newf("couldn't parse url %s: %w", l.Href, err)
 		}
 	}
 	if nodeinfoHref == nil {
-		return nil, errors.New("callNodeInfoWellKnown: could not find nodeinfo rel in well known response")
+		return nil, gtserror.New("could not find nodeinfo rel in well known response")
 	}
 
 	return nodeinfoHref, nil
@@ -302,20 +316,27 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	}
 	defer resp.Body.Close()
 
+	// Ensure a non-error status response.
 	if resp.StatusCode != http.StatusOK {
 		return nil, gtserror.NewFromResponse(resp)
+	}
+
+	// Ensure that the incoming request content-type is expected.
+	if ct := resp.Header.Get("Content-Type"); !apiutil.NodeInfo2ContentType(ct) {
+		err := gtserror.Newf("non nodeinfo schema 2.0 response: %s", ct)
+		return nil, gtserror.SetMalformed(err)
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	} else if len(b) == 0 {
-		return nil, errors.New("callNodeInfo: response bytes was len 0")
+		return nil, gtserror.New("response bytes was len 0")
 	}
 
 	niResp := &apimodel.Nodeinfo{}
 	if err := json.Unmarshal(b, niResp); err != nil {
-		return nil, fmt.Errorf("callNodeInfo: could not unmarshal server response as Nodeinfo: %s", err)
+		return nil, gtserror.Newf("could not unmarshal server response as Nodeinfo: %w", err)
 	}
 
 	return niResp, nil

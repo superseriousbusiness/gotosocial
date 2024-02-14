@@ -19,6 +19,7 @@ package dereferencing_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -204,6 +205,28 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 	)
 	suite.True(gtserror.IsUnretrievable(err))
 	suite.EqualError(err, db.ErrNoEntries.Error())
+	suite.Nil(fetchedAccount)
+}
+
+func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithNonMatchingURI() {
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	const (
+		remoteURI    = "https://turnip.farm/users/turniplover6969"
+		remoteAltURI = "https://turnip.farm/users/turniphater420"
+	)
+
+	// Create a copy of this remote account at alternative URI.
+	remotePerson := suite.client.TestRemotePeople[remoteURI]
+	suite.client.TestRemotePeople[remoteAltURI] = remotePerson
+
+	// Attempt to fetch account at alternative URI, it should fail!
+	fetchedAccount, _, err := suite.dereferencer.GetAccountByURI(
+		context.Background(),
+		fetchingAccount.Username,
+		testrig.URLMustParse(remoteAltURI),
+	)
+	suite.Equal(err.Error(), fmt.Sprintf("enrichAccount: dereferenced account uri %s does not match %s", remoteURI, remoteAltURI))
 	suite.Nil(fetchedAccount)
 }
 

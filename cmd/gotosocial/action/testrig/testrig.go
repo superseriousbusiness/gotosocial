@@ -111,6 +111,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return &http.Response{
 			StatusCode: 200,
 			Body:       r,
+			Header: http.Header{
+				"Content-Type": req.Header.Values("Accept"),
+			},
 		}, nil
 	}, ""))
 	mediaManager := testrig.NewTestMediaManager(&state)

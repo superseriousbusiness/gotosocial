@@ -23,69 +23,17 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
-
-// IsASMediaType will return whether the given content-type string
-// matches one of the 2 possible ActivityStreams incoming content types:
-// - application/activity+json
-// - application/ld+json;profile=https://w3.org/ns/activitystreams
-//
-// Where for the above we are leniant with whitespace, quotes, and charset.
-func IsASMediaType(ct string) bool {
-	var (
-		// First content-type part,
-		// contains the application/...
-		p1 string = ct //nolint:revive
-
-		// Second content-type part,
-		// contains AS IRI or charset
-		// if provided.
-		p2 string
-	)
-
-	// Split content-type by semi-colon.
-	sep := strings.IndexByte(ct, ';')
-	if sep >= 0 {
-		p1 = ct[:sep]
-
-		// Trim all start/end
-		// space of second part.
-		p2 = ct[sep+1:]
-		p2 = strings.Trim(p2, " ")
-	}
-
-	// Trim any ending space from the
-	// main content-type part of string.
-	p1 = strings.TrimRight(p1, " ")
-
-	switch p1 {
-	case "application/activity+json":
-		// Accept with or without charset.
-		// This should be case insensitive.
-		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type#charset
-		return p2 == "" || strings.EqualFold(p2, "charset=utf-8")
-
-	case "application/ld+json":
-		// Drop any quotes around the URI str.
-		p2 = strings.ReplaceAll(p2, "\"", "")
-
-		// End part must be a ref to the main AS namespace IRI.
-		return p2 == "profile=https://www.w3.org/ns/activitystreams"
-
-	default:
-		return false
-	}
-}
 
 // federatingActor wraps the pub.FederatingActor
 // with some custom GoToSocial-specific logic.
@@ -124,7 +72,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 
 	// Ensure valid ActivityPub Content-Type.
 	// https://www.w3.org/TR/activitypub/#server-to-server-interactions
-	if ct := r.Header.Get("Content-Type"); !IsASMediaType(ct) {
+	if ct := r.Header.Get("Content-Type"); !apiutil.ASContentType(ct) {
 		const ct1 = "application/activity+json"
 		const ct2 = "application/ld+json;profile=https://w3.org/ns/activitystreams"
 		err := fmt.Errorf("Content-Type %s not acceptable, this endpoint accepts: [%q %q]", ct, ct1, ct2)

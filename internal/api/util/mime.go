@@ -17,6 +17,8 @@
 
 package util
 
+import "strings"
+
 const (
 	// Possible GoToSocial mimetypes.
 	AppJSON           = `application/json`
@@ -24,7 +26,8 @@ const (
 	AppXMLXRD         = `application/xrd+xml`
 	AppRSSXML         = `application/rss+xml`
 	AppActivityJSON   = `application/activity+json`
-	AppActivityLDJSON = `application/ld+json; profile="https://www.w3.org/ns/activitystreams"`
+	appActivityLDJSON = `application/ld+json` // without profile
+	AppActivityLDJSON = appActivityLDJSON + `; profile="https://www.w3.org/ns/activitystreams"`
 	AppJRDJSON        = `application/jrd+json` // https://www.rfc-editor.org/rfc/rfc7033#section-10.2
 	AppForm           = `application/x-www-form-urlencoded`
 	MultipartForm     = `multipart/form-data`
@@ -32,3 +35,112 @@ const (
 	TextHTML          = `text/html`
 	TextCSS           = `text/css`
 )
+
+// JSONContentType returns whether is application/json(;charset=utf-8)? content-type.
+func JSONContentType(ct string) bool {
+	p := splitContentType(ct)
+	p, ok := isUTF8ContentType(p)
+	return ok && len(p) == 1 &&
+		p[0] == AppJSON
+}
+
+// JSONJRDContentType returns whether is application/(jrd+)?json(;charset=utf-8)? content-type.
+func JSONJRDContentType(ct string) bool {
+	p := splitContentType(ct)
+	p, ok := isUTF8ContentType(p)
+	return ok && len(p) == 1 &&
+		p[0] == AppJSON ||
+		p[0] == AppJRDJSON
+}
+
+// XMLContentType returns whether is application/xml(;charset=utf-8)? content-type.
+func XMLContentType(ct string) bool {
+	p := splitContentType(ct)
+	p, ok := isUTF8ContentType(p)
+	return ok && len(p) == 1 &&
+		p[0] == AppXML
+}
+
+// XMLXRDContentType returns whether is application/(xrd+)?xml(;charset=utf-8)? content-type.
+func XMLXRDContentType(ct string) bool {
+	p := splitContentType(ct)
+	p, ok := isUTF8ContentType(p)
+	return ok && len(p) == 1 &&
+		p[0] == AppXML ||
+		p[0] == AppXMLXRD
+}
+
+// ASContentType returns whether is valid ActivityStreams content-types:
+// - application/activity+json
+// - application/ld+json;profile=https://w3.org/ns/activitystreams
+func ASContentType(ct string) bool {
+	p := splitContentType(ct)
+	p, ok := isUTF8ContentType(p)
+	if !ok {
+		return false
+	}
+	switch len(p) {
+	case 1:
+		return p[0] == AppActivityJSON
+	case 2:
+		return p[0] == appActivityLDJSON &&
+			p[1] == "profile=https://www.w3.org/ns/activitystreams" ||
+			p[1] == "profile=\"https://www.w3.org/ns/activitystreams\""
+	default:
+		return false
+	}
+}
+
+// NodeInfo2ContentType returns whether is nodeinfo schema 2.0 content-type.
+func NodeInfo2ContentType(ct string) bool {
+	p := splitContentType(ct)
+	p, ok := isUTF8ContentType(p)
+	if !ok {
+		return false
+	}
+	switch len(p) {
+	case 1:
+		return p[0] == AppJSON
+	case 2:
+		return p[0] == AppJSON &&
+			p[1] == "profile=\"http://nodeinfo.diaspora.software/ns/schema/2.0#\"" ||
+			p[1] == "profile=http://nodeinfo.diaspora.software/ns/schema/2.0#"
+	default:
+		return false
+	}
+}
+
+// isUTF8ContentType checks for a provided charset in given
+// type parts list, removes it and returns whether is utf-8.
+func isUTF8ContentType(p []string) ([]string, bool) {
+	const charset = "charset="
+	const charsetUTF8 = charset + "utf-8"
+	for i, part := range p {
+
+		// Only handle charset slice parts.
+		if part[:len(charset)] == charset {
+
+			// Check if is UTF-8 charset.
+			ok := (part == charsetUTF8)
+
+			// Drop this slice part.
+			_ = copy(p[i:], p[i+1:])
+			p = p[:len(p)-1]
+
+			return p, ok
+		}
+	}
+	return p, true
+}
+
+// splitContentType splits content-type into semi-colon
+// separated parts. useful when a charset is provided.
+// note this also maps all chars to their lowercase form.
+func splitContentType(ct string) []string {
+	s := strings.Split(ct, ";")
+	for i := range s {
+		s[i] = strings.TrimSpace(s[i])
+		s[i] = strings.ToLower(s[i])
+	}
+	return s
+}
