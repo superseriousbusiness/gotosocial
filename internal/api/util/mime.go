@@ -23,6 +23,7 @@ const (
 	// Possible GoToSocial mimetypes.
 	AppJSON           = `application/json`
 	AppXML            = `application/xml`
+	appXMLText        = `text/xml` // AppXML is only *recommended* in RFC7303
 	AppXMLXRD         = `application/xrd+xml`
 	AppRSSXML         = `application/rss+xml`
 	AppActivityJSON   = `application/activity+json`
@@ -58,7 +59,8 @@ func XMLContentType(ct string) bool {
 	p := splitContentType(ct)
 	p, ok := isUTF8ContentType(p)
 	return ok && len(p) == 1 &&
-		p[0] == AppXML
+		p[0] == AppXML ||
+		p[0] == appXMLText
 }
 
 // XMLXRDContentType returns whether is application/(xrd+)?xml(;charset=utf-8)? content-type.
@@ -67,6 +69,7 @@ func XMLXRDContentType(ct string) bool {
 	p, ok := isUTF8ContentType(p)
 	return ok && len(p) == 1 &&
 		p[0] == AppXML ||
+		p[0] == appXMLText ||
 		p[0] == AppXMLXRD
 }
 
