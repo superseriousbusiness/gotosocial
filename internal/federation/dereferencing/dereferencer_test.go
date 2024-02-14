@@ -35,6 +35,7 @@ type DereferencerStandardTestSuite struct {
 	db      db.DB
 	storage *storage.Driver
 	state   state.State
+	client  *testrig.MockHTTPClient
 
 	testRemoteStatuses    map[string]vocab.ActivityStreamsNote
 	testRemotePeople      map[string]vocab.ActivityStreamsPerson
@@ -72,11 +73,12 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 		converter,
 	)
 
+	suite.client = testrig.NewMockHTTPClient(nil, "../../../testrig/media")
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.DB = suite.db
 	suite.state.Storage = suite.storage
 	media := testrig.NewTestMediaManager(&suite.state)
-	suite.dereferencer = dereferencing.NewDereferencer(&suite.state, converter, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), media)
+	suite.dereferencer = dereferencing.NewDereferencer(&suite.state, converter, testrig.NewTestTransportController(&suite.state, suite.client), media)
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

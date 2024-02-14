@@ -396,7 +396,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Ensure we have the author account of the status dereferenced (+ up-to-date). If this is a new status
-	// (i.e. status.AccountID == "") then any error here is irrecoverable. AccountID must ALWAYS be set.
+	// (i.e. status.AccountID == "") then any error here is irrecoverable. status.AccountID must ALWAYS be set.
 	if _, _, err := d.getAccountByURI(ctx, requestUser, attributedTo); err != nil && status.AccountID == "" {
 		return nil, nil, gtserror.Newf("failed to dereference status author %s: %w", uri, err)
 	}
@@ -408,13 +408,33 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
 
-	// Check if we've previously
-	// stored this status in the DB.
-	// If we have, it'll be ID'd.
-	var isNew = (status.ID == "")
-	if isNew {
-		// No ID, we haven't stored this status before.
-		// Generate new status ID from the status publication time.
+	// Ensure final status isn't attempting
+	// to claim being authored by local user.
+	if latestStatus.Account.IsLocal() {
+		return nil, nil, gtserror.Newf(
+			"dereferenced status %s claiming to be local",
+			latestStatus.URI,
+		)
+	}
+
+	// Ensure the final parsed status URI / URL matches
+	// the input URI we fetched (or received) it as.
+	if expect := uri.String(); latestStatus.URI != expect &&
+		latestStatus.URL != expect {
+		return nil, nil, gtserror.Newf(
+			"dereferenced status uri %s does not match %s",
+			latestStatus.URI, expect,
+		)
+	}
+
+	var isNew bool
+
+	// Based on the original provided
+	// status model, determine whether
+	// this is a new insert / update.
+	if isNew = (status.ID == ""); isNew {
+
+		// Generate new status ID from the provided creation date.
 		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
 		if err != nil {
 			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)

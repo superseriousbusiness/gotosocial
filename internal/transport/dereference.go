@@ -64,8 +64,15 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	}
 	defer rsp.Body.Close()
 
+	// Ensure a non-error status response.
 	if rsp.StatusCode != http.StatusOK {
 		return nil, gtserror.NewFromResponse(rsp)
+	}
+
+	// Ensure that the incoming request content-type is expected.
+	if ct := rsp.Header.Get("Content-Type"); !apiutil.ASContentType(ct) {
+		err := gtserror.Newf("non activity streams response: %s", ct)
+		return nil, gtserror.SetMalformed(err)
 	}
 
 	return io.ReadAll(rsp.Body)

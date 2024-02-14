@@ -21,9 +21,9 @@ import (
 	"context"
 	"encoding/json"
 	"net/url"
-	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -74,10 +74,12 @@ func (d *Dereferencer) fingerRemoteAccount(
 		return "", nil, err
 	}
 
-	_, accountDomain, err := util.ExtractWebfingerParts(resp.Subject)
+	accUsername, accDomain, err := util.ExtractWebfingerParts(resp.Subject)
 	if err != nil {
 		err = gtserror.Newf("error extracting subject parts for %s: %w", target, err)
 		return "", nil, err
+	} else if accUsername != username {
+		return "", nil, gtserror.Newf("response username does not match input for %s: %w", target, err)
 	}
 
 	// Look through links for the first
@@ -92,8 +94,7 @@ func (d *Dereferencer) fingerRemoteAccount(
 			continue
 		}
 
-		if !strings.EqualFold(link.Type, "application/activity+json") &&
-			!strings.EqualFold(link.Type, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
+		if !apiutil.ASContentType(link.Type) {
 			// Not an AP type, ignore.
 			continue
 		}
@@ -121,7 +122,7 @@ func (d *Dereferencer) fingerRemoteAccount(
 		}
 
 		// All looks good, return happily!
-		return accountDomain, uri, nil
+		return accDomain, uri, nil
 	}
 
 	return "", nil, gtserror.Newf("no suitable self, AP-type link found in webfinger response for %s", target)

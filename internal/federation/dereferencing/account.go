@@ -586,6 +586,16 @@ func (d *Dereferencer) enrichAccount(
 	}
 
 	if account.Username == "" {
+		// Assume the host from the
+		// ActivityPub representation.
+		id := ap.GetJSONLDId(apubAcc)
+		if id == nil {
+			return nil, nil, gtserror.New("no id property found on person, or id was not an iri")
+		}
+
+		// Get IRI host value.
+		accHost := id.Host
+
 		// No username was provided, so no webfinger was attempted earlier.
 		//
 		// Now we have a username we can attempt again, to ensure up-to-date
@@ -596,40 +606,35 @@ func (d *Dereferencer) enrichAccount(
 		// https://example.org/@someone@somewhere.else and we've been redirected
 		// from example.org to somewhere.else: we want to take somewhere.else
 		// as the accountDomain then, not the example.org we were redirected from.
-
-		// Assume the host from the returned
-		// ActivityPub representation.
-		id := ap.GetJSONLDId(apubAcc)
-		if id == nil {
-			return nil, nil, gtserror.New("no id property found on person, or id was not an iri")
-		}
-
-		// Get IRI host value.
-		accHost := id.Host
-
 		latestAcc.Domain, _, err = d.fingerRemoteAccount(ctx,
 			tsport,
 			latestAcc.Username,
 			accHost,
 		)
 		if err != nil {
-			// We still couldn't webfinger the account, so we're not certain
-			// what the accountDomain actually is. Still, we can make a solid
-			// guess that it's the Host of the ActivityPub URI of the account.
-			// If we're wrong, we can just try again in a couple days.
-			log.Errorf(ctx, "error webfingering[2] remote account %s@%s: %v", latestAcc.Username, accHost, err)
-			latestAcc.Domain = accHost
+			// Webfingering account still failed, so we're not certain
+			// what the accountDomain actually is. Exit here for safety.
+			return nil, nil, gtserror.Newf(
+				"error webfingering remote account %s@%s: %w",
+				latestAcc.Username, accHost, err,
+			)
 		}
 	}
 
 	if latestAcc.Domain == "" {
 		// Ensure we have a domain set by this point,
 		// otherwise it gets stored as a local user!
-		//
-		// TODO: there is probably a more granular way
-		// way of checking this in each of the above parts,
-		// and honestly it could do with a smol refactor.
 		return nil, nil, gtserror.Newf("empty domain for %s", uri)
+	}
+
+	// Ensure the final parsed account URI / URL matches
+	// the input URI we fetched (or received) it as.
+	if expect := uri.String(); latestAcc.URI != expect &&
+		latestAcc.URL != expect {
+		return nil, nil, gtserror.Newf(
+			"dereferenced account uri %s does not match %s",
+			latestAcc.URI, expect,
+		)
 	}
 
 	/*

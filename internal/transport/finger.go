@@ -97,9 +97,17 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 			// again here to renew the TTL
 			t.controller.state.Caches.GTS.Webfinger().Set(targetDomain, url)
 		}
+
 		if rsp.StatusCode == http.StatusGone {
 			return nil, fmt.Errorf("account has been deleted/is gone")
 		}
+
+		// Ensure that the incoming request content-type is expected.
+		if ct := rsp.Header.Get("Content-Type"); !apiutil.JSONJRDContentType(ct) {
+			err := gtserror.Newf("non webfinger type response: %s", ct)
+			return nil, gtserror.SetMalformed(err)
+		}
+
 		return io.ReadAll(rsp.Body)
 	}
 
@@ -190,6 +198,12 @@ func (t *transport) webfingerFromHostMeta(ctx context.Context, targetDomain stri
 	// Doesn't look like host-meta is working for this instance
 	if rsp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("GET request for %s failed: %s", req.URL.String(), rsp.Status)
+	}
+
+	// Ensure that the incoming request content-type is expected.
+	if ct := rsp.Header.Get("Content-Type"); !apiutil.XMLXRDContentType(ct) {
+		err := gtserror.Newf("non host-meta type response: %s", ct)
+		return "", gtserror.SetMalformed(err)
 	}
 
 	e := xml.NewDecoder(rsp.Body)
