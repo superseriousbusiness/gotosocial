@@ -1975,6 +1975,31 @@ func GetOIDCLinkExisting() bool { return global.GetOIDCLinkExisting() }
 // SetOIDCLinkExisting safely sets the value for global configuration 'OIDCLinkExisting' field
 func SetOIDCLinkExisting(v bool) { global.SetOIDCLinkExisting(v) }
 
+// GetOIDCAllowedGroups safely fetches the Configuration value for state's 'OIDCAllowedGroups' field
+func (st *ConfigState) GetOIDCAllowedGroups() (v []string) {
+	st.mutex.RLock()
+	v = st.config.OIDCAllowedGroups
+	st.mutex.RUnlock()
+	return
+}
+
+// SetOIDCAllowedGroups safely sets the Configuration value for state's 'OIDCAllowedGroups' field
+func (st *ConfigState) SetOIDCAllowedGroups(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.OIDCAllowedGroups = v
+	st.reloadToViper()
+}
+
+// OIDCAllowedGroupsFlag returns the flag name for the 'OIDCAllowedGroups' field
+func OIDCAllowedGroupsFlag() string { return "oidc-allowed-groups" }
+
+// GetOIDCAllowedGroups safely fetches the value for global configuration 'OIDCAllowedGroups' field
+func GetOIDCAllowedGroups() []string { return global.GetOIDCAllowedGroups() }
+
+// SetOIDCAllowedGroups safely sets the value for global configuration 'OIDCAllowedGroups' field
+func SetOIDCAllowedGroups(v []string) { global.SetOIDCAllowedGroups(v) }
+
 // GetOIDCAdminGroups safely fetches the Configuration value for state's 'OIDCAdminGroups' field
 func (st *ConfigState) GetOIDCAdminGroups() (v []string) {
 	st.mutex.RLock()

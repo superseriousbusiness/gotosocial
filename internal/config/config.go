@@ -133,6 +133,7 @@ type Configuration struct {
 	OIDCClientSecret     string   `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
 	OIDCScopes           []string `name:"oidc-scopes" usage:"OIDC scopes."`
 	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
+	OIDCAllowedGroups    []string `name:"oidc-allowed-groups" usage:"Membership of one of the listed groups allows access to GtS. If this is empty, all groups are allowed."`
 	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
 	TracingEnabled           bool   `name:"tracing-enabled" usage:"Enable OTLP Tracing"`

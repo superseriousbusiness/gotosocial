@@ -118,6 +118,9 @@ EXPECT=$(cat << "EOF"
     "oidc-admin-groups": [
         "steamy"
     ],
+    "oidc-allowed-groups": [
+        "sloths"
+    ],
     "oidc-client-id": "1234",
     "oidc-client-secret": "shhhh its a secret",
     "oidc-enabled": true,
@@ -251,6 +254,7 @@ GTS_OIDC_CLIENT_ID='1234' \
 GTS_OIDC_CLIENT_SECRET='shhhh its a secret' \
 GTS_OIDC_SCOPES='read,write' \
 GTS_OIDC_LINK_EXISTING=true \
+GTS_OIDC_ALLOWED_GROUPS='sloths' \
 GTS_OIDC_ADMIN_GROUPS='steamy' \
 GTS_SMTP_HOST='example.com' \
 GTS_SMTP_PORT=4269 \
