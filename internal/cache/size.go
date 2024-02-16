@@ -428,6 +428,19 @@ func sizeofMention() uintptr {
 	}))
 }
 
+func sizeofMove() uintptr {
+	return uintptr(size.Of(&gtsmodel.Move{
+		ID:          exampleID,
+		CreatedAt:   exampleTime,
+		UpdatedAt:   exampleTime,
+		AttemptedAt: exampleTime,
+		SucceededAt: exampleTime,
+		OriginURI:   exampleURI,
+		TargetURI:   exampleURI,
+		URI:         exampleURI,
+	}))
+}
+
 func sizeofNotification() uintptr {
 	return uintptr(size.Of(&gtsmodel.Notification{
 		ID:               exampleID,

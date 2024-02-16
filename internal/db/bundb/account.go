@@ -304,6 +304,17 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 		account.AlsoKnownAs = alsoKnownAs
 	}
 
+	if account.Move == nil && account.MoveID != "" {
+		// Account move is not set, fetch from database.
+		account.Move, err = a.state.DB.GetMoveByID(
+			ctx,
+			account.MovedToURI,
+		)
+		if err != nil {
+			errs.Appendf("error populating move: %w", err)
+		}
+	}
+
 	if account.MovedTo == nil && account.MovedToURI != "" {
 		// Account movedTo is not set, fetch from database.
 		account.MovedTo, err = a.state.DB.GetAccountByURI(

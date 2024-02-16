@@ -211,6 +211,7 @@ type CacheConfiguration struct {
 	MarkerMemRatio           float64       `name:"marker-mem-ratio"`
 	MediaMemRatio            float64       `name:"media-mem-ratio"`
 	MentionMemRatio          float64       `name:"mention-mem-ratio"`
+	MoveMemRatio             float64       `name:"move-mem-ratio"`
 	NotificationMemRatio     float64       `name:"notification-mem-ratio"`
 	PollMemRatio             float64       `name:"poll-mem-ratio"`
 	PollVoteMemRatio         float64       `name:"poll-vote-mem-ratio"`

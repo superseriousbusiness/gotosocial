@@ -36,6 +36,7 @@ type DB interface {
 	Marker
 	Media
 	Mention
+	Move
 	Notification
 	Poll
 	Relationship
