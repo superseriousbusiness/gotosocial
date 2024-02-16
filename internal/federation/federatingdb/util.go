@@ -220,25 +220,52 @@ func (f *federatingDB) collectIRIs(ctx context.Context, iris []*url.URL) (vocab.
 	return collection, nil
 }
 
-// extractFromCtx extracts some useful values from a context passed into the federatingDB:
-//
-//   - The account that owns the inbox or URI being interacted with.
-//   - The account that POSTed a request to the inbox.
-//   - Whether this is an internal request (one originating not from
-//     the API but from inside the instance).
-//
-// If the request is internal, the caller can assume that the activity has
-// already been processed elsewhere, and should return with no further action.
-func extractFromCtx(ctx context.Context) (receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account, internal bool) {
-	receivingAccount = gtscontext.ReceivingAccount(ctx)
-	requestingAccount = gtscontext.RequestingAccount(ctx)
+// activityContext represents the context in
+// which a call to one of the federatingdb
+// functions is taking place, including the
+// account who initiated the request via POST
+// to an inbox, and the account who received
+// the request in their inbox.
+type activityContext struct {
+	// The account that owns the inbox
+	// or URI being interacted with.
+	receivingAcct *gtsmodel.Account
 
-	// If the receiving account wasn't set on the context, that
-	// means this request didn't pass through the API, but
-	// came from inside GtS as the result of a local activity.
-	internal = receivingAccount == nil
+	// The account whose keyId was used
+	// to POST a request to the inbox.
+	requestingAcct *gtsmodel.Account
 
-	return
+	// Whether this is an internal request,
+	// ie., one originating not from the
+	// API but from inside the instance.
+	//
+	// If the request is internal, it's
+	// safe to assume that the activity
+	// has already been processed elsewhere,
+	// and we can return with no action.
+	internal bool
+}
+
+// getActivityContext extracts the context in
+// which an Activity is taking place from the
+// context.Context passed in to one of the
+// federatingdb functions.
+func getActivityContext(ctx context.Context) activityContext {
+	receivingAcct := gtscontext.ReceivingAccount(ctx)
+	requestingAcct := gtscontext.RequestingAccount(ctx)
+
+	// If the receiving account wasn't set on
+	// the context, that means this request
+	// didn't pass through the fedi API, but
+	// came from inside the instance as the
+	// result of a local activity.
+	internal := receivingAcct == nil
+
+	return activityContext{
+		receivingAcct:  receivingAcct,
+		requestingAcct: requestingAcct,
+		internal:       internal,
+	}
 }
 
 func marshalItem(item vocab.Type) (string, error) {

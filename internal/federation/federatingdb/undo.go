@@ -44,13 +44,15 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 		l.Debug("entering Undo")
 	}
 
-	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
-	if internal {
+	activityContext := getActivityContext(ctx)
+	if activityContext.internal {
 		return nil // Already processed.
 	}
 
-	var errs gtserror.MultiError
+	requestingAcct := activityContext.requestingAcct
+	receivingAcct := activityContext.receivingAcct
 
+	var errs gtserror.MultiError
 	for _, object := range ap.ExtractObjects(undo) {
 		// Try to get object as vocab.Type,
 		// else skip handling (likely) IRI.
@@ -61,18 +63,18 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 
 		switch objType.GetTypeName() {
 		case ap.ActivityFollow:
-			if err := f.undoFollow(ctx, receivingAccount, requestingAccount, undo, objType); err != nil {
+			if err := f.undoFollow(ctx, receivingAcct, requestingAcct, undo, objType); err != nil {
 				errs.Appendf("error undoing follow: %w", err)
 			}
 		case ap.ActivityLike:
-			if err := f.undoLike(ctx, receivingAccount, requestingAccount, undo, objType); err != nil {
+			if err := f.undoLike(ctx, receivingAcct, requestingAcct, undo, objType); err != nil {
 				errs.Appendf("error undoing like: %w", err)
 			}
 		case ap.ActivityAnnounce:
 			// TODO: actually handle this !
 			log.Warn(ctx, "skipped undo announce")
 		case ap.ActivityBlock:
-			if err := f.undoBlock(ctx, receivingAccount, requestingAccount, undo, objType); err != nil {
+			if err := f.undoBlock(ctx, receivingAcct, requestingAcct, undo, objType); err != nil {
 				errs.Appendf("error undoing block: %w", err)
 			}
 		}

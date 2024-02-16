@@ -63,27 +63,30 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 			Trace("entering Create")
 	}
 
-	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
-	if internal {
+	activityContext := getActivityContext(ctx)
+	if activityContext.internal {
 		return nil // Already processed.
 	}
+
+	requestingAcct := activityContext.requestingAcct
+	receivingAcct := activityContext.receivingAcct
 
 	switch asType.GetTypeName() {
 	case ap.ActivityBlock:
 		// BLOCK SOMETHING
-		return f.activityBlock(ctx, asType, receivingAccount, requestingAccount)
+		return f.activityBlock(ctx, asType, receivingAcct, requestingAcct)
 	case ap.ActivityCreate:
 		// CREATE SOMETHING
-		return f.activityCreate(ctx, asType, receivingAccount, requestingAccount)
+		return f.activityCreate(ctx, asType, receivingAcct, requestingAcct)
 	case ap.ActivityFollow:
 		// FOLLOW SOMETHING
-		return f.activityFollow(ctx, asType, receivingAccount, requestingAccount)
+		return f.activityFollow(ctx, asType, receivingAcct, requestingAcct)
 	case ap.ActivityLike:
 		// LIKE SOMETHING
-		return f.activityLike(ctx, asType, receivingAccount, requestingAccount)
+		return f.activityLike(ctx, asType, receivingAcct, requestingAcct)
 	case ap.ActivityFlag:
 		// FLAG / REPORT SOMETHING
-		return f.activityFlag(ctx, asType, receivingAccount, requestingAccount)
+		return f.activityFlag(ctx, asType, receivingAcct, requestingAcct)
 	}
 
 	return nil

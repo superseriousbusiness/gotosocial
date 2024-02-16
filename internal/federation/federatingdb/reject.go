@@ -40,10 +40,13 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 		l.Debug("entering Reject")
 	}
 
-	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
-	if internal {
+	activityContext := getActivityContext(ctx)
+	if activityContext.internal {
 		return nil // Already processed.
 	}
+
+	requestingAcct := activityContext.requestingAcct
+	receivingAcct := activityContext.receivingAcct
 
 	for _, obj := range ap.ExtractObjects(reject) {
 
@@ -59,13 +62,13 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 
 				// Make sure the creator of the original follow
 				// is the same as whatever inbox this landed in.
-				if followReq.AccountID != receivingAccount.ID {
+				if followReq.AccountID != receivingAcct.ID {
 					return errors.New("Reject: follow account and inbox account were not the same")
 				}
 
 				// Make sure the target of the original follow
 				// is the same as the account making the request.
-				if followReq.TargetAccountID != requestingAccount.ID {
+				if followReq.TargetAccountID != requestingAcct.ID {
 					return errors.New("Reject: follow target account and requesting account were not the same")
 				}
 
@@ -89,13 +92,13 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 
 			// Make sure the creator of the original follow
 			// is the same as whatever inbox this landed in.
-			if gtsFollow.AccountID != receivingAccount.ID {
+			if gtsFollow.AccountID != receivingAcct.ID {
 				return errors.New("Reject: follow account and inbox account were not the same")
 			}
 
 			// Make sure the target of the original follow
 			// is the same as the account making the request.
-			if gtsFollow.TargetAccountID != requestingAccount.ID {
+			if gtsFollow.TargetAccountID != requestingAcct.ID {
 				return errors.New("Reject: follow target account and requesting account were not the same")
 			}
 

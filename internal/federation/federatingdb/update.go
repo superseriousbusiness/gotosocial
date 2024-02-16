@@ -53,17 +53,20 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		l.Debug("entering Update")
 	}
 
-	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
-	if internal {
+	activityContext := getActivityContext(ctx)
+	if activityContext.internal {
 		return nil // Already processed.
 	}
 
+	requestingAcct := activityContext.requestingAcct
+	receivingAcct := activityContext.receivingAcct
+
 	if accountable, ok := ap.ToAccountable(asType); ok {
-		return f.updateAccountable(ctx, receivingAccount, requestingAccount, accountable)
+		return f.updateAccountable(ctx, receivingAcct, requestingAcct, accountable)
 	}
 
 	if statusable, ok := ap.ToStatusable(asType); ok {
-		return f.updateStatusable(ctx, receivingAccount, requestingAccount, statusable)
+		return f.updateStatusable(ctx, receivingAcct, requestingAcct, statusable)
 	}
 
 	return nil
