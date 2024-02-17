@@ -41,10 +41,13 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		l.Debug("entering Announce")
 	}
 
-	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
-	if internal {
+	activityContext := getActivityContext(ctx)
+	if activityContext.internal {
 		return nil // Already processed.
 	}
+
+	requestingAcct := activityContext.requestingAcct
+	receivingAcct := activityContext.receivingAcct
 
 	// Ensure requestingAccount is among
 	// the Actors doing the Announce.
@@ -52,11 +55,11 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 	// We don't support Announce forwards.
 	actorIRIs := ap.GetActorIRIs(announce)
 	if !slices.ContainsFunc(actorIRIs, func(actorIRI *url.URL) bool {
-		return actorIRI.String() == requestingAccount.URI
+		return actorIRI.String() == requestingAcct.URI
 	}) {
 		return gtserror.Newf(
 			"requestingAccount %s was not among Announce Actors",
-			requestingAccount.URI,
+			requestingAcct.URI,
 		)
 	}
 
@@ -76,7 +79,7 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 		APObjectType:     ap.ActivityAnnounce,
 		APActivityType:   ap.ActivityCreate,
 		GTSModel:         boost,
-		ReceivingAccount: receivingAccount,
+		ReceivingAccount: receivingAcct,
 	})
 
 	return nil

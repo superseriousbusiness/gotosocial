@@ -58,7 +58,6 @@ type controller struct {
 // NewController returns an implementation of the Controller interface for creating new transports
 func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client httpclient.SigningClient) Controller {
 	var (
-		applicationName  = config.GetApplicationName()
 		host             = config.GetHost()
 		proto            = config.GetProtocol()
 		version          = config.GetSoftwareVersion()
@@ -77,7 +76,7 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		clock:     clock,
 		client:    client,
 		trspCache: cache.NewTTL[string, *transport](0, 100, 0),
-		userAgent: fmt.Sprintf("%s (+%s://%s) gotosocial/%s", applicationName, proto, host, version),
+		userAgent: fmt.Sprintf("gotosocial/%s (+%s://%s)", version, proto, host),
 		senders:   senders,
 	}
 
