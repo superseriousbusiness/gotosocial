@@ -46,6 +46,10 @@ function UserMigrationForm({ data: profile }) {
 	return (
 		<>
 			<h2>Account Migration Settings</h2>
+			<div className="info">
+				<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
+				<b>Moving your account to another instance, or moving an account from another instance to your account, isn't implemented yet! <a href="https://github.com/superseriousbusiness/gotosocial/issues/130" target="_blank" rel="noopener noreferrer">See here for progress</a>.</b>
+			</div>
 			<p>
 				The following settings allow you to <strong>alias</strong> your account to another account
 				elsewhere, and to <strong>move</strong> your followers and following lists to another account.
@@ -186,18 +190,20 @@ function MoveForm({ data: profile }) {
 				</a>
 			</div>
 			<TextInput
+				disabled={true}
 				field={form.movedToURI}
 				label="Move target URI"
 				placeholder="https://example.org/users/my_new_account"
 			/>
 			<TextInput
+				disabled={true}
 				type="password"
 				name="password"
 				field={form.password}
 				label="Confirm account password"
 			/>
 			<MutationButton
-				disabled={false}
+				disabled={true}
 				label="Confirm account move"
 				result={result}
 			/>
