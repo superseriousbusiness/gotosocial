@@ -41,10 +41,13 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		l.Debug("entering Accept")
 	}
 
-	receivingAccount, requestingAccount, internal := extractFromCtx(ctx)
-	if internal {
+	activityContext := getActivityContext(ctx)
+	if activityContext.internal {
 		return nil // Already processed.
 	}
+
+	requestingAcct := activityContext.requestingAcct
+	receivingAcct := activityContext.receivingAcct
 
 	// Iterate all provided objects in the activity.
 	for _, object := range ap.ExtractObjects(accept) {
@@ -65,13 +68,13 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 
 				// Make sure the creator of the original follow
 				// is the same as whatever inbox this landed in.
-				if gtsFollow.AccountID != receivingAccount.ID {
+				if gtsFollow.AccountID != receivingAcct.ID {
 					return errors.New("ACCEPT: follow account and inbox account were not the same")
 				}
 
 				// Make sure the target of the original follow
 				// is the same as the account making the request.
-				if gtsFollow.TargetAccountID != requestingAccount.ID {
+				if gtsFollow.TargetAccountID != requestingAcct.ID {
 					return errors.New("ACCEPT: follow target account and requesting account were not the same")
 				}
 
@@ -84,7 +87,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					APObjectType:     ap.ActivityFollow,
 					APActivityType:   ap.ActivityAccept,
 					GTSModel:         follow,
-					ReceivingAccount: receivingAccount,
+					ReceivingAccount: receivingAcct,
 				})
 			}
 
@@ -112,13 +115,13 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 
 			// Make sure the creator of the original follow
 			// is the same as whatever inbox this landed in.
-			if followReq.AccountID != receivingAccount.ID {
+			if followReq.AccountID != receivingAcct.ID {
 				return errors.New("ACCEPT: follow account and inbox account were not the same")
 			}
 
 			// Make sure the target of the original follow
 			// is the same as the account making the request.
-			if followReq.TargetAccountID != requestingAccount.ID {
+			if followReq.TargetAccountID != requestingAcct.ID {
 				return errors.New("ACCEPT: follow target account and requesting account were not the same")
 			}
 
@@ -131,7 +134,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				APObjectType:     ap.ActivityFollow,
 				APActivityType:   ap.ActivityAccept,
 				GTSModel:         follow,
-				ReceivingAccount: receivingAccount,
+				ReceivingAccount: receivingAcct,
 			})
 
 			continue
