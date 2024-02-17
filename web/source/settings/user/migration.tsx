@@ -190,11 +190,13 @@ function MoveForm({ data: profile }) {
 				</a>
 			</div>
 			<TextInput
+				disabled={true}
 				field={form.movedToURI}
 				label="Move target URI"
 				placeholder="https://example.org/users/my_new_account"
 			/>
 			<TextInput
+				disabled={true}
 				type="password"
 				name="password"
 				field={form.password}
