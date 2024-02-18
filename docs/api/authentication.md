@@ -19,6 +19,7 @@ curl -X POST 'https://your.instance.url/api/v1/apps' \
 The string "urn:ietf:wg:oauth:2.0:oob" is an indication of what is known as out-of-band authentication - a technique used in multi-factor authentication to reduce the number of ways that a bad actor can intrude on the authentication process. In this instance, it allows us to view and manually copy the tokens created to use further in this process.
 
 Note that `scopes` can be one of:
+
 - read
 - write
 - follow
@@ -83,7 +84,7 @@ curl -X POST 'https://your.instance.url/oauth/token' \
 ```
 !!! warning
     Please note that the characters used above are just a random selection of characters and cannot be used.
-    ake sure you replace it with the code *you* get from your instance.
+    Make sure you replace it with the code *you* get from your instance.
 
 You'll get a response that includes your access token and looks something like this:
 ```json
