@@ -156,7 +156,7 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 
 		// Check parent is deref'd.
 		if next.InReplyToID == "" {
-			log.Warnf(ctx, "status not yet deref'd: %s", next.InReplyToURI)
+			log.Debugf(ctx, "status not (yet) deref'd: %s", next.InReplyToURI)
 			return false, cache.SentinelError
 		}
 

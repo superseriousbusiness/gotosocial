@@ -124,9 +124,34 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// Check for a returned HTTP code via error.
 		switch code := gtserror.StatusCode(err); {
 
-		// Status codes 404 and 410 incicate the status does not exist anymore.
-		// Gone (410) is the preferred for deletion, but we accept NotFound too.
-		case code == http.StatusNotFound || code == http.StatusGone:
+		// 404 may indicate deletion, but can also
+		// indicate that we don't have permission to
+		// view the status (it's followers-only and
+		// we don't follow, for example).
+		case code == http.StatusNotFound:
+			// If this reply is followers-only or stricter,
+			// we can safely assume the status it replies
+			// to is also followers only or stricter.
+			//
+			// In this case we should leave the inReplyTo
+			// URI in place for visibility filtering,
+			// and just return since we can go no further.
+			if status.Visibility == gtsmodel.VisibilityFollowersOnly ||
+				status.Visibility == gtsmodel.VisibilityMutualsOnly ||
+				status.Visibility == gtsmodel.VisibilityDirect {
+				return nil
+			}
+
+			// If the reply is public or unlisted then
+			// likely the replied-to status is/was public
+			// or unlisted and has indeed been deleted,
+			// fall through to the Gone case to clean up.
+			fallthrough
+
+		// Gone (410) definitely indicates deletion.
+		// Update the status to remove references to
+		// the now-gone parent.
+		case code == http.StatusGone:
 			l.Trace("status orphaned")
 			current.InReplyToID = ""
 			current.InReplyToURI = ""
