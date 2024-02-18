@@ -19,7 +19,6 @@ package bundb_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
