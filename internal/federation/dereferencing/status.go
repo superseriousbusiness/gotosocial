@@ -222,7 +222,7 @@ func (d *Dereferencer) RefreshStatus(
 		d.dereferenceThread(ctx,
 			requestUser,
 			uri,
-			status,
+			latest,
 			statusable,
 			isNew,
 		)
