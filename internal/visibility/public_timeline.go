@@ -95,7 +95,7 @@ func (f *Filter) isStatusPublicTimelineable(ctx context.Context, requester *gtsm
 		// Fetch next parent to lookup.
 		parentID := parent.InReplyToID
 		if parentID == "" {
-			log.Warnf(ctx, "status not yet deref'd: %s", parent.InReplyToURI)
+			log.Debugf(ctx, "status not (yet) deref'd: %s", parent.InReplyToURI)
 			return false, cache.SentinelError
 		}
 
