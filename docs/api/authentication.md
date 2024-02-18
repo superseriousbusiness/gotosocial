@@ -6,7 +6,7 @@ Using the client API requires authentication. This page documents the general fl
 
 We need to get a new key pair for our application. This is done by making a `POST` request to the `/api/v1/apps` endpoint. Replace `your_app_name` in the code below:
 
-```
+```bash
 curl -X POST 'https://your.instance.url/api/v1/apps' \ 
   -H 'Content-Type:application/json' \
   -d '{
@@ -58,8 +58,6 @@ Hi `your_username`!
 
 Application `your_app_name` would like to perform actions on your behalf, with scope *`read`*.
 The application will redirect to urn:ietf:wg:oauth:2.0:oob to continue.
-
-<span style="padding:12px;background-color:#66befe;color:black;">Allow</span>
 ```
 
 Once you click `Allow`, you will get a window that looks something like this:
@@ -72,7 +70,7 @@ WBANQAXXHDN9KJQZXGWNQANA4V9EJWMUDHVCUUM3JHYAB3DP
 
 ## Getting your token
 The next step is to send a `POST` request to the oauth/token endpoint to get an access token that you will use to authenticate your future requests. 
-```
+```bash
 curl -X POST 'https://your.instance.url/oauth/token' \
   -H 'Content-Type:application/json' 
   -d '{
@@ -100,7 +98,7 @@ You'll get a response that includes your access token and looks something like t
 To make sure everything went through successfully, query the `/api/v1/verify_credentials` endpoint, adding your new access token to the Header as `Authentication: Bearer your_brand_new_token`.
 
 See this example:
-```
+```bash
 curl -X GET 'https://your.instance.url/api/v1/accounts/verify_credentials' \
   -H 'Content-Type:application/json' 
   -H 'Authorization:Bearer your_brand_new_token'
@@ -109,7 +107,7 @@ If all goes well, you should get your user profile as a response response.
 
 ## Final notes
 Thereafter, whenever you make an api call, say to query your notifications, add a Header to your request `Authorization:Bearer your_brand_new_token` like this:
-```
+```bash
 curl --request GET \
   --url https://your.instance.url/api/v1/notifications \
   --header 'Authorization: Bearer your_brand_new_token' \
