@@ -151,7 +151,7 @@ func NewProcessor(
 	emailSender email.Sender,
 ) *Processor {
 	var (
-		parseMentionFunc = GetParseMentionFunc(state.DB, federator)
+		parseMentionFunc = GetParseMentionFunc(state, federator)
 		filter           = visibility.NewFilter(state)
 	)
 

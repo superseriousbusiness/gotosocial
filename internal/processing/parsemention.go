@@ -1,0 +1,119 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package processing
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
+)
+
+// GetParseMentionFunc returns a new ParseMentionFunc using the provided state and federator.
+// State is used for doing local database lookups; federator is used for remote account lookups (if necessary).
+func GetParseMentionFunc(state *state.State, federator *federation.Federator) gtsmodel.ParseMentionFunc {
+	return func(ctx context.Context, namestring string, originAccountID string, statusID string) (*gtsmodel.Mention, error) {
+		// Get the origin account first since
+		// we'll need it to create the mention.
+		originAccount, err := state.DB.GetAccountByID(ctx, originAccountID)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"db error getting mention origin account %s: %w",
+				originAccountID, err,
+			)
+		}
+
+		// Parse target components from the
+		// "@someone@example.org" namestring.
+		targetUsername, targetHost, err := util.ExtractNamestringParts(namestring)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"error extracting mention target: %w",
+				err,
+			)
+		}
+
+		// It's a "local" mention if namestring
+		// looks like one of the following:
+		//
+		//   - "@someone" with no host component.
+		//   - "@someone@gts.example.org" and we're host "gts.example.org".
+		//   - "@someone@example.org" and we're account-domain "example.org".
+		local := targetHost == "" ||
+			targetHost == config.GetHost() ||
+			targetHost == config.GetAccountDomain()
+
+		// Either a local or remote
+		// target for the mention.
+		var targetAcct *gtsmodel.Account
+		if local {
+			// Lookup local target accounts in the db only.
+			targetAcct, err = state.DB.GetAccountByUsernameDomain(ctx, targetUsername, "")
+			if err != nil {
+				return nil, fmt.Errorf(
+					"db error getting mention local target account %s: %w",
+					targetUsername, err,
+				)
+			}
+		} else {
+			// If origin account is local, use
+			// it to do potential dereference.
+			// Else fallback to empty string,
+			// which uses instance account.
+			var requestUser string
+			if originAccount.IsLocal() {
+				requestUser = originAccount.Username
+			}
+
+			targetAcct, _, err = federator.GetAccountByUsernameDomain(
+				gtscontext.SetFastFail(ctx),
+				requestUser,
+				targetUsername,
+				targetHost,
+			)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"error fetching mention remote target account: %w",
+					err,
+				)
+			}
+		}
+
+		// Return mention with useful populated fields,
+		// but *don't* store it in the database; that's
+		// up to the calling function to do, if they want.
+		return &gtsmodel.Mention{
+			ID:               id.NewULID(),
+			StatusID:         statusID,
+			OriginAccountID:  originAccount.ID,
+			OriginAccountURI: originAccount.URI,
+			OriginAccount:    originAccount,
+			TargetAccountID:  targetAcct.ID,
+			TargetAccountURI: targetAcct.URI,
+			TargetAccountURL: targetAcct.URL,
+			TargetAccount:    targetAcct,
+			NameString:       namestring,
+		}, nil
+	}
+}
