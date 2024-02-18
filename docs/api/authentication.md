@@ -27,8 +27,8 @@ Note that `scopes` can be one of:
 - admin
 
 !!! warning
- Be **very** careful what scopes you grant to your application. 
- The default is `read` if `scopes` is not set.
+    Be **very** careful what scopes you grant to your application.
+    The default is `read` if `scopes` is not set.
 
 A successful call returns a response with a client_id and client_secret that we are going need to use in the rest of the process. It looks something like this: 
 ```
@@ -42,7 +42,7 @@ A successful call returns a response with a client_id and client_secret that we 
 ```
 
 !!! important
- Ensure you save the client_id and client_secret somewhere so you can refer to it as we go.
+    Ensure you save the client_id and client_secret somewhere so you can refer to it as we go.
 
 ## authorizing your application
 
@@ -55,19 +55,19 @@ https://your.instance.url/oauth/authorize?client_id=your_new_client_id-id&redire
 
 You'll get a login form to your instance and be prompted to login if you aren't already logged in. Once logged in, you will get a screen that says something like this:
 !!! note
- Hi `your_username`!
+    Hi `your_username`!
  
- Application `your_app_name` would like to perform actions on your behalf, with scope *`read`*.
- The application will redirect to urn:ietf:wg:oauth:2.0:oob to continue.
+    Application `your_app_name` would like to perform actions on your behalf, with scope *`read`*.
+    The application will redirect to urn:ietf:wg:oauth:2.0:oob to continue.
  
- <span style="padding:12px;background-color:#66befe;color:black;">Allow</span>
+    <span style="padding:12px;background-color:#66befe;color:black;">Allow</span>
  
 
 Once you click `Allow`, you will get a window that looks something like this:
 
 !!! note
- Here's your out-of-band token with scope "read", use it wisely:
-  WBANQAXXHDN9KJQZXGWNQANA4V9EJWMUDHVCUUM3JHYAB3DP
+    Here's your out-of-band token with scope "read", use it wisely:
+     WBANQAXXHDN9KJQZXGWNQANA4V9EJWMUDHVCUUM3JHYAB3DP
 
 
 ## Getting your token
@@ -82,8 +82,8 @@ curl -X POST 'https://your.instance.url/oauth/token' -H 'Content-Type:applicatio
 }' 
 ```
 !!! warning
- Please note that the characters used above are just a random selection of characters and cannot be used.
-Make sure you replace it with the code *you* get from your instance.
+    Please note that the characters used above are just a random selection of characters and cannot be used.
+    ake sure you replace it with the code *you* get from your instance.
 
 You'll get a response that includes your access token and looks something like this:
 ```
