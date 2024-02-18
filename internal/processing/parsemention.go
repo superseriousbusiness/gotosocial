@@ -36,7 +36,7 @@ func GetParseMentionFunc(state *state.State, federator *federation.Federator) gt
 	return func(ctx context.Context, namestring string, originAccountID string, statusID string) (*gtsmodel.Mention, error) {
 		// Get the origin account first since
 		// we'll need it to create the mention.
-		originAccount, err := state.DB.GetAccountByID(ctx, originAccountID)
+		originAcct, err := state.DB.GetAccountByID(ctx, originAccountID)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"db error getting mention origin account %s: %w",
@@ -82,8 +82,8 @@ func GetParseMentionFunc(state *state.State, federator *federation.Federator) gt
 			// Else fallback to empty string,
 			// which uses instance account.
 			var requestUser string
-			if originAccount.IsLocal() {
-				requestUser = originAccount.Username
+			if originAcct.IsLocal() {
+				requestUser = originAcct.Username
 			}
 
 			targetAcct, _, err = federator.GetAccountByUsernameDomain(
@@ -106,9 +106,9 @@ func GetParseMentionFunc(state *state.State, federator *federation.Federator) gt
 		return &gtsmodel.Mention{
 			ID:               id.NewULID(),
 			StatusID:         statusID,
-			OriginAccountID:  originAccount.ID,
-			OriginAccountURI: originAccount.URI,
-			OriginAccount:    originAccount,
+			OriginAccountID:  originAcct.ID,
+			OriginAccountURI: originAcct.URI,
+			OriginAccount:    originAcct,
 			TargetAccountID:  targetAcct.ID,
 			TargetAccountURI: targetAcct.URI,
 			TargetAccountURL: targetAcct.URL,
