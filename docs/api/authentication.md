@@ -18,7 +18,7 @@ curl -X POST 'https://your.instance.url/api/v1/apps' \
 
 The string "urn:ietf:wg:oauth:2.0:oob" is an indication of what is known as out-of-band authentication - a technique used in multi-factor authentication to reduce the number of ways that a bad actor can intrude on the authentication process. In this instance, it allows us to view and manually copy the tokens created to use further in this process.
 
-Note that `scopes` can be one of:
+Note that `scopes` can be any space-separated combination of:
 
 - read
 - write
