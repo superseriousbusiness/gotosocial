@@ -124,5 +124,6 @@ nav:
       - "federation/federating_with_gotosocial.md"
   - "API Documentation":
       - "api/swagger.md"
+      - "api/authentication.md"
       - "api/ratelimiting.md"
       - "api/throttling.md"
