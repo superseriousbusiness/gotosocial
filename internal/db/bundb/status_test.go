@@ -144,6 +144,14 @@ func (suite *StatusTestSuite) TestGetStatusWithMention() {
 	suite.True(*status.Likeable)
 }
 
+// The below test was originally used to ensure that a second
+// fetch is faster than a first fetch of a status, because in
+// the second fetch it should be cached. However because we
+// always run in-memory tests anyway, sometimes the first fetch
+// is actually faster, which causes CI/CD to fail unpredictably.
+// Since we know by now (Feb 2024) that the cache works fine,
+// the test is commented out.
+/*
 func (suite *StatusTestSuite) TestGetStatusTwice() {
 	before1 := time.Now()
 	_, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
@@ -162,6 +170,7 @@ func (suite *StatusTestSuite) TestGetStatusTwice() {
 	// second retrieval should be several orders faster since it will be cached now
 	suite.Less(duration2, duration1)
 }
+*/
 
 func (suite *StatusTestSuite) TestGetStatusReplies() {
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
