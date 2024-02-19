@@ -190,18 +190,28 @@ func (p *Processor) processReplyToID(ctx context.Context, form *apimodel.Advance
 }
 
 func (p *Processor) processThreadID(ctx context.Context, status *gtsmodel.Status) gtserror.WithCode {
-	// Status takes the thread ID
-	// of whatever it replies to.
-	if status.InReplyTo != nil {
+	// Status takes the thread ID of
+	// whatever it replies to, if set.
+	//
+	// Might not be set if status is local
+	// and replies to a remote status that
+	// doesn't have a thread ID yet.
+	//
+	// If so, we can just thread from this
+	// status onwards instead, since this
+	// is where the relevant part of the
+	// thread starts, from the perspective
+	// of our instance at least.
+	if status.InReplyTo != nil &&
+		status.InReplyTo.ThreadID != "" {
+		// Just inherit threadID from parent.
 		status.ThreadID = status.InReplyTo.ThreadID
 		return nil
 	}
 
-	// Status doesn't reply to anything,
-	// so it's a new local top-level status
-	// and therefore needs a thread ID.
+	// Mark new thread (or threaded
+	// subsection) starting from here.
 	threadID := id.NewULID()
-
 	if err := p.state.DB.PutThread(
 		ctx,
 		&gtsmodel.Thread{
