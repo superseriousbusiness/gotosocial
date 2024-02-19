@@ -131,12 +131,12 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	suite.False(*notif.Read)
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-	msg, argCtx, strCtx := wssStream.Recv(ctx)
-	suite.True(argCtx && strCtx)
+	msg, ok := wssStream.Recv(ctx)
+	suite.True(ok)
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
 	notifStreamed := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notifStreamed)
 	suite.NoError(err)
@@ -199,12 +199,12 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 	suite.False(*notif.Read)
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-	msg, argCtx, strCtx := wssStream.Recv(ctx)
-	suite.True(argCtx && strCtx)
+	msg, ok := wssStream.Recv(ctx)
+	suite.True(ok)
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineNotifications}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
 }
 
 // TestProcessFaveWithDifferentReceivingAccount ensures that when an account receives a fave that's for
@@ -269,9 +269,8 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 
 	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-	_, argCtx, strCtx := wssStream.Recv(ctx)
-	suite.True(strCtx)
-	suite.False(argCtx)
+	_, ok := wssStream.Recv(ctx)
+	suite.False(ok)
 }
 
 func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
@@ -400,12 +399,12 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	suite.NoError(err)
 
 	ctx, _ = context.WithTimeout(ctx, time.Second*5)
-	msg, argCtx, strCtx := wssStream.Recv(context.Background())
-	suite.True(argCtx && strCtx)
+	msg, ok := wssStream.Recv(context.Background())
+	suite.True(ok)
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
 	notif := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)
@@ -413,7 +412,7 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	suite.Equal(originAccount.ID, notif.Account.ID)
 
 	// no messages should have been sent out, since we didn't need to federate an accept
-	suite.Empty(suite.httpClient.SentMessages)
+	suite.Empty(&suite.httpClient.SentMessages)
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
@@ -494,12 +493,12 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 	suite.Equal("Accept", accept.Type)
 
 	ctx, _ = context.WithTimeout(ctx, time.Second*5)
-	msg, argCtx, strCtx := wssStream.Recv(context.Background())
-	suite.True(argCtx && strCtx)
+	msg, ok := wssStream.Recv(context.Background())
+	suite.True(ok)
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
 	notif := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)

@@ -51,8 +51,8 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 
 	suite.streamProcessor.Notify(context.Background(), account, notification)
 
-	msg, argCtx, strCtx := openStream.Recv(context.Background())
-	suite.True(argCtx && strCtx)
+	msg, ok := openStream.Recv(context.Background())
+	suite.True(ok)
 
 	dst := new(bytes.Buffer)
 	err = json.Indent(dst, []byte(msg.Payload), "", "  ")

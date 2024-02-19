@@ -133,7 +133,7 @@ func (s *Streams) Open(accountID string, streamTypes ...string) *Stream {
 }
 
 // Post will post the given message to all streams of given account ID matching type.
-func (s *Streams) Post(ctx context.Context, accountID string, msg Message) (bool, bool) {
+func (s *Streams) Post(ctx context.Context, accountID string, msg Message) bool {
 	// Acquire lock.
 	s.mutex.Lock()
 
@@ -144,7 +144,7 @@ func (s *Streams) Post(ctx context.Context, accountID string, msg Message) (bool
 		// No streams for
 		// given account ID.
 		s.mutex.Unlock()
-		return true, true
+		return true
 	}
 
 	// Create new slice of supported streams
@@ -167,18 +167,15 @@ func (s *Streams) Post(ctx context.Context, accountID string, msg Message) (bool
 	// lock so we don't risk blocking / slow
 	// access to the main Streams{} mutex.
 	for _, str := range support {
-		argCtx, strCtx := str.Send(ctx, msg)
-		if !argCtx {
-			return argCtx, ok
-		}
-		ok = ok && strCtx
+		sent := str.Send(ctx, msg)
+		ok = ok && sent
 	}
 
-	return true, ok
+	return ok
 }
 
 // PostAll will post the given message to all streams with matching types.
-func (s *Streams) PostAll(ctx context.Context, msg Message) {
+func (s *Streams) PostAll(ctx context.Context, msg Message) bool {
 	// Acquire lock.
 	s.mutex.Lock()
 
@@ -197,13 +194,18 @@ func (s *Streams) PostAll(ctx context.Context, msg Message) {
 	// Done with lock.
 	s.mutex.Unlock()
 
+	var ok bool
+
 	// Send message to supported stream
 	// types OUTSIDE of main Streams{} mutex
 	// lock so we don't risk blocking / slow
 	// access to the main Streams{} mutex.
 	for _, str := range support {
-		str.Send(ctx, msg)
+		sent := str.Send(ctx, msg)
+		ok = ok && sent
 	}
+
+	return ok
 }
 
 // Stream represents one
@@ -212,7 +214,7 @@ type Stream struct {
 
 	// atomically updated ptr to a read-only copy
 	// of supported stream types in a hashmap. this
-	// gets updated via CAS operations in .cas()
+	// gets updated via CAS operations in .cas().
 	types atomic.Pointer[map[string]struct{}]
 
 	// protects stream close.
@@ -260,29 +262,29 @@ func (s *Stream) Unsubscribe(streamType string) {
 	})
 }
 
-// Send will block on posting a new Message{}, returning either value false in
-// the case that Stream has already been closed, or provided context is closed.
-func (s *Stream) Send(ctx context.Context, msg Message) (argCtx bool, strCtx bool) {
+// Send will block on posting a new Message{}, returning early with
+// a false value if provided context is canceled, or stream closed.
+func (s *Stream) Send(ctx context.Context, msg Message) bool {
 	select {
 	case <-s.done:
-		return true, false
+		return false
 	case <-ctx.Done():
-		return false, true
+		return false
 	case s.msgCh <- msg:
-		return true, true
+		return true
 	}
 }
 
-// Recv will block on receiving Message{}, returning either value false in
-// the case that Stream has already been closed, or provided ctx is closed.
-func (s *Stream) Recv(ctx context.Context) (msg Message, argCtx bool, strCtx bool) {
+// Recv will block on receiving Message{}, returning early with a
+// false value if provided context is canceled, or stream closed.
+func (s *Stream) Recv(ctx context.Context) (Message, bool) {
 	select {
 	case <-s.done:
-		return Message{}, true, false
+		return Message{}, false
 	case <-ctx.Done():
-		return Message{}, false, true
-	case msg = <-s.msgCh:
-		return msg, true, true
+		return Message{}, false
+	case msg := <-s.msgCh:
+		return msg, true
 	}
 }
 

@@ -44,8 +44,8 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 
 	suite.streamProcessor.StatusUpdate(context.Background(), account, apiStatus, stream.TimelineHome)
 
-	msg, argCtx, strCtx := openStream.Recv(context.Background())
-	suite.True(argCtx && strCtx)
+	msg, ok := openStream.Recv(context.Background())
+	suite.True(ok)
 
 	dst := new(bytes.Buffer)
 	err = json.Indent(dst, []byte(msg.Payload), "", "  ")

@@ -357,23 +357,19 @@ func (m *Module) writeToWSConn(
 	l *log.Entry,
 ) {
 
+loop:
 	for {
 		// Wrap context with timeout to send a ping.
-		ctx, cncl := context.WithTimeout(ctx, ping)
+		pingctx, cncl := context.WithTimeout(ctx, ping)
 
-		// Block on receipt of next message.
-		msg, ok, open := stream.Recv(ctx)
+		// Block on receipt of msg.
+		msg, ok := stream.Recv(pingctx)
 
 		// Stop timer.
 		cncl()
 
-		if !open {
-			// Stream was
-			// closed.
-			return
-		}
-
-		if !ok {
+		switch {
+		case pingctx.Err() != nil:
 			l.Trace("writing websocket ping")
 
 			// Wrapped context time-out, send a keep-alive "ping".
@@ -382,7 +378,12 @@ func (m *Module) writeToWSConn(
 				break
 			}
 
-			continue
+			continue loop
+
+		case !ok:
+			// Stream was
+			// closed.
+			return
 		}
 
 		l.Trace("writing websocket message: %+v", msg)

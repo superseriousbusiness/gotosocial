@@ -122,8 +122,7 @@ func (suite *FromClientAPITestSuite) checkStreamed(
 	ctx, cncl := context.WithTimeout(ctx, time.Second*5)
 	defer cncl()
 
-	msg, argCtx, strCtx := str.Recv(context.Background())
-	ok := (argCtx && strCtx)
+	msg, ok := str.Recv(ctx)
 
 	if expectMessage && !ok {
 		suite.FailNow("expected a message but message was not received")
