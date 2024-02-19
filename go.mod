@@ -39,7 +39,7 @@ require (
 	github.com/jackc/pgx/v5 v5.5.2
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/miekg/dns v1.1.58
-	github.com/minio/minio-go/v7 v7.0.66
+	github.com/minio/minio-go/v7 v7.0.67
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.18.0
@@ -63,6 +63,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.20.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.43.0
+	go.opentelemetry.io/otel/metric v1.20.0
 	go.opentelemetry.io/otel/sdk v1.20.0
 	go.opentelemetry.io/otel/sdk/metric v1.20.0
 	go.opentelemetry.io/otel/trace v1.20.0
@@ -172,7 +173,6 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.20.0 // indirect
-	go.opentelemetry.io/otel/metric v1.20.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.5.0 // indirect
