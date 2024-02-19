@@ -504,7 +504,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 						if 0 < len(attr.Data) && (attr.Data[len(attr.Data)-1] == '\'' || attr.Data[len(attr.Data)-1] == '"') {
 							quote = attr.Data[len(attr.Data)-1]
 						}
-						val = html.EscapeAttrVal(&attrByteBuffer, val, quote, o.KeepQuotes, isXML)
+						val = html.EscapeAttrVal(&attrByteBuffer, val, quote, o.KeepQuotes || isXML)
 						w.Write(val)
 					}
 				}
