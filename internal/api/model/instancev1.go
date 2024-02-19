@@ -74,7 +74,7 @@ type InstanceV1 struct {
 	// URLs of interest for client applications.
 	URLs InstanceV1URLs `json:"urls,omitempty"`
 	// Statistics about the instance: number of posts, accounts, etc.
-	Stats map[string]int `json:"stats,omitempty"`
+	Stats map[string]*int `json:"stats,omitempty"`
 	// URL of the instance avatar/banner image.
 	// example: https://example.org/files/instance/thumbnail.jpeg
 	Thumbnail string `json:"thumbnail"`
