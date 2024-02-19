@@ -98,7 +98,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 
 	common := common.New(&suite.state, suite.typeConverter, suite.federator, filter)
 	polls := polls.New(&common, &suite.state, suite.typeConverter)
-	suite.status = status.New(&suite.state, &common, &polls, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
+	suite.status = status.New(&suite.state, &common, &polls, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
