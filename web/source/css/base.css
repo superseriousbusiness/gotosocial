@@ -239,7 +239,7 @@ blockquote {
 	padding: 0.5rem 0 0.5rem 0.5rem;
 	border-left: 0.2rem solid $border-accent;
 	margin: 0;
-	font-style: italic;
+	font-style: normal;
 }
 
 /*
