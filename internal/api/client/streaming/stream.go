@@ -356,8 +356,6 @@ func (m *Module) writeToWSConn(
 	ping time.Duration,
 	l *log.Entry,
 ) {
-
-loop:
 	for {
 		// Wrap context with timeout to send a ping.
 		pingctx, cncl := context.WithTimeout(ctx, ping)
@@ -365,23 +363,22 @@ loop:
 		// Block on receipt of msg.
 		msg, ok := stream.Recv(pingctx)
 
-		// Stop timer.
+		// Check if cancel because ping.
+		pinged := (pingctx.Err() != nil)
 		cncl()
 
-		if !ok {
-			if pingctx.Err() != nil {
-				// The ping context timed out!
-				l.Trace("writing websocket ping")
+		switch {
+		case !ok && pinged:
+			// The ping context timed out!
+			l.Trace("writing websocket ping")
 
-				// Wrapped context time-out, send a keep-alive "ping".
-				if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
-					l.Debugf("error writing websocket ping: %v", err)
-					break
-				}
-
-				continue loop
+			// Wrapped context time-out, send a keep-alive "ping".
+			if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
+				l.Debugf("error writing websocket ping: %v", err)
+				break
 			}
 
+		case !ok:
 			// Stream was
 			// closed.
 			return
