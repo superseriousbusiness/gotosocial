@@ -242,6 +242,50 @@ func (suite *StatusCreateTestSuite) TestProcessLanguageWithScriptPart() {
 	suite.Equal("zh-Hans", *apiStatus.Language)
 }
 
+func (suite *StatusCreateTestSuite) TestProcessReplyToUnthreadedRemoteStatus() {
+	ctx := context.Background()
+
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+	inReplyTo := suite.testStatuses["remote_account_1_status_1"]
+
+	// Reply to a remote status that
+	// doesn't have a threadID set on it.
+	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
+		StatusCreateRequest: apimodel.StatusCreateRequest{
+			Status:      "boobies",
+			MediaIDs:    []string{},
+			Poll:        nil,
+			InReplyToID: inReplyTo.ID,
+			Sensitive:   false,
+			SpoilerText: "this is a reply",
+			Visibility:  apimodel.VisibilityPublic,
+			ScheduledAt: "",
+			Language:    "en",
+			ContentType: apimodel.StatusContentTypePlain,
+		},
+		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
+			Federated: nil,
+			Boostable: nil,
+			Replyable: nil,
+			Likeable:  nil,
+		},
+	}
+
+	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(err)
+	suite.NotNil(apiStatus)
+
+	// ThreadID should be set on the status,
+	// even though the replied-to status does
+	// not have a threadID.
+	dbStatus, dbErr := suite.state.DB.GetStatusByID(ctx, apiStatus.ID)
+	if dbErr != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotEmpty(dbStatus.ThreadID)
+}
+
 func TestStatusCreateTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusCreateTestSuite))
 }
