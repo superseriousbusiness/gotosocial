@@ -368,19 +368,20 @@ loop:
 		// Stop timer.
 		cncl()
 
-		switch {
-		case pingctx.Err() != nil:
-			l.Trace("writing websocket ping")
+		if !ok {
+			if pingctx.Err() != nil {
+				// The ping context timed out!
+				l.Trace("writing websocket ping")
 
-			// Wrapped context time-out, send a keep-alive "ping".
-			if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
-				l.Debugf("error writing websocket ping: %v", err)
-				break
+				// Wrapped context time-out, send a keep-alive "ping".
+				if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
+					l.Debugf("error writing websocket ping: %v", err)
+					break
+				}
+
+				continue loop
 			}
 
-			continue loop
-
-		case !ok:
 			// Stream was
 			// closed.
 			return
