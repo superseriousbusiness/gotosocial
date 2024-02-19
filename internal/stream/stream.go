@@ -45,31 +45,37 @@ const (
 )
 
 const (
-	// TimelineLocal -- public
-	// statuses from the LOCAL timeline.
+	// TimelineLocal:
+	// All public posts originating from this
+	// server. Analogous to the local timeline.
 	TimelineLocal = "public:local"
 
-	// TimelinePublic -- public
-	// statuses, including federated.
+	// TimelinePublic:
+	// All public posts known to the server.
+	// Analogous to the federated timeline.
 	TimelinePublic = "public"
 
-	// TimelineHome -- statuses
-	// for a user's Home timeline.
+	// TimelineHome:
+	// Events related to the current user, such
+	// as home feed updates and notifications.
 	TimelineHome = "user"
 
-	// TimelineNotifications -- notification events.
+	// TimelineNotifications:
+	// Notifications for the current user.
 	TimelineNotifications = "user:notification"
 
-	// TimelineDirect -- statuses
-	// sent to a user directly.
+	// TimelineDirect:
+	// Updates to direct conversations.
 	TimelineDirect = "direct"
 
-	// TimelineList -- statuses
-	// for a user's list timeline.
+	// TimelineList:
+	// Updates to a specific list.
 	TimelineList = "list"
 )
 
-// AllStatusTimelines contains all Timelines that a status could conceivably be delivered to -- useful for doing deletes.
+// AllStatusTimelines contains all Timelines
+// that a status could conceivably be delivered
+// to, useful for sending out status deletes.
 var AllStatusTimelines = []string{
 	TimelineLocal,
 	TimelinePublic,
@@ -134,26 +140,37 @@ func (s *Streams) Open(accountID string, streamTypes ...string) *Stream {
 
 // Post will post the given message to all streams of given account ID matching type.
 func (s *Streams) Post(ctx context.Context, accountID string, msg Message) bool {
+	var deferred []func() bool
+
 	// Acquire lock.
 	s.mutex.Lock()
 
-	// Look for open streams.
-	strs := s.streams[accountID]
+	// Iterate all streams stored for account.
+	for _, str := range s.streams[accountID] {
 
-	if len(strs) == 0 {
-		// No streams for
-		// given account ID.
-		s.mutex.Unlock()
-		return true
-	}
+		// Check whether stream supports any of our message targets.
+		if stype := str.getStreamType(msg.Stream...); stype != "" {
 
-	// Create new slice of supported streams
-	// which we use as a concurrency safe copy
-	// of []Stream that support message type.
-	support := make([]*Stream, 0, len(strs))
-	for _, str := range strs {
-		if str.Supports(msg.Stream...) {
-			support = append(support, str)
+			// Rescope var
+			// to prevent
+			// ptr reuse.
+			stream := str
+
+			// Use a message copy to *only*
+			// include the supported stream.
+			msgCopy := Message{
+				Stream:  []string{stype},
+				Event:   msg.Event,
+				Payload: msg.Payload,
+			}
+
+			// Send message to supported stream
+			// DEFERRED (i.e. OUTSIDE OF MAIN MUTEX).
+			// This prevents deadlocks between each
+			// msg channel and main Streams{} mutex.
+			deferred = append(deferred, func() bool {
+				return stream.send(ctx, msgCopy)
+			})
 		}
 	}
 
@@ -162,13 +179,10 @@ func (s *Streams) Post(ctx context.Context, accountID string, msg Message) bool 
 
 	var ok bool
 
-	// Send message to supported stream
-	// types OUTSIDE of main Streams{} mutex
-	// lock so we don't risk blocking / slow
-	// access to the main Streams{} mutex.
-	for _, str := range support {
-		sent := str.Send(ctx, msg)
-		ok = ok && sent
+	// Execute deferred outside lock.
+	for _, deferfn := range deferred {
+		v := deferfn()
+		ok = ok && v
 	}
 
 	return ok
@@ -176,17 +190,38 @@ func (s *Streams) Post(ctx context.Context, accountID string, msg Message) bool 
 
 // PostAll will post the given message to all streams with matching types.
 func (s *Streams) PostAll(ctx context.Context, msg Message) bool {
+	var deferred []func() bool
+
 	// Acquire lock.
 	s.mutex.Lock()
 
-	// Create new slice of supported streams
-	// which we use as a concurrency safe copy
-	// of []Stream that support message type.
-	support := make([]*Stream, 0, len(s.streams))
+	// Iterate ALL stored streams.
 	for _, strs := range s.streams {
 		for _, str := range strs {
-			if str.Supports(msg.Stream...) {
-				support = append(support, str)
+
+			// Check whether stream supports any of our message targets.
+			if stype := str.getStreamType(msg.Stream...); stype != "" {
+
+				// Rescope var
+				// to prevent
+				// ptr reuse.
+				stream := str
+
+				// Use a message copy to *only*
+				// include the supported stream.
+				msgCopy := Message{
+					Stream:  []string{stype},
+					Event:   msg.Event,
+					Payload: msg.Payload,
+				}
+
+				// Send message to supported stream
+				// DEFERRED (i.e. OUTSIDE OF MAIN MUTEX).
+				// This prevents deadlocks between each
+				// msg channel and main Streams{} mutex.
+				deferred = append(deferred, func() bool {
+					return stream.send(ctx, msgCopy)
+				})
 			}
 		}
 	}
@@ -196,13 +231,10 @@ func (s *Streams) PostAll(ctx context.Context, msg Message) bool {
 
 	var ok bool
 
-	// Send message to supported stream
-	// types OUTSIDE of main Streams{} mutex
-	// lock so we don't risk blocking / slow
-	// access to the main Streams{} mutex.
-	for _, str := range support {
-		sent := str.Send(ctx, msg)
-		ok = ok && sent
+	// Execute deferred outside lock.
+	for _, deferfn := range deferred {
+		v := deferfn()
+		ok = ok && v
 	}
 
 	return ok
@@ -228,18 +260,6 @@ type Stream struct {
 	close func()
 }
 
-// Supports returns whether Stream supports given any of stream types.
-func (s *Stream) Supports(streamTypes ...string) bool {
-	if ptr := s.types.Load(); ptr != nil {
-		for _, streamType := range streamTypes {
-			if _, ok := (*ptr)[streamType]; ok {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 // Subscribe will add given type to given types this stream supports.
 func (s *Stream) Subscribe(streamType string) {
 	s.cas(func(m map[string]struct{}) bool {
@@ -262,9 +282,21 @@ func (s *Stream) Unsubscribe(streamType string) {
 	})
 }
 
-// Send will block on posting a new Message{}, returning early with
+// getStreamType returns the first stream type in given list that stream supports.
+func (s *Stream) getStreamType(streamTypes ...string) string {
+	if ptr := s.types.Load(); ptr != nil {
+		for _, streamType := range streamTypes {
+			if _, ok := (*ptr)[streamType]; ok {
+				return streamType
+			}
+		}
+	}
+	return ""
+}
+
+// send will block on posting a new Message{}, returning early with
 // a false value if provided context is canceled, or stream closed.
-func (s *Stream) Send(ctx context.Context, msg Message) bool {
+func (s *Stream) send(ctx context.Context, msg Message) bool {
 	select {
 	case <-s.done:
 		return false

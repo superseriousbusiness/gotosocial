@@ -136,7 +136,7 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
 	notifStreamed := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notifStreamed)
 	suite.NoError(err)
@@ -204,7 +204,7 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineNotifications}, msg.Stream)
 }
 
 // TestProcessFaveWithDifferentReceivingAccount ensures that when an account receives a fave that's for
@@ -404,7 +404,7 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
 	notif := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)
@@ -498,7 +498,7 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
-	suite.EqualValues([]string{stream.TimelineNotifications, stream.TimelineHome}, msg.Stream)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
 	notif := &apimodel.Notification{}
 	err = json.Unmarshal([]byte(msg.Payload), notif)
 	suite.NoError(err)

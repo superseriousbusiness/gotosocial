@@ -36,6 +36,9 @@ func (p *Processor) Notify(ctx context.Context, account *gtsmodel.Account, notif
 	p.streams.Post(ctx, account.ID, stream.Message{
 		Payload: byteutil.B2S(b),
 		Event:   stream.EventTypeNotification,
-		Stream:  []string{stream.TimelineNotifications, stream.TimelineHome},
+		Stream: []string{
+			stream.TimelineNotifications,
+			stream.TimelineHome,
+		},
 	})
 }
