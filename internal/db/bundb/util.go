@@ -206,3 +206,23 @@ func parseWhere(w db.Where) (query string, args []interface{}) {
 	args = []interface{}{bun.Ident(w.Key), w.Value}
 	return
 }
+
+// whereArrayIsNullOrEmpty extends a query with a where clause requiring an array to be null or empty.
+// (The empty check varies by dialect; only PG has direct support for SQL array types.)
+func whereArrayIsNullOrEmpty(query *bun.SelectQuery, subject interface{}) *bun.SelectQuery {
+	var arrayEmptySQL string
+	switch d := query.Dialect().Name(); d {
+	case dialect.SQLite:
+		arrayEmptySQL = "json_array_length(?) = 0"
+	case dialect.PG:
+		arrayEmptySQL = "CARDINALITY(?) = 0"
+	default:
+		log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
+	}
+
+	return query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.
+			Where("? IS NULL", subject).
+			WhereOr(arrayEmptySQL, subject)
+	})
+}
