@@ -233,13 +233,20 @@ ol {
 
 /*
 	Outdent block quotes a bit; use
-	orange stripe for left border.
+	orange strip for left border.
 */
 blockquote {
 	padding: 0.5rem 0 0.5rem 0.5rem;
 	border-left: 0.2rem solid $border-accent;
 	margin: 0;
 	font-style: normal;
+
+	/*
+		Same background color we
+		use for code blocks
+	*/
+	background-color: $gray2;
+	border-radius: $br;
 }
 
 /*
