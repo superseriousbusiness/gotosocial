@@ -84,23 +84,18 @@ type Streams struct {
 }
 
 // Open will open open a new Stream for given account ID and stream types, the given context will be passed to Stream.
-func (s *Streams) Open(ctx context.Context, accountID string, streamTypes ...string) *Stream {
+func (s *Streams) Open(accountID string, streamTypes ...string) *Stream {
 	if len(streamTypes) == 0 {
 		panic("no stream types given")
 	}
 
 	// Prep new Stream.
 	str := new(Stream)
+	str.done = make(chan struct{})
 	str.msgCh = make(chan Message, 50) // TODO: make configurable
 	for _, streamType := range streamTypes {
 		str.Subscribe(streamType)
 	}
-
-	// Wrap the provided context with cancel
-	// to ensure calling .Close() will close
-	// the underlying Stream{} context too.
-	ctx, cncl := context.WithCancel(ctx)
-	str.ctx, str.cncl = ctx, cncl
 
 	// TODO: add configurable
 	// max streams per account.
@@ -220,9 +215,8 @@ type Stream struct {
 	// gets updated via CAS operations in .cas()
 	types atomic.Pointer[map[string]struct{}]
 
-	// underlying stream ctx.
-	ctx  context.Context
-	cncl func()
+	// protects stream close.
+	done chan struct{}
 
 	// inbound msg ch.
 	msgCh chan Message
@@ -266,16 +260,11 @@ func (s *Stream) Unsubscribe(streamType string) {
 	})
 }
 
-// Context provides access to the underlying Stream context.
-func (s *Stream) Context() context.Context {
-	return s.ctx
-}
-
 // Send will block on posting a new Message{}, returning either value false in
 // the case that Stream has already been closed, or provided context is closed.
 func (s *Stream) Send(ctx context.Context, msg Message) (argCtx bool, strCtx bool) {
 	select {
-	case <-s.ctx.Done():
+	case <-s.done:
 		return true, false
 	case <-ctx.Done():
 		return false, true
@@ -288,7 +277,7 @@ func (s *Stream) Send(ctx context.Context, msg Message) (argCtx bool, strCtx boo
 // the case that Stream has already been closed, or provided ctx is closed.
 func (s *Stream) Recv(ctx context.Context) (msg Message, argCtx bool, strCtx bool) {
 	select {
-	case <-s.ctx.Done():
+	case <-s.done:
 		return Message{}, true, false
 	case <-ctx.Done():
 		return Message{}, false, true
@@ -301,21 +290,10 @@ func (s *Stream) Recv(ctx context.Context) (msg Message, argCtx bool, strCtx boo
 // removing it from the parent Streams per-account-map.
 func (s *Stream) Close() {
 	select {
-	case <-s.ctx.Done():
+	case <-s.done:
 	default:
-		s.cncl()
+		close(s.done)
 		s.close()
-	}
-}
-
-// IsOpen returns whether Stream's open,
-// i.e. is underlying context closed.
-func (s *Stream) IsOpen() bool {
-	select {
-	case <-s.ctx.Done():
-		return false
-	default:
-		return true
 	}
 }
 

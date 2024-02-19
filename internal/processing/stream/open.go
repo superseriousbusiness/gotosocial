@@ -34,5 +34,5 @@ func (p *Processor) Open(ctx context.Context, account *gtsmodel.Account, streamT
 		{"streamType", streamType},
 	}...)
 	l.Debug("received open stream request")
-	return p.streams.Open(ctx, account.ID, streamType), nil
+	return p.streams.Open(account.ID, streamType), nil
 }

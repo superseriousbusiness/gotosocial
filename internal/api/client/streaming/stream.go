@@ -229,8 +229,6 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		return
 	}
 
-	l.Info("opened websocket connection")
-
 	// We perform the main websocket rw loops in a separate
 	// goroutine in order to let the upgrade handler return.
 	// This prevents the upgrade handler from holding open any
@@ -245,22 +243,28 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 // or writing (including expected errors like clients leaving), the
 // connection will be closed.
 func (m *Module) handleWSConn(l *log.Entry, wsConn *websocket.Conn, stream *streampkg.Stream) {
-	// Read messages coming from the Websocket
-	// client connection into the server.
+	l.Info("opened websocket connection")
+
+	// Create new async context with cancel.
+	ctx, cncl := context.WithCancel(context.Background())
+
 	go func() {
-		defer stream.Close()
-		m.readFromWSConn(wsConn, stream, l)
+		defer cncl()
+
+		// Read messages from websocket to server.
+		m.readFromWSConn(ctx, wsConn, stream, l)
 	}()
 
-	// Write messages coming from the processor
-	// into the Websocket client connection.
 	go func() {
-		defer stream.Close()
-		m.writeToWSConn(wsConn, stream, m.dTicker, l)
+		defer cncl()
+
+		// Write messages from processor in websocket conn.
+		m.writeToWSConn(ctx, wsConn, stream, m.dTicker, l)
 	}()
 
-	// Wait for stream to close.
-	<-stream.Context().Done()
+	// Wait for ctx
+	// to be closed.
+	<-ctx.Done()
 
 	// Tidy up underlying websocket connection.
 	if err := wsConn.Close(); err != nil {
@@ -277,13 +281,13 @@ func (m *Module) handleWSConn(l *log.Entry, wsConn *websocket.Conn, stream *stre
 // This is a blocking function; will return only on read error or
 // if the given context is canceled.
 func (m *Module) readFromWSConn(
+	ctx context.Context,
 	wsConn *websocket.Conn,
 	stream *streampkg.Stream,
 	l *log.Entry,
 ) {
-	// Check still open.
-	for stream.IsOpen() {
 
+	for {
 		var msg struct {
 			Type   string `json:"type"`
 			Stream string `json:"stream"`
@@ -309,7 +313,7 @@ func (m *Module) readFromWSConn(
 
 		// Messages *from* the WS connection are infrequent
 		// and usually interesting, so log this at info.
-		l.Infof("received message from websocket: %v", msg)
+		l.Infof("received websocket message: %+v", msg)
 
 		// Ignore if the updateStreamType is unknown (or missing),
 		// so a bad client can't cause extra memory allocations
@@ -335,7 +339,7 @@ func (m *Module) readFromWSConn(
 		}
 	}
 
-	l.Debug("finished reading from websocket connection")
+	l.Debug("finished websocket read")
 }
 
 // writeToWSConn receives messages coming from the processor via the
@@ -346,6 +350,7 @@ func (m *Module) readFromWSConn(
 // This is a blocking function; will return only on write error or
 // if the given context is canceled.
 func (m *Module) writeToWSConn(
+	ctx context.Context,
 	wsConn *websocket.Conn,
 	stream *streampkg.Stream,
 	ping time.Duration,
@@ -353,8 +358,8 @@ func (m *Module) writeToWSConn(
 ) {
 
 	for {
-		// Wrap stream context with timeout to send a ping.
-		ctx, cncl := context.WithTimeout(stream.Context(), ping)
+		// Wrap context with timeout to send a ping.
+		ctx, cncl := context.WithTimeout(ctx, ping)
 
 		// Block on receipt of next message.
 		msg, ok, open := stream.Recv(ctx)
@@ -369,22 +374,25 @@ func (m *Module) writeToWSConn(
 		}
 
 		if !ok {
+			l.Trace("writing websocket ping")
+
 			// Wrapped context time-out, send a keep-alive "ping".
-			l.Trace("writing ping control message to websocket")
 			if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
-				l.Debugf("error writing ping to websocket: %v", err)
+				l.Debugf("error writing websocket ping: %v", err)
 				break
 			}
+
 			continue
 		}
 
+		l.Trace("writing websocket message: %+v", msg)
+
 		// Received a new message from the processor.
-		l.Tracef("writing message to websocket: %+v", msg)
 		if err := wsConn.WriteJSON(msg); err != nil {
-			l.Debugf("error writing json to websocket: %v", err)
+			l.Debugf("error writing websocket message: %v", err)
 			break
 		}
 	}
 
-	l.Debug("finished writing to websocket connection")
+	l.Debug("finished websocket write")
 }
