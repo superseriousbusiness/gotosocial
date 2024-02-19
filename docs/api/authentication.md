@@ -96,7 +96,7 @@ You'll get a response that includes your access token and looks something like t
 }
 ```
 ## Verifying it all
-To make sure everything went through successfully, query the `/api/v1/verify_credentials` endpoint, adding your new access token to the Header as `Authentication: Bearer your_brand_new_token`.
+To make sure everything went through successfully, query the `/api/v1/verify_credentials` endpoint, adding your new access token to the Header as `Authorization: Bearer your_brand_new_token`.
 
 See this example:
 ```bash
