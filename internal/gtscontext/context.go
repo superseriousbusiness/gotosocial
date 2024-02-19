@@ -136,7 +136,7 @@ func HTTPSignatureVerifier(ctx context.Context) httpsig.VerifierWithOptions {
 
 // SetHTTPSignatureVerifier stores the given http signature verifier and returns the
 // wrapped context. See HTTPSignatureVerifier() for further information on the verifier value.
-func SetHTTPSignatureVerifier(ctx context.Context, verifier httpsig.Verifier) context.Context {
+func SetHTTPSignatureVerifier(ctx context.Context, verifier httpsig.VerifierWithOptions) context.Context {
 	return context.WithValue(ctx, httpSigVerifierKey, verifier)
 }
 
