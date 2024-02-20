@@ -302,12 +302,12 @@ func (m *Module) readFromWSConn(
 		if err := wsConn.ReadJSON(&msg); err != nil {
 			// Only log an error if something weird happened.
 			// See: https://www.rfc-editor.org/rfc/rfc6455.html#section-11.7
-			if websocket.IsUnexpectedCloseError(err, []int{
+			if !websocket.IsCloseError(err, []int{
 				websocket.CloseNormalClosure,
 				websocket.CloseGoingAway,
 				websocket.CloseNoStatusReceived,
 			}...) {
-				l.Errorf("error reading from websocket: %v", err)
+				l.Errorf("error during websocket read: %v", err)
 			}
 
 			// The connection is gone; no
