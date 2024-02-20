@@ -266,6 +266,10 @@ func (m *Module) handleWSConn(l *log.Entry, wsConn *websocket.Conn, stream *stre
 	// to be closed.
 	<-ctx.Done()
 
+	// Close stream
+	// straightaway.
+	stream.Close()
+
 	// Tidy up underlying websocket connection.
 	if err := wsConn.Close(); err != nil {
 		l.Errorf("error closing websocket connection: %v", err)
