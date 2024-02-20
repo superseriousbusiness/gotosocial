@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -40,11 +39,13 @@ func isSuccess(code int) bool {
 //
 // It may be reused multiple times, but never concurrently.
 type Transport interface {
-	// Dereference fetches the ActivityStreams object located at this IRI
-	// with a GET request.
-	Dereference(c context.Context, iri *url.URL) ([]byte, error)
+	// Dereference fetches the ActivityStreams object located at this IRI with
+	// a GET request. Note that Response will only be returned on status = OK.
+	Dereference(c context.Context, iri *url.URL) (*http.Response, error)
+
 	// Deliver sends an ActivityStreams object.
 	Deliver(c context.Context, b []byte, to *url.URL) error
+
 	// BatchDeliver sends an ActivityStreams object to multiple recipients.
 	BatchDeliver(c context.Context, b []byte, recipients []*url.URL) error
 }
@@ -107,9 +108,8 @@ func NewHttpSigTransport(
 	}
 }
 
-// Dereference sends a GET request signed with an HTTP Signature to obtain an
-// ActivityStreams value.
-func (h HttpSigTransport) Dereference(c context.Context, iri *url.URL) ([]byte, error) {
+// Dereference sends a GET request signed with an HTTP Signature to obtain an ActivityStreams value.
+func (h HttpSigTransport) Dereference(c context.Context, iri *url.URL) (*http.Response, error) {
 	req, err := http.NewRequest("GET", iri.String(), nil)
 	if err != nil {
 		return nil, err
@@ -130,11 +130,11 @@ func (h HttpSigTransport) Dereference(c context.Context, iri *url.URL) ([]byte, 
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
+		_ = resp.Body.Close()
 		return nil, fmt.Errorf("GET request to %s failed (%d): %s", iri.String(), resp.StatusCode, resp.Status)
 	}
-	return ioutil.ReadAll(resp.Body)
+	return resp, nil
 }
 
 // Deliver sends a POST request with an HTTP Signature.
@@ -166,8 +166,7 @@ func (h HttpSigTransport) Deliver(c context.Context, b []byte, to *url.URL) erro
 	return nil
 }
 
-// BatchDeliver sends concurrent POST requests. Returns an error if any of the
-// requests had an error.
+// BatchDeliver sends concurrent POST requests. Returns an error if any of the requests had an error.
 func (h HttpSigTransport) BatchDeliver(c context.Context, b []byte, recipients []*url.URL) error {
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(recipients))

@@ -393,16 +393,27 @@ func (d *Dereferencer) enrichStatus(
 
 	if apubStatus == nil {
 		// Dereference latest version of the status.
-		b, err := tsport.Dereference(ctx, uri)
+		rsp, err := tsport.Dereference(ctx, uri)
 		if err != nil {
 			err := gtserror.Newf("error dereferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
-		// Attempt to resolve ActivityPub status from data.
-		apubStatus, err = ap.ResolveStatusable(ctx, b)
+		// Update the input status URI with the last
+		// set URI during HTTP client dereferencing, as it
+		// may have been updated following redirects.
+		uri = rsp.Request.URL
+
+		// Tidy up when done.
+		defer rsp.Body.Close()
+
+		// Attempt to resolve ActivityPub status from response.
+		apubStatus, err = ap.ResolveStatusable(ctx, rsp.Body)
 		if err != nil {
-			return nil, nil, gtserror.Newf("error resolving statusable from data for account %s: %w", uri, err)
+
+			// ResolveStatusable will set gtserror.WrongType
+			// on the returned error, so we don't need to do it here.
+			return nil, nil, gtserror.Newf("error resolving statusable %s: %w", uri, err)
 		}
 	}
 

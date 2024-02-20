@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
-	"sync"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
@@ -31,50 +31,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// mapPool is a memory pool of maps for JSON decoding.
-var mapPool = sync.Pool{
-	New: func() any {
-		return make(map[string]any)
-	},
-}
-
-// getMap acquires a map from memory pool.
-func getMap() map[string]any {
-	m := mapPool.Get().(map[string]any) //nolint
-	return m
-}
-
-// putMap clears and places map back in pool.
-func putMap(m map[string]any) {
-	if len(m) > int(^uint8(0)) {
-		// don't pool overly
-		// large maps.
-		return
-	}
-	for k := range m {
-		delete(m, k)
-	}
-	mapPool.Put(m)
-}
-
-// bytesToType tries to parse the given bytes slice
-// as a JSON ActivityPub type, failing if the input
-// bytes are not parseable as JSON, or do not parse
-// to an ActivityPub that we can understand.
+// decodeBody tries to read and parse the data
+// at provided io.Reader as a JSON ActivityPub
+// type, failing if not parseable as JSON or not
+// resolveable as one of our known AS types.
 //
 // The given map pointer will also be populated with
-// the parsed JSON, to allow further processing.
-func bytesToType(
+// the 'raw' JSON data, for further processing.
+func decodeBody(
 	ctx context.Context,
-	b []byte,
+	body io.Reader,
 	raw map[string]any,
 ) (vocab.Type, error) {
 	// Unmarshal the raw JSON bytes into a "raw" map.
 	// This will fail if the input is not parseable
 	// as JSON; eg., a remote has returned HTML as a
 	// fallback response to an ActivityPub JSON request.
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return nil, gtserror.NewfAt(3, "error unmarshalling bytes into json: %w", err)
+	if err := json.NewDecoder(body).Decode(&raw); err != nil {
+		return nil, gtserror.NewfAt(3, "error decoding into json: %w", err)
 	}
 
 	// Resolve an ActivityStreams type.
@@ -96,22 +70,22 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	// Tidy up when done.
 	defer r.Body.Close()
 
-	// Decode the JSON body stream into "raw" map.
-	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
-		err := gtserror.Newf("error decoding json: %w", err)
-		return nil, false, gtserror.NewErrorInternalError(err)
-	}
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	t, err := decodeBody(r.Context(), r.Body, raw)
 
-	// Resolve "raw" JSON to vocab.Type.
-	t, err := streams.ToType(r.Context(), raw)
 	if err != nil {
+		// NOTE: if the error here was due to the response body
+		// ending early, the connection will have broken so it
+		// doesn't matter if we try to return 400 or 500, the
+		// error is mainly for our logging. tl;dr there's not a
+		// huge need to differentiate between those error types.
+
 		if !streams.IsUnmatchedErr(err) {
 			err := gtserror.Newf("error matching json to type: %w", err)
 			return nil, false, gtserror.NewErrorInternalError(err)
 		}
 
-		// Respond with bad request; we just couldn't
-		// match the type to one that we know about.
 		const text = "body json not resolvable as ActivityStreams type"
 		return nil, false, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
@@ -142,18 +116,18 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	return activity, true, nil
 }
 
-// ResolveStatusable tries to resolve the given bytes into an ActivityPub Statusable representation.
-// It will then perform normalization on the Statusable.
+// ResolveStatusable tries to resolve the response data as an ActivityPub
+// Statusable representation. It will then perform normalization on the Statusable.
 //
 // Works for: Article, Document, Image, Video, Note, Page, Event, Place, Profile, Question.
-func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
+func ResolveStatusable(ctx context.Context, data io.Reader) (Statusable, error) {
 	// Get "raw" map
 	// destination.
 	raw := getMap()
 
-	// Convert raw bytes to an AP type.
-	// This will also populate the map.
-	t, err := bytesToType(ctx, b, raw)
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	t, err := decodeBody(ctx, data, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -183,18 +157,18 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	return statusable, nil
 }
 
-// ResolveStatusable tries to resolve the given bytes into an ActivityPub Accountable representation.
-// It will then perform normalization on the Accountable.
+// ResolveAccountable tries to resolve the given reader into an ActivityPub
+// Accountable representation. It will then perform normalization on the Accountable.
 //
 // Works for: Application, Group, Organization, Person, Service
-func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
+func ResolveAccountable(ctx context.Context, data io.Reader) (Accountable, error) {
 	// Get "raw" map
 	// destination.
 	raw := getMap()
 
-	// Convert raw bytes to an AP type.
-	// This will also populate the map.
-	t, err := bytesToType(ctx, b, raw)
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	t, err := decodeBody(ctx, data, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -212,4 +186,22 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 	putMap(raw)
 
 	return accountable, nil
+}
+
+// ResolveCollectionPage tries to resolve the given reader into an ActivityPub CollectionPage-like
+// representation, then wrapping as abstracted iterator. Works for: CollectionPage, OrderedCollectionPage.
+func ResolveCollectionPage(ctx context.Context, data io.Reader) (CollectionPageIterator, error) {
+	// Get "raw" map
+	// destination.
+	raw := getMap()
+
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	t, err := decodeBody(ctx, data, raw)
+	if err != nil {
+		return nil, gtserror.SetWrongType(err)
+	}
+
+	// Cast as as CollectionPage-like.
+	return ToCollectionPageIterator(t)
 }

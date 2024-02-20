@@ -19,7 +19,6 @@ package transport
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"net/url"
 
@@ -29,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, error) {
+func (t *transport) Dereference(ctx context.Context, iri *url.URL) (*http.Response, error) {
 	// if the request is to us, we can shortcut for certain URIs rather than going through
 	// the normal request flow, thereby saving time and energy
 	if iri.Host == config.GetHost() {
@@ -62,18 +61,20 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
 
 	// Ensure a non-error status response.
 	if rsp.StatusCode != http.StatusOK {
-		return nil, gtserror.NewFromResponse(rsp)
+		err := gtserror.NewFromResponse(rsp)
+		_ = rsp.Body.Close() // done with body
+		return nil, err
 	}
 
 	// Ensure that the incoming request content-type is expected.
 	if ct := rsp.Header.Get("Content-Type"); !apiutil.ASContentType(ct) {
 		err := gtserror.Newf("non activity streams response: %s", ct)
+		_ = rsp.Body.Close() // done with body
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	return io.ReadAll(rsp.Body)
+	return rsp, nil
 }

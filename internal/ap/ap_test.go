@@ -18,6 +18,7 @@
 package ap_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 
@@ -187,7 +188,10 @@ func (suite *APTestSuite) noteWithHashtags1() ap.Statusable {
 	}
 }`)
 
-	statusable, err := ap.ResolveStatusable(context.Background(), noteJson)
+	statusable, err := ap.ResolveStatusable(
+		context.Background(),
+		bytes.NewReader(noteJson),
+	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

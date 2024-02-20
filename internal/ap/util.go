@@ -19,9 +19,38 @@ package ap
 
 import (
 	"net/url"
+	"sync"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
 )
+
+const mapmax = 256
+
+// mapPool is a memory pool
+// of maps for JSON decoding.
+var mapPool sync.Pool
+
+// getMap acquires a map from memory pool.
+func getMap() map[string]any {
+	v := mapPool.Get()
+	if v == nil {
+		// preallocate map of max-size.
+		m := make(map[string]any, mapmax)
+		v = m
+	}
+	return v.(map[string]any) //nolint
+}
+
+// putMap clears and places map back in pool.
+func putMap(m map[string]any) {
+	if len(m) > mapmax {
+		// drop maps beyond
+		// our maximum size.
+		return
+	}
+	clear(m)
+	mapPool.Put(m)
+}
 
 // _TypeOrIRI wraps a vocab.Type to implement TypeOrIRI.
 type _TypeOrIRI struct {

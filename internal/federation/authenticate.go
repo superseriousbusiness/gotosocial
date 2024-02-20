@@ -23,6 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -414,10 +415,19 @@ func (f *Federator) callForPubKey(
 
 	// The actual http call to the remote server is
 	// made right here by the Dereference function.
-	pubKeyBytes, err := trans.Dereference(ctx, pubKeyID)
+	rsp, err := trans.Dereference(ctx, pubKeyID)
+
 	if err == nil {
-		// No problem.
-		return pubKeyBytes, nil
+		// Read the response body data.
+		b, err := io.ReadAll(rsp.Body)
+		_ = rsp.Body.Close() // done
+
+		if err != nil {
+			err := gtserror.Newf("error reading pubkey: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		return b, nil
 	}
 
 	if gtserror.StatusCode(err) == http.StatusGone {

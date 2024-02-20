@@ -65,7 +65,7 @@ type Transport interface {
 	GET(*http.Request) (*http.Response, error)
 
 	// Dereference fetches the ActivityStreams object located at this IRI with a GET request.
-	Dereference(ctx context.Context, iri *url.URL) ([]byte, error)
+	Dereference(ctx context.Context, iri *url.URL) (*http.Response, error)
 
 	// DereferenceMedia fetches the given media attachment IRI, returning the reader and filesize.
 	DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)

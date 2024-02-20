@@ -4,6 +4,8 @@ go 1.21
 
 toolchain go1.21.3
 
+replace github.com/superseriousbusiness/activity => ./activity
+
 require (
 	codeberg.org/gruf/go-bytes v1.0.2
 	codeberg.org/gruf/go-bytesize v1.0.2

@@ -18,6 +18,7 @@
 package typeutils_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -39,11 +40,11 @@ func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
 	ctx := context.Background()
 	b := []byte(in)
 
-	if accountable, err := ap.ResolveAccountable(ctx, b); err == nil {
+	if accountable, err := ap.ResolveAccountable(ctx, bytes.NewReader(b)); err == nil {
 		return accountable
 	}
 
-	if statusable, err := ap.ResolveStatusable(ctx, b); err == nil {
+	if statusable, err := ap.ResolveStatusable(ctx, bytes.NewReader(b)); err == nil {
 		return statusable
 	}
 

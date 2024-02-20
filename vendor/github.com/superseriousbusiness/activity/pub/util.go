@@ -71,6 +71,16 @@ const (
 	acceptHeader = "Accept"
 )
 
+// readActivityPubResponse reads expected ActivtyPub data from contained response body,
+// also checking for appropriate media type. (also handles closing response body).
+func readActivityPubResponse(resp *http.Response, dst any) error {
+	defer resp.Body.Close()
+	if mediaType := resp.Header.Get("Content-Type"); !headerIsActivityPubMediaType(mediaType) {
+		return fmt.Errorf("data at %s was not ActivityPub media type: %s", resp.Request.URL.String(), mediaType)
+	}
+	return json.NewDecoder(resp.Body).Decode(dst)
+}
+
 // isActivityPubPost returns true if the request is a POST request that has the
 // ActivityStreams content type header
 func isActivityPubPost(r *http.Request) bool {
@@ -774,12 +784,12 @@ func mustHaveActivityActorsMatchObjectActors(c context.Context,
 		if err != nil {
 			return err
 		}
-		b, err := tport.Dereference(c, iri)
+		resp, err := tport.Dereference(c, iri)
 		if err != nil {
 			return err
 		}
 		var m map[string]interface{}
-		if err = json.Unmarshal(b, &m); err != nil {
+		if err = readActivityPubResponse(resp, &m); err != nil {
 			return err
 		}
 		t, err := streams.ToType(c, m)

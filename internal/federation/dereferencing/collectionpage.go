@@ -19,10 +19,8 @@ package dereferencing
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -40,24 +38,16 @@ func (d *Dereferencer) dereferenceCollectionPage(ctx context.Context, username s
 		return nil, gtserror.Newf("error creating transport: %w", err)
 	}
 
-	b, err := transport.Dereference(ctx, pageIRI)
+	rsp, err := transport.Dereference(ctx, pageIRI)
 	if err != nil {
 		return nil, gtserror.Newf("error deferencing %s: %w", pageIRI.String(), err)
 	}
 
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, gtserror.Newf("error unmarshalling bytes into json: %w", err)
-	}
+	defer rsp.Body.Close()
 
-	t, err := streams.ToType(ctx, m)
+	page, err := ap.ResolveCollectionPage(ctx, rsp.Body)
 	if err != nil {
-		return nil, gtserror.Newf("error resolving json into ap vocab type: %w", err)
-	}
-
-	page, err := ap.ToCollectionPageIterator(t)
-	if err != nil {
-		return nil, gtserror.Newf("error resolving vocab type as page: %w", err)
+		return nil, gtserror.Newf("error resolving collection page %s: %w", pageIRI.String(), err)
 	}
 
 	return page, nil

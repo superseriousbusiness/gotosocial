@@ -629,14 +629,14 @@ func (a *SideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *
 		if err != nil {
 			return false, err
 		}
-		b, err := tport.Dereference(c, iri)
+		resp, err := tport.Dereference(c, iri)
 		if err != nil {
 			// Do not fail the entire process if the data is
 			// missing.
 			continue
 		}
 		var m map[string]interface{}
-		if err = json.Unmarshal(b, &m); err != nil {
+		if err = readActivityPubResponse(resp, &m); err != nil {
 			return false, err
 		}
 		t, err := streams.ToType(c, m)
@@ -855,13 +855,13 @@ func (a *SideEffectActor) resolveActors(c context.Context, t Transport, r []*url
 // The returned actor could be nil, if it wasn't an actor (ex: a Collection or
 // OrderedCollection).
 func (a *SideEffectActor) dereferenceForResolvingInboxes(c context.Context, t Transport, actorIRI *url.URL) (actor vocab.Type, moreActorIRIs []*url.URL, err error) {
-	var resp []byte
+	var resp *http.Response
 	resp, err = t.Dereference(c, actorIRI)
 	if err != nil {
 		return
 	}
 	var m map[string]interface{}
-	if err = json.Unmarshal(resp, &m); err != nil {
+	if err = readActivityPubResponse(resp, &m); err != nil {
 		return
 	}
 	actor, err = streams.ToType(c, m)

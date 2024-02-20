@@ -19,7 +19,6 @@ package dereferencing
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/url"
@@ -567,18 +566,27 @@ func (d *Dereferencer) enrichAccount(
 		// We were not given any (partial) ActivityPub
 		// version of this account as a parameter.
 		// Dereference latest version of the account.
-		b, err := tsport.Dereference(ctx, uri)
+		rsp, err := tsport.Dereference(ctx, uri)
 		if err != nil {
 			err := gtserror.Newf("error dereferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
-		// Attempt to resolve ActivityPub acc from data.
-		apubAcc, err = ap.ResolveAccountable(ctx, b)
+		// Update the input account URI with the last
+		// set URI during HTTP client dereferencing, as it
+		// may have been updated following redirects.
+		uri = rsp.Request.URL
+
+		// Tidy up when done.
+		defer rsp.Body.Close()
+
+		// Attempt to resolve ActivityPub acc from response.
+		apubAcc, err = ap.ResolveAccountable(ctx, rsp.Body)
 		if err != nil {
-			// ResolveAccountable will set Unretrievable/WrongType
+
+			// ResolveAccountable will set gtserror.WrongType
 			// on the returned error, so we don't need to do it here.
-			err = gtserror.Newf("error resolving accountable from data for account %s: %w", uri, err)
+			err = gtserror.Newf("error resolving accountable %s: %w", uri, err)
 			return nil, nil, err
 		}
 	}
@@ -1020,14 +1028,14 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 		return gtserror.Newf("couldn't create transport: %w", err)
 	}
 
-	b, err := tsport.Dereference(ctx, uri)
+	rsp, err := tsport.Dereference(ctx, uri)
 	if err != nil {
 		return err
 	}
 
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return gtserror.Newf("error unmarshalling bytes into json: %w", err)
+	m, err := ap.ReadASResponse(rsp)
+	if err != nil {
+		return err
 	}
 
 	t, err := streams.ToType(ctx, m)

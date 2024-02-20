@@ -17,6 +17,14 @@
 
 package ap
 
+import (
+	"encoding/json"
+	"net/http"
+
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+)
+
 // https://www.w3.org/TR/activitystreams-vocabulary
 const (
 	ActivityAccept          = "Accept"          // ActivityStreamsAccept https://www.w3.org/TR/activitystreams-vocabulary/#dfn-accept
@@ -78,6 +86,20 @@ const (
 	// and https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tag
 	TagHashtag = "Hashtag"
 )
+
+// ReadASResponse reads ActivityStreams data from given HTTP response, handling
+// response body close and checking for appropriate AS content-type before read.
+func ReadASResponse(rsp *http.Response) (map[string]interface{}, error) {
+	if ct := rsp.Header.Get("Content-Type"); !apiutil.ASContentType(ct) {
+		_ = rsp.Body.Close()
+		err := gtserror.Newf("non activity streams response: %s", ct)
+		return nil, gtserror.SetMalformed(err)
+	}
+	var m map[string]interface{}
+	err := json.NewDecoder(rsp.Body).Decode(&m)
+	_ = rsp.Body.Close()
+	return m, err
+}
 
 // isActivity returns whether AS type name is of an Activity (NOT IntransitiveActivity).
 func isActivity(typeName string) bool {
