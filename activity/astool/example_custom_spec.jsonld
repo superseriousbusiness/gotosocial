@@ -1,0 +1,168 @@
+{
+  "@context": [
+    {
+      "as": "https://www.w3.org/ns/activitystreams",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "rfc": "https://tools.ietf.org/html/",
+      "schema": "http://schema.org/",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    },
+    {
+      "domain": "rdfs:domain",
+      "example": "schema:workExample",
+      "isDefinedBy": "rdfs:isDefinedBy",
+      "mainEntity": "schema:mainEntity",
+      "members": "owl:members",
+      "name": "schema:name",
+      "notes": "rdfs:comment",
+      "range": "rdfs:range",
+      "subClassOf": "rdfs:subClassOf",
+      "disjointWith": "owl:disjointWith",
+      "subPropertyOf": "rdfs:subPropertyOf",
+      "unionOf": "owl:unionOf",
+      "url": "schema:URL"
+    }
+  ],
+  "id": "https://example.com/fake-vocabulary",
+  "type": "owl:Ontology",
+  "name": "FakeVocabulary",
+  "members": [
+    {
+      "id": "https://example.com/fake-vocabulary#CustomType",
+      "type": "owl:Class",
+      "example": [
+        {
+          "id": "https://example.com/fake-vocabulary#ex1-jsonld",
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "type": "CustomType",
+            "actor": {
+              "type": "Person",
+              "name": "Nemo"
+            },
+            "object": "http://example.org/foo",
+            "summary": "A short summary"
+          },
+          "name": "Example 1"
+        }
+      ],
+      "notes": "Custom note for this custom type.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-activity",
+        "name": "as:Activity"
+      },
+      "disjointWith": [],
+      "name": "CustomType",
+      "url": "https://example.com/fake-vocabulary#dfn-customtype"
+    },
+    {
+      "id": "https://example.com/fake-vocabulary#customproperty",
+      "type": "rdf:Property",
+      "example": [
+        {
+          "id": "https://example.com/fake-vocabulary#ex2-jsonld",
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "type": "CustomType",
+            "actor": "http://sally.example.org",
+            "object": "http://example.org/foo",
+            "summary": "Sally and the Foo object",
+	    "customproperty": "http://exmaple.org/customtype"
+          },
+          "name": "Example 2"
+        }
+      ],
+      "notes": "This is a description of a custom property.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-activity",
+          "name": "as:Activity"
+        }
+      },
+      "isDefinedBy": "https://example.com/fake-vocabulary#dfn-customproperty",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+            "name": "as:Object"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-link",
+            "name": "as:Link"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://example.com/fake-vocabulary#dfn-customtype",
+            "name": "CustomType"
+          }
+        ]
+      },
+      "subPropertyOf": {
+        "type": "owl:Class",
+        "url": "https://example.com/fake-vocabulary#dfn-target",
+        "name": "as:target"
+      },
+      "name": "customproperty",
+      "url": "https://example.com/fake-vocabulary#dfn-customproperty"
+    },
+    {
+      "id": "https://example.com/fake-vocabulary#Update",
+      "type": "owl:Class",
+      "notes": "Collides with the ActivityStreams Update type.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-activity",
+        "name": "as:Activity"
+      },
+      "disjointWith": [],
+      "name": "Update",
+      "url": "https://example.com/fake-vocabulary#dfn-update"
+    },
+    {
+      "id": "https://example.com/fake-vocabulary#accuracy",
+      "type": "rdf:Property",
+      "notes": "Collides with the ActivityStreams accuracy property",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-update",
+            "name": "as:Update"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://example.com/fake-vocabulary#dfn-update",
+            "name": "Update"
+          }
+        ]
+      },
+      "isDefinedBy": "https://example.com/fake-vocabulary#dfn-accuracy",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-update",
+            "name": "as:Update"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://example.com/fake-vocabulary#dfn-update",
+            "name": "Update"
+          }
+        ]
+      },
+      "name": "accuracy",
+      "url": "https://example.com/fake-vocabulary#dfn-accuracy"
+    }
+  ]
+} 

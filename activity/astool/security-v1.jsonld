@@ -1,0 +1,143 @@
+{
+  "@context": [
+    {
+      "as": "https://www.w3.org/ns/activitystreams",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "rfc": "https://tools.ietf.org/html/",
+      "schema": "http://schema.org/",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    },
+    {
+      "domain": "rdfs:domain",
+      "example": "schema:workExample",
+      "isDefinedBy": "rdfs:isDefinedBy",
+      "mainEntity": "schema:mainEntity",
+      "members": "owl:members",
+      "name": "schema:name",
+      "notes": "rdfs:comment",
+      "range": "rdfs:range",
+      "subClassOf": "rdfs:subClassOf",
+      "disjointWith": "owl:disjointWith",
+      "subPropertyOf": "rdfs:subPropertyOf",
+      "unionOf": "owl:unionOf",
+      "url": "schema:URL"
+    }
+  ],
+  "id": "https://w3id.org/security/v1",
+  "type": "owl:Ontology",
+  "name": "W3IDSecurityV1",
+  "members": [
+    {
+      "id": "https://w3id.org/security/v1#PublicKey",
+      "type": "owl:Class",
+      "notes": "A public key represents a public cryptographical key for a user",
+      "name": "PublicKey",
+      "url": "https://w3id.org/security/v1#PublicKey",
+      "@wtf_typeless": true
+    },
+    {
+      "id": "https://w3id.org/security/v1#dfn-publickey",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "example": {},
+      "notes": "The public key for an ActivityStreams actor",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Application",
+            "name": "as:Application"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Group",
+            "name": "as:Group"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Organization",
+            "name": "as:Organization"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Person",
+            "name": "as:Person"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Service",
+            "name": "as:Service"
+          }
+        ]
+      },
+      "isDefinedBy": "https://w3id.org/security/v1#dfn-publickey",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://w3id.org/security/v1#PublicKey",
+            "name": "PublicKey"
+          }
+        ]
+      },
+      "name": "publicKey",
+      "url": "https://w3id.org/security/v1#dfn-publickey"
+    },
+    {
+      "id": "https://w3id.org/security/v1#dfn-publickeypem",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "The public key PEM encoded data for an ActivityStreams actor",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://w3id.org/security/v1#PublicKey",
+            "name": "PublicKey"
+          }
+        ]
+      },
+      "isDefinedBy": "https://w3id.org/security/v1#dfn-publickeypem",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "publicKeyPem",
+      "url": "https://w3id.org/security/v1#dfn-publickeypem"
+    },
+    {
+      "id": "https://w3id.org/security/v1#dfn-owner",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "The owner of the public key for an ActivityStreams actor",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://w3id.org/security/v1#PublicKey",
+            "name": "PublicKey"
+          }
+        ]
+      },
+      "isDefinedBy": "https://w3id.org/security/v1#dfn-owner",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:anyURI"
+      },
+      "name": "owner",
+      "url": "https://w3id.org/security/v1#dfn-owner"
+    }
+  ]
+}

@@ -1,0 +1,291 @@
+{
+  "@context": [
+    {
+      "as": "https://www.w3.org/ns/activitystreams",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "rfc": "https://tools.ietf.org/html/",
+      "schema": "http://schema.org/",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    },
+    {
+      "domain": "rdfs:domain",
+      "example": "schema:workExample",
+      "isDefinedBy": "rdfs:isDefinedBy",
+      "mainEntity": "schema:mainEntity",
+      "members": "owl:members",
+      "name": "schema:name",
+      "notes": "rdfs:comment",
+      "range": "rdfs:range",
+      "subClassOf": "rdfs:subClassOf",
+      "disjointWith": "owl:disjointWith",
+      "subPropertyOf": "rdfs:subPropertyOf",
+      "unionOf": "owl:unionOf",
+      "url": "schema:URL"
+    }
+  ],
+  "id": "http://joinmastodon.org/ns#",
+  "type": "owl:Ontology",
+  "name": "Toot",
+  "members": [
+    {
+      "id": "http://joinmastodon.org/ns#Emoji",
+      "type": "owl:Class",
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "id": "https://example.com/@alice/hello-world",
+            "type": "Note",
+            "content": "Hello world :Kappa:",
+            "tag": [
+              {
+                "id": "https://example.com/emoji/123",
+                "type": "Emoji",
+                "name": ":Kappa:",
+                "icon": {
+                  "type": "Image",
+                  "mediaType": "image/png",
+                  "url": "https://example.com/files/kappa.png"
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/ns/activitystreams#Object",
+        "name": "as:Object"
+      },
+      "disjointWith": [],
+      "name": "Emoji",
+      "url": "https://docs.joinmastodon.org/development/activitypub/#custom-emojis"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#Hashtag",
+      "type": "owl:Class",
+      "example": [
+        {
+          "mainEntity": {
+            "id": "https://example.com/@alice/hello-world",
+            "type": "Note",
+            "content": "example",
+            "tag": [
+              {
+                "href": "https://example.com/hashtag/example",
+                "type": "Hashtag",
+                "name": "#example"
+              }
+            ]
+          }
+        }
+      ],
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/ns/activitystreams#Link",
+        "name": "as:Link"
+      },
+      "disjointWith": [],
+      "name": "Hashtag",
+      "url": "https://docs.joinmastodon.org/development/activitypub/#hashtag"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#featured",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": {},
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Application",
+            "name": "as:Application"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Group",
+            "name": "as:Group"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Organization",
+            "name": "as:Organization"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Person",
+            "name": "as:Person"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Service",
+            "name": "as:Service"
+          }
+        ]
+      },
+      "isDefinedBy": "https://docs.joinmastodon.org/development/activitypub/#featured-collection",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/ns/activitystreams#OrderedCollection",
+          "name": "as:OrderedCollection"
+        }
+      },
+      "name": "featured",
+      "url": "https://docs.joinmastodon.org/development/activitypub/#featured-collection"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#votersCount",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": {},
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Question",
+            "name": "as:Question"
+          }
+        ]
+      },
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:nonNegativeInteger"
+      },
+      "name": "votersCount"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#blurhash",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": {},
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Document",
+            "name": "as:Document"
+          }
+        ]
+      },
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "blurhash"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#IdentityProof",
+      "type": "owl:Class",
+      "example": {},
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/ns/activitystreams#Object",
+        "name": "as:Object"
+      },
+      "disjointWith": [],
+      "name": "IdentityProof"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#signatureAlgorithm",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": {},
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "http://joinmastodon.org/ns#IdentityProof",
+            "name": "IdentityProof"
+          }
+        ]
+      },
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "signatureAlgorithm"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#signatureValue",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": {},
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "http://joinmastodon.org/ns#IdentityProof",
+            "name": "IdentityProof"
+          }
+        ]
+      },
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "signatureValue"
+    },
+    {
+      "id": "http://joinmastodon.org/ns#discoverable",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": {},
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Application",
+            "name": "as:Application"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Group",
+            "name": "as:Group"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Organization",
+            "name": "as:Organization"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Person",
+            "name": "as:Person"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/ns/activitystreams#Service",
+            "name": "as:Service"
+          }
+        ]
+      },
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:boolean"
+      },
+      "name": "discoverable"
+    }
+  ]
+}

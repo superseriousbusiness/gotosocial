@@ -1,0 +1,881 @@
+{
+  "@context": [
+    {
+      "as": "https://www.w3.org/ns/activitystreams",
+      "owl": "http://www.w3.org/2002/07/owl#",
+      "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+      "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+      "rfc": "https://tools.ietf.org/html/",
+      "schema": "http://schema.org/",
+      "xsd": "http://www.w3.org/2001/XMLSchema#"
+    },
+    {
+      "domain": "rdfs:domain",
+      "example": "schema:workExample",
+      "isDefinedBy": "rdfs:isDefinedBy",
+      "mainEntity": "schema:mainEntity",
+      "members": "owl:members",
+      "name": "schema:name",
+      "notes": "rdfs:comment",
+      "range": "rdfs:range",
+      "subClassOf": "rdfs:subClassOf",
+      "disjointWith": "owl:disjointWith",
+      "subPropertyOf": "rdfs:subPropertyOf",
+      "unionOf": "owl:unionOf",
+      "url": "schema:URL"
+    }
+  ],
+  "id": "https://forgefed.peers.community/ns",
+  "type": "owl:Ontology",
+  "name": "ForgeFed",
+  "members": [
+    {
+      "id": "https://forgefed.peers.community/ns#Push",
+      "type": "owl:Class",
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://example.org/aviva/outbox/reBGo",
+            "type": "Push",
+            "actor": "https://example.org/aviva",
+            "to": [
+              "https://example.org/aviva/followers",
+              "https://example.org/aviva/myproject",
+              "https://example.org/aviva/myproject/team",
+              "https://example.org/aviva/myproject/followers"
+            ],
+            "summary": "<p>Aviva pushed a commit to myproject</p>",
+            "object": {
+              "type": "OrderedCollection",
+              "totalItems": 1,
+              "items": [
+                {
+                  "id": "https://example.org/aviva/myproject/commits/d96596230322716bd6f87a232a648ca9822a1c20",
+                  "type": "Commit",
+                  "attributedTo": "https://example.org/aviva",
+                  "context": "https://example.org/aviva/myproject",
+                  "hash": "d96596230322716bd6f87a232a648ca9822a1c20",
+                  "created": "2019-11-03T13:43:59Z",
+                  "summary": "Provide hints in sign-up form fields"
+                }
+              ]
+            },
+            "target": "https://example.org/aviva/myproject/branches/master",
+            "context": "https://example.org/aviva/myproject"
+          }
+        }
+      ],
+      "notes": "Indicates that new content has been pushed to the Repository.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-activity",
+        "name": "as:Activity"
+      },
+      "name": "Push",
+      "url": "https://forgefed.peers.community/vocabulary.html#act-push"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#Repository",
+      "type": "owl:Class",
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://w3id.org/security/v1",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://dev.example/aviva/treesim",
+            "type": "Repository",
+            "publicKey": {
+              "id": "https://dev.example/aviva/treesim#main-key",
+              "owner": "https://dev.example/aviva/treesim",
+              "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhki....."
+            },
+            "inbox": "https://dev.example/aviva/treesim/inbox",
+            "outbox": "https://dev.example/aviva/treesim/outbox",
+            "followers": "https://dev.example/aviva/treesim/followers",
+            "team": "https://dev.example/aviva/treesim/team",
+            "name": "Tree Growth 3D Simulation",
+            "summary": "<p>Tree growth 3D simulator for my nature exploration game</p>"
+          }
+        }
+      ],
+      "notes": "Represents a version control system repository.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+        "name": "as:Object"
+      },
+      "name": "Repository",
+      "url": "https://forgefed.peers.community/vocabulary.html#type-repository"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#Branch",
+      "type": "owl:Class",
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://example.org/luke/myrepo/branches/master",
+            "type": "Branch",
+            "name": "master",
+            "context": "https://example.org/luke/myrepo",
+            "ref": "refs/heads/master"
+          }
+        }
+      ],
+      "notes": "Represents a named variable reference to a version of the Repository, typically used for committing changes in parallel to other development, and usually eventually merging the changes into the main history line.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+        "name": "as:Object"
+      },
+      "name": "Branch",
+      "url": "https://forgefed.peers.community/vocabulary.html#type-branch"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#Commit",
+      "type": "owl:Class",
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://example.org/alice/myrepo/commits/109ec9a09c7df7fec775d2ba0b9d466e5643ec8c",
+            "type": "Commit",
+            "context": "https://example.org/alice/myrepo",
+            "attributedTo": "https://example.org/bob",
+            "committedBy": "https://example.org/alice",
+            "hash": "109ec9a09c7df7fec775d2ba0b9d466e5643ec8c",
+            "summary": "Add an installation script, fixes issue #89",
+            "description": {
+              "mediaType": "text/plain",
+              "content": "It's about time people can install on their computers!"
+            },
+            "created": "2019-07-11T12:34:56Z",
+            "committed": "2019-07-26T23:45:01Z"
+          }
+        }
+      ],
+      "notes": "Represents a named set of changes in the history of a Repository. This is called \"commit\" in Git, Mercurial and Monotone; \"patch\" in Darcs; sometimes called \"change set\". Note that Commit is a set of changes that already exists in a repo’s history, while a Patch is a separate proposed change set, that could be applied and pushed to a repo, resulting with a Commit.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+        "name": "as:Object"
+      },
+      "name": "Commit",
+      "url": "https://forgefed.peers.community/vocabulary.html#type-commit"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#TicketDependency",
+      "type": "owl:Class",
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "type": [
+              "Relationship",
+              "TicketDependency"
+            ],
+            "id": "https://example.org/ticket-deps/2342593",
+            "attributedTo": "https://example.org/alice",
+            "summary": "Alice's ticket depends on Bob's ticket",
+            "published": "2019-07-11T12:34:56Z",
+            "subject": "https://example.org/alice/myproj/issues/42",
+            "relationship": "dependsOn",
+            "object": "https://example.com/bob/coolproj/issues/85"
+          }
+        }
+      ],
+      "notes": "Represents a relationship between 2 Tickets, in which the resolution of one ticket requires the other ticket to be resolved too. It MUST specify the subject, object and relationship properties, and the relationship property MUST be dependsOn.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-relationship",
+        "name": "as:Relationship"
+      },
+      "name": "TicketDependency",
+      "url": "https://forgefed.peers.community/vocabulary.html#type-ticketdependency"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#Ticket",
+      "type": "owl:Class",
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "type": "Ticket",
+            "id": "https://example.org/alice/myrepo/issues/42",
+            "context": "https://example.org/alice/myrepo",
+            "attributedTo": "https://example.com/bob",
+            "summary": "Nothing works!",
+            "content": "<p>Please fix. <i>Everything</i> is broken!</p>",
+            "mediaType": "text/html",
+            "source": {
+              "content": "Please fix. *Everything* is broken!",
+              "mediaType": "text/markdown; variant=CommonMark"
+            },
+            "assignedTo": "https://example.org/alice",
+            "isResolved": false
+          }
+        }
+      ],
+      "notes": "Represents an item that requires work or attention. Tickets exist in the context of a project (which may or may not be a version-control repository), and are used to track ideas, proposals, tasks, bugs and more.",
+      "subClassOf": {
+        "type": "owl:Class",
+        "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+        "name": "as:Object"
+      },
+      "name": "Ticket",
+      "url": "https://forgefed.peers.community/vocabulary.html#type-ticket"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#earlyItems",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://dev.example/aviva/outbox",
+            "type": "OrderedCollection",
+            "totalItems": 712,
+            "orderedItems": [
+              "https://dev.example/aviva/outbox/712",
+              "https://dev.example/aviva/outbox/711",
+              "https://dev.example/aviva/outbox/710"
+            ],
+            "earlyItems": [
+              "https://dev.example/aviva/outbox/3",
+              "https://dev.example/aviva/outbox/2",
+              "https://dev.example/aviva/outbox/1"
+            ]
+          }
+        }
+      ],
+      "notes": "In an ordered collection (or an ordered collection page) in which items (or orderedItems) contains a continuous subset of the collection’s items from one end, earlyItems identifiers a continuous subset from the other end. For example, if items lists the chronologically latest items, earlyItems would list the chrologically earliest items. The ordering rule for items in earlyItems MUST be the same as in items. For examle, if items lists items in reverse chronogical order, then so does earlyItems.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection",
+          "name": "as:OrderedCollection"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-earlyitems",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": [
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+            "name": "as:Object"
+          },
+          {
+            "type": "owl:Class",
+            "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-link",
+            "name": "as:Link"
+          }
+        ]
+      },
+      "name": "earlyItems",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-earlyitems"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#assignedTo",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Identifies the Person assigned to work on this Ticket.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-assignedto",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-person",
+          "name": "as:Person"
+        }
+      },
+      "name": "assignedTo",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-assignedto"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#isResolved",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Specifies whether the Ticket is closed, i.e. the work on it is done and it doesn’t need to attract attention anymore.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-isresolved",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:boolean"
+      },
+      "name": "isResolved",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-isresolved"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#dependsOn",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "notes": "Identifies one or more tickets on which this Ticket depends, i.e. it can’t be resolved without those tickets being resolved too.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-dependson",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "name": "dependsOn",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-dependson"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#dependedBy",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "notes": "Identifies one or more tickets which depend on this Ticket, i.e. they can’t be resolved without this tickets being resolved too.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-dependedby",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "name": "dependedBy",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-dependedby"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#dependencies",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Identifies a Collection of TicketDependency which specify tickets that this Ticket depends on, i.e. this ticket is the subject of the dependsOn relationship.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-dependencies",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/ns/activitystreams#OrderedCollection",
+          "name": "as:OrderedCollection"
+        }
+      },
+      "name": "dependencies",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-dependencies"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#dependants",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Identifies a Collection of TicketDependency which specify tickets that depends on this Ticket, i.e. this ticket is the object of the dependsOn relationship. Often called \"reverse dependencies\".",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-ticket",
+          "name": "Ticket"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-dependants",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/ns/activitystreams#OrderedCollection",
+          "name": "as:OrderedCollection"
+        }
+      },
+      "name": "dependants",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-dependants"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#description",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://example.org/alice/myrepo/commits/109ec9a09c7df7fec775d2ba0b9d466e5643ec8c",
+            "type": "Commit",
+            "context": "https://example.org/alice/myrepo",
+            "attributedTo": "https://example.org/bob",
+            "hash": "109ec9a09c7df7fec775d2ba0b9d466e5643ec8c",
+            "created": "2019-07-11T12:34:56Z",
+            "summary": "Add an installation script, fixes issue #89",
+            "description": {
+              "mediaType": "text/plain",
+              "content": "It's about time people can install on their computers!"
+            }
+          }
+        }
+      ],
+      "notes": "Specifies the description text of a Commit, which is an optional possibly multi-line text provided in addition to the one-line commit title. The range of the description property works the same way the range of the ActivityPub source property works.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-commit",
+          "name": "Commit"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-description",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+          "name": "as:Object"
+        }
+      },
+      "name": "description",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-description"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#committedBy",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Identifies the actor (usually a person, but could be something else, e.g. a bot) that added a set of changes to the version-control Repository. Sometimes the author of the changes and the committer of those changes aren’t the same actor, in which case the committedBy property can be used to specify who added the changes to the repository. For example, when applying a patch to a repository, e.g. a Git repository, the author would be the person who made the patch, and the committer would be the person who applied the patch to their copy of the repository.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-commit",
+          "name": "Commit"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-committedby",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+          "name": "as:Object"
+        }
+      },
+      "name": "committedBy",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-committedby"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#hash",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Specifies the hash associated with a Commit, which is a unique identifier of the commit within the Repository, usually generated as a cryptographic hash function of some (or all) of the commit’s data or metadata. For example, in Git it would be the SHA1 hash of the commit; in Darcs it would be the SHA1 hash of the patch info.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-commit",
+          "name": "Commit"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-hash",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "hash",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-hash"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#committed",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Specifies the time that a set of changes was committed into the Repository and became a Commit in it. This can be different from the time the set of changes was produced, e.g. if one person creates a patch and sends to another, and the other person then applies the patch to their copy of the repository. We call the former event \"created\" and the latter event \"committed\", and this latter event is specified by the committed property.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-commit",
+          "name": "Commit"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-committed",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:dateTime"
+      },
+      "name": "committed",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-committed"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#filesAdded",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "notes": "Specifies a filename, as a relative path, relative to the top of the tree of files in the Repository, of a file that got added in this Commit, and didn’t exist in the previous version of the tree.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-commit",
+          "name": "Commit"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-filesadded",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "filesAdded",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-filesadded"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#filesModified",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "notes": "Specifies a filename, as a relative path, relative to the top of the tree of files in the Repository, of a file that existed in the previous version of the tree, and its contents got modified in this Commit.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-commit",
+          "name": "Commit"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-filesmodified",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "filesModified",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-filesmodified"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#filesRemoved",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "notes": "Specifies a filename, as a relative path, relative to the top of the tree of files in the Repository, of a file that existed in the previous version of the tree, and got removed from the tree in this Commit.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-commit",
+          "name": "Commit"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-filesremoved",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "filesRemoved",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-filesremoved"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#ref",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://example.org/luke/myrepo/branches/master",
+            "type": "Branch",
+            "name": "master",
+            "context": "https://example.org/luke/myrepo",
+            "ref": "refs/heads/master"
+          }
+        }
+      ],
+      "notes": "Specifies an identifier for a Branch, that is used in the Repository to uniquely refer to it. For example, in Git, \"refs/heads/master\" would be the ref of the master branch.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-branch",
+          "name": "Branch"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-ref",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": "xsd:string"
+      },
+      "name": "ref",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-ref"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#team",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://w3id.org/security/v1",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://dev.example/aviva/treesim",
+            "type": "Repository",
+            "publicKey": {
+              "id": "https://dev.example/aviva/treesim#main-key",
+              "owner": "https://dev.example/aviva/treesim",
+              "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhki....."
+            },
+            "inbox": "https://dev.example/aviva/treesim/inbox",
+            "outbox": "https://dev.example/aviva/treesim/outbox",
+            "followers": "https://dev.example/aviva/treesim/followers",
+            "name": "Tree Growth 3D Simulation",
+            "summary": "<p>Tree growth 3D simulator for my nature exploration game</p>",
+            "team": "https://dev.example/aviva/treesim/team"
+          }
+        },
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": "https://www.w3.org/ns/activitystreams",
+            "id": "https://dev.example/aviva/treesim/team",
+            "type": "Collection",
+            "totalItems": 3,
+            "items": [
+              "https://dev.example/aviva",
+              "https://dev.example/luke",
+              "https://code.community/users/lorax"
+            ]
+          }
+        }
+      ],
+      "notes": "Specifies a Collection of actors who are working on the object, or responsible for it, or managing or administrating it, or having edit access to it. For example, for a Repository, it could be the people who have push/edit access, the \"collaborators\" of the repository.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+          "name": "as:Object"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-team",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-collection",
+          "name": "as:Collection"
+        }
+      },
+      "name": "team",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-team"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#ticketsTrackedBy",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://dev.example/aviva/treesim",
+            "type": "Repository",
+            "name": "Tree Growth 3D Simulation",
+            "summary": "<p>Tree growth 3D simulator for my nature exploration game</p>",
+            "ticketsTrackedBy": "https://bugs.example/projects/treesim"
+          }
+        }
+      ],
+      "notes": "Identifies the actor which tracks tickets related to the given object. This is the actor to whom you send tickets you’d like to open against the object.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+          "name": "as:Object"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-ticketstrackedby",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+          "name": "as:Object"
+        }
+      },
+      "name": "ticketsTrackedBy",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-ticketstrackedby"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#tracksTicketsFor",
+      "type": [
+        "rdf:Property",
+        "owl:ObjectProperty"
+      ],
+      "example": [
+        {
+          "type": "http://schema.org/CreativeWork",
+          "mainEntity": {
+            "@context": [
+              "https://www.w3.org/ns/activitystreams",
+              "https://forgefed.peers.community/ns"
+            ],
+            "id": "https://bugs.example/treesim",
+            "type": "Project",
+            "tracksTicketsFor": [
+              "https://dev.example/aviva/liblsystem",
+              "https://dev.example/aviva/3d-tree-models",
+              "https://dev.example/aviva/treesim"
+            ]
+          }
+        }
+      ],
+      "notes": "Identifies objects for which which this ticket tracker tracks tickets. When you’d like to open a ticket against those objects, you can send them to this tracker.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+          "name": "as:Object"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-tracksticketsfor",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-object",
+          "name": "as:Object"
+        }
+      },
+      "name": "tracksTicketsFor",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-tracksticketsfor"
+    },
+    {
+      "id": "https://forgefed.peers.community/ns#forks",
+      "type": [
+        "rdf:Property",
+        "owl:FunctionalProperty"
+      ],
+      "notes": "Identifies an OrderedCollection of Repositorys which were created as forks of this Repository, i.e. by cloning it. The order of the collection items is by reverse chronological order of the forking events.",
+      "domain": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://forgefed.peers.community/vocabulary.html#type-repository",
+          "name": "Repository"
+        }
+      },
+      "isDefinedBy": "https://forgefed.peers.community/vocabulary.html#prop-forks",
+      "range": {
+        "type": "owl:Class",
+        "unionOf": {
+          "type": "owl:Class",
+          "url": "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection",
+          "name": "as:OrderedCollection"
+        }
+      },
+      "name": "forks",
+      "url": "https://forgefed.peers.community/vocabulary.html#prop-forks"
+    }
+  ]
+}
