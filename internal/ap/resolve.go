@@ -202,6 +202,9 @@ func ResolveCollectionPage(ctx context.Context, data io.Reader) (CollectionPageI
 		return nil, gtserror.SetWrongType(err)
 	}
 
+	// Release.
+	putMap(raw)
+
 	// Cast as as CollectionPage-like.
 	return ToCollectionPageIterator(t)
 }
