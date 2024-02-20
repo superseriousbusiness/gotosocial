@@ -42,6 +42,8 @@ type Relationship struct {
 	MutingNotifications bool `json:"muting_notifications"`
 	// You have requested to follow this account, and the request is pending.
 	Requested bool `json:"requested"`
+	// This account has requested to follow you, and the request is pending.
+	RequestedBy bool `json:"requested_by"`
 	// You are blocking this account's domain.
 	DomainBlocking bool `json:"domain_blocking"`
 	// You are featuring this account on your profile.

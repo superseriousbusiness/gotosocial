@@ -345,6 +345,10 @@ definitions:
                 description: You have requested to follow this account, and the request is pending.
                 type: boolean
                 x-go-name: Requested
+            requested_by:
+                description: This account has requested to follow you, and the request is pending.
+                type: boolean
+                x-go-name: RequestedBy
             showing_reblogs:
                 description: You are seeing reblogs/boosts from this account in your home timeline.
                 type: boolean
@@ -1487,7 +1491,10 @@ definitions:
                 additionalProperties:
                     format: int64
                     type: integer
-                description: 'Statistics about the instance: number of posts, accounts, etc.'
+                description: |-
+                    Statistics about the instance: number of posts, accounts, etc.
+                    Values are pointers because we don't want to skip 0 values when
+                    rendering stats via web templates.
                 type: object
                 x-go-name: Stats
             terms:
@@ -3648,6 +3655,7 @@ paths:
         post:
             consumes:
                 - multipart/form-data
+            description: NOT IMPLEMENTED YET!
             operationId: accountMove
             parameters:
                 - description: Password of the account user, for confirmation.

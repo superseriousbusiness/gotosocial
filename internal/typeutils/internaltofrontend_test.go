@@ -1967,6 +1967,94 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
 }`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestRelationshipFollowRequested() {
+	var (
+		ctx      = context.Background()
+		account1 = suite.testAccounts["admin_account"]
+		account2 = suite.testAccounts["local_account_2"]
+	)
+
+	// Put a follow request in the db from
+	// admin account targeting local_account_2.
+	followRequest := &gtsmodel.FollowRequest{
+		ID:              "01GEF753FWHCHRDWR0QEHBXM8W",
+		URI:             "http://localhost:8080/weeeeeeeeeeeeeeeee",
+		AccountID:       account1.ID,
+		TargetAccountID: account2.ID,
+	}
+	if err := suite.db.PutFollowRequest(ctx, followRequest); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Fetch the relationship from the database.
+	dbRelationship, err := suite.state.DB.GetRelationship(ctx, account1.ID, account2.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check API model is set appropriately.
+	relationship, err := suite.typeconverter.RelationshipToAPIRelationship(ctx, dbRelationship)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(relationship, "", "  ")
+	if err != nil {
+    suite.FailNow(err.Error())
+  }
+
+	suite.Equal(`{
+  "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+  "following": false,
+  "showing_reblogs": false,
+  "notifying": false,
+  "followed_by": false,
+  "blocking": false,
+  "blocked_by": false,
+  "muting": false,
+  "muting_notifications": false,
+  "requested": true,
+  "requested_by": false,
+  "domain_blocking": false,
+  "endorsed": false,
+  "note": ""
+}`, string(b))
+
+	// Check relationship from the other side too.
+	dbRelationship, err = suite.state.DB.GetRelationship(ctx, account2.ID, account1.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check API model is set appropriately.
+	relationship, err = suite.typeconverter.RelationshipToAPIRelationship(ctx, dbRelationship)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err = json.MarshalIndent(relationship, "", "  ")
+	if err != nil {
+    suite.FailNow(err.Error())
+  }
+
+  suite.Equal(`{
+  "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+  "following": false,
+  "showing_reblogs": false,
+  "notifying": false,
+  "followed_by": false,
+  "blocking": false,
+  "blocked_by": false,
+  "muting": false,
+  "muting_notifications": false,
+  "requested": false,
+  "requested_by": true,
+  "domain_blocking": false,
+  "endorsed": false,
+  "note": ""
+}`, string(b))
+}
+
 func TestInternalToFrontendTestSuite(t *testing.T) {
 	suite.Run(t, new(InternalToFrontendTestSuite))
 }
