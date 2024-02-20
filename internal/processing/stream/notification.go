@@ -24,6 +24,7 @@ import (
 	"codeberg.org/gruf/go-byteutil"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
@@ -31,7 +32,8 @@ import (
 func (p *Processor) Notify(ctx context.Context, account *gtsmodel.Account, notif *apimodel.Notification) {
 	b, err := json.Marshal(notif)
 	if err != nil {
-		panic(err) // this should never happen
+		log.Errorf(ctx, "error marshaling json: %v", err)
+		return
 	}
 	p.streams.Post(ctx, account.ID, stream.Message{
 		Payload: byteutil.B2S(b),
