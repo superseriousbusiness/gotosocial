@@ -74,6 +74,15 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 		return nil, gtserror.Newf("error checking requested: %w", err)
 	}
 
+	// check if target has follow requested requesting
+	rel.RequestedBy, err = r.IsFollowRequested(ctx,
+		targetAccount,
+		requestingAccount,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("error checking requestedBy: %w", err)
+	}
+
 	// check if the requesting account is blocking the target account
 	rel.Blocking, err = r.IsBlocked(ctx, requestingAccount, targetAccount)
 	if err != nil {

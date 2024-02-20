@@ -1194,6 +1194,7 @@ func (c *Converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmod
 		Muting:              r.Muting,
 		MutingNotifications: r.MutingNotifications,
 		Requested:           r.Requested,
+		RequestedBy:         r.RequestedBy,
 		DomainBlocking:      r.DomainBlocking,
 		Endorsed:            r.Endorsed,
 		Note:                r.Note,

@@ -92,6 +92,7 @@ func (suite *AuthorizeTestSuite) TestAuthorize() {
   "muting": false,
   "muting_notifications": false,
   "requested": false,
+  "requested_by": false,
   "domain_blocking": false,
   "endorsed": false,
   "note": ""
