@@ -31,35 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// decodeBody tries to read and parse the data
-// at provided io.Reader as a JSON ActivityPub
-// type, failing if not parseable as JSON or not
-// resolveable as one of our known AS types.
-//
-// The given map pointer will also be populated with
-// the 'raw' JSON data, for further processing.
-func decodeBody(
-	ctx context.Context,
-	body io.Reader,
-	raw map[string]any,
-) (vocab.Type, error) {
-	// Unmarshal the raw JSON bytes into a "raw" map.
-	// This will fail if the input is not parseable
-	// as JSON; eg., a remote has returned HTML as a
-	// fallback response to an ActivityPub JSON request.
-	if err := json.NewDecoder(body).Decode(&raw); err != nil {
-		return nil, gtserror.NewfAt(3, "error decoding into json: %w", err)
-	}
-
-	// Resolve an ActivityStreams type.
-	t, err := streams.ToType(ctx, raw)
-	if err != nil {
-		return nil, gtserror.NewfAt(3, "error resolving json into ap vocab type: %w", err)
-	}
-
-	return t, nil
-}
-
 // ResolveActivity is a util function for pulling a pub.Activity type out of an incoming request body,
 // returning the resolved activity type, error and whether to accept activity (false = transient i.e. ignore).
 func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.WithCode) {
@@ -67,12 +38,12 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	// destination.
 	raw := getMap()
 
-	// Tidy up when done.
-	defer r.Body.Close()
-
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
-	t, err := decodeBody(r.Context(), r.Body, raw)
+	t, err := decodeType(r.Context(), r.Body, raw)
+
+	// Tidy up body.
+	_ = r.Body.Close()
 
 	if err != nil {
 		// NOTE: if the error here was due to the response body
@@ -127,7 +98,7 @@ func ResolveStatusable(ctx context.Context, data io.Reader) (Statusable, error) 
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
-	t, err := decodeBody(ctx, data, raw)
+	t, err := decodeType(ctx, data, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -168,7 +139,7 @@ func ResolveAccountable(ctx context.Context, data io.Reader) (Accountable, error
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
-	t, err := decodeBody(ctx, data, raw)
+	t, err := decodeType(ctx, data, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -197,7 +168,7 @@ func ResolveCollectionPage(ctx context.Context, data io.Reader) (CollectionPageI
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
-	t, err := decodeBody(ctx, data, raw)
+	t, err := decodeType(ctx, data, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -207,4 +178,49 @@ func ResolveCollectionPage(ctx context.Context, data io.Reader) (CollectionPageI
 
 	// Cast as as CollectionPage-like.
 	return ToCollectionPageIterator(t)
+}
+
+// emptydest is an empty JSON decode
+// destination useful for "noop" decodes
+// to check underlying reader is empty.
+var emptydest = &struct{}{}
+
+// decodeType tries to read and parse the data
+// at provided io.Reader as a JSON ActivityPub
+// type, failing if not parseable as JSON or not
+// resolveable as one of our known AS types.
+//
+// The given map pointer will also be populated with
+// the 'raw' JSON data, for further processing.
+func decodeType(
+	ctx context.Context,
+	data io.Reader,
+	raw map[string]any,
+) (vocab.Type, error) {
+
+	// Wrap data in JSON decoder.
+	dec := json.NewDecoder(data)
+
+	// Unmarshal the raw JSON bytes into a "raw" map.
+	// This will fail if the input is not parseable
+	// as JSON; eg., a remote has returned HTML as a
+	// fallback response to ActivityPub JSON request.
+	if err := dec.Decode(&raw); err != nil {
+		return nil, gtserror.NewfAt(3, "error decoding into json: %w", err)
+	}
+
+	// Perform a secondary decode just to ensure we drained the
+	// entirety of the data source. Error indicates either extra
+	// trailing garbage, or multiple JSON values (invalid data).
+	if err := dec.Decode(emptydest); err != io.EOF {
+		return nil, gtserror.NewfAt(3, "data remaining after json")
+	}
+
+	// Resolve an ActivityStreams type.
+	t, err := streams.ToType(ctx, raw)
+	if err != nil {
+		return nil, gtserror.NewfAt(3, "error resolving json into ap vocab type: %w", err)
+	}
+
+	return t, nil
 }
