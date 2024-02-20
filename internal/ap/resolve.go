@@ -199,12 +199,16 @@ func decodeType(
 ) (vocab.Type, error) {
 
 	// Wrap data in JSON decoder.
+	//
+	// We do this instead of using json.Unmarshal()
+	// so we can take advantage of the decoder's streamed
+	// check of input data as valid JSON. This means that
+	// in the cases of garbage input, or even just fallback
+	// HTML responses that were incorrectly content-type'd,
+	// we can error-out as soon as possible.
 	dec := json.NewDecoder(data)
 
-	// Unmarshal the raw JSON bytes into a "raw" map.
-	// This will fail if the input is not parseable
-	// as JSON; eg., a remote has returned HTML as a
-	// fallback response to ActivityPub JSON request.
+	// Unmarshal JSON source data into "raw" map.
 	if err := dec.Decode(&raw); err != nil {
 		return nil, gtserror.NewfAt(3, "error decoding into json: %w", err)
 	}
