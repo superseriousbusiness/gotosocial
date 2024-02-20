@@ -394,10 +394,7 @@ func (s *surface) notify(
 	if err != nil {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
-
-	if err := s.stream.Notify(apiNotif, targetAccount); err != nil {
-		return gtserror.Newf("error streaming notification to account: %w", err)
-	}
+	s.stream.Notify(ctx, targetAccount, apiNotif)
 
 	return nil
 }

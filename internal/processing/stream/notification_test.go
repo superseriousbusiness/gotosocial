@@ -49,10 +49,11 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 		Account:   followAccountAPIModel,
 	}
 
-	err = suite.streamProcessor.Notify(notification, account)
-	suite.NoError(err)
+	suite.streamProcessor.Notify(context.Background(), account, notification)
 
-	msg := <-openStream.Messages
+	msg, ok := openStream.Recv(context.Background())
+	suite.True(ok)
+
 	dst := new(bytes.Buffer)
 	err = json.Indent(dst, []byte(msg.Payload), "", "  ")
 	suite.NoError(err)

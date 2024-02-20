@@ -130,14 +130,9 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	suite.Equal(replyingStatus.ID, notif.StatusID)
 	suite.False(*notif.Read)
 
-	// the notification should be streamed
-	var msg *stream.Message
-	select {
-	case msg = <-wssStream.Messages:
-		// fine
-	case <-time.After(5 * time.Second):
-		suite.FailNow("no message from wssStream")
-	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	msg, ok := wssStream.Recv(ctx)
+	suite.True(ok)
 
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
@@ -203,14 +198,10 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 	suite.Equal(fave.StatusID, notif.StatusID)
 	suite.False(*notif.Read)
 
-	// 2. a notification should be streamed
-	var msg *stream.Message
-	select {
-	case msg = <-wssStream.Messages:
-		// fine
-	case <-time.After(5 * time.Second):
-		suite.FailNow("no message from wssStream")
-	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	msg, ok := wssStream.Recv(ctx)
+	suite.True(ok)
+
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineNotifications}, msg.Stream)
@@ -277,7 +268,9 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 	suite.False(*notif.Read)
 
 	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target
-	suite.Empty(wssStream.Messages)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	_, ok := wssStream.Recv(ctx)
+	suite.False(ok)
 }
 
 func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
@@ -405,14 +398,10 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	})
 	suite.NoError(err)
 
-	// a notification should be streamed
-	var msg *stream.Message
-	select {
-	case msg = <-wssStream.Messages:
-		// fine
-	case <-time.After(5 * time.Second):
-		suite.FailNow("no message from wssStream")
-	}
+	ctx, _ = context.WithTimeout(ctx, time.Second*5)
+	msg, ok := wssStream.Recv(context.Background())
+	suite.True(ok)
+
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
@@ -423,7 +412,7 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	suite.Equal(originAccount.ID, notif.Account.ID)
 
 	// no messages should have been sent out, since we didn't need to federate an accept
-	suite.Empty(suite.httpClient.SentMessages)
+	suite.Empty(&suite.httpClient.SentMessages)
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
@@ -503,14 +492,10 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 	suite.Equal(originAccount.URI, accept.To)
 	suite.Equal("Accept", accept.Type)
 
-	// a notification should be streamed
-	var msg *stream.Message
-	select {
-	case msg = <-wssStream.Messages:
-		// fine
-	case <-time.After(5 * time.Second):
-		suite.FailNow("no message from wssStream")
-	}
+	ctx, _ = context.WithTimeout(ctx, time.Second*5)
+	msg, ok := wssStream.Recv(context.Background())
+	suite.True(ok)
+
 	suite.Equal(stream.EventTypeNotification, msg.Event)
 	suite.NotEmpty(msg.Payload)
 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)

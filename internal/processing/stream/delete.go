@@ -18,38 +18,16 @@
 package stream
 
 import (
-	"fmt"
-	"strings"
+	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 // Delete streams the delete of the given statusID to *ALL* open streams.
-func (p *Processor) Delete(statusID string) error {
-	errs := []string{}
-
-	// get all account IDs with open streams
-	accountIDs := []string{}
-	p.streamMap.Range(func(k interface{}, _ interface{}) bool {
-		key, ok := k.(string)
-		if !ok {
-			panic("streamMap key was not a string (account id)")
-		}
-
-		accountIDs = append(accountIDs, key)
-		return true
+func (p *Processor) Delete(ctx context.Context, statusID string) {
+	p.streams.PostAll(ctx, stream.Message{
+		Payload: statusID,
+		Event:   stream.EventTypeDelete,
+		Stream:  stream.AllStatusTimelines,
 	})
-
-	// stream the delete to every account
-	for _, accountID := range accountIDs {
-		if err := p.toAccount(statusID, stream.EventTypeDelete, stream.AllStatusTimelines, accountID); err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
-
-	if len(errs) != 0 {
-		return fmt.Errorf("one or more errors streaming status delete: %s", strings.Join(errs, ";"))
-	}
-
-	return nil
 }
