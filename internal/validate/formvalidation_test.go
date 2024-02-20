@@ -321,6 +321,63 @@ func (suite *ValidationTestSuite) TestValidateCustomCSSTooLongUnicode() {
 	suite.EqualError(err, "custom_css must be less than 5 characters, but submitted custom_css was 10 characters")
 }
 
+func (suite *ValidationTestSuite) TestValidateEmojiShortcode() {
+	type testStruct struct {
+		shortcode string
+		ok        bool
+	}
+
+	for _, test := range []testStruct{
+		{
+			shortcode: "peepee",
+			ok:        true,
+		},
+		{
+			shortcode: "poo-poo",
+			ok:        false,
+		},
+		{
+			shortcode: "-peepee",
+			ok:        false,
+		},
+		{
+			shortcode: "p",
+			ok:        false,
+		},
+		{
+			shortcode: "pp",
+			ok:        true,
+		},
+		{
+			shortcode: "6969",
+			ok:        true,
+		},
+		{
+			shortcode: "__peepee",
+			ok:        true,
+		},
+		{
+			shortcode: "_",
+			ok:        false,
+		},
+		{
+			// Too long.
+			shortcode: "_XxX_Ultimate_Gamer_dude_6969_420_",
+			ok:        false,
+		},
+		{
+			shortcode: "_XxX_Ultimate_Gamer_dude_6969_",
+			ok:        true,
+		},
+	} {
+		err := validate.EmojiShortcode(test.shortcode)
+		ok := err == nil
+		if !suite.Equal(test.ok, ok) {
+			suite.T().Logf("fail on %s", test.shortcode)
+		}
+	}
+}
+
 func TestValidationTestSuite(t *testing.T) {
 	suite.Run(t, new(ValidationTestSuite))
 }

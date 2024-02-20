@@ -47,6 +47,7 @@ const (
 	mentionFinder            = `(?:^|\s)(@` + usernameGrp + `+(?:@` + domainGrp + `+)?)` // Extract all mentions from a text, each mention may include domain.
 	emojiShortcode           = `\w{2,30}`                                                // Pattern for emoji shortcodes. maximumEmojiShortcodeLength = 30
 	emojiFinder              = `(?:\b)?:(` + emojiShortcode + `):(?:\b)?`                // Extract all emoji shortcodes from a text.
+	emojiValidator           = `^` + emojiShortcode + `$`                                // Validate a single emoji shortcode.
 	usernameStrict           = `^[a-z0-9_]{1,64}$`                                       // Pattern for usernames on THIS instance. maximumUsernameLength = 64
 	usernameRelaxed          = `[a-z0-9_\.]{1,}`                                         // Relaxed version of username that can match instance accounts too.
 	misskeyReportNotesFinder = `(?m)(?:^Note: ((?:http|https):\/\/.*)$)`                 // Extract reported Note URIs from the text of a Misskey report/flag.
@@ -95,8 +96,8 @@ var (
 	// MentionFinder extracts whole mentions from a piece of text.
 	MentionFinder = regexp.MustCompile(mentionFinder)
 
-	// EmojiShortcode validates an emoji name.
-	EmojiShortcode = regexp.MustCompile(emojiShortcode)
+	// EmojiValidator validates an emoji shortcode.
+	EmojiValidator = regexp.MustCompile(emojiValidator)
 
 	// EmojiFinder extracts emoji strings from a piece of text.
 	// See: https://regex101.com/r/478XGM/1
