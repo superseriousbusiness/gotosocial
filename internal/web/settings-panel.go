@@ -46,7 +46,7 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 	}
 
 	page := apiutil.WebPage{
-		Template: "frontend.tmpl",
+		Template: "settings.tmpl",
 		Instance: instance,
 		Stylesheets: []string{
 			cssFA,
