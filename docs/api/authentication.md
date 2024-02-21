@@ -4,13 +4,13 @@ Using the client API requires authentication. This page documents the general fl
 
 ## Create a new application
 
-We need to get a new key pair for our application. This is done by making a `POST` request to the `/api/v1/apps` endpoint. Replace `your_app_name` in the code below:
+We need to register a new application, which we can then use to request an OAuth token. This is done by making a `POST` request to the `/api/v1/apps` endpoint. Replace `your_app_name` in the code below:
 
 ```bash
 curl -X POST 'https://your.instance.url/api/v1/apps' \ 
   -H 'Content-Type:application/json' \
   -d '{
-      "client_name": your_app_name,
+      "client_name": "your_app_name",
       "redirect_uris": "urn:ietf:wg:oauth:2.0:oob",
       "scopes": "read"
     }'
@@ -27,17 +27,16 @@ Note that `scopes` can be any space-separated combination of:
 - admin
 
 !!! warning
-    Be **very** careful what scopes you grant to your application.
-    The default is `read` if `scopes` is not set.
+    Be **very** careful what scopes you grant to your application. While GoToSocial does not yet support properly scoped tokens, it is always good practice to grant your application the lowest tier permissions it needs to do its job. e.g. If your application won't be making posts, use scope=read. Also note that "read" is the default if none is set.
 
 A successful call returns a response with a `client_id` and `client_secret` that we are going need to use in the rest of the process. It looks something like this: 
 ```json
 {
-  "id": randomised_id,
-  "name": your_app_name,
+  "id": "randomised_id",
+  "name": "your_app_name",
   "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
-  "client_id": your_new_client_id,
-  "client_secret": your_new_client_secret
+  "client_id": "your_new_client_id",
+  "client_secret": "your_new_client_secret"
 }
 ```
 
