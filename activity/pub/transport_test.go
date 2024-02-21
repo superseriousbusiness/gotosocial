@@ -32,7 +32,8 @@ var (
 			gs,
 			ps,
 			testPubKeyId,
-			testPrivKey)
+			testPrivKey,
+		)
 		return
 	}
 )

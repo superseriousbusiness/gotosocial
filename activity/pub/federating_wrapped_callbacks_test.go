@@ -298,7 +298,7 @@ func TestFederatedCreate(t *testing.T) {
 		mockDB.EXPECT().Lock(ctx, mustParse(testNoteId1)).Return(func() {}, nil)
 		mockDB.EXPECT().Create(ctx, toDeserializedForm(testFederatedNote))
 		mockTp.EXPECT().Dereference(ctx, mustParse(testNoteId1)).Return(
-			wrappedInResponse(mustParse(testNoteId1), testFederatedNote), nil)
+			mustWrapInGETResponse(mustParse(testNoteId1), testFederatedNote), nil)
 		c := newCreateFn()
 		op := streams.NewActivityStreamsObjectProperty()
 		op.AppendIRI(mustParse(testNoteId1))
@@ -754,7 +754,7 @@ func TestFederatedAccept(t *testing.T) {
 		mockDB.EXPECT().ActorForInbox(ctx, mustParse(testMyInboxIRI)).Return(
 			mustParse(testFederatedActorIRI2), nil)
 		mockTp.EXPECT().Dereference(ctx, mustParse(testFederatedActivityIRI)).Return(
-			wrappedInResponse(mustParse(testFederatedActivityIRI), testFollow), nil)
+			mustWrapInGETResponse(mustParse(testFederatedActivityIRI), testFollow), nil)
 		mockDB.EXPECT().Lock(ctx, mustParse(testFederatedActivityIRI)).Return(func() {}, nil)
 		mockDB.EXPECT().Get(ctx, mustParse(testFederatedActivityIRI)).Return(
 			testFollow, nil)
@@ -1650,7 +1650,7 @@ func TestFederatedUndo(t *testing.T) {
 		defer ctl.Finish()
 		w, mockTp := setupFn(ctl)
 		mockTp.EXPECT().Dereference(ctx, mustParse(testFederatedActivityIRI)).Return(
-			wrappedInResponse(mustParse(testFederatedActivityIRI), testListen), nil)
+			mustWrapInGETResponse(mustParse(testFederatedActivityIRI), testListen), nil)
 		u := newUndoFn()
 		actor := streams.NewActivityStreamsActorProperty()
 		actor.AppendIRI(mustParse(testFederatedActorIRI2))
@@ -1665,7 +1665,7 @@ func TestFederatedUndo(t *testing.T) {
 		defer ctl.Finish()
 		w, mockTp := setupFn(ctl)
 		mockTp.EXPECT().Dereference(ctx, mustParse(testFederatedActivityIRI)).Return(
-			wrappedInResponse(mustParse(testFederatedActivityIRI), testFollow), nil)
+			mustWrapInGETResponse(mustParse(testFederatedActivityIRI), testFollow), nil)
 		u := newUndoFn()
 		op := streams.NewActivityStreamsObjectProperty()
 		op.AppendIRI(mustParse(testFederatedActivityIRI))
@@ -1680,7 +1680,7 @@ func TestFederatedUndo(t *testing.T) {
 		defer ctl.Finish()
 		w, mockTp := setupFn(ctl)
 		mockTp.EXPECT().Dereference(ctx, mustParse(testFederatedActivityIRI)).Return(
-			wrappedInResponse(mustParse(testFederatedActivityIRI), testListen), nil)
+			mustWrapInGETResponse(mustParse(testFederatedActivityIRI), testListen), nil)
 		u := newUndoFn()
 		err := w.undo(ctx, u)
 		if err != nil {
@@ -1692,7 +1692,7 @@ func TestFederatedUndo(t *testing.T) {
 		defer ctl.Finish()
 		w, mockTp := setupFn(ctl)
 		mockTp.EXPECT().Dereference(ctx, mustParse(testFederatedActivityIRI)).Return(
-			wrappedInResponse(mustParse(testFederatedActivityIRI), testListen), nil)
+			mustWrapInGETResponse(mustParse(testFederatedActivityIRI), testListen), nil)
 		u := newUndoFn()
 		op := streams.NewActivityStreamsObjectProperty()
 		op.AppendIRI(mustParse(testFederatedActivityIRI))
@@ -1707,7 +1707,7 @@ func TestFederatedUndo(t *testing.T) {
 		defer ctl.Finish()
 		w, mockTp := setupFn(ctl)
 		mockTp.EXPECT().Dereference(ctx, mustParse(testFederatedActivityIRI)).Return(
-			wrappedInResponse(mustParse(testFederatedActivityIRI), testListen), nil)
+			mustWrapInGETResponse(mustParse(testFederatedActivityIRI), testListen), nil)
 		var gotc context.Context
 		var got vocab.ActivityStreamsUndo
 		w.Undo = func(ctx context.Context, v vocab.ActivityStreamsUndo) error {

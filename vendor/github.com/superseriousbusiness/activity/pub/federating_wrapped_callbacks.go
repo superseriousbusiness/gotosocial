@@ -247,8 +247,8 @@ func (w FederatingWrappedCallbacks) create(c context.Context, a vocab.ActivitySt
 			if err != nil {
 				return err
 			}
-			var m map[string]interface{}
-			if err = readActivityPubResponse(resp, &m); err != nil {
+			m, err := readActivityPubResp(resp)
+			if err != nil {
 				return err
 			}
 			t, err = streams.ToType(c, m)
@@ -517,8 +517,8 @@ func (w FederatingWrappedCallbacks) accept(c context.Context, a vocab.ActivitySt
 				if err != nil {
 					return err
 				}
-				var m map[string]interface{}
-				if err = readActivityPubResponse(resp, &m); err != nil {
+				m, err := readActivityPubResp(resp)
+				if err != nil {
 					return err
 				}
 				t, err = streams.ToType(c, m)

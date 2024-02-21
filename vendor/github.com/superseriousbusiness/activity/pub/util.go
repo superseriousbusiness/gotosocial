@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -71,14 +72,35 @@ const (
 	acceptHeader = "Accept"
 )
 
-// readActivityPubResponse reads expected ActivtyPub data from contained response body,
-// also checking for appropriate media type. (also handles closing response body).
-func readActivityPubResponse(resp *http.Response, dst any) error {
+// readActivityPubReq reads ActivityPub data from an incoming request, handling body close.
+func readActivityPubReq(req *http.Request) (map[string]interface{}, error) {
+	defer req.Body.Close()
+	var m map[string]interface{}
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&m); err != nil {
+		return nil, err
+	}
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		return nil, errors.New("trailing data after json")
+	}
+	return m, nil
+}
+
+// readActivityPubResp reads ActivityPub data from a dereference response, handling media type check and body close.
+func readActivityPubResp(resp *http.Response) (map[string]interface{}, error) {
 	defer resp.Body.Close()
 	if mediaType := resp.Header.Get("Content-Type"); !headerIsActivityPubMediaType(mediaType) {
-		return fmt.Errorf("data at %s was not ActivityPub media type: %s", resp.Request.URL.String(), mediaType)
+		return nil, fmt.Errorf("%s %s resp was not ActivityPub media type: %s", resp.Request.Method, resp.Request.URL, mediaType)
 	}
-	return json.NewDecoder(resp.Body).Decode(dst)
+	var m map[string]interface{}
+	dec := json.NewDecoder(resp.Body)
+	if err := dec.Decode(&m); err != nil {
+		return nil, err
+	}
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		return nil, errors.New("trailing data after json")
+	}
+	return m, nil
 }
 
 // isActivityPubPost returns true if the request is a POST request that has the
@@ -788,8 +810,8 @@ func mustHaveActivityActorsMatchObjectActors(c context.Context,
 		if err != nil {
 			return err
 		}
-		var m map[string]interface{}
-		if err = readActivityPubResponse(resp, &m); err != nil {
+		m, err := readActivityPubResp(resp)
+		if err != nil {
 			return err
 		}
 		t, err := streams.ToType(c, m)

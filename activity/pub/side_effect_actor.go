@@ -635,8 +635,8 @@ func (a *SideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *
 			// missing.
 			continue
 		}
-		var m map[string]interface{}
-		if err = readActivityPubResponse(resp, &m); err != nil {
+		m, err := readActivityPubResp(resp)
+		if err != nil {
 			return false, err
 		}
 		t, err := streams.ToType(c, m)
@@ -861,7 +861,8 @@ func (a *SideEffectActor) dereferenceForResolvingInboxes(c context.Context, t Tr
 		return
 	}
 	var m map[string]interface{}
-	if err = readActivityPubResponse(resp, &m); err != nil {
+	m, err = readActivityPubResp(resp)
+	if err != nil {
 		return
 	}
 	actor, err = streams.ToType(c, m)

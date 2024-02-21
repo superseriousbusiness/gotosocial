@@ -536,10 +536,10 @@ func TestInboxForwarding(t *testing.T) {
 			db.EXPECT().Owns(ctx, mustParse(testNoteId1)).Return(false, nil),
 			cm.EXPECT().NewTransport(ctx, mustParse(testMyInboxIRI), goFedUserAgent()).Return(mockTPortTag, nil),
 			mockTPortTag.EXPECT().Dereference(ctx, mustParse(testTagIRI)).Return(
-				wrappedInResponse(mustParse(testTagIRI), newObjectWithId(testTagIRI)), nil),
+				mustWrapInGETResponse(mustParse(testTagIRI), newObjectWithId(testTagIRI)), nil),
 			cm.EXPECT().NewTransport(ctx, mustParse(testMyInboxIRI), goFedUserAgent()).Return(mockTPortTag2, nil),
 			mockTPortTag2.EXPECT().Dereference(ctx, mustParse(testTagIRI2)).Return(
-				wrappedInResponse(mustParse(testTagIRI2), newObjectWithId(testTagIRI2)), nil),
+				mustWrapInGETResponse(mustParse(testTagIRI2), newObjectWithId(testTagIRI2)), nil),
 		)
 		// Run
 		err := a.InboxForwarding(ctx, mustParse(testMyInboxIRI), input)

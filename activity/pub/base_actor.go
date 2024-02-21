@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -195,12 +194,8 @@ func (b *baseActor) PostInboxScheme(c context.Context, w http.ResponseWriter, r 
 	// Begin processing the request, but have not yet applied
 	// authorization (ex: blocks). Obtain the activity reject unknown
 	// activities.
-	raw, err := ioutil.ReadAll(r.Body)
+	m, err := readActivityPubReq(r)
 	if err != nil {
-		return true, err
-	}
-	var m map[string]interface{}
-	if err = json.Unmarshal(raw, &m); err != nil {
 		return true, err
 	}
 	asValue, err := streams.ToType(c, m)
@@ -340,12 +335,8 @@ func (b *baseActor) PostOutboxScheme(c context.Context, w http.ResponseWriter, r
 		return true, nil
 	}
 	// Everything is good to begin processing the request.
-	raw, err := ioutil.ReadAll(r.Body)
+	m, err := readActivityPubReq(r)
 	if err != nil {
-		return true, err
-	}
-	var m map[string]interface{}
-	if err = json.Unmarshal(raw, &m); err != nil {
 		return true, err
 	}
 	// Note that converting to a Type will NOT successfully convert types
