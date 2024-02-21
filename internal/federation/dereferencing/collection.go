@@ -27,6 +27,34 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
+// dereferenceCollectionPage returns the activitystreams Collection at the specified IRI, or an error if something goes wrong.
+func (d *Dereferencer) dereferenceCollection(ctx context.Context, username string, pageIRI *url.URL) (ap.CollectionIterator, error) {
+	if blocked, err := d.state.DB.IsDomainBlocked(ctx, pageIRI.Host); blocked || err != nil {
+		return nil, gtserror.Newf("domain %s is blocked", pageIRI.Host)
+	}
+
+	transport, err := d.transportController.NewTransportForUsername(ctx, username)
+	if err != nil {
+		return nil, gtserror.Newf("error creating transport: %w", err)
+	}
+
+	rsp, err := transport.Dereference(ctx, pageIRI)
+	if err != nil {
+		return nil, gtserror.Newf("error deferencing %s: %w", pageIRI.String(), err)
+	}
+
+	collect, err := ap.ResolveCollection(ctx, rsp.Body)
+
+	// Tidy up rsp body.
+	_ = rsp.Body.Close()
+
+	if err != nil {
+		return nil, gtserror.Newf("error resolving collection %s: %w", pageIRI.String(), err)
+	}
+
+	return collect, nil
+}
+
 // dereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
 func (d *Dereferencer) dereferenceCollectionPage(ctx context.Context, username string, pageIRI *url.URL) (ap.CollectionPageIterator, error) {
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, pageIRI.Host); blocked || err != nil {
@@ -43,9 +71,11 @@ func (d *Dereferencer) dereferenceCollectionPage(ctx context.Context, username s
 		return nil, gtserror.Newf("error deferencing %s: %w", pageIRI.String(), err)
 	}
 
-	defer rsp.Body.Close()
-
 	page, err := ap.ResolveCollectionPage(ctx, rsp.Body)
+
+	// Tidy up rsp body.
+	_ = rsp.Body.Close()
+
 	if err != nil {
 		return nil, gtserror.Newf("error resolving collection page %s: %w", pageIRI.String(), err)
 	}

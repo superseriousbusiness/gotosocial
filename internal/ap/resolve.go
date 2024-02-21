@@ -159,6 +159,27 @@ func ResolveAccountable(ctx context.Context, data io.Reader) (Accountable, error
 	return accountable, nil
 }
 
+// ResolveCollection tries to resolve the given reader into an ActivityPub Collection-like
+// representation, then wrapping as abstracted iterator. Works for: Collection, OrderedCollection.
+func ResolveCollection(ctx context.Context, data io.Reader) (CollectionIterator, error) {
+	// Get "raw" map
+	// destination.
+	raw := getMap()
+
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	t, err := decodeType(ctx, data, raw)
+	if err != nil {
+		return nil, gtserror.SetWrongType(err)
+	}
+
+	// Release.
+	putMap(raw)
+
+	// Cast as as Collection-like.
+	return ToCollectionIterator(t)
+}
+
 // ResolveCollectionPage tries to resolve the given reader into an ActivityPub CollectionPage-like
 // representation, then wrapping as abstracted iterator. Works for: CollectionPage, OrderedCollectionPage.
 func ResolveCollectionPage(ctx context.Context, data io.Reader) (CollectionPageIterator, error) {

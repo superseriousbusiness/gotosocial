@@ -1046,7 +1046,7 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 		return err
 	}
 
-	page, err := d.dereferenceCollectionPage(ctx, requestUser, uri)
+	collect, err := d.dereferenceCollection(ctx, requestUser, uri)
 	if err != nil {
 		return err
 	}
@@ -1060,8 +1060,8 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 	var statusURIs []*url.URL
 
 	for {
-		// Get next item from page.
-		item := page.NextItem()
+		// Get next collect item.
+		item := collect.NextItem()
 		if item == nil {
 			break
 		}
