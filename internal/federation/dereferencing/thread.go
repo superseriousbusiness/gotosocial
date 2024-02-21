@@ -176,14 +176,6 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// we simply treat this as a temporary situation.
 		case err != nil:
 			l.Errorf("error getting parent: %v", err)
-
-		// The current status is using an indirect URL
-		// in order to reference the parent. This is just
-		// weird and broken... Leave the URI in place but
-		// don't link the statuses via database IDs as it
-		// could cause all sorts of unexpected situations.
-		case current.InReplyToURI != parent.URI:
-			l.Errorf("indirect in_reply_to_uri => %s", parent.URI)
 		}
 
 		// Start a new switch case
