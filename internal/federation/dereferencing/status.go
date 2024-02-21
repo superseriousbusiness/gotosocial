@@ -413,7 +413,7 @@ func (d *Dereferencer) enrichStatus(
 		}
 
 		// Check whether input URI and final returned URI
-		// have checked (i.e. we followed some redirects).
+		// have changed (i.e. we followed some redirects).
 		if finalURIStr := rsp.Request.URL.String(); //
 		finalURIStr != uri.String() {
 
