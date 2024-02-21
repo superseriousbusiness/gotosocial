@@ -507,7 +507,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.6.0-gts => ./activity
+# github.com/superseriousbusiness/activity v1.6.0-gts.0.20240221151241-5d56c04088d4
 ## explicit; go 1.18
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
@@ -1162,4 +1162,3 @@ modernc.org/token
 # mvdan.cc/xurls/v2 v2.5.0
 ## explicit; go 1.19
 mvdan.cc/xurls/v2
-# github.com/superseriousbusiness/activity => ./activity

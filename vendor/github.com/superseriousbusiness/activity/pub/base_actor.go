@@ -67,12 +67,7 @@ func NewSocialActor(c CommonBehavior,
 	clock Clock) Actor {
 	return &baseActor{
 		// Use SideEffectActor without s2s.
-		delegate: &SideEffectActor{
-			common: c,
-			c2s:    c2s,
-			db:     db,
-			clock:  clock,
-		},
+		delegate:             NewSideEffectActor(c, nil, c2s, db, clock),
 		enableSocialProtocol: true,
 		clock:                clock,
 	}
@@ -97,12 +92,7 @@ func NewFederatingActor(c CommonBehavior,
 	return &baseActorFederating{
 		baseActor{
 			// Use SideEffectActor without c2s.
-			delegate: &SideEffectActor{
-				common: c,
-				s2s:    s2s,
-				db:     db,
-				clock:  clock,
-			},
+			delegate:                NewSideEffectActor(c, s2s, nil, db, clock),
 			enableFederatedProtocol: true,
 			clock:                   clock,
 		},
