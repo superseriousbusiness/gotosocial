@@ -1097,20 +1097,21 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 			}
 		}
 
-		// If the status was already pinned, we don't need to do anything.
+		// If the status was already pinned,
+		// we don't need to do anything.
 		if !status.PinnedAt.IsZero() {
 			continue
 		}
 
-		if status.AccountID != account.ID {
+		if status.AccountURI != account.URI {
 			// Someone's pinned a status that doesn't
 			// belong to them, this doesn't work for us.
 			continue
 		}
 
-		if status.BoostOfID != "" {
-			// Someone's pinned a boost. This also
-			// doesn't work for us.
+		if status.BoostOfURI != "" {
+			// Someone's pinned a boost. This
+			// also doesn't work for us.
 			continue
 		}
 
