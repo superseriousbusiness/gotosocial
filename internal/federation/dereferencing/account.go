@@ -497,16 +497,17 @@ func (d *Dereferencer) enrichAccount(
 
 		case err == nil && account.Domain != accDomain:
 			// After webfinger, we now have correct account domain from which we can do a final DB check.
-			alreadyAcct, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
+			alreadyAcc, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return nil, nil, gtserror.Newf("db err looking for account again after webfinger: %w", err)
+				return nil, nil, gtserror.Newf("db error getting account after webfinger: %w", err)
 			}
 
-			if alreadyAcct != nil {
-				// We had this account stored under
-				// the discovered accountDomain.
+			if alreadyAcc != nil {
+				// We had this account stored
+				// under discovered accountDomain.
+				//
 				// Proceed with this account.
-				account = alreadyAcct
+				account = alreadyAcc
 			}
 
 			// Whether we had the account or not, we
@@ -535,8 +536,9 @@ func (d *Dereferencer) enrichAccount(
 			)
 		}
 
+		// Check URI scheme ahead of time for more useful errs.
 		if uri.Scheme != "http" && uri.Scheme != "https" {
-			err = errors.New("account URI scheme must be http or https")
+			err := errors.New("account URI scheme must be http or https")
 			return nil, nil, gtserror.Newf(
 				"invalid uri %q: %w",
 				account.URI, gtserror.SetUnretrievable(err),
@@ -571,22 +573,45 @@ func (d *Dereferencer) enrichAccount(
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
-		// Update the input account URI with the last
-		// set URI during HTTP client dereferencing, as it
-		// may have been updated following redirects.
-		uri = rsp.Request.URL
-
-		// Tidy up when done.
-		defer rsp.Body.Close()
-
 		// Attempt to resolve ActivityPub acc from response.
 		apubAcc, err = ap.ResolveAccountable(ctx, rsp.Body)
-		if err != nil {
 
+		// Tidy up now done.
+		_ = rsp.Body.Close()
+
+		if err != nil {
 			// ResolveAccountable will set gtserror.WrongType
 			// on the returned error, so we don't need to do it here.
 			err = gtserror.Newf("error resolving accountable %s: %w", uri, err)
 			return nil, nil, err
+		}
+
+		// Check whether input URI and final returned URI
+		// have checked (i.e. we followed some redirects).
+		if finalURIStr := rsp.Request.URL.String(); //
+		finalURIStr != uri.String() {
+
+			// NOTE: this URI check + database call is performed
+			// AFTER reading and closing response body, for performance.
+			//
+			// Check whether we have this account stored under *final* URI.
+			alreadyAcc, err := d.state.DB.GetAccountByURI(ctx, finalURIStr)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return nil, nil, gtserror.Newf("db error getting account after redirects: %w", err)
+			}
+
+			if alreadyAcc != nil {
+				// We had this account stored
+				// under discovered final URI.
+				//
+				// Proceed with this account.
+				account = alreadyAcc
+			}
+
+			// Update the input URI to
+			// the final determined URI
+			// for later URI checks.
+			uri = rsp.Request.URL
 		}
 	}
 

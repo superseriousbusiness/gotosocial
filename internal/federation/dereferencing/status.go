@@ -399,21 +399,45 @@ func (d *Dereferencer) enrichStatus(
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
-		// Update the input status URI with the last
-		// set URI during HTTP client dereferencing, as it
-		// may have been updated following redirects.
-		uri = rsp.Request.URL
-
-		// Tidy up when done.
-		defer rsp.Body.Close()
-
 		// Attempt to resolve ActivityPub status from response.
 		apubStatus, err = ap.ResolveStatusable(ctx, rsp.Body)
-		if err != nil {
 
+		// Tidy up now done.
+		_ = rsp.Body.Close()
+
+		if err != nil {
 			// ResolveStatusable will set gtserror.WrongType
 			// on the returned error, so we don't need to do it here.
-			return nil, nil, gtserror.Newf("error resolving statusable %s: %w", uri, err)
+			err = gtserror.Newf("error resolving statusable %s: %w", uri, err)
+			return nil, nil, err
+		}
+
+		// Check whether input URI and final returned URI
+		// have checked (i.e. we followed some redirects).
+		if finalURIStr := rsp.Request.URL.String(); //
+		finalURIStr != uri.String() {
+
+			// NOTE: this URI check + database call is performed
+			// AFTER reading and closing response body, for performance.
+			//
+			// Check whether we have this status stored under *final* URI.
+			alreadyStatus, err := d.state.DB.GetStatusByURI(ctx, finalURIStr)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return nil, nil, gtserror.Newf("db error getting status after redirects: %w", err)
+			}
+
+			if alreadyStatus != nil {
+				// We had this status stored
+				// under discovered final URI.
+				//
+				// Proceed with this status.
+				status = alreadyStatus
+			}
+
+			// Update the input URI to
+			// the final determined URI
+			// for later URI checks.
+			uri = rsp.Request.URL
 		}
 	}
 
