@@ -155,9 +155,9 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// the now-gone parent.
 		case code == http.StatusGone:
 			l.Trace("status orphaned")
-			status.InReplyToAccount = nil
+			current.InReplyToAccount = nil
 			return d.updateStatusParent(ctx,
-				status,
+				current,
 				"", // status ID
 				"", // status URI
 				"", // account ID
@@ -198,9 +198,9 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// Update the current's inReplyTo fields to parent.
 		case current.InReplyToID != parent.ID:
 			l.Tracef("parent changed %s => %s", current.InReplyToID, parent.ID)
-			status.InReplyToAccount = parent.Account
+			current.InReplyToAccount = parent.Account
 			if err := d.updateStatusParent(ctx,
-				status,
+				current,
 				parent.ID,
 				parent.URI,
 				parent.AccountID,
