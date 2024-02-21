@@ -80,6 +80,7 @@ func NormalizeIncomingActivity(activity pub.Activity, rawJSON map[string]interfa
 		if accountable, ok := ToAccountable(dataType); ok {
 			// Normalize everything we can on the accountable.
 			NormalizeIncomingSummary(accountable, rawData)
+			NormalizeIncomingFields(accountable, rawData)
 			continue
 		}
 	}
@@ -257,6 +258,64 @@ func NormalizeIncomingSummary(item WithSummary, rawJSON map[string]interface{}) 
 	item.SetActivityStreamsSummary(summaryProp)
 }
 
+// NormalizeIncomingFields sanitizes any PropertyValue fields on the
+// given WithAttachment interface, by removing html completely from
+// the "name" field, and sanitizing dodgy HTML out of the "value" field.
+func NormalizeIncomingFields(item WithAttachment, rawJSON map[string]interface{}) {
+	rawAttachments, ok := rawJSON["attachment"]
+	if !ok {
+		// No attachments in rawJSON.
+		return
+	}
+
+	// Convert to slice if not already,
+	// so we can iterate through it.
+	var attachments []interface{}
+	if attachments, ok = rawAttachments.([]interface{}); !ok {
+		attachments = []interface{}{rawAttachments}
+	}
+
+	attachmentProperty := item.GetActivityStreamsAttachment()
+	if attachmentProperty == nil {
+		// Nothing to do here.
+		return
+	}
+
+	if l := attachmentProperty.Len(); l == 0 || l != len(attachments) {
+		// Mismatch between item and
+		// JSON, can't normalize.
+		return
+	}
+
+	// Keep an index of where we are in the iter;
+	// we need this so we can modify the correct
+	// attachment, in case of multiples.
+	i := -1
+
+	for iter := attachmentProperty.Begin(); iter != attachmentProperty.End(); iter = iter.Next() {
+		i++
+
+		if !iter.IsSchemaPropertyValue() {
+			// Not interested.
+			continue
+		}
+
+		pv := iter.GetSchemaPropertyValue()
+		if pv == nil {
+			// Odd.
+			continue
+		}
+
+		rawPv, ok := attachments[i].(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		NormalizeIncomingName(pv, rawPv)
+		NormalizeIncomingValue(pv, rawPv)
+	}
+}
+
 // NormalizeIncomingName replaces the Name of the given item
 // with the raw 'name' value from the raw json object map.
 //
@@ -287,6 +346,36 @@ func NormalizeIncomingName(item WithName, rawJSON map[string]interface{}) {
 	nameProp := streams.NewActivityStreamsNameProperty()
 	nameProp.AppendXMLSchemaString(name)
 	item.SetActivityStreamsName(nameProp)
+}
+
+// NormalizeIncomingValue replaces the Value of the given
+// tem with the raw 'value' from the raw json object map.
+//
+// noop if there was no name in the json object map or the
+// value was not a plain string.
+func NormalizeIncomingValue(item WithValue, rawJSON map[string]interface{}) {
+	rawValue, ok := rawJSON["value"]
+	if !ok {
+		// No value in rawJSON.
+		return
+	}
+
+	value, ok := rawValue.(string)
+	if !ok {
+		// Not interested in non-string name.
+		return
+	}
+
+	// Value often contains links or
+	// mentions or other little snippets.
+	// Sanitize to HTML to allow these.
+	value = text.SanitizeToHTML(value)
+
+	// Set normalized name property from the raw string; this
+	// will replace any existing value property on the item.
+	valueProp := streams.NewSchemaValueProperty()
+	valueProp.Set(value)
+	item.SetSchemaValue(valueProp)
 }
 
 // NormalizeIncomingOneOf normalizes all oneOf (if any) of the given
