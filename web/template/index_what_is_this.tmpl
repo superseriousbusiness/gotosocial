@@ -1,0 +1,58 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<section role="region" class="about-section what-is-this" aria-labelledby="what-is-this">
+    <h3 id="what-is-this">What is this?</h3>
+    <div class="about-section-contents">
+        <p>
+            The web page you're reading right now is served by an instance of GoToSocial,
+            a federated, distributed, open-source microblogging software which connects
+            to other instances across a network known as the "fediverse".
+        </p>
+        <h4 id="what-is-an-instance">What is an "instance"?</h4>
+        <p>
+            "Instance" is a term commonly used for one node in the fediverse. Each instance
+            has its own web address, user(s), culture, rules, and settings. Instances exchange
+            data by "talking" to each other over the internet using a protocol called
+            <a href="https://www.w3.org/TR/activitypub" rel="nofollow noreferrer noopener" target="_blank">ActivityPub (opens in a new tab)</a>.
+        </p>
+        <p>
+            Each instance can, in theory, talk to each other instance, allowing people to talk
+            to one another across a decentralized network that has no single authority in charge.
+        </p>
+        <p>
+            There are thousands of fediverse instances, connecting millions of people together.
+        </p>
+        <h4 id="how-do-i-join-the-fediverse">How do I join the fediverse?</h4>
+        <p>
+            You can join the fediverse by running your own instance of an ActivityPub software,
+            or by finding an existing instance that aligns with your values and expectations,
+            and registering an account there.
+        </p>
+        <p>
+            To help you find an instance that suits you, you can try one of the following tools:
+        </p>
+        <ul>
+            <li><a href="https://fediverse.observer" rel="nofollow noreferrer noopener" target="_blank">Fediverse Observer (opens in a new tab)</a></li>
+            <li><a href="https://fedidb.org/network" rel="nofollow noreferrer noopener" target="_blank">FediDB (opens in a new tab)</a></li>
+        </ul>
+    </div>
+</section>
+{{- end }}

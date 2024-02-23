@@ -33,6 +33,32 @@
 {{- end }}
 {{- end -}}
 
+{{- define "languages" -}}
+{{- if .languages }}
+<p>This instance prefers the following languages:</p>
+<ol>
+    {{- range .languages }}
+    <li>{{- . -}}</li>
+    {{- end }}
+</ol>
+{{- else }}
+<p>No preferred languages have yet been set for this instance.</p> 
+{{- end }}
+{{- end -}}
+
+{{- define "rules" -}}
+{{- if .instance.Rules }}
+<p>This instance has the following rules:</p>
+<ol>
+    {{- range .instance.Rules }}
+    <li>{{- .Text -}}</li>
+    {{- end }}
+</ol>
+{{- else }}
+<p>No rules have yet been set for this instance.</p>
+{{- end }}
+{{- end -}}
+
 {{- define "registrationLimits" -}}
 {{- if .instance.Registrations -}}
     Registration is enabled; new signups can be submitted to this instance.<br/>
@@ -129,30 +155,16 @@ Polls can have up to&nbsp;
     <section class="about-section" role="region" aria-labelledby="languages">
         <h3 id="languages">Languages</h3>
         <div class="about-section-contents">
-            {{- if .languages }}
-            <p>This instance prefers the following languages:</p>
-            <ol>
-                {{- range .languages }}
-                <li>{{- . -}}</li>
-                {{- end }}
-            </ol>
-            {{- else }}
-            <p>This instance does not have any preferred languages.</p> 
+            {{- with . }}
+            {{- include "languages" . | indent 3 }}
             {{- end }}
         </div>
     </section>
     <section class="about-section" role="region" aria-labelledby="rules">
         <h3 id="rules">Instance Rules</h3>
         <div class="about-section-contents">
-            <p>This instance has the following rules:</p>
-            {{- if .instance.Rules }}
-            <ol>
-                {{- range .instance.Rules }}
-                <li>{{- .Text -}}</li>
-                {{- end }}
-            </ol>
-            {{- else }}
-            <p>This instance has not yet set any rules.</p>
+            {{- with . }}
+            {{- include "rules" . | indent 3 }}
             {{- end }}
         </div>
     </section>
