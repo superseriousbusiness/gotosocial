@@ -1109,9 +1109,11 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 			continue
 		}
 
-		if status.BoostOfURI != "" {
+		if status.BoostOfID != "" {
 			// Someone's pinned a boost. This
-			// also doesn't work for us.
+			// also doesn't work for us. (note
+			// we check using BoostOfID since
+			// BoostOfURI isn't *always* set).
 			continue
 		}
 
