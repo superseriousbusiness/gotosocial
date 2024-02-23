@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -40,11 +41,11 @@ func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
 	ctx := context.Background()
 	b := []byte(in)
 
-	if accountable, err := ap.ResolveAccountable(ctx, bytes.NewReader(b)); err == nil {
+	if accountable, err := ap.ResolveAccountable(ctx, io.NopCloser(bytes.NewReader(b))); err == nil {
 		return accountable
 	}
 
-	if statusable, err := ap.ResolveStatusable(ctx, bytes.NewReader(b)); err == nil {
+	if statusable, err := ap.ResolveStatusable(ctx, io.NopCloser(bytes.NewReader(b))); err == nil {
 		return statusable
 	}
 

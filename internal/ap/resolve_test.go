@@ -20,6 +20,7 @@ package ap_test
 import (
 	"bytes"
 	"context"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -35,7 +36,7 @@ func (suite *ResolveTestSuite) TestResolveDocumentAsStatusable() {
 	b := []byte(suite.typeToJson(suite.document1))
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(), bytes.NewReader(b),
+		context.Background(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.NoError(err)
 	suite.NotNil(statusable)
@@ -45,7 +46,7 @@ func (suite *ResolveTestSuite) TestResolveDocumentAsAccountable() {
 	b := []byte(suite.typeToJson(suite.document1))
 
 	accountable, err := ap.ResolveAccountable(
-		context.Background(), bytes.NewReader(b),
+		context.Background(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.True(gtserror.IsWrongType(err))
 	suite.EqualError(err, "ResolveAccountable: cannot resolve vocab type *typedocument.ActivityStreamsDocument as accountable")
@@ -57,7 +58,7 @@ func (suite *ResolveTestSuite) TestResolveHTMLAsAccountable() {
 	<title>.</title>`)
 
 	accountable, err := ap.ResolveAccountable(
-		context.Background(), bytes.NewReader(b),
+		context.Background(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.True(gtserror.IsWrongType(err))
 	suite.EqualError(err, "ResolveAccountable: error decoding into json: invalid character '<' looking for beginning of value")
@@ -72,7 +73,7 @@ func (suite *ResolveTestSuite) TestResolveNonAPJSONAsAccountable() {
 }`)
 
 	accountable, err := ap.ResolveAccountable(
-		context.Background(), bytes.NewReader(b),
+		context.Background(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.True(gtserror.IsWrongType(err))
 	suite.EqualError(err, "ResolveAccountable: error resolving json into ap vocab type: activity stream did not match any known types")

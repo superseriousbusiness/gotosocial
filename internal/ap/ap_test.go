@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/pub"
@@ -190,7 +191,7 @@ func (suite *APTestSuite) noteWithHashtags1() ap.Statusable {
 
 	statusable, err := ap.ResolveStatusable(
 		context.Background(),
-		bytes.NewReader(noteJson),
+		io.NopCloser(bytes.NewReader(noteJson)),
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
