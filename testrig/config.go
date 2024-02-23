@@ -101,7 +101,6 @@ var testDefaults = config.Configuration{
 	StorageLocalBasePath: "",
 
 	StatusesMaxChars:           5000,
-	StatusesCWMaxChars:         100,
 	StatusesPollMaxOptions:     6,
 	StatusesPollOptionMaxChars: 50,
 	StatusesMediaMaxFiles:      6,
