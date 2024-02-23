@@ -137,15 +137,11 @@ func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) erro
 	}
 
 	maxChars := config.GetStatusesMaxChars()
-	maxMediaFiles := config.GetStatusesMediaMaxFiles()
-	maxCwChars := config.GetStatusesCWMaxChars()
-
-	if form.Status != "" {
-		if length := len([]rune(form.Status)); length > maxChars {
-			return fmt.Errorf("status too long, %d characters provided but limit is %d", length, maxChars)
-		}
+	if length := len([]rune(form.Status)) + len([]rune(form.SpoilerText)); length > maxChars {
+		return fmt.Errorf("status too long, %d characters provided (including spoiler/content warning) but limit is %d", length, maxChars)
 	}
 
+	maxMediaFiles := config.GetStatusesMediaMaxFiles()
 	if len(form.MediaIDs) > maxMediaFiles {
 		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), maxMediaFiles)
 	}
@@ -153,12 +149,6 @@ func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) erro
 	if form.Poll != nil {
 		if err := validateNormalizeCreatePoll(form); err != nil {
 			return err
-		}
-	}
-
-	if form.SpoilerText != "" {
-		if length := len([]rune(form.SpoilerText)); length > maxCwChars {
-			return fmt.Errorf("content-warning/spoilertext too long, %d characters provided but limit is %d", length, maxCwChars)
 		}
 	}
 

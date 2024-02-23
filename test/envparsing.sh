@@ -142,7 +142,6 @@ EXPECT=$(cat << "EOF"
     "smtp-port": 4269,
     "smtp-username": "sex-haver",
     "software-version": "",
-    "statuses-cw-max-chars": 420,
     "statuses-max-chars": 69,
     "statuses-media-max-files": 1,
     "statuses-poll-max-options": 1,
