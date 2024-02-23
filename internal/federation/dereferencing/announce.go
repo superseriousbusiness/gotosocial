@@ -83,6 +83,10 @@ func (d *Dereferencer) EnrichAnnounce(
 		return nil, gtserror.Newf("error generating id: %w", err)
 	}
 
+	// Set boost_of_uri again in case the
+	// original URI was an indirect link.
+	boost.BoostOfURI = target.URI
+
 	// Populate remaining fields on
 	// the boost wrapper using target.
 	boost.Content = target.Content
@@ -101,10 +105,10 @@ func (d *Dereferencer) EnrichAnnounce(
 	boost.Replyable = target.Replyable
 	boost.Likeable = target.Likeable
 
-	// Store the boost wrapper status.
+	// Store the boost wrapper status in database.
 	switch err = d.state.DB.PutStatus(ctx, boost); {
 	case err == nil:
-		// All good baby.
+		// all groovy.
 
 	case errors.Is(err, db.ErrAlreadyExists):
 		uri := boost.URI
@@ -119,8 +123,7 @@ func (d *Dereferencer) EnrichAnnounce(
 			)
 		}
 
-	default:
-		// Proper database error.
+	default: // Proper database error.
 		return nil, gtserror.Newf("db error inserting status: %w", err)
 	}
 

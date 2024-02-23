@@ -300,6 +300,15 @@ type ReplyToable interface {
 	WithInReplyTo
 }
 
+// CollectionIterator represents the minimum interface for interacting with a
+// wrapped Collection or OrderedCollection in order to access next / prev items.
+type CollectionIterator interface {
+	vocab.Type
+
+	NextItem() TypeOrIRI
+	PrevItem() TypeOrIRI
+}
+
 // CollectionPageIterator represents the minimum interface for interacting with a wrapped
 // CollectionPage or OrderedCollectionPage in order to access both next / prev pages and items.
 type CollectionPageIterator interface {

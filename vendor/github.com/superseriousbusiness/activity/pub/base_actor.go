@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -68,12 +67,7 @@ func NewSocialActor(c CommonBehavior,
 	clock Clock) Actor {
 	return &baseActor{
 		// Use SideEffectActor without s2s.
-		delegate: &SideEffectActor{
-			common: c,
-			c2s:    c2s,
-			db:     db,
-			clock:  clock,
-		},
+		delegate:             NewSideEffectActor(c, nil, c2s, db, clock),
 		enableSocialProtocol: true,
 		clock:                clock,
 	}
@@ -98,12 +92,7 @@ func NewFederatingActor(c CommonBehavior,
 	return &baseActorFederating{
 		baseActor{
 			// Use SideEffectActor without c2s.
-			delegate: &SideEffectActor{
-				common: c,
-				s2s:    s2s,
-				db:     db,
-				clock:  clock,
-			},
+			delegate:                NewSideEffectActor(c, s2s, nil, db, clock),
 			enableFederatedProtocol: true,
 			clock:                   clock,
 		},
@@ -195,12 +184,8 @@ func (b *baseActor) PostInboxScheme(c context.Context, w http.ResponseWriter, r 
 	// Begin processing the request, but have not yet applied
 	// authorization (ex: blocks). Obtain the activity reject unknown
 	// activities.
-	raw, err := ioutil.ReadAll(r.Body)
+	m, err := readActivityPubReq(r)
 	if err != nil {
-		return true, err
-	}
-	var m map[string]interface{}
-	if err = json.Unmarshal(raw, &m); err != nil {
 		return true, err
 	}
 	asValue, err := streams.ToType(c, m)
@@ -340,12 +325,8 @@ func (b *baseActor) PostOutboxScheme(c context.Context, w http.ResponseWriter, r
 		return true, nil
 	}
 	// Everything is good to begin processing the request.
-	raw, err := ioutil.ReadAll(r.Body)
+	m, err := readActivityPubReq(r)
 	if err != nil {
-		return true, err
-	}
-	var m map[string]interface{}
-	if err = json.Unmarshal(raw, &m); err != nil {
 		return true, err
 	}
 	// Note that converting to a Type will NOT successfully convert types

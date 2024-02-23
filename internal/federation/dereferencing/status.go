@@ -393,16 +393,51 @@ func (d *Dereferencer) enrichStatus(
 
 	if apubStatus == nil {
 		// Dereference latest version of the status.
-		b, err := tsport.Dereference(ctx, uri)
+		rsp, err := tsport.Dereference(ctx, uri)
 		if err != nil {
 			err := gtserror.Newf("error dereferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
-		// Attempt to resolve ActivityPub status from data.
-		apubStatus, err = ap.ResolveStatusable(ctx, b)
+		// Attempt to resolve ActivityPub status from response.
+		apubStatus, err = ap.ResolveStatusable(ctx, rsp.Body)
+
+		// Tidy up now done.
+		_ = rsp.Body.Close()
+
 		if err != nil {
-			return nil, nil, gtserror.Newf("error resolving statusable from data for account %s: %w", uri, err)
+			// ResolveStatusable will set gtserror.WrongType
+			// on the returned error, so we don't need to do it here.
+			err = gtserror.Newf("error resolving statusable %s: %w", uri, err)
+			return nil, nil, err
+		}
+
+		// Check whether input URI and final returned URI
+		// have changed (i.e. we followed some redirects).
+		if finalURIStr := rsp.Request.URL.String(); //
+		finalURIStr != uri.String() {
+
+			// NOTE: this URI check + database call is performed
+			// AFTER reading and closing response body, for performance.
+			//
+			// Check whether we have this status stored under *final* URI.
+			alreadyStatus, err := d.state.DB.GetStatusByURI(ctx, finalURIStr)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return nil, nil, gtserror.Newf("db error getting status after redirects: %w", err)
+			}
+
+			if alreadyStatus != nil {
+				// We had this status stored
+				// under discovered final URI.
+				//
+				// Proceed with this status.
+				status = alreadyStatus
+			}
+
+			// Update the input URI to
+			// the final determined URI
+			// for later URI checks.
+			uri = rsp.Request.URL
 		}
 	}
 

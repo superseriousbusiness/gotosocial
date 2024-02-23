@@ -26,6 +26,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
+// TODO: replace must of this logic with just
+// using extractIRIs() on the iterator types.
+
+// ToCollectionIterator attempts to resolve the given vocab type as a Collection
+// like object and wrap in a standardised interface in order to iterate its contents.
+func ToCollectionIterator(t vocab.Type) (CollectionIterator, error) {
+	switch name := t.GetTypeName(); name {
+	case ObjectCollection:
+		t := t.(vocab.ActivityStreamsCollection)
+		return WrapCollection(t), nil
+	case ObjectOrderedCollection:
+		t := t.(vocab.ActivityStreamsOrderedCollection)
+		return WrapOrderedCollection(t), nil
+	default:
+		return nil, fmt.Errorf("%T(%s) was not Collection-like", t, name)
+	}
+}
+
 // ToCollectionPageIterator attempts to resolve the given vocab type as a CollectionPage
 // like object and wrap in a standardised interface in order to iterate its contents.
 func ToCollectionPageIterator(t vocab.Type) (CollectionPageIterator, error) {
@@ -41,6 +59,16 @@ func ToCollectionPageIterator(t vocab.Type) (CollectionPageIterator, error) {
 	}
 }
 
+// WrapCollection wraps an ActivityStreamsCollection in a standardised collection interface.
+func WrapCollection(collection vocab.ActivityStreamsCollection) CollectionIterator {
+	return &regularCollectionIterator{ActivityStreamsCollection: collection}
+}
+
+// WrapOrderedCollection wraps an ActivityStreamsOrderedCollection in a standardised collection interface.
+func WrapOrderedCollection(collection vocab.ActivityStreamsOrderedCollection) CollectionIterator {
+	return &orderedCollectionIterator{ActivityStreamsOrderedCollection: collection}
+}
+
 // WrapCollectionPage wraps an ActivityStreamsCollectionPage in a standardised collection page interface.
 func WrapCollectionPage(page vocab.ActivityStreamsCollectionPage) CollectionPageIterator {
 	return &regularCollectionPageIterator{ActivityStreamsCollectionPage: page}
@@ -49,6 +77,90 @@ func WrapCollectionPage(page vocab.ActivityStreamsCollectionPage) CollectionPage
 // WrapOrderedCollectionPage wraps an ActivityStreamsOrderedCollectionPage in a standardised collection page interface.
 func WrapOrderedCollectionPage(page vocab.ActivityStreamsOrderedCollectionPage) CollectionPageIterator {
 	return &orderedCollectionPageIterator{ActivityStreamsOrderedCollectionPage: page}
+}
+
+// regularCollectionIterator implements CollectionIterator
+// for the vocab.ActivitiyStreamsCollection type.
+type regularCollectionIterator struct {
+	vocab.ActivityStreamsCollection
+	items vocab.ActivityStreamsItemsPropertyIterator
+	once  bool // only init items once
+}
+
+func (iter *regularCollectionIterator) NextItem() TypeOrIRI {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Next()
+	return cur
+}
+
+func (iter *regularCollectionIterator) PrevItem() TypeOrIRI {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Prev()
+	return cur
+}
+
+func (iter *regularCollectionIterator) initItems() bool {
+	if iter.once {
+		return (iter.items != nil)
+	}
+	iter.once = true
+	if iter.ActivityStreamsCollection == nil {
+		return false // no page set
+	}
+	items := iter.GetActivityStreamsItems()
+	if items == nil {
+		return false // no items found
+	}
+	iter.items = items.Begin()
+	return (iter.items != nil)
+}
+
+// orderedCollectionIterator implements CollectionIterator
+// for the vocab.ActivitiyStreamsOrderedCollection type.
+type orderedCollectionIterator struct {
+	vocab.ActivityStreamsOrderedCollection
+	items vocab.ActivityStreamsOrderedItemsPropertyIterator
+	once  bool // only init items once
+}
+
+func (iter *orderedCollectionIterator) NextItem() TypeOrIRI {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Next()
+	return cur
+}
+
+func (iter *orderedCollectionIterator) PrevItem() TypeOrIRI {
+	if !iter.initItems() {
+		return nil
+	}
+	cur := iter.items
+	iter.items = iter.items.Prev()
+	return cur
+}
+
+func (iter *orderedCollectionIterator) initItems() bool {
+	if iter.once {
+		return (iter.items != nil)
+	}
+	iter.once = true
+	if iter.ActivityStreamsOrderedCollection == nil {
+		return false // no page set
+	}
+	items := iter.GetActivityStreamsOrderedItems()
+	if items == nil {
+		return false // no items found
+	}
+	iter.items = items.Begin()
+	return (iter.items != nil)
 }
 
 // regularCollectionPageIterator implements CollectionPageIterator

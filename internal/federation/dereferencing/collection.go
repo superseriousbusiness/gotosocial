@@ -19,15 +19,41 @@ package dereferencing
 
 import (
 	"context"
-	"encoding/json"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
+
+// dereferenceCollectionPage returns the activitystreams Collection at the specified IRI, or an error if something goes wrong.
+func (d *Dereferencer) dereferenceCollection(ctx context.Context, username string, pageIRI *url.URL) (ap.CollectionIterator, error) {
+	if blocked, err := d.state.DB.IsDomainBlocked(ctx, pageIRI.Host); blocked || err != nil {
+		return nil, gtserror.Newf("domain %s is blocked", pageIRI.Host)
+	}
+
+	transport, err := d.transportController.NewTransportForUsername(ctx, username)
+	if err != nil {
+		return nil, gtserror.Newf("error creating transport: %w", err)
+	}
+
+	rsp, err := transport.Dereference(ctx, pageIRI)
+	if err != nil {
+		return nil, gtserror.Newf("error deferencing %s: %w", pageIRI.String(), err)
+	}
+
+	collect, err := ap.ResolveCollection(ctx, rsp.Body)
+
+	// Tidy up rsp body.
+	_ = rsp.Body.Close()
+
+	if err != nil {
+		return nil, gtserror.Newf("error resolving collection %s: %w", pageIRI.String(), err)
+	}
+
+	return collect, nil
+}
 
 // dereferenceCollectionPage returns the activitystreams CollectionPage at the specified IRI, or an error if something goes wrong.
 func (d *Dereferencer) dereferenceCollectionPage(ctx context.Context, username string, pageIRI *url.URL) (ap.CollectionPageIterator, error) {
@@ -40,24 +66,18 @@ func (d *Dereferencer) dereferenceCollectionPage(ctx context.Context, username s
 		return nil, gtserror.Newf("error creating transport: %w", err)
 	}
 
-	b, err := transport.Dereference(ctx, pageIRI)
+	rsp, err := transport.Dereference(ctx, pageIRI)
 	if err != nil {
 		return nil, gtserror.Newf("error deferencing %s: %w", pageIRI.String(), err)
 	}
 
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, gtserror.Newf("error unmarshalling bytes into json: %w", err)
-	}
+	page, err := ap.ResolveCollectionPage(ctx, rsp.Body)
 
-	t, err := streams.ToType(ctx, m)
-	if err != nil {
-		return nil, gtserror.Newf("error resolving json into ap vocab type: %w", err)
-	}
+	// Tidy up rsp body.
+	_ = rsp.Body.Close()
 
-	page, err := ap.ToCollectionPageIterator(t)
 	if err != nil {
-		return nil, gtserror.Newf("error resolving vocab type as page: %w", err)
+		return nil, gtserror.Newf("error resolving collection page %s: %w", pageIRI.String(), err)
 	}
 
 	return page, nil

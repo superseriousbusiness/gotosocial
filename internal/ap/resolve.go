@@ -22,69 +22,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
-	"sync"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
-
-// mapPool is a memory pool of maps for JSON decoding.
-var mapPool = sync.Pool{
-	New: func() any {
-		return make(map[string]any)
-	},
-}
-
-// getMap acquires a map from memory pool.
-func getMap() map[string]any {
-	m := mapPool.Get().(map[string]any) //nolint
-	return m
-}
-
-// putMap clears and places map back in pool.
-func putMap(m map[string]any) {
-	if len(m) > int(^uint8(0)) {
-		// don't pool overly
-		// large maps.
-		return
-	}
-	for k := range m {
-		delete(m, k)
-	}
-	mapPool.Put(m)
-}
-
-// bytesToType tries to parse the given bytes slice
-// as a JSON ActivityPub type, failing if the input
-// bytes are not parseable as JSON, or do not parse
-// to an ActivityPub that we can understand.
-//
-// The given map pointer will also be populated with
-// the parsed JSON, to allow further processing.
-func bytesToType(
-	ctx context.Context,
-	b []byte,
-	raw map[string]any,
-) (vocab.Type, error) {
-	// Unmarshal the raw JSON bytes into a "raw" map.
-	// This will fail if the input is not parseable
-	// as JSON; eg., a remote has returned HTML as a
-	// fallback response to an ActivityPub JSON request.
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return nil, gtserror.NewfAt(3, "error unmarshalling bytes into json: %w", err)
-	}
-
-	// Resolve an ActivityStreams type.
-	t, err := streams.ToType(ctx, raw)
-	if err != nil {
-		return nil, gtserror.NewfAt(3, "error resolving json into ap vocab type: %w", err)
-	}
-
-	return t, nil
-}
 
 // ResolveActivity is a util function for pulling a pub.Activity type out of an incoming request body,
 // returning the resolved activity type, error and whether to accept activity (false = transient i.e. ignore).
@@ -93,25 +38,23 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	// destination.
 	raw := getMap()
 
-	// Tidy up when done.
-	defer r.Body.Close()
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	// (this handles close of request body).
+	t, err := decodeType(r.Context(), r.Body, raw)
 
-	// Decode the JSON body stream into "raw" map.
-	if err := json.NewDecoder(r.Body).Decode(&raw); err != nil {
-		err := gtserror.Newf("error decoding json: %w", err)
-		return nil, false, gtserror.NewErrorInternalError(err)
-	}
-
-	// Resolve "raw" JSON to vocab.Type.
-	t, err := streams.ToType(r.Context(), raw)
 	if err != nil {
+		// NOTE: if the error here was due to the response body
+		// ending early, the connection will have broken so it
+		// doesn't matter if we try to return 400 or 500, the
+		// error is mainly for our logging. tl;dr there's not a
+		// huge need to differentiate between those error types.
+
 		if !streams.IsUnmatchedErr(err) {
 			err := gtserror.Newf("error matching json to type: %w", err)
 			return nil, false, gtserror.NewErrorInternalError(err)
 		}
 
-		// Respond with bad request; we just couldn't
-		// match the type to one that we know about.
 		const text = "body json not resolvable as ActivityStreams type"
 		return nil, false, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
@@ -142,18 +85,19 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	return activity, true, nil
 }
 
-// ResolveStatusable tries to resolve the given bytes into an ActivityPub Statusable representation.
-// It will then perform normalization on the Statusable.
+// ResolveStatusable tries to resolve the response data as an ActivityPub
+// Statusable representation. It will then perform normalization on the Statusable.
 //
 // Works for: Article, Document, Image, Video, Note, Page, Event, Place, Profile, Question.
-func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
+func ResolveStatusable(ctx context.Context, body io.ReadCloser) (Statusable, error) {
 	// Get "raw" map
 	// destination.
 	raw := getMap()
 
-	// Convert raw bytes to an AP type.
-	// This will also populate the map.
-	t, err := bytesToType(ctx, b, raw)
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	// (this handles close of given body).
+	t, err := decodeType(ctx, body, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -183,18 +127,19 @@ func ResolveStatusable(ctx context.Context, b []byte) (Statusable, error) {
 	return statusable, nil
 }
 
-// ResolveStatusable tries to resolve the given bytes into an ActivityPub Accountable representation.
-// It will then perform normalization on the Accountable.
+// ResolveAccountable tries to resolve the given reader into an ActivityPub
+// Accountable representation. It will then perform normalization on the Accountable.
 //
 // Works for: Application, Group, Organization, Person, Service
-func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
+func ResolveAccountable(ctx context.Context, body io.ReadCloser) (Accountable, error) {
 	// Get "raw" map
 	// destination.
 	raw := getMap()
 
-	// Convert raw bytes to an AP type.
-	// This will also populate the map.
-	t, err := bytesToType(ctx, b, raw)
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	// (this handles close of given body).
+	t, err := decodeType(ctx, body, raw)
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
@@ -212,4 +157,105 @@ func ResolveAccountable(ctx context.Context, b []byte) (Accountable, error) {
 	putMap(raw)
 
 	return accountable, nil
+}
+
+// ResolveCollection tries to resolve the given reader into an ActivityPub Collection-like
+// representation, then wrapping as abstracted iterator. Works for: Collection, OrderedCollection.
+func ResolveCollection(ctx context.Context, body io.ReadCloser) (CollectionIterator, error) {
+	// Get "raw" map
+	// destination.
+	raw := getMap()
+
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	// (this handles close of given body).
+	t, err := decodeType(ctx, body, raw)
+	if err != nil {
+		return nil, gtserror.SetWrongType(err)
+	}
+
+	// Release.
+	putMap(raw)
+
+	// Cast as as Collection-like.
+	return ToCollectionIterator(t)
+}
+
+// ResolveCollectionPage tries to resolve the given reader into an ActivityPub CollectionPage-like
+// representation, then wrapping as abstracted iterator. Works for: CollectionPage, OrderedCollectionPage.
+func ResolveCollectionPage(ctx context.Context, body io.ReadCloser) (CollectionPageIterator, error) {
+	// Get "raw" map
+	// destination.
+	raw := getMap()
+
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	// (this handles close of given body).
+	t, err := decodeType(ctx, body, raw)
+	if err != nil {
+		return nil, gtserror.SetWrongType(err)
+	}
+
+	// Release.
+	putMap(raw)
+
+	// Cast as as CollectionPage-like.
+	return ToCollectionPageIterator(t)
+}
+
+// emptydest is an empty JSON decode
+// destination useful for "noop" decodes
+// to check underlying reader is empty.
+var emptydest = &struct{}{}
+
+// decodeType tries to read and parse the data
+// at provided io.ReadCloser as a JSON ActivityPub
+// type, failing if not parseable as JSON or not
+// resolveable as one of our known AS types.
+//
+// NOTE: this function handles closing
+// given body when it is finished with.
+//
+// The given map pointer will also be populated with
+// the 'raw' JSON data, for further processing.
+func decodeType(
+	ctx context.Context,
+	body io.ReadCloser,
+	raw map[string]any,
+) (vocab.Type, error) {
+
+	// Wrap body in JSON decoder.
+	//
+	// We do this instead of using json.Unmarshal()
+	// so we can take advantage of the decoder's streamed
+	// check of input data as valid JSON. This means that
+	// in the cases of garbage input, or even just fallback
+	// HTML responses that were incorrectly content-type'd,
+	// we can error-out as soon as possible.
+	dec := json.NewDecoder(body)
+
+	// Unmarshal JSON source data into "raw" map.
+	if err := dec.Decode(&raw); err != nil {
+		_ = body.Close() // ensure closed.
+		return nil, gtserror.NewfAt(3, "error decoding into json: %w", err)
+	}
+
+	// Perform a secondary decode just to ensure we drained the
+	// entirety of the data source. Error indicates either extra
+	// trailing garbage, or multiple JSON values (invalid data).
+	if err := dec.Decode(emptydest); err != io.EOF {
+		_ = body.Close() // ensure closed.
+		return nil, gtserror.NewfAt(3, "data remaining after json")
+	}
+
+	// Done with body.
+	_ = body.Close()
+
+	// Resolve an ActivityStreams type.
+	t, err := streams.ToType(ctx, raw)
+	if err != nil {
+		return nil, gtserror.NewfAt(3, "error resolving json into ap vocab type: %w", err)
+	}
+
+	return t, nil
 }

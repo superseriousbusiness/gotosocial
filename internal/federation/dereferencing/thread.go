@@ -33,7 +33,7 @@ import (
 
 // maxIter defines how many iterations of descendants or
 // ancesters we are willing to follow before returning error.
-const maxIter = 1000
+const maxIter = 512
 
 // dereferenceThread handles dereferencing status thread after
 // fetch. Passing off appropriate parts to be enqueued for async
@@ -98,15 +98,9 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 			return nil
 		}
 
+		// Apparent current parent URI to log fields.
 		l = l.WithField("parent", current.InReplyToURI)
 		l.Trace("following status ancestor")
-
-		// Parse status parent URI for later use.
-		uri, err := url.Parse(current.InReplyToURI)
-		if err != nil {
-			l.Warnf("invalid uri: %v", err)
-			return nil
-		}
 
 		// Check whether this parent has already been deref'd.
 		if _, ok := derefdStatuses[current.InReplyToURI]; ok {
@@ -116,6 +110,13 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 
 		// Add this status's parent URI to map of deref'd.
 		derefdStatuses[current.InReplyToURI] = struct{}{}
+
+		// Parse status parent URI for later use.
+		uri, err := url.Parse(current.InReplyToURI)
+		if err != nil {
+			l.Warnf("invalid uri: %v", err)
+			return nil
+		}
 
 		// Fetch parent status by current's reply URI, this handles
 		// case of existing (updating if necessary) or a new status.
@@ -129,6 +130,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// view the status (it's followers-only and
 		// we don't follow, for example).
 		case code == http.StatusNotFound:
+
 			// If this reply is followers-only or stricter,
 			// we can safely assume the status it replies
 			// to is also followers only or stricter.
@@ -153,31 +155,43 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// the now-gone parent.
 		case code == http.StatusGone:
 			l.Trace("status orphaned")
-			current.InReplyToID = ""
-			current.InReplyToURI = ""
-			current.InReplyToAccountID = ""
 			current.InReplyTo = nil
 			current.InReplyToAccount = nil
-			if err := d.state.DB.UpdateStatus(ctx,
+			return d.updateStatusParent(ctx,
 				current,
-				"in_reply_to_id",
-				"in_reply_to_uri",
-				"in_reply_to_account_id",
-			); err != nil {
-				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
-			}
-			return nil
+				"", // status ID
+				"", // status URI
+				"", // account ID
+			)
 
 		// An error was returned for a status during
 		// an attempted NEW dereference, return here.
-		case err != nil && current.InReplyToID == "":
+		//
+		// NOTE: this will catch all cases of a nil
+		// parent, all cases below can safely assume
+		// a non-nil parent in their code logic.
+		case err != nil && parent == nil:
 			return gtserror.Newf("error dereferencing new %s: %w", current.InReplyToURI, err)
 
 		// An error was returned for an existing parent,
 		// we simply treat this as a temporary situation.
-		// (we fallback to using existing parent status).
 		case err != nil:
 			l.Errorf("error getting parent: %v", err)
+		}
+
+		// Start a new switch case
+		// as the following scenarios
+		// are possible with / without
+		// any returned error.
+		switch {
+
+		// The current status is using an indirect URL
+		// in order to reference the parent. This is just
+		// weird and broken... Leave the URI in place but
+		// don't link the statuses via database IDs as it
+		// could cause all sorts of unexpected situations.
+		case current.InReplyToURI != parent.URI:
+			l.Errorf("indirect in_reply_to_uri => %s", parent.URI)
 
 		// The ID has changed for currently stored parent ID
 		// (which may be empty, if new!) and fetched version.
@@ -185,17 +199,14 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// Update the current's inReplyTo fields to parent.
 		case current.InReplyToID != parent.ID:
 			l.Tracef("parent changed %s => %s", current.InReplyToID, parent.ID)
-			current.InReplyToAccountID = parent.AccountID
 			current.InReplyToAccount = parent.Account
-			current.InReplyToURI = parent.URI
-			current.InReplyToID = parent.ID
-			if err := d.state.DB.UpdateStatus(ctx,
+			if err := d.updateStatusParent(ctx,
 				current,
-				"in_reply_to_id",
-				"in_reply_to_uri",
-				"in_reply_to_account_id",
+				parent.ID,
+				parent.URI,
+				parent.AccountID,
 			); err != nil {
-				return gtserror.Newf("db error updating status %s: %w", current.ID, err)
+				return err
 			}
 		}
 
@@ -383,4 +394,27 @@ stackLoop:
 	}
 
 	return gtserror.Newf("reached %d descendant iterations for %q", maxIter, statusIRIStr)
+}
+
+// updateStatusParent updates the given status' parent
+// status URI, ID and account ID to given values in DB.
+func (d *Dereferencer) updateStatusParent(
+	ctx context.Context,
+	status *gtsmodel.Status,
+	parentStatusID string,
+	parentStatusURI string,
+	parentAccountID string,
+) error {
+	status.InReplyToAccountID = parentAccountID
+	status.InReplyToURI = parentStatusURI
+	status.InReplyToID = parentStatusID
+	if err := d.state.DB.UpdateStatus(ctx,
+		status,
+		"in_reply_to_id",
+		"in_reply_to_uri",
+		"in_reply_to_account_id",
+	); err != nil {
+		return gtserror.Newf("error updating status %s: %w", status.URI, err)
+	}
+	return nil
 }

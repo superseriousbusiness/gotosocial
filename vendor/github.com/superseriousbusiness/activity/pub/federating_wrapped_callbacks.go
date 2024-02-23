@@ -2,7 +2,6 @@ package pub
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -244,12 +243,12 @@ func (w FederatingWrappedCallbacks) create(c context.Context, a vocab.ActivitySt
 			if err != nil {
 				return err
 			}
-			b, err := tport.Dereference(c, iter.GetIRI())
+			resp, err := tport.Dereference(c, iter.GetIRI())
 			if err != nil {
 				return err
 			}
-			var m map[string]interface{}
-			if err = json.Unmarshal(b, &m); err != nil {
+			m, err := readActivityPubResp(resp)
+			if err != nil {
 				return err
 			}
 			t, err = streams.ToType(c, m)
@@ -514,12 +513,12 @@ func (w FederatingWrappedCallbacks) accept(c context.Context, a vocab.ActivitySt
 				if err != nil {
 					return err
 				}
-				b, err := tport.Dereference(c, iter.GetIRI())
+				resp, err := tport.Dereference(c, iter.GetIRI())
 				if err != nil {
 					return err
 				}
-				var m map[string]interface{}
-				if err = json.Unmarshal(b, &m); err != nil {
+				m, err := readActivityPubResp(resp)
+				if err != nil {
 					return err
 				}
 				t, err = streams.ToType(c, m)

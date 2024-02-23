@@ -19,14 +19,12 @@ package dereferencing
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/url"
 	"time"
 
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -499,16 +497,17 @@ func (d *Dereferencer) enrichAccount(
 
 		case err == nil && account.Domain != accDomain:
 			// After webfinger, we now have correct account domain from which we can do a final DB check.
-			alreadyAcct, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
+			alreadyAcc, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return nil, nil, gtserror.Newf("db err looking for account again after webfinger: %w", err)
+				return nil, nil, gtserror.Newf("db error getting account after webfinger: %w", err)
 			}
 
-			if alreadyAcct != nil {
-				// We had this account stored under
-				// the discovered accountDomain.
+			if alreadyAcc != nil {
+				// We had this account stored
+				// under discovered accountDomain.
+				//
 				// Proceed with this account.
-				account = alreadyAcct
+				account = alreadyAcc
 			}
 
 			// Whether we had the account or not, we
@@ -537,8 +536,9 @@ func (d *Dereferencer) enrichAccount(
 			)
 		}
 
+		// Check URI scheme ahead of time for more useful errs.
 		if uri.Scheme != "http" && uri.Scheme != "https" {
-			err = errors.New("account URI scheme must be http or https")
+			err := errors.New("account URI scheme must be http or https")
 			return nil, nil, gtserror.Newf(
 				"invalid uri %q: %w",
 				account.URI, gtserror.SetUnretrievable(err),
@@ -567,19 +567,51 @@ func (d *Dereferencer) enrichAccount(
 		// We were not given any (partial) ActivityPub
 		// version of this account as a parameter.
 		// Dereference latest version of the account.
-		b, err := tsport.Dereference(ctx, uri)
+		rsp, err := tsport.Dereference(ctx, uri)
 		if err != nil {
 			err := gtserror.Newf("error dereferencing %s: %w", uri, err)
 			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
-		// Attempt to resolve ActivityPub acc from data.
-		apubAcc, err = ap.ResolveAccountable(ctx, b)
+		// Attempt to resolve ActivityPub acc from response.
+		apubAcc, err = ap.ResolveAccountable(ctx, rsp.Body)
+
+		// Tidy up now done.
+		_ = rsp.Body.Close()
+
 		if err != nil {
-			// ResolveAccountable will set Unretrievable/WrongType
+			// ResolveAccountable will set gtserror.WrongType
 			// on the returned error, so we don't need to do it here.
-			err = gtserror.Newf("error resolving accountable from data for account %s: %w", uri, err)
+			err = gtserror.Newf("error resolving accountable %s: %w", uri, err)
 			return nil, nil, err
+		}
+
+		// Check whether input URI and final returned URI
+		// have changed (i.e. we followed some redirects).
+		if finalURIStr := rsp.Request.URL.String(); //
+		finalURIStr != uri.String() {
+
+			// NOTE: this URI check + database call is performed
+			// AFTER reading and closing response body, for performance.
+			//
+			// Check whether we have this account stored under *final* URI.
+			alreadyAcc, err := d.state.DB.GetAccountByURI(ctx, finalURIStr)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return nil, nil, gtserror.Newf("db error getting account after redirects: %w", err)
+			}
+
+			if alreadyAcc != nil {
+				// We had this account stored
+				// under discovered final URI.
+				//
+				// Proceed with this account.
+				account = alreadyAcc
+			}
+
+			// Update the input URI to
+			// the final determined URI
+			// for later URI checks.
+			uri = rsp.Request.URL
 		}
 	}
 
@@ -1014,39 +1046,9 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 		return err
 	}
 
-	// Pre-fetch a transport for requesting username, used by later deref procedures.
-	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
-	if err != nil {
-		return gtserror.Newf("couldn't create transport: %w", err)
-	}
-
-	b, err := tsport.Dereference(ctx, uri)
+	collect, err := d.dereferenceCollection(ctx, requestUser, uri)
 	if err != nil {
 		return err
-	}
-
-	m := make(map[string]interface{})
-	if err := json.Unmarshal(b, &m); err != nil {
-		return gtserror.Newf("error unmarshalling bytes into json: %w", err)
-	}
-
-	t, err := streams.ToType(ctx, m)
-	if err != nil {
-		return gtserror.Newf("error resolving json into ap vocab type: %w", err)
-	}
-
-	if t.GetTypeName() != ap.ObjectOrderedCollection {
-		return gtserror.Newf("%s was not an OrderedCollection", uri)
-	}
-
-	collection, ok := t.(vocab.ActivityStreamsOrderedCollection)
-	if !ok {
-		return gtserror.New("couldn't coerce OrderedCollection")
-	}
-
-	items := collection.GetActivityStreamsOrderedItems()
-	if items == nil {
-		return gtserror.New("nil orderedItems")
 	}
 
 	// Get previous pinned statuses (we'll need these later).
@@ -1055,35 +1057,22 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 		return gtserror.Newf("error getting account pinned statuses: %w", err)
 	}
 
-	statusURIs := make([]*url.URL, 0, items.Len())
-	for iter := items.Begin(); iter != items.End(); iter = iter.Next() {
-		var statusURI *url.URL
+	var statusURIs []*url.URL
 
-		switch {
-		case iter.IsActivityStreamsNote():
-			// We got a whole Note. Extract the URI.
-			if note := iter.GetActivityStreamsNote(); note != nil {
-				if id := note.GetJSONLDId(); id != nil {
-					statusURI = id.GetIRI()
-				}
-			}
-		case iter.IsActivityStreamsArticle():
-			// We got a whole Article. Extract the URI.
-			if article := iter.GetActivityStreamsArticle(); article != nil {
-				if id := article.GetJSONLDId(); id != nil {
-					statusURI = id.GetIRI()
-				}
-			}
-		default:
-			// Try to get just the URI.
-			statusURI = iter.GetIRI()
+	for {
+		// Get next collect item.
+		item := collect.NextItem()
+		if item == nil {
+			break
 		}
 
-		if statusURI == nil {
+		// Check for available IRI.
+		itemIRI, _ := pub.ToId(item)
+		if itemIRI == nil {
 			continue
 		}
 
-		if statusURI.Host != uri.Host {
+		if itemIRI.Host != uri.Host {
 			// If this status doesn't share a host with its featured
 			// collection URI, we shouldn't trust it. Just move on.
 			continue
@@ -1093,13 +1082,13 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 		// We do this here so that even if we can't get
 		// the status in the next part for some reason,
 		// we still know it was *meant* to be pinned.
-		statusURIs = append(statusURIs, statusURI)
+		statusURIs = append(statusURIs, itemIRI)
 
 		// Search for status by URI. Note this may return an existing model
 		// we have stored with an error from attempted update, so check both.
-		status, _, _, err := d.getStatusByURI(ctx, requestUser, statusURI)
+		status, _, _, err := d.getStatusByURI(ctx, requestUser, itemIRI)
 		if err != nil {
-			log.Errorf(ctx, "error getting status from featured collection %s: %v", statusURI, err)
+			log.Errorf(ctx, "error getting status from featured collection %s: %v", itemIRI, err)
 
 			if status == nil {
 				// This is only unactionable
@@ -1108,20 +1097,23 @@ func (d *Dereferencer) dereferenceAccountFeatured(ctx context.Context, requestUs
 			}
 		}
 
-		// If the status was already pinned, we don't need to do anything.
+		// If the status was already pinned,
+		// we don't need to do anything.
 		if !status.PinnedAt.IsZero() {
 			continue
 		}
 
-		if status.AccountID != account.ID {
+		if status.AccountURI != account.URI {
 			// Someone's pinned a status that doesn't
 			// belong to them, this doesn't work for us.
 			continue
 		}
 
 		if status.BoostOfID != "" {
-			// Someone's pinned a boost. This also
-			// doesn't work for us.
+			// Someone's pinned a boost. This
+			// also doesn't work for us. (note
+			// we check using BoostOfID since
+			// BoostOfURI isn't *always* set).
 			continue
 		}
 
