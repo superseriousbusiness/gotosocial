@@ -155,6 +155,7 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 		// the now-gone parent.
 		case code == http.StatusGone:
 			l.Trace("status orphaned")
+			current.InReplyTo = nil
 			current.InReplyToAccount = nil
 			return d.updateStatusParent(ctx,
 				current,
