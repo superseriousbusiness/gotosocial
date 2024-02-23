@@ -74,7 +74,7 @@ var Defaults = Configuration{
 	MediaImageMaxSize:        10 * bytesize.MiB,
 	MediaVideoMaxSize:        40 * bytesize.MiB,
 	MediaDescriptionMinChars: 0,
-	MediaDescriptionMaxChars: 500,
+	MediaDescriptionMaxChars: 1500,
 	MediaRemoteCacheDays:     7,
 	MediaEmojiLocalMaxSize:   50 * bytesize.KiB,
 	MediaEmojiRemoteMaxSize:  100 * bytesize.KiB,
@@ -87,7 +87,6 @@ var Defaults = Configuration{
 	StorageS3Proxy:       false,
 
 	StatusesMaxChars:           5000,
-	StatusesCWMaxChars:         100,
 	StatusesPollMaxOptions:     6,
 	StatusesPollOptionMaxChars: 50,
 	StatusesMediaMaxFiles:      6,

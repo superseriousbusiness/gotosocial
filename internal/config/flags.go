@@ -113,7 +113,6 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 
 		// Statuses
 		cmd.Flags().Int(StatusesMaxCharsFlag(), cfg.StatusesMaxChars, fieldtag("StatusesMaxChars", "usage"))
-		cmd.Flags().Int(StatusesCWMaxCharsFlag(), cfg.StatusesCWMaxChars, fieldtag("StatusesCWMaxChars", "usage"))
 		cmd.Flags().Int(StatusesPollMaxOptionsFlag(), cfg.StatusesPollMaxOptions, fieldtag("StatusesPollMaxOptions", "usage"))
 		cmd.Flags().Int(StatusesPollOptionMaxCharsFlag(), cfg.StatusesPollOptionMaxChars, fieldtag("StatusesPollOptionMaxChars", "usage"))
 		cmd.Flags().Int(StatusesMediaMaxFilesFlag(), cfg.StatusesMediaMaxFiles, fieldtag("StatusesMediaMaxFiles", "usage"))

@@ -25,9 +25,9 @@ media-video-max-size: 41943040
 media-description-min-chars: 0
 
 # Int. Maximum amount of characters permitted in an image or video description.
-# Examples: [500, 1000, 1500]
-# Default: 500
-media-description-max-chars: 500
+# Examples: [1000, 1500, 3000]
+# Default: 1500
+media-description-max-chars: 1500
 
 # Int. Max size in bytes of emojis uploaded to this instance via the admin API.
 # The default is the same as the Mastodon size limit for emojis (50kb), which allows

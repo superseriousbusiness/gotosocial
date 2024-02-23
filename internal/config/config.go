@@ -111,8 +111,7 @@ type Configuration struct {
 	StorageS3BucketName  string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
 	StorageS3Proxy       bool   `name:"storage-s3-proxy" usage:"Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL"`
 
-	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses"`
-	StatusesCWMaxChars         int `name:"statuses-cw-max-chars" usage:"Max permitted characters for content/spoiler warnings on statuses"`
+	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses, including content warning"`
 	StatusesPollMaxOptions     int `name:"statuses-poll-max-options" usage:"Max amount of options permitted on a poll"`
 	StatusesPollOptionMaxChars int `name:"statuses-poll-option-max-chars" usage:"Max amount of characters for a poll option"`
 	StatusesMediaMaxFiles      int `name:"statuses-media-max-files" usage:"Maximum number of media files/attachments per status"`

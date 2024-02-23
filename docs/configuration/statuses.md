@@ -9,17 +9,14 @@
 
 # Config pertaining to the creation of statuses/posts, and permitted limits.
 
-# Int. Maximum amount of characters permitted for a new status.
+# Int. Maximum amount of characters permitted for a new status,
+# including the content warning (if set).
+#
 # Note that going way higher than the default might break federation.
+#
 # Examples: [140, 500, 5000]
 # Default: 5000
 statuses-max-chars: 5000
-
-# Int. Maximum amount of characters allowed in the CW/subject header of a status.
-# Note that going way higher than the default might break federation.
-# Examples: [100, 200]
-# Default: 100
-statuses-cw-max-chars: 100
 
 # Int. Maximum amount of options to permit when creating a new poll.
 # Note that going way higher than the default might break federation.

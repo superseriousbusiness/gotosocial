@@ -429,9 +429,9 @@ media-video-max-size: 41943040
 media-description-min-chars: 0
 
 # Int. Maximum amount of characters permitted in an image or video description.
-# Examples: [500, 1000, 1500]
-# Default: 500
-media-description-max-chars: 500
+# Examples: [1000, 1500, 3000]
+# Default: 1500
+media-description-max-chars: 1500
 
 # Int. Max size in bytes of emojis uploaded to this instance via the admin API.
 # The default is the same as the Mastodon size limit for emojis (50kb), which allows
@@ -551,17 +551,14 @@ storage-s3-bucket: ""
 
 # Config pertaining to the creation of statuses/posts, and permitted limits.
 
-# Int. Maximum amount of characters permitted for a new status.
+# Int. Maximum amount of characters permitted for a new status,
+# including the content warning (if set).
+#
 # Note that going way higher than the default might break federation.
+#
 # Examples: [140, 500, 5000]
 # Default: 5000
 statuses-max-chars: 5000
-
-# Int. Maximum amount of characters allowed in the CW/subject header of a status.
-# Note that going way higher than the default might break federation.
-# Examples: [100, 200]
-# Default: 100
-statuses-cw-max-chars: 100
 
 # Int. Maximum amount of options to permit when creating a new poll.
 # Note that going way higher than the default might break federation.

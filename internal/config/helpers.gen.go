@@ -1525,31 +1525,6 @@ func GetStatusesMaxChars() int { return global.GetStatusesMaxChars() }
 // SetStatusesMaxChars safely sets the value for global configuration 'StatusesMaxChars' field
 func SetStatusesMaxChars(v int) { global.SetStatusesMaxChars(v) }
 
-// GetStatusesCWMaxChars safely fetches the Configuration value for state's 'StatusesCWMaxChars' field
-func (st *ConfigState) GetStatusesCWMaxChars() (v int) {
-	st.mutex.RLock()
-	v = st.config.StatusesCWMaxChars
-	st.mutex.RUnlock()
-	return
-}
-
-// SetStatusesCWMaxChars safely sets the Configuration value for state's 'StatusesCWMaxChars' field
-func (st *ConfigState) SetStatusesCWMaxChars(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.StatusesCWMaxChars = v
-	st.reloadToViper()
-}
-
-// StatusesCWMaxCharsFlag returns the flag name for the 'StatusesCWMaxChars' field
-func StatusesCWMaxCharsFlag() string { return "statuses-cw-max-chars" }
-
-// GetStatusesCWMaxChars safely fetches the value for global configuration 'StatusesCWMaxChars' field
-func GetStatusesCWMaxChars() int { return global.GetStatusesCWMaxChars() }
-
-// SetStatusesCWMaxChars safely sets the value for global configuration 'StatusesCWMaxChars' field
-func SetStatusesCWMaxChars(v int) { global.SetStatusesCWMaxChars(v) }
-
 // GetStatusesPollMaxOptions safely fetches the Configuration value for state's 'StatusesPollMaxOptions' field
 func (st *ConfigState) GetStatusesPollMaxOptions() (v int) {
 	st.mutex.RLock()
