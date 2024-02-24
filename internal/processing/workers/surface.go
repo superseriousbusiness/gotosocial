@@ -19,10 +19,10 @@ package workers
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // surface wraps functions for 'surfacing' the result
