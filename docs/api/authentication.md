@@ -22,12 +22,14 @@ Note that `scopes` can be any space-separated combination of:
 
 - read
 - write
-- follow
-- push
 - admin
 
 !!! warning
-    Be **very** careful what scopes you grant to your application. While GoToSocial does not yet support properly scoped tokens, it is always good practice to grant your application the lowest tier permissions it needs to do its job. e.g. If your application won't be making posts, use scope=read. Also note that "read" is the default if none is set.
+   GoToSocial does not currently support scoped authorization tokens, so any token you obtain in this process will be able to perform all actions on your behalf, including admin actions if your account has admin permissions. Nevertheless, it is always good practice to grant your application the lowest tier permissions it needs to do its job. e.g. If your application won't be making posts, use scope=read.
+   
+   In this spirit, "read" is used in the example above, which means that in the future when scoped tokens are supported, the application will be restricted to only being able to do "read" actions.
+   
+   You can read more about additional planned OAuth security features [right here](https://github.com/superseriousbusiness/gotosocial/issues/2232).
 
 A successful call returns a response with a `client_id` and `client_secret` that we are going need to use in the rest of the process. It looks something like this: 
 ```json
