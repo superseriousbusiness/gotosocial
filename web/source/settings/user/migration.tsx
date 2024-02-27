@@ -48,7 +48,7 @@ function UserMigrationForm({ data: profile }) {
 			<h2>Account Migration Settings</h2>
 			<div className="info">
 				<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
-				<b>Moving your account to another instance, or moving an account from another instance to your account, isn't implemented yet! <a href="https://github.com/superseriousbusiness/gotosocial/issues/130" target="_blank" rel="noopener noreferrer">See here for progress</a>.</b>
+				<b>Moving your account to another instance, or moving an account from another instance to your account, isn't implemented yet! You will only be able to use the "alias" section of the below panel. <a href="https://github.com/superseriousbusiness/gotosocial/issues/130" target="_blank" rel="noopener noreferrer">See here for progress</a>.</b>
 			</div>
 			<p>
 				The following settings allow you to <strong>alias</strong> your account to another account
