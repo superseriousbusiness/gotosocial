@@ -6,54 +6,40 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-func TestNotInAdminGroup(t *testing.T) {
+func TestAdminGroup(t *testing.T) {
 	testrig.InitTestConfig()
-	// Test if user has allowed group but not in admin group
-	groups := []string{"group1", "group2", "allowedRole"}
-
-	got := adminGroup(groups)
-	want := false
-
-	if got != want {
-		t.Errorf("got %t, wanted %t", got, want)
+	for _, test := range []struct {
+		name     string
+		groups   []string
+		expected bool
+	}{
+		{name: "not in admin group", groups: []string{"group1", "group2", "allowedRole"}, expected: false},
+		{name: "in admin group", groups: []string{"group1", "group2", "adminRole"}, expected: true},
+	} {
+		test := test // loopvar capture
+		t.Run(test.name, func(t *testing.T) {
+			if got := adminGroup(test.groups); got != test.expected {
+				t.Fatalf("got: %t, wanted: %t", got, test.expected)
+			}
+		})
 	}
 }
 
-func TestInAdminGroup(t *testing.T) {
+func TestAllowedGroup(t *testing.T) {
 	testrig.InitTestConfig()
-	// Test if user has admin group
-	groups := []string{"group1", "group2", "adminRole"}
-
-	got := adminGroup(groups)
-	want := true
-
-	if got != want {
-		t.Errorf("got %t, wanted %t", got, want)
-	}
-}
-
-func TestNotInAllowedGroup(t *testing.T) {
-	testrig.InitTestConfig()
-	// Test if user has admin group but not in allowed group
-	groups := []string{"group1", "group2", "adminRole"}
-
-	got := allowedGroup(groups)
-	want := false
-
-	if got != want {
-		t.Errorf("got %t, wanted %t", got, want)
-	}
-}
-
-func TestInAllowedGroup(t *testing.T) {
-	testrig.InitTestConfig()
-	// Test if user has allowed group
-	groups := []string{"group1", "group2", "allowedRole"}
-
-	got := allowedGroup(groups)
-	want := true
-
-	if got != want {
-		t.Errorf("got %t, wanted %t", got, want)
+	for _, test := range []struct {
+		name     string
+		groups   []string
+		expected bool
+	}{
+		{name: "not in allowed group", groups: []string{"group1", "group2", "adminRole"}, expected: false},
+		{name: "in allowed group", groups: []string{"group1", "group2", "allowedRole"}, expected: true},
+	} {
+		test := test // loopvar capture
+		t.Run(test.name, func(t *testing.T) {
+			if got := allowedGroup(test.groups); got != test.expected {
+				t.Fatalf("got: %t, wanted: %t", got, test.expected)
+			}
+		})
 	}
 }
