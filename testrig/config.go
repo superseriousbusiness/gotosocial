@@ -119,6 +119,8 @@ var testDefaults = config.Configuration{
 	OIDCClientSecret:     "",
 	OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
 	OIDCLinkExisting:     false,
+	OIDCAdminGroups:      []string{"adminRole"},
+	OIDCAllowedGroups:    []string{"allowedRole"},
 
 	SMTPHost:               "",
 	SMTPPort:               0,
