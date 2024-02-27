@@ -87,6 +87,7 @@ EXPECT=$(cat << "EOF"
     "instance-expose-suspended": true,
     "instance-expose-suspended-web": true,
     "instance-federation-mode": "allowlist",
+    "instance-federation-spam-filter": true,
     "instance-inject-mastodon-version": true,
     "instance-languages": [
         "nl",
@@ -208,6 +209,7 @@ GTS_INSTANCE_EXPOSE_SUSPENDED=true \
 GTS_INSTANCE_EXPOSE_SUSPENDED_WEB=true \
 GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_FEDERATION_MODE='allowlist' \
+GTS_INSTANCE_FEDERATION_SPAM_FILTER=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_INSTANCE_INJECT_MASTODON_VERSION=true \
 GTS_INSTANCE_LANGUAGES="nl,en-gb" \

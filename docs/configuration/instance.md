@@ -39,6 +39,43 @@ instance-languages: []
 # Default: "blocklist"
 instance-federation-mode: "blocklist"
 
+# Bool. Enable spam filtering heuristics for messages entering your instance
+# via the federation API. Regardless of what you set here, basic checks
+# for message relevancy will still be performed, but you can try enabling
+# this setting if you are being spammed with unwanted messages from other
+# instances, and want to more strictly filter out spam messages.
+#
+# THIS IS CURRENTLY AN EXPERIMENTAL SETTING, AND MAY FILTER OUT LEGITIMATE
+# MESSAGES, OR FAIL TO FILTER OUT SPAMMY MESSAGES. It is recommended to
+# only enable this setting when the fediverse is in the midst of a spam
+# wave, and you need to batten down the hatches to keep your instance usable.
+#
+# The decision of whether a message counts as spam or not is made based on
+# the following heuristics, in order, where receiver = the account on your
+# instance that received a message in their inbox, and requester = the
+# account on a remote instance that sent the message.
+#
+# First, basic relevancy checks
+#
+#  1. Receiver follows requester. Return OK.
+#  2. Statusable doesn't mention receiver. Return NotRelevant.
+#
+# If instance-federation-spam-filter = false, then return OK now.
+# Otherwise check:
+#
+#  3. Receiver is locked and is followed by requester. Return OK.
+#  4. Five or more people are mentioned. Return Spam.
+#  5. Receiver follow (requests) a mentioned account. Return OK.
+#  6. Statusable has a media attachment. Return Spam.
+#  7. Statusable contains non-mention, non-hashtag links. Return Spam.
+#
+# Messages identified as spam will be dropped from your instance, and not
+# inserted into the database, or into home timelines or notifications.
+#
+# Options: [true, false]
+# Default: false
+instance-federation-spam-filter: false
+
 # Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=open in order
 # to see a list of instances that this instance 'peers' with. Even if set to 'false', then authenticated
 # users (members of the instance) will still be able to query the endpoint.

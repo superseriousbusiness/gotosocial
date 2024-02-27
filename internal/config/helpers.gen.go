@@ -775,6 +775,31 @@ func GetInstanceFederationMode() string { return global.GetInstanceFederationMod
 // SetInstanceFederationMode safely sets the value for global configuration 'InstanceFederationMode' field
 func SetInstanceFederationMode(v string) { global.SetInstanceFederationMode(v) }
 
+// GetInstanceFederationSpamFilter safely fetches the Configuration value for state's 'InstanceFederationSpamFilter' field
+func (st *ConfigState) GetInstanceFederationSpamFilter() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceFederationSpamFilter
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceFederationSpamFilter safely sets the Configuration value for state's 'InstanceFederationSpamFilter' field
+func (st *ConfigState) SetInstanceFederationSpamFilter(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceFederationSpamFilter = v
+	st.reloadToViper()
+}
+
+// InstanceFederationSpamFilterFlag returns the flag name for the 'InstanceFederationSpamFilter' field
+func InstanceFederationSpamFilterFlag() string { return "instance-federation-spam-filter" }
+
+// GetInstanceFederationSpamFilter safely fetches the value for global configuration 'InstanceFederationSpamFilter' field
+func GetInstanceFederationSpamFilter() bool { return global.GetInstanceFederationSpamFilter() }
+
+// SetInstanceFederationSpamFilter safely sets the value for global configuration 'InstanceFederationSpamFilter' field
+func SetInstanceFederationSpamFilter(v bool) { global.SetInstanceFederationSpamFilter(v) }
+
 // GetInstanceExposePeers safely fetches the Configuration value for state's 'InstanceExposePeers' field
 func (st *ConfigState) GetInstanceExposePeers() (v bool) {
 	st.mutex.RLock()

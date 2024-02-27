@@ -2000,8 +2000,8 @@ func (suite *InternalToFrontendTestSuite) TestRelationshipFollowRequested() {
 
 	b, err := json.MarshalIndent(relationship, "", "  ")
 	if err != nil {
-    suite.FailNow(err.Error())
-  }
+		suite.FailNow(err.Error())
+	}
 
 	suite.Equal(`{
   "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
@@ -2034,10 +2034,10 @@ func (suite *InternalToFrontendTestSuite) TestRelationshipFollowRequested() {
 
 	b, err = json.MarshalIndent(relationship, "", "  ")
 	if err != nil {
-    suite.FailNow(err.Error())
-  }
+		suite.FailNow(err.Error())
+	}
 
-  suite.Equal(`{
+	suite.Equal(`{
   "id": "01F8MH17FWEB39HZJ76B6VXSKF",
   "following": false,
   "showing_reblogs": false,

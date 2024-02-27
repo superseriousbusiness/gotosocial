@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/metrics"
@@ -143,8 +144,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
 	typeConverter := typeutils.NewConverter(&state)
-	filter := visibility.NewFilter(&state)
-	federatingDB := federatingdb.New(&state, typeConverter, filter)
+	visFilter := visibility.NewFilter(&state)
+	spamFilter := spam.NewFilter(&state)
+	federatingDB := federatingdb.New(&state, typeConverter, visFilter, spamFilter)
 	transportController := transport.NewController(&state, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(&state, federatingDB, transportController, typeConverter, mediaManager)
 
@@ -168,7 +170,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Initialize timelines.
 	state.Timelines.Home = timeline.NewManager(
 		tlprocessor.HomeTimelineGrab(&state),
-		tlprocessor.HomeTimelineFilter(&state, filter),
+		tlprocessor.HomeTimelineFilter(&state, visFilter),
 		tlprocessor.HomeTimelineStatusPrepare(&state, typeConverter),
 		tlprocessor.SkipInsert(),
 	)
@@ -178,7 +180,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	state.Timelines.List = timeline.NewManager(
 		tlprocessor.ListTimelineGrab(&state),
-		tlprocessor.ListTimelineFilter(&state, filter),
+		tlprocessor.ListTimelineFilter(&state, visFilter),
 		tlprocessor.ListTimelineStatusPrepare(&state, typeConverter),
 		tlprocessor.SkipInsert(),
 	)

@@ -15,22 +15,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package testrig
+package spam
 
-import (
-	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-)
+import "github.com/superseriousbusiness/gotosocial/internal/state"
 
-// NewTestFederatingDB returns a federating DB with the underlying db
-func NewTestFederatingDB(state *state.State) federatingdb.DB {
-	return federatingdb.New(
-		state,
-		typeutils.NewConverter(state),
-		visibility.NewFilter(state),
-		spam.NewFilter(state),
-	)
+// Filter packages logic for checking whether
+// given statuses should be considered spam.
+type Filter struct {
+	state *state.State
+}
+
+// NewFilter returns a new spam Filter
+// that will use the provided state.
+func NewFilter(state *state.State) *Filter {
+	return &Filter{state: state}
 }

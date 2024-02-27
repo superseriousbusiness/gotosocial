@@ -118,6 +118,7 @@ nav:
       - "admin/cli.md"
       - "admin/backup_and_restore.md"
       - "admin/media_caching.md"
+      - "admin/spam.md"
   - "Federation":
       - "federation/index.md"
       - "federation/glossary.md"

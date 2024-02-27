@@ -15,22 +15,45 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package testrig
+package spam_test
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// NewTestFederatingDB returns a federating DB with the underlying db
-func NewTestFederatingDB(state *state.State) federatingdb.DB {
-	return federatingdb.New(
-		state,
-		typeutils.NewConverter(state),
-		visibility.NewFilter(state),
-		spam.NewFilter(state),
-	)
+type FilterStandardTestSuite struct {
+	// standard suite interfaces
+	suite.Suite
+	db    db.DB
+	state state.State
+
+	// standard suite models
+	testAccounts map[string]*gtsmodel.Account
+
+	filter *spam.Filter
+}
+
+func (suite *FilterStandardTestSuite) SetupSuite() {
+	suite.testAccounts = testrig.NewTestAccounts()
+}
+
+func (suite *FilterStandardTestSuite) SetupTest() {
+	suite.state.Caches.Init()
+
+	testrig.InitTestConfig()
+	testrig.InitTestLog()
+
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.filter = spam.NewFilter(&suite.state)
+
+	testrig.StandardDBSetup(suite.db, nil)
+}
+
+func (suite *FilterStandardTestSuite) TearDownTest() {
+	testrig.StandardDBTeardown(suite.db)
 }
