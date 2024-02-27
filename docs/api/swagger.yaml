@@ -1502,7 +1502,8 @@ definitions:
                 x-go-name: InvitesEnabled
             languages:
                 description: Primary language of the instance.
-                example: en
+                example:
+                    - en
                 items:
                     type: string
                 type: array
@@ -2830,7 +2831,9 @@ definitions:
                 x-go-name: ID
             items:
                 description: List of status URIs.
-                example: '[''https://example.org/users/some_user/statuses/01GSZ0F7Q8SJKNRF777GJD271R'', ''https://example.org/users/some_user/statuses/01GSZ0G012CBQ7TEKX689S3QRE'']'
+                example:
+                    - https://example.org/users/some_user/statuses/01GSZ0F7Q8SJKNRF777GJD271R
+                    - https://example.org/users/some_user/statuses/01GSZ0G012CBQ7TEKX689S3QRE
                 items:
                     type: string
                 type: array
@@ -5807,7 +5810,7 @@ paths:
                 - allowEmptyValue: true
                   description: Title to use for the instance.
                   in: formData
-                  maximum: 40
+                  maxLength: 40
                   name: title
                   type: string
                 - allowEmptyValue: true
@@ -5823,19 +5826,19 @@ paths:
                 - allowEmptyValue: true
                   description: Short description of the instance.
                   in: formData
-                  maximum: 500
+                  maxLength: 500
                   name: short_description
                   type: string
                 - allowEmptyValue: true
                   description: Longer description of the instance.
                   in: formData
-                  maximum: 5000
+                  maxLength: 5000
                   name: description
                   type: string
                 - allowEmptyValue: true
                   description: Terms and conditions of the instance.
                   in: formData
-                  maximum: 5000
+                  maxLength: 5000
                   name: terms
                   type: string
                 - description: Thumbnail image to use for the instance.
