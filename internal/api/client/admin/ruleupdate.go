@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// RulePATCHHandler swagger:operation PATCH /api/v1/admin/instance/rules{id} ruleUpdate
+// RulePATCHHandler swagger:operation PATCH /api/v1/admin/instance/rules/{id} ruleUpdate
 //
 // Update an existing instance rule.
 //
@@ -46,10 +46,10 @@ import (
 //	parameters:
 //	-
 //		name: id
-//		in: formData
+//		in: path
 //		description: >-
 //			The id of the rule to update.
-//		type: path
+//		type: string
 //		required: true
 //	-
 //		name: text

@@ -120,12 +120,17 @@ import (
 //		description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
 //		type: boolean
 //	-
-//		name: fields_attributes
+//		name: fields_attributes[0][name]
 //		in: formData
-//		description: Profile fields to be added to this account's profile
-//		type: array
-//		items:
-//			type: object
+//		description: Name of profile field to be added to this account's profile.
+//			(The index may be any string; add more indexes to send more fields.)
+//		type: string
+//	-
+//		name: fields_attributes[0][value]
+//		in: formData
+//		description: Value of profile field to be added to this account's profile.
+//			(The index may be any string; add more indexes to send more fields.)
+//		type: string
 //
 //	security:
 //	- OAuth2 Bearer:

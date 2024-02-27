@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// EmojiCategoriesGETHandler swagger:operation GET /api/v1/admin/custom_emojis/categories emojiCategoriesGet
+// EmojiCategoriesGETHandler swagger:operation GET /api/v1/admin/custom_emojis/categories/{id} emojiCategoriesGet
 //
 // Get a list of existing emoji categories.
 //
@@ -52,7 +52,7 @@ import (
 //			schema:
 //				type: array
 //				items:
-//					"$ref": "#/definitions/adminEmojiCategory"
+//					"$ref": "#/definitions/emojiCategory"
 //		'400':
 //			description: bad request
 //		'401':

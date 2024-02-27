@@ -57,9 +57,8 @@ import (
 //	-
 //		name: title
 //		type: string
-//		description: Title of this list.
+//		description: 'Title of this list. Sample: Cool People'
 //		in: formData
-//		example: Cool People
 //	-
 //		name: replies_policy
 //		type: string
@@ -68,8 +67,12 @@ import (
 //		  followed = Show replies to any followed user
 //		  list = Show replies to members of the list
 //		  none = Show replies to no one
+//		  Sample: list
+//		enum:
+//			- followed
+//			- list
+//			- none
 //		in: formData
-//		example: list
 //
 //	security:
 //	- OAuth2 Bearer:

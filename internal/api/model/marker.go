@@ -18,6 +18,8 @@
 package model
 
 // Marker represents the last read position within a user's timelines.
+//
+// swagger:model markers
 type Marker struct {
 	// Information about the user's position in the home timeline.
 	Home *TimelineMarker `json:"home,omitempty"`

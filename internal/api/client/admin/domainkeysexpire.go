@@ -61,8 +61,7 @@ import (
 //	-
 //		name: domain
 //		in: formData
-//		description: Domain to expire keys for.
-//		example: example.org
+//		description: 'Domain to expire keys for. Sample: example.org'
 //		type: string
 //
 //	security:

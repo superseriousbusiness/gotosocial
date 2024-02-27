@@ -160,6 +160,24 @@ definitions:
         title: Source represents display or publishing preferences of user's own account.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    TimelineMarker:
+        properties:
+            last_read_id:
+                description: The ID of the most recently viewed entity.
+                type: string
+                x-go-name: LastReadID
+            updated_at:
+                description: The timestamp of when the marker was set (ISO 8601 Datetime)
+                type: string
+                x-go-name: UpdatedAt
+            version:
+                description: Used for locking to prevent write conflicts.
+                format: int64
+                type: integer
+                x-go-name: Version
+        title: TimelineMarker contains information about a user's progress through a specific timeline.
+        type: object
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     account:
         description: The modelled account can be either a remote account, or one on this instance.
         properties:
@@ -1209,6 +1227,40 @@ definitions:
         type: object
         x-go-name: Field
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    headerFilter:
+        properties:
+            created_at:
+                description: Time at which the header filter was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                readOnly: true
+                type: string
+                x-go-name: CreatedAt
+            created_by:
+                description: The ID of the admin account that created this header filter.
+                example: 01FBW2758ZB6PBR200YPDDJK4C
+                readOnly: true
+                type: string
+                x-go-name: CreatedBy
+            header:
+                description: The HTTP header to match against.
+                example: User-Agent
+                type: string
+                x-go-name: Header
+            id:
+                description: The ID of the header filter.
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                readOnly: true
+                type: string
+                x-go-name: ID
+            regex:
+                description: The header value matching regular expression.
+                example: .*Firefox.*
+                type: string
+                x-go-name: Regex
+        title: HeaderFilter represents a regex value filter applied to one particular HTTP header (allow / block).
+        type: object
+        x-go-name: HeaderFilter
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     headerFilterCreateRequest:
         properties:
             header:
@@ -1833,6 +1885,16 @@ definitions:
         title: List represents a user-created list of accounts that the user follows.
         type: object
         x-go-name: List
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    markers:
+        properties:
+            home:
+                $ref: '#/definitions/TimelineMarker'
+            notifications:
+                $ref: '#/definitions/TimelineMarker'
+        title: Marker represents the last read position within a user's timelines.
+        type: object
+        x-go-name: Marker
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     mediaDimensions:
         properties:
@@ -3849,12 +3911,14 @@ paths:
                   in: formData
                   name: enable_rss
                   type: boolean
-                - description: Profile fields to be added to this account's profile
+                - description: Name of profile field to be added to this account's profile. (The index may be any string; add more indexes to send more fields.)
                   in: formData
-                  items:
-                    type: object
-                  name: fields_attributes
-                  type: array
+                  name: fields_attributes[0][name]
+                  type: string
+                - description: Value of profile field to be added to this account's profile. (The index may be any string; add more indexes to send more fields.)
+                  in: formData
+                  name: fields_attributes[0][value]
+                  type: string
             produces:
                 - application/json
             responses:
@@ -4209,7 +4273,7 @@ paths:
             summary: Perform admin action on a local or remote emoji known to this instance.
             tags:
                 - admin
-    /api/v1/admin/custom_emojis/categories:
+    /api/v1/admin/custom_emojis/categories/{id}:
         get:
             operationId: emojiCategoriesGet
             parameters:
@@ -4225,7 +4289,7 @@ paths:
                     description: Array of existing emoji categories.
                     schema:
                         items:
-                            $ref: '#/definitions/adminEmojiCategory'
+                            $ref: '#/definitions/emojiCategory'
                         type: array
                 "400":
                     description: bad request
@@ -4627,8 +4691,7 @@ paths:
                 be performed.
             operationId: domainKeysExpire
             parameters:
-                - description: Domain to expire keys for.
-                  example: example.org
+                - description: 'Domain to expire keys for. Sample: example.org'
                   in: formData
                   name: domain
                   type: string
@@ -4961,17 +5024,17 @@ paths:
             summary: Create a new instance rule.
             tags:
                 - admin
-    /api/v1/admin/instance/rules{id}:
+    /api/v1/admin/instance/rules/{id}:
         delete:
             consumes:
                 - multipart/form-data
             operationId: ruleDelete
             parameters:
                 - description: The id of the rule to delete.
-                  in: formData
+                  in: path
                   name: id
                   required: true
-                  type: path
+                  type: string
             produces:
                 - application/json
             responses:
@@ -5003,10 +5066,10 @@ paths:
             operationId: ruleUpdate
             parameters:
                 - description: The id of the rule to update.
-                  in: formData
+                  in: path
                   name: id
                   required: true
-                  type: path
+                  type: string
                 - description: Text body for the updated instance rule, plaintext.
                   in: formData
                   name: text
@@ -5224,8 +5287,7 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: Optional admin comment on the action taken in response to this report. Useful for providing an explanation about what action was taken (if any) before the report was marked as resolved. This will be visible to the user that created the report!
-                  example: The reported account was suspended.
+                - description: 'Optional admin comment on the action taken in response to this report. Useful for providing an explanation about what action was taken (if any) before the report was marked as resolved. This will be visible to the user that created the report! Sample: The reported account was suspended.'
                   in: formData
                   name: action_taken_comment
                   type: string
@@ -5255,7 +5317,7 @@ paths:
     /api/v1/admin/rules:
         get:
             description: The rules will be returned in order (sorted by Order ascending).
-            operationId: rules
+            operationId: adminsRuleGet
             produces:
                 - application/json
             responses:
@@ -5769,7 +5831,7 @@ paths:
                 "200":
                     description: The newly updated instance.
                     schema:
-                        $ref: '#/definitions/instance'
+                        $ref: '#/definitions/instanceV1'
                 "400":
                     description: bad request
                 "401":
@@ -5897,8 +5959,9 @@ paths:
                 - application/x-www-form-urlencoded
             operationId: listCreate
             parameters:
-                - description: Title of this list.
-                  example: Cool People
+                - description: |-
+                    Title of this list.
+                    Sample: Cool People
                   in: formData
                   name: title
                   required: true
@@ -5910,7 +5973,7 @@ paths:
                     followed = Show replies to any followed user
                     list = Show replies to members of the list
                     none = Show replies to no one
-                  example: list
+                    Sample: list
                   in: formData
                   name: replies_policy
                   type: string
@@ -6009,14 +6072,12 @@ paths:
             operationId: listUpdate
             parameters:
                 - description: ID of the list
-                  example: Cool People
                   in: path
                   name: id
                   required: true
                   type: string
                   x-go-name: Title
-                - description: Title of this list.
-                  example: Cool People
+                - description: 'Title of this list. Sample: Cool People'
                   in: formData
                   name: title
                   type: string
@@ -6026,7 +6087,11 @@ paths:
                     followed = Show replies to any followed user
                     list = Show replies to members of the list
                     none = Show replies to no one
-                  example: list
+                    Sample: list
+                  enum:
+                    - followed
+                    - list
+                    - none
                   in: formData
                   name: replies_policy
                   type: string
@@ -6352,6 +6417,12 @@ paths:
     /api/v1/notification/{id}:
         get:
             operationId: notification
+            parameters:
+                - description: The ID of the notification.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
             produces:
                 - application/json
             responses:
@@ -6655,32 +6726,34 @@ paths:
                 - application/x-www-form-urlencoded
             operationId: reportCreate
             parameters:
-                - description: ID of the account to report.
-                  example: 01GPE75FXSH2EGFBF85NXPH3KP
+                - description: |-
+                    ID of the account to report.
+                    Sample: 01GPE75FXSH2EGFBF85NXPH3KP
                   in: formData
                   name: account_id
                   required: true
                   type: string
                   x-go-name: AccountID
-                - description: IDs of statuses to attach to the report to provide additional context.
-                  example:
-                    - 01GPE76N4SBVRZ8K24TW51ZZQ4
-                    - 01GPE76WN9JZE62EPT3Q9FRRD4
+                - description: |-
+                    IDs of statuses to attach to the report to provide additional context.
+                    Sample: ["01GPE76N4SBVRZ8K24TW51ZZQ4","01GPE76WN9JZE62EPT3Q9FRRD4"]
                   in: formData
                   items:
                     type: string
                   name: status_ids
                   type: array
                   x-go-name: StatusIDs
-                - description: The reason for the report. Default maximum of 1000 characters.
-                  example: Anti-Blackness, transphobia.
+                - description: |-
+                    The reason for the report. Default maximum of 1000 characters.
+                    Sample: Anti-Blackness, transphobia.
                   in: formData
                   name: comment
                   type: string
                   x-go-name: Comment
                 - default: false
-                  description: If the account is remote, should the report be forwarded to the remote admin?
-                  example: true
+                  description: |-
+                    If the account is remote, should the report be forwarded to the remote admin?
+                    Sample: true
                   in: formData
                   name: forward
                   type: boolean
@@ -6689,15 +6762,14 @@ paths:
                   description: |-
                     Specify if the report is due to spam, violation of enumerated instance rules, or some other reason.
                     Currently only 'other' is supported.
-                  example: other
+                    Sample: other
                   in: formData
                   name: category
                   type: string
                   x-go-name: Category
-                - description: IDs of rules on this instance which have been broken according to the reporter.
-                  example:
-                    - 01GPBN5YDY6JKBWE44H7YQBDCQ
-                    - 01GPBN65PDWSBPWVDD0SQCFFY3
+                - description: |-
+                    IDs of rules on this instance which have been broken according to the reporter.
+                    Sample: ["01GPBN5YDY6JKBWE44H7YQBDCQ","01GPBN65PDWSBPWVDD0SQCFFY3"]
                   in: formData
                   items:
                     type: string
@@ -7705,6 +7777,11 @@ paths:
                 ````
             operationId: tagTimeline
             parameters:
+                - description: Name of the tag
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
                 - description: Return only statuses *OLDER* than the given max status ID. The status with the specified ID will not be included in the response.
                   in: query
                   name: max_id
@@ -7834,6 +7911,12 @@ paths:
 
                 HTTP signature is required on the request.
             operationId: s2sFeaturedCollectionGet
+            parameters:
+                - description: Account name of the user
+                  in: path
+                  name: username
+                  required: true
+                  type: string
             produces:
                 - application/activity+json
             responses:

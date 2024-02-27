@@ -18,6 +18,8 @@
 package model
 
 // HeaderFilter represents a regex value filter applied to one particular HTTP header (allow / block).
+//
+// swagger:model headerFilter
 type HeaderFilter struct {
 	// The ID of the header filter.
 	// example: 01FBW21XJA09XYX51KV5JVBW0F

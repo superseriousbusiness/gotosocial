@@ -113,7 +113,7 @@ import (
 //		'200':
 //			description: "The newly updated instance."
 //			schema:
-//				"$ref": "#/definitions/instance"
+//				"$ref": "#/definitions/instanceV1"
 //		'400':
 //			description: bad request
 //		'401':

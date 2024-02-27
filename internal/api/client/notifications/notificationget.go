@@ -38,6 +38,14 @@ import (
 //	produces:
 //	- application/json
 //
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: The ID of the notification.
+//		in: path
+//		required: true
+//
 //	security:
 //	- OAuth2 Bearer:
 //		- read:notifications
