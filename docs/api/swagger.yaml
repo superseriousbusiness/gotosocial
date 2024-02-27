@@ -2542,8 +2542,33 @@ definitions:
                     type: string
                 type: array
                 x-go-name: MediaIDs
-            poll:
-                $ref: '#/definitions/pollRequest'
+            poll[expires_in]:
+                description: |-
+                    Duration the poll should be open, in seconds.
+                    If provided, media_ids cannot be used, and poll[options] must be provided.
+                    in: formData
+                format: int64
+                type: integer
+                x-go-name: SwaggerPollExpiresIn
+            poll[hide_totals]:
+                default: true
+                description: Hide vote counts until the poll ends.
+                type: boolean
+                x-go-name: SwaggerPollHideTotals
+            poll[multiple]:
+                default: false
+                description: Allow multiple choices on this poll.
+                type: boolean
+                x-go-name: SwaggerPollMultiple
+            poll[options][]:
+                description: |-
+                    Array of possible answers.
+                    If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+                    in: formData
+                items:
+                    type: string
+                type: array
+                x-go-name: SwaggerPollOptions
             scheduled_at:
                 description: |-
                     ISO 8601 Datetime at which to schedule a status.
@@ -6862,11 +6887,35 @@ paths:
                   name: media_ids
                   type: array
                   x-go-name: MediaIDs
-                - $ref: '#/definitions/pollRequest'
-                  description: Poll to include with this status.
+                - description: |-
+                    Array of possible answers.
+                    If provided, media_ids cannot be used, and poll[expires_in] must be provided.
                   in: formData
-                  name: poll
-                  x-go-name: Poll
+                  items:
+                    type: string
+                  name: poll[options][]
+                  type: array
+                  x-go-name: SwaggerPollOptions
+                - description: |-
+                    Duration the poll should be open, in seconds.
+                    If provided, media_ids cannot be used, and poll[options] must be provided.
+                  format: int64
+                  in: formData
+                  name: poll[expires_in]
+                  type: integer
+                  x-go-name: SwaggerPollExpiresIn
+                - default: false
+                  description: Allow multiple choices on this poll.
+                  in: formData
+                  name: poll[multiple]
+                  type: boolean
+                  x-go-name: SwaggerPollMultiple
+                - default: true
+                  description: Hide vote counts until the poll ends.
+                  in: formData
+                  name: poll[hide_totals]
+                  type: boolean
+                  x-go-name: SwaggerPollHideTotals
                 - description: ID of the status being replied to, if status is a reply.
                   in: formData
                   name: in_reply_to_id

@@ -179,8 +179,26 @@ type StatusCreateRequest struct {
 	// in: formData
 	MediaIDs []string `form:"media_ids[]" json:"media_ids" xml:"media_ids"`
 	// Poll to include with this status.
-	// in: formData
+	// The SwaggerPoll… parameters should only be used to document this complex parameter,
+	// and should not be used otherwise.
+	// swagger:ignore
 	Poll *PollRequest `form:"poll" json:"poll" xml:"poll"`
+	// Array of possible answers.
+	// If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+	// in: formData
+	SwaggerPollOptions []string `form:"-" json:"poll[options][]" xml:"-"`
+	// Duration the poll should be open, in seconds.
+	// If provided, media_ids cannot be used, and poll[options] must be provided.
+	// in: formData
+	SwaggerPollExpiresIn int `form:"-" json:"poll[expires_in]" xml:"-"`
+	// Allow multiple choices on this poll.
+	// default: false
+	// in: formData
+	SwaggerPollMultiple bool `form:"-" json:"poll[multiple]" xml:"-"`
+	// Hide vote counts until the poll ends.
+	// default: true
+	// in: formData
+	SwaggerPollHideTotals bool `form:"-" json:"poll[hide_totals]" xml:"-"`
 	// ID of the status being replied to, if status is a reply.
 	// in: formData
 	InReplyToID string `form:"in_reply_to_id" json:"in_reply_to_id" xml:"in_reply_to_id"`
