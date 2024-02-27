@@ -7,7 +7,7 @@ ADDR='127.0.0.1'
 PORT='8080'
 DB=$(mktemp)
 STORAGE=$(mktemp -d)
-EXPORT="$(mktemp).json"
+EXPORT="$(mktemp --suffix '.json')"
 
 _kill() {
     pid=$(pidof gotosocial) \
