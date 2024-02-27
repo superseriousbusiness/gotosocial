@@ -22,6 +22,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -32,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -83,6 +85,110 @@ func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPub
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, true)
 	suite.NoError(err)
 	suite.Len(statuses, 2)
+}
+
+// populateTestStatus adds mandatory fields to a partially populated status.
+func (suite *AccountTestSuite) populateTestStatus(testAccountKey string, status *gtsmodel.Status, inReplyTo *gtsmodel.Status) *gtsmodel.Status {
+	testAccount := suite.testAccounts[testAccountKey]
+	if testAccount == nil {
+		suite.FailNowf("", "Missing test account: %s", testAccountKey)
+		return status
+	}
+	if testAccount.Domain != "" {
+		suite.FailNowf("", "Only local test accounts are supported: %s is remote", testAccountKey)
+		return status
+	}
+
+	status.AccountID = testAccount.ID
+	status.AccountURI = testAccount.URI
+	status.URI = fmt.Sprintf("http://localhost:8080/users/%s/statuses/%s", testAccount.Username, status.ID)
+	status.Local = util.Ptr(true)
+
+	if status.Visibility == "" {
+		status.Visibility = gtsmodel.VisibilityDefault
+	}
+	if status.ActivityStreamsType == "" {
+		status.ActivityStreamsType = ap.ObjectNote
+	}
+	if status.Federated == nil {
+		status.Federated = util.Ptr(true)
+	}
+	if status.Boostable == nil {
+		status.Boostable = util.Ptr(true)
+	}
+	if status.Likeable == nil {
+		status.Likeable = util.Ptr(true)
+	}
+	if status.Replyable == nil {
+		status.Replyable = util.Ptr(true)
+	}
+
+	if inReplyTo != nil {
+		status.InReplyToAccountID = inReplyTo.AccountID
+		status.InReplyToID = inReplyTo.ID
+		status.InReplyToURI = inReplyTo.URI
+	}
+
+	return status
+}
+
+// Tests that we're including self-replies but excluding those that mention other accounts.
+func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesExcludesSelfRepliesWithMentions() {
+	post := suite.populateTestStatus(
+		"local_account_1",
+		&gtsmodel.Status{
+			ID:      "01HQ1FGN679M5F81DZ18WS6JQG",
+			Content: "post",
+		},
+		nil,
+	)
+	reply := suite.populateTestStatus(
+		"local_account_2",
+		&gtsmodel.Status{
+			ID:         "01HQ1GTXMT2W6PF8MA2XG9DG6Q",
+			Content:    "post",
+			MentionIDs: []string{post.InReplyToAccountID},
+		},
+		post,
+	)
+	riposte := suite.populateTestStatus(
+		"local_account_1",
+		&gtsmodel.Status{
+			ID:         "01HQ1GTXN0RWG9ZWJKRFAEF5RE",
+			Content:    "riposte",
+			MentionIDs: []string{reply.InReplyToAccountID},
+		},
+		reply,
+	)
+	followup := suite.populateTestStatus(
+		"local_account_1",
+		&gtsmodel.Status{
+			ID:         "01HQ1GTXN52X7MM9Z12PNJWEHQ",
+			Content:    "followup",
+			MentionIDs: []string{reply.InReplyToAccountID},
+		},
+		riposte,
+	)
+
+	for _, status := range []*gtsmodel.Status{post, reply, riposte, followup} {
+		if err := suite.db.PutStatus(context.Background(), status); err != nil {
+			suite.FailNowf("", "Error while adding test status with ID %s: %v", status.ID, err)
+			return
+		}
+	}
+
+	testAccount := suite.testAccounts["local_account_1"]
+	statuses, err := suite.db.GetAccountStatuses(context.Background(), testAccount.ID, 20, true, true, "", "", false, false)
+	suite.NoError(err)
+	suite.Len(statuses, 8)
+	for _, status := range statuses {
+		if status.InReplyToID != "" && status.InReplyToAccountID != testAccount.ID {
+			suite.FailNowf("", "Status with ID %s is a non-self reply and should have been excluded", status.ID)
+		}
+		if len(status.Mentions) != 0 {
+			suite.FailNowf("", "Status with ID %s has mentions and should have been excluded", status.ID)
+		}
+	}
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
