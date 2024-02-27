@@ -38,10 +38,22 @@ func init() {
 		}
 
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			// Remove previous index for viewing
+			// statuses created by account.
+			if _, err := tx.
+				NewDropIndex().
+				Index("statuses_account_id_id_idx").
+				IfExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			// Add new index for viewing statuses created
+			// by account, which includes mentions in the index.
 			if _, err := tx.
 				NewCreateIndex().
 				Model((*gtsmodel.Status)(nil)).
-				Index("statuses_mentions_is_null_or_empty_idx").
+				Index("statuses_account_view_idx").
 				Column(
 					"account_id",
 					"in_reply_to_account_id",
