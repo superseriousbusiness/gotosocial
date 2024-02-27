@@ -64,6 +64,11 @@ Disallow: /
 User-agent: WellKnownBot
 Disallow: /
 
+# Block Amazonbot, because Amazon.
+# https://developer.amazon.com/amazonbot
+User-agent: Amazonbot
+Disallow: /
+
 # Rules for everything else.
 User-agent: *
 Crawl-delay: 500
