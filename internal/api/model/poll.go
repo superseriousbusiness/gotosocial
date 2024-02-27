@@ -78,21 +78,21 @@ type PollRequest struct {
 	// Array of possible answers.
 	// If provided, media_ids cannot be used, and poll[expires_in] must be provided.
 	// name: poll[options]
-	Options []string `form:"options" json:"options" xml:"options"`
+	Options []string `form:"poll[options][]" json:"options" xml:"options"`
 
 	// Duration the poll should be open, in seconds.
 	// If provided, media_ids cannot be used, and poll[options] must be provided.
-	ExpiresIn int `form:"expires_in" xml:"expires_in"`
+	ExpiresIn int `form:"poll[expires_in]" xml:"expires_in"`
 
 	// Duration the poll should be open, in seconds.
 	// If provided, media_ids cannot be used, and poll[options] must be provided.
 	ExpiresInI interface{} `json:"expires_in"`
 
 	// Allow multiple choices on this poll.
-	Multiple bool `form:"multiple" json:"multiple" xml:"multiple"`
+	Multiple bool `form:"poll[multiple]" json:"multiple" xml:"multiple"`
 
 	// Hide vote counts until the poll ends.
-	HideTotals bool `form:"hide_totals" json:"hide_totals" xml:"hide_totals"`
+	HideTotals bool `form:"poll[hide_totals]" json:"hide_totals" xml:"hide_totals"`
 }
 
 // PollVoteRequest models a request to vote in a poll.
