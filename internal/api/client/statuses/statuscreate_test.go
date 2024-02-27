@@ -21,10 +21,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -425,6 +427,74 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithNoncanonicalLanguageTag
 	suite.Equal("<p>English? what's English? i speak American</p>", statusReply.Content)
 	suite.NotNil(statusReply.Language)
 	suite.Equal("en-US", *statusReply.Language)
+}
+
+// Post a new status with an attached poll.
+func (suite *StatusCreateTestSuite) testPostNewStatusWithPoll(configure func(request *http.Request)) {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
+
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
+	configure(ctx.Request)
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
+
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+
+	statusReply := &apimodel.Status{}
+	err = json.Unmarshal(b, statusReply)
+	suite.NoError(err)
+
+	suite.Equal("<p>this is a status with a poll!</p>", statusReply.Content)
+	suite.Equal(apimodel.VisibilityPublic, statusReply.Visibility)
+	if suite.NotNil(statusReply.Poll) {
+		if suite.Len(statusReply.Poll.Options, 2) {
+			suite.Equal("first option", statusReply.Poll.Options[0].Title)
+			suite.Equal("second option", statusReply.Poll.Options[1].Title)
+		}
+		suite.NotZero(statusReply.Poll.ExpiresAt)
+		suite.False(statusReply.Poll.Expired)
+		suite.True(statusReply.Poll.Multiple)
+	}
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
+	suite.testPostNewStatusWithPoll(func(request *http.Request) {
+		request.Form = url.Values{
+			"status":           {"this is a status with a poll!"},
+			"visibility":       {"public"},
+			"poll[options][]":  {"first option", "second option"},
+			"poll[expires_in]": {"3600"},
+			"poll[multiple]":   {"true"},
+		}
+	})
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
+	suite.testPostNewStatusWithPoll(func(request *http.Request) {
+		request.Header.Set("content-type", "application/json")
+		request.Body = io.NopCloser(strings.NewReader(`{
+			"status": "this is a status with a poll!",
+			"visibility": "public",
+			"poll": {
+				"options": ["first option", "second option"],
+				"expires_in": 3600,
+				"multiple": true
+			}
+		}`))
+	})
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {
