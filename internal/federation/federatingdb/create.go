@@ -21,13 +21,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -35,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Create adds a new entry to the database which must be able to be
@@ -321,26 +318,45 @@ func (f *federatingDB) createStatusable(
 	statusable ap.Statusable,
 	forwarded bool,
 ) error {
-
-	// Check whether we should accept this new status,
-	// we do this BEFORE even handling forwards to us.
-	accept, err := f.shouldAcceptStatusable(ctx,
+	// Check whether this status is both
+	// relevant, and doesn't look like spam.
+	err := f.spamFilter.StatusableOK(ctx,
 		receiver,
 		requester,
 		statusable,
 	)
-	if err != nil {
-		return gtserror.Newf("error checking status acceptibility: %w", err)
-	}
 
-	if !accept {
-		// This is a status sent with no relation to receiver, i.e.
-		// - receiving account does not follow requesting account
-		// - received status does not mention receiving account
+	switch {
+	case err == nil:
+		// No problem!
+
+	case gtserror.IsNotRelevant(err):
+		// This case is quite common if a remote (Mastodon)
+		// instance forwards a message to us which is a reply
+		// from someone else to a status we've also replied to.
 		//
-		// We just pretend that all is fine (dog with cuppa, flames everywhere)
-		log.Trace(ctx, "status failed acceptability check")
+		// It does this to try to ensure thread completion, but
+		// we have our own thread fetching mechanism anyway.
+		log.Debugf(ctx,
+			"status %s is not relevant to receiver (%v); dropping it",
+			ap.GetJSONLDId(statusable), err,
+		)
 		return nil
+
+	case gtserror.IsSpam(err):
+		// Log this at a higher level so admins can
+		// gauge how much spam is being sent to them.
+		//
+		// TODO: add Prometheus metrics for this.
+		log.Infof(ctx,
+			"status %s looked like spam (%v); dropping it",
+			ap.GetJSONLDId(statusable), err,
+		)
+		return nil
+
+	default:
+		// A real error has occurred.
+		return gtserror.Newf("error checking relevancy/spam: %w", err)
 	}
 
 	// If we do have a forward, we should ignore the content
@@ -376,52 +392,6 @@ func (f *federatingDB) createStatusable(
 	})
 
 	return nil
-}
-
-func (f *federatingDB) shouldAcceptStatusable(ctx context.Context, receiver *gtsmodel.Account, requester *gtsmodel.Account, statusable ap.Statusable) (bool, error) {
-	host := config.GetHost()
-	accountDomain := config.GetAccountDomain()
-
-	// Check whether status mentions the receiver,
-	// this is the quickest check so perform it first.
-	mentions, _ := ap.ExtractMentions(statusable)
-	for _, mention := range mentions {
-
-		// Extract placeholder mention vars.
-		accURI := mention.TargetAccountURI
-		name := mention.NameString
-
-		switch {
-		case accURI != "" &&
-			accURI == receiver.URI || accURI == receiver.URL:
-			// Mention target is receiver,
-			// they are mentioned in status.
-			return true, nil
-
-		case accURI == "" && name != "":
-			// Only a name was provided, extract the user@domain parts.
-			user, domain, err := util.ExtractNamestringParts(name)
-			if err != nil {
-				return false, gtserror.Newf("error extracting mention name parts: %w", err)
-			}
-
-			// Check if the name points to our receiving local user.
-			isLocal := (domain == host || domain == accountDomain)
-			if isLocal && strings.EqualFold(user, receiver.Username) {
-				return true, nil
-			}
-		}
-	}
-
-	// Check whether receiving account follows the requesting account.
-	follows, err := f.state.DB.IsFollowing(ctx, receiver.ID, requester.ID)
-	if err != nil {
-		return false, gtserror.Newf("error checking follow status: %w", err)
-	}
-
-	// Status will only be acceptable
-	// if receiver follows requester.
-	return follows, nil
 }
 
 /*

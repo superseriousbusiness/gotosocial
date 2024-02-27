@@ -15,26 +15,18 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package workers
+package spam
 
-import (
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-)
+import "github.com/superseriousbusiness/gotosocial/internal/state"
 
-// surface wraps functions for 'surfacing' the result
-// of processing a message, eg:
-//   - timelining a status
-//   - removing a status from timelines
-//   - sending a notification to a user
-//   - sending an email
-type surface struct {
-	state       *state.State
-	converter   *typeutils.Converter
-	stream      *stream.Processor
-	filter      *visibility.Filter
-	emailSender email.Sender
+// Filter packages logic for checking whether
+// given statuses should be considered spam.
+type Filter struct {
+	state *state.State
+}
+
+// NewFilter returns a new spam Filter
+// that will use the provided state.
+func NewFilter(state *state.State) *Filter {
+	return &Filter{state: state}
 }

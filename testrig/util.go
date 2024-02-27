@@ -27,13 +27,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	wprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/workers"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // Starts workers on the provided state using noop processing functions.

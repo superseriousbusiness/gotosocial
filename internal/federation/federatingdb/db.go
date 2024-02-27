@@ -22,12 +22,14 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
-// DB wraps the pub.Database interface with a couple of custom functions for GoToSocial.
+// DB wraps the pub.Database interface with
+// a couple of custom functions for GoToSocial.
 type DB interface {
 	pub.Database
 	Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error
@@ -36,20 +38,28 @@ type DB interface {
 	Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error
 }
 
-// FederatingDB uses the underlying DB interface to implement the go-fed pub.Database interface.
-// It doesn't care what the underlying implementation of the DB interface is, as long as it works.
+// FederatingDB uses the given state interface
+// to implement the go-fed pub.Database interface.
 type federatingDB struct {
-	state     *state.State
-	converter *typeutils.Converter
-	filter    *visibility.Filter
+	state      *state.State
+	converter  *typeutils.Converter
+	visFilter  *visibility.Filter
+	spamFilter *spam.Filter
 }
 
-// New returns a DB interface using the given database and config
-func New(state *state.State, converter *typeutils.Converter, filter *visibility.Filter) DB {
+// New returns a DB that satisfies the pub.Database
+// interface, using the given state and filters.
+func New(
+	state *state.State,
+	converter *typeutils.Converter,
+	visFilter *visibility.Filter,
+	spamFilter *spam.Filter,
+) DB {
 	fdb := federatingDB{
-		state:     state,
-		converter: converter,
-		filter:    filter,
+		state:      state,
+		converter:  converter,
+		visFilter:  visFilter,
+		spamFilter: spamFilter,
 	}
 	return &fdb
 }

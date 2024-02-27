@@ -65,6 +65,7 @@ var testDefaults = config.Configuration{
 	WebAssetBaseDir:    "./web/assets/",
 
 	InstanceFederationMode:         config.InstanceFederationModeDefault,
+	InstanceFederationSpamFilter:   true,
 	InstanceExposePeers:            true,
 	InstanceExposeSuspended:        true,
 	InstanceExposeSuspendedWeb:     true,

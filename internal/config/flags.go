@@ -84,6 +84,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 
 		// Instance
 		cmd.Flags().String(InstanceFederationModeFlag(), cfg.InstanceFederationMode, fieldtag("InstanceFederationMode", "usage"))
+		cmd.Flags().Bool(InstanceFederationSpamFilterFlag(), cfg.InstanceFederationSpamFilter, fieldtag("InstanceFederationSpamFilter", "usage"))
 		cmd.Flags().Bool(InstanceExposePeersFlag(), cfg.InstanceExposePeers, fieldtag("InstanceExposePeers", "usage"))
 		cmd.Flags().Bool(InstanceExposeSuspendedFlag(), cfg.InstanceExposeSuspended, fieldtag("InstanceExposeSuspended", "usage"))
 		cmd.Flags().Bool(InstanceExposeSuspendedWebFlag(), cfg.InstanceExposeSuspendedWeb, fieldtag("InstanceExposeSuspendedWeb", "usage"))

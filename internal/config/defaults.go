@@ -59,6 +59,7 @@ var Defaults = Configuration{
 	WebAssetBaseDir:    "./web/assets/",
 
 	InstanceFederationMode:         InstanceFederationModeDefault,
+	InstanceFederationSpamFilter:   false,
 	InstanceExposePeers:            false,
 	InstanceExposeSuspended:        false,
 	InstanceExposeSuspendedWeb:     false,
