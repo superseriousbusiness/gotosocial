@@ -4719,7 +4719,9 @@ paths:
                 be performed.
             operationId: domainKeysExpire
             parameters:
-                - description: 'Domain to expire keys for. Sample: example.org'
+                - description: |-
+                    Domain to expire keys for.
+                    Sample: example.org
                   in: formData
                   name: domain
                   type: string
@@ -5315,7 +5317,9 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: 'Optional admin comment on the action taken in response to this report. Useful for providing an explanation about what action was taken (if any) before the report was marked as resolved. This will be visible to the user that created the report! Sample: The reported account was suspended.'
+                - description: |-
+                    Optional admin comment on the action taken in response to this report. Useful for providing an explanation about what action was taken (if any) before the report was marked as resolved. This will be visible to the user that created the report!
+                    Sample: The reported account was suspended.
                   in: formData
                   name: action_taken_comment
                   type: string
@@ -6104,7 +6108,9 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: 'Title of this list. Sample: Cool People'
+                - description: |-
+                    Title of this list.
+                    Sample: Cool People
                   in: formData
                   name: title
                   type: string

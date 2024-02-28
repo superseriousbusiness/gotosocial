@@ -57,7 +57,9 @@ import (
 //	-
 //		name: title
 //		type: string
-//		description: 'Title of this list. Sample: Cool People'
+//		description: |-
+//			Title of this list.
+//			Sample: Cool People
 //		in: formData
 //	-
 //		name: replies_policy

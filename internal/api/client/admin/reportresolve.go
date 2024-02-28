@@ -60,6 +60,7 @@ import (
 //			Useful for providing an explanation about what action was taken (if any)
 //			before the report was marked as resolved. This will be visible to the user
 //			that created the report!
+//
 //			Sample: The reported account was suspended.
 //		type: string
 //
