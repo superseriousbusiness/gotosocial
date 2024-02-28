@@ -6104,12 +6104,10 @@ paths:
                   name: id
                   required: true
                   type: string
-                  x-go-name: Title
                 - description: 'Title of this list. Sample: Cool People'
                   in: formData
                   name: title
                   type: string
-                  x-go-name: RepliesPolicy
                 - description: |-
                     RepliesPolicy for this list.
                     followed = Show replies to any followed user

@@ -57,7 +57,7 @@ type ListCreateRequest struct {
 
 // ListUpdateRequest models list update parameters.
 //
-// swagger:parameters listUpdate
+// swagger:ignore
 type ListUpdateRequest struct {
 	// Title of this list.
 	// Sample: Cool People
