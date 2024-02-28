@@ -23,44 +23,27 @@ import (
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		var expression string
-		switch db.Dialect().Name() {
-		case dialect.PG:
-			expression = "(mentions IS NULL OR CARDINALITY(mentions) = 0)"
-		case dialect.SQLite:
-			expression = "(mentions IS NULL OR json_array_length(mentions) = 0)"
-		default:
-			panic("db conn was neither pg not sqlite")
+		log.Info(ctx, "reindexing statuses (statuses_account_id_id_idx); this may take a few minutes, please don't interrupt this migration!")
+
+		// Re-add index removed in a different
+		// version of previous migration.
+		if _, err := db.
+			NewCreateIndex().
+			Model(&gtsmodel.Status{}).
+			Index("statuses_account_id_id_idx").
+			Column("account_id").
+			ColumnExpr("id DESC").
+			IfNotExists().
+			Exec(ctx); err != nil {
+			return err
 		}
 
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			log.Info(ctx, "reindexing statuses (statuses_account_view_idx); this may take a few minutes, please don't interrupt this migration!")
+		return nil
 
-			// Add new index for viewing statuses created
-			// by account, which includes mentions in the index.
-			if _, err := tx.
-				NewCreateIndex().
-				Model((*gtsmodel.Status)(nil)).
-				Index("statuses_account_view_idx").
-				Column(
-					"account_id",
-					"in_reply_to_account_id",
-					"in_reply_to_uri",
-				).
-				ColumnExpr(expression).
-				ColumnExpr("id DESC").
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			return nil
-		})
 	}
 
 	down := func(ctx context.Context, db *bun.DB) error {
