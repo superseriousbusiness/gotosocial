@@ -37,6 +37,7 @@ func init() {
 			Index("statuses_account_id_id_idx").
 			Column("account_id").
 			ColumnExpr("id DESC").
+			IfNotExists().
 			Exec(ctx); err != nil {
 			return err
 		}
