@@ -599,8 +599,8 @@ func (d *Dereferencer) isPermittedStatus(
 		// can't perform further checks.
 		//
 		// Worst case we allow something
-		// through, and later on refetch
-		// it will get deleted.
+		// through, and later on during
+		// refetch it will get deleted.
 		return true, nil
 	}
 
