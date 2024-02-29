@@ -1237,7 +1237,7 @@ definitions:
                 uniqueItems: true
                 x-go-name: Context
             expires_at:
-                description: When the filter should no longer be applied. Not present if the filter does not expire.
+                description: When the filter should no longer be applied. Null if the filter does not expire.
                 example: "2024-02-01T02:57:49Z"
                 type: string
                 x-go-name: ExpiresAt
@@ -1260,12 +1260,6 @@ definitions:
                 example: true
                 type: boolean
                 x-go-name: WholeWord
-        required:
-            - id
-            - phrase
-            - context
-            - whole_word
-            - irreversible
         title: FilterV1 represents a user-defined filter for determining which statuses should not be shown to the user.
         type: object
         x-go-name: FilterV1
@@ -5653,7 +5647,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:lists
+                    - read:filters
             summary: Get all filters for the authenticated account.
             tags:
                 - filters
@@ -5727,7 +5721,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:filters
+                    - write:filters
             summary: Create a single filter.
             tags:
                 - filters
@@ -5757,7 +5751,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - write:lists
+                    - write:filters
             summary: Delete a single filter with the given ID.
             tags:
                 - filters
@@ -5788,7 +5782,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:lists
+                    - read:filters
             summary: Get a single filter with the given ID.
             tags:
                 - filters
@@ -5867,7 +5861,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:filters
+                    - write:filters
             summary: Update a single filter with the given ID.
             tags:
                 - filters
