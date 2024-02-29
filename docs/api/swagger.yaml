@@ -2550,17 +2550,17 @@ definitions:
                     in: formData
                 format: int64
                 type: integer
-                x-go-name: SwaggerPollExpiresIn
+                x-go-name: PollExpiresIn
             poll[hide_totals]:
                 default: true
                 description: Hide vote counts until the poll ends.
                 type: boolean
-                x-go-name: SwaggerPollHideTotals
+                x-go-name: PollHideTotals
             poll[multiple]:
                 default: false
                 description: Allow multiple choices on this poll.
                 type: boolean
-                x-go-name: SwaggerPollMultiple
+                x-go-name: PollMultiple
             poll[options][]:
                 description: |-
                     Array of possible answers.
@@ -2569,7 +2569,7 @@ definitions:
                 items:
                     type: string
                 type: array
-                x-go-name: SwaggerPollOptions
+                x-go-name: PollOptions
             scheduled_at:
                 description: |-
                     ISO 8601 Datetime at which to schedule a status.
@@ -6936,7 +6936,7 @@ paths:
                     type: string
                   name: poll[options][]
                   type: array
-                  x-go-name: SwaggerPollOptions
+                  x-go-name: PollOptions
                 - description: |-
                     Duration the poll should be open, in seconds.
                     If provided, media_ids cannot be used, and poll[options] must be provided.
@@ -6944,19 +6944,19 @@ paths:
                   in: formData
                   name: poll[expires_in]
                   type: integer
-                  x-go-name: SwaggerPollExpiresIn
+                  x-go-name: PollExpiresIn
                 - default: false
                   description: Allow multiple choices on this poll.
                   in: formData
                   name: poll[multiple]
                   type: boolean
-                  x-go-name: SwaggerPollMultiple
+                  x-go-name: PollMultiple
                 - default: true
                   description: Hide vote counts until the poll ends.
                   in: formData
                   name: poll[hide_totals]
                   type: boolean
-                  x-go-name: SwaggerPollHideTotals
+                  x-go-name: PollHideTotals
                 - description: ID of the status being replied to, if status is a reply.
                   in: formData
                   name: in_reply_to_id
