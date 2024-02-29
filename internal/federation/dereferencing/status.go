@@ -571,14 +571,20 @@ func (d *Dereferencer) isPermittedStatus(
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) (
-	bool, // is permitted?
-	error,
+	permitted bool, // is permitted?
+	err error,
 ) {
+
+	// label onFail:
+	// our failure condition handling
+	// at the end of this function for
+	// the case of permission = false.
+
 	if !status.Account.SuspendedAt.IsZero() {
 		// The status author is suspended,
 		// this shouldn't have reached here
 		// but it's a fast check anyways.
-		return false, nil
+		goto onFail
 	}
 
 	if status.InReplyToURI == "" {
@@ -587,10 +593,7 @@ func (d *Dereferencer) isPermittedStatus(
 		return true, nil
 	}
 
-	// Extract any status reply.
-	inReplyTo := status.InReplyTo
-
-	if inReplyTo == nil {
+	if status.InReplyTo == nil {
 		// If no inReplyTo has been set,
 		// we return here for now as we
 		// can't perform further checks.
@@ -601,44 +604,29 @@ func (d *Dereferencer) isPermittedStatus(
 		return true, nil
 	}
 
-	if inReplyTo.BoostOfID != "" {
-		// The in-reply-to status is a boost
-		// wrapper. Unwrap to get *actual*.
-		inReplyTo = inReplyTo.BoostOf
-
-		// Set updated status details.
-		status.InReplyToID = inReplyTo.ID
-		status.InReplyTo = inReplyTo
-		status.InReplyToAccountID = inReplyTo.AccountID
-		status.InReplyToAccount = inReplyTo.Account
-
-		// NOTE: we keep the inReplyToURI field
-		// as the same value, just as that is how
-		// the remote server expects it to be stored
-		// and accessible from our database as.
+	if status.InReplyTo.BoostOf != nil {
+		// We do not permit replies
+		// to boost wrapper statuses.
+		goto onFail
 	}
 
 	// Check visibility of inReplyTo to status author.
-	visible, err := d.visibility.StatusVisible(ctx,
+	permitted, err = d.visibility.StatusVisible(ctx,
 		status.Account,
-		inReplyTo,
+		status.InReplyTo,
 	)
 	if err != nil {
 		return false, gtserror.Newf("error checking in-reply-to visibility: %w", err)
 	}
 
-	if visible &&
-		*inReplyTo.Replyable {
+	if permitted &&
+		*status.InReplyTo.Replyable {
 		// This status is visible AND
 		// replyable, in this economy?!
 		return true, nil
 	}
 
-	if existing == nil {
-		// This is a new status,
-		// just return false here.
-		return false, nil
-	}
+onFail:
 
 	// Delete existing status from database as it's no longer permitted.
 	if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
