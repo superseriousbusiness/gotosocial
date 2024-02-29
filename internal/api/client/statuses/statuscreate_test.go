@@ -284,13 +284,13 @@ func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
 
 	// check response
 
-	suite.EqualValues(http.StatusBadRequest, recorder.Code)
+	suite.EqualValues(http.StatusNotFound, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"Bad Request: cannot reply to status that does not exist"}`, string(b))
+	suite.Equal(`{"error":"Not Found: target status not found"}`, string(b))
 }
 
 // Post a reply to the status of a local user that allows replies.
