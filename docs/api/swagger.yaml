@@ -4301,15 +4301,9 @@ paths:
             summary: Perform admin action on a local or remote emoji known to this instance.
             tags:
                 - admin
-    /api/v1/admin/custom_emojis/categories/{id}:
+    /api/v1/admin/custom_emojis/categories:
         get:
             operationId: emojiCategoriesGet
-            parameters:
-                - description: The id of the emoji.
-                  in: path
-                  name: id
-                  required: true
-                  type: string
             produces:
                 - application/json
             responses:

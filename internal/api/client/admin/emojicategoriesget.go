@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// EmojiCategoriesGETHandler swagger:operation GET /api/v1/admin/custom_emojis/categories/{id} emojiCategoriesGet
+// EmojiCategoriesGETHandler swagger:operation GET /api/v1/admin/custom_emojis/categories emojiCategoriesGet
 //
 // Get a list of existing emoji categories.
 //
@@ -37,14 +37,6 @@ import (
 //
 //	produces:
 //	- application/json
-//
-//	parameters:
-//	-
-//		name: id
-//		type: string
-//		description: The id of the emoji.
-//		in: path
-//		required: true
 //
 //	responses:
 //		'200':
