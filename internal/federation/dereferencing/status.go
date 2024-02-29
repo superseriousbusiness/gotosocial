@@ -587,7 +587,10 @@ func (d *Dereferencer) isPermittedStatus(
 		return true, nil
 	}
 
-	if status.InReplyTo == nil {
+	// Extract any status reply.
+	inReplyTo := status.InReplyTo
+
+	if inReplyTo == nil {
 		// If no inReplyTo has been set,
 		// we return here for now as we
 		// can't perform further checks.
@@ -598,17 +601,34 @@ func (d *Dereferencer) isPermittedStatus(
 		return true, nil
 	}
 
+	if inReplyTo.BoostOfID != "" {
+		// The in-reply-to status is a boost
+		// wrapper. Unwrap to get *actual*.
+		inReplyTo = inReplyTo.BoostOf
+
+		// Set updated status details.
+		status.InReplyToID = inReplyTo.ID
+		status.InReplyTo = inReplyTo
+		status.InReplyToAccountID = inReplyTo.AccountID
+		status.InReplyToAccount = inReplyTo.Account
+
+		// NOTE: we keep the inReplyToURI field
+		// as the same value, just as that is how
+		// the remote server expects it to be stored
+		// and accessible from our database as.
+	}
+
 	// Check visibility of inReplyTo to status author.
 	visible, err := d.visibility.StatusVisible(ctx,
 		status.Account,
-		status.InReplyTo,
+		inReplyTo,
 	)
 	if err != nil {
 		return false, gtserror.Newf("error checking in-reply-to visibility: %w", err)
 	}
 
 	if visible &&
-		*status.InReplyTo.Replyable {
+		*inReplyTo.Replyable {
 		// This status is visible AND
 		// replyable, in this economy?!
 		return true, nil
