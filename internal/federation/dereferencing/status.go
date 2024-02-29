@@ -605,8 +605,9 @@ func (d *Dereferencer) isPermittedStatus(
 	}
 
 	if status.InReplyTo.BoostOfID != "" {
-		// We do not permit replies
-		// to boost wrapper statuses.
+		// We do not permit replies to
+		// boost wrapper statuses. (this
+		// shouldn't be able to happen).
 		goto onFail
 	}
 
