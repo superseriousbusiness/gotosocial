@@ -604,7 +604,7 @@ func (d *Dereferencer) isPermittedStatus(
 		return true, nil
 	}
 
-	if status.InReplyTo.BoostOf != nil {
+	if status.InReplyTo.BoostOfID != "" {
 		// We do not permit replies
 		// to boost wrapper statuses.
 		goto onFail
@@ -629,8 +629,9 @@ func (d *Dereferencer) isPermittedStatus(
 onFail:
 
 	if existing != nil {
+		log.Debugf(ctx, "deleting after permissivity fail: %s", existing.URI)
+
 		// Delete existing status from database as it's no longer permitted.
-		log.Infof(ctx, "deleting after permissivity fail: %s", existing.URI)
 		if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
 			log.Errorf(ctx, "error deleting %s after permissivity fail: %v", existing.URI, err)
 		}
