@@ -26,15 +26,15 @@ type Filter struct {
 	UpdatedAt            time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	ExpiresAt            time.Time        `bun:"type:timestamptz,nullzero"`                                   // Time filter should expire. If null, should not expire.
 	AccountID            string           `bun:"type:CHAR(26),notnull,nullzero"`                              // ID of the local account that created the filter.
-	Title                string           `bun:",nullzero,notnull,unique:filter_title_uniq"`                  // The name of the filter.
+	Title                string           `bun:",nullzero,notnull,unique"`                                    // The name of the filter.
 	Action               FilterAction     `bun:",nullzero,notnull"`                                           // The action to take.
 	Keywords             []*FilterKeyword `bun:"-"`                                                           // Keywords for this filter.
 	Statuses             []*FilterStatus  `bun:"-"`                                                           // Statuses for this filter.
-	ContextHome          bool             `bun:",notnull"`                                                    // Apply filter to home timeline and lists.
-	ContextNotifications bool             `bun:",notnull"`                                                    // Apply filter to notifications.
-	ContextPublic        bool             `bun:",notnull"`                                                    // Apply filter to home timeline and lists.
-	ContextThread        bool             `bun:",notnull"`                                                    // Apply filter when viewing a status's associated thread.
-	ContextAccount       bool             `bun:",notnull"`                                                    // Apply filter when viewing an account profile.
+	ContextHome          *bool            `bun:",nullzero,notnull,default:false"`                             // Apply filter to home timeline and lists.
+	ContextNotifications *bool            `bun:",nullzero,notnull,default:false"`                             // Apply filter to notifications.
+	ContextPublic        *bool            `bun:",nullzero,notnull,default:false"`                             // Apply filter to home timeline and lists.
+	ContextThread        *bool            `bun:",nullzero,notnull,default:false"`                             // Apply filter when viewing a status's associated thread.
+	ContextAccount       *bool            `bun:",nullzero,notnull,default:false"`                             // Apply filter when viewing an account profile.
 }
 
 // FilterEntry is the fields common across FilterKeyword and FilterStatus.
@@ -50,8 +50,8 @@ type FilterEntry struct {
 // FilterKeyword stores a single keyword to filter statuses against.
 type FilterKeyword struct {
 	FilterEntry
-	Keyword   string `bun:",nullzero,notnull"` // The keyword or phrase to filter against.
-	WholeWord bool   `bun:",notnull"`          // Should the filter consider word boundaries?
+	Keyword   string `bun:",nullzero,notnull"`               // The keyword or phrase to filter against.
+	WholeWord *bool  `bun:",nullzero,notnull,default:false"` // Should the filter consider word boundaries?
 }
 
 // FilterStatus stores a single status to filter.

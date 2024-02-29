@@ -3272,8 +3272,8 @@ func NewTestFilters() map[string]*gtsmodel.Filter {
 			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
 			Title:         "fnord",
 			Action:        gtsmodel.FilterActionWarn,
-			ContextHome:   true,
-			ContextPublic: true,
+			ContextHome:   util.Ptr(true),
+			ContextPublic: util.Ptr(true),
 		},
 		"local_account_1_filter_2": {
 			ID:            "01HN277FSPQAWXZXK92QPPYF79",
@@ -3282,8 +3282,8 @@ func NewTestFilters() map[string]*gtsmodel.Filter {
 			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
 			Title:         "metasyntactic variables",
 			Action:        gtsmodel.FilterActionWarn,
-			ContextHome:   true,
-			ContextPublic: true,
+			ContextHome:   util.Ptr(true),
+			ContextPublic: util.Ptr(true),
 		},
 		"local_account_2_filter_1": {
 			ID:            "01HNGFYJBED9FS0VWRVMY4TKXH",
@@ -3292,8 +3292,8 @@ func NewTestFilters() map[string]*gtsmodel.Filter {
 			AccountID:     "01F8MH1VYJAE00TVVGMM5JNJ8X",
 			Title:         "gamer words",
 			Action:        gtsmodel.FilterActionWarn,
-			ContextHome:   true,
-			ContextPublic: true,
+			ContextHome:   util.Ptr(true),
+			ContextPublic: util.Ptr(true),
 		},
 	}
 }
@@ -3309,7 +3309,7 @@ func NewTestFilterKeywords() map[string]*gtsmodel.FilterKeyword {
 				FilterID:  "01HN26VM6KZTW1ANNRVSBMA461",
 			},
 			Keyword:   "fnord",
-			WholeWord: true,
+			WholeWord: util.Ptr(true),
 		},
 		"local_account_1_filter_2_keyword_1": {
 			FilterEntry: gtsmodel.FilterEntry{
@@ -3320,7 +3320,7 @@ func NewTestFilterKeywords() map[string]*gtsmodel.FilterKeyword {
 				FilterID:  "01HN277FSPQAWXZXK92QPPYF79",
 			},
 			Keyword:   "foo",
-			WholeWord: true,
+			WholeWord: util.Ptr(true),
 		},
 		"local_account_1_filter_2_keyword_2": {
 			FilterEntry: gtsmodel.FilterEntry{
@@ -3331,7 +3331,7 @@ func NewTestFilterKeywords() map[string]*gtsmodel.FilterKeyword {
 				FilterID:  "01HN277FSPQAWXZXK92QPPYF79",
 			},
 			Keyword:   "bar",
-			WholeWord: true,
+			WholeWord: util.Ptr(true),
 		},
 		"local_account_2_filter_1_keyword_1": {
 			FilterEntry: gtsmodel.FilterEntry{
@@ -3342,7 +3342,7 @@ func NewTestFilterKeywords() map[string]*gtsmodel.FilterKeyword {
 				FilterID:  "01HNGFYJBED9FS0VWRVMY4TKXH",
 			},
 			Keyword:   "Virtual Boy",
-			WholeWord: true,
+			WholeWord: util.Ptr(true),
 		},
 	}
 }

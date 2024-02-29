@@ -33,17 +33,13 @@ package model
 // - filters
 type FilterV1 struct {
 	// The ID of the filter in the database.
-	//
-	// Required: true
 	ID string `json:"id"`
 	// The text to be filtered.
 	//
-	// Required: true
 	// Example: fnord
 	Phrase string `json:"phrase"`
 	// The contexts in which the filter should be applied.
 	//
-	// Required: true
 	// Minimum length: 1
 	// Unique: true
 	// Enum:
@@ -56,18 +52,16 @@ type FilterV1 struct {
 	Context []FilterContext `json:"context"`
 	// Should the filter consider word boundaries?
 	//
-	// Required: true
 	// Example: true
 	WholeWord bool `json:"whole_word"`
 	// Should matching entities be removed from the user's timelines/views, instead of hidden?
 	//
-	// Required: true
 	// Example: false
 	Irreversible bool `json:"irreversible"`
-	// When the filter should no longer be applied. Not present if the filter does not expire.
+	// When the filter should no longer be applied. Null if the filter does not expire.
 	//
 	// Example: 2024-02-01T02:57:49Z
-	ExpiresAt string `json:"expires_at,omitempty"`
+	ExpiresAt *string `json:"expires_at"`
 }
 
 // FilterCreateUpdateRequestV1 captures params for creating or updating a v1 filter.

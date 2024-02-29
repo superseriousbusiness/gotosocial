@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type FilterTestSuite struct {
@@ -41,8 +42,8 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 		AccountID:     "01HNEJXCPRTJVJY9MV0VVHGD47",
 		Title:         "foss jail",
 		Action:        gtsmodel.FilterActionWarn,
-		ContextHome:   true,
-		ContextPublic: true,
+		ContextHome:   util.Ptr(true),
+		ContextPublic: util.Ptr(true),
 	}
 	filterKeyword := &gtsmodel.FilterKeyword{
 		FilterEntry: gtsmodel.FilterEntry{
@@ -110,7 +111,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	suite.Empty(all[0].Statuses)
 
 	// Update the filter context and add another keyword and a status.
-	check.ContextNotifications = true
+	check.ContextNotifications = util.Ptr(true)
 
 	newKeyword := &gtsmodel.FilterKeyword{
 		FilterEntry: gtsmodel.FilterEntry{
@@ -143,11 +144,21 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 
 	// Ensure expected fields were modified on check filter.
 	suite.True(check.UpdatedAt.After(filter.UpdatedAt))
-	suite.True(check.ContextHome)
-	suite.True(check.ContextNotifications)
-	suite.True(check.ContextPublic)
-	suite.False(check.ContextThread)
-	suite.False(check.ContextAccount)
+	if suite.NotNil(check.ContextHome) {
+		suite.True(*check.ContextHome)
+	}
+	if suite.NotNil(check.ContextNotifications) {
+		suite.True(*check.ContextNotifications)
+	}
+	if suite.NotNil(check.ContextPublic) {
+		suite.True(*check.ContextPublic)
+	}
+	if suite.NotNil(check.ContextThread) {
+		suite.False(*check.ContextThread)
+	}
+	if suite.NotNil(check.ContextAccount) {
+		suite.False(*check.ContextAccount)
+	}
 
 	// Ensure keyword entries were added.
 	suite.Len(check.Keywords, 2)
@@ -166,7 +177,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	suite.ElementsMatch([]string{newStatus.ID}, checkFilterStatusIDs)
 
 	// Update one filter keyword and delete another. Don't change the filter or the filter status.
-	filterKeyword.WholeWord = true
+	filterKeyword.WholeWord = util.Ptr(true)
 	check.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 	check.Statuses = nil
 
@@ -181,17 +192,29 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	// Ensure expected fields were not modified.
 	suite.Equal(filter.Title, check.Title)
 	suite.Equal(gtsmodel.FilterActionWarn, check.Action)
-	suite.True(check.ContextHome)
-	suite.True(check.ContextNotifications)
-	suite.True(check.ContextPublic)
-	suite.False(check.ContextThread)
-	suite.False(check.ContextAccount)
+	if suite.NotNil(check.ContextHome) {
+		suite.True(*check.ContextHome)
+	}
+	if suite.NotNil(check.ContextNotifications) {
+		suite.True(*check.ContextNotifications)
+	}
+	if suite.NotNil(check.ContextPublic) {
+		suite.True(*check.ContextPublic)
+	}
+	if suite.NotNil(check.ContextThread) {
+		suite.False(*check.ContextThread)
+	}
+	if suite.NotNil(check.ContextAccount) {
+		suite.False(*check.ContextAccount)
+	}
 
 	// Ensure only changed field of keyword was modified, and other keyword was deleted.
 	suite.Len(check.Keywords, 1)
 	suite.Equal(filterKeyword.ID, check.Keywords[0].ID)
 	suite.Equal("GNU/Linux", check.Keywords[0].Keyword)
-	suite.True(check.Keywords[0].WholeWord)
+	if suite.NotNil(check.Keywords[0].WholeWord) {
+		suite.True(*check.Keywords[0].WholeWord)
+	}
 
 	// Ensure status entry was not deleted.
 	suite.Len(check.Statuses, 1)
@@ -220,8 +243,8 @@ func (suite *FilterTestSuite) TestFilterKeywordCRUD() {
 		AccountID:     "01HNEJXCPRTJVJY9MV0VVHGD47",
 		Title:         "foss jail",
 		Action:        gtsmodel.FilterActionWarn,
-		ContextHome:   true,
-		ContextPublic: true,
+		ContextHome:   util.Ptr(true),
+		ContextPublic: util.Ptr(true),
 	}
 
 	// Create new cancellable test context.
@@ -288,7 +311,7 @@ func (suite *FilterTestSuite) TestFilterKeywordCRUD() {
 	suite.Equal(filterKeyword.ID, all[0].ID)
 
 	// Modify the filter keyword.
-	filterKeyword.WholeWord = true
+	filterKeyword.WholeWord = util.Ptr(true)
 	err = suite.db.UpdateFilterKeyword(ctx, filterKeyword)
 	if err != nil {
 		t.Fatalf("error updating filter keyword: %v", err)

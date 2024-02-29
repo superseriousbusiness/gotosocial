@@ -18,7 +18,6 @@
 package v1
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,7 +47,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- write:lists
+//		- write:filters
 //
 //	responses:
 //		'200':
@@ -75,14 +74,13 @@ func (m *Module) FilterDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	id := c.Param(IDKey)
-	if id == "" {
-		err := errors.New("no filter id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	id, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	errWithCode := m.processor.FiltersV1().Delete(c.Request.Context(), authed.Account, id)
+	errWithCode = m.processor.FiltersV1().Delete(c.Request.Context(), authed.Account, id)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

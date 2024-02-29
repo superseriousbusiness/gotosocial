@@ -18,13 +18,13 @@
 package v1
 
 import (
-	"errors"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"net/http"
 )
 
 // FilterPUTHandler swagger:operation PUT /api/v1/filters/{id} filterV1Put
@@ -100,7 +100,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:filters
+//		- write:filters
 //
 //	responses:
 //		'200':
@@ -132,10 +132,9 @@ func (m *Module) FilterPUTHandler(c *gin.Context) {
 		return
 	}
 
-	id := c.Param(IDKey)
-	if id == "" {
-		err := errors.New("no filter id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	id, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

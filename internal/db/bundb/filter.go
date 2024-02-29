@@ -43,7 +43,7 @@ func (f *filterDB) GetFilterByID(ctx context.Context, id string) (*gtsmodel.Filt
 		"ID",
 		func() (*gtsmodel.Filter, error) {
 			var filter gtsmodel.Filter
-			err := f.db.NewSelect().Model(&filter).Where("id = ?", id).Scan(ctx)
+			err := f.db.NewSelect().Model(&filter).Where("? = ?", bun.Ident("id"), id).Scan(ctx)
 			return &filter, err
 		},
 		id,
@@ -69,7 +69,7 @@ func (f *filterDB) GetFiltersForAccountID(ctx context.Context, accountID string)
 		NewSelect().
 		Model((*gtsmodel.Filter)(nil)).
 		Column("id").
-		Where("account_id = ?", accountID).
+		Where("? = ?", bun.Ident("account_id"), accountID).
 		Scan(ctx, &filterIDs); err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (f *filterDB) GetFiltersForAccountID(ctx context.Context, accountID string)
 			if err := f.db.
 				NewSelect().
 				Model(&uncachedFilters).
-				Where("id IN (?)", bun.In(uncachedFilterIDs)).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncachedFilterIDs)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
@@ -232,7 +232,7 @@ func (f *filterDB) UpdateFilter(
 			NewUpdate().
 			Model(filter).
 			Column(filterColumns...).
-			Where("id = ?", filter.ID).
+			Where("? = ?", bun.Ident("id"), filter.ID).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -261,7 +261,7 @@ func (f *filterDB) UpdateFilter(
 			if _, err := tx.
 				NewDelete().
 				Model((*gtsmodel.FilterKeyword)(nil)).
-				Where("id = (?)", bun.In(deleteFilterKeywordIDs)).
+				Where("? = (?)", bun.Ident("id"), bun.In(deleteFilterKeywordIDs)).
 				Exec(ctx); err != nil {
 				return err
 			}
@@ -271,7 +271,7 @@ func (f *filterDB) UpdateFilter(
 			if _, err := tx.
 				NewDelete().
 				Model((*gtsmodel.FilterStatus)(nil)).
-				Where("id = (?)", bun.In(deleteFilterStatusIDs)).
+				Where("? = (?)", bun.Ident("id"), bun.In(deleteFilterStatusIDs)).
 				Exec(ctx); err != nil {
 				return err
 			}
@@ -303,7 +303,7 @@ func (f *filterDB) DeleteFilterByID(ctx context.Context, id string) error {
 		if _, err := tx.
 			NewDelete().
 			Model((*gtsmodel.FilterKeyword)(nil)).
-			Where("filter_id = ?", id).
+			Where("? = ?", bun.Ident("filter_id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -312,7 +312,7 @@ func (f *filterDB) DeleteFilterByID(ctx context.Context, id string) error {
 		if _, err := tx.
 			NewDelete().
 			Model((*gtsmodel.FilterStatus)(nil)).
-			Where("filter_id = ?", id).
+			Where("? = ?", bun.Ident("filter_id"), id).
 			Exec(ctx); err != nil {
 			return err
 		}
@@ -321,7 +321,7 @@ func (f *filterDB) DeleteFilterByID(ctx context.Context, id string) error {
 		_, err := tx.
 			NewDelete().
 			Model((*gtsmodel.Filter)(nil)).
-			Where("id = ?", id).
+			Where("? = ?", bun.Ident("id"), id).
 			Exec(ctx)
 		return err
 	}); err != nil {
@@ -435,7 +435,7 @@ func getFilterEntryByID[Entry entry[Model, Entry], Model any](ctx context.Contex
 		"ID",
 		func() (*Model, error) {
 			var model Model
-			err := f.db.NewSelect().Model(&model).Where("id = ?", id).Scan(ctx)
+			err := f.db.NewSelect().Model(&model).Where("? = ?", bun.Ident("id"), id).Scan(ctx)
 			return &model, err
 		},
 		id,
@@ -505,7 +505,7 @@ func getFilterEntries[Entry entry[Model, Entry], Model any](ctx context.Context,
 			if err := f.db.
 				NewSelect().
 				Model(&uncachedFilterEntries).
-				Where("id IN (?)", bun.In(uncachedFilterEntryIDs)).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncachedFilterEntryIDs)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
@@ -572,7 +572,7 @@ func updateFilterEntry[Entry entry[Model, Entry], Model any](ctx context.Context
 		_, err := f.db.
 			NewUpdate().
 			Model(model).
-			Where("id = ?", entry.common().ID).
+			Where("? = ?", bun.Ident("id"), entry.common().ID).
 			Column(columns...).
 			Exec(ctx)
 		return err
@@ -586,7 +586,7 @@ func deleteFilterEntryByID[Entry entry[Model, Entry], Model any](ctx context.Con
 	if _, err := f.db.
 		NewDelete().
 		Model((*Model)(nil)).
-		Where("id = ?", id).
+		Where("? = ?", bun.Ident("id"), id).
 		Exec(ctx); err != nil {
 		return err
 	}

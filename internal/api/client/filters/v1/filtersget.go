@@ -39,7 +39,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:lists
+//		- read:filters
 //
 //	responses:
 //		'200':

@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Create a new filter and filter keyword for the given account, using the provided parameters.
@@ -49,15 +50,15 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	for _, context := range form.Context {
 		switch context {
 		case apimodel.FilterContextHome:
-			filter.ContextHome = true
+			filter.ContextHome = util.Ptr(true)
 		case apimodel.FilterContextNotifications:
-			filter.ContextNotifications = true
+			filter.ContextNotifications = util.Ptr(true)
 		case apimodel.FilterContextPublic:
-			filter.ContextPublic = true
+			filter.ContextPublic = util.Ptr(true)
 		case apimodel.FilterContextThread:
-			filter.ContextThread = true
+			filter.ContextThread = util.Ptr(true)
 		case apimodel.FilterContextAccount:
-			filter.ContextAccount = true
+			filter.ContextAccount = util.Ptr(true)
 		default:
 			return nil, gtserror.NewErrorUnprocessableEntity(
 				fmt.Errorf("unsupported filter context '%s'", context),
@@ -73,7 +74,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 			Filter:    filter,
 		},
 		Keyword:   form.Phrase,
-		WholeWord: *form.WholeWord,
+		WholeWord: util.Ptr(util.PtrValueOr(form.WholeWord, false)),
 	}
 	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 

@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Update an existing filter and filter keyword for the given account, using the provided parameters.
@@ -108,11 +109,11 @@ func (p *Processor) Update(
 		if expiresAt != filter.ExpiresAt {
 			forbiddenFields = append(forbiddenFields, "expires_in")
 		}
-		if contextHome != filter.ContextHome ||
-			contextNotifications != filter.ContextNotifications ||
-			contextPublic != filter.ContextPublic ||
-			contextThread != filter.ContextThread ||
-			contextAccount != filter.ContextAccount {
+		if contextHome != util.PtrValueOr(filter.ContextHome, false) ||
+			contextNotifications != util.PtrValueOr(filter.ContextNotifications, false) ||
+			contextPublic != util.PtrValueOr(filter.ContextPublic, false) ||
+			contextThread != util.PtrValueOr(filter.ContextThread, false) ||
+			contextAccount != util.PtrValueOr(filter.ContextAccount, false) {
 			forbiddenFields = append(forbiddenFields, "context")
 		}
 		if len(forbiddenFields) > 0 {
@@ -126,13 +127,13 @@ func (p *Processor) Update(
 	filter.Title = title
 	filter.Action = action
 	filter.ExpiresAt = expiresAt
-	filter.ContextHome = contextHome
-	filter.ContextNotifications = contextNotifications
-	filter.ContextPublic = contextPublic
-	filter.ContextThread = contextThread
-	filter.ContextAccount = contextAccount
+	filter.ContextHome = &contextHome
+	filter.ContextNotifications = &contextNotifications
+	filter.ContextPublic = &contextPublic
+	filter.ContextThread = &contextThread
+	filter.ContextAccount = &contextAccount
 	filterKeyword.Keyword = form.Phrase
-	filterKeyword.WholeWord = *form.WholeWord
+	filterKeyword.WholeWord = util.Ptr(util.PtrValueOr(form.WholeWord, false))
 
 	// We only want to update the relevant filter keyword.
 	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}

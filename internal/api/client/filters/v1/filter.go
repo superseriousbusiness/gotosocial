@@ -19,17 +19,16 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"net/http"
 )
 
 const (
-	// IDKey is for filter UUIDs
-	IDKey = "id"
 	// BasePath is the base path for serving the filters API, minus the 'api' prefix
 	BasePath = "/v1/filters"
 	// BasePathWithID is the base path with the ID key in it, for operations on an existing filter.
-	BasePathWithID = BasePath + "/:" + IDKey
+	BasePathWithID = BasePath + "/:" + apiutil.IDKey
 )
 
 // Module implements APIs for client-side aka "v1" filtering.

@@ -1638,25 +1638,25 @@ func (c *Converter) FilterKeywordToAPIFilterV1(ctx context.Context, filterKeywor
 	filter := filterKeyword.Filter
 
 	apiContexts := make([]apimodel.FilterContext, 0, apimodel.FilterContextNumValues)
-	if filter.ContextHome {
+	if util.PtrValueOr(filter.ContextHome, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextHome)
 	}
-	if filter.ContextNotifications {
+	if util.PtrValueOr(filter.ContextNotifications, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextNotifications)
 	}
-	if filter.ContextPublic {
+	if util.PtrValueOr(filter.ContextPublic, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextPublic)
 	}
-	if filter.ContextThread {
+	if util.PtrValueOr(filter.ContextThread, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextThread)
 	}
-	if filter.ContextAccount {
+	if util.PtrValueOr(filter.ContextAccount, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextAccount)
 	}
 
-	var expiresAt string
+	var expiresAt *string
 	if !filter.ExpiresAt.IsZero() {
-		expiresAt = util.FormatISO8601(filter.ExpiresAt)
+		expiresAt = util.Ptr(util.FormatISO8601(filter.ExpiresAt))
 	}
 
 	return &apimodel.FilterV1{
@@ -1664,7 +1664,7 @@ func (c *Converter) FilterKeywordToAPIFilterV1(ctx context.Context, filterKeywor
 		ID:           filterKeyword.ID,
 		Phrase:       filterKeyword.Keyword,
 		Context:      apiContexts,
-		WholeWord:    filterKeyword.WholeWord,
+		WholeWord:    util.PtrValueOr(filterKeyword.WholeWord, false),
 		ExpiresAt:    expiresAt,
 		Irreversible: filter.Action == gtsmodel.FilterActionHide,
 	}, nil

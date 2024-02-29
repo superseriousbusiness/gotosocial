@@ -18,7 +18,6 @@
 package v1
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,7 +47,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:lists
+//		- read:filters
 //
 //	responses:
 //		'200':
@@ -78,10 +77,9 @@ func (m *Module) FilterGETHandler(c *gin.Context) {
 		return
 	}
 
-	id := c.Param(IDKey)
-	if id == "" {
-		err := errors.New("no filter id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	id, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

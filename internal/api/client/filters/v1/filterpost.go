@@ -94,7 +94,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:filters
+//		- write:filters
 //
 //	responses:
 //		'200':
@@ -137,11 +137,11 @@ func (m *Module) FilterPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiList, errWithCode := m.processor.FiltersV1().Create(c.Request.Context(), authed.Account, form)
+	apiFilter, errWithCode := m.processor.FiltersV1().Create(c.Request.Context(), authed.Account, form)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	apiutil.JSON(c, http.StatusOK, apiList)
+	apiutil.JSON(c, http.StatusOK, apiFilter)
 }

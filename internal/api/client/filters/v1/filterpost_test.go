@@ -132,7 +132,9 @@ func (suite *FiltersTestSuite) TestPostFilterFull() {
 	suite.ElementsMatch(context, filterContext)
 	suite.Equal(irreversible, filter.Irreversible)
 	suite.Equal(wholeWord, filter.WholeWord)
-	suite.NotEmpty(filter.ExpiresAt)
+	if suite.NotNil(filter.ExpiresAt) {
+		suite.NotEmpty(*filter.ExpiresAt)
+	}
 }
 
 func (suite *FiltersTestSuite) TestPostFilterFullJSON() {
@@ -159,7 +161,9 @@ func (suite *FiltersTestSuite) TestPostFilterFullJSON() {
 	)
 	suite.Equal(false, filter.Irreversible)
 	suite.Equal(true, filter.WholeWord)
-	suite.NotEmpty(filter.ExpiresAt)
+	if suite.NotNil(filter.ExpiresAt) {
+		suite.NotEmpty(*filter.ExpiresAt)
+	}
 }
 
 func (suite *FiltersTestSuite) TestPostFilterMinimal() {
@@ -178,7 +182,7 @@ func (suite *FiltersTestSuite) TestPostFilterMinimal() {
 	suite.ElementsMatch(context, filterContext)
 	suite.False(filter.Irreversible)
 	suite.False(filter.WholeWord)
-	suite.Empty(filter.ExpiresAt)
+	suite.Nil(filter.ExpiresAt)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterEmptyPhrase() {
