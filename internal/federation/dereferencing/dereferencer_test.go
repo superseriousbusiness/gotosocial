@@ -77,8 +77,10 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.DB = suite.db
 	suite.state.Storage = suite.storage
+
+	visFilter := visibility.NewFilter(&suite.state)
 	media := testrig.NewTestMediaManager(&suite.state)
-	suite.dereferencer = dereferencing.NewDereferencer(&suite.state, converter, testrig.NewTestTransportController(&suite.state, suite.client), media)
+	suite.dereferencer = dereferencing.NewDereferencer(&suite.state, converter, testrig.NewTestTransportController(&suite.state, suite.client), visFilter, media)
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

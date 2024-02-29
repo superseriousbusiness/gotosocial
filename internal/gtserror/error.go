@@ -39,6 +39,7 @@ const (
 	malformedKey
 	notRelevantKey
 	spamKey
+	notPermittedKey
 )
 
 // IsUnretrievable indicates that a call to retrieve a resource
@@ -55,6 +56,17 @@ func IsUnretrievable(err error) bool {
 // flag, returning wrapped error. See Unretrievable() for example use-cases.
 func SetUnretrievable(err error) error {
 	return errors.WithValue(err, unrtrvableKey, struct{}{})
+}
+
+// NotPermitted ...
+func NotPermitted(err error) bool {
+	_, ok := errors.Value(err, notPermittedKey).(struct{})
+	return ok
+}
+
+// SetNotPermitted ...
+func SetNotPermitted(err error) error {
+	return errors.WithValue(err, notPermittedKey, struct{}{})
 }
 
 // IsWrongType checks error for a stored "wrong type" flag.
