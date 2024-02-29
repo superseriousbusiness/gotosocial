@@ -575,7 +575,7 @@ func (d *Dereferencer) isPermittedStatus(
 	err error,
 ) {
 
-	// label onFail:
+	// goto onFail:
 	// our failure condition handling
 	// at the end of this function for
 	// the case of permission = false.
