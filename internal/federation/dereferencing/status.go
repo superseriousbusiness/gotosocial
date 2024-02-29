@@ -629,7 +629,7 @@ func (d *Dereferencer) isPermittedStatus(
 onFail:
 
 	if existing != nil {
-		log.Debugf(ctx, "deleting after permissivity fail: %s", existing.URI)
+		log.Infof(ctx, "deleting unpermitted: %s", existing.URI)
 
 		// Delete existing status from database as it's no longer permitted.
 		if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
