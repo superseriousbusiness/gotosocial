@@ -43,10 +43,9 @@ const (
 )
 
 // IsUnretrievable indicates that a call to retrieve a resource
-// (account, status, attachment, etc) could not be fulfilled,
-// either because it was not found locally, or because some
-// prerequisite remote resource call failed, making it impossible
-// to return the item.
+// (account, status, attachment, etc) could not be fulfilled, either
+// because it was not found locally, or because some prerequisite
+// remote resource call failed, making it impossible to return it.
 func IsUnretrievable(err error) bool {
 	_, ok := errors.Value(err, unrtrvableKey).(struct{})
 	return ok
@@ -58,13 +57,17 @@ func SetUnretrievable(err error) error {
 	return errors.WithValue(err, unrtrvableKey, struct{}{})
 }
 
-// NotPermitted ...
+// NotPermitted indicates that some call failed due to failed permission
+// or acceptibility checks. For example an attempt to dereference remote
+// status in which the status author does not have permission to reply
+// to the status it is intended to be replying to.
 func NotPermitted(err error) bool {
 	_, ok := errors.Value(err, notPermittedKey).(struct{})
 	return ok
 }
 
-// SetNotPermitted ...
+// SetNotPermitted will wrap the given error to store a "not permitted"
+// flag, returning wrapped error. See NotPermitted() for example use-cases.
 func SetNotPermitted(err error) error {
 	return errors.WithValue(err, notPermittedKey, struct{}{})
 }
