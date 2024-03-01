@@ -600,30 +600,6 @@ func deleteFilterEntryByID[Entry entry[Model, Entry], Model any](ctx context.Con
 
 //region Filter keyword methods
 
-func (f *filterDB) GetFilterKeywordByID(ctx context.Context, id string) (*gtsmodel.FilterKeyword, error) {
-	return getFilterEntryByID[*keywordEntry, gtsmodel.FilterKeyword](ctx, f, id)
-}
-
-func (f *filterDB) GetFilterKeywordsForFilterID(ctx context.Context, filterID string) ([]*gtsmodel.FilterKeyword, error) {
-	return getFilterEntries[*keywordEntry, gtsmodel.FilterKeyword](ctx, f, "filter_id", filterID)
-}
-
-func (f *filterDB) GetFilterKeywordsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.FilterKeyword, error) {
-	return getFilterEntries[*keywordEntry, gtsmodel.FilterKeyword](ctx, f, "account_id", accountID)
-}
-
-func (f *filterDB) PutFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) error {
-	return putFilterEntry[*keywordEntry](ctx, f, filterKeyword)
-}
-
-func (f *filterDB) UpdateFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword, columns ...string) error {
-	return updateFilterEntry[*keywordEntry](ctx, f, filterKeyword, columns)
-}
-
-func (f *filterDB) DeleteFilterKeywordByID(ctx context.Context, id string) error {
-	return deleteFilterEntryByID[*keywordEntry, gtsmodel.FilterKeyword](ctx, f, id)
-}
-
 //endregion
 
 //region Filter status methods
