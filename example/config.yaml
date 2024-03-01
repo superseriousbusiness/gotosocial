@@ -450,15 +450,23 @@ accounts-custom-css-length: 10000
 
 # Config pertaining to media uploads (videos, image, image descriptions, emoji).
 
-# Int. Maximum allowed image upload size in bytes.
-# Examples: [2097152, 10485760]
-# Default: 10485760 -- aka 10MB
-media-image-max-size: 10485760
+# Size. Maximum allowed image upload size in bytes.
+#
+# Raising this limit may cause other servers to not fetch media
+# attached to a post.
+#
+# Examples: [2097152, 10485760, 10MB, 10MiB]
+# Default: 10MiB (10485760 bytes)
+media-image-max-size: 10MiB
 
-# Int. Maximum allowed video upload size in bytes.
-# Examples: [2097152, 10485760]
-# Default: 41943040 -- aka 40MB
-media-video-max-size: 41943040
+# Size. Maximum allowed video upload size in bytes.
+#
+# Raising this limit may cause other servers to not fetch media
+# attached to a post.
+#
+# Examples: [2097152, 10485760, 40MB, 40MiB]
+# Default: 40MiB (41943040 bytes)
+media-video-max-size: 40MiB
 
 # Int. Minimum amount of characters required as an image or video description.
 # Examples: [500, 1000, 1500]
@@ -470,21 +478,25 @@ media-description-min-chars: 0
 # Default: 1500
 media-description-max-chars: 1500
 
-# Int. Max size in bytes of emojis uploaded to this instance via the admin API.
+# Size. Max size in bytes of emojis uploaded to this instance via the admin API.
+#
 # The default is the same as the Mastodon size limit for emojis (50kb), which allows
 # for good interoperability. Raising this limit may cause issues with federation
 # of your emojis to other instances, so beware.
-# Examples: [51200, 102400]
-# Default: 51200
-media-emoji-local-max-size: 51200
+#
+# Examples: [51200, 102400, 50KB, 50KiB]
+# Default: 50KiB (51200 bytes)
+media-emoji-local-max-size: 50KiB
 
-# Int. Max size in bytes of emojis to download from other instances.
+# Size. Max size in bytes of emojis to download from other instances.
+#
 # By default this is 100kb, or twice the size of the default for media-emoji-local-max-size.
 # This strikes a good balance between decent interoperability with instances that have
 # higher emoji size limits, and not taking up too much space in storage.
-# Examples: [51200, 102400]
-# Default: 102400
-media-emoji-remote-max-size: 102400
+#
+# Examples: [51200, 102400, 100KB, 100KiB]
+# Default: 100KiB (102400 bytes)
+media-emoji-remote-max-size: 100KiB
 
 # The below media cleanup settings allow admins to customize when and
 # how often media cleanup + prune jobs run, while being set to a fairly
