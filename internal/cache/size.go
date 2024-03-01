@@ -323,25 +323,21 @@ func sizeofFilter() uintptr {
 
 func sizeofFilterKeyword() uintptr {
 	return uintptr(size.Of(&gtsmodel.FilterKeyword{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        exampleID,
-			CreatedAt: exampleTime,
-			UpdatedAt: exampleTime,
-			FilterID:  exampleID,
-		},
-		Keyword: exampleTextSmall,
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		FilterID:  exampleID,
+		Keyword:   exampleTextSmall,
 	}))
 }
 
 func sizeofFilterStatus() uintptr {
 	return uintptr(size.Of(&gtsmodel.FilterStatus{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        exampleID,
-			CreatedAt: exampleTime,
-			UpdatedAt: exampleTime,
-			FilterID:  exampleID,
-		},
-		StatusID: exampleID,
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		FilterID:  exampleID,
+		StatusID:  exampleID,
 	}))
 }
 

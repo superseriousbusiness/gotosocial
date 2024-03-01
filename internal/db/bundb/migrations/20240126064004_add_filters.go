@@ -55,35 +55,27 @@ func init() {
 			}
 
 			// Add indexes to the filter tables.
-			for table, indexes := range map[string]map[string]struct {
-				unique  bool
-				columns []string
-			}{
+			for table, indexes := range map[string]map[string][]string{
 				"filters": {
-					"filters_account_id_idx": {false, []string{"account_id"}},
+					"filters_account_id_idx": {"account_id"},
 				},
 				"filter_keywords": {
-					"filter_keywords_account_id_idx":         {false, []string{"account_id"}},
-					"filter_keywords_filter_id_idx":          {false, []string{"filter_id"}},
-					"filter_keywords_filter_id_keyword_uniq": {true, []string{"filter_id", "keyword"}},
+					"filter_keywords_account_id_idx": {"account_id"},
+					"filter_keywords_filter_id_idx":  {"filter_id"},
 				},
 				"filter_statuses": {
-					"filter_statuses_account_id_idx":           {false, []string{"account_id"}},
-					"filter_statuses_filter_id_idx":            {false, []string{"filter_id"}},
-					"filter_statuses_filter_id_status_id_uniq": {true, []string{"filter_id", "status_id"}},
+					"filter_statuses_account_id_idx": {"account_id"},
+					"filter_statuses_filter_id_idx":  {"filter_id"},
 				},
 			} {
-				for name, index := range indexes {
-					createIndex := tx.
+				for index, columns := range indexes {
+					if _, err := tx.
 						NewCreateIndex().
 						Table(table).
-						Index(name).
-						Column(index.columns...).
-						IfNotExists()
-					if index.unique {
-						createIndex = createIndex.Unique()
-					}
-					if _, err := createIndex.Exec(ctx); err != nil {
+						Index(index).
+						Column(columns...).
+						IfNotExists().
+						Exec(ctx); err != nil {
 						return err
 					}
 				}

@@ -37,27 +37,27 @@ type Filter struct {
 	ContextAccount       *bool            `bun:",nullzero,notnull,default:false"`                             // Apply filter when viewing an account profile.
 }
 
-// FilterEntry is the fields common across FilterKeyword and FilterStatus.
-type FilterEntry struct {
-	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	AccountID string    `bun:"type:CHAR(26),notnull,nullzero"`                              // ID of the local account that created the filter keyword.
-	FilterID  string    `bun:"type:CHAR(26),notnull,nullzero"`                              // ID of the filter that this keyword belongs to.
-	Filter    *Filter   `bun:"-"`                                                           // Filter corresponding to FilterID
-}
-
 // FilterKeyword stores a single keyword to filter statuses against.
 type FilterKeyword struct {
-	FilterEntry
-	Keyword   string `bun:",nullzero,notnull"`               // The keyword or phrase to filter against.
-	WholeWord *bool  `bun:",nullzero,notnull,default:false"` // Should the filter consider word boundaries?
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                     // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                  // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                  // when was item last updated
+	AccountID string    `bun:"type:CHAR(26),notnull,nullzero"`                                               // ID of the local account that created the filter keyword.
+	FilterID  string    `bun:"type:CHAR(26),notnull,nullzero,unique:filter_keywords_filter_id_keyword_uniq"` // ID of the filter that this keyword belongs to.
+	Filter    *Filter   `bun:"-"`                                                                            // Filter corresponding to FilterID
+	Keyword   string    `bun:",nullzero,notnull,unique:filter_keywords_filter_id_keyword_uniq"`              // The keyword or phrase to filter against.
+	WholeWord *bool     `bun:",nullzero,notnull,default:false"`                                              // Should the filter consider word boundaries?
 }
 
 // FilterStatus stores a single status to filter.
 type FilterStatus struct {
-	FilterEntry
-	StatusID string `bun:"type:CHAR(26),notnull,nullzero"` // ID of the status to filter.
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                       // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                    // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                    // when was item last updated
+	AccountID string    `bun:"type:CHAR(26),notnull,nullzero"`                                                 // ID of the local account that created the filter keyword.
+	FilterID  string    `bun:"type:CHAR(26),notnull,nullzero,unique:filter_statuses_filter_id_status_id_uniq"` // ID of the filter that this keyword belongs to.
+	Filter    *Filter   `bun:"-"`                                                                              // Filter corresponding to FilterID
+	StatusID  string    `bun:"type:CHAR(26),notnull,nullzero,unique:filter_statuses_filter_id_status_id_uniq"` // ID of the status to filter.
 }
 
 // FilterAction represents the action to take on a filtered status.

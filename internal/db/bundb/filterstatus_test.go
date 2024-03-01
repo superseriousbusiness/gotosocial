@@ -60,12 +60,10 @@ func (suite *FilterTestSuite) TestFilterStatusCRD() {
 
 	// Add a filter status to it.
 	filterStatus := &gtsmodel.FilterStatus{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
-			AccountID: filter.AccountID,
-			FilterID:  filter.ID,
-		},
-		StatusID: "01HQXGMQ3QFXRT4GX9WNQ8KC0X",
+		ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
+		AccountID: filter.AccountID,
+		FilterID:  filter.ID,
+		StatusID:  "01HQXGMQ3QFXRT4GX9WNQ8KC0X",
 	}
 
 	// Insert the new filter status into the DB.

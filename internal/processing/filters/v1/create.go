@@ -67,12 +67,10 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	filterKeyword := &gtsmodel.FilterKeyword{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        id.NewULID(),
-			AccountID: account.ID,
-			FilterID:  filter.ID,
-			Filter:    filter,
-		},
+		ID:        id.NewULID(),
+		AccountID: account.ID,
+		FilterID:  filter.ID,
+		Filter:    filter,
 		Keyword:   form.Phrase,
 		WholeWord: util.Ptr(util.PtrValueOr(form.WholeWord, false)),
 	}

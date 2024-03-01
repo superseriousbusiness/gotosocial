@@ -46,12 +46,10 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 		ContextPublic: util.Ptr(true),
 	}
 	filterKeyword := &gtsmodel.FilterKeyword{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
-			AccountID: filter.AccountID,
-			FilterID:  filter.ID,
-		},
-		Keyword: "GNU/Linux",
+		ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
+		AccountID: filter.AccountID,
+		FilterID:  filter.ID,
+		Keyword:   "GNU/Linux",
 	}
 	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 
@@ -114,22 +112,18 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	check.ContextNotifications = util.Ptr(true)
 
 	newKeyword := &gtsmodel.FilterKeyword{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        "01HNEMY810E5XKWDDMN5ZRE749",
-			FilterID:  filter.ID,
-			AccountID: filter.AccountID,
-		},
-		Keyword: "tux",
+		ID:        "01HNEMY810E5XKWDDMN5ZRE749",
+		FilterID:  filter.ID,
+		AccountID: filter.AccountID,
+		Keyword:   "tux",
 	}
 	check.Keywords = append(check.Keywords, newKeyword)
 
 	newStatus := &gtsmodel.FilterStatus{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        "01HNEMYD5XE7C8HH8TNCZ76FN2",
-			FilterID:  filter.ID,
-			AccountID: filter.AccountID,
-		},
-		StatusID: "01HNEKZW34SQZ8PSDQ0Z10NZES",
+		ID:        "01HNEMYD5XE7C8HH8TNCZ76FN2",
+		FilterID:  filter.ID,
+		AccountID: filter.AccountID,
+		StatusID:  "01HNEKZW34SQZ8PSDQ0Z10NZES",
 	}
 	check.Statuses = append(check.Statuses, newStatus)
 
@@ -222,12 +216,10 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 
 	// Add another status entry for the same status ID. It should be ignored without problems.
 	redundantStatus := &gtsmodel.FilterStatus{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        "01HQXJ5Y405XZSQ67C2BSQ6HJ0",
-			FilterID:  filter.ID,
-			AccountID: filter.AccountID,
-		},
-		StatusID: newStatus.StatusID,
+		ID:        "01HQXJ5Y405XZSQ67C2BSQ6HJ0",
+		FilterID:  filter.ID,
+		AccountID: filter.AccountID,
+		StatusID:  newStatus.StatusID,
 	}
 	check.Statuses = []*gtsmodel.FilterStatus{redundantStatus}
 	if err := suite.db.UpdateFilter(ctx, check, nil, nil, nil, nil); err != nil {

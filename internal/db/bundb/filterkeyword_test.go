@@ -60,12 +60,10 @@ func (suite *FilterTestSuite) TestFilterKeywordCRUD() {
 
 	// Add a filter keyword to it.
 	filterKeyword := &gtsmodel.FilterKeyword{
-		FilterEntry: gtsmodel.FilterEntry{
-			ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
-			AccountID: filter.AccountID,
-			FilterID:  filter.ID,
-		},
-		Keyword: "GNU/Linux",
+		ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
+		AccountID: filter.AccountID,
+		FilterID:  filter.ID,
+		Keyword:   "GNU/Linux",
 	}
 
 	// Insert the new filter keyword into the DB.
