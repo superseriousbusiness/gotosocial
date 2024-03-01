@@ -143,6 +143,8 @@ import (
 //			ISO 8601 Datetime at which to schedule a status.
 //			Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 //			Must be at least 5 minutes in the future.
+//
+//			This feature isn't implemented yet.
 //		type: string
 //		in: formData
 //	-
