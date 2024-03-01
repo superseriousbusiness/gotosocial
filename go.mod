@@ -36,20 +36,20 @@ require (
 	github.com/gorilla/feeds v1.1.2
 	github.com/gorilla/websocket v1.5.1
 	github.com/h2non/filetype v1.1.3
-	github.com/jackc/pgx/v5 v5.5.2
+	github.com/jackc/pgx/v5 v5.5.3
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/miekg/dns v1.1.58
-	github.com/minio/minio-go/v7 v7.0.66
+	github.com/minio/minio-go/v7 v7.0.67
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
-	github.com/superseriousbusiness/activity v1.6.0-gts
+	github.com/superseriousbusiness/activity v1.6.0-gts.0.20240221151241-5d56c04088d4
 	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
-	github.com/tdewolff/minify/v2 v2.20.16
+	github.com/tdewolff/minify/v2 v2.20.18
 	github.com/technologize/otel-go-contrib v1.1.0
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
@@ -63,6 +63,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.20.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.43.0
+	go.opentelemetry.io/otel/metric v1.20.0
 	go.opentelemetry.io/otel/sdk v1.20.0
 	go.opentelemetry.io/otel/sdk/metric v1.20.0
 	go.opentelemetry.io/otel/trace v1.20.0
@@ -163,7 +164,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe // indirect
 	github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB // indirect
-	github.com/tdewolff/parse/v2 v2.7.11 // indirect
+	github.com/tdewolff/parse/v2 v2.7.12 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
@@ -172,7 +173,6 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.20.0 // indirect
-	go.opentelemetry.io/otel/metric v1.20.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.5.0 // indirect

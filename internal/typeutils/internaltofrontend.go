@@ -1024,24 +1024,24 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.URLs.StreamingAPI = "wss://" + i.Domain
 
 	// statistics
-	stats := make(map[string]int, 3)
+	stats := make(map[string]*int, 3)
 	userCount, err := c.state.DB.CountInstanceUsers(ctx, i.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance users: %w", err)
 	}
-	stats["user_count"] = userCount
+	stats["user_count"] = util.Ptr(userCount)
 
 	statusCount, err := c.state.DB.CountInstanceStatuses(ctx, i.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance statuses: %w", err)
 	}
-	stats["status_count"] = statusCount
+	stats["status_count"] = util.Ptr(statusCount)
 
 	domainCount, err := c.state.DB.CountInstanceDomains(ctx, i.Domain)
 	if err != nil {
 		return nil, fmt.Errorf("InstanceToAPIV1Instance: db error getting counting instance domains: %w", err)
 	}
-	stats["domain_count"] = domainCount
+	stats["domain_count"] = util.Ptr(domainCount)
 	instance.Stats = stats
 
 	// thumbnail
@@ -1194,6 +1194,7 @@ func (c *Converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmod
 		Muting:              r.Muting,
 		MutingNotifications: r.MutingNotifications,
 		Requested:           r.Requested,
+		RequestedBy:         r.RequestedBy,
 		DomainBlocking:      r.DomainBlocking,
 		Endorsed:            r.Endorsed,
 		Note:                r.Note,

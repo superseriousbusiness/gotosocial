@@ -105,19 +105,18 @@ function AdminSettingsForm({ data: instance }: AdminSettingsFormProps) {
 			/>
 
 			<div className="file-upload" aria-labelledby="avatar">
-				<strong id="avatar">Instance avatar</strong>
-				<div>
+				<strong id="avatar">Instance avatar (1:1 images look best)</strong>
+				<div className="file-upload-with-preview">
 					<img
 						className="preview avatar"
 						src={form.thumbnail.previewValue ?? instance?.thumbnail}
 						alt={form.thumbnailDesc.value ?? (instance?.thumbnail ? `Thumbnail image for the instance` : "No instance thumbnail image set")}
 					/>
-					<div>
+					<div className="file-input-with-image-description">
 						<FileInput
 							field={form.thumbnail}
 							accept="image/png, image/jpeg, image/webp, image/gif"
 						/>
-						<br/>
 						<TextInput
 							field={form.thumbnailDesc}
 							label="Avatar image description"

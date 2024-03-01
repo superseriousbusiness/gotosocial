@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -70,6 +71,59 @@ const (
 	// The Accept header.
 	acceptHeader = "Accept"
 )
+
+// readActivityPubReq reads ActivityPub data from an incoming request, handling body close.
+func readActivityPubReq(req *http.Request) (map[string]interface{}, error) {
+	// Ensure closed when done.
+	defer req.Body.Close()
+
+	var m map[string]interface{}
+
+	// Wrap body in a JSON decoder.
+	dec := json.NewDecoder(req.Body)
+
+	// Decode JSON body as "raw" AP data map.
+	if err := dec.Decode(&m); err != nil {
+		return nil, err
+	}
+
+	// Perform a final second decode to ensure no trailing
+	// garbage data or second JSON value (indicates malformed).
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		return nil, errors.New("trailing data after json")
+	}
+
+	return m, nil
+}
+
+// readActivityPubResp reads ActivityPub data from a dereference response, handling media type check and body close.
+func readActivityPubResp(resp *http.Response) (map[string]interface{}, error) {
+	// Ensure closed when done.
+	defer resp.Body.Close()
+
+	// Check the incoming response media type is the expected ActivityPub content-type.
+	if mediaType := resp.Header.Get("Content-Type"); !headerIsActivityPubMediaType(mediaType) {
+		return nil, fmt.Errorf("%s %s resp was not ActivityPub media type: %s", resp.Request.Method, resp.Request.URL, mediaType)
+	}
+
+	var m map[string]interface{}
+
+	// Wrap body in a JSON decoder.
+	dec := json.NewDecoder(resp.Body)
+
+	// Decode JSON body as "raw" AP data map.
+	if err := dec.Decode(&m); err != nil {
+		return nil, err
+	}
+
+	// Perform a final second decode to ensure no trailing
+	// garbage data or second JSON value (indicates malformed).
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		return nil, errors.New("trailing data after json")
+	}
+
+	return m, nil
+}
 
 // isActivityPubPost returns true if the request is a POST request that has the
 // ActivityStreams content type header
@@ -774,12 +828,12 @@ func mustHaveActivityActorsMatchObjectActors(c context.Context,
 		if err != nil {
 			return err
 		}
-		b, err := tport.Dereference(c, iri)
+		resp, err := tport.Dereference(c, iri)
 		if err != nil {
 			return err
 		}
-		var m map[string]interface{}
-		if err = json.Unmarshal(b, &m); err != nil {
+		m, err := readActivityPubResp(resp)
+		if err != nil {
 			return err
 		}
 		t, err := streams.ToType(c, m)

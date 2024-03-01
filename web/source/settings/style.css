@@ -395,21 +395,29 @@ section.with-sidebar > div, section.with-sidebar > form {
 	gap: 1rem;
 }
 
-.file-upload > div {
-	display: flex;
-	gap: 1rem;
-
-	img {
-		height: 8rem;
-		border: 0.2rem solid $border-accent;
+.file-upload {
+	.file-upload-with-preview {
+		display: flex;
+		gap: 1rem;
+	
+		img {
+			height: 8rem;
+			border: 0.2rem solid $border-accent;
+		}
+	
+		img.avatar {
+			width: 8rem;
+		}
+	
+		img.header {
+			width: 24rem;
+		}
 	}
-
-	img.avatar {
-		width: 8rem;
-	}
-
-	img.header {
-		width: 24rem;
+	
+	.file-input-with-image-description {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-around;
 	}
 }
 

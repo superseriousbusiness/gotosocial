@@ -88,6 +88,7 @@ EXPECT=$(cat << "EOF"
     "instance-expose-suspended": true,
     "instance-expose-suspended-web": true,
     "instance-federation-mode": "allowlist",
+    "instance-federation-spam-filter": true,
     "instance-inject-mastodon-version": true,
     "instance-languages": [
         "nl",
@@ -119,6 +120,9 @@ EXPECT=$(cat << "EOF"
     "oidc-admin-groups": [
         "steamy"
     ],
+    "oidc-allowed-groups": [
+        "sloths"
+    ],
     "oidc-client-id": "1234",
     "oidc-client-secret": "shhhh its a secret",
     "oidc-enabled": true,
@@ -143,7 +147,6 @@ EXPECT=$(cat << "EOF"
     "smtp-port": 4269,
     "smtp-username": "sex-haver",
     "software-version": "",
-    "statuses-cw-max-chars": 420,
     "statuses-max-chars": 69,
     "statuses-media-max-files": 1,
     "statuses-poll-max-options": 1,
@@ -210,6 +213,7 @@ GTS_INSTANCE_EXPOSE_SUSPENDED=true \
 GTS_INSTANCE_EXPOSE_SUSPENDED_WEB=true \
 GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_FEDERATION_MODE='allowlist' \
+GTS_INSTANCE_FEDERATION_SPAM_FILTER=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_INSTANCE_INJECT_MASTODON_VERSION=true \
 GTS_INSTANCE_LANGUAGES="nl,en-gb" \
@@ -252,6 +256,7 @@ GTS_OIDC_CLIENT_ID='1234' \
 GTS_OIDC_CLIENT_SECRET='shhhh its a secret' \
 GTS_OIDC_SCOPES='read,write' \
 GTS_OIDC_LINK_EXISTING=true \
+GTS_OIDC_ALLOWED_GROUPS='sloths' \
 GTS_OIDC_ADMIN_GROUPS='steamy' \
 GTS_SMTP_HOST='example.com' \
 GTS_SMTP_PORT=4269 \

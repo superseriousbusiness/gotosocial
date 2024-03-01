@@ -6,7 +6,7 @@ var (
 )
 
 // EscapeAttrVal returns the escaped attribute value bytes with quotes. Either single or double quotes are used, whichever is shorter. If there are no quotes present in the value and the value is in HTML (not XML), it will return the value without quotes.
-func EscapeAttrVal(buf *[]byte, b []byte, origQuote byte, mustQuote, isXML bool) []byte {
+func EscapeAttrVal(buf *[]byte, b []byte, origQuote byte, mustQuote bool) []byte {
 	singles := 0
 	doubles := 0
 	unquoted := true
@@ -20,9 +20,9 @@ func EscapeAttrVal(buf *[]byte, b []byte, origQuote byte, mustQuote, isXML bool)
 			}
 		}
 	}
-	if unquoted && (!mustQuote || origQuote == 0) && !isXML {
+	if unquoted && (!mustQuote || origQuote == 0) {
 		return b
-	} else if singles == 0 && origQuote == '\'' && !isXML || doubles == 0 && origQuote == '"' {
+	} else if singles == 0 && origQuote == '\'' || doubles == 0 && origQuote == '"' {
 		if len(b)+2 > cap(*buf) {
 			*buf = make([]byte, 0, len(b)+2)
 		}
@@ -36,14 +36,10 @@ func EscapeAttrVal(buf *[]byte, b []byte, origQuote byte, mustQuote, isXML bool)
 	n := len(b) + 2
 	var quote byte
 	var escapedQuote []byte
-	if singles >= doubles || isXML {
+	if singles > doubles || singles == doubles && origQuote != '\'' {
 		n += doubles * 4
 		quote = '"'
 		escapedQuote = doubleQuoteEntityBytes
-		if singles == doubles && origQuote == '\'' && !isXML {
-			quote = '\''
-			escapedQuote = singleQuoteEntityBytes
-		}
 	} else {
 		n += singles * 4
 		quote = '\''

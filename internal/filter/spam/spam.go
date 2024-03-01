@@ -1,4 +1,3 @@
-{{- /*
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -15,10 +14,19 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/ -}}
 
-{{- with . }}
-<main class="lightgray">
-    <div id="root"></div>
-</main>
-{{- end }}
+package spam
+
+import "github.com/superseriousbusiness/gotosocial/internal/state"
+
+// Filter packages logic for checking whether
+// given statuses should be considered spam.
+type Filter struct {
+	state *state.State
+}
+
+// NewFilter returns a new spam Filter
+// that will use the provided state.
+func NewFilter(state *state.State) *Filter {
+	return &Filter{state: state}
+}

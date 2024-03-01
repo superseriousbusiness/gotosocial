@@ -46,14 +46,6 @@ Take a look at the [list of open bugs](https://github.com/superseriousbusiness/g
 - account migration
 - shared block lists across servers
 
-## Warnings “authentication NOT PASSED for public key” in the log
-
-These warnings are caused by Mastodon forgetting to take query parameters into account when signing HTTP requests. Fixes on both Mastodon and GoToSocial sides are in the works, and other instance software is expected to follow.
-
-## Warnings “status not yet deref'd” in the logs
-
-The warning is mostly to say that the derived visibility of the given status may not be entirely accurate due to a parent not being dereferenced yet, so do not worry about it.
-
 ## Will you support tables in Markdown?
 
 Not at the moment, as most clients handle them terribly.

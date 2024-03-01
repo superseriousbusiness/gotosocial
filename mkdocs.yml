@@ -118,11 +118,13 @@ nav:
       - "admin/cli.md"
       - "admin/backup_and_restore.md"
       - "admin/media_caching.md"
+      - "admin/spam.md"
   - "Federation":
       - "federation/index.md"
       - "federation/glossary.md"
       - "federation/federating_with_gotosocial.md"
-  - "API Documentation":
+  - "Client API Docs":
+      - "api/authentication.md"
       - "api/swagger.md"
       - "api/ratelimiting.md"
       - "api/throttling.md"

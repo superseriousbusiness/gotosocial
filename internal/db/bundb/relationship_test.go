@@ -596,6 +596,14 @@ func (suite *RelationshipTestSuite) TestAcceptFollowRequestOK() {
 	suite.False(relationship.Following)
 	suite.True(relationship.Requested)
 
+	// Check the other way around too; local_account_2
+	// should have requested_by true for admin now.
+	inverse, err := suite.db.GetRelationship(ctx, targetAccount.ID, account.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.True(inverse.RequestedBy)
+
 	followRequestNotification := &gtsmodel.Notification{
 		ID:               "01GV8MY1Q9KX2ZSWN4FAQ3V1PB",
 		OriginAccountID:  account.ID,

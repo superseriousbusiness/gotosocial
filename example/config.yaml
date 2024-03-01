@@ -296,7 +296,7 @@ instance-languages: []
 
 # String. Federation mode to use for this instance.
 #
-# "blocklist" -- open federation by default. Only instances that are explicitly 
+# "blocklist" -- open federation by default. Only instances that are explicitly
 #                blocked will be denied (unless they are also explicitly allowed).
 #
 # "allowlist" -- closed federation by default. Only instances that are explicitly
@@ -308,6 +308,43 @@ instance-languages: []
 # Options: ["blocklist", "allowlist"]
 # Default: "blocklist"
 instance-federation-mode: "blocklist"
+
+# Bool. Enable spam filtering heuristics for messages entering your instance
+# via the federation API. Regardless of what you set here, basic checks
+# for message relevancy will still be performed, but you can try enabling
+# this setting if you are being spammed with unwanted messages from other
+# instances, and want to more strictly filter out spam messages.
+#
+# THIS IS CURRENTLY AN EXPERIMENTAL SETTING, AND MAY FILTER OUT LEGITIMATE
+# MESSAGES, OR FAIL TO FILTER OUT SPAMMY MESSAGES. It is recommended to
+# only enable this setting when the fediverse is in the midst of a spam
+# wave, and you need to batten down the hatches to keep your instance usable.
+#
+# The decision of whether a message counts as spam or not is made based on
+# the following heuristics, in order, where receiver = the account on your
+# instance that received a message in their inbox, and requester = the
+# account on a remote instance that sent the message.
+#
+# First, basic relevancy checks
+#
+#  1. Receiver follows requester. Return OK.
+#  2. Statusable doesn't mention receiver. Return NotRelevant.
+#
+# If instance-federation-spam-filter = false, then return OK now.
+# Otherwise check:
+#
+#  3. Receiver is locked and is followed by requester. Return OK.
+#  4. Five or more people are mentioned. Return Spam.
+#  5. Receiver follow (requests) a mentioned account. Return OK.
+#  6. Statusable has a media attachment. Return Spam.
+#  7. Statusable contains non-mention, non-hashtag links. Return Spam.
+#
+# Messages identified as spam will be dropped from your instance, and not
+# inserted into the database, or into home timelines or notifications.
+#
+# Options: [true, false]
+# Default: false
+instance-federation-spam-filter: false
 
 # Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=open in order
 # to see a list of instances that this instance 'peers' with. Even if set to 'false', then authenticated
@@ -429,9 +466,9 @@ media-video-max-size: 41943040
 media-description-min-chars: 0
 
 # Int. Maximum amount of characters permitted in an image or video description.
-# Examples: [500, 1000, 1500]
-# Default: 500
-media-description-max-chars: 500
+# Examples: [1000, 1500, 3000]
+# Default: 1500
+media-description-max-chars: 1500
 
 # Int. Max size in bytes of emojis uploaded to this instance via the admin API.
 # The default is the same as the Mastodon size limit for emojis (50kb), which allows
@@ -468,7 +505,7 @@ media-remote-cache-days: 7
 
 # String. 24hr time of day formatted as hh:mm.
 # Examples: ["14:30", "00:00", "04:00"]
-# Default: "00:00" (midnight). 
+# Default: "00:00" (midnight).
 media-cleanup-from: "00:00"
 
 # Duration. Period between media cleanup runs.
@@ -551,17 +588,14 @@ storage-s3-bucket: ""
 
 # Config pertaining to the creation of statuses/posts, and permitted limits.
 
-# Int. Maximum amount of characters permitted for a new status.
+# Int. Maximum amount of characters permitted for a new status,
+# including the content warning (if set).
+#
 # Note that going way higher than the default might break federation.
+#
 # Examples: [140, 500, 5000]
 # Default: 5000
 statuses-max-chars: 5000
-
-# Int. Maximum amount of characters allowed in the CW/subject header of a status.
-# Note that going way higher than the default might break federation.
-# Examples: [100, 200]
-# Default: 100
-statuses-cw-max-chars: 100
 
 # Int. Maximum amount of options to permit when creating a new poll.
 # Note that going way higher than the default might break federation.
@@ -694,6 +728,12 @@ oidc-scopes:
 # Options: [true, false]
 # Default: false
 oidc-link-existing: false
+
+# Array of string. If the returned ID token contains a 'groups' claim that matches one of the
+# groups in oidc-allowed-groups, then this user will be granted access on the GtS instance. If the array is empty,
+# then all groups will be granted permission.
+# Default: []
+oidc-allowed-groups: []
 
 # Array of string. If the returned ID token contains a 'groups' claim that matches one of the
 # groups in oidc-admin-groups, then this user will be granted admin rights on the GtS instance
@@ -874,7 +914,7 @@ http-client:
   #
   # THIS SETTING SHOULD BE USED FOR TESTING ONLY! IF YOU TURN THIS
   # ON WHILE RUNNING IN PRODUCTION YOU ARE LEAVING YOUR SERVER WIDE
-  # OPEN TO MAN IN THE MIDDLE ATTACKS! DO NOT CHANGE THIS SETTING 
+  # OPEN TO MAN IN THE MIDDLE ATTACKS! DO NOT CHANGE THIS SETTING
   # UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING AND WHY YOU'RE DOING IT.
   #
   # Default: false
@@ -1029,7 +1069,7 @@ advanced-sender-multiplier: 2
 # generate a correct Content-Security-Policy, you probably won't need
 # to ever touch this setting, but it's included in the 'spirit of more
 # configurable (usually) means more good'.
-# 
+#
 # See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
 #
 # Example: ["s3.example.org", "some-bucket-name.s3.example.org"]

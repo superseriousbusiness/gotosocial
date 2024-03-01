@@ -21,6 +21,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	mm "github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -42,7 +43,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // Processor groups together processing functions and
@@ -151,7 +151,7 @@ func NewProcessor(
 	emailSender email.Sender,
 ) *Processor {
 	var (
-		parseMentionFunc = GetParseMentionFunc(state.DB, federator)
+		parseMentionFunc = GetParseMentionFunc(state, federator)
 		filter           = visibility.NewFilter(state)
 	)
 

@@ -324,7 +324,7 @@ github.com/jackc/pgpassfile
 # github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
-# github.com/jackc/pgx/v5 v5.5.2
+# github.com/jackc/pgx/v5 v5.5.3
 ## explicit; go 1.19
 github.com/jackc/pgx/v5
 github.com/jackc/pgx/v5/internal/anynil
@@ -384,7 +384,7 @@ github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
-# github.com/minio/minio-go/v7 v7.0.66
+# github.com/minio/minio-go/v7 v7.0.67
 ## explicit; go 1.17
 github.com/minio/minio-go/v7
 github.com/minio/minio-go/v7/pkg/credentials
@@ -507,7 +507,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.6.0-gts
+# github.com/superseriousbusiness/activity v1.6.0-gts.0.20240221151241-5d56c04088d4
 ## explicit; go 1.18
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
@@ -689,11 +689,11 @@ github.com/superseriousbusiness/oauth2/v4/generates
 github.com/superseriousbusiness/oauth2/v4/manage
 github.com/superseriousbusiness/oauth2/v4/models
 github.com/superseriousbusiness/oauth2/v4/server
-# github.com/tdewolff/minify/v2 v2.20.16
+# github.com/tdewolff/minify/v2 v2.20.18
 ## explicit; go 1.18
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.7.11
+# github.com/tdewolff/parse/v2 v2.7.12
 ## explicit; go 1.13
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer

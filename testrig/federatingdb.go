@@ -19,12 +19,18 @@ package testrig
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // NewTestFederatingDB returns a federating DB with the underlying db
 func NewTestFederatingDB(state *state.State) federatingdb.DB {
-	return federatingdb.New(state, typeutils.NewConverter(state), visibility.NewFilter(state))
+	return federatingdb.New(
+		state,
+		typeutils.NewConverter(state),
+		visibility.NewFilter(state),
+		spam.NewFilter(state),
+	)
 }

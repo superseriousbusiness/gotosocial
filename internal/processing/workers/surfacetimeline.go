@@ -348,11 +348,7 @@ func (s *surface) timelineStatus(
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return true, err
 	}
-
-	if err := s.stream.Update(apiStatus, account, []string{streamType}); err != nil {
-		err = gtserror.Newf("error streaming update for status %s: %w", status.ID, err)
-		return true, err
-	}
+	s.stream.Update(ctx, account, apiStatus, streamType)
 
 	return true, nil
 }
@@ -363,12 +359,11 @@ func (s *surface) deleteStatusFromTimelines(ctx context.Context, statusID string
 	if err := s.state.Timelines.Home.WipeItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
-
 	if err := s.state.Timelines.List.WipeItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
-
-	return s.stream.Delete(statusID)
+	s.stream.Delete(ctx, statusID)
+	return nil
 }
 
 // invalidateStatusFromTimelines does cache invalidation on the given status by
@@ -555,11 +550,6 @@ func (s *surface) timelineStreamStatusUpdate(
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return err
 	}
-
-	if err := s.stream.StatusUpdate(apiStatus, account, []string{streamType}); err != nil {
-		err = gtserror.Newf("error streaming update for status %s: %w", status.ID, err)
-		return err
-	}
-
+	s.stream.StatusUpdate(ctx, account, apiStatus, streamType)
 	return nil
 }

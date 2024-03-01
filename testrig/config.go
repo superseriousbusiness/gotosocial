@@ -65,6 +65,7 @@ var testDefaults = config.Configuration{
 	WebAssetBaseDir:    "./web/assets/",
 
 	InstanceFederationMode:         config.InstanceFederationModeDefault,
+	InstanceFederationSpamFilter:   true,
 	InstanceExposePeers:            true,
 	InstanceExposeSuspended:        true,
 	InstanceExposeSuspendedWeb:     true,
@@ -101,7 +102,6 @@ var testDefaults = config.Configuration{
 	StorageLocalBasePath: "",
 
 	StatusesMaxChars:           5000,
-	StatusesCWMaxChars:         100,
 	StatusesPollMaxOptions:     6,
 	StatusesPollOptionMaxChars: 50,
 	StatusesMediaMaxFiles:      6,
@@ -119,6 +119,8 @@ var testDefaults = config.Configuration{
 	OIDCClientSecret:     "",
 	OIDCScopes:           []string{oidc.ScopeOpenID, "profile", "email", "groups"},
 	OIDCLinkExisting:     false,
+	OIDCAdminGroups:      []string{"adminRole"},
+	OIDCAllowedGroups:    []string{"allowedRole"},
 
 	SMTPHost:               "",
 	SMTPPort:               0,

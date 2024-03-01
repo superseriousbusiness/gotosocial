@@ -116,23 +116,20 @@ func (suite *FromClientAPITestSuite) checkStreamed(
 	expectPayload string,
 	expectEventType string,
 ) {
-	var msg *stream.Message
-streamLoop:
-	for {
-		select {
-		case msg = <-str.Messages:
-			break streamLoop // Got it.
-		case <-time.After(5 * time.Second):
-			break streamLoop // Didn't get it.
-		}
+
+	// Set a 5s timeout on context.
+	ctx := context.Background()
+	ctx, cncl := context.WithTimeout(ctx, time.Second*5)
+	defer cncl()
+
+	msg, ok := str.Recv(ctx)
+
+	if expectMessage && !ok {
+		suite.FailNow("expected a message but message was not received")
 	}
 
-	if expectMessage && msg == nil {
-		suite.FailNow("expected a message but message was nil")
-	}
-
-	if !expectMessage && msg != nil {
-		suite.FailNow("expected no message but message was not nil")
+	if !expectMessage && ok {
+		suite.FailNow("expected no message but message was received")
 	}
 
 	if expectPayload != "" && msg.Payload != expectPayload {

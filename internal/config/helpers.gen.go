@@ -775,6 +775,31 @@ func GetInstanceFederationMode() string { return global.GetInstanceFederationMod
 // SetInstanceFederationMode safely sets the value for global configuration 'InstanceFederationMode' field
 func SetInstanceFederationMode(v string) { global.SetInstanceFederationMode(v) }
 
+// GetInstanceFederationSpamFilter safely fetches the Configuration value for state's 'InstanceFederationSpamFilter' field
+func (st *ConfigState) GetInstanceFederationSpamFilter() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceFederationSpamFilter
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceFederationSpamFilter safely sets the Configuration value for state's 'InstanceFederationSpamFilter' field
+func (st *ConfigState) SetInstanceFederationSpamFilter(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceFederationSpamFilter = v
+	st.reloadToViper()
+}
+
+// InstanceFederationSpamFilterFlag returns the flag name for the 'InstanceFederationSpamFilter' field
+func InstanceFederationSpamFilterFlag() string { return "instance-federation-spam-filter" }
+
+// GetInstanceFederationSpamFilter safely fetches the value for global configuration 'InstanceFederationSpamFilter' field
+func GetInstanceFederationSpamFilter() bool { return global.GetInstanceFederationSpamFilter() }
+
+// SetInstanceFederationSpamFilter safely sets the value for global configuration 'InstanceFederationSpamFilter' field
+func SetInstanceFederationSpamFilter(v bool) { global.SetInstanceFederationSpamFilter(v) }
+
 // GetInstanceExposePeers safely fetches the Configuration value for state's 'InstanceExposePeers' field
 func (st *ConfigState) GetInstanceExposePeers() (v bool) {
 	st.mutex.RLock()
@@ -1525,31 +1550,6 @@ func GetStatusesMaxChars() int { return global.GetStatusesMaxChars() }
 // SetStatusesMaxChars safely sets the value for global configuration 'StatusesMaxChars' field
 func SetStatusesMaxChars(v int) { global.SetStatusesMaxChars(v) }
 
-// GetStatusesCWMaxChars safely fetches the Configuration value for state's 'StatusesCWMaxChars' field
-func (st *ConfigState) GetStatusesCWMaxChars() (v int) {
-	st.mutex.RLock()
-	v = st.config.StatusesCWMaxChars
-	st.mutex.RUnlock()
-	return
-}
-
-// SetStatusesCWMaxChars safely sets the Configuration value for state's 'StatusesCWMaxChars' field
-func (st *ConfigState) SetStatusesCWMaxChars(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.StatusesCWMaxChars = v
-	st.reloadToViper()
-}
-
-// StatusesCWMaxCharsFlag returns the flag name for the 'StatusesCWMaxChars' field
-func StatusesCWMaxCharsFlag() string { return "statuses-cw-max-chars" }
-
-// GetStatusesCWMaxChars safely fetches the value for global configuration 'StatusesCWMaxChars' field
-func GetStatusesCWMaxChars() int { return global.GetStatusesCWMaxChars() }
-
-// SetStatusesCWMaxChars safely sets the value for global configuration 'StatusesCWMaxChars' field
-func SetStatusesCWMaxChars(v int) { global.SetStatusesCWMaxChars(v) }
-
 // GetStatusesPollMaxOptions safely fetches the Configuration value for state's 'StatusesPollMaxOptions' field
 func (st *ConfigState) GetStatusesPollMaxOptions() (v int) {
 	st.mutex.RLock()
@@ -1974,6 +1974,31 @@ func GetOIDCLinkExisting() bool { return global.GetOIDCLinkExisting() }
 
 // SetOIDCLinkExisting safely sets the value for global configuration 'OIDCLinkExisting' field
 func SetOIDCLinkExisting(v bool) { global.SetOIDCLinkExisting(v) }
+
+// GetOIDCAllowedGroups safely fetches the Configuration value for state's 'OIDCAllowedGroups' field
+func (st *ConfigState) GetOIDCAllowedGroups() (v []string) {
+	st.mutex.RLock()
+	v = st.config.OIDCAllowedGroups
+	st.mutex.RUnlock()
+	return
+}
+
+// SetOIDCAllowedGroups safely sets the Configuration value for state's 'OIDCAllowedGroups' field
+func (st *ConfigState) SetOIDCAllowedGroups(v []string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.OIDCAllowedGroups = v
+	st.reloadToViper()
+}
+
+// OIDCAllowedGroupsFlag returns the flag name for the 'OIDCAllowedGroups' field
+func OIDCAllowedGroupsFlag() string { return "oidc-allowed-groups" }
+
+// GetOIDCAllowedGroups safely fetches the value for global configuration 'OIDCAllowedGroups' field
+func GetOIDCAllowedGroups() []string { return global.GetOIDCAllowedGroups() }
+
+// SetOIDCAllowedGroups safely sets the value for global configuration 'OIDCAllowedGroups' field
+func SetOIDCAllowedGroups(v []string) { global.SetOIDCAllowedGroups(v) }
 
 // GetOIDCAdminGroups safely fetches the Configuration value for state's 'OIDCAdminGroups' field
 func (st *ConfigState) GetOIDCAdminGroups() (v []string) {

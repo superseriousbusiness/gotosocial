@@ -215,7 +215,8 @@ type Relationship struct {
 	BlockedBy           bool   // Is this user blocking you?
 	Muting              bool   // Are you muting this user?
 	MutingNotifications bool   // Are you muting notifications from this user?
-	Requested           bool   // Do you have a pending follow request for this user?
+	Requested           bool   // Do you have a pending follow request targeting this user?
+	RequestedBy         bool   // Does the user have a pending follow request targeting you?
 	DomainBlocking      bool   // Are you blocking this user's domain?
 	Endorsed            bool   // Are you featuring this user on your profile?
 	Note                string // Your note on this account.

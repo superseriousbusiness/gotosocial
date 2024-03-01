@@ -19,6 +19,7 @@ package account
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -26,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 )
 
 // Processor wraps functionality for updating, creating, and deleting accounts in response to API requests.

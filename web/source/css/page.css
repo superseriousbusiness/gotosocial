@@ -47,11 +47,20 @@
 		flex-wrap: wrap;
 		gap: 1rem;
 		justify-content: center;
-	
+
 		img {
 			align-self: center;
+			
+			/*
+				Shrink too-wide / too-tall instance
+				icons to sensible proportions. Allow
+				pretty wide images but prevent things
+				getting too out of hand + looking bad.
+			*/
+			max-height: 4rem;
+			max-width: 16rem;
 		}
-	
+
 		h1 {
 			align-self: center;
 			text-align: center;

@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // ExtractObjects will extract object vocab.Types from given implementing interface.
@@ -776,11 +777,21 @@ func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 	}
 	tagName := strings.TrimPrefix(name, "#")
 
-	yeah := func() *bool { t := true; return &t }
+	// Extract href for the tag, if set.
+	//
+	// Fine if not, it's only used for spam
+	// checking anyway so not critical.
+	var href string
+	hrefProp := i.GetActivityStreamsHref()
+	if hrefProp != nil && hrefProp.IsIRI() {
+		href = hrefProp.GetIRI().String()
+	}
+
 	return &gtsmodel.Tag{
 		Name:     tagName,
-		Useable:  yeah(), // Assume true by default.
-		Listable: yeah(), // Assume true by default.
+		Useable:  util.Ptr(true), // Assume true by default.
+		Listable: util.Ptr(true), // Assume true by default.
+		Href:     href,
 	}, nil
 }
 

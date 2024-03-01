@@ -65,7 +65,7 @@ type Transport interface {
 	GET(*http.Request) (*http.Response, error)
 
 	// Dereference fetches the ActivityStreams object located at this IRI with a GET request.
-	Dereference(ctx context.Context, iri *url.URL) ([]byte, error)
+	Dereference(ctx context.Context, iri *url.URL) (*http.Response, error)
 
 	// DereferenceMedia fetches the given media attachment IRI, returning the reader and filesize.
 	DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
@@ -84,8 +84,8 @@ type transport struct {
 	privkey    crypto.PrivateKey
 
 	signerExp  time.Time
-	getSigner  httpsig.Signer
-	postSigner httpsig.Signer
+	getSigner  httpsig.SignerWithOptions
+	postSigner httpsig.SignerWithOptions
 	signerMu   sync.Mutex
 }
 
@@ -97,7 +97,15 @@ func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
 	r = r.WithContext(ctx) // replace request ctx.
 	r.Header.Set("User-Agent", t.controller.userAgent)
-	return t.controller.client.DoSigned(r, t.signGET())
+
+	resp, err := t.controller.client.DoSigned(r, t.signGET(httpsig.SignatureOption{ExcludeQueryStringFromPathPseudoHeader: false}))
+	if err != nil || resp.StatusCode != http.StatusUnauthorized {
+		return resp, err
+	}
+
+	// try again without the path included in the HTTP signature for better compatibility
+	_ = resp.Body.Close()
+	return t.controller.client.DoSigned(r, t.signGET(httpsig.SignatureOption{ExcludeQueryStringFromPathPseudoHeader: true}))
 }
 
 func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
@@ -112,10 +120,10 @@ func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 }
 
 // signGET will safely sign an HTTP GET request.
-func (t *transport) signGET() httpclient.SignFunc {
+func (t *transport) signGET(opts httpsig.SignatureOption) httpclient.SignFunc {
 	return func(r *http.Request) (err error) {
 		t.safesign(func() {
-			err = t.getSigner.SignRequest(t.privkey, t.pubKeyID, r, nil)
+			err = t.getSigner.SignRequestWithOptions(t.privkey, t.pubKeyID, r, nil, opts)
 		})
 		return
 	}

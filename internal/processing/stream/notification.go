@@ -18,20 +18,29 @@
 package stream
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 
+	"codeberg.org/gruf/go-byteutil"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 // Notify streams the given notification to any open, appropriate streams belonging to the given account.
-func (p *Processor) Notify(n *apimodel.Notification, account *gtsmodel.Account) error {
-	bytes, err := json.Marshal(n)
+func (p *Processor) Notify(ctx context.Context, account *gtsmodel.Account, notif *apimodel.Notification) {
+	b, err := json.Marshal(notif)
 	if err != nil {
-		return fmt.Errorf("error marshalling notification to json: %s", err)
+		log.Errorf(ctx, "error marshaling json: %v", err)
+		return
 	}
-
-	return p.toAccount(string(bytes), stream.EventTypeNotification, []string{stream.TimelineNotifications, stream.TimelineHome}, account.ID)
+	p.streams.Post(ctx, account.ID, stream.Message{
+		Payload: byteutil.B2S(b),
+		Event:   stream.EventTypeNotification,
+		Stream: []string{
+			stream.TimelineNotifications,
+			stream.TimelineHome,
+		},
+	})
 }

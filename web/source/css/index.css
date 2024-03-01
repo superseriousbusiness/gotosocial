@@ -18,12 +18,23 @@
 */
 
 /*
-	Render instance title a
-	bit bigger on index page.
+	Render instance title + image
+	a bit bigger on index page.
+
+	Overrides the css from page.css.
 */
-.page-header a h1 {
-	font-size: 2rem;
-	line-height: 2rem;
+.page-header {
+	& > a {
+		& > h1 {
+			font-size: 2rem;
+			line-height: 2rem;
+		}
+
+		& > img {
+			align-self: center;
+			max-height: 6rem;
+		}
+	}
 }
 
 /*

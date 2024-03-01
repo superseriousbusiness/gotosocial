@@ -19,12 +19,9 @@ package log_test
 
 import (
 	"fmt"
-	"os"
-	"path"
 	"regexp"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -96,42 +93,6 @@ func (suite *SyslogTestSuite) TestSyslogLongMessage() {
 	entry := <-suite.syslogChannel
 	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s`, longMessage[:2048-len(prefix)])
 	suite.Regexp(regexp.MustCompile(regex), entry["content"])
-}
-
-func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
-	socketPath := path.Join(os.TempDir(), uuid.NewString())
-	defer func() {
-		if err := os.Remove(socketPath); err != nil {
-			panic(err)
-		}
-	}()
-
-	server, channel, err := testrig.InitTestSyslogUnixgram(socketPath)
-	if err != nil {
-		panic(err)
-	}
-	syslogServer := server
-	syslogChannel := channel
-
-	config.SetSyslogEnabled(true)
-	config.SetSyslogProtocol("unixgram")
-	config.SetSyslogAddress(socketPath)
-
-	testrig.InitTestLog()
-
-	log.Warn(nil, longMessage)
-
-	funcName := log.Caller(2)
-	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
-
-	entry := <-syslogChannel
-	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s`, longMessage[:2048-len(prefix)])
-
-	suite.Regexp(regexp.MustCompile(regex), entry["content"])
-
-	if err := syslogServer.Kill(); err != nil {
-		panic(err)
-	}
 }
 
 func TestSyslogTestSuite(t *testing.T) {

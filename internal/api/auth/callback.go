@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/gin-contrib/sessions"
@@ -156,6 +157,14 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		apiutil.TemplateWebPage(c, page)
 		return
 	}
+
+	// Check user permissions on login
+	if !allowedGroup(claims.Groups) {
+		err := fmt.Errorf("User groups %+v do not include an allowed group", claims.Groups)
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
 	s.Set(sessionUserID, user.ID)
 	if err := s.Save(); err != nil {
 		m.clearSession(s)
@@ -297,6 +306,11 @@ func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, ex
 		return nil, gtserror.NewErrorConflict(err, help)
 	}
 
+	if !allowedGroup(claims.Groups) {
+		err := fmt.Errorf("User groups %+v do not include an allowed group", claims.Groups)
+		return nil, gtserror.NewErrorUnauthorized(err, err.Error())
+	}
+
 	// We still need to set something as a password, even
 	// if it's not a password the user will end up using.
 	//
@@ -356,17 +370,37 @@ func (m *Module) createUserFromOIDC(ctx context.Context, claims *oidc.Claims, ex
 // adminGroup returns true if one of the given OIDC
 // groups is equal to at least one admin OIDC group.
 func adminGroup(groups []string) bool {
-	for _, ag := range config.GetOIDCAdminGroups() {
-		for _, g := range groups {
-			if strings.EqualFold(ag, g) {
-				// This is an admin group,
-				// ∴ user is an admin.
-				return true
-			}
+	adminGroups := config.GetOIDCAdminGroups()
+	for _, claimedGroup := range groups {
+		if slices.ContainsFunc(adminGroups, func(allowedGroup string) bool {
+			return strings.EqualFold(claimedGroup, allowedGroup)
+		}) {
+			return true
 		}
 	}
 
 	// User is in no admin groups,
 	// ∴ user is not an admin.
+	return false
+}
+
+// allowedGroup returns true if one of the given OIDC
+// groups is equal to at least one allowed OIDC group.
+func allowedGroup(groups []string) bool {
+	allowedGroups := config.GetOIDCAllowedGroups()
+	if len(allowedGroups) == 0 {
+		// If no groups are configured, allow access (for backwards compatibility)
+		return true
+	}
+	for _, claimedGroup := range groups {
+		if slices.ContainsFunc(allowedGroups, func(allowedGroup string) bool {
+			return strings.EqualFold(claimedGroup, allowedGroup)
+		}) {
+			return true
+		}
+	}
+
+	// User is in no allowed groups,
+	// ∴ user is not allowed to log in
 	return false
 }

@@ -37,6 +37,8 @@ const (
 	wrongTypeKey
 	smtpKey
 	malformedKey
+	notRelevantKey
+	spamKey
 )
 
 // IsUnretrievable indicates that a call to retrieve a resource
@@ -126,4 +128,31 @@ func IsMalformed(err error) bool {
 // returning wrapped error. See IsMalformed() for example use-cases.
 func SetMalformed(err error) error {
 	return errors.WithValue(err, malformedKey, struct{}{})
+}
+
+// IsNotRelevant checks error for a stored "notRelevant" flag.
+// This error is used when determining whether or not to store
+// + process an incoming AP message.
+func IsNotRelevant(err error) bool {
+	_, ok := errors.Value(err, notRelevantKey).(struct{})
+	return ok
+}
+
+// SetNotRelevant will wrap the given error to store a "notRelevant" flag,
+// returning wrapped error. See IsNotRelevant() for example use-cases.
+func SetNotRelevant(err error) error {
+	return errors.WithValue(err, notRelevantKey, struct{}{})
+}
+
+// IsSpam checks error for a stored "spam" flag. This error is used when
+// determining whether or not to store + process an incoming AP message.
+func IsSpam(err error) bool {
+	_, ok := errors.Value(err, spamKey).(struct{})
+	return ok
+}
+
+// SetSpam will wrap the given error to store a "spam" flag,
+// returning wrapped error. See IsSpam() for example use-cases.
+func SetSpam(err error) error {
+	return errors.WithValue(err, spamKey, struct{}{})
 }

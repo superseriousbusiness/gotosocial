@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -35,7 +36,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -115,7 +115,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 
 	filter := visibility.NewFilter(&suite.state)
 	common := common.New(&suite.state, suite.tc, suite.federator, filter)
-	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.oauthServer, suite.federator, filter, processing.GetParseMentionFunc(suite.db, suite.federator))
+	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.oauthServer, suite.federator, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

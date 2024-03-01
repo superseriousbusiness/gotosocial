@@ -78,6 +78,7 @@ type Configuration struct {
 	WebAssetBaseDir    string `name:"web-asset-base-dir" usage:"Directory to serve static assets from, accessible at example.org/assets/"`
 
 	InstanceFederationMode         string             `name:"instance-federation-mode" usage:"Set instance federation mode."`
+	InstanceFederationSpamFilter   bool               `name:"instance-federation-spam-filter" usage:"Enable basic spam filter heuristics for messages coming from other instances, and drop messages identified as spam"`
 	InstanceExposePeers            bool               `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
 	InstanceExposeSuspended        bool               `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
 	InstanceExposeSuspendedWeb     bool               `name:"instance-expose-suspended-web" usage:"Expose list of suspended instances as webpage on /about/suspended"`
@@ -111,8 +112,7 @@ type Configuration struct {
 	StorageS3BucketName  string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
 	StorageS3Proxy       bool   `name:"storage-s3-proxy" usage:"Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL"`
 
-	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses"`
-	StatusesCWMaxChars         int `name:"statuses-cw-max-chars" usage:"Max permitted characters for content/spoiler warnings on statuses"`
+	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses, including content warning"`
 	StatusesPollMaxOptions     int `name:"statuses-poll-max-options" usage:"Max amount of options permitted on a poll"`
 	StatusesPollOptionMaxChars int `name:"statuses-poll-option-max-chars" usage:"Max amount of characters for a poll option"`
 	StatusesMediaMaxFiles      int `name:"statuses-media-max-files" usage:"Maximum number of media files/attachments per status"`
@@ -133,6 +133,7 @@ type Configuration struct {
 	OIDCClientSecret     string   `name:"oidc-client-secret" usage:"ClientSecret of GoToSocial, as registered with the OIDC provider."`
 	OIDCScopes           []string `name:"oidc-scopes" usage:"OIDC scopes."`
 	OIDCLinkExisting     bool     `name:"oidc-link-existing" usage:"link existing user accounts to OIDC logins based on the stored email value"`
+	OIDCAllowedGroups    []string `name:"oidc-allowed-groups" usage:"Membership of one of the listed groups allows access to GtS. If this is empty, all groups are allowed."`
 	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
 	TracingEnabled           bool   `name:"tracing-enabled" usage:"Enable OTLP Tracing"`

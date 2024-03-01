@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -40,12 +41,20 @@ import (
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
 //
 // Precondition: the form's fields should have already been validated and normalized by the caller.
-func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Account, application *gtsmodel.Application, form *apimodel.AdvancedStatusCreateForm) (*apimodel.Status, gtserror.WithCode) {
+func (p *Processor) Create(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	application *gtsmodel.Application,
+	form *apimodel.AdvancedStatusCreateForm,
+) (
+	*apimodel.Status,
+	gtserror.WithCode,
+) {
 	// Generate new ID for status.
 	statusID := id.NewULID()
 
 	// Generate necessary URIs for username, to build status URIs.
-	accountURIs := uris.GenerateURIsForAccount(requestingAccount.Username)
+	accountURIs := uris.GenerateURIsForAccount(requester.Username)
 
 	// Get current time.
 	now := time.Now()
@@ -57,9 +66,9 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		CreatedAt:                now,
 		UpdatedAt:                now,
 		Local:                    util.Ptr(true),
-		Account:                  requestingAccount,
-		AccountID:                requestingAccount.ID,
-		AccountURI:               requestingAccount.URI,
+		Account:                  requester,
+		AccountID:                requester.ID,
+		AccountURI:               requester.URI,
 		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                &form.Sensitive,
 		CreatedWithApplicationID: application.ID,
@@ -86,7 +95,12 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		status.PollID = status.Poll.ID
 	}
 
-	if errWithCode := p.processReplyToID(ctx, form, requestingAccount.ID, status); errWithCode != nil {
+	// Check + attach in-reply-to status.
+	if errWithCode := p.processInReplyTo(ctx,
+		requester,
+		status,
+		form.InReplyToID,
+	); errWithCode != nil {
 		return nil, errWithCode
 	}
 
@@ -94,15 +108,15 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		return nil, errWithCode
 	}
 
-	if errWithCode := p.processMediaIDs(ctx, form, requestingAccount.ID, status); errWithCode != nil {
+	if errWithCode := p.processMediaIDs(ctx, form, requester.ID, status); errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if err := processVisibility(form, requestingAccount.Privacy, status); err != nil {
+	if err := processVisibility(form, requester.Privacy, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := processLanguage(form, requestingAccount.Language, status); err != nil {
+	if err := processLanguage(form, requester.Language, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -128,56 +142,47 @@ func (p *Processor) Create(ctx context.Context, requestingAccount *gtsmodel.Acco
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       status,
-		OriginAccount:  requestingAccount,
+		OriginAccount:  requester,
 	})
 
 	if status.Poll != nil {
 		// Now that the status is inserted, and side effects queued,
 		// attempt to schedule an expiry handler for the status poll.
 		if err := p.polls.ScheduleExpiry(ctx, status.Poll); err != nil {
-			err := gtserror.Newf("error scheduling poll expiry: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
+			log.Errorf(ctx, "error scheduling poll expiry: %v", err)
 		}
 	}
 
-	return p.c.GetAPIStatus(ctx, requestingAccount, status)
+	return p.c.GetAPIStatus(ctx, requester, status)
 }
 
-func (p *Processor) processReplyToID(ctx context.Context, form *apimodel.AdvancedStatusCreateForm, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
-	if form.InReplyToID == "" {
+func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status, inReplyToID string) gtserror.WithCode {
+	if inReplyToID == "" {
 		return nil
 	}
 
-	// If this status is a reply to another status, we need to do a bit of work to establish whether or not this status can be posted:
-	//
-	// 1. Does the replied status exist in the database?
-	// 2. Is the replied status marked as replyable?
-	// 3. Does a block exist between either the current account or the account that posted the status it's replying to?
-	//
-	// If this is all OK, then we fetch the repliedStatus and the repliedAccount for later processing.
-
-	inReplyTo, err := p.state.DB.GetStatusByID(ctx, form.InReplyToID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("error fetching status %s from db: %w", form.InReplyToID, err)
-		return gtserror.NewErrorInternalError(err)
+	// Fetch target in-reply-to status (checking visibility).
+	inReplyTo, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requester,
+		inReplyToID,
+		nil,
+	)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
-	if inReplyTo == nil {
-		const text = "cannot reply to status that does not exist"
-		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	// If this is a boost, unwrap it to get source status.
+	inReplyTo, errWithCode = p.c.UnwrapIfBoost(ctx,
+		requester,
+		inReplyTo,
+	)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
 	if !*inReplyTo.Replyable {
-		text := fmt.Sprintf("status %s is marked as not replyable", form.InReplyToID)
+		const text = "in-reply-to status marked as not replyable"
 		return gtserror.NewErrorForbidden(errors.New(text), text)
-	}
-
-	if blocked, err := p.state.DB.IsEitherBlocked(ctx, thisAccountID, inReplyTo.AccountID); err != nil {
-		err := gtserror.Newf("error checking block in db: %w", err)
-		return gtserror.NewErrorInternalError(err)
-	} else if blocked {
-		text := fmt.Sprintf("status %s is not replyable", form.InReplyToID)
-		return gtserror.NewErrorNotFound(errors.New(text), text)
 	}
 
 	// Set status fields from inReplyTo.
@@ -190,18 +195,28 @@ func (p *Processor) processReplyToID(ctx context.Context, form *apimodel.Advance
 }
 
 func (p *Processor) processThreadID(ctx context.Context, status *gtsmodel.Status) gtserror.WithCode {
-	// Status takes the thread ID
-	// of whatever it replies to.
-	if status.InReplyTo != nil {
+	// Status takes the thread ID of
+	// whatever it replies to, if set.
+	//
+	// Might not be set if status is local
+	// and replies to a remote status that
+	// doesn't have a thread ID yet.
+	//
+	// If so, we can just thread from this
+	// status onwards instead, since this
+	// is where the relevant part of the
+	// thread starts, from the perspective
+	// of our instance at least.
+	if status.InReplyTo != nil &&
+		status.InReplyTo.ThreadID != "" {
+		// Just inherit threadID from parent.
 		status.ThreadID = status.InReplyTo.ThreadID
 		return nil
 	}
 
-	// Status doesn't reply to anything,
-	// so it's a new local top-level status
-	// and therefore needs a thread ID.
+	// Mark new thread (or threaded
+	// subsection) starting from here.
 	threadID := id.NewULID()
-
 	if err := p.state.DB.PutThread(
 		ctx,
 		&gtsmodel.Thread{

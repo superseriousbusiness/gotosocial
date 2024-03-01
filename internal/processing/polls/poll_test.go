@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -32,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/visibility"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 

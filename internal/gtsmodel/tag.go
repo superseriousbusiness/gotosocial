@@ -27,4 +27,5 @@ type Tag struct {
 	Name      string    `bun:",unique,nullzero,notnull"`                                    // (lowercase) name of the tag without the hash prefix
 	Useable   *bool     `bun:",nullzero,notnull,default:true"`                              // Tag is useable on this instance.
 	Listable  *bool     `bun:",nullzero,notnull,default:true"`                              // Tagged statuses can be listed on this instance.
+	Href      string    `bun:"-"`                                                           // Href of the hashtag. Will only be set on freshly-extracted hashtags from remote AP messages. Not stored in the database.
 }

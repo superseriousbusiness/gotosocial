@@ -74,7 +74,7 @@ func (suite *TextStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&state)
 
 	federator := testrig.NewTestFederator(&state, testrig.NewTestTransportController(&state, testrig.NewMockHTTPClient(nil, "../../testrig/media")), nil)
-	suite.parseMention = processing.GetParseMentionFunc(suite.db, federator)
+	suite.parseMention = processing.GetParseMentionFunc(&state, federator)
 
 	suite.formatter = text.NewFormatter(suite.db)
 
