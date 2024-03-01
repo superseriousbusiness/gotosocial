@@ -154,7 +154,7 @@ func (p *Processor) Update(
 		"keyword",
 		"whole_word",
 	}
-	if err := p.state.DB.UpdateFilter(ctx, filter, filterColumns, filterKeywordColumns, nil, nil, nil); err != nil {
+	if err := p.state.DB.UpdateFilter(ctx, filter, filterColumns, filterKeywordColumns, nil, nil); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			err = errors.New("you already have a filter with this title")
 			return nil, gtserror.NewErrorConflict(err, err.Error())

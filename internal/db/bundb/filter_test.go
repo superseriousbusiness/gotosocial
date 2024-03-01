@@ -133,7 +133,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	}
 	check.Statuses = append(check.Statuses, newStatus)
 
-	if err := suite.db.UpdateFilter(ctx, check, nil, nil, nil, nil, nil); err != nil {
+	if err := suite.db.UpdateFilter(ctx, check, nil, nil, nil, nil); err != nil {
 		t.Fatalf("error updating filter: %v", err)
 	}
 	// Now fetch newly updated filter.
@@ -181,7 +181,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	check.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 	check.Statuses = nil
 
-	if err := suite.db.UpdateFilter(ctx, check, nil, nil, nil, []string{newKeyword.ID}, nil); err != nil {
+	if err := suite.db.UpdateFilter(ctx, check, nil, nil, []string{newKeyword.ID}, nil); err != nil {
 		t.Fatalf("error updating filter: %v", err)
 	}
 	check, err = suite.db.GetFilterByID(ctx, filter.ID)
@@ -219,6 +219,29 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	// Ensure status entry was not deleted.
 	suite.Len(check.Statuses, 1)
 	suite.Equal(newStatus.ID, check.Statuses[0].ID)
+
+	// Add another status entry for the same status ID. It should be ignored without problems.
+	redundantStatus := &gtsmodel.FilterStatus{
+		FilterEntry: gtsmodel.FilterEntry{
+			ID:        "01HQXJ5Y405XZSQ67C2BSQ6HJ0",
+			FilterID:  filter.ID,
+			AccountID: filter.AccountID,
+		},
+		StatusID: newStatus.StatusID,
+	}
+	check.Statuses = []*gtsmodel.FilterStatus{redundantStatus}
+	if err := suite.db.UpdateFilter(ctx, check, nil, nil, nil, nil); err != nil {
+		t.Fatalf("error updating filter: %v", err)
+	}
+	check, err = suite.db.GetFilterByID(ctx, filter.ID)
+	if err != nil {
+		t.Fatalf("error fetching updated filter: %v", err)
+	}
+
+	// Ensure status entry was not deleted, updated, or duplicated.
+	suite.Len(check.Statuses, 1)
+	suite.Equal(newStatus.ID, check.Statuses[0].ID)
+	suite.Equal(newStatus.StatusID, check.Statuses[0].StatusID)
 
 	// Now delete the filter from the DB.
 	if err := suite.db.DeleteFilterByID(ctx, filter.ID); err != nil {

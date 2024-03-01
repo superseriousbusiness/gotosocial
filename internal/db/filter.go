@@ -24,7 +24,7 @@ import (
 )
 
 type Filter interface {
-	//region Filter methods
+	//<editor-fold desc="Filter methods">
 
 	// GetFilterByID gets one filter with the given id.
 	GetFilterByID(ctx context.Context, id string) (*gtsmodel.Filter, error)
@@ -37,7 +37,7 @@ type Filter interface {
 	PutFilter(ctx context.Context, filter *gtsmodel.Filter) error
 
 	// UpdateFilter updates the given filter,
-	// upserts any attached keywords or statuses,
+	// upserts any attached keywords and inserts any new statuses (existing statuses cannot be updated),
 	// and deletes indicated filter keywords and statuses by ID.
 	// It uses a transaction to ensure no partial updates.
 	// The column lists are optional; if not specified, all columns will be updated.
@@ -46,7 +46,6 @@ type Filter interface {
 		filter *gtsmodel.Filter,
 		filterColumns []string,
 		filterKeywordColumns []string,
-		filterStatusColumns []string,
 		deleteFilterKeywordIDs []string,
 		deleteFilterStatusIDs []string,
 	) error
@@ -55,9 +54,9 @@ type Filter interface {
 	// It uses a transaction to ensure no partial updates.
 	DeleteFilterByID(ctx context.Context, id string) error
 
-	//endregion
+	//</editor-fold>
 
-	//region Filter keyword methods
+	//<editor-fold desc="Filter keyword methods">
 
 	// GetFilterKeywordByID gets one filter keyword with the given ID.
 	GetFilterKeywordByID(ctx context.Context, id string) (*gtsmodel.FilterKeyword, error)
@@ -78,9 +77,9 @@ type Filter interface {
 	// DeleteFilterKeywordByID deletes one filter keyword with the given id.
 	DeleteFilterKeywordByID(ctx context.Context, id string) error
 
-	//endregion
+	//</editor-fold>
 
-	//region Filter status methods
+	//<editor-fold desc="Filter status methods">
 
 	// GetFilterStatusByID gets one filter status with the given ID.
 	GetFilterStatusByID(ctx context.Context, id string) (*gtsmodel.FilterStatus, error)
@@ -94,12 +93,8 @@ type Filter interface {
 	// PutFilterStatus inserts a single filter status into the database.
 	PutFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus) error
 
-	// UpdateFilterStatus updates the given filter status.
-	// Columns is optional, if not specified all will be updated.
-	UpdateFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus, columns ...string) error
-
 	// DeleteFilterStatusByID deletes one filter status with the given id.
 	DeleteFilterStatusByID(ctx context.Context, id string) error
 
-	//endregion
+	//</editor-fold>
 }

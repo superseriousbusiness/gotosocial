@@ -202,7 +202,6 @@ func (f *filterDB) UpdateFilter(
 	filter *gtsmodel.Filter,
 	filterColumns []string,
 	filterKeywordColumns []string,
-	filterStatusColumns []string,
 	deleteFilterKeywordIDs []string,
 	deleteFilterStatusIDs []string,
 ) error {
@@ -221,9 +220,6 @@ func (f *filterDB) UpdateFilter(
 	}
 	if len(filterKeywordColumns) > 0 {
 		filterKeywordColumns = append(filterKeywordColumns, "updated_at")
-	}
-	if len(filterStatusColumns) > 0 {
-		filterStatusColumns = append(filterStatusColumns, "updated_at")
 	}
 
 	// Update database.
@@ -248,10 +244,9 @@ func (f *filterDB) UpdateFilter(
 		}
 
 		if len(filter.Statuses) > 0 {
-			if _, err := NewUpsert(tx).
+			if _, err := tx.NewInsert().
+				Ignore().
 				Model(&filter.Statuses).
-				Constraint("id").
-				Column(filterStatusColumns...).
 				Exec(ctx); err != nil {
 				return err
 			}
