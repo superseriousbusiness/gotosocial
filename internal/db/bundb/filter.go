@@ -40,7 +40,11 @@ func (f *filterDB) GetFilterByID(ctx context.Context, id string) (*gtsmodel.Filt
 		"ID",
 		func() (*gtsmodel.Filter, error) {
 			var filter gtsmodel.Filter
-			err := f.db.NewSelect().Model(&filter).Where("? = ?", bun.Ident("id"), id).Scan(ctx)
+			err := f.db.
+				NewSelect().
+				Model(&filter).
+				Where("? = ?", bun.Ident("id"), id).
+				Scan(ctx)
 			return &filter, err
 		},
 		id,
@@ -165,18 +169,27 @@ func (f *filterDB) populateFilter(ctx context.Context, filter *gtsmodel.Filter) 
 func (f *filterDB) PutFilter(ctx context.Context, filter *gtsmodel.Filter) error {
 	// Update database.
 	if err := f.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		if _, err := tx.NewInsert().Model(filter).Exec(ctx); err != nil {
+		if _, err := tx.
+			NewInsert().
+			Model(filter).
+			Exec(ctx); err != nil {
 			return err
 		}
 
 		if len(filter.Keywords) > 0 {
-			if _, err := tx.NewInsert().Model(&filter.Keywords).Exec(ctx); err != nil {
+			if _, err := tx.
+				NewInsert().
+				Model(&filter.Keywords).
+				Exec(ctx); err != nil {
 				return err
 			}
 		}
 
 		if len(filter.Statuses) > 0 {
-			if _, err := tx.NewInsert().Model(&filter.Statuses).Exec(ctx); err != nil {
+			if _, err := tx.
+				NewInsert().
+				Model(&filter.Statuses).
+				Exec(ctx); err != nil {
 				return err
 			}
 		}
@@ -241,7 +254,8 @@ func (f *filterDB) UpdateFilter(
 		}
 
 		if len(filter.Statuses) > 0 {
-			if _, err := tx.NewInsert().
+			if _, err := tx.
+				NewInsert().
 				Ignore().
 				Model(&filter.Statuses).
 				Exec(ctx); err != nil {

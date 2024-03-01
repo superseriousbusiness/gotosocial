@@ -34,7 +34,11 @@ func (f *filterDB) GetFilterKeywordByID(ctx context.Context, id string) (*gtsmod
 		"ID",
 		func() (*gtsmodel.FilterKeyword, error) {
 			var filterKeyword gtsmodel.FilterKeyword
-			err := f.db.NewSelect().Model(&filterKeyword).Where("? = ?", bun.Ident("id"), id).Scan(ctx)
+			err := f.db.
+				NewSelect().
+				Model(&filterKeyword).
+				Where("? = ?", bun.Ident("id"), id).
+				Scan(ctx)
 			return &filterKeyword, err
 		},
 		id,
@@ -148,7 +152,10 @@ func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id st
 
 func (f *filterDB) PutFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) error {
 	return f.state.Caches.GTS.FilterKeyword.Store(filterKeyword, func() error {
-		_, err := f.db.NewInsert().Model(filterKeyword).Exec(ctx)
+		_, err := f.db.
+			NewInsert().
+			Model(filterKeyword).
+			Exec(ctx)
 		return err
 	})
 }

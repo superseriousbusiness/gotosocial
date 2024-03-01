@@ -34,7 +34,11 @@ func (f *filterDB) GetFilterStatusByID(ctx context.Context, id string) (*gtsmode
 		"ID",
 		func() (*gtsmodel.FilterStatus, error) {
 			var filterStatus gtsmodel.FilterStatus
-			err := f.db.NewSelect().Model(&filterStatus).Where("? = ?", bun.Ident("id"), id).Scan(ctx)
+			err := f.db.
+				NewSelect().
+				Model(&filterStatus).
+				Where("? = ?", bun.Ident("id"), id).
+				Scan(ctx)
 			return &filterStatus, err
 		},
 		id,
@@ -148,7 +152,10 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 
 func (f *filterDB) PutFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus) error {
 	return f.state.Caches.GTS.FilterStatus.Store(filterStatus, func() error {
-		_, err := f.db.NewInsert().Model(filterStatus).Exec(ctx)
+		_, err := f.db.
+			NewInsert().
+			Model(filterStatus).
+			Exec(ctx)
 		return err
 	})
 }
