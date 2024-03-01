@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
+// Filter contains methods for creating, reading, updating, and deleting filters and their keyword and status entries.
 type Filter interface {
 	//<editor-fold desc="Filter methods">
 
