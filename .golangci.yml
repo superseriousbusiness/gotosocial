@@ -86,20 +86,9 @@ linters-settings:
 
 issues:
   exclude-rules:
-    # Exclude GoLand custom folding region comments in files that use them.
+    # Exclude VSCode custom folding region comments in files that use them.
     # Already fixed in go-critic and can be removed next time go-critic is updated.
     - linters:
         - gocritic
       path: internal/db/filter.go
       text: 'commentFormatting: put a space between `//` and comment text'
-    - linters:
-        - gocritic
-      path: internal/db/bundb/filter.go
-      text: 'commentFormatting: put a space between `//` and comment text'
-    # The unused code linter doesn't fully understand generics yet.
-    # If these functions were unused, the filter tests wouldn't pass.
-    # This can be confirmed by running them with code coverage instrumentation.
-    - linters:
-        - unused
-      path: internal/db/bundb/filter.go
-      text: 'func `\(\*(keyword|status)Entry\)\.(new|name|cache|get|set|common)` is unused'
