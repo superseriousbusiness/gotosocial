@@ -163,65 +163,33 @@ type StatusReblogged struct {
 
 // StatusCreateRequest models status creation parameters.
 //
-// swagger:model statusCreateRequest
+// swagger:ignore
 type StatusCreateRequest struct {
 	// Text content of the status.
 	// If media_ids is provided, this becomes optional.
 	// Attaching a poll is optional while status is provided.
-	// in: formData
 	Status string `form:"status" json:"status" xml:"status"`
 	// Array of Attachment ids to be attached as media.
 	// If provided, status becomes optional, and poll cannot be used.
-	//
-	// If the status is being submitted as a form, the key is 'media_ids[]',
-	// but if it's json or xml, the key is 'media_ids'.
-	//
-	// in: formData
 	MediaIDs []string `form:"media_ids[]" json:"media_ids" xml:"media_ids"`
 	// Poll to include with this status.
-	// The Poll… parameters below only exist to document this struct parameter for Swagger,
-	// and should not be used otherwise.
-	// swagger:ignore
 	Poll *PollRequest `form:"poll" json:"poll" xml:"poll"`
-	// Array of possible answers.
-	// If provided, media_ids cannot be used, and poll[expires_in] must be provided.
-	// in: formData
-	PollOptions []string `form:"-" json:"poll[options][]" xml:"-"`
-	// Duration the poll should be open, in seconds.
-	// If provided, media_ids cannot be used, and poll[options] must be provided.
-	// in: formData
-	PollExpiresIn int `form:"-" json:"poll[expires_in]" xml:"-"`
-	// Allow multiple choices on this poll.
-	// default: false
-	// in: formData
-	PollMultiple bool `form:"-" json:"poll[multiple]" xml:"-"`
-	// Hide vote counts until the poll ends.
-	// default: true
-	// in: formData
-	PollHideTotals bool `form:"-" json:"poll[hide_totals]" xml:"-"`
 	// ID of the status being replied to, if status is a reply.
-	// in: formData
 	InReplyToID string `form:"in_reply_to_id" json:"in_reply_to_id" xml:"in_reply_to_id"`
 	// Status and attached media should be marked as sensitive.
-	// in: formData
 	Sensitive bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
 	// Text to be shown as a warning or subject before the actual content.
 	// Statuses are generally collapsed behind this field.
-	// in: formData
 	SpoilerText string `form:"spoiler_text" json:"spoiler_text" xml:"spoiler_text"`
 	// Visibility of the posted status.
-	// in: formData
 	Visibility Visibility `form:"visibility" json:"visibility" xml:"visibility"`
 	// ISO 8601 Datetime at which to schedule a status.
 	// Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 	// Must be at least 5 minutes in the future.
-	// in: formData
 	ScheduledAt string `form:"scheduled_at" json:"scheduled_at" xml:"scheduled_at"`
 	// ISO 639 language code for this status.
-	// in: formData
 	Language string `form:"language" json:"language" xml:"language"`
 	// Content type to use when parsing this status.
-	// in: formData
 	ContentType StatusContentType `form:"content_type" json:"content_type" xml:"content_type"`
 }
 
@@ -247,7 +215,7 @@ const (
 // AdvancedStatusCreateForm wraps the mastodon-compatible status create form along with the GTS advanced
 // visibility settings.
 //
-// swagger:parameters statusCreate
+// swagger:ignore
 type AdvancedStatusCreateForm struct {
 	StatusCreateRequest
 	AdvancedVisibilityFlagsForm
@@ -256,7 +224,7 @@ type AdvancedStatusCreateForm struct {
 // AdvancedVisibilityFlagsForm allows a few more advanced flags to be set on new statuses, in addition
 // to the standard mastodon-compatible ones.
 //
-// swagger:model advancedVisibilityFlagsForm
+// swagger:ignore
 type AdvancedVisibilityFlagsForm struct {
 	// This status will be federated beyond the local timeline(s).
 	Federated *bool `form:"federated" json:"federated" xml:"federated"`

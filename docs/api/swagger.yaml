@@ -640,30 +640,6 @@ definitions:
         type: object
         x-go-name: AdminReport
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    advancedVisibilityFlagsForm:
-        description: |-
-            AdvancedVisibilityFlagsForm allows a few more advanced flags to be set on new statuses, in addition
-            to the standard mastodon-compatible ones.
-        properties:
-            boostable:
-                description: This status can be boosted/reblogged.
-                type: boolean
-                x-go-name: Boostable
-            federated:
-                description: This status will be federated beyond the local timeline(s).
-                type: boolean
-                x-go-name: Federated
-            likeable:
-                description: This status can be liked/faved.
-                type: boolean
-                x-go-name: Likeable
-            replyable:
-                description: This status can be replied to.
-                type: boolean
-                x-go-name: Replyable
-        type: object
-        x-go-name: AdvancedVisibilityFlagsForm
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     announcement:
         properties:
             all_day:
@@ -2509,105 +2485,6 @@ definitions:
         title: Context models the tree around a given status.
         type: object
         x-go-name: Context
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    statusCreateRequest:
-        properties:
-            content_type:
-                description: |-
-                    Content type to use when parsing this status.
-                    in: formData
-                type: string
-                x-go-name: ContentType
-            in_reply_to_id:
-                description: |-
-                    ID of the status being replied to, if status is a reply.
-                    in: formData
-                type: string
-                x-go-name: InReplyToID
-            language:
-                description: |-
-                    ISO 639 language code for this status.
-                    in: formData
-                type: string
-                x-go-name: Language
-            media_ids:
-                description: |-
-                    Array of Attachment ids to be attached as media.
-                    If provided, status becomes optional, and poll cannot be used.
-
-                    If the status is being submitted as a form, the key is 'media_ids[]',
-                    but if it's json or xml, the key is 'media_ids'.
-
-                    in: formData
-                items:
-                    type: string
-                type: array
-                x-go-name: MediaIDs
-            poll[expires_in]:
-                description: |-
-                    Duration the poll should be open, in seconds.
-                    If provided, media_ids cannot be used, and poll[options] must be provided.
-                    in: formData
-                format: int64
-                type: integer
-                x-go-name: PollExpiresIn
-            poll[hide_totals]:
-                default: true
-                description: Hide vote counts until the poll ends.
-                type: boolean
-                x-go-name: PollHideTotals
-            poll[multiple]:
-                default: false
-                description: Allow multiple choices on this poll.
-                type: boolean
-                x-go-name: PollMultiple
-            poll[options][]:
-                description: |-
-                    Array of possible answers.
-                    If provided, media_ids cannot be used, and poll[expires_in] must be provided.
-                    in: formData
-                items:
-                    type: string
-                type: array
-                x-go-name: PollOptions
-            scheduled_at:
-                description: |-
-                    ISO 8601 Datetime at which to schedule a status.
-                    Providing this parameter will cause ScheduledStatus to be returned instead of Status.
-                    Must be at least 5 minutes in the future.
-                    in: formData
-                type: string
-                x-go-name: ScheduledAt
-            sensitive:
-                description: |-
-                    Status and attached media should be marked as sensitive.
-                    in: formData
-                type: boolean
-                x-go-name: Sensitive
-            spoiler_text:
-                description: |-
-                    Text to be shown as a warning or subject before the actual content.
-                    Statuses are generally collapsed behind this field.
-                    in: formData
-                type: string
-                x-go-name: SpoilerText
-            status:
-                description: |-
-                    Text content of the status.
-                    If media_ids is provided, this becomes optional.
-                    Attaching a poll is optional while status is provided.
-                    in: formData
-                type: string
-                x-go-name: Status
-            visibility:
-                description: |-
-                    Visibility of the posted status.
-                    in: formData
-                type: string
-                x-go-name: Visibility
-        title: StatusCreateRequest models status creation parameters.
-        type: object
-        x-go-name: StatusCreateRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     statusReblogged:
         properties:
@@ -6929,7 +6806,7 @@ paths:
                   type: array
                   x-go-name: MediaIDs
                 - description: |-
-                    Array of possible answers.
+                    Array of possible poll answers.
                     If provided, media_ids cannot be used, and poll[expires_in] must be provided.
                   in: formData
                   items:
@@ -6975,6 +6852,12 @@ paths:
                   type: string
                   x-go-name: SpoilerText
                 - description: Visibility of the posted status.
+                  enum:
+                    - public
+                    - unlisted
+                    - private
+                    - mutuals_only
+                    - direct
                   in: formData
                   name: visibility
                   type: string
@@ -6993,27 +6876,30 @@ paths:
                   type: string
                   x-go-name: Language
                 - description: Content type to use when parsing this status.
+                  enum:
+                    - text/plain
+                    - text/markdown
                   in: formData
                   name: content_type
                   type: string
                   x-go-name: ContentType
                 - description: This status will be federated beyond the local timeline(s).
-                  in: query
+                  in: formData
                   name: federated
                   type: boolean
                   x-go-name: Federated
                 - description: This status can be boosted/reblogged.
-                  in: query
+                  in: formData
                   name: boostable
                   type: boolean
                   x-go-name: Boostable
                 - description: This status can be replied to.
-                  in: query
+                  in: formData
                   name: replyable
                   type: boolean
                   x-go-name: Replyable
                 - description: This status can be liked/faved.
-                  in: query
+                  in: formData
                   name: likeable
                   type: boolean
                   x-go-name: Likeable
