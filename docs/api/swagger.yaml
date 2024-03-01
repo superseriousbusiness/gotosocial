@@ -1,9 +1,5 @@
 basePath: /
 definitions:
-    EmojiUpdateType:
-        title: EmojiUpdateType models an admin update action to take on a custom emoji.
-        type: string
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     InstanceConfigurationEmojis:
         properties:
             emoji_size_limit:
@@ -640,127 +636,6 @@ definitions:
         type: object
         x-go-name: AdminReport
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    announcement:
-        properties:
-            all_day:
-                description: Announcement doesn't have begin time and end time, but begin day and end day.
-                type: boolean
-                x-go-name: AllDay
-            content:
-                description: |-
-                    The body of the announcement.
-                    Should be HTML formatted.
-                example: <p>This is an announcement. No malarky.</p>
-                type: string
-                x-go-name: Content
-            emoji:
-                description: Emojis used in this announcement.
-                items:
-                    $ref: '#/definitions/emoji'
-                type: array
-                x-go-name: Emojis
-            ends_at:
-                description: |-
-                    When the announcement should stop being displayed (ISO 8601 Datetime).
-                    If the announcement has no end time, this will be omitted or empty.
-                example: "2021-07-30T09:20:25+00:00"
-                type: string
-                x-go-name: EndsAt
-            id:
-                description: The ID of the announcement.
-                example: 01FC30T7X4TNCZK0TH90QYF3M4
-                type: string
-                x-go-name: ID
-            mentions:
-                description: Mentions this announcement contains.
-                items:
-                    $ref: '#/definitions/Mention'
-                type: array
-                x-go-name: Mentions
-            published:
-                description: |-
-                    Announcement is 'published', ie., visible to users.
-                    Announcements that are not published should be shown only to admins.
-                type: boolean
-                x-go-name: Published
-            published_at:
-                description: When the announcement was first published (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
-                type: string
-                x-go-name: PublishedAt
-            reactions:
-                description: Reactions to this announcement.
-                items:
-                    $ref: '#/definitions/announcementReaction'
-                type: array
-                x-go-name: Reactions
-            read:
-                description: Requesting account has seen this announcement.
-                type: boolean
-                x-go-name: Read
-            starts_at:
-                description: |-
-                    When the announcement should begin to be displayed (ISO 8601 Datetime).
-                    If the announcement has no start time, this will be omitted or empty.
-                example: "2021-07-30T09:20:25+00:00"
-                type: string
-                x-go-name: StartsAt
-            statuses:
-                description: Statuses contained in this announcement.
-                items:
-                    $ref: '#/definitions/status'
-                type: array
-                x-go-name: Statuses
-            tags:
-                description: Tags used in this announcement.
-                items:
-                    $ref: '#/definitions/tag'
-                type: array
-                x-go-name: Tags
-            updated_at:
-                description: When the announcement was last updated (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
-                type: string
-                x-go-name: UpdatedAt
-        title: Announcement models an admin announcement for the instance.
-        type: object
-        x-go-name: Announcement
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    announcementReaction:
-        properties:
-            count:
-                description: The total number of users who have added this reaction.
-                example: 5
-                format: int64
-                type: integer
-                x-go-name: Count
-            me:
-                description: This reaction belongs to the account viewing it.
-                type: boolean
-                x-go-name: Me
-            name:
-                description: The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
-                example: blobcat_uwu
-                type: string
-                x-go-name: Name
-            static_url:
-                description: |-
-                    Web link to a non-animated image of the custom emoji.
-                    Empty for unicode emojis.
-                example: https://example.org/custom_emojis/statuc/blobcat_uwu.png
-                type: string
-                x-go-name: StaticURL
-            url:
-                description: |-
-                    Web link to the image of the custom emoji.
-                    Empty for unicode emojis.
-                example: https://example.org/custom_emojis/original/blobcat_uwu.png
-                type: string
-                x-go-name: URL
-        title: AnnouncementReaction models a user reaction to an announcement.
-        type: object
-        x-go-name: AnnouncementReaction
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     application:
         properties:
             client_id:
@@ -997,16 +872,6 @@ definitions:
         type: object
         x-go-name: Domain
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    domainKeysExpireRequest:
-        properties:
-            domain:
-                description: hostname/domain to expire keys for.
-                type: string
-                x-go-name: Domain
-        title: DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_keys_expire to expire a domain's public keys.
-        type: object
-        x-go-name: DomainKeysExpireRequest
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     domainPermission:
         properties:
             created_at:
@@ -1064,43 +929,6 @@ definitions:
         type: object
         x-go-name: DomainPermission
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    domainPermissionCreateRequest:
-        properties:
-            domain:
-                description: |-
-                    A single domain for which this permission request should apply.
-                    Only used if import=true is NOT specified or if import=false.
-                example: example.org
-                type: string
-                x-go-name: Domain
-            domains:
-                description: |-
-                    A list of domains for which this permission request should apply.
-                    Only used if import=true is specified.
-                x-go-name: Domains
-            obfuscate:
-                description: |-
-                    Obfuscate the domain name when displaying this permission entry publicly.
-                    Ie., instead of 'example.org' show something like 'e**mpl*.or*'.
-                example: false
-                type: boolean
-                x-go-name: Obfuscate
-            private_comment:
-                description: Private comment for other admins on why this permission entry was created.
-                example: don't like 'em!!!!
-                type: string
-                x-go-name: PrivateComment
-            public_comment:
-                description: |-
-                    Public comment on why this permission entry was created.
-                    Will be visible to requesters at /api/v1/instance/peers if this endpoint is exposed.
-                example: "foss dorks \U0001F62B"
-                type: string
-                x-go-name: PublicComment
-        title: DomainPermissionRequest is the form submitted as a POST to create a new domain permission entry (allow/block).
-        type: object
-        x-go-name: DomainPermissionRequest
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
             category:
@@ -1145,42 +973,6 @@ definitions:
         title: EmojiCategory represents a custom emoji category.
         type: object
         x-go-name: EmojiCategory
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    emojiCreateRequest:
-        properties:
-            CategoryName:
-                description: |-
-                    Category in which to place the new emoji. Will be uncategorized by default.
-                    CategoryName length should not exceed 64 characters.
-                type: string
-            Image:
-                description: Image file to use for the emoji. Must be png or gif and no larger than 50kb.
-            Shortcode:
-                description: Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
-                example: blobcat_uwu
-                type: string
-        title: EmojiCreateRequest represents a request to create a custom emoji made through the admin API.
-        type: object
-        x-go-name: EmojiCreateRequest
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    emojiUpdateRequest:
-        properties:
-            CategoryName:
-                description: Category in which to place the emoji.
-                type: string
-            Image:
-                description: |-
-                    Image file to use for the emoji.
-                    Must be png or gif and no larger than 50kb.
-            Shortcode:
-                description: Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
-                example: blobcat_uwu
-                type: string
-            type:
-                $ref: '#/definitions/EmojiUpdateType'
-        title: EmojiUpdateRequest represents a request to update a custom emoji, made through the admin API.
-        type: object
-        x-go-name: EmojiUpdateRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     field:
         properties:
@@ -1236,20 +1028,6 @@ definitions:
         title: HeaderFilter represents a regex value filter applied to one particular HTTP header (allow / block).
         type: object
         x-go-name: HeaderFilter
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    headerFilterCreateRequest:
-        properties:
-            header:
-                description: The HTTP header to match against (e.g. User-Agent).
-                type: string
-                x-go-name: Header
-            regex:
-                description: The header value matching regular expression.
-                type: string
-                x-go-name: Regex
-        title: HeaderFilterRequest is the form submitted as a POST to create a new header filter entry (allow / block).
-        type: object
-        x-go-name: HeaderFilterRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     hostmeta:
         description: 'See: https://www.rfc-editor.org/rfc/rfc6415.html#section-3'
@@ -1417,24 +1195,6 @@ definitions:
         title: InstanceRule represents a single instance rule.
         type: object
         x-go-name: InstanceRule
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    instanceRuleCreateRequest:
-        properties:
-            Text:
-                type: string
-        title: InstanceRuleCreateRequest represents a request to create a new instance rule, made through the admin API.
-        type: object
-        x-go-name: InstanceRuleCreateRequest
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    instanceRuleUpdateRequest:
-        properties:
-            ID:
-                type: string
-            Text:
-                type: string
-        title: InstanceRuleUpdateRequest represents a request to update the text of an instance rule, made through the admin API.
-        type: object
-        x-go-name: InstanceRuleUpdateRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV1:
         properties:
@@ -1964,72 +1724,6 @@ definitions:
         type: object
         x-go-name: MediaMeta
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    multiStatus:
-        description: |-
-            This model should be transmitted along with http code
-            207 MULTI-STATUS to indicate a mixture of responses.
-            See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/207
-        properties:
-            data:
-                items:
-                    $ref: '#/definitions/multiStatusEntry'
-                type: array
-                x-go-name: Data
-            metadata:
-                $ref: '#/definitions/multiStatusMetadata'
-        title: MultiStatus models a multistatus HTTP response body.
-        type: object
-        x-go-name: MultiStatus
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    multiStatusEntry:
-        description: |-
-            It can model either a success or a failure. The type
-            and value of `Resource` is left to the discretion of
-            the caller, but at minimum it should be expected to be
-            JSON-serializable.
-        properties:
-            message:
-                description: Message/error message for this entry.
-                type: string
-                x-go-name: Message
-            resource:
-                description: |-
-                    The resource/result for this entry.
-                    Value may be any type, check the docs
-                    per endpoint to see which to expect.
-                x-go-name: Resource
-            status:
-                description: HTTP status code of this entry.
-                format: int64
-                type: integer
-                x-go-name: Status
-        title: MultiStatusEntry models one entry in multistatus data.
-        type: object
-        x-go-name: MultiStatusEntry
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    multiStatusMetadata:
-        description: |-
-            MultiStatusMetadata models an at-a-glance summary of
-            the data contained in the MultiStatus.
-        properties:
-            failure:
-                description: Count of unsuccessful results (!2xx).
-                format: int64
-                type: integer
-                x-go-name: Failure
-            success:
-                description: Count of successful results (2xx).
-                format: int64
-                type: integer
-                x-go-name: Success
-            total:
-                description: Success count + failure count.
-                format: int64
-                type: integer
-                x-go-name: Total
-        type: object
-        x-go-name: MultiStatusMetadata
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     nodeinfo:
         description: 'See: https://nodeinfo.diaspora.software/schema.html'
         properties:
@@ -2197,40 +1891,6 @@ definitions:
         title: PollOption represents the current vote counts for different poll options.
         type: object
         x-go-name: PollOption
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    pollRequest:
-        properties:
-            ExpiresIn:
-                description: |-
-                    Duration the poll should be open, in seconds.
-                    If provided, media_ids cannot be used, and poll[options] must be provided.
-                format: int64
-                type: integer
-            expires_in:
-                description: |-
-                    Duration the poll should be open, in seconds.
-                    If provided, media_ids cannot be used, and poll[options] must be provided.
-                x-go-name: ExpiresInI
-            hide_totals:
-                description: Hide vote counts until the poll ends.
-                type: boolean
-                x-go-name: HideTotals
-            multiple:
-                description: Allow multiple choices on this poll.
-                type: boolean
-                x-go-name: Multiple
-            options:
-                description: |-
-                    Array of possible answers.
-                    If provided, media_ids cannot be used, and poll[expires_in] must be provided.
-                    name: poll[options]
-                items:
-                    type: string
-                type: array
-                x-go-name: Options
-        title: PollRequest models a request to create a poll.
-        type: object
-        x-go-name: PollRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     report:
         properties:
@@ -2747,43 +2407,6 @@ definitions:
         title: Tag represents a hashtag used within the content of a status.
         type: object
         x-go-name: Tag
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    updateField:
-        description: By default, max 6 fields and 255 characters per property/value.
-        properties:
-            name:
-                description: Name of the field
-                type: string
-                x-go-name: Name
-            value:
-                description: Value of the field
-                type: string
-                x-go-name: Value
-        title: UpdateField is to be used specifically in an UpdateCredentialsRequest.
-        type: object
-        x-go-name: UpdateField
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    updateSource:
-        properties:
-            language:
-                description: Default language to use for authored statuses. (ISO 6391)
-                type: string
-                x-go-name: Language
-            privacy:
-                description: Default post privacy for authored statuses.
-                type: string
-                x-go-name: Privacy
-            sensitive:
-                description: Mark authored statuses as sensitive by default.
-                type: boolean
-                x-go-name: Sensitive
-            status_content_type:
-                description: Default format for authored statuses (text/plain or text/markdown).
-                type: string
-                x-go-name: StatusContentType
-        title: UpdateSource is to be used specifically in an UpdateCredentialsRequest.
-        type: object
-        x-go-name: UpdateSource
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         description: See https://webfinger.net/
@@ -4049,7 +3672,7 @@ paths:
                   name: image
                   required: true
                   type: file
-                - description: Category in which to place the new emoji. 64 characters or less. If left blank, emoji will be uncategorized. If a category with the given name doesn't exist yet, it will be created.
+                - description: Category in which to place the new emoji. If left blank, emoji will be uncategorized. If a category with the given name doesn't exist yet, it will be created.
                   in: formData
                   name: category
                   type: string
@@ -4176,6 +3799,10 @@ paths:
                     Type of action to be taken. One of: (`disable`, `copy`, `modify`).
                     For REMOTE emojis, `copy` or `disable` are supported.
                     For LOCAL emojis, only `modify` is supported.
+                  enum:
+                    - copy
+                    - disable
+                    - modify
                   in: formData
                   name: type
                   required: true
@@ -4189,7 +3816,7 @@ paths:
                   in: formData
                   name: image
                   type: file
-                - description: Category in which to place the emoji. 64 characters or less. If a category with the given name doesn't exist yet, it will be created.
+                - description: Category in which to place the emoji. If a category with the given name doesn't exist yet, it will be created.
                   in: formData
                   name: category
                   type: string
@@ -4636,6 +4263,7 @@ paths:
                   in: formData
                   name: domain
                   type: string
+                  x-go-name: Domain
             produces:
                 - application/json
             responses:
@@ -4738,6 +4366,19 @@ paths:
                 The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
                 The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
             operationId: headerFilterAllowCreate
+            parameters:
+                - description: The HTTP header to match against (e.g. User-Agent).
+                  in: formData
+                  name: header
+                  required: true
+                  type: string
+                  x-go-name: Header
+                - description: The header value matching regular expression.
+                  in: formData
+                  name: regex
+                  required: true
+                  type: string
+                  x-go-name: Regex
             produces:
                 - application/json
             responses:
@@ -4851,6 +4492,19 @@ paths:
                 The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
                 The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
             operationId: headerFilterBlockCreate
+            parameters:
+                - description: The HTTP header to match against (e.g. User-Agent).
+                  in: formData
+                  name: header
+                  required: true
+                  type: string
+                  x-go-name: Header
+                - description: The header value matching regular expression.
+                  in: formData
+                  name: regex
+                  required: true
+                  type: string
+                  x-go-name: Regex
             produces:
                 - application/json
             responses:
@@ -4940,6 +4594,7 @@ paths:
                   name: text
                   required: true
                   type: string
+                  x-go-name: Text
             produces:
                 - application/json
             responses:
@@ -5011,11 +4666,13 @@ paths:
                   name: id
                   required: true
                   type: string
+                  x-go-name: ID
                 - description: Text body for the updated instance rule, plaintext.
                   in: formData
                   name: text
                   required: true
                   type: string
+                  x-go-name: Text
             produces:
                 - application/json
             responses:

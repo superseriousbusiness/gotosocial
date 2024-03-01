@@ -22,7 +22,7 @@ package model
 // 207 MULTI-STATUS to indicate a mixture of responses.
 // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/207
 //
-// swagger:model multiStatus
+// TODO: swagger:model multiStatus once domain permissions API supports HTTP 207
 type MultiStatus struct {
 	Data     []MultiStatusEntry  `json:"data"`
 	Metadata MultiStatusMetadata `json:"metadata"`
@@ -34,7 +34,7 @@ type MultiStatus struct {
 // the caller, but at minimum it should be expected to be
 // JSON-serializable.
 //
-// swagger:model multiStatusEntry
+// TODO: swagger:model multiStatusEntry once domain permissions API supports HTTP 207
 type MultiStatusEntry struct {
 	// The resource/result for this entry.
 	// Value may be any type, check the docs
@@ -49,7 +49,7 @@ type MultiStatusEntry struct {
 // MultiStatusMetadata models an at-a-glance summary of
 // the data contained in the MultiStatus.
 //
-// swagger:model multiStatusMetadata
+// TODO: swagger:model multiStatusMetadata once domain permissions API supports HTTP 207
 type MultiStatusMetadata struct {
 	// Success count + failure count.
 	Total int `json:"total"`

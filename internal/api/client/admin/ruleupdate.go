@@ -43,22 +43,6 @@ import (
 //	produces:
 //	- application/json
 //
-//	parameters:
-//	-
-//		name: id
-//		in: path
-//		description: >-
-//			The id of the rule to update.
-//		type: string
-//		required: true
-//	-
-//		name: text
-//		in: formData
-//		description: >-
-//			Text body for the updated instance rule, plaintext.
-//		type: string
-//		required: true
-//
 //	security:
 //	- OAuth2 Bearer:
 //		- admin

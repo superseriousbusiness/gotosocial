@@ -73,7 +73,7 @@ type PollOption struct {
 
 // PollRequest models a request to create a poll.
 //
-// swagger:model pollRequest
+// swagger:ignore
 type PollRequest struct {
 	// Array of possible answers.
 	// If provided, media_ids cannot be used, and poll[expires_in] must be provided.

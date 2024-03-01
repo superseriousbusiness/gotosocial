@@ -27,15 +27,24 @@ type InstanceRule struct {
 
 // InstanceRuleCreateRequest represents a request to create a new instance rule, made through the admin API.
 //
-// swagger:model instanceRuleCreateRequest
+// swagger:parameters ruleCreate
 type InstanceRuleCreateRequest struct {
-	Text string `form:"text" validation:"required"`
+	// Text body for the instance rule, plaintext.
+	// required: true
+	// in: formData
+	Text string `form:"text" json:"text" validation:"required"`
 }
 
 // InstanceRuleUpdateRequest represents a request to update the text of an instance rule, made through the admin API.
 //
-// swagger:model instanceRuleUpdateRequest
+// swagger:parameters ruleUpdate
 type InstanceRuleUpdateRequest struct {
-	ID   string `form:"id"`
-	Text string `form:"text"`
+	// The id of the rule to update.
+	// required: true
+	// in: path
+	ID string `form:"id" json:"id"`
+	// Text body for the updated instance rule, plaintext.
+	// required: true
+	// in: formData
+	Text string `form:"text" json:"text"`
 }
