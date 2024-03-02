@@ -207,6 +207,12 @@ func (suite *StatusTestSuite) TestDeleteStatus() {
 	suite.ErrorIs(err, db.ErrNoEntries)
 }
 
+func (suite *StatusTestSuite) TestCountStatuses() {
+	count, err := suite.db.CountStatuses(context.Background())
+	suite.NoError(err)
+	suite.Equal(23, count)
+}
+
 // This test was added specifically to ensure that Postgres wasn't getting upset
 // about trying to use a transaction in which an error has already occurred, which
 // was previously leading to errors like 'current transaction is aborted, commands

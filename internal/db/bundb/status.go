@@ -699,3 +699,15 @@ func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.St
 		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
 	return exists(ctx, q)
 }
+
+func (s *statusDB) CountStatuses(ctx context.Context) (int, error) {
+	q := s.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status"))
+
+	count, err := q.Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

@@ -81,4 +81,7 @@ type Status interface {
 
 	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
 	IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
+
+	// CountStatuses returns the total amount of statuses recorded.
+	CountStatuses(ctx context.Context) (int, error)
 }

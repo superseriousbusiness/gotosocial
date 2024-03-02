@@ -129,6 +129,23 @@ func Initialize(db db.DB) error {
 		return err
 	}
 
+	_, err = meter.Int64ObservableGauge(
+		"gotosocial.db.statuses_count",
+		metric.WithDescription("Total number of records in statuses table"),
+		metric.WithInt64Callback(func(c context.Context, o metric.Int64Observer) error {
+			statusCount, err := db.CountStatuses(c)
+			if err != nil {
+				return err
+			}
+			o.Observe(int64(statusCount))
+			return nil
+		}),
+	)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
