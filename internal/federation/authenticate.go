@@ -30,6 +30,7 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/streams"
+	typepublickey "github.com/superseriousbusiness/activity/streams/impl/w3idsecurityv1/type_publickey"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -504,24 +505,45 @@ func parsePubKeyBytes(
 		return nil, nil, err
 	}
 
-	t, err := streams.ToType(ctx, m)
-	if err != nil {
-		return nil, nil, err
+	var (
+		pubKey   *rsa.PublicKey
+		ownerURI *url.URL
+	)
+
+	if t, err := streams.ToType(ctx, m); err == nil {
+		// See if Actor with a PublicKey attached.
+		wpk, ok := t.(ap.WithPublicKey)
+		if !ok {
+			return nil, nil, gtserror.Newf(
+				"resource at %s with type %T did not contain recognizable public key",
+				pubKeyID, t,
+			)
+		}
+
+		pubKey, _, ownerURI, err = ap.ExtractPubKeyFromActor(wpk)
+		if err != nil {
+			return nil, nil, gtserror.Newf(
+				"error extracting public key from %T at %s: %w",
+				t, pubKeyID, err,
+			)
+		}
+	} else if pk, err := typepublickey.DeserializePublicKey(m, nil); err == nil {
+		// Bare PublicKey.
+		pubKey, _, ownerURI, err = ap.ExtractPubKeyFromKey(pk)
+		if err != nil {
+			return nil, nil, gtserror.Newf(
+				"error extracting public key at %s: %w",
+				pubKeyID, err,
+			)
+		}
+	} else {
+		return nil, nil, gtserror.Newf(
+			"resource at %s did not contain recognizable public key",
+			pubKeyID,
+		)
 	}
 
-	withPublicKey, ok := t.(ap.WithPublicKey)
-	if !ok {
-		err = gtserror.Newf("resource at %s with type %T could not be converted to ap.WithPublicKey", pubKeyID, t)
-		return nil, nil, err
-	}
-
-	pubKey, _, pubKeyOwnerID, err := ap.ExtractPublicKey(withPublicKey)
-	if err != nil {
-		err = gtserror.Newf("resource at %s with type %T did not contain recognizable public key", pubKeyID, t)
-		return nil, nil, err
-	}
-
-	return pubKey, pubKeyOwnerID, nil
+	return pubKey, ownerURI, nil
 }
 
 var signingAlgorithms = []httpsig.Algorithm{

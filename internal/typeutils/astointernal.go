@@ -219,7 +219,7 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	}
 
 	// Extract account public key and verify ownership to account.
-	pkey, pkeyURL, pkeyOwnerID, err := ap.ExtractPublicKey(accountable)
+	pkey, pkeyURL, pkeyOwnerID, err := ap.ExtractPubKeyFromActor(accountable)
 	if err != nil {
 		err := gtserror.Newf("error extracting public key for %s: %w", uri, err)
 		return nil, gtserror.SetMalformed(err)
