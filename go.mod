@@ -45,7 +45,7 @@ require (
 	github.com/prometheus/client_golang v1.18.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/superseriousbusiness/activity v1.6.0-gts.0.20240221151241-5d56c04088d4
 	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
