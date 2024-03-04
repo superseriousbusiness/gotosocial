@@ -12,6 +12,20 @@ This behavior is the equivalent of Mastodon's [AUTHORIZED_FETCH / "secure mode"]
 
 GoToSocial uses the [superseriousbusiness/httpsig](https://github.com/superseriousbusiness/httpsign) library (forked from go-fed) for signing outgoing requests, and for parsing and validating the signatures of incoming requests. This library strictly follows the [Cavage http signature RFC](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12), which is the same RFC used by other implementations like Mastodon, Pixelfed, Akkoma/Pleroma, etc. (This RFC has since been superceded by the [httpbis http signature RFC](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-message-signatures), but this is not yet widely implemented.)
 
+### Query Parameters
+
+The HTTP signature spec used is ambiguous about whether or not query parameters should be included in the URL used to generate and validate signatures.
+
+Historically, GoToSocial included query parameters in the signature, whereas most other implementations did not. This caused compatibility issues when making signed GET requests, or validating signed GET requests, to Collection endpoints, which typically use query parameters to do paging.
+
+Since 2024, GoToSocial now attempts to sign and validate requests both with and without query parameters, to ensure better compatibility with other implementations.
+
+When sending a request, GtS will attempt first *with* query parameters included. On receiving a `401` from the remote server, it will reattempt the request without query parameters included.
+
+When receiving a request, GtS will attempt to validate the signature first *with* query parameters included. If the signature fails to validate, it will reattempt validation without query parameters included.
+
+See [#894](https://github.com/superseriousbusiness/gotosocial/issues/894) for more details.
+
 ### Incoming Requests
 
 GoToSocial request signature validation is implemented in [internal/federation](https://github.com/superseriousbusiness/gotosocial/blob/main/internal/federation/authenticate.go).
@@ -33,7 +47,7 @@ When assembling signatures:
 - outgoing `GET` requests use `(request-target) host date`
 - outgoing `POST` requests use `(request-target) host date digest` 
 
-GoToSocial uses the `RSA_SHA256` algorithm for signing requests, which is in line with other ActivityPub implementations.
+GoToSocial sets the "algorithm" field in signatures to the value `hs2019`, which essentially means "derive the algorithm from metadata associated with the keyId". The *actual* algorithm used for generating signatures is `RSA_SHA256`, which is in line with other ActivityPub implementations. When validating a GoToSocial HTTP signature, remote servers can safely assume that the signature is generated using `sha256`.
 
 ### Quirks
 
