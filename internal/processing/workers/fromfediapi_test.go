@@ -90,9 +90,17 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	replyingAccount := suite.testAccounts["remote_account_1"]
 
 	// Set the replyingAccount's last fetched_at
-	// date to something recent so no refresh is attempted.
+	// date to something recent so no refresh is attempted,
+	// and ensure it isn't a suspended account.
 	replyingAccount.FetchedAt = time.Now()
-	err := suite.state.DB.UpdateAccount(context.Background(), replyingAccount, "fetched_at")
+	replyingAccount.SuspendedAt = time.Time{}
+	replyingAccount.SuspensionOrigin = ""
+	err := suite.state.DB.UpdateAccount(context.Background(),
+		replyingAccount,
+		"fetched_at",
+		"suspended_at",
+		"suspension_origin",
+	)
 	suite.NoError(err)
 
 	// Get replying statusable to use from remote test statuses.

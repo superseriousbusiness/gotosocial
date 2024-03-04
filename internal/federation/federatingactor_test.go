@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -60,14 +61,21 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 	tc := testrig.NewTestTransportController(&suite.state, httpClient)
 
 	// setup module being tested
-	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.typeconverter, testrig.NewTestMediaManager(&suite.state))
+	federator := federation.NewFederator(
+		&suite.state,
+		testrig.NewTestFederatingDB(&suite.state),
+		tc,
+		suite.typeconverter,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestMediaManager(&suite.state),
+	)
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)
 	suite.NotNil(activity)
 
 	// because zork has no remote followers, sent messages should be empty (no messages sent to own instance)
-	suite.Empty(httpClient.SentMessages)
+	suite.Empty(&httpClient.SentMessages)
 }
 
 func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
@@ -105,8 +113,16 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
 	tc := testrig.NewTestTransportController(&suite.state, httpClient)
+
 	// setup module being tested
-	federator := federation.NewFederator(&suite.state, testrig.NewTestFederatingDB(&suite.state), tc, suite.typeconverter, testrig.NewTestMediaManager(&suite.state))
+	federator := federation.NewFederator(
+		&suite.state,
+		testrig.NewTestFederatingDB(&suite.state),
+		tc,
+		suite.typeconverter,
+		visibility.NewFilter(&suite.state),
+		testrig.NewTestMediaManager(&suite.state),
+	)
 
 	activity, err := federator.FederatingActor().Send(ctx, testrig.URLMustParse(testAccount.OutboxURI), testActivity)
 	suite.NoError(err)
