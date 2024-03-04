@@ -14,7 +14,7 @@ GoToSocial uses the [superseriousbusiness/httpsig](https://github.com/superserio
 
 ### Query Parameters
 
-The HTTP signature spec used is ambiguous about whether or not query parameters should be included in the URL used to generate and validate signatures.
+The HTTP signature spec is open to interpretation about whether or not query parameters should be included in the URL used to generate and validate signatures.
 
 Historically, GoToSocial included query parameters in the signature, whereas most other implementations did not. This caused compatibility issues when making signed GET requests, or validating signed GET requests, to Collection endpoints, which typically use query parameters to do paging.
 
