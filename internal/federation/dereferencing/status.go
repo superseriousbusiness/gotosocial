@@ -575,16 +575,26 @@ func (d *Dereferencer) isPermittedStatus(
 	err error,
 ) {
 
-	// goto onFail:
 	// our failure condition handling
 	// at the end of this function for
 	// the case of permission = false.
+	onFail := func() (bool, error) {
+		if existing != nil {
+			log.Infof(ctx, "deleting unpermitted: %s", existing.URI)
+
+			// Delete existing status from database as it's no longer permitted.
+			if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
+				log.Errorf(ctx, "error deleting %s after permissivity fail: %v", existing.URI, err)
+			}
+		}
+		return false, nil
+	}
 
 	if !status.Account.SuspendedAt.IsZero() {
 		// The status author is suspended,
 		// this shouldn't have reached here
 		// but it's a fast check anyways.
-		goto onFail
+		return onFail()
 	}
 
 	if status.InReplyToURI == "" {
@@ -608,7 +618,7 @@ func (d *Dereferencer) isPermittedStatus(
 		// We do not permit replies to
 		// boost wrapper statuses. (this
 		// shouldn't be able to happen).
-		goto onFail
+		return onFail()
 	}
 
 	// Check visibility of inReplyTo to status author.
@@ -627,18 +637,7 @@ func (d *Dereferencer) isPermittedStatus(
 		return true, nil
 	}
 
-onFail:
-
-	if existing != nil {
-		log.Infof(ctx, "deleting unpermitted: %s", existing.URI)
-
-		// Delete existing status from database as it's no longer permitted.
-		if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
-			log.Errorf(ctx, "error deleting %s after permissivity fail: %v", existing.URI, err)
-		}
-	}
-
-	return false, nil
+	return onFail()
 }
 
 // populateMentionTarget tries to populate the given
