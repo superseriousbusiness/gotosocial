@@ -593,9 +593,9 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	suite.Equal(338, attachment.FileMeta.Original.Width)
 	suite.Equal(240, attachment.FileMeta.Original.Height)
 	suite.Equal(81120, attachment.FileMeta.Original.Size)
-	suite.EqualValues(1.4083333, attachment.FileMeta.Original.Aspect)
-	suite.EqualValues(6.640907, *attachment.FileMeta.Original.Duration)
-	suite.EqualValues(29.000029, *attachment.FileMeta.Original.Framerate)
+	suite.EqualValues(float32(1.4083333), attachment.FileMeta.Original.Aspect)
+	suite.EqualValues(float32(6.640907), *attachment.FileMeta.Original.Duration)
+	suite.EqualValues(float32(29.000029), *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0x59e74, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
 		Width: 338, Height: 240, Size: 81120, Aspect: 1.4083333333333334,
@@ -668,9 +668,9 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	suite.Equal(600, attachment.FileMeta.Original.Width)
 	suite.Equal(330, attachment.FileMeta.Original.Height)
 	suite.Equal(198000, attachment.FileMeta.Original.Size)
-	suite.EqualValues(1.8181819, attachment.FileMeta.Original.Aspect)
-	suite.EqualValues(16.6, *attachment.FileMeta.Original.Duration)
-	suite.EqualValues(10, *attachment.FileMeta.Original.Framerate)
+	suite.EqualValues(float32(1.8181819), attachment.FileMeta.Original.Aspect)
+	suite.EqualValues(float32(16.6), *attachment.FileMeta.Original.Duration)
+	suite.EqualValues(float32(10), *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0xc8fb, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
 		Width: 512, Height: 281, Size: 143872, Aspect: 1.822064,
@@ -743,9 +743,9 @@ func (suite *ManagerTestSuite) TestBirdnestMp4ProcessBlocking() {
 	suite.Equal(404, attachment.FileMeta.Original.Width)
 	suite.Equal(720, attachment.FileMeta.Original.Height)
 	suite.Equal(290880, attachment.FileMeta.Original.Size)
-	suite.EqualValues(0.5611111, attachment.FileMeta.Original.Aspect)
-	suite.EqualValues(9.822041, *attachment.FileMeta.Original.Duration)
-	suite.EqualValues(30, *attachment.FileMeta.Original.Framerate)
+	suite.EqualValues(float32(0.5611111), attachment.FileMeta.Original.Aspect)
+	suite.EqualValues(float32(9.822041), *attachment.FileMeta.Original.Duration)
+	suite.EqualValues(float32(30), *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0x117c79, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
 		Width: 287, Height: 512, Size: 146944, Aspect: 0.5605469,
