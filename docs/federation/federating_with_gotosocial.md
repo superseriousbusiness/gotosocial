@@ -18,7 +18,7 @@ The HTTP signature spec is open to interpretation about whether or not query par
 
 Historically, GoToSocial included query parameters in the signature, whereas most other implementations did not. This caused compatibility issues when making signed GET requests, or validating signed GET requests, to Collection endpoints, which typically use query parameters to do paging.
 
-Since 2024, GoToSocial now attempts to sign and validate requests both with and without query parameters, to ensure better compatibility with other implementations.
+Since 0.14, GoToSocial now attempts to sign and validate requests both with and without query parameters, to ensure better compatibility with other implementations.
 
 When sending a request, GtS will attempt first *with* query parameters included. On receiving a `401` from the remote server, it will reattempt the request without query parameters included.
 
