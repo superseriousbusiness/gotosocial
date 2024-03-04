@@ -34,8 +34,8 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
-	httpconv "go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
+	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -84,13 +84,16 @@ func Initialize() error {
 	default:
 		return fmt.Errorf("invalid tracing transport: %s", config.GetTracingTransport())
 	}
-	r, _ := resource.Merge(
+	r, err := resource.Merge(
 		resource.Default(),
-		resource.NewWithAttributes(
-			semconv.SchemaURL,
+		resource.NewSchemaless(
 			semconv.ServiceName("GoToSocial"),
 		),
 	)
+	if err != nil {
+		// this can happen if semconv versioning is out-of-sync
+		return fmt.Errorf("building tracing resource: %w", err)
+	}
 
 	tp := trace.NewTracerProvider(
 		tpo,
