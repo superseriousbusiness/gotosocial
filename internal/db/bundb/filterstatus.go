@@ -136,7 +136,6 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 	errs := gtserror.NewMultiError(len(filterStatuses))
 	filterStatuses = slices.DeleteFunc(filterStatuses, func(filterStatus *gtsmodel.FilterStatus) bool {
 		if err := f.populateFilterStatus(ctx, filterStatus); err != nil {
-			//goland:noinspection GoPrintFunctions %w is allowed here.
 			errs.Appendf(
 				"error populating filter status %s: %w",
 				filterStatus.ID,

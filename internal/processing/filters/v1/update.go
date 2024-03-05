@@ -75,7 +75,6 @@ func (p *Processor) Update(
 	contextPublic := false
 	contextThread := false
 	contextAccount := false
-	//goland:noinspection GoImportUsedAsName
 	for _, context := range form.Context {
 		switch context {
 		case apimodel.FilterContextHome:

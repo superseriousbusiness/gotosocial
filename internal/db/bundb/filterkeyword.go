@@ -136,7 +136,6 @@ func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id st
 	errs := gtserror.NewMultiError(len(filterKeywords))
 	filterKeywords = slices.DeleteFunc(filterKeywords, func(filterKeyword *gtsmodel.FilterKeyword) bool {
 		if err := f.populateFilterKeyword(ctx, filterKeyword); err != nil {
-			//goland:noinspection GoPrintFunctions %w is allowed here.
 			errs.Appendf(
 				"error populating filter keyword %s: %w",
 				filterKeyword.ID,

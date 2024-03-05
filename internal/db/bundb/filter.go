@@ -116,8 +116,6 @@ func (f *filterDB) GetFiltersForAccountID(ctx context.Context, accountID string)
 	errs := gtserror.NewMultiError(len(filters))
 	filters = slices.DeleteFunc(filters, func(filter *gtsmodel.Filter) bool {
 		if err := f.populateFilter(ctx, filter); err != nil {
-			// %w is allowed here.
-			//goland:noinspection GoPrintFunctions
 			errs.Appendf("error populating filter %s: %w", filter.ID, err)
 			return true
 		}
@@ -138,8 +136,6 @@ func (f *filterDB) populateFilter(ctx context.Context, filter *gtsmodel.Filter) 
 			filter.ID,
 		)
 		if err != nil {
-			// %w is allowed here.
-			//goland:noinspection GoPrintFunctions
 			errs.Appendf("error populating filter keywords: %w", err)
 		}
 		for i := range filter.Keywords {
@@ -154,8 +150,6 @@ func (f *filterDB) populateFilter(ctx context.Context, filter *gtsmodel.Filter) 
 			filter.ID,
 		)
 		if err != nil {
-			// %w is allowed here.
-			//goland:noinspection GoPrintFunctions
 			errs.Appendf("error populating filter statuses: %w", err)
 		}
 		for i := range filter.Statuses {

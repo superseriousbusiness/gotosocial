@@ -46,7 +46,6 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	if form.ExpiresIn != nil {
 		filter.ExpiresAt = time.Now().Add(time.Second * time.Duration(*form.ExpiresIn))
 	}
-	//goland:noinspection GoImportUsedAsName
 	for _, context := range form.Context {
 		switch context {
 		case apimodel.FilterContextHome:

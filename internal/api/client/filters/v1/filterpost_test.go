@@ -82,7 +82,6 @@ func (suite *FiltersTestSuite) postFilter(
 
 	// read the response
 	result := recorder.Result()
-	//goland:noinspection GoUnhandledErrorResult
 	defer result.Body.Close()
 
 	b, err := io.ReadAll(result.Body)
@@ -204,7 +203,6 @@ func (suite *FiltersTestSuite) TestPostFilterMissingPhrase() {
 
 func (suite *FiltersTestSuite) TestPostFilterEmptyContext() {
 	phrase := "GNU/Linux"
-	//goland:noinspection GoPreferNilSlice
 	context := []string{}
 	_, err := suite.postFilter(&phrase, &context, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {

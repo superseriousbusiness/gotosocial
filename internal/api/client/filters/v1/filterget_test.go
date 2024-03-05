@@ -56,7 +56,6 @@ func (suite *FiltersTestSuite) getFilter(
 
 	// read the response
 	result := recorder.Result()
-	//goland:noinspection GoUnhandledErrorResult
 	defer result.Body.Close()
 
 	b, err := io.ReadAll(result.Body)
