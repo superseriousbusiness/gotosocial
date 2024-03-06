@@ -44,6 +44,7 @@ const (
 	maximumProfileFieldLength     = 255
 	maximumProfileFields          = 6
 	maximumListTitleLength        = 200
+	maximumFilterKeywordLength    = 40
 )
 
 // Password returns a helpful error if the given password
@@ -305,4 +306,45 @@ func MarkerName(name string) error {
 		return nil
 	}
 	return fmt.Errorf("marker timeline name '%s' was not recognized, valid options are '%s', '%s'", name, apimodel.MarkerNameHome, apimodel.MarkerNameNotifications)
+}
+
+// FilterKeyword validates the title of a new or updated List.
+func FilterKeyword(keyword string) error {
+	if keyword == "" {
+		return fmt.Errorf("filter keyword must be provided, and must be no more than %d chars", maximumFilterKeywordLength)
+	}
+
+	if length := len([]rune(keyword)); length > maximumFilterKeywordLength {
+		return fmt.Errorf("filter keyword length must be no more than %d chars, provided keyword was %d chars", maximumFilterKeywordLength, length)
+	}
+
+	return nil
+}
+
+// FilterContexts validates the context of a new or updated filter.
+func FilterContexts(contexts []apimodel.FilterContext) error {
+	if len(contexts) == 0 {
+		return fmt.Errorf("at least one filter context is required")
+	}
+	for _, context := range contexts {
+		switch context {
+		case apimodel.FilterContextHome,
+			apimodel.FilterContextNotifications,
+			apimodel.FilterContextPublic,
+			apimodel.FilterContextThread,
+			apimodel.FilterContextAccount:
+			continue
+		default:
+			return fmt.Errorf(
+				"filter context '%s' was not recognized, valid options are '%s', '%s', '%s', '%s', '%s'",
+				context,
+				apimodel.FilterContextHome,
+				apimodel.FilterContextNotifications,
+				apimodel.FilterContextPublic,
+				apimodel.FilterContextThread,
+				apimodel.FilterContextAccount,
+			)
+		}
+	}
+	return nil
 }

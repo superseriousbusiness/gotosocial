@@ -1617,6 +1617,59 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 	return apiAttachments, errs.Combine()
 }
 
+// FilterToAPIFiltersV1 converts one GTS model filter into an API v1 filter list
+func (c *Converter) FilterToAPIFiltersV1(ctx context.Context, filter *gtsmodel.Filter) ([]*apimodel.FilterV1, error) {
+	apiFilters := make([]*apimodel.FilterV1, 0, len(filter.Keywords))
+	for _, filterKeyword := range filter.Keywords {
+		apiFilter, err := c.FilterKeywordToAPIFilterV1(ctx, filterKeyword)
+		if err != nil {
+			return nil, err
+		}
+		apiFilters = append(apiFilters, apiFilter)
+	}
+	return apiFilters, nil
+}
+
+// FilterKeywordToAPIFilterV1 converts one GTS model filter and filter keyword into an API v1 filter
+func (c *Converter) FilterKeywordToAPIFilterV1(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) (*apimodel.FilterV1, error) {
+	if filterKeyword.Filter == nil {
+		return nil, gtserror.New("FilterKeyword model's Filter field isn't populated, but needs to be")
+	}
+	filter := filterKeyword.Filter
+
+	apiContexts := make([]apimodel.FilterContext, 0, apimodel.FilterContextNumValues)
+	if util.PtrValueOr(filter.ContextHome, false) {
+		apiContexts = append(apiContexts, apimodel.FilterContextHome)
+	}
+	if util.PtrValueOr(filter.ContextNotifications, false) {
+		apiContexts = append(apiContexts, apimodel.FilterContextNotifications)
+	}
+	if util.PtrValueOr(filter.ContextPublic, false) {
+		apiContexts = append(apiContexts, apimodel.FilterContextPublic)
+	}
+	if util.PtrValueOr(filter.ContextThread, false) {
+		apiContexts = append(apiContexts, apimodel.FilterContextThread)
+	}
+	if util.PtrValueOr(filter.ContextAccount, false) {
+		apiContexts = append(apiContexts, apimodel.FilterContextAccount)
+	}
+
+	var expiresAt *string
+	if !filter.ExpiresAt.IsZero() {
+		expiresAt = util.Ptr(util.FormatISO8601(filter.ExpiresAt))
+	}
+
+	return &apimodel.FilterV1{
+		// v1 filters have a single keyword each, so we use the filter keyword ID as the v1 filter ID.
+		ID:           filterKeyword.ID,
+		Phrase:       filterKeyword.Keyword,
+		Context:      apiContexts,
+		WholeWord:    util.PtrValueOr(filterKeyword.WholeWord, false),
+		ExpiresAt:    expiresAt,
+		Irreversible: filter.Action == gtsmodel.FilterActionHide,
+	}, nil
+}
+
 // convertEmojisToAPIEmojis will convert a slice of GTS model emojis to frontend API model emojis, falling back to IDs if no GTS models supplied.
 func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]apimodel.Emoji, error) {
 	var errs gtserror.MultiError

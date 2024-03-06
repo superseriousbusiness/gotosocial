@@ -111,7 +111,6 @@ func (p *Processor) contextGet(
 
 	TopoSort(descendants, targetStatus.AccountID)
 
-	//goland:noinspection GoImportUsedAsName
 	context := &apimodel.Context{
 		Ancestors:   make([]apimodel.Status, 0, len(ancestors)),
 		Descendants: make([]apimodel.Status, 0, len(descendants)),
