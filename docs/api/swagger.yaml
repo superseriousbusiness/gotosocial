@@ -5296,7 +5296,9 @@ paths:
                 "200":
                     description: Requested filters.
                     schema:
-                        $ref: '#/definitions/filterV1'
+                        items:
+                            $ref: '#/definitions/filterV1'
+                        type: array
                 "400":
                     description: bad request
                 "401":
