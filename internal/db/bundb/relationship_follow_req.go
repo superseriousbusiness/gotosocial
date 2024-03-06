@@ -382,7 +382,7 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 	if _, err := r.db.
 		NewSelect().
 		Column("id").
-		Table("follow_requestss").
+		Table("follow_requests").
 		WhereOr("? = ? OR ? = ?",
 			bun.Ident("account_id"),
 			accountID,
