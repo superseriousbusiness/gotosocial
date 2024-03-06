@@ -5320,45 +5320,53 @@ paths:
                 - application/x-www-form-urlencoded
             operationId: filterV1Post
             parameters:
-                - description: The text to be filtered.
-                  example: fnord
+                - description: |-
+                    The text to be filtered.
+
+                    Sample: fnord
                   in: formData
                   maxLength: 40
                   name: phrase
                   required: true
                   type: string
-                - description: The contexts in which the filter should be applied.
+                - description: |-
+                    The contexts in which the filter should be applied.
+
+                    Sample: home, public
                   enum:
                     - home
                     - notifications
                     - public
                     - thread
                     - account
-                  example:
-                    - home
-                    - public
                   in: formData
                   items:
-                    $ref: '#/definitions/filterContext'
-                  minLength: 1
+                    type: string
+                  minItems: 1
                   name: context
                   required: true
                   type: array
                   uniqueItems: true
-                - description: Number of seconds from now that the filter should expire. If omitted, filter never expires.
-                  example: 86400
+                - description: |-
+                    Number of seconds from now that the filter should expire. If omitted, filter never expires.
+
+                    Sample: 86400
                   in: formData
                   name: expires_in
                   type: number
                 - default: false
-                  description: Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
-                  example: false
+                  description: |-
+                    Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
+
+                    Sample: false
                   in: formData
                   name: irreversible
                   type: boolean
                 - default: false
-                  description: Should the filter consider word boundaries?
-                  example: true
+                  description: |-
+                    Should the filter consider word boundaries?
+
+                    Sample: true
                   in: formData
                   name: whole_word
                   type: boolean
@@ -5460,45 +5468,53 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: The text to be filtered.
-                  example: fnord
+                - description: |-
+                    The text to be filtered.
+
+                    Sample: fnord
                   in: formData
                   maxLength: 40
                   name: phrase
                   required: true
                   type: string
-                - description: The contexts in which the filter should be applied.
+                - description: |-
+                    The contexts in which the filter should be applied.
+
+                    Sample: home, public
                   enum:
                     - home
                     - notifications
                     - public
                     - thread
                     - account
-                  example:
-                    - home
-                    - public
                   in: formData
                   items:
-                    $ref: '#/definitions/filterContext'
-                  minLength: 1
+                    type: string
+                  minItems: 1
                   name: context
                   required: true
                   type: array
                   uniqueItems: true
-                - description: Number of seconds from now that the filter should expire. If omitted, filter never expires.
-                  example: 86400
+                - description: |-
+                    Number of seconds from now that the filter should expire. If omitted, filter never expires.
+
+                    Sample: 86400
                   in: formData
                   name: expires_in
                   type: number
                 - default: false
-                  description: Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
-                  example: false
+                  description: |-
+                    Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
+
+                    Sample: false
                   in: formData
                   name: irreversible
                   type: boolean
                 - default: false
-                  description: Should the filter consider word boundaries?
-                  example: true
+                  description: |-
+                    Should the filter consider word boundaries?
+
+                    Sample: true
                   in: formData
                   name: whole_word
                   type: boolean

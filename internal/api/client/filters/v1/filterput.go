@@ -54,49 +54,58 @@ import (
 //		name: phrase
 //		in: formData
 //		required: true
-//		description: The text to be filtered.
+//		description: |-
+//			The text to be filtered.
+//
+//			Sample: fnord
 //		maxLength: 40
 //		type: string
-//		example: "fnord"
 //	-
 //		name: context
 //		in: formData
 //		required: true
-//		description: The contexts in which the filter should be applied.
+//		description: |-
+//			The contexts in which the filter should be applied.
+//
+//			Sample: home, public
 //		enum:
 //			- home
 //			- notifications
 //			- public
 //			- thread
 //			- account
-//		example:
-//			- home
-//			- public
-//		items:
-//			$ref: '#/definitions/filterContext'
 //		minLength: 1
 //		type: array
+//		items:
+//			type:
+//				string
 //		uniqueItems: true
 //	-
 //		name: expires_in
 //		in: formData
-//		description: Number of seconds from now that the filter should expire. If omitted, filter never expires.
+//		description: |-
+//			Number of seconds from now that the filter should expire. If omitted, filter never expires.
+//
+//			Sample: 86400
 //		type: number
-//		example: 86400
 //	-
 //		name: irreversible
 //		in: formData
-//		description: Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
+//		description: |-
+//			Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
+//
+//			Sample: false
 //		type: boolean
 //		default: false
-//		example: false
 //	-
 //		name: whole_word
 //		in: formData
-//		description: Should the filter consider word boundaries?
+//		description: |-
+//			Should the filter consider word boundaries?
+//
+//			Sample: true
 //		type: boolean
 //		default: false
-//		example: true
 //
 //	security:
 //	- OAuth2 Bearer:
