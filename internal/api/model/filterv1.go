@@ -40,7 +40,7 @@ type FilterV1 struct {
 	Phrase string `json:"phrase"`
 	// The contexts in which the filter should be applied.
 	//
-	// Minimum length: 1
+	// Minimum items: 1
 	// Unique: true
 	// Enum:
 	//	- home

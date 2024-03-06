@@ -1018,7 +1018,7 @@ definitions:
                     - public
                 items:
                     $ref: '#/definitions/filterContext'
-                minLength: 1
+                minItems: 1
                 type: array
                 uniqueItems: true
                 x-go-name: Context
