@@ -68,11 +68,11 @@ import (
 //			- public
 //			- thread
 //			- account
-//		minLength: 1
 //		type: array
 //		items:
 //			type:
 //				string
+//		minItems: 1
 //		uniqueItems: true
 //	-
 //		name: expires_in
