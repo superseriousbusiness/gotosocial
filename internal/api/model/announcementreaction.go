@@ -19,7 +19,7 @@ package model
 
 // AnnouncementReaction models a user reaction to an announcement.
 //
-// swagger:model announcementReaction
+// TODO: swagger:model announcementReaction once announcement API is supported
 type AnnouncementReaction struct {
 	// The emoji used for the reaction. Either a unicode emoji, or a custom emoji's shortcode.
 	// example: blobcat_uwu

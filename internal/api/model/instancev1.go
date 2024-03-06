@@ -60,7 +60,7 @@ type InstanceV1 struct {
 	// example: 0.1.1 cb85f65
 	Version string `json:"version"`
 	// Primary language of the instance.
-	// example: en
+	// example: ["en"]
 	Languages []string `json:"languages"`
 	// New account registrations are enabled on this instance.
 	Registrations bool `json:"registrations"`

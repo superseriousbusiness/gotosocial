@@ -19,7 +19,7 @@ package model
 
 // Announcement models an admin announcement for the instance.
 //
-// swagger:model announcement
+// TODO: swagger:model announcement once announcement API is supported
 type Announcement struct {
 	// The ID of the announcement.
 	// example: 01FC30T7X4TNCZK0TH90QYF3M4

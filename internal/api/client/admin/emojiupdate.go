@@ -73,6 +73,10 @@ import (
 //			For REMOTE emojis, `copy` or `disable` are supported.
 //			For LOCAL emojis, only `modify` is supported.
 //		type: string
+//		enum:
+//			- copy
+//			- disable
+//			- modify
 //		required: true
 //	-
 //		name: shortcode
@@ -94,9 +98,10 @@ import (
 //		name: category
 //		in: formData
 //		description: >-
-//			Category in which to place the emoji. 64 characters or less.
+//			Category in which to place the emoji.
 //			If a category with the given name doesn't exist yet, it will be created.
 //		type: string
+//		maximumLength: 64
 //
 //	security:
 //	- OAuth2 Bearer:

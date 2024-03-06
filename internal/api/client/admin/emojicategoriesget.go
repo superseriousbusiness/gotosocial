@@ -38,21 +38,13 @@ import (
 //	produces:
 //	- application/json
 //
-//	parameters:
-//	-
-//		name: id
-//		type: string
-//		description: The id of the emoji.
-//		in: path
-//		required: true
-//
 //	responses:
 //		'200':
 //			description: Array of existing emoji categories.
 //			schema:
 //				type: array
 //				items:
-//					"$ref": "#/definitions/adminEmojiCategory"
+//					"$ref": "#/definitions/emojiCategory"
 //		'400':
 //			description: bad request
 //		'401':

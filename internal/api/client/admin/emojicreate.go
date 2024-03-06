@@ -67,10 +67,11 @@ import (
 //		name: category
 //		in: formData
 //		description: >-
-//			Category in which to place the new emoji. 64 characters or less.
+//			Category in which to place the new emoji.
 //			If left blank, emoji will be uncategorized. If a category with the
 //			given name doesn't exist yet, it will be created.
 //		type: string
+//		maximumLength: 64
 //		required: false
 //
 //	security:

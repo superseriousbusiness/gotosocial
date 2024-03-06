@@ -48,6 +48,145 @@ import (
 //	- application/xml
 //	- application/x-www-form-urlencoded
 //
+//	parameters:
+//	-
+//		name: status
+//		x-go-name: Status
+//		description: |-
+//			Text content of the status.
+//			If media_ids is provided, this becomes optional.
+//			Attaching a poll is optional while status is provided.
+//		type: string
+//		in: formData
+//	-
+//		name: media_ids
+//		x-go-name: MediaIDs
+//		description: |-
+//			Array of Attachment ids to be attached as media.
+//			If provided, status becomes optional, and poll cannot be used.
+//
+//			If the status is being submitted as a form, the key is 'media_ids[]',
+//			but if it's json or xml, the key is 'media_ids'.
+//		type: array
+//		items:
+//			type: string
+//		in: formData
+//	-
+//		name: poll[options][]
+//		x-go-name: PollOptions
+//		description: |-
+//			Array of possible poll answers.
+//			If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+//		type: array
+//		items:
+//			type: string
+//		in: formData
+//	-
+//		name: poll[expires_in]
+//		x-go-name: PollExpiresIn
+//		description: |-
+//			Duration the poll should be open, in seconds.
+//			If provided, media_ids cannot be used, and poll[options] must be provided.
+//		type: integer
+//		format: int64
+//		in: formData
+//	-
+//		name: poll[multiple]
+//		x-go-name: PollMultiple
+//		description: Allow multiple choices on this poll.
+//		type: boolean
+//		default: false
+//		in: formData
+//	-
+//		name: poll[hide_totals]
+//		x-go-name: PollHideTotals
+//		description: Hide vote counts until the poll ends.
+//		type: boolean
+//		default: true
+//		in: formData
+//	-
+//		name: in_reply_to_id
+//		x-go-name: InReplyToID
+//		description: ID of the status being replied to, if status is a reply.
+//		type: string
+//		in: formData
+//	-
+//		name: sensitive
+//		x-go-name: Sensitive
+//		description: Status and attached media should be marked as sensitive.
+//		type: boolean
+//		in: formData
+//	-
+//		name: spoiler_text
+//		x-go-name: SpoilerText
+//		description: |-
+//			Text to be shown as a warning or subject before the actual content.
+//			Statuses are generally collapsed behind this field.
+//		type: string
+//		in: formData
+//	-
+//		name: visibility
+//		x-go-name: Visibility
+//		description: Visibility of the posted status.
+//		type: string
+//		enum:
+//			- public
+//			- unlisted
+//			- private
+//			- mutuals_only
+//			- direct
+//		in: formData
+//	-
+//		name: scheduled_at
+//		x-go-name: ScheduledAt
+//		description: |-
+//			ISO 8601 Datetime at which to schedule a status.
+//			Providing this parameter will cause ScheduledStatus to be returned instead of Status.
+//			Must be at least 5 minutes in the future.
+//
+//			This feature isn't implemented yet.
+//		type: string
+//		in: formData
+//	-
+//		name: language
+//		x-go-name: Language
+//		description: ISO 639 language code for this status.
+//		type: string
+//		in: formData
+//	-
+//		name: content_type
+//		x-go-name: ContentType
+//		description: Content type to use when parsing this status.
+//		type: string
+//		enum:
+//			- text/plain
+//			- text/markdown
+//		in: formData
+//	-
+//		name: federated
+//		x-go-name: Federated
+//		description: This status will be federated beyond the local timeline(s).
+//		in: formData
+//		type: boolean
+//	-
+//		name: boostable
+//		x-go-name: Boostable
+//		description: This status can be boosted/reblogged.
+//		in: formData
+//		type: boolean
+//	-
+//		name: replyable
+//		x-go-name: Replyable
+//		description: This status can be replied to.
+//		in: formData
+//		type: boolean
+//	-
+//		name: likeable
+//		x-go-name: Likeable
+//		description: This status can be liked/faved.
+//		in: formData
+//		type: boolean
+//
 //	produces:
 //	- application/json
 //

@@ -72,7 +72,7 @@ type SwaggerFeaturedCollection struct {
 	// example: OrderedCollection
 	Type string `json:"type"`
 	// List of status URIs.
-	// example: ['https://example.org/users/some_user/statuses/01GSZ0F7Q8SJKNRF777GJD271R', 'https://example.org/users/some_user/statuses/01GSZ0G012CBQ7TEKX689S3QRE']
+	// example: ["https://example.org/users/some_user/statuses/01GSZ0F7Q8SJKNRF777GJD271R", "https://example.org/users/some_user/statuses/01GSZ0G012CBQ7TEKX689S3QRE"]
 	Items []string `json:"items"`
 	// Number of items in this collection.
 	// example: 2

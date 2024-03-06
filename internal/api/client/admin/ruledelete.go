@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// RuleDELETEHandler swagger:operation DELETE /api/v1/admin/instance/rules{id} ruleDelete
+// RuleDELETEHandler swagger:operation DELETE /api/v1/admin/instance/rules/{id} ruleDelete
 //
 // Delete an existing instance rule.
 //
@@ -45,10 +45,10 @@ import (
 //	parameters:
 //	-
 //		name: id
-//		in: formData
+//		in: path
 //		description: >-
 //			The id of the rule to delete.
-//		type: path
+//		type: string
 //		required: true
 //
 //	security:

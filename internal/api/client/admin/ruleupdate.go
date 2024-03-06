@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// RulePATCHHandler swagger:operation PATCH /api/v1/admin/instance/rules{id} ruleUpdate
+// RulePATCHHandler swagger:operation PATCH /api/v1/admin/instance/rules/{id} ruleUpdate
 //
 // Update an existing instance rule.
 //
@@ -42,22 +42,6 @@ import (
 //
 //	produces:
 //	- application/json
-//
-//	parameters:
-//	-
-//		name: id
-//		in: formData
-//		description: >-
-//			The id of the rule to update.
-//		type: path
-//		required: true
-//	-
-//		name: text
-//		in: formData
-//		description: >-
-//			Text body for the updated instance rule, plaintext.
-//		type: string
-//		required: true
 //
 //	security:
 //	- OAuth2 Bearer:

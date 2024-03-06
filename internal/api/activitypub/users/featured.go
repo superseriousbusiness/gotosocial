@@ -44,6 +44,14 @@ import (
 //	produces:
 //	- application/activity+json
 //
+//	parameters:
+//	-
+//		name: username
+//		type: string
+//		description: Account name of the user
+//		in: path
+//		required: true
+//
 //	responses:
 //		'200':
 //			in: body

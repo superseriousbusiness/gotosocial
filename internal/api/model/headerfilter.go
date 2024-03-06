@@ -18,6 +18,8 @@
 package model
 
 // HeaderFilter represents a regex value filter applied to one particular HTTP header (allow / block).
+//
+// swagger:model headerFilter
 type HeaderFilter struct {
 	// The ID of the header filter.
 	// example: 01FBW21XJA09XYX51KV5JVBW0F
@@ -45,11 +47,15 @@ type HeaderFilter struct {
 
 // HeaderFilterRequest is the form submitted as a POST to create a new header filter entry (allow / block).
 //
-// swagger:model headerFilterCreateRequest
+// swagger:parameters headerFilterAllowCreate headerFilterBlockCreate
 type HeaderFilterRequest struct {
 	// The HTTP header to match against (e.g. User-Agent).
+	// required: true
+	// in: formData
 	Header string `form:"header" json:"header" xml:"header"`
 
 	// The header value matching regular expression.
+	// required: true
+	// in: formData
 	Regex string `form:"regex" json:"regex" xml:"regex"`
 }

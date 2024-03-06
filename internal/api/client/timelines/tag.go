@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// HomeTimelineGETHandler swagger:operation GET /api/v1/timelines/tag/{tag_name} tagTimeline
+// TagTimelineGETHandler swagger:operation GET /api/v1/timelines/tag/{tag_name} tagTimeline
 //
 // See public statuses that use the given hashtag (case insensitive).
 //
@@ -48,6 +48,12 @@ import (
 //	- application/json
 //
 //	parameters:
+//	-
+//		name: tag_name
+//		type: string
+//		description: Name of the tag
+//		in: path
+//		required: true
 //	-
 //		name: max_id
 //		type: string

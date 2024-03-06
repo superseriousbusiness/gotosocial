@@ -42,7 +42,7 @@ type Emoji struct {
 
 // EmojiCreateRequest represents a request to create a custom emoji made through the admin API.
 //
-// swagger:model emojiCreateRequest
+// swagger:ignore
 type EmojiCreateRequest struct {
 	// Desired shortcode for the emoji, without surrounding colons. This must be unique for the domain.
 	// example: blobcat_uwu
@@ -56,7 +56,7 @@ type EmojiCreateRequest struct {
 
 // EmojiUpdateRequest represents a request to update a custom emoji, made through the admin API.
 //
-// swagger:model emojiUpdateRequest
+// swagger:ignore
 type EmojiUpdateRequest struct {
 	// Type of action. One of disable, modify, copy.
 	Type EmojiUpdateType `form:"type" json:"type" xml:"type"`

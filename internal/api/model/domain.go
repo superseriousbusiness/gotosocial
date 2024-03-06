@@ -65,7 +65,7 @@ type DomainPermission struct {
 
 // DomainPermissionRequest is the form submitted as a POST to create a new domain permission entry (allow/block).
 //
-// swagger:model domainPermissionCreateRequest
+// swagger:ignore
 type DomainPermissionRequest struct {
 	// A list of domains for which this permission request should apply.
 	// Only used if import=true is specified.
@@ -87,9 +87,9 @@ type DomainPermissionRequest struct {
 	PublicComment string `form:"public_comment" json:"public_comment" xml:"public_comment"`
 }
 
-// DomainBlockCreateRequest is the form submitted as a POST to /api/v1/admin/domain_keys_expire to expire a domain's public keys.
+// DomainKeysExpireRequest is the form submitted as a POST to /api/v1/admin/domain_keys_expire to expire a domain's public keys.
 //
-// swagger:model domainKeysExpireRequest
+// swagger:parameters domainKeysExpire
 type DomainKeysExpireRequest struct {
 	// hostname/domain to expire keys for.
 	Domain string `form:"domain" json:"domain" xml:"domain"`

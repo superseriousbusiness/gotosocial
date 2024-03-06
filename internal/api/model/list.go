@@ -37,7 +37,7 @@ type List struct {
 // swagger:parameters listCreate
 type ListCreateRequest struct {
 	// Title of this list.
-	// example: Cool People
+	// Sample: Cool People
 	// in: formData
 	// required: true
 	Title string `form:"title" json:"title" xml:"title"`
@@ -45,28 +45,35 @@ type ListCreateRequest struct {
 	//	followed = Show replies to any followed user
 	//	list = Show replies to members of the list
 	//	none = Show replies to no one
-	// example: list
+	// Sample: list
 	// default: list
 	// in: formData
+	// enum:
+	//	- followed
+	//	- list
+	//	- none
 	RepliesPolicy string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
 }
 
 // ListUpdateRequest models list update parameters.
 //
-// swagger:parameters listUpdate
+// swagger:ignore
 type ListUpdateRequest struct {
 	// Title of this list.
-	// example: Cool People
+	// Sample: Cool People
 	// in: formData
 	Title *string `form:"title" json:"title" xml:"title"`
 	// RepliesPolicy for this list.
 	//	followed = Show replies to any followed user
 	//	list = Show replies to members of the list
 	//	none = Show replies to no one
+	// Sample: list
 	// in: formData
 	RepliesPolicy *string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
 }
 
+// ListAccountsChangeRequest is a list of account IDs to add to or remove from a list.
+//
 // swagger:ignore
 type ListAccountsChangeRequest struct {
 	AccountIDs []string `form:"account_ids[]" json:"account_ids" xml:"account_ids"`

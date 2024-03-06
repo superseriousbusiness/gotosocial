@@ -120,12 +120,67 @@ import (
 //		description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
 //		type: boolean
 //	-
-//		name: fields_attributes
+//		name: fields_attributes[0][name]
 //		in: formData
-//		description: Profile fields to be added to this account's profile
-//		type: array
-//		items:
-//			type: object
+//		description: Name of 1st profile field to be added to this account's profile.
+//			(The index may be any string; add more indexes to send more fields.)
+//		type: string
+//	-
+//		name: fields_attributes[0][value]
+//		in: formData
+//		description: Value of 1st profile field to be added to this account's profile.
+//			(The index may be any string; add more indexes to send more fields.)
+//		type: string
+//	-
+//		name: fields_attributes[1][name]
+//		in: formData
+//		description: Name of 2nd profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[1][value]
+//		in: formData
+//		description: Value of 2nd profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[2][name]
+//		in: formData
+//		description: Name of 3rd profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[2][value]
+//		in: formData
+//		description: Value of 3rd profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[3][name]
+//		in: formData
+//		description: Name of 4th profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[3][value]
+//		in: formData
+//		description: Value of 4th profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[4][name]
+//		in: formData
+//		description: Name of 5th profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[4][value]
+//		in: formData
+//		description: Value of 5th profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[5][name]
+//		in: formData
+//		description: Name of 6th profile field to be added to this account's profile.
+//		type: string
+//	-
+//		name: fields_attributes[5][value]
+//		in: formData
+//		description: Value of 6th profile field to be added to this account's profile.
+//		type: string
 //
 //	security:
 //	- OAuth2 Bearer:

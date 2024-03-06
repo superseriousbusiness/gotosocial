@@ -52,7 +52,7 @@ import (
 //		in: formData
 //		description: Title to use for the instance.
 //		type: string
-//		maximum: 40
+//		maxLength: 40
 //		allowEmptyValue: true
 //	-
 //		name: contact_username
@@ -73,21 +73,21 @@ import (
 //		in: formData
 //		description: Short description of the instance.
 //		type: string
-//		maximum: 500
+//		maxLength: 500
 //		allowEmptyValue: true
 //	-
 //		name: description
 //		in: formData
 //		description: Longer description of the instance.
 //		type: string
-//		maximum: 5000
+//		maxLength: 5000
 //		allowEmptyValue: true
 //	-
 //		name: terms
 //		in: formData
 //		description: Terms and conditions of the instance.
 //		type: string
-//		maximum: 5000
+//		maxLength: 5000
 //		allowEmptyValue: true
 //	-
 //		name: thumbnail
@@ -113,7 +113,7 @@ import (
 //		'200':
 //			description: "The newly updated instance."
 //			schema:
-//				"$ref": "#/definitions/instance"
+//				"$ref": "#/definitions/instanceV1"
 //		'400':
 //			description: bad request
 //		'401':

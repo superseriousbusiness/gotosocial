@@ -43,15 +43,6 @@ import (
 //	produces:
 //	- application/json
 //
-//	parameters:
-//	-
-//		name: text
-//		in: formData
-//		description: >-
-//			Text body for the instance rule, plaintext.
-//		type: string
-//		required: true
-//
 //	security:
 //	- OAuth2 Bearer:
 //		- admin

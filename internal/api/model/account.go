@@ -170,7 +170,7 @@ type UpdateCredentialsRequest struct {
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
 //
-// swagger:model updateSource
+// swagger:ignore
 type UpdateSource struct {
 	// Default post privacy for authored statuses.
 	Privacy *string `form:"privacy" json:"privacy"`
@@ -185,7 +185,7 @@ type UpdateSource struct {
 // UpdateField is to be used specifically in an UpdateCredentialsRequest.
 // By default, max 6 fields and 255 characters per property/value.
 //
-// swagger:model updateField
+// swagger:ignore
 type UpdateField struct {
 	// Key this form field was submitted with;
 	// only set if it was submitted as JSON.
