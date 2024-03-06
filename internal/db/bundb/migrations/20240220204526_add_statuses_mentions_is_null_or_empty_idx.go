@@ -21,6 +21,7 @@ import (
 	"context"
 
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -38,15 +39,7 @@ func init() {
 		}
 
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// Remove previous index for viewing
-			// statuses created by account.
-			if _, err := tx.
-				NewDropIndex().
-				Index("statuses_account_id_id_idx").
-				IfExists().
-				Exec(ctx); err != nil {
-				return err
-			}
+			log.Info(ctx, "reindexing statuses (statuses_account_view_idx); this may take a few minutes, please don't interrupt this migration!")
 
 			// Add new index for viewing statuses created
 			// by account, which includes mentions in the index.

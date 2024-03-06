@@ -36,6 +36,7 @@
 //	      read:blocks: grant read access to blocks
 //	      read:custom_emojis: grant read access to custom_emojis
 //	      read:favourites: grant read access to favourites
+//	      read:filters: grant read access to filters
 //	      read:follows: grant read access to follows
 //	      read:lists: grant read access to lists
 //	      read:media: grant read access to media
@@ -48,6 +49,7 @@
 //	      write: grants write access to everything
 //	      write:accounts: grants write access to accounts
 //	      write:blocks: grants write access to blocks
+//	      write:filters: grants write access to filters
 //	      write:follows: grants write access to follows
 //	      write:lists: grants write access to lists
 //	      write:media: grants write access to media

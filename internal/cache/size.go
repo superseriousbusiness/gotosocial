@@ -309,6 +309,38 @@ func sizeofEmojiCategory() uintptr {
 	}))
 }
 
+func sizeofFilter() uintptr {
+	return uintptr(size.Of(&gtsmodel.Filter{
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		ExpiresAt: exampleTime,
+		AccountID: exampleID,
+		Title:     exampleTextSmall,
+		Action:    gtsmodel.FilterActionHide,
+	}))
+}
+
+func sizeofFilterKeyword() uintptr {
+	return uintptr(size.Of(&gtsmodel.FilterKeyword{
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		FilterID:  exampleID,
+		Keyword:   exampleTextSmall,
+	}))
+}
+
+func sizeofFilterStatus() uintptr {
+	return uintptr(size.Of(&gtsmodel.FilterStatus{
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		FilterID:  exampleID,
+		StatusID:  exampleID,
+	}))
+}
+
 func sizeofFollow() uintptr {
 	return uintptr(size.Of(&gtsmodel.Follow{
 		ID:              exampleID,
@@ -425,6 +457,19 @@ func sizeofMention() uintptr {
 		NameString:       exampleUsername,
 		TargetAccountURI: exampleURI,
 		TargetAccountURL: exampleURI,
+	}))
+}
+
+func sizeofMove() uintptr {
+	return uintptr(size.Of(&gtsmodel.Move{
+		ID:          exampleID,
+		CreatedAt:   exampleTime,
+		UpdatedAt:   exampleTime,
+		AttemptedAt: exampleTime,
+		SucceededAt: exampleTime,
+		OriginURI:   exampleURI,
+		TargetURI:   exampleURI,
+		URI:         exampleURI,
 	}))
 }
 

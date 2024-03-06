@@ -1,0 +1,147 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package v1
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+)
+
+// FilterPOSTHandler swagger:operation POST /api/v1/filters filterV1Post
+//
+// Create a single filter.
+//
+//	---
+//	tags:
+//	- filters
+//
+//	consumes:
+//	- application/json
+//	- application/xml
+//	- application/x-www-form-urlencoded
+//
+//	produces:
+//	- application/json
+//
+//	parameters:
+//	-
+//		name: phrase
+//		in: formData
+//		required: true
+//		description: The text to be filtered.
+//		maxLength: 40
+//		type: string
+//		example: "fnord"
+//	-
+//		name: context
+//		in: formData
+//		required: true
+//		description: The contexts in which the filter should be applied.
+//		enum:
+//			- home
+//			- notifications
+//			- public
+//			- thread
+//			- account
+//		example:
+//			- home
+//			- public
+//		items:
+//			$ref: '#/definitions/filterContext'
+//		minLength: 1
+//		type: array
+//		uniqueItems: true
+//	-
+//		name: expires_in
+//		in: formData
+//		description: Number of seconds from now that the filter should expire. If omitted, filter never expires.
+//		type: number
+//		example: 86400
+//	-
+//		name: irreversible
+//		in: formData
+//		description: Should matching entities be removed from the user's timelines/views, instead of hidden? Not supported yet.
+//		type: boolean
+//		default: false
+//		example: false
+//	-
+//		name: whole_word
+//		in: formData
+//		description: Should the filter consider word boundaries?
+//		type: boolean
+//		default: false
+//		example: true
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- write:filters
+//
+//	responses:
+//		'200':
+//			name: filter
+//			description: New filter.
+//			schema:
+//				"$ref": "#/definitions/filterV1"
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'422':
+//			description: unprocessable content
+//		'500':
+//			description: internal server error
+func (m *Module) FilterPOSTHandler(c *gin.Context) {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	form := &apimodel.FilterCreateUpdateRequestV1{}
+	if err := c.ShouldBind(form); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if err := validateNormalizeCreateUpdateFilter(form); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnprocessableEntity(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	apiFilter, errWithCode := m.processor.FiltersV1().Create(c.Request.Context(), authed.Account, form)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	apiutil.JSON(c, http.StatusOK, apiFilter)
+}

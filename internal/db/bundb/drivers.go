@@ -136,7 +136,7 @@ func (stmt *PostgreSQLStmt) Exec(args []driver.Value) (driver.Result, error) {
 
 func (stmt *PostgreSQLStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
 	res, err := stmt.stmt.ExecContext(ctx, args)
-	err = processSQLiteError(err)
+	err = processPostgresError(err)
 	return res, err
 }
 
@@ -146,7 +146,7 @@ func (stmt *PostgreSQLStmt) Query(args []driver.Value) (driver.Rows, error) {
 
 func (stmt *PostgreSQLStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	rows, err := stmt.stmt.QueryContext(ctx, args)
-	err = processSQLiteError(err)
+	err = processPostgresError(err)
 	return rows, err
 }
 

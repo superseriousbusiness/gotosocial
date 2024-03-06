@@ -802,6 +802,22 @@ func PostIncAtomicUint32(p *uint32, d uint32) uint32     { return atomic.AddUint
 func PostIncAtomicUint64(p *uint64, d uint64) uint64     { return atomic.AddUint64(p, d) - d }
 func PostIncAtomicUintptr(p *uintptr, d uintptr) uintptr { return atomic.AddUintptr(p, d) - d }
 
+func PostIncAtomicInt32P(p uintptr, d int32) int32 {
+	return atomic.AddInt32((*int32)(unsafe.Pointer(p)), d) - d
+}
+func PostIncAtomicInt64P(p uintptr, d int64) int64 {
+	return atomic.AddInt64((*int64)(unsafe.Pointer(p)), d) - d
+}
+func PostIncAtomicUint32P(p uintptr, d uint32) uint32 {
+	return atomic.AddUint32((*uint32)(unsafe.Pointer(p)), d) - d
+}
+func PostIncAtomicUint64P(p uintptr, d uint64) uint64 {
+	return atomic.AddUint64((*uint64)(unsafe.Pointer(p)), d) - d
+}
+func PostIncAtomicUintptrP(p uintptr, d uintptr) uintptr {
+	return atomic.AddUintptr((*uintptr)(unsafe.Pointer(p)), d) - d
+}
+
 func PostDecInt8(p *int8, d int8) int8                         { r := *p; *p -= d; return r }
 func PostDecInt16(p *int16, d int16) int16                     { r := *p; *p -= d; return r }
 func PostDecInt32(p *int32, d int32) int32                     { r := *p; *p -= d; return r }

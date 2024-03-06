@@ -9,6 +9,7 @@
 	linux_amd64 \
 	linux_arm \
 	linux_arm64 \
+	strace \
 
 
 grep=--include=*.go --include=*.l --include=*.y --include=*.yy --include=*.qbe --include=*.ssa
@@ -171,6 +172,8 @@ editor:
 	gofmt -l -s -w *.go
 	go test -short 2>&1 | tee -a log
 	go install -v ./...
+	go build -o /dev/null generate.go
+	go build -o /dev/null strace.go
 
 later:
 	@grep -n $(grep) LATER * || true
@@ -197,3 +200,7 @@ work:
 	go work use ../ccgo/v4
 	go work use ../ccgo/v3
 	go work use ../cc/v4
+
+strace:
+	go run strace.go
+	go build -v ./...

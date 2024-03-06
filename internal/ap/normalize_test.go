@@ -177,6 +177,23 @@ func (suite *NormalizeTestSuite) getAccountable() (vocab.ActivityStreamsPerson, 
 		"@context": "https://www.w3.org/ns/activitystreams",
 		"id": "https://example.org/users/someone",
 		"summary": "about: I'm a #Barbie #girl in a #Barbie #world\nLife in plastic, it's fantastic\nYou can brush my hair, undress me everywhere\nImagination, life is your creation\nI'm a blonde bimbo girl\nIn a fantasy world\nDress me up, make it tight\nI'm your dolly\nYou're my doll, rock and roll\nFeel the glamour in pink\nKiss me here, touch me there\nHanky panky",
+		"attachment": [
+			{
+				"name": "<strong>cheeky</strong>",
+				"type": "PropertyValue",
+				"value": "<script>alert(\"teehee!\")</script>"
+			},
+			{
+				"name": "buy me coffee?",
+				"type": "PropertyValue",
+				"value": "<a href=\"https://example.org/some_link_to_my_ko_fi\">Right here!</a>"
+			},
+			{
+				"name": "hello",
+				"type": "PropertyValue",
+				"value": "world"
+			}
+		],
 		"type": "Person"
 	  }`)
 
@@ -403,6 +420,38 @@ You're my doll, rock and roll
 Feel the glamour in pink
 Kiss me here, touch me there
 Hanky panky`, ap.ExtractSummary(accountable))
+}
+
+func (suite *NormalizeTestSuite) TestNormalizeAccountableFields() {
+	accountable, rawAccount := suite.getAccountable()
+	fields := ap.ExtractFields(accountable)
+
+	// Dodgy field.
+	suite.Equal(`<strong>cheeky</strong>`, fields[0].Name)
+	suite.Equal(`<script>alert("teehee!")</script>`, fields[0].Value)
+
+	// More or less OK field.
+	suite.Equal(`buy me coffee?`, fields[1].Name)
+	suite.Equal(`<a href="https://example.org/some_link_to_my_ko_fi">Right here!</a>`, fields[1].Value)
+
+	// Fine field.
+	suite.Equal(`hello`, fields[2].Name)
+	suite.Equal(`world`, fields[2].Value)
+
+	// Normalize 'em.
+	ap.NormalizeIncomingFields(accountable, rawAccount)
+
+	// Dodgy field should be removed.
+	fields = ap.ExtractFields(accountable)
+	suite.Len(fields, 2)
+
+	// More or less OK field is now very OK.
+	suite.Equal(`buy me coffee?`, fields[0].Name)
+	suite.Equal(`<a href="https://example.org/some_link_to_my_ko_fi" rel="nofollow noreferrer noopener" target="_blank">Right here!</a>`, fields[0].Value)
+
+	// Fine field continues to be fine.
+	suite.Equal(`hello`, fields[1].Name)
+	suite.Equal(`world`, fields[1].Value)
 }
 
 func (suite *NormalizeTestSuite) TestNormalizeStatusableSummary() {

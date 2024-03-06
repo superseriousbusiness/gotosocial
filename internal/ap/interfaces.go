@@ -387,6 +387,12 @@ type WithName interface {
 	SetActivityStreamsName(vocab.ActivityStreamsNameProperty)
 }
 
+// WithValue represents an activity with SchemaValueProperty
+type WithValue interface {
+	GetSchemaValue() vocab.SchemaValueProperty
+	SetSchemaValue(vocab.SchemaValueProperty)
+}
+
 // WithImage represents an activity with ActivityStreamsImageProperty
 type WithImage interface {
 	GetActivityStreamsImage() vocab.ActivityStreamsImageProperty

@@ -2975,6 +2975,81 @@ func GetCacheEmojiCategoryMemRatio() float64 { return global.GetCacheEmojiCatego
 // SetCacheEmojiCategoryMemRatio safely sets the value for global configuration 'Cache.EmojiCategoryMemRatio' field
 func SetCacheEmojiCategoryMemRatio(v float64) { global.SetCacheEmojiCategoryMemRatio(v) }
 
+// GetCacheFilterMemRatio safely fetches the Configuration value for state's 'Cache.FilterMemRatio' field
+func (st *ConfigState) GetCacheFilterMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.FilterMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheFilterMemRatio safely sets the Configuration value for state's 'Cache.FilterMemRatio' field
+func (st *ConfigState) SetCacheFilterMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.FilterMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheFilterMemRatioFlag returns the flag name for the 'Cache.FilterMemRatio' field
+func CacheFilterMemRatioFlag() string { return "cache-filter-mem-ratio" }
+
+// GetCacheFilterMemRatio safely fetches the value for global configuration 'Cache.FilterMemRatio' field
+func GetCacheFilterMemRatio() float64 { return global.GetCacheFilterMemRatio() }
+
+// SetCacheFilterMemRatio safely sets the value for global configuration 'Cache.FilterMemRatio' field
+func SetCacheFilterMemRatio(v float64) { global.SetCacheFilterMemRatio(v) }
+
+// GetCacheFilterKeywordMemRatio safely fetches the Configuration value for state's 'Cache.FilterKeywordMemRatio' field
+func (st *ConfigState) GetCacheFilterKeywordMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.FilterKeywordMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheFilterKeywordMemRatio safely sets the Configuration value for state's 'Cache.FilterKeywordMemRatio' field
+func (st *ConfigState) SetCacheFilterKeywordMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.FilterKeywordMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheFilterKeywordMemRatioFlag returns the flag name for the 'Cache.FilterKeywordMemRatio' field
+func CacheFilterKeywordMemRatioFlag() string { return "cache-filter-keyword-mem-ratio" }
+
+// GetCacheFilterKeywordMemRatio safely fetches the value for global configuration 'Cache.FilterKeywordMemRatio' field
+func GetCacheFilterKeywordMemRatio() float64 { return global.GetCacheFilterKeywordMemRatio() }
+
+// SetCacheFilterKeywordMemRatio safely sets the value for global configuration 'Cache.FilterKeywordMemRatio' field
+func SetCacheFilterKeywordMemRatio(v float64) { global.SetCacheFilterKeywordMemRatio(v) }
+
+// GetCacheFilterStatusMemRatio safely fetches the Configuration value for state's 'Cache.FilterStatusMemRatio' field
+func (st *ConfigState) GetCacheFilterStatusMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.FilterStatusMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheFilterStatusMemRatio safely sets the Configuration value for state's 'Cache.FilterStatusMemRatio' field
+func (st *ConfigState) SetCacheFilterStatusMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.FilterStatusMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheFilterStatusMemRatioFlag returns the flag name for the 'Cache.FilterStatusMemRatio' field
+func CacheFilterStatusMemRatioFlag() string { return "cache-filter-status-mem-ratio" }
+
+// GetCacheFilterStatusMemRatio safely fetches the value for global configuration 'Cache.FilterStatusMemRatio' field
+func GetCacheFilterStatusMemRatio() float64 { return global.GetCacheFilterStatusMemRatio() }
+
+// SetCacheFilterStatusMemRatio safely sets the value for global configuration 'Cache.FilterStatusMemRatio' field
+func SetCacheFilterStatusMemRatio(v float64) { global.SetCacheFilterStatusMemRatio(v) }
+
 // GetCacheFollowMemRatio safely fetches the Configuration value for state's 'Cache.FollowMemRatio' field
 func (st *ConfigState) GetCacheFollowMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -3249,6 +3324,31 @@ func GetCacheMentionMemRatio() float64 { return global.GetCacheMentionMemRatio()
 
 // SetCacheMentionMemRatio safely sets the value for global configuration 'Cache.MentionMemRatio' field
 func SetCacheMentionMemRatio(v float64) { global.SetCacheMentionMemRatio(v) }
+
+// GetCacheMoveMemRatio safely fetches the Configuration value for state's 'Cache.MoveMemRatio' field
+func (st *ConfigState) GetCacheMoveMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.MoveMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheMoveMemRatio safely sets the Configuration value for state's 'Cache.MoveMemRatio' field
+func (st *ConfigState) SetCacheMoveMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.MoveMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheMoveMemRatioFlag returns the flag name for the 'Cache.MoveMemRatio' field
+func CacheMoveMemRatioFlag() string { return "cache-move-mem-ratio" }
+
+// GetCacheMoveMemRatio safely fetches the value for global configuration 'Cache.MoveMemRatio' field
+func GetCacheMoveMemRatio() float64 { return global.GetCacheMoveMemRatio() }
+
+// SetCacheMoveMemRatio safely sets the value for global configuration 'Cache.MoveMemRatio' field
+func SetCacheMoveMemRatio(v float64) { global.SetCacheMoveMemRatio(v) }
 
 // GetCacheNotificationMemRatio safely fetches the Configuration value for state's 'Cache.NotificationMemRatio' field
 func (st *ConfigState) GetCacheNotificationMemRatio() (v float64) {

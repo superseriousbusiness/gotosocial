@@ -54,6 +54,10 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 
 	// Invalidate this account's block lists.
 	c.GTS.BlockIDs.Invalidate(account.ID)
+
+	// Invalidate this account's Move(s).
+	c.GTS.Move.Invalidate("OriginURI", account.URI)
+	c.GTS.Move.Invalidate("TargetURI", account.URI)
 }
 
 func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {

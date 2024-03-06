@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -72,6 +73,7 @@ type Dereferencer struct {
 	converter           *typeutils.Converter
 	transportController transport.Controller
 	mediaManager        *media.Manager
+	visibility          *visibility.Filter
 
 	// all protected by State{}.FedLocks.
 	derefAvatars map[string]*media.ProcessingMedia
@@ -87,6 +89,7 @@ func NewDereferencer(
 	state *state.State,
 	converter *typeutils.Converter,
 	transportController transport.Controller,
+	visFilter *visibility.Filter,
 	mediaManager *media.Manager,
 ) Dereferencer {
 	return Dereferencer{
@@ -94,6 +97,7 @@ func NewDereferencer(
 		converter:           converter,
 		transportController: transportController,
 		mediaManager:        mediaManager,
+		visibility:          visFilter,
 		derefAvatars:        make(map[string]*media.ProcessingMedia),
 		derefHeaders:        make(map[string]*media.ProcessingMedia),
 		derefEmojis:         make(map[string]*media.ProcessingEmoji),

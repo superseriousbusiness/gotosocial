@@ -83,3 +83,12 @@ linters-settings:
     # Enable all checks, but disable SA1012: nil context passing.
     # See: https://staticcheck.io/docs/configuration/options/#checks
     checks: ["all", "-SA1012"]
+
+issues:
+  exclude-rules:
+    # Exclude VSCode custom folding region comments in files that use them.
+    # Already fixed in go-critic and can be removed next time go-critic is updated.
+    - linters:
+        - gocritic
+      path: internal/db/filter.go
+      text: 'commentFormatting: put a space between `//` and comment text'

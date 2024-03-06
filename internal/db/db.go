@@ -32,10 +32,12 @@ type DB interface {
 	Emoji
 	HeaderFilter
 	Instance
+	Filter
 	List
 	Marker
 	Media
 	Mention
+	Move
 	Notification
 	Poll
 	Relationship

@@ -32,6 +32,9 @@ var (
 
 // void *malloc(size_t size);
 func Xmalloc(t *TLS, n types.Size_t) uintptr {
+	if __ccgo_strace {
+		trc("t=%v n=%v, (%v:)", t, n, origin(2))
+	}
 	if n == 0 {
 		return 0
 	}
@@ -54,11 +57,17 @@ func Xmalloc(t *TLS, n types.Size_t) uintptr {
 
 // void *calloc(size_t nmemb, size_t size);
 func Xcalloc(t *TLS, n, size types.Size_t) uintptr {
+	if __ccgo_strace {
+		trc("t=%v size=%v, (%v:)", t, size, origin(2))
+	}
 	return Xmalloc(t, n*size)
 }
 
 // void *realloc(void *ptr, size_t size);
 func Xrealloc(t *TLS, ptr uintptr, size types.Size_t) uintptr {
+	if __ccgo_strace {
+		trc("t=%v ptr=%v size=%v, (%v:)", t, ptr, size, origin(2))
+	}
 	switch {
 	case ptr != 0 && size != 0:
 		p := Xmalloc(t, size)
@@ -74,7 +83,12 @@ func Xrealloc(t *TLS, ptr uintptr, size types.Size_t) uintptr {
 }
 
 // void free(void *ptr);
-func Xfree(t *TLS, p uintptr) {}
+
+func Xfree(t *TLS, p uintptr) {
+	if __ccgo_strace {
+		trc("t=%v p=%v, (%v:)", t, p, origin(2))
+	}
+}
 
 func UsableSize(p uintptr) types.Size_t {
 	return types.Size_t(*(*uintptr)(unsafe.Pointer(p - uintptrSize)))

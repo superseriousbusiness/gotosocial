@@ -148,7 +148,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	spamFilter := spam.NewFilter(&state)
 	federatingDB := federatingdb.New(&state, typeConverter, visFilter, spamFilter)
 	transportController := transport.NewController(&state, federatingDB, &federation.Clock{}, client)
-	federator := federation.NewFederator(&state, federatingDB, transportController, typeConverter, mediaManager)
+	federator := federation.NewFederator(&state, federatingDB, transportController, typeConverter, visFilter, mediaManager)
 
 	// Decide whether to create a noop email
 	// sender (won't send emails) or a real one.

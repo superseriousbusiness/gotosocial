@@ -15,6 +15,9 @@ import (
 
 // int pthread_attr_init(pthread_attr_t *attr);
 func Xpthread_attr_init(t *TLS, pAttr uintptr) int32 {
+	if __ccgo_strace {
+		trc("t=%v pAttr=%v, (%v:)", t, pAttr, origin(2))
+	}
 	*(*pthread.Pthread_attr_t)(unsafe.Pointer(pAttr)) = pthread.Pthread_attr_t{}
 	return 0
 }
@@ -31,6 +34,9 @@ func Xpthread_attr_init(t *TLS, pAttr uintptr) int32 {
 //
 // int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
 func Xpthread_mutex_init(t *TLS, pMutex, pAttr uintptr) int32 {
+	if __ccgo_strace {
+		trc("t=%v pAttr=%v, (%v:)", t, pAttr, origin(2))
+	}
 	typ := pthread.PTHREAD_MUTEX_DEFAULT
 	if pAttr != 0 {
 		typ = int(X__ccgo_pthreadMutexattrGettype(t, pAttr))

@@ -62,10 +62,12 @@ type DBService struct {
 	db.Emoji
 	db.HeaderFilter
 	db.Instance
+	db.Filter
 	db.List
 	db.Marker
 	db.Media
 	db.Mention
+	db.Move
 	db.Notification
 	db.Poll
 	db.Relationship
@@ -200,6 +202,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			db:    db,
 			state: state,
 		},
+		Filter: &filterDB{
+			db:    db,
+			state: state,
+		},
 		List: &listDB{
 			db:    db,
 			state: state,
@@ -213,6 +219,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Mention: &mentionDB{
+			db:    db,
+			state: state,
+		},
+		Move: &moveDB{
 			db:    db,
 			state: state,
 		},
