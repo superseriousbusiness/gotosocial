@@ -179,6 +179,7 @@ var Defaults = Configuration{
 		MarkerMemRatio:           0.5,
 		MediaMemRatio:            4,
 		MentionMemRatio:          2,
+		MoveMemRatio:             0.1,
 		NotificationMemRatio:     2,
 		PollMemRatio:             1,
 		PollVoteMemRatio:         2,

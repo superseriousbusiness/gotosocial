@@ -67,6 +67,7 @@ type DBService struct {
 	db.Marker
 	db.Media
 	db.Mention
+	db.Move
 	db.Notification
 	db.Poll
 	db.Relationship
@@ -218,6 +219,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Mention: &mentionDB{
+			db:    db,
+			state: state,
+		},
+		Move: &moveDB{
 			db:    db,
 			state: state,
 		},

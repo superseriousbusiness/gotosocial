@@ -46,6 +46,7 @@ EXPECT=$(cat << "EOF"
         "media-mem-ratio": 4,
         "memory-target": 104857600,
         "mention-mem-ratio": 2,
+        "move-mem-ratio": 0.1,
         "notification-mem-ratio": 2,
         "poll-mem-ratio": 1,
         "poll-vote-ids-mem-ratio": 2,

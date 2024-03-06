@@ -117,6 +117,9 @@ type GTSCaches struct {
 	// Mention provides access to the gtsmodel Mention database cache.
 	Mention structr.Cache[*gtsmodel.Mention]
 
+	// Move provides access to the gtsmodel Move database cache.
+	Move structr.Cache[*gtsmodel.Move]
+
 	// Notification provides access to the gtsmodel Notification database cache.
 	Notification structr.Cache[*gtsmodel.Notification]
 
@@ -185,6 +188,8 @@ func (c *Caches) initAccount() {
 		a2.AvatarMediaAttachment = nil
 		a2.HeaderMediaAttachment = nil
 		a2.Emojis = nil
+		a2.AlsoKnownAs = nil
+		a2.Move = nil
 
 		return a2
 	}
@@ -813,6 +818,33 @@ func (c *Caches) initMention() {
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
 		CopyValue: copyF,
+	})
+}
+
+func (c *Caches) initMove() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofMove(), // model in-mem size.
+		config.GetCacheMoveMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.GTS.Move.Init(structr.Config[*gtsmodel.Move]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "URI"},
+			{Fields: "OriginURI,TargetURI"},
+			{Fields: "OriginURI", Multiple: true},
+			{Fields: "TargetURI", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		CopyValue: func(m1 *gtsmodel.Move) *gtsmodel.Move {
+			m2 := new(gtsmodel.Move)
+			*m2 = *m1
+			return m2
+		},
 	})
 }
 
