@@ -61,7 +61,7 @@ import (
 //		maxLength: 40
 //		type: string
 //	-
-//		name: context
+//		name: context[]
 //		in: formData
 //		required: true
 //		description: |-
@@ -78,6 +78,7 @@ import (
 //		items:
 //			type:
 //				string
+//		collectionFormat: multi
 //		minItems: 1
 //		uniqueItems: true
 //	-
