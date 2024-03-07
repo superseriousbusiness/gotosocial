@@ -43,10 +43,12 @@ import (
 //
 //	responses:
 //		'200':
-//			name: filter
+//			name: filters
 //			description: Requested filters.
 //			schema:
-//				"$ref": "#/definitions/filterV1"
+//				type: array
+//				items:
+//					"$ref": "#/definitions/filterV1"
 //		'400':
 //			description: bad request
 //		'401':
