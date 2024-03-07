@@ -18,6 +18,7 @@
 package bundb
 
 import (
+	"database/sql/driver"
 	"errors"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -75,6 +76,27 @@ func processSQLiteError(err error) error {
 		return errBusy
 	case sqlite3.SQLITE_BUSY_TIMEOUT:
 		return db.ErrBusyTimeout
+
+	// WORKAROUND:
+	// text copied from matrix dev chat:
+	//
+	// okay i've found a workaround for now. so between
+	// v1.29.0 and v1.29.2 (modernc.org/sqlite) is that
+	// slightly tweaked interruptOnDone() behaviour, which
+	// causes interrupt to (imo, correctly) get called when
+	// a context is cancelled to cancel the running query. the
+	// issue is that every single query after that point seems
+	// to still then return interrupted. so as you thought,
+	// maybe that query count isn't being decremented. i don't
+	// think it's our code, but i haven't ruled it out yet.
+	//
+	// the workaround for now is adding to our sqlite error
+	// processor to replace an SQLITE_INTERRUPTED code with
+	// driver.ErrBadConn, which hints to the golang sql package
+	// that the conn needs to be closed and a new one opened
+	//
+	case sqlite3.SQLITE_INTERRUPT:
+		return driver.ErrBadConn
 	}
 
 	return err
