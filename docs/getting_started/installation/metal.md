@@ -131,15 +131,33 @@ Copy it to `/etc/systemd/system/gotosocial.service`:
 sudo cp /gotosocial/example/gotosocial.service /etc/systemd/system/
 ```
 
-Then use `sudoedit /etc/systemd/system/gotosocial.service` to change the `ExecStart=` and `WorkingDirectory=` lines according to your installation.
+Then use `sudoedit /etc/systemd/system/gotosocial.service` to open the file in an editor. If you installed GoToSocial in a directory different from the `/gotosocial` path used in this guide, change the `ExecStart=` and `WorkingDirectory=` lines according to your installation.
 
-If you have been following this guide word for word the defaults should be fine.
+!!! info "Running on ports 80 and 443"
+    
+    If you've been following this guide word for word, your GoToSocial instance will be configured to bind to ports 443 and 80, which are known as privileged ports. To allow the GoToSocial user to bind to these, you need to uncomment the line about `CAP_NET_BIND_SERVICE` in the service file by removing the leading `#`.
+    
+    Before:
+    
+    ```
+    #AmbientCapabilities=CAP_NET_BIND_SERVICE
+    ```
+    
+    After:
+    
+    ```
+    AmbientCapabilities=CAP_NET_BIND_SERVICE
+    ```
+    
+    If you later decide to run GoToSocial using a reverse proxy (see below) you may want to re-comment this line to remove the privileges, since the reverse proxy will bind to the privileged ports instead.
 
-After you're done enable the service:
+After you're done editing, save and close the file, and run the following command to enable the service:
 
 ```bash
 sudo systemctl enable --now gotosocial.service
 ```
+
+GoToSocial should now be up and running.
 
 ## (Optional) Reverse proxy
 
