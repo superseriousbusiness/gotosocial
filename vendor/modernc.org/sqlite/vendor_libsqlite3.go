@@ -109,12 +109,6 @@ func main() {
 type Sqlite3_int64 = sqlite3_int64
 type Sqlite3_mutex_methods = sqlite3_mutex_methods
 type Sqlite3_value = sqlite3_value
-
-type Sqlite3_index_info = sqlite3_index_info
-type Sqlite3_module = sqlite3_module
-type Sqlite3_vtab = sqlite3_vtab
-type Sqlite3_vtab_cursor = sqlite3_vtab_cursor
-
 `)
 		base = strings.Replace(base, "ccgo_", "sqlite_", 1)
 		if err := os.WriteFile(filepath.Join("lib", base), b.Bytes(), 0660); err != nil {
