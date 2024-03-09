@@ -18,6 +18,7 @@
 package admin
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -90,6 +91,12 @@ func (m *Module) EmailTestPOSTHandler(c *gin.Context) {
 	if !*authed.User.Admin {
 		err := fmt.Errorf("user %s not an admin", authed.User.ID)
 		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if authed.Account.IsMoving() {
+		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
 		return
 	}
 

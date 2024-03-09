@@ -75,6 +75,12 @@ func (m *Module) createDomainPermissions(
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
+		return
+	}
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -175,6 +181,12 @@ func (m *Module) deleteDomainPermission(
 	if !*authed.User.Admin {
 		err := fmt.Errorf("user %s not an admin", authed.User.ID)
 		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if authed.Account.IsMoving() {
+		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
 		return
 	}
 

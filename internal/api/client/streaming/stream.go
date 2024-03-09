@@ -19,6 +19,7 @@ package streaming
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"time"
 
@@ -183,6 +184,12 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 
 		// Set the auth'ed account.
 		account = authed.Account
+	}
+
+	if account.IsMoving() {
+		err := errors.New("your account has Moved or is currently Moving; you cannot take create or update type actions")
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
 	}
 
 	// Get the initial requested stream type, if there is one.

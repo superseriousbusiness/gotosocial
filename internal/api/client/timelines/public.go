@@ -117,6 +117,12 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 		authed, err = oauth.Authed(c, false, false, false, false)
 	} else {
 		authed, err = oauth.Authed(c, true, true, true, true)
+		if authed.Account.IsMoving() {
+			// For moving/moved accounts, just return
+			// empty to avoid breaking client apps.
+			apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
+			return
+		}
 	}
 
 	if err != nil {

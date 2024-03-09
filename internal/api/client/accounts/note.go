@@ -18,6 +18,7 @@
 package accounts
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -78,6 +79,12 @@ func (m *Module) AccountNotePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if authed.Account.IsMoving() {
+		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
 		return
 	}
 

@@ -148,6 +148,13 @@ func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() && targetAcctID != authed.Account.ID {
+		// For moving/moved accounts, allow the
+		// account to view its own statuses only.
+		apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
+		return
+	}
+
 	limit := 30
 	limitString := c.Query(LimitKey)
 	if limitString != "" {

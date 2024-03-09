@@ -99,6 +99,12 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
+		return
+	}
+
 	form := &apimodel.AdminActionRequest{}
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)

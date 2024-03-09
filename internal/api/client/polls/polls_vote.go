@@ -18,6 +18,7 @@
 package polls
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -84,6 +85,12 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 	if err != nil {
 		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if authed.Account.IsMoving() {
+		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
 		return
 	}
 
