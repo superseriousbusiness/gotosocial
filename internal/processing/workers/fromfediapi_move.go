@@ -210,7 +210,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 		// to ensure we have up-to-date version.
 		targetAcct, _, err = p.federate.RefreshAccount(ctx,
 			receiver.Username,
-			originAcct,
+			targetAcct,
 			targetAcctable,
 			dereferencing.Freshest,
 		)
