@@ -57,7 +57,7 @@ type Account struct {
 	AlsoKnownAs             []*Account       `bun:"-"`                              // This account is associated with these accounts (field not stored in the db).
 	MovedToURI              string           `bun:",nullzero"`                      // This account has (or claims to have) moved to this account URI. Even if this field is set the move may not yet have been processed. Check `move` for this.
 	MovedTo                 *Account         `bun:"-"`                              // This account has moved to this account (field not stored in the db).
-	MoveID                  string           `bun:""`                               // ID of a Move in the database for this account. Only set if we received or created a Move activity for which this account URI was the origin.
+	MoveID                  string           `bun:"type:CHAR(26),nullzero"`         // ID of a Move in the database for this account. Only set if we received or created a Move activity for which this account URI was the origin.
 	Move                    *Move            `bun:"-"`                              // Move corresponding to MoveID, if set.
 	Bot                     *bool            `bun:",default:false"`                 // Does this account identify itself as a bot?
 	Reason                  string           `bun:""`                               // What reason was given for signing up when this account was created?
