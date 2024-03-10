@@ -482,6 +482,17 @@ func (suite *AccountTestSuite) TestCountAccountPinnedNothingPinned() {
 	suite.Equal(pinned, 0) // This account has nothing pinned.
 }
 
+func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_1"]
+
+	// Set test account MovedToURI to something we don't have in the database.
+	// We should not get an error when populating.
+	testAccount.MovedToURI = "https://unknown-instance.example.org/users/someone_we_dont_know"
+	err := suite.db.PopulateAccount(context.Background(), testAccount)
+	suite.NoError(err)
+}
+
 func TestAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTestSuite))
 }
