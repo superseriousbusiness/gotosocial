@@ -27,6 +27,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
@@ -34,7 +35,9 @@ import (
 // well as if the URL was retrieved from cache. When the URL is retrieved
 // from cache we don't have to try and do host-meta discovery
 func (t *transport) webfingerURLFor(targetDomain string) (string, bool) {
-	url := "https://" + targetDomain + "/.well-known/webfinger"
+	protocol := config.GetProtocol()
+
+	url := protocol + "://" + targetDomain + "/.well-known/webfinger"
 
 	wc := t.controller.state.Caches.GTS.Webfinger
 
