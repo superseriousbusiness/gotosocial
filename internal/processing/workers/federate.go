@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -949,6 +950,69 @@ func (f *federate) Flag(ctx context.Context, report *gtsmodel.Report) error {
 		return gtserror.Newf(
 			"error sending activity %T via outbox %s: %w",
 			flag, outboxIRI, err,
+		)
+	}
+
+	return nil
+}
+
+func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) error {
+	// Do nothing if it's not our
+	// account that's been deleted.
+	if !account.IsLocal() {
+		return nil
+	}
+
+	// Parse relevant URI(s).
+	outboxIRI, err := parseURI(account.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	// Actor doing the Move.
+	actorIRI := account.Move.Origin
+
+	// Destination Actor of the Move.
+	targetIRI := account.Move.Target
+
+	followersIRI, err := parseURI(account.FollowersURI)
+	if err != nil {
+		return err
+	}
+
+	publicIRI, err := parseURI(pub.PublicActivityPubIRI)
+	if err != nil {
+		return err
+	}
+
+	// Create a new move.
+	move := streams.NewActivityStreamsMove()
+
+	// Set the Move ID.
+	ap.SetJSONLDIdStr(move, account.Move.URI)
+
+	// Set the Actor for the Move.
+	ap.AppendActorIRIs(move, actorIRI)
+
+	// Set the account's IRI as the 'object' property.
+	ap.AppendObjectIRIs(move, actorIRI)
+
+	// Set the target's IRI as the 'target' property.
+	ap.AppendTargetIRIs(move, targetIRI)
+
+	// Address the move To followers.
+	ap.AppendTo(move, followersIRI)
+
+	// Address the move CC public.
+	ap.AppendCc(move, publicIRI)
+
+	// Send the Move via the Actor's outbox.
+	if _, err := f.FederatingActor().Send(
+		ctx, outboxIRI, move,
+	); err != nil {
+		return gtserror.Newf(
+			"error sending activity %T via outbox %s: %w",
+			move, outboxIRI, err,
 		)
 	}
 

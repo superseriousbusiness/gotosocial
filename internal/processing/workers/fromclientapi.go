@@ -194,6 +194,15 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		case ap.ObjectProfile:
 			return p.clientAPI.ReportAccount(ctx, cMsg)
 		}
+
+	// MOVE SOMETHING
+	case ap.ActivityMove:
+		switch cMsg.APObjectType { //nolint:gocritic
+
+		// MOVE PROFILE/ACCOUNT
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.MoveAccount(ctx, cMsg)
+		}
 	}
 
 	return gtserror.Newf("unhandled: %s %s", cMsg.APActivityType, cMsg.APObjectType)
@@ -637,6 +646,20 @@ func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientA
 
 	if err := p.surface.emailReportOpened(ctx, report); err != nil {
 		log.Errorf(ctx, "error emailing report opened: %v", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// At this point, we know OriginAccount has the
+	// Move set on it. Just make sure it's populated.
+	if err := p.state.DB.PopulateMove(ctx, cMsg.OriginAccount.Move); err != nil {
+		return gtserror.Newf("error populating Move: %w", err)
+	}
+
+	if err := p.federate.MoveAccount(ctx, cMsg.OriginAccount); err != nil {
+		return gtserror.Newf("error federating account move: %w", err)
 	}
 
 	return nil

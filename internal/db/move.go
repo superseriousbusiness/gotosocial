@@ -34,6 +34,9 @@ type Move interface {
 	// GetMoveByOriginTarget gets one move with the given originURI and targetURI.
 	GetMoveByOriginTarget(ctx context.Context, originURI string, targetURI string) (*gtsmodel.Move, error)
 
+	// PopulateMove parses out the origin and target URIs on the move.
+	PopulateMove(ctx context.Context, move *gtsmodel.Move) error
+
 	// GetLatestMoveSuccessInvolvingURIs gets the time of
 	// the latest successfully-processed Move that includes
 	// either uri1 or uri2 in target or origin positions.

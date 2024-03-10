@@ -220,17 +220,36 @@ func (p *Processor) MoveSelf(
 	var move *gtsmodel.Move
 
 	if originAcct.MoveID != "" {
-		// Move already stored.
+		// Move already stored, ensure it's
+		// to the target and nothing weird is
+		// happening with race conditions etc.
 		move = originAcct.Move
+		if move == nil {
+			// This shouldn't happen...
+			err := fmt.Errorf("nil move for id %s", originAcct.MoveID)
+			return gtserror.NewErrorInternalError(err)
+		}
+
+		if move.OriginURI != originAcct.URI ||
+			move.TargetURI != targetAcct.URI {
+			// This is also weird...
+			err := errors.New("a Move is already stored for your account but contains invalid fields")
+			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		}
+
+		if originAcct.MovedToURI != move.TargetURI {
+			// Huh... I'll be damned.
+			err := errors.New("stored Move target URI does not equal your moved_to_uri value")
+			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		}
 	} else {
 		// Move not stored yet, create it.
 		moveID := id.NewULID()
 		moveURIStr := uris.GenerateURIForMove(originAcct.Username, moveID)
 
 		// We might have selected the target
-		// using the URL and not the URI, so
-		// when storing a Move, ensure we're
-		// using the actual AP URI!
+		// using the URL and not the URI.
+		// Ensure we continue with the URI!
 		if targetAcctURIStr != targetAcct.URI {
 			targetAcctURIStr = targetAcct.URI
 			targetAcctURI, err = url.Parse(targetAcctURIStr)
