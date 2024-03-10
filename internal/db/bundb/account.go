@@ -316,12 +316,13 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 	}
 
 	if account.MovedTo == nil && account.MovedToURI != "" {
-		// Account movedTo is not set, fetch from database.
+		// Account movedTo is not set, try to fetch from database,
+		// but only error on real errors since this field is optional.
 		account.MovedTo, err = a.state.DB.GetAccountByURI(
 			gtscontext.SetBarebones(ctx),
 			account.MovedToURI,
 		)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			errs.Appendf("error populating moved to account: %w", err)
 		}
 	}
