@@ -536,6 +536,85 @@ func (suite *FromFediAPITestSuite) TestCreateStatusFromIRI() {
 	suite.Equal(statusCreator.URI, s.AccountURI)
 }
 
+func (suite *FromFediAPITestSuite) TestMoveAccount() {
+	// We're gonna migrate foss_satan to our local admin account.
+	ctx := context.Background()
+	receivingAcct := suite.testAccounts["local_account_1"]
+
+	// Copy requesting and target accounts
+	// since we'll be changing these.
+	requestingAcct := &gtsmodel.Account{}
+	*requestingAcct = *suite.testAccounts["remote_account_1"]
+	targetAcct := &gtsmodel.Account{}
+	*targetAcct = *suite.testAccounts["admin_account"]
+
+	// Set alsoKnownAs on the admin account.
+	targetAcct.AlsoKnownAsURIs = []string{requestingAcct.URI}
+	if err := suite.state.DB.UpdateAccount(ctx, targetAcct, "also_known_as_uris"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Create a Move, as though this request had
+	// already passed through the federatingDB.
+	move := &gtsmodel.Move{
+		ID:          "01HR9ZYCWZQ5P35B9T1RR1XR0X",
+		AttemptedAt: time.Now(),
+		OriginURI:   requestingAcct.URI,
+		Origin:      testrig.URLMustParse(requestingAcct.URI),
+		TargetURI:   targetAcct.URI,
+		Target:      testrig.URLMustParse(targetAcct.URI),
+		URI:         "https://fossbros-anonymous.io/users/foss_satan/moves/01HRA064871MR8HGVSAFJ333GM",
+	}
+	if err := suite.state.DB.PutMove(ctx, move); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Update Move ID on requesting account; again,
+	// as though this request had already passed
+	// through the federatingDB.
+	requestingAcct.MoveID = move.ID
+	if err := suite.state.DB.UpdateAccount(ctx, requestingAcct, "move_id"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Remove existing follow from zork to admin account.
+	if err := suite.state.DB.DeleteFollowByID(
+		ctx,
+		suite.testFollows["local_account_1_admin_account"].ID,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Have Zork follow foss_satan instead.
+	if err := suite.state.DB.PutFollow(ctx, &gtsmodel.Follow{
+		ID:              "01HRA0XZYFZC5MNWTKEBR58SSE",
+		URI:             "http://localhost:8080/users/the_mighty_zork/follows/01HRA0XZYFZC5MNWTKEBR58SSE",
+		AccountID:       receivingAcct.ID,
+		TargetAccountID: requestingAcct.ID,
+	}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the Move.
+	err := suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
+		APObjectType:     ap.ObjectProfile,
+		APActivityType:   ap.ActivityMove,
+		GTSModel:         move,
+		ReceivingAccount: receivingAcct,
+	})
+	suite.NoError(err)
+
+	// Zork should now be following admin account.
+	follows, err := suite.state.DB.IsFollowing(ctx, receivingAcct.ID, targetAcct.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.True(follows)
+
+	// Move should be marked as completed.
+	suite.WithinDuration(time.Now(), move.SucceededAt, 1*time.Minute)
+}
+
 func TestFromFederatorTestSuite(t *testing.T) {
 	suite.Run(t, &FromFediAPITestSuite{})
 }

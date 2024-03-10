@@ -31,11 +31,18 @@ import (
 // DB wraps the pub.Database interface with
 // a couple of custom functions for GoToSocial.
 type DB interface {
+	// Default functionality.
 	pub.Database
+
+	/*
+		Overridden functionality for calling from federatingProtocol.
+	*/
+
 	Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error
 	Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error
 	Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error
 	Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error
+	Move(ctx context.Context, move vocab.ActivityStreamsMove) error
 }
 
 // FederatingDB uses the given state interface

@@ -68,6 +68,12 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	requestingAcct := activityContext.requestingAcct
 	receivingAcct := activityContext.receivingAcct
 
+	if requestingAcct.IsMoving() {
+		// A Moving account
+		// can't do this.
+		return nil
+	}
+
 	switch asType.GetTypeName() {
 	case ap.ActivityBlock:
 		// BLOCK SOMETHING

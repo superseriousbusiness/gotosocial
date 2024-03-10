@@ -187,6 +187,12 @@ func (a *Account) IsSuspended() bool {
 	return !a.SuspendedAt.IsZero()
 }
 
+// IsMoving returns true if
+// account is Moving or has Moved.
+func (a *Account) IsMoving() bool {
+	return a.MovedToURI != "" || a.MoveID != ""
+}
+
 // AccountToEmoji is an intermediate struct to facilitate the many2many relationship between an account and one or more emojis.
 type AccountToEmoji struct {
 	AccountID string   `bun:"type:CHAR(26),unique:accountemoji,nullzero,notnull"`
