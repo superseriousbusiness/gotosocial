@@ -60,14 +60,14 @@ require (
 	github.com/uptrace/bun/extra/bunotel v1.1.16
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.7.0
-	go.opentelemetry.io/otel v1.20.0
+	go.opentelemetry.io/otel v1.24.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.20.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.20.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.43.0
-	go.opentelemetry.io/otel/metric v1.20.0
-	go.opentelemetry.io/otel/sdk v1.20.0
+	go.opentelemetry.io/otel/metric v1.24.0
+	go.opentelemetry.io/otel/sdk v1.24.0
 	go.opentelemetry.io/otel/sdk/metric v1.20.0
-	go.opentelemetry.io/otel/trace v1.20.0
+	go.opentelemetry.io/otel/trace v1.24.0
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/crypto v0.21.0
 	golang.org/x/image v0.15.0
