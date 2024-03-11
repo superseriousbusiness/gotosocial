@@ -88,6 +88,7 @@ func Initialize() error {
 		resource.Default(),
 		resource.NewSchemaless(
 			semconv.ServiceName("GoToSocial"),
+			semconv.ServiceVersion(config.GetSoftwareVersion()),
 		),
 	)
 	if err != nil {
