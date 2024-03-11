@@ -34,7 +34,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	sdk "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
 const (
@@ -42,7 +42,6 @@ const (
 )
 
 func Initialize(db db.DB) error {
-
 	if !config.GetMetricsEnabled() {
 		return nil
 	}
@@ -90,7 +89,6 @@ func Initialize(db db.DB) error {
 			return nil
 		}),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -107,7 +105,6 @@ func Initialize(db db.DB) error {
 			return nil
 		}),
 	)
-
 	if err != nil {
 		return err
 	}
@@ -124,7 +121,6 @@ func Initialize(db db.DB) error {
 			return nil
 		}),
 	)
-
 	if err != nil {
 		return err
 	}
