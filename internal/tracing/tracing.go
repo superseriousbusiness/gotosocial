@@ -35,7 +35,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
-	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -88,6 +88,7 @@ func Initialize() error {
 		resource.Default(),
 		resource.NewSchemaless(
 			semconv.ServiceName("GoToSocial"),
+			semconv.ServiceVersion(config.GetSoftwareVersion()),
 		),
 	)
 	if err != nil {
@@ -164,7 +165,7 @@ func InstrumentGin() gin.HandlerFunc {
 		status := c.Writer.Status()
 		span.SetStatus(httpconv.ServerStatus(status))
 		if status > 0 {
-			span.SetAttributes(semconv.HTTPStatusCode(status))
+			span.SetAttributes(semconv.HTTPResponseStatusCode(status))
 		}
 		if len(c.Errors) > 0 {
 			span.SetAttributes(attribute.String("gin.errors", c.Errors.String()))
