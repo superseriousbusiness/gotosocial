@@ -38,6 +38,11 @@
 	overflow: hidden;
 	margin-bottom: 1rem;
 
+	.moved-to {
+		padding: 1rem;
+		text-align: center;
+	}
+
 	.header-image-wrapper {
 		position: relative;
 		padding-top: 33.33%; /* aspect-ratio 1/3 */
