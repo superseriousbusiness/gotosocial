@@ -296,10 +296,11 @@ func (f *federatingDB) Move(ctx context.Context, move vocab.ActivityStreamsMove)
 	// We had a Move already or stored a new Move.
 	// Pass back to a worker for async processing.
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ObjectProfile,
-		APActivityType:   ap.ActivityMove,
-		GTSModel:         gtsMove,
-		ReceivingAccount: receivingAcct,
+		APObjectType:      ap.ObjectProfile,
+		APActivityType:    ap.ActivityMove,
+		GTSModel:          gtsMove,
+		RequestingAccount: requestingAcct,
+		ReceivingAccount:  receivingAcct,
 	})
 
 	return nil

@@ -57,7 +57,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 	// Move origin and target info.
 	var (
 		originAcctURIStr = move.OriginURI
-		originAcctURI    = move.Origin
+		originAcct       = fMsg.RequestingAccount
 		targetAcctURIStr = move.TargetURI
 		targetAcctURI    = move.Target
 	)
@@ -82,42 +82,6 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 		"move:" + originAcctURIStr + ":" + targetAcctURIStr,
 	)
 	defer unlock()
-
-	// Fetch the Move originAcct. Likely just got
-	// put in cache by delivering to the inbox.
-	originAcct, originAcctable, err := p.federate.GetAccountByURI(
-		ctx,
-		receiver.Username,
-		originAcctURI,
-	)
-	if err != nil {
-		return gtserror.Newf(
-			"error getting origin account %s: %w",
-			originAcctURIStr, err,
-		)
-	}
-
-	// Hard force refresh Move origin account to
-	// ensure we most have up-to-date version.
-	//
-	// Note that it's possible for originAcct.MovedTo
-	// to be set to targetAcctURI already without us
-	// having actually processed the Move yet, if we
-	// manage to refresh originAcct here (or further
-	// upstream) *before* an Account Update is sent to
-	// us from their instance.
-	originAcct, _, err = p.federate.RefreshAccount(ctx,
-		receiver.Username,
-		originAcct,
-		originAcctable,
-		dereferencing.Freshest,
-	)
-	if err != nil {
-		return gtserror.Newf(
-			"error refreshing origin account %s: %w",
-			originAcctURIStr, err,
-		)
-	}
 
 	// If movedToURI is set on originAcct, make
 	// sure it's actually to the intended target.
