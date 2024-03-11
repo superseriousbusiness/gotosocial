@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"unsafe"
 )
 
 // per validate construct
@@ -112,6 +113,10 @@ func (v *validate) traverseField(ctx context.Context, parent reflect.Value, curr
 			return
 		}
 
+		if ct.typeof == typeOmitNil && (kind != reflect.Invalid && current.IsNil()) {
+			return
+		}
+
 		if ct.hasTag {
 			if kind == reflect.Invalid {
 				v.str1 = string(append(ns, cf.altName...))
@@ -152,7 +157,7 @@ func (v *validate) traverseField(ctx context.Context, parent reflect.Value, curr
 						structNs:       v.str2,
 						fieldLen:       uint8(len(cf.altName)),
 						structfieldLen: uint8(len(cf.name)),
-						value:          current.Interface(),
+						value:          getValue(current),
 						param:          ct.param,
 						kind:           kind,
 						typ:            current.Type(),
@@ -228,6 +233,26 @@ OUTER:
 
 			if !hasValue(v) {
 				return
+			}
+
+			ct = ct.next
+			continue
+
+		case typeOmitNil:
+			v.slflParent = parent
+			v.flField = current
+			v.cf = cf
+			v.ct = ct
+
+			switch field := v.Field(); field.Kind() {
+			case reflect.Slice, reflect.Map, reflect.Ptr, reflect.Interface, reflect.Chan, reflect.Func:
+				if field.IsNil() {
+					return
+				}
+			default:
+				if v.fldIsPointer && field.Interface() == nil {
+					return
+				}
 			}
 
 			ct = ct.next
@@ -386,7 +411,7 @@ OUTER:
 								structNs:       v.str2,
 								fieldLen:       uint8(len(cf.altName)),
 								structfieldLen: uint8(len(cf.name)),
-								value:          current.Interface(),
+								value:          getValue(current),
 								param:          ct.param,
 								kind:           kind,
 								typ:            typ,
@@ -406,7 +431,7 @@ OUTER:
 								structNs:       v.str2,
 								fieldLen:       uint8(len(cf.altName)),
 								structfieldLen: uint8(len(cf.name)),
-								value:          current.Interface(),
+								value:          getValue(current),
 								param:          ct.param,
 								kind:           kind,
 								typ:            typ,
@@ -446,7 +471,7 @@ OUTER:
 						structNs:       v.str2,
 						fieldLen:       uint8(len(cf.altName)),
 						structfieldLen: uint8(len(cf.name)),
-						value:          current.Interface(),
+						value:          getValue(current),
 						param:          ct.param,
 						kind:           kind,
 						typ:            typ,
@@ -459,4 +484,27 @@ OUTER:
 		}
 	}
 
+}
+
+func getValue(val reflect.Value) interface{} {
+	if val.CanInterface() {
+		return val.Interface()
+	}
+
+	if val.CanAddr() {
+		return reflect.NewAt(val.Type(), unsafe.Pointer(val.UnsafeAddr())).Elem().Interface()
+	}
+
+	switch val.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return val.Int()
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return val.Uint()
+	case reflect.Complex64, reflect.Complex128:
+		return val.Complex()
+	case reflect.Float32, reflect.Float64:
+		return val.Float()
+	default:
+		return val.String()
+	}
 }
