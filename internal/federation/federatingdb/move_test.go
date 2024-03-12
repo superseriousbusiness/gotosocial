@@ -18,7 +18,6 @@
 package federatingdb_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -79,49 +78,37 @@ func (suite *MoveTestSuite) TestMove() {
 	suite.move(receivingAcct, requestingAcct, moveStr1)
 
 	// Should be a message heading to the processor.
-	var msg1 messages.FromFediAPI
+	var msg messages.FromFediAPI
 	select {
-	case msg1 = <-suite.fromFederator:
+	case msg = <-suite.fromFederator:
 		// Fine.
 	case <-time.After(5 * time.Second):
 		suite.FailNow("", "timeout waiting for suite.fromFederator")
 	}
-	suite.Equal(ap.ObjectProfile, msg1.APObjectType)
-	suite.Equal(ap.ActivityMove, msg1.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActivityMove, msg.APActivityType)
 
-	// A Move should now be in the database.
-	move, err := suite.state.DB.GetMoveByURI(
-		context.Background(),
-		"http://fossbros-anonymous.io/users/foss_satan/moves/01HR9FDFCAGM7JYPMWNTFRDQE9",
-	)
-	if err != nil {
-		suite.FailNow(err.Error())
+	// Stub Move should be on the message.
+	move, ok := msg.GTSModel.(*gtsmodel.Move)
+	if !ok {
+		suite.FailNow("", "could not cast %T to *gtsmodel.Move", msg.GTSModel)
 	}
-
 	suite.Equal("http://fossbros-anonymous.io/users/foss_satan", move.OriginURI)
 	suite.Equal("https://turnip.farm/users/turniplover6969", move.TargetURI)
-
-	// Update the Move to set attempted_at > 5 minutes
-	// ago, to avoid retry rate limiting.
-	move.AttemptedAt = move.AttemptedAt.Add(-10 * time.Minute)
-	if err := suite.state.DB.UpdateMove(context.Background(), move, "attempted_at"); err != nil {
-		suite.FailNow(err.Error())
-	}
 
 	// Trigger the same move again.
 	suite.move(receivingAcct, requestingAcct, moveStr1)
 
 	// Should be a message heading to the processor
 	// since this is just a straight up retry.
-	var msg2 messages.FromFediAPI
 	select {
-	case msg2 = <-suite.fromFederator:
+	case msg = <-suite.fromFederator:
 		// Fine.
 	case <-time.After(5 * time.Second):
 		suite.FailNow("", "timeout waiting for suite.fromFederator")
 	}
-	suite.Equal(ap.ObjectProfile, msg2.APObjectType)
-	suite.Equal(ap.ActivityMove, msg2.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActivityMove, msg.APActivityType)
 
 	// Same as the first Move, but with a different ID.
 	moveStr2 := `{
@@ -134,41 +121,19 @@ func (suite *MoveTestSuite) TestMove() {
   "to": "http://fossbros-anonymous.io/users/foss_satan/followers"
 }`
 
-	// Update the Move to set attempted_at > 5 minutes
-	// ago, to avoid retry rate limiting.
-	move.AttemptedAt = move.AttemptedAt.Add(-10 * time.Minute)
-	if err := suite.state.DB.UpdateMove(context.Background(), move, "attempted_at"); err != nil {
-		suite.FailNow(err.Error())
-	}
-
 	// Trigger the move.
 	suite.move(receivingAcct, requestingAcct, moveStr2)
 
 	// Should be a message heading to the processor
 	// since this is just a retry with a different ID.
-	var msg3 messages.FromFediAPI
 	select {
-	case msg3 = <-suite.fromFederator:
+	case msg = <-suite.fromFederator:
 		// Fine.
 	case <-time.After(5 * time.Second):
 		suite.FailNow("", "timeout waiting for suite.fromFederator")
 	}
-	suite.Equal(ap.ObjectProfile, msg3.APObjectType)
-	suite.Equal(ap.ActivityMove, msg3.APActivityType)
-
-	// The Move in the database should
-	// have the new ID/URI set on it.
-	move, err = suite.state.DB.GetMoveByID(
-		context.Background(),
-		move.ID,
-	)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Equal("http://fossbros-anonymous.io/users/foss_satan/moves/01HR9XWDD25CKXHW82MYD1GDAR", move.URI)
-	suite.Equal("http://fossbros-anonymous.io/users/foss_satan", move.OriginURI)
-	suite.Equal("https://turnip.farm/users/turniplover6969", move.TargetURI)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActivityMove, msg.APActivityType)
 }
 
 func (suite *MoveTestSuite) TestBadMoves() {

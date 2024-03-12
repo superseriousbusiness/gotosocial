@@ -554,29 +554,6 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 		suite.FailNow(err.Error())
 	}
 
-	// Create a Move, as though this request had
-	// already passed through the federatingDB.
-	move := &gtsmodel.Move{
-		ID:          "01HR9ZYCWZQ5P35B9T1RR1XR0X",
-		AttemptedAt: time.Now(),
-		OriginURI:   requestingAcct.URI,
-		Origin:      testrig.URLMustParse(requestingAcct.URI),
-		TargetURI:   targetAcct.URI,
-		Target:      testrig.URLMustParse(targetAcct.URI),
-		URI:         "https://fossbros-anonymous.io/users/foss_satan/moves/01HRA064871MR8HGVSAFJ333GM",
-	}
-	if err := suite.state.DB.PutMove(ctx, move); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// Update Move ID on requesting account; again,
-	// as though this request had already passed
-	// through the federatingDB.
-	requestingAcct.MoveID = move.ID
-	if err := suite.state.DB.UpdateAccount(ctx, requestingAcct, "move_id"); err != nil {
-		suite.FailNow(err.Error())
-	}
-
 	// Remove existing follow from zork to admin account.
 	if err := suite.state.DB.DeleteFollowByID(
 		ctx,
@@ -597,10 +574,17 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 
 	// Process the Move.
 	err := suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ObjectProfile,
-		APActivityType:   ap.ActivityMove,
-		GTSModel:         move,
-		ReceivingAccount: receivingAcct,
+		APObjectType:   ap.ObjectProfile,
+		APActivityType: ap.ActivityMove,
+		GTSModel: &gtsmodel.Move{
+			OriginURI: requestingAcct.URI,
+			Origin:    testrig.URLMustParse(requestingAcct.URI),
+			TargetURI: targetAcct.URI,
+			Target:    testrig.URLMustParse(targetAcct.URI),
+			URI:       "https://fossbros-anonymous.io/users/foss_satan/moves/01HRA064871MR8HGVSAFJ333GM",
+		},
+		ReceivingAccount:  receivingAcct,
+		RequestingAccount: requestingAcct,
 	})
 	suite.NoError(err)
 
@@ -610,6 +594,12 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 		suite.FailNow(err.Error())
 	}
 	suite.True(follows)
+
+	// Move should be in the DB.
+	move, err := suite.state.DB.GetMoveByURI(ctx, "https://fossbros-anonymous.io/users/foss_satan/moves/01HRA064871MR8HGVSAFJ333GM")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	// Move should be marked as completed.
 	suite.WithinDuration(time.Now(), move.SucceededAt, 1*time.Minute)

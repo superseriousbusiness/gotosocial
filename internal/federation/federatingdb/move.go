@@ -26,15 +26,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
@@ -144,153 +141,31 @@ func (f *federatingDB) Move(ctx context.Context, move vocab.ActivityStreamsMove)
 		return gtserror.SetMalformed(err)
 	}
 
-	// If a Move has been *attempted* within last 5m,
-	// that involved the origin and target in any way,
-	// then we shouldn't try to reprocess immediately.
+	// If movedToURI is set on requestingAcct,
+	// make sure it points to the intended target.
 	//
-	// This avoids the potential DDOS vector of a given
-	// origin account spamming out moves to various
-	// target accounts, causing loads of dereferences.
-	latestMoveAttempt, err := f.state.DB.GetLatestMoveAttemptInvolvingURIs(
-		ctx, objectStr, targetStr,
-	)
-	if err != nil {
-		return gtserror.Newf(
-			"error checking latest Move attempt involving object %s and target %s: %w",
-			objectStr, targetStr, err,
+	// If it's not set, that's fine, we don't
+	// need it right now. We know by now that the
+	// Move was really sent to us by requestingAcct.
+	movedToURI := receivingAcct.MovedToURI
+	if movedToURI != "" &&
+		movedToURI != targetStr {
+		err := fmt.Errorf(
+			"origin account movedTo is set to %s, which differs from Move target; will not process Move",
+			movedToURI,
 		)
+		return gtserror.SetMalformed(err)
 	}
 
-	if !latestMoveAttempt.IsZero() &&
-		time.Since(latestMoveAttempt) < 5*time.Minute {
-		log.Infof(ctx,
-			"object %s or target %s have been involved in a Move attempt within the last 5 minutes, will not process Move",
-			objectStr, targetStr,
-		)
-		return nil
-	}
-
-	// If a Move has *succeeded* within the last week
-	// that involved the origin and target in any way,
-	// then we shouldn't process again for a while.
-	latestMoveSuccess, err := f.state.DB.GetLatestMoveSuccessInvolvingURIs(
-		ctx, objectStr, targetStr,
-	)
-	if err != nil {
-		return gtserror.Newf(
-			"error checking latest Move success involving object %s and target %s: %w",
-			objectStr, targetStr, err,
-		)
-	}
-
-	if !latestMoveSuccess.IsZero() &&
-		time.Since(latestMoveSuccess) < 168*time.Hour {
-		log.Infof(ctx,
-			"object %s or target %s have been involved in a successful Move within the last 7 days, will not process Move",
-			objectStr, targetStr,
-		)
-		return nil
-	}
-
-	// This Move looks surface-level legit,
-	// and passes our rate-limiting requirements.
-	//
-	// Create it in the db (or retrieve it) and
-	// then process side effects asynchronously.
-	var gtsMove *gtsmodel.Move
-
-	// See if we have a move with
-	// this ID/URI stored already.
-	gtsMove, err = f.state.DB.GetMoveByURI(ctx, moveURIStr)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := fmt.Errorf("db error retrieving move with URI %s: %w", moveURIStr, err)
-		return gtserror.NewErrorInternalError(err)
-	}
-
-	if gtsMove != nil {
-		// We had a Move with this ID/URI.
-		//
-		// Make sure the Move we already had
-		// stored has the same origin + target.
-		if gtsMove.OriginURI != objectStr ||
-			gtsMove.TargetURI != targetStr {
-			err := fmt.Errorf(
-				"Move object %s and/or target %s differ from stored object and target for this ID (%s)",
-				objectStr, targetStr, moveURIStr,
-			)
-			return gtserror.SetMalformed(err)
-		}
-	}
-
-	// If we didn't have a move stored for
-	// this ID/URI, then see if we have a
-	// Move with this origin and target
-	// already (but a different ID/URI).
-	if gtsMove == nil {
-		gtsMove, err = f.state.DB.GetMoveByOriginTarget(ctx, objectStr, targetStr)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err := fmt.Errorf(
-				"db error retrieving Move with object %s and target %s: %w",
-				objectStr, targetStr, err,
-			)
-			return gtserror.NewErrorInternalError(err)
-		}
-
-		if gtsMove != nil {
-			// We had a move for this object and
-			// target, but the ID/URI has changed.
-			// Update the Move's URI in the db to
-			// reflect that this is but the latest
-			// attempt with this origin + target.
-			//
-			// The remote may be trying to retry
-			// the Move but their server might
-			// not reuse the same Activity URIs,
-			// and we don't want to store a brand
-			// new Move for each attempt!
-			gtsMove.URI = moveURIStr
-			if err := f.state.DB.UpdateMove(ctx, gtsMove, "uri"); err != nil {
-				err := fmt.Errorf(
-					"db error updating Move with object %s and target %s: %w",
-					objectStr, targetStr, err,
-				)
-				return gtserror.NewErrorInternalError(err)
-			}
-		}
-	}
-
-	if gtsMove == nil {
-		// If Move is still nil then
-		// we didn't have this Move
-		// stored yet, so it's new.
-		// Store it now!
-		gtsMove = &gtsmodel.Move{
-			ID:          id.NewULID(),
-			AttemptedAt: time.Now(),
-			OriginURI:   actorStr,
-			Origin:      actor,
-			TargetURI:   targetStr,
-			Target:      target,
-			URI:         moveURIStr,
-		}
-		if err := f.state.DB.PutMove(ctx, gtsMove); err != nil {
-			err := fmt.Errorf("db error storing move %s: %w", moveURIStr, err)
-			return gtserror.NewErrorInternalError(err)
-		}
-	}
-
-	// If move_id isn't set on the requesting
-	// account yet, set it so other processes
-	// know there's a Move in progress.
-	if requestingAcct.MoveID != gtsMove.ID {
-		requestingAcct.Move = gtsMove
-		requestingAcct.MoveID = gtsMove.ID
-		if err := f.state.DB.UpdateAccount(ctx,
-			requestingAcct, "move_id",
-		); err != nil {
-			err := fmt.Errorf("db error updating move_id on account: %w", err)
-			return gtserror.NewErrorInternalError(err)
-		}
+	// Create a stub *gtsmodel.Move with relevant
+	// values. This will be updated / stored by the
+	// fedi api worker as necessary.
+	stubMove := &gtsmodel.Move{
+		OriginURI: objectStr,
+		Origin:    object,
+		TargetURI: targetStr,
+		Target:    target,
+		URI:       moveURIStr,
 	}
 
 	// We had a Move already or stored a new Move.
@@ -298,7 +173,7 @@ func (f *federatingDB) Move(ctx context.Context, move vocab.ActivityStreamsMove)
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
 		APObjectType:      ap.ObjectProfile,
 		APActivityType:    ap.ActivityMove,
-		GTSModel:          gtsMove,
+		GTSModel:          stubMove,
 		RequestingAccount: requestingAcct,
 		ReceivingAccount:  receivingAcct,
 	})
