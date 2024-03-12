@@ -378,27 +378,20 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 		looks valid and we should process it.
 	*/
 
-	var errs gtserror.MultiError
-
 	// Transfer originAcct's followers
 	// on this instance to targetAcct.
-	if err := p.RedirectAccountFollowers(
+	redirectOK := p.RedirectAccountFollowers(
 		ctx,
 		originAcct,
 		targetAcct,
-	); err != nil {
-		errs.Append(err)
-	}
+	)
 
 	// Remove follows on this
 	// instance owned by originAcct.
-	if err := p.RemoveAccountFollowing(
+	removeFollowingOK := p.RemoveAccountFollowing(
 		ctx,
 		originAcct,
-		targetAcct,
-	); err != nil {
-		errs.Append(err)
-	}
+	)
 
 	// Whatever happened above, error or
 	// not, we've just at least attempted
@@ -406,12 +399,8 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 	move.AttemptedAt = time.Now()
 	updateColumns := []string{"attempted_at"}
 
-	if err := errs.Combine(); err != nil {
-		// We tried to process but
-		// didn't succeed completely.
-		l.Infof("one or more errors procesing Move side effects: %v", err)
-	} else {
-		// No errors means we can mark the
+	if redirectOK && removeFollowingOK {
+		// All OK means we can mark the
 		// Move as definitively succeeded.
 		//
 		// Take same time so SucceededAt
@@ -441,13 +430,13 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 //
 // Callers to this function MUST have obtained
 // a lock already by calling FedLocks.Lock.
+//
+// Return bool will be true if all goes OK.
 func (p *fediAPI) RedirectAccountFollowers(
 	ctx context.Context,
 	originAcct *gtsmodel.Account,
 	targetAcct *gtsmodel.Account,
-) error {
-	var errs gtserror.MultiError
-
+) bool {
 	// Any local followers of originAcct should
 	// send follow requests to targetAcct instead,
 	// and have followers of originAcct removed.
@@ -460,30 +449,25 @@ func (p *fediAPI) RedirectAccountFollowers(
 		originAcct.ID,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf(
-			"db error getting follows targeting originAcct: %w",
+		log.Errorf(ctx,
+			"db error getting follows targeting originAcct: %v",
 			err,
 		)
-
-		// Shouldn't do anything
-		// else if this happens.
-		return errs.Combine()
+		return false
 	}
 
 	for _, follow := range followers {
-		// Populate the local account that
+		// Fetch the local account that
 		// owns the follow targeting originAcct.
 		if follow.Account, err = p.state.DB.GetAccountByID(
 			gtscontext.SetBarebones(ctx),
 			follow.AccountID,
 		); err != nil {
-			errs.Appendf(
-				"db error getting follow account %s: %w",
+			log.Errorf(ctx,
+				"db error getting follow account %s: %v",
 				follow.AccountID, err,
 			)
-
-			// Skip this one.
-			continue
+			return false
 		}
 
 		// Use the account processor FollowCreate
@@ -504,13 +488,11 @@ func (p *fediAPI) RedirectAccountFollowers(
 				Notify:  follow.Notify,
 			},
 		); err != nil {
-			errs.Appendf(
-				"error creating new follow for account %s: %w",
+			log.Errorf(ctx,
+				"error creating new follow for account %s: %v",
 				follow.AccountID, err,
 			)
-
-			// Skip this one.
-			continue
+			return false
 		}
 
 		// New follow is in the process of
@@ -521,23 +503,31 @@ func (p *fediAPI) RedirectAccountFollowers(
 			follow.Account,
 			follow.TargetAccountID,
 		); err != nil {
-			errs.Appendf(
-				"error removing old follow for account %s: %w",
+			log.Errorf(ctx,
+				"error removing old follow for account %s: %v",
 				follow.AccountID, err,
 			)
+			return false
 		}
 	}
 
-	return errs.Combine()
+	return true
 }
 
+// RemoveAccountFollowing removes all
+// follows owned by the move originAcct.
+//
+// originAcct must be fully dereferenced
+// already, and the Move must be valid.
+//
+// Callers to this function MUST have obtained
+// a lock already by calling FedLocks.Lock.
+//
+// Return bool will be true if all goes OK.
 func (p *fediAPI) RemoveAccountFollowing(
 	ctx context.Context,
 	originAcct *gtsmodel.Account,
-	targetAcct *gtsmodel.Account,
-) error {
-	var errs gtserror.MultiError
-
+) bool {
 	// Any follows owned by originAcct which target
 	// accounts on our instance should be removed.
 	//
@@ -548,14 +538,11 @@ func (p *fediAPI) RemoveAccountFollowing(
 		originAcct.ID,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf(
-			"db error getting follows owned by originAcct: %w",
+		log.Errorf(ctx,
+			"db error getting follows owned by originAcct: %v",
 			err,
 		)
-
-		// Shouldn't do anything
-		// else if this happens.
-		return errs.Combine()
+		return false
 	}
 
 	for _, follow := range following {
@@ -563,10 +550,11 @@ func (p *fediAPI) RemoveAccountFollowing(
 		// from our side so we don't need to
 		// send any messages this time.
 		if err := p.state.DB.DeleteFollowByID(ctx, follow.ID); err != nil {
-			errs.Appendf(
-				"error removing old follow owned by account %s: %w",
+			log.Errorf(ctx,
+				"error removing old follow owned by account %s: %v",
 				follow.AccountID, err,
 			)
+			return false
 		}
 	}
 
@@ -575,11 +563,12 @@ func (p *fediAPI) RemoveAccountFollowing(
 	if err := p.state.DB.DeleteAccountFollowRequests(
 		ctx, originAcct.ID,
 	); err != nil {
-		errs.Appendf(
-			"db error deleting follow requests involving originAcct %s: %w",
+		log.Errorf(ctx,
+			"db error deleting follow requests involving originAcct %s: %v",
 			originAcct.URI, err,
 		)
+		return false
 	}
 
-	return errs.Combine()
+	return true
 }
