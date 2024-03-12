@@ -108,6 +108,10 @@ import (
 //				type: array
 //				items:
 //					"$ref": "#/definitions/report"
+//			headers:
+//				Link:
+//					type: string
+//					description: Links to the next and previous queries.
 //		'400':
 //			description: bad request
 //		'401':
