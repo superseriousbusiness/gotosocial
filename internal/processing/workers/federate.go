@@ -989,7 +989,9 @@ func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) e
 	move := streams.NewActivityStreamsMove()
 
 	// Set the Move ID.
-	ap.SetJSONLDIdStr(move, account.Move.URI)
+	if err := ap.SetJSONLDIdStr(move, account.Move.URI); err != nil {
+		return err
+	}
 
 	// Set the Actor for the Move.
 	ap.AppendActorIRIs(move, actorIRI)
