@@ -958,7 +958,7 @@ func (f *federate) Flag(ctx context.Context, report *gtsmodel.Report) error {
 
 func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) error {
 	// Do nothing if it's not our
-	// account that's been deleted.
+	// account that's been moved.
 	if !account.IsLocal() {
 		return nil
 	}
