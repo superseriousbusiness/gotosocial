@@ -39,12 +39,13 @@ import (
 // specifically for messages originating
 // from the client/REST API.
 type clientAPI struct {
-	state      *state.State
-	converter  *typeutils.Converter
-	surface    *surface
-	federate   *federate
-	wipeStatus wipeStatus
-	account    *account.Processor
+	state             *state.State
+	converter         *typeutils.Converter
+	surface           *surface
+	federate          *federate
+	wipeStatus        wipeStatus
+	redirectFollowers redirectFollowers
+	account           *account.Processor
 }
 
 func (p *Processor) EnqueueClientAPI(cctx context.Context, msgs ...messages.FromClientAPI) {
@@ -652,12 +653,18 @@ func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientA
 }
 
 func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// Redirect each local follower of
+	// OriginAccount to follow move target.
+	p.redirectFollowers(ctx, cMsg.OriginAccount, cMsg.TargetAccount)
+
 	// At this point, we know OriginAccount has the
 	// Move set on it. Just make sure it's populated.
 	if err := p.state.DB.PopulateMove(ctx, cMsg.OriginAccount.Move); err != nil {
 		return gtserror.Newf("error populating Move: %w", err)
 	}
 
+	// Now send the Move message out to
+	// OriginAccount's (remote) followers.
 	if err := p.federate.MoveAccount(ctx, cMsg.OriginAccount); err != nil {
 		return gtserror.Newf("error federating account move: %w", err)
 	}

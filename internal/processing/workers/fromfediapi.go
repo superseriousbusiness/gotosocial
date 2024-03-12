@@ -39,11 +39,12 @@ import (
 // specifically for messages originating
 // from the federation/ActivityPub API.
 type fediAPI struct {
-	state      *state.State
-	surface    *surface
-	federate   *federate
-	wipeStatus wipeStatus
-	account    *account.Processor
+	state             *state.State
+	surface           *surface
+	federate          *federate
+	wipeStatus        wipeStatus
+	redirectFollowers redirectFollowers
+	account           *account.Processor
 }
 
 func (p *Processor) EnqueueFediAPI(cctx context.Context, msgs ...messages.FromFediAPI) {

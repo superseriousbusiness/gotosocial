@@ -71,22 +71,31 @@ func New(
 		surface,
 	)
 
+	// Init shared redirect
+	// followers func.
+	redirectFollowers := redirectFollowersF(
+		state,
+		account,
+	)
+
 	return Processor{
 		workers: &state.Workers,
 		clientAPI: &clientAPI{
-			state:      state,
-			converter:  converter,
-			surface:    surface,
-			federate:   federate,
-			wipeStatus: wipeStatus,
-			account:    account,
+			state:             state,
+			converter:         converter,
+			surface:           surface,
+			federate:          federate,
+			wipeStatus:        wipeStatus,
+			redirectFollowers: redirectFollowers,
+			account:           account,
 		},
 		fediAPI: &fediAPI{
-			state:      state,
-			surface:    surface,
-			federate:   federate,
-			wipeStatus: wipeStatus,
-			account:    account,
+			state:             state,
+			surface:           surface,
+			federate:          federate,
+			wipeStatus:        wipeStatus,
+			redirectFollowers: redirectFollowers,
+			account:           account,
 		},
 	}
 }
