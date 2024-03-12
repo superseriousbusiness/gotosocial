@@ -34,10 +34,11 @@ type FromClientAPI struct {
 
 // FromFediAPI wraps a message that travels from the federating API into the processor.
 type FromFediAPI struct {
-	APObjectType     string
-	APActivityType   string
-	APIri            *url.URL
-	APObjectModel    interface{}       // Optional AP model of the Object of the Activity. Should be Accountable or Statusable.
-	GTSModel         interface{}       // Optional GTS model of the Activity or Object.
-	ReceivingAccount *gtsmodel.Account // Local account which owns the inbox that this Activity was posted to.
+	APObjectType      string
+	APActivityType    string
+	APIri             *url.URL
+	APObjectModel     interface{}       // Optional AP model of the Object of the Activity. Should be Accountable or Statusable.
+	GTSModel          interface{}       // Optional GTS model of the Activity or Object.
+	RequestingAccount *gtsmodel.Account // Remote account that posted this Activity to the inbox.
+	ReceivingAccount  *gtsmodel.Account // Local account which owns the inbox that this Activity was posted to.
 }

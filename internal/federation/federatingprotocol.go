@@ -450,7 +450,11 @@ func (f *Federator) Blocked(ctx context.Context, actorIRIs []*url.URL) (bool, er
 //
 // Applications are not expected to handle every single ActivityStreams
 // type and extension. The unhandled ones are passed to DefaultCallback.
-func (f *Federator) FederatingCallbacks(ctx context.Context) (wrapped pub.FederatingWrappedCallbacks, other []interface{}, err error) {
+func (f *Federator) FederatingCallbacks(ctx context.Context) (
+	wrapped pub.FederatingWrappedCallbacks,
+	other []any,
+	err error,
+) {
 	wrapped = pub.FederatingWrappedCallbacks{
 		// OnFollow determines what action to take for this
 		// particular callback if a Follow Activity is handled.
@@ -461,7 +465,7 @@ func (f *Federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 	}
 
 	// Override some default behaviors to trigger our own side effects.
-	other = []interface{}{
+	other = []any{
 		func(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
 			return f.FederatingDB().Undo(ctx, undo)
 		},
@@ -475,6 +479,14 @@ func (f *Federator) FederatingCallbacks(ctx context.Context) (wrapped pub.Federa
 			return f.FederatingDB().Announce(ctx, announce)
 		},
 	}
+
+	// Define some of our own behaviors which are not
+	// overrides of the default pub.FederatingWrappedCallbacks.
+	other = append(other, []any{
+		func(ctx context.Context, move vocab.ActivityStreamsMove) error {
+			return f.FederatingDB().Move(ctx, move)
+		},
+	}...)
 
 	return
 }

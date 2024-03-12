@@ -846,4 +846,44 @@ GoToSocial will only set `movedTo` on outgoing Actors when an account `Move` has
 
 ### `Move` Activity
 
-TODO: document how `Move` works!
+To actually trigger account migrations, GoToSocial uses the `Move` Activity with Actor URI as Object and Target, for example:
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/users/1happyturtle/moves/01HR9FDFCAGM7JYPMWNTFRDQE9",
+  "actor": "https://example.org/users/1happyturtle",
+  "type": "Move",
+  "object": "https://example.org/users/1happyturtle",
+  "target": "https://another-server.com/users/my_new_account_hurray",
+  "to": "https://example.org/users/1happyturtle/followers"
+}
+```
+
+In the above `Move`, Actor `https://example.org/users/1happyturtle` indicates that their account is moving to the URI `https://another-server.com/users/my_new_account_hurray`.
+
+#### Incoming
+
+On receiving a `Move` activity in an Actor's Inbox, GoToSocial will first validate the `Move` by making the following checks:
+
+1. Request was signed by `actor`.
+2. `actor` and `object` fields are the same (you can't `Move` someone else's account).
+3. `actor` has not already moved somewhere else.
+4. `target` is a valid Actor URI: retrievable, not suspended, not already moved, and on a domain that's not defederated by the GoToSocial instance that received the `Move`.
+5. `target` has `alsoKnownAs` set to the `actor` that sent the `Move`. In this example, `https://another-server.com/users/my_new_account_hurray` must have an `alsoKnownAs` value that includes `https://example.org/users/1happyturtle`.
+
+If checks pass, then GoToSocial will process the `Move` by redirecting followers to the new account:
+
+1. Select all followers on this GtS instance of the `actor` doing the `Move`.
+2. For each local follower selected in this way, send a follow request from that follower to the `target` of the `Move`.
+3. Remove all follows targeting the "old" `actor`.
+
+The end result of this is that all followers of `https://example.org/users/1happyturtle` on the receiving instance will now be following `https://another-server.com/users/my_new_account_hurray` instead.
+
+GoToSocial will also remove all follow and pending follow requests owned by the `actor` doing the `Move`; it's up to the `target` account to send follow requests out again.
+
+To prevent potential DoS vectors, GoToSocial enforces a 7-day cooldown on `Move`s. Once an account has successfully moved, GoToSocial will not process further moves from the new account until 7 days after the previous move.
+
+#### Outgoing
+
+Outgoing account migrations use the `Move` Activity in much the same way. When an Actor on a GoToSocial instance wants to `Move`, GtS will first check and validate the `Move` target, and ensure it has an `alsoKnownAs` entry equal to the Actor doing the `Move`. On successful validation, a `Move` message will be sent out to all of the moving Actor's followers, indicating the `target` of the Move. GoToSocial expects remote instances to transfer the `actor`'s followers to the `target`.

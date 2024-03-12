@@ -145,6 +145,15 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 		case ap.ObjectProfile:
 			return p.fediAPI.DeleteAccount(ctx, fMsg)
 		}
+
+	// MOVE SOMETHING
+	case ap.ActivityMove:
+
+		// MOVE PROFILE/ACCOUNT
+		// fromfediapi_move.go.
+		if fMsg.APObjectType == ap.ObjectProfile {
+			return p.fediAPI.MoveAccount(ctx, fMsg)
+		}
 	}
 
 	return gtserror.Newf("unhandled: %s %s", fMsg.APActivityType, fMsg.APObjectType)

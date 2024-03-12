@@ -49,6 +49,12 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 	requestingAcct := activityContext.requestingAcct
 	receivingAcct := activityContext.receivingAcct
 
+	if requestingAcct.IsMoving() {
+		// A Moving account
+		// can't do this.
+		return nil
+	}
+
 	// Ensure requestingAccount is among
 	// the Actors doing the Announce.
 	//

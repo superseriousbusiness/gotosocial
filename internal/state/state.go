@@ -42,9 +42,12 @@ type State struct {
 	// DB provides access to the database.
 	DB db.DB
 
-	// FedLocks provides access to this state's mutex map
-	// of per URI federation locks. Used during dereferencing
-	// and by the go-fed/activity library.
+	// FedLocks provides access to this state's
+	// mutex map of per URI federation locks.
+	//
+	// Used during account and status dereferencing,
+	// message processing in the FromFediAPI worker
+	// functions, and by the go-fed/activity library.
 	FedLocks mutexes.MutexMap
 
 	// Storage provides access to the storage driver.

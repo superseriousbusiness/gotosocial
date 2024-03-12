@@ -49,6 +49,12 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	requestingAcct := activityContext.requestingAcct
 	receivingAcct := activityContext.receivingAcct
 
+	if requestingAcct.IsMoving() {
+		// A Moving account
+		// can't do this.
+		return nil
+	}
+
 	// Iterate all provided objects in the activity.
 	for _, object := range ap.ExtractObjects(accept) {
 
