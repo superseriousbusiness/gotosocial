@@ -492,9 +492,33 @@ func toNamedValues(vals []driver.Value) (r []driver.NamedValue) {
 func (s *stmt) exec(ctx context.Context, args []driver.NamedValue) (r driver.Result, err error) {
 	var pstmt uintptr
 	var done int32
-	if ctx != nil && ctx.Done() != nil {
-		defer interruptOnDone(ctx, s.c, &done)()
+	if ctx != nil {
+		if ctxDone := ctx.Done(); ctxDone != nil {
+			select {
+			case <-ctxDone:
+				return nil, ctx.Err()
+			default:
+			}
+			defer interruptOnDone(ctx, s.c, &done)()
+		}
 	}
+
+	defer func() {
+		if pstmt != 0 {
+			// ensure stmt finalized.
+			e := s.c.finalize(pstmt)
+
+			if err == nil && e != nil {
+				// prioritize original
+				// returned error.
+				err = e
+			}
+		}
+
+		if ctx != nil && atomic.LoadInt32(&done) != 0 {
+			r, err = nil, ctx.Err()
+		}
+	}()
 
 	for psql := s.psql; *(*byte)(unsafe.Pointer(psql)) != 0 && atomic.LoadInt32(&done) == 0; {
 		if pstmt, err = s.c.prepareV2(&psql); err != nil {
@@ -532,7 +556,7 @@ func (s *stmt) exec(ctx context.Context, args []driver.NamedValue) (r driver.Res
 
 			switch rc & 0xff {
 			case sqlite3.SQLITE_DONE, sqlite3.SQLITE_ROW:
-				// nop
+				r, err = newResult(s.c)
 			default:
 				return s.c.errstr(int32(rc))
 			}
@@ -540,7 +564,12 @@ func (s *stmt) exec(ctx context.Context, args []driver.NamedValue) (r driver.Res
 			return nil
 		}()
 
-		if e := s.c.finalize(pstmt); e != nil && err == nil {
+		e := s.c.finalize(pstmt)
+		pstmt = 0 // done with
+
+		if err == nil && e != nil {
+			// prioritize original
+			// returned error.
 			err = e
 		}
 
@@ -548,7 +577,7 @@ func (s *stmt) exec(ctx context.Context, args []driver.NamedValue) (r driver.Res
 			return nil, err
 		}
 	}
-	return newResult(s.c)
+	return r, err
 }
 
 // NumInput returns the number of placeholder parameters.
@@ -576,14 +605,34 @@ func (s *stmt) Query(args []driver.Value) (driver.Rows, error) { //TODO StmtQuer
 func (s *stmt) query(ctx context.Context, args []driver.NamedValue) (r driver.Rows, err error) {
 	var pstmt uintptr
 	var done int32
-	if ctx != nil && ctx.Done() != nil {
-		defer interruptOnDone(ctx, s.c, &done)()
+	if ctx != nil {
+		if ctxDone := ctx.Done(); ctxDone != nil {
+			select {
+			case <-ctxDone:
+				return nil, ctx.Err()
+			default:
+			}
+			defer interruptOnDone(ctx, s.c, &done)()
+		}
 	}
 
 	var allocs []uintptr
 
 	defer func() {
-		if r == nil && err == nil {
+		if pstmt != 0 {
+			// ensure stmt finalized.
+			e := s.c.finalize(pstmt)
+
+			if err == nil && e != nil {
+				// prioritize original
+				// returned error.
+				err = e
+			}
+		}
+
+		if ctx != nil && atomic.LoadInt32(&done) != 0 {
+			r, err = nil, ctx.Err()
+		} else if r == nil && err == nil {
 			r, err = newRows(s.c, pstmt, allocs, true)
 		}
 	}()
@@ -651,7 +700,13 @@ func (s *stmt) query(ctx context.Context, args []driver.NamedValue) (r driver.Ro
 			}
 			return nil
 		}()
-		if e := s.c.finalize(pstmt); e != nil && err == nil {
+
+		e := s.c.finalize(pstmt)
+		pstmt = 0 // done with
+
+		if err == nil && e != nil {
+			// prioritize original
+			// returned error.
 			err = e
 		}
 
