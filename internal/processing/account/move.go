@@ -107,6 +107,15 @@ func (p *Processor) MoveSelf(
 		targetAcctable ap.Accountable
 	)
 
+	// Next steps involve checking + setting
+	// state that might get messed up if a
+	// client triggers this function twice
+	// in quick succession, so get a lock on
+	// this account's moves.
+	lockKey := originAcct.URI + "/moves"
+	unlock := p.state.ClientLocks.Lock(lockKey)
+	defer unlock()
+
 	// Ensure we have a valid, up-to-date representation of the target account.
 	targetAcct, targetAcctable, err = p.federator.GetAccountByURI(
 		ctx,
