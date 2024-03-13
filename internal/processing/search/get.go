@@ -491,7 +491,14 @@ func (p *Processor) byURI(
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
-			if !gtserror.IsUnretrievable(err) && !gtserror.IsWrongType(err) {
+			switch {
+			case gtserror.IsUnretrievable(err),
+				gtserror.IsWrongType(err):
+				log.Debugf(ctx,
+					"semi-expected error type looking up %s as account: %v",
+					uri, err,
+				)
+			default:
 				err = gtserror.Newf("error looking up %s as account: %w", uri, err)
 				return gtserror.NewErrorInternalError(err)
 			}
@@ -509,7 +516,15 @@ func (p *Processor) byURI(
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
-			if !gtserror.IsUnretrievable(err) && !gtserror.IsWrongType(err) {
+			switch {
+			case gtserror.IsUnretrievable(err),
+				gtserror.IsWrongType(err),
+				gtserror.NotPermitted(err):
+				log.Debugf(ctx,
+					"semi-expected error type looking up %s as status: %v",
+					uri, err,
+				)
+			default:
 				err = gtserror.Newf("error looking up %s as status: %w", uri, err)
 				return gtserror.NewErrorInternalError(err)
 			}
