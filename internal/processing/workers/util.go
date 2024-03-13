@@ -199,20 +199,25 @@ func (u *utilF) redirectFollowers(
 		// account has already followed the target
 		// account, by just updating the existing
 		// follow of target account.
-		if _, err := u.account.FollowCreate(
-			ctx,
-			follow.Account,
-			&apimodel.AccountFollowRequest{
-				ID:      targetAcct.ID,
-				Reblogs: follow.ShowReblogs,
-				Notify:  follow.Notify,
-			},
-		); err != nil {
-			log.Errorf(ctx,
-				"error creating new follow for account %s: %v",
-				follow.AccountID, err,
-			)
-			return false
+		//
+		// Also, ensure new follow wouldn't be a
+		// self follow, since that will error.
+		if follow.AccountID != targetAcct.ID {
+			if _, err := u.account.FollowCreate(
+				ctx,
+				follow.Account,
+				&apimodel.AccountFollowRequest{
+					ID:      targetAcct.ID,
+					Reblogs: follow.ShowReblogs,
+					Notify:  follow.Notify,
+				},
+			); err != nil {
+				log.Errorf(ctx,
+					"error creating new follow for account %s: %v",
+					follow.AccountID, err,
+				)
+				return false
+			}
 		}
 
 		// New follow is in the process of
