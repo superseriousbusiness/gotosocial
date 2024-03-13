@@ -274,7 +274,7 @@ func (p *Processor) MoveSelf(
 		}
 
 		// Store the Move.
-		move := &gtsmodel.Move{
+		move = &gtsmodel.Move{
 			ID:          moveID,
 			AttemptedAt: time.Now(),
 			OriginURI:   originAcct.URI,
