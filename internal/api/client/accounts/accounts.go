@@ -113,5 +113,5 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// migration handlers
 	attachHandler(http.MethodPost, AliasPath, m.AccountAliasPOSTHandler)
-	// attachHandler(http.MethodPost, MovePath, m.AccountMovePOSTHandler) // todo: enable this only when Move is completed
+	attachHandler(http.MethodPost, MovePath, m.AccountMovePOSTHandler)
 }

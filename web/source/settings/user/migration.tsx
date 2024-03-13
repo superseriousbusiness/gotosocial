@@ -40,49 +40,23 @@ export default function UserMigration() {
 }
 
 function UserMigrationForm({ data: profile }) {
-	let urlStr = store.getState().oauth.instanceUrl ?? "";
-	let url = new URL(urlStr);
-
 	return (
 		<>
 			<h2>Account Migration Settings</h2>
-			<div className="info">
-				<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
-				<b>Moving your account to another instance, or moving an account from another instance to your account, isn't implemented yet! You will only be able to use the "alias" section of the below panel. <a href="https://github.com/superseriousbusiness/gotosocial/issues/130" target="_blank" rel="noopener noreferrer">See here for progress</a>.</b>
-			</div>
 			<p>
-				The following settings allow you to <strong>alias</strong> your account to another account
-				elsewhere, and to <strong>move</strong> your followers and following lists to another account.
+				The following settings allow you to <strong>alias</strong> your account to
+				another account elsewhere, or to <strong>move</strong> to another account.
 			</p>
 			<p>
 				Account <strong>aliasing</strong> is harmless and reversible; you can
 				set and unset up to five account aliases as many times as you wish.
 			</p>
 			<p>
-				The account <strong>move</strong> action, on the other hand, has serious and irreversible consequences.
+				The account <strong>move</strong> action, on the other
+				hand, has serious and irreversible consequences.
 			</p>
 			<p>
-				To move, you must set an alias from your account to the target account, using this settings panel.
-			</p>
-			<p>
-				You must also set an alias from the target account back to your account, using
-				the settings panel of the instance on which the target account resides.
-			</p>
-			<p>
-				Provide the following details to the other instance: 
-			</p>
-			<dl className="migration-details">
-				<div>
-					<dt>Account handle/username:</dt>
-					<dd>@{profile.acct}@{url.host}</dd>
-				</div>
-				<div>
-					<dt>Account URI:</dt>
-					<dd>{urlStr}/users/{profile.username}</dd>
-				</div>
-			</dl>
-			<p>
-				For more information on account migration, please see <a href="https://docs.gotosocial.org/en/latest/user_guide/settings/#alias-account" target="_blank" className="docslink" rel="noreferrer">the documentation</a>.
+				For more information on account migration, please see <a href="https://docs.gotosocial.org/en/latest/user_guide/settings/#migration" target="_blank" className="docslink" rel="noreferrer">the documentation</a>.
 			</p>
 			<AliasForm data={profile} />
 			<MoveForm data={profile} />
@@ -166,44 +140,70 @@ function AlsoKnownAsURI({ index, data }) {
 }
 
 function MoveForm({ data: profile }) {
+	let urlStr = store.getState().oauth.instanceUrl ?? "";
+	let url = new URL(urlStr);
+	
 	const form = {
 		movedToURI: useTextInput("moved_to_uri", {
 			source: profile,
-			valueSelector: (p) => p.moved?.uri },
+			valueSelector: (p) => p.moved?.url },
 		),
 		password: useTextInput("password"),
 	};
 
-	const [submitForm, result] = useFormSubmit(form, useMoveAccountMutation());
+	const [submitForm, result] = useFormSubmit(form, useMoveAccountMutation(), {
+		changedOnly: false,
+	});
 	
 	return (
 		<form className="user-migration-move" onSubmit={submitForm}>
 			<div className="form-section-docs without-border">
 				<h3>Move Account</h3>
-				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#move-account"
-					target="_blank"
-					className="docslink"
-					rel="noreferrer"
-				>
-					Learn more about moving your account (opens in a new tab)
-				</a>
+				<p>
+					<p>
+						For a move to be successful, you must have already set an alias from the
+						target account back to the account you're moving from (ie., this account),
+						using the settings panel of the instance on which the target account resides.
+					</p>
+					<p>
+						To do this, provide the following details to the other instance: 
+					</p>
+					<dl className="migration-details">
+						<div>
+							<dt>Account handle/username:</dt>
+							<dd>@{profile.acct}@{url.host}</dd>
+						</div>
+						<div>
+							<dt>Account URI:</dt>
+							<dd>{urlStr}/users/{profile.username}</dd>
+						</div>
+					</dl>
+					<br/>
+					<a
+						href="https://docs.gotosocial.org/en/latest/user_guide/settings/#move-account"
+						target="_blank"
+						className="docslink"
+						rel="noreferrer"
+					>
+						Learn more about moving your account (opens in a new tab)
+					</a>
+				</p>
 			</div>
 			<TextInput
-				disabled={true}
+				disabled={false}
 				field={form.movedToURI}
 				label="Move target URI"
 				placeholder="https://example.org/users/my_new_account"
 			/>
 			<TextInput
-				disabled={true}
+				disabled={false}
 				type="password"
 				name="password"
 				field={form.password}
-				label="Confirm account password"
+				label="Current account password"
 			/>
 			<MutationButton
-				disabled={true}
+				disabled={false}
 				label="Confirm account move"
 				result={result}
 			/>
