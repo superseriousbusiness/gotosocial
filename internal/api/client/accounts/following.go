@@ -99,9 +99,13 @@ import (
 //			name: accounts
 //			description: Array of accounts that are followed by this account.
 //			schema:
-//			type: array
-//			items:
-//				"$ref": "#/definitions/account"
+//				type: array
+//				items:
+//					"$ref": "#/definitions/account"
+//			headers:
+//				Link:
+//					type: string
+//					description: Links to the next and previous queries.
 //		'400':
 //			description: bad request
 //		'401':

@@ -2907,6 +2907,10 @@ paths:
             responses:
                 "200":
                     description: Array of accounts that follow this account.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
                     schema:
                         items:
                             $ref: '#/definitions/account'
@@ -2967,6 +2971,14 @@ paths:
             responses:
                 "200":
                     description: Array of accounts that are followed by this account.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/account'
+                        type: array
                 "400":
                     description: bad request
                 "401":
@@ -3109,6 +3121,10 @@ paths:
             responses:
                 "200":
                     description: Array of statuses.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
                     schema:
                         items:
                             $ref: '#/definitions/status'
@@ -4875,6 +4891,10 @@ paths:
             responses:
                 "200":
                     description: Array of reports.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
                     schema:
                         items:
                             $ref: '#/definitions/adminReport'
@@ -6614,6 +6634,10 @@ paths:
             responses:
                 "200":
                     description: Array of reports.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
                     schema:
                         items:
                             $ref: '#/definitions/report'
