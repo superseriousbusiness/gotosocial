@@ -109,7 +109,7 @@ func GenerateURIForBlock(username string, thisBlockID string) string {
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
 }
 
-// GenerateURIForBlock returns the AP URI for a new block activity -- something like:
+// GenerateURIForMove returns the AP URI for a new Move activity -- something like:
 // https://example.org/users/whatever_user/moves/01F7XTH1QGBAPMGF49WJZ91XGC
 func GenerateURIForMove(username string, thisMoveID string) string {
 	protocol := config.GetProtocol()
