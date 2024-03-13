@@ -18,7 +18,6 @@
 package accounts
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -76,8 +75,7 @@ func (m *Module) AccountLookupGETHandler(c *gin.Context) {
 	if authed.Account.IsMoving() {
 		// For moving/moved accounts, just return
 		// empty to avoid breaking client apps.
-		const text = "no results"
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(text), text), m.processor.InstanceGetV1)
+		apiutil.NotFoundAfterMove(c)
 		return
 	}
 

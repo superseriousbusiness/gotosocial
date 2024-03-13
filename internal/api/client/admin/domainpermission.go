@@ -76,8 +76,7 @@ func (m *Module) createDomainPermissions(
 	}
 
 	if authed.Account.IsMoving() {
-		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
-		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
+		apiutil.ForbiddenAfterMove(c)
 		return
 	}
 
@@ -185,8 +184,7 @@ func (m *Module) deleteDomainPermission(
 	}
 
 	if authed.Account.IsMoving() {
-		const text = "your account has Moved or is currently Moving; you cannot take create or update type actions"
-		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(errors.New(text), text), m.processor.InstanceGetV1)
+		apiutil.ForbiddenAfterMove(c)
 		return
 	}
 
