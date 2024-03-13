@@ -97,6 +97,11 @@ func (m *Module) ReportResolvePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
+		return
+	}
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return

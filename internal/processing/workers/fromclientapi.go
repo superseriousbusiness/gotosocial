@@ -39,12 +39,12 @@ import (
 // specifically for messages originating
 // from the client/REST API.
 type clientAPI struct {
-	state      *state.State
-	converter  *typeutils.Converter
-	surface    *surface
-	federate   *federate
-	wipeStatus wipeStatus
-	account    *account.Processor
+	state     *state.State
+	converter *typeutils.Converter
+	surface   *surface
+	federate  *federate
+	account   *account.Processor
+	utilF     *utilF
 }
 
 func (p *Processor) EnqueueClientAPI(cctx context.Context, msgs ...messages.FromClientAPI) {
@@ -193,6 +193,15 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// FLAG/REPORT A PROFILE
 		case ap.ObjectProfile:
 			return p.clientAPI.ReportAccount(ctx, cMsg)
+		}
+
+	// MOVE SOMETHING
+	case ap.ActivityMove:
+		switch cMsg.APObjectType { //nolint:gocritic
+
+		// MOVE PROFILE/ACCOUNT
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.MoveAccount(ctx, cMsg)
 		}
 	}
 
@@ -576,7 +585,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg messages.FromClientAP
 		return gtserror.Newf("db error populating status: %w", err)
 	}
 
-	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
+	if err := p.utilF.wipeStatus(ctx, status, deleteAttachments); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
 	}
 
@@ -637,6 +646,36 @@ func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientA
 
 	if err := p.surface.emailReportOpened(ctx, report); err != nil {
 		log.Errorf(ctx, "error emailing report opened: %v", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	// Redirect each local follower of
+	// OriginAccount to follow move target.
+	p.utilF.redirectFollowers(ctx, cMsg.OriginAccount, cMsg.TargetAccount)
+
+	// At this point, we know OriginAccount has the
+	// Move set on it. Just make sure it's populated.
+	if err := p.state.DB.PopulateMove(ctx, cMsg.OriginAccount.Move); err != nil {
+		return gtserror.Newf("error populating Move: %w", err)
+	}
+
+	// Now send the Move message out to
+	// OriginAccount's (remote) followers.
+	if err := p.federate.MoveAccount(ctx, cMsg.OriginAccount); err != nil {
+		return gtserror.Newf("error federating account move: %w", err)
+	}
+
+	// Mark the move attempt as successful.
+	cMsg.OriginAccount.Move.SucceededAt = cMsg.OriginAccount.Move.AttemptedAt
+	if err := p.state.DB.UpdateMove(
+		ctx,
+		cMsg.OriginAccount.Move,
+		"succeeded_at",
+	); err != nil {
+		return gtserror.Newf("error marking move as successful: %w", err)
 	}
 
 	return nil

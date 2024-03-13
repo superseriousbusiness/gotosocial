@@ -192,7 +192,7 @@ func GetObjectIRIs(with WithObject) []*url.URL {
 }
 
 // AppendObjectIRIs appends the given IRIs to the Object property of 'with'.
-func AppendObjectIRIs(with WithObject) {
+func AppendObjectIRIs(with WithObject, object ...*url.URL) {
 	appendIRIs(func() Property[vocab.ActivityStreamsObjectPropertyIterator] {
 		objectProp := with.GetActivityStreamsObject()
 		if objectProp == nil {
@@ -200,7 +200,7 @@ func AppendObjectIRIs(with WithObject) {
 			with.SetActivityStreamsObject(objectProp)
 		}
 		return objectProp
-	})
+	}, object...)
 }
 
 // GetTargetIRIs returns the IRIs contained in the Target property of 'with'.
@@ -210,7 +210,7 @@ func GetTargetIRIs(with WithTarget) []*url.URL {
 }
 
 // AppendTargetIRIs appends the given IRIs to the Target property of 'with'.
-func AppendTargetIRIs(with WithTarget) {
+func AppendTargetIRIs(with WithTarget, target ...*url.URL) {
 	appendIRIs(func() Property[vocab.ActivityStreamsTargetPropertyIterator] {
 		targetProp := with.GetActivityStreamsTarget()
 		if targetProp == nil {
@@ -218,7 +218,7 @@ func AppendTargetIRIs(with WithTarget) {
 			with.SetActivityStreamsTarget(targetProp)
 		}
 		return targetProp
-	})
+	}, target...)
 }
 
 // GetAttributedTo returns the IRIs contained in the AttributedTo property of 'with'.

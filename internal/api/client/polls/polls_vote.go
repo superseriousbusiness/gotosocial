@@ -87,6 +87,11 @@ func (m *Module) PollVotePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
+		return
+	}
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

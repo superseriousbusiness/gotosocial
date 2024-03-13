@@ -144,6 +144,11 @@ func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
+		return
+	}
+
 	form := &apimodel.InstanceSettingsUpdateRequest{}
 	if err := c.ShouldBind(&form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)

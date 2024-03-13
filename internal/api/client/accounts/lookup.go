@@ -72,6 +72,13 @@ func (m *Module) AccountLookupGETHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		// For moving/moved accounts, just return
+		// empty to avoid breaking client apps.
+		apiutil.NotFoundAfterMove(c)
+		return
+	}
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return

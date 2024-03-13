@@ -112,6 +112,13 @@ func (m *Module) ListTimelineGETHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		// For moving/moved accounts, just return
+		// empty to avoid breaking client apps.
+		apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
+		return
+	}
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return

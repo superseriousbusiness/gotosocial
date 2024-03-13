@@ -17,10 +17,31 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- define "profileMovedTo" -}}
+{{- with .account.Moved }}
+<div class="moved-to">
+    <b>
+        ℹ️ This account has permanently moved to
+        <a
+            href="{{ .URL }}"
+            class="nounderline"
+            rel="nofollow noreferrer noopener"
+            target="_blank"
+        >
+            @{{ .Username }}
+        </a>
+    </b>
+</div>
+{{- end }}
+{{- end -}}
+
 {{- with . }}
 <main class="profile">
     <h2 class="sr-only">Profile for {{ .account.Username -}}</h2>
     <section class="profile-header" role="region" aria-label="Basic info">
+        {{- if .account.Moved }}
+        {{- include "profileMovedTo" . | indent 2 }}
+        {{- end }}
         <div class="header-image-wrapper">
             <img
                 src="{{- .account.Header -}}"

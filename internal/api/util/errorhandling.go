@@ -184,3 +184,21 @@ func OAuthErrorHandler(c *gin.Context, errWithCode gtserror.WithCode) {
 		"error_description": errWithCode.Safe(),
 	})
 }
+
+// NotFoundAfterMove returns code 404 to the caller and writes a helpful error message.
+// Specifically used for accounts trying to access endpoints they cannot use while moving.
+func NotFoundAfterMove(c *gin.Context) {
+	const errMsg = "your account has Moved or is currently Moving; you cannot use this endpoint"
+	JSON(c, http.StatusForbidden, map[string]string{
+		"error": errMsg,
+	})
+}
+
+// ForbiddenAfterMove returns code 403 to the caller and writes a helpful error message.
+// Specifically used for accounts trying to take actions on endpoints they cannot do while moving.
+func ForbiddenAfterMove(c *gin.Context) {
+	const errMsg = "your account has Moved or is currently Moving; you cannot take create or update type actions"
+	JSON(c, http.StatusForbidden, map[string]string{
+		"error": errMsg,
+	})
+}

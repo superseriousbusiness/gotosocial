@@ -185,6 +185,13 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		account = authed.Account
 	}
 
+	if account.IsMoving() {
+		// Moving accounts can't
+		// use streaming endpoints.
+		apiutil.NotFoundAfterMove(c)
+		return
+	}
+
 	// Get the initial requested stream type, if there is one.
 	streamType := c.Query(StreamQueryKey)
 

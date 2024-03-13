@@ -39,11 +39,11 @@ import (
 // specifically for messages originating
 // from the federation/ActivityPub API.
 type fediAPI struct {
-	state      *state.State
-	surface    *surface
-	federate   *federate
-	wipeStatus wipeStatus
-	account    *account.Processor
+	state    *state.State
+	surface  *surface
+	federate *federate
+	account  *account.Processor
+	utilF    *utilF
 }
 
 func (p *Processor) EnqueueFediAPI(cctx context.Context, msgs ...messages.FromFediAPI) {
@@ -563,7 +563,7 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
 	}
 
-	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
+	if err := p.utilF.wipeStatus(ctx, status, deleteAttachments); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
 	}
 

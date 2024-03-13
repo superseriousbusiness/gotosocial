@@ -99,6 +99,11 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
+		return
+	}
+
 	form := &apimodel.AdminActionRequest{}
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)

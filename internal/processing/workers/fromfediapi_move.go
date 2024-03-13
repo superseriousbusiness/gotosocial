@@ -22,7 +22,6 @@ import (
 	"errors"
 	"time"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -380,7 +379,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 
 	// Transfer originAcct's followers
 	// on this instance to targetAcct.
-	redirectOK := p.RedirectAccountFollowers(
+	redirectOK := p.utilF.redirectFollowers(
 		ctx,
 		originAcct,
 		targetAcct,
@@ -420,98 +419,6 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 	}
 
 	return nil
-}
-
-// RedirectAccountFollowers redirects all local
-// followers of originAcct to targetAcct.
-//
-// Both accounts must be fully dereferenced
-// already, and the Move must be valid.
-//
-// Callers to this function MUST have obtained
-// a lock already by calling FedLocks.Lock.
-//
-// Return bool will be true if all goes OK.
-func (p *fediAPI) RedirectAccountFollowers(
-	ctx context.Context,
-	originAcct *gtsmodel.Account,
-	targetAcct *gtsmodel.Account,
-) bool {
-	// Any local followers of originAcct should
-	// send follow requests to targetAcct instead,
-	// and have followers of originAcct removed.
-	//
-	// Select local followers with barebones, since
-	// we only need follow.Account and we can get
-	// that ourselves.
-	followers, err := p.state.DB.GetAccountLocalFollowers(
-		gtscontext.SetBarebones(ctx),
-		originAcct.ID,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		log.Errorf(ctx,
-			"db error getting follows targeting originAcct: %v",
-			err,
-		)
-		return false
-	}
-
-	for _, follow := range followers {
-		// Fetch the local account that
-		// owns the follow targeting originAcct.
-		if follow.Account, err = p.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			follow.AccountID,
-		); err != nil {
-			log.Errorf(ctx,
-				"db error getting follow account %s: %v",
-				follow.AccountID, err,
-			)
-			return false
-		}
-
-		// Use the account processor FollowCreate
-		// function to send off the new follow,
-		// carrying over the Reblogs and Notify
-		// values from the old follow to the new.
-		//
-		// This will also handle cases where our
-		// account has already followed the target
-		// account, by just updating the existing
-		// follow of target account.
-		if _, err := p.account.FollowCreate(
-			ctx,
-			follow.Account,
-			&apimodel.AccountFollowRequest{
-				ID:      targetAcct.ID,
-				Reblogs: follow.ShowReblogs,
-				Notify:  follow.Notify,
-			},
-		); err != nil {
-			log.Errorf(ctx,
-				"error creating new follow for account %s: %v",
-				follow.AccountID, err,
-			)
-			return false
-		}
-
-		// New follow is in the process of
-		// sending, remove the existing follow.
-		// This will send out an Undo Activity for each Follow.
-		if _, err := p.account.FollowRemove(
-			ctx,
-			follow.Account,
-			follow.TargetAccountID,
-		); err != nil {
-			log.Errorf(ctx,
-				"error removing old follow for account %s: %v",
-				follow.AccountID, err,
-			)
-			return false
-		}
-	}
-
-	return true
 }
 
 // RemoveAccountFollowing removes all

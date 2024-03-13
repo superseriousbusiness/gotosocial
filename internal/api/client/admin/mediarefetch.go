@@ -83,6 +83,11 @@ func (m *Module) MediaRefetchPOSTHandler(c *gin.Context) {
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
+		return
+	}
+
 	if errWithCode := m.processor.Admin().MediaRefetch(c.Request.Context(), authed.Account, c.Query(DomainQueryKey)); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

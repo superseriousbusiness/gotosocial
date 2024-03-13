@@ -40,6 +40,7 @@ const (
 	FollowPath       = "follow"        // FollowPath used to generate the URI for an individual follow or follow request
 	UpdatePath       = "updates"       // UpdatePath is used to generate the URI for an account update
 	BlocksPath       = "blocks"        // BlocksPath is used to generate the URI for a block
+	MovesPath        = "moves"         // MovesPath is used to generate the URI for a move
 	ReportsPath      = "reports"       // ReportsPath is used to generate the URI for a report/flag
 	ConfirmEmailPath = "confirm_email" // ConfirmEmailPath is used to generate the URI for an email confirmation link
 	FileserverPath   = "fileserver"    // FileserverPath is a path component for serving attachments + media
@@ -106,6 +107,14 @@ func GenerateURIForBlock(username string, thisBlockID string) string {
 	protocol := config.GetProtocol()
 	host := config.GetHost()
 	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, BlocksPath, thisBlockID)
+}
+
+// GenerateURIForMove returns the AP URI for a new Move activity -- something like:
+// https://example.org/users/whatever_user/moves/01F7XTH1QGBAPMGF49WJZ91XGC
+func GenerateURIForMove(username string, thisMoveID string) string {
+	protocol := config.GetProtocol()
+	host := config.GetHost()
+	return fmt.Sprintf("%s://%s/%s/%s/%s/%s", protocol, host, UsersPath, username, MovesPath, thisMoveID)
 }
 
 // GenerateURIForReport returns the API URI for a new Flag activity -- something like:

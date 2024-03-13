@@ -114,6 +114,11 @@ func (m *Module) createHeaderFilter(c *gin.Context, create func(context.Context,
 		return
 	}
 
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
+		return
+	}
+
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		errWithCode := gtserror.NewErrorNotAcceptable(err, err.Error())
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -154,6 +159,11 @@ func (m *Module) deleteHeaderFilter(c *gin.Context, delete func(context.Context,
 		const text = "user not an admin"
 		errWithCode := gtserror.NewErrorForbidden(errors.New(text), text)
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
 		return
 	}
 

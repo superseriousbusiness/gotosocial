@@ -177,21 +177,31 @@ func (m *moveDB) getMove(
 	}
 
 	// Populate the Move by parsing out the URIs.
+	if err := m.PopulateMove(ctx, move); err != nil {
+		return nil, err
+	}
+
+	return move, nil
+}
+
+func (m *moveDB) PopulateMove(ctx context.Context, move *gtsmodel.Move) error {
 	if move.Origin == nil {
+		var err error
 		move.Origin, err = url.Parse(move.OriginURI)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing Move originURI: %w", err)
+			return fmt.Errorf("error parsing Move originURI: %w", err)
 		}
 	}
 
 	if move.Target == nil {
+		var err error
 		move.Target, err = url.Parse(move.TargetURI)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing Move originURI: %w", err)
+			return fmt.Errorf("error parsing Move targetURI: %w", err)
 		}
 	}
 
-	return move, nil
+	return nil
 }
 
 func (m *moveDB) PutMove(ctx context.Context, move *gtsmodel.Move) error {
