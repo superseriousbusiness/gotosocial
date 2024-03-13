@@ -111,8 +111,8 @@ func (p *Processor) MoveSelf(
 	// state that might get messed up if a
 	// client triggers this function twice
 	// in quick succession, so get a lock on
-	// this account's moves.
-	lockKey := originAcct.URI + "/moves"
+	// this account.
+	lockKey := originAcct.URI
 	unlock := p.state.ClientLocks.Lock(lockKey)
 	defer unlock()
 
