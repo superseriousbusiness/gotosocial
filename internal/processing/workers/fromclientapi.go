@@ -669,5 +669,15 @@ func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI
 		return gtserror.Newf("error federating account move: %w", err)
 	}
 
+	// Mark the move attempt as successful.
+	cMsg.OriginAccount.Move.SucceededAt = cMsg.OriginAccount.Move.AttemptedAt
+	if err := p.state.DB.UpdateMove(
+		ctx,
+		cMsg.OriginAccount.Move,
+		"succeeded_at",
+	); err != nil {
+		return gtserror.Newf("error marking move as successful: %w", err)
+	}
+
 	return nil
 }
