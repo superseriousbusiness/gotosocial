@@ -33,7 +33,6 @@ type Processor struct {
 	workers   *workers.Workers
 	clientAPI *clientAPI
 	fediAPI   *fediAPI
-	utilF     *utilF
 }
 
 func New(
