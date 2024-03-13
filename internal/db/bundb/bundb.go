@@ -113,7 +113,7 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 
 	if db.Dialect().Name() == dialect.SQLite {
 		log.Info(ctx, "running ANALYZE to update table and index statistics")
-		_, err := db.ExecContext(ctx, "ANALYZE")
+		_, err := db.ExecContext(ctx, "PRAGMA analysis_limit=10000; ANALYZE")
 		if err != nil {
 			log.Warnf(ctx, "ANALYZE failed, query planner may make poor life choices: %s", err)
 		}
