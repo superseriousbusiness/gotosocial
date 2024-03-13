@@ -31,8 +31,6 @@ import (
 //
 // Move your account to another account.
 //
-// NOT IMPLEMENTED YET!
-//
 //	---
 //	tags:
 //	- accounts

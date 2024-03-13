@@ -154,6 +154,17 @@ func (p *Processor) MoveSelf(
 		}
 	}
 
+	// If originAcct has already moved, ensure
+	// this move reattempt is to the same account.
+	if originAcct.IsMoving() &&
+		originAcct.MovedToURI != targetAcct.URI {
+		err := fmt.Errorf(
+			"your account is already Moving or has Moved to %s; you cannot also Move to %s",
+			originAcct.MovedToURI, targetAcct.URI,
+		)
+		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	}
+
 	// Target account MUST be aliased to this
 	// account for this to be a valid Move.
 	if !slices.Contains(targetAcct.AlsoKnownAsURIs, originAcct.URI) {

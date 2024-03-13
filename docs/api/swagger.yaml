@@ -3316,7 +3316,6 @@ paths:
         post:
             consumes:
                 - multipart/form-data
-            description: NOT IMPLEMENTED YET!
             operationId: accountMove
             parameters:
                 - description: Password of the account user, for confirmation.
