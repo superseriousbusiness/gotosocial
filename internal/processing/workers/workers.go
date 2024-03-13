@@ -33,6 +33,7 @@ type Processor struct {
 	workers   *workers.Workers
 	clientAPI *clientAPI
 	fediAPI   *fediAPI
+	utilF     *utilF
 }
 
 func New(
@@ -63,39 +64,30 @@ func New(
 		converter: converter,
 	}
 
-	// Init shared logic wipe
-	// status util func.
-	wipeStatus := wipeStatusF(
-		state,
-		media,
-		surface,
-	)
-
-	// Init shared redirect
-	// followers func.
-	redirectFollowers := redirectFollowersF(
-		state,
-		account,
-	)
+	// Init shared util funcs.
+	utilF := &utilF{
+		state:   state,
+		media:   media,
+		account: account,
+		surface: surface,
+	}
 
 	return Processor{
 		workers: &state.Workers,
 		clientAPI: &clientAPI{
-			state:             state,
-			converter:         converter,
-			surface:           surface,
-			federate:          federate,
-			wipeStatus:        wipeStatus,
-			redirectFollowers: redirectFollowers,
-			account:           account,
+			state:     state,
+			converter: converter,
+			surface:   surface,
+			federate:  federate,
+			account:   account,
+			utilF:     utilF,
 		},
 		fediAPI: &fediAPI{
-			state:             state,
-			surface:           surface,
-			federate:          federate,
-			wipeStatus:        wipeStatus,
-			redirectFollowers: redirectFollowers,
-			account:           account,
+			state:    state,
+			surface:  surface,
+			federate: federate,
+			account:  account,
+			utilF:    utilF,
 		},
 	}
 }

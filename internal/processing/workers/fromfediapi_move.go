@@ -379,7 +379,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 
 	// Transfer originAcct's followers
 	// on this instance to targetAcct.
-	redirectOK := p.redirectFollowers(
+	redirectOK := p.utilF.redirectFollowers(
 		ctx,
 		originAcct,
 		targetAcct,

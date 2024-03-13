@@ -39,13 +39,12 @@ import (
 // specifically for messages originating
 // from the client/REST API.
 type clientAPI struct {
-	state             *state.State
-	converter         *typeutils.Converter
-	surface           *surface
-	federate          *federate
-	wipeStatus        wipeStatus
-	redirectFollowers redirectFollowers
-	account           *account.Processor
+	state     *state.State
+	converter *typeutils.Converter
+	surface   *surface
+	federate  *federate
+	account   *account.Processor
+	utilF     *utilF
 }
 
 func (p *Processor) EnqueueClientAPI(cctx context.Context, msgs ...messages.FromClientAPI) {
@@ -586,7 +585,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg messages.FromClientAP
 		return gtserror.Newf("db error populating status: %w", err)
 	}
 
-	if err := p.wipeStatus(ctx, status, deleteAttachments); err != nil {
+	if err := p.utilF.wipeStatus(ctx, status, deleteAttachments); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
 	}
 
@@ -655,7 +654,7 @@ func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientA
 func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
 	// Redirect each local follower of
 	// OriginAccount to follow move target.
-	p.redirectFollowers(ctx, cMsg.OriginAccount, cMsg.TargetAccount)
+	p.utilF.redirectFollowers(ctx, cMsg.OriginAccount, cMsg.TargetAccount)
 
 	// At this point, we know OriginAccount has the
 	// Move set on it. Just make sure it's populated.
