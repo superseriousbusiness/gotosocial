@@ -52,7 +52,7 @@ import (
 //		in: path
 //		required: true
 //	-
-//		name: account_ids
+//		name: account_ids[]
 //		type: array
 //		items:
 //			type: string
@@ -61,6 +61,7 @@ import (
 //			Each accountID must correspond to an account
 //			that the requesting account follows.
 //		in: formData
+//		collectionFormat: multi
 //		required: true
 //
 //	security:
