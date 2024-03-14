@@ -621,19 +621,23 @@ func (d *Dereferencer) isPermittedStatus(
 		return onFail()
 	}
 
-	// Check visibility of inReplyTo to status author.
-	permitted, err = d.visibility.StatusVisible(ctx,
-		status.Account,
-		status.InReplyTo,
-	)
-	if err != nil {
-		return false, gtserror.Newf("error checking in-reply-to visibility: %w", err)
+	// Default to true
+	permitted = true
+
+	if *status.InReplyTo.Local {
+		// Check visibility of inReplyTo to status author.
+		permitted, err = d.visibility.StatusVisible(ctx,
+			status.Account,
+			status.InReplyTo,
+		)
+		if err != nil {
+			return false, gtserror.Newf("error checking in-reply-to visibility: %w", err)
+		}
 	}
 
 	if permitted &&
 		*status.InReplyTo.Replyable {
-		// This status is visible AND
-		// replyable, in this economy?!
+		// Status is reply-able to.
 		return true, nil
 	}
 
