@@ -113,8 +113,8 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 
 	if db.Dialect().Name() == dialect.SQLite {
 		log.Info(ctx,
-			"running ANALYZE to update table and index statistics; this may take 10 minutes or "+
-				"longer depending on your hardware and database size, please be patient",
+			"running ANALYZE to update table and index statistics; this will take somewhere between "+
+				"1-10 minutes, or maybe longer depending on your hardware and database size, please be patient",
 		)
 		_, err := db.ExecContext(ctx, "ANALYZE")
 		if err != nil {
