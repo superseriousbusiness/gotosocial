@@ -4,7 +4,7 @@ Regardless of whether you choose to run GoToSocial with SQLite or Postgres, you 
 
 !!! tip
     
-    Though the maintenance tips provided here are intended by non-destructive, you should still consider backing up your database before manually intervening to do maintenance. That way if you mistype something or accidentally run a bad command, you can simply restore your backup and try again.
+    Though the maintenance tips provided here are intended to be non-destructive, you should backup your database before manually performing maintenance. That way if you mistype something or accidentally run a bad command, you can restore your backup and try again.
 
 !!! danger
     
