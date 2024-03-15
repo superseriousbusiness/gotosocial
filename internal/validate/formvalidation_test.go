@@ -144,7 +144,10 @@ func (suite *ValidationTestSuite) TestValidateEmail() {
 
 	err = validate.Email(almostAnEmailAddress)
 	if suite.Error(err) {
-		suite.Equal(errors.New("mail: no angle-addr"), err)
+		suite.True("mail: no angle-addr" == err.Error() ||
+			// golang 1.21.8 fixed some inconsistencies in net/mail which leads
+			// to different error messages.
+			"mail: missing word in phrase: mail: invalid string" == err.Error())
 	}
 
 	err = validate.Email(aWebsite)
