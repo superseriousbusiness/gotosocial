@@ -980,6 +980,10 @@ advanced-rate-limit-requests: 300
 # applied on their requests, and rate limit headers will not be
 # set for those requests.
 #
+# For IPv6, we only take subnets up to a /64 into account. If you
+# want to open up a larger prefix, you'll need to list multiple
+# prefixes instead.
+#
 # This can be useful in the following example cases (and probably
 # a bunch of others as well):
 #
@@ -999,7 +1003,7 @@ advanced-rate-limit-requests: 300
 # wide a range. If in doubt, be too restrictive rather than too
 # lenient, and adjust as you go.
 #
-# Example: ["192.168.0.0/16"]
+# Example: ["192.168.0.0/16", "2001:DB8:FACE:CAFE::/64"]
 # Default: []
 advanced-rate-limit-exceptions: []
 
