@@ -53,6 +53,28 @@ const (
 //	- OAuth2 Bearer:
 //		- read:bookmarks
 //
+//	parameters:
+//	-
+//		name: limit
+//		type: integer
+//		description: Number of statuses to return.
+//		default: 30
+//		in: query
+//	-
+//		name: max_id
+//		type: string
+//		description: >-
+//			Return only bookmarked statuses *OLDER* than the given bookmark ID.
+//			The status with the corresponding bookmark ID will not be included in the response.
+//		in: query
+//	-
+//		name: min_id
+//		type: string
+//		description: >-
+//			Return only bookmarked statuses *NEWER* than the given bookmark ID.
+//			The status with the corresponding bookmark ID will not be included in the response.
+//		in: query
+//
 //	responses:
 //		'200':
 //			description: Array of bookmarked statuses

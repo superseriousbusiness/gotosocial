@@ -5177,6 +5177,20 @@ paths:
         get:
             description: Get an array of statuses bookmarked in the instance
             operationId: bookmarksGet
+            parameters:
+                - default: 30
+                  description: Number of statuses to return.
+                  in: query
+                  name: limit
+                  type: integer
+                - description: Return only bookmarked statuses *OLDER* than the given bookmark ID. The status with the corresponding bookmark ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only bookmarked statuses *NEWER* than the given bookmark ID. The status with the corresponding bookmark ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
             produces:
                 - application/json
             responses:
