@@ -24,6 +24,7 @@ import (
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -158,7 +159,10 @@ func (f *Formatter) fromPlain(
 				emojiOnly,
 				result,
 			},
-			extension.Linkify, // Turns URLs into links.
+			// Turns URLs into links.
+			extension.NewLinkify(
+				extension.WithLinkifyURLRegexp(regexes.LinkScheme),
+			),
 		),
 	)
 
