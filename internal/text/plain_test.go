@@ -34,6 +34,8 @@ const (
 	withHTMLExpected           = "<p>&lt;div>blah this should just be html escaped blah&lt;/div></p>"
 	moreComplex                = "Another test @foss_satan@fossbros-anonymous.io\n\n#Hashtag\n\nText\n\n:rainbow:"
 	moreComplexExpected        = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text<br><br>:rainbow:</p>"
+	withUTF8Link               = "here's a link with utf-8 characters in it: https://example.org/söme_url"
+	withUTF8LinkExpected       = "<p>here's a link with utf-8 characters in it: <a href=\"https://example.org/s%C3%B6me_url\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org/söme_url</a></p>"
 )
 
 type PlainTestSuite struct {
@@ -68,6 +70,11 @@ func (suite *PlainTestSuite) TestParseWithHTML() {
 func (suite *PlainTestSuite) TestParseMoreComplex() {
 	formatted := suite.FromPlain(moreComplex)
 	suite.Equal(moreComplexExpected, formatted.HTML)
+}
+
+func (suite *PlainTestSuite) TestWithUTF8Link() {
+	formatted := suite.FromPlain(withUTF8Link)
+	suite.Equal(withUTF8LinkExpected, formatted.HTML)
 }
 
 func (suite *PlainTestSuite) TestLinkNoMention() {
