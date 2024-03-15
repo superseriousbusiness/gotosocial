@@ -3353,11 +3353,12 @@ paths:
         get:
             operationId: accountRelationships
             parameters:
-                - description: Account IDs.
+                - collectionFormat: multi
+                  description: Account IDs.
                   in: query
                   items:
                     type: string
-                  name: id
+                  name: id[]
                   required: true
                   type: array
             produces:
@@ -6067,11 +6068,12 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: Array of accountIDs to modify. Each accountID must correspond to an account that the requesting account follows.
+                - collectionFormat: multi
+                  description: Array of accountIDs to modify. Each accountID must correspond to an account that the requesting account follows.
                   in: formData
                   items:
                     type: string
-                  name: account_ids
+                  name: account_ids[]
                   required: true
                   type: array
             produces:
@@ -6171,11 +6173,12 @@ paths:
                   name: id
                   required: true
                   type: string
-                - description: Array of accountIDs to modify. Each accountID must correspond to an account that the requesting account follows.
+                - collectionFormat: multi
+                  description: Array of accountIDs to modify. Each accountID must correspond to an account that the requesting account follows.
                   in: formData
                   items:
                     type: string
-                  name: account_ids
+                  name: account_ids[]
                   required: true
                   type: array
             produces:

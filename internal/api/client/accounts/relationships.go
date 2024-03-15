@@ -41,12 +41,13 @@ import (
 //
 //	parameters:
 //	-
-//		name: id
+//		name: id[]
 //		type: array
 //		items:
 //			type: string
 //		description: Account IDs.
 //		in: query
+//		collectionFormat: multi
 //		required: true
 //
 //	security:
