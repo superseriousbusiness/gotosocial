@@ -639,8 +639,8 @@ github.com/tdewolff/parse/v2 v2.7.12/go.mod h1:3FbJWZp3XT9OWVN3Hmfp0p/a08v4h8J9W
 github.com/tdewolff/test v1.0.11-0.20231101010635-f1265d231d52/go.mod h1:6DAvZliBAAnD7rhVgwaM7DE5/d9NMOAJ09SqYqeK4QE=
 github.com/tdewolff/test v1.0.11-0.20240106005702-7de5f7df4739 h1:IkjBCtQOOjIn03u/dMQK9g+Iw9ewps4mCl1nB8Sscbo=
 github.com/tdewolff/test v1.0.11-0.20240106005702-7de5f7df4739/go.mod h1:XPuWBzvdUzhCuxWO1ojpXsyzsA5bFoS3tO/Q3kFuTG8=
-github.com/technologize/otel-go-contrib v1.1.0 h1:gl9bxxJAgXFnKJzoprJOfbvNRE1k3Ky9O7ppVJDb9gg=
-github.com/technologize/otel-go-contrib v1.1.0/go.mod h1:dCN/wj2WyUO8aFZFdIN+6tfJHImjTML/8r2YVYAy3So=
+github.com/technologize/otel-go-contrib v1.1.1 h1:wZH9aSPNWZWIkEh3vfaKfMb15AJ80jJ1aVj/4GZdqIw=
+github.com/technologize/otel-go-contrib v1.1.1/go.mod h1:dCN/wj2WyUO8aFZFdIN+6tfJHImjTML/8r2YVYAy3So=
 github.com/tidwall/btree v0.0.0-20191029221954-400434d76274 h1:G6Z6HvJuPjG6XfNGi/feOATzeJrfgTNJY+rGrHbA04E=
 github.com/tidwall/btree v0.0.0-20191029221954-400434d76274/go.mod h1:huei1BkDWJ3/sLXmO+bsCNELL+Bp2Kks9OLyQFkzvA8=
 github.com/tidwall/buntdb v1.1.2 h1:noCrqQXL9EKMtcdwJcmuVKSEjqu1ua99RHHgbLTEHRo=
