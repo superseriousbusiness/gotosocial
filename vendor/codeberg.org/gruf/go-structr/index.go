@@ -9,6 +9,43 @@ import (
 	"github.com/zeebo/xxh3"
 )
 
+// Key represents one key to
+// lookup (potentially) stored
+// entries in an Index.
+type Key struct {
+	raw []any
+	sum Hash
+}
+
+// Equal returns whether keys are equal.
+func (k Key) Equal(o Key) bool {
+	if len(k.raw) != len(o.raw) {
+		return false
+	}
+	for i := range k.raw {
+		if k.raw[i] != o.raw[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Sum returns the hashsum of Key.
+func (k Key) Sum() Hash {
+	return k.sum
+}
+
+// Value returns the raw slice of
+// values that comprise this Key.
+func (k Key) Values() []any {
+	return k.raw
+}
+
+// Zero indicates a zero value key.
+func (k Key) Zero() bool {
+	return k.raw == nil
+}
+
 // IndexConfig defines config variables
 // for initializing a struct index.
 type IndexConfig struct {
@@ -79,32 +116,36 @@ type Index[StructType any] struct {
 	flags uint8
 }
 
-// Key returns the configured fields as key, and hash sum of key.
-func (i *Index[T]) Key(value T) ([]any, Hash, bool) {
+// Name returns the receiving Index name.
+func (i *Index[T]) Name() string {
+	return i.name
+}
+
+// Key generates Key{} from given parts for
+// the type of lookup this Index uses in cache.
+// NOTE: panics on incorrect no. parts / types given.
+func (i *Index[T]) ToKey(parts ...any) Key {
 	h := get_hasher()
-	key, sum, ok := index_key(i, h, value)
+	key := index_key(i, h, parts)
 	hash_pool.Put(h)
-	return key, sum, ok
+	return key
 }
 
-func is_unique(f uint8) bool {
-	const mask = uint8(1) << 0
-	return f&mask != 0
-}
-
-func set_is_unique(f *uint8) {
-	const mask = uint8(1) << 0
-	(*f) |= mask
-}
-
-func allow_zero(f uint8) bool {
-	const mask = uint8(1) << 1
-	return f&mask != 0
-}
-
-func set_allow_zero(f *uint8) {
-	const mask = uint8(1) << 1
-	(*f) |= mask
+// ToKeys generates []Key{} from given (multiple) parts
+// for the type of lookup this Index uses in the cache.
+// NOTE: panics on incorrect no. parts / types given.
+func (i *Index[T]) ToKeys(parts ...[]any) []Key {
+	keys := make([]Key, 0, len(parts))
+	h := get_hasher()
+	for _, parts := range parts {
+		key := index_key(i, h, parts)
+		if key.Zero() {
+			continue
+		}
+		keys = append(keys, key)
+	}
+	hash_pool.Put(h)
+	return keys
 }
 
 func init_index[T any](i *Index[T], config IndexConfig, max int) {
@@ -141,52 +182,44 @@ func init_index[T any](i *Index[T], config IndexConfig, max int) {
 	i.data = make(map[Hash]*list, max+1)
 }
 
-func index_key[T any](i *Index[T], h *xxh3.Hasher, value T) ([]any, Hash, bool) {
-	key := extract_fields(value, i.fields)
-	sum, zero := hash_sum(i.fields, h, key)
+func index_key[T any](i *Index[T], h *xxh3.Hasher, parts []any) Key {
+	sum, zero := hash_sum(i.fields, h, parts)
 	if zero && !allow_zero(i.flags) {
-		var zero Hash
-		return nil, zero, false
+		return Key{}
 	}
-	return key, sum, true
+	return Key{
+		raw: parts,
+		sum: sum,
+	}
 }
 
-func index_hash[T any](i *Index[T], h *xxh3.Hasher, key []any) (Hash, bool) {
-	sum, zero := hash_sum(i.fields, h, key)
-	if zero && !allow_zero(i.flags) {
-		var zero Hash
-		return zero, false
-	}
-	return sum, true
-}
-
-func index_get[T any](i *Index[T], hash Hash, key []any) *list {
-	l := i.data[hash]
+func index_get[T any](i *Index[T], key Key) *list {
+	l := i.data[key.sum]
 	if l == nil {
 		return nil
 	}
 	entry := (*index_entry)(l.head.data)
-	if !is_equal(entry.key, key) {
+	if !entry.key.Equal(key) {
 		return l
 	}
 	return l
 }
 
-func index_append[T any](c *Cache[T], i *Index[T], hash Hash, key []any, res *result) {
+func index_append[T any](c *Cache[T], i *Index[T], key Key, res *result) {
 	// Get list at key.
-	l := i.data[hash]
+	l := i.data[key.sum]
 
 	if l == nil {
 
 		// Allocate new list.
 		l = list_acquire()
-		i.data[hash] = l
+		i.data[key.sum] = l
 
 	} else if entry := (*index_entry)(l.head.data); //nocollapse
-	!is_equal(entry.key, key) {
+	!entry.key.Equal(key) {
 
 		// Collision! Drop all.
-		delete(i.data, hash)
+		delete(i.data, key.sum)
 
 		// Iterate entries in list.
 		for x := 0; x < l.len; x++ {
@@ -236,7 +269,6 @@ func index_append[T any](c *Cache[T], i *Index[T], hash Hash, key []any, res *re
 	entry.index = unsafe.Pointer(i)
 	entry.result = res
 	entry.key = key
-	entry.hash = hash
 
 	// Append to result's indexed entries.
 	res.indexed = append(res.indexed, entry)
@@ -245,26 +277,27 @@ func index_append[T any](c *Cache[T], i *Index[T], hash Hash, key []any, res *re
 	list_push_front(l, &entry.elem)
 }
 
-func index_delete[T any](c *Cache[T], i *Index[T], hash Hash, key []any, fn func(*result)) {
+func index_delete[T any](i *Index[T], key Key, fn func(*result)) {
 	if fn == nil {
 		panic("nil fn")
 	}
 
 	// Get list at hash.
-	l := i.data[hash]
+	l := i.data[key.sum]
 	if l == nil {
 		return
 	}
 
+	// Extract entry from first list elem.
 	entry := (*index_entry)(l.head.data)
 
-	// Check contains expected key for hash.
-	if !is_equal(entry.key, key) {
+	// Check contains expected key.
+	if !entry.key.Equal(key) {
 		return
 	}
 
 	// Delete data at hash.
-	delete(i.data, hash)
+	delete(i.data, key.sum)
 
 	// Iterate entries in list.
 	for x := 0; x < l.len; x++ {
@@ -287,12 +320,12 @@ func index_delete[T any](c *Cache[T], i *Index[T], hash Hash, key []any, fn func
 	list_release(l)
 }
 
-func index_delete_entry[T any](c *Cache[T], entry *index_entry) {
-	// Get from entry.
+func index_delete_entry[T any](entry *index_entry) {
+	// Get index from entry.
 	i := (*Index[T])(entry.index)
 
 	// Get list at hash sum.
-	l := i.data[entry.hash]
+	l := i.data[entry.key.sum]
 	if l == nil {
 		return
 	}
@@ -301,8 +334,8 @@ func index_delete_entry[T any](c *Cache[T], entry *index_entry) {
 	list_remove(l, &entry.elem)
 	if l.len == 0 {
 
-		// Remove list from map.
-		delete(i.data, entry.hash)
+		// Remove entry list from map.
+		delete(i.data, entry.key.sum)
 
 		// Release to pool.
 		list_release(l)
@@ -337,15 +370,10 @@ type index_entry struct {
 	// is currently stored under.
 	result *result
 
-	// key contains the actual
-	// key this item was stored
-	// under, used for collision
-	// check.
-	key []any
-
-	// hash contains computed
-	// hash checksum of .key.
-	hash Hash
+	// key contains the raw key
+	// data this was stored under,
+	// and the hash checksum.
+	key Key
 }
 
 func index_entry_acquire() *index_entry {
@@ -365,28 +393,32 @@ func index_entry_acquire() *index_entry {
 }
 
 func index_entry_release(entry *index_entry) {
-	var zero Hash
-
 	// Reset index entry.
 	entry.elem.data = nil
 	entry.index = nil
 	entry.result = nil
-	entry.key = nil
-	entry.hash = zero
+	entry.key = Key{}
 
 	// Release to pool.
 	entry_pool.Put(entry)
 }
 
-// is_equal returns whether 2 key slices are equal.
-func is_equal(k1, k2 []any) bool {
-	if len(k1) != len(k2) {
-		return false
-	}
-	for i := range k1 {
-		if k1[i] != k2[i] {
-			return false
-		}
-	}
-	return true
+func is_unique(f uint8) bool {
+	const mask = uint8(1) << 0
+	return f&mask != 0
+}
+
+func set_is_unique(f *uint8) {
+	const mask = uint8(1) << 0
+	(*f) |= mask
+}
+
+func allow_zero(f uint8) bool {
+	const mask = uint8(1) << 1
+	return f&mask != 0
+}
+
+func set_allow_zero(f *uint8) {
+	const mask = uint8(1) << 1
+	(*f) |= mask
 }

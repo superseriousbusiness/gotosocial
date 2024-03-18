@@ -12,10 +12,10 @@ import (
 )
 
 type structfield struct {
-	// _type is the runtime type pointer
+	// type2 is the runtime type pointer
 	// underlying the struct field type.
 	// used for repacking our own erfaces.
-	_type reflect2.Type
+	type2 reflect2.Type
 
 	// offset is the offset in memory
 	// of this struct field from the
@@ -92,7 +92,7 @@ func find_field(t reflect.Type, names []string) (sfield structfield) {
 	}
 
 	// Get field type as reflect2.
-	sfield._type = reflect2.Type2(t)
+	sfield.type2 = reflect2.Type2(t)
 
 	// Find hasher for type.
 	sfield.hasher = hasher(t)
@@ -117,7 +117,7 @@ func extract_fields[T any](value T, fields []structfield) []any {
 	for i := 0; i < len(fields); i++ {
 		// Manually access field at memory offset and pack eface.
 		ptr := unsafe.Pointer(uintptr(ptr) + fields[i].offset)
-		ifaces[i] = fields[i]._type.UnsafeIndirect(ptr)
+		ifaces[i] = fields[i].type2.UnsafeIndirect(ptr)
 	}
 
 	return ifaces

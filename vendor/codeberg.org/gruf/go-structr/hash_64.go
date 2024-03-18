@@ -8,7 +8,7 @@ package structr
 // checksum type. Here; uint64.
 type Hash uint64
 
-// uint64ToHash converts uint64 to currently Hash type.
+// uint64ToHash converts uint64 to current Hash type.
 func uint64ToHash(u uint64) Hash {
 	return Hash(u)
 }
