@@ -817,7 +817,7 @@ github.com/tdewolff/parse/v2/buffer
 github.com/tdewolff/parse/v2/css
 github.com/tdewolff/parse/v2/html
 github.com/tdewolff/parse/v2/strconv
-# github.com/technologize/otel-go-contrib v1.1.0
+# github.com/technologize/otel-go-contrib v1.1.1
 ## explicit; go 1.17
 github.com/technologize/otel-go-contrib/otelginmetrics
 # github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc

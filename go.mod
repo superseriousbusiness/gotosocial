@@ -51,7 +51,7 @@ require (
 	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.20.18
-	github.com/technologize/otel-go-contrib v1.1.0
+	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
 	github.com/uptrace/bun v1.1.17
