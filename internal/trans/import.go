@@ -73,6 +73,12 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, account); err != nil {
 			return fmt.Errorf("inputEntry: error adding account to database: %s", err)
 		}
+		if account.SettingsID != "" {
+			// Insert barebones settings model.
+			if err := i.putInDB(ctx, &transmodel.AccountSettings{ID: account.SettingsID}); err != nil {
+				return fmt.Errorf("inputEntry: error adding account settings to database: %s", err)
+			}
+		}
 		log.Infof(ctx, "added account with id %s", account.ID)
 		return nil
 	case transmodel.TransBlock:

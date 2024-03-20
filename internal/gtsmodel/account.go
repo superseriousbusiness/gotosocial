@@ -48,45 +48,39 @@ type Account struct {
 	DisplayName             string           `bun:""`                                                            // DisplayName for this account. Can be empty, then just the Username will be used for display purposes.
 	EmojiIDs                []string         `bun:"emojis,array"`                                                // Database IDs of any emojis used in this account's bio, display name, etc
 	Emojis                  []*Emoji         `bun:"attached_emojis,m2m:account_to_emojis"`                       // Emojis corresponding to emojiIDs. https://bun.uptrace.dev/guide/relations.html#many-to-many-relation
-	Fields                  []*Field         // A slice of of fields that this account has added to their profile.
-	FieldsRaw               []*Field         // The raw (unparsed) content of fields that this account has added to their profile, without conversion to HTML, only available when requester = target
-	Note                    string           `bun:""`                               // A note that this account has on their profile (ie., the account's bio/description of themselves)
-	NoteRaw                 string           `bun:""`                               // The raw contents of .Note without conversion to HTML, only available when requester = target
-	Memorial                *bool            `bun:",default:false"`                 // Is this a memorial account, ie., has the user passed away?
-	AlsoKnownAsURIs         []string         `bun:"also_known_as_uris,array"`       // This account is associated with these account URIs.
-	AlsoKnownAs             []*Account       `bun:"-"`                              // This account is associated with these accounts (field not stored in the db).
-	MovedToURI              string           `bun:",nullzero"`                      // This account has (or claims to have) moved to this account URI. Even if this field is set the move may not yet have been processed. Check `move` for this.
-	MovedTo                 *Account         `bun:"-"`                              // This account has moved to this account (field not stored in the db).
-	MoveID                  string           `bun:"type:CHAR(26),nullzero"`         // ID of a Move in the database for this account. Only set if we received or created a Move activity for which this account URI was the origin.
-	Move                    *Move            `bun:"-"`                              // Move corresponding to MoveID, if set.
-	Bot                     *bool            `bun:",default:false"`                 // Does this account identify itself as a bot?
-	Reason                  string           `bun:""`                               // What reason was given for signing up when this account was created?
-	Locked                  *bool            `bun:",default:true"`                  // Does this account need an approval for new followers?
-	Discoverable            *bool            `bun:",default:false"`                 // Should this account be shown in the instance's profile directory?
-	Privacy                 Visibility       `bun:",nullzero"`                      // Default post privacy for this account
-	Sensitive               *bool            `bun:",default:false"`                 // Set posts from this account to sensitive by default?
-	Language                string           `bun:",nullzero,notnull,default:'en'"` // What language does this account post in?
-	StatusContentType       string           `bun:",nullzero"`                      // What is the default format for statuses posted by this account (only for local accounts).
-	CustomCSS               string           `bun:",nullzero"`                      // Custom CSS that should be displayed for this Account's profile and statuses.
-	URI                     string           `bun:",nullzero,notnull,unique"`       // ActivityPub URI for this account.
-	URL                     string           `bun:",nullzero,unique"`               // Web URL for this account's profile
-	InboxURI                string           `bun:",nullzero,unique"`               // Address of this account's ActivityPub inbox, for sending activity to
-	SharedInboxURI          *string          `bun:""`                               // Address of this account's ActivityPub sharedInbox. Gotcha warning: this is a string pointer because it has three possible states: 1. We don't know yet if the account has a shared inbox -- null. 2. We know it doesn't have a shared inbox -- empty string. 3. We know it does have a shared inbox -- url string.
-	OutboxURI               string           `bun:",nullzero,unique"`               // Address of this account's activitypub outbox
-	FollowingURI            string           `bun:",nullzero,unique"`               // URI for getting the following list of this account
-	FollowersURI            string           `bun:",nullzero,unique"`               // URI for getting the followers list of this account
-	FeaturedCollectionURI   string           `bun:",nullzero,unique"`               // URL for getting the featured collection list of this account
-	ActorType               string           `bun:",nullzero,notnull"`              // What type of activitypub actor is this account?
-	PrivateKey              *rsa.PrivateKey  `bun:""`                               // Privatekey for signing activitypub requests, will only be defined for local accounts
-	PublicKey               *rsa.PublicKey   `bun:",notnull"`                       // Publickey for authorizing signed activitypub requests, will be defined for both local and remote accounts
-	PublicKeyURI            string           `bun:",nullzero,notnull,unique"`       // Web-reachable location of this account's public key
-	PublicKeyExpiresAt      time.Time        `bun:"type:timestamptz,nullzero"`      // PublicKey will expire/has expired at given time, and should be fetched again as appropriate. Only ever set for remote accounts.
-	SensitizedAt            time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account set to have all its media shown as sensitive?
-	SilencedAt              time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account silenced (eg., statuses only visible to followers, not public)?
-	SuspendedAt             time.Time        `bun:"type:timestamptz,nullzero"`      // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
-	HideCollections         *bool            `bun:",default:false"`                 // Hide this account's collections
-	SuspensionOrigin        string           `bun:"type:CHAR(26),nullzero"`         // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
-	EnableRSS               *bool            `bun:",default:false"`                 // enable RSS feed subscription for this account's public posts at [URL]/feed
+	Fields                  []*Field         `bun:""`                                                            // A slice of of fields that this account has added to their profile.
+	FieldsRaw               []*Field         `bun:""`                                                            // The raw (unparsed) content of fields that this account has added to their profile, without conversion to HTML, only available when requester = target
+	Note                    string           `bun:""`                                                            // A note that this account has on their profile (ie., the account's bio/description of themselves)
+	NoteRaw                 string           `bun:""`                                                            // The raw contents of .Note without conversion to HTML, only available when requester = target
+	Memorial                *bool            `bun:",default:false"`                                              // Is this a memorial account, ie., has the user passed away?
+	AlsoKnownAsURIs         []string         `bun:"also_known_as_uris,array"`                                    // This account is associated with these account URIs.
+	AlsoKnownAs             []*Account       `bun:"-"`                                                           // This account is associated with these accounts (field not stored in the db).
+	MovedToURI              string           `bun:",nullzero"`                                                   // This account has (or claims to have) moved to this account URI. Even if this field is set the move may not yet have been processed. Check `move` for this.
+	MovedTo                 *Account         `bun:"-"`                                                           // This account has moved to this account (field not stored in the db).
+	MoveID                  string           `bun:"type:CHAR(26),nullzero"`                                      // ID of a Move in the database for this account. Only set if we received or created a Move activity for which this account URI was the origin.
+	Move                    *Move            `bun:"-"`                                                           // Move corresponding to MoveID, if set.
+	Bot                     *bool            `bun:",default:false"`                                              // Does this account identify itself as a bot?
+	Locked                  *bool            `bun:",default:true"`                                               // Does this account need an approval for new followers?
+	Discoverable            *bool            `bun:",default:false"`                                              // Should this account be shown in the instance's profile directory?
+	URI                     string           `bun:",nullzero,notnull,unique"`                                    // ActivityPub URI for this account.
+	URL                     string           `bun:",nullzero,unique"`                                            // Web URL for this account's profile
+	InboxURI                string           `bun:",nullzero,unique"`                                            // Address of this account's ActivityPub inbox, for sending activity to
+	SharedInboxURI          *string          `bun:""`                                                            // Address of this account's ActivityPub sharedInbox. Gotcha warning: this is a string pointer because it has three possible states: 1. We don't know yet if the account has a shared inbox -- null. 2. We know it doesn't have a shared inbox -- empty string. 3. We know it does have a shared inbox -- url string.
+	OutboxURI               string           `bun:",nullzero,unique"`                                            // Address of this account's activitypub outbox
+	FollowingURI            string           `bun:",nullzero,unique"`                                            // URI for getting the following list of this account
+	FollowersURI            string           `bun:",nullzero,unique"`                                            // URI for getting the followers list of this account
+	FeaturedCollectionURI   string           `bun:",nullzero,unique"`                                            // URL for getting the featured collection list of this account
+	ActorType               string           `bun:",nullzero,notnull"`                                           // What type of activitypub actor is this account?
+	PrivateKey              *rsa.PrivateKey  `bun:""`                                                            // Privatekey for signing activitypub requests, will only be defined for local accounts
+	PublicKey               *rsa.PublicKey   `bun:",notnull"`                                                    // Publickey for authorizing signed activitypub requests, will be defined for both local and remote accounts
+	PublicKeyURI            string           `bun:",nullzero,notnull,unique"`                                    // Web-reachable location of this account's public key
+	PublicKeyExpiresAt      time.Time        `bun:"type:timestamptz,nullzero"`                                   // PublicKey will expire/has expired at given time, and should be fetched again as appropriate. Only ever set for remote accounts.
+	SensitizedAt            time.Time        `bun:"type:timestamptz,nullzero"`                                   // When was this account set to have all its media shown as sensitive?
+	SilencedAt              time.Time        `bun:"type:timestamptz,nullzero"`                                   // When was this account silenced (eg., statuses only visible to followers, not public)?
+	SuspendedAt             time.Time        `bun:"type:timestamptz,nullzero"`                                   // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
+	SuspensionOrigin        string           `bun:"type:CHAR(26),nullzero"`                                      // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
+	SettingsID              string           `bun:"type:CHAR(26),nullzero"`                                      // If account is local, ID of the settings model for this account.
+	Settings                *AccountSettings `bun:"-"`                                                           // gtsmodel.AccountSettings for this account.
 }
 
 // IsLocal returns whether account is a local user account.

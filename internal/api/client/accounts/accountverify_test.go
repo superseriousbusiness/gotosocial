@@ -81,7 +81,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.Equal(2, apimodelAccount.FollowingCount)
 	suite.Equal(7, apimodelAccount.StatusesCount)
 	suite.EqualValues(gtsmodel.VisibilityPublic, apimodelAccount.Source.Privacy)
-	suite.Equal(testAccount.Language, apimodelAccount.Source.Language)
+	suite.Equal(testAccount.Settings.Language, apimodelAccount.Source.Language)
 	suite.Equal(testAccount.NoteRaw, apimodelAccount.Source.Note)
 }
 

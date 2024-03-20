@@ -50,6 +50,11 @@ func (p *Processor) Create(
 	*apimodel.Status,
 	gtserror.WithCode,
 ) {
+	// Ensure account populated; we'll need settings.
+	if err := p.state.DB.PopulateAccount(ctx, requester); err != nil {
+		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
+	}
+
 	// Generate new ID for status.
 	statusID := id.NewULID()
 
@@ -112,11 +117,11 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	if err := processVisibility(form, requester.Privacy, status); err != nil {
+	if err := processVisibility(form, requester.Settings.Privacy, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if err := processLanguage(form, requester.Language, status); err != nil {
+	if err := processLanguage(form, requester.Settings.Language, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -369,7 +374,7 @@ func processLanguage(form *apimodel.AdvancedStatusCreateForm, accountDefaultLang
 func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.ParseMentionFunc, form *apimodel.AdvancedStatusCreateForm, status *gtsmodel.Status) error {
 	if form.ContentType == "" {
 		// If content type wasn't specified, use the author's preferred content-type.
-		contentType := apimodel.StatusContentType(status.Account.StatusContentType)
+		contentType := apimodel.StatusContentType(status.Account.Settings.StatusContentType)
 		form.ContentType = contentType
 	}
 

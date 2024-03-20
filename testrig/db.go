@@ -70,6 +70,7 @@ var testModels = []interface{}{
 	&gtsmodel.Report{},
 	&gtsmodel.Rule{},
 	&gtsmodel.AccountNote{},
+	&gtsmodel.AccountSettings{},
 }
 
 // NewTestDB returns a new initialized, empty database for testing.
@@ -203,6 +204,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 			if err := db.Put(ctx, v); err != nil {
 				log.Panic(nil, err)
 			}
+		}
+	}
+
+	for _, v := range NewTestAccountSettings() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
 		}
 	}
 

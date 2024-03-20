@@ -2825,6 +2825,31 @@ func GetCacheAccountNoteMemRatio() float64 { return global.GetCacheAccountNoteMe
 // SetCacheAccountNoteMemRatio safely sets the value for global configuration 'Cache.AccountNoteMemRatio' field
 func SetCacheAccountNoteMemRatio(v float64) { global.SetCacheAccountNoteMemRatio(v) }
 
+// GetCacheAccountSettingsMemRatio safely fetches the Configuration value for state's 'Cache.AccountSettingsMemRatio' field
+func (st *ConfigState) GetCacheAccountSettingsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.AccountSettingsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheAccountSettingsMemRatio safely sets the Configuration value for state's 'Cache.AccountSettingsMemRatio' field
+func (st *ConfigState) SetCacheAccountSettingsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.AccountSettingsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheAccountSettingsMemRatioFlag returns the flag name for the 'Cache.AccountSettingsMemRatio' field
+func CacheAccountSettingsMemRatioFlag() string { return "cache-account-settings-mem-ratio" }
+
+// GetCacheAccountSettingsMemRatio safely fetches the value for global configuration 'Cache.AccountSettingsMemRatio' field
+func GetCacheAccountSettingsMemRatio() float64 { return global.GetCacheAccountSettingsMemRatio() }
+
+// SetCacheAccountSettingsMemRatio safely sets the value for global configuration 'Cache.AccountSettingsMemRatio' field
+func SetCacheAccountSettingsMemRatio(v float64) { global.SetCacheAccountSettingsMemRatio(v) }
+
 // GetCacheApplicationMemRatio safely fetches the Configuration value for state's 'Cache.ApplicationMemRatio' field
 func (st *ConfigState) GetCacheApplicationMemRatio() (v float64) {
 	st.mutex.RLock()

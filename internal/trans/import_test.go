@@ -106,11 +106,6 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	suite.Equal(testAccountBefore.Memorial, testAccountAfter.Memorial)
 	suite.Equal(testAccountBefore.Bot, testAccountAfter.Bot)
 	suite.Equal(testAccountBefore.Locked, testAccountAfter.Locked)
-	suite.Equal(testAccountBefore.Reason, testAccountAfter.Reason)
-	suite.Equal(testAccountBefore.Privacy, testAccountAfter.Privacy)
-	suite.Equal(testAccountBefore.Sensitive, testAccountAfter.Sensitive)
-	suite.Equal(testAccountBefore.Language, testAccountAfter.Language)
-	suite.Equal(testAccountBefore.StatusContentType, testAccountAfter.StatusContentType)
 	suite.Equal(testAccountBefore.URI, testAccountAfter.URI)
 	suite.Equal(testAccountBefore.URL, testAccountAfter.URL)
 	suite.Equal(testAccountBefore.InboxURI, testAccountAfter.InboxURI)
@@ -123,7 +118,6 @@ func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
 	suite.Equal(testAccountBefore.PublicKey, testAccountAfter.PublicKey)
 	suite.Equal(testAccountBefore.PublicKeyURI, testAccountAfter.PublicKeyURI)
 	suite.Equal(testAccountBefore.SuspendedAt, testAccountAfter.SuspendedAt)
-	suite.Equal(testAccountBefore.HideCollections, testAccountAfter.HideCollections)
 	suite.Equal(testAccountBefore.SuspensionOrigin, testAccountAfter.SuspensionOrigin)
 }
 

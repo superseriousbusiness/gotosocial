@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 const (
@@ -219,9 +220,6 @@ func sizeofAccount() uintptr {
 		Bot:                     func() *bool { ok := true; return &ok }(),
 		Locked:                  func() *bool { ok := true; return &ok }(),
 		Discoverable:            func() *bool { ok := false; return &ok }(),
-		Privacy:                 gtsmodel.VisibilityFollowersOnly,
-		Sensitive:               func() *bool { ok := true; return &ok }(),
-		Language:                "fr",
 		URI:                     exampleURI,
 		URL:                     exampleURI,
 		InboxURI:                exampleURI,
@@ -236,9 +234,7 @@ func sizeofAccount() uintptr {
 		SensitizedAt:            exampleTime,
 		SilencedAt:              exampleTime,
 		SuspendedAt:             exampleTime,
-		HideCollections:         func() *bool { ok := true; return &ok }(),
 		SuspensionOrigin:        exampleID,
-		EnableRSS:               func() *bool { ok := true; return &ok }(),
 	}))
 }
 
@@ -248,6 +244,22 @@ func sizeofAccountNote() uintptr {
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
 		Comment:         exampleTextSmall,
+	}))
+}
+
+func sizeofAccountSettings() uintptr {
+	return uintptr(size.Of(&gtsmodel.AccountSettings{
+		ID:                exampleID,
+		CreatedAt:         exampleTime,
+		UpdatedAt:         exampleTime,
+		Reason:            exampleText,
+		Privacy:           gtsmodel.VisibilityFollowersOnly,
+		Sensitive:         util.Ptr(true),
+		Language:          "fr",
+		StatusContentType: "text/plain",
+		CustomCSS:         exampleText,
+		EnableRSS:         util.Ptr(true),
+		HideCollections:   util.Ptr(false),
 	}))
 }
 

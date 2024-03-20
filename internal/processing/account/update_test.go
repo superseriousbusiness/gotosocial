@@ -126,8 +126,14 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
+	// Copy zork.
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_1"]
+
+	// Copy zork's settings.
+	settings := &gtsmodel.AccountSettings{}
+	*settings = *suite.testAccounts["local_account_1"].Settings
+	testAccount.Settings = settings
 
 	var (
 		ctx          = context.Background()
@@ -136,8 +142,8 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 	)
 
 	// Set status content type of account 1 to markdown for this test.
-	testAccount.StatusContentType = "text/markdown"
-	if err := suite.db.UpdateAccount(ctx, testAccount, "status_content_type"); err != nil {
+	testAccount.Settings.StatusContentType = "text/markdown"
+	if err := suite.db.UpdateAccountSettings(ctx, testAccount.Settings, "status_content_type"); err != nil {
 		suite.FailNow(err.Error())
 	}
 

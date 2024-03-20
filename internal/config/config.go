@@ -195,6 +195,7 @@ type CacheConfiguration struct {
 	MemoryTarget             bytesize.Size `name:"memory-target"`
 	AccountMemRatio          float64       `name:"account-mem-ratio"`
 	AccountNoteMemRatio      float64       `name:"account-note-mem-ratio"`
+	AccountSettingsMemRatio  float64       `name:"account-settings-mem-ratio"`
 	ApplicationMemRatio      float64       `name:"application-mem-ratio"`
 	BlockMemRatio            float64       `name:"block-mem-ratio"`
 	BlockIDsMemRatio         float64       `name:"block-mem-ratio"`

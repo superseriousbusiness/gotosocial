@@ -216,6 +216,8 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 		a2.AvatarMediaAttachment = nil
 		a1.Emojis = nil
 		a2.Emojis = nil
+		a1.Settings = nil
+		a2.Settings = nil
 
 		// Clear database-set fields.
 		a1.CreatedAt = time.Time{}
@@ -439,15 +441,11 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	err = suite.db.Put(context.Background(), newAccount)
 	suite.NoError(err)
 
-	suite.Equal("en", newAccount.Language)
 	suite.WithinDuration(time.Now(), newAccount.CreatedAt, 30*time.Second)
 	suite.WithinDuration(time.Now(), newAccount.UpdatedAt, 30*time.Second)
 	suite.True(*newAccount.Locked)
-	suite.False(*newAccount.Memorial)
 	suite.False(*newAccount.Bot)
 	suite.False(*newAccount.Discoverable)
-	suite.False(*newAccount.Sensitive)
-	suite.False(*newAccount.HideCollections)
 }
 
 func (suite *AccountTestSuite) TestGetAccountPinnedStatusesSomeResults() {

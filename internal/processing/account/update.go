@@ -47,6 +47,11 @@ func (p *Processor) selectNoteFormatter(contentType string) text.FormatFunc {
 
 // Update processes the update of an account with the given form.
 func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form *apimodel.UpdateCredentialsRequest) (*apimodel.Account, gtserror.WithCode) {
+	// Ensure account populated; we'll need settings.
+	if err := p.state.DB.PopulateAccount(ctx, account); err != nil {
+		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
+	}
+
 	if form.Discoverable != nil {
 		account.Discoverable = form.Discoverable
 	}
@@ -146,7 +151,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 
 		// Format + set note according to user prefs.
-		f := p.selectNoteFormatter(account.StatusContentType)
+		f := p.selectNoteFormatter(account.Settings.StatusContentType)
 		formatNoteResult := f(ctx, p.parseMention, account.ID, "", account.NoteRaw)
 		account.Note = formatNoteResult.HTML
 
@@ -227,11 +232,11 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			if err != nil {
 				return nil, gtserror.NewErrorBadRequest(err)
 			}
-			account.Language = language
+			account.Settings.Language = language
 		}
 
 		if form.Source.Sensitive != nil {
-			account.Sensitive = form.Source.Sensitive
+			account.Settings.Sensitive = form.Source.Sensitive
 		}
 
 		if form.Source.Privacy != nil {
@@ -239,7 +244,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 				return nil, gtserror.NewErrorBadRequest(err)
 			}
 			privacy := typeutils.APIVisToVis(apimodel.Visibility(*form.Source.Privacy))
-			account.Privacy = privacy
+			account.Settings.Privacy = privacy
 		}
 
 		if form.Source.StatusContentType != nil {
@@ -247,7 +252,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
 
-			account.StatusContentType = *form.Source.StatusContentType
+			account.Settings.StatusContentType = *form.Source.StatusContentType
 		}
 	}
 
@@ -256,16 +261,19 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err := validate.CustomCSS(customCSS); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		account.CustomCSS = text.SanitizeToPlaintext(customCSS)
+		account.Settings.CustomCSS = text.SanitizeToPlaintext(customCSS)
 	}
 
 	if form.EnableRSS != nil {
-		account.EnableRSS = form.EnableRSS
+		account.Settings.EnableRSS = form.EnableRSS
 	}
 
-	err := p.state.DB.UpdateAccount(ctx, account)
-	if err != nil {
+	if err := p.state.DB.UpdateAccount(ctx, account); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
+	}
+
+	if err := p.state.DB.UpdateAccountSettings(ctx, account.Settings); err != nil {
+		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account settings %s: %s", account.ID, err))
 	}
 
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{

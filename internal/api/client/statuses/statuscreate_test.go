@@ -103,16 +103,22 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
-	// set default post language of account 1 to markdown
-	testAccount := suite.testAccounts["local_account_1"]
-	testAccount.StatusContentType = "text/markdown"
-	a := testAccount
+	// Copy zork.
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_1"]
 
-	err := suite.db.UpdateAccount(context.Background(), a)
+	// Copy zork's settings.
+	settings := &gtsmodel.AccountSettings{}
+	*settings = *suite.testAccounts["local_account_1"].Settings
+	testAccount.Settings = settings
+
+	// set default post language of zork to markdown
+	testAccount.Settings.StatusContentType = "text/markdown"
+	err := suite.db.UpdateAccountSettings(context.Background(), testAccount.Settings)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Equal(a.StatusContentType, "text/markdown")
+	suite.Equal(testAccount.Settings.StatusContentType, "text/markdown")
 
 	t := suite.testTokens["local_account_1"]
 	oauthToken := oauth.DBTokenToToken(t)
@@ -122,7 +128,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, a)
+	ctx.Set(oauth.SessionAuthorizedAccount, testAccount)
 
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil)
 	ctx.Request.Header.Set("accept", "application/json")

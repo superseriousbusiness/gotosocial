@@ -43,6 +43,9 @@ type GTSCaches struct {
 		Pinned   int
 	}]
 
+	// AccountSettings provides access to the gtsmodel AccountSettings database cache.
+	AccountSettings structr.Cache[*gtsmodel.AccountSettings]
+
 	// Application provides access to the gtsmodel Application database cache.
 	Application structr.Cache[*gtsmodel.Application]
 
@@ -190,6 +193,7 @@ func (c *Caches) initAccount() {
 		a2.Emojis = nil
 		a2.AlsoKnownAs = nil
 		a2.Move = nil
+		a2.Settings = nil
 
 		return a2
 	}
@@ -259,6 +263,29 @@ func (c *Caches) initAccountNote() {
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
 		CopyValue: copyF,
+	})
+}
+
+func (c *Caches) initAccountSettings() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofAccountSettings(), // model in-mem size.
+		config.GetCacheAccountSettingsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.GTS.AccountSettings.Init(structr.Config[*gtsmodel.AccountSettings]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		CopyValue: func(s1 *gtsmodel.AccountSettings) *gtsmodel.AccountSettings {
+			s2 := new(gtsmodel.AccountSettings)
+			*s2 = *s1
+			return s2
+		},
 	})
 }
 

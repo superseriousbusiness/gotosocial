@@ -100,7 +100,6 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 	targetAccount := &gtsmodel.Account{
 		ID:                    "01FG1K8EA7SYHEC7V6XKVNC4ZA",
 		Username:              "new_account_domain_user",
-		Privacy:               gtsmodel.VisibilityDefault,
 		URI:                   "http://" + host + "/users/new_account_domain_user",
 		URL:                   "http://" + host + "/@new_account_domain_user",
 		InboxURI:              "http://" + host + "/users/new_account_domain_user/inbox",
