@@ -1,10 +1,11 @@
 # go-structr
 
-A performant struct caching library with automated indexing by arbitrary combinations of fields, including support for negative results (errors!). An example use case is in database lookups.
+A library with a series of performant data types with automated struct value indexing. Indexing is supported via arbitrary combinations of fields, and in the case of the cache type, negative results (errors!) are also supported.
 
-Under the hood, go-structr maintains a hashmap per index, where each hashmap is a hashmap keyed with either 32bit, 48bit or 64bit (default) hash checksum of the inputted raw index keys. The hash checksum size can be controlled by the following Go build-tags: `structr_32bit_hash` `structr_48bit_hash`
+Under the hood, go-structr maintains a hashmap per index, where each hashmap is a hashmap keyed by serialized input key type. This is handled by the incredibly performant serialization library [go-mangler](https://codeberg.org/gruf/go-mangler), which at this point in time supports just about **any** arbitrary type, so feel free to index by *anything*!
 
-Some example code of how you can use `go-structr` in your application:
+## Cache example
+
 ```golang
 type Cached struct {
     Username    string
@@ -15,7 +16,7 @@ type Cached struct {
 
 var c structr.Cache[*Cached]
 
-c.Init(structr.Config[*Cached]{
+c.Init(structr.CacheConfig[*Cached]{
 
     // Fields this cached struct type
     // will be indexed and stored under.
@@ -32,7 +33,7 @@ c.Init(structr.Config[*Cached]{
     // User provided value copy function to
     // reduce need for reflection + ensure
     // concurrency safety for returned values.
-    CopyValue: func(c *Cached) *Cached {
+    Copy: func(c *Cached) *Cached {
         c2 := new(Cached)
         *c2 = *c
         return c2
@@ -44,15 +45,23 @@ c.Init(structr.Config[*Cached]{
     },
 })
 
+// Access and store indexes ahead-of-time for perf.
+usernameDomainIndex := c.Index("Username,Domain")
+urlIndex := c.Index("URL")
+countryCodeIndex := c.Index("CountryCode")
+
 var url string
+
+// Generate URL index key.
+urlKey := urlIndex.Key(url)
 
 // Load value from cache, with callback function to hydrate
 // cache if value cannot be found under index name with key.
 // Negative (error) results are also cached, with user definable
 // errors to ignore from caching (e.g. context deadline errs).
-value, err := c.LoadOne("URL", func() (*Cached, error) {
+value, err := c.LoadOne(urlIndex, func() (*Cached, error) {
     return dbType.SelectByURL(url)
-}, url)
+}, urlKey)
 if err != nil {
     return nil, err
 }
@@ -69,9 +78,66 @@ if err := c.Store(value, func() error {
     return nil, err
 }
 
+// Generate country code index key.
+countryCodeKey := countryCodeIndex.Key(42)
+
 // Invalidate all cached results stored under
 // provided index name with give field value(s).
-c.Invalidate("CountryCode", 42)
+c.Invalidate(countryCodeIndex, countryCodeKey)
 ```
+
+## Queue example
+
+```golang
+
+type Queued struct{
+    Username    string
+    Domain      string
+    URL         string
+    CountryCode int
+}
+
+var q structr.Queue[*Queued]
+
+q.Init(structr.QueueConfig[*Cached]{
+
+    // Fields this queued struct type
+    // will be indexed and stored under.
+    Indices: []structr.IndexConfig{
+        {Fields: "Username,Domain", AllowZero: true},
+        {Fields: "URL"},
+        {Fields: "CountryCode", Multiple: true},
+    },
+
+    // User defined pop hook.
+    Pop: func(c *Cached) {
+        log.Println("popped:", c)
+    },
+})
+
+// Access and store indexes ahead-of-time for perf.
+usernameDomainIndex := q.Index("Username,Domain")
+urlIndex := q.Index("URL")
+countryCodeIndex := q.Index("CountryCode")
+
+// ...
+q.PushBack(Queued{
+    Username:   "billybob",
+    Domain:     "google.com",
+    URL:        "https://some.website.here",
+    CountryCode: 42,
+})
+
+// ...
+queued, ok := q.PopFront()
+
+// Generate country code index key.
+countryCodeKey := countryCodeIndex.Key(42)
+
+// ...
+queuedByCountry := q.Pop(countryCodeIndex, countryCodeKey)
+```
+
+## Notes
 
 This is a core underpinning of [GoToSocial](https://github.com/superseriousbusiness/gotosocial)'s performance.

@@ -113,23 +113,10 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 		return nil, err
 	}
 
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(faveIDs))
-
 	// Load all fave IDs via cache loader callbacks.
-	faves, err := s.state.Caches.GTS.StatusFave.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range faveIDs {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached status faves loader function.
-		func() ([]*gtsmodel.StatusFave, error) {
+	faves, err := s.state.Caches.GTS.StatusFave.LoadIDs("ID",
+		faveIDs,
+		func(uncached []string) ([]*gtsmodel.StatusFave, error) {
 			// Preallocate expected length of uncached faves.
 			faves := make([]*gtsmodel.StatusFave, 0, len(uncached))
 
@@ -318,10 +305,10 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	// Deduplicate determined status IDs.
 	statusIDs = util.Deduplicate(statusIDs)
 
-	for _, id := range statusIDs {
-		// Invalidate any cached status faves for this status.
-		s.state.Caches.GTS.StatusFave.Invalidate("ID", id)
+	// Invalidate any cached status faves for this status ID.
+	s.state.Caches.GTS.StatusFave.InvalidateIDs("ID", statusIDs)
 
+	for _, id := range statusIDs {
 		// Invalidate any cached status fave IDs for this status.
 		s.state.Caches.GTS.StatusFaveIDs.Invalidate(id)
 	}

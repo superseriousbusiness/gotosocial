@@ -97,17 +97,9 @@ func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id st
 	}
 
 	// Get each filter keyword by ID from the cache or DB.
-	uncachedFilterKeywordIDs := make([]string, 0, len(filterKeywordIDs))
-	filterKeywords, err := f.state.Caches.GTS.FilterKeyword.Load(
-		"ID",
-		func(load func(keyParts ...any) bool) {
-			for _, id := range filterKeywordIDs {
-				if !load(id) {
-					uncachedFilterKeywordIDs = append(uncachedFilterKeywordIDs, id)
-				}
-			}
-		},
-		func() ([]*gtsmodel.FilterKeyword, error) {
+	filterKeywords, err := f.state.Caches.GTS.FilterKeyword.LoadIDs("ID",
+		filterKeywordIDs,
+		func(uncachedFilterKeywordIDs []string) ([]*gtsmodel.FilterKeyword, error) {
 			uncachedFilterKeywords := make([]*gtsmodel.FilterKeyword, 0, len(uncachedFilterKeywordIDs))
 			if err := f.db.
 				NewSelect().
