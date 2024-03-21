@@ -308,10 +308,8 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	// Invalidate any cached status faves for this status ID.
 	s.state.Caches.GTS.StatusFave.InvalidateIDs("ID", statusIDs)
 
-	for _, id := range statusIDs {
-		// Invalidate any cached status fave IDs for this status.
-		s.state.Caches.GTS.StatusFaveIDs.Invalidate(id)
-	}
+	// Invalidate any cached status fave IDs for this status ID.
+	s.state.Caches.GTS.StatusFaveIDs.Invalidate(statusIDs...)
 
 	return nil
 }

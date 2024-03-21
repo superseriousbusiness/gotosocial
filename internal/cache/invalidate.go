@@ -37,7 +37,7 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's
 	// following / follower lists.
 	// (see FollowIDs() comment for details).
-	c.GTS.FollowIDs.InvalidateAll(
+	c.GTS.FollowIDs.Invalidate(
 		">"+account.ID,
 		"l>"+account.ID,
 		"<"+account.ID,
@@ -47,7 +47,7 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's
 	// follow requesting / request lists.
 	// (see FollowRequestIDs() comment for details).
-	c.GTS.FollowRequestIDs.InvalidateAll(
+	c.GTS.FollowRequestIDs.Invalidate(
 		">"+account.ID,
 		"<"+account.ID,
 	)
@@ -96,7 +96,7 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	// Invalidate source account's following
 	// lists, and destination's follwer lists.
 	// (see FollowIDs() comment for details).
-	c.GTS.FollowIDs.InvalidateAll(
+	c.GTS.FollowIDs.Invalidate(
 		">"+follow.AccountID,
 		"l>"+follow.AccountID,
 		"<"+follow.AccountID,
@@ -115,7 +115,7 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 	// Invalidate source account's followreq
 	// lists, and destinations follow req lists.
 	// (see FollowRequestIDs() comment for details).
-	c.GTS.FollowRequestIDs.InvalidateAll(
+	c.GTS.FollowRequestIDs.Invalidate(
 		">"+followReq.AccountID,
 		"<"+followReq.AccountID,
 		">"+followReq.TargetAccountID,

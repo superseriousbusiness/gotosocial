@@ -27,19 +27,19 @@ import (
 // SliceCache wraps a simple.Cache to provide simple loader-callback
 // functions for fetching + caching slices of objects (e.g. IDs).
 type SliceCache[T any] struct {
-	simple.Cache[string, []T]
+	cache simple.Cache[string, []T]
 }
 
 // Init ...
 func (c *SliceCache[T]) Init(len, cap int) {
-	c.Cache = simple.Cache[string, []T]{}
-	c.Cache.Init(len, cap)
+	c.cache = simple.Cache[string, []T]{}
+	c.cache.Init(len, cap)
 }
 
 // Load will attempt to load an existing slice from the cache for the given key, else calling the provided load function and caching the result.
 func (c *SliceCache[T]) Load(key string, load func() ([]T, error)) ([]T, error) {
-	// Look for follow IDs list in cache under this key.
-	data, ok := c.Get(key)
+	// Look for cached values.
+	data, ok := c.cache.Get(key)
 
 	if !ok {
 		var err error
@@ -51,11 +51,36 @@ func (c *SliceCache[T]) Load(key string, load func() ([]T, error)) ([]T, error) 
 		}
 
 		// Store the data.
-		c.Set(key, data)
+		c.cache.Set(key, data)
 	}
 
 	// Return data clone for safety.
 	return slices.Clone(data), nil
+}
+
+// Invalidate ...
+func (c *SliceCache[T]) Invalidate(keys ...string) {
+	_ = c.cache.InvalidateAll(keys...)
+}
+
+// Trim ...
+func (c *SliceCache[T]) Trim(perc float64) {
+	c.cache.Trim(perc)
+}
+
+// Clear ...
+func (c *SliceCache[T]) Clear() {
+	c.cache.Clear()
+}
+
+// Len ...
+func (c *SliceCache[T]) Len() int {
+	return c.cache.Len()
+}
+
+// Cap ...
+func (c *SliceCache[T]) Cap() int {
+	return c.cache.Cap()
 }
 
 // StructCache ...
@@ -152,10 +177,6 @@ func (c *StructCache[T]) InvalidateIDs(index string, ids []string) {
 
 	// Pass to main invalidate func.
 	c.cache.Invalidate(i, keys...)
-}
-
-func (c *StructCache[T]) with(index string, with func(index *structr.Index)) {
-	with(c.index[index])
 }
 
 // Trim ...
