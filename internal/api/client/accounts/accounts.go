@@ -55,6 +55,7 @@ const (
 	VerifyPath        = BasePath + "/verify_credentials"
 	MovePath          = BasePath + "/move"
 	AliasPath         = BasePath + "/alias"
+	ThemesPath        = BasePath + "/themes"
 )
 
 type Module struct {
@@ -114,4 +115,7 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	// migration handlers
 	attachHandler(http.MethodPost, AliasPath, m.AccountAliasPOSTHandler)
 	attachHandler(http.MethodPost, MovePath, m.AccountMovePOSTHandler)
+
+	// account themes
+	attachHandler(http.MethodGet, ThemesPath, m.AccountThemesGETHandler)
 }

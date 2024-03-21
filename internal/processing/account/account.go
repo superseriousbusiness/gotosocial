@@ -44,6 +44,7 @@ type Processor struct {
 	formatter    *text.Formatter
 	federator    *federation.Federator
 	parseMention gtsmodel.ParseMentionFunc
+	themes       *Themes
 }
 
 // New returns a new account processor.
@@ -67,5 +68,6 @@ func New(
 		formatter:    text.NewFormatter(state.DB),
 		federator:    federator,
 		parseMention: parseMention,
+		themes:       PopulateThemes(),
 	}
 }

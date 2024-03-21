@@ -170,12 +170,13 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// Bits that vary between remote + local accounts:
 	//   - Account (acct) string.
 	//   - Role.
-	//   - Settings things (enableRSS, customCSS).
+	//   - Settings things (enableRSS, theme, customCSS).
 
 	var (
 		acct      string
 		role      *apimodel.AccountRole
 		enableRSS bool
+		theme     string
 		customCSS string
 	)
 
@@ -208,6 +209,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			}
 
 			enableRSS = *a.Settings.EnableRSS
+			theme = a.Settings.Theme
 			customCSS = a.Settings.CustomCSS
 		}
 
@@ -272,6 +274,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Emojis:         apiEmojis,
 		Fields:         fields,
 		Suspended:      !a.SuspendedAt.IsZero(),
+		Theme:          theme,
 		CustomCSS:      customCSS,
 		EnableRSS:      enableRSS,
 		Role:           role,

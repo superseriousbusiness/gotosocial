@@ -140,16 +140,31 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
+	// Basic profile stylesheets.
+	stylesheets := []string{
+		cssFA, cssStatus, cssThread, cssProfile,
+	}
+
+	// User-selected theme if set.
+	if theme := targetAccount.Theme; theme != "" {
+		stylesheets = append(
+			stylesheets,
+			themesPathPrefix+"/"+theme,
+		)
+	}
+
+	// Custom CSS for this user last in cascade.
+	stylesheets = append(
+		stylesheets,
+		"/@"+targetAccount.Username+"/custom.css",
+	)
+
 	page := apiutil.WebPage{
-		Template: "profile.tmpl",
-		Instance: instance,
-		OGMeta:   apiutil.OGBase(instance).WithAccount(targetAccount),
-		Stylesheets: []string{
-			cssFA, cssStatus, cssThread, cssProfile,
-			// Custom CSS for this user last in cascade.
-			"/@" + targetAccount.Username + "/custom.css",
-		},
-		Javascript: []string{jsFrontend},
+		Template:    "profile.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance).WithAccount(targetAccount),
+		Stylesheets: stylesheets,
+		Javascript:  []string{jsFrontend},
 		Extra: map[string]any{
 			"account":          targetAccount,
 			"rssFeed":          rssFeed,

@@ -23,7 +23,8 @@ import {
 	useTextInput,
 	useFileInput,
 	useBoolInput,
-	useFieldArrayInput
+	useFieldArrayInput,
+	useRadioInput
 } from "../lib/form";
 
 import useFormSubmit from "../lib/form/submit";
@@ -33,14 +34,15 @@ import {
 	TextInput,
 	TextArea,
 	FileInput,
-	Checkbox
+	Checkbox,
+	RadioGroup
 } from "../components/form/inputs";
 
 import FormWithData from "../lib/form/form-with-data";
 import FakeProfile from "../components/fake-profile";
 import MutationButton from "../components/form/mutation-button";
 
-import { useInstanceV1Query } from "../lib/query";
+import { useAccountThemesQuery, useInstanceV1Query } from "../lib/query";
 import { useUpdateCredentialsMutation } from "../lib/query/user";
 import { useVerifyCredentialsQuery } from "../lib/query/oauth";
 
@@ -64,6 +66,7 @@ function UserProfileForm({ data: profile }) {
 		- file header
 		- bool enable_rss
 		- string custom_css (if enabled)
+		- string theme
 	*/
 
 	const { data: instance } = useInstanceV1Query();
@@ -73,13 +76,24 @@ function UserProfileForm({ data: profile }) {
 			maxPinnedFields: instance?.configuration?.accounts?.max_profile_fields ?? 6
 		};
 	}, [instance]);
+	
+	// Parse out available theme options into nice format.
+	const { data: themes } = useAccountThemesQuery();
+	let themeOptions = { "": "Default" }
+	themes?.forEach((theme) => {
+		let key = theme.file_name;
+		let value = theme.title;
+		if (theme.description) {
+			value += " - " + theme.description;
+		}
+		themeOptions[key] = value
+	})
 
 	const form = {
 		avatar: useFileInput("avatar", { withPreview: true }),
 		header: useFileInput("header", { withPreview: true }),
 		displayName: useTextInput("display_name", { source: profile }),
 		note: useTextInput("note", { source: profile, valueSelector: (p) => p.source?.note }),
-		customCSS: useTextInput("custom_css", { source: profile, nosubmit: !instanceConfig.allowCustomCSS }),
 		bot: useBoolInput("bot", { source: profile }),
 		locked: useBoolInput("locked", { source: profile }),
 		discoverable: useBoolInput("discoverable", { source: profile}),
@@ -87,6 +101,11 @@ function UserProfileForm({ data: profile }) {
 		fields: useFieldArrayInput("fields_attributes", {
 			defaultValue: profile?.source?.fields,
 			length: instanceConfig.maxPinnedFields
+		}),
+		customCSS: useTextInput("custom_css", { source: profile, nosubmit: !instanceConfig.allowCustomCSS }),
+		theme: useRadioInput("theme", {
+			source: profile,
+			options: themeOptions,
 		}),
 	};
 
@@ -125,6 +144,13 @@ function UserProfileForm({ data: profile }) {
 						/>
 					</div>
 				</div>
+
+				<label className="theme">
+					<b>Profile Theme</b>
+					<RadioGroup
+						field={form.theme}
+					/>
+				</label>
 			</div>
 
 			<div className="form-section-docs">

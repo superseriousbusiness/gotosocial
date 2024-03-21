@@ -256,6 +256,22 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
+	if form.Theme != nil {
+		theme := *form.Theme
+		if theme == "" {
+			// Empty is easy, just clear this.
+			account.Settings.Theme = ""
+		} else {
+			// Theme was provided, check
+			// against known available themes.
+			if _, ok := p.themes.ByFileName[theme]; !ok {
+				err := fmt.Errorf("theme %s not available on this instance, see /api/v1/accounts/themes for available themes", theme)
+				return nil, gtserror.NewErrorBadRequest(err, err.Error())
+			}
+			account.Settings.Theme = theme
+		}
+	}
+
 	if form.CustomCSS != nil {
 		customCSS := *form.CustomCSS
 		if err := validate.CustomCSS(customCSS); err != nil {

@@ -465,6 +465,12 @@ section.with-sidebar > div, section.with-sidebar > form {
 			gap: 0.5rem;
 		}
 	}
+
+	.theme, .form-field.radio {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
 }
 
 .migration-details {
