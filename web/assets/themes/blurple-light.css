@@ -18,17 +18,17 @@
   --blurple11: #33009a;
 
   /* Restyle basic colors to use blurple */
-  --white1: var(--blurple1);
-  --white2: var(--blurple2);
-  --blue1: var(--blurple4);
-  --blue2: var(--blurple6);
-  --blue3: var(--blurple8);
+  --white1: var(--blurple2);
+  --white2: var(--blurple3);
+  --blue1: var(--blurple6);
+  --blue2: var(--blurple8);
+  --blue3: var(--blurple10);
 
   /* Basic page styling (background + foreground) */
-  --bg: var(--white1);
+  --bg: linear-gradient(var(--blurple2), var(--blurple1));
   --bg-accent: var(--white2);
-  --fg: var(--gray2);
-  --fg-reduced: var(--gray1);
+  --fg: var(--gray1);
+  --fg-reduced: var(--gray2);
 
   /* Profile page styling (light) */
   --profile-bg: var(--white2);

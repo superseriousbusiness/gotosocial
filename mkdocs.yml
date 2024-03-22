@@ -120,6 +120,7 @@ nav:
       - "admin/media_caching.md"
       - "admin/spam.md"
       - "admin/database_maintenance.md"
+      - "admin/themes.md"
   - "Federation":
       - "federation/index.md"
       - "federation/glossary.md"

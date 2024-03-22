@@ -145,12 +145,17 @@ function UserProfileForm({ data: profile }) {
 					</div>
 				</div>
 
-				<label className="theme">
-					<b>Profile Theme</b>
+				<div className="theme">
+					<div>
+						<b id="theme-label">Theme</b>
+						<br/>
+						<span>After choosing theme and saving, <a href={profile.url} target="_blank">open your profile</a> and refresh to see changes.</span>
+					</div>
 					<RadioGroup
+						aria-labelledby="theme-label"
 						field={form.theme}
 					/>
-				</label>
+				</div>
 			</div>
 
 			<div className="form-section-docs">

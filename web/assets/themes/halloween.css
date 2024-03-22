@@ -1,0 +1,159 @@
+/*
+  theme-title: Midnight Trip
+  theme-description: Woah
+*/
+
+/* Theme colors */
+:root {
+  --acid-green: rgb(63, 255, 0);
+  --acid-green-light: #79FF4D;
+  --acid-green-dark: #269900;
+  --magenta: rgb(153, 50, 204);
+  --darkred: rgb(58, 0, 15);
+  --darkblue: rgb(0, 0, 58);
+  --darkmagenta: rgb(47, 1, 65);
+
+  /* Override */
+  --orange2: var(--acid-green);
+  --gray1: rgb(20, 21, 23);
+  --blue1: var(--acid-green-dark);
+  --blue2: var(--acid-green-light);
+  --blue3: var(--acid-green);
+}
+
+body {
+  background: linear-gradient(-45deg, black, var(--darkmagenta), var(--darkblue), var(--darkred));
+  background-size: 400% 400%;
+  height: 100%;
+}
+
+@media not (prefers-reduced-motion) {
+  body {
+    animation: gradient 30s ease infinite;
+  }
+  
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+}
+
+html, body {
+  /* Funky scroll bar */
+  scrollbar-color: var(--acid-green) var(--gray1);
+}
+
+/* Instance display name */
+.page-header {
+  grid-column: 2;
+  align-self: start;
+  margin: 1rem 0 1rem 0;
+  background-color: var(--gray1);
+  border: 0.25rem solid var(--magenta);
+  border-radius: var(--br);
+}
+
+/* Header card */
+.profile .profile-header {
+  background-color: var(--gray1);
+  border: 0.25rem solid var(--magenta);
+}
+
+/* About + Pinned posts headers */
+.profile .col-header {
+  background: var(--gray1);
+  border: 0.25rem solid var(--magenta);
+}
+
+.profile .about-user .col-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Make about sections transparent */
+.profile .about-user .fields, .profile .about-user .bio, .profile .about-user .accountstats {
+  background: var(--gray1);
+  border-left: 0.25rem solid var(--magenta);
+  border-right: 0.25rem solid var(--magenta);
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields .field:first-child {
+  border-top: 0.25rem dashed var(--magenta);
+}
+.profile .about-user .fields .field {
+  border-bottom: 0.25rem dashed var(--magenta);
+}
+.profile .about-user .accountstats {
+  border-top: 0.25rem dashed var(--magenta);
+  border-bottom: 0.25rem solid var(--magenta);
+}
+
+/* Statuses + threads */
+
+/* Thread column header */
+.thread .col-header {
+  background: var(--gray1);
+  border: 0.25rem solid var(--magenta);
+}
+
+/* Main status body */
+.status, .status.expanded {
+  background: var(--gray1);
+  border: 0.25rem solid var(--magenta);
+}
+
+/* Code snippets */
+.status .text .content pre, .status .text .content code {
+  background: black;
+  color: var(--white2);
+}
+
+/* Block quotes */
+.status .text .content blockquote {
+  background-color: black;
+}
+
+/* Media wrapper for attachments */
+.status .media .media-wrapper {
+  background: var(--bg-nearly-opaque);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  border: 0.2rem dashed var(--magenta);
+}
+
+/* Polls */
+.status .text .poll {
+  background-color: black;
+  border: 0.25rem solid var(--magenta);
+}
+
+.status .text .poll .poll-info {
+  background-color: black;
+}
+
+/* Status info bars */
+.status .status-info, .status.expanded .status-info {
+  background: black;
+}
+
+/* Back + next links */
+.backnextlinks {
+  background: var(--gray1);
+  padding: 0.5rem;
+  border: 0.25rem solid var(--magenta);
+  border-radius: var(--br);
+}
+
+.page-footer {
+  margin-top: 2rem;
+  background-color: var(--gray1);
+  border-top: 0.25rem solid var(--magenta);
+}
