@@ -72,7 +72,9 @@ func processSQLiteError(err error) error {
 	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
 		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
-	case sqlite3.SQLITE_BUSY:
+	case sqlite3.SQLITE_BUSY,
+		sqlite3.SQLITE_BUSY_SNAPSHOT,
+		sqlite3.SQLITE_BUSY_RECOVERY:
 		return errBusy
 	case sqlite3.SQLITE_BUSY_TIMEOUT:
 		return db.ErrBusyTimeout
