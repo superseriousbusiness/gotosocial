@@ -79,15 +79,15 @@ function UserProfileForm({ data: profile }) {
 	
 	// Parse out available theme options into nice format.
 	const { data: themes } = useAccountThemesQuery();
-	let themeOptions = { "": "Default" }
+	let themeOptions = { "": "Default" };
 	themes?.forEach((theme) => {
 		let key = theme.file_name;
 		let value = theme.title;
 		if (theme.description) {
 			value += " - " + theme.description;
 		}
-		themeOptions[key] = value
-	})
+		themeOptions[key] = value;
+	});
 
 	const form = {
 		avatar: useFileInput("avatar", { withPreview: true }),

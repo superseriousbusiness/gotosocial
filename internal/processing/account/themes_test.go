@@ -42,8 +42,8 @@ func (suite *ThemesTestSuite) TestPopulateThemes() {
 	if theme == nil {
 		suite.FailNow("theme was nil")
 	}
-	suite.Equal("Blurple Light", theme.Title)
-	suite.Equal("Light blurple theme", theme.Description)
+	suite.Equal("Blurple (light)", theme.Title)
+	suite.Equal("Official light blurple theme", theme.Description)
 	suite.Equal("blurple-light.css", theme.FileName)
 }
 
