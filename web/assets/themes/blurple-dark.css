@@ -46,6 +46,11 @@
   --boxshadow-border: 0.08rem solid black;
 }
 
+/* Scroll bar */
+html, body {
+  scrollbar-color: var(--blurple8) var(--blurple12);
+}
+
 /* Profile fields */
 .profile .about-user .fields .field {
   border-bottom: 0.1rem solid var(--blurple8);
@@ -61,11 +66,27 @@
 .status .media .media-wrapper details .unknown-attachment .placeholder {
   color: var(--blue2);
 }
+.status .media .media-wrapper details video.plyr-video {
+  background: var(--blurple11);
+}
 
 /* Status polls */
 .status .text .poll {
-  background-color: var(--blurple12);
+  background-color: var(--bg);
 }
 .status .text .poll .poll-info {
   background-color: var(--blurple11);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background-color: var(--blurple12);
+  color: var(--fg-reduced);
+}
+
+/* Block quotes */
+blockquote {
+  background-color: var(--blurple12);
+  color: var(--fg-reduced);
 }

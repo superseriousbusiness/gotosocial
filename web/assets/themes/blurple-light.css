@@ -16,6 +16,7 @@
   --blurple9: #5c33ae;
   --blurple10: #471aa4;
   --blurple11: #33009a;
+  --blurple12: #170044;
 
   /* Restyle basic colors to use blurple */
   --white1: var(--blurple2);
@@ -47,6 +48,11 @@
   --boxshadow-border: 0.08rem solid var(--blurple10);
 }
 
+/* Scroll bar */
+html, body {
+  scrollbar-color: var(--blurple8) var(--blurple2);
+}
+
 /* Profile fields */
 .profile .about-user .fields .field {
   border-bottom: 0.1rem solid var(--blurple10);
@@ -62,6 +68,9 @@
 .status .media .media-wrapper details .unknown-attachment .placeholder {
   color: var(--blue2);
 }
+.status .media .media-wrapper details video.plyr-video {
+  background: var(--blurple2);
+}
 
 /* Status polls */
 .status .text .poll {
@@ -69,4 +78,17 @@
 }
 .status .text .poll .poll-info {
   background-color: var(--white1);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background-color: var(--blurple12);
+  color: var(--blurple2);
+}
+
+/* Block quotes */
+blockquote {
+	background-color: var(--blurple1);
+  color: var(--blurple12);
 }
