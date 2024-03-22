@@ -19,8 +19,9 @@ package gtsmodel
 
 import "time"
 
+// AccountSettings models settings / preferences for a local, non-instance account.
 type AccountSettings struct {
-	ID                string     `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	AccountID         string     `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // AccountID that owns this settings.
 	CreatedAt         time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created.
 	UpdatedAt         time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item was last updated.
 	Reason            string     `bun:",nullzero"`                                                   // What reason was given for signing up when this account was created?

@@ -55,9 +55,8 @@ type Account struct {
 	SilencedAt            *time.Time      `json:"silencedAt,omitempty" bun:",nullzero"`
 	SuspendedAt           *time.Time      `json:"suspendedAt,omitempty" bun:",nullzero"`
 	SuspensionOrigin      string          `json:"suspensionOrigin,omitempty" bun:",nullzero"`
-	SettingsID            string          `json:"settingsID,omitempty" bun:",nullzero"`
 }
 
 type AccountSettings struct {
-	ID string
+	AccountID string
 }

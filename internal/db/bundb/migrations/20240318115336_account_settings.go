@@ -19,12 +19,9 @@ package migrations
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	oldgtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20230328203024_migration_fix"
 	newgtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 
@@ -34,24 +31,6 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		log.Info(ctx, "migrating account settings to new table, please wait...")
-
-		// Add settings_id to accounts table.
-		//
-		// Do this outside of the transaction so it doesn't mess
-		// up the transaction if the column exists already.
-		_, err := db.ExecContext(ctx,
-			"ALTER TABLE ? ADD COLUMN ? CHAR(26)",
-			bun.Ident("accounts"), bun.Ident("settings_id"),
-		)
-		if err != nil {
-			e := err.Error()
-			if !(strings.Contains(e, "already exists") ||
-				strings.Contains(e, "duplicate column name") ||
-				strings.Contains(e, "SQLSTATE 42701")) {
-				return err
-			}
-		}
-
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// Columns we'll be moving
 			// to AccountSettings.
@@ -94,13 +73,8 @@ func init() {
 			// Create a settings entry for each existing account, taking
 			// values from the old account model (with sensible defaults).
 			for _, account := range accounts {
-				settingsID, err := id.NewRandomULID()
-				if err != nil {
-					return fmt.Errorf("error creating settingsID: %w", err)
-				}
-
 				settings := &newgtsmodel.AccountSettings{
-					ID:                settingsID,
+					AccountID:         account.ID,
 					CreatedAt:         account.CreatedAt,
 					Reason:            account.Reason,
 					Privacy:           newgtsmodel.Visibility(account.Privacy),
@@ -116,16 +90,6 @@ func init() {
 				if _, err := tx.
 					NewInsert().
 					Model(settings).
-					Exec(ctx); err != nil {
-					return err
-				}
-
-				// Update account with new settings ID.
-				if _, err := tx.
-					NewUpdate().
-					Table("accounts").
-					Set("? = ?", bun.Ident("settings_id"), settings.ID).
-					Where("? = ?", bun.Ident("id"), account.ID).
 					Exec(ctx); err != nil {
 					return err
 				}

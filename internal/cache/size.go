@@ -249,7 +249,7 @@ func sizeofAccountNote() uintptr {
 
 func sizeofAccountSettings() uintptr {
 	return uintptr(size.Of(&gtsmodel.AccountSettings{
-		ID:                exampleID,
+		AccountID:         exampleID,
 		CreatedAt:         exampleTime,
 		UpdatedAt:         exampleTime,
 		Reason:            exampleText,

@@ -353,7 +353,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
 			SuspensionOrigin:        "",
-			SettingsID:              "01HS90H04H2MSARC9QQE5RR8VX",
 			Settings:                settings["unconfirmed_account"],
 		},
 		"admin_account": {
@@ -388,7 +387,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
 			SuspensionOrigin:        "",
-			SettingsID:              "01HS90JWVBQK1BPMMQGVAM1MND",
 			Settings:                settings["admin_account"],
 		},
 		"local_account_1": {
@@ -423,7 +421,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
 			SuspensionOrigin:        "",
-			SettingsID:              "01HS90M11AWFA7DB00XQ3BB1D1",
 			Settings:                settings["local_account_1"],
 		},
 		"local_account_2": {
@@ -477,7 +474,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
 			SuspensionOrigin:      "",
-			SettingsID:            "01HS90N2SDC5JHA0F8TMAM7TBE",
 			Settings:              settings["local_account_2"],
 		},
 		"remote_account_1": {
@@ -665,7 +661,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 	return map[string]*gtsmodel.AccountSettings{
 		"unconfirmed_account": {
-			ID:              "01HS90H04H2MSARC9QQE5RR8VX",
+			AccountID:       "01F8MH0BBE4FHXPH513MBVFHB0",
 			CreatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
 			UpdatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
 			Reason:          "hi, please let me in! I'm looking for somewhere neato bombeato to hang out.",
@@ -676,7 +672,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			HideCollections: util.Ptr(false),
 		},
 		"admin_account": {
-			ID:              "01HS90JWVBQK1BPMMQGVAM1MND",
+			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF",
 			CreatedAt:       TimeMustParse("2022-05-17T13:10:59Z"),
 			UpdatedAt:       TimeMustParse("2022-05-17T13:10:59Z"),
 			Reason:          "",
@@ -687,7 +683,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			HideCollections: util.Ptr(false),
 		},
 		"local_account_1": {
-			ID:              "01HS90M11AWFA7DB00XQ3BB1D1",
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
 			CreatedAt:       TimeMustParse("2022-05-20T11:09:18Z"),
 			UpdatedAt:       TimeMustParse("2022-05-20T11:09:18Z"),
 			Reason:          "I wanna be on this damned webbed site so bad! Please! Wow",
@@ -698,7 +694,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			HideCollections: util.Ptr(false),
 		},
 		"local_account_2": {
-			ID:              "01HS90N2SDC5JHA0F8TMAM7TBE",
+			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
 			CreatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
 			UpdatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
 			Reason:          "",

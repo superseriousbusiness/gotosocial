@@ -117,6 +117,10 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 		suite.FailNow(err.Error())
 	}
 
+	if err := suite.db.PutAccountSettings(context.Background(), &gtsmodel.AccountSettings{AccountID: targetAccount.ID}); err != nil {
+		suite.FailNow(err.Error())
+	}
+
 	return targetAccount
 }
 

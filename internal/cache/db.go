@@ -277,7 +277,7 @@ func (c *Caches) initAccountSettings() {
 
 	c.GTS.AccountSettings.Init(structr.Config[*gtsmodel.AccountSettings]{
 		Indices: []structr.IndexConfig{
-			{Fields: "ID"},
+			{Fields: "AccountID"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,

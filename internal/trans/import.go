@@ -25,6 +25,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
 )
@@ -73,9 +74,11 @@ func (i *importer) inputEntry(ctx context.Context, entry transmodel.Entry) error
 		if err := i.putInDB(ctx, account); err != nil {
 			return fmt.Errorf("inputEntry: error adding account to database: %s", err)
 		}
-		if account.SettingsID != "" {
+		if account.Domain == "" && account.Username != config.GetHost() {
+			// Local, non-instance account.
 			// Insert barebones settings model.
-			if err := i.putInDB(ctx, &transmodel.AccountSettings{ID: account.SettingsID}); err != nil {
+			settings := &transmodel.AccountSettings{AccountID: account.ID}
+			if err := i.putInDB(ctx, settings); err != nil {
 				return fmt.Errorf("inputEntry: error adding account settings to database: %s", err)
 			}
 		}

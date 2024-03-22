@@ -113,12 +113,6 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 			return nil, err
 		}
 
-		settingsID, err := id.NewRandomULID()
-		if err != nil {
-			err := gtserror.Newf("error creating new account settings id: %w", err)
-			return nil, err
-		}
-
 		privKey, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 		if err != nil {
 			err := gtserror.Newf("error creating new rsa private key: %w", err)
@@ -126,9 +120,9 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 		}
 
 		settings := &gtsmodel.AccountSettings{
-			ID:      settingsID,
-			Reason:  newSignup.Reason,
-			Privacy: gtsmodel.VisibilityDefault,
+			AccountID: accountID,
+			Reason:    newSignup.Reason,
+			Privacy:   gtsmodel.VisibilityDefault,
 		}
 
 		// Insert the settings!
@@ -151,7 +145,6 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 			PrivateKey:            privKey,
 			PublicKey:             &privKey.PublicKey,
 			PublicKeyURI:          uris.PublicKeyURI,
-			SettingsID:            settingsID,
 			Settings:              settings,
 		}
 

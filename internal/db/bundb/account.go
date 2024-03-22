@@ -338,11 +338,11 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 		}
 	}
 
-	if account.Settings == nil && account.SettingsID != "" {
+	if account.IsLocal() && account.Settings == nil && !account.IsInstance() {
 		// Account settings not set, fetch from db.
 		account.Settings, err = a.state.DB.GetAccountSettings(
 			ctx, // these are already barebones
-			account.SettingsID,
+			account.ID,
 		)
 		if err != nil {
 			errs.Appendf("error populating account settings: %w", err)
@@ -524,7 +524,7 @@ func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username 
 	// Ensure settings populated, in case
 	// barebones context was passed.
 	if account.Settings == nil {
-		account.Settings, err = a.GetAccountSettings(ctx, account.SettingsID)
+		account.Settings, err = a.GetAccountSettings(ctx, account.ID)
 		if err != nil {
 			return "", err
 		}
@@ -804,24 +804,24 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 
 func (a *accountDB) GetAccountSettings(
 	ctx context.Context,
-	settingsID string,
+	accountID string,
 ) (*gtsmodel.AccountSettings, error) {
 	// Fetch settings from db cache with loader callback.
 	return a.state.Caches.GTS.AccountSettings.LoadOne(
-		"ID",
+		"AccountID",
 		func() (*gtsmodel.AccountSettings, error) {
 			// Not cached! Perform database query.
 			var settings gtsmodel.AccountSettings
 			if err := a.db.
 				NewSelect().
 				Model(&settings).
-				Where("? = ?", bun.Ident("account_settings.id"), settingsID).
+				Where("? = ?", bun.Ident("account_settings.account_id"), accountID).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
 			return &settings, nil
 		},
-		settingsID,
+		accountID,
 	)
 }
 
@@ -858,7 +858,7 @@ func (a *accountDB) UpdateAccountSettings(
 			NewUpdate().
 			Model(settings).
 			Column(columns...).
-			Where("? = ?", bun.Ident("account_settings.id"), settings.ID).
+			Where("? = ?", bun.Ident("account_settings.account_id"), settings.AccountID).
 			Exec(ctx); err != nil {
 			return err
 		}

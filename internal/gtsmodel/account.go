@@ -79,7 +79,6 @@ type Account struct {
 	SilencedAt              time.Time        `bun:"type:timestamptz,nullzero"`                                   // When was this account silenced (eg., statuses only visible to followers, not public)?
 	SuspendedAt             time.Time        `bun:"type:timestamptz,nullzero"`                                   // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
 	SuspensionOrigin        string           `bun:"type:CHAR(26),nullzero"`                                      // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
-	SettingsID              string           `bun:"type:CHAR(26),nullzero"`                                      // If account is local, ID of the settings model for this account.
 	Settings                *AccountSettings `bun:"-"`                                                           // gtsmodel.AccountSettings for this account.
 }
 
