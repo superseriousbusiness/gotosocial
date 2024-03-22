@@ -32,9 +32,9 @@ func (p *Processor) PreferencesGet(ctx context.Context, accountID string) (*apim
 	}
 
 	return &apimodel.Preferences{
-		PostingDefaultVisibility: mastoPrefVisibility(act.Privacy),
-		PostingDefaultSensitive:  *act.Sensitive,
-		PostingDefaultLanguage:   act.Language,
+		PostingDefaultVisibility: mastoPrefVisibility(act.Settings.Privacy),
+		PostingDefaultSensitive:  *act.Settings.Sensitive,
+		PostingDefaultLanguage:   act.Settings.Language,
 		// The Reading* preferences don't appear to actually be settable by the
 		// client, so forcing some sensible defaults here
 		ReadingExpandMedia:    "default",

@@ -117,4 +117,13 @@ type Account interface {
 	// GetInstanceAccount returns the instance account for the given domain.
 	// If domain is empty, this instance account will be returned.
 	GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, error)
+
+	// Get local account settings with the given ID.
+	GetAccountSettings(ctx context.Context, id string) (*gtsmodel.AccountSettings, error)
+
+	// Store local account settings.
+	PutAccountSettings(ctx context.Context, settings *gtsmodel.AccountSettings) error
+
+	// Update local account settings.
+	UpdateAccountSettings(ctx context.Context, settings *gtsmodel.AccountSettings, columns ...string) error
 }

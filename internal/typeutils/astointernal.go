@@ -130,13 +130,8 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	// Extract account note (bio / summary).
 	acct.Note = ap.ExtractSummary(accountable)
 
-	// Assume:
-	// - memorial (TODO)
-	// - sensitive (TODO)
-	// - hide collections (TODO)
+	// Assume not memorial (todo)
 	acct.Memorial = util.Ptr(false)
-	acct.Sensitive = util.Ptr(false)
-	acct.HideCollections = util.Ptr(false)
 
 	// Extract 'manuallyApprovesFollowers' aka locked account (default = true).
 	manuallyApprovesFollowers := ap.GetManuallyApprovesFollowers(accountable)
@@ -145,9 +140,6 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 	// Extract account discoverability (default = false).
 	discoverable := ap.GetDiscoverable(accountable)
 	acct.Discoverable = &discoverable
-
-	// Assume not an RSS feed.
-	acct.EnableRSS = util.Ptr(false)
 
 	// Extract the URL property.
 	urls := ap.GetURL(accountable)

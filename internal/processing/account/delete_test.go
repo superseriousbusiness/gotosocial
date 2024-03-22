@@ -66,14 +66,9 @@ func (suite *AccountDeleteTestSuite) TestAccountDeleteLocal() {
 	suite.Zero(updatedAccount.NoteRaw)
 	suite.False(*updatedAccount.Memorial)
 	suite.Empty(updatedAccount.AlsoKnownAsURIs)
-	suite.Zero(updatedAccount.Reason)
 	suite.False(*updatedAccount.Discoverable)
-	suite.Zero(updatedAccount.StatusContentType)
-	suite.Zero(updatedAccount.CustomCSS)
 	suite.WithinDuration(time.Now(), updatedAccount.SuspendedAt, 1*time.Minute)
 	suite.Equal(suspensionOrigin, updatedAccount.SuspensionOrigin)
-	suite.True(*updatedAccount.HideCollections)
-	suite.False(*updatedAccount.EnableRSS)
 
 	updatedUser, err := suite.db.GetUserByAccountID(ctx, testAccount.ID)
 	if err != nil {

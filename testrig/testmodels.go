@@ -286,6 +286,8 @@ func NewTestUsers() map[string]*gtsmodel.User {
 
 // NewTestAccounts returns a map of accounts keyed by what type of account they are.
 func NewTestAccounts() map[string]*gtsmodel.Account {
+	settings := NewTestAccountSettings()
+
 	accounts := map[string]*gtsmodel.Account{
 		"instance_account": {
 			ID:                      "01AY6P665V14JJR0AFVRT7311Y",
@@ -301,12 +303,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			CreatedAt:               TimeMustParse("2020-05-17T13:10:59Z"),
 			UpdatedAt:               TimeMustParse("2020-05-17T13:10:59Z"),
 			Bot:                     util.Ptr(false),
-			Reason:                  "",
 			Locked:                  util.Ptr(false),
 			Discoverable:            util.Ptr(true),
-			Privacy:                 gtsmodel.VisibilityPublic,
-			Sensitive:               util.Ptr(false),
-			Language:                "en",
 			URI:                     "http://localhost:8080/users/localhost:8080",
 			URL:                     "http://localhost:8080/@localhost:8080",
 			PublicKeyURI:            "http://localhost:8080/users/localhost:8080#main-key",
@@ -322,9 +320,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
-			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
-			EnableRSS:               util.Ptr(false),
 		},
 		"unconfirmed_account": {
 			ID:                      "01F8MH0BBE4FHXPH513MBVFHB0",
@@ -339,12 +335,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			CreatedAt:               TimeMustParse("2022-06-04T13:12:00Z"),
 			UpdatedAt:               TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                     util.Ptr(false),
-			Reason:                  "hi, please let me in! I'm looking for somewhere neato bombeato to hang out.",
 			Locked:                  util.Ptr(false),
 			Discoverable:            util.Ptr(false),
-			Privacy:                 gtsmodel.VisibilityPublic,
-			Sensitive:               util.Ptr(false),
-			Language:                "en",
 			URI:                     "http://localhost:8080/users/weed_lord420",
 			URL:                     "http://localhost:8080/@weed_lord420",
 			FetchedAt:               time.Time{},
@@ -360,9 +352,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
-			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
-			EnableRSS:               util.Ptr(false),
+			Settings:                settings["unconfirmed_account"],
 		},
 		"admin_account": {
 			ID:                      "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -378,12 +369,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			CreatedAt:               TimeMustParse("2022-05-17T13:10:59Z"),
 			UpdatedAt:               TimeMustParse("2022-05-17T13:10:59Z"),
 			Bot:                     util.Ptr(false),
-			Reason:                  "",
 			Locked:                  util.Ptr(false),
 			Discoverable:            util.Ptr(true),
-			Privacy:                 gtsmodel.VisibilityPublic,
-			Sensitive:               util.Ptr(false),
-			Language:                "en",
 			URI:                     "http://localhost:8080/users/admin",
 			URL:                     "http://localhost:8080/@admin",
 			PublicKeyURI:            "http://localhost:8080/users/admin#main-key",
@@ -399,9 +386,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
-			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
-			EnableRSS:               util.Ptr(true),
+			Settings:                settings["admin_account"],
 		},
 		"local_account_1": {
 			ID:                      "01F8MH1H7YV1Z7D2C8K2730QBF",
@@ -417,12 +403,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			CreatedAt:               TimeMustParse("2022-05-20T11:09:18Z"),
 			UpdatedAt:               TimeMustParse("2022-05-20T11:09:18Z"),
 			Bot:                     util.Ptr(false),
-			Reason:                  "I wanna be on this damned webbed site so bad! Please! Wow",
 			Locked:                  util.Ptr(false),
 			Discoverable:            util.Ptr(true),
-			Privacy:                 gtsmodel.VisibilityPublic,
-			Sensitive:               util.Ptr(false),
-			Language:                "en",
 			URI:                     "http://localhost:8080/users/the_mighty_zork",
 			URL:                     "http://localhost:8080/@the_mighty_zork",
 			FetchedAt:               time.Time{},
@@ -438,9 +420,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
-			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
-			EnableRSS:               util.Ptr(true),
+			Settings:                settings["local_account_1"],
 		},
 		"local_account_2": {
 			ID:                      "01F8MH5NBDF2MV7CTC4Q5128HF",
@@ -475,12 +456,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			CreatedAt:             TimeMustParse("2022-06-04T13:12:00Z"),
 			UpdatedAt:             TimeMustParse("2022-06-04T13:12:00Z"),
 			Bot:                   util.Ptr(false),
-			Reason:                "",
 			Locked:                util.Ptr(true),
 			Discoverable:          util.Ptr(false),
-			Privacy:               gtsmodel.VisibilityFollowersOnly,
-			Sensitive:             util.Ptr(true),
-			Language:              "fr",
 			URI:                   "http://localhost:8080/users/1happyturtle",
 			URL:                   "http://localhost:8080/@1happyturtle",
 			FetchedAt:             time.Time{},
@@ -496,9 +473,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:          time.Time{},
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
-			HideCollections:       util.Ptr(false),
 			SuspensionOrigin:      "",
-			EnableRSS:             util.Ptr(false),
+			Settings:              settings["local_account_2"],
 		},
 		"remote_account_1": {
 			ID:                    "01F8MH5ZK5VRH73AKHQM6Y9VNX",
@@ -514,8 +490,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Bot:                   util.Ptr(false),
 			Locked:                util.Ptr(false),
 			Discoverable:          util.Ptr(true),
-			Sensitive:             util.Ptr(false),
-			Language:              "en",
 			URI:                   "http://fossbros-anonymous.io/users/foss_satan",
 			URL:                   "http://fossbros-anonymous.io/@foss_satan",
 			FetchedAt:             time.Time{},
@@ -532,9 +506,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:          time.Time{},
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
-			HideCollections:       util.Ptr(false),
 			SuspensionOrigin:      "",
-			EnableRSS:             util.Ptr(false),
 		},
 		"remote_account_2": {
 			ID:                    "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -550,8 +522,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Bot:                   util.Ptr(false),
 			Locked:                util.Ptr(true),
 			Discoverable:          util.Ptr(true),
-			Sensitive:             util.Ptr(false),
-			Language:              "en",
 			URI:                   "http://example.org/users/Some_User",
 			URL:                   "http://example.org/@Some_User",
 			FetchedAt:             time.Time{},
@@ -568,9 +538,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:          time.Time{},
 			SilencedAt:            time.Time{},
 			SuspendedAt:           time.Time{},
-			HideCollections:       util.Ptr(false),
 			SuspensionOrigin:      "",
-			EnableRSS:             util.Ptr(false),
 		},
 		"remote_account_3": {
 			ID:                      "062G5WYKY35KKD12EMSM3F8PJ8",
@@ -586,8 +554,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Bot:                     util.Ptr(false),
 			Locked:                  util.Ptr(true),
 			Discoverable:            util.Ptr(true),
-			Sensitive:               util.Ptr(false),
-			Language:                "en",
 			URI:                     "http://thequeenisstillalive.technology/users/her_fuckin_maj",
 			URL:                     "http://thequeenisstillalive.technology/@her_fuckin_maj",
 			FetchedAt:               time.Time{},
@@ -604,10 +570,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
-			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
 			HeaderMediaAttachmentID: "01PFPMWK2FF0D9WMHEJHR07C3R",
-			EnableRSS:               util.Ptr(false),
 		},
 		"remote_account_4": {
 			ID:                      "07GZRBAEMBNKGZ8Z9VSKSXKR98",
@@ -622,8 +586,6 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			Bot:                     util.Ptr(false),
 			Locked:                  util.Ptr(false),
 			Discoverable:            util.Ptr(false),
-			Sensitive:               util.Ptr(false),
-			Language:                "de",
 			URI:                     "https://xn--xample-ova.org/users/%C3%BCser",
 			URL:                     "https://xn--xample-ova.org/users/@%C3%BCser",
 			FetchedAt:               time.Time{},
@@ -640,10 +602,8 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 			SensitizedAt:            time.Time{},
 			SilencedAt:              time.Time{},
 			SuspendedAt:             time.Time{},
-			HideCollections:         util.Ptr(false),
 			SuspensionOrigin:        "",
 			HeaderMediaAttachmentID: "",
-			EnableRSS:               util.Ptr(false),
 		},
 	}
 
@@ -696,6 +656,55 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	}
 
 	return accounts
+}
+
+func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
+	return map[string]*gtsmodel.AccountSettings{
+		"unconfirmed_account": {
+			AccountID:       "01F8MH0BBE4FHXPH513MBVFHB0",
+			CreatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
+			UpdatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
+			Reason:          "hi, please let me in! I'm looking for somewhere neato bombeato to hang out.",
+			Privacy:         gtsmodel.VisibilityPublic,
+			Sensitive:       util.Ptr(false),
+			Language:        "en",
+			EnableRSS:       util.Ptr(false),
+			HideCollections: util.Ptr(false),
+		},
+		"admin_account": {
+			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF",
+			CreatedAt:       TimeMustParse("2022-05-17T13:10:59Z"),
+			UpdatedAt:       TimeMustParse("2022-05-17T13:10:59Z"),
+			Reason:          "",
+			Privacy:         gtsmodel.VisibilityPublic,
+			Sensitive:       util.Ptr(false),
+			Language:        "en",
+			EnableRSS:       util.Ptr(true),
+			HideCollections: util.Ptr(false),
+		},
+		"local_account_1": {
+			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
+			CreatedAt:       TimeMustParse("2022-05-20T11:09:18Z"),
+			UpdatedAt:       TimeMustParse("2022-05-20T11:09:18Z"),
+			Reason:          "I wanna be on this damned webbed site so bad! Please! Wow",
+			Privacy:         gtsmodel.VisibilityPublic,
+			Sensitive:       util.Ptr(false),
+			Language:        "en",
+			EnableRSS:       util.Ptr(true),
+			HideCollections: util.Ptr(false),
+		},
+		"local_account_2": {
+			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			CreatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
+			UpdatedAt:       TimeMustParse("2022-06-04T13:12:00Z"),
+			Reason:          "",
+			Privacy:         gtsmodel.VisibilityFollowersOnly,
+			Sensitive:       util.Ptr(true),
+			Language:        "fr",
+			EnableRSS:       util.Ptr(false),
+			HideCollections: util.Ptr(false),
+		},
+	}
 }
 
 func NewTestTombstones() map[string]*gtsmodel.Tombstone {

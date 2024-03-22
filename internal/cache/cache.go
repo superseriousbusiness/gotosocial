@@ -53,6 +53,7 @@ func (c *Caches) Init() {
 	c.initAccount()
 	c.initAccountCounts()
 	c.initAccountNote()
+	c.initAccountSettings()
 	c.initApplication()
 	c.initBlock()
 	c.initBlockIDs()
@@ -119,6 +120,7 @@ func (c *Caches) Stop() {
 func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Account.Trim(threshold)
 	c.GTS.AccountNote.Trim(threshold)
+	c.GTS.AccountSettings.Trim(threshold)
 	c.GTS.Block.Trim(threshold)
 	c.GTS.BlockIDs.Trim(threshold)
 	c.GTS.Emoji.Trim(threshold)

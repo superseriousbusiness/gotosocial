@@ -119,12 +119,21 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 			return nil, err
 		}
 
+		settings := &gtsmodel.AccountSettings{
+			AccountID: accountID,
+			Reason:    newSignup.Reason,
+			Privacy:   gtsmodel.VisibilityDefault,
+		}
+
+		// Insert the settings!
+		if err := a.state.DB.PutAccountSettings(ctx, settings); err != nil {
+			return nil, err
+		}
+
 		account = &gtsmodel.Account{
 			ID:                    accountID,
 			Username:              newSignup.Username,
 			DisplayName:           newSignup.Username,
-			Reason:                newSignup.Reason,
-			Privacy:               gtsmodel.VisibilityDefault,
 			URI:                   uris.UserURI,
 			URL:                   uris.UserURL,
 			InboxURI:              uris.InboxURI,
@@ -136,6 +145,7 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 			PrivateKey:            privKey,
 			PublicKey:             &privKey.PublicKey,
 			PublicKeyURI:          uris.PublicKeyURI,
+			Settings:              settings,
 		}
 
 		// Insert the new account!

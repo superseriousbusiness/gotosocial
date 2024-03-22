@@ -85,19 +85,13 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 	suite.Nil(a.Fields)
 	suite.Empty(a.Note)
 	suite.Empty(a.NoteRaw)
-	suite.False(*a.Memorial)
 	suite.Empty(a.AlsoKnownAsURIs)
 	suite.Empty(a.MovedToURI)
 	suite.False(*a.Bot)
-	suite.Empty(a.Reason)
 	// Locked is especially important, since it's a bool that defaults
 	// to true, which is why we use pointers for bools in the first place
 	suite.True(*a.Locked)
 	suite.False(*a.Discoverable)
-	suite.Empty(a.Privacy)
-	suite.False(*a.Sensitive)
-	suite.Equal("en", a.Language)
-	suite.Empty(a.StatusContentType)
 	suite.Equal(testAccount.URI, a.URI)
 	suite.Equal(testAccount.URL, a.URL)
 	suite.Zero(testAccount.FetchedAt)
@@ -113,7 +107,6 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 	suite.Zero(a.SensitizedAt)
 	suite.Zero(a.SilencedAt)
 	suite.Zero(a.SuspendedAt)
-	suite.False(*a.HideCollections)
 	suite.Empty(a.SuspensionOrigin)
 }
 

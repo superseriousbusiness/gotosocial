@@ -26,6 +26,7 @@ EXPECT=$(cat << "EOF"
     "cache": {
         "account-mem-ratio": 5,
         "account-note-mem-ratio": 1,
+        "account-settings-mem-ratio": 0.1,
         "application-mem-ratio": 0.1,
         "block-mem-ratio": 3,
         "boost-of-ids-mem-ratio": 3,

@@ -78,14 +78,14 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	}
 
 	statusContentType := string(apimodel.StatusContentTypeDefault)
-	if a.StatusContentType != "" {
-		statusContentType = a.StatusContentType
+	if a.Settings.StatusContentType != "" {
+		statusContentType = a.Settings.StatusContentType
 	}
 
 	apiAccount.Source = &apimodel.Source{
-		Privacy:             c.VisToAPIVis(ctx, a.Privacy),
-		Sensitive:           *a.Sensitive,
-		Language:            a.Language,
+		Privacy:             c.VisToAPIVis(ctx, a.Settings.Privacy),
+		Sensitive:           *a.Settings.Sensitive,
+		Language:            a.Settings.Language,
 		StatusContentType:   statusContentType,
 		Note:                a.NoteRaw,
 		Fields:              c.fieldsToAPIFields(a.FieldsRaw),
@@ -170,10 +170,13 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// Bits that vary between remote + local accounts:
 	//   - Account (acct) string.
 	//   - Role.
+	//   - Settings things (enableRSS, customCSS).
 
 	var (
-		acct string
-		role *apimodel.AccountRole
+		acct      string
+		role      *apimodel.AccountRole
+		enableRSS bool
+		customCSS string
 	)
 
 	if a.IsRemote() {
@@ -203,6 +206,9 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			default:
 				role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
 			}
+
+			enableRSS = *a.Settings.EnableRSS
+			customCSS = a.Settings.CustomCSS
 		}
 
 		acct = a.Username // omit domain
@@ -239,7 +245,6 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		locked       = boolPtrDef("locked", a.Locked, true)
 		discoverable = boolPtrDef("discoverable", a.Discoverable, false)
 		bot          = boolPtrDef("bot", a.Bot, false)
-		enableRSS    = boolPtrDef("enableRSS", a.EnableRSS, false)
 	)
 
 	// Remaining properties are simple and
@@ -267,7 +272,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Emojis:         apiEmojis,
 		Fields:         fields,
 		Suspended:      !a.SuspendedAt.IsZero(),
-		CustomCSS:      a.CustomCSS,
+		CustomCSS:      customCSS,
 		EnableRSS:      enableRSS,
 		Role:           role,
 		Moved:          moved,
@@ -376,6 +381,10 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		createdByApplicationID string
 	)
 
+	if err := c.state.DB.PopulateAccount(ctx, a); err != nil {
+		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
+	}
+
 	if a.IsRemote() {
 		// Domain may be in Punycode,
 		// de-punify it just in case.
@@ -404,8 +413,8 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		}
 
 		locale = user.Locale
-		if user.Account.Reason != "" {
-			inviteRequest = &user.Account.Reason
+		if a.Settings.Reason != "" {
+			inviteRequest = &a.Settings.Reason
 		}
 
 		if *user.Admin {

@@ -338,6 +338,17 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 		}
 	}
 
+	if account.IsLocal() && account.Settings == nil && !account.IsInstance() {
+		// Account settings not set, fetch from db.
+		account.Settings, err = a.state.DB.GetAccountSettings(
+			ctx, // these are already barebones
+			account.ID,
+		)
+		if err != nil {
+			errs.Appendf("error populating account settings: %w", err)
+		}
+	}
+
 	return errs.Combine()
 }
 
@@ -504,12 +515,22 @@ func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachmen
 }
 
 func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, error) {
+	// Get local account.
 	account, err := a.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		return "", err
 	}
 
-	return account.CustomCSS, nil
+	// Ensure settings populated, in case
+	// barebones context was passed.
+	if account.Settings == nil {
+		account.Settings, err = a.GetAccountSettings(ctx, account.ID)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return account.Settings.CustomCSS, nil
 }
 
 func (a *accountDB) GetAccountsUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Account, error) {
@@ -779,4 +800,69 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 	}
 
 	return a.state.DB.GetStatusesByIDs(ctx, statusIDs)
+}
+
+func (a *accountDB) GetAccountSettings(
+	ctx context.Context,
+	accountID string,
+) (*gtsmodel.AccountSettings, error) {
+	// Fetch settings from db cache with loader callback.
+	return a.state.Caches.GTS.AccountSettings.LoadOne(
+		"AccountID",
+		func() (*gtsmodel.AccountSettings, error) {
+			// Not cached! Perform database query.
+			var settings gtsmodel.AccountSettings
+			if err := a.db.
+				NewSelect().
+				Model(&settings).
+				Where("? = ?", bun.Ident("account_settings.account_id"), accountID).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+			return &settings, nil
+		},
+		accountID,
+	)
+}
+
+func (a *accountDB) PutAccountSettings(
+	ctx context.Context,
+	settings *gtsmodel.AccountSettings,
+) error {
+	return a.state.Caches.GTS.AccountSettings.Store(settings, func() error {
+		if _, err := a.db.
+			NewInsert().
+			Model(settings).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (a *accountDB) UpdateAccountSettings(
+	ctx context.Context,
+	settings *gtsmodel.AccountSettings,
+	columns ...string,
+) error {
+	return a.state.Caches.GTS.AccountSettings.Store(settings, func() error {
+		settings.UpdatedAt = time.Now()
+		if len(columns) > 0 {
+			// If we're updating by column,
+			// ensure "updated_at" is included.
+			columns = append(columns, "updated_at")
+		}
+
+		if _, err := a.db.
+			NewUpdate().
+			Model(settings).
+			Column(columns...).
+			Where("? = ?", bun.Ident("account_settings.account_id"), settings.AccountID).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }

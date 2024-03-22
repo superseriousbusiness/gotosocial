@@ -743,9 +743,6 @@ func (d *Dereferencer) enrichAccount(
 		// Set time of update from the last-fetched date.
 		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
-		// Carry over existing account language.
-		latestAcc.Language = account.Language
-
 		// This is an existing account, update the model in the database.
 		if err := d.state.DB.UpdateAccount(ctx, latestAcc); err != nil {
 			return nil, nil, gtserror.Newf("error updating database: %w", err)

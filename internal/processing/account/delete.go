@@ -518,14 +518,9 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 	account.Memorial = util.Ptr(false)
 	account.AlsoKnownAsURIs = nil
 	account.MovedToURI = ""
-	account.Reason = ""
 	account.Discoverable = util.Ptr(false)
-	account.StatusContentType = ""
-	account.CustomCSS = ""
 	account.SuspendedAt = now
 	account.SuspensionOrigin = origin
-	account.HideCollections = util.Ptr(true)
-	account.EnableRSS = util.Ptr(false)
 
 	return []string{
 		"fetched_at",
@@ -541,14 +536,9 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 		"memorial",
 		"also_known_as_uris",
 		"moved_to_uri",
-		"reason",
 		"discoverable",
-		"status_content_type",
-		"custom_css",
 		"suspended_at",
 		"suspension_origin",
-		"hide_collections",
-		"enable_rss",
 	}
 }
 
