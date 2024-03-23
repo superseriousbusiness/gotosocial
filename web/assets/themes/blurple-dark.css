@@ -24,7 +24,7 @@
   --blue3: var(--blurple3);
 
   /* Basic page styling (background + foreground) */
-  --bg: linear-gradient(var(--blurple12), black);
+  --bg: var(--blurple12);
   --bg-accent: var(--blurple11);
   --fg: var(--blurple1);
   --fg-reduced: var(--blurple3);

@@ -1,0 +1,124 @@
+/*
+  theme-title: Soft
+  theme-description: Pastel pink and blue with dark magenta trim
+*/
+
+:root {
+  /* Define our palette */
+  --soft-pink: rgb(255, 199, 234);
+  --soft-pink-translucent: rgb(255, 199, 234, 30%);
+  --soft-lilac: #D8B4F8;
+  --soft-lilac-translucent: rgb(216, 180, 248, 30%);
+  --soft-blue: #d6f1ff;
+
+  /* Override */
+  --blue1: #7f16de;
+  --blue2: #7514cc;
+  --blue3: #6b12ba;
+  --orange2: var(--blue1);
+  --br: 0.8rem;
+  --br-inner: 0.4rem; 
+
+  /* Basic page styling (background + foreground) */
+  --bg: linear-gradient(-90deg, var(--soft-blue), var(--soft-pink), white, var(--soft-pink), var(--soft-blue));
+  --bg-accent: var(--soft-pink-translucent);
+  --fg: var(--gray1);
+  --fg-reduced: var(--gray3);
+
+  /* Profile page styling (light) */
+  --profile-bg: var(--soft-pink-translucent);
+
+  /* Statuses */
+  --status-bg: var(--soft-pink-translucent);
+  --status-focus-bg: var(--soft-pink-translucent);
+  --status-info-bg: var(--soft-lilac-translucent);
+  --status-focus-info-bg: var(--soft-lilac-translucent);
+
+  /* Boot-on */
+  --button-fg: var(--white1);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 0.08rem solid var(--gray8);
+}
+
+/* Scroll bar */
+html, body {
+  scrollbar-color: var(--orange2) var(--soft-pink);
+}
+
+/* Header card */
+.profile .profile-header {
+  border: var(--boxshadow-border);
+}
+
+.profile .profile-header .basic-info .namerole .role {
+  border: var(--boxshadow-border);
+}
+
+/* About + Pinned posts headers */
+.profile .col-header {
+  border: var(--boxshadow-border);
+}
+
+.profile .about-user .col-header {
+  margin-bottom: initial;
+  border-bottom: none;
+  border-top: var(--boxshadow-border);
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+
+/* Profile fields + bio */
+.profile .about-user .fields {
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+.profile .about-user .fields .field {
+  border-bottom: 0.1rem dashed var(--blue3);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: 0.1rem dashed var(--blue3);
+}
+.profile .about-user .bio {
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+.profile .about-user .accountstats {
+  background: var(--soft-lilac-translucent);
+  border-bottom: var(--boxshadow-border);
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+  border-bottom-left-radius: var(--br);
+  border-bottom-right-radius: var(--br);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: 0.08rem solid var(--blue3);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--blue2);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: var(--soft-pink-translucent);
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--soft-lilac-translucent);
+}
+.status .text .poll .poll-info {
+  background-color: var(--soft-blue);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background-color: var(--gray1);
+  color: white;
+}
+
+/* Block quotes */
+blockquote {
+	background-color: var(--soft-lilac-translucent);
+}
