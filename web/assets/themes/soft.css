@@ -108,7 +108,7 @@ html, body {
   background-color: var(--soft-lilac-translucent);
 }
 .status .text .poll .poll-info {
-  background-color: var(--soft-blue);
+  background: var(--bg);
 }
 
 /* Code snippets */
