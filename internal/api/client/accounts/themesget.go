@@ -21,7 +21,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -73,17 +72,6 @@ func (m *Module) AccountThemesGETHandler(c *gin.Context) {
 	}
 
 	// Retrieve available themes.
-	gtsThemes := m.processor.Account().ThemesGet()
-
-	// Convert themes to apimodel.
-	themes := make([]apimodel.Theme, len(gtsThemes.SortedByTitle))
-	for i, gtsTheme := range gtsThemes.SortedByTitle {
-		themes[i] = apimodel.Theme{
-			Title:       gtsTheme.Title,
-			Description: gtsTheme.Description,
-			FileName:    gtsTheme.FileName,
-		}
-	}
-
+	themes := m.processor.Account().ThemesGet()
 	apiutil.JSON(c, http.StatusOK, themes)
 }

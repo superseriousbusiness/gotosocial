@@ -26,7 +26,9 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-bytesize"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
@@ -36,22 +38,8 @@ var (
 )
 
 // GetThemes returns available account css themes.
-func (p *Processor) ThemesGet() *Themes {
-	return p.themes
-}
-
-// Theme represents a user-selected
-// CSS theme for an account.
-type Theme struct {
-	// User-facing title of this theme.
-	Title string
-
-	// User-facing description of this theme.
-	Description string
-
-	// FileName of this theme in the themes
-	// directory (eg., `light-blurple.css`).
-	FileName string
+func (p *Processor) ThemesGet() []apimodel.Theme {
+	return p.converter.ThemesToAPIThemes(p.themes.SortedByTitle)
 }
 
 // Themes represents an in-memory
@@ -59,11 +47,11 @@ type Theme struct {
 type Themes struct {
 	// Themes sorted alphabetically
 	// by title (case insensitive).
-	SortedByTitle []*Theme
+	SortedByTitle []*gtsmodel.Theme
 
 	// ByFileName contains themes retrievable
 	// by their filename eg., `light-blurple.css`.
-	ByFileName map[string]*Theme
+	ByFileName map[string]*gtsmodel.Theme
 }
 
 // PopulateThemes parses available account CSS
@@ -82,7 +70,7 @@ func PopulateThemes() *Themes {
 	}
 
 	themes := &Themes{
-		ByFileName: make(map[string]*Theme),
+		ByFileName: make(map[string]*gtsmodel.Theme),
 	}
 
 	for _, f := range themesFiles {
@@ -143,7 +131,7 @@ func PopulateThemes() *Themes {
 			themeDescription = strings.TrimSpace(string(descMatches[1]))
 		}
 
-		theme := &Theme{
+		theme := &gtsmodel.Theme{
 			Title:       themeTitle,
 			Description: themeDescription,
 			FileName:    fileName,
@@ -155,7 +143,7 @@ func PopulateThemes() *Themes {
 
 	// Sort themes alphabetically
 	// by title (case insensitive).
-	slices.SortFunc(themes.SortedByTitle, func(a, b *Theme) int {
+	slices.SortFunc(themes.SortedByTitle, func(a, b *gtsmodel.Theme) int {
 		return cmp.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title))
 	})
 

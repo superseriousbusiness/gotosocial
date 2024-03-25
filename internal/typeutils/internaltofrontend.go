@@ -1774,3 +1774,16 @@ func (c *Converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 
 	return apiTags, errs.Combine()
 }
+
+// ThemesToAPIThemes converts a slice of gtsmodel Themes into apimodel Themes.
+func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme {
+	apiThemes := make([]apimodel.Theme, len(themes))
+	for i, theme := range themes {
+		apiThemes[i] = apimodel.Theme{
+			Title:       theme.Title,
+			Description: theme.Description,
+			FileName:    theme.FileName,
+		}
+	}
+	return apiThemes
+}
