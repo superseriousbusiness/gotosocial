@@ -33,8 +33,8 @@ type Basic interface {
 	// If the database implementation doesn't need to be stopped, this can just return nil.
 	Close() error
 
-	// IsHealthy should return nil if the database connection is healthy, or an error if not.
-	IsHealthy(ctx context.Context) error
+	// Ready returns nil if the database connection is ready, or an error if not.
+	Ready(ctx context.Context) error
 
 	// GetByID gets one entry by its id. In a database like postgres, this might be the 'id' field of the entry,
 	// for other implementations (for example, in-memory) it might just be the key of a map.

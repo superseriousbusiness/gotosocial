@@ -124,8 +124,14 @@ func (b *basicDB) DropTable(ctx context.Context, i interface{}) error {
 	return err
 }
 
-func (b *basicDB) IsHealthy(ctx context.Context) error {
-	return b.db.PingContext(ctx)
+func (b *basicDB) Ready(ctx context.Context) error {
+	if _, err := b.db.
+		NewRaw("SELECT NULL FROM ? LIMIT 0", bun.Ident("instances")).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (b *basicDB) Close() error {
