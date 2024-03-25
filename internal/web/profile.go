@@ -140,10 +140,19 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return
 	}
 
+	// Prepare stylesheets for profile.
+	stylesheets := make([]string, 0, 6)
+
 	// Basic profile stylesheets.
-	stylesheets := []string{
-		cssFA, cssStatus, cssThread, cssProfile,
-	}
+	stylesheets = append(
+		stylesheets,
+		[]string{
+			cssFA,
+			cssStatus,
+			cssThread,
+			cssProfile,
+		}...,
+	)
 
 	// User-selected theme if set.
 	if theme := targetAccount.Theme; theme != "" {
