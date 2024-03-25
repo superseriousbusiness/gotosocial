@@ -224,6 +224,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		authModule        = api.NewAuth(state.DB, processor, idp, routerSession, sessionName) // auth/oauth paths
 		clientModule      = api.NewClient(state.DB, processor)                                // api client endpoints
 		metricsModule     = api.NewMetrics()                                                  // Metrics endpoints
+		healthModule      = api.NewHealth(state.DB.Ready)                                     // Health check endpoints
 		fileserverModule  = api.NewFileserver(processor)                                      // fileserver endpoints
 		wellKnownModule   = api.NewWellKnown(processor)                                       // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(processor)                                        // nodeinfo endpoint
@@ -235,6 +236,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	authModule.Route(router)
 	clientModule.Route(router)
 	metricsModule.Route(router)
+	healthModule.Route(router)
 	fileserverModule.Route(router)
 	fileserverModule.RouteEmojis(router, instanceAccount.ID)
 	wellKnownModule.Route(router)

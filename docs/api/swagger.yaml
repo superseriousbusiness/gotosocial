@@ -7878,6 +7878,23 @@ paths:
             summary: View instance information.
             tags:
                 - instance
+    /livez:
+        get:
+            operationId: liveGet
+            responses:
+                "200":
+                    description: OK
+            summary: Returns code 200 with no body if GoToSocial is "live", ie., able to respond to HTTP requests.
+            tags:
+                - health
+        head:
+            operationId: liveHead
+            responses:
+                "200":
+                    description: OK
+            summary: Returns code 200 if GoToSocial is "live", ie., able to respond to HTTP requests.
+            tags:
+                - health
     /nodeinfo/2.0:
         get:
             description: 'See: https://nodeinfo.diaspora.software/schema.html'
@@ -7892,6 +7909,27 @@ paths:
             summary: Returns a compliant nodeinfo response to node info queries.
             tags:
                 - nodeinfo
+    /readyz:
+        get:
+            description: If GtS is not ready, 500 Internal Error will be returned, and an error will be logged (but not returned to the caller, to avoid leaking internals).
+            operationId: readyGet
+            responses:
+                "200":
+                    description: OK
+                "500":
+                    description: Not ready. Check logs for error message.
+            summary: Returns code 200 with no body if GoToSocial is "ready", ie., able to connect to the database backend and do a simple SELECT.
+            tags:
+                - health
+        head:
+            description: If GtS is not ready, 500 Internal Error will be returned, and an error will be logged (but not returned to the caller, to avoid leaking internals).
+            operationId: readyHead
+            responses:
+                "200":
+                    description: OK
+            summary: Returns code 200 with no body if GoToSocial is "ready", ie., able to connect to the database backend and do a simple SELECT.
+            tags:
+                - health
     /users/{username}/collections/featured:
         get:
             description: |-

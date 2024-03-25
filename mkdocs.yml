@@ -108,6 +108,7 @@ nav:
       - "advanced/security/index.md"
       - "advanced/security/sandboxing.md"
       - "advanced/security/firewall.md"
+    - "advanced/healthchecks.md"
     - "advanced/tracing.md"
     - "advanced/metrics.md"
 

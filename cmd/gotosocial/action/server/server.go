@@ -309,6 +309,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		authModule        = api.NewAuth(dbService, processor, idp, routerSession, sessionName) // auth/oauth paths
 		clientModule      = api.NewClient(dbService, processor)                                // api client endpoints
 		metricsModule     = api.NewMetrics()                                                   // Metrics endpoints
+		healthModule      = api.NewHealth(dbService.Ready)                                     // Health check endpoints
 		fileserverModule  = api.NewFileserver(processor)                                       // fileserver endpoints
 		wellKnownModule   = api.NewWellKnown(processor)                                        // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(processor)                                         // nodeinfo endpoint
@@ -340,6 +341,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	authModule.Route(router, clLimit, clThrottle, gzip)
 	clientModule.Route(router, clLimit, clThrottle, gzip)
 	metricsModule.Route(router, clLimit, clThrottle, gzip)
+	healthModule.Route(router, clLimit, clThrottle)
 	fileserverModule.Route(router, fsMainLimit, fsThrottle)
 	fileserverModule.RouteEmojis(router, instanceAccount.ID, fsEmojiLimit, fsThrottle)
 	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
