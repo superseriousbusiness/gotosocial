@@ -170,12 +170,13 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// Bits that vary between remote + local accounts:
 	//   - Account (acct) string.
 	//   - Role.
-	//   - Settings things (enableRSS, customCSS).
+	//   - Settings things (enableRSS, theme, customCSS).
 
 	var (
 		acct      string
 		role      *apimodel.AccountRole
 		enableRSS bool
+		theme     string
 		customCSS string
 	)
 
@@ -208,6 +209,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			}
 
 			enableRSS = *a.Settings.EnableRSS
+			theme = a.Settings.Theme
 			customCSS = a.Settings.CustomCSS
 		}
 
@@ -272,6 +274,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Emojis:         apiEmojis,
 		Fields:         fields,
 		Suspended:      !a.SuspendedAt.IsZero(),
+		Theme:          theme,
 		CustomCSS:      customCSS,
 		EnableRSS:      enableRSS,
 		Role:           role,
@@ -1770,4 +1773,17 @@ func (c *Converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 	}
 
 	return apiTags, errs.Combine()
+}
+
+// ThemesToAPIThemes converts a slice of gtsmodel Themes into apimodel Themes.
+func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme {
+	apiThemes := make([]apimodel.Theme, len(themes))
+	for i, theme := range themes {
+		apiThemes[i] = apimodel.Theme{
+			Title:       theme.Title,
+			Description: theme.Description,
+			FileName:    theme.FileName,
+		}
+	}
+	return apiThemes
 }

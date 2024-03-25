@@ -22,6 +22,15 @@ A preview of the image as it will appear on your profile will be shown. If you'r
 
 If you navigate to your profile and refresh the page, your new avatar / header will be shown. It might take a bit longer for the update to federate out to remote instances.
 
+### Select Theme
+
+GoToSocial provides themes for you to choose from for the web view of your profile, to change your profile's appearance and vibe.
+
+To choose a theme, just select it from the profile settings page, and click/tap "Save profile info" at the bottom of the page. When you look at your profile in the web view (you may need to refresh the page), you'll see the new theme applied, and so will anyone else visiting your profile.
+
+!!! tip "Adding more themes"
+    Instance admins can add more themes by dropping css files into the `web/assets/themes` folder. See the [themes](../admin/themes.md) part of the admin docs for more information.
+
 ### Basic Information
 
 #### Display Name
@@ -109,9 +118,14 @@ Turning on the discoverable flag may take a week or more to propagate; your acco
 
 #### Custom CSS
 
-If enabled on your instance by the instance administrator, [Custom CSS](./custom_css.md) allows you to theme the way your profile looks when visited through a browser.
+If enabled on your instance by the instance administrator, custom CSS allows you to further customize the way your profile looks when visited through a browser.
 
-When this setting is not enabled by the instance administrator, the text input box is read-only.
+When this setting is not enabled by the instance administrator, the text input box is read-only and custom CSS will not be applied.
+
+See the [Custom CSS](./custom_css.md) page for some tips on writing custom CSS for your profile.
+
+!!! tip
+    Any custom CSS you add in this box will be applied *after* your selected theme, so you can pick a preset theme that you like and then make your own tweaks!
 
 ## Post Settings
 

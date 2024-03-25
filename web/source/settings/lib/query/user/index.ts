@@ -23,6 +23,7 @@ import type {
 	MoveAccountFormData,
 	UpdateAliasesFormData
 } from "../../types/migration";
+import type { Theme } from "../../types/theme";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -66,6 +67,11 @@ const extended = gtsApi.injectEndpoints({
 				url: `/api/v1/accounts/move`,
 				body: data
 			})
+		}),
+		accountThemes: build.query<Theme[], void>({
+			query: () => ({
+				url: `/api/v1/accounts/themes`
+			})
 		})
 	})
 });
@@ -75,4 +81,5 @@ export const {
 	usePasswordChangeMutation,
 	useAliasAccountMutation,
 	useMoveAccountMutation,
+	useAccountThemesQuery,
 } = extended;

@@ -18,7 +18,6 @@
 package accounts
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,9 +26,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountListsGETHandler swagger:operation GET /api/v1/accounts/{id}/lists accountLists
+// AccountThemesGETHandler swagger:operation GET /api/v1/accounts/themes accountThemes
 //
-// See all lists of yours that contain requested account.
+// See preset CSS themes available to accounts on this instance.
 //
 //	---
 //	tags:
@@ -38,26 +37,18 @@ import (
 //	produces:
 //	- application/json
 //
-//	parameters:
-//	-
-//		name: id
-//		type: string
-//		description: Account ID.
-//		in: path
-//		required: true
-//
 //	security:
 //	- OAuth2 Bearer:
-//		- read:lists
+//		- read:accounts
 //
 //	responses:
 //		'200':
-//			name: lists
-//			description: Array of all lists containing this account.
+//			name: statuses
+//			description: Array of themes.
 //			schema:
 //				type: array
 //				items:
-//					"$ref": "#/definitions/list"
+//					"$ref": "#/definitions/theme"
 //		'400':
 //			description: bad request
 //		'401':
@@ -68,8 +59,8 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) AccountListsGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
+func (m *Module) AccountThemesGETHandler(c *gin.Context) {
+	_, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -80,18 +71,7 @@ func (m *Module) AccountListsGETHandler(c *gin.Context) {
 		return
 	}
 
-	targetAcctID := c.Param(IDKey)
-	if targetAcctID == "" {
-		err := errors.New("no account id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	lists, errWithCode := m.processor.Account().ListsGet(c.Request.Context(), authed.Account, targetAcctID)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	apiutil.JSON(c, http.StatusOK, lists)
+	// Retrieve available themes.
+	themes := m.processor.Account().ThemesGet()
+	apiutil.JSON(c, http.StatusOK, themes)
 }

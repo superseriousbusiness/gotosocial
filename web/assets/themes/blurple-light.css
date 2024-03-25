@@ -1,0 +1,94 @@
+/*
+  theme-title: Blurple (light)
+  theme-description: Official light blurple theme
+*/
+
+:root {
+  /* Define our nice blurple palette */
+  --blurple1: #ffffff;
+  --blurple2: #ebe6f8;
+  --blurple3: #d6cceb;
+  --blurple4: #c2b3e1;
+  --blurple5: #ad99d7;
+  --blurple6: #9980cd;
+  --blurple7: #8566c2;
+  --blurple8: #704db8;
+  --blurple9: #5c33ae;
+  --blurple10: #471aa4;
+  --blurple11: #33009a;
+  --blurple12: #170044;
+
+  /* Restyle basic colors to use blurple */
+  --white1: var(--blurple2);
+  --white2: var(--blurple3);
+  --blue1: var(--blurple6);
+  --blue2: var(--blurple8);
+  --blue3: var(--blurple10);
+
+  /* Basic page styling (background + foreground) */
+  --bg: linear-gradient(var(--blurple2), var(--blurple1));
+  --bg-accent: var(--white2);
+  --fg: var(--gray1);
+  --fg-reduced: var(--gray2);
+
+  /* Profile page styling (light) */
+  --profile-bg: var(--white2);
+
+  /* Blurpleize buttons */
+  --button-bg: var(--blue2);
+  --button-fg: var(--white1);
+
+  /* Blurpleize statuses */
+  --status-bg: var(--white1);
+  --status-focus-bg: var(--white1);
+  --status-info-bg: var(--white2);
+  --status-focus-info-bg: var(--white2);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 0.08rem solid var(--blurple10);
+}
+
+/* Scroll bar */
+html, body {
+  scrollbar-color: var(--blurple8) var(--blurple2);
+}
+
+/* Profile fields */
+.profile .about-user .fields .field {
+  border-bottom: 0.1rem solid var(--blurple10);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: 0.1rem solid var(--blurple10);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: 0.08rem solid var(--blurple10);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--blue2);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: var(--blurple2);
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--white2);
+}
+.status .text .poll .poll-info {
+  background-color: var(--white1);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background-color: var(--blurple12);
+  color: var(--blurple2);
+}
+
+/* Block quotes */
+blockquote {
+	background-color: var(--blurple1);
+  color: var(--blurple12);
+}

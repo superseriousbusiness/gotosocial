@@ -294,6 +294,10 @@ definitions:
                 description: Account has been suspended by our instance.
                 type: boolean
                 x-go-name: Suspended
+            theme:
+                description: Filename of user-selected CSS theme to include when rendering this account's profile or statuses. Eg., `blurple-light.css`.
+                type: string
+                x-go-name: Theme
             url:
                 description: Web location of the account's profile page.
                 example: https://example.org/@some_user
@@ -2463,6 +2467,24 @@ definitions:
         type: object
         x-go-name: Tag
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    theme:
+        properties:
+            description:
+                description: User-facing description of this theme.
+                type: string
+                x-go-name: Description
+            file_name:
+                description: FileName of this theme in the themes directory.
+                type: string
+                x-go-name: FileName
+            title:
+                description: User-facing title of this theme.
+                type: string
+                x-go-name: Title
+        title: Theme represents one user-selectable preset CSS theme.
+        type: object
+        x-go-name: Theme
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         description: See https://webfinger.net/
         properties:
@@ -3446,6 +3468,34 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: Search for accounts by username and/or display name.
+            tags:
+                - accounts
+    /api/v1/accounts/themes:
+        get:
+            operationId: accountThemes
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of themes.
+                    schema:
+                        items:
+                            $ref: '#/definitions/theme'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: See preset CSS themes available to accounts on this instance.
             tags:
                 - accounts
     /api/v1/accounts/update_credentials:

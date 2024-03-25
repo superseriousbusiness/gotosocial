@@ -89,6 +89,8 @@ type Account struct {
 	MuteExpiresAt string `json:"mute_expires_at,omitempty"`
 	// Extra profile information. Shown only if the requester owns the account being requested.
 	Source *Source `json:"source,omitempty"`
+	// Filename of user-selected CSS theme to include when rendering this account's profile or statuses. Eg., `blurple-light.css`.
+	Theme string `json:"theme,omitempty"`
 	// CustomCSS to include when rendering this account's profile or statuses.
 	CustomCSS string `json:"custom_css,omitempty"`
 	// Account has enabled RSS feed.
@@ -162,7 +164,11 @@ type UpdateCredentialsRequest struct {
 	FieldsAttributes *[]UpdateField `form:"fields_attributes" json:"-"`
 	// Profile metadata names and values, parsed from JSON.
 	JSONFieldsAttributes *map[string]UpdateField `form:"-" json:"fields_attributes"`
+	// Theme file name to be used when rendering this account's profile or statuses.
+	// Use empty string to unset.
+	Theme *string `form:"theme" json:"theme"`
 	// Custom CSS to be included when rendering this account's profile or statuses.
+	// Use empty string to unset.
 	CustomCSS *string `form:"custom_css" json:"custom_css"`
 	// Enable RSS feed of public toots for this account at /@[username]/feed.rss
 	EnableRSS *bool `form:"enable_rss" json:"enable_rss"`

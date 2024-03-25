@@ -1,0 +1,92 @@
+/*
+  theme-title: Blurple (dark)
+  theme-description: Official dark blurple theme
+*/
+
+:root {
+  /* Define our nice blurple palette */
+  --blurple1: #ffffff;
+  --blurple2: #ebe6f8;
+  --blurple3: #d6cceb;
+  --blurple4: #c2b3e1;
+  --blurple5: #ad99d7;
+  --blurple6: #9980cd;
+  --blurple7: #8566c2;
+  --blurple8: #704db8;
+  --blurple9: #5c33ae;
+  --blurple10: #471aa4;
+  --blurple11: #33009a;
+  --blurple12: #170044;
+
+  /* Restyle basic colors to use blurple */
+  --blue1: var(--blurple1);
+  --blue2: var(--blurple2);
+  --blue3: var(--blurple3);
+
+  /* Basic page styling (background + foreground) */
+  --bg: var(--blurple12);
+  --bg-accent: var(--blurple11);
+  --fg: var(--blurple1);
+  --fg-reduced: var(--blurple3);
+
+  /* Profile page styling (light) */
+  --profile-bg: var(--blurple11);
+
+  /* Blurpleize buttons */
+  --button-bg: var(--blurple2);
+  --button-fg: var(--blurple11);
+
+  /* Blurpleize statuses */
+  --status-bg: var(--blurple11);
+  --status-focus-bg: var(--blurple11);
+  --status-info-bg: var(--blurple9);
+  --status-focus-info-bg: var(--blurple9);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 0.08rem solid black;
+}
+
+/* Scroll bar */
+html, body {
+  scrollbar-color: var(--blurple8) var(--blurple12);
+}
+
+/* Profile fields */
+.profile .about-user .fields .field {
+  border-bottom: 0.1rem solid var(--blurple8);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: 0.1rem solid var(--blurple8);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: 0.08rem solid var(--blurple9);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--blue2);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: var(--blurple11);
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--bg);
+}
+.status .text .poll .poll-info {
+  background-color: var(--blurple11);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background-color: var(--blurple12);
+  color: var(--fg-reduced);
+}
+
+/* Block quotes */
+blockquote {
+  background-color: var(--blurple12);
+  color: var(--fg-reduced);
+}

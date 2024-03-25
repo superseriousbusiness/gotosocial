@@ -44,6 +44,7 @@ const (
 	rssFeedPath        = profileGroupPath + "/feed.rss"
 	assetsPathPrefix   = "/assets"
 	distPathPrefix     = assetsPathPrefix + "/dist"
+	themesPathPrefix   = assetsPathPrefix + "/themes"
 	settingsPathPrefix = "/settings"
 	settingsPanelGlob  = settingsPathPrefix + "/*panel"
 	userPanelPath      = settingsPathPrefix + "/user"

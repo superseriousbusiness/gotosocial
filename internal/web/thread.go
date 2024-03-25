@@ -138,16 +138,39 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		return
 	}
 
+	// Prepare stylesheets for thread.
+	stylesheets := make([]string, 0, 5)
+
+	// Basic thread stylesheets.
+	stylesheets = append(
+		stylesheets,
+		[]string{
+			cssFA,
+			cssStatus,
+			cssThread,
+		}...,
+	)
+
+	// User-selected theme if set.
+	if theme := targetAccount.Theme; theme != "" {
+		stylesheets = append(
+			stylesheets,
+			themesPathPrefix+"/"+theme,
+		)
+	}
+
+	// Custom CSS for this user last in cascade.
+	stylesheets = append(
+		stylesheets,
+		"/@"+targetAccount.Username+"/custom.css",
+	)
+
 	page := apiutil.WebPage{
-		Template: "thread.tmpl",
-		Instance: instance,
-		OGMeta:   apiutil.OGBase(instance).WithStatus(status),
-		Stylesheets: []string{
-			cssFA, cssStatus, cssThread,
-			// Custom CSS for this user last in cascade.
-			"/@" + targetUsername + "/custom.css",
-		},
-		Javascript: []string{jsFrontend},
+		Template:    "thread.tmpl",
+		Instance:    instance,
+		OGMeta:      apiutil.OGBase(instance).WithStatus(status),
+		Stylesheets: stylesheets,
+		Javascript:  []string{jsFrontend},
 		Extra: map[string]any{
 			"status":  status,
 			"context": context,

@@ -220,3 +220,17 @@ type Relationship struct {
 	Endorsed            bool   // Are you featuring this user on your profile?
 	Note                string // Your note on this account.
 }
+
+// Theme represents a user-selected
+// CSS theme for an account.
+type Theme struct {
+	// User-facing title of this theme.
+	Title string
+
+	// User-facing description of this theme.
+	Description string
+
+	// FileName of this theme in the themes
+	// directory (eg., `light-blurple.css`).
+	FileName string
+}

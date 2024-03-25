@@ -439,7 +439,7 @@ section.with-sidebar > div, section.with-sidebar > form {
 		display: grid;
 		max-width: 60rem;
 		grid-template-columns: 70% 30%;
-		grid-template-rows: 100%;
+		grid-template-rows: auto;
 		gap: 1rem;
 
 		.files {
@@ -464,6 +464,12 @@ section.with-sidebar > div, section.with-sidebar > form {
 			display: flex;
 			gap: 0.5rem;
 		}
+	}
+
+	.theme, .form-field.radio {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 	}
 }
 
