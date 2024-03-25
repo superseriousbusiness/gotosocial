@@ -150,7 +150,7 @@ func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
 
 	resp, errWithCode := m.processor.Timeline().PublicTimelineGet(
 		c.Request.Context(),
-		authed,
+		authed.Account,
 		c.Query(apiutil.MaxIDKey),
 		c.Query(apiutil.SinceIDKey),
 		c.Query(apiutil.MinIDKey),
