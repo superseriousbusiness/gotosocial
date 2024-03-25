@@ -30,13 +30,13 @@ type SliceCache[T any] struct {
 	cache simple.Cache[string, []T]
 }
 
-// Init ...
+// Init initializes the cache with given length + capacity.
 func (c *SliceCache[T]) Init(len, cap int) {
 	c.cache = simple.Cache[string, []T]{}
 	c.cache.Init(len, cap)
 }
 
-// Load will attempt to load an existing slice from the cache for the given key, else calling the provided load function and caching the result.
+// Load will attempt to load an existing slice from cache for key, else calling load function and caching the result.
 func (c *SliceCache[T]) Load(key string, load func() ([]T, error)) ([]T, error) {
 	// Look for cached values.
 	data, ok := c.cache.Get(key)
@@ -58,38 +58,42 @@ func (c *SliceCache[T]) Load(key string, load func() ([]T, error)) ([]T, error) 
 	return slices.Clone(data), nil
 }
 
-// Invalidate ...
+// Invalidate: see simple.Cache{}.InvalidateAll().
 func (c *SliceCache[T]) Invalidate(keys ...string) {
 	_ = c.cache.InvalidateAll(keys...)
 }
 
-// Trim ...
+// Trim: see simple.Cache{}.Trim().
 func (c *SliceCache[T]) Trim(perc float64) {
 	c.cache.Trim(perc)
 }
 
-// Clear ...
+// Clear: see simple.Cache{}.Clear().
 func (c *SliceCache[T]) Clear() {
 	c.cache.Clear()
 }
 
-// Len ...
+// Len: see simple.Cache{}.Len().
 func (c *SliceCache[T]) Len() int {
 	return c.cache.Len()
 }
 
-// Cap ...
+// Cap: see simple.Cache{}.Cap().
 func (c *SliceCache[T]) Cap() int {
 	return c.cache.Cap()
 }
 
-// StructCache ...
+// StructCache wraps a structr.Cache{} to simple index caching
+// by name (also to ease update to library version that introduced
+// this). (in the future it may be worth embedding these indexes by
+// name under the main database caches struct which would reduce
+// time required to access cached values).
 type StructCache[StructType any] struct {
 	cache structr.Cache[StructType]
 	index map[string]*structr.Index
 }
 
-// Init ...
+// Init initializes the cache with given structr.CacheConfig{}.
 func (c *StructCache[T]) Init(config structr.CacheConfig[T]) {
 	c.index = make(map[string]*structr.Index, len(config.Indices))
 	c.cache = structr.Cache[T]{}
@@ -99,30 +103,36 @@ func (c *StructCache[T]) Init(config structr.CacheConfig[T]) {
 	}
 }
 
-// GetOne ...
+// GetOne calls structr.Cache{}.GetOne(), using a cached structr.Index{} by 'index' name.
+// Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) GetOne(index string, key ...any) (T, bool) {
 	i := c.index[index]
 	return c.cache.GetOne(i, i.Key(key...))
 }
 
-// Get ...
+// Get calls structr.Cache{}.Get(), using a cached structr.Index{} by 'index' name.
+// Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) Get(index string, keys ...[]any) []T {
 	i := c.index[index]
 	return c.cache.Get(i, i.Keys(keys...)...)
 }
 
-// Put ...
+// Put: see structr.Cache{}.Put().
 func (c *StructCache[T]) Put(values ...T) {
 	c.cache.Put(values...)
 }
 
-// LoadOne ...
+// LoadOne calls structr.Cache{}.LoadOne(), using a cached structr.Index{} by 'index' name.
+// Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) LoadOne(index string, load func() (T, error), key ...any) (T, error) {
 	i := c.index[index]
 	return c.cache.LoadOne(i, i.Key(key...), load)
 }
 
-// LoadIDs ...
+// LoadIDs calls structr.Cache{}.Load(), using a cached structr.Index{} by 'index' name. Note: this also handles
+// conversion of the ID strings to structr.Key{} via structr.Index{}. Strong typing is used for caller convenience.
+//
+// If you need to load multiple cache keys other than by ID strings, please create another convenience wrapper.
 func (c *StructCache[T]) LoadIDs(index string, ids []string, load func([]string) ([]T, error)) ([]T, error) {
 	i := c.index[index]
 	if i == nil {
@@ -148,18 +158,22 @@ func (c *StructCache[T]) LoadIDs(index string, ids []string, load func([]string)
 	})
 }
 
-// Store ...
+// Store: see structr.Cache{}.Store().
 func (c *StructCache[T]) Store(value T, store func() error) error {
 	return c.cache.Store(value, store)
 }
 
-// InvalidateOne ...
+// Invalidate calls structr.Cache{}.Invalidate(), using a cached structr.Index{} by 'index' name.
+// Note: this also handles conversion of the untyped (any) keys to structr.Key{} via structr.Index{}.
 func (c *StructCache[T]) Invalidate(index string, key ...any) {
 	i := c.index[index]
 	c.cache.Invalidate(i, i.Key(key...))
 }
 
-// InvalidateIDs ...
+// InvalidateIDs calls structr.Cache{}.Invalidate(), using a cached structr.Index{} by 'index' name. Note: this also
+// handles conversion of the ID strings to structr.Key{} via structr.Index{}. Strong typing is used for caller convenience.
+//
+// If you need to invalidate multiple cache keys other than by ID strings, please create another convenience wrapper.
 func (c *StructCache[T]) InvalidateIDs(index string, ids []string) {
 	i := c.index[index]
 	if i == nil {
@@ -179,22 +193,22 @@ func (c *StructCache[T]) InvalidateIDs(index string, ids []string) {
 	c.cache.Invalidate(i, keys...)
 }
 
-// Trim ...
+// Trim: see structr.Cache{}.Trim().
 func (c *StructCache[T]) Trim(perc float64) {
 	c.cache.Trim(perc)
 }
 
-// Clear ...
+// Clear: see structr.Cache{}.Clear().
 func (c *StructCache[T]) Clear() {
 	c.cache.Clear()
 }
 
-// Len ...
+// Len: see structr.Cache{}.Len().
 func (c *StructCache[T]) Len() int {
 	return c.cache.Len()
 }
 
-// Cap ...
+// Cap: see structr.Cache{}.Cap().
 func (c *StructCache[T]) Cap() int {
 	return c.cache.Cap()
 }
