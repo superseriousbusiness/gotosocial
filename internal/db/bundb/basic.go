@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
@@ -126,14 +125,13 @@ func (b *basicDB) DropTable(ctx context.Context, i interface{}) error {
 }
 
 func (b *basicDB) Ready(ctx context.Context) error {
-	// Simple select of the ID
-	// of our instance account.
-	return b.db.
-		NewSelect().
-		Table("instances").
-		Column("id").
-		Where("? = ?", bun.Ident("domain"), config.GetHost()).
-		Scan(ctx, new(string))
+	if _, err := b.db.
+		NewRaw("SELECT NULL FROM ? LIMIT 0", bun.Ident("instances")).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (b *basicDB) Close() error {
