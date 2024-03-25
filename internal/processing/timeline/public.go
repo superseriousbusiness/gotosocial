@@ -25,50 +25,112 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *Processor) PublicTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
-	statuses, err := p.state.DB.GetPublicTimeline(ctx, maxID, sinceID, minID, limit, local)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("db error getting statuses: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	count := len(statuses)
-	if count == 0 {
-		return util.EmptyPageableResponse(), nil
-	}
-
+func (p *Processor) PublicTimelineGet(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+	local bool,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
+	const maxAttempts = 3
 	var (
-		items = make([]interface{}, 0, count)
-
-		// Set next + prev values before filtering and API
-		// converting, so caller can still page properly.
-		nextMaxIDValue = statuses[count-1].ID
-		prevMinIDValue = statuses[0].ID
+		nextMaxIDValue string
+		prevMinIDValue string
+		items          = make([]any, 0, limit)
 	)
 
-	for _, s := range statuses {
-		timelineable, err := p.filter.StatusPublicTimelineable(ctx, authed.Account, s)
-		if err != nil {
-			log.Errorf(ctx, "error checking status visibility: %v", err)
-			continue
+	// Try a few times to select appropriate public
+	// statuses from the db, paging up or down to
+	// reattempt if nothing suitable is found.
+outer:
+	for attempts := 1; ; attempts++ {
+		// Select slightly more than the limit to try to avoid situations where
+		// we filter out all the entries, and have to make another db call.
+		// It's cheaper to select more in 1 query than it is to do multiple queries.
+		statuses, err := p.state.DB.GetPublicTimeline(ctx, maxID, sinceID, minID, limit+5, local)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = gtserror.Newf("db error getting statuses: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		if !timelineable {
-			continue
+		count := len(statuses)
+		if count == 0 {
+			// Nothing relevant (left) in the db.
+			return util.EmptyPageableResponse(), nil
 		}
 
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, authed.Account)
-		if err != nil {
-			log.Errorf(ctx, "error convert to api status: %v", err)
-			continue
+		// Page up from first status in slice
+		// (ie., one with the highest ID).
+		prevMinIDValue = statuses[0].ID
+
+	inner:
+		for _, s := range statuses {
+			// Push back the next page down ID to
+			// this status, regardless of whether
+			// we end up filtering it out or not.
+			nextMaxIDValue = s.ID
+
+			timelineable, err := p.filter.StatusPublicTimelineable(ctx, requester, s)
+			if err != nil {
+				log.Errorf(ctx, "error checking status visibility: %v", err)
+				continue inner
+			}
+
+			if !timelineable {
+				continue inner
+			}
+
+			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester)
+			if err != nil {
+				log.Errorf(ctx, "error converting to api status: %v", err)
+				continue inner
+			}
+
+			// Looks good, add this.
+			items = append(items, apiStatus)
+
+			// We called the db with a little
+			// more than the desired limit.
+			//
+			// Ensure we don't return more
+			// than the caller asked for.
+			if len(items) == limit {
+				break outer
+			}
 		}
 
-		items = append(items, apiStatus)
+		if len(items) != 0 {
+			// We've got some items left after
+			// filtering, happily break + return.
+			break
+		}
+
+		if attempts >= maxAttempts {
+			// We reached our attempts limit.
+			// Be nice + warn about it.
+			log.Warn(ctx, "reached max attempts to find items in public timeline")
+			break
+		}
+
+		// We filtered out all items before we
+		// found anything we could return, but
+		// we still have attempts left to try
+		// fetching again. Set paging params
+		// and allow loop to continue.
+		if minID != "" {
+			// Paging up.
+			minID = prevMinIDValue
+		} else {
+			// Paging down.
+			maxID = nextMaxIDValue
+		}
 	}
 
 	return util.PackagePageableResponse(util.PageableResponseParams{
