@@ -9,8 +9,6 @@
   --acid-green-light: #79FF4D;
   --acid-green-dark: #269900;
   --magenta: rgb(153, 50, 204);
-  --darkred: rgb(58, 0, 15);
-  --darkblue: rgb(0, 0, 58);
   --darkmagenta: rgb(47, 1, 65);
 
   /* Override */
@@ -22,27 +20,7 @@
 }
 
 body {
-  background: linear-gradient(-45deg, black, var(--darkmagenta), var(--darkblue), var(--darkred));
-  background-size: 400% 400%;
-  height: 100%;
-}
-
-@media not (prefers-reduced-motion) {
-  body {
-    animation: gradient 30s ease infinite;
-  }
-  
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
-  }
+  background: linear-gradient(90deg, var(--darkmagenta), black, var(--darkmagenta));
 }
 
 html, body {
