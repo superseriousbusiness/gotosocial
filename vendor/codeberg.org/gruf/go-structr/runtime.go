@@ -7,31 +7,38 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
+	"codeberg.org/gruf/go-mangler"
 	"github.com/modern-go/reflect2"
-	"github.com/zeebo/xxh3"
 )
 
-type structfield struct {
-	// _type is the runtime type pointer
+// struct_field contains pre-prepared type
+// information about a struct's field member,
+// including memory offset and hash function.
+type struct_field struct {
+
+	// type2 is the runtime type pointer
 	// underlying the struct field type.
 	// used for repacking our own erfaces.
-	_type reflect2.Type
+	type2 reflect2.Type
 
 	// offset is the offset in memory
 	// of this struct field from the
 	// outer-most value ptr location.
 	offset uintptr
 
-	// hasher is the relevant function
-	// for hashing value of structfield
-	// into the supplied hashbuf, where
-	// return value indicates if zero.
-	hasher func(*xxh3.Hasher, any) bool
+	// struct field type mangling
+	// (i.e. fast serializing) fn.
+	mangle mangler.Mangler
+
+	// mangled zero value string,
+	// if set this indicates zero
+	// values of field not allowed
+	zero string
 }
 
 // find_field will search for a struct field with given set of names,
 // where names is a len > 0 slice of names account for struct nesting.
-func find_field(t reflect.Type, names []string) (sfield structfield) {
+func find_field(t reflect.Type, names []string) (sfield struct_field) {
 	var (
 		// is_exported returns whether name is exported
 		// from a package; can be func or struct field.
@@ -55,17 +62,6 @@ func find_field(t reflect.Type, names []string) (sfield structfield) {
 		// struct field value in below loop.
 		field reflect.StructField
 	)
-
-	switch {
-	// The only 2 types we support are
-	// structs, and ptrs to a struct.
-	case t.Kind() == reflect.Struct:
-	case t.Kind() == reflect.Pointer &&
-		t.Elem().Kind() == reflect.Struct:
-		t = t.Elem()
-	default:
-		panic("index only support struct{} and *struct{}")
-	}
 
 	for len(names) > 0 {
 		var ok bool
@@ -92,17 +88,17 @@ func find_field(t reflect.Type, names []string) (sfield structfield) {
 	}
 
 	// Get field type as reflect2.
-	sfield._type = reflect2.Type2(t)
+	sfield.type2 = reflect2.Type2(t)
 
-	// Find hasher for type.
-	sfield.hasher = hasher(t)
+	// Find mangler for field type.
+	sfield.mangle = mangler.Get(t)
 
 	return
 }
 
 // extract_fields extracts given structfields from the provided value type,
 // this is done using predetermined struct field memory offset locations.
-func extract_fields[T any](value T, fields []structfield) []any {
+func extract_fields[T any](value T, fields []struct_field) []any {
 	// Get ptr to raw value data.
 	ptr := unsafe.Pointer(&value)
 
@@ -117,15 +113,10 @@ func extract_fields[T any](value T, fields []structfield) []any {
 	for i := 0; i < len(fields); i++ {
 		// Manually access field at memory offset and pack eface.
 		ptr := unsafe.Pointer(uintptr(ptr) + fields[i].offset)
-		ifaces[i] = fields[i]._type.UnsafeIndirect(ptr)
+		ifaces[i] = fields[i].type2.UnsafeIndirect(ptr)
 	}
 
 	return ifaces
-}
-
-// data_ptr returns the runtime data ptr associated with value.
-func data_ptr(a any) unsafe.Pointer {
-	return (*struct{ t, v unsafe.Pointer })(unsafe.Pointer(&a)).v
 }
 
 // panicf provides a panic with string formatting.

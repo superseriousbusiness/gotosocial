@@ -101,23 +101,10 @@ func (r *relationshipDB) GetBlock(ctx context.Context, sourceAccountID string, t
 }
 
 func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Block, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all blocks IDs via cache loader callbacks.
-	blocks, err := r.state.Caches.GTS.Block.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached block loader function.
-		func() ([]*gtsmodel.Block, error) {
+	blocks, err := r.state.Caches.GTS.Block.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Block, error) {
 			// Preallocate expected length of uncached blocks.
 			blocks := make([]*gtsmodel.Block, 0, len(uncached))
 

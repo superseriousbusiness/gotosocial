@@ -24,7 +24,7 @@ import (
 )
 
 type VisibilityCache struct {
-	structr.Cache[*CachedVisibility]
+	StructCache[*CachedVisibility]
 }
 
 func (c *Caches) initVisibility() {
@@ -42,7 +42,7 @@ func (c *Caches) initVisibility() {
 		return v2
 	}
 
-	c.Visibility.Init(structr.Config[*CachedVisibility]{
+	c.Visibility.Init(structr.CacheConfig[*CachedVisibility]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ItemID", Multiple: true},
 			{Fields: "RequesterID", Multiple: true},
@@ -50,7 +50,7 @@ func (c *Caches) initVisibility() {
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
-		CopyValue: copyF,
+		Copy:      copyF,
 	})
 }
 

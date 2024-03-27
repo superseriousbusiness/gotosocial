@@ -270,23 +270,10 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 		return nil, err
 	}
 
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(voteIDs))
-
 	// Load all votes from IDs via cache loader callbacks.
-	votes, err := p.state.Caches.GTS.PollVote.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range voteIDs {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached poll vote loader function.
-		func() ([]*gtsmodel.PollVote, error) {
+	votes, err := p.state.Caches.GTS.PollVote.LoadIDs("ID",
+		voteIDs,
+		func(uncached []string) ([]*gtsmodel.PollVote, error) {
 			// Preallocate expected length of uncached votes.
 			votes := make([]*gtsmodel.PollVote, 0, len(uncached))
 

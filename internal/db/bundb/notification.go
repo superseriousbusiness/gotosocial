@@ -104,23 +104,10 @@ func (n *notificationDB) getNotification(ctx context.Context, lookup string, dbQ
 }
 
 func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Notification, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all notif IDs via cache loader callbacks.
-	notifs, err := n.state.Caches.GTS.Notification.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached notification loader function.
-		func() ([]*gtsmodel.Notification, error) {
+	notifs, err := n.state.Caches.GTS.Notification.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Notification, error) {
 			// Preallocate expected length of uncached notifications.
 			notifs := make([]*gtsmodel.Notification, 0, len(uncached))
 
@@ -345,12 +332,8 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 		return err
 	}
 
-	defer func() {
-		// Invalidate all IDs on return.
-		for _, id := range notifIDs {
-			n.state.Caches.GTS.Notification.Invalidate("ID", id)
-		}
-	}()
+	// Invalidate all cached notifications by IDs on return.
+	defer n.state.Caches.GTS.Notification.InvalidateIDs("ID", notifIDs)
 
 	// Load all notif into cache, this *really* isn't great
 	// but it is the only way we can ensure we invalidate all
@@ -383,12 +366,8 @@ func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statu
 		return err
 	}
 
-	defer func() {
-		// Invalidate all IDs on return.
-		for _, id := range notifIDs {
-			n.state.Caches.GTS.Notification.Invalidate("ID", id)
-		}
-	}()
+	// Invalidate all cached notifications by IDs on return.
+	defer n.state.Caches.GTS.Notification.InvalidateIDs("ID", notifIDs)
 
 	// Load all notif into cache, this *really* isn't great
 	// but it is the only way we can ensure we invalidate all

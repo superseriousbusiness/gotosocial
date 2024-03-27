@@ -79,17 +79,9 @@ func (f *filterDB) GetFiltersForAccountID(ctx context.Context, accountID string)
 	}
 
 	// Get each filter by ID from the cache or DB.
-	uncachedFilterIDs := make([]string, 0, len(filterIDs))
-	filters, err := f.state.Caches.GTS.Filter.Load(
-		"ID",
-		func(load func(keyParts ...any) bool) {
-			for _, id := range filterIDs {
-				if !load(id) {
-					uncachedFilterIDs = append(uncachedFilterIDs, id)
-				}
-			}
-		},
-		func() ([]*gtsmodel.Filter, error) {
+	filters, err := f.state.Caches.GTS.Filter.LoadIDs("ID",
+		filterIDs,
+		func(uncachedFilterIDs []string) ([]*gtsmodel.Filter, error) {
 			uncachedFilters := make([]*gtsmodel.Filter, 0, len(uncachedFilterIDs))
 			if err := f.db.
 				NewSelect().

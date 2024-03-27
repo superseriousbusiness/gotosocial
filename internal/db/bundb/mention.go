@@ -65,23 +65,10 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 }
 
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all mention IDs via cache loader callbacks.
-	mentions, err := m.state.Caches.GTS.Mention.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached mention loader function.
-		func() ([]*gtsmodel.Mention, error) {
+	mentions, err := m.state.Caches.GTS.Mention.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Mention, error) {
 			// Preallocate expected length of uncached mentions.
 			mentions := make([]*gtsmodel.Mention, 0, len(uncached))
 

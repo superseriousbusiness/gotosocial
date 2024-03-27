@@ -53,23 +53,10 @@ func (m *mediaDB) GetAttachmentByID(ctx context.Context, id string) (*gtsmodel.M
 }
 
 func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.MediaAttachment, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all media IDs via cache loader callbacks.
-	media, err := m.state.Caches.GTS.Media.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached media loader function.
-		func() ([]*gtsmodel.MediaAttachment, error) {
+	media, err := m.state.Caches.GTS.Media.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.MediaAttachment, error) {
 			// Preallocate expected length of uncached media attachments.
 			media := make([]*gtsmodel.MediaAttachment, 0, len(uncached))
 

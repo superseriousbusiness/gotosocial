@@ -50,23 +50,10 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 }
 
 func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
-	// Load all status IDs via cache loader callbacks.
-	statuses, err := s.state.Caches.GTS.Status.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached statuses loader function.
-		func() ([]*gtsmodel.Status, error) {
+	// Load all input status IDs via cache loader callback.
+	statuses, err := s.state.Caches.GTS.Status.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Status, error) {
 			// Preallocate expected length of uncached statuses.
 			statuses := make([]*gtsmodel.Status, 0, len(uncached))
 

@@ -71,23 +71,10 @@ func (t *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, e
 }
 
 func (t *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all tag IDs via cache loader callbacks.
-	tags, err := t.state.Caches.GTS.Tag.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached tag loader function.
-		func() ([]*gtsmodel.Tag, error) {
+	tags, err := t.state.Caches.GTS.Tag.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Tag, error) {
 			// Preallocate expected length of uncached tags.
 			tags := make([]*gtsmodel.Tag, 0, len(uncached))
 

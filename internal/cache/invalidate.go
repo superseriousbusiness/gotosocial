@@ -37,7 +37,7 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's
 	// following / follower lists.
 	// (see FollowIDs() comment for details).
-	c.GTS.FollowIDs.InvalidateAll(
+	c.GTS.FollowIDs.Invalidate(
 		">"+account.ID,
 		"l>"+account.ID,
 		"<"+account.ID,
@@ -47,7 +47,7 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's
 	// follow requesting / request lists.
 	// (see FollowRequestIDs() comment for details).
-	c.GTS.FollowRequestIDs.InvalidateAll(
+	c.GTS.FollowRequestIDs.Invalidate(
 		">"+account.ID,
 		"<"+account.ID,
 	)
@@ -96,7 +96,7 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	// Invalidate source account's following
 	// lists, and destination's follwer lists.
 	// (see FollowIDs() comment for details).
-	c.GTS.FollowIDs.InvalidateAll(
+	c.GTS.FollowIDs.Invalidate(
 		">"+follow.AccountID,
 		"l>"+follow.AccountID,
 		"<"+follow.AccountID,
@@ -115,7 +115,7 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 	// Invalidate source account's followreq
 	// lists, and destinations follow req lists.
 	// (see FollowRequestIDs() comment for details).
-	c.GTS.FollowRequestIDs.InvalidateAll(
+	c.GTS.FollowRequestIDs.Invalidate(
 		">"+followReq.AccountID,
 		"<"+followReq.AccountID,
 		">"+followReq.TargetAccountID,
@@ -164,15 +164,13 @@ func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
 	// Invalidate status ID cached visibility.
 	c.Visibility.Invalidate("ItemID", status.ID)
 
-	for _, id := range status.AttachmentIDs {
-		// Invalidate each media by the IDs we're aware of.
-		// This must be done as the status table is aware of
-		// the media IDs in use before the media table is
-		// aware of the status ID they are linked to.
-		//
-		// c.GTS.Media().Invalidate("StatusID") will not work.
-		c.GTS.Media.Invalidate("ID", id)
-	}
+	// Invalidate each media by the IDs we're aware of.
+	// This must be done as the status table is aware of
+	// the media IDs in use before the media table is
+	// aware of the status ID they are linked to.
+	//
+	// c.GTS.Media().Invalidate("StatusID") will not work.
+	c.GTS.Media.InvalidateIDs("ID", status.AttachmentIDs)
 
 	if status.BoostOfID != "" {
 		// Invalidate boost ID list of the original status.
