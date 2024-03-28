@@ -37,5 +37,6 @@ shell.nix
 /.idea/
 /.fleet/
 
-# ignore cache dir from mkdocs serve
-/.cache
+# ignore cached pngs from mkdocs serve,
+# while preserving cached fonts.
+/docs/.cache/plugin/social/*.png
