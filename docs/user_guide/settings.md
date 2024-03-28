@@ -88,15 +88,6 @@ This option is often referred to on the fediverse as "locking" your account.
 
 After ticking or unticking the checkbox, be sure to click on the `Save profile info` button at the bottom to save your new settings.
 
-#### Enable RSS Feed of Public Posts
-
-RSS feeds for users are disabled by default, but can be opted into with this checkbox. For more information see [RSS](./rss.md).
-
-This feed only includes posts set as 'Public' (see [Privacy Settings](./posts.md#privacy-settings)).
-
-!!! warning
-    Exposing your RSS feed allows *anyone* to subscribe to updates on your Public posts anonymously, bypassing follows and follow requests.
-
 #### Mark Account as Discoverable by Search Engines and Directories
 
 This setting updates the 'discoverable' flag on your account.
@@ -113,6 +104,21 @@ Turning on the discoverable flag may take a week or more to propagate; your acco
 
 !!! info
     The discoverable setting is about **discoverability of your account**, not searchability of your posts. It has nothing to do with indexing of your posts for search by Mastodon instances, or other federated instances that use full text search!
+
+#### Enable RSS Feed of Public Posts
+
+RSS feeds for users are disabled by default, but can be opted into with this checkbox. For more information see [RSS](./rss.md).
+
+This feed only includes posts set as 'Public' (see [Privacy Settings](./posts.md#privacy-settings)).
+
+!!! warning
+    Exposing your RSS feed allows *anyone* to subscribe to updates on your Public posts anonymously, bypassing follows and follow requests.
+
+#### Hide Who You Follow / Are Followed By
+
+By default, GoToSocial shows your following/followers counts on your public web profile, and allows others to see who you follow and are followed by. This can be useful for account discovery purposes. However, for privacy + safety reasons you may wish to hide these counts, and to hide your following/followers lists from other accounts. You can do this by checking this box.
+
+With the box checked, your following/followers counts will be hidden from your public web profile, and others will not be able to page through your following/followers lists.
 
 ### Advanced
 

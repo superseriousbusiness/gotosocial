@@ -702,7 +702,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			Sensitive:       util.Ptr(true),
 			Language:        "fr",
 			EnableRSS:       util.Ptr(false),
-			HideCollections: util.Ptr(false),
+			HideCollections: util.Ptr(true),
 		},
 	}
 }

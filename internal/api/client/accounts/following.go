@@ -39,6 +39,8 @@ import (
 // <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
 // ````
 //
+// If account `hide_collections` is true, and requesting account != target account, no results will be returned.
+//
 //	---
 //	tags:
 //	- accounts

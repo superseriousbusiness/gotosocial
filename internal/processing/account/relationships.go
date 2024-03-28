@@ -31,9 +31,23 @@ import (
 // FollowersGet fetches a list of the target account's followers.
 func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, page *paging.Page) (*apimodel.PageableResponse, gtserror.WithCode) {
 	// Fetch target account to check it exists, and visibility of requester->target.
-	_, errWithCode := p.c.GetVisibleTargetAccount(ctx, requestingAccount, targetAccountID)
+	targetAccount, errWithCode := p.c.GetVisibleTargetAccount(ctx, requestingAccount, targetAccountID)
 	if errWithCode != nil {
 		return nil, errWithCode
+	}
+
+	if targetAccount.IsInstance() {
+		// Instance accounts can't follow/be followed.
+		return paging.EmptyResponse(), nil
+	}
+
+	// If account isn't requesting its own followers list,
+	// but instead the list for a local account that has
+	// hide_followers set, just return an empty array.
+	if targetAccountID != requestingAccount.ID &&
+		targetAccount.IsLocal() &&
+		*targetAccount.Settings.HideCollections {
+		return paging.EmptyResponse(), nil
 	}
 
 	follows, err := p.state.DB.GetAccountFollowers(ctx, targetAccountID, page)
@@ -76,9 +90,23 @@ func (p *Processor) FollowersGet(ctx context.Context, requestingAccount *gtsmode
 // FollowingGet fetches a list of the accounts that target account is following.
 func (p *Processor) FollowingGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string, page *paging.Page) (*apimodel.PageableResponse, gtserror.WithCode) {
 	// Fetch target account to check it exists, and visibility of requester->target.
-	_, errWithCode := p.c.GetVisibleTargetAccount(ctx, requestingAccount, targetAccountID)
+	targetAccount, errWithCode := p.c.GetVisibleTargetAccount(ctx, requestingAccount, targetAccountID)
 	if errWithCode != nil {
 		return nil, errWithCode
+	}
+
+	if targetAccount.IsInstance() {
+		// Instance accounts can't follow/be followed.
+		return paging.EmptyResponse(), nil
+	}
+
+	// If account isn't requesting its own following list,
+	// but instead the list for a local account that has
+	// hide_followers set, just return an empty array.
+	if targetAccountID != requestingAccount.ID &&
+		targetAccount.IsLocal() &&
+		*targetAccount.Settings.HideCollections {
+		return paging.EmptyResponse(), nil
 	}
 
 	// Fetch known accounts that follow given target account ID.

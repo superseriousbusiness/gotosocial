@@ -49,7 +49,39 @@ func TestASCollection(t *testing.T) {
 	// Create new collection using builder function.
 	c := ap.NewASCollection(ap.CollectionParams{
 		ID:    parseURI(idURI),
+		First: new(paging.Page),
 		Query: url.Values{"limit": []string{"40"}},
+		Total: total,
+	})
+
+	// Serialize collection.
+	s := toJSON(c)
+
+	// Ensure outputs are equal.
+	assert.Equal(t, expect, s)
+}
+
+func TestASCollectionTotalOnly(t *testing.T) {
+	const (
+		proto = "https"
+		host  = "zorg.flabormagorg.xyz"
+		path  = "/users/itsa_me_mario"
+
+		idURI = proto + "://" + host + path
+		total = 10
+	)
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":   "https://www.w3.org/ns/activitystreams",
+		"type":       "Collection",
+		"id":         idURI,
+		"totalItems": total,
+	})
+
+	// Create new collection using builder function.
+	c := ap.NewASCollection(ap.CollectionParams{
+		ID:    parseURI(idURI),
 		Total: total,
 	})
 
@@ -132,7 +164,35 @@ func TestASOrderedCollection(t *testing.T) {
 	// Create new collection using builder function.
 	c := ap.NewASOrderedCollection(ap.CollectionParams{
 		ID:    parseURI(idURI),
+		First: new(paging.Page),
 		Query: url.Values{"limit": []string{"40"}},
+		Total: total,
+	})
+
+	// Serialize collection.
+	s := toJSON(c)
+
+	// Ensure outputs are equal.
+	assert.Equal(t, expect, s)
+}
+
+func TestASOrderedCollectionTotalOnly(t *testing.T) {
+	const (
+		idURI = "https://zorg.flabormagorg.xyz/users/itsa_me_mario"
+		total = 10
+	)
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":   "https://www.w3.org/ns/activitystreams",
+		"type":       "OrderedCollection",
+		"id":         idURI,
+		"totalItems": total,
+	})
+
+	// Create new collection using builder function.
+	c := ap.NewASOrderedCollection(ap.CollectionParams{
+		ID:    parseURI(idURI),
 		Total: total,
 	})
 

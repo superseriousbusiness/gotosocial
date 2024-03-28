@@ -170,14 +170,15 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// Bits that vary between remote + local accounts:
 	//   - Account (acct) string.
 	//   - Role.
-	//   - Settings things (enableRSS, theme, customCSS).
+	//   - Settings things (enableRSS, theme, customCSS, hideCollections).
 
 	var (
-		acct      string
-		role      *apimodel.AccountRole
-		enableRSS bool
-		theme     string
-		customCSS string
+		acct            string
+		role            *apimodel.AccountRole
+		enableRSS       bool
+		theme           string
+		customCSS       string
+		hideCollections bool
 	)
 
 	if a.IsRemote() {
@@ -211,6 +212,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			enableRSS = *a.Settings.EnableRSS
 			theme = a.Settings.Theme
 			customCSS = a.Settings.CustomCSS
+			hideCollections = *a.Settings.HideCollections
 		}
 
 		acct = a.Username // omit domain
@@ -253,32 +255,33 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// can be populated directly below.
 
 	accountFrontend := &apimodel.Account{
-		ID:             a.ID,
-		Username:       a.Username,
-		Acct:           acct,
-		DisplayName:    a.DisplayName,
-		Locked:         locked,
-		Discoverable:   discoverable,
-		Bot:            bot,
-		CreatedAt:      util.FormatISO8601(a.CreatedAt),
-		Note:           a.Note,
-		URL:            a.URL,
-		Avatar:         aviURL,
-		AvatarStatic:   aviURLStatic,
-		Header:         headerURL,
-		HeaderStatic:   headerURLStatic,
-		FollowersCount: followersCount,
-		FollowingCount: followingCount,
-		StatusesCount:  statusesCount,
-		LastStatusAt:   lastStatusAt,
-		Emojis:         apiEmojis,
-		Fields:         fields,
-		Suspended:      !a.SuspendedAt.IsZero(),
-		Theme:          theme,
-		CustomCSS:      customCSS,
-		EnableRSS:      enableRSS,
-		Role:           role,
-		Moved:          moved,
+		ID:              a.ID,
+		Username:        a.Username,
+		Acct:            acct,
+		DisplayName:     a.DisplayName,
+		Locked:          locked,
+		Discoverable:    discoverable,
+		Bot:             bot,
+		CreatedAt:       util.FormatISO8601(a.CreatedAt),
+		Note:            a.Note,
+		URL:             a.URL,
+		Avatar:          aviURL,
+		AvatarStatic:    aviURLStatic,
+		Header:          headerURL,
+		HeaderStatic:    headerURLStatic,
+		FollowersCount:  followersCount,
+		FollowingCount:  followingCount,
+		StatusesCount:   statusesCount,
+		LastStatusAt:    lastStatusAt,
+		Emojis:          apiEmojis,
+		Fields:          fields,
+		Suspended:       !a.SuspendedAt.IsZero(),
+		Theme:           theme,
+		CustomCSS:       customCSS,
+		EnableRSS:       enableRSS,
+		HideCollections: hideCollections,
+		Role:            role,
+		Moved:           moved,
 	}
 
 	// Bodge default avatar + header in,

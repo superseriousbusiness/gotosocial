@@ -98,9 +98,9 @@
                 <dt>Posts</dt>
                 <dd>{{- .account.StatusesCount -}}</dd>
                 <dt>Followed by</dt>
-                <dd>{{- .account.FollowersCount -}}</dd>
+                <dd>{{- if .account.HideCollections -}}<i>hidden</i>{{- else -}}{{- .account.FollowersCount -}}{{- end -}}</dd>
                 <dt>Following</dt>
-                <dd>{{- .account.FollowingCount -}}</dd>
+                <dd>{{- if .account.HideCollections -}}<i>hidden</i>{{- else -}}{{- .account.FollowingCount -}}{{- end -}}</dd>
             </dl>
         </section>
         <div class="statuses-wrapper" role="region" aria-label="Posts by {{ .account.Username -}}">

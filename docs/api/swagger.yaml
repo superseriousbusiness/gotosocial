@@ -225,7 +225,9 @@ definitions:
                 type: array
                 x-go-name: Emojis
             enable_rss:
-                description: Account has enabled RSS feed.
+                description: |-
+                    Account has enabled RSS feed.
+                    Key/value omitted if false.
                 type: boolean
                 x-go-name: EnableRSS
             fields:
@@ -256,6 +258,12 @@ definitions:
                 example: https://example.org/media/some_user/header/static/header.png
                 type: string
                 x-go-name: HeaderStatic
+            hide_collections:
+                description: |-
+                    Account has opted to hide their followers/following collections.
+                    Key/value omitted if false.
+                type: boolean
+                x-go-name: HideCollections
             id:
                 description: The account id.
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
@@ -2898,6 +2906,8 @@ paths:
                 ```
                 <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
                 ````
+
+                If account `hide_collections` is true, and requesting account != target account, no results will be returned.
             operationId: accountFollowers
             parameters:
                 - description: Account ID.
@@ -2962,6 +2972,8 @@ paths:
                 ```
                 <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
                 ````
+
+                If account `hide_collections` is true, and requesting account != target account, no results will be returned.
             operationId: accountFollowing
             parameters:
                 - description: Account ID.
@@ -3552,6 +3564,10 @@ paths:
                   in: formData
                   name: source[status_content_type]
                   type: string
+                - description: FileName of the theme to use when rendering this account's profile or statuses. The theme must exist on this server, as indicated by /api/v1/accounts/themes. Empty string unsets theme and returns to the default GoToSocial theme.
+                  in: formData
+                  name: theme
+                  type: string
                 - description: Custom CSS to use when rendering this account's profile or statuses. String must be no more than 5,000 characters (~5kb).
                   in: formData
                   name: custom_css
@@ -3559,6 +3575,10 @@ paths:
                 - description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
                   in: formData
                   name: enable_rss
+                  type: boolean
+                - description: Hide the account's following/followers collections.
+                  in: formData
+                  name: hide_collections
                   type: boolean
                 - description: Name of 1st profile field to be added to this account's profile. (The index may be any string; add more indexes to send more fields.)
                   in: formData

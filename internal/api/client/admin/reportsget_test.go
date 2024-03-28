@@ -236,6 +236,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "verified_at": null
           }
         ],
+        "hide_collections": true,
         "role": {
           "name": "user"
         }
@@ -397,6 +398,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "verified_at": null
           }
         ],
+        "hide_collections": true,
         "role": {
           "name": "user"
         }
@@ -618,6 +620,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
             "verified_at": null
           }
         ],
+        "hide_collections": true,
         "role": {
           "name": "user"
         }
@@ -839,6 +842,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
             "verified_at": null
           }
         ],
+        "hide_collections": true,
         "role": {
           "name": "user"
         }

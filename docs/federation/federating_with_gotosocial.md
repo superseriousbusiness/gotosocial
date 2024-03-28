@@ -106,7 +106,9 @@ This ensures that remote servers cannot flood a GoToSocial instance with spuriou
 
 For more details on request throttling and rate limiting behavior, please see the [throttling](../api/throttling.md) and [rate limiting](../api/ratelimiting.md) documents.
 
-## Inbox
+## Actors and Actor Properties
+
+### Inbox
 
 GoToSocial implements Inboxes for Actors following the ActivityPub specification [here](https://www.w3.org/TR/activitypub/#inbox).
 
@@ -132,7 +134,7 @@ Invalidly-formed Inbox POST requests will receive a [400 - Bad Request](https://
 
 Even if GoToSocial returns a `202` status code, it may not continue processing the Activity delivered, depending on the originator(s), target(s) and type of the Activity. ActivityPub is an extensive protocol, and GoToSocial does not cover every combination of Activity and Object.
 
-## Outbox
+### Outbox
 
 GoToSocial implements Outboxes for Actors (ie., instance accounts) following the ActivityPub specification [here](https://www.w3.org/TR/activitypub/#outbox).
 
@@ -142,10 +144,10 @@ The server will return an OrderedCollection of the following structure:
 
 ```json
 {
-    "@context": "https://www.w3.org/ns/activitystreams",
-    "id": "https://example.org/users/whatever/outbox",
-    "type": "OrderedCollection",
-    "first": "https://example.org/users/whatever/outbox?page=true"
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/users/whatever/outbox",
+  "type": "OrderedCollection",
+  "first": "https://example.org/users/whatever/outbox?page=true"
 }
 ```
 
@@ -153,32 +155,84 @@ Note that the `OrderedCollection` itself contains no items. Callers must derefer
 
 ```json
 {
-    "id": "https://example.org/users/whatever/outbox?page=true",
-    "type": "OrderedCollectionPage",
-    "next": "https://example.org/users/whatever/outbox?max_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
-    "prev": "https://example.org/users/whatever/outbox?min_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
-    "partOf": "https://example.org/users/whatever/outbox",
-    "orderedItems": [
-        {
-            "id": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7/activity",
-            "type": "Create",
-            "actor": "https://example.org/users/whatever",
-            "published": "2021-10-18T20:06:18Z",
-            "to": [
-                "https://www.w3.org/ns/activitystreams#Public"
-            ],
-            "cc": [
-                "https://example.org/users/whatever/followers"
-            ],
-            "object": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7"
-        }
-    ]
+  "id": "https://example.org/users/whatever/outbox?page=true",
+  "type": "OrderedCollectionPage",
+  "next": "https://example.org/users/whatever/outbox?max_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
+  "prev": "https://example.org/users/whatever/outbox?min_id=01FJC1Q0E3SSQR59TD2M1KP4V8&page=true",
+  "partOf": "https://example.org/users/whatever/outbox",
+  "orderedItems": [
+    {
+      "id": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7/activity",
+      "type": "Create",
+      "actor": "https://example.org/users/whatever",
+      "published": "2021-10-18T20:06:18Z",
+      "to": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "cc": [
+        "https://example.org/users/whatever/followers"
+      ],
+      "object": "https://example.org/users/whatever/statuses/01FJC1MKPVX2VMWP2ST93Q90K7"
+    }
+  ]
 }
 ```
 
 The `orderedItems` array will contain up to 30 entries. To get more entries beyond that, the caller can use the `next` link provided in the response.
 
 Note that in the returned `orderedItems`, all activity types will be `Create`. On each activity, the `object` field will be the AP URI of an original public status created by the Actor who owns the Outbox (ie., a `Note` with `https://www.w3.org/ns/activitystreams#Public` in the `to` field, which is not a reply to another status). Callers can use the returned AP URIs to dereference the content of the notes.
+
+### Followers / Following Collections
+
+GoToSocial implements followers and following collections as `OrderedCollection`s. A properly-signed `GET` request to an Actor's Following collection, for example, will return something like:
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "first": "https://example.org/users/someone/following?limit=40",
+  "id": "https://example.org/users/someone/following",
+  "totalItems": 397,
+  "type": "OrderedCollection"
+}
+```
+
+From there, you can use the `first` page to start getting items. For example, a `GET` request to `https://example.org/users/someone/following?limit=40` will produce something like:
+
+```json
+{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "id": "https://example.org/users/someone/following?limit=40",
+  "next": "https://example.org/users/someone/following?limit=40&max_id=01V1AY4ZJT4JK1NT271SH2WMGH",
+  "orderedItems": [
+    "https://example.org/users/someone_else",
+    "https://somewhere.else.example.org/users/another_account",
+    [... 38 more entries here ...]
+  ],
+  "partOf": "https://example.org/users/someone/following",
+  "prev": "https://example.org/users/someone/following?limit=40&since_id=021HKBY346X7BPFYANPPJN493P",
+  "totalItems": 397,
+  "type": "OrderedCollectionPage"
+}
+```
+
+You can then use the `next` and `prev` endpoints to page down and up through the OrderedCollection.
+
+!!! Info "Hidden Followers / Following Collections"
+    
+    GoToSocial allows users to hide their followers/following collections if they wish.
+    
+    If a user has chosen to hide their collections, then only a stub collection with `totalItems` will be returned, and you will not be able to page through the Actor's followers/following collections.
+    
+    A `GET` to the following collection of an Actor with hidden collections will look like:
+    
+    ```json
+    {
+      "@context": "https://www.w3.org/ns/activitystreams",
+      "id": "https://example.org/users/someone/following",
+      "type": "OrderedCollection",
+      "totalItems": 397
+    }
+    ```
 
 ## Conversation Threads
 

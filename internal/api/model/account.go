@@ -94,12 +94,16 @@ type Account struct {
 	// CustomCSS to include when rendering this account's profile or statuses.
 	CustomCSS string `json:"custom_css,omitempty"`
 	// Account has enabled RSS feed.
+	// Key/value omitted if false.
 	EnableRSS bool `json:"enable_rss,omitempty"`
+	// Account has opted to hide their followers/following collections.
+	// Key/value omitted if false.
+	HideCollections bool `json:"hide_collections,omitempty"`
 	// Role of the account on this instance.
-	// Omitted for remote accounts.
+	// Key/value omitted for remote accounts.
 	Role *AccountRole `json:"role,omitempty"`
 	// If set, indicates that this account is currently inactive, and has migrated to the given account.
-	// Omitted for accounts that haven't moved, and for suspended accounts.
+	// Key/value omitted for accounts that haven't moved, and for suspended accounts.
 	Moved *Account `json:"moved,omitempty"`
 }
 
@@ -172,6 +176,8 @@ type UpdateCredentialsRequest struct {
 	CustomCSS *string `form:"custom_css" json:"custom_css"`
 	// Enable RSS feed of public toots for this account at /@[username]/feed.rss
 	EnableRSS *bool `form:"enable_rss" json:"enable_rss"`
+	// Hide this account's following/followers collections.
+	HideCollections *bool `form:"hide_collections" json:"hide_collections"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.
