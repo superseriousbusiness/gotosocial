@@ -279,9 +279,9 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 
 		// Set the collection item property builder function.
 		pageParams.Append = func(i int, itemsProp ap.ItemsPropertyBuilder) {
-			// Get follower URI at index.
+			// Get followed URI at index.
 			follow := follows[i]
-			accURI := follow.Account.URI
+			accURI := follow.TargetAccount.URI
 
 			// Parse URL object from URI.
 			iri, err := url.Parse(accURI)
