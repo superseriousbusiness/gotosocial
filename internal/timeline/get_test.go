@@ -688,7 +688,7 @@ func (suite *GetTestSuite) TestGetTimelinesAsync() {
 					limit,
 					local,
 				); err != nil {
-					suite.FailNow(err.Error())
+					suite.Fail(err.Error())
 				}
 
 				wg.Done()
