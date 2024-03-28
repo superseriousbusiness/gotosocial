@@ -8,7 +8,7 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: "mambaforge-22.9" # https://docs.readthedocs.io/en/stable/guides/conda.html#making-builds-faster-with-mamba
+    python: "miniconda3-4.7"
 
 mkdocs:
   configuration: "mkdocs.yml"
