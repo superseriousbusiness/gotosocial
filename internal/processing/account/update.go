@@ -284,6 +284,10 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.Settings.EnableRSS = form.EnableRSS
 	}
 
+	if form.HideCollections != nil {
+		account.Settings.HideCollections = form.HideCollections
+	}
+
 	if err := p.state.DB.UpdateAccount(ctx, account); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
 	}

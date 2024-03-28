@@ -140,15 +140,25 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 	params.ID = collectionID
 	params.Total = total
 
-	if page == nil {
+	switch {
+
+	case receiver.IsInstance() ||
+		*receiver.Settings.HideCollections:
+		// Instance account (can't follow/be followed),
+		// or an account that hides followers/following.
+		// Respect this by just returning totalItems.
+		obj = ap.NewASOrderedCollection(params)
+
+	case page == nil:
 		// i.e. paging disabled, return collection
 		// that links to first page (i.e. path below).
+		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
 		obj = ap.NewASOrderedCollection(params)
-	} else {
-		// i.e. paging enabled
 
+	default:
+		// i.e. paging enabled
 		// Get the request page of full follower objects with attached accounts.
 		followers, err := p.state.DB.GetAccountFollowers(ctx, receiver.ID, page)
 		if err != nil {
@@ -239,15 +249,24 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 	params.ID = collectionID
 	params.Total = total
 
-	if page == nil {
+	switch {
+	case receiver.IsInstance() ||
+		*receiver.Settings.HideCollections:
+		// Instance account (can't follow/be followed),
+		// or an account that hides followers/following.
+		// Respect this by just returning totalItems.
+		obj = ap.NewASOrderedCollection(params)
+
+	case page == nil:
 		// i.e. paging disabled, return collection
 		// that links to first page (i.e. path below).
+		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
 		obj = ap.NewASOrderedCollection(params)
-	} else {
-		// i.e. paging enabled
 
+	default:
+		// i.e. paging enabled
 		// Get the request page of full follower objects with attached accounts.
 		follows, err := p.state.DB.GetAccountFollows(ctx, receiver.ID, page)
 		if err != nil {
