@@ -28,6 +28,7 @@ plugins:
       cards_layout_options:
         background_color: "#fd6a00"
         color: "#fafaff"
+      cache_dir: "./docs/.cache/plugin/social"
   - swagger-ui-tag:
       supportedSubmitMethods: []
       syntaxHighlightTheme: obsidian
