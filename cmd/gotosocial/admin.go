@@ -108,7 +108,7 @@ func adminCommands() *cobra.Command {
 
 	adminAccountDisableCmd := &cobra.Command{
 		Use:   "disable",
-		Short: "prevent a local account from signing in or posting etc, but don't delete anything",
+		Short: "set 'disabled' to true on a local account to prevent it from signing in or posting etc, but don't delete anything",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return preRun(preRunArgs{cmd: cmd})
 		},
@@ -118,6 +118,19 @@ func adminCommands() *cobra.Command {
 	}
 	config.AddAdminAccount(adminAccountDisableCmd)
 	adminAccountCmd.AddCommand(adminAccountDisableCmd)
+
+	adminAccountEnableCmd := &cobra.Command{
+		Use:   "enable",
+		Short: "undo a previous disable command by setting 'disabled' to false on a local account",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), account.Enable)
+		},
+	}
+	config.AddAdminAccount(adminAccountEnableCmd)
+	adminAccountCmd.AddCommand(adminAccountEnableCmd)
 
 	adminAccountPasswordCmd := &cobra.Command{
 		Use:   "password",

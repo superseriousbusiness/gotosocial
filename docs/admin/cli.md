@@ -142,7 +142,7 @@ This command can be used to disable an account on your instance: prevent it from
 `gotosocial admin account disable --help`:
 
 ```text
-prevent a local account from signing in or posting etc, but don't delete anything
+set 'disabled' to true on a local account to prevent it from signing in or posting etc, but don't delete anything
 
 Usage:
   gotosocial admin account disable [flags]
@@ -156,6 +156,29 @@ Example:
 
 ```bash
 gotosocial admin account disable --username some_username --config-path config.yaml
+```
+
+### gotosocial admin account enable
+
+This command can be used to reenable an account on your instance, undoing a previous `disable` command.
+
+`gotosocial admin account enable --help`:
+
+```text
+undo a previous disable command by setting 'disabled' to false on a local account
+
+Usage:
+  gotosocial admin account enable [flags]
+
+Flags:
+  -h, --help              help for enable
+      --username string   the username to create/delete/etc
+```
+
+Example:
+
+```bash
+gotosocial admin account enable --username some_username --config-path config.yaml
 ```
 
 ### gotosocial admin account password
