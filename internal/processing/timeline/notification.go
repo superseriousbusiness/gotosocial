@@ -43,6 +43,12 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 		return util.EmptyPageableResponse(), nil
 	}
 
+	filters, err := p.state.DB.GetFiltersForAccountID(ctx, authed.Account.ID)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", authed.Account.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	var (
 		items          = make([]interface{}, 0, count)
 		nextMaxIDValue string
@@ -87,7 +93,7 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 			}
 		}
 
-		item, err := p.converter.NotificationToAPINotification(ctx, n)
+		item, err := p.converter.NotificationToAPINotification(ctx, n, filters)
 		if err != nil {
 			log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
 			continue
@@ -121,7 +127,13 @@ func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Accou
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif)
+	filters, err := p.state.DB.GetFiltersForAccountID(ctx, account.ID)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", account.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, filters)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorNotFound(err)

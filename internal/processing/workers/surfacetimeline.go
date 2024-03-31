@@ -22,6 +22,7 @@ import (
 	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -111,6 +112,11 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 			continue
 		}
 
+		filters, err := s.state.DB.GetFiltersForAccountID(ctx, follow.AccountID)
+		if err != nil {
+			return gtserror.Newf("couldn't retrieve filters for account %s: %w", follow.AccountID, err)
+		}
+
 		// Add status to any relevant lists
 		// for this follow, if applicable.
 		s.listTimelineStatusForFollow(
@@ -118,6 +124,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 			status,
 			follow,
 			&errs,
+			filters,
 		)
 
 		// Add status to home timeline for owner
@@ -129,6 +136,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 			follow.Account,
 			status,
 			stream.TimelineHome,
+			filters,
 		)
 		if err != nil {
 			errs.Appendf("error home timelining status: %w", err)
@@ -180,6 +188,7 @@ func (s *surface) listTimelineStatusForFollow(
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
 	errs *gtserror.MultiError,
+	filters []*gtsmodel.Filter,
 ) {
 	// To put this status in appropriate list timelines,
 	// we need to get each listEntry that pertains to
@@ -222,6 +231,7 @@ func (s *surface) listTimelineStatusForFollow(
 			follow.Account,
 			status,
 			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
+			filters,
 		); err != nil {
 			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
 			// implicit continue
@@ -332,6 +342,7 @@ func (s *surface) timelineStatus(
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 	streamType string,
+	filters []*gtsmodel.Filter,
 ) (bool, error) {
 	// Ingest status into given timeline using provided function.
 	if inserted, err := ingest(ctx, timelineID, status); err != nil {
@@ -343,7 +354,7 @@ func (s *surface) timelineStatus(
 	}
 
 	// The status was inserted so stream it to the user.
-	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account)
+	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account, custom.FilterContextHome, filters)
 	if err != nil {
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return true, err
@@ -457,6 +468,11 @@ func (s *surface) timelineStatusUpdateForFollowers(
 			continue
 		}
 
+		filters, err := s.state.DB.GetFiltersForAccountID(ctx, follow.AccountID)
+		if err != nil {
+			return gtserror.Newf("couldn't retrieve filters for account %s: %w", follow.AccountID, err)
+		}
+
 		// Add status to any relevant lists
 		// for this follow, if applicable.
 		s.listTimelineStatusUpdateForFollow(
@@ -464,6 +480,7 @@ func (s *surface) timelineStatusUpdateForFollowers(
 			status,
 			follow,
 			&errs,
+			filters,
 		)
 
 		// Add status to home timeline for owner
@@ -473,6 +490,7 @@ func (s *surface) timelineStatusUpdateForFollowers(
 			follow.Account,
 			status,
 			stream.TimelineHome,
+			filters,
 		)
 		if err != nil {
 			errs.Appendf("error home timelining status: %w", err)
@@ -490,6 +508,7 @@ func (s *surface) listTimelineStatusUpdateForFollow(
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
 	errs *gtserror.MultiError,
+	filters []*gtsmodel.Filter,
 ) {
 	// To put this status in appropriate list timelines,
 	// we need to get each listEntry that pertains to
@@ -530,6 +549,7 @@ func (s *surface) listTimelineStatusUpdateForFollow(
 			follow.Account,
 			status,
 			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
+			filters,
 		); err != nil {
 			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
 			// implicit continue
@@ -544,8 +564,13 @@ func (s *surface) timelineStreamStatusUpdate(
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 	streamType string,
+	filters []*gtsmodel.Filter,
 ) error {
-	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account)
+	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account, custom.FilterContextHome, filters)
+	if errors.Is(err, custom.HideStatus) {
+		// Don't put this status in the stream.
+		return nil
+	}
 	if err != nil {
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return err

@@ -24,6 +24,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -111,6 +112,12 @@ func (p *Processor) packageTagResponse(
 		prevMinIDValue = statuses[0].ID
 	)
 
+	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAcct.ID)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAcct.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	for _, s := range statuses {
 		timelineable, err := p.filter.StatusTagTimelineable(ctx, requestingAcct, s)
 		if err != nil {
@@ -122,7 +129,10 @@ func (p *Processor) packageTagResponse(
 			continue
 		}
 
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requestingAcct)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requestingAcct, custom.FilterContextPublic, filters)
+		if errors.Is(err, custom.HideStatus) {
+			continue
+		}
 		if err != nil {
 			log.Errorf(ctx, "error converting to api status: %v", err)
 			continue

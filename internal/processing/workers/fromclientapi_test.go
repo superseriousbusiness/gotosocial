@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -150,6 +151,8 @@ func (suite *FromClientAPITestSuite) statusJSON(
 		ctx,
 		status,
 		requestingAccount,
+		custom.FilterContextNone,
+		nil,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -244,7 +247,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 		suite.FailNow("timed out waiting for new status notification")
 	}
 
-	apiNotif, err := suite.typeconverter.NotificationToAPINotification(ctx, notif)
+	apiNotif, err := suite.typeconverter.NotificationToAPINotification(ctx, notif, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

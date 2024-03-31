@@ -184,7 +184,7 @@ func (p *Processor) GetAPIStatus(
 	apiStatus *apimodel.Status,
 	errWithCode gtserror.WithCode,
 ) {
-	apiStatus, err := p.converter.StatusToAPIStatus(ctx, target, requester)
+	apiStatus, err := p.converter.StatusToAPIStatus(ctx, target, requester, "", nil)
 	if err != nil {
 		err = gtserror.Newf("error converting status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

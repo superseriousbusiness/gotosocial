@@ -100,6 +100,8 @@ type Status struct {
 	// so the user may redraft from the source text without the client having to reverse-engineer
 	// the original text from the HTML content.
 	Text string `json:"text,omitempty"`
+	// A filter that matched this status and why it matched, if there is such a filter.
+	Filtered *FilterResult `json:"filtered,omitempty"`
 
 	// Additional fields not exposed via JSON
 	// (used only internally for templating etc).

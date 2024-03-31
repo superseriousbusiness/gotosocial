@@ -390,7 +390,7 @@ func (s *surface) notify(
 	}
 
 	// Stream notification to the user.
-	apiNotif, err := s.converter.NotificationToAPINotification(ctx, notif)
+	apiNotif, err := s.converter.NotificationToAPINotification(ctx, notif, nil)
 	if err != nil {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}

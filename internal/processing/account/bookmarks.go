@@ -23,6 +23,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -74,7 +75,7 @@ func (p *Processor) BookmarksGet(ctx context.Context, requestingAccount *gtsmode
 		}
 
 		// Convert the status.
-		item, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount)
+		item, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount, custom.FilterContextNone, nil)
 		if err != nil {
 			log.Errorf(ctx, "error converting bookmarked status to api: %s", err)
 			continue

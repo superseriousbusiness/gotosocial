@@ -23,6 +23,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -98,7 +99,13 @@ func HomeTimelineStatusPrepare(state *state.State, converter *typeutils.Converte
 			return nil, err
 		}
 
-		return converter.StatusToAPIStatus(ctx, status, requestingAccount)
+		filters, err := state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
+		if err != nil {
+			err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
+			return nil, err
+		}
+
+		return converter.StatusToAPIStatus(ctx, status, requestingAccount, custom.FilterContextHome, filters)
 	}
 }
 
