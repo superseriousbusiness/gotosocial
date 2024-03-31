@@ -706,21 +706,21 @@ func (c *Converter) StatusToAPIStatus(
 	return apiStatus, nil
 }
 
-// statusToAPIFilterResult applies filters to a status and returns an API filter result object.
+// statusToAPIFilterResults applies filters to a status and returns an API filter result object.
 // The result may be nil if no filters matched.
 // If the status should not be returned at all, it returns the HideStatus error.
-func (c *Converter) statusToAPIFilterResult(
+func (c *Converter) statusToAPIFilterResults(
 	ctx context.Context,
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 	filterContext custom.FilterContext,
 	filters []*gtsmodel.Filter,
-) (*apimodel.FilterResult, error) {
+) ([]apimodel.FilterResult, error) {
 	if filterContext == "" || len(filters) == 0 || s.AccountID == requestingAccount.ID {
 		return nil, nil
 	}
 
-	var filterResult *apimodel.FilterResult
+	filterResults := make([]apimodel.FilterResult, 0, len(filters))
 
 	now := time.Now()
 	for _, filter := range filters {
@@ -730,10 +730,6 @@ func (c *Converter) statusToAPIFilterResult(
 		}
 		if !filter.ExpiresAt.IsZero() && filter.ExpiresAt.Before(now) {
 			// Filter is expired.
-			continue
-		}
-		if filterResult != nil && filter.Action == gtsmodel.FilterActionWarn {
-			// Filter is a warn filter, but we've already matched at least one of those.
 			continue
 		}
 
@@ -778,19 +774,16 @@ func (c *Converter) statusToAPIFilterResult(
 		if len(keywordMatches) > 0 || len(statusMatches) > 0 {
 			switch filter.Action {
 			case gtsmodel.FilterActionWarn:
-				if filterResult == nil {
-					// If this is the first filter to match, record what matched.
-					apiFilter, err := c.FilterToAPIFilterV2(ctx, filter)
-					if err != nil {
-						return nil, err
-					}
-					filterResult = &apimodel.FilterResult{
-						Filter:         *apiFilter,
-						KeywordMatches: keywordMatches,
-						StatusMatches:  statusMatches,
-					}
+				// Record what matched.
+				apiFilter, err := c.FilterToAPIFilterV2(ctx, filter)
+				if err != nil {
+					return nil, err
 				}
-				// We'll keep going after this in case there's a filter with a hide action that also matches.
+				filterResults = append(filterResults, apimodel.FilterResult{
+					Filter:         *apiFilter,
+					KeywordMatches: keywordMatches,
+					StatusMatches:  statusMatches,
+				})
 
 			case gtsmodel.FilterActionHide:
 				// Don't show this status. Immediate return.
@@ -799,7 +792,7 @@ func (c *Converter) statusToAPIFilterResult(
 		}
 	}
 
-	return filterResult, nil
+	return filterResults, nil
 }
 
 // filterableTextFields returns all text from a status that we might want to filter on:
@@ -1105,11 +1098,11 @@ func (c *Converter) statusToFrontend(
 	}
 
 	// Apply filters.
-	filterResult, err := c.statusToAPIFilterResult(ctx, s, requestingAccount, filterContext, filters)
+	filterResults, err := c.statusToAPIFilterResults(ctx, s, requestingAccount, filterContext, filters)
 	if err != nil {
 		return nil, fmt.Errorf("error applying filters: %w", err)
 	}
-	apiStatus.Filtered = filterResult
+	apiStatus.Filtered = filterResults
 
 	return apiStatus, nil
 }

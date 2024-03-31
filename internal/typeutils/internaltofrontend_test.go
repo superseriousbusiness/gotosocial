@@ -661,30 +661,32 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
   "card": null,
   "poll": null,
   "text": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
-  "filtered": {
-    "filter": {
-      "id": "01HN26VM6KZTW1ANNRVSBMA461",
-      "title": "fnord",
-      "context": [
-        "home",
-        "public"
+  "filtered": [
+    {
+      "filter": {
+        "id": "01HN26VM6KZTW1ANNRVSBMA461",
+        "title": "fnord",
+        "context": [
+          "home",
+          "public"
+        ],
+        "expires_at": null,
+        "filter_action": "warn",
+        "keywords": [
+          {
+            "id": "01HN272TAVWAXX72ZX4M8JZ0PS",
+            "keyword": "fnord",
+            "whole_word": true
+          }
+        ],
+        "statuses": []
+      },
+      "keyword_matches": [
+        "fnord"
       ],
-      "expires_at": null,
-      "filter_action": "warn",
-      "keywords": [
-        {
-          "id": "01HN272TAVWAXX72ZX4M8JZ0PS",
-          "keyword": "fnord",
-          "whole_word": true
-        }
-      ],
-      "statuses": []
-    },
-    "keyword_matches": [
-      "fnord"
-    ],
-    "status_matches": []
-  }
+      "status_matches": []
+    }
+  ]
 }`, string(b))
 }
 
