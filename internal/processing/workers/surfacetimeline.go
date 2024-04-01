@@ -567,7 +567,7 @@ func (s *surface) timelineStreamStatusUpdate(
 	filters []*gtsmodel.Filter,
 ) error {
 	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account, custom.FilterContextHome, filters)
-	if errors.Is(err, custom.HideStatus) {
+	if errors.Is(err, custom.ErrHideStatus) {
 		// Don't put this status in the stream.
 		return nil
 	}

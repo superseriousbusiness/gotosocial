@@ -130,7 +130,7 @@ func (p *Processor) packageTagResponse(
 		}
 
 		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requestingAcct, custom.FilterContextPublic, filters)
-		if errors.Is(err, custom.HideStatus) {
+		if errors.Is(err, custom.ErrHideStatus) {
 			continue
 		}
 		if err != nil {

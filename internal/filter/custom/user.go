@@ -22,8 +22,8 @@ import (
 	"errors"
 )
 
-// HideStatus indicates that a status has been filtered and should not be returned at all.
-var HideStatus = errors.New("hide status")
+// ErrHideStatus indicates that a status has been filtered and should not be returned at all.
+var ErrHideStatus = errors.New("hide status")
 
 // FilterContext determines the filters that apply to a given status or list of statuses.
 type FilterContext string

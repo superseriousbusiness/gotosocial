@@ -690,7 +690,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
 }`, string(b))
 }
 
-// Test that a status which is filtered with a hide filter by the requesting user results in the HideStatus error.
+// Test that a status which is filtered with a hide filter by the requesting user results in the ErrHideStatus error.
 func (suite *InternalToFrontendTestSuite) TestHideFilteredStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	testStatus.Content += " fnord"
@@ -709,7 +709,7 @@ func (suite *InternalToFrontendTestSuite) TestHideFilteredStatusToFrontend() {
 		custom.FilterContextHome,
 		requestingAccountFilters,
 	)
-	suite.ErrorIs(err, custom.HideStatus)
+	suite.ErrorIs(err, custom.ErrHideStatus)
 }
 
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments() {

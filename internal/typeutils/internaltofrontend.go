@@ -682,7 +682,7 @@ func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistor
 //
 // Filter context can be the empty string if these statuses are not being filtered.
 //
-// If there is a matching "hide" filter, the returned status will be nil with a HideStatus error;
+// If there is a matching "hide" filter, the returned status will be nil with a ErrHideStatus error;
 // callers need to handle that case by excluding it from results.
 func (c *Converter) StatusToAPIStatus(
 	ctx context.Context,
@@ -708,7 +708,7 @@ func (c *Converter) StatusToAPIStatus(
 
 // statusToAPIFilterResults applies filters to a status and returns an API filter result object.
 // The result may be nil if no filters matched.
-// If the status should not be returned at all, it returns the HideStatus error.
+// If the status should not be returned at all, it returns the ErrHideStatus error.
 func (c *Converter) statusToAPIFilterResults(
 	ctx context.Context,
 	s *gtsmodel.Status,
@@ -783,7 +783,7 @@ func (c *Converter) statusToAPIFilterResults(
 
 			case gtsmodel.FilterActionHide:
 				// Don't show this status. Immediate return.
-				return nil, custom.HideStatus
+				return nil, custom.ErrHideStatus
 			}
 		}
 	}
@@ -1053,7 +1053,7 @@ func (c *Converter) statusToFrontend(
 
 	if s.BoostOf != nil {
 		reblog, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount, filterContext, filters)
-		if errors.Is(err, custom.HideStatus) {
+		if errors.Is(err, custom.ErrHideStatus) {
 			// If we'd hide the original status, hide the boost.
 			return nil, err
 		}

@@ -122,7 +122,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 	for e, entry := range toPrepare {
 		prepared, err := t.prepareFunction(ctx, t.timelineID, entry.itemID)
 		if err != nil {
-			if errors.Is(err, custom.HideStatus) {
+			if errors.Is(err, custom.ErrHideStatus) {
 				// This item has been filtered out by the requesting user's filters.
 				// Remove it and skip past it.
 				t.items.data.Remove(e)

@@ -99,7 +99,7 @@ outer:
 			}
 
 			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester, custom.FilterContextPublic, filters)
-			if errors.Is(err, custom.HideStatus) {
+			if errors.Is(err, custom.ErrHideStatus) {
 				continue
 			}
 			if err != nil {
