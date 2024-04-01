@@ -734,8 +734,6 @@ func (c *Converter) statusToAPIFilterResults(
 		}
 
 		// List all matching keywords.
-		// TODO: (Vyr) this might be sped up slightly by concatenating regexps in a cache somewhere,
-		// 	although we still have to keep track of which actual keywords matched.
 		keywordMatches := make([]string, 0, len(filter.Keywords))
 		fields := filterableTextFields(s)
 		for _, filterKeyword := range filter.Keywords {
@@ -761,7 +759,6 @@ func (c *Converter) statusToAPIFilterResults(
 		}
 
 		// A status has only one ID. Not clear why this is a list in the Mastodon API.
-		// TODO: (Vyr) Likewise, there could be a set of status IDs in a cache.
 		statusMatches := make([]string, 0, 1)
 		for _, filterStatus := range filter.Statuses {
 			if s.ID == filterStatus.StatusID {
@@ -855,8 +852,7 @@ func (c *Converter) StatusToWebStatus(
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 ) (*apimodel.Status, error) {
-	// TODO: (Vyr) it's not clear to me why we'd have an account when requesting a web status
-	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, "", nil)
+	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, custom.FilterContextNone, nil)
 	if err != nil {
 		return nil, err
 	}
