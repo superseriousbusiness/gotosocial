@@ -740,20 +740,19 @@ func (c *Converter) statusToAPIFilterResults(
 		fields := filterableTextFields(s)
 		for _, filterKeyword := range filter.Keywords {
 			wholeWord := util.PtrValueOr(filterKeyword.WholeWord, false)
+			wordBreak := ``
+			if wholeWord {
+				wordBreak = `\b`
+			}
+			re, err := regexp.Compile(`(?i)` + wordBreak + regexp.QuoteMeta(filterKeyword.Keyword) + wordBreak)
+			if err != nil {
+				return nil, err
+			}
 			var isMatch bool
 			for _, field := range fields {
-				if wholeWord {
-					regexpIsMatch, err := regexp.MatchString(`\b`+regexp.QuoteMeta(filterKeyword.Keyword)+`\b`, field)
-					if err != nil {
-						return nil, err
-					}
-					if regexpIsMatch {
-						isMatch = true
-					}
-				} else {
-					if strings.Contains(field, filterKeyword.Keyword) {
-						isMatch = true
-					}
+				if re.MatchString(field) {
+					isMatch = true
+					break
 				}
 			}
 			if isMatch {
