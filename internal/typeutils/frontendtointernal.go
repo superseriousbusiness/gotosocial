@@ -47,13 +47,3 @@ func APIMarkerNameToMarkerName(m apimodel.MarkerName) gtsmodel.MarkerName {
 	}
 	return ""
 }
-
-func APIFilterActionToFilterAction(m apimodel.FilterAction) gtsmodel.FilterAction {
-	switch m {
-	case apimodel.FilterActionWarn:
-		return gtsmodel.FilterActionWarn
-	case apimodel.FilterActionHide:
-		return gtsmodel.FilterActionHide
-	}
-	return ""
-}
