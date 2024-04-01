@@ -389,8 +389,13 @@ func (s *surface) notify(
 		return gtserror.Newf("error putting notification in database: %w", err)
 	}
 
+	filters, err := s.state.DB.GetFiltersForAccountID(ctx, targetAccount.ID)
+	if err != nil {
+		return gtserror.Newf("couldn't retrieve filters for account %s: %w", targetAccount.ID, err)
+	}
+
 	// Stream notification to the user.
-	apiNotif, err := s.converter.NotificationToAPINotification(ctx, notif, nil)
+	apiNotif, err := s.converter.NotificationToAPINotification(ctx, notif, filters)
 	if err != nil {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
