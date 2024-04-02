@@ -32,13 +32,12 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
-	"codeberg.org/gruf/go-cache/v3"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-iotools"
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 var (
@@ -106,9 +105,9 @@ type Config struct {
 //   - optional request signing
 //   - request logging
 type Client struct {
-	client   http.Client
-	badHosts cache.TTLCache[string, struct{}]
-	bodyMax  int64
+	state   *state.State
+	client  http.Client
+	bodyMax int64
 }
 
 // New returns a new instance of Client initialized using configuration.
@@ -176,32 +175,11 @@ func New(cfg Config) *Client {
 		DisableCompression:    cfg.DisableCompression,
 	}}
 
-	// Initiate outgoing bad hosts lookup cache.
-	c.badHosts = cache.NewTTL[string, struct{}](0, 1000, 0)
-	c.badHosts.SetTTL(time.Hour, false)
-	if !c.badHosts.Start(time.Minute) {
-		log.Panic(nil, "failed to start transport controller cache")
-	}
-
 	return &c
 }
 
 // Do will essentially perform http.Client{}.Do() with retry-backoff functionality.
-func (c *Client) Do(r *http.Request) (*http.Response, error) {
-	return c.DoSigned(r, func(r *http.Request) error {
-		return nil // no request signing
-	})
-}
-
-// DoSigned will essentially perform http.Client{}.Do() with retry-backoff functionality and requesting signing..
-func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, err error) {
-	const (
-		// max no. attempts.
-		maxRetries = 5
-
-		// starting backoff duration.
-		baseBackoff = 2 * time.Second
-	)
+func (c *Client) Do(r *http.Request) (rsp *http.Response, err error) {
 
 	// First validate incoming request.
 	if err := ValidateRequest(r); err != nil {
@@ -219,108 +197,50 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 		// errors that are retried upon are server failure, TLS
 		// and domain resolution type errors, so this cached result
 		// indicates this server is likely having issues.
-		fastFail = c.badHosts.Has(host)
+		fastFail = c.state.Caches.BadHosts.Has(host)
 		defer func() {
 			if err != nil {
-				// On error return mark as bad-host.
-				c.badHosts.Set(host, struct{}{})
+				// On error return ensure marked as bad-host.
+				c.state.Caches.BadHosts.Set(host, struct{}{})
 			}
 		}()
 	}
 
-	// Start a log entry for this request
-	l := log.WithContext(r.Context()).
-		WithFields(kv.Fields{
-			{"method", r.Method},
-			{"url", r.URL.String()},
-		}...)
+	// Prepare log entry.
+	log := requestLog(r)
 
-	for i := 0; i < maxRetries; i++ {
-		var backoff time.Duration
+	// Wrap in our own request
+	// type for retry-backoff.
+	req := wrapRequest(r)
 
-		l.Info("performing request")
+	for req.attempts < maxRetries {
+		var retry bool
 
-		// Perform the request.
-		rsp, err = c.do(r)
-		if err == nil { //nolint:gocritic
+		log.Info("performing request")
 
-			// TooManyRequest means we need to slow
-			// down and retry our request. Codes over
-			// 500 generally indicate temp. outages.
-			if code := rsp.StatusCode; code < 500 &&
-				code != http.StatusTooManyRequests {
-				return rsp, nil
-			}
-
-			// Create loggable error from response status code.
-			err = fmt.Errorf(`http response: %s`, rsp.Status)
-
-			// Search for a provided "Retry-After" header value.
-			if after := rsp.Header.Get("Retry-After"); after != "" {
-
-				// Get current time.
-				now := time.Now()
-
-				if u, _ := strconv.ParseUint(after, 10, 32); u != 0 {
-					// An integer number of backoff seconds was provided.
-					backoff = time.Duration(u) * time.Second
-				} else if at, _ := http.ParseTime(after); !at.Before(now) {
-					// An HTTP formatted future date-time was provided.
-					backoff = at.Sub(now)
-				}
-
-				// Don't let their provided backoff exceed our max.
-				if max := baseBackoff * maxRetries; backoff > max {
-					backoff = max
-				}
-			}
-
-			// Close + unset rsp.
-			_ = rsp.Body.Close()
-			rsp = nil
-
-		} else if errorsv2.IsV2(err,
-			context.DeadlineExceeded,
-			context.Canceled,
-			ErrBodyTooLarge,
-			ErrReservedAddr,
-		) {
-			// Non-retryable errors.
-			return nil, err
-		} else if errstr := err.Error(); // nocollapse
-		strings.Contains(errstr, "stopped after 10 redirects") ||
-			strings.Contains(errstr, "tls: ") ||
-			strings.Contains(errstr, "x509: ") {
-			// These error types aren't wrapped
-			// so we have to check the error string.
-			// All are unrecoverable!
-			return nil, err
-		} else if dnserr := (*net.DNSError)(nil); // nocollapse
-		errors.As(err, &dnserr) && dnserr.IsNotFound {
-			// DNS lookup failure, this domain does not exist
-			return nil, gtserror.SetNotFound(err)
+		// Perform the http request.
+		rsp, retry, err = c.do(&req)
+		if err == nil || !retry {
+			return
 		}
+
+		log.Error(err)
 
 		if fastFail {
 			// on fast-fail, don't bother backoff/retry
 			return nil, fmt.Errorf("%w (fast fail)", err)
 		}
 
-		if backoff == 0 {
-			// No retry-after found, set our predefined
-			// backoff according to a multiplier of 2^n.
-			backoff = baseBackoff * 1 << (i + 1)
-		}
-
-		l.Errorf("backing off for %s after http request error: %v", backoff, err)
+		// Start the backoff timer channel.
+		backoff, cncl := sleepch(req.BackOff())
 
 		select {
 		// Request ctx cancelled
 		case <-r.Context().Done():
-			return nil, r.Context().Err()
+			cncl()
 
-		// Backoff for some time
-		case <-time.After(backoff):
+		// Backoff for a time
+		case <-backoff:
 		}
 	}
 
@@ -329,12 +249,80 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 	return
 }
 
-// do wraps http.Client{}.Do() to provide safely limited response bodies.
-func (c *Client) do(req *http.Request) (*http.Response, error) {
+// do wraps an underlying http.Client{}.Do() to perform our wrapped request type:
+// rewinding response body to permit reuse, signing request data when SignFunc provided,
+// safely limiting response body, updating retry attempt counts and setting retry-after.
+func (c *Client) do(r *request) (*http.Response, bool /* retry */, error) {
+	// Update the
+	// attempts.
+	r.attempts++
+
+	// Reset backoff.
+	r.backoff = 0
+
 	// Perform the HTTP request.
-	rsp, err := c.client.Do(req)
+	rsp, err := c.client.Do(r.req)
 	if err != nil {
-		return nil, err
+
+		if errorsv2.IsV2(err,
+			context.DeadlineExceeded,
+			context.Canceled,
+			ErrBodyTooLarge,
+			ErrReservedAddr,
+		) {
+			// Non-retryable errors.
+			return nil, false, err
+		}
+
+		if errstr := err.Error(); // nocollapse
+		strings.Contains(errstr, "stopped after 10 redirects") ||
+			strings.Contains(errstr, "tls: ") ||
+			strings.Contains(errstr, "x509: ") {
+			// These error types aren't wrapped
+			// so we have to check the error string.
+			// All are unrecoverable!
+			return nil, false, err
+		}
+
+		if dnserr := (*net.DNSError)(nil); // nocollapse
+		errors.As(err, &dnserr) && dnserr.IsNotFound {
+			// DNS lookup failure, this domain does not exist
+			return nil, false, gtserror.SetNotFound(err)
+		}
+
+		return nil, true, err
+
+	} else if rsp.StatusCode > 500 ||
+		rsp.StatusCode == http.StatusTooManyRequests {
+
+		// Codes over 500 (and 429: too many requests)
+		// are generally temporary errors. For these
+		// we replace the response with a loggable error.
+		err = fmt.Errorf(`http response: %s`, rsp.Status)
+
+		// Search for a provided "Retry-After" header value.
+		if after := rsp.Header.Get("Retry-After"); after != "" {
+
+			// Get cur time.
+			now := time.Now()
+
+			if u, _ := strconv.ParseUint(after, 10, 32); u != 0 {
+				// An integer no. of backoff seconds was provided.
+				r.backoff = time.Duration(u) * time.Second
+			} else if at, _ := http.ParseTime(after); !at.Before(now) {
+				// An HTTP formatted future date-time was provided.
+				r.backoff = at.Sub(time.Now())
+			}
+
+			// Don't let their provided backoff exceed our max.
+			if max := baseBackoff * maxRetries; r.backoff > max {
+				r.backoff = max
+			}
+		}
+
+		// Unset + close rsp.
+		_ = rsp.Body.Close()
+		return nil, true, err
 	}
 
 	// Seperate the body implementers.
@@ -364,11 +352,10 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 
 	// Check response body not too large.
 	if rsp.ContentLength > c.bodyMax {
-		_ = rsp.Body.Close()
-		return nil, ErrBodyTooLarge
+		return nil, false, ErrBodyTooLarge
 	}
 
-	return rsp, nil
+	return rsp, true, nil
 }
 
 // cast discard writer to full interface it supports.
