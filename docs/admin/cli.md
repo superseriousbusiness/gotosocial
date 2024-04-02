@@ -20,18 +20,34 @@ Usage:
 
 Available Commands:
   admin       gotosocial admin-related tasks
-  completion  generate the autocompletion script for the specified shell
   debug       gotosocial debug-related tasks
   help        Help about any command
   server      gotosocial server-related tasks
-  testrig     gotosocial testrig-related tasks
 ```
 
-Under `Available Commands`, you can see the standard `server` command. But there are also commands doing admin and testing etc, which will be explained in this document.
+Under `Available Commands`, you can see the standard `server` command. But there are also commands doing admin and debugging etc, which will be explained in this document.
 
-**Please note -- for all of these commands, you will still need to set the global options correctly so that the CLI tool knows how eg., how to connect to your database, which database to use, which host and account domain to use etc.**
+!!! Info "Passing global config to the CLI"
+    
+    For all of these commands, you will still need to set the global options correctly so that the CLI tool knows how to connect to your database, which database to use, which host and account domain to use, etc.
+    
+    You can set these options using environment variables, passing them as CLI flags (eg., `gotosocial [commands] --host example.org`), or by just pointing the CLI tool towards your config file (eg., `gotosocial --config-path ./config.yaml [commands]`).
 
-You can set these options using environment variables, passing them as CLI flags (eg., `gotosocial [commands] --host example.org`), or by just pointing the CLI tool towards your config file (eg., `gotosocial --config-path ./config.yaml [commands]`).
+!!! Info
+    
+    When running CLI commands, you'll get a bit of output like the following:
+    
+    ```text
+    time=XXXX level=info msg=connected to SQLITE database
+    time=XXXX level=info msg=there are no new migrations to run func=doMigration
+    time=XXXX level=info msg=closing db connection
+    ```
+    
+    This is normal and indicates that the commands ran as expected.
+
+!!! Warning "Restarting GtS after running admin commands"
+    
+    Because of the way internal caching works in GoToSocial, you may need to restart GoToSocial after running some of these commands in order for the effect of the command to "take". We are still looking for a way to make this unnecessary. In the meantime, commands that require a restart after running the command are highlighted below.
 
 ## gotosocial admin
 
@@ -68,7 +84,11 @@ gotosocial admin account create \
 
 ### gotosocial admin account confirm
 
-This command can be used to confirm a user+account on your instance, allowing them to log in and use the account. Note that if the account was created using `admin account create` this is not necessary.
+This command can be used to confirm a user+account on your instance, allowing them to log in and use the account.
+
+!!! Info
+    
+    If the account was created using `admin account create` it is not necessary to run `confirm` on the account, it will be confirmed already.
 
 `gotosocial admin account confirm --help`:
 
@@ -93,6 +113,10 @@ gotosocial admin account confirm --username some_username --config-path config.y
 
 This command can be used to promote a user to admin.
 
+!!! Warning "Server restart required"
+    
+    In order for the change to "take", this command requires a restart of GoToSocial after running the command.
+
 `gotosocial admin account promote --help`:
 
 ```text
@@ -115,6 +139,10 @@ gotosocial admin account promote --username some_username --config-path config.y
 ### gotosocial admin account demote
 
 This command can be used to demote a user from admin to normal user.
+
+!!! Warning "Server restart required"
+    
+    In order for the change to "take", this command requires a restart of GoToSocial after running the command.
 
 `gotosocial admin account demote --help`:
 
@@ -139,10 +167,14 @@ gotosocial admin account demote --username some_username --config-path config.ya
 
 This command can be used to disable an account on your instance: prevent it from signing in or doing anything, without deleting data.
 
+!!! Warning "Server restart required"
+    
+    In order for the change to "take", this command requires a restart of GoToSocial after running the command.
+
 `gotosocial admin account disable --help`:
 
 ```text
-prevent a local account from signing in or posting etc, but don't delete anything
+set 'disabled' to true on a local account to prevent it from signing in or posting etc, but don't delete anything
 
 Usage:
   gotosocial admin account disable [flags]
@@ -158,9 +190,40 @@ Example:
 gotosocial admin account disable --username some_username --config-path config.yaml
 ```
 
+### gotosocial admin account enable
+
+This command can be used to reenable an account on your instance, undoing a previous `disable` command.
+
+!!! Warning "Server restart required"
+    
+    In order for the change to "take", this command requires a restart of GoToSocial after running the command.
+
+`gotosocial admin account enable --help`:
+
+```text
+undo a previous disable command by setting 'disabled' to false on a local account
+
+Usage:
+  gotosocial admin account enable [flags]
+
+Flags:
+  -h, --help              help for enable
+      --username string   the username to create/delete/etc
+```
+
+Example:
+
+```bash
+gotosocial admin account enable --username some_username --config-path config.yaml
+```
+
 ### gotosocial admin account password
 
 This command can be used to set a new password on the given local account.
+
+!!! Warning "Server restart required"
+    
+    In order for the change to "take", this command requires a restart of GoToSocial after running the command.
 
 `gotosocial admin account password --help`:
 
@@ -329,7 +392,11 @@ This command can be used to prune orphaned media from your GoToSocial.
 
 Orphaned media is defined as media that is in storage under a key that matches the format used by GoToSocial, but which does not have a corresponding database entry. This is useful for excising files that may be remaining from a previous installation, or files that were placed in storage mistakenly.
 
-**This command only works when GoToSocial is not running, since it acquires an exclusive lock on storage. Stop GoToSocial first before running this command!**
+!!! Warning "Requires a stopped server"
+    
+    This command only works when GoToSocial is not running, since it acquires an exclusive lock on storage.
+    
+    Stop GoToSocial first before running this command!
 
 ```text
 prune orphaned media from storage
@@ -366,7 +433,11 @@ These items will be refetched later on demand, if necessary.
 
 Unused media means avatars/headers/status attachments which are not currently in use by an account or status.
 
-**This command only works when GoToSocial is not running, since it acquires an exclusive lock on storage. Stop GoToSocial first before running this command!**
+!!! Warning "Requires a stopped server"
+    
+    This command only works when GoToSocial is not running, since it acquires an exclusive lock on storage.
+    
+    Stop GoToSocial first before running this command!
 
 ```text
 prune unused/stale remote media from storage, older than given number of days
