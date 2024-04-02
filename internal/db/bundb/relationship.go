@@ -331,7 +331,7 @@ func newSelectFollows(db *bun.DB, accountID string) *bun.SelectQuery {
 		Table("follows").
 		Column("id").
 		Where("? = ?", bun.Ident("account_id"), accountID).
-		OrderExpr("? DESC", bun.Ident("id"))
+		OrderExpr("? DESC", bun.Ident("created_at"))
 }
 
 // newSelectLocalFollows returns a new select query for all rows in the follows table with
@@ -349,7 +349,7 @@ func newSelectLocalFollows(db *bun.DB, accountID string) *bun.SelectQuery {
 				Column("id").
 				Where("? IS NULL", bun.Ident("domain")),
 		).
-		OrderExpr("? DESC", bun.Ident("id"))
+		OrderExpr("? DESC", bun.Ident("created_at"))
 }
 
 // newSelectFollowers returns a new select query for all rows in the follows table with target_account_id = accountID.
@@ -358,7 +358,7 @@ func newSelectFollowers(db *bun.DB, accountID string) *bun.SelectQuery {
 		Table("follows").
 		Column("id").
 		Where("? = ?", bun.Ident("target_account_id"), accountID).
-		OrderExpr("? DESC", bun.Ident("id"))
+		OrderExpr("? DESC", bun.Ident("created_at"))
 }
 
 // newSelectLocalFollowers returns a new select query for all rows in the follows table with
@@ -376,7 +376,7 @@ func newSelectLocalFollowers(db *bun.DB, accountID string) *bun.SelectQuery {
 				Column("id").
 				Where("? IS NULL", bun.Ident("domain")),
 		).
-		OrderExpr("? DESC", bun.Ident("id"))
+		OrderExpr("? DESC", bun.Ident("created_at"))
 }
 
 // newSelectBlocks returns a new select query for all rows in the blocks table with account_id = accountID.
