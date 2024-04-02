@@ -129,11 +129,15 @@ func SetOtherIRIs(ctx context.Context, iris []*url.URL) context.Context {
 	return context.WithValue(ctx, otherIRIsKey, iris)
 }
 
+// HTTPClientSignFunc returns an httpclient signing function for the current client
+// request context. This can be used to resign a request as calling transport's user.
 func HTTPClientSignFunc(ctx context.Context) func(*http.Request) error {
 	fn, _ := ctx.Value(httpClientSignFnKey).(func(*http.Request) error)
 	return fn
 }
 
+// SetHTTPClientSignFunc stores the given httpclient signing function and returns the wrapped
+// context. See HTTPClientSignFunc() for further information on the signing function value.
 func SetHTTPClientSignFunc(ctx context.Context, fn func(*http.Request) error) context.Context {
 	return context.WithValue(ctx, httpClientSignFnKey, fn)
 }
