@@ -68,7 +68,6 @@ func prepWebfingerReq(ctx context.Context, loc, domain, username string) (*http.
 	// including Gin itself. So concat the accept header with a comma
 	// instead which seems to work reliably
 	req.Header.Add("Accept", string(apiutil.AppJRDJSON)+","+string(apiutil.AppJSON))
-	req.Header.Set("Host", req.URL.Host)
 
 	return req, nil
 }
@@ -187,7 +186,6 @@ func (t *transport) webfingerFromHostMeta(ctx context.Context, targetDomain stri
 	// We're doing XML
 	req.Header.Add("Accept", string(apiutil.AppXML))
 	req.Header.Add("Accept", "application/xrd+xml")
-	req.Header.Set("Host", req.URL.Host)
 
 	// Perform the HTTP request
 	rsp, err := t.GET(req)

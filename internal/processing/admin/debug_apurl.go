@@ -97,7 +97,6 @@ func (p *Processor) DebugAPUrl(
 
 	req.Header.Add("Accept", string(apiutil.AppActivityLDJSON)+","+string(apiutil.AppActivityJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
-	req.Header.Set("Host", url.Host)
 
 	// Perform the HTTP request,
 	// and return everything.

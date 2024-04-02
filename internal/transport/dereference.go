@@ -54,7 +54,6 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) (*http.Respon
 
 	req.Header.Add("Accept", string(apiutil.AppActivityLDJSON)+","+string(apiutil.AppActivityJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
-	req.Header.Set("Host", iri.Host)
 
 	// Perform the HTTP request
 	rsp, err := t.GET(req)
