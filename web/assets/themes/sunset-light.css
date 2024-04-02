@@ -50,8 +50,14 @@ html, body {
   scrollbar-color: var(--pink) var(--eggshell);
 }
 
+/* Instance title color */
 .page-header a h1 {
   color: var(--eggshell);
+}
+
+/* Role badge background */
+.profile .profile-header .basic-info .namerole .role {
+  background: var(--eggshell);
 }
 
 /* Profile fields */

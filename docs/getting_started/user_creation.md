@@ -2,10 +2,10 @@
 
 Regardless of the installation method, you'll need to create some users. GoToSocial currently doesn't have a way for users to be created through the web UI, or for people to sign-up through the web UI.
 
-Using the CLI, you can create a user:
+In the meantime, you can create a user using the CLI:
 
 ```sh
-$ gotosocial --config-path /path/to/config.yaml \
+./gotosocial --config-path /path/to/config.yaml \
     admin account create \
     --username some_username \
     --email some_email@whatever.org \
@@ -17,29 +17,28 @@ In the above command, replace `some_username` with your desired username, `some_
 If you want your user to have admin rights, you can promote them using a similar command:
 
 ```sh
-$ gotosocial --config-path /path/to/config.yaml \
+./gotosocial --config-path /path/to/config.yaml \
     admin account promote --username some_username
 ```
 
 Replace `some_username` with the username of the account you just created.
 
-!!! info
-    When running these commands, you'll get a bit of output like the following:
+!!! warning "Promotion requires server restart"
+    
+    Due to the way caching works in GoToSocial, some admin CLI commands require a server restart after running the command in order for the changes to "take".
+    
+    For example, after promoting a user to admin, you will need to restart your GoToSocial server so that the new values can be loaded from the database.
 
-    ```text
-    time=XXXX level=info msg=connected to SQLITE database
-    time=XXXX level=info msg=there are no new migrations to run func=doMigration
-    time=XXXX level=info msg=closing db connection
-    ```
-
-    This is normal and indicates that the commands ran as expected.
+!!! tip
+    
+    Take a look at the other available CLI commands [here](../admin/cli.md).
 
 ## Containers
 
-When running GoToSocial from a container, you'll need to execute the above command in the conatiner instead. How to do this varies based on your container runtime, but for Docker it should look like:
+When running GoToSocial from a container, you'll need to execute the above command in the container instead. How to do this varies based on your container runtime, but for Docker it should look like:
 
 ```sh
-$ docker exec -it CONTAINER_NAME_OR_ID \
+docker exec -it CONTAINER_NAME_OR_ID \
     /gotosocial/gotosocial \
     admin account create \
     --username some_username \

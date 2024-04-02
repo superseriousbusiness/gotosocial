@@ -281,7 +281,7 @@ type CollectionParams struct {
 	ID *url.URL
 
 	// First page details.
-	First paging.Page
+	First *paging.Page
 	Query url.Values
 
 	// Total no. items.
@@ -376,6 +376,11 @@ func buildCollection[C CollectionBuilder](collection C, params CollectionParams)
 	totalItems := streams.NewActivityStreamsTotalItemsProperty()
 	totalItems.Set(params.Total)
 	collection.SetActivityStreamsTotalItems(totalItems)
+
+	// No First page means we're done.
+	if params.First == nil {
+		return
+	}
 
 	// Append paging query params
 	// to those already in ID prop.

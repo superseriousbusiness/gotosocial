@@ -161,6 +161,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
         "verified_at": null
       }
     ],
+    "hide_collections": true,
     "role": {
       "name": "user"
     }
@@ -1313,6 +1314,7 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
         "verified_at": null
       }
     ],
+    "hide_collections": true,
     "role": {
       "name": "user"
     }
@@ -1428,6 +1430,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
           "verified_at": null
         }
       ],
+      "hide_collections": true,
       "role": {
         "name": "user"
       }
@@ -1599,6 +1602,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "verified_at": null
         }
       ],
+      "hide_collections": true,
       "role": {
         "name": "user"
       }
@@ -1864,6 +1868,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "emojis": [],
       "fields": [],
       "suspended": true,
+      "hide_collections": true,
       "role": {
         "name": "user"
       }

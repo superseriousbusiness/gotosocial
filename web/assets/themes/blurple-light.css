@@ -5,28 +5,26 @@
 
 :root {
   /* Define our nice blurple palette */
-  --blurple1: #ffffff;
-  --blurple2: #ebe6f8;
-  --blurple3: #d6cceb;
-  --blurple4: #c2b3e1;
-  --blurple5: #ad99d7;
-  --blurple6: #9980cd;
-  --blurple7: #8566c2;
-  --blurple8: #704db8;
-  --blurple9: #5c33ae;
-  --blurple10: #471aa4;
-  --blurple11: #33009a;
-  --blurple12: #170044;
+  --blurple1: #ebe6f8;
+  --blurple2: #d6cceb;
+  --blurple3: #c2b3e1;
+  --blurple4: #aa60ff;
+  --blurple5: #783d9f;
+  --blurple6: #2d2b55;
+  --blurple7: #1f1f41;
+
+  /* Override orange trim */
+  --orange2: #700000;
 
   /* Restyle basic colors to use blurple */
   --white1: var(--blurple2);
   --white2: var(--blurple3);
-  --blue1: var(--blurple6);
-  --blue2: var(--blurple8);
-  --blue3: var(--blurple10);
+  --blue1: var(--blurple4);
+  --blue2: var(--blurple5);
+  --blue3: var(--blurple6);
 
   /* Basic page styling (background + foreground) */
-  --bg: linear-gradient(var(--blurple2), var(--blurple1));
+  --bg: linear-gradient(var(--blurple1), white);
   --bg-accent: var(--white2);
   --fg: var(--gray1);
   --fg-reduced: var(--gray2);
@@ -45,25 +43,25 @@
   --status-focus-info-bg: var(--white2);
 
   /* Used around statuses + other items */
-  --boxshadow-border: 0.08rem solid var(--blurple10);
+  --boxshadow-border: 0.08rem solid var(--blurple6);
 }
 
 /* Scroll bar */
 html, body {
-  scrollbar-color: var(--blurple8) var(--blurple2);
+  scrollbar-color: var(--blurple5) var(--blurple2);
 }
 
 /* Profile fields */
 .profile .about-user .fields .field {
-  border-bottom: 0.1rem solid var(--blurple10);
+  border-bottom: 0.1rem solid var(--blurple6);
 }
 .profile .about-user .fields .field:first-child {
-  border-top: 0.1rem solid var(--blurple10);
+  border-top: 0.1rem solid var(--blurple6);
 }
 
 /* Status media */
 .status .media .media-wrapper {
-  border: 0.08rem solid var(--blurple10);
+  border: 0.08rem solid var(--blurple6);
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
   color: var(--blue2);
@@ -83,12 +81,12 @@ html, body {
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-	background-color: var(--blurple12);
+	background-color: var(--blurple7);
   color: var(--blurple2);
 }
 
 /* Block quotes */
 blockquote {
 	background-color: var(--blurple1);
-  color: var(--blurple12);
+  color: var(--blurple7);
 }
