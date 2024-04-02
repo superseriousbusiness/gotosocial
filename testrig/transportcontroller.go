@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -51,7 +52,7 @@ const (
 // Unlike the other test interfaces provided in this package, you'll probably want to call this function
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
-func NewTestTransportController(state *state.State, client httpclient.SigningClient) transport.Controller {
+func NewTestTransportController(state *state.State, client pub.HttpClient) transport.Controller {
 	return transport.NewController(state, NewTestFederatingDB(state), &federation.Clock{}, client)
 }
 

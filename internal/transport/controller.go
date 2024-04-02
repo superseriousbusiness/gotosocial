@@ -37,7 +37,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -54,14 +53,14 @@ type controller struct {
 	state     *state.State
 	fedDB     federatingdb.DB
 	clock     pub.Clock
-	client    httpclient.SigningClient
+	client    pub.HttpClient
 	trspCache cache.TTLCache[string, *transport]
 	userAgent string
 	senders   int // no. concurrent batch delivery routines.
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client httpclient.SigningClient) Controller {
+func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	var (
 		host             = config.GetHost()
 		proto            = config.GetProtocol()
