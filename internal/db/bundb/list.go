@@ -341,23 +341,10 @@ func (l *listDB) GetListEntries(ctx context.Context,
 }
 
 func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.List, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all list IDs via cache loader callbacks.
-	lists, err := l.state.Caches.GTS.List.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached list loader function.
-		func() ([]*gtsmodel.List, error) {
+	lists, err := l.state.Caches.GTS.List.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.List, error) {
 			// Preallocate expected length of uncached lists.
 			lists := make([]*gtsmodel.List, 0, len(uncached))
 
@@ -401,23 +388,10 @@ func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.L
 }
 
 func (l *listDB) GetListEntriesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.ListEntry, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all entry IDs via cache loader callbacks.
-	entries, err := l.state.Caches.GTS.ListEntry.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached entry loader function.
-		func() ([]*gtsmodel.ListEntry, error) {
+	entries, err := l.state.Caches.GTS.ListEntry.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.ListEntry, error) {
 			// Preallocate expected length of uncached entries.
 			entries := make([]*gtsmodel.ListEntry, 0, len(uncached))
 

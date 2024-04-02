@@ -77,23 +77,10 @@ func (r *relationshipDB) GetFollowRequest(ctx context.Context, sourceAccountID s
 }
 
 func (r *relationshipDB) GetFollowRequestsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.FollowRequest, error) {
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all follow IDs via cache loader callbacks.
-	follows, err := r.state.Caches.GTS.FollowRequest.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached follow req loader function.
-		func() ([]*gtsmodel.FollowRequest, error) {
+	follows, err := r.state.Caches.GTS.FollowRequest.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.FollowRequest, error) {
 			// Preallocate expected length of uncached followReqs.
 			follows := make([]*gtsmodel.FollowRequest, 0, len(uncached))
 
