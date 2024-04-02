@@ -32,7 +32,6 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
-	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v3"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-iotools"
@@ -163,7 +162,7 @@ func New(cfg Config) *Client {
 	}
 
 	// Set underlying HTTP client roundtripper.
-	c.client.Transport = &http.Transport{
+	c.client.Transport = &signingtransport{http.Transport{
 		Proxy:                 http.ProxyFromEnvironment,
 		ForceAttemptHTTP2:     true,
 		DialContext:           d.DialContext,
@@ -175,7 +174,7 @@ func New(cfg Config) *Client {
 		ReadBufferSize:        cfg.ReadBufferSize,
 		WriteBufferSize:       cfg.WriteBufferSize,
 		DisableCompression:    cfg.DisableCompression,
-	}
+	}}
 
 	// Initiate outgoing bad hosts lookup cache.
 	c.badHosts = cache.NewTTL[string, struct{}](0, 1000, 0)
@@ -239,23 +238,6 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 	for i := 0; i < maxRetries; i++ {
 		var backoff time.Duration
 
-		// Reset signing header fields
-		now := time.Now().UTC()
-		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
-		r.Header.Del("Signature")
-		r.Header.Del("Digest")
-
-		// Rewind body reader and content-length if set.
-		if rc, ok := r.Body.(*byteutil.ReadNopCloser); ok {
-			rc.Rewind() // set len AFTER rewind
-			r.ContentLength = int64(rc.Len())
-		}
-
-		// Sign the outgoing request.
-		if err := sign(r); err != nil {
-			return nil, err
-		}
-
 		l.Info("performing request")
 
 		// Perform the request.
@@ -275,6 +257,9 @@ func (c *Client) DoSigned(r *http.Request, sign SignFunc) (rsp *http.Response, e
 
 			// Search for a provided "Retry-After" header value.
 			if after := rsp.Header.Get("Retry-After"); after != "" {
+
+				// Get current time.
+				now := time.Now()
 
 				if u, _ := strconv.ParseUint(after, 10, 32); u != 0 {
 					// An integer number of backoff seconds was provided.
