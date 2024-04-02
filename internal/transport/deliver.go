@@ -120,7 +120,6 @@ func (t *transport) deliver(ctx context.Context, b []byte, to *url.URL) error {
 
 	req.Header.Add("Content-Type", string(apiutil.AppActivityLDJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
-	req.Header.Set("Host", to.Host)
 
 	rsp, err := t.POST(req, b)
 	if err != nil {

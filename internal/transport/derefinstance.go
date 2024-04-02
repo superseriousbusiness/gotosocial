@@ -93,7 +93,6 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	}
 
 	req.Header.Add("Accept", string(apiutil.AppJSON))
-	req.Header.Set("Host", cleanIRI.Host)
 
 	resp, err := t.GET(req)
 	if err != nil {
@@ -250,7 +249,6 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 		return nil, err
 	}
 	req.Header.Add("Accept", string(apiutil.AppJSON))
-	req.Header.Set("Host", cleanIRI.Host)
 
 	resp, err := t.GET(req)
 	if err != nil {
@@ -308,7 +306,6 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 		return nil, err
 	}
 	req.Header.Add("Accept", string(apiutil.AppJSON))
-	req.Header.Set("Host", iri.Host)
 
 	resp, err := t.GET(req)
 	if err != nil {

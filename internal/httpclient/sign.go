@@ -37,6 +37,9 @@ type signingtransport struct {
 }
 
 func (t *signingtransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	// Ensure updated host always set.
+	r.Header.Set("Host", r.URL.Host)
+
 	if sign := gtscontext.HTTPClientSignFunc(r.Context()); sign != nil {
 		// Reset signing header fields
 		now := time.Now().UTC()
