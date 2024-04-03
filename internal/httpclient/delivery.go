@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-runners"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 )
@@ -243,6 +244,7 @@ func wrapMsg(ctx context.Context, msg *queue.APRequest) *delivery {
 	dlv := new(delivery)
 	dlv.request = wrapRequest(msg.Request)
 	dlv.log = requestLog(dlv.req)
+	ctx = gtscontext.WithValues(ctx, msg.Request.Context())
 	dlv.req = dlv.req.WithContext(ctx)
 	return dlv
 }
