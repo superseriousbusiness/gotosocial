@@ -216,7 +216,6 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			// If codes 400, 401, or 403, obey the go-fed
 			// interface by writing the header and bailing.
 			w.WriteHeader(errWithCode.Code())
-			return ctx, false, nil
 		case http.StatusGone:
 			// If the requesting account's key has gone
 			// (410) then likely inbox post was a delete.
@@ -225,11 +224,11 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 			// know about the account anyway, so we can't
 			// do any further processing.
 			w.WriteHeader(http.StatusAccepted)
-			return ctx, false, nil
-		default:
-			// Proper error.
-			return ctx, false, err
 		}
+
+		// We still return the error
+		// for later request logging.
+		return ctx, false, errWithCode
 	}
 
 	if pubKeyAuth.Handshaking {
