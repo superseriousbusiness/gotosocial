@@ -42,7 +42,6 @@ func (q *Queues) initHTTPRequest() {
 			{Fields: "ActorID", Multiple: true},
 			{Fields: "ObjectID", Multiple: true},
 			{Fields: "TargetID", Multiple: true},
-			{Fields: "Request.URL.Host", Multiple: true},
 		},
 	})
 }
