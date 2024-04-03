@@ -51,8 +51,9 @@ func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}
 	}
 
 	// Extract object IDs.
-	objID := getObjectID(obj)
 	actID := getActorID(obj)
+	objID := getObjectID(obj)
+	tgtID := getTargetID(obj)
 
 	for _, to := range recipients {
 		// Skip delivery to recipient if it is "us".
@@ -60,8 +61,14 @@ func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}
 			continue
 		}
 
-		// Prepare new outgoing http client request.
-		req, err := t.prepare(ctx, objID, actID, b, to)
+		// Prepare http client request.
+		req, err := t.prepare(ctx,
+			actID,
+			objID,
+			tgtID,
+			b,
+			to,
+		)
 		if err != nil {
 			errs.Append(err)
 			continue
@@ -92,8 +99,9 @@ func (t *transport) Deliver(ctx context.Context, obj map[string]interface{}, to 
 
 	// Prepare http client request.
 	req, err := t.prepare(ctx,
-		getObjectID(obj),
 		getActorID(obj),
+		getObjectID(obj),
+		getTargetID(obj),
 		b,
 		to,
 	)
@@ -112,8 +120,9 @@ func (t *transport) Deliver(ctx context.Context, obj map[string]interface{}, to 
 // request object with signing function.
 func (t *transport) prepare(
 	ctx context.Context,
-	objectID string,
 	actorID string,
+	objectID string,
+	targetID string,
 	data []byte,
 	to *url.URL,
 ) (
@@ -142,7 +151,9 @@ func (t *transport) prepare(
 	req.Header.Add("Accept-Charset", "utf-8")
 
 	return &queue.APRequest{
+		ActorID:  actorID,
 		ObjectID: objectID,
+		TargetID: targetID,
 		Request:  req,
 	}, nil
 }
@@ -163,6 +174,19 @@ func getObjectID(obj map[string]interface{}) string {
 // getActorID extracts an actor ID from 'serialized' ActivityPub object map.
 func getActorID(obj map[string]interface{}) string {
 	switch t := obj["actor"].(type) {
+	case string:
+		return t
+	case map[string]interface{}:
+		id, _ := t["id"].(string)
+		return id
+	default:
+		return ""
+	}
+}
+
+// getTargetID extracts a target ID from 'serialized' ActivityPub object map.
+func getTargetID(obj map[string]interface{}) string {
+	switch t := obj["target"].(type) {
 	case string:
 		return t
 	case map[string]interface{}:

@@ -39,7 +39,9 @@ func (q *Queues) Init() {
 func (q *Queues) initHTTPRequest() {
 	q.APRequests.Init(structr.QueueConfig[*APRequest]{
 		Indices: []structr.IndexConfig{
+			{Fields: "ActorID", Multiple: true},
 			{Fields: "ObjectID", Multiple: true},
+			{Fields: "TargetID", Multiple: true},
 			{Fields: "Request.URL.Host", Multiple: true},
 		},
 	})

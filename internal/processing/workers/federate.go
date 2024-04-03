@@ -79,6 +79,7 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 	// (this stops any queued likes, boosts, creates etc).
 	f.state.Queues.APRequests.Delete("ActorID", account.URI)
 	f.state.Queues.APRequests.Delete("ObjectID", account.URI)
+	f.state.Queues.APRequests.Delete("TargetID", account.URI)
 
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(account.OutboxURI)
@@ -230,6 +231,7 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 	// Drop any queued outgoing http requests for status,
 	// (this stops any queued likes, boosts, creates etc).
 	f.state.Queues.APRequests.Delete("ObjectID", status.URI)
+	f.state.Queues.APRequests.Delete("TargetID", status.URI)
 
 	// Ensure the status model is fully populated.
 	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {

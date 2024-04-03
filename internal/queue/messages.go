@@ -63,6 +63,9 @@ type APRequest struct {
 	// ObjectID ...
 	ObjectID string
 
+	// TargetID ...
+	TargetID string
+
 	// Request ...
 	Request *http.Request
 }
