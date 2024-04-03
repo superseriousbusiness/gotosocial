@@ -72,10 +72,10 @@ func (q *StructQueue[T]) Push(values ...T) {
 	q.broadcast()
 }
 
-// MoveBack ...
-func (q *StructQueue[T]) MoveBack(index string, key ...any) {
+// Delete removes all queued entries under index with key.
+func (q *StructQueue[T]) Delete(index string, key ...any) {
 	i := q.index[index]
-	q.queue.MoveBack(i, i.Key(key...))
+	q.queue.Pop(i, i.Key(key...))
 }
 
 // Len: see structr.Queue{}.Len().

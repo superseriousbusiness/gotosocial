@@ -128,7 +128,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Initialize the queues.
 	state.Queues.Init()
 
-	state.Workers.HTTPClient.Init(client, &state.Queues.HTTPRequest, runtime.GOMAXPROCS(0))
+	state.Workers.APDelivery.Init(client, &state.Queues.APRequests, runtime.GOMAXPROCS(0))
 
 	// Initialize workers.
 	state.Workers.Start()

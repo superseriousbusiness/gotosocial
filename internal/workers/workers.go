@@ -25,7 +25,6 @@ import (
 	"codeberg.org/gruf/go-runners"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/queue"
 	"github.com/superseriousbusiness/gotosocial/internal/scheduler"
 )
 
@@ -33,8 +32,8 @@ type Workers struct {
 	// Main task scheduler instance.
 	Scheduler scheduler.Scheduler
 
-	// HTTPClient ...
-	HTTPClient httpclient.DeliveryWorkerPool
+	// APDelivery ...
+	APDelivery httpclient.APDeliveryWorkerPool
 
 	// ClientAPI provides a worker pool that handles both
 	// incoming client actions, and our own side-effects.
@@ -47,9 +46,8 @@ type Workers struct {
 	// Enqueue functions for clientAPI / federator worker pools,
 	// these are pointers to Processor{}.Enqueue___() msg functions.
 	// This prevents dependency cycling as Processor depends on Workers.
-	EnqueueHTTPClient func(context.Context, ...queue.HTTPRequest)
-	EnqueueClientAPI  func(context.Context, ...messages.FromClientAPI)
-	EnqueueFediAPI    func(context.Context, ...messages.FromFediAPI)
+	EnqueueClientAPI func(context.Context, ...messages.FromClientAPI)
+	EnqueueFediAPI   func(context.Context, ...messages.FromFediAPI)
 
 	// Blocking processing functions for clientAPI / federator.
 	// These are pointers to Processor{}.Process___() msg functions.
@@ -78,7 +76,7 @@ func (w *Workers) Start() {
 
 	tryUntil("starting scheduler", 5, w.Scheduler.Start)
 
-	tryUntil("start http client workerpool", 5, w.HTTPClient.Start)
+	tryUntil("start ap delivery workerpool", 5, w.APDelivery.Start)
 
 	tryUntil("starting client API workerpool", 5, func() bool {
 		return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)
@@ -96,7 +94,7 @@ func (w *Workers) Start() {
 // Stop will stop all of the contained worker pools (and global scheduler).
 func (w *Workers) Stop() {
 	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
-	tryUntil("stopping http client workerpool", 5, w.HTTPClient.Stop)
+	tryUntil("stopping ap delivery workerpool", 5, w.APDelivery.Stop)
 	tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
 	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
 	tryUntil("stopping media workerpool", 5, w.Media.Stop)

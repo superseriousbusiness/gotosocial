@@ -27,33 +27,31 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 )
 
-// DeliveryWorkerPool ...
-type DeliveryWorkerPool struct {
-	client  *Client
-	queue   *queue.StructQueue[*queue.HTTPRequest]
-	workers []DeliveryWorker
+// APDeliveryWorkerPool ...
+type APDeliveryWorkerPool struct {
+	workers []APDeliveryWorker
 }
 
 // Init will initialize the DeliveryWorker{} pool
 // with given http client, request queue to pull
 // from and number of delivery workers to spawn.
-func (p *DeliveryWorkerPool) Init(
+func (p *APDeliveryWorkerPool) Init(
 	client *Client,
-	queue *queue.StructQueue[*queue.HTTPRequest],
+	queue *queue.StructQueue[*queue.APRequest],
 	workers int,
 ) {
-	p.workers = make([]DeliveryWorker, workers)
+	p.workers = make([]APDeliveryWorker, workers)
 	for i := range p.workers {
-		p.workers[i] = NewDeliveryWorker(
-			p.client,
-			p.queue,
+		p.workers[i] = NewAPDeliveryWorker(
+			client,
+			queue,
 		)
 	}
 }
 
 // Start will attempt to start all of the contained DeliveryWorker{}s.
 // NOTE: this is not safe to call concurrently with .Init().
-func (p *DeliveryWorkerPool) Start() bool {
+func (p *APDeliveryWorkerPool) Start() bool {
 	if len(p.workers) == 0 {
 		return false
 	}
@@ -66,7 +64,7 @@ func (p *DeliveryWorkerPool) Start() bool {
 
 // Stop will attempt to stop all of the contained DeliveryWorker{}s.
 // NOTE: this is not safe to call concurrently with .Init().
-func (p *DeliveryWorkerPool) Stop() bool {
+func (p *APDeliveryWorkerPool) Stop() bool {
 	if len(p.workers) == 0 {
 		return false
 	}
@@ -77,17 +75,17 @@ func (p *DeliveryWorkerPool) Stop() bool {
 	return ok
 }
 
-// DeliveryWorker ...
-type DeliveryWorker struct {
+// APDeliveryWorker ...
+type APDeliveryWorker struct {
 	client  *Client
-	queue   *queue.StructQueue[*queue.HTTPRequest]
+	queue   *queue.StructQueue[*queue.APRequest]
 	backlog []*delivery
 	service runners.Service
 }
 
-// NewDeliveryWorker returns a new DeliveryWorker that feeds from queue, using given HTTP client.
-func NewDeliveryWorker(client *Client, queue *queue.StructQueue[*queue.HTTPRequest]) DeliveryWorker {
-	return DeliveryWorker{
+// NewAPDeliveryWorker returns a new APDeliveryWorker that feeds from queue, using given HTTP client.
+func NewAPDeliveryWorker(client *Client, queue *queue.StructQueue[*queue.APRequest]) APDeliveryWorker {
+	return APDeliveryWorker{
 		client:  client,
 		queue:   queue,
 		backlog: make([]*delivery, 0, 256),
@@ -95,17 +93,17 @@ func NewDeliveryWorker(client *Client, queue *queue.StructQueue[*queue.HTTPReque
 }
 
 // Start will attempt to start the DeliveryWorker{}.
-func (w *DeliveryWorker) Start() bool {
+func (w *APDeliveryWorker) Start() bool {
 	return w.service.Run(w.process)
 }
 
 // Stop will attempt to stop the DeliveryWorker{}.
-func (w *DeliveryWorker) Stop() bool {
+func (w *APDeliveryWorker) Stop() bool {
 	return w.service.Stop()
 }
 
 // process is the main delivery worker processing routine.
-func (w *DeliveryWorker) process(ctx context.Context) {
+func (w *APDeliveryWorker) process(ctx context.Context) {
 	if w.client == nil || w.queue == nil {
 		panic("nil delivery worker fields")
 	}
@@ -165,7 +163,7 @@ loop:
 }
 
 // next gets the next available delivery, blocking until available if necessary.
-func (w *DeliveryWorker) next(ctx context.Context) (*delivery, bool) {
+func (w *APDeliveryWorker) next(ctx context.Context) (*delivery, bool) {
 	// Try pop next queued.
 	msg, ok := w.queue.Pop()
 
@@ -195,7 +193,7 @@ func (w *DeliveryWorker) next(ctx context.Context) (*delivery, bool) {
 }
 
 // popBacklog pops next available from the backlog.
-func (w *DeliveryWorker) popBacklog() *delivery {
+func (w *APDeliveryWorker) popBacklog() *delivery {
 	if len(w.backlog) == 0 {
 		return nil
 	}
@@ -211,7 +209,7 @@ func (w *DeliveryWorker) popBacklog() *delivery {
 }
 
 // pushBacklog pushes the given delivery to backlog.
-func (w *DeliveryWorker) pushBacklog(dlv *delivery) {
+func (w *APDeliveryWorker) pushBacklog(dlv *delivery) {
 	w.backlog = append(w.backlog, dlv)
 }
 
@@ -240,8 +238,8 @@ func (d *delivery) BackOff() time.Duration {
 	return time.Now().Sub(d.next)
 }
 
-// wrapMsg wraps a received queued HTTP request message in our delivery type.
-func wrapMsg(ctx context.Context, msg *queue.HTTPRequest) *delivery {
+// wrapMsg wraps a received queued AP request message in our delivery type.
+func wrapMsg(ctx context.Context, msg *queue.APRequest) *delivery {
 	dlv := new(delivery)
 	dlv.request = wrapRequest(msg.Request)
 	dlv.log = requestLog(dlv.req)

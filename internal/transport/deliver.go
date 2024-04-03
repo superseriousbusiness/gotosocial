@@ -34,7 +34,7 @@ import (
 func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}, recipients []*url.URL) error {
 	var (
 		// accumulated prepared reqs.
-		reqs []*queue.HTTPRequest
+		reqs []*queue.APRequest
 
 		// accumulated preparation errs.
 		errs gtserror.MultiError
@@ -50,8 +50,9 @@ func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}
 		return gtserror.Newf("error marshaling json: %w", err)
 	}
 
-	// Extract object ID.
-	id := getObjectID(obj)
+	// Extract object IDs.
+	objID := getObjectID(obj)
+	actID := getActorID(obj)
 
 	for _, to := range recipients {
 		// Skip delivery to recipient if it is "us".
@@ -59,8 +60,8 @@ func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}
 			continue
 		}
 
-		// Prepare new http client request.
-		req, err := t.prepare(ctx, id, b, to)
+		// Prepare new outgoing http client request.
+		req, err := t.prepare(ctx, objID, actID, b, to)
 		if err != nil {
 			errs.Append(err)
 			continue
@@ -71,7 +72,7 @@ func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}
 	}
 
 	// Push the request list to HTTP client worker queue.
-	t.controller.state.Queues.HTTPRequest.Push(reqs...)
+	t.controller.state.Queues.APRequests.Push(reqs...)
 
 	// Return combined err.
 	return errs.Combine()
@@ -89,17 +90,19 @@ func (t *transport) Deliver(ctx context.Context, obj map[string]interface{}, to 
 		return gtserror.Newf("error marshaling json: %w", err)
 	}
 
-	// Extract object ID.
-	id := getObjectID(obj)
-
-	// Prepare new http client request.
-	req, err := t.prepare(ctx, id, b, to)
+	// Prepare http client request.
+	req, err := t.prepare(ctx,
+		getObjectID(obj),
+		getActorID(obj),
+		b,
+		to,
+	)
 	if err != nil {
 		return err
 	}
 
 	// Push the request to HTTP client worker queue.
-	t.controller.state.Queues.HTTPRequest.Push(req)
+	t.controller.state.Queues.APRequests.Push(req)
 
 	return nil
 }
@@ -110,10 +113,11 @@ func (t *transport) Deliver(ctx context.Context, obj map[string]interface{}, to 
 func (t *transport) prepare(
 	ctx context.Context,
 	objectID string,
+	actorID string,
 	data []byte,
 	to *url.URL,
 ) (
-	*queue.HTTPRequest,
+	*queue.APRequest,
 	error,
 ) {
 	url := to.String()
@@ -137,7 +141,7 @@ func (t *transport) prepare(
 	req.Header.Add("Content-Type", string(apiutil.AppActivityLDJSON))
 	req.Header.Add("Accept-Charset", "utf-8")
 
-	return &queue.HTTPRequest{
+	return &queue.APRequest{
 		ObjectID: objectID,
 		Request:  req,
 	}, nil
@@ -146,6 +150,19 @@ func (t *transport) prepare(
 // getObjectID extracts an object ID from 'serialized' ActivityPub object map.
 func getObjectID(obj map[string]interface{}) string {
 	switch t := obj["object"].(type) {
+	case string:
+		return t
+	case map[string]interface{}:
+		id, _ := t["id"].(string)
+		return id
+	default:
+		return ""
+	}
+}
+
+// getActorID extracts an actor ID from 'serialized' ActivityPub object map.
+func getActorID(obj map[string]interface{}) string {
+	switch t := obj["actor"].(type) {
 	case string:
 		return t
 	case map[string]interface{}:

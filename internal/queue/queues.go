@@ -24,8 +24,8 @@ import (
 
 // Queues ...
 type Queues struct {
-	// HTTPRequest ...
-	HTTPRequest StructQueue[*HTTPRequest]
+	// APRequests ...
+	APRequests StructQueue[*APRequest]
 }
 
 // Init will re(initialize) queues. NOTE: the queue
@@ -37,7 +37,7 @@ func (q *Queues) Init() {
 }
 
 func (q *Queues) initHTTPRequest() {
-	q.HTTPRequest.Init(structr.QueueConfig[*HTTPRequest]{
+	q.APRequests.Init(structr.QueueConfig[*APRequest]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ObjectID", Multiple: true},
 			{Fields: "Request.URL.Host", Multiple: true},

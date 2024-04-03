@@ -55,7 +55,10 @@ import (
 // 	Receiving *gtsmodel.Account
 // }
 
-type HTTPRequest struct {
+type APRequest struct {
+
+	// ActorID ...
+	ActorID string
 
 	// ObjectID ...
 	ObjectID string
