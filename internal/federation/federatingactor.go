@@ -81,7 +81,14 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 
 	// Authenticate request by checking http signature.
 	ctx, authenticated, err := f.sideEffectActor.AuthenticatePostInbox(ctx, w, r)
-	if err != nil {
+	if errors.As(err, new(gtserror.WithCode)) {
+		// If it was already wrapped with an
+		// HTTP code then don't bother rewrapping
+		// it, just return it as-is for caller to
+		// handle. AuthenticatePostInbox already
+		// calls WriteHeader() in some situations.
+		return false, err
+	} else if err != nil {
 		err := gtserror.Newf("error authenticating post inbox: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}
