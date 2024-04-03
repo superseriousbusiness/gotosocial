@@ -143,15 +143,23 @@ loop:
 			}
 		}
 
+		dlv.log.Info("performing request")
+
 		// Attempt outoing delivery of request.
 		_, retry, err := w.client.do(&dlv.request)
-		if err == nil || !retry {
+		if err == nil {
 			continue loop
 		}
 
-		if dlv.attempts > maxRetries {
-			// Drop deliveries once
-			// we reach max retries.
+		dlv.log.Error(err)
+
+		if !retry {
+			continue loop
+		}
+
+		if !retry || dlv.attempts > maxRetries {
+			// Drop deliveries when no retry
+			// requested, or we reach max.
 			continue loop
 		}
 
