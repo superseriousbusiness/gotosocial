@@ -153,10 +153,6 @@ loop:
 
 		dlv.log.Error(err)
 
-		if !retry {
-			continue loop
-		}
-
 		if !retry || dlv.attempts > maxRetries {
 			// Drop deliveries when no retry
 			// requested, or we reach max.
