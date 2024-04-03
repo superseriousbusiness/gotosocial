@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -123,6 +124,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		Timeout:               config.GetHTTPClientTimeout(),
 		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
+
+	// Initialize the queues.
+	state.Queues.Init()
+
+	state.Workers.HTTPClient.Init(client, &state.Queues.HTTPRequest, runtime.GOMAXPROCS(0))
 
 	// Initialize workers.
 	state.Workers.Start()

@@ -20,16 +20,11 @@ package cache
 import (
 	"time"
 
-	"codeberg.org/gruf/go-cache/v3/ttl"
 	"github.com/superseriousbusiness/gotosocial/internal/cache/headerfilter"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type Caches struct {
-
-	// BadHosts provides access to the HTTP
-	// client bad (i.e. erroring) hosts cache.
-	BadHosts ttl.Cache[string, struct{}]
 
 	// GTS provides access to the collection of
 	// gtsmodel object caches. (used by the database).

@@ -51,10 +51,10 @@ type Transport interface {
 	POST(*http.Request, []byte) (*http.Response, error)
 
 	// Deliver sends an ActivityStreams object.
-	Deliver(ctx context.Context, b []byte, to *url.URL) error
+	Deliver(ctx context.Context, obj map[string]interface{}, to *url.URL) error
 
 	// BatchDeliver sends an ActivityStreams object to multiple recipients.
-	BatchDeliver(ctx context.Context, b []byte, recipients []*url.URL) error
+	BatchDeliver(ctx context.Context, obj map[string]interface{}, recipients []*url.URL) error
 
 	/*
 		GET functions
@@ -77,7 +77,8 @@ type Transport interface {
 	Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error)
 }
 
-// transport implements the Transport interface.
+// transport implements
+// the Transport interface.
 type transport struct {
 	controller *controller
 	pubKeyID   string

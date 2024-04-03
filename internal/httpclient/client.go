@@ -32,12 +32,12 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-cache/v3"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-iotools"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 var (
@@ -105,9 +105,9 @@ type Config struct {
 //   - optional request signing
 //   - request logging
 type Client struct {
-	state   *state.State
-	client  http.Client
-	bodyMax int64
+	client   http.Client
+	badHosts cache.TTLCache[string, struct{}]
+	bodyMax  int64
 }
 
 // New returns a new instance of Client initialized using configuration.
@@ -175,6 +175,13 @@ func New(cfg Config) *Client {
 		DisableCompression:    cfg.DisableCompression,
 	}}
 
+	// Initiate outgoing bad hosts lookup cache.
+	c.badHosts = cache.NewTTL[string, struct{}](0, 512, 0)
+	c.badHosts.SetTTL(time.Hour, false)
+	if !c.badHosts.Start(time.Minute) {
+		log.Panic(nil, "failed to start transport controller cache")
+	}
+
 	return &c
 }
 
@@ -197,11 +204,11 @@ func (c *Client) Do(r *http.Request) (rsp *http.Response, err error) {
 		// errors that are retried upon are server failure, TLS
 		// and domain resolution type errors, so this cached result
 		// indicates this server is likely having issues.
-		fastFail = c.state.Caches.BadHosts.Has(host)
+		fastFail = c.badHosts.Has(host)
 		defer func() {
 			if err != nil {
-				// On error return ensure marked as bad-host.
-				c.state.Caches.BadHosts.Set(host, struct{}{})
+				// On error mark as a bad-host.
+				c.badHosts.Set(host, struct{}{})
 			}
 		}()
 	}

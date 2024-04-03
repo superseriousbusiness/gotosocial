@@ -27,20 +27,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 )
 
+// DeliveryWorkerPool ...
 type DeliveryWorkerPool struct {
 	client  *Client
-	queue   *queue.StructQueue[queue.HTTPRequest]
+	queue   *queue.StructQueue[*queue.HTTPRequest]
 	workers []DeliveryWorker
 }
 
-// Init ...
+// Init will initialize the DeliveryWorker{} pool
+// with given http client, request queue to pull
+// from and number of delivery workers to spawn.
 func (p *DeliveryWorkerPool) Init(
 	client *Client,
-	queue *queue.StructQueue[queue.HTTPRequest],
+	queue *queue.StructQueue[*queue.HTTPRequest],
 	workers int,
 ) {
-	p.client = client
-	p.queue = queue
 	p.workers = make([]DeliveryWorker, workers)
 	for i := range p.workers {
 		p.workers[i] = NewDeliveryWorker(
@@ -50,7 +51,8 @@ func (p *DeliveryWorkerPool) Init(
 	}
 }
 
-// Start ...
+// Start will attempt to start all of the contained DeliveryWorker{}s.
+// NOTE: this is not safe to call concurrently with .Init().
 func (p *DeliveryWorkerPool) Start() bool {
 	if len(p.workers) == 0 {
 		return false
@@ -62,7 +64,8 @@ func (p *DeliveryWorkerPool) Start() bool {
 	return ok
 }
 
-// Stop ...
+// Stop will attempt to stop all of the contained DeliveryWorker{}s.
+// NOTE: this is not safe to call concurrently with .Init().
 func (p *DeliveryWorkerPool) Stop() bool {
 	if len(p.workers) == 0 {
 		return false
@@ -74,15 +77,16 @@ func (p *DeliveryWorkerPool) Stop() bool {
 	return ok
 }
 
+// DeliveryWorker ...
 type DeliveryWorker struct {
 	client  *Client
-	queue   *queue.StructQueue[queue.HTTPRequest]
+	queue   *queue.StructQueue[*queue.HTTPRequest]
 	backlog []*delivery
 	service runners.Service
 }
 
 // NewDeliveryWorker returns a new DeliveryWorker that feeds from queue, using given HTTP client.
-func NewDeliveryWorker(client *Client, queue *queue.StructQueue[queue.HTTPRequest]) DeliveryWorker {
+func NewDeliveryWorker(client *Client, queue *queue.StructQueue[*queue.HTTPRequest]) DeliveryWorker {
 	return DeliveryWorker{
 		client:  client,
 		queue:   queue,
@@ -90,12 +94,12 @@ func NewDeliveryWorker(client *Client, queue *queue.StructQueue[queue.HTTPReques
 	}
 }
 
-// Start ...
+// Start will attempt to start the DeliveryWorker{}.
 func (w *DeliveryWorker) Start() bool {
 	return w.service.Run(w.process)
 }
 
-// Stop ...
+// Stop will attempt to stop the DeliveryWorker{}.
 func (w *DeliveryWorker) Stop() bool {
 	return w.service.Stop()
 }
@@ -237,7 +241,7 @@ func (d *delivery) BackOff() time.Duration {
 }
 
 // wrapMsg wraps a received queued HTTP request message in our delivery type.
-func wrapMsg(ctx context.Context, msg queue.HTTPRequest) *delivery {
+func wrapMsg(ctx context.Context, msg *queue.HTTPRequest) *delivery {
 	dlv := new(delivery)
 	dlv.request = wrapRequest(msg.Request)
 	dlv.log = requestLog(dlv.req)

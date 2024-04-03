@@ -62,7 +62,4 @@ type HTTPRequest struct {
 
 	// Request ...
 	Request *http.Request
-
-	// Signer ...
-	Signer func(*http.Request) error
 }

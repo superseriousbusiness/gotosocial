@@ -33,8 +33,8 @@ type Workers struct {
 	// Main task scheduler instance.
 	Scheduler scheduler.Scheduler
 
-	// Delivery ...
-	Delivery httpclient.DeliveryWorkerPool
+	// HTTPClient ...
+	HTTPClient httpclient.DeliveryWorkerPool
 
 	// ClientAPI provides a worker pool that handles both
 	// incoming client actions, and our own side-effects.
@@ -78,7 +78,7 @@ func (w *Workers) Start() {
 
 	tryUntil("starting scheduler", 5, w.Scheduler.Start)
 
-	tryUntil("start http client workerpool", 5, w.Delivery.Start)
+	tryUntil("start http client workerpool", 5, w.HTTPClient.Start)
 
 	tryUntil("starting client API workerpool", 5, func() bool {
 		return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)
@@ -96,7 +96,7 @@ func (w *Workers) Start() {
 // Stop will stop all of the contained worker pools (and global scheduler).
 func (w *Workers) Stop() {
 	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
-	tryUntil("stopping http client workerpool", 5, w.Delivery.Stop)
+	tryUntil("stopping http client workerpool", 5, w.HTTPClient.Stop)
 	tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
 	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
 	tryUntil("stopping media workerpool", 5, w.Media.Stop)

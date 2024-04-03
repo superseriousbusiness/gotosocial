@@ -2,7 +2,6 @@ package pub
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -477,17 +476,12 @@ func (a *SideEffectActor) deliverToRecipients(c context.Context, boxIRI *url.URL
 		return err
 	}
 
-	b, err := json.Marshal(m)
-	if err != nil {
-		return err
-	}
-
 	tp, err := a.common.NewTransport(c, boxIRI, goFedUserAgent())
 	if err != nil {
 		return err
 	}
 
-	return tp.BatchDeliver(c, b, recipients)
+	return tp.BatchDeliver(c, m, recipients)
 }
 
 // addToOutbox adds the activity to the outbox and creates the activity in the
