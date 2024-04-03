@@ -80,6 +80,14 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	}
 
 	// Authenticate request by checking http signature.
+	//
+	// NOTE: the behaviour here is a little strange as we have
+	// the competing code styles of the go-fed interface expecting
+	// that any 'err' is fatal, but 'authenticated' bool is intended to
+	// be the main passer of whether failed auth occurred, but we in
+	// the gts codebase use errors to pass-back non-200 status codes,
+	// so we specifically have to check for already wrapped with code.
+	//
 	ctx, authenticated, err := f.sideEffectActor.AuthenticatePostInbox(ctx, w, r)
 	if errors.As(err, new(gtserror.WithCode)) {
 		// If it was already wrapped with an

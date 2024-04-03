@@ -590,7 +590,7 @@ func (suite *InboxPostTestSuite) TestPostUnauthorized() {
 		requestingAccount,
 		targetAccount,
 		http.StatusUnauthorized,
-		`{"error":"Unauthorized: not authenticated"}`,
+		`{"error":"Unauthorized: http request wasn't signed or http signature was invalid: (verifier)"}`,
 		// Omit signature check middleware.
 	)
 }
