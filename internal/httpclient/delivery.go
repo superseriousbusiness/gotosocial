@@ -94,7 +94,7 @@ func NewAPDeliveryWorker(client *Client, queue *queue.StructQueue[*queue.APReque
 
 // Start will attempt to start the DeliveryWorker{}.
 func (w *APDeliveryWorker) Start() bool {
-	return w.service.Run(w.process)
+	return w.service.GoRun(w.process)
 }
 
 // Stop will attempt to stop the DeliveryWorker{}.
