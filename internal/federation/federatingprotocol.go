@@ -228,7 +228,7 @@ func (f *Federator) AuthenticatePostInbox(ctx context.Context, w http.ResponseWr
 
 		// We still return the error
 		// for later request logging.
-		return ctx, false, err
+		return ctx, false, errWithCode
 	}
 
 	if pubKeyAuth.Handshaking {
