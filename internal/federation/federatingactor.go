@@ -89,7 +89,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// so we specifically have to check for already wrapped with code.
 	//
 	ctx, authenticated, err := f.sideEffectActor.AuthenticatePostInbox(ctx, w, r)
-	if errors.As(err, new(gtserror.WithCode)) {
+	if errorsv2.AsV2[gtserror.WithCode](err) != nil {
 		// If it was already wrapped with an
 		// HTTP code then don't bother rewrapping
 		// it, just return it as-is for caller to
@@ -131,7 +131,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// Check authorization of the activity; this will include blocks.
 	authorized, err := f.sideEffectActor.AuthorizePostInbox(ctx, w, activity)
 	if err != nil {
-		if errors.As(err, new(errOtherIRIBlocked)) {
+		if errorsv2.AsV2[*errOtherIRIBlocked](err) != nil {
 			// There's no direct block between requester(s) and
 			// receiver. However, one or more of the other IRIs
 			// involved in the request (account replied to, note
@@ -139,7 +139,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 			// by the receiver. We don't need to return 403 here,
 			// instead, just return 202 accepted but don't do any
 			// further processing of the activity.
-			return true, nil
+			return true, nil //nolint
 		}
 
 		// Real error has occurred.
