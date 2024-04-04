@@ -23,6 +23,7 @@ import (
 	"runtime"
 
 	"codeberg.org/gruf/go-runners"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/scheduler"
@@ -76,7 +77,10 @@ func (w *Workers) Start() {
 
 	tryUntil("starting scheduler", 5, w.Scheduler.Start)
 
-	tryUntil("start ap delivery workerpool", 5, w.APDelivery.Start)
+	tryUntil("start ap delivery workerpool", 5, func() bool {
+		n := config.GetAdvancedSenderMultiplier()
+		return w.APDelivery.Start(n * maxprocs)
+	})
 
 	tryUntil("starting client API workerpool", 5, func() bool {
 		return w.ClientAPI.Start(4*maxprocs, 400*maxprocs)

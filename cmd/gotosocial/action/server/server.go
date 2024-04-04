@@ -24,7 +24,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 
@@ -127,8 +126,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize the queues.
 	state.Queues.Init()
-
-	state.Workers.APDelivery.Init(client, &state.Queues.APRequests, runtime.GOMAXPROCS(0))
+	state.Workers.APDelivery.Init(client, &state.Queues.APRequests)
 
 	// Initialize workers.
 	state.Workers.Start()

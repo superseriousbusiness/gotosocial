@@ -20,6 +20,7 @@ package httpclient
 import (
 	"context"
 	"slices"
+	"sync"
 	"time"
 
 	"codeberg.org/gruf/go-runners"
@@ -31,7 +32,10 @@ import (
 // APDeliveryWorkerPool wraps APDeliveryWorker{}s
 // in a singular struct for easy multi start/stop.
 type APDeliveryWorkerPool struct {
+	client  *Client
+	queue   *queue.StructQueue[*queue.APRequest]
 	workers []APDeliveryWorker
+	mutex   sync.Mutex
 }
 
 // Init will initialize the DeliveryWorker{} pool
@@ -40,41 +44,39 @@ type APDeliveryWorkerPool struct {
 func (p *APDeliveryWorkerPool) Init(
 	client *Client,
 	queue *queue.StructQueue[*queue.APRequest],
-	workers int,
 ) {
-	p.workers = make([]APDeliveryWorker, workers)
-	for i := range p.workers {
-		p.workers[i] = NewAPDeliveryWorker(
-			client,
-			queue,
-		)
-	}
+	p.mutex.Lock()
+	p.client = client
+	p.queue = queue
+	p.mutex.Unlock()
 }
 
-// Start will attempt to start all of the contained DeliveryWorker{}s.
-// NOTE: this is not safe to call concurrently with .Init().
-func (p *APDeliveryWorkerPool) Start() bool {
-	if len(p.workers) == 0 {
-		return false
+// Start will attempt to start 'n' DeliveryWorker{}s.
+func (p *APDeliveryWorkerPool) Start(n int) (ok bool) {
+	p.mutex.Lock()
+	if ok = (len(p.workers) == 0); ok {
+		p.workers = make([]APDeliveryWorker, n)
+		for i := range p.workers {
+			p.workers[i].client = p.client
+			p.workers[i].queue = p.queue
+			ok = p.workers[i].Start() && ok
+		}
 	}
-	ok := true
-	for i := range p.workers {
-		ok = p.workers[i].Start() && ok
-	}
-	return ok
+	p.mutex.Unlock()
+	return
 }
 
 // Stop will attempt to stop all of the contained DeliveryWorker{}s.
-// NOTE: this is not safe to call concurrently with .Init().
-func (p *APDeliveryWorkerPool) Stop() bool {
-	if len(p.workers) == 0 {
-		return false
+func (p *APDeliveryWorkerPool) Stop() (ok bool) {
+	p.mutex.Lock()
+	if ok = (len(p.workers) > 0); ok {
+		for i := range p.workers {
+			ok = p.workers[i].Stop() && ok
+		}
+		p.workers = p.workers[:0]
 	}
-	ok := true
-	for i := range p.workers {
-		ok = p.workers[i].Stop() && ok
-	}
-	return ok
+	p.mutex.Unlock()
+	return
 }
 
 // APDeliveryWorker wraps a Client{} to feed from

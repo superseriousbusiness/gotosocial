@@ -114,9 +114,7 @@ type Client struct {
 // New returns a new instance of Client initialized using configuration.
 func New(cfg Config) *Client {
 	var c Client
-
-	// For now use const.
-	c.retries = maxRetries
+	c.retries = 5
 
 	d := &net.Dialer{
 		Timeout:   15 * time.Second,
@@ -285,7 +283,7 @@ func (c *Client) do(r *request) (*http.Response, bool /* retry */, error) {
 			return nil, false, err
 		}
 
-		if errstr := err.Error(); // nocollapse
+		if errstr := err.Error(); //
 		strings.Contains(errstr, "stopped after 10 redirects") ||
 			strings.Contains(errstr, "tls: ") ||
 			strings.Contains(errstr, "x509: ") {
@@ -295,7 +293,7 @@ func (c *Client) do(r *request) (*http.Response, bool /* retry */, error) {
 			return nil, false, err
 		}
 
-		if dnserr := errorsv2.AsV2[*net.DNSError](err); // nocollapse
+		if dnserr := errorsv2.AsV2[*net.DNSError](err); //
 		dnserr != nil && dnserr.IsNotFound {
 			// DNS lookup failure, this domain does not exist
 			return nil, false, gtserror.SetNotFound(err)
@@ -326,7 +324,8 @@ func (c *Client) do(r *request) (*http.Response, bool /* retry */, error) {
 			}
 
 			// Don't let their provided backoff exceed our max.
-			if max := baseBackoff * maxRetries; r.backoff > max {
+			if max := baseBackoff * time.Duration(c.retries); //
+			r.backoff > max {
 				r.backoff = max
 			}
 		}

@@ -25,9 +25,6 @@ import (
 )
 
 const (
-	// max no. attempts.
-	maxRetries = 5
-
 	// starting backoff duration.
 	baseBackoff = 2 * time.Second
 )
