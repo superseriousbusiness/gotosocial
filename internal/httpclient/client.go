@@ -108,11 +108,15 @@ type Client struct {
 	client   http.Client
 	badHosts cache.TTLCache[string, struct{}]
 	bodyMax  int64
+	retries  uint
 }
 
 // New returns a new instance of Client initialized using configuration.
 func New(cfg Config) *Client {
 	var c Client
+
+	// For now use const.
+	c.retries = maxRetries
 
 	d := &net.Dialer{
 		Timeout:   15 * time.Second,
@@ -220,7 +224,7 @@ func (c *Client) Do(r *http.Request) (rsp *http.Response, err error) {
 	// type for retry-backoff.
 	req := wrapRequest(r)
 
-	for req.attempts < maxRetries {
+	for req.attempts < c.retries {
 		var retry bool
 
 		log.Info("performing request")

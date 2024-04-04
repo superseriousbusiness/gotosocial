@@ -28,7 +28,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 )
 
-// APDeliveryWorkerPool ...
+// APDeliveryWorkerPool wraps APDeliveryWorker{}s
+// in a singular struct for easy multi start/stop.
 type APDeliveryWorkerPool struct {
 	workers []APDeliveryWorker
 }
@@ -76,7 +77,10 @@ func (p *APDeliveryWorkerPool) Stop() bool {
 	return ok
 }
 
-// APDeliveryWorker ...
+// APDeliveryWorker wraps a Client{} to feed from
+// a queue.StructQueue{} for ActivityPub requests
+// to deliver. It does so while prioritizing new
+// queued requests over backlogged retries.
 type APDeliveryWorker struct {
 	client  *Client
 	queue   *queue.StructQueue[*queue.APRequest]
@@ -153,9 +157,11 @@ loop:
 
 		dlv.log.Error(err)
 
-		if !retry || dlv.attempts > maxRetries {
-			// Drop deliveries when no retry
-			// requested, or we reach max.
+		if !retry || w.client.badHosts.Has(dlv.host) ||
+			dlv.attempts > w.client.retries {
+			// Drop deliveries when no retry requested,
+			// or we reach max defined retry attempts.
+			w.client.badHosts.Set(dlv.host, struct{}{})
 			continue loop
 		}
 
@@ -229,6 +235,10 @@ type delivery struct {
 	// next attempt time.
 	next time.Time
 
+	// hostname string
+	// for bad host check.
+	host string
+
 	// embedded
 	// request.
 	request
@@ -248,6 +258,7 @@ func wrapMsg(ctx context.Context, msg *queue.APRequest) *delivery {
 	dlv := new(delivery)
 	dlv.request = wrapRequest(msg.Request)
 	dlv.log = requestLog(dlv.req)
+	dlv.host = dlv.req.URL.Hostname()
 	ctx = gtscontext.WithValues(ctx, msg.Request.Context())
 	dlv.req = dlv.req.WithContext(ctx)
 	return dlv

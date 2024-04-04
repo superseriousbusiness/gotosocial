@@ -43,7 +43,7 @@ type request struct {
 	backoff time.Duration
 
 	// delivery attempts.
-	attempts int
+	attempts uint
 }
 
 // wrapRequest wraps an http.Request{} in our own request{} type.
