@@ -291,8 +291,8 @@ func (c *Client) do(r *request) (*http.Response, bool /* retry */, error) {
 			return nil, false, err
 		}
 
-		if dnserr := (*net.DNSError)(nil); // nocollapse
-		errors.As(err, &dnserr) && dnserr.IsNotFound {
+		if dnserr := errorsv2.AsV2[*net.DNSError](err); // nocollapse
+		dnserr != nil && dnserr.IsNotFound {
 			// DNS lookup failure, this domain does not exist
 			return nil, false, gtserror.SetNotFound(err)
 		}
