@@ -53,13 +53,13 @@ func (suite *SyslogTestSuite) TestSyslogLongMessageUnixgram() {
 
 	testrig.InitTestLog()
 
-	log.Warn(nil, longMessage)
+	log.Error(nil, longMessage)
 
 	funcName := log.Caller(2)
-	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
+	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=ERROR msg="`, funcName)
 
 	entry := <-syslogChannel
-	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s`, longMessage[:2048-len(prefix)])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=ERROR msg="%s`, longMessage[:2048-len(prefix)])
 
 	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 

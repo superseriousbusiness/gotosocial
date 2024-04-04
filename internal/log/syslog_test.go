@@ -62,10 +62,10 @@ func (suite *SyslogTestSuite) TearDownTest() {
 }
 
 func (suite *SyslogTestSuite) TestSyslog() {
-	log.Info(nil, "this is a test of the emergency broadcast system!")
+	log.Error(nil, "this is a test of the emergency broadcast system!")
 
 	entry := <-suite.syslogChannel
-	suite.Regexp(regexp.MustCompile(`timestamp=.* func=.* level=INFO msg="this is a test of the emergency broadcast system!"`), entry["content"])
+	suite.Regexp(regexp.MustCompile(`timestamp=.* func=.* level=ERROR msg="this is a test of the emergency broadcast system!"`), entry["content"])
 }
 
 func (suite *SyslogTestSuite) TestSyslogDisableTimestamp() {
@@ -78,20 +78,20 @@ func (suite *SyslogTestSuite) TestSyslogDisableTimestamp() {
 	// Set old timestamp on return.
 	defer log.SetTimeFormat(timefmt)
 
-	log.Info(nil, "this is a test of the emergency broadcast system!")
+	log.Error(nil, "this is a test of the emergency broadcast system!")
 
 	entry := <-suite.syslogChannel
-	suite.Regexp(regexp.MustCompile(`func=.* level=INFO msg="this is a test of the emergency broadcast system!"`), entry["content"])
+	suite.Regexp(regexp.MustCompile(`func=.* level=ERROR msg="this is a test of the emergency broadcast system!"`), entry["content"])
 }
 
 func (suite *SyslogTestSuite) TestSyslogLongMessage() {
-	log.Warn(nil, longMessage)
+	log.Error(nil, longMessage)
 
 	funcName := log.Caller(2)
-	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=WARN msg="`, funcName)
+	prefix := fmt.Sprintf(`timestamp="02/01/2006 15:04:05.000" func=%s level=ERROR msg="`, funcName)
 
 	entry := <-suite.syslogChannel
-	regex := fmt.Sprintf(`timestamp=.* func=.* level=WARN msg="%s`, longMessage[:2048-len(prefix)])
+	regex := fmt.Sprintf(`timestamp=.* func=.* level=ERROR msg="%s`, longMessage[:2048-len(prefix)])
 	suite.Regexp(regexp.MustCompile(regex), entry["content"])
 }
 

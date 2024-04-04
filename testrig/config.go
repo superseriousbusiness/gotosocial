@@ -18,6 +18,7 @@
 package testrig
 
 import (
+	"os"
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
@@ -33,8 +34,16 @@ func InitTestConfig() {
 	})
 }
 
+func logLevel() string {
+	level := "error"
+	if lv := os.Getenv("GTS_LOG_LEVEL"); lv != "" {
+		level = lv
+	}
+	return level
+}
+
 var testDefaults = config.Configuration{
-	LogLevel:           "info",
+	LogLevel:           logLevel(),
 	LogTimestampFormat: "02/01/2006 15:04:05.000",
 	LogDbQueries:       true,
 	ApplicationName:    "gotosocial",
