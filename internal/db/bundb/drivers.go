@@ -218,6 +218,7 @@ func (c *SQLiteConn) Query(query string, args []driver.Value) (driver.Rows, erro
 func (c *SQLiteConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
 	err = retryOnBusy(ctx, func() error {
 		rows, err = c.conn.QueryContext(ctx, query, args)
+		defer rows.Close()
 		err = processSQLiteError(err)
 		return err
 	})
@@ -276,6 +277,7 @@ func (stmt *SQLiteStmt) Query(args []driver.Value) (driver.Rows, error) {
 func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (rows driver.Rows, err error) {
 	err = retryOnBusy(ctx, func() error {
 		rows, err = stmt.stmt.QueryContext(ctx, args)
+		defer rows.Close()
 		err = processSQLiteError(err)
 		return err
 	})
