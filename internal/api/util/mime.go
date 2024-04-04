@@ -121,7 +121,7 @@ func isUTF8ContentType(p []string) ([]string, bool) {
 	for i, part := range p {
 
 		// Only handle charset slice parts.
-		if part[:len(charset)] == charset {
+		if strings.HasPrefix(part, charset) {
 
 			// Check if is UTF-8 charset.
 			ok := (part == charsetUTF8)
