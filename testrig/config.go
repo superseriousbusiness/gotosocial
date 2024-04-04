@@ -36,7 +36,7 @@ func InitTestConfig() {
 
 func logLevel() string {
 	level := "error"
-	if lv := os.Getenv("GTS_TESTRIG_LOG_LEVEL"); lv != "" {
+	if lv := os.Getenv("GTS_LOG_LEVEL"); lv != "" {
 		level = lv
 	}
 	return level
