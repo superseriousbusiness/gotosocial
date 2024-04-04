@@ -18,13 +18,13 @@
 package queue
 
 import (
-	"context"
 	"sync/atomic"
 
 	"codeberg.org/gruf/go-structr"
 )
 
-// StructQueue ...
+// StructQueue wraps a structr.Queue{} to
+// provide simple index caching by name.
 type StructQueue[StructType any] struct {
 	queue structr.Queue[StructType]
 	index map[string]*structr.Index
@@ -46,36 +46,16 @@ func (q *StructQueue[T]) Pop() (value T, ok bool) {
 	return q.queue.PopFront()
 }
 
-// PopCtx wraps structr.Queue{}.PopFront() to add sleep until value is available.
-func (q *StructQueue[T]) PopCtx(ctx context.Context) (value T, ok bool) {
-	for {
-		// Try pop from front of queue.
-		value, ok = q.queue.PopFront()
-		if ok {
-			return
-		}
-
-		select {
-		// Context canceled.
-		case <-ctx.Done():
-			return
-
-		// Waiter released.
-		case <-q.Wait():
-		}
-	}
-}
-
-// Push wraps structr.Queue{}.PushBack() to add sleeping pop goroutine awakening.
+// Push wraps structr.Queue{}.PushBack() to awaken those blocking on <-.Wait().
 func (q *StructQueue[T]) Push(values ...T) {
 	q.queue.PushBack(values...)
 	q.broadcast()
 }
 
-// Delete removes all queued entries under index with key.
+// Delete pops (and drops!) all queued entries under index with key.
 func (q *StructQueue[T]) Delete(index string, key ...any) {
 	i := q.index[index]
-	q.queue.Pop(i, i.Key(key...))
+	_ = q.queue.Pop(i, i.Key(key...))
 }
 
 // Len: see structr.Queue{}.Len().
@@ -83,7 +63,8 @@ func (q *StructQueue[T]) Len() int {
 	return q.queue.Len()
 }
 
-// Wait safely returns current (read-only) wait channel.
+// Wait returns current wait channel, which may be
+// blocked on to awaken when new value pushed to queue.
 func (q *StructQueue[T]) Wait() <-chan struct{} {
 	var ch chan struct{}
 

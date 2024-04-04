@@ -163,6 +163,7 @@ loop:
 			dlv.attempts > w.client.retries {
 			// Drop deliveries when no retry requested,
 			// or we reach max defined retry attempts.
+			// "bad" hosts support a max of 1 attempt.
 			w.client.badHosts.Set(dlv.host, struct{}{})
 			continue loop
 		}
@@ -177,32 +178,39 @@ loop:
 
 // next gets the next available delivery, blocking until available if necessary.
 func (w *APDeliveryWorker) next(ctx context.Context) (*delivery, bool) {
-	// Try pop next queued.
-	msg, ok := w.queue.Pop()
+loop:
+	for {
+		// Try pop next queued.
+		msg, ok := w.queue.Pop()
 
-	if !ok {
-		// Check the backlog.
-		if len(w.backlog) > 0 {
-
-			// Sort by 'next' time.
-			sortDeliveries(w.backlog)
-
-			// Pop next delivery.
-			dlv := w.popBacklog()
-
-			return dlv, true
-		}
-
-		// Backlog is empty, we MUST
-		// block until next enqueued.
-		msg, ok = w.queue.PopCtx(ctx)
 		if !ok {
-			return nil, false
-		}
-	}
+			// Check the backlog.
+			if len(w.backlog) > 0 {
 
-	// Wrap msg in delivery type.
-	return wrapMsg(ctx, msg), true
+				// Sort by 'next' time.
+				sortDeliveries(w.backlog)
+
+				// Pop next delivery.
+				dlv := w.popBacklog()
+
+				return dlv, true
+			}
+
+			select {
+			// Backlog is empty, we MUST
+			// block until next enqueued.
+			case <-w.queue.Wait():
+				continue loop
+
+			// Worker was stopped.
+			case <-ctx.Done():
+				return nil, false
+			}
+		}
+
+		// Wrap msg in delivery type.
+		return wrapMsg(ctx, msg), true
+	}
 }
 
 // popBacklog pops next available from the backlog.
