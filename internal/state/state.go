@@ -21,7 +21,6 @@ import (
 	"codeberg.org/gruf/go-mutexes"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/queue"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/workers"
@@ -36,9 +35,6 @@ import (
 type State struct {
 	// Caches provides access to this state's collection of caches.
 	Caches cache.Caches
-
-	// Queues provides access to this state's collection of queues.
-	Queues queue.Queues
 
 	// Timelines provides access to this state's collection of timelines.
 	Timelines timeline.Timelines

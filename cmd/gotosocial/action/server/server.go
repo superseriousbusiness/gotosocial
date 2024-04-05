@@ -124,9 +124,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
 
-	// Initialize the queues.
-	state.Queues.Init()
-	state.Workers.APDelivery.Init(client, &state.Queues.APRequests)
+	// Initialize delivery worker with http client.
+	state.Workers.Delivery.Init(client)
 
 	// Initialize workers.
 	state.Workers.Start()

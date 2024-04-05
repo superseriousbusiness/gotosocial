@@ -29,37 +29,42 @@ const (
 	baseBackoff = 2 * time.Second
 )
 
-// request wraps an HTTP request
+// Request wraps an HTTP request
 // to add our own retry / backoff.
-type request struct {
+type Request struct {
+	// log entry fields.
+	log log.Entry
 
-	// underlying request.
-	req *http.Request
-
-	// current backoff dur.
+	// Current backoff dur.
 	backoff time.Duration
 
-	// delivery attempts.
+	// Delivery attempts.
 	attempts uint
+
+	// done is marked when
+	// no more requests may
+	// be attempted.
+	done bool
+
+	// underlying request.
+	*http.Request
 }
 
-// wrapRequest wraps an http.Request{} in our own request{} type.
-func wrapRequest(req *http.Request) request {
-	var r request
-	r.req = req
-	return r
-}
-
-// requestLog returns a prepared log entry with fields for http.Request{}.
-func requestLog(r *http.Request) log.Entry {
-	return log.WithContext(r.Context()).
+// WrapRequest wraps an existing http.Request within
+// our own httpclient.Request with retry / backoff tracking.
+func WrapRequest(r *http.Request) Request {
+	var rr Request
+	rr.Request = r
+	rr.log = log.WithContext(r.Context()).
 		WithField("method", r.Method).
-		WithField("url", r.URL.String())
+		WithField("url", r.URL.String()).
+		WithField("contentType", r.Header.Get("Content-Type"))
+	return rr
 }
 
-// BackOff returns the currently set backoff duration,
-// setting a default according to no. attempts if needed.
-func (r *request) BackOff() time.Duration {
+// GetBackOff returns the currently set backoff duration,
+// (using a default according to no. attempts if needed).
+func (r *Request) BackOff() time.Duration {
 	if r.backoff <= 0 {
 		// No backoff dur found, set our predefined
 		// backoff according to a multiplier of 2^n.

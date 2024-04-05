@@ -24,17 +24,17 @@ import (
 
 	"codeberg.org/gruf/go-runners"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/scheduler"
+	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
 )
 
 type Workers struct {
 	// Main task scheduler instance.
 	Scheduler scheduler.Scheduler
 
-	// APDelivery ...
-	APDelivery httpclient.APDeliveryWorkerPool
+	// ...
+	Delivery delivery.WorkerPool
 
 	// ClientAPI provides a worker pool that handles both
 	// incoming client actions, and our own side-effects.
@@ -70,7 +70,8 @@ type Workers struct {
 	_ nocopy
 }
 
-// Start will start all of the contained worker pools (and global scheduler).
+// Start will start all of the contained
+// worker pools (and global scheduler).
 func (w *Workers) Start() {
 	// Get currently set GOMAXPROCS.
 	maxprocs := runtime.GOMAXPROCS(0)
@@ -79,7 +80,7 @@ func (w *Workers) Start() {
 
 	tryUntil("start ap delivery workerpool", 5, func() bool {
 		n := config.GetAdvancedSenderMultiplier()
-		return w.APDelivery.Start(n * maxprocs)
+		return w.Delivery.Start(n * maxprocs)
 	})
 
 	tryUntil("starting client API workerpool", 5, func() bool {
@@ -98,7 +99,7 @@ func (w *Workers) Start() {
 // Stop will stop all of the contained worker pools (and global scheduler).
 func (w *Workers) Stop() {
 	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
-	tryUntil("stopping ap delivery workerpool", 5, w.APDelivery.Stop)
+	tryUntil("stopping delivery workerpool", 5, w.Delivery.Stop)
 	tryUntil("stopping client API workerpool", 5, w.ClientAPI.Stop)
 	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
 	tryUntil("stopping media workerpool", 5, w.Media.Stop)

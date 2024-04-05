@@ -195,82 +195,114 @@ func (c *Client) Do(r *http.Request) (rsp *http.Response, err error) {
 		return nil, err
 	}
 
-	// Get request hostname.
-	host := r.URL.Hostname()
-
-	// Check whether request should fast fail.
-	fastFail := gtscontext.IsFastfail(r.Context())
-	if !fastFail {
-		// Check if recently reached max retries for this host
-		// so we don't bother with a retry-backoff loop. The only
-		// errors that are retried upon are server failure, TLS
-		// and domain resolution type errors, so this cached result
-		// indicates this server is likely having issues.
-		fastFail = c.badHosts.Has(host)
-		defer func() {
-			if err != nil {
-				// On error mark as a bad-host.
-				c.badHosts.Set(host, struct{}{})
-			}
-		}()
-	}
-
-	// Prepare log entry.
-	log := requestLog(r)
-
 	// Wrap in our own request
 	// type for retry-backoff.
-	req := wrapRequest(r)
+	req := WrapRequest(r)
 
-	for req.attempts < c.retries {
-		var retry bool
-
-		log.Info("performing request")
-
-		// Perform the http request.
-		rsp, retry, err = c.do(&req)
-		if err == nil || !retry {
-			return
-		}
-
-		log.Error(err)
-
-		if fastFail {
-			// on fast-fail, don't bother backoff/retry
+	if gtscontext.IsFastfail(r.Context()) {
+		// If the fast-fail flag was set, just
+		// attempt a single iteration instead of
+		// following the below retry-backoff loop.
+		rsp, _, err = c.DoOnce(&req)
+		if err != nil {
 			return nil, fmt.Errorf("%w (fast fail)", err)
 		}
-
-		// Start the backoff timer channel.
-		backoff, cncl := sleepch(req.BackOff())
-
-		select {
-		// Request ctx cancelled
-		case <-r.Context().Done():
-			cncl()
-
-		// Backoff for a time
-		case <-backoff:
-		}
+		return rsp, nil
 	}
 
-	// Set error return to trigger setting "bad host".
-	err = errors.New("transport reached max retries")
-	return
+	for {
+		var retry bool
+
+		// Perform the http request.
+		rsp, retry, err = c.DoOnce(&req)
+		if err == nil {
+			return rsp, nil
+		}
+
+		if !retry {
+			// reached max retries, don't further backoff
+			return nil, fmt.Errorf("%w (max retries)", err)
+		}
+
+		// Start new backoff sleep timer.
+		backoff := time.NewTimer(req.BackOff())
+
+		select {
+		// Request ctx cancelled.
+		case <-r.Context().Done():
+			backoff.Stop()
+
+			// Return context error.
+			err = r.Context().Err()
+			return nil, err
+
+		// Backoff for time.
+		case <-backoff.C:
+		}
+	}
 }
 
-// do wraps an underlying http.Client{}.Do() to perform our wrapped request type:
+// DoOnce wraps an underlying http.Client{}.Do() to perform our wrapped request type:
 // rewinding response body to permit reuse, signing request data when SignFunc provided,
-// safely limiting response body, updating retry attempt counts and setting retry-after.
-func (c *Client) do(r *request) (*http.Response, bool /* retry */, error) {
-	// Update the
+// marking erroring hosts, updating retry attempt counts and setting backoff from header.
+func (c *Client) DoOnce(r *Request) (rsp *http.Response, retry bool, err error) {
+	if r.attempts > c.retries {
+		// Ensure request hasn't reached max number of attempts.
+		err = fmt.Errorf("httpclient: reached max retries (%d)", c.retries)
+		return
+	}
+
+	// Update no.
 	// attempts.
 	r.attempts++
 
 	// Reset backoff.
 	r.backoff = 0
 
+	// Perform main routine.
+	rsp, retry, err = c.do(r)
+
+	if rsp != nil {
+		// Log successful rsp.
+		r.log.Info(rsp.Status)
+		return
+	}
+
+	// Log any errors.
+	r.log.Error(err)
+
+	switch {
+	case !retry:
+		// If they were told not to
+		// retry, also set number of
+		// attempts to prevent retry.
+		r.attempts = c.retries + 1
+
+	case r.attempts > c.retries:
+		// On max retries, mark this as
+		// a "badhost", i.e. is erroring.
+		c.badHosts.Set(r.Host, struct{}{})
+
+		// Ensure retry flag is unset
+		// when reached max attempts.
+		retry = false
+
+	case c.badHosts.Has(r.Host):
+		// When retry is still permitted,
+		// check host hasn't been marked
+		// as a "badhost", i.e. erroring.
+		r.attempts = c.retries + 1
+		retry = false
+	}
+
+	return
+}
+
+// do performs the "meat" of DoOnce(), but it's separated out to allow
+// easier wrapping of the response, retry, error returns with further logic.
+func (c *Client) do(r *Request) (rsp *http.Response, retry bool, err error) {
 	// Perform the HTTP request.
-	rsp, err := c.client.Do(r.req)
+	rsp, err = c.client.Do(r.Request)
 	if err != nil {
 
 		if errorsv2.IsV2(err,
@@ -299,6 +331,7 @@ func (c *Client) do(r *request) (*http.Response, bool /* retry */, error) {
 			return nil, false, gtserror.SetNotFound(err)
 		}
 
+		// A retryable error.
 		return nil, true, err
 
 	} else if rsp.StatusCode > 500 ||

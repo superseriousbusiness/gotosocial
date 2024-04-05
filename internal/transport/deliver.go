@@ -28,13 +28,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/queue"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
+	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
 )
 
 func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}, recipients []*url.URL) error {
 	var (
-		// accumulated prepared reqs.
-		reqs []*queue.APRequest
+		// accumulated delivery reqs.
+		reqs []*delivery.Delivery
 
 		// accumulated preparation errs.
 		errs gtserror.MultiError
@@ -78,8 +79,7 @@ func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}
 		reqs = append(reqs, req)
 	}
 
-	// Push the request list to HTTP client worker queue.
-	t.controller.state.Queues.APRequests.Push(reqs...)
+	t.controller.state.Workers.Delivery.Queue.Push(reqs...)
 
 	// Return combined err.
 	return errs.Combine()
@@ -109,8 +109,7 @@ func (t *transport) Deliver(ctx context.Context, obj map[string]interface{}, to 
 		return err
 	}
 
-	// Push the request to HTTP client worker queue.
-	t.controller.state.Queues.APRequests.Push(req)
+	t.controller.state.Workers.Delivery.Queue.Push(req)
 
 	return nil
 }
@@ -126,7 +125,7 @@ func (t *transport) prepare(
 	data []byte,
 	to *url.URL,
 ) (
-	*queue.APRequest,
+	*delivery.Delivery,
 	error,
 ) {
 	url := to.String()
@@ -142,19 +141,21 @@ func (t *transport) prepare(
 	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
 	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, &body)
+	// Prepare a new request with data body directed at URL.
+	r, err := http.NewRequestWithContext(ctx, "POST", url, &body)
 	if err != nil {
 		return nil, gtserror.Newf("error preparing request: %w", err)
 	}
 
-	req.Header.Add("Content-Type", string(apiutil.AppActivityLDJSON))
-	req.Header.Add("Accept-Charset", "utf-8")
+	// Set the standard ActivityPub content-type + charset headers.
+	r.Header.Add("Content-Type", string(apiutil.AppActivityLDJSON))
+	r.Header.Add("Accept-Charset", "utf-8")
 
-	return &queue.APRequest{
+	return &delivery.Delivery{
 		ActorID:  actorID,
 		ObjectID: objectID,
 		TargetID: targetID,
-		Request:  req,
+		Request:  httpclient.WrapRequest(r),
 	}, nil
 }
 
