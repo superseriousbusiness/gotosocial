@@ -32,9 +32,6 @@ const (
 // Request wraps an HTTP request
 // to add our own retry / backoff.
 type Request struct {
-	// log entry fields.
-	log log.Entry
-
 	// Current backoff dur.
 	backoff time.Duration
 
@@ -46,6 +43,9 @@ type Request struct {
 	// be attempted.
 	done bool
 
+	// log fields.
+	log.Entry
+
 	// underlying request.
 	*http.Request
 }
@@ -55,7 +55,7 @@ type Request struct {
 func WrapRequest(r *http.Request) Request {
 	var rr Request
 	rr.Request = r
-	rr.log = log.WithContext(r.Context()).
+	rr.Entry = log.WithContext(r.Context()).
 		WithField("method", r.Method).
 		WithField("url", r.URL.String()).
 		WithField("contentType", r.Header.Get("Content-Type"))

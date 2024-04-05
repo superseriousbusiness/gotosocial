@@ -264,12 +264,12 @@ func (c *Client) DoOnce(r *Request) (rsp *http.Response, retry bool, err error) 
 
 	if rsp != nil {
 		// Log successful rsp.
-		r.log.Info(rsp.Status)
+		r.Entry.Info(rsp.Status)
 		return
 	}
 
 	// Log any errors.
-	r.log.Error(err)
+	r.Entry.Error(err)
 
 	switch {
 	case !retry:

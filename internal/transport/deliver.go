@@ -79,6 +79,7 @@ func (t *transport) BatchDeliver(ctx context.Context, obj map[string]interface{}
 		reqs = append(reqs, req)
 	}
 
+	// Push prepared request list to the delivery queue.
 	t.controller.state.Workers.Delivery.Queue.Push(reqs...)
 
 	// Return combined err.
@@ -109,6 +110,7 @@ func (t *transport) Deliver(ctx context.Context, obj map[string]interface{}, to 
 		return err
 	}
 
+	// Push prepared request to the delivery queue.
 	t.controller.state.Workers.Delivery.Queue.Push(req)
 
 	return nil
