@@ -25,6 +25,7 @@ import (
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-structr"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 )
 
@@ -99,6 +100,7 @@ func (p *WorkerPool) Init(client *httpclient.Client) {
 // Start will attempt to start 'n' Worker{}s.
 func (p *WorkerPool) Start(n int) (ok bool) {
 	if ok = (len(p.workers) == 0); ok {
+		log.Infof(nil, "starting %d delivery workers", n)
 		p.workers = make([]Worker, n)
 		for i := range p.workers {
 			p.workers[i].Client = p.Client
@@ -112,6 +114,7 @@ func (p *WorkerPool) Start(n int) (ok bool) {
 // Stop will attempt to stop contained Worker{}s.
 func (p *WorkerPool) Stop() (ok bool) {
 	if ok = (len(p.workers) > 0); ok {
+		log.Infof(nil, "stopping %d delivery workers", len(p.workers))
 		for i := range p.workers {
 			ok = p.workers[i].Stop() && ok
 		}
@@ -141,12 +144,29 @@ type Worker struct {
 
 // Start will attempt to start the Worker{}.
 func (w *Worker) Start() bool {
-	return w.service.GoRun(w.process)
+	return w.service.GoRun(w.run)
 }
 
 // Stop will attempt to stop the Worker{}.
 func (w *Worker) Stop() bool {
 	return w.service.Stop()
+}
+
+// run wraps process to restart on any panic.
+func (w *Worker) run(ctx context.Context) {
+	log.Infof(ctx, "%p: started delivery worker", w)
+	defer log.Infof(ctx, "%p: stopped delivery worker", w)
+	for returned := false; !returned; {
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Errorf(ctx, "recovered panic: %v", r)
+				}
+			}()
+			w.process(ctx)
+			returned = true
+		}()
+	}
 }
 
 // process is the main delivery worker processing routine.
@@ -164,10 +184,8 @@ loop:
 		}
 
 		// Check whether backoff required.
-		if d := dlv.backoff(); d != 0 {
-
-			// Get queue wait ch.
-			queue := w.Queue.Wait()
+		const min = 100 * time.Millisecond
+		if d := dlv.backoff(); d > min {
 
 			// Start backoff sleep timer.
 			backoff := time.NewTimer(d)
@@ -177,8 +195,9 @@ loop:
 				// Main ctx
 				// cancelled.
 				backoff.Stop()
+				return
 
-			case <-queue:
+			case <-w.Queue.Wait():
 				// A new message was
 				// queued, re-add this
 				// to backlog + retry.
