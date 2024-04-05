@@ -24,6 +24,7 @@ import (
 
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-structr"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
@@ -270,7 +271,8 @@ loop:
 		}
 
 		// Replace request context for worker state canceling.
-		dlv.Request.Request = dlv.Request.WithContext(ctx)
+		ctx := gtscontext.WithValues(ctx, dlv.Request.Context())
+		dlv.Request.Request = dlv.Request.Request.WithContext(ctx)
 
 		return dlv, true
 	}
