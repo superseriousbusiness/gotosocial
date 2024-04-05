@@ -151,6 +151,11 @@ func (t *transport) prepare(
 	r.Header.Add("Content-Type", string(apiutil.AppActivityLDJSON))
 	r.Header.Add("Accept-Charset", "utf-8")
 
+	// Validate the request before queueing for delivery.
+	if err := httpclient.ValidateRequest(r); err != nil {
+		return nil, err
+	}
+
 	return &delivery.Delivery{
 		ActorID:  actorID,
 		ObjectID: objectID,
