@@ -83,6 +83,10 @@ func (w *Workers) Start() {
 
 	tryUntil("start delivery workerpool", 5, func() bool {
 		n := config.GetAdvancedSenderMultiplier()
+		if n < 1 {
+			// clamp min senders to 1.
+			return w.Delivery.Start(1)
+		}
 		return w.Delivery.Start(n * maxprocs)
 	})
 
