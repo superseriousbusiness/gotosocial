@@ -80,7 +80,7 @@ type WorkerPool struct {
 	Queue queue.StructQueue[*Delivery]
 
 	// internal fields.
-	workers []Worker
+	workers []*Worker
 }
 
 // Init will initialize the Worker{} pool
@@ -100,8 +100,9 @@ func (p *WorkerPool) Init(client *httpclient.Client) {
 // Start will attempt to start 'n' Worker{}s.
 func (p *WorkerPool) Start(n int) (ok bool) {
 	if ok = (len(p.workers) == 0); ok {
-		p.workers = make([]Worker, n)
+		p.workers = make([]*Worker, n)
 		for i := range p.workers {
+			p.workers[i] = new(Worker)
 			p.workers[i].Client = p.Client
 			p.workers[i].Queue = &p.Queue
 			ok = p.workers[i].Start() && ok
@@ -115,6 +116,7 @@ func (p *WorkerPool) Stop() (ok bool) {
 	if ok = (len(p.workers) > 0); ok {
 		for i := range p.workers {
 			ok = p.workers[i].Stop() && ok
+			p.workers[i] = nil
 		}
 		p.workers = p.workers[:0]
 	}
