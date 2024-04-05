@@ -28,25 +28,38 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 )
 
+// Delivery wraps an httpclient.Request{}
+// to add ActivityPub ID IRI fields of the
+// outgoing activity, so that deliveries may
+// be indexed (and so, dropped from queue)
+// by any of these possible ID IRIs.
 type Delivery struct {
-	// ActorID ...
+
+	// ActorID contains the ActivityPub
+	// actor ID IRI (if any) of the activity
+	// being sent out by this request.
 	ActorID string
 
-	// ObjectID ...
+	// ObjectID contains the ActivityPub
+	// object ID IRI (if any) of the activity
+	// being sent out by this request.
 	ObjectID string
 
-	// TargetID ...
+	// TargetID contains the ActivityPub
+	// target ID IRI (if any) of the activity
+	// being sent out by this request.
 	TargetID string
 
-	// Request ...
+	// Request is the prepared (+ wrapped)
+	// httpclient.Client{} request that
+	// constitutes this ActivtyPub delivery.
 	Request httpclient.Request
 
 	// internal fields.
 	next time.Time
 }
 
-// BackOff ...
-func (dlv *Delivery) BackOff() time.Duration {
+func (dlv *Delivery) backoff() time.Duration {
 	if dlv.next.IsZero() {
 		return 0
 	}
@@ -151,7 +164,7 @@ loop:
 		}
 
 		// Check whether backoff required.
-		if d := dlv.BackOff(); d != 0 {
+		if d := dlv.backoff(); d != 0 {
 
 			// Get queue wait ch.
 			queue := w.Queue.Wait()
@@ -197,7 +210,8 @@ loop:
 		}
 
 		// Determine next delivery attempt.
-		dlv.next = time.Now().Add(dlv.BackOff())
+		backoff := dlv.Request.BackOff()
+		dlv.next = time.Now().Add(backoff)
 
 		// Push to backlog.
 		w.pushBacklog(dlv)
