@@ -33,7 +33,10 @@ type Workers struct {
 	// Main task scheduler instance.
 	Scheduler scheduler.Scheduler
 
-	// ...
+	// Delivery provides a worker pool that
+	// handles outgoing ActivityPub deliveries.
+	// It contains an embedded (but accessible)
+	// indexed queue of Delivery{} objects.
 	Delivery delivery.WorkerPool
 
 	// ClientAPI provides a worker pool that handles both
@@ -78,7 +81,7 @@ func (w *Workers) Start() {
 
 	tryUntil("starting scheduler", 5, w.Scheduler.Start)
 
-	tryUntil("start ap delivery workerpool", 5, func() bool {
+	tryUntil("start delivery workerpool", 5, func() bool {
 		n := config.GetAdvancedSenderMultiplier()
 		return w.Delivery.Start(n * maxprocs)
 	})
