@@ -55,7 +55,7 @@ clean:
 
 edit:
 	@touch log
-	@if [ -f "Session.vim" ]; then novim -S & else novim -p Makefile all_test.go generator.go & fi
+	@if [ -f "Session.vim" ]; then novim -S & else novim -p Makefile go.mod builder.json all_test.go generator.go & fi
 
 editor:
 	gofmt -l -s -w . 2>&1 | tee log-editor

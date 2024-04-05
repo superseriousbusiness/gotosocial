@@ -2,6 +2,8 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.21
 
+replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.5-concurrency-workaround
+
 toolchain go1.21.3
 
 require (
