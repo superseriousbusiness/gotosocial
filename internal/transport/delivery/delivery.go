@@ -100,7 +100,6 @@ func (p *WorkerPool) Init(client *httpclient.Client) {
 // Start will attempt to start 'n' Worker{}s.
 func (p *WorkerPool) Start(n int) (ok bool) {
 	if ok = (len(p.workers) == 0); ok {
-		log.Infof(nil, "starting %d delivery workers", n)
 		p.workers = make([]Worker, n)
 		for i := range p.workers {
 			p.workers[i].Client = p.Client
@@ -114,7 +113,6 @@ func (p *WorkerPool) Start(n int) (ok bool) {
 // Stop will attempt to stop contained Worker{}s.
 func (p *WorkerPool) Stop() (ok bool) {
 	if ok = (len(p.workers) > 0); ok {
-		log.Infof(nil, "stopping %d delivery workers", len(p.workers))
 		for i := range p.workers {
 			ok = p.workers[i].Stop() && ok
 		}
