@@ -20,6 +20,7 @@ package account
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -32,15 +33,48 @@ import (
 )
 
 // Create processes the given form for creating a new account,
-// returning an oauth token for that account if successful.
+// returning a new user (with attached account) if successful.
 //
-// Precondition: the form's fields should have already been validated and normalized by the caller.
+// App should be the app used to create the account.
+// If nil, the instance app will be used.
+//
+// Precondition: the form's fields should have already been
+// validated and normalized by the caller.
 func (p *Processor) Create(
 	ctx context.Context,
-	appToken oauth2.TokenInfo,
 	app *gtsmodel.Application,
 	form *apimodel.AccountCreateRequest,
-) (*apimodel.Token, gtserror.WithCode) {
+) (*gtsmodel.User, gtserror.WithCode) {
+	const (
+		usersPerDay = 10
+		regBacklog  = 20
+	)
+
+	// Ensure no more than usersPerDay
+	// have registered in the last 24h.
+	newUsersCount, err := p.state.DB.CountApprovedSignupsSince(ctx, time.Now().Add(-24*time.Hour))
+	if err != nil {
+		err := fmt.Errorf("db error counting new users: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if newUsersCount >= usersPerDay {
+		err := fmt.Errorf("this instance has hit its limit of new sign-ups for today; you can try again tomorrow")
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	}
+
+	// Ensure the new users backlog isn't full.
+	backlogLen, err := p.state.DB.CountUnhandledSignups(ctx)
+	if err != nil {
+		err := fmt.Errorf("db error counting registration backlog length: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if backlogLen >= regBacklog {
+		err := fmt.Errorf("this instance's sign-up backlog is currently full; you must wait until pending sign-ups are handled by the admin(s)")
+		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	}
+
 	emailAvailable, err := p.state.DB.IsEmailAvailable(ctx, form.Email)
 	if err != nil {
 		err := fmt.Errorf("db error checking email availability: %w", err)
@@ -67,26 +101,28 @@ func (p *Processor) Create(
 		reason = form.Reason
 	}
 
+	// Use instance app if no app provided.
+	if app == nil {
+		app, err = p.state.DB.GetInstanceApplication(ctx)
+		if err != nil {
+			err := fmt.Errorf("db error getting instance app: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	}
+
 	user, err := p.state.DB.NewSignup(ctx, gtsmodel.NewSignup{
-		Username:    form.Username,
-		Email:       form.Email,
-		Password:    form.Password,
-		Reason:      text.SanitizeToPlaintext(reason),
-		PreApproved: !config.GetAccountsApprovalRequired(), // Mark as approved if no approval required.
-		SignUpIP:    form.IP,
-		Locale:      form.Locale,
-		AppID:       app.ID,
+		Username: form.Username,
+		Email:    form.Email,
+		Password: form.Password,
+		Reason:   text.SanitizeToPlaintext(reason),
+		// Mark as approved if no approval required.
+		// PreApproved: !config.GetAccountsApprovalRequired(),
+		SignUpIP: form.IP,
+		Locale:   form.Locale,
+		AppID:    app.ID,
 	})
 	if err != nil {
 		err := fmt.Errorf("db error creating new signup: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Generate access token *before* doing side effects; we
-	// don't want to process side effects if something borks.
-	accessToken, err := p.oauthServer.GenerateUserAccessToken(ctx, appToken, app.ClientSecret, user.ID)
-	if err != nil {
-		err := fmt.Errorf("error creating new access token for user %s: %w", user.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -95,9 +131,32 @@ func (p *Processor) Create(
 	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityCreate,
-		GTSModel:       user.Account,
+		GTSModel:       user,
 		OriginAccount:  user.Account,
 	})
+
+	return user, nil
+}
+
+// TokenForNewUser generates an OAuth Bearer token
+// for a new user (with account) created by Create().
+func (p *Processor) TokenForNewUser(
+	ctx context.Context,
+	appToken oauth2.TokenInfo,
+	app *gtsmodel.Application,
+	user *gtsmodel.User,
+) (*apimodel.Token, gtserror.WithCode) {
+	// Generate access token.
+	accessToken, err := p.oauthServer.GenerateUserAccessToken(
+		ctx,
+		appToken,
+		app.ClientSecret,
+		user.ID,
+	)
+	if err != nil {
+		err := fmt.Errorf("error creating new access token for user %s: %w", user.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
 
 	return &apimodel.Token{
 		AccessToken: accessToken.GetAccess(),

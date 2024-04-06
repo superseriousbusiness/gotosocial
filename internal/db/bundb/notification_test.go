@@ -176,7 +176,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAndTar
 	}
 
 	for _, n := range notif {
-		if n.OriginAccountID == originAccount.ID || n.TargetAccountID == targetAccount.ID {
+		if n.OriginAccountID == originAccount.ID && n.TargetAccountID == targetAccount.ID {
 			suite.FailNowf(
 				"",
 				"no notifications with origin account id %s and target account %s should remain",

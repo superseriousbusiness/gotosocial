@@ -1000,31 +1000,6 @@ func GetAccountsRegistrationOpen() bool { return global.GetAccountsRegistrationO
 // SetAccountsRegistrationOpen safely sets the value for global configuration 'AccountsRegistrationOpen' field
 func SetAccountsRegistrationOpen(v bool) { global.SetAccountsRegistrationOpen(v) }
 
-// GetAccountsApprovalRequired safely fetches the Configuration value for state's 'AccountsApprovalRequired' field
-func (st *ConfigState) GetAccountsApprovalRequired() (v bool) {
-	st.mutex.RLock()
-	v = st.config.AccountsApprovalRequired
-	st.mutex.RUnlock()
-	return
-}
-
-// SetAccountsApprovalRequired safely sets the Configuration value for state's 'AccountsApprovalRequired' field
-func (st *ConfigState) SetAccountsApprovalRequired(v bool) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.AccountsApprovalRequired = v
-	st.reloadToViper()
-}
-
-// AccountsApprovalRequiredFlag returns the flag name for the 'AccountsApprovalRequired' field
-func AccountsApprovalRequiredFlag() string { return "accounts-approval-required" }
-
-// GetAccountsApprovalRequired safely fetches the value for global configuration 'AccountsApprovalRequired' field
-func GetAccountsApprovalRequired() bool { return global.GetAccountsApprovalRequired() }
-
-// SetAccountsApprovalRequired safely sets the value for global configuration 'AccountsApprovalRequired' field
-func SetAccountsApprovalRequired(v bool) { global.SetAccountsApprovalRequired(v) }
-
 // GetAccountsReasonRequired safely fetches the Configuration value for state's 'AccountsReasonRequired' field
 func (st *ConfigState) GetAccountsReasonRequired() (v bool) {
 	st.mutex.RLock()

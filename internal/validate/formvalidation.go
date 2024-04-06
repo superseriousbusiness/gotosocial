@@ -348,3 +348,42 @@ func FilterContexts(contexts []apimodel.FilterContext) error {
 	}
 	return nil
 }
+
+// CreateAccount checks through all the prerequisites for
+// creating a new account, according to the provided form.
+// If the account isn't eligible, an error will be returned.
+//
+// Side effect: normalizes the provided language tag for the user's locale.
+func CreateAccount(form *apimodel.AccountCreateRequest) error {
+	if form == nil {
+		return errors.New("form was nil")
+	}
+
+	if !config.GetAccountsRegistrationOpen() {
+		return errors.New("registration is not open for this server")
+	}
+
+	if err := Username(form.Username); err != nil {
+		return err
+	}
+
+	if err := Email(form.Email); err != nil {
+		return err
+	}
+
+	if err := Password(form.Password); err != nil {
+		return err
+	}
+
+	if !form.Agreement {
+		return errors.New("agreement to terms and conditions not given")
+	}
+
+	locale, err := Language(form.Locale)
+	if err != nil {
+		return err
+	}
+	form.Locale = locale
+
+	return SignUpReason(form.Reason, config.GetAccountsReasonRequired())
+}

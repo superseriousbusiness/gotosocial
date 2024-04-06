@@ -29,6 +29,9 @@ type Account interface {
 	// GetAccountByID returns one account with the given ID, or an error if something goes wrong.
 	GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, error)
 
+	// GetAccountsByIDs returns accounts corresponding to given IDs.
+	GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error)
+
 	// GetAccountByURI returns one account with the given URI, or an error if something goes wrong.
 	GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 

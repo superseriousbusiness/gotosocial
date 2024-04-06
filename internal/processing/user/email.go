@@ -28,53 +28,82 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-var oneWeek = 168 * time.Hour
-
-// EmailConfirm processes an email confirmation request, usually initiated as a result of clicking on a link
-// in a 'confirm your email address' type email.
-func (p *Processor) EmailConfirm(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode) {
+// EmailGetUserForConfirmToken retrieves the user (with account) from
+// the database for the given "confirm your email" token string.
+func (p *Processor) EmailGetUserForConfirmToken(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode) {
 	if token == "" {
-		return nil, gtserror.NewErrorNotFound(errors.New("no token provided"))
+		err := errors.New("no token provided")
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	user, err := p.state.DB.GetUserByConfirmationToken(ctx, token)
 	if err != nil {
-		if err == db.ErrNoEntries {
-			return nil, gtserror.NewErrorNotFound(err)
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real error.
+			return nil, gtserror.NewErrorInternalError(err)
 		}
-		return nil, gtserror.NewErrorInternalError(err)
+
+		// No user found for this token.
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	if user.Account == nil {
-		a, err := p.state.DB.GetAccountByID(ctx, user.AccountID)
-		if err != nil {
-			return nil, gtserror.NewErrorNotFound(err)
+		user.Account, err = p.state.DB.GetAccountByID(ctx, user.AccountID)
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real error.
+			return nil, gtserror.NewErrorInternalError(err)
 		}
-		user.Account = a
+
+		// No account found for this user,
+		// or error populating account.
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	if !user.Account.SuspendedAt.IsZero() {
-		return nil, gtserror.NewErrorForbidden(fmt.Errorf("ConfirmEmail: account %s is suspended", user.AccountID))
+		err := fmt.Errorf("account %s is suspended", user.AccountID)
+		return nil, gtserror.NewErrorForbidden(err, err.Error())
 	}
 
-	if user.UnconfirmedEmail == "" || user.UnconfirmedEmail == user.Email {
-		// no pending email confirmations so just return OK
+	return user, nil
+}
+
+// EmailConfirm processes an email confirmation request,
+// usually initiated as a result of clicking on a link
+// in a 'confirm your email address' type email.
+func (p *Processor) EmailConfirm(ctx context.Context, token string) (*gtsmodel.User, gtserror.WithCode) {
+	user, errWithCode := p.EmailGetUserForConfirmToken(ctx, token)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	if user.UnconfirmedEmail == "" ||
+		user.UnconfirmedEmail == user.Email {
+		// Confirmed already, just return.
 		return user, nil
 	}
 
+	// Ensure token not expired.
+	const oneWeek = 168 * time.Hour
 	if user.ConfirmationSentAt.Before(time.Now().Add(-oneWeek)) {
-		return nil, gtserror.NewErrorForbidden(errors.New("ConfirmEmail: confirmation token expired"))
+		err := errors.New("confirmation token expired (older than one week)")
+		return nil, gtserror.NewErrorForbidden(err, err.Error())
 	}
 
-	// mark the user's email address as confirmed + remove the unconfirmed address and the token
-	updatingColumns := []string{"email", "unconfirmed_email", "confirmed_at", "confirmation_token", "updated_at"}
+	// Mark the user's email address as confirmed,
+	// and remove the unconfirmed address and the token.
 	user.Email = user.UnconfirmedEmail
 	user.UnconfirmedEmail = ""
 	user.ConfirmedAt = time.Now()
 	user.ConfirmationToken = ""
-	user.UpdatedAt = time.Now()
 
-	if err := p.state.DB.UpdateByID(ctx, user, user.ID, updatingColumns...); err != nil {
+	if err := p.state.DB.UpdateUser(
+		ctx,
+		user,
+		"email",
+		"unconfirmed_email",
+		"confirmed_at",
+		"confirmation_token",
+	); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

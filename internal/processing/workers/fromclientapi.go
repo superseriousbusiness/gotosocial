@@ -209,18 +209,23 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 }
 
 func (p *clientAPI) CreateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
-	account, ok := cMsg.GTSModel.(*gtsmodel.Account)
+	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.Account", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
 	}
 
-	// Send a confirmation email to the newly created account.
-	user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
-	if err != nil {
-		return gtserror.Newf("db error getting user for account id %s: %w", account.ID, err)
+	// Notify mods of the new signup.
+	if err := p.surface.notifySignup(ctx, newUser); err != nil {
+		log.Errorf(ctx, "error notifying mods of new sign-up: %v", err)
 	}
 
-	if err := p.surface.emailPleaseConfirm(ctx, user, account.Username); err != nil {
+	// Send "new sign up" email to mods.
+	if err := p.surface.emailAdminNewSignup(ctx, newUser); err != nil {
+		log.Errorf(ctx, "error emailing new signup: %v", err)
+	}
+
+	// Send "please confirm your address" email to the new user.
+	if err := p.surface.emailUserPleaseConfirm(ctx, newUser); err != nil {
 		log.Errorf(ctx, "error emailing confirm: %v", err)
 	}
 
@@ -458,7 +463,7 @@ func (p *clientAPI) UpdateReport(ctx context.Context, cMsg messages.FromClientAP
 		return nil
 	}
 
-	if err := p.surface.emailReportClosed(ctx, report); err != nil {
+	if err := p.surface.emailUserReportClosed(ctx, report); err != nil {
 		log.Errorf(ctx, "error emailing report closed: %v", err)
 	}
 
@@ -644,7 +649,7 @@ func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientA
 		}
 	}
 
-	if err := p.surface.emailReportOpened(ctx, report); err != nil {
+	if err := p.surface.emailAdminReportOpened(ctx, report); err != nil {
 		log.Errorf(ctx, "error emailing report opened: %v", err)
 	}
 

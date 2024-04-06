@@ -380,3 +380,33 @@ func (i *instanceDB) GetInstanceModeratorAddresses(ctx context.Context) ([]strin
 
 	return addresses, nil
 }
+
+func (i *instanceDB) GetInstanceModerators(ctx context.Context) ([]*gtsmodel.Account, error) {
+	accountIDs := []string{}
+
+	// Select account IDs of approved, confirmed,
+	// and enabled moderators or admins.
+
+	q := i.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
+		Column("user.account_id").
+		Where("? = ?", bun.Ident("user.approved"), true).
+		Where("? IS NOT NULL", bun.Ident("user.confirmed_at")).
+		Where("? = ?", bun.Ident("user.disabled"), false).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.
+				Where("? = ?", bun.Ident("user.moderator"), true).
+				WhereOr("? = ?", bun.Ident("user.admin"), true)
+		})
+
+	if err := q.Scan(ctx, &accountIDs); err != nil {
+		return nil, err
+	}
+
+	if len(accountIDs) == 0 {
+		return nil, db.ErrNoEntries
+	}
+
+	return i.state.DB.GetAccountsByIDs(ctx, accountIDs)
+}

@@ -414,13 +414,13 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 			email = user.UnconfirmedEmail
 		}
 
-		if i := user.CurrentSignInIP.String(); i != "<nil>" {
+		if i := user.SignUpIP.String(); i != "<nil>" {
 			ip = &i
 		}
 
 		locale = user.Locale
-		if a.Settings.Reason != "" {
-			inviteRequest = &a.Settings.Reason
+		if user.Reason != "" {
+			inviteRequest = &user.Reason
 		}
 
 		if *user.Admin {
@@ -1003,7 +1003,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		Version:              config.GetSoftwareVersion(),
 		Languages:            config.GetInstanceLanguages().TagStrs(),
 		Registrations:        config.GetAccountsRegistrationOpen(),
-		ApprovalRequired:     config.GetAccountsApprovalRequired(),
+		ApprovalRequired:     true,  // approval always required
 		InvitesEnabled:       false, // todo: not supported yet
 		MaxTootChars:         uint(config.GetStatusesMaxChars()),
 		Rules:                c.InstanceRulesToAPIRules(i.Rules),
@@ -1172,8 +1172,8 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 	// registrations
 	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()
-	instance.Registrations.ApprovalRequired = config.GetAccountsApprovalRequired()
-	instance.Registrations.Message = nil // todo: not implemented
+	instance.Registrations.ApprovalRequired = true // always required
+	instance.Registrations.Message = nil           // todo: not implemented
 
 	// contact
 	instance.Contact.Email = i.ContactEmail

@@ -21,7 +21,7 @@ import (
 	"context"
 
 	oldgtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20230328203024_migration_fix"
-	newgtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	newgtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240318115336_account_settings"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 

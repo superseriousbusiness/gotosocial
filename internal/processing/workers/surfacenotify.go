@@ -333,6 +333,45 @@ func (s *surface) notifyPollClose(ctx context.Context, status *gtsmodel.Status) 
 	return errs.Combine()
 }
 
+func (s *surface) notifySignup(ctx context.Context, newUser *gtsmodel.User) error {
+	modAccounts, err := s.state.DB.GetInstanceModerators(ctx)
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			// No registered
+			// mod accounts.
+			return nil
+		}
+
+		// Real error.
+		return gtserror.Newf("error getting instance moderator accounts: %w", err)
+	}
+
+	// Ensure user + account populated.
+	if err := s.state.DB.PopulateUser(ctx, newUser); err != nil {
+		return gtserror.Newf("db error populating new user: %w", err)
+	}
+
+	if err := s.state.DB.PopulateAccount(ctx, newUser.Account); err != nil {
+		return gtserror.Newf("db error populating new user's account: %w", err)
+	}
+
+	// Notify each moderator.
+	var errs gtserror.MultiError
+	for _, mod := range modAccounts {
+		if err := s.notify(ctx,
+			gtsmodel.NotificationSignup,
+			mod,
+			newUser.Account,
+			"",
+		); err != nil {
+			errs.Appendf("error notifying moderator %s: %w", mod.ID, err)
+			continue
+		}
+	}
+
+	return errs.Combine()
+}
+
 // notify creates, inserts, and streams a new
 // notification to the target account if it
 // doesn't yet exist with the given parameters.
@@ -342,7 +381,7 @@ func (s *surface) notifyPollClose(ctx context.Context, status *gtsmodel.Status) 
 // targets into this function without filtering
 // for non-local first.
 //
-// targetAccountID and originAccountID must be
+// targetAccount and originAccount must be
 // set, but statusID can be an empty string.
 func (s *surface) notify(
 	ctx context.Context,

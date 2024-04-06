@@ -20,16 +20,22 @@ package web
 import (
 	"context"
 	"errors"
-	"net/http"
+	"net"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func (m *Module) confirmEmailGETHandler(c *gin.Context) {
-	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
+func (m *Module) signupGETHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// We'll need the instance later, and we can also use it
+	// before then to make it easier to return a web error.
+	instance, errWithCode := m.processor.InstanceGetV1(ctx)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -47,50 +53,24 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 		return
 	}
 
-	// If there's no token in the query,
-	// just serve the 404 web handler.
-	token := c.Query("token")
-	if token == "" {
-		errWithCode := gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound)))
-		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
-		return
-	}
-
-	// Get user but don't confirm yet.
-	user, errWithCode := m.processor.User().EmailGetUserForConfirmToken(c.Request.Context(), token)
-	if errWithCode != nil {
-		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
-		return
-	}
-
-	// They may have already confirmed before
-	// and are visiting the link again for
-	// whatever reason. This is fine, just make
-	// sure we have an email address to show them.
-	email := user.UnconfirmedEmail
-	if email == "" {
-		// Already confirmed, take
-		// that address instead.
-		email = user.Email
-	}
-
-	// Serve page where user can click button
-	// to POST confirmation to same endpoint.
 	page := apiutil.WebPage{
-		Template: "confirm_email.tmpl",
+		Template: "sign-up.tmpl",
 		Instance: instance,
+		OGMeta:   apiutil.OGBase(instance),
 		Extra: map[string]any{
-			"email":    email,
-			"username": user.Account.Username,
-			"token":    token,
+			"reasonRequired": config.GetAccountsReasonRequired(),
 		},
 	}
 
 	apiutil.TemplateWebPage(c, page)
 }
 
-func (m *Module) confirmEmailPOSTHandler(c *gin.Context) {
-	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
+func (m *Module) signupPOSTHandler(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	// We'll need the instance later, and we can also use it
+	// before then to make it easier to return a web error.
+	instance, errWithCode := m.processor.InstanceGetV1(ctx)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -108,32 +88,49 @@ func (m *Module) confirmEmailPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// If there's no token in the query,
-	// just serve the 404 web handler.
-	token := c.Query("token")
-	if token == "" {
-		errWithCode := gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound)))
-		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
+	form := &apimodel.AccountCreateRequest{}
+	if err := c.ShouldBind(form); err != nil {
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), instanceGet)
 		return
 	}
 
-	// Confirm email address for real this time.
-	user, errWithCode := m.processor.User().EmailConfirm(c.Request.Context(), token)
+	if err := validate.CreateAccount(form); err != nil {
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), instanceGet)
+		return
+	}
+
+	clientIP := c.ClientIP()
+	signUpIP := net.ParseIP(clientIP)
+	if signUpIP == nil {
+		err := errors.New("ip address could not be parsed from request")
+		apiutil.WebErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), instanceGet)
+		return
+	}
+	form.IP = signUpIP
+
+	// We have all the info we need, call account create
+	// (this will also trigger side effects like sending emails etc).
+	user, errWithCode := m.processor.Account().Create(
+		c.Request.Context(),
+		// nil to use
+		// instance app.
+		nil,
+		form,
+	)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return
 	}
 
-	// Serve page informing user that their
-	// email address is now confirmed.
+	// Serve a page informing the
+	// user that they've signed up.
 	page := apiutil.WebPage{
-		Template: "confirmed_email.tmpl",
+		Template: "signed-up.tmpl",
 		Instance: instance,
+		OGMeta:   apiutil.OGBase(instance),
 		Extra: map[string]any{
-			"email":    user.Email,
+			"email":    user.UnconfirmedEmail,
 			"username": user.Account.Username,
-			"token":    token,
-			"approved": *user.Approved,
 		},
 	}
 
