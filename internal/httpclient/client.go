@@ -353,7 +353,7 @@ func (c *Client) do(r *Request) (rsp *http.Response, retry bool, err error) {
 				r.backoff = time.Duration(u) * time.Second
 			} else if at, _ := http.ParseTime(after); !at.Before(now) {
 				// An HTTP formatted future date-time was provided.
-				r.backoff = at.Sub(time.Now())
+				r.backoff = at.Sub(now)
 			}
 
 			// Don't let their provided backoff exceed our max.

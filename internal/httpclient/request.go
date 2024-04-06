@@ -38,11 +38,6 @@ type Request struct {
 	// Delivery attempts.
 	attempts uint
 
-	// done is marked when
-	// no more requests may
-	// be attempted.
-	done bool
-
 	// log fields.
 	log.Entry
 
