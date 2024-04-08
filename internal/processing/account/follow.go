@@ -114,7 +114,7 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 			err = gtserror.Newf("error accepting follow request for local unlocked account: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-	} else if targetAccount.IsRemote() {
+	} else {
 		// Otherwise we leave the follow request as it is,
 		// and we handle the rest of the process async.
 		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{

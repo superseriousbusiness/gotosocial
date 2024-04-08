@@ -20,9 +20,12 @@ package account_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -128,6 +131,39 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowSetNothing() {
 
 	suite.True(relationship.ShowingReblogs)
 	suite.False(relationship.Notifying)
+}
+
+func (suite *FollowTestSuite) TestFollowRequestLocal() {
+	ctx := context.Background()
+	requestingAccount := suite.testAccounts["admin_account"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	// Have admin follow request turtle.
+	_, err := suite.accountProcessor.FollowCreate(
+		ctx,
+		requestingAccount,
+		&apimodel.AccountFollowRequest{
+			ID:      targetAccount.ID,
+			Reblogs: util.Ptr(true),
+			Notify:  util.Ptr(false),
+		})
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// There should be a message going to the worker.
+	var cMsg messages.FromClientAPI
+	select {
+	case cMsg = <-suite.fromClientAPIChan:
+		// No problem.
+	case <-time.After(5 * time.Second):
+		suite.FailNow("timed out waiting for message")
+	}
+
+	suite.Equal(ap.ActivityCreate, cMsg.APActivityType)
+	suite.Equal(ap.ActivityFollow, cMsg.APObjectType)
+	suite.Equal(requestingAccount.ID, cMsg.OriginAccount.ID)
+	suite.Equal(targetAccount.ID, cMsg.TargetAccount.ID)
 }
 
 func TestFollowTestS(t *testing.T) {
