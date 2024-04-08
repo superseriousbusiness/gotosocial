@@ -49,14 +49,10 @@ func (p *Processor) EmailGetUserForConfirmToken(ctx context.Context, token strin
 
 	if user.Account == nil {
 		user.Account, err = p.state.DB.GetAccountByID(ctx, user.AccountID)
-		if !errors.Is(err, db.ErrNoEntries) {
-			// Real error.
+		if err != nil {
+			// We need the account for a local user.
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-
-		// No account found for this user,
-		// or error populating account.
-		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	if !user.Account.SuspendedAt.IsZero() {
