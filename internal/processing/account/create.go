@@ -115,8 +115,6 @@ func (p *Processor) Create(
 		Email:    form.Email,
 		Password: form.Password,
 		Reason:   text.SanitizeToPlaintext(reason),
-		// Mark as approved if no approval required.
-		// PreApproved: !config.GetAccountsApprovalRequired(),
 		SignUpIP: form.IP,
 		Locale:   form.Locale,
 		AppID:    app.ID,
