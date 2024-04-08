@@ -44,7 +44,7 @@ type errOtherIRIBlocked struct {
 	iriStrs     []string
 }
 
-func (e errOtherIRIBlocked) Error() string {
+func (e *errOtherIRIBlocked) Error() string {
 	iriStrsNice := "[" + strings.Join(e.iriStrs, ", ") + "]"
 	if e.domainBlock {
 		return "domain block exists for one or more of " + iriStrsNice
@@ -67,7 +67,7 @@ func newErrOtherIRIBlocked(
 		e.iriStrs = append(e.iriStrs, iri.String())
 	}
 
-	return e
+	return &e
 }
 
 /*
