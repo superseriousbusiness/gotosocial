@@ -60,6 +60,10 @@ func test(
 	defer l.Close()
 
 	// Start the HTTP server.
+	//
+	// specifically not using httptest.Server{} here as httptest
+	// links that server with its own http.Client{}, whereas we're
+	// using an httpclient.Client{} (well, delivery routine is).
 	srv := new(http.Server)
 	srv.Addr = "http://" + l.Addr().String()
 	srv.Handler = handler
