@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ManagerTestSuite struct {
@@ -1197,8 +1198,8 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 
 	var state state.State
 
-	state.Workers.Start()
-	defer state.Workers.Stop()
+	testrig.StartNoopWorkers(&state)
+	defer testrig.StopWorkers(&state)
 
 	storage := &gtsstorage.Driver{
 		Storage: disk,
