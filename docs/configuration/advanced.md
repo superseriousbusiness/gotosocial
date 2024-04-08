@@ -119,15 +119,10 @@ advanced-throttling-multiplier: 8
 # Default: "30s"
 advanced-throttling-retry-after: "30s"
 
-# Int. CPU multiplier for the amount of goroutines to spawn in order to send messages via ActivityPub.
-# Messages will be batched so that at most multiplier * CPU count messages will be sent out at once.
-# This can be tuned to limit concurrent POSTing to remote inboxes, preventing your instance CPU
-# usage from skyrocketing when an account with many followers posts a new status.
-#
-# Messages are split among available senders, and each sender processes its assigned messages in serial.
-# For example, say a user with 1000 followers is on an instance with 2 CPUs. With the default multiplier
-# of 2, this means 4 senders would be in process at once on this instance. When the user creates a new post,
-# each sender would end up iterating through about 250 Create messages + delivering them to remote instances.
+# Int. CPU multiplier for the fixed number of goroutines to spawn in order to send messages via ActivityPub.
+# Messages will be batched and pushed to a singular queue, from which multiplier * CPU count goroutines will
+# pull and attempt deliveries. This can be tuned to limit concurrent posting to remote inboxes, preventing
+# your instance CPU usage skyrocketing when accounts with many followers post statuses.
 #
 # If you set this to 0 or less, only 1 sender will be used regardless of CPU count. This may be
 # useful in cases where you are working with very tight network or CPU constraints.
