@@ -87,6 +87,8 @@ func init() {
 				"last_sign_in_at",
 				"last_sign_in_ip",
 				"sign_in_count",
+				"chosen_languages",
+				"filtered_languages",
 			} {
 				if _, err := tx.
 					NewDropColumn().
