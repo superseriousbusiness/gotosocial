@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
@@ -457,22 +458,6 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 	})
 	suite.NoError(err)
 
-	// an accept message should be sent to satan's inbox
-	var sent [][]byte
-	if !testrig.WaitFor(func() bool {
-		sentI, ok := suite.httpClient.SentMessages.Load(*originAccount.SharedInboxURI)
-		if ok {
-			sent, ok = sentI.([][]byte)
-			if !ok {
-				panic("SentMessages entry was not []byte")
-			}
-			return true
-		}
-		return false
-	}) {
-		suite.FailNow("timed out waiting for message")
-	}
-
 	accept := &struct {
 		Actor  string `json:"actor"`
 		ID     string `json:"id"`
@@ -486,8 +471,29 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 		To   string `json:"to"`
 		Type string `json:"type"`
 	}{}
-	err = json.Unmarshal(sent[0], accept)
-	suite.NoError(err)
+
+	// an accept message should be sent to satan's inbox
+	var sent []byte
+	if !testrig.WaitFor(func() bool {
+		delivery, ok := suite.state.Workers.Delivery.Queue.Pop()
+		if !ok {
+			return false
+		}
+		if !testrig.EqualRequestURIs(delivery.Request.URL, *originAccount.SharedInboxURI) {
+			panic("differing request uris")
+		}
+		sent, err = io.ReadAll(delivery.Request.Body)
+		if err != nil {
+			panic("error reading body: " + err.Error())
+		}
+		err = json.Unmarshal(sent, accept)
+		if err != nil {
+			panic("error unmarshaling json: " + err.Error())
+		}
+		return true
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
 
 	suite.Equal(targetAccount.URI, accept.Actor)
 	suite.Equal(originAccount.URI, accept.Object.Actor)

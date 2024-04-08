@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
@@ -77,22 +78,6 @@ func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
 		Note:                "",
 	}, relationship)
 
-	// accept should be sent to Some_User
-	var sent [][]byte
-	if !testrig.WaitFor(func() bool {
-		sentI, ok := suite.httpClient.SentMessages.Load(targetAccount.InboxURI)
-		if ok {
-			sent, ok = sentI.([][]byte)
-			if !ok {
-				panic("SentMessages entry was not []byte")
-			}
-			return true
-		}
-		return false
-	}) {
-		suite.FailNow("timed out waiting for message")
-	}
-
 	accept := &struct {
 		Actor  string `json:"actor"`
 		ID     string `json:"id"`
@@ -106,8 +91,29 @@ func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
 		To   string `json:"to"`
 		Type string `json:"type"`
 	}{}
-	err = json.Unmarshal(sent[0], accept)
-	suite.NoError(err)
+
+	// accept should be sent to Some_User
+	var sent []byte
+	if !testrig.WaitFor(func() bool {
+		delivery, ok := suite.state.Workers.Delivery.Queue.Pop()
+		if !ok {
+			return false
+		}
+		if !testrig.EqualRequestURIs(delivery.Request.URL, targetAccount.InboxURI) {
+			panic("differing request uris")
+		}
+		sent, err = io.ReadAll(delivery.Request.Body)
+		if err != nil {
+			panic("error reading body: " + err.Error())
+		}
+		err = json.Unmarshal(sent, accept)
+		if err != nil {
+			panic("error unmarshaling json: " + err.Error())
+		}
+		return true
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
 
 	suite.Equal(requestingAccount.URI, accept.Actor)
 	suite.Equal(targetAccount.URI, accept.Object.Actor)
@@ -144,22 +150,6 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 	suite.NoError(errWithCode)
 	suite.EqualValues(&apimodel.Relationship{ID: "01FHMQX3GAABWSM0S2VZEC2SWC", Following: false, ShowingReblogs: false, Notifying: false, FollowedBy: false, Blocking: false, BlockedBy: false, Muting: false, MutingNotifications: false, Requested: false, DomainBlocking: false, Endorsed: false, Note: ""}, relationship)
 
-	// reject should be sent to Some_User
-	var sent [][]byte
-	if !testrig.WaitFor(func() bool {
-		sentI, ok := suite.httpClient.SentMessages.Load(targetAccount.InboxURI)
-		if ok {
-			sent, ok = sentI.([][]byte)
-			if !ok {
-				panic("SentMessages entry was not []byte")
-			}
-			return true
-		}
-		return false
-	}) {
-		suite.FailNow("timed out waiting for message")
-	}
-
 	reject := &struct {
 		Actor  string `json:"actor"`
 		ID     string `json:"id"`
@@ -173,8 +163,29 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 		To   string `json:"to"`
 		Type string `json:"type"`
 	}{}
-	err = json.Unmarshal(sent[0], reject)
-	suite.NoError(err)
+
+	// reject should be sent to Some_User
+	var sent []byte
+	if !testrig.WaitFor(func() bool {
+		delivery, ok := suite.state.Workers.Delivery.Queue.Pop()
+		if !ok {
+			return false
+		}
+		if !testrig.EqualRequestURIs(delivery.Request.URL, targetAccount.InboxURI) {
+			panic("differing request uris")
+		}
+		sent, err = io.ReadAll(delivery.Request.Body)
+		if err != nil {
+			panic("error reading body: " + err.Error())
+		}
+		err = json.Unmarshal(sent, reject)
+		if err != nil {
+			panic("error unmarshaling json: " + err.Error())
+		}
+		return true
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
 
 	suite.Equal(requestingAccount.URI, reject.Actor)
 	suite.Equal(targetAccount.URI, reject.Object.Actor)

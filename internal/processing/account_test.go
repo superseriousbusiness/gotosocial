@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
@@ -55,7 +56,7 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	suite.NoError(errWithCode)
 
 	// the delete should be federated outwards to the following account's inbox
-	var sent [][]byte
+	var sent []byte
 	delete := new(struct {
 		Actor  string `json:"actor"`
 		ID     string `json:"id"`
@@ -66,16 +67,22 @@ func (suite *AccountTestSuite) TestAccountDeleteLocal() {
 	})
 
 	if !testrig.WaitFor(func() bool {
-		sentI, ok := suite.httpClient.SentMessages.Load(*followingAccount.SharedInboxURI)
-		if ok {
-			sent, ok = sentI.([][]byte)
-			if !ok {
-				panic("SentMessages entry was not [][]byte")
-			}
-			err = json.Unmarshal(sent[0], delete)
-			return err == nil
+		delivery, ok := suite.state.Workers.Delivery.Queue.Pop()
+		if !ok {
+			return false
 		}
-		return false
+		if !testrig.EqualRequestURIs(delivery.Request.URL, *followingAccount.SharedInboxURI) {
+			panic("differing request uris")
+		}
+		sent, err = io.ReadAll(delivery.Request.Body)
+		if err != nil {
+			panic("error reading body: " + err.Error())
+		}
+		err = json.Unmarshal(sent, delete)
+		if err != nil {
+			panic("error unmarshaling json: " + err.Error())
+		}
+		return true
 	}) {
 		suite.FailNow("timed out waiting for message")
 	}

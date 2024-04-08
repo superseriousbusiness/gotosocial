@@ -97,6 +97,64 @@ func StartTimelines(state *state.State, filter *visibility.Filter, converter *ty
 	}
 }
 
+// EqualRequestURIs checks whether inputs have equal request URIs,
+// handling cases of url.URL{}, *url.URL{}, string, *string.
+func EqualRequestURIs(u1, u2 any) bool {
+	var uri1, uri2 string
+
+	requestURI := func(in string) (string, error) {
+		u, err := url.Parse(in)
+		if err != nil {
+			return "", err
+		}
+		return u.RequestURI(), nil
+	}
+
+	switch u1 := u1.(type) {
+	case url.URL:
+		uri1 = u1.RequestURI()
+	case *url.URL:
+		uri1 = u1.RequestURI()
+	case *string:
+		var err error
+		uri1, err = requestURI(*u1)
+		if err != nil {
+			return false
+		}
+	case string:
+		var err error
+		uri1, err = requestURI(u1)
+		if err != nil {
+			return false
+		}
+	default:
+		panic("unsupported type")
+	}
+
+	switch u2 := u2.(type) {
+	case url.URL:
+		uri2 = u2.RequestURI()
+	case *url.URL:
+		uri2 = u2.RequestURI()
+	case *string:
+		var err error
+		uri2, err = requestURI(*u2)
+		if err != nil {
+			return false
+		}
+	case string:
+		var err error
+		uri2, err = requestURI(u2)
+		if err != nil {
+			return false
+		}
+	default:
+		panic("unsupported type")
+	}
+
+	return uri1 == uri2
+}
+
 // CreateMultipartFormData is a handy function for taking a fieldname and a filename, and creating a multipart form bytes buffer
 // with the file contents set in the given fieldname. The extraFields param can be used to add extra FormFields to the request, as necessary.
 // The returned bytes.Buffer b can be used like so:

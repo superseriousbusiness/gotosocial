@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/url"
 	"testing"
 	"time"
@@ -129,23 +130,27 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 	suite.NotNil(activity)
 
 	// because we added 1 remote follower for zork, there should be a url in sentMessage
-	var sent [][]byte
+	var sent []byte
 	if !testrig.WaitFor(func() bool {
-		sentI, ok := httpClient.SentMessages.Load(*testRemoteAccount.SharedInboxURI)
-		if ok {
-			sent, ok = sentI.([][]byte)
-			if !ok {
-				panic("SentMessages entry was not []byte")
-			}
-			return true
+		delivery, ok := suite.state.Workers.Delivery.Queue.Pop()
+		if !ok {
+			return false
 		}
-		return false
+		if !testrig.EqualRequestURIs(delivery.Request.URL, *testRemoteAccount.SharedInboxURI) {
+			panic("differing request uris")
+		}
+		sent, err = io.ReadAll(delivery.Request.Body)
+		if err != nil {
+			panic("error reading body: " + err.Error())
+		}
+		return true
+
 	}) {
 		suite.FailNow("timed out waiting for message")
 	}
 
 	dst := new(bytes.Buffer)
-	err = json.Indent(dst, sent[0], "", "  ")
+	err = json.Indent(dst, sent, "", "  ")
 	suite.NoError(err)
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",

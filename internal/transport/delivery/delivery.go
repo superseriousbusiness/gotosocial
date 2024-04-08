@@ -155,6 +155,9 @@ func (w *Worker) Stop() bool {
 
 // run wraps process to restart on any panic.
 func (w *Worker) run(ctx context.Context) {
+	if w.Client == nil || w.Queue == nil {
+		panic("not yet initialized")
+	}
 	log.Infof(ctx, "%p: started delivery worker", w)
 	defer log.Infof(ctx, "%p: stopped delivery worker", w)
 	for returned := false; !returned; {
@@ -173,6 +176,10 @@ func (w *Worker) run(ctx context.Context) {
 // process is the main delivery worker processing routine.
 func (w *Worker) process(ctx context.Context) {
 	if w.Client == nil || w.Queue == nil {
+		// we perform this check here just
+		// to ensure the compiler knows these
+		// variables aren't nil in the loop,
+		// even if already checked by caller.
 		panic("not yet initialized")
 	}
 
