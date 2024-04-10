@@ -271,6 +271,9 @@ func (q *Queue[T]) index(value T) *indexed_item {
 
 		// Extract fields comprising index key.
 		parts := extract_fields(value, idx.fields)
+		if parts == nil {
+			continue
+		}
 
 		// Calculate index key.
 		key := idx.key(buf, parts)

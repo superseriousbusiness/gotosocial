@@ -16,15 +16,14 @@ import (
 // including memory offset and hash function.
 type struct_field struct {
 
-	// type2 is the runtime type pointer
-	// underlying the struct field type.
-	// used for repacking our own erfaces.
+	// type2 contains the reflect2
+	// type information for this field,
+	// used in repacking it as eface.
 	type2 reflect2.Type
 
-	// offset is the offset in memory
-	// of this struct field from the
-	// outer-most value ptr location.
-	offset uintptr
+	// offsets defines whereabouts in
+	// memory this field is located.
+	offsets []next_offset
 
 	// struct field type mangling
 	// (i.e. fast serializing) fn.
@@ -33,7 +32,21 @@ type struct_field struct {
 	// mangled zero value string,
 	// if set this indicates zero
 	// values of field not allowed
-	zero string
+	mzero string
+
+	// zero value data ptr for field,
+	// used when nil encountered during
+	// next_offset following loop.
+	pzero unsafe.Pointer
+}
+
+// next_offset defines a next offset location
+// in a struct_field, first by the number of
+// derefences required, then by offset from
+// that final memory location.
+type next_offset struct {
+	derefs uint
+	offset uintptr
 }
 
 // find_field will search for a struct field with given set of names,
@@ -64,15 +77,23 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 	)
 
 	for len(names) > 0 {
-		var ok bool
-
 		// Pop next name.
 		name := pop_name()
 
+		var off next_offset
+
+		// Dereference any ptrs to struct.
+		for t.Kind() == reflect.Pointer {
+			t = t.Elem()
+			off.derefs++
+		}
+
 		// Check for valid struct type.
 		if t.Kind() != reflect.Struct {
-			panicf("field %s is not struct: %s", t, name)
+			panicf("field %s is not struct (or ptr-to): %s", t, name)
 		}
+
+		var ok bool
 
 		// Look for next field by name.
 		field, ok = t.FieldByName(name)
@@ -80,8 +101,9 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 			panicf("unknown field: %s", name)
 		}
 
-		// Increment total field offset.
-		sfield.offset += field.Offset
+		// Set next offset value.
+		off.offset = field.Offset
+		sfield.offsets = append(sfield.offsets, off)
 
 		// Set the next type.
 		t = field.Type
@@ -93,6 +115,11 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 	// Find mangler for field type.
 	sfield.mangle = mangler.Get(t)
 
+	// Set possible zero value data.
+	sfield.pzero = sfield.type2.UnsafeNew()
+	i := sfield.type2.UnsafeIndirect(sfield.pzero)
+	sfield.mzero = string(sfield.mangle(nil, i))
+
 	return
 }
 
@@ -102,21 +129,41 @@ func extract_fields[T any](value T, fields []struct_field) []any {
 	// Get ptr to raw value data.
 	ptr := unsafe.Pointer(&value)
 
-	// If this is a pointer type deref the value ptr.
-	if reflect.TypeOf(value).Kind() == reflect.Pointer {
-		ptr = *(*unsafe.Pointer)(ptr)
-	}
-
 	// Prepare slice of field ifaces.
 	ifaces := make([]any, len(fields))
+	for i, field := range fields {
 
-	for i := 0; i < len(fields); i++ {
-		// Manually access field at memory offset and pack eface.
-		ptr := unsafe.Pointer(uintptr(ptr) + fields[i].offset)
-		ifaces[i] = fields[i].type2.UnsafeIndirect(ptr)
+		// loop scope.
+		fptr := ptr
+
+		for _, offset := range field.offsets {
+			// Dereference any ptrs to offset.
+			fptr = deref(fptr, offset.derefs)
+			if fptr == nil {
+				return nil
+			}
+
+			// Jump forward by offset to next ptr.
+			fptr = unsafe.Pointer(uintptr(fptr) +
+				offset.offset)
+		}
+
+		// Repack value data ptr as empty interface.
+		ifaces[i] = field.type2.UnsafeIndirect(fptr)
 	}
 
 	return ifaces
+}
+
+// deref will dereference ptr 'n' times (or until nil).
+func deref(p unsafe.Pointer, n uint) unsafe.Pointer {
+	for ; n > 0; n-- {
+		if p == nil {
+			return nil
+		}
+		p = *(*unsafe.Pointer)(p)
+	}
+	return p
 }
 
 // panicf provides a panic with string formatting.

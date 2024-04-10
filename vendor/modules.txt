@@ -59,7 +59,7 @@ codeberg.org/gruf/go-sched
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
-# codeberg.org/gruf/go-structr v0.6.0
+# codeberg.org/gruf/go-structr v0.6.1
 ## explicit; go 1.21
 codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/exif-terminator v0.7.0
