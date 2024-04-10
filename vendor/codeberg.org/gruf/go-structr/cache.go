@@ -527,6 +527,9 @@ func (c *Cache[T]) store_value(index *Index, key Key, value T) {
 		index.append(key, item)
 	}
 
+	// Get ptr to value data.
+	ptr := unsafe.Pointer(&value)
+
 	// Acquire key buf.
 	buf := new_buffer()
 
@@ -541,7 +544,7 @@ func (c *Cache[T]) store_value(index *Index, key Key, value T) {
 		}
 
 		// Extract fields comprising index key.
-		parts := extract_fields(value, idx.fields)
+		parts := extract_fields(ptr, idx.fields)
 		if parts == nil {
 			continue
 		}

@@ -32,12 +32,7 @@ type struct_field struct {
 	// mangled zero value string,
 	// if set this indicates zero
 	// values of field not allowed
-	mzero string
-
-	// zero value data ptr for field,
-	// used when nil encountered during
-	// next_offset following loop.
-	pzero unsafe.Pointer
+	zero string
 }
 
 // next_offset defines a next offset location
@@ -111,24 +106,20 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 
 	// Get field type as reflect2.
 	sfield.type2 = reflect2.Type2(t)
+	i := sfield.type2.New()
 
 	// Find mangler for field type.
 	sfield.mangle = mangler.Get(t)
 
-	// Set possible zero value data.
-	sfield.pzero = sfield.type2.UnsafeNew()
-	i := sfield.type2.UnsafeIndirect(sfield.pzero)
-	sfield.mzero = string(sfield.mangle(nil, i))
+	// Set possible mangled zero value.
+	sfield.zero = string(sfield.mangle(nil, i))
 
 	return
 }
 
 // extract_fields extracts given structfields from the provided value type,
 // this is done using predetermined struct field memory offset locations.
-func extract_fields[T any](value T, fields []struct_field) []any {
-	// Get ptr to raw value data.
-	ptr := unsafe.Pointer(&value)
-
+func extract_fields(ptr unsafe.Pointer, fields []struct_field) []any {
 	// Prepare slice of field ifaces.
 	ifaces := make([]any, len(fields))
 	for i, field := range fields {

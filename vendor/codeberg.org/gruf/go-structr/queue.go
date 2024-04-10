@@ -262,6 +262,9 @@ func (q *Queue[T]) index(value T) *indexed_item {
 	// Set item value.
 	item.data = value
 
+	// Get ptr to value data.
+	ptr := unsafe.Pointer(&value)
+
 	// Acquire key buf.
 	buf := new_buffer()
 
@@ -270,7 +273,7 @@ func (q *Queue[T]) index(value T) *indexed_item {
 		idx := &(q.indices[i])
 
 		// Extract fields comprising index key.
-		parts := extract_fields(value, idx.fields)
+		parts := extract_fields(ptr, idx.fields)
 		if parts == nil {
 			continue
 		}
