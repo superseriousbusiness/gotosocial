@@ -67,7 +67,7 @@ CPU usage is only intensive when handling media (encoding blurhashes, mostly) an
 
 ### Single-board Computers
 
-These light requirements mean GtS runs pretty well on something like a Raspberry Pi (a €40 single-board computer). It's been tested on a Raspberry Pi Zero W as well (a €9 computer smaller than a credit card), but it's not quite able to run on that. Some people have reported success running GoToSocial on a Raspberry Pi Zero W 2 (which costs €14!), but we haven't tested that ourselves yet. If running on a single board computer, ensure GoToSocial is using a USB drive (preferably an SSD) to store its database files and media, not SD card storage.
+GoToSocial's light system requirements means that it runs pretty well on decently-specced single-board computers. If running on a single-board computer, you should ensure that GoToSocial is using a USB drive (preferably an SSD) to store its database files and media, not SD card storage, since the latter tends to be too slow to run a database on.
 
 ### VPS
 
