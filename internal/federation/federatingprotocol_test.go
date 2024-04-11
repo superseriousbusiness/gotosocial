@@ -21,13 +21,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -101,8 +101,8 @@ func (suite *FederatingProtocolTestSuite) authenticatePostInbox(
 
 	recorder := httptest.NewRecorder()
 	newContext, authed, err := suite.federator.AuthenticatePostInbox(ctx, recorder, request)
-	if withCode := new(gtserror.WithCode); (errors.As(err, withCode) &&
-		(*withCode).Code() >= 500) || (err != nil && (*withCode) == nil) {
+	if withCode := errorsv2.AsV2[gtserror.WithCode](err); // nocollapse
+	(withCode != nil && withCode.Code() >= 500) || (err != nil && withCode == nil) {
 		// NOTE: the behaviour here is a little strange as we have
 		// the competing code styles of the go-fed interface expecting
 		// that any err is a no-go, but authed bool is intended to be

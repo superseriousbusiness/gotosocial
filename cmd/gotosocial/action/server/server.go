@@ -124,6 +124,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
 
+	// Initialize delivery worker with http client.
+	state.Workers.Delivery.Init(client)
+
 	// Initialize workers.
 	state.Workers.Start()
 	defer state.Workers.Stop()

@@ -25,6 +25,7 @@ import (
 )
 
 type Caches struct {
+
 	// GTS provides access to the collection of
 	// gtsmodel object caches. (used by the database).
 	GTS GTSCaches

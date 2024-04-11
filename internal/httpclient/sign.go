@@ -32,9 +32,7 @@ type SignFunc func(r *http.Request) error
 // (RoundTripper implementer) to check request
 // context for a signing function and using for
 // all subsequent trips through RoundTrip().
-type signingtransport struct {
-	http.Transport // underlying transport
-}
+type signingtransport struct{ http.Transport }
 
 func (t *signingtransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Ensure updated host always set.
