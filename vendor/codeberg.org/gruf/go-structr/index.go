@@ -19,17 +19,15 @@ type IndexConfig struct {
 	// be specified using periods. An example:
 	// "Username,Favorites.Color"
 	//
-	// Field types supported include:
-	// - ~int
-	// - ~int8
-	// - ~int16
-	// - ~int32
-	// - ~int64
-	// - ~float32
-	// - ~float64
-	// - ~string
-	// - slices of above
-	// - ptrs of above
+	// Note that nested fields where the nested
+	// struct field is a ptr are supported, but
+	// nil ptr values in nesting will result in
+	// that particular value NOT being indexed.
+	// e.g. with "Favorites.Color" if *Favorites
+	// is nil then it will not be indexed.
+	//
+	// Field types supported include any of those
+	// supported by the `go-mangler` library.
 	Fields string
 
 	// Multiple indicates whether to accept multiple
@@ -124,7 +122,6 @@ func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
 	case t.Kind() == reflect.Struct:
 	case t.Kind() == reflect.Pointer &&
 		t.Elem().Kind() == reflect.Struct:
-		t = t.Elem()
 	default:
 		panic("index only support struct{} and *struct{}")
 	}
@@ -146,10 +143,10 @@ func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
 
 	// Preallocate expected struct field slice.
 	i.fields = make([]struct_field, len(fields))
+	for x, name := range fields {
 
-	for x, fieldName := range fields {
 		// Split name to account for nesting.
-		names := strings.Split(fieldName, ".")
+		names := strings.Split(name, ".")
 
 		// Look for usable struct field.
 		i.fields[x] = find_field(t, names)
@@ -214,23 +211,23 @@ func (i *Index) get(key Key, hook func(*indexed_item)) {
 func (i *Index) key(buf *byteutil.Buffer, parts []any) Key {
 	if len(parts) != len(i.fields) {
 		panicf("incorrect number key parts: want=%d received=%d",
-			len(parts),
 			len(i.fields),
+			len(parts),
 		)
 	}
 	buf.B = buf.B[:0]
 	if !allow_zero(i.flags) {
-		for x := range parts {
+		for x, field := range i.fields {
 			before := len(buf.B)
-			buf.B = i.fields[x].mangle(buf.B, parts[x])
-			if string(buf.B[before:]) == i.fields[x].zero {
+			buf.B = field.mangle(buf.B, parts[x])
+			if string(buf.B[before:]) == field.zero {
 				return Key{}
 			}
 			buf.B = append(buf.B, '.')
 		}
 	} else {
-		for x := range parts {
-			buf.B = i.fields[x].mangle(buf.B, parts[x])
+		for x, field := range i.fields {
+			buf.B = field.mangle(buf.B, parts[x])
 			buf.B = append(buf.B, '.')
 		}
 	}

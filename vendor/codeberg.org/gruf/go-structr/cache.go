@@ -255,18 +255,21 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 	item := index.get_one(key)
 
 	if ok = (item != nil); ok {
-		if value, is := item.data.(T); is {
+		var is bool
+
+		if val, is = item.data.(T); is {
 			// Set value COPY.
-			val = c.copy(value)
+			val = c.copy(val)
 
 			// Push to front of LRU list, USING
 			// THE ITEM'S LRU ENTRY, NOT THE
 			// INDEX KEY ENTRY. VERY IMPORTANT!!
 			c.lru.move_front(&item.elem)
 
-		} else if error, is := item.data.(error); is {
-			// Return error.
-			err = error
+		} else {
+
+			// Attempt to return error.
+			err, _ = item.data.(error)
 		}
 	}
 
@@ -423,10 +426,10 @@ func (c *Cache[T]) Invalidate(index *Index, keys ...Key) {
 	// Preallocate expected ret slice.
 	values := make([]T, 0, len(keys))
 
-	for i := range keys {
+	for _, key := range keys {
 		// Delete all items under key from index, collecting
 		// value items and dropping them from all their indices.
-		index.delete(keys[i], func(item *indexed_item) {
+		index.delete(key, func(item *indexed_item) {
 
 			if value, ok := item.data.(T); ok {
 				// No need to copy, as item
@@ -524,6 +527,9 @@ func (c *Cache[T]) store_value(index *Index, key Key, value T) {
 		index.append(key, item)
 	}
 
+	// Get ptr to value data.
+	ptr := unsafe.Pointer(&value)
+
 	// Acquire key buf.
 	buf := new_buffer()
 
@@ -538,7 +544,10 @@ func (c *Cache[T]) store_value(index *Index, key Key, value T) {
 		}
 
 		// Extract fields comprising index key.
-		parts := extract_fields(value, idx.fields)
+		parts := extract_fields(ptr, idx.fields)
+		if parts == nil {
+			continue
+		}
 
 		// Calculate index key.
 		key := idx.key(buf, parts)
