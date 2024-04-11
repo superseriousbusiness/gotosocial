@@ -17,14 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const ExpireRemote = require("./expireremote");
+import React from "react";
+import Cleanup from "./cleanup";
 
-module.exports = function Keys() {
+export default function Media() {
 	return (
 		<>
-			<h1>Key Actions</h1>
-			<ExpireRemote />
+			<h1>Media Actions</h1>
+			<Cleanup />
 		</>
 	);
 };

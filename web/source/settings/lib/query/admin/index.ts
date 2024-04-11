@@ -20,6 +20,7 @@
 import { replaceCacheOnMutation, removeFromCacheOnMutation } from "../query-modifiers";
 import { gtsApi } from "../gts-api";
 import { listToKeyedObject } from "../transforms";
+import { AdminAccount, HandleSignupParams, SearchAccountParams } from "../../types/account";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -54,14 +55,43 @@ const extended = gtsApi.injectEndpoints({
 			})
 		}),
 
-		getAccount: build.query({
+		getAccount: build.query<AdminAccount, string>({
 			query: (id) => ({
-				url: `/api/v1/accounts/${id}`
+				url: `/api/v1/admin/accounts/${id}`
 			}),
-			providesTags: (_, __, id) => [{ type: "Account", id }]
+			providesTags: (_result, _error, id) => [
+				{ type: 'Account', id }
+			],
 		}),
 
-		actionAccount: build.mutation({
+		searchAccounts: build.query<AdminAccount[], SearchAccountParams>({
+			query: (form) => {
+				const params = new(URLSearchParams)
+				Object.entries(form).forEach(([k, v]) => {
+					if (v !== undefined) {
+						params.append(k, v)
+					}
+				})
+
+				let query = "";
+				if (params.size !== 0) {
+					query = `?${params.toString()}`;
+				}
+
+				return {
+					url: `/api/v2/admin/accounts${query}`
+				}
+			},
+			providesTags: (res) =>
+				res
+					? [
+						...res.map(({ id }) => ({ type: 'Account' as const, id })),
+						{ type: 'Account', id: 'LIST' },
+					  ]
+					: [{ type: 'Account', id: 'LIST' }],
+		}),
+
+		actionAccount: build.mutation<string, { id: string, action: string, reason: string }>({
 			query: ({ id, action, reason }) => ({
 				method: "POST",
 				url: `/api/v1/admin/accounts/${id}/action`,
@@ -71,16 +101,24 @@ const extended = gtsApi.injectEndpoints({
 					text: reason
 				}
 			}),
-			invalidatesTags: (_, __, { id }) => [{ type: "Account", id }]
+			invalidatesTags: (_result, _error, { id }) => [
+				{ type: 'Account', id },
+			],
 		}),
 
-		searchAccount: build.mutation({
-			query: (username) => ({
-				url: `/api/v2/search?q=${encodeURIComponent(username)}&resolve=true`
-			}),
-			transformResponse: (res) => {
-				return res.accounts ?? [];
-			}
+		handleSignup: build.mutation<AdminAccount, HandleSignupParams>({
+			query: ({id, approve_or_reject, ...formData}) => {
+				console.log(formData);
+				return {
+					method: "POST",
+					url: `/api/v1/admin/accounts/${id}/${approve_or_reject}`,
+					asForm: true,
+					body: approve_or_reject === "reject" ?? formData,
+				}
+			},
+			invalidatesTags: (_result, _error, { id }) => [
+				{ type: 'Account', id },
+			],
 		}),
 
 		instanceRules: build.query({
@@ -140,7 +178,9 @@ export const {
 	useInstanceKeysExpireMutation,
 	useGetAccountQuery,
 	useActionAccountMutation,
-	useSearchAccountMutation,
+	useSearchAccountsQuery,
+	useLazySearchAccountsQuery,
+	useHandleSignupMutation,
 	useInstanceRulesQuery,
 	useAddInstanceRuleMutation,
 	useUpdateInstanceRuleMutation,

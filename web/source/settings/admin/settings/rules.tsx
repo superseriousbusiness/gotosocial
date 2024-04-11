@@ -17,25 +17,26 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Switch, Route, Link, Redirect, useRoute } = require("wouter");
+import React from "react";
+import { Switch, Route, Link, Redirect, useRoute } from "wouter";
 
-const query = require("../../lib/query");
-const FormWithData = require("../../lib/form/form-with-data").default;
-const { useBaseUrl } = require("../../lib/navigation/util");
+import { useInstanceRulesQuery, useAddInstanceRuleMutation, useUpdateInstanceRuleMutation, useDeleteInstanceRuleMutation } from "../../lib/query";
+import FormWithData from "../../lib/form/form-with-data";
+import { useBaseUrl } from "../../lib/navigation/util";
 
-const { useValue, useTextInput } = require("../../lib/form");
-const useFormSubmit = require("../../lib/form/submit").default;
+import { useValue, useTextInput } from "../../lib/form";
+import useFormSubmit from "../../lib/form/submit";
 
-const { TextArea } = require("../../components/form/inputs");
-const MutationButton = require("../../components/form/mutation-button");
+import { TextArea } from "../../components/form/inputs";
+import MutationButton from "../../components/form/mutation-button";
+import { Error } from "../../components/error";
 
-module.exports = function InstanceRulesData({ baseUrl }) {
+export default function InstanceRulesData({ baseUrl }) {
 	return (
 		<FormWithData
-			dataQuery={query.useInstanceRulesQuery}
+			dataQuery={useInstanceRulesQuery}
 			DataForm={InstanceRules}
-			baseUrl={baseUrl}
+			{...{baseUrl}}
 		/>
 	);
 };
@@ -64,7 +65,8 @@ function InstanceRules({ baseUrl, data: rules }) {
 function InstanceRuleList({ rules }) {
 	const newRule = useTextInput("text", {});
 
-	const [submitForm, result] = useFormSubmit({ newRule }, query.useAddInstanceRuleMutation(), {
+	const [submitForm, result] = useFormSubmit({ newRule }, useAddInstanceRuleMutation(), {
+		changedOnly: true,
 		onFinish: () => newRule.reset()
 	});
 
@@ -72,7 +74,7 @@ function InstanceRuleList({ rules }) {
 		<>
 			<form onSubmit={submitForm} className="new-rule">
 				<ol className="instance-rules">
-					{Object.values(rules).map((rule) => (
+					{Object.values(rules).map((rule: any) => (
 						<InstanceRule key={rule.id} rule={rule} />
 					))}
 				</ol>
@@ -80,7 +82,11 @@ function InstanceRuleList({ rules }) {
 					field={newRule}
 					label="New instance rule"
 				/>
-				<MutationButton label="Add rule" result={result} />
+				<MutationButton
+					disabled={newRule.value === undefined || newRule.value.length === 0}
+					label="Add rule"
+					result={result}
+				/>
 			</form>
 		</>
 	);
@@ -124,9 +130,9 @@ function InstanceRuleForm({ rule }) {
 		rule: useTextInput("text", { defaultValue: rule.text })
 	};
 
-	const [submitForm, result] = useFormSubmit(form, query.useUpdateInstanceRuleMutation());
+	const [submitForm, result] = useFormSubmit(form, useUpdateInstanceRuleMutation());
 
-	const [deleteRule, deleteResult] = query.useDeleteInstanceRuleMutation({ fixedCacheKey: rule.id });
+	const [deleteRule, deleteResult] = useDeleteInstanceRuleMutation({ fixedCacheKey: rule.id });
 
 	if (result.isSuccess || deleteResult.isSuccess) {
 		return (
@@ -150,6 +156,7 @@ function InstanceRuleForm({ rule }) {
 					/>
 
 					<MutationButton
+						disabled={false}
 						type="button"
 						onClick={() => deleteRule(rule.id)}
 						label="Delete"

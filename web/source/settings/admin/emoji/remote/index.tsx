@@ -17,15 +17,15 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React, { useMemo } from "react";
 
-const ParseFromToot = require("./parse-from-toot");
+import ParseFromToot from "./parse-from-toot";
 
-const Loading = require("../../../components/loading");
-const { Error } = require("../../../components/error");
-const { useListEmojiQuery } = require("../../../lib/query/admin/custom-emoji");
+import Loading from "../../../components/loading";
+import { Error } from "../../../components/error";
+import { useListEmojiQuery } from "../../../lib/query/admin/custom-emoji";
 
-module.exports = function RemoteEmoji() {
+export default function RemoteEmoji() {
 	// local emoji are queried for shortcode collision detection
 	const {
 		data: emoji = [],
@@ -33,7 +33,7 @@ module.exports = function RemoteEmoji() {
 		error
 	} = useListEmojiQuery({ filter: "domain:local" });
 
-	const emojiCodes = React.useMemo(() => {
+	const emojiCodes = useMemo(() => {
 		return new Set(emoji.map((e) => e.shortcode));
 	}, [emoji]);
 
@@ -46,7 +46,7 @@ module.exports = function RemoteEmoji() {
 			{isLoading
 				? <Loading />
 				: <>
-					<ParseFromToot emoji={emoji} emojiCodes={emojiCodes} />
+					<ParseFromToot emojiCodes={emojiCodes} />
 				</>
 			}
 		</>

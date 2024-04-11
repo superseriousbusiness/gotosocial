@@ -17,26 +17,23 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { useRoute, Redirect } = require("wouter");
+import React, { useState } from "react";
+import { useRoute, Redirect } from "wouter";
 
-const FormWithData = require("../../lib/form/form-with-data").default;
-const BackButton = require("../../components/back-button");
+import FormWithData from "../../lib/form/form-with-data";
+import BackButton from "../../components/back-button";
 
-const { useValue, useTextInput } = require("../../lib/form");
-const useFormSubmit = require("../../lib/form/submit").default;
+import { useValue, useTextInput } from "../../lib/form";
+import useFormSubmit from "../../lib/form/submit";
 
-const { TextArea } = require("../../components/form/inputs");
+import { TextArea } from "../../components/form/inputs";
 
-const MutationButton = require("../../components/form/mutation-button");
-const Username = require("./username");
-const { useBaseUrl } = require("../../lib/navigation/util");
-const {
-	useGetReportQuery,
-	useResolveReportMutation,
-} = require("../../lib/query/admin/reports");
+import MutationButton from "../../components/form/mutation-button";
+import Username from "./username";
+import { useBaseUrl } from "../../lib/navigation/util";
+import { useGetReportQuery, useResolveReportMutation } from "../../lib/query/admin/reports";
 
-module.exports = function ReportDetail({ }) {
+export default function ReportDetail({ }) {
 	const baseUrl = useBaseUrl();
 	let [_match, params] = useRoute(`${baseUrl}/:reportId`);
 	if (params?.reportId == undefined) {
@@ -131,7 +128,11 @@ function ReportActionForm({ report }) {
 				field={form.comment}
 				label="Comment"
 			/>
-			<MutationButton label="Resolve" result={result} />
+			<MutationButton
+				disabled={false}
+				label="Resolve"
+				result={result}
+			/>
 		</form>
 	);
 }
@@ -170,10 +171,10 @@ function ReportedToot({ toot }) {
 				}
 			</section>
 			<aside className="status-info">
-				<dl class="status-stats">
-					<div class="stats-grouping">
-						<div class="stats-item published-at text-cutoff">
-							<dt class="sr-only">Published</dt>
+				<dl className="status-stats">
+					<div className="stats-grouping">
+						<div className="stats-item published-at text-cutoff">
+							<dt className="sr-only">Published</dt>
 							<dd>
 								<time dateTime={toot.created_at}>{new Date(toot.created_at).toLocaleString()}</time>
 							</dd>
@@ -186,7 +187,7 @@ function ReportedToot({ toot }) {
 }
 
 function TootCW({ note, content }) {
-	const [visible, setVisible] = React.useState(false);
+	const [visible, setVisible] = useState(false);
 
 	function toggleVisible() {
 		setVisible(!visible);
@@ -217,12 +218,12 @@ function TootMedia({ media, sensitive }) {
 						<input id={`sensitiveMedia-${m.id}`} type="checkbox" className="sensitive-checkbox hidden" />
 						<div className="sensitive">
 							<div className="open">
-								<label htmlFor={`sensitiveMedia-${m.id}`} className="button" role="button" tabIndex="0">
+								<label htmlFor={`sensitiveMedia-${m.id}`} className="button" role="button" tabIndex={0}>
 									<i className="fa fa-eye-slash" title="Hide sensitive media"></i>
 								</label>
 							</div>
 							<div className="closed" title={m.description}>
-								<label htmlFor={`sensitiveMedia-${m.id}`} className="button" role="button" tabIndex="0">
+								<label htmlFor={`sensitiveMedia-${m.id}`} className="button" role="button" tabIndex={0}>
 									Show sensitive media
 								</label>
 							</div>
@@ -241,8 +242,7 @@ function TootMedia({ media, sensitive }) {
 							alt={m.description}
 							src={m.url}
 							// thumb={m.preview_url}
-							size={m.meta?.original}
-							type={m.type}
+							sizes={m.meta?.original}
 						/>
 					</a>
 				</div>

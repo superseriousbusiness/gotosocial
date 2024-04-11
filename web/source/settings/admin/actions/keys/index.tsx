@@ -17,19 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Switch, Route } = require("wouter");
+import React from "react";
+import ExpireRemote from "./expireremote";
 
-const EmojiOverview = require("./overview");
-const EmojiDetail = require("./detail");
-
-module.exports = function CustomEmoji({ baseUrl }) {
+export default function Keys() {
 	return (
-		<Switch>
-			<Route path={`${baseUrl}/:emojiId`}>
-				<EmojiDetail />
-			</Route>
-			<EmojiOverview />
-		</Switch>
+		<>
+			<h1>Key Actions</h1>
+			<ExpireRemote />
+		</>
 	);
 };
