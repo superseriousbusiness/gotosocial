@@ -19,6 +19,7 @@ package db
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -55,6 +56,25 @@ type Account interface {
 
 	// GetAccountByFollowersURI returns one account with the given followers_uri, or an error if something goes wrong.
 	GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
+
+	// GetAccounts returns accounts
+	// with the given parameters.
+	GetAccounts(
+		ctx context.Context,
+		origin string,
+		status string,
+		mods bool,
+		invitedBy string,
+		username string,
+		displayName string,
+		domain string,
+		email string,
+		ip net.IP,
+		maxID string,
+		sinceID string,
+		minID string,
+		limit int,
+	) ([]*gtsmodel.Account, error)
 
 	// PopulateAccount ensures that all sub-models of an account are populated (e.g. avatar, header etc).
 	PopulateAccount(ctx context.Context, account *gtsmodel.Account) error

@@ -20,6 +20,8 @@ package bundb
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -220,6 +222,218 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	}
 
 	return a.GetAccountByUsernameDomain(ctx, username, domain)
+}
+
+func (a *accountDB) GetAccounts(
+	ctx context.Context,
+	origin string,
+	status string,
+	mods bool,
+	invitedBy string,
+	username string,
+	displayName string,
+	domain string,
+	email string,
+	ip net.IP,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+) ([]*gtsmodel.Account, error) {
+	// Ensure reasonable
+	if limit < 0 {
+		limit = 0
+	}
+
+	// Make educated guess for slice size
+	var (
+		accountIDs     = make([]string, 0, limit)
+		accountIDIn    []string
+		useAccountIDIn bool
+		frontToBack    = true
+	)
+
+	// We need users for this query.
+	users, err := a.state.DB.GetAllUsers(gtscontext.SetBarebones(ctx))
+	if err != nil {
+		return nil, fmt.Errorf("error getting users: %w", err)
+	}
+
+	q := a.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		// Select only IDs from table
+		Column("account.id")
+
+	// Return only accounts OLDER
+	// than account with maxID.
+	if maxID != "" {
+		maxIDAcct, err := a.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			maxID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error getting maxID account %s: %w", maxID, err)
+		}
+
+		q = q.Where("? < ?", bun.Ident("account.created_at"), maxIDAcct.CreatedAt)
+	}
+
+	if sinceID != "" {
+		// Return only accounts NEWER
+		// than account with sinceID.
+		sinceIDAcct, err := a.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			sinceID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error getting sinceID account %s: %w", sinceID, err)
+		}
+
+		q = q.Where("? > ?", bun.Ident("account.created_at"), sinceIDAcct.CreatedAt)
+	}
+
+	if minID != "" {
+		// Return only accounts NEWER
+		// than account with minID.
+		minIDAcct, err := a.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			sinceID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error getting minID account %s: %w", minID, err)
+		}
+
+		q = q.Where("? > ?", bun.Ident("account.created_at"), minIDAcct.CreatedAt)
+
+		// Paging up.
+		frontToBack = false
+	}
+
+	if origin == "local" {
+		// Get only local accounts.
+		q = q.Where("? IS NULL", bun.Ident("account.domain"))
+	} else if origin == "remote" {
+		// Get only remote accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.domain"))
+	}
+
+	switch status {
+
+	case "active":
+		// Get only enabled accounts.
+		for _, user := range users {
+			if !*user.Disabled {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+
+	case "pending":
+		// Get only unapproved accounts.
+		for _, user := range users {
+			if !*user.Approved {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+
+	case "disabled":
+		// Get only disabled accounts.
+		for _, user := range users {
+			if *user.Disabled {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+
+	case "silenced":
+		// Get only silenced accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.silenced_at"))
+
+	case "suspended":
+		// Get only suspended accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.suspended_at"))
+	}
+
+	if mods {
+		// Get only mod accounts.
+		for _, user := range users {
+			if *user.Moderator || *user.Admin {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+	}
+
+	// TODO: invitedBy
+
+	if username != "" {
+		q = q.Where("? = ?", bun.Ident("account.username"), username)
+	}
+
+	if displayName != "" {
+		q = q.Where("? = ?", bun.Ident("account.display_name"), displayName)
+	}
+
+	if domain != "" {
+		q = q.Where("? = ?", bun.Ident("account.domain"), domain)
+	}
+
+	if email != "" {
+		for _, user := range users {
+			if user.Email == email || user.UnconfirmedEmail == email {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+	}
+
+	if ip != nil {
+		for _, user := range users {
+			if user.SignUpIP.String() == ip.String() {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+	}
+
+	if useAccountIDIn {
+		q = q.Where("? IN (?)", bun.Ident("account.id"), bun.In(accountIDIn))
+	}
+
+	if limit > 0 {
+		// limit amount of statuses returned
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("account.created_at DESC")
+	} else {
+		// Page up.
+		q = q.Order("account.created_at ASC")
+	}
+
+	if err := q.Scan(ctx, &accountIDs); err != nil {
+		return nil, err
+	}
+
+	if len(accountIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want accounts
+	// to be sorted by createdAt desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(accountIDs)-1; l < r; l, r = l+1, r-1 {
+			accountIDs[l], accountIDs[r] = accountIDs[r], accountIDs[l]
+		}
+	}
+
+	// Return account IDs loaded from cache + db.
+	return a.state.DB.GetAccountsByIDs(ctx, accountIDs)
 }
 
 func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, error) {

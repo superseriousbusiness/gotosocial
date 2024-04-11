@@ -23,6 +23,7 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"net"
 	"reflect"
 	"strings"
 	"testing"
@@ -489,6 +490,170 @@ func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {
 	testAccount.MovedToURI = "https://unknown-instance.example.org/users/someone_we_dont_know"
 	err := suite.db.PopulateAccount(context.Background(), testAccount)
 	suite.NoError(err)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsAll() {
+	var (
+		ctx                = context.Background()
+		origin             = ""
+		status             = ""
+		mods               = false
+		invitedBy          = ""
+		username           = ""
+		displayName        = ""
+		domain             = ""
+		email              = ""
+		ip          net.IP = nil
+		maxID              = ""
+		sinceID            = ""
+		minID              = ""
+		limit              = 100
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 9)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
+	var (
+		ctx                = context.Background()
+		origin             = ""
+		status             = ""
+		mods               = true
+		invitedBy          = ""
+		username           = ""
+		displayName        = ""
+		domain             = ""
+		email              = ""
+		ip          net.IP = nil
+		maxID              = ""
+		sinceID            = ""
+		minID              = ""
+		limit              = 100
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
+	var (
+		ctx                = context.Background()
+		origin             = "local"
+		status             = ""
+		mods               = false
+		invitedBy          = ""
+		username           = ""
+		displayName        = ""
+		domain             = ""
+		email              = "tortle.dude@example.org"
+		ip          net.IP = nil
+		maxID              = ""
+		sinceID            = ""
+		minID              = ""
+		limit              = 100
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
+}
+
+func (suite *AccountTestSuite) TestGetPendingAccounts() {
+	var (
+		ctx                = context.Background()
+		origin             = ""
+		status             = "pending"
+		mods               = false
+		invitedBy          = ""
+		username           = ""
+		displayName        = ""
+		domain             = ""
+		email              = ""
+		ip          net.IP = nil
+		maxID              = ""
+		sinceID            = ""
+		minID              = ""
+		limit              = 100
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
 }
 
 func TestAccountTestSuite(t *testing.T) {

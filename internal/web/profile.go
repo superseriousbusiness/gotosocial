@@ -49,7 +49,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	// Parse account targetUsername from the URL.
-	targetUsername, errWithCode := apiutil.ParseWebUsername(c.Param(apiutil.WebUsernameKey))
+	targetUsername, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return

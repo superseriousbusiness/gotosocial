@@ -229,3 +229,63 @@ type DebugAPUrlResponse struct {
 	// may be an error, may be both!
 	ResponseBody string `json:"response_body"`
 }
+
+// AdminGetAccountsRequest models a request
+// to get an admin view of one or more
+// accounts using given parameters.
+//
+// swagger:ignore
+type AdminGetAccountsRequest struct {
+	// Filter for `local` or `remote` accounts.
+	Origin string
+	// Filter for `active`, `pending`, `disabled`,
+	// `silenced`, or `suspended` accounts.
+	Status string
+	// Filter for accounts with staff perms
+	// (users that can manage reports).
+	Permissions string
+	// Filter for users with these roles.
+	RoleIDs []string
+	// Lookup users invited by the account with this ID.
+	InvitedBy string
+	// Search for the given username.
+	Username string
+	// Search for the given display name.
+	DisplayName string
+	// Filter by the given domain.
+	ByDomain string
+	// Lookup a user with this email.
+	Email string
+	// Lookup users with this IP address.
+	IP string
+	// All results returned will be
+	// older than the item with this ID.
+	MaxID string
+	// All results returned will be
+	// newer than the item with this ID.
+	SinceID string
+	// Returns results immediately newer
+	// than the item with this ID.
+	MinID string
+	// Maximum number of results to return.
+	Limit int
+	// API version to use for this request (1 or 2).
+	// Set internally, not by callers.
+	APIVersion int
+}
+
+// AdminAccountRejectRequest models a
+// request to deny a new account sign-up.
+//
+// swagger:ignore
+type AdminAccountRejectRequest struct {
+	// Comment to leave on why the account was denied.
+	// The comment will be visible to admins only.
+	PrivateComment string `form:"private_comment" json:"private_comment"`
+	// Message to include in email to applicant.
+	// Will be included only if send_email is true.
+	Message string `form:"message" json:"message"`
+	// Send an email to the applicant informing
+	// them that their sign-up has been rejected.
+	SendEmail bool `form:"send_email" json:"send_email"`
+}
