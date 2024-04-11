@@ -569,11 +569,6 @@ func stubbifyUser(user *gtsmodel.User) ([]string, error) {
 
 	user.EncryptedPassword = string(dummyPassword)
 	user.SignUpIP = net.IPv4zero
-	user.CurrentSignInAt = never
-	user.CurrentSignInIP = net.IPv4zero
-	user.LastSignInAt = never
-	user.LastSignInIP = net.IPv4zero
-	user.SignInCount = 1
 	user.Locale = ""
 	user.CreatedByApplicationID = ""
 	user.LastEmailedAt = never
@@ -585,11 +580,6 @@ func stubbifyUser(user *gtsmodel.User) ([]string, error) {
 	return []string{
 		"encrypted_password",
 		"sign_up_ip",
-		"current_sign_in_at",
-		"current_sign_in_ip",
-		"last_sign_in_at",
-		"last_sign_in_ip",
-		"sign_in_count",
 		"locale",
 		"created_by_application_id",
 		"last_emailed_at",

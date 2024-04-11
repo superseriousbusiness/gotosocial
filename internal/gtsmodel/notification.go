@@ -46,4 +46,5 @@ const (
 	NotificationFave          NotificationType = "favourite"      // NotificationFave -- someone faved/liked one of your statuses
 	NotificationPoll          NotificationType = "poll"           // NotificationPoll -- a poll you voted in or created has ended
 	NotificationStatus        NotificationType = "status"         // NotificationStatus -- someone you enabled notifications for has posted a status.
+	NotificationSignup        NotificationType = "admin.sign_up"  // NotificationSignup -- someone has submitted a new account sign-up to the instance.
 )

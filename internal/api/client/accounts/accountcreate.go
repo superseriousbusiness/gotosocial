@@ -25,7 +25,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
@@ -67,6 +66,11 @@ import (
 //			description: not found
 //		'406':
 //			description: not acceptable
+//		'422':
+//			description: >-
+//				Unprocessable. Your account creation request cannot be processed
+//				because either too many accounts have been created on this instance
+//				in the last 24h, or the pending account backlog is full.
 //		'500':
 //			description: internal server error
 func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
@@ -87,7 +91,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if err := validateNormalizeCreateAccount(form); err != nil {
+	if err := validate.CreateAccount(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -101,48 +105,29 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	}
 	form.IP = signUpIP
 
-	ti, errWithCode := m.processor.Account().Create(c.Request.Context(), authed.Token, authed.Application, form)
+	// Create the new account + user.
+	ctx := c.Request.Context()
+	user, errWithCode := m.processor.Account().Create(
+		ctx,
+		authed.Application,
+		form,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	// Get a token for the new user.
+	ti, errWithCode := m.processor.Account().TokenForNewUser(
+		ctx,
+		authed.Token,
+		authed.Application,
+		user,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
 	apiutil.JSON(c, http.StatusOK, ti)
-}
-
-// validateNormalizeCreateAccount checks through all the necessary prerequisites for creating a new account,
-// according to the provided account create request. If the account isn't eligible, an error will be returned.
-// Side effect: normalizes the provided language tag for the user's locale.
-func validateNormalizeCreateAccount(form *apimodel.AccountCreateRequest) error {
-	if form == nil {
-		return errors.New("form was nil")
-	}
-
-	if !config.GetAccountsRegistrationOpen() {
-		return errors.New("registration is not open for this server")
-	}
-
-	if err := validate.Username(form.Username); err != nil {
-		return err
-	}
-
-	if err := validate.Email(form.Email); err != nil {
-		return err
-	}
-
-	if err := validate.Password(form.Password); err != nil {
-		return err
-	}
-
-	if !form.Agreement {
-		return errors.New("agreement to terms and conditions not given")
-	}
-
-	locale, err := validate.Language(form.Locale)
-	if err != nil {
-		return err
-	}
-	form.Locale = locale
-
-	return validate.SignUpReason(form.Reason, config.GetAccountsReasonRequired())
 }

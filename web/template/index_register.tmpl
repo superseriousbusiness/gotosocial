@@ -17,12 +17,25 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- define "registrationLimits" -}}
+New account registration is currently&nbsp;
+{{- if .instance.Registrations -}}
+    <b>open</b>.
+{{- else -}}
+    <b>closed</b>.
+{{- end -}}
+{{- end -}}
+
 {{- with . }}
-<main>
-    <section class="oob-token">
-        <h1>Hi <b>{{- .user -}}</b>!</h1>
-        <p>Here's your out-of-band token with scope "<em>{{- .scope -}}</em>", use it wisely:</p>
-        <code>{{- .oobToken -}}</code>
-    </section>
-</main>
+<section class="about-section" role="region" aria-labelledby="signup">
+    <h3 id="signup">Register an Account on {{ .instance.Title -}}</h3>
+    <div class="about-section-contents">
+        <p>{{- template "registrationLimits" . -}}</p>
+        {{- if .instance.Registrations }}
+        <p>To register a new account, please first read the <a href="/about#rules">rules</a> and <a href="/about#terms">terms</a>.</p>
+        <p>Then, use the <a href="/signup">sign-up page</a> to register an account.</p>
+        <p>Manual admin approval is <b>required</b> for new accounts.</p>
+        {{- end }}
+    </div>
+</section>
 {{- end }}

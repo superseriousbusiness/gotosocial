@@ -1,4 +1,3 @@
-{{- /*
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -15,14 +14,29 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/ -}}
 
-{{- with . }}
-<main>
-    <section class="oob-token">
-        <h1>Hi <b>{{- .user -}}</b>!</h1>
-        <p>Here's your out-of-band token with scope "<em>{{- .scope -}}</em>", use it wisely:</p>
-        <code>{{- .oobToken -}}</code>
-    </section>
-</main>
-{{- end }}
+package email
+
+var (
+	newSignupTemplate = "email_new_signup.tmpl"
+	newSignupSubject  = "GoToSocial New Sign-Up"
+)
+
+type NewSignupData struct {
+	// URL of the instance to present to the receiver.
+	InstanceURL string
+	// Name of the instance to present to the receiver.
+	InstanceName string
+	// Email address sign-up was created with.
+	SignupEmail string
+	// Username submitted on the sign-up form.
+	SignupUsername string
+	// Reason given on the sign-up form.
+	SignupReason string
+	// URL to open the sign-up in the settings panel.
+	SignupURL string
+}
+
+func (s *sender) SendNewSignupEmail(toAddresses []string, data NewSignupData) error {
+	return s.sendTemplate(newSignupTemplate, newSignupSubject, data, toAddresses...)
+}

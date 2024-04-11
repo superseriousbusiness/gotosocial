@@ -19,11 +19,14 @@ package gtsmodel
 
 import "time"
 
+type Visibility string
+
 // AccountSettings models settings / preferences for a local, non-instance account.
 type AccountSettings struct {
 	AccountID         string     `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // AccountID that owns this settings.
 	CreatedAt         time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created.
 	UpdatedAt         time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item was last updated.
+	Reason            string     `bun:",nullzero"`                                                   // What reason was given for signing up when this account was created?
 	Privacy           Visibility `bun:",nullzero"`                                                   // Default post privacy for this account
 	Sensitive         *bool      `bun:",nullzero,notnull,default:false"`                             // Set posts from this account to sensitive by default?
 	Language          string     `bun:",nullzero,notnull,default:'en'"`                              // What language does this account post in?

@@ -17,12 +17,16 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- with . }}
-<main>
-    <section class="oob-token">
-        <h1>Hi <b>{{- .user -}}</b>!</h1>
-        <p>Here's your out-of-band token with scope "<em>{{- .scope -}}</em>", use it wisely:</p>
-        <code>{{- .oobToken -}}</code>
-    </section>
-</main>
+Hello moderator of {{ .InstanceName }} ({{ .InstanceURL }})!
+
+Someone has submitted a new account sign-up to your instance.
+
+They provided the following details:
+
+Email address: {{ .SignupEmail }}
+Username:      {{ .SignupUsername }}
+{{- if .SignupReason }}
+Reason:        {{ .SignupReason }}
 {{- end }}
+
+To view the sign-up, paste the following link into your browser: {{ .SignupURL }}

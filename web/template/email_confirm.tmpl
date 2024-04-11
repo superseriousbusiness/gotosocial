@@ -17,12 +17,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-Hello {{.Username}}!
+Hello {{ .Username -}}!
 
-You are receiving this mail because you've requested an account on {{.InstanceURL}}.
+You are receiving this mail because you've requested an account on {{ .InstanceURL -}}.
 
-We just need to confirm that this is your email address. To confirm your email, paste the following in your browser's address bar:
+To use your account, you must confirm that this is your email address.
 
-{{.ConfirmLink}}
+To confirm your email, paste the following in your browser's address bar:
 
-If you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of {{.InstanceURL}}
+{{ .ConfirmLink }}
+
+If you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of {{ .InstanceURL -}}.

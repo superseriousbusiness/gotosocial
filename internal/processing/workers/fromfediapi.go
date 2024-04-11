@@ -473,7 +473,7 @@ func (p *fediAPI) CreateFlag(ctx context.Context, fMsg messages.FromFediAPI) err
 	// TODO: handle additional side effects of flag creation:
 	// - notify admins by dm / notification
 
-	if err := p.surface.emailReportOpened(ctx, incomingReport); err != nil {
+	if err := p.surface.emailAdminReportOpened(ctx, incomingReport); err != nil {
 		log.Errorf(ctx, "error emailing report opened: %v", err)
 	}
 

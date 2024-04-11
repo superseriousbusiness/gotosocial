@@ -50,8 +50,8 @@ type AdminAccountInfo struct {
 	// The locale of the account. (ISO 639 Part 1 two-letter language code)
 	// example: en
 	Locale string `json:"locale"`
-	// The reason given when requesting an invite.
-	// Null if not known / remote account.
+	// The reason given when signing up.
+	// Null if no reason / remote account.
 	// example: Pleaaaaaaaaaaaaaaase!!
 	InviteRequest *string `json:"invite_request"`
 	// The current role of the account.

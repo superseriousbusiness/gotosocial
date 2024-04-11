@@ -29,11 +29,8 @@ type User struct {
 	Email               string     `json:"email,omitempty" bun:",nullzero"`
 	AccountID           string     `json:"accountID" bun:",nullzero"`
 	EncryptedPassword   string     `json:"encryptedPassword" bun:",nullzero"`
-	CurrentSignInAt     *time.Time `json:"currentSignInAt,omitempty" bun:",nullzero"`
-	LastSignInAt        *time.Time `json:"lastSignInAt,omitempty" bun:",nullzero"`
+	Reason              string     `json:"reason" bun:",nullzero"`
 	InviteID            string     `json:"inviteID,omitempty" bun:",nullzero"`
-	ChosenLanguages     []string   `json:"chosenLanguages,omitempty" bun:",nullzero"`
-	FilteredLanguages   []string   `json:"filteredLanguage,omitempty" bun:",nullzero"`
 	Locale              string     `json:"locale" bun:",nullzero"`
 	LastEmailedAt       time.Time  `json:"lastEmailedAt,omitempty" bun:",nullzero"`
 	ConfirmationToken   string     `json:"confirmationToken,omitempty" bun:",nullzero"`

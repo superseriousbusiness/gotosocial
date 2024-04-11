@@ -93,7 +93,6 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 
 		// Accounts
 		cmd.Flags().Bool(AccountsRegistrationOpenFlag(), cfg.AccountsRegistrationOpen, fieldtag("AccountsRegistrationOpen", "usage"))
-		cmd.Flags().Bool(AccountsApprovalRequiredFlag(), cfg.AccountsApprovalRequired, fieldtag("AccountsApprovalRequired", "usage"))
 		cmd.Flags().Bool(AccountsReasonRequiredFlag(), cfg.AccountsReasonRequired, fieldtag("AccountsReasonRequired", "usage"))
 		cmd.Flags().Bool(AccountsAllowCustomCSSFlag(), cfg.AccountsAllowCustomCSS, fieldtag("AccountsAllowCustomCSS", "usage"))
 

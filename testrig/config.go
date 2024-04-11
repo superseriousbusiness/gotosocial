@@ -89,7 +89,6 @@ var testDefaults = config.Configuration{
 	},
 
 	AccountsRegistrationOpen: true,
-	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
 	AccountsAllowCustomCSS:   true,
 	AccountsCustomCSSLength:  10000,

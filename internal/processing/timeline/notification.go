@@ -60,31 +60,14 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 			prevMinIDValue = n.ID
 		}
 
-		// Ensure this notification should be shown to requester.
-		if n.OriginAccount != nil {
-			// Account is set, ensure it's visible to notif target.
-			visible, err := p.filter.AccountVisible(ctx, authed.Account, n.OriginAccount)
-			if err != nil {
-				log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %s", n.ID, err)
-				continue
-			}
-
-			if !visible {
-				continue
-			}
+		visible, err := p.notifVisible(ctx, n, authed.Account)
+		if err != nil {
+			log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %v", n.ID, err)
+			continue
 		}
 
-		if n.Status != nil {
-			// Status is set, ensure it's visible to notif target.
-			visible, err := p.filter.StatusVisible(ctx, authed.Account, n.Status)
-			if err != nil {
-				log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %s", n.ID, err)
-				continue
-			}
-
-			if !visible {
-				continue
-			}
+		if !visible {
+			continue
 		}
 
 		item, err := p.converter.NotificationToAPINotification(ctx, n)
@@ -141,4 +124,45 @@ func (p *Processor) NotificationsClear(ctx context.Context, authed *oauth.Auth) 
 	}
 
 	return nil
+}
+
+func (p *Processor) notifVisible(
+	ctx context.Context,
+	n *gtsmodel.Notification,
+	acct *gtsmodel.Account,
+) (bool, error) {
+	// If account is set, ensure it's
+	// visible to notif target.
+	if n.OriginAccount != nil {
+		// If this is a new local account sign-up,
+		// skip normal visibility checking because
+		// origin account won't be confirmed yet.
+		if n.NotificationType == gtsmodel.NotificationSignup {
+			return true, nil
+		}
+
+		visible, err := p.filter.AccountVisible(ctx, acct, n.OriginAccount)
+		if err != nil {
+			return false, err
+		}
+
+		if !visible {
+			return false, nil
+		}
+	}
+
+	// If status is set, ensure it's
+	// visible to notif target.
+	if n.Status != nil {
+		visible, err := p.filter.StatusVisible(ctx, acct, n.Status)
+		if err != nil {
+			return false, err
+		}
+
+		if !visible {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }

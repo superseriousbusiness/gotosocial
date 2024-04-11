@@ -186,9 +186,13 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 	user.Approved = func() *bool { a := true; return &a }()
 	user.Email = user.UnconfirmedEmail
 	user.ConfirmedAt = time.Now()
+	user.SignUpIP = nil
 	return state.DB.UpdateUser(
 		ctx, user,
-		"approved", "email", "confirmed_at",
+		"approved",
+		"email",
+		"confirmed_at",
+		"sign_up_ip",
 	)
 }
 

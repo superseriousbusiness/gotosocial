@@ -19,6 +19,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -36,7 +37,7 @@ type Admin interface {
 	// C) something went wrong in the db
 	IsEmailAvailable(ctx context.Context, email string) (bool, error)
 
-	// NewSignup creates a new user in the database with the given parameters.
+	// NewSignup creates a new user + account in the database with the given parameters.
 	// By the time this function is called, it should be assumed that all the parameters have passed validation!
 	NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (*gtsmodel.User, error)
 
@@ -49,6 +50,23 @@ type Admin interface {
 	// Ie., if the instance is hosted at 'example.org' the instance will have a domain of 'example.org'.
 	// This is needed for things like serving instance information through /api/v1/instance
 	CreateInstanceInstance(ctx context.Context) error
+
+	// CreateInstanceApplication creates an application in the database
+	// for use in processing signups etc through the sign-up form.
+	CreateInstanceApplication(ctx context.Context) error
+
+	// GetInstanceApplication gets the instance application
+	// (ie., the application owned by the instance account).
+	GetInstanceApplication(ctx context.Context) (*gtsmodel.Application, error)
+
+	// CountApprovedSignupsSince counts the number of new account
+	// sign-ups approved on this instance since the given time.
+	CountApprovedSignupsSince(ctx context.Context, since time.Time) (int, error)
+
+	// CountUnhandledSignups counts the number of account sign-ups
+	// that have not yet been approved or denied. In other words,
+	// the number of pending sign-ups sitting in the backlog.
+	CountUnhandledSignups(ctx context.Context) (int, error)
 
 	/*
 		ACTION FUNCS

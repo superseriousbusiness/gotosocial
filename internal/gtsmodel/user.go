@@ -22,8 +22,14 @@ import (
 	"time"
 )
 
-// User represents an actual human user of gotosocial. Note, this is a LOCAL gotosocial user, not a remote account.
-// To cross reference this local user with their account (which can be local or remote), use the AccountID field.
+// User represents one signed-up user of this GoToSocial instance.
+//
+// User may not necessarily be approved yet; in other words, this
+// model is used for both active users and signed-up but not yet
+// approved users.
+//
+// Sign-ups that have been denied rather than
+// approved are stored as DeniedUser instead.
 type User struct {
 	ID                     string       `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt              time.Time    `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
@@ -32,15 +38,9 @@ type User struct {
 	AccountID              string       `bun:"type:CHAR(26),nullzero,notnull,unique"`                       // The id of the local gtsmodel.Account entry for this user.
 	Account                *Account     `bun:"rel:belongs-to"`                                              // Pointer to the account of this user that corresponds to AccountID.
 	EncryptedPassword      string       `bun:",nullzero,notnull"`                                           // The encrypted password of this user, generated using https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword. A salt is included so we're safe against 🌈 tables.
-	SignUpIP               net.IP       `bun:",nullzero"`                                                   // From what IP was this user created?
-	CurrentSignInAt        time.Time    `bun:"type:timestamptz,nullzero"`                                   // When did the user sign in with their current session.
-	CurrentSignInIP        net.IP       `bun:",nullzero"`                                                   // What's the most recent IP of this user
-	LastSignInAt           time.Time    `bun:"type:timestamptz,nullzero"`                                   // When did this user last sign in?
-	LastSignInIP           net.IP       `bun:",nullzero"`                                                   // What's the previous IP of this user?
-	SignInCount            int          `bun:",notnull,default:0"`                                          // How many times has this user signed in?
+	SignUpIP               net.IP       `bun:",nullzero"`                                                   // IP this user used to sign up. Only stored for pending sign-ups.
 	InviteID               string       `bun:"type:CHAR(26),nullzero"`                                      // id of the user who invited this user (who let this joker in?)
-	ChosenLanguages        []string     `bun:",nullzero"`                                                   // What languages does this user want to see?
-	FilteredLanguages      []string     `bun:",nullzero"`                                                   // What languages does this user not want to see?
+	Reason                 string       `bun:",nullzero"`                                                   // What reason was given for signing up when this user was created?
 	Locale                 string       `bun:",nullzero"`                                                   // In what timezone/locale is this user located?
 	CreatedByApplicationID string       `bun:"type:CHAR(26),nullzero"`                                      // Which application id created this user? See gtsmodel.Application
 	CreatedByApplication   *Application `bun:"rel:belongs-to"`                                              // Pointer to the application corresponding to createdbyapplicationID.
@@ -58,15 +58,36 @@ type User struct {
 	ExternalID             string       `bun:",nullzero,unique"`                                            // If the login for the user is managed externally (e.g OIDC), we need to keep a stable reference to the external object (e.g OIDC sub claim)
 }
 
+// DeniedUser represents one user sign-up that
+// was submitted to the instance and denied.
+type DeniedUser struct {
+	ID                     string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
+	CreatedAt              time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
+	UpdatedAt              time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	Email                  string    `bun:",nullzero,notnull"`                                           // Email address provided on the sign-up form.
+	Username               string    `bun:",nullzero,notnull"`                                           // Username provided on the sign-up form.
+	SignUpIP               net.IP    `bun:",nullzero"`                                                   // IP address the sign-up originated from.
+	InviteID               string    `bun:"type:CHAR(26),nullzero"`                                      // Invite ID provided on the sign-up form (if applicable).
+	Locale                 string    `bun:",nullzero"`                                                   // Locale provided on the sign-up form.
+	CreatedByApplicationID string    `bun:"type:CHAR(26),nullzero"`                                      // ID of application used to create this sign-up.
+	SignUpReason           string    `bun:",nullzero"`                                                   // Reason provided by user on the sign-up form.
+	PrivateComment         string    `bun:",nullzero"`                                                   // Comment from instance admin about why this sign-up was denied.
+	SendEmail              *bool     `bun:",nullzero,notnull,default:false"`                             // Send an email informing user that their sign-up has been denied.
+	Message                string    `bun:",nullzero"`                                                   // Message to include when sending an email to the denied user's email address, if SendEmail is true.
+}
+
 // NewSignup models parameters for the creation
 // of a new user + account on this instance.
 //
 // Aside from username, email, and password, it is
 // fine to use zero values on fields of this struct.
+//
+// This struct is not stored in the database,
+// it's just for passing around parameters.
 type NewSignup struct {
-	Username string // Username of the new account.
-	Email    string // Email address of the user.
-	Password string // Plaintext (not yet hashed) password for the user.
+	Username string // Username of the new account (required).
+	Email    string // Email address of the user (required).
+	Password string // Plaintext (not yet hashed) password for the user (required).
 
 	Reason        string // Reason given by the user when submitting a sign up request (optional).
 	PreApproved   bool   // Mark the new user/account as preapproved (optional)

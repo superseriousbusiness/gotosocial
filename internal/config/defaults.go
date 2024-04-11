@@ -67,7 +67,6 @@ var Defaults = Configuration{
 	InstanceLanguages:              make(language.Languages, 0),
 
 	AccountsRegistrationOpen: true,
-	AccountsApprovalRequired: true,
 	AccountsReasonRequired:   true,
 	AccountsAllowCustomCSS:   false,
 	AccountsCustomCSSLength:  10000,
