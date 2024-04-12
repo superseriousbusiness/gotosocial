@@ -421,16 +421,17 @@ func (a *accountDB) GetAccounts(
 			accountIDIn = append(accountIDIn, user.AccountID)
 		}
 		useAccountIDIn = true
-	} else if origin == "remote" {
-		// Get only remote accounts.
-		q = q.Where("? IS NOT NULL", bun.Ident("account.domain"))
 
+	} else if origin == "remote" {
 		if useAccountIDIn {
 			// useAccountIDIn specifically indicates
 			// a parameter that limits querying to
 			// local accounts, there will be none.
 			return nil, nil
 		}
+
+		// Get only remote accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.domain"))
 	}
 
 	if useAccountIDIn {
