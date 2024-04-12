@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 	"time"
 
@@ -403,7 +404,8 @@ func (a *accountDB) GetAccounts(
 	}
 
 	if limit > 0 {
-		// limit amount of statuses returned
+		// Limit amount of
+		// accounts returned.
 		q = q.Limit(limit)
 	}
 
@@ -425,11 +427,8 @@ func (a *accountDB) GetAccounts(
 
 	// If we're paging up, we still want accounts
 	// to be sorted by createdAt desc, so reverse ids slice.
-	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
 	if !frontToBack {
-		for l, r := 0, len(accountIDs)-1; l < r; l, r = l+1, r-1 {
-			accountIDs[l], accountIDs[r] = accountIDs[r], accountIDs[l]
-		}
+		slices.Reverse(accountIDs)
 	}
 
 	// Return account IDs loaded from cache + db.
