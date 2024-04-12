@@ -32,7 +32,7 @@ import { HandleSignup } from "./handlesignup";
 import { AccountActions } from "./actions";
 import BackButton from "../../../components/back-button";
 
-export default function AccountDetail({ }) {
+export default function AccountDetail() {
 	// /settings/admin/accounts
 	const accountsBaseUrl = useBaseUrl();
 
@@ -55,7 +55,7 @@ export default function AccountDetail({ }) {
 			</div>
 		);
 	}
-};
+}
 
 interface AccountDetailFormProps {
 	accountsBaseUrl: string,
@@ -64,7 +64,7 @@ interface AccountDetailFormProps {
 
 function AccountDetailForm({ data: adminAcct, accountsBaseUrl }: AccountDetailFormProps) {	
 	let yesOrNo = (b: boolean) => {
-		return b ? "yes" : "no"
+		return b ? "yes" : "no";
 	};
 
 	let created = new Date(adminAcct.created_at).toDateString();
@@ -97,7 +97,7 @@ function AccountDetailForm({ data: adminAcct, accountsBaseUrl }: AccountDetailFo
 				<div className="info-list-entry">
 					<dt>Last posted</dt>
 					<dd>{lastPosted}</dd>
-					</div>
+				</div>
 				<div className="info-list-entry">
 					<dt>Suspended</dt>
 					<dd>{yesOrNo(adminAcct.suspended)}</dd>
@@ -119,60 +119,60 @@ function AccountDetailForm({ data: adminAcct, accountsBaseUrl }: AccountDetailFo
 					<dd>{adminAcct.account.following_count}</dd>
 				</div>
 			</dl>
-				{ local &&
-				// Only show local account details
-				// if this is a local account!
-				<>
-					<h3>Local Account Details</h3>
-					{ !adminAcct.approved &&
-						<div className="info">
-							<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
-							<b>Account is pending.</b>
-						</div>
-					}
-					{ !adminAcct.confirmed && 
-						<div className="info">
-							<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
-							<b>Account email not yet confirmed.</b>
-						</div>
-					}
-					<dl className="info-list">
-						<div className="info-list-entry">
-							<dt>Email</dt>
-							<dd>{adminAcct.email} {<b>{adminAcct.confirmed ? "(confirmed)" : "(not confirmed)"}</b> }</dd>
-						</div>
-						<div className="info-list-entry">
-							<dt>Disabled</dt>
-							<dd>{yesOrNo(adminAcct.disabled)}</dd>
-						</div>
-						<div className="info-list-entry">
-							<dt>Approved</dt>
-							<dd>{yesOrNo(adminAcct.approved)}</dd>
-						</div>
-						<div className="info-list-entry">
-							<dt>Sign-Up Reason</dt>
-							<dd>{adminAcct.invite_request ?? <i>none provided</i>}</dd>
-						</div>
-						{ (adminAcct.ip && adminAcct.ip !== "0.0.0.0") &&
-						<div className="info-list-entry">
-							<dt>Sign-Up IP</dt>
-							<dd>{adminAcct.ip}</dd>
-						</div> }
-						{ adminAcct.locale &&
-						<div className="info-list-entry">
-							<dt>Locale</dt>
-							<dd>{adminAcct.locale}</dd>
-						</div> }
-					</dl>
-				</> }
+			{ local &&
+			// Only show local account details
+			// if this is a local account!
+			<>
+				<h3>Local Account Details</h3>
+				{ !adminAcct.approved &&
+					<div className="info">
+						<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
+						<b>Account is pending.</b>
+					</div>
+				}
+				{ !adminAcct.confirmed && 
+					<div className="info">
+						<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
+						<b>Account email not yet confirmed.</b>
+					</div>
+				}
+				<dl className="info-list">
+					<div className="info-list-entry">
+						<dt>Email</dt>
+						<dd>{adminAcct.email} {<b>{adminAcct.confirmed ? "(confirmed)" : "(not confirmed)"}</b> }</dd>
+					</div>
+					<div className="info-list-entry">
+						<dt>Disabled</dt>
+						<dd>{yesOrNo(adminAcct.disabled)}</dd>
+					</div>
+					<div className="info-list-entry">
+						<dt>Approved</dt>
+						<dd>{yesOrNo(adminAcct.approved)}</dd>
+					</div>
+					<div className="info-list-entry">
+						<dt>Sign-Up Reason</dt>
+						<dd>{adminAcct.invite_request ?? <i>none provided</i>}</dd>
+					</div>
+					{ (adminAcct.ip && adminAcct.ip !== "0.0.0.0") &&
+					<div className="info-list-entry">
+						<dt>Sign-Up IP</dt>
+						<dd>{adminAcct.ip}</dd>
+					</div> }
+					{ adminAcct.locale &&
+					<div className="info-list-entry">
+						<dt>Locale</dt>
+						<dd>{adminAcct.locale}</dd>
+					</div> }
+				</dl>
+			</> }
 			{ local && !adminAcct.approved
 				?
-					<HandleSignup
-						account={adminAcct}
-						accountsBaseUrl={accountsBaseUrl}
-					/>
+				<HandleSignup
+					account={adminAcct}
+					accountsBaseUrl={accountsBaseUrl}
+				/>
 				:
-					<AccountActions account={adminAcct} />
+				<AccountActions account={adminAcct} />
 			}
 		</>
 	);

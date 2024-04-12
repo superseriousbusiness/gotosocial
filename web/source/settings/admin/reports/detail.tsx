@@ -52,7 +52,7 @@ export default function ReportDetail({ }) {
 			</div>
 		);
 	}
-};
+}
 
 function ReportDetailForm({ data: report }) {
 	const from = report.account;

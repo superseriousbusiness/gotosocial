@@ -39,7 +39,7 @@ export default function InstanceRulesData({ baseUrl }) {
 			{...{baseUrl}}
 		/>
 	);
-};
+}
 
 function InstanceRules({ baseUrl, data: rules }) {
 	return (

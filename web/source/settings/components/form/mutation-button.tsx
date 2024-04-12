@@ -69,4 +69,4 @@ export default function MutationButton({
 			</button>
 		</div>
 	);
-};
+}

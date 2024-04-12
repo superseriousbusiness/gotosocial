@@ -19,7 +19,6 @@
 
 import React from "react";
 import { Link } from "wouter";
-import { useBaseUrl } from "../lib/navigation/util";
 import { Error } from "./error";
 import { AdminAccount } from "../lib/types/account";
 import { SerializedError } from "@reduxjs/toolkit";
@@ -41,9 +40,7 @@ export function AccountList({
 	isError,
 	error,
 	emptyMessage,
- }: AccountListProps) {
-	const baseUrl = useBaseUrl();
-
+}: AccountListProps) {
 	if (!(isSuccess || isError)) {
 		// Hasn't been called yet.
 		return null;
@@ -54,7 +51,7 @@ export function AccountList({
 			className="fa fa-fw fa-refresh fa-spin"
 			aria-hidden="true"
 			title="Loading..."
-		/>
+		/>;
 	}
 
 	if (error) {

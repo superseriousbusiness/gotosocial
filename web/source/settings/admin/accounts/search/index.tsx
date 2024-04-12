@@ -39,7 +39,7 @@ export function AccountSearchForm() {
 		by_domain: useTextInput("by_domain"),
 		email: useTextInput("email"),
 		ip: useTextInput("ip"),
-	}
+	};
 
 	function submitSearch(e) {
 		e.preventDefault();
@@ -50,14 +50,14 @@ export function AccountSearchForm() {
 			if (v.value === undefined || v.value.length === 0) {
 				return null;
 			}
-			return [[k, v.value]]
+			return [[k, v.value]];
 		}).flatMap(kv => {
 			// Remove any nulls.
 			return kv || [];
-		})
+		});
 
 		const params: SearchAccountParams = Object.fromEntries(entries);
-		searchAcct(params)
+		searchAcct(params);
 	}
 
 	return (

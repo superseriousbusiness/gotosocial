@@ -32,7 +32,7 @@ export default function Accounts({ baseUrl }) {
 			<AccountOverview />
 		</Switch>
 	);
-};
+}
 
 function AccountOverview({ }) {
 	return (

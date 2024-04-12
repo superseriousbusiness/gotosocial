@@ -38,7 +38,7 @@ export default function Reports({ baseUrl }) {
 			</Switch>
 		</div>
 	);
-};
+}
 
 function ReportOverview({ }) {
 	return (

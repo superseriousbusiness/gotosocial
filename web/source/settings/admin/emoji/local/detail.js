@@ -48,7 +48,7 @@ export default function EmojiDetailRoute({ }) {
 			</div>
 		);
 	}
-};
+}
 
 function EmojiDetailForm({ data: emoji }) {
 	const baseUrl = useBaseUrl();

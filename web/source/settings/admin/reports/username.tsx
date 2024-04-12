@@ -51,4 +51,4 @@ export default function Username({ user, link = true }) {
 			<span className="sr-only">{icon.info}</span>
 		</Element>
 	);
-};
+}

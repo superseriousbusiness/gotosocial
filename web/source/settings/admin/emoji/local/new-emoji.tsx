@@ -113,4 +113,4 @@ export default function NewEmojiForm() {
 			</form>
 		</div>
 	);
-};
+}

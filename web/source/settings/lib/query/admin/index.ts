@@ -66,12 +66,12 @@ const extended = gtsApi.injectEndpoints({
 
 		searchAccounts: build.query<AdminAccount[], SearchAccountParams>({
 			query: (form) => {
-				const params = new(URLSearchParams)
+				const params = new(URLSearchParams);
 				Object.entries(form).forEach(([k, v]) => {
 					if (v !== undefined) {
-						params.append(k, v)
+						params.append(k, v);
 					}
-				})
+				});
 
 				let query = "";
 				if (params.size !== 0) {
@@ -80,7 +80,7 @@ const extended = gtsApi.injectEndpoints({
 
 				return {
 					url: `/api/v2/admin/accounts${query}`
-				}
+				};
 			},
 			providesTags: (res) =>
 				res
@@ -108,13 +108,12 @@ const extended = gtsApi.injectEndpoints({
 
 		handleSignup: build.mutation<AdminAccount, HandleSignupParams>({
 			query: ({id, approve_or_reject, ...formData}) => {
-				console.log(formData);
 				return {
 					method: "POST",
 					url: `/api/v1/admin/accounts/${id}/${approve_or_reject}`,
 					asForm: true,
 					body: approve_or_reject === "reject" ?? formData,
-				}
+				};
 			},
 			invalidatesTags: (_result, _error, { id }) => [
 				{ type: 'Account', id },

@@ -21,7 +21,7 @@ import React from "react";
 import { useSearchAccountsQuery } from "../../../lib/query";
 import { AccountList } from "../../../components/account-list";
 
-export default function AccountsPending({ baseUrl }) {
+export default function AccountsPending() {
 	const searchRes = useSearchAccountsQuery({status: "pending"});
 
 	return (
@@ -37,4 +37,4 @@ export default function AccountsPending({ baseUrl }) {
 			/>
 		</div>
 	);
-};
+}
