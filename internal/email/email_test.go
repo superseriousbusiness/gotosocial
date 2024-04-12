@@ -50,7 +50,7 @@ func (suite *EmailTestSuite) TestTemplateConfirm() {
 
 	suite.sender.SendConfirmEmail("user@example.org", confirmData)
 	suite.Len(suite.sentEmails, 1)
-	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because you've requested an account on https://example.org.\r\n\r\nTo use your account, you must confirm that this is your email address.\r\n\r\nTo confirm your email, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
+	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because you've requested an account on https://example.org.\r\n\r\nTo use your account, you must confirm that this is your email address.\r\n\r\nTo confirm your email, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
 
 func (suite *EmailTestSuite) TestTemplateReset() {
@@ -63,7 +63,7 @@ func (suite *EmailTestSuite) TestTemplateReset() {
 
 	suite.sender.SendResetEmail("user@example.org", resetData)
 	suite.Len(suite.sentEmails, 1)
-	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Password Reset\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because a password reset has been requested for your account on https://example.org.\r\n\r\nTo reset your password, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/reset_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
+	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Password Reset\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because a password reset has been requested for your account on https://example.org.\r\n\r\nTo reset your password, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/reset_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
 
 func (suite *EmailTestSuite) TestTemplateReportRemoteToLocal() {
@@ -166,7 +166,7 @@ func (suite *EmailTestSuite) TestTemplateReportClosedOK() {
 		suite.FailNow(err.Error())
 	}
 	suite.Len(suite.sentEmails, 1)
-	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Report Closed\r\n\r\nHello !\r\n\r\nYou recently reported the account @foss_satan@fossbros-anonymous.io to the moderator(s) of Test Instance (https://example.org).\r\n\r\nThe report you submitted has now been closed.\r\n\r\nThe moderator who closed the report left the following comment: User was yeeted. Thank you for reporting!\r\n\r\n", suite.sentEmails["user@example.org"])
+	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Report Closed\r\n\r\nHello !\r\n\r\nYou recently reported the account @foss_satan@fossbros-anonymous.io to the moderator(s) of Test Instance (https://example.org).\r\n\r\nThe report you submitted has now been closed.\r\n\r\nThe moderator who closed the report left the following comment: User was yeeted. Thank you for reporting!\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
 
 func (suite *EmailTestSuite) TestTemplateReportClosedLocalAccountNoComment() {
@@ -182,7 +182,7 @@ func (suite *EmailTestSuite) TestTemplateReportClosedLocalAccountNoComment() {
 		suite.FailNow(err.Error())
 	}
 	suite.Len(suite.sentEmails, 1)
-	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Report Closed\r\n\r\nHello !\r\n\r\nYou recently reported the account @1happyturtle to the moderator(s) of Test Instance (https://example.org).\r\n\r\nThe report you submitted has now been closed.\r\n\r\nThe moderator who closed the report did not leave a comment.\r\n\r\n", suite.sentEmails["user@example.org"])
+	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Report Closed\r\n\r\nHello !\r\n\r\nYou recently reported the account @1happyturtle to the moderator(s) of Test Instance (https://example.org).\r\n\r\nThe report you submitted has now been closed.\r\n\r\nThe moderator who closed the report did not leave a comment.\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
 
 func TestEmailTestSuite(t *testing.T) {
