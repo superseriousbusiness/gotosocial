@@ -147,7 +147,7 @@ func (s *surface) emailUserSignupApproved(ctx context.Context, user *gtsmodel.Us
 
 	// Assemble email contents and send the email.
 	if err := s.emailSender.SendSignupApprovedEmail(
-		user.UnconfirmedEmail,
+		emailAddr,
 		email.SignupApprovedData{
 			Username:     user.Account.Username,
 			InstanceURL:  instance.URI,
