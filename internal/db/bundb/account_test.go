@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
@@ -494,20 +495,17 @@ func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {
 
 func (suite *AccountTestSuite) TestGetAccountsAll() {
 	var (
-		ctx                = context.Background()
-		origin             = ""
-		status             = ""
-		mods               = false
-		invitedBy          = ""
-		username           = ""
-		displayName        = ""
-		domain             = ""
-		email              = ""
-		ip          net.IP = nil
-		maxID              = ""
-		sinceID            = ""
-		minID              = ""
-		limit              = 100
+		ctx                      = context.Background()
+		origin                   = ""
+		status                   = ""
+		mods                     = false
+		invitedBy                = ""
+		username                 = ""
+		displayName              = ""
+		domain                   = ""
+		email                    = ""
+		ip          net.IP       = nil
+		page        *paging.Page = nil
 	)
 
 	accounts, err := suite.db.GetAccounts(
@@ -521,10 +519,7 @@ func (suite *AccountTestSuite) TestGetAccountsAll() {
 		domain,
 		email,
 		ip,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		page,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -545,10 +540,9 @@ func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
 		domain             = ""
 		email              = ""
 		ip          net.IP = nil
-		maxID              = ""
-		sinceID            = ""
-		minID              = ""
-		limit              = 100
+		page               = &paging.Page{
+			Limit: 100,
+		}
 	)
 
 	accounts, err := suite.db.GetAccounts(
@@ -562,10 +556,7 @@ func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
 		domain,
 		email,
 		ip,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		page,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -586,10 +577,9 @@ func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
 		domain             = ""
 		email              = "tortle.dude@example.org"
 		ip          net.IP = nil
-		maxID              = ""
-		sinceID            = ""
-		minID              = ""
-		limit              = 100
+		page               = &paging.Page{
+			Limit: 100,
+		}
 	)
 
 	accounts, err := suite.db.GetAccounts(
@@ -603,10 +593,7 @@ func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
 		domain,
 		email,
 		ip,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		page,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -627,10 +614,9 @@ func (suite *AccountTestSuite) TestGetPendingAccounts() {
 		domain             = ""
 		email              = ""
 		ip          net.IP = nil
-		maxID              = ""
-		sinceID            = ""
-		minID              = ""
-		limit              = 100
+		page               = &paging.Page{
+			Limit: 100,
+		}
 	)
 
 	accounts, err := suite.db.GetAccounts(
@@ -644,10 +630,7 @@ func (suite *AccountTestSuite) TestGetPendingAccounts() {
 		domain,
 		email,
 		ip,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		page,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())

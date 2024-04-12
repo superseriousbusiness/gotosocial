@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
@@ -236,29 +237,45 @@ func (a *accountDB) GetAccounts(
 	domain string,
 	email string,
 	ip net.IP,
-	maxID string,
-	sinceID string,
-	minID string,
-	limit int,
-) ([]*gtsmodel.Account, error) {
-	// Ensure reasonable
-	if limit < 0 {
-		limit = 0
-	}
-
-	// Make educated guess for slice size
+	page *paging.Page,
+) (
+	[]*gtsmodel.Account,
+	error,
+) {
 	var (
-		accountIDs     = make([]string, 0, limit)
-		accountIDIn    []string
-		useAccountIDIn bool
-		frontToBack    = true
-	)
+		// local users lists,
+		// required for some
+		// limiting parameters.
+		users []*gtsmodel.User
 
-	// We need users for this query.
-	users, err := a.state.DB.GetAllUsers(gtscontext.SetBarebones(ctx))
-	if err != nil {
-		return nil, fmt.Errorf("error getting users: %w", err)
-	}
+		// lazyLoadUsers only loads the users
+		// slice if it's required by params.
+		lazyLoadUsers = func() (err error) {
+			if users == nil {
+				users, err = a.state.DB.GetAllUsers(gtscontext.SetBarebones(ctx))
+				if err != nil {
+					return fmt.Errorf("error getting users: %w", err)
+				}
+			}
+			return nil
+		}
+
+		// Get paging params.
+		//
+		// Note this may be min_id OR since_id
+		// from the API, this gets handled below
+		// when checking order to reverse slice.
+		minID = page.GetMin()
+		maxID = page.GetMax()
+		limit = page.GetLimit()
+		order = page.GetOrder()
+
+		// Make educated guess for slice size
+		accountIDs  = make([]string, 0, limit)
+		accountIDIn []string
+
+		useAccountIDIn bool
+	)
 
 	q := a.db.
 		NewSelect().
@@ -280,49 +297,27 @@ func (a *accountDB) GetAccounts(
 		q = q.Where("? < ?", bun.Ident("account.created_at"), maxIDAcct.CreatedAt)
 	}
 
-	if sinceID != "" {
-		// Return only accounts NEWER
-		// than account with sinceID.
-		sinceIDAcct, err := a.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			sinceID,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error getting sinceID account %s: %w", sinceID, err)
-		}
-
-		q = q.Where("? > ?", bun.Ident("account.created_at"), sinceIDAcct.CreatedAt)
-	}
-
+	// Return only accounts NEWER
+	// than account with minID.
 	if minID != "" {
-		// Return only accounts NEWER
-		// than account with minID.
 		minIDAcct, err := a.GetAccountByID(
 			gtscontext.SetBarebones(ctx),
-			sinceID,
+			minID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error getting minID account %s: %w", minID, err)
 		}
 
 		q = q.Where("? > ?", bun.Ident("account.created_at"), minIDAcct.CreatedAt)
-
-		// Paging up.
-		frontToBack = false
-	}
-
-	if origin == "local" {
-		// Get only local accounts.
-		q = q.Where("? IS NULL", bun.Ident("account.domain"))
-	} else if origin == "remote" {
-		// Get only remote accounts.
-		q = q.Where("? IS NOT NULL", bun.Ident("account.domain"))
 	}
 
 	switch status {
 
 	case "active":
 		// Get only enabled accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
 		for _, user := range users {
 			if !*user.Disabled {
 				accountIDIn = append(accountIDIn, user.AccountID)
@@ -332,6 +327,9 @@ func (a *accountDB) GetAccounts(
 
 	case "pending":
 		// Get only unapproved accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
 		for _, user := range users {
 			if !*user.Approved {
 				accountIDIn = append(accountIDIn, user.AccountID)
@@ -341,6 +339,9 @@ func (a *accountDB) GetAccounts(
 
 	case "disabled":
 		// Get only disabled accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
 		for _, user := range users {
 			if *user.Disabled {
 				accountIDIn = append(accountIDIn, user.AccountID)
@@ -359,6 +360,9 @@ func (a *accountDB) GetAccounts(
 
 	if mods {
 		// Get only mod accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
 		for _, user := range users {
 			if *user.Moderator || *user.Admin {
 				accountIDIn = append(accountIDIn, user.AccountID)
@@ -382,6 +386,9 @@ func (a *accountDB) GetAccounts(
 	}
 
 	if email != "" {
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
 		for _, user := range users {
 			if user.Email == email || user.UnconfirmedEmail == email {
 				accountIDIn = append(accountIDIn, user.AccountID)
@@ -391,6 +398,9 @@ func (a *accountDB) GetAccounts(
 	}
 
 	if ip != nil {
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
 		for _, user := range users {
 			if user.SignUpIP.String() == ip.String() {
 				accountIDIn = append(accountIDIn, user.AccountID)
@@ -399,7 +409,37 @@ func (a *accountDB) GetAccounts(
 		useAccountIDIn = true
 	}
 
+	if origin == "local" && !useAccountIDIn {
+		// In the case we're not already limiting
+		// by specific subset of account IDs, just
+		// use existing list of user.AccountIDs
+		// instead of adding WHERE to the query.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			accountIDIn = append(accountIDIn, user.AccountID)
+		}
+		useAccountIDIn = true
+	} else if origin == "remote" {
+		// Get only remote accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.domain"))
+
+		if useAccountIDIn {
+			// useAccountIDIn specifically indicates
+			// a parameter that limits querying to
+			// local accounts, there will be none.
+			return nil, nil
+		}
+	}
+
 	if useAccountIDIn {
+		if len(accountIDIn) == 0 {
+			// There will be no
+			// possible answer.
+			return nil, nil
+		}
+
 		q = q.Where("? IN (?)", bun.Ident("account.id"), bun.In(accountIDIn))
 	}
 
@@ -409,12 +449,12 @@ func (a *accountDB) GetAccounts(
 		q = q.Limit(limit)
 	}
 
-	if frontToBack {
-		// Page down.
-		q = q.Order("account.created_at DESC")
-	} else {
+	if order == paging.OrderAscending {
 		// Page up.
 		q = q.Order("account.created_at ASC")
+	} else {
+		// Page down.
+		q = q.Order("account.created_at DESC")
 	}
 
 	if err := q.Scan(ctx, &accountIDs); err != nil {
@@ -427,7 +467,7 @@ func (a *accountDB) GetAccounts(
 
 	// If we're paging up, we still want accounts
 	// to be sorted by createdAt desc, so reverse ids slice.
-	if !frontToBack {
+	if order == paging.OrderAscending {
 		slices.Reverse(accountIDs)
 	}
 

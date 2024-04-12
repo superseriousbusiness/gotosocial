@@ -258,17 +258,6 @@ type AdminGetAccountsRequest struct {
 	Email string
 	// Lookup users with this IP address.
 	IP string
-	// All results returned will be
-	// older than the item with this ID.
-	MaxID string
-	// All results returned will be
-	// newer than the item with this ID.
-	SinceID string
-	// Returns results immediately newer
-	// than the item with this ID.
-	MinID string
-	// Maximum number of results to return.
-	Limit int
 	// API version to use for this request (1 or 2).
 	// Set internally, not by callers.
 	APIVersion int

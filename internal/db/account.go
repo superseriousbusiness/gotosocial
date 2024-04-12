@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Account contains functions related to account getting/setting/creation.
@@ -70,11 +71,11 @@ type Account interface {
 		domain string,
 		email string,
 		ip net.IP,
-		maxID string,
-		sinceID string,
-		minID string,
-		limit int,
-	) ([]*gtsmodel.Account, error)
+		page *paging.Page,
+	) (
+		[]*gtsmodel.Account,
+		error,
+	)
 
 	// PopulateAccount ensures that all sub-models of an account are populated (e.g. avatar, header etc).
 	PopulateAccount(ctx context.Context, account *gtsmodel.Account) error

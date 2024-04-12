@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"slices"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -29,13 +30,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 func (p *Processor) AccountsGet(
 	ctx context.Context,
 	request *apimodel.AdminGetAccountsRequest,
-) (*apimodel.PageableResponse, gtserror.WithCode) {
+	page *paging.Page,
+) (
+	*apimodel.PageableResponse,
+	gtserror.WithCode,
+) {
 	// Validate "origin".
 	if v := request.Origin; v != "" {
 		valid := []string{"local", "remote"}
@@ -84,10 +89,7 @@ func (p *Processor) AccountsGet(
 		request.ByDomain,
 		request.Email,
 		ip,
-		request.MaxID,
-		request.SinceID,
-		request.MinID,
-		request.Limit,
+		page,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting accounts: %w", err)
@@ -96,11 +98,11 @@ func (p *Processor) AccountsGet(
 
 	count := len(accounts)
 	if count == 0 {
-		return util.EmptyPageableResponse(), nil
+		return paging.EmptyResponse(), nil
 	}
 
-	nextMax := accounts[count-1].ID
-	prevMin := accounts[0].ID
+	hi := accounts[count-1].ID
+	lo := accounts[0].ID
 
 	items := make([]interface{}, 0, count)
 	for _, account := range accounts {
@@ -109,7 +111,6 @@ func (p *Processor) AccountsGet(
 			log.Errorf(ctx, "error converting to api account: %v", err)
 			continue
 		}
-
 		items = append(items, apiAccount)
 	}
 
@@ -117,10 +118,10 @@ func (p *Processor) AccountsGet(
 	// the API version used to call this function.
 	switch request.APIVersion {
 	case 1:
-		return packageAccountsV1(items, nextMax, prevMin, request)
+		return packageAccountsV1(items, lo, hi, request, page)
 
 	case 2:
-		return packageAccountsV2(items, nextMax, prevMin, request)
+		return packageAccountsV2(items, lo, hi, request, page)
 
 	default:
 		log.Panic(ctx, "api version was neither 1 nor 2")
@@ -130,11 +131,11 @@ func (p *Processor) AccountsGet(
 
 func packageAccountsV1(
 	items []interface{},
-	nextMax string,
-	prevMin string,
+	loID, hiID string,
 	request *apimodel.AdminGetAccountsRequest,
+	page *paging.Page,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
-	extraQueryParams := []string{}
+	queryParams := make(url.Values, 8)
 
 	// Translate origin to v1.
 	if v := request.Origin; v != "" {
@@ -146,10 +147,7 @@ func packageAccountsV1(
 			k = apiutil.AdminRemoteKey
 		}
 
-		extraQueryParams = append(
-			extraQueryParams,
-			k+"=true",
-		)
+		queryParams.Add(k, "true")
 	}
 
 	// Translate status to v1.
@@ -169,142 +167,92 @@ func packageAccountsV1(
 			k = apiutil.AdminSuspendedKey
 		}
 
-		extraQueryParams = append(
-			extraQueryParams,
-			k+"=true",
-		)
+		queryParams.Add(k, "true")
 	}
 
 	if v := request.Username; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.UsernameKey+"="+v,
-		)
+		queryParams.Add(apiutil.UsernameKey, v)
 	}
 
 	if v := request.DisplayName; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminDisplayNameKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminDisplayNameKey, v)
 	}
 
 	if v := request.ByDomain; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminByDomainKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminByDomainKey, v)
 	}
 
 	if v := request.Email; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminEmailKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminEmailKey, v)
 	}
 
 	if v := request.IP; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminIPKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminIPKey, v)
 	}
 
 	// Translate permissions to v1.
 	if v := request.Permissions; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminStaffKey+"=true",
-		)
+		queryParams.Add(apiutil.AdminStaffKey, v)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:            items,
-		Path:             "/api/v1/admin/accounts",
-		NextMaxIDValue:   nextMax,
-		PrevMinIDValue:   prevMin,
-		Limit:            request.Limit,
-		ExtraQueryParams: extraQueryParams,
-	})
+	return paging.PackageResponse(paging.ResponseParams{
+		Items: items,
+		Path:  "/api/v1/admin/accounts",
+		Next:  page.Next(loID, hiID),
+		Prev:  page.Prev(loID, hiID),
+		Query: queryParams,
+	}), nil
 }
 
 func packageAccountsV2(
 	items []interface{},
-	nextMax string,
-	prevMin string,
+	loID, hiID string,
 	request *apimodel.AdminGetAccountsRequest,
+	page *paging.Page,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
-	extraQueryParams := []string{}
+	queryParams := make(url.Values, 9)
 
 	if v := request.Origin; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminOriginKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminOriginKey, v)
 	}
 
 	if v := request.Status; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminStatusKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminStatusKey, v)
 	}
 
 	if v := request.Permissions; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminPermissionsKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminPermissionsKey, v)
 	}
 
 	if v := request.InvitedBy; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminInvitedByKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminInvitedByKey, v)
 	}
 
 	if v := request.Username; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.UsernameKey+"="+v,
-		)
+		queryParams.Add(apiutil.UsernameKey, v)
 	}
 
 	if v := request.DisplayName; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminDisplayNameKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminDisplayNameKey, v)
 	}
 
 	if v := request.ByDomain; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminByDomainKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminByDomainKey, v)
 	}
 
 	if v := request.Email; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminEmailKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminEmailKey, v)
 	}
 
 	if v := request.IP; v != "" {
-		extraQueryParams = append(
-			extraQueryParams,
-			apiutil.AdminIPKey+"="+v,
-		)
+		queryParams.Add(apiutil.AdminIPKey, v)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:            items,
-		Path:             "/api/v2/admin/accounts",
-		NextMaxIDValue:   nextMax,
-		PrevMinIDValue:   prevMin,
-		Limit:            request.Limit,
-		ExtraQueryParams: extraQueryParams,
-	})
+	return paging.PackageResponse(paging.ResponseParams{
+		Items: items,
+		Path:  "/api/v2/admin/accounts",
+		Next:  page.Next(loID, hiID),
+		Prev:  page.Prev(loID, hiID),
+		Query: queryParams,
+	}), nil
 }

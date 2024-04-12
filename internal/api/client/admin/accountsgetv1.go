@@ -174,6 +174,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 func (m *Module) AccountsGETV1Handler(c *gin.Context) {
@@ -199,7 +200,7 @@ func (m *Module) AccountsGETV1Handler(c *gin.Context) {
 		return
 	}
 
-	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 100, 200, 1)
+	page, errWithCode := paging.ParseIDPage(c, 1, 200, 100)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -326,14 +327,14 @@ func (m *Module) AccountsGETV1Handler(c *gin.Context) {
 		ByDomain:    c.Query(apiutil.AdminByDomainKey),
 		Email:       c.Query(apiutil.AdminEmailKey),
 		IP:          c.Query(apiutil.AdminIPKey),
-		MaxID:       apiutil.ParseMaxID(c.Query(apiutil.MaxIDKey), ""),
-		SinceID:     apiutil.ParseSinceID(c.Query(apiutil.SinceIDKey), ""),
-		MinID:       apiutil.ParseMinID(c.Query(apiutil.MinIDKey), ""),
-		Limit:       limit,
 		APIVersion:  1,
 	}
 
-	resp, errWithCode := m.processor.Admin().AccountsGet(c.Request.Context(), params)
+	resp, errWithCode := m.processor.Admin().AccountsGet(
+		c.Request.Context(),
+		params,
+		page,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
