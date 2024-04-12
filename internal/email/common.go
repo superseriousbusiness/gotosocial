@@ -105,6 +105,9 @@ func assembleMessage(mailSubject string, mailBody string, mailFrom string, mailT
 	}
 	msg.WriteString("From: " + mailFrom + CRLF)
 	msg.WriteString("Subject: " + mailSubject + CRLF)
+	msg.WriteString("MIME-Version: 1.0" + CRLF)
+	msg.WriteString("Content-Transfer-Encoding: 8bit" + CRLF)
+	msg.WriteString("Content-Type: text/plain; charset=\"UTF-8\"" + CRLF)
 	msg.WriteString(CRLF)
 	msg.WriteString(mailBody)
 	msg.WriteString(CRLF)
