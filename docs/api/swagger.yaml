@@ -3885,6 +3885,86 @@ paths:
             summary: Perform an admin action on an account.
             tags:
                 - admin
+    /api/v1/admin/accounts/{id}/approve:
+        post:
+            operationId: adminAccountApprove
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-approved account.
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Approve pending account.
+            tags:
+                - admin
+    /api/v1/admin/accounts/{id}/reject:
+        post:
+            operationId: adminAccountReject
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Comment to leave on why the account was denied. The comment will be visible to admins only.
+                  in: formData
+                  name: private_comment
+                  type: string
+                - description: Message to include in email to applicant. Will be included only if send_email is true.
+                  in: formData
+                  name: message
+                  type: string
+                - description: Send an email to the applicant informing them that their sign-up has been rejected.
+                  in: formData
+                  name: send_email
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-rejected account.
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Reject pending account.
+            tags:
+                - admin
     /api/v1/admin/custom_emojis:
         get:
             description: |-
