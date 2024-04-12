@@ -17,14 +17,11 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-Hello {{.Username}}!
+Hello!
 
-You recently reported the account @{{ .ReportTargetUsername }}{{ if .ReportTargetDomain }}@{{ .ReportTargetDomain }}{{ end }} to the moderator(s) of {{ .InstanceName }} ({{ .InstanceURL }}).
+You are receiving this mail because your request for an account on {{ .InstanceName }} has been rejected by a moderator.
 
-The report you submitted has now been closed.
-
-{{ if .ActionTakenComment }}The moderator who closed the report left the following comment: {{ .ActionTakenComment }}
-{{- else }}The moderator who closed the report did not leave a comment.{{ end }}
+{{ if .Message }}The moderator who handled the sign-up included the following message regarding this rejection: "{{- .Message -}}"{{ end }}
 
 ---
 

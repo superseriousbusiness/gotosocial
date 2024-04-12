@@ -72,6 +72,14 @@ func (s *noopSender) SendNewSignupEmail(toAddresses []string, data NewSignupData
 	return s.sendTemplate(newSignupTemplate, newSignupSubject, data, toAddresses...)
 }
 
+func (s *noopSender) SendSignupApprovedEmail(toAddress string, data SignupApprovedData) error {
+	return s.sendTemplate(signupApprovedTemplate, signupApprovedSubject, data, toAddress)
+}
+
+func (s *noopSender) SendSignupRejectedEmail(toAddress string, data SignupRejectedData) error {
+	return s.sendTemplate(signupRejectedTemplate, signupRejectedSubject, data, toAddress)
+}
+
 func (s *noopSender) sendTemplate(template string, subject string, data any, toAddresses ...string) error {
 	buf := &bytes.Buffer{}
 	if err := s.template.ExecuteTemplate(buf, template, data); err != nil {

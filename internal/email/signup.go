@@ -40,3 +40,39 @@ type NewSignupData struct {
 func (s *sender) SendNewSignupEmail(toAddresses []string, data NewSignupData) error {
 	return s.sendTemplate(newSignupTemplate, newSignupSubject, data, toAddresses...)
 }
+
+var (
+	signupApprovedTemplate = "email_signup_approved.tmpl"
+	signupApprovedSubject  = "GoToSocial Sign-Up Approved"
+)
+
+type SignupApprovedData struct {
+	// Username to be addressed.
+	Username string
+	// URL of the instance to present to the receiver.
+	InstanceURL string
+	// Name of the instance to present to the receiver.
+	InstanceName string
+}
+
+func (s *sender) SendSignupApprovedEmail(toAddress string, data SignupApprovedData) error {
+	return s.sendTemplate(signupApprovedTemplate, signupApprovedSubject, data, toAddress)
+}
+
+var (
+	signupRejectedTemplate = "email_signup_rejected.tmpl"
+	signupRejectedSubject  = "GoToSocial Sign-Up Rejected"
+)
+
+type SignupRejectedData struct {
+	// Message to the rejected applicant.
+	Message string
+	// URL of the instance to present to the receiver.
+	InstanceURL string
+	// Name of the instance to present to the receiver.
+	InstanceName string
+}
+
+func (s *sender) SendSignupRejectedEmail(toAddress string, data SignupRejectedData) error {
+	return s.sendTemplate(signupRejectedTemplate, signupRejectedSubject, data, toAddress)
+}

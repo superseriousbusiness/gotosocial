@@ -17,14 +17,17 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-Hello {{.Username}}!
+Hello {{ .Username -}}!
 
-You recently reported the account @{{ .ReportTargetUsername }}{{ if .ReportTargetDomain }}@{{ .ReportTargetDomain }}{{ end }} to the moderator(s) of {{ .InstanceName }} ({{ .InstanceURL }}).
+You are receiving this mail because your request for an account on {{ .InstanceName }} has been approved by a moderator. Welcome!
 
-The report you submitted has now been closed.
+If you have already confirmed your email address, you can now log in to your new account using a client application of your choice.
 
-{{ if .ActionTakenComment }}The moderator who closed the report left the following comment: {{ .ActionTakenComment }}
-{{- else }}The moderator who closed the report did not leave a comment.{{ end }}
+Some client applications known to work with GoToSocial are listed here: {{ .InstanceURL -}}#apps.
+
+If you have not yet confirmed your email address, you will not be able to log in until you have done so.
+
+Please check your inbox for the relevant email containing the confirmation link.
 
 ---
 

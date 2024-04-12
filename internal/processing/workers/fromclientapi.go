@@ -141,6 +141,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// ACCEPT FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.AcceptFollow(ctx, cMsg)
+
+		// ACCEPT PROFILE/ACCOUNT (sign-up)
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.AcceptAccount(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -150,6 +154,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// REJECT FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.RejectFollowRequest(ctx, cMsg)
+
+		// REJECT PROFILE/ACCOUNT (sign-up)
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.RejectAccount(ctx, cMsg)
 		}
 
 	// UNDO SOMETHING
@@ -681,6 +689,40 @@ func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI
 		"succeeded_at",
 	); err != nil {
 		return gtserror.Newf("error marking move as successful: %w", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) AcceptAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
+	}
+
+	// Send "your sign-up has been approved" email to the new user.
+	if err := p.surface.emailUserSignupApproved(ctx, newUser); err != nil {
+		log.Errorf(ctx, "error emailing: %v", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) RejectAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	denied, ok := cMsg.GTSModel.(*gtsmodel.DeniedUser)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.DeniedUser", cMsg.GTSModel)
+	}
+
+	if !*denied.SendEmail {
+		// No need to send an
+		// email. Nothing to do.
+		return nil
+	}
+
+	// Send "your sign-up has been rejected" email to the denied user.
+	if err := p.surface.emailUserSignupRejected(ctx, denied); err != nil {
+		log.Errorf(ctx, "error emailing: %v", err)
 	}
 
 	return nil
