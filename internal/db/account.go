@@ -19,7 +19,7 @@ package db
 
 import (
 	"context"
-	"net"
+	"net/netip"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -70,7 +70,7 @@ type Account interface {
 		displayName string,
 		domain string,
 		email string,
-		ip net.IP,
+		ip netip.Addr,
 		page *paging.Page,
 	) (
 		[]*gtsmodel.Account,

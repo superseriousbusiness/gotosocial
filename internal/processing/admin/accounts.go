@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 	"net/url"
 	"slices"
 
@@ -68,11 +68,13 @@ func (p *Processor) AccountsGet(
 		}
 	}
 
-	var ip net.IP
+	// Validate/parse IP.
+	var ip netip.Addr
 	if v := request.IP; v != "" {
-		ip = net.ParseIP(v)
-		if ip == nil {
-			err := fmt.Errorf("ip %s not a valid IP address", v)
+		var err error
+		ip, err = netip.ParseAddr(request.IP)
+		if err != nil {
+			err := fmt.Errorf("invalid ip provided: %w", err)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 	}

@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 	"slices"
 	"strings"
 	"time"
@@ -262,7 +262,7 @@ func (a *accountDB) GetAccounts(
 	displayName string,
 	domain string,
 	email string,
-	ip net.IP,
+	ip netip.Addr,
 	page *paging.Page,
 ) (
 	[]*gtsmodel.Account,
@@ -423,7 +423,8 @@ func (a *accountDB) GetAccounts(
 		useAccountIDIn = true
 	}
 
-	if ip != nil {
+	// Use ip if not zero value.
+	if ip.IsValid() {
 		if err := lazyLoadUsers(); err != nil {
 			return nil, err
 		}

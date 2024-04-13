@@ -23,7 +23,7 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"net"
+	"net/netip"
 	"reflect"
 	"strings"
 	"testing"
@@ -495,16 +495,16 @@ func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {
 
 func (suite *AccountTestSuite) TestGetAccountsAll() {
 	var (
-		ctx                      = context.Background()
-		origin                   = ""
-		status                   = ""
-		mods                     = false
-		invitedBy                = ""
-		username                 = ""
-		displayName              = ""
-		domain                   = ""
-		email                    = ""
-		ip          net.IP       = nil
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
 		page        *paging.Page = nil
 	)
 
@@ -530,17 +530,17 @@ func (suite *AccountTestSuite) TestGetAccountsAll() {
 
 func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
 	var (
-		ctx                = context.Background()
-		origin             = ""
-		status             = ""
-		mods               = true
-		invitedBy          = ""
-		username           = ""
-		displayName        = ""
-		domain             = ""
-		email              = ""
-		ip          net.IP = nil
-		page               = &paging.Page{
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = true
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
+		page        = &paging.Page{
 			Limit: 100,
 		}
 	)
@@ -567,17 +567,54 @@ func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
 
 func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
 	var (
-		ctx                = context.Background()
-		origin             = "local"
-		status             = ""
-		mods               = false
-		invitedBy          = ""
-		username           = ""
-		displayName        = ""
-		domain             = ""
-		email              = "tortle.dude@example.org"
-		ip          net.IP = nil
-		page               = &paging.Page{
+		ctx         = context.Background()
+		origin      = "local"
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = "tortle.dude@example.org"
+		ip          netip.Addr
+		page        = &paging.Page{
+			Limit: 100,
+		}
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsWithIP() {
+	var (
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          = netip.MustParseAddr("199.222.111.89")
+		page        = &paging.Page{
 			Limit: 100,
 		}
 	)
@@ -604,17 +641,17 @@ func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
 
 func (suite *AccountTestSuite) TestGetPendingAccounts() {
 	var (
-		ctx                = context.Background()
-		origin             = ""
-		status             = "pending"
-		mods               = false
-		invitedBy          = ""
-		username           = ""
-		displayName        = ""
-		domain             = ""
-		email              = ""
-		ip          net.IP = nil
-		page               = &paging.Page{
+		ctx         = context.Background()
+		origin      = ""
+		status      = "pending"
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
+		page        = &paging.Page{
 			Limit: 100,
 		}
 	)
