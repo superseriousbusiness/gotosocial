@@ -60,22 +60,48 @@ func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Ac
 }
 
 func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error) {
-	accounts := make([]*gtsmodel.Account, 0, len(ids))
+	// Load all input account IDs via cache loader callback.
+	accounts, err := a.state.Caches.GTS.Account.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Account, error) {
+			// Preallocate expected length of uncached accounts.
+			accounts := make([]*gtsmodel.Account, 0, len(uncached))
 
-	for _, id := range ids {
-		// Attempt to fetch account from DB.
-		account, err := a.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			id,
-		)
-		if err != nil {
-			log.Errorf(ctx, "error getting account %q: %v", id, err)
-			continue
-		}
+			// Perform database query scanning
+			// the remaining (uncached) account IDs.
+			if err := a.db.NewSelect().
+				Model(&accounts).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		// Append account to return slice.
-		accounts = append(accounts, account)
+			return accounts, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	// Reorder the statuses by their
+	// IDs to ensure in correct order.
+	getID := func(a *gtsmodel.Account) string { return a.ID }
+	util.OrderBy(accounts, ids, getID)
+
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return accounts, nil
+	}
+
+	// Populate all loaded accounts, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	accounts = slices.DeleteFunc(accounts, func(account *gtsmodel.Account) bool {
+		if err := a.PopulateAccount(ctx, account); err != nil {
+			log.Errorf(ctx, "error populating account %s: %v", account.ID, err)
+			return true
+		}
+		return false
+	})
 
 	return accounts, nil
 }
