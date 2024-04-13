@@ -17,38 +17,24 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Link } = require("wouter");
+import React from "react";
+import { useSearchAccountsQuery } from "../../../lib/query";
+import { AccountList } from "../../../components/account-list";
 
-module.exports = function Username({ user, link = true }) {
-	let className = "user";
-	let isLocal = user.domain == null;
-
-	if (user.suspended) {
-		className += " suspended";
-	}
-
-	if (isLocal) {
-		className += " local";
-	}
-
-	let icon = isLocal
-		? { fa: "fa-home", info: "Local user" }
-		: { fa: "fa-external-link-square", info: "Remote user" };
-
-	let Element = "div";
-	let href = null;
-
-	if (link) {
-		Element = Link;
-		href = `/settings/admin/accounts/${user.id}`;
-	}
+export default function AccountsPending() {
+	const searchRes = useSearchAccountsQuery({status: "pending"});
 
 	return (
-		<Element className={className} to={href}>
-			<span className="acct">@{user.account.acct}</span>
-			<i className={`fa fa-fw ${icon.fa}`} aria-hidden="true" title={icon.info} />
-			<span className="sr-only">{icon.info}</span>
-		</Element>
+		<div className="accounts-view">
+			<h1>Pending Accounts</h1>
+			<AccountList
+				isLoading={searchRes.isLoading}
+				isSuccess={searchRes.isSuccess}
+				data={searchRes.data}
+				isError={searchRes.isError}
+				error={searchRes.error}
+				emptyMessage="No pending account sign-ups."
+			/>
+		</div>
 	);
-};
+}

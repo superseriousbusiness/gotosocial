@@ -17,19 +17,19 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-const query = require("../../../lib/query");
+import { useInstanceKeysExpireMutation } from "../../../lib/query";
 
-const { useTextInput } = require("../../../lib/form");
-const { TextInput } = require("../../../components/form/inputs");
+import { useTextInput } from "../../../lib/form";
+import { TextInput } from "../../../components/form/inputs";
 
-const MutationButton = require("../../../components/form/mutation-button");
+import MutationButton from "../../../components/form/mutation-button";
 
-module.exports = function ExpireRemote({}) {
+export default function ExpireRemote({}) {
 	const domainField = useTextInput("domain");
 
-	const [expire, expireResult] = query.useInstanceKeysExpireMutation();
+	const [expire, expireResult] = useInstanceKeysExpireMutation();
 
 	function submitExpire(e) {
 		e.preventDefault();
@@ -53,7 +53,11 @@ module.exports = function ExpireRemote({}) {
 				type="string"
 				placeholder="example.org"
 			/>
-			<MutationButton label="Expire keys" result={expireResult} />
+			<MutationButton
+				disabled={false}
+				label="Expire keys"
+				result={expireResult}
+			/>
 		</form>
 	);
-};
+}

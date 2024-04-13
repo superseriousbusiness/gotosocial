@@ -17,19 +17,19 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-const query = require("../../../lib/query");
+import { useMediaCleanupMutation } from "../../../lib/query";
 
-const { useTextInput } = require("../../../lib/form");
-const { TextInput } = require("../../../components/form/inputs");
+import { useTextInput } from "../../../lib/form";
+import { TextInput } from "../../../components/form/inputs";
 
-const MutationButton = require("../../../components/form/mutation-button");
+import MutationButton from "../../../components/form/mutation-button";
 
-module.exports = function Cleanup({}) {
-	const daysField = useTextInput("days", { defaultValue: 30 });
+export default function Cleanup({}) {
+	const daysField = useTextInput("days", { defaultValue: "30" });
 
-	const [mediaCleanup, mediaCleanupResult] = query.useMediaCleanupMutation();
+	const [mediaCleanup, mediaCleanupResult] = useMediaCleanupMutation();
 
 	function submitCleanup(e) {
 		e.preventDefault();
@@ -51,7 +51,11 @@ module.exports = function Cleanup({}) {
 				min="0"
 				placeholder="30"
 			/>
-			<MutationButton label="Remove old media" result={mediaCleanupResult} />
+			<MutationButton
+				disabled={false}
+				label="Remove old media"
+				result={mediaCleanupResult}
+			/>
 		</form>
 	);
-};
+}

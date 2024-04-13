@@ -130,10 +130,11 @@ main {
 		}
 	}
 
-	&:disabled {
+	&:disabled,
+	&.disabled {
 		color: $white2;
 		background: $gray2;
-		cursor: auto;
+		cursor: not-allowed;
 
 		&:hover {
 			background: $gray3;

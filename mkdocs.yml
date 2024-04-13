@@ -115,6 +115,7 @@ nav:
 
   - "Admin":
       - "admin/settings.md"
+      - "admin/signups.md"
       - "admin/federation_modes.md"
       - "admin/domain_blocks.md"
       - "admin/cli.md"

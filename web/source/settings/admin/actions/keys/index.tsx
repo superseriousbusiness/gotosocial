@@ -17,38 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
+import ExpireRemote from "./expireremote";
 
-const ParseFromToot = require("./parse-from-toot");
-
-const Loading = require("../../../components/loading");
-const { Error } = require("../../../components/error");
-const { useListEmojiQuery } = require("../../../lib/query/admin/custom-emoji");
-
-module.exports = function RemoteEmoji() {
-	// local emoji are queried for shortcode collision detection
-	const {
-		data: emoji = [],
-		isLoading,
-		error
-	} = useListEmojiQuery({ filter: "domain:local" });
-
-	const emojiCodes = React.useMemo(() => {
-		return new Set(emoji.map((e) => e.shortcode));
-	}, [emoji]);
-
+export default function Keys() {
 	return (
 		<>
-			<h1>Custom Emoji (remote)</h1>
-			{error &&
-				<Error error={error} />
-			}
-			{isLoading
-				? <Loading />
-				: <>
-					<ParseFromToot emoji={emoji} emojiCodes={emojiCodes} />
-				</>
-			}
+			<h1>Key Actions</h1>
+			<ExpireRemote />
 		</>
 	);
-};
+}

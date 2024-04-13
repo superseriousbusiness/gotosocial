@@ -54,4 +54,10 @@ type User interface {
 
 	// DeleteUserByID deletes one user by its ID.
 	DeleteUserByID(ctx context.Context, userID string) error
+
+	// PutDeniedUser inserts the given deniedUser into the db.
+	PutDeniedUser(ctx context.Context, deniedUser *gtsmodel.DeniedUser) error
+
+	// GetDeniedUserByID returns one denied user with the given ID.
+	GetDeniedUserByID(ctx context.Context, id string) (*gtsmodel.DeniedUser, error)
 }

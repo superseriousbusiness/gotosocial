@@ -3680,6 +3680,166 @@ paths:
             summary: Verify a token by returning account details pertaining to it.
             tags:
                 - accounts
+    /api/v1/admin/accounts:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/accounts?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/accounts?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: adminAccountsGetV1
+            parameters:
+                - default: false
+                  description: Filter for local accounts.
+                  in: query
+                  name: local
+                  type: boolean
+                - default: false
+                  description: Filter for remote accounts.
+                  in: query
+                  name: remote
+                  type: boolean
+                - default: false
+                  description: Filter for currently active accounts.
+                  in: query
+                  name: active
+                  type: boolean
+                - default: false
+                  description: Filter for currently pending accounts.
+                  in: query
+                  name: pending
+                  type: boolean
+                - default: false
+                  description: Filter for currently disabled accounts.
+                  in: query
+                  name: disabled
+                  type: boolean
+                - default: false
+                  description: Filter for currently silenced accounts.
+                  in: query
+                  name: silenced
+                  type: boolean
+                - default: false
+                  description: Filter for currently suspended accounts.
+                  in: query
+                  name: suspended
+                  type: boolean
+                - default: false
+                  description: Filter for accounts force-marked as sensitive.
+                  in: query
+                  name: sensitized
+                  type: boolean
+                - description: Search for the given username.
+                  in: query
+                  name: username
+                  type: string
+                - description: Search for the given display name.
+                  in: query
+                  name: display_name
+                  type: string
+                - description: Filter by the given domain.
+                  in: query
+                  name: by_domain
+                  type: string
+                - description: Lookup a user with this email.
+                  in: query
+                  name: email
+                  type: string
+                - description: Lookup users with this IP address.
+                  in: query
+                  name: ip
+                  type: string
+                - default: false
+                  description: Filter for staff accounts.
+                  in: query
+                  name: staff
+                  type: boolean
+                - description: All results returned will be older than the item with this ID.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: All results returned will be newer than the item with this ID.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Returns results immediately newer than the item with this ID.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 100
+                  description: Maximum number of results to return.
+                  in: query
+                  maximum: 200
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminAccountInfo'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View + page through known accounts according to given filters.
+            tags:
+                - admin
+    /api/v1/admin/accounts/{id}:
+        get:
+            operationId: adminAccountGet
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View one account.
+            tags:
+                - admin
     /api/v1/admin/accounts/{id}/action:
         post:
             consumes:
@@ -3723,6 +3883,86 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Perform an admin action on an account.
+            tags:
+                - admin
+    /api/v1/admin/accounts/{id}/approve:
+        post:
+            operationId: adminAccountApprove
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-approved account.
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Approve pending account.
+            tags:
+                - admin
+    /api/v1/admin/accounts/{id}/reject:
+        post:
+            operationId: adminAccountReject
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Comment to leave on why the account was denied. The comment will be visible to admins only.
+                  in: formData
+                  name: private_comment
+                  type: string
+                - description: Message to include in email to applicant. Will be included only if send_email is true.
+                  in: formData
+                  name: message
+                  type: string
+                - description: Send an email to the applicant informing them that their sign-up has been rejected.
+                  in: formData
+                  name: send_email
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-rejected account.
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Reject pending account.
             tags:
                 - admin
     /api/v1/admin/custom_emojis:
@@ -7934,6 +8174,109 @@ paths:
             summary: Change the password of authenticated user.
             tags:
                 - user
+    /api/v2/admin/accounts:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v2/admin/accounts?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v2/admin/accounts?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: adminAccountsGetV2
+            parameters:
+                - description: Filter for `local` or `remote` accounts.
+                  in: query
+                  name: origin
+                  type: string
+                - description: Filter for `active`, `pending`, `disabled`, `silenced`, or `suspended` accounts.
+                  in: query
+                  name: status
+                  type: string
+                - description: Filter for accounts with staff permissions (users that can manage reports).
+                  in: query
+                  name: permissions
+                  type: string
+                - description: Filter for users with these roles.
+                  in: query
+                  items:
+                    type: string
+                  name: role_ids[]
+                  type: array
+                - description: Lookup users invited by the account with this ID.
+                  in: query
+                  name: invited_by
+                  type: string
+                - description: Search for the given username.
+                  in: query
+                  name: username
+                  type: string
+                - description: Search for the given display name.
+                  in: query
+                  name: display_name
+                  type: string
+                - description: Filter by the given domain.
+                  in: query
+                  name: by_domain
+                  type: string
+                - description: Lookup a user with this email.
+                  in: query
+                  name: email
+                  type: string
+                - description: Lookup users with this IP address.
+                  in: query
+                  name: ip
+                  type: string
+                - description: All results returned will be older than the item with this ID.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: All results returned will be newer than the item with this ID.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Returns results immediately newer than the item with this ID.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 100
+                  description: Maximum number of results to return.
+                  in: query
+                  maximum: 200
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminAccountInfo'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View + page through known accounts according to given filters.
+            tags:
+                - admin
     /api/v2/instance:
         get:
             operationId: instanceGetV2

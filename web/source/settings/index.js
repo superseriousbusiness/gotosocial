@@ -34,10 +34,22 @@ const UserProfile = require("./user/profile").default;
 const UserSettings = require("./user/settings").default;
 const UserMigration = require("./user/migration").default;
 
+const Reports = require("./admin/reports").default;
+
+const Accounts = require("./admin/accounts").default;
+const AccountsPending = require("./admin/accounts/pending").default;
+
 const DomainPerms = require("./admin/domain-permissions").default;
 const DomainPermsImportExport = require("./admin/domain-permissions/import-export").default;
 
+const AdminMedia = require("./admin/actions/media").default;
+const AdminKeys =  require("./admin/actions/keys").default;
+
+const LocalEmoji = require("./admin/emoji/local").default;
+const RemoteEmoji = require("./admin/emoji/remote").default;
+
 const InstanceSettings = require("./admin/settings").default;
+const InstanceRules = require("./admin/settings/rules").default;
 
 require("./style.css");
 
@@ -51,8 +63,11 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		url: "admin",
 		permissions: ["admin"]
 	}, [
-		Item("Reports", { icon: "fa-flag", wildcard: true }, require("./admin/reports")),
-		Item("Accounts", { icon: "fa-users", wildcard: true }, require("./admin/accounts")),
+		Item("Reports", { icon: "fa-flag", wildcard: true }, Reports),
+		Item("Accounts", { icon: "fa-users", wildcard: true }, [
+			Item("Overview", { icon: "fa-list", url: "", wildcard: true }, Accounts),
+			Item("Pending", { icon: "fa-question", url: "pending", wildcard: true }, AccountsPending),
+		]),
 		Menu("Domain Permissions", { icon: "fa-hubzilla" }, [
 			Item("Blocks", { icon: "fa-close", url: "block", wildcard: true }, DomainPerms),
 			Item("Allows", { icon: "fa-check", url: "allow", wildcard: true }, DomainPerms),
@@ -65,16 +80,16 @@ const { Sidebar, ViewRouter } = createNavigation("/settings", [
 		permissions: ["admin"]
 	}, [
 		Menu("Actions", { icon: "fa-bolt" }, [
-			Item("Media", { icon: "fa-photo" }, require("./admin/actions/media")),
-			Item("Keys", { icon: "fa-key-modern" }, require("./admin/actions/keys")),
+			Item("Media", { icon: "fa-photo" }, AdminMedia),
+			Item("Keys", { icon: "fa-key-modern" }, AdminKeys),
 		]),
 		Menu("Custom Emoji", { icon: "fa-smile-o" }, [
-			Item("Local", { icon: "fa-home", wildcard: true }, require("./admin/emoji/local")),
-			Item("Remote", { icon: "fa-cloud" }, require("./admin/emoji/remote"))
+			Item("Local", { icon: "fa-home", wildcard: true }, LocalEmoji),
+			Item("Remote", { icon: "fa-cloud" }, RemoteEmoji),
 		]),
 		Menu("Settings", { icon: "fa-sliders" }, [
 			Item("Settings", { icon: "fa-sliders", url: "" }, InstanceSettings),
-			Item("Rules", { icon: "fa-dot-circle-o", wildcard: true }, require("./admin/settings/rules"))
+			Item("Rules", { icon: "fa-dot-circle-o", wildcard: true }, InstanceRules),
 		]),
 	])
 ]);

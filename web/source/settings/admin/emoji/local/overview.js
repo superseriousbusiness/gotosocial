@@ -22,7 +22,7 @@ const { Link } = require("wouter");
 const syncpipe = require("syncpipe");
 const { matchSorter } = require("match-sorter");
 
-const NewEmojiForm = require("./new-emoji");
+const NewEmojiForm = require("./new-emoji").default;
 const { useTextInput } = require("../../../lib/form");
 
 const { useEmojiByCategory } = require("../category-select");

@@ -17,17 +17,17 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Link, Switch, Route } = require("wouter");
+import React from "react";
+import { Link, Switch, Route } from "wouter";
 
-const FormWithData = require("../../lib/form/form-with-data").default;
+import FormWithData from "../../lib/form/form-with-data";
 
-const ReportDetail = require("./detail");
-const Username = require("./username");
-const { useBaseUrl } = require("../../lib/navigation/util");
-const { useListReportsQuery } = require("../../lib/query/admin/reports");
+import ReportDetail from "./detail";
+import Username from "./username";
+import { useBaseUrl } from "../../lib/navigation/util";
+import { useListReportsQuery } from "../../lib/query/admin/reports";
 
-module.exports = function Reports({ baseUrl }) {
+export default function Reports({ baseUrl }) {
 	return (
 		<div className="reports">
 			<Switch>
@@ -38,7 +38,7 @@ module.exports = function Reports({ baseUrl }) {
 			</Switch>
 		</div>
 	);
-};
+}
 
 function ReportOverview({ }) {
 	return (

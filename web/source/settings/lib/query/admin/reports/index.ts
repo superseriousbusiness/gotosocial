@@ -36,7 +36,7 @@ const extended = gtsApi.injectEndpoints({
 					...params
 				}
 			}),
-			providesTags: ["Reports"]
+			providesTags: [{ type: "Reports", id: "LIST" }]
 		}),
 
 		getReport: build.query<AdminReport, string>({

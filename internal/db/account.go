@@ -19,9 +19,11 @@ package db
 
 import (
 	"context"
+	"net/netip"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Account contains functions related to account getting/setting/creation.
@@ -55,6 +57,25 @@ type Account interface {
 
 	// GetAccountByFollowersURI returns one account with the given followers_uri, or an error if something goes wrong.
 	GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
+
+	// GetAccounts returns accounts
+	// with the given parameters.
+	GetAccounts(
+		ctx context.Context,
+		origin string,
+		status string,
+		mods bool,
+		invitedBy string,
+		username string,
+		displayName string,
+		domain string,
+		email string,
+		ip netip.Addr,
+		page *paging.Page,
+	) (
+		[]*gtsmodel.Account,
+		error,
+	)
 
 	// PopulateAccount ensures that all sub-models of an account are populated (e.g. avatar, header etc).
 	PopulateAccount(ctx context.Context, account *gtsmodel.Account) error

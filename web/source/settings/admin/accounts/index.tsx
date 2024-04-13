@@ -17,19 +17,33 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Switch, Route } = require("wouter");
+import React from "react";
+import { Switch, Route } from "wouter";
 
-const EmojiOverview = require("./overview");
-const EmojiDetail = require("./detail");
+import AccountDetail from "./detail";
+import { AccountSearchForm } from "./search";
 
-module.exports = function CustomEmoji({ baseUrl }) {
+export default function Accounts({ baseUrl }) {
 	return (
 		<Switch>
-			<Route path={`${baseUrl}/:emojiId`}>
-				<EmojiDetail />
+			<Route path={`${baseUrl}/:accountId`}>
+				<AccountDetail />
 			</Route>
-			<EmojiOverview />
+			<AccountOverview />
 		</Switch>
 	);
-};
+}
+
+function AccountOverview({ }) {
+	return (
+		<div className="accounts-view">
+			<h1>Accounts Overview</h1>
+			<span>
+				You can perform actions on an account by clicking
+				its name in a report, or by searching for the account
+				using the form below and clicking on its name.
+			</span>
+			<AccountSearchForm />
+		</div>
+	);
+}

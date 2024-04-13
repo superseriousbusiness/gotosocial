@@ -17,29 +17,25 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { useRoute, Link, Redirect } = require("wouter");
+import React, { useEffect } from "react";
+import { useRoute, Link, Redirect } from "wouter";
 
-const { useComboBoxInput, useFileInput, useValue } = require("../../../lib/form");
-const { CategorySelect } = require("../category-select");
+import { useComboBoxInput, useFileInput, useValue } from "../../../lib/form";
+import { CategorySelect } from "../category-select";
 
-const useFormSubmit = require("../../../lib/form/submit").default;
-const { useBaseUrl } = require("../../../lib/navigation/util");
+import useFormSubmit from "../../../lib/form/submit";
+import { useBaseUrl } from "../../../lib/navigation/util";
 
-const FakeToot = require("../../../components/fake-toot");
-const FormWithData = require("../../../lib/form/form-with-data").default;
-const Loading = require("../../../components/loading");
-const { FileInput } = require("../../../components/form/inputs");
-const MutationButton = require("../../../components/form/mutation-button");
-const { Error } = require("../../../components/error");
+import FakeToot from "../../../components/fake-toot";
+import FormWithData from "../../../lib/form/form-with-data";
+import Loading from "../../../components/loading";
+import { FileInput } from "../../../components/form/inputs";
+import MutationButton from "../../../components/form/mutation-button";
+import { Error } from "../../../components/error";
 
-const {
-	useGetEmojiQuery,
-	useEditEmojiMutation,
-	useDeleteEmojiMutation,
-} = require("../../../lib/query/admin/custom-emoji");
+import { useGetEmojiQuery, useEditEmojiMutation, useDeleteEmojiMutation } from "../../../lib/query/admin/custom-emoji";
 
-module.exports = function EmojiDetailRoute({ }) {
+export default function EmojiDetailRoute({ }) {
 	const baseUrl = useBaseUrl();
 	let [_match, params] = useRoute(`${baseUrl}/:emojiId`);
 	if (params?.emojiId == undefined) {
@@ -52,7 +48,7 @@ module.exports = function EmojiDetailRoute({ }) {
 			</div>
 		);
 	}
-};
+}
 
 function EmojiDetailForm({ data: emoji }) {
 	const baseUrl = useBaseUrl();
@@ -68,7 +64,7 @@ function EmojiDetailForm({ data: emoji }) {
 	const [modifyEmoji, result] = useFormSubmit(form, useEditEmojiMutation());
 
 	// Automatic submitting of category change
-	React.useEffect(() => {
+	useEffect(() => {
 		if (
 			form.category.hasChanged() &&
 			!form.category.state.open &&

@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // clientAPI wraps processing functions
@@ -141,6 +142,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// ACCEPT FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.AcceptFollow(ctx, cMsg)
+
+		// ACCEPT PROFILE/ACCOUNT (sign-up)
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.AcceptAccount(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -150,6 +155,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// REJECT FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.RejectFollowRequest(ctx, cMsg)
+
+		// REJECT PROFILE/ACCOUNT (sign-up)
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.RejectAccount(ctx, cMsg)
 		}
 
 	// UNDO SOMETHING
@@ -681,6 +690,69 @@ func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI
 		"succeeded_at",
 	); err != nil {
 		return gtserror.Newf("error marking move as successful: %w", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) AcceptAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
+	}
+
+	// Mark user as approved + clear sign-up IP.
+	newUser.Approved = util.Ptr(true)
+	newUser.SignUpIP = nil
+	if err := p.state.DB.UpdateUser(ctx, newUser, "approved", "sign_up_ip"); err != nil {
+		// Error now means we should return without
+		// sending email + let admin try to approve again.
+		return gtserror.Newf("db error updating user %s: %w", newUser.ID, err)
+	}
+
+	// Send "your sign-up has been approved" email to the new user.
+	if err := p.surface.emailUserSignupApproved(ctx, newUser); err != nil {
+		log.Errorf(ctx, "error emailing: %v", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) RejectAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	deniedUser, ok := cMsg.GTSModel.(*gtsmodel.DeniedUser)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.DeniedUser", cMsg.GTSModel)
+	}
+
+	// Remove the account.
+	if err := p.state.DB.DeleteAccount(ctx, cMsg.TargetAccount.ID); err != nil {
+		log.Errorf(ctx,
+			"db error deleting account %s: %v",
+			cMsg.TargetAccount.ID, err,
+		)
+	}
+
+	// Remove the user.
+	if err := p.state.DB.DeleteUserByID(ctx, deniedUser.ID); err != nil {
+		log.Errorf(ctx,
+			"db error deleting user %s: %v",
+			deniedUser.ID, err,
+		)
+	}
+
+	// Store the deniedUser entry.
+	if err := p.state.DB.PutDeniedUser(ctx, deniedUser); err != nil {
+		log.Errorf(ctx,
+			"db error putting denied user %s: %v",
+			deniedUser.ID, err,
+		)
+	}
+
+	if *deniedUser.SendEmail {
+		// Send "your sign-up has been rejected" email to the denied user.
+		if err := p.surface.emailUserSignupRejected(ctx, deniedUser); err != nil {
+			log.Errorf(ctx, "error emailing: %v", err)
+		}
 	}
 
 	return nil

@@ -17,16 +17,16 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const RoleContext = React.createContext([]);
-const BaseUrlContext = React.createContext(null);
+import { createContext, useContext } from "react";
+const RoleContext = createContext([]);
+const BaseUrlContext = createContext<string>("");
 
 function urlSafe(str) {
 	return str.toLowerCase().replace(/[\s/]+/g, "-");
 }
 
 function useHasPermission(permissions) {
-	const roles = React.useContext(RoleContext);
+	const roles = useContext(RoleContext);
 	return checkPermission(permissions, roles);
 }
 
@@ -41,9 +41,14 @@ function checkPermission(requiredPermissisons, user) {
 }
 
 function useBaseUrl() {
-	return React.useContext(BaseUrlContext);
+	return useContext(BaseUrlContext);
 }
 
-module.exports = {
-	urlSafe, RoleContext, useHasPermission, checkPermission, BaseUrlContext, useBaseUrl
+export {
+	urlSafe,
+	RoleContext,
+	useHasPermission,
+	checkPermission,
+	BaseUrlContext,
+	useBaseUrl
 };

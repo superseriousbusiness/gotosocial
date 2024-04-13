@@ -17,31 +17,26 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React, { useMemo, useEffect } from "react";
 
-const {
-	useFileInput,
-	useComboBoxInput
-} = require("../../../lib/form");
-const useShortcode = require("./use-shortcode");
+import { useFileInput, useComboBoxInput } from "../../../lib/form";
+import useShortcode from "./use-shortcode";
 
-const useFormSubmit = require("../../../lib/form/submit").default;
+import useFormSubmit from "../../../lib/form/submit";
 
-const {
-	TextInput, FileInput
-} = require("../../../components/form/inputs");
+import { TextInput, FileInput } from "../../../components/form/inputs";
 
-const { CategorySelect } = require('../category-select');
-const FakeToot = require("../../../components/fake-toot");
-const MutationButton = require("../../../components/form/mutation-button");
-const { useAddEmojiMutation } = require("../../../lib/query/admin/custom-emoji");
-const { useInstanceV1Query } = require("../../../lib/query");
+import { CategorySelect } from '../category-select';
+import FakeToot from "../../../components/fake-toot";
+import MutationButton from "../../../components/form/mutation-button";
+import { useAddEmojiMutation } from "../../../lib/query/admin/custom-emoji";
+import { useInstanceV1Query } from "../../../lib/query";
 
-module.exports = function NewEmojiForm() {
+export default function NewEmojiForm() {
 	const shortcode = useShortcode();
 
 	const { data: instance } = useInstanceV1Query();
-	const emojiMaxSize = React.useMemo(() => {
+	const emojiMaxSize = useMemo(() => {
 		return instance?.configuration?.emojis?.emoji_size_limit ?? 50 * 1024;
 	}, [instance]);
 
@@ -56,8 +51,8 @@ module.exports = function NewEmojiForm() {
 		shortcode, image, category
 	}, useAddEmojiMutation());
 
-	React.useEffect(() => {
-		if (shortcode.value.length == 0) {
+	useEffect(() => {
+		if (shortcode.value === undefined || shortcode.value.length == 0) {
 			if (image.value != undefined) {
 				let [name, _ext] = image.value.name.split(".");
 				shortcode.setter(name);
@@ -71,7 +66,7 @@ module.exports = function NewEmojiForm() {
 		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [image.value]);
 
-	let emojiOrShortcode = `:${shortcode.value}:`;
+	let emojiOrShortcode;
 
 	if (image.previewValue != undefined) {
 		emojiOrShortcode = <img
@@ -80,6 +75,10 @@ module.exports = function NewEmojiForm() {
 			title={`:${shortcode.value}:`}
 			alt={shortcode.value}
 		/>;
+	} else if (shortcode.value !== undefined && shortcode.value.length > 0) {
+		emojiOrShortcode = `:${shortcode.value}:`;
+	} else {
+		emojiOrShortcode = `:your_emoji_here:`;
 	}
 
 	return (
@@ -103,10 +102,15 @@ module.exports = function NewEmojiForm() {
 
 				<CategorySelect
 					field={category}
+					children={[]}
 				/>
 
-				<MutationButton label="Upload emoji" result={result} />
+				<MutationButton
+					disabled={image.previewValue === undefined}
+					label="Upload emoji"
+					result={result}
+				/>
 			</form>
 		</div>
 	);
-};
+}

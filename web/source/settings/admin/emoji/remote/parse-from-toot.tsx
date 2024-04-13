@@ -17,36 +17,28 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React, { useCallback, useEffect } from "react";
 
-const {
-	useTextInput,
-	useComboBoxInput,
-	useCheckListInput
-} = require("../../../lib/form");
+import { useTextInput, useComboBoxInput, useCheckListInput } from "../../../lib/form";
 
-const useFormSubmit = require("../../../lib/form/submit").default;
+import useFormSubmit from "../../../lib/form/submit";
 
-const CheckList = require("../../../components/check-list").default;
-const { CategorySelect } = require('../category-select');
+import CheckList from "../../../components/check-list";
+import { CategorySelect } from '../category-select';
 
-const { TextInput } = require("../../../components/form/inputs");
-const MutationButton = require("../../../components/form/mutation-button");
-const { Error } = require("../../../components/error");
-const {
-	useSearchItemForEmojiMutation,
-	usePatchRemoteEmojisMutation
-} = require("../../../lib/query/admin/custom-emoji");
+import { TextInput } from "../../../components/form/inputs";
+import MutationButton from "../../../components/form/mutation-button";
+import { Error } from "../../../components/error";
+import { useSearchItemForEmojiMutation, usePatchRemoteEmojisMutation } from "../../../lib/query/admin/custom-emoji";
 
-module.exports = function ParseFromToot({ emojiCodes }) {
+export default function ParseFromToot({ emojiCodes }) {
 	const [searchStatus, result] = useSearchItemForEmojiMutation();
-
-	const [onURLChange, _resetURL, { url }] = useTextInput("url");
+	const urlField = useTextInput("url");
 
 	function submitSearch(e) {
 		e.preventDefault();
-		if (url.trim().length != 0) {
-			searchStatus(url);
+		if (urlField.value !== undefined && urlField.value.trim().length != 0) {
+			searchStatus(urlField.value);
 		}
 	}
 
@@ -63,8 +55,8 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 							type="text"
 							id="url"
 							name="url"
-							onChange={onURLChange}
-							value={url}
+							onChange={urlField.onChange}
+							value={urlField.value}
 						/>
 						<button disabled={result.isLoading}>
 							<i className={[
@@ -81,7 +73,7 @@ module.exports = function ParseFromToot({ emojiCodes }) {
 			<SearchResult result={result} localEmojiCodes={emojiCodes} />
 		</div>
 	);
-};
+}
 
 function SearchResult({ result, localEmojiCodes }) {
 	const { error, data, isSuccess, isError } = result;
@@ -106,7 +98,6 @@ function SearchResult({ result, localEmojiCodes }) {
 		<CopyEmojiForm
 			localEmojiCodes={localEmojiCodes}
 			type={data.type}
-			domain={data.domain}
 			emojiList={data.list}
 		/>
 	);
@@ -139,13 +130,16 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 	);
 
 	const buttonsInactive = form.selectedEmoji.someSelected
-		? {}
+		? {
+			disabled: false,
+			title: ""
+		}
 		: {
 			disabled: true,
 			title: "No emoji selected, cannot perform any actions"
 		};
 
-	const checkListExtraProps = React.useCallback(() => ({ localEmojiCodes }), [localEmojiCodes]);
+	const checkListExtraProps = useCallback(() => ({ localEmojiCodes }), [localEmojiCodes]);
 
 	return (
 		<div className="parsed">
@@ -153,17 +147,32 @@ function CopyEmojiForm({ localEmojiCodes, type, emojiList }) {
 			<form onSubmit={formSubmit}>
 				<CheckList
 					field={form.selectedEmoji}
+					header={<></>}
 					EntryComponent={EmojiEntry}
 					getExtraProps={checkListExtraProps}
 				/>
 
 				<CategorySelect
 					field={form.category}
+					children={[]}
 				/>
 
 				<div className="action-buttons row">
-					<MutationButton name="copy" label="Copy to local emoji" result={result} showError={false} {...buttonsInactive} />
-					<MutationButton name="disable" label="Disable" result={result} className="button danger" showError={false} {...buttonsInactive} />
+					<MutationButton
+						name="copy"
+						label="Copy to local emoji"
+						result={result}
+						showError={false}
+						{...buttonsInactive}
+					/>
+					<MutationButton
+						name="disable"
+						label="Disable"
+						result={result}
+						className="button danger"
+						showError={false}
+						{...buttonsInactive}
+					/>
 				</div>
 				{result.error && (
 					Array.isArray(result.error)
@@ -198,13 +207,13 @@ function EmojiEntry({ entry: emoji, onChange, extraProps: { localEmojiCodes } })
 		}
 	});
 
-	React.useEffect(() => {
+	useEffect(() => {
 		if (emoji.valid != shortcodeField.valid) {
 			onChange({ valid: shortcodeField.valid });
 		}
 	}, [onChange, emoji.valid, shortcodeField.valid]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		shortcodeField.validate();
 		// only need this update if it's the emoji.checked that updated, not shortcodeField
 		// eslint-disable-next-line react-hooks/exhaustive-deps

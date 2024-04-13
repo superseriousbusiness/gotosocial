@@ -230,3 +230,23 @@ func (u *userDB) DeleteUserByID(ctx context.Context, userID string) error {
 		Exec(ctx)
 	return err
 }
+
+func (u *userDB) PutDeniedUser(ctx context.Context, deniedUser *gtsmodel.DeniedUser) error {
+	_, err := u.db.NewInsert().
+		Model(deniedUser).
+		Exec(ctx)
+	return err
+}
+
+func (u *userDB) GetDeniedUserByID(ctx context.Context, id string) (*gtsmodel.DeniedUser, error) {
+	deniedUser := new(gtsmodel.DeniedUser)
+	if err := u.db.
+		NewSelect().
+		Model(deniedUser).
+		Where("? = ?", bun.Ident("denied_user.id"), id).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return deniedUser, nil
+}
