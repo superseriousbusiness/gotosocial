@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *Processor) AccountApprove(
@@ -47,14 +46,13 @@ func (p *Processor) AccountApprove(
 		return nil, gtserror.NewErrorNotFound(err, err.Error())
 	}
 
-	if !*user.Approved {
-		// Mark user as approved.
-		user.Approved = util.Ptr(true)
-		if err := p.state.DB.UpdateUser(ctx, user, "approved"); err != nil {
-			err := gtserror.Newf("db error updating user %s: %w", user.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	// Get a lock on the account URI,
+	// to ensure it's not also being
+	// rejected at the same time!
+	unlock := p.state.ClientLocks.Lock(user.Account.URI)
+	defer unlock()
 
+	if !*user.Approved {
 		// Process approval side effects asynschronously.
 		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
@@ -70,6 +68,12 @@ func (p *Processor) AccountApprove(
 		err := gtserror.Newf("error converting account %s to admin api model: %w", accountID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	// Optimistically set approved to true and
+	// clear sign-up IP to reflect state that
+	// will be produced by side effects.
+	apiAccount.Approved = true
+	apiAccount.IP = nil
 
 	return apiAccount, nil
 }

@@ -23,6 +23,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AdminRejectTestSuite struct {
@@ -51,13 +53,20 @@ func (suite *AdminRejectTestSuite) TestReject() {
 	if errWithCode != nil {
 		suite.FailNow(errWithCode.Error())
 	}
-
 	suite.NotNil(acct)
+	suite.False(acct.Approved)
 
-	// Should be a denied user entry now.
-	deniedUser, err := suite.state.DB.GetDeniedUserByID(ctx, targetUser.ID)
-	if err != nil {
-		suite.FailNow(err.Error())
+	// Wait for processor to
+	// handle side effects.
+	var (
+		deniedUser *gtsmodel.DeniedUser
+		err        error
+	)
+	if !testrig.WaitFor(func() bool {
+		deniedUser, err = suite.state.DB.GetDeniedUserByID(ctx, targetUser.ID)
+		return deniedUser != nil && err == nil
+	}) {
+		suite.FailNow("waiting for denied user")
 	}
 
 	// Ensure fields as expected.

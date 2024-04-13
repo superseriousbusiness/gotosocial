@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AdminApproveTestSuite struct {
@@ -53,13 +54,20 @@ func (suite *AdminApproveTestSuite) TestApprove() {
 	// Account should be approved.
 	suite.NotNil(acct)
 	suite.True(acct.Approved)
+	suite.Nil(acct.IP)
 
-	// Check DB entry too.
-	dbUser, err := suite.state.DB.GetUserByID(ctx, targetUser.ID)
-	if err != nil {
-		suite.FailNow(err.Error())
+	// Wait for processor to
+	// handle side effects.
+	var (
+		dbUser *gtsmodel.User
+		err    error
+	)
+	if !testrig.WaitFor(func() bool {
+		dbUser, err = suite.state.DB.GetUserByID(ctx, targetUser.ID)
+		return err == nil && dbUser != nil && *dbUser.Approved
+	}) {
+		suite.FailNow("waiting for approved user")
 	}
-	suite.True(*dbUser.Approved)
 }
 
 func TestAdminApproveTestSuite(t *testing.T) {

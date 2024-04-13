@@ -71,18 +71,12 @@ func (p *Processor) AccountReject(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Remove the account.
-	if err := p.state.DB.DeleteAccount(ctx, accountID); err != nil {
-		err := gtserror.Newf("db error deleting account %s: %w", accountID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	// Set approved to false on the API model, to
+	// reflect the changes that will occur
+	// asynchronously in the processor.
+	apiAccount.Approved = false
 
-	// Remove the user.
-	if err := p.state.DB.DeleteUserByID(ctx, user.ID); err != nil {
-		err := gtserror.Newf("db error deleting user %s: %w", user.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
+	// Ensure we an email address.
 	var email string
 	if user.Email != "" {
 		email = user.Email
@@ -90,7 +84,8 @@ func (p *Processor) AccountReject(
 		email = user.UnconfirmedEmail
 	}
 
-	// Create and store a denied user entry.
+	// Create a denied user entry for
+	// the worker to process + store.
 	deniedUser := &gtsmodel.DeniedUser{
 		ID:                     user.ID,
 		Email:                  email,
@@ -103,11 +98,6 @@ func (p *Processor) AccountReject(
 		PrivateComment:         privateComment,
 		SendEmail:              &sendEmail,
 		Message:                message,
-	}
-
-	if err := p.state.DB.PutDeniedUser(ctx, deniedUser); err != nil {
-		err := gtserror.Newf("db error putting denied user %s: %w", deniedUser.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Process rejection side effects asynschronously.
