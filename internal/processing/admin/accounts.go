@@ -33,6 +33,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
+var (
+	accountsValidOrigins     = []string{"local", "remote"}
+	accountsValidStatuses    = []string{"active", "pending", "disabled", "silenced", "suspended"}
+	accountsValidPermissions = []string{"staff"}
+)
+
 func (p *Processor) AccountsGet(
 	ctx context.Context,
 	request *apimodel.AdminGetAccountsRequest,
@@ -43,27 +49,33 @@ func (p *Processor) AccountsGet(
 ) {
 	// Validate "origin".
 	if v := request.Origin; v != "" {
-		valid := []string{"local", "remote"}
-		if !slices.Contains(valid, v) {
-			err := fmt.Errorf("origin %s not recognized; valid choices are %+v", v, valid)
+		if !slices.Contains(accountsValidOrigins, v) {
+			err := fmt.Errorf(
+				"origin %s not recognized; valid choices are %+v",
+				v, accountsValidOrigins,
+			)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 	}
 
 	// Validate "status".
 	if v := request.Status; v != "" {
-		valid := []string{"active", "pending", "disabled", "silenced", "suspended"}
-		if !slices.Contains(valid, v) {
-			err := fmt.Errorf("status %s not recognized; valid choices are %+v", v, valid)
+		if !slices.Contains(accountsValidStatuses, v) {
+			err := fmt.Errorf(
+				"status %s not recognized; valid choices are %+v",
+				v, accountsValidStatuses,
+			)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 	}
 
 	// Validate "permissions".
 	if v := request.Permissions; v != "" {
-		valid := []string{"staff"}
-		if !slices.Contains(valid, v) {
-			err := fmt.Errorf("permissions %s not recognized; valid choices are %+v", v, valid)
+		if !slices.Contains(accountsValidPermissions, v) {
+			err := fmt.Errorf(
+				"permissions %s not recognized; valid choices are %+v",
+				v, accountsValidPermissions,
+			)
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 	}
