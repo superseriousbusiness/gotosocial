@@ -397,7 +397,7 @@ func (a *adminDB) CreateInstanceApplication(ctx context.Context) error {
 	}
 
 	// Store it.
-	return a.state.DB.Put(ctx, oc)
+	return a.state.DB.PutClient(ctx, oc)
 }
 
 func (a *adminDB) GetInstanceApplication(ctx context.Context) (*gtsmodel.Application, error) {
