@@ -1214,6 +1214,7 @@ func (c *Caches) initToken() {
 			{Fields: "Code"},
 			{Fields: "Access"},
 			{Fields: "Refresh"},
+			{Fields: "ClientID", Multiple: true},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
