@@ -97,6 +97,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 	testrig.StandardStorageSetup(state.Storage, "./testrig/media")
 
+	// Initialize workers.
+	testrig.StartNoopWorkers(&state)
+	defer testrig.StopWorkers(&state)
+
 	// build backend handlers
 	transportController := testrig.NewTestTransportController(&state, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		r := io.NopCloser(bytes.NewReader([]byte{}))
@@ -137,9 +141,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	processor := testrig.NewTestProcessor(&state, federator, emailSender, mediaManager)
-
-	// Initialize workers.
-	testrig.StartWorkers(&state, processor.Workers())
 
 	// Initialize metrics.
 	if err := metrics.Initialize(state.DB); err != nil {

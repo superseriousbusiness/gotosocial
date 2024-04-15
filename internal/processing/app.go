@@ -75,7 +75,7 @@ func (p *Processor) AppCreate(ctx context.Context, authed *oauth.Auth, form *api
 	}
 
 	// chuck it in the db
-	if err := p.state.DB.Put(ctx, oc); err != nil {
+	if err := p.state.DB.PutClient(ctx, oc); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

@@ -60,6 +60,11 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	c.GTS.Move.Invalidate("TargetURI", account.URI)
 }
 
+func (c *Caches) OnInvalidateApplication(app *gtsmodel.Application) {
+	// Invalidate cached client of this application.
+	c.GTS.Client.Invalidate("ID", app.ClientID)
+}
+
 func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
 	// Invalidate block origin account ID cached visibility.
 	c.Visibility.Invalidate("ItemID", block.AccountID)
@@ -71,6 +76,11 @@ func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
 
 	// Invalidate source account's block lists.
 	c.GTS.BlockIDs.Invalidate(block.AccountID)
+}
+
+func (c *Caches) OnInvalidateClient(client *gtsmodel.Client) {
+	// Invalidate any tokens under this client.
+	c.GTS.Token.Invalidate("ClientID", client.ID)
 }
 
 func (c *Caches) OnInvalidateEmojiCategory(category *gtsmodel.EmojiCategory) {

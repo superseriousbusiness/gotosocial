@@ -49,7 +49,7 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 
 	form := &tokenRequestForm{}
 	if err := c.ShouldBind(form); err != nil {
-		apiutil.OAuthErrorHandler(c, gtserror.NewErrorBadRequest(oauth.InvalidRequest(), err.Error()))
+		apiutil.OAuthErrorHandler(c, gtserror.NewErrorBadRequest(oauth.ErrInvalidRequest, err.Error()))
 		return
 	}
 
@@ -98,7 +98,7 @@ func (m *Module) TokenPOSTHandler(c *gin.Context) {
 	}
 
 	if len(help) != 0 {
-		apiutil.OAuthErrorHandler(c, gtserror.NewErrorBadRequest(oauth.InvalidRequest(), help...))
+		apiutil.OAuthErrorHandler(c, gtserror.NewErrorBadRequest(oauth.ErrInvalidRequest, help...))
 		return
 	}
 
