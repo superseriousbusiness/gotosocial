@@ -35,4 +35,40 @@ type Application interface {
 
 	// DeleteApplicationByClientID deletes the application with corresponding client_id value from the database.
 	DeleteApplicationByClientID(ctx context.Context, clientID string) error
+
+	// GetClientByID ...
+	GetClientByID(ctx context.Context, id string) (*gtsmodel.Client, error)
+
+	// PutClient ...
+	PutClient(ctx context.Context, client *gtsmodel.Client) error
+
+	// DeleteClientByID ...
+	DeleteClientByID(ctx context.Context, id string) error
+
+	// GetAllTokens ...
+	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
+
+	// GetTokenByCode ...
+	GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error)
+
+	// GetTokenByAccess ...
+	GetTokenByAccess(ctx context.Context, access string) (*gtsmodel.Token, error)
+
+	// GetTokenByRefresh ...
+	GetTokenByRefresh(ctx context.Context, refresh string) (*gtsmodel.Token, error)
+
+	// PutToken ...
+	PutToken(ctx context.Context, token *gtsmodel.Token) error
+
+	// DeleteTokenByID ...
+	DeleteTokenByID(ctx context.Context, id string) error
+
+	// DeleteTokenByCode ...
+	DeleteTokenByCode(ctx context.Context, code string) error
+
+	// DeleteTokenByAccess ...
+	DeleteTokenByAccess(ctx context.Context, access string) error
+
+	// DeleteTokenByRefresh ...
+	DeleteTokenByRefresh(ctx context.Context, refresh string) error
 }

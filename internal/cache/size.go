@@ -176,6 +176,7 @@ func totalOfRatios() float64 {
 		config.GetCacheBlockMemRatio() +
 		config.GetCacheBlockIDsMemRatio() +
 		config.GetCacheBoostOfIDsMemRatio() +
+		config.GetCacheClientMemRatio() +
 		config.GetCacheEmojiMemRatio() +
 		config.GetCacheEmojiCategoryMemRatio() +
 		config.GetCacheFollowMemRatio() +
@@ -198,6 +199,7 @@ func totalOfRatios() float64 {
 		config.GetCacheStatusFaveIDsMemRatio() +
 		config.GetCacheTagMemRatio() +
 		config.GetCacheThreadMuteMemRatio() +
+		config.GetCacheTokenMemRatio() +
 		config.GetCacheTombstoneMemRatio() +
 		config.GetCacheUserMemRatio() +
 		config.GetCacheWebfingerMemRatio() +
@@ -284,6 +286,17 @@ func sizeofBlock() uintptr {
 		URI:             exampleURI,
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
+	}))
+}
+
+func sizeofClient() uintptr {
+	return uintptr(size.Of(&gtsmodel.Client{
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		Secret:    exampleID,
+		Domain:    exampleURI,
+		UserID:    exampleID,
 	}))
 }
 
@@ -591,13 +604,36 @@ func sizeofTag() uintptr {
 	}))
 }
 
-func sizeOfThreadMute() uintptr {
+func sizeofThreadMute() uintptr {
 	return uintptr(size.Of(&gtsmodel.ThreadMute{
 		ID:        exampleID,
 		CreatedAt: exampleTime,
 		UpdatedAt: exampleTime,
 		ThreadID:  exampleID,
 		AccountID: exampleID,
+	}))
+}
+
+func sizeofToken() uintptr {
+	return uintptr(size.Of(&gtsmodel.Token{
+		ID:                  exampleID,
+		CreatedAt:           exampleTime,
+		UpdatedAt:           exampleTime,
+		ClientID:            exampleID,
+		UserID:              exampleID,
+		RedirectURI:         exampleURI,
+		Scope:               "r:w",
+		Code:                "", // TODO
+		CodeChallenge:       "", // TODO
+		CodeChallengeMethod: "", // TODO
+		CodeCreateAt:        exampleTime,
+		CodeExpiresAt:       exampleTime,
+		Access:              exampleID + exampleID,
+		AccessCreateAt:      exampleTime,
+		AccessExpiresAt:     exampleTime,
+		Refresh:             "", // TODO: clients don't really support this very well yet
+		RefreshCreateAt:     exampleTime,
+		RefreshExpiresAt:    exampleTime,
 	}))
 }
 
