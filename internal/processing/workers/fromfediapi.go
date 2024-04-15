@@ -220,6 +220,11 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		return nil
 	}
 
+	// Update stats for the actor account.
+	if err := p.utilF.incrementStatusesCount(ctx, fMsg.RequestingAccount, status); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status; uncache the
 		// prepared version from all timelines. The status dereferencer
@@ -294,6 +299,12 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI
 		if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
 			log.Errorf(ctx, "error notifying follow request: %v", err)
 		}
+
+		// And update stats for the target account.
+		if err := p.utilF.incrementFollowRequestsCount(ctx, fMsg.ReceivingAccount); err != nil {
+			log.Errorf(ctx, "error updating account stats: %v", err)
+		}
+
 		return nil
 	}
 
@@ -307,6 +318,11 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI
 	)
 	if err != nil {
 		return gtserror.Newf("error accepting follow request: %w", err)
+	}
+
+	// Update stats for the target account.
+	if err := p.utilF.incrementFollowersCount(ctx, fMsg.ReceivingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if err := p.federate.AcceptFollow(ctx, follow); err != nil {
@@ -367,6 +383,11 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 
 		// Actual error.
 		return gtserror.Newf("error dereferencing announce: %w", err)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utilF.incrementStatusesCount(ctx, fMsg.RequestingAccount, boost); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	// Timeline and notify the announce.
@@ -565,6 +586,11 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 
 	if err := p.utilF.wipeStatus(ctx, status, deleteAttachments); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utilF.decrementStatusesCount(ctx, fMsg.RequestingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if status.InReplyToID != "" {

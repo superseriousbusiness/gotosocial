@@ -182,11 +182,6 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 			nil,
 			nil,
 		)
-		statusJSON = suite.statusJSON(
-			ctx,
-			status,
-			receivingAccount,
-		)
 	)
 
 	// Update the follow from receiving account -> posting account so
@@ -211,6 +206,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	statusJSON := suite.statusJSON(
+		ctx,
+		status,
+		receivingAccount,
+	)
 
 	// Check message in home stream.
 	suite.checkStreamed(
@@ -285,11 +286,6 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
-		statusJSON = suite.statusJSON(
-			ctx,
-			status,
-			receivingAccount,
-		)
 	)
 
 	// Process the new status.
@@ -304,6 +300,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	statusJSON := suite.statusJSON(
+		ctx,
+		status,
+		receivingAccount,
+	)
 
 	// Check message in home stream.
 	suite.checkStreamed(
@@ -451,11 +453,6 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
-		statusJSON = suite.statusJSON(
-			ctx,
-			status,
-			receivingAccount,
-		)
 	)
 
 	// Modify replies policy of test list to show replies
@@ -479,6 +476,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	statusJSON := suite.statusJSON(
+		ctx,
+		status,
+		receivingAccount,
+	)
 
 	// Check message in home stream.
 	suite.checkStreamed(
@@ -518,11 +521,6 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
-		statusJSON = suite.statusJSON(
-			ctx,
-			status,
-			receivingAccount,
-		)
 	)
 
 	// Modify replies policy of test list to show replies
@@ -551,6 +549,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	statusJSON := suite.statusJSON(
+		ctx,
+		status,
+		receivingAccount,
+	)
 
 	// Check message in home stream.
 	suite.checkStreamed(
@@ -590,11 +594,6 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
-		statusJSON = suite.statusJSON(
-			ctx,
-			status,
-			receivingAccount,
-		)
 	)
 
 	// Modify replies policy of test list.
@@ -618,6 +617,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	statusJSON := suite.statusJSON(
+		ctx,
+		status,
+		receivingAccount,
+	)
 
 	// Check message in home stream.
 	suite.checkStreamed(
@@ -654,11 +659,6 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 			nil,
 			suite.testStatuses["local_account_2_status_1"],
 		)
-		statusJSON = suite.statusJSON(
-			ctx,
-			status,
-			receivingAccount,
-		)
 	)
 
 	// Process the new status.
@@ -673,6 +673,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	statusJSON := suite.statusJSON(
+		ctx,
+		status,
+		receivingAccount,
+	)
 
 	// Check message in home stream.
 	suite.checkStreamed(

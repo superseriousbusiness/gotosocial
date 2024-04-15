@@ -112,7 +112,7 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 }
 
 func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Follow, error) {
-	followIDs, err := r.getAccountFollowIDs(ctx, accountID, page)
+	followIDs, err := r.GetAccountFollowIDs(ctx, accountID, page)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (r *relationshipDB) GetAccountFollows(ctx context.Context, accountID string
 }
 
 func (r *relationshipDB) GetAccountLocalFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
-	followIDs, err := r.getAccountLocalFollowIDs(ctx, accountID)
+	followIDs, err := r.GetAccountLocalFollowIDs(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (r *relationshipDB) GetAccountLocalFollows(ctx context.Context, accountID s
 }
 
 func (r *relationshipDB) GetAccountFollowers(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Follow, error) {
-	followerIDs, err := r.getAccountFollowerIDs(ctx, accountID, page)
+	followerIDs, err := r.GetAccountFollowerIDs(ctx, accountID, page)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (r *relationshipDB) GetAccountFollowers(ctx context.Context, accountID stri
 }
 
 func (r *relationshipDB) GetAccountLocalFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error) {
-	followerIDs, err := r.getAccountLocalFollowerIDs(ctx, accountID)
+	followerIDs, err := r.GetAccountLocalFollowerIDs(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (r *relationshipDB) GetAccountLocalFollowers(ctx context.Context, accountID
 }
 
 func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.FollowRequest, error) {
-	followReqIDs, err := r.getAccountFollowRequestIDs(ctx, accountID, page)
+	followReqIDs, err := r.GetAccountFollowRequestIDs(ctx, accountID, page)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +152,7 @@ func (r *relationshipDB) GetAccountFollowRequests(ctx context.Context, accountID
 }
 
 func (r *relationshipDB) GetAccountFollowRequesting(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.FollowRequest, error) {
-	followReqIDs, err := r.getAccountFollowRequestingIDs(ctx, accountID, page)
+	followReqIDs, err := r.GetAccountFollowRequestingIDs(ctx, accountID, page)
 	if err != nil {
 		return nil, err
 	}
@@ -160,49 +160,14 @@ func (r *relationshipDB) GetAccountFollowRequesting(ctx context.Context, account
 }
 
 func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Block, error) {
-	blockIDs, err := r.getAccountBlockIDs(ctx, accountID, page)
+	blockIDs, err := r.GetAccountBlockIDs(ctx, accountID, page)
 	if err != nil {
 		return nil, err
 	}
 	return r.GetBlocksByIDs(ctx, blockIDs)
 }
 
-func (r *relationshipDB) CountAccountFollows(ctx context.Context, accountID string) (int, error) {
-	followIDs, err := r.getAccountFollowIDs(ctx, accountID, nil)
-	return len(followIDs), err
-}
-
-func (r *relationshipDB) CountAccountLocalFollows(ctx context.Context, accountID string) (int, error) {
-	followIDs, err := r.getAccountLocalFollowIDs(ctx, accountID)
-	return len(followIDs), err
-}
-
-func (r *relationshipDB) CountAccountFollowers(ctx context.Context, accountID string) (int, error) {
-	followerIDs, err := r.getAccountFollowerIDs(ctx, accountID, nil)
-	return len(followerIDs), err
-}
-
-func (r *relationshipDB) CountAccountLocalFollowers(ctx context.Context, accountID string) (int, error) {
-	followerIDs, err := r.getAccountLocalFollowerIDs(ctx, accountID)
-	return len(followerIDs), err
-}
-
-func (r *relationshipDB) CountAccountFollowRequests(ctx context.Context, accountID string) (int, error) {
-	followReqIDs, err := r.getAccountFollowRequestIDs(ctx, accountID, nil)
-	return len(followReqIDs), err
-}
-
-func (r *relationshipDB) CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error) {
-	followReqIDs, err := r.getAccountFollowRequestingIDs(ctx, accountID, nil)
-	return len(followReqIDs), err
-}
-
-func (r *relationshipDB) CountAccountBlocks(ctx context.Context, accountID string) (int, error) {
-	blockIDs, err := r.getAccountBlockIDs(ctx, accountID, nil)
-	return len(blockIDs), err
-}
-
-func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
+func (r *relationshipDB) GetAccountFollowIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
 	return loadPagedIDs(&r.state.Caches.GTS.FollowIDs, ">"+accountID, page, func() ([]string, error) {
 		var followIDs []string
 
@@ -217,7 +182,7 @@ func (r *relationshipDB) getAccountFollowIDs(ctx context.Context, accountID stri
 	})
 }
 
-func (r *relationshipDB) getAccountLocalFollowIDs(ctx context.Context, accountID string) ([]string, error) {
+func (r *relationshipDB) GetAccountLocalFollowIDs(ctx context.Context, accountID string) ([]string, error) {
 	return r.state.Caches.GTS.FollowIDs.Load("l>"+accountID, func() ([]string, error) {
 		var followIDs []string
 
@@ -232,7 +197,7 @@ func (r *relationshipDB) getAccountLocalFollowIDs(ctx context.Context, accountID
 	})
 }
 
-func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
+func (r *relationshipDB) GetAccountFollowerIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
 	return loadPagedIDs(&r.state.Caches.GTS.FollowIDs, "<"+accountID, page, func() ([]string, error) {
 		var followIDs []string
 
@@ -247,7 +212,7 @@ func (r *relationshipDB) getAccountFollowerIDs(ctx context.Context, accountID st
 	})
 }
 
-func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, accountID string) ([]string, error) {
+func (r *relationshipDB) GetAccountLocalFollowerIDs(ctx context.Context, accountID string) ([]string, error) {
 	return r.state.Caches.GTS.FollowIDs.Load("l<"+accountID, func() ([]string, error) {
 		var followIDs []string
 
@@ -262,7 +227,7 @@ func (r *relationshipDB) getAccountLocalFollowerIDs(ctx context.Context, account
 	})
 }
 
-func (r *relationshipDB) getAccountFollowRequestIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
+func (r *relationshipDB) GetAccountFollowRequestIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
 	return loadPagedIDs(&r.state.Caches.GTS.FollowRequestIDs, ">"+accountID, page, func() ([]string, error) {
 		var followReqIDs []string
 
@@ -277,7 +242,7 @@ func (r *relationshipDB) getAccountFollowRequestIDs(ctx context.Context, account
 	})
 }
 
-func (r *relationshipDB) getAccountFollowRequestingIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
+func (r *relationshipDB) GetAccountFollowRequestingIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
 	return loadPagedIDs(&r.state.Caches.GTS.FollowRequestIDs, "<"+accountID, page, func() ([]string, error) {
 		var followReqIDs []string
 
@@ -292,7 +257,7 @@ func (r *relationshipDB) getAccountFollowRequestingIDs(ctx context.Context, acco
 	})
 }
 
-func (r *relationshipDB) getAccountBlockIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
+func (r *relationshipDB) GetAccountBlockIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
 	return loadPagedIDs(&r.state.Caches.GTS.BlockIDs, accountID, page, func() ([]string, error) {
 		var blockIDs []string
 

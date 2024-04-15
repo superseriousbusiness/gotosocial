@@ -105,6 +105,15 @@ func (iter *regularCollectionIterator) PrevItem() TypeOrIRI {
 	return cur
 }
 
+func (iter *regularCollectionIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
+}
+
 func (iter *regularCollectionIterator) initItems() bool {
 	if iter.once {
 		return (iter.items != nil)
@@ -145,6 +154,15 @@ func (iter *orderedCollectionIterator) PrevItem() TypeOrIRI {
 	cur := iter.items
 	iter.items = iter.items.Prev()
 	return cur
+}
+
+func (iter *orderedCollectionIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
 }
 
 func (iter *orderedCollectionIterator) initItems() bool {
@@ -203,6 +221,15 @@ func (iter *regularCollectionPageIterator) PrevItem() TypeOrIRI {
 	return cur
 }
 
+func (iter *regularCollectionPageIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
+}
+
 func (iter *regularCollectionPageIterator) initItems() bool {
 	if iter.once {
 		return (iter.items != nil)
@@ -257,6 +284,15 @@ func (iter *orderedCollectionPageIterator) PrevItem() TypeOrIRI {
 	cur := iter.items
 	iter.items = iter.items.Prev()
 	return cur
+}
+
+func (iter *orderedCollectionPageIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
 }
 
 func (iter *orderedCollectionPageIterator) initItems() bool {

@@ -695,7 +695,7 @@ func (d *Dereferencer) enrichAccount(
 		representation of the target account, derived from
 		a combination of webfinger lookups and dereferencing.
 		Further fetching beyond this point is for peripheral
-		things like account avatar, header, emojis.
+		things like account avatar, header, emojis, stats.
 	*/
 
 	// Ensure internal db ID is
@@ -716,6 +716,11 @@ func (d *Dereferencer) enrichAccount(
 	// Fetch the latest remote account emoji IDs used in account display name/bio.
 	if _, err = d.fetchRemoteAccountEmojis(ctx, latestAcc, requestUser); err != nil {
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
+	}
+
+	// Fetch followers/following count for this account.
+	if err := d.fetchRemoteAccountStats(ctx, latestAcc, requestUser); err != nil {
+		log.Errorf(ctx, "error fetching remote stats for account %s: %v", uri, err)
 	}
 
 	if account.IsNew() {
@@ -1034,6 +1039,129 @@ func (d *Dereferencer) fetchRemoteAccountEmojis(ctx context.Context, targetAccou
 	}
 
 	return changed, nil
+}
+
+func (d *Dereferencer) fetchRemoteAccountStats(ctx context.Context, account *gtsmodel.Account, requestUser string) error {
+	// Ensure we have a stats model for this account.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = d.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// We want to update stats by getting remote
+	// followers/following/statuses counts for
+	// this account.
+	//
+	// If we fail getting any particular stat,
+	// it will just fall back to counting local.
+
+	// Followers first.
+	if count, err := d.countCollection(
+		ctx,
+		account.FollowersURI,
+		requestUser,
+	); err != nil {
+		// Something up with the URL,
+		// log this but don't bail.
+		log.Errorf(ctx,
+			"bad followers URI for account @%s@%s: %v",
+			account.Username, account.Domain, err,
+		)
+	} else if count > 0 {
+		// Positive integer is useful!
+		account.Stats.FollowersCount = &count
+	}
+
+	// Now following.
+	if count, err := d.countCollection(
+		ctx,
+		account.FollowingURI,
+		requestUser,
+	); err != nil {
+		// Something up with the URL,
+		// log this but don't bail.
+		log.Errorf(ctx,
+			"bad following URI for account @%s@%s: %v",
+			account.Username, account.Domain, err,
+		)
+	} else if count > 0 {
+		// Positive integer is useful!
+		account.Stats.FollowingCount = &count
+	}
+
+	// Now statuses count.
+	if count, err := d.countCollection(
+		ctx,
+		account.OutboxURI,
+		requestUser,
+	); err != nil {
+		// Something up with the URL,
+		// log this but don't bail.
+		log.Errorf(ctx,
+			"bad outbox URI for account @%s@%s: %v",
+			account.Username, account.Domain, err,
+		)
+	} else if count > 0 {
+		// Positive integer is useful!
+		account.Stats.StatusesCount = &count
+	}
+
+	// Update stats now.
+	if err := d.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"followers_count",
+		"following_count",
+		"statuses_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+// countCollection parses the given uriStr,
+// dereferences the result as a collection
+// type, and returns total items as 0, or
+// a positive integer, or -1 if total items
+// cannot be counted.
+//
+// Only returns an error if provided uriStr
+// is not empty and not parseable. Actual
+// dereferencing errors are ignored, on the
+// basis that it's not a show stopper if an
+// error occurs since these numbers are not
+// very important, but malformed URIs are
+// kind of significant.
+func (d *Dereferencer) countCollection(
+	ctx context.Context,
+	uriStr string,
+	requestUser string,
+) (int, error) {
+	if uriStr == "" {
+		return -1, nil
+	}
+
+	uri, err := url.Parse(uriStr)
+	if err != nil {
+		return -1, err
+	}
+
+	collect, err := d.dereferenceCollection(ctx, requestUser, uri)
+	if err != nil {
+		// Just log for debug, we don't
+		// mind if we can't fetch this.
+		log.Debugf(ctx,
+			"error dereferencing %s: %v",
+			uriStr, err,
+		)
+		return -1, nil
+	}
+
+	return collect.TotalItems(), nil
 }
 
 // dereferenceAccountFeatured dereferences an account's featuredCollectionURI (if not empty). For each discovered status, this status will

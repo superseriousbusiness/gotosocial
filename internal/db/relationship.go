@@ -140,44 +140,44 @@ type Relationship interface {
 	// GetAccountFollows returns a slice of follows owned by the given accountID.
 	GetAccountFollows(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Follow, error)
 
+	// GetAccountFollowIDs is like GetAccountFollows, but returns just IDs.
+	GetAccountFollowIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
+
 	// GetAccountLocalFollows returns a slice of follows owned by the given accountID, only including follows from this instance.
 	GetAccountLocalFollows(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// GetAccountLocalFollowIDs is like GetAccountLocalFollows, but returns just IDs.
+	GetAccountLocalFollowIDs(ctx context.Context, accountID string) ([]string, error)
 
 	// GetAccountFollowers fetches follows that target given accountID.
 	GetAccountFollowers(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Follow, error)
 
+	// GetAccountFollowerIDs is like GetAccountFollowers, but returns just IDs.
+	GetAccountFollowerIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
+
 	// GetAccountLocalFollowers fetches follows that target given accountID, only including follows from this instance.
 	GetAccountLocalFollowers(ctx context.Context, accountID string) ([]*gtsmodel.Follow, error)
+
+	// GetAccountLocalFollowerIDs is like GetAccountLocalFollowers, but returns just IDs.
+	GetAccountLocalFollowerIDs(ctx context.Context, accountID string) ([]string, error)
 
 	// GetAccountFollowRequests returns all follow requests targeting the given account.
 	GetAccountFollowRequests(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.FollowRequest, error)
 
+	// GetAccountFollowRequestIDs is like GetAccountFollowRequests, but returns just IDs.
+	GetAccountFollowRequestIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
+
 	// GetAccountFollowRequesting returns all follow requests originating from the given account.
 	GetAccountFollowRequesting(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.FollowRequest, error)
+
+	// GetAccountFollowRequestingIDs is like GetAccountFollowRequesting, but returns just IDs.
+	GetAccountFollowRequestingIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
 
 	// GetAccountBlocks returns all blocks originating from the given account, with given optional paging parameters.
 	GetAccountBlocks(ctx context.Context, accountID string, paging *paging.Page) ([]*gtsmodel.Block, error)
 
-	// CountAccountFollows returns the amount of accounts that the given accountID is following.
-	CountAccountFollows(ctx context.Context, accountID string) (int, error)
-
-	// CountAccountLocalFollows returns the amount of accounts that the given accountID is following, only including follows from this instance.
-	CountAccountLocalFollows(ctx context.Context, accountID string) (int, error)
-
-	// CountAccountFollowers returns the amounts that the given ID is followed by.
-	CountAccountFollowers(ctx context.Context, accountID string) (int, error)
-
-	// CountAccountLocalFollowers returns the amounts that the given ID is followed by, only including follows from this instance.
-	CountAccountLocalFollowers(ctx context.Context, accountID string) (int, error)
-
-	// CountAccountFollowRequests returns number of follow requests targeting the given account.
-	CountAccountFollowRequests(ctx context.Context, accountID string) (int, error)
-
-	// CountAccountFollowerRequests returns number of follow requests originating from the given account.
-	CountAccountFollowRequesting(ctx context.Context, accountID string) (int, error)
-
-	// CountAccountBlocks ...
-	CountAccountBlocks(ctx context.Context, accountID string) (int, error)
+	// GetAccountBlockIDs is like GetAccountBlocks, but returns just IDs.
+	GetAccountBlockIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
 
 	// GetNote gets a private note from a source account on a target account, if it exists.
 	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error)

@@ -220,6 +220,8 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 		a2.Emojis = nil
 		a1.Settings = nil
 		a2.Settings = nil
+		a1.Stats = nil
+		a2.Stats = nil
 
 		// Clear database-set fields.
 		a1.CreatedAt = time.Time{}
@@ -413,18 +415,6 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	suite.WithinDuration(time.Now(), noCache.UpdatedAt, 5*time.Second)
 }
 
-func (suite *AccountTestSuite) TestGetAccountLastPosted() {
-	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, false)
-	suite.NoError(err)
-	suite.EqualValues(1702200240, lastPosted.Unix())
-}
-
-func (suite *AccountTestSuite) TestGetAccountLastPostedWebOnly() {
-	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, true)
-	suite.NoError(err)
-	suite.EqualValues(1702200240, lastPosted.Unix())
-}
-
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	suite.NoError(err)
@@ -464,22 +454,6 @@ func (suite *AccountTestSuite) TestGetAccountPinnedStatusesNothingPinned() {
 	statuses, err := suite.db.GetAccountPinnedStatuses(context.Background(), testAccount.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Empty(statuses) // This account has nothing pinned.
-}
-
-func (suite *AccountTestSuite) TestCountAccountPinnedSomeResults() {
-	testAccount := suite.testAccounts["admin_account"]
-
-	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
-	suite.NoError(err)
-	suite.Equal(pinned, 2) // This account has 2 statuses pinned.
-}
-
-func (suite *AccountTestSuite) TestCountAccountPinnedNothingPinned() {
-	testAccount := suite.testAccounts["local_account_1"]
-
-	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
-	suite.NoError(err)
-	suite.Equal(pinned, 0) // This account has nothing pinned.
 }
 
 func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {

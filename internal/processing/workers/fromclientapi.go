@@ -247,6 +247,11 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAP
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
 	}
 
+	// Update stats for the actor account.
+	if err := p.utilF.incrementStatusesCount(ctx, cMsg.OriginAccount, status); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
@@ -311,6 +316,11 @@ func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClien
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", cMsg.GTSModel)
 	}
 
+	// Update stats for the target account.
+	if err := p.utilF.incrementFollowRequestsCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
 		log.Errorf(ctx, "error notifying follow request: %v", err)
 	}
@@ -358,6 +368,11 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg messages.FromClient
 	boost, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utilF.incrementStatusesCount(ctx, cMsg.OriginAccount, boost); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	// Timeline and notify the boost wrapper status.
@@ -485,6 +500,20 @@ func (p *clientAPI) AcceptFollow(ctx context.Context, cMsg messages.FromClientAP
 		return gtserror.Newf("%T not parseable as *gtsmodel.Follow", cMsg.GTSModel)
 	}
 
+	// Update stats for the target account.
+	if err := p.utilF.decrementFollowRequestsCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	if err := p.utilF.incrementFollowersCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Update stats for the origin account.
+	if err := p.utilF.incrementFollowingCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.surface.notifyFollow(ctx, follow); err != nil {
 		log.Errorf(ctx, "error notifying follow: %v", err)
 	}
@@ -502,6 +531,11 @@ func (p *clientAPI) RejectFollowRequest(ctx context.Context, cMsg messages.FromC
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", cMsg.GTSModel)
 	}
 
+	// Update stats for the target account.
+	if err := p.utilF.decrementFollowRequestsCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.federate.RejectFollow(
 		ctx,
 		p.converter.FollowRequestToFollow(ctx, followReq),
@@ -516,6 +550,16 @@ func (p *clientAPI) UndoFollow(ctx context.Context, cMsg messages.FromClientAPI)
 	follow, ok := cMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Follow", cMsg.GTSModel)
+	}
+
+	// Update stats for the origin account.
+	if err := p.utilF.decrementFollowingCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Update stats for the target account.
+	if err := p.utilF.decrementFollowersCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if err := p.federate.UndoFollow(ctx, follow); err != nil {
@@ -565,6 +609,11 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg messages.FromClientAP
 		return gtserror.Newf("db error deleting status: %w", err)
 	}
 
+	// Update stats for the origin account.
+	if err := p.utilF.decrementStatusesCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.surface.deleteStatusFromTimelines(ctx, status.ID); err != nil {
 		log.Errorf(ctx, "error removing timelined status: %v", err)
 	}
@@ -601,6 +650,11 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg messages.FromClientAP
 
 	if err := p.utilF.wipeStatus(ctx, status, deleteAttachments); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
+	}
+
+	// Update stats for the origin account.
+	if err := p.utilF.decrementStatusesCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if status.InReplyToID != "" {

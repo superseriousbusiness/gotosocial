@@ -69,14 +69,19 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		return nil, never, gtserror.NewErrorNotFound(err)
 	}
 
+	// Ensure account stats populated.
+	if account.Stats == nil {
+		account.Stats, err = p.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			err = gtserror.Newf("db error getting account stats %s: %w", username, err)
+			return nil, never, gtserror.NewErrorInternalError(err)
+		}
+	}
+
 	// LastModified time is needed by callers to check freshness for cacheing.
 	// This might be a zero time.Time if account has never posted a status that's
 	// eligible to appear in the RSS feed; that's fine.
-	lastPostAt, err := p.state.DB.GetAccountLastPosted(ctx, account.ID, true)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("db error getting account %s last posted: %w", username, err)
-		return nil, never, gtserror.NewErrorInternalError(err)
-	}
+	lastPostAt := account.Stats.LastStatusAt
 
 	return func() (string, gtserror.WithCode) {
 		// Assemble author namestring once only.

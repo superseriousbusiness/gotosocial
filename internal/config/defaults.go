@@ -159,6 +159,7 @@ var Defaults = Configuration{
 		AccountMemRatio:          5,
 		AccountNoteMemRatio:      1,
 		AccountSettingsMemRatio:  0.1,
+		AccountStatsMemRatio:     2,
 		ApplicationMemRatio:      0.1,
 		BlockMemRatio:            2,
 		BlockIDsMemRatio:         3,

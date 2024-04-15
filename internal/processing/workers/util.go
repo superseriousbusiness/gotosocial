@@ -238,3 +238,242 @@ func (u *utilF) redirectFollowers(
 
 	return true
 }
+
+func (u *utilF) incrementStatusesCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	status *gtsmodel.Status,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by incrementing status
+	// count by one and setting last posted.
+	*account.Stats.StatusesCount++
+	account.Stats.LastStatusAt = status.CreatedAt
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"statuses_count",
+		"last_status_at",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+func (u *utilF) decrementStatusesCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by decrementing
+	// status count by one.
+	//
+	// Clamp to 0 to avoid funny business.
+	*account.Stats.StatusesCount--
+	if *account.Stats.StatusesCount < 0 {
+		*account.Stats.StatusesCount = 0
+	}
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"statuses_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+func (u *utilF) incrementFollowersCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by incrementing followers
+	// count by one and setting last posted.
+	*account.Stats.FollowersCount++
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"followers_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+func (u *utilF) decrementFollowersCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by decrementing
+	// followers count by one.
+	//
+	// Clamp to 0 to avoid funny business.
+	*account.Stats.FollowersCount--
+	if *account.Stats.FollowersCount < 0 {
+		*account.Stats.FollowersCount = 0
+	}
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"followers_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+func (u *utilF) incrementFollowingCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by incrementing
+	// followers count by one.
+	*account.Stats.FollowingCount++
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"following_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+func (u *utilF) decrementFollowingCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by decrementing
+	// following count by one.
+	//
+	// Clamp to 0 to avoid funny business.
+	*account.Stats.FollowingCount--
+	if *account.Stats.FollowingCount < 0 {
+		*account.Stats.FollowingCount = 0
+	}
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"following_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+func (u *utilF) incrementFollowRequestsCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by incrementing
+	// follow requests count by one.
+	*account.Stats.FollowRequestsCount++
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"follow_requests_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}
+
+func (u *utilF) decrementFollowRequestsCount(
+	ctx context.Context,
+	account *gtsmodel.Account,
+) error {
+	// Populate stats.
+	if account.Stats == nil {
+		var err error
+		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			return gtserror.Newf("db error getting account stats: %w", err)
+		}
+	}
+
+	// Update stats by decrementing
+	// follow requests count by one.
+	//
+	// Clamp to 0 to avoid funny business.
+	*account.Stats.FollowRequestsCount--
+	if *account.Stats.FollowRequestsCount < 0 {
+		*account.Stats.FollowRequestsCount = 0
+	}
+	if err := u.state.DB.UpdateAccountStats(
+		ctx,
+		account.Stats,
+		"follow_requests_count",
+	); err != nil {
+		return gtserror.Newf("db error updating account stats: %w", err)
+	}
+
+	return nil
+}

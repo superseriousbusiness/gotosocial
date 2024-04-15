@@ -20,7 +20,6 @@ package cache
 import (
 	"time"
 
-	"codeberg.org/gruf/go-cache/v3/simple"
 	"codeberg.org/gruf/go-cache/v3/ttl"
 	"codeberg.org/gruf/go-structr"
 	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
@@ -36,15 +35,11 @@ type GTSCaches struct {
 	// AccountNote provides access to the gtsmodel Note database cache.
 	AccountNote StructCache[*gtsmodel.AccountNote]
 
-	// TEMPORARY CACHE TO ALLEVIATE SLOW COUNT QUERIES,
-	// (in time will be removed when these IDs are cached).
-	AccountCounts *simple.Cache[string, struct {
-		Statuses int
-		Pinned   int
-	}]
-
 	// AccountSettings provides access to the gtsmodel AccountSettings database cache.
 	AccountSettings StructCache[*gtsmodel.AccountSettings]
+
+	// AccountStats provides access to the gtsmodel AccountStats database cache.
+	AccountStats StructCache[*gtsmodel.AccountStats]
 
 	// Application provides access to the gtsmodel Application database cache.
 	Application StructCache[*gtsmodel.Application]
@@ -194,6 +189,7 @@ func (c *Caches) initAccount() {
 		a2.AlsoKnownAs = nil
 		a2.Move = nil
 		a2.Settings = nil
+		a2.Stats = nil
 
 		return a2
 	}
@@ -215,22 +211,6 @@ func (c *Caches) initAccount() {
 		Copy:       copyF,
 		Invalidate: c.OnInvalidateAccount,
 	})
-}
-
-func (c *Caches) initAccountCounts() {
-	// Simply use size of accounts cache,
-	// as this cache will be very small.
-	cap := c.GTS.Account.Cap()
-	if cap == 0 {
-		panic("must be initialized before accounts")
-	}
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	c.GTS.AccountCounts = simple.New[string, struct {
-		Statuses int
-		Pinned   int
-	}](0, cap)
 }
 
 func (c *Caches) initAccountNote() {
@@ -283,6 +263,29 @@ func (c *Caches) initAccountSettings() {
 		IgnoreErr: ignoreErrors,
 		Copy: func(s1 *gtsmodel.AccountSettings) *gtsmodel.AccountSettings {
 			s2 := new(gtsmodel.AccountSettings)
+			*s2 = *s1
+			return s2
+		},
+	})
+}
+
+func (c *Caches) initAccountStats() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofAccountStats(), // model in-mem size.
+		config.GetCacheAccountStatsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.GTS.AccountStats.Init(structr.CacheConfig[*gtsmodel.AccountStats]{
+		Indices: []structr.IndexConfig{
+			{Fields: "AccountID"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy: func(s1 *gtsmodel.AccountStats) *gtsmodel.AccountStats {
+			s2 := new(gtsmodel.AccountStats)
 			*s2 = *s1
 			return s2
 		},

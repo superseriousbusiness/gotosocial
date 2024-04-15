@@ -63,10 +63,11 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	if a, err := f.state.DB.GetAccountByURI(ctx, id.String()); err == nil && requestingAcct.ID == a.ID {
 		l.Debugf("deleting account: %s", a.ID)
 		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:     ap.ObjectProfile,
-			APActivityType:   ap.ActivityDelete,
-			GTSModel:         a,
-			ReceivingAccount: receivingAcct,
+			APObjectType:      ap.ObjectProfile,
+			APActivityType:    ap.ActivityDelete,
+			GTSModel:          a,
+			ReceivingAccount:  receivingAcct,
+			RequestingAccount: requestingAcct,
 		})
 	}
 

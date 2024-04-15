@@ -262,6 +262,17 @@ func sizeofAccountSettings() uintptr {
 	}))
 }
 
+func sizeofAccountStats() uintptr {
+	return uintptr(size.Of(&gtsmodel.AccountStats{
+		AccountID:           exampleID,
+		FollowersCount:      util.Ptr(100),
+		FollowingCount:      util.Ptr(100),
+		StatusesCount:       util.Ptr(100),
+		StatusesPinnedCount: util.Ptr(100),
+		LastStatusAt:        exampleTime,
+	}))
+}
+
 func sizeofApplication() uintptr {
 	return uintptr(size.Of(&gtsmodel.Application{
 		ID:           exampleID,
