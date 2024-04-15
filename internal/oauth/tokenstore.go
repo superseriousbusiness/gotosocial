@@ -20,7 +20,6 @@ package oauth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -34,14 +33,14 @@ import (
 // tokenStore is an implementation of oauth2.TokenStore, which uses our db interface as a storage backend.
 type tokenStore struct {
 	oauth2.TokenStore
-	db db.Basic
+	db db.DB
 }
 
 // newTokenStore returns a token store that satisfies the oauth2.TokenStore interface.
 //
 // In order to allow tokens to 'expire', it will also set off a goroutine that iterates through
 // the tokens in the DB once per minute and deletes any that have expired.
-func newTokenStore(ctx context.Context, db db.Basic) oauth2.TokenStore {
+func newTokenStore(ctx context.Context, db db.DB) oauth2.TokenStore {
 	ts := &tokenStore{
 		db: db,
 	}
@@ -107,67 +106,49 @@ func (ts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 		dbt.ID = dbtID
 	}
 
-	if err := ts.db.Put(ctx, dbt); err != nil {
-		return fmt.Errorf("error in tokenstore create: %s", err)
-	}
-	return nil
+	return ts.db.PutToken(ctx, dbt)
 }
 
 // RemoveByCode deletes a token from the DB based on the Code field
 func (ts *tokenStore) RemoveByCode(ctx context.Context, code string) error {
-	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "code", Value: code}}, &gtsmodel.Token{})
+	return ts.db.DeleteTokenByCode(ctx, code)
 }
 
 // RemoveByAccess deletes a token from the DB based on the Access field
 func (ts *tokenStore) RemoveByAccess(ctx context.Context, access string) error {
-	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "access", Value: access}}, &gtsmodel.Token{})
+	return ts.db.DeleteTokenByAccess(ctx, access)
 }
 
 // RemoveByRefresh deletes a token from the DB based on the Refresh field
 func (ts *tokenStore) RemoveByRefresh(ctx context.Context, refresh string) error {
-	return ts.db.DeleteWhere(ctx, []db.Where{{Key: "refresh", Value: refresh}}, &gtsmodel.Token{})
+	return ts.db.DeleteTokenByRefresh(ctx, refresh)
 }
 
 // GetByCode selects a token from the DB based on the Code field
 func (ts *tokenStore) GetByCode(ctx context.Context, code string) (oauth2.TokenInfo, error) {
-	if code == "" {
-		return nil, nil
-	}
-	dbt := &gtsmodel.Token{
-		Code: code,
-	}
-	if err := ts.db.GetWhere(ctx, []db.Where{{Key: "code", Value: code}}, dbt); err != nil {
+	token, err := ts.db.GetTokenByCode(ctx, code)
+	if err != nil {
 		return nil, err
 	}
-	return DBTokenToToken(dbt), nil
+	return DBTokenToToken(token), nil
 }
 
 // GetByAccess selects a token from the DB based on the Access field
 func (ts *tokenStore) GetByAccess(ctx context.Context, access string) (oauth2.TokenInfo, error) {
-	if access == "" {
-		return nil, nil
-	}
-	dbt := &gtsmodel.Token{
-		Access: access,
-	}
-	if err := ts.db.GetWhere(ctx, []db.Where{{Key: "access", Value: access}}, dbt); err != nil {
+	token, err := ts.db.GetTokenByAccess(ctx, access)
+	if err != nil {
 		return nil, err
 	}
-	return DBTokenToToken(dbt), nil
+	return DBTokenToToken(token), nil
 }
 
 // GetByRefresh selects a token from the DB based on the Refresh field
 func (ts *tokenStore) GetByRefresh(ctx context.Context, refresh string) (oauth2.TokenInfo, error) {
-	if refresh == "" {
-		return nil, nil
-	}
-	dbt := &gtsmodel.Token{
-		Refresh: refresh,
-	}
-	if err := ts.db.GetWhere(ctx, []db.Where{{Key: "refresh", Value: refresh}}, dbt); err != nil {
+	token, err := ts.db.GetTokenByRefresh(ctx, refresh)
+	if err != nil {
 		return nil, err
 	}
-	return DBTokenToToken(dbt), nil
+	return DBTokenToToken(token), nil
 }
 
 /*

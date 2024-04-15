@@ -95,3 +95,126 @@ func (a *applicationDB) DeleteApplicationByClientID(ctx context.Context, clientI
 
 	return nil
 }
+
+func (a *applicationDB) GetClientByID(ctx context.Context, id string) (*gtsmodel.Client, error) {
+	return a.state.Caches.GTS.Client.LoadOne("ID", func() (*gtsmodel.Client, error) {
+		var client gtsmodel.Client
+
+		if err := a.db.NewSelect().
+			Model(&client).
+			Where("? = ?", bun.Ident("id"), id).
+			Scan(ctx); err != nil {
+			return nil, err
+		}
+
+		return &client, nil
+	}, id)
+}
+
+func (a *applicationDB) PutClient(ctx context.Context, client *gtsmodel.Client) error {
+	return a.state.Caches.GTS.Client.Store(client, func() error {
+		_, err := a.db.NewInsert().Model(client).Exec(ctx)
+		return err
+	})
+}
+
+func (a *applicationDB) DeleteClientByID(ctx context.Context, id string) error {
+	_, err := a.db.NewDelete().
+		Table("clients").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	a.state.Caches.GTS.Client.Invalidate("ID", id)
+	return nil
+}
+
+func (a *applicationDB) GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error) {
+	return a.getTokenBy(
+		"Code",
+		func(t *gtsmodel.Token) error {
+			return a.db.NewSelect().Model(t).Where("? = ?", bun.Ident("code"), code).Scan(ctx)
+		},
+		code,
+	)
+}
+
+func (a *applicationDB) GetTokenByAccess(ctx context.Context, access string) (*gtsmodel.Token, error) {
+	return a.getTokenBy(
+		"Access",
+		func(t *gtsmodel.Token) error {
+			return a.db.NewSelect().Model(t).Where("? = ?", bun.Ident("access"), access).Scan(ctx)
+		},
+		access,
+	)
+}
+
+func (a *applicationDB) GetTokenByRefresh(ctx context.Context, refresh string) (*gtsmodel.Token, error) {
+	return a.getTokenBy(
+		"Refresh",
+		func(t *gtsmodel.Token) error {
+			return a.db.NewSelect().Model(t).Where("? = ?", bun.Ident("refresh"), refresh).Scan(ctx)
+		},
+		refresh,
+	)
+}
+
+func (a *applicationDB) getTokenBy(lookup string, dbQuery func(*gtsmodel.Token) error, keyParts ...any) (*gtsmodel.Token, error) {
+	return a.state.Caches.GTS.Token.LoadOne(lookup, func() (*gtsmodel.Token, error) {
+		var token gtsmodel.Token
+
+		if err := dbQuery(&token); err != nil {
+			return nil, err
+		}
+
+		return &token, nil
+	}, keyParts...)
+}
+
+func (a *applicationDB) PutToken(ctx context.Context, token *gtsmodel.Token) error {
+	return a.state.Caches.GTS.Token.Store(token, func() error {
+		_, err := a.db.NewInsert().Model(token).Exec(ctx)
+		return err
+	})
+}
+
+func (a *applicationDB) DeleteTokenByCode(ctx context.Context, code string) error {
+	_, err := a.db.NewDelete().
+		Table("tokens").
+		Where("? = ?", bun.Ident("code"), code).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	a.state.Caches.GTS.Token.Invalidate("Code", code)
+	return nil
+}
+
+func (a *applicationDB) DeleteTokenByAccess(ctx context.Context, access string) error {
+	_, err := a.db.NewDelete().
+		Table("tokens").
+		Where("? = ?", bun.Ident("access"), access).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	a.state.Caches.GTS.Token.Invalidate("Access", access)
+	return nil
+}
+
+func (a *applicationDB) DeleteTokenByRefresh(ctx context.Context, refresh string) error {
+	_, err := a.db.NewDelete().
+		Table("tokens").
+		Where("? = ?", bun.Ident("refresh"), refresh).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	a.state.Caches.GTS.Token.Invalidate("Refresh", refresh)
+	return nil
+}

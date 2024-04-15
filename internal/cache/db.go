@@ -58,6 +58,9 @@ type GTSCaches struct {
 	// BoostOfIDs provides access to the boost of IDs list database cache.
 	BoostOfIDs SliceCache[string]
 
+	// Client ...
+	Client StructCache[*gtsmodel.Client]
+
 	// DomainAllow provides access to the domain allow database cache.
 	DomainAllow *domain.Cache
 
@@ -149,6 +152,9 @@ type GTSCaches struct {
 
 	// Tag provides access to the gtsmodel Tag database cache.
 	Tag StructCache[*gtsmodel.Tag]
+
+	// Token ...
+	Token StructCache[*gtsmodel.Token]
 
 	// Tombstone provides access to the gtsmodel Tombstone database cache.
 	Tombstone StructCache[*gtsmodel.Tombstone]
@@ -372,6 +378,31 @@ func (c *Caches) initBoostOfIDs() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.GTS.BoostOfIDs.Init(0, cap)
+}
+
+func (c *Caches) initClient() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofClient(), // model in-mem size.
+		config.GetCacheClientMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(c1 *gtsmodel.Client) *gtsmodel.Client {
+		c2 := new(gtsmodel.Client)
+		*c2 = *c1
+		return c2
+	}
+
+	c.GTS.Client.Init(structr.CacheConfig[*gtsmodel.Client]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
 }
 
 func (c *Caches) initDomainAllow() {
@@ -1135,7 +1166,7 @@ func (c *Caches) initTag() {
 
 func (c *Caches) initThreadMute() {
 	cap := calculateResultCacheMax(
-		sizeOfThreadMute(), // model in-mem size.
+		sizeofThreadMute(), // model in-mem size.
 		config.GetCacheThreadMuteMemRatio(),
 	)
 
@@ -1153,6 +1184,33 @@ func (c *Caches) initThreadMute() {
 			{Fields: "ThreadID", Multiple: true},
 			{Fields: "AccountID", Multiple: true},
 			{Fields: "ThreadID,AccountID"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initToken() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofToken(), // model in-mem size.
+		config.GetCacheTokenMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(t1 *gtsmodel.Token) *gtsmodel.Token {
+		t2 := new(gtsmodel.Token)
+		*t2 = *t1
+		return t2
+	}
+
+	c.GTS.Token.Init(structr.CacheConfig[*gtsmodel.Token]{
+		Indices: []structr.IndexConfig{
+			{Fields: "Code"},
+			{Fields: "Access"},
+			{Fields: "Refresh"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,

@@ -19,7 +19,5 @@ package oauth
 
 import "github.com/superseriousbusiness/oauth2/v4/errors"
 
-// InvalidRequest returns an oauth spec compliant 'invalid_request' error.
-func InvalidRequest() error {
-	return errors.New("invalid_request")
-}
+// ErrInvalidRequest is an oauth spec compliant 'invalid_request' error.
+var ErrInvalidRequest = errors.New("invalid_request")

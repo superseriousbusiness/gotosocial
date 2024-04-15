@@ -27,11 +27,11 @@ import (
 )
 
 type clientStore struct {
-	db db.Basic
+	db db.DB
 }
 
 // NewClientStore returns an implementation of the oauth2 ClientStore interface, using the given db as a storage backend.
-func NewClientStore(db db.Basic) oauth2.ClientStore {
+func NewClientStore(db db.DB) oauth2.ClientStore {
 	pts := &clientStore{
 		db: db,
 	}
@@ -39,26 +39,27 @@ func NewClientStore(db db.Basic) oauth2.ClientStore {
 }
 
 func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
-	poc := &gtsmodel.Client{}
-	if err := cs.db.GetByID(ctx, clientID, poc); err != nil {
+	client, err := cs.db.GetClientByID(ctx, clientID)
+	if err != nil {
 		return nil, err
 	}
-	return models.New(poc.ID, poc.Secret, poc.Domain, poc.UserID), nil
+	return models.New(
+		client.ID,
+		client.Secret,
+		client.Domain,
+		client.UserID,
+	), nil
 }
 
 func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo) error {
-	poc := &gtsmodel.Client{
+	return cs.db.PutClient(ctx, &gtsmodel.Client{
 		ID:     cli.GetID(),
 		Secret: cli.GetSecret(),
 		Domain: cli.GetDomain(),
 		UserID: cli.GetUserID(),
-	}
-	return cs.db.Put(ctx, poc)
+	})
 }
 
 func (cs *clientStore) Delete(ctx context.Context, id string) error {
-	poc := &gtsmodel.Client{
-		ID: id,
-	}
-	return cs.db.DeleteByID(ctx, id, poc)
+	return cs.db.DeleteClientByID(ctx, id)
 }
