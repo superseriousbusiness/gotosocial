@@ -56,10 +56,10 @@ require (
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
-	github.com/uptrace/bun v1.1.17
+	github.com/uptrace/bun v1.2.1
 	github.com/uptrace/bun/dialect/pgdialect v1.1.17
 	github.com/uptrace/bun/dialect/sqlitedialect v1.1.17
-	github.com/uptrace/bun/extra/bunotel v1.1.17
+	github.com/uptrace/bun/extra/bunotel v1.2.1
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.7.1
 	go.opentelemetry.io/otel v1.25.0
@@ -201,7 +201,7 @@ require (
 	github.com/toqueteos/webbrowser v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.3 // indirect
+	github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.4 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
