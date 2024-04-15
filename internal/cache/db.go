@@ -315,9 +315,10 @@ func (c *Caches) initApplication() {
 			{Fields: "ID"},
 			{Fields: "ClientID"},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateApplication,
 	})
 }
 
@@ -399,9 +400,10 @@ func (c *Caches) initClient() {
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateClient,
 	})
 }
 
