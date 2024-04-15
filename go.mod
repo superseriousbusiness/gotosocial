@@ -56,9 +56,9 @@ require (
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
-	github.com/uptrace/bun v1.1.17
+	github.com/uptrace/bun v1.2.1
 	github.com/uptrace/bun/dialect/pgdialect v1.1.17
-	github.com/uptrace/bun/dialect/sqlitedialect v1.1.17
+	github.com/uptrace/bun/dialect/sqlitedialect v1.2.1
 	github.com/uptrace/bun/extra/bunotel v1.1.17
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.7.1
