@@ -191,7 +191,7 @@ var Defaults = Configuration{
 		StatusFaveIDsMemRatio:    3,
 		TagMemRatio:              2,
 		ThreadMuteMemRatio:       0.2,
-		TokenMemRatio:            0.5,
+		TokenMemRatio:            0.75,
 		TombstoneMemRatio:        0.5,
 		UserMemRatio:             0.25,
 		WebfingerMemRatio:        0.1,

@@ -176,6 +176,7 @@ func totalOfRatios() float64 {
 		config.GetCacheBlockMemRatio() +
 		config.GetCacheBlockIDsMemRatio() +
 		config.GetCacheBoostOfIDsMemRatio() +
+		config.GetCacheClientMemRatio() +
 		config.GetCacheEmojiMemRatio() +
 		config.GetCacheEmojiCategoryMemRatio() +
 		config.GetCacheFollowMemRatio() +
@@ -198,6 +199,7 @@ func totalOfRatios() float64 {
 		config.GetCacheStatusFaveIDsMemRatio() +
 		config.GetCacheTagMemRatio() +
 		config.GetCacheThreadMuteMemRatio() +
+		config.GetCacheTokenMemRatio() +
 		config.GetCacheTombstoneMemRatio() +
 		config.GetCacheUserMemRatio() +
 		config.GetCacheWebfingerMemRatio() +
