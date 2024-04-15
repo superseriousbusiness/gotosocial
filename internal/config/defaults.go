@@ -66,7 +66,7 @@ var Defaults = Configuration{
 	InstanceDeliverToSharedInboxes: true,
 	InstanceLanguages:              make(language.Languages, 0),
 
-	AccountsRegistrationOpen: true,
+	AccountsRegistrationOpen: false,
 	AccountsReasonRequired:   true,
 	AccountsAllowCustomCSS:   false,
 	AccountsCustomCSSLength:  10000,
