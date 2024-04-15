@@ -852,8 +852,8 @@ github.com/ugorji/go/codec
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-# github.com/uptrace/bun v1.1.17
-## explicit; go 1.19
+# github.com/uptrace/bun v1.2.1
+## explicit; go 1.21
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
 github.com/uptrace/bun/dialect/feature
@@ -864,17 +864,17 @@ github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.1.17
-## explicit; go 1.19
+# github.com/uptrace/bun/dialect/pgdialect v1.2.1
+## explicit; go 1.21
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/dialect/sqlitedialect v1.1.17
-## explicit; go 1.19
+# github.com/uptrace/bun/dialect/sqlitedialect v1.2.1
+## explicit; go 1.21
 github.com/uptrace/bun/dialect/sqlitedialect
-# github.com/uptrace/bun/extra/bunotel v1.1.17
-## explicit; go 1.19
+# github.com/uptrace/bun/extra/bunotel v1.2.1
+## explicit; go 1.21
 github.com/uptrace/bun/extra/bunotel
-# github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.3
-## explicit; go 1.18
+# github.com/uptrace/opentelemetry-go-extra/otelsql v0.2.4
+## explicit; go 1.21
 github.com/uptrace/opentelemetry-go-extra/otelsql
 # github.com/vmihailenco/msgpack/v5 v5.4.1
 ## explicit; go 1.19

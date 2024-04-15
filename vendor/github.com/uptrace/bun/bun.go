@@ -20,11 +20,6 @@ type (
 
 	BeforeScanRowHook = schema.BeforeScanRowHook
 	AfterScanRowHook  = schema.AfterScanRowHook
-
-	// DEPRECATED. Use BeforeScanRowHook instead.
-	BeforeScanHook = schema.BeforeScanHook
-	// DEPRECATED. Use AfterScanRowHook instead.
-	AfterScanHook = schema.AfterScanHook
 )
 
 type BeforeSelectHook interface {
@@ -77,7 +72,7 @@ type AfterDropTableHook interface {
 
 // SetLogger overwriters default Bun logger.
 func SetLogger(logger internal.Logging) {
-	internal.Logger = logger
+	internal.SetLogger(logger)
 }
 
 func In(slice interface{}) schema.QueryAppender {
