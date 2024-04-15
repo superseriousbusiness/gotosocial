@@ -1210,6 +1210,7 @@ func (c *Caches) initToken() {
 
 	c.GTS.Token.Init(structr.CacheConfig[*gtsmodel.Token]{
 		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
 			{Fields: "Code"},
 			{Fields: "Access"},
 			{Fields: "Refresh"},

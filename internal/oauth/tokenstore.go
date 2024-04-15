@@ -68,19 +68,19 @@ func newTokenStore(ctx context.Context, db db.DB) oauth2.TokenStore {
 func (ts *tokenStore) sweep(ctx context.Context) error {
 	// select *all* tokens from the db
 	// todo: if this becomes expensive (ie., there are fucking LOADS of tokens) then figure out a better way.
-	tokens := new([]*gtsmodel.Token)
-	if err := ts.db.GetAll(ctx, tokens); err != nil {
+	tokens, err := ts.db.GetAllTokens(ctx)
+	if err != nil {
 		return err
 	}
 
 	// iterate through and remove expired tokens
 	now := time.Now()
-	for _, dbt := range *tokens {
+	for _, dbt := range tokens {
 		// The zero value of a time.Time is 00:00 january 1 1970, which will always be before now. So:
 		// we only want to check if a token expired before now if the expiry time is *not zero*;
 		// ie., if it's been explicity set.
 		if !dbt.CodeExpiresAt.IsZero() && dbt.CodeExpiresAt.Before(now) || !dbt.RefreshExpiresAt.IsZero() && dbt.RefreshExpiresAt.Before(now) || !dbt.AccessExpiresAt.IsZero() && dbt.AccessExpiresAt.Before(now) {
-			if err := ts.db.DeleteByID(ctx, dbt.ID, dbt); err != nil {
+			if err := ts.db.DeleteTokenByID(ctx, dbt.ID); err != nil {
 				return err
 			}
 		}

@@ -45,6 +45,9 @@ type Application interface {
 	// DeleteClientByID ...
 	DeleteClientByID(ctx context.Context, id string) error
 
+	// GetAllTokens ...
+	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
+
 	// GetTokenByCode ...
 	GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error)
 
@@ -56,6 +59,9 @@ type Application interface {
 
 	// PutToken ...
 	PutToken(ctx context.Context, token *gtsmodel.Token) error
+
+	// DeleteTokenByID ...
+	DeleteTokenByID(ctx context.Context, id string) error
 
 	// DeleteTokenByCode ...
 	DeleteTokenByCode(ctx context.Context, code string) error

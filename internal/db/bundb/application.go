@@ -22,6 +22,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
 
@@ -131,6 +132,48 @@ func (a *applicationDB) DeleteClientByID(ctx context.Context, id string) error {
 	return nil
 }
 
+func (a *applicationDB) GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error) {
+	var tokenIDs []string
+
+	// Select ALL token IDs.
+	if err := a.db.NewSelect().
+		Table("tokens").
+		Column("id").
+		Scan(ctx, &tokenIDs); err != nil {
+		return nil, err
+	}
+
+	// Load all input token IDs via cache loader callback.
+	tokens, err := a.state.Caches.GTS.Token.LoadIDs("ID",
+		tokenIDs,
+		func(uncached []string) ([]*gtsmodel.Token, error) {
+			// Preallocate expected length of uncached tokens.
+			tokens := make([]*gtsmodel.Token, 0, len(uncached))
+
+			// Perform database query scanning
+			// the remaining (uncached) token IDs.
+			if err := a.db.NewSelect().
+				Model(tokens).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return tokens, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reoroder the tokens by their
+	// IDs to ensure in correct order.
+	getID := func(t *gtsmodel.Token) string { return t.ID }
+	util.OrderBy(tokens, tokenIDs, getID)
+
+	return tokens, nil
+}
+
 func (a *applicationDB) GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error) {
 	return a.getTokenBy(
 		"Code",
@@ -178,6 +221,19 @@ func (a *applicationDB) PutToken(ctx context.Context, token *gtsmodel.Token) err
 		_, err := a.db.NewInsert().Model(token).Exec(ctx)
 		return err
 	})
+}
+
+func (a *applicationDB) DeleteTokenByID(ctx context.Context, id string) error {
+	_, err := a.db.NewDelete().
+		Table("tokens").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	a.state.Caches.GTS.Token.Invalidate("ID", id)
+	return nil
 }
 
 func (a *applicationDB) DeleteTokenByCode(ctx context.Context, code string) error {
