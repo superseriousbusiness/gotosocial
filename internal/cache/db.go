@@ -58,7 +58,7 @@ type GTSCaches struct {
 	// BoostOfIDs provides access to the boost of IDs list database cache.
 	BoostOfIDs SliceCache[string]
 
-	// Client ...
+	// Client provides access to the gtsmodel Client database cache.
 	Client StructCache[*gtsmodel.Client]
 
 	// DomainAllow provides access to the domain allow database cache.
@@ -153,7 +153,7 @@ type GTSCaches struct {
 	// Tag provides access to the gtsmodel Tag database cache.
 	Tag StructCache[*gtsmodel.Tag]
 
-	// Token ...
+	// Token provides access to the gtsmodel Token database cache.
 	Token StructCache[*gtsmodel.Token]
 
 	// Tombstone provides access to the gtsmodel Tombstone database cache.
