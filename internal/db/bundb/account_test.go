@@ -650,6 +650,55 @@ func (suite *AccountTestSuite) TestGetPendingAccounts() {
 	suite.Len(accounts, 1)
 }
 
+func (suite *AccountTestSuite) TestAccountStatsAll() {
+	ctx := context.Background()
+	for _, account := range suite.testAccounts {
+		// Get stats for the first time. They
+		// should all be generated now since
+		// they're not stored in the test rig.
+		stats, err := suite.db.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		suite.NotNil(stats)
+		suite.WithinDuration(time.Now(), stats.RegeneratedAt, 5*time.Second)
+
+		// Get stats a second time. They shouldn't
+		// be regenerated since we just did it.
+		stats2, err := suite.db.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		suite.NotNil(stats)
+		suite.Equal(stats.RegeneratedAt, stats2.RegeneratedAt)
+
+		// Update the stats to indicate they're out of date.
+		stats2.RegeneratedAt = time.Now().Add(-72 * time.Hour)
+		if err := suite.db.UpdateAccountStats(ctx, stats2, "regenerated_at"); err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		// Get stats for a third time, they
+		// should get regenerated now, but
+		// only for local accounts.
+		stats3, err := suite.db.GetAccountStats(ctx, account.ID)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		suite.NotNil(stats)
+		if account.IsLocal() {
+			suite.True(stats3.RegeneratedAt.After(stats.RegeneratedAt))
+		} else {
+			suite.False(stats3.RegeneratedAt.After(stats.RegeneratedAt))
+		}
+
+		// Now delete the stats.
+		if err := suite.db.DeleteAccountStats(ctx, account.ID); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+}
+
 func TestAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTestSuite))
 }
