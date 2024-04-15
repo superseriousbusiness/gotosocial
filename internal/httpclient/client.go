@@ -59,8 +59,26 @@ var (
 // configuration values passed to initialized http.Transport{}
 // and http.Client{}, along with httpclient.Client{} specific.
 type Config struct {
-	// MaxOpenConnsPerHost limits the max number of open connections to a host.
+
+	// MaxOpenConnsPerHost limits the max
+	// number of open connections to a host.
 	MaxOpenConnsPerHost int
+
+	// AllowRanges allows outgoing
+	// communications to given IP nets.
+	AllowRanges []netip.Prefix
+
+	// BlockRanges blocks outgoing
+	// communiciations to given IP nets.
+	BlockRanges []netip.Prefix
+
+	// TLSInsecureSkipVerify can be set to true to
+	// skip validation of remote TLS certificates.
+	//
+	// THIS SHOULD BE USED FOR TESTING ONLY, IF YOU
+	// TURN THIS ON WHILE RUNNING IN PRODUCTION YOU
+	// ARE LEAVING YOUR SERVER WIDE OPEN TO ATTACKS!
+	TLSInsecureSkipVerify bool
 
 	// MaxIdleConns: see http.Transport{}.MaxIdleConns.
 	MaxIdleConns int
@@ -80,19 +98,8 @@ type Config struct {
 	// DisableCompression: see http.Transport{}.DisableCompression.
 	DisableCompression bool
 
-	// AllowRanges allows outgoing communications to given IP nets.
-	AllowRanges []netip.Prefix
-
-	// BlockRanges blocks outgoing communiciations to given IP nets.
-	BlockRanges []netip.Prefix
-
-	// TLSInsecureSkipVerify can be set to true to
-	// skip validation of remote TLS certificates.
-	//
-	// THIS SHOULD BE USED FOR TESTING ONLY, IF YOU
-	// TURN THIS ON WHILE RUNNING IN PRODUCTION YOU
-	// ARE LEAVING YOUR SERVER WIDE OPEN TO ATTACKS!
-	TLSInsecureSkipVerify bool
+	// HTTPClient ...
+	HTTPClient *http.Client
 }
 
 // Client wraps an underlying http.Client{} to provide the following:
@@ -116,6 +123,11 @@ func New(cfg Config) *Client {
 	var c Client
 	c.retries = 5
 
+	if cfg.HTTPClient != nil {
+		// Copy over existing client.
+		c.client = *cfg.HTTPClient
+	}
+
 	d := &net.Dialer{
 		Timeout:   15 * time.Second,
 		KeepAlive: 30 * time.Second,
@@ -138,7 +150,8 @@ func New(cfg Config) *Client {
 		cfg.MaxBodySize = int64(40 * bytesize.MiB)
 	}
 
-	// Protect dialer with IP range sanitizer.
+	// Protect the dialer
+	// with IP range sanitizer.
 	d.Control = (&Sanitizer{
 		Allow: cfg.AllowRanges,
 		Block: cfg.BlockRanges,
@@ -148,7 +161,7 @@ func New(cfg Config) *Client {
 	c.client.Timeout = cfg.Timeout
 	c.bodyMax = cfg.MaxBodySize
 
-	// Prepare TLS config for transport.
+	// Prepare transport TLS config.
 	tlsClientConfig := &tls.Config{
 		InsecureSkipVerify: cfg.TLSInsecureSkipVerify, //nolint:gosec
 	}

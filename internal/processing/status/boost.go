@@ -89,12 +89,12 @@ func (p *Processor) BoostCreate(
 	}
 
 	// Process side effects asynchronously.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActivityAnnounce,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       boost,
-		OriginAccount:  requester,
-		TargetAccount:  target.Account,
+		Origin:         requester,
+		Target:         target.Account,
 	})
 
 	return p.c.GetAPIStatus(ctx, requester, boost)
@@ -141,12 +141,12 @@ func (p *Processor) BoostRemove(
 
 	if boost != nil {
 		// Status was boosted. Process unboost side effects asynchronously.
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityUndo,
 			GTSModel:       boost,
-			OriginAccount:  requester,
-			TargetAccount:  target.Account,
+			Origin:         requester,
+			Target:         target.Account,
 		})
 	}
 

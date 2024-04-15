@@ -20,12 +20,10 @@ package account_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -152,18 +150,11 @@ func (suite *FollowTestSuite) TestFollowRequestLocal() {
 	}
 
 	// There should be a message going to the worker.
-	var cMsg messages.FromClientAPI
-	select {
-	case cMsg = <-suite.fromClientAPIChan:
-		// No problem.
-	case <-time.After(5 * time.Second):
-		suite.FailNow("timed out waiting for message")
-	}
-
+	cMsg := suite.checkClientAPIChan()
 	suite.Equal(ap.ActivityCreate, cMsg.APActivityType)
 	suite.Equal(ap.ActivityFollow, cMsg.APObjectType)
-	suite.Equal(requestingAccount.ID, cMsg.OriginAccount.ID)
-	suite.Equal(targetAccount.ID, cMsg.TargetAccount.ID)
+	suite.Equal(requestingAccount.ID, cMsg.Origin.ID)
+	suite.Equal(targetAccount.ID, cMsg.Target.ID)
 }
 
 func TestFollowTestS(t *testing.T) {

@@ -317,12 +317,12 @@ func (p *Processor) MoveSelf(
 	}
 
 	// Everything seems OK, process Move side effects async.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityMove,
 		GTSModel:       move,
-		OriginAccount:  originAcct,
-		TargetAccount:  targetAcct,
+		Origin:         originAcct,
+		Target:         targetAcct,
 	})
 
 	return nil

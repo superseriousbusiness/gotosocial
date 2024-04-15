@@ -39,38 +39,38 @@ import (
 // Starts workers on the provided state using noop processing functions.
 // Useful when you *don't* want to trigger side effects in a test.
 func StartNoopWorkers(state *state.State) {
-	state.Workers.EnqueueClientAPI = func(context.Context, ...messages.FromClientAPI) {}
-	state.Workers.EnqueueFediAPI = func(context.Context, ...messages.FromFediAPI) {}
-	state.Workers.ProcessFromClientAPI = func(context.Context, messages.FromClientAPI) error { return nil }
-	state.Workers.ProcessFromFediAPI = func(context.Context, messages.FromFediAPI) error { return nil }
+	state.Workers.Client.Process = func(context.Context, *messages.FromClientAPI) error { return nil }
+	state.Workers.Federator.Process = func(context.Context, *messages.FromFediAPI) error { return nil }
 
+	state.Workers.Client.Init(messages.ClientMsgIndices())
+	state.Workers.Federator.Init(messages.FederatorMsgIndices())
 	state.Workers.Delivery.Init(nil)
 
 	_ = state.Workers.Scheduler.Start()
-	_ = state.Workers.ClientAPI.Start(1, 10)
-	_ = state.Workers.Federator.Start(1, 10)
-	_ = state.Workers.Media.Start(1, 10)
+	_ = state.Workers.Client.Start(1)
+	_ = state.Workers.Federator.Start(1)
+	_ = state.Workers.Media.Start(1)
 }
 
 // Starts workers on the provided state using processing functions from the given
 // workers processor. Useful when you *do* want to trigger side effects in a test.
 func StartWorkers(state *state.State, processor *workers.Processor) {
-	state.Workers.EnqueueClientAPI = processor.EnqueueClientAPI
-	state.Workers.EnqueueFediAPI = processor.EnqueueFediAPI
-	state.Workers.ProcessFromClientAPI = processor.ProcessFromClientAPI
-	state.Workers.ProcessFromFediAPI = processor.ProcessFromFediAPI
+	state.Workers.Client.Process = processor.ProcessFromClientAPI
+	state.Workers.Federator.Process = processor.ProcessFromFediAPI
 
+	state.Workers.Client.Init(messages.ClientMsgIndices())
+	state.Workers.Federator.Init(messages.FederatorMsgIndices())
 	state.Workers.Delivery.Init(nil)
 
 	_ = state.Workers.Scheduler.Start()
-	_ = state.Workers.ClientAPI.Start(1, 10)
-	_ = state.Workers.Federator.Start(1, 10)
-	_ = state.Workers.Media.Start(1, 10)
+	_ = state.Workers.Client.Start(1)
+	_ = state.Workers.Federator.Start(1)
+	_ = state.Workers.Media.Start(1)
 }
 
 func StopWorkers(state *state.State) {
 	_ = state.Workers.Scheduler.Stop()
-	_ = state.Workers.ClientAPI.Stop()
+	_ = state.Workers.Client.Stop()
 	_ = state.Workers.Federator.Stop()
 	_ = state.Workers.Media.Stop()
 }

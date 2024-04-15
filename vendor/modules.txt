@@ -37,6 +37,9 @@ codeberg.org/gruf/go-iotools
 ## explicit; go 1.19
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format
+# codeberg.org/gruf/go-list v0.0.0-20231115200530-cb0fdba14ec9
+## explicit; go 1.21.4
+codeberg.org/gruf/go-list
 # codeberg.org/gruf/go-logger/v2 v2.2.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-logger/v2/level

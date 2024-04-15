@@ -56,6 +56,8 @@ codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f h1:Kazm/PInN2m1S
 codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f/go.mod h1:B8uq4yHtIcKXhBZT9C/SYisz25lldLHMVpwZPz4ADLQ=
 codeberg.org/gruf/go-kv v1.6.4 h1:3NZiW8HVdBM3kpOiLb7XfRiihnzZWMAixdCznguhILk=
 codeberg.org/gruf/go-kv v1.6.4/go.mod h1:O/YkSvKiS9XsRolM3rqCd9YJmND7dAXu9z+PrlYO4bc=
+codeberg.org/gruf/go-list v0.0.0-20231115200530-cb0fdba14ec9 h1:hELzrV7847swWgUbe2tONjbsZwmDAcUI88Oz0Qpa0IY=
+codeberg.org/gruf/go-list v0.0.0-20231115200530-cb0fdba14ec9/go.mod h1:U2H88vfAEdre9Gm3VzvzskhsuV1yLQE7Ga3GxoogZ94=
 codeberg.org/gruf/go-logger/v2 v2.2.1 h1:RP2u059EQKTBFV3cN8X6xDxNk2RkzqdgXGKflKqB7Oc=
 codeberg.org/gruf/go-logger/v2 v2.2.1/go.mod h1:m/vBfG5jNUmYXI8Hg9aVSk7Pn8YgEBITQB/B/CzdRss=
 codeberg.org/gruf/go-loosy v0.0.0-20231007123304-bb910d1ab5c4 h1:IXwfoU7f2whT6+JKIKskNl/hBlmWmnF1vZd84Eb3cyA=

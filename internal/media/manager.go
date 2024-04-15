@@ -432,8 +432,8 @@ func (m *Manager) ProcessEmoji(
 		return nil, err
 	}
 
-	// Attempt to add this emoji processing item to the worker queue.
-	_ = m.state.Workers.Media.MustEnqueueCtx(ctx, emoji.Process)
+	// Attempt to add emoji item to the worker queue.
+	m.state.Workers.Media.Queue.Push(emoji.Process)
 
 	return emoji, nil
 }

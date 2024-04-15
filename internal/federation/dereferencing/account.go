@@ -104,7 +104,7 @@ func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, 
 
 	if accountable != nil {
 		// This account was updated, enqueue re-dereference featured posts.
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
 			}
@@ -201,7 +201,7 @@ func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUs
 
 	if accountable != nil {
 		// This account was updated, enqueue re-dereference featured posts.
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
 			}
@@ -322,7 +322,7 @@ func (d *Dereferencer) RefreshAccount(
 
 	if accountable != nil {
 		// This account was updated, enqueue re-dereference featured posts.
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
 			}
@@ -362,7 +362,7 @@ func (d *Dereferencer) RefreshAccountAsync(
 	}
 
 	// Enqueue a worker function to enrich this account async.
-	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+	d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 		latest, accountable, err := d.enrichAccountSafely(ctx, requestUser, uri, account, accountable)
 		if err != nil {
 			log.Errorf(ctx, "error enriching remote account: %v", err)

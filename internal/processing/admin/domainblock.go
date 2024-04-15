@@ -201,15 +201,13 @@ func (p *Processor) domainBlockSideEffects(
 	// process an account delete message to remove
 	// that account's posts, media, etc.
 	if err := p.rangeDomainAccounts(ctx, block.Domain, func(account *gtsmodel.Account) {
-		cMsg := messages.FromClientAPI{
+		if err := p.state.Workers.Client.Process(ctx, &messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityDelete,
 			GTSModel:       block,
-			OriginAccount:  account,
-			TargetAccount:  account,
-		}
-
-		if err := p.state.Workers.ProcessFromClientAPI(ctx, cMsg); err != nil {
+			Origin:         account,
+			Target:         account,
+		}); err != nil {
 			errs.Append(err)
 		}
 	}); err != nil {

@@ -51,7 +51,7 @@ func (suite *CreateTestSuite) TestCreateNote() {
 	msg := <-suite.fromFederator
 	suite.Equal(ap.ObjectNote, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
-	suite.Equal(note, msg.APObjectModel)
+	suite.Equal(note, msg.APObject)
 }
 
 func (suite *CreateTestSuite) TestCreateNoteForward() {
@@ -79,15 +79,15 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg := <-suite.fromFederator
+	msg, _ := suite.state.Workers.Federator.Queue.Pop()
 	suite.Equal(ap.ObjectNote, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 
 	// nothing should be set as the model since this is a forward
-	suite.Nil(msg.APObjectModel)
+	suite.Nil(msg.APObject)
 
 	// but we should have a uri set
-	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", msg.APIri.String())
+	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", msg.APIRI.String())
 }
 
 func (suite *CreateTestSuite) TestCreateFlag1() {
@@ -120,7 +120,7 @@ func (suite *CreateTestSuite) TestCreateFlag1() {
 	}
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg := <-suite.fromFederator
+	msg, _ := suite.state.Workers.Federator.Queue.Pop()
 	suite.Equal(ap.ActivityFlag, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 

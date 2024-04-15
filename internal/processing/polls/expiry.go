@@ -116,11 +116,11 @@ func (p *Processor) onExpiry(pollID string) func(context.Context, time.Time) {
 
 		// Enqueue a status update operation to the client API worker,
 		// this will asynchronously send an update with the Poll close time.
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 			APActivityType: ap.ActivityUpdate,
 			APObjectType:   ap.ObjectNote,
 			GTSModel:       status,
-			OriginAccount:  status.Account,
+			Origin:         status.Account,
 		})
 	}
 }

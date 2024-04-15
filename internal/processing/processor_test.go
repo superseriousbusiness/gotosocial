@@ -124,8 +124,6 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
 	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
-	suite.state.Workers.EnqueueClientAPI = suite.processor.Workers().EnqueueClientAPI
-	suite.state.Workers.EnqueueFediAPI = suite.processor.Workers().EnqueueFediAPI
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../testrig/media")

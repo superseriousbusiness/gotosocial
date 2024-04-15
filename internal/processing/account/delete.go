@@ -102,16 +102,13 @@ func (p *Processor) Delete(
 // and the above Delete function will be called afterwards from the processor, to clear
 // out the account's bits and bobs, and stubbify it.
 func (p *Processor) DeleteSelf(ctx context.Context, account *gtsmodel.Account) gtserror.WithCode {
-	fromClientAPIMessage := messages.FromClientAPI{
+	// Process the delete side effects asynchronously.
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityDelete,
-		OriginAccount:  account,
-		TargetAccount:  account,
-	}
-
-	// Process the delete side effects asynchronously.
-	p.state.Workers.EnqueueClientAPI(ctx, fromClientAPIMessage)
-
+		Origin:         account,
+		Target:         account,
+	})
 	return nil
 }
 
@@ -193,7 +190,8 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 
 	var (
 		// Use this slice to batch unfollow messages.
-		msgs = []messages.FromClientAPI{}
+		msgs = []*messages.FromClientAPI{}
+
 		// To avoid checking if account is local over + over
 		// inside the subsequent loops, just generate static
 		// side effects function once now.
@@ -214,7 +212,7 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 		}
 		if msg := unfollowSideEffects(ctx, account, follow); msg != nil {
 			// There was a side effect to process.
-			msgs = append(msgs, *msg)
+			msgs = append(msgs, msg)
 		}
 	}
 
@@ -244,13 +242,13 @@ func (p *Processor) deleteAccountFollows(ctx context.Context, account *gtsmodel.
 
 		if msg := unfollowSideEffects(ctx, account, follow); msg != nil {
 			// There was a side effect to process.
-			msgs = append(msgs, *msg)
+			msgs = append(msgs, msg)
 		}
 	}
 
 	// Process accreted messages in serial.
 	for _, msg := range msgs {
-		if err := p.state.Workers.ProcessFromClientAPI(ctx, msg); err != nil {
+		if err := p.state.Workers.Client.Process(ctx, msg); err != nil {
 			log.Errorf(
 				ctx,
 				"error processing %s of %s during Delete of account %s: %v",
@@ -306,8 +304,8 @@ func (p *Processor) unfollowSideEffectsFunc(local bool) func(
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel:       follow,
-			OriginAccount:  account,
-			TargetAccount:  follow.TargetAccount,
+			Origin:         account,
+			Target:         follow.TargetAccount,
 		}
 	}
 }
@@ -337,7 +335,7 @@ func (p *Processor) deleteAccountStatuses(
 		statuses []*gtsmodel.Status
 		err      error
 		maxID    string
-		msgs     = []messages.FromClientAPI{}
+		msgs     = []*messages.FromClientAPI{}
 	)
 
 statusLoop:
@@ -404,29 +402,29 @@ statusLoop:
 					continue
 				}
 
-				msgs = append(msgs, messages.FromClientAPI{
+				msgs = append(msgs, &messages.FromClientAPI{
 					APObjectType:   ap.ActivityAnnounce,
 					APActivityType: ap.ActivityUndo,
 					GTSModel:       status,
-					OriginAccount:  boost.Account,
-					TargetAccount:  account,
+					Origin:         boost.Account,
+					Target:         account,
 				})
 			}
 
 			// Now prepare to Delete status.
-			msgs = append(msgs, messages.FromClientAPI{
+			msgs = append(msgs, &messages.FromClientAPI{
 				APObjectType:   ap.ObjectNote,
 				APActivityType: ap.ActivityDelete,
 				GTSModel:       status,
-				OriginAccount:  account,
-				TargetAccount:  account,
+				Origin:         account,
+				Target:         account,
 			})
 		}
 	}
 
 	// Process accreted messages in serial.
 	for _, msg := range msgs {
-		if err := p.state.Workers.ProcessFromClientAPI(ctx, msg); err != nil {
+		if err := p.state.Workers.Client.Process(ctx, msg); err != nil {
 			log.Errorf(
 				ctx,
 				"error processing %s of %s during Delete of account %s: %v",

@@ -32,9 +32,7 @@ import (
 // but the state will not be initialized.
 func NewTestProcessor(state *state.State, federator *federation.Federator, emailSender email.Sender, mediaManager *media.Manager) *processing.Processor {
 	p := processing.NewProcessor(cleaner.New(state), typeutils.NewConverter(state), federator, NewTestOauthServer(state.DB), mediaManager, state, emailSender)
-	state.Workers.EnqueueClientAPI = p.Workers().EnqueueClientAPI
-	state.Workers.EnqueueFediAPI = p.Workers().EnqueueFediAPI
-	state.Workers.ProcessFromClientAPI = p.Workers().ProcessFromClientAPI
-	state.Workers.ProcessFromFediAPI = p.Workers().ProcessFromFediAPI
+	state.Workers.Client.Process = p.Workers().ProcessFromClientAPI
+	state.Workers.Federator.Process = p.Workers().ProcessFromFediAPI
 	return p
 }

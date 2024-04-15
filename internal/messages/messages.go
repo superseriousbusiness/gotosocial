@@ -20,25 +20,74 @@ package messages
 import (
 	"net/url"
 
+	"codeberg.org/gruf/go-structr"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// FromClientAPI wraps a message that travels from the client API into the processor.
+// FromClientAPI wraps a message that
+// travels from the client API into the processor.
 type FromClientAPI struct {
-	APObjectType   string
+
+	// APObjectType ...
+	APObjectType string
+
+	// APActivityType ...
 	APActivityType string
-	GTSModel       interface{}
-	OriginAccount  *gtsmodel.Account
-	TargetAccount  *gtsmodel.Account
+
+	// Optional GTS model of
+	// the Activity or Object.
+	GTSModel interface{}
+
+	// Origin ...
+	Origin *gtsmodel.Account
+
+	// Target ...
+	Target *gtsmodel.Account
 }
 
-// FromFediAPI wraps a message that travels from the federating API into the processor.
+// FromFediAPI wraps a message that
+// travels from the federating API into the processor.
 type FromFediAPI struct {
-	APObjectType      string
-	APActivityType    string
-	APIri             *url.URL
-	APObjectModel     interface{}       // Optional AP model of the Object of the Activity. Should be Accountable or Statusable.
-	GTSModel          interface{}       // Optional GTS model of the Activity or Object.
-	RequestingAccount *gtsmodel.Account // Remote account that posted this Activity to the inbox.
-	ReceivingAccount  *gtsmodel.Account // Local account which owns the inbox that this Activity was posted to.
+
+	// APObjectType ...
+	APObjectType string
+
+	// APActivityType ...
+	APActivityType string
+
+	// APIRI ...
+	APIRI *url.URL
+
+	// Optional AP model of the Object of the
+	// Activity. Likely Accountable or Statusable.
+	APObject interface{}
+
+	// Optional GTS model of
+	// the Activity or Object.
+	GTSModel interface{}
+
+	// Remote account that posted
+	// this Activity to the inbox.
+	Requesting *gtsmodel.Account
+
+	// Local account which owns the inbox
+	// that this Activity was posted to.
+	Receiving *gtsmodel.Account
+}
+
+// ClientMsgIndices ...
+func ClientMsgIndices() []structr.IndexConfig {
+	return []structr.IndexConfig{
+		{Fields: "Origin.ID", Multiple: true},
+		{Fields: "Target.ID", Multiple: true},
+	}
+}
+
+// FederatorMsgIndices ...
+func FederatorMsgIndices() []structr.IndexConfig {
+	return []structr.IndexConfig{
+		{Fields: "APIRI", Multiple: true},
+		{Fields: "Requesting.ID", Multiple: true},
+		{Fields: "Receiving.ID", Multiple: true},
+	}
 }

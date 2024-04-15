@@ -56,14 +56,14 @@ func (d *Dereferencer) dereferenceThread(
 		}
 
 		// Enqueue dereferencing remaining status thread, (children), asychronously .
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.DereferenceStatusDescendants(ctx, requestUser, uri, statusable); err != nil {
 				log.Error(ctx, err)
 			}
 		})
 	} else {
 		// This is an existing status, dereference the WHOLE thread asynchronously.
-		d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.DereferenceStatusAncestors(ctx, requestUser, status); err != nil {
 				log.Error(ctx, err)
 			}

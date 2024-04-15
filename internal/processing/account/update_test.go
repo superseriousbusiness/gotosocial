@@ -20,29 +20,31 @@ package account_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 type AccountUpdateTestSuite struct {
 	AccountStandardTestSuite
 }
 
-func (suite *AccountStandardTestSuite) checkClientAPIChan(accountID string) {
-	msg := <-suite.fromClientAPIChan
-
-	// Profile update.
-	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
-
-	// Correct account updated.
-	if msg.OriginAccount == nil {
-		suite.FailNow("expected msg.OriginAccount not to be nil")
+func (suite *AccountStandardTestSuite) checkClientAPIChan() *messages.FromClientAPI {
+	select {
+	case <-suite.state.Workers.Client.Queue.Wait():
+	case <-time.After(5 * time.Second):
 	}
-	suite.Equal(accountID, msg.OriginAccount.ID)
+
+	msg, ok := suite.state.Workers.Client.Queue.Pop()
+	if !ok {
+		suite.FailNow("no queued message")
+	}
+
+	return msg
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
@@ -73,7 +75,17 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	suite.Equal(noteExpected, apiAccount.Note)
 
 	// We should have an update in the client api channel.
-	suite.checkClientAPIChan(testAccount.ID)
+	msg := suite.checkClientAPIChan()
+
+	// Profile update.
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+
+	// Correct account updated.
+	if msg.Origin == nil {
+		suite.FailNow("expected msg.OriginAccount not to be nil")
+	}
+	suite.Equal(testAccount.ID, msg.Origin.ID)
 
 	// Check database model of account as well.
 	dbAccount, err := suite.db.GetAccountByID(ctx, testAccount.ID)
@@ -113,7 +125,17 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 	suite.Equal(noteExpected, apiAccount.Note)
 
 	// We should have an update in the client api channel.
-	suite.checkClientAPIChan(testAccount.ID)
+	msg := suite.checkClientAPIChan()
+
+	// Profile update.
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+
+	// Correct account updated.
+	if msg.Origin == nil {
+		suite.FailNow("expected msg.OriginAccount not to be nil")
+	}
+	suite.Equal(testAccount.ID, msg.Origin.ID)
 
 	// Check database model of account as well.
 	dbAccount, err := suite.db.GetAccountByID(ctx, testAccount.ID)
@@ -159,7 +181,17 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 	suite.Equal(noteExpected, apiAccount.Note)
 
 	// We should have an update in the client api channel.
-	suite.checkClientAPIChan(testAccount.ID)
+	msg := suite.checkClientAPIChan()
+
+	// Profile update.
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+
+	// Correct account updated.
+	if msg.Origin == nil {
+		suite.FailNow("expected msg.OriginAccount not to be nil")
+	}
+	suite.Equal(testAccount.ID, msg.Origin.ID)
 
 	// Check database model of account as well.
 	dbAccount, err := suite.db.GetAccountByID(ctx, testAccount.ID)
@@ -234,7 +266,17 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 	suite.EqualValues(emojisExpected, apiAccount.Emojis)
 
 	// We should have an update in the client api channel.
-	suite.checkClientAPIChan(testAccount.ID)
+	msg := suite.checkClientAPIChan()
+
+	// Profile update.
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+
+	// Correct account updated.
+	if msg.Origin == nil {
+		suite.FailNow("expected msg.OriginAccount not to be nil")
+	}
+	suite.Equal(testAccount.ID, msg.Origin.ID)
 
 	// Check database model of account as well.
 	dbAccount, err := suite.db.GetAccountByID(ctx, testAccount.ID)
@@ -281,7 +323,17 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateNoteNotFields() {
 	suite.Equal(fieldsBefore, len(apiAccount.Fields))
 
 	// We should have an update in the client api channel.
-	suite.checkClientAPIChan(testAccount.ID)
+	msg := suite.checkClientAPIChan()
+
+	// Profile update.
+	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
+	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+
+	// Correct account updated.
+	if msg.Origin == nil {
+		suite.FailNow("expected msg.OriginAccount not to be nil")
+	}
+	suite.Equal(testAccount.ID, msg.Origin.ID)
 
 	// Check database model of account as well.
 	dbAccount, err := suite.db.GetAccountByID(ctx, testAccount.ID)

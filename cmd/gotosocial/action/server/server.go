@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
@@ -129,6 +130,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	})
 
 	// Initialize delivery worker with http client.
+	state.Workers.Client.Init(messages.ClientMsgIndices())
+	state.Workers.Federator.Init(messages.FederatorMsgIndices())
 	state.Workers.Delivery.Init(client)
 
 	// Initialize workers.
@@ -137,7 +140,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Add a task to the scheduler to sweep caches.
 	// Frequency = 1 * minute
-	// Threshold = 80% capacity
+	// Threshold = 60% capacity
 	_ = state.Workers.Scheduler.AddRecurring(
 		"@cachesweep", // id
 		time.Time{},   // start
@@ -195,10 +198,12 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting list timeline: %s", err)
 	}
 
-	// Create a media cleaner using the given state.
+	// Create a media cleaner
+	// using the given state.
 	cleaner := cleaner.New(&state)
 
-	// Create the processor using all the other services we've created so far.
+	// Create the processor using all the
+	// other services we've created so far.
 	processor := processing.NewProcessor(
 		cleaner,
 		typeConverter,
@@ -209,13 +214,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		emailSender,
 	)
 
-	// Set state client / federator asynchronous worker enqueue functions
-	state.Workers.EnqueueClientAPI = processor.Workers().EnqueueClientAPI
-	state.Workers.EnqueueFediAPI = processor.Workers().EnqueueFediAPI
-
 	// Set state client / federator synchronous processing functions.
-	state.Workers.ProcessFromClientAPI = processor.Workers().ProcessFromClientAPI
-	state.Workers.ProcessFromFediAPI = processor.Workers().ProcessFromFediAPI
+	state.Workers.Client.Process = processor.Workers().ProcessFromClientAPI
+	state.Workers.Federator.Process = processor.Workers().ProcessFromFediAPI
 
 	// Schedule tasks for all existing poll expiries.
 	if err := processor.Polls().ScheduleAll(ctx); err != nil {

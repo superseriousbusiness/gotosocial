@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Delivery wraps an httpclient.Request{}
@@ -158,23 +159,13 @@ func (w *Worker) run(ctx context.Context) {
 	if w.Client == nil || w.Queue == nil {
 		panic("not yet initialized")
 	}
-	log.Infof(ctx, "%p: started delivery worker", w)
-	defer log.Infof(ctx, "%p: stopped delivery worker", w)
-	for returned := false; !returned; {
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					log.Errorf(ctx, "recovered panic: %v", r)
-				}
-			}()
-			w.process(ctx)
-			returned = true
-		}()
-	}
+	log.Infof(ctx, "%p: starting worker", w)
+	defer log.Infof(ctx, "%p: stopped worker", w)
+	util.Must(func() { w.process(ctx) })
 }
 
 // process is the main delivery worker processing routine.
-func (w *Worker) process(ctx context.Context) {
+func (w *Worker) process(ctx context.Context) bool {
 	if w.Client == nil || w.Queue == nil {
 		// we perform this check here just
 		// to ensure the compiler knows these
@@ -188,7 +179,7 @@ loop:
 		// Get next delivery.
 		dlv, ok := w.next(ctx)
 		if !ok {
-			return
+			return true
 		}
 
 		// Check whether backoff required.
@@ -203,7 +194,7 @@ loop:
 				// Main ctx
 				// cancelled.
 				backoff.Stop()
-				return
+				return true
 
 			case <-w.Queue.Wait():
 				// A new message was
