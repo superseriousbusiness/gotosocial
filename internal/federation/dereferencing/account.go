@@ -1062,10 +1062,9 @@ func (d *Dereferencer) fetchRemoteAccountStats(ctx context.Context, account *gts
 		account.FollowersURI,
 		requestUser,
 	); err != nil {
-		// Something up with the URL,
-		// log this but don't bail.
-		log.Errorf(ctx,
-			"bad followers URI for account @%s@%s: %v",
+		// Log this but don't bail.
+		log.Warnf(ctx,
+			"couldn't count followers for @%s@%s: %v",
 			account.Username, account.Domain, err,
 		)
 	} else if count > 0 {
@@ -1079,10 +1078,9 @@ func (d *Dereferencer) fetchRemoteAccountStats(ctx context.Context, account *gts
 		account.FollowingURI,
 		requestUser,
 	); err != nil {
-		// Something up with the URL,
-		// log this but don't bail.
-		log.Errorf(ctx,
-			"bad following URI for account @%s@%s: %v",
+		// Log this but don't bail.
+		log.Warnf(ctx,
+			"couldn't count following for @%s@%s: %v",
 			account.Username, account.Domain, err,
 		)
 	} else if count > 0 {
@@ -1096,10 +1094,9 @@ func (d *Dereferencer) fetchRemoteAccountStats(ctx context.Context, account *gts
 		account.OutboxURI,
 		requestUser,
 	); err != nil {
-		// Something up with the URL,
-		// log this but don't bail.
-		log.Errorf(ctx,
-			"bad outbox URI for account @%s@%s: %v",
+		// Log this but don't bail.
+		log.Warnf(ctx,
+			"couldn't count statuses for @%s@%s: %v",
 			account.Username, account.Domain, err,
 		)
 	} else if count > 0 {
@@ -1127,13 +1124,8 @@ func (d *Dereferencer) fetchRemoteAccountStats(ctx context.Context, account *gts
 // a positive integer, or -1 if total items
 // cannot be counted.
 //
-// Only returns an error if provided uriStr
-// is not empty and not parseable. Actual
-// dereferencing errors are ignored, on the
-// basis that it's not a show stopper if an
-// error occurs since these numbers are not
-// very important, but malformed URIs are
-// kind of significant.
+// Error will be returned for invalid non-empty
+// URIs or dereferencing isses.
 func (d *Dereferencer) countCollection(
 	ctx context.Context,
 	uriStr string,
@@ -1150,13 +1142,7 @@ func (d *Dereferencer) countCollection(
 
 	collect, err := d.dereferenceCollection(ctx, requestUser, uri)
 	if err != nil {
-		// Just log for debug, we don't
-		// mind if we can't fetch this.
-		log.Debugf(ctx,
-			"error dereferencing %s: %v",
-			uriStr, err,
-		)
-		return -1, nil
+		return -1, err
 	}
 
 	return collect.TotalItems(), nil
