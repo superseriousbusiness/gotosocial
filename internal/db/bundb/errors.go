@@ -18,13 +18,12 @@
 package bundb
 
 import (
-	"database/sql/driver"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/ncruces/go-sqlite3"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"modernc.org/sqlite"
-	sqlite3 "modernc.org/sqlite/lib"
 )
 
 // errBusy is a sentinel error indicating
@@ -54,52 +53,31 @@ func processPostgresError(err error) error {
 	return err
 }
 
-// processSQLiteError processes an error, replacing any sqlite specific errors with our own error type
 func processSQLiteError(err error) error {
-	// Catch nil errs.
-	if err == nil {
-		return nil
-	}
-
-	// Attempt to cast as sqlite
-	sqliteErr, ok := err.(*sqlite.Error)
+	// Attempt to cast as sqlite error.
+	sqliteErr, ok := err.(*sqlite3.Error)
 	if !ok {
 		return err
 	}
 
 	// Handle supplied error code:
-	switch sqliteErr.Code() {
-	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
-		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
+	switch sqliteErr.ExtendedCode() {
+	case sqlite3.BUSY_TIMEOUT:
+		return err // return busy timeouts.
+	case sqlite3.CONSTRAINT_UNIQUE,
+		sqlite3.CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
-	case sqlite3.SQLITE_BUSY,
-		sqlite3.SQLITE_BUSY_SNAPSHOT,
-		sqlite3.SQLITE_BUSY_RECOVERY:
+	}
+	switch sqliteErr.Code() {
+	case sqlite3.BUSY,
+		sqlite3.LOCKED:
 		return errBusy
-	case sqlite3.SQLITE_BUSY_TIMEOUT:
-		return db.ErrBusyTimeout
-
-	// WORKAROUND:
-	// text copied from matrix dev chat:
-	//
-	// okay i've found a workaround for now. so between
-	// v1.29.0 and v1.29.2 (modernc.org/sqlite) is that
-	// slightly tweaked interruptOnDone() behaviour, which
-	// causes interrupt to (imo, correctly) get called when
-	// a context is cancelled to cancel the running query. the
-	// issue is that every single query after that point seems
-	// to still then return interrupted. so as you thought,
-	// maybe that query count isn't being decremented. i don't
-	// think it's our code, but i haven't ruled it out yet.
-	//
-	// the workaround for now is adding to our sqlite error
-	// processor to replace an SQLITE_INTERRUPTED code with
-	// driver.ErrBadConn, which hints to the golang sql package
-	// that the conn needs to be closed and a new one opened
-	//
-	case sqlite3.SQLITE_INTERRUPT:
-		return driver.ErrBadConn
 	}
 
-	return err
+	// Wrap the returned error with the code and
+	// extended code for easier debugging later.
+	return fmt.Errorf("%w (code=%d extended=%d)", err,
+		sqliteErr.Code(),
+		sqliteErr.ExtendedCode(),
+	)
 }

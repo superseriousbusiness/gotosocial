@@ -19,6 +19,7 @@ package bundb_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -82,10 +83,20 @@ func (suite *TagTestSuite) TestPutTag() {
 
 		// Subsequent inserts should fail
 		// since all these tags are equivalent.
-		suite.ErrorIs(err, db.ErrAlreadyExists)
+		if !suite.ErrorIs(err, db.ErrAlreadyExists) {
+			suite.T().Logf("%T(%v) %v", err, err, unwrap(err))
+		}
 	}
 }
 
 func TestTagTestSuite(t *testing.T) {
 	suite.Run(t, new(TagTestSuite))
+}
+
+func unwrap(err error) (errs []error) {
+	for err != nil {
+		errs = append(errs, err)
+		err = errors.Unwrap(err)
+	}
+	return
 }

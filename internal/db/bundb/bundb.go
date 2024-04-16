@@ -48,8 +48,6 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
-
-	"modernc.org/sqlite"
 )
 
 // DBService satisfies the DB interface
@@ -339,9 +337,7 @@ func sqliteConn(ctx context.Context, state *state.State) (*bun.DB, error) {
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite-gts", address)
 	if err != nil {
-		if errWithCode, ok := err.(*sqlite.Error); ok {
-			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
-		}
+		err = processSQLiteError(err) // this adds error code information
 		return nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
 	}
 
@@ -356,9 +352,7 @@ func sqliteConn(ctx context.Context, state *state.State) (*bun.DB, error) {
 
 	// ping to check the db is there and listening
 	if err := db.PingContext(ctx); err != nil {
-		if errWithCode, ok := err.(*sqlite.Error); ok {
-			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
-		}
+		err = processSQLiteError(err) // this adds error code information
 		return nil, fmt.Errorf("sqlite ping: %w", err)
 	}
 	log.Infof(ctx, "connected to SQLITE database with address %s", address)
