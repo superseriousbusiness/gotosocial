@@ -244,6 +244,10 @@ func (u *utilF) incrementStatusesCount(
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
@@ -271,6 +275,10 @@ func (u *utilF) decrementStatusesCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
@@ -301,6 +309,10 @@ func (u *utilF) incrementFollowersCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
@@ -326,6 +338,10 @@ func (u *utilF) decrementFollowersCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
@@ -356,6 +372,10 @@ func (u *utilF) incrementFollowingCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
@@ -381,6 +401,10 @@ func (u *utilF) decrementFollowingCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
@@ -411,6 +435,10 @@ func (u *utilF) incrementFollowRequestsCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
@@ -436,6 +464,10 @@ func (u *utilF) decrementFollowRequestsCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
+	// Lock on this account since we're changing stats.
+	unlock := u.state.AccountLocks.Lock(account.URI)
+	defer unlock()
+
 	// Populate stats.
 	if account.Stats == nil {
 		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
