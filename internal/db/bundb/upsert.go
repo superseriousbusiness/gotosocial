@@ -189,14 +189,14 @@ func (u *UpsertQuery) insertQuery() (*bun.InsertQuery, error) {
 		constraintIDPlaceholders = append(constraintIDPlaceholders, "?")
 		constraintIDs = append(constraintIDs, bun.Ident(constraint))
 	}
-	onSQL := "conflict (" + strings.Join(constraintIDPlaceholders, ", ") + ") do update"
+	onSQL := "CONFLICT (" + strings.Join(constraintIDPlaceholders, ", ") + ") DO UPDATE"
 
 	setClauses := make([]string, 0, len(columns))
 	setIDs := make([]interface{}, 0, 2*len(columns))
 	for _, column := range columns {
+		setClauses = append(setClauses, "? = ?")
 		// "excluded" is a special table that contains only the row involved in a conflict.
-		setClauses = append(setClauses, "? = excluded.?")
-		setIDs = append(setIDs, bun.Ident(column), bun.Ident(column))
+		setIDs = append(setIDs, bun.Ident(column), bun.Ident("excluded."+column))
 	}
 	setSQL := strings.Join(setClauses, ", ")
 

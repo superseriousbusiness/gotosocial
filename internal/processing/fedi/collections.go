@@ -126,11 +126,12 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Calculate total number of followers available for account.
-	total, err := p.state.DB.CountAccountFollowers(ctx, receiver.ID)
-	if err != nil {
-		err := gtserror.Newf("error counting followers: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
+	// Ensure we have stats for this account.
+	if receiver.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
+			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	var obj vocab.Type
@@ -138,7 +139,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 	// Start the AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = total
+	params.Total = *receiver.Stats.FollowersCount
 
 	switch {
 
@@ -235,11 +236,12 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Calculate total number of following available for account.
-	total, err := p.state.DB.CountAccountFollows(ctx, receiver.ID)
-	if err != nil {
-		err := gtserror.Newf("error counting follows: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
+	// Ensure we have stats for this account.
+	if receiver.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
+			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	var obj vocab.Type
@@ -247,7 +249,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = total
+	params.Total = *receiver.Stats.FollowingCount
 
 	switch {
 	case receiver.IsInstance() ||

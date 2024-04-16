@@ -27,8 +27,8 @@ import (
 // HOOKS TO BE CALLED ON DELETE YOU MUST FIRST POPULATE IT IN THE CACHE.
 
 func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
-	// Invalidate status counts for this account.
-	c.GTS.AccountCounts.Invalidate(account.ID)
+	// Invalidate stats for this account.
+	c.GTS.AccountStats.Invalidate("AccountID", account.ID)
 
 	// Invalidate account ID cached visibility.
 	c.Visibility.Invalidate("ItemID", account.ID)
@@ -168,8 +168,8 @@ func (c *Caches) OnInvalidatePollVote(vote *gtsmodel.PollVote) {
 }
 
 func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
-	// Invalidate status counts for this account.
-	c.GTS.AccountCounts.Invalidate(status.AccountID)
+	// Invalidate stats for this account.
+	c.GTS.AccountStats.Invalidate("AccountID", status.AccountID)
 
 	// Invalidate status ID cached visibility.
 	c.Visibility.Invalidate("ItemID", status.ID)

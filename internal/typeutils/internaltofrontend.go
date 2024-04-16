@@ -63,18 +63,22 @@ func toMastodonVersion(in string) string {
 // if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 // (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
 func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-	// we can build this sensitive account easily by first getting the public account....
+	// We can build this sensitive account model
+	// by first getting the public account, and
+	// then adding the Source object to it.
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
 	if err != nil {
 		return nil, err
 	}
 
-	// then adding the Source object to it...
-
-	// check pending follow requests aimed at this account
-	frc, err := c.state.DB.CountAccountFollowRequests(ctx, a.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error counting follow requests: %s", err)
+	// Ensure account stats populated.
+	if a.Stats == nil {
+		if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
+			return nil, gtserror.Newf(
+				"error getting stats for account %s: %w",
+				a.ID, err,
+			)
+		}
 	}
 
 	statusContentType := string(apimodel.StatusContentTypeDefault)
@@ -89,7 +93,7 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		StatusContentType:   statusContentType,
 		Note:                a.NoteRaw,
 		Fields:              c.fieldsToAPIFields(a.FieldsRaw),
-		FollowRequestsCount: frc,
+		FollowRequestsCount: *a.Stats.FollowRequestsCount,
 		AlsoKnownAsURIs:     a.AlsoKnownAsURIs,
 	}
 
@@ -100,8 +104,22 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 // if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 // In other words, this is the public record that the server has of an account.
 func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-	if err := c.state.DB.PopulateAccount(ctx, a); err != nil {
+	// Populate account struct fields.
+	err := c.state.DB.PopulateAccount(ctx, a)
+
+	switch {
+	case err == nil:
+		// No problem.
+
+	case err != nil && a.Stats != nil:
+		// We have stats so that's
+		// *maybe* OK, try to continue.
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
+
+	default:
+		// There was an error and we don't
+		// have stats, we can't continue.
+		return nil, gtserror.Newf("account stats not populated, could not continue: %w", err)
 	}
 
 	// Basic account stats:
@@ -110,30 +128,17 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	//   - Statuses count
 	//   - Last status time
 
-	followersCount, err := c.state.DB.CountAccountFollowers(ctx, a.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error counting followers: %w", err)
-	}
-
-	followingCount, err := c.state.DB.CountAccountFollows(ctx, a.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error counting following: %w", err)
-	}
-
-	statusesCount, err := c.state.DB.CountAccountStatuses(ctx, a.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error counting statuses: %w", err)
-	}
-
-	var lastStatusAt *string
-	lastPosted, err := c.state.DB.GetAccountLastPosted(ctx, a.ID, false)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error getting last posted: %w", err)
-	}
-
-	if !lastPosted.IsZero() {
-		lastStatusAt = util.Ptr(util.FormatISO8601(lastPosted))
-	}
+	var (
+		followersCount = *a.Stats.FollowersCount
+		followingCount = *a.Stats.FollowingCount
+		statusesCount  = *a.Stats.StatusesCount
+		lastStatusAt   = func() *string {
+			if a.Stats.LastStatusAt.IsZero() {
+				return nil
+			}
+			return util.Ptr(util.FormatISO8601(a.Stats.LastStatusAt))
+		}()
+	)
 
 	// Profile media + nice extras:
 	//   - Avatar

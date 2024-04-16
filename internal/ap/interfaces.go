@@ -307,6 +307,12 @@ type CollectionIterator interface {
 
 	NextItem() TypeOrIRI
 	PrevItem() TypeOrIRI
+
+	// TotalItems returns the total items
+	// present in the collection, derived
+	// from the totalItems property, or -1
+	// if totalItems not present / readable.
+	TotalItems() int
 }
 
 // CollectionPageIterator represents the minimum interface for interacting with a wrapped
@@ -319,6 +325,12 @@ type CollectionPageIterator interface {
 
 	NextItem() TypeOrIRI
 	PrevItem() TypeOrIRI
+
+	// TotalItems returns the total items
+	// present in the collection, derived
+	// from the totalItems property, or -1
+	// if totalItems not present / readable.
+	TotalItems() int
 }
 
 // Flaggable represents the minimum interface for an activitystreams 'Flag' activity.

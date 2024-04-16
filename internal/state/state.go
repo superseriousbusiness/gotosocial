@@ -50,11 +50,12 @@ type State struct {
 	// functions, and by the go-fed/activity library.
 	FedLocks mutexes.MutexMap
 
-	// ClientLocks provides access to this state's
-	// mutex map of per URI client locks.
-	//
-	// Used during account migration actions.
-	ClientLocks mutexes.MutexMap
+	// AccountLocks provides access to this state's
+	// mutex map of per URI locks, intended for use
+	// when updating accounts, migrating, approving
+	// or rejecting an account, changing stats,
+	// pinned statuses, etc.
+	AccountLocks mutexes.MutexMap
 
 	// Storage provides access to the storage driver.
 	Storage *storage.Driver
