@@ -153,7 +153,7 @@ func (a *applicationDB) GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, er
 			// Perform database query scanning
 			// the remaining (uncached) token IDs.
 			if err := a.db.NewSelect().
-				Model(tokens).
+				Model(&tokens).
 				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
 				Scan(ctx); err != nil {
 				return nil, err
