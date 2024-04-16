@@ -93,9 +93,7 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 
 	// Ensure account stats populated.
 	if requestingAccount.Stats == nil {
-		var err error
-		requestingAccount.Stats, err = p.state.DB.GetAccountStats(ctx, requestingAccount.ID)
-		if err != nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
 			err = gtserror.Newf("db error getting account stats: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -160,9 +158,7 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 
 	// Ensure account stats populated.
 	if requestingAccount.Stats == nil {
-		var err error
-		requestingAccount.Stats, err = p.state.DB.GetAccountStats(ctx, requestingAccount.ID)
-		if err != nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
 			err = gtserror.Newf("db error getting account stats: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}

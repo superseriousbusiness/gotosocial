@@ -632,11 +632,7 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 
 	if account.Stats == nil {
 		// Get / Create stats for this account.
-		account.Stats, err = a.state.DB.GetAccountStats(
-			ctx,
-			account.ID,
-		)
-		if err != nil {
+		if err := a.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			errs.Appendf("error populating account stats: %w", err)
 		}
 	}
@@ -1081,7 +1077,7 @@ func (a *accountDB) UpdateAccountSettings(
 	})
 }
 
-func (a *accountDB) GetAccountStats(ctx context.Context, accountID string) (*gtsmodel.AccountStats, error) {
+func (a *accountDB) PopulateAccountStats(ctx context.Context, account *gtsmodel.Account) error {
 	// Fetch stats from db cache with loader callback.
 	stats, err := a.state.Caches.GTS.AccountStats.LoadOne(
 		"AccountID",
@@ -1091,45 +1087,39 @@ func (a *accountDB) GetAccountStats(ctx context.Context, accountID string) (*gts
 			if err := a.db.
 				NewSelect().
 				Model(&stats).
-				Where("? = ?", bun.Ident("account_stats.account_id"), accountID).
+				Where("? = ?", bun.Ident("account_stats.account_id"), account.ID).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
 			return &stats, nil
 		},
-		accountID,
+		account.ID,
 	)
 
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		// Real error.
-		return nil, err
+		return err
 	}
 
 	if stats == nil {
 		// Don't have stats yet, generate them.
-		return a.RegenerateAccountStats(ctx, accountID)
+		return a.RegenerateAccountStats(ctx, account)
 	}
+
+	// We have a stats, attach
+	// it to the account.
+	account.Stats = stats
 
 	// Check if this is a local
 	// stats by looking at the
 	// account they pertain to.
-	statsAcct, err := a.GetAccountByID(
-		// Must be barebones to avoid
-		// getting stuck in a loop.
-		gtscontext.SetBarebones(ctx),
-		accountID,
-	)
-	if err != nil {
-		return nil, gtserror.Newf("db error getting stats account: %w", err)
-	}
-
-	if statsAcct.IsRemote() {
+	if account.IsRemote() {
 		// Account is remote. Updating
 		// stats for remote accounts is
 		// handled in the dereferencer.
 		//
 		// Nothing more to do!
-		return stats, nil
+		return nil
 	}
 
 	// Stats account is local, check
@@ -1138,41 +1128,41 @@ func (a *accountDB) GetAccountStats(ctx context.Context, accountID string) (*gts
 	expiry := stats.RegeneratedAt.Add(statsFreshness)
 	if time.Now().After(expiry) {
 		// Stats have expired, regenerate them.
-		return a.RegenerateAccountStats(ctx, accountID)
+		return a.RegenerateAccountStats(ctx, account)
 	}
 
 	// Stats are still fresh.
-	return stats, nil
+	return nil
 }
 
-func (a *accountDB) RegenerateAccountStats(ctx context.Context, accountID string) (*gtsmodel.AccountStats, error) {
+func (a *accountDB) RegenerateAccountStats(ctx context.Context, account *gtsmodel.Account) error {
 	// Initialize a new stats struct.
 	stats := &gtsmodel.AccountStats{
-		AccountID:     accountID,
+		AccountID:     account.ID,
 		RegeneratedAt: time.Now(),
 	}
 
 	// Count followers outside of transaction since
 	// it uses a cache + requires its own db calls.
-	followerIDs, err := a.state.DB.GetAccountFollowerIDs(ctx, accountID, nil)
+	followerIDs, err := a.state.DB.GetAccountFollowerIDs(ctx, account.ID, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	stats.FollowersCount = util.Ptr(len(followerIDs))
 
 	// Count following outside of transaction since
 	// it uses a cache + requires its own db calls.
-	followIDs, err := a.state.DB.GetAccountFollowIDs(ctx, accountID, nil)
+	followIDs, err := a.state.DB.GetAccountFollowIDs(ctx, account.ID, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	stats.FollowingCount = util.Ptr(len(followIDs))
 
 	// Count follow requests outside of transaction since
 	// it uses a cache + requires its own db calls.
-	followRequestIDs, err := a.state.DB.GetAccountFollowRequestIDs(ctx, accountID, nil)
+	followRequestIDs, err := a.state.DB.GetAccountFollowRequestIDs(ctx, account.ID, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	stats.FollowRequestsCount = util.Ptr(len(followRequestIDs))
 
@@ -1184,7 +1174,7 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, accountID string
 		// Scan database for account statuses.
 		statusesCount, err := tx.NewSelect().
 			Table("statuses").
-			Where("? = ?", bun.Ident("account_id"), accountID).
+			Where("? = ?", bun.Ident("account_id"), account.ID).
 			Count(ctx)
 		if err != nil {
 			return err
@@ -1194,7 +1184,7 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, accountID string
 		// Scan database for pinned statuses.
 		statusesPinnedCount, err := tx.NewSelect().
 			Table("statuses").
-			Where("? = ?", bun.Ident("account_id"), accountID).
+			Where("? = ?", bun.Ident("account_id"), account.ID).
 			Where("? IS NOT NULL", bun.Ident("pinned_at")).
 			Count(ctx)
 		if err != nil {
@@ -1208,7 +1198,7 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, accountID string
 			NewSelect().
 			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 			Column("status.created_at").
-			Where("? = ?", bun.Ident("status.account_id"), accountID).
+			Where("? = ?", bun.Ident("status.account_id"), account.ID).
 			Order("status.id DESC").
 			Limit(1).
 			Scan(ctx, &lastStatusAt)
@@ -1219,12 +1209,12 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, accountID string
 
 		return nil
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
 	// Upsert this stats in case a race
 	// meant someone else inserted it first.
-	err = a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+	if err := a.state.Caches.GTS.AccountStats.Store(stats, func() error {
 		if _, err := NewUpsert(a.db).
 			Model(stats).
 			Constraint("account_id").
@@ -1232,9 +1222,12 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, accountID string
 			return err
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
 
-	return stats, err
+	account.Stats = stats
+	return nil
 }
 
 func (a *accountDB) UpdateAccountStats(ctx context.Context, stats *gtsmodel.AccountStats, columns ...string) error {

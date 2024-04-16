@@ -194,9 +194,7 @@ func (suite *StatusPinTestSuite) TestPinStatusTooManyPins() {
 	}
 
 	// Regenerate account stats to set pinned count.
-	var err error
-	testAccount.Stats, err = suite.db.RegenerateAccountStats(ctx, testAccount.ID)
-	if err != nil {
+	if err := suite.db.RegenerateAccountStats(ctx, testAccount); err != nil {
 		suite.FailNow(err.Error())
 	}
 

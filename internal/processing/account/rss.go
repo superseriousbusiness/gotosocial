@@ -71,8 +71,7 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 
 	// Ensure account stats populated.
 	if account.Stats == nil {
-		account.Stats, err = p.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			err = gtserror.Newf("db error getting account stats %s: %w", username, err)
 			return nil, never, gtserror.NewErrorInternalError(err)
 		}

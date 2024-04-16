@@ -656,21 +656,21 @@ func (suite *AccountTestSuite) TestAccountStatsAll() {
 		// Get stats for the first time. They
 		// should all be generated now since
 		// they're not stored in the test rig.
-		stats, err := suite.db.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := suite.db.PopulateAccountStats(ctx, account); err != nil {
 			suite.FailNow(err.Error())
 		}
+		stats := account.Stats
 		suite.NotNil(stats)
 		suite.WithinDuration(time.Now(), stats.RegeneratedAt, 5*time.Second)
 
 		// Get stats a second time. They shouldn't
 		// be regenerated since we just did it.
-		stats2, err := suite.db.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := suite.db.PopulateAccountStats(ctx, account); err != nil {
 			suite.FailNow(err.Error())
 		}
-		suite.NotNil(stats)
-		suite.Equal(stats.RegeneratedAt, stats2.RegeneratedAt)
+		stats2 := account.Stats
+		suite.NotNil(stats2)
+		suite.Equal(stats2.RegeneratedAt, stats.RegeneratedAt)
 
 		// Update the stats to indicate they're out of date.
 		stats2.RegeneratedAt = time.Now().Add(-72 * time.Hour)
@@ -681,11 +681,11 @@ func (suite *AccountTestSuite) TestAccountStatsAll() {
 		// Get stats for a third time, they
 		// should get regenerated now, but
 		// only for local accounts.
-		stats3, err := suite.db.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := suite.db.PopulateAccountStats(ctx, account); err != nil {
 			suite.FailNow(err.Error())
 		}
-		suite.NotNil(stats)
+		stats3 := account.Stats
+		suite.NotNil(stats3)
 		if account.IsLocal() {
 			suite.True(stats3.RegeneratedAt.After(stats.RegeneratedAt))
 		} else {

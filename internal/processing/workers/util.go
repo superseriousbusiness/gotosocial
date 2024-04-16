@@ -246,9 +246,7 @@ func (u *utilF) incrementStatusesCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
@@ -275,9 +273,7 @@ func (u *utilF) decrementStatusesCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
@@ -307,9 +303,7 @@ func (u *utilF) incrementFollowersCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
@@ -334,9 +328,7 @@ func (u *utilF) decrementFollowersCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
@@ -366,9 +358,7 @@ func (u *utilF) incrementFollowingCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
@@ -393,9 +383,7 @@ func (u *utilF) decrementFollowingCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
@@ -425,9 +413,7 @@ func (u *utilF) incrementFollowRequestsCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
@@ -452,9 +438,7 @@ func (u *utilF) decrementFollowRequestsCount(
 ) error {
 	// Populate stats.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = u.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}

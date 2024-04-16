@@ -128,8 +128,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 
 	// Ensure we have stats for this account.
 	if receiver.Stats == nil {
-		receiver.Stats, err = p.state.DB.GetAccountStats(ctx, receiver.ID)
-		if err != nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
 			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -239,8 +238,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 
 	// Ensure we have stats for this account.
 	if receiver.Stats == nil {
-		receiver.Stats, err = p.state.DB.GetAccountStats(ctx, receiver.ID)
-		if err != nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
 			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}

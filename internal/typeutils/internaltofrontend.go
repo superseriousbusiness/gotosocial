@@ -73,8 +73,7 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 
 	// Ensure account stats populated.
 	if a.Stats == nil {
-		a.Stats, err = c.state.DB.GetAccountStats(ctx, a.ID)
-		if err != nil {
+		if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
 			return nil, gtserror.Newf(
 				"error getting stats for account %s: %w",
 				a.ID, err,

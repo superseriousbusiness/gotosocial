@@ -137,13 +137,19 @@ type Account interface {
 	// Update local account settings.
 	UpdateAccountSettings(ctx context.Context, settings *gtsmodel.AccountSettings, columns ...string) error
 
-	// Get (or create and get) account stats for the given accountID.
-	GetAccountStats(ctx context.Context, accountID string) (*gtsmodel.AccountStats, error)
+	// PopulateAccountStats gets (or creates and gets) account stats for
+	// the given account, and attaches them to the account model.
+	PopulateAccountStats(ctx context.Context, account *gtsmodel.Account) error
 
-	// RegenerateAccountStats creates, upserts, and returns stats for the given accountID.
-	// Unlike GetAccountStats, it will always get the database stats fresh. This can be
-	// used to "refresh" stats. Callers should prefer GetAccountStats in 99% of cases.
-	RegenerateAccountStats(ctx context.Context, accountID string) (*gtsmodel.AccountStats, error)
+	// RegenerateAccountStats creates, upserts, and returns stats
+	// for the given account, and attaches them to the account model.
+	//
+	// Unlike GetAccountStats, it will always get the database stats fresh.
+	// This can be used to "refresh" stats.
+	//
+	// Because this involves database calls that can be expensive (on Postgres
+	// specifically), callers should prefer GetAccountStats in 99% of cases.
+	RegenerateAccountStats(ctx context.Context, account *gtsmodel.Account) error
 
 	// Update account stats.
 	UpdateAccountStats(ctx context.Context, stats *gtsmodel.AccountStats, columns ...string) error

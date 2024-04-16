@@ -1044,9 +1044,7 @@ func (d *Dereferencer) fetchRemoteAccountEmojis(ctx context.Context, targetAccou
 func (d *Dereferencer) fetchRemoteAccountStats(ctx context.Context, account *gtsmodel.Account, requestUser string) error {
 	// Ensure we have a stats model for this account.
 	if account.Stats == nil {
-		var err error
-		account.Stats, err = d.state.DB.GetAccountStats(ctx, account.ID)
-		if err != nil {
+		if err := d.state.DB.PopulateAccountStats(ctx, account); err != nil {
 			return gtserror.Newf("db error getting account stats: %w", err)
 		}
 	}
