@@ -53,10 +53,11 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	if s, err := f.state.DB.GetStatusByURI(ctx, id.String()); err == nil && requestingAcct.ID == s.AccountID {
 		l.Debugf("deleting status: %s", s.ID)
 		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:     ap.ObjectNote,
-			APActivityType:   ap.ActivityDelete,
-			GTSModel:         s,
-			ReceivingAccount: receivingAcct,
+			APObjectType:      ap.ObjectNote,
+			APActivityType:    ap.ActivityDelete,
+			GTSModel:          s,
+			ReceivingAccount:  receivingAcct,
+			RequestingAccount: requestingAcct,
 		})
 	}
 
