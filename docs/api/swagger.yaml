@@ -2214,6 +2214,52 @@ definitions:
         type: object
         x-go-name: Context
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    statusEdit:
+        description: |-
+            StatusEdit represents one historical revision of a status, containing
+            partial information about the state of the status at that revision.
+        properties:
+            account:
+                $ref: '#/definitions/account'
+            content:
+                description: |-
+                    The content of this status at this revision.
+                    Should be HTML, but might also be plaintext in some cases.
+                example: <p>Hey this is a status!</p>
+                type: string
+                x-go-name: Content
+            created_at:
+                description: The date when this revision was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            emojis:
+                description: Custom emoji to be used when rendering status content.
+                items:
+                    $ref: '#/definitions/emoji'
+                type: array
+                x-go-name: Emojis
+            media_attachments:
+                description: Media that is attached to this status.
+                items:
+                    $ref: '#/definitions/attachment'
+                type: array
+                x-go-name: MediaAttachments
+            poll:
+                $ref: '#/definitions/poll'
+            sensitive:
+                description: Status marked sensitive at this revision.
+                example: false
+                type: boolean
+                x-go-name: Sensitive
+            spoiler_text:
+                description: Subject, summary, or content warning for the status at this revision.
+                example: warning nsfw
+                type: string
+                x-go-name: SpoilerText
+        type: object
+        x-go-name: StatusEdit
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     statusReblogged:
         properties:
             account:
@@ -7462,6 +7508,43 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: View accounts that have faved/starred/liked the target status.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/history:
+        get:
+            description: 'UNIMPLEMENTED: Currently this endpoint will always return an array of length 1, containing only the latest/current version of the status.'
+            operationId: statusHistoryGet
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            $ref: '#/definitions/statusEdit'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: View edit history of status with the given ID.
             tags:
                 - statuses
     /api/v1/statuses/{id}/mute:
