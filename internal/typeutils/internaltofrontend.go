@@ -838,14 +838,6 @@ func (c *Converter) statusToFrontend(
 		return nil, gtserror.Newf("error counting faves: %w", err)
 	}
 
-	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
-	if err != nil {
-		log.Errorf(ctx, "error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
-
-		// Ensure a non nil object
-		interacts = &statusInteractions{}
-	}
-
 	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
 	if err != nil {
 		log.Errorf(ctx, "error converting status attachments: %v", err)
@@ -880,11 +872,6 @@ func (c *Converter) statusToFrontend(
 		RepliesCount:       repliesCount,
 		ReblogsCount:       reblogsCount,
 		FavouritesCount:    favesCount,
-		Favourited:         interacts.Faved,
-		Bookmarked:         interacts.Bookmarked,
-		Muted:              interacts.Muted,
-		Reblogged:          interacts.Reblogged,
-		Pinned:             interacts.Pinned,
 		Content:            s.Content,
 		Reblog:             nil, // Set below.
 		Application:        nil, // Set below.
@@ -939,6 +926,34 @@ func (c *Converter) statusToFrontend(
 		if err != nil {
 			return nil, fmt.Errorf("error converting poll: %w", err)
 		}
+	}
+
+	// Status interactions.
+	//
+	// Take from boosted status if set,
+	// otherwise take from status itself.
+	if apiStatus.Reblog != nil {
+		apiStatus.Favourited = apiStatus.Reblog.Favourited
+		apiStatus.Bookmarked = apiStatus.Reblog.Bookmarked
+		apiStatus.Muted = apiStatus.Reblog.Muted
+		apiStatus.Reblogged = apiStatus.Reblog.Reblogged
+		apiStatus.Pinned = apiStatus.Reblog.Pinned
+	} else {
+		interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
+		if err != nil {
+			log.Errorf(ctx,
+				"error getting interactions for status %s for account %s: %v",
+				s.ID, requestingAccount.ID, err,
+			)
+
+			// Ensure non-nil object.
+			interacts = new(statusInteractions)
+		}
+		apiStatus.Favourited = interacts.Favourited
+		apiStatus.Bookmarked = interacts.Bookmarked
+		apiStatus.Muted = interacts.Muted
+		apiStatus.Reblogged = interacts.Reblogged
+		apiStatus.Pinned = interacts.Pinned
 	}
 
 	// If web URL is empty for whatever

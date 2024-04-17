@@ -36,7 +36,7 @@ import (
 )
 
 type statusInteractions struct {
-	Faved      bool
+	Favourited bool
 	Muted      bool
 	Bookmarked bool
 	Reblogged  bool
@@ -51,7 +51,7 @@ func (c *Converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has faved status: %s", err)
 		}
-		si.Faved = faved
+		si.Favourited = faved
 
 		reblogged, err := c.state.DB.IsStatusBoostedBy(ctx, s.ID, requestingAccount.ID)
 		if err != nil {
