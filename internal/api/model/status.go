@@ -263,3 +263,33 @@ type StatusSource struct {
 	// Plain-text version of spoiler text.
 	SpoilerText string `json:"spoiler_text"`
 }
+
+// StatusEdit represents one historical revision of a status, containing
+// partial information about the state of the status at that revision.
+//
+// swagger:model statusEdit
+type StatusEdit struct {
+	// The content of this status at this revision.
+	// Should be HTML, but might also be plaintext in some cases.
+	// example: <p>Hey this is a status!</p>
+	Content string `json:"content"`
+	// Subject, summary, or content warning for the status at this revision.
+	// example: warning nsfw
+	SpoilerText string `json:"spoiler_text"`
+	// Status marked sensitive at this revision.
+	// example: false
+	Sensitive bool `json:"sensitive"`
+	// The date when this revision was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	CreatedAt string `json:"created_at"`
+	// The account that authored this status.
+	Account *Account `json:"account"`
+	// The poll attached to the status at this revision.
+	// Note that edits changing the poll options will be collapsed together into one edit, since this action resets the poll.
+	// nullable: true
+	Poll *Poll `json:"poll"`
+	// Media that is attached to this status.
+	MediaAttachments []*Attachment `json:"media_attachments"`
+	// Custom emoji to be used when rendering status content.
+	Emojis []Emoji `json:"emojis"`
+}
