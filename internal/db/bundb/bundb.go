@@ -131,12 +131,12 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 
 	switch t {
 	case "postgres":
-		db, err = pgConn(ctx, state)
+		db, err = pgConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	case "sqlite":
-		db, err = sqliteConn(ctx, state)
+		db, err = sqliteConn(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -293,7 +293,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	return ps, nil
 }
 
-func pgConn(ctx context.Context, state *state.State) (*bun.DB, error) {
+func pgConn(ctx context.Context) (*bun.DB, error) {
 	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
 	if err != nil {
 		return nil, fmt.Errorf("could not create bundb postgres options: %w", err)
@@ -324,7 +324,7 @@ func pgConn(ctx context.Context, state *state.State) (*bun.DB, error) {
 	return db, nil
 }
 
-func sqliteConn(ctx context.Context, state *state.State) (*bun.DB, error) {
+func sqliteConn(ctx context.Context) (*bun.DB, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
 	if address == "" {
@@ -352,7 +352,7 @@ func sqliteConn(ctx context.Context, state *state.State) (*bun.DB, error) {
 
 	// ping to check the db is there and listening
 	if err := db.PingContext(ctx); err != nil {
-		err = processSQLiteError(err) // this adds error code information
+		err = processSQLiteError(err) // adds error code
 		return nil, fmt.Errorf("sqlite ping: %w", err)
 	}
 	log.Infof(ctx, "connected to SQLITE database with address %s", address)
@@ -515,7 +515,7 @@ func buildSQLiteAddress(addr string) string {
 
 	// use immediate transaction lock mode to fail quickly if tx can't lock
 	// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
-	prefs.Add("_txlock", "immediate")
+	// prefs.Add("_txlock", "immediate")
 
 	if addr == ":memory:" {
 		log.Warn(nil, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
@@ -526,14 +526,8 @@ func buildSQLiteAddress(addr string) string {
 
 		// in-mem-specific preferences
 		// (shared cache so that tests don't fail)
-		prefs.Add("mode", "memory")
-		prefs.Add("cache", "shared")
-	}
-
-	if dur := config.GetDbSqliteBusyTimeout(); dur > 0 {
-		// Set the user provided SQLite busy timeout
-		// NOTE: MUST BE SET BEFORE THE JOURNAL MODE.
-		prefs.Add("_pragma", fmt.Sprintf("busy_timeout(%d)", dur.Milliseconds()))
+		// prefs.Add("mode", "memory")
+		// prefs.Add("cache", "shared")
 	}
 
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {

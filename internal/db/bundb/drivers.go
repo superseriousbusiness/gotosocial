@@ -42,18 +42,8 @@ var (
 	// global SQLite3 driver instance.
 	sqliteDriver = &sqlite.Driver{
 		Init: func(c *sqlite3.Conn) error {
-			return c.BusyHandler(func(ctx context.Context, i int) (retry bool) {
-				backoff := 2 * time.Millisecond * (1 << (2*i + 1))
-				if backoff > 5*time.Minute {
-					return false
-				}
-				select {
-				case <-ctx.Done():
-					return false
-				case <-time.After(backoff):
-					return true
-				}
-			})
+			// unset an busy handler.
+			return c.BusyHandler(nil)
 		},
 	}
 
@@ -268,9 +258,6 @@ func (c *SQLiteConn) QueryContext(ctx context.Context, query string, args []driv
 		return err
 	})
 	if err != nil {
-		if rows != nil {
-			_ = rows.Close()
-		}
 		return nil, err
 	}
 	return &SQLiteTmpStmtRows{
@@ -286,7 +273,7 @@ func (c *SQLiteConn) Close() (err error) {
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
 	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
 	if r, ok := c.ConnIface.(sqlite3.DriverConn); ok {
-		_ = r.Raw().Exec(onClose) // perform ASAP
+		_ = r.Raw().Exec(onClose)
 		_ = r.Raw().Close()
 	}
 	return
@@ -295,6 +282,7 @@ func (c *SQLiteConn) Close() (err error) {
 type SQLiteTx struct{ driver.Tx }
 
 func (tx *SQLiteTx) Commit() (err error) {
+	// use background ctx as this commit MUST happen.
 	return retryOnBusy(context.Background(), func() error {
 		err = tx.Tx.Commit()
 		err = processSQLiteError(err)
@@ -303,6 +291,7 @@ func (tx *SQLiteTx) Commit() (err error) {
 }
 
 func (tx *SQLiteTx) Rollback() (err error) {
+	// use background ctx as this rollback MUST happen.
 	return retryOnBusy(context.Background(), func() error {
 		err = tx.Tx.Rollback()
 		err = processSQLiteError(err)
@@ -345,6 +334,7 @@ func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedVal
 }
 
 func (stmt *SQLiteStmt) Close() (err error) {
+	// use background ctx as this stmt MUST be closed.
 	err = retryOnBusy(context.Background(), func() error {
 		err = stmt.StmtIface.Close()
 		err = processSQLiteError(err)
@@ -368,6 +358,7 @@ func (r *SQLiteRows) Next(dest []driver.Value) (err error) {
 }
 
 func (r *SQLiteRows) Close() (err error) {
+	// use background ctx as these rows MUST be closed.
 	err = retryOnBusy(context.Background(), func() error {
 		err = r.RowsIface.Close()
 		err = processSQLiteError(err)
