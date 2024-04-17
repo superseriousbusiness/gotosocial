@@ -792,6 +792,17 @@ func (c *Converter) StatusToWebStatus(
 	return webStatus, nil
 }
 
+// StatusToAPIStatusSource returns the *apimodel.StatusSource of the given status.
+// Callers should check beforehand whether a requester has permission to view the
+// source of the status, and ensure they're passing only a local status into this function.
+func (c *Converter) StatusToAPIStatusSource(ctx context.Context, s *gtsmodel.Status) (*apimodel.StatusSource, error) {
+	return &apimodel.StatusSource{
+		ID:          s.ID,
+		Text:        s.Text,
+		SpoilerText: s.ContentWarning,
+	}, nil
+}
+
 // statusToFrontend is a package internal function for
 // parsing a status into its initial frontend representation.
 //

@@ -250,6 +250,20 @@ const (
 	StatusContentTypeDefault                    = StatusContentTypePlain
 )
 
+// StatusSource represents the source text of a
+// status as submitted to the API when it was created.
+//
+// swagger:model statusSource
+type StatusSource struct {
+	// ID of the status.
+	// example: 01FBVD42CQ3ZEEVMW180SBX03B
+	ID string `json:"id"`
+	// Plain-text source of a status.
+	Text string `json:"source"`
+	// Plain-text version of spoiler text.
+	SpoilerText string `json:"spoiler_text"`
+}
+
 // StatusEdit represents one historical revision of a status, containing
 // partial information about the state of the status at that revision.
 //
