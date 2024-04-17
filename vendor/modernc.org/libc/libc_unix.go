@@ -2,15 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build unix
+//go:build unix && !(linux && (amd64 || loong64))
 // +build unix
+// +build !linux !amd64,!loong64
 
 package libc // import "modernc.org/libc"
 
 import (
 	"bufio"
 	// "encoding/hex"
-	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -116,10 +116,6 @@ func Xputchar(t *TLS, c int32) int32 {
 func Xgethostname(t *TLS, name uintptr, slen types.Size_t) int32 {
 	if __ccgo_strace {
 		trc("t=%v name=%v slen=%v, (%v:)", t, name, slen, origin(2))
-	}
-	if slen < 0 {
-		t.setErrno(errno.EINVAL)
-		return -1
 	}
 
 	if slen == 0 {
@@ -298,7 +294,7 @@ func Xtmpfile(t *TLS) uintptr {
 	if __ccgo_strace {
 		trc("t=%v, (%v:)", t, origin(2))
 	}
-	f, err := ioutil.TempFile("", "tmpfile-")
+	f, err := os.CreateTemp("", "tmpfile-")
 	if err != nil {
 		t.setErrno(err)
 		return 0
@@ -317,7 +313,7 @@ func Xtmpfile(t *TLS) uintptr {
 // FILE *fdopen(int fd, const char *mode);
 func Xfdopen(t *TLS, fd int32, mode uintptr) uintptr {
 	if __ccgo_strace {
-		trc("t=%v fd=%v mode=%v, (%v:)", t, fd, mode, origin(2))
+		trc("t=%v fd=%v mode=%v, (%v:)", t, fd, GoString(mode), origin(2))
 	}
 	m := strings.ReplaceAll(GoString(mode), "b", "")
 	switch m {
@@ -333,12 +329,12 @@ func Xfdopen(t *TLS, fd int32, mode uintptr) uintptr {
 		return 0
 	}
 
-	if p := newFile(t, fd); p != 0 {
-		return p
+	p := newFile(t, fd)
+	if p == 0 {
+		t.setErrno(errno.EINVAL)
+		return 0
 	}
-
-	t.setErrno(errno.EINVAL)
-	return 0
+	return p
 }
 
 // struct passwd *getpwnam(const char *name);
@@ -587,11 +583,7 @@ func initPasswd2(t *TLS, buf uintptr, buflen types.Size_t, p *pwd.Passwd, name, 
 	}
 
 	p.Fpw_shell, buf, buflen = bufString(buf, buflen, shell)
-	if buf == 0 {
-		return false
-	}
-
-	return true
+	return buf != 0
 }
 
 func bufString(buf uintptr, buflen types.Size_t, s string) (uintptr, uintptr, types.Size_t) {
@@ -971,14 +963,16 @@ func Xuuid_unparse(t *TLS, uu, out uintptr) {
 	*(*byte)(unsafe.Pointer(out + uintptr(len(s)))) = 0
 }
 
-var staticRandomData = &rand.Rand{}
+// no longer used?
+// var staticRandomData = &rand.Rand{}
 
 // char *initstate(unsigned seed, char *state, size_t size);
 func Xinitstate(t *TLS, seed uint32, statebuf uintptr, statelen types.Size_t) uintptr {
 	if __ccgo_strace {
 		trc("t=%v seed=%v statebuf=%v statelen=%v, (%v:)", t, seed, statebuf, statelen, origin(2))
 	}
-	staticRandomData = rand.New(rand.NewSource(int64(seed)))
+	// staticRandomData = rand.New(rand.NewSource(int64(seed)))
+	_ = rand.New(rand.NewSource(int64(seed)))
 	return 0
 }
 

@@ -1140,32 +1140,6 @@ func (c *conn) bindText(pstmt uintptr, idx1 int, value string) (uintptr, error) 
 
 // C documentation
 //
-//	int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
-func (c *conn) bindBlob(pstmt uintptr, idx1 int, value []byte) (uintptr, error) {
-	if value != nil && len(value) == 0 {
-		if rc := sqlite3.Xsqlite3_bind_zeroblob(c.tls, pstmt, int32(idx1), 0); rc != sqlite3.SQLITE_OK {
-			return 0, c.errstr(rc)
-		}
-		return 0, nil
-	}
-
-	p, err := c.malloc(len(value))
-	if err != nil {
-		return 0, err
-	}
-	if len(value) != 0 {
-		copy((*libc.RawMem)(unsafe.Pointer(p))[:len(value):len(value)], value)
-	}
-	if rc := sqlite3.Xsqlite3_bind_blob(c.tls, pstmt, int32(idx1), p, int32(len(value)), 0); rc != sqlite3.SQLITE_OK {
-		c.free(p)
-		return 0, c.errstr(rc)
-	}
-
-	return p, nil
-}
-
-// C documentation
-//
 //	int sqlite3_bind_int(sqlite3_stmt*, int, int);
 func (c *conn) bindInt(pstmt uintptr, idx1, value int) (err error) {
 	if rc := sqlite3.Xsqlite3_bind_int(c.tls, pstmt, int32(idx1), int32(value)); rc != sqlite3.SQLITE_OK {
@@ -1828,6 +1802,21 @@ func (b *Backup) Finish() error {
 type ExecQuerierContext interface {
 	driver.ExecerContext
 	driver.QueryerContext
+}
+
+// Commit releases all resources associated with the Backup object but does not
+// close the destination database connection.
+//
+// The destination database connection is returned to the caller or an error if raised.
+// It is the responsibility of the caller to handle the connection closure.
+func (b *Backup) Commit() (driver.Conn, error) {
+	rc := sqlite3.Xsqlite3_backup_finish(b.srcConn.tls, b.pBackup)
+
+	if rc == sqlite3.SQLITE_OK {
+		return b.dstConn, nil
+	} else {
+		return nil, b.srcConn.errstr(rc)
+	}
 }
 
 // ConnectionHookFn function type for a connection hook on the Driver. Connection
