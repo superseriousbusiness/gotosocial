@@ -29,6 +29,8 @@ build_all_targets:
 	GOOS=linux GOARCH=arm go build -v ./...
 	GOOS=linux GOARCH=arm64 go test -c -o /dev/null
 	GOOS=linux GOARCH=arm64 go build -v ./...
+	GOOS=linux GOARCH=loong64 go test -c -o /dev/null
+	GOOS=linux GOARCH=loong64 go build -v ./...
 	GOOS=linux GOARCH=ppc64le go test -c -o /dev/null
 	GOOS=linux GOARCH=ppc64le go build -v ./...
 	GOOS=linux GOARCH=riscv64 go test -c -o /dev/null
@@ -55,7 +57,7 @@ clean:
 
 edit:
 	@touch log
-	@if [ -f "Session.vim" ]; then novim -S & else novim -p Makefile go.mod builder.json all_test.go generator.go & fi
+	@if [ -f "Session.vim" ]; then novim -S & else novim -p Makefile go.mod builder.json all_test.go vendor_libsqlite3.go & fi
 
 editor:
 	gofmt -l -s -w . 2>&1 | tee log-editor
@@ -64,7 +66,7 @@ editor:
 	go build -o /dev/null vendor_libsqlite3.go
 
 test:
-	go test -v -timeout 24h 2>&1 | tee log-test
+	go test -v -timeout 24h  . ./functest 2>&1 | tee log-test
 	
 vendor:
 	go run vendor_libsqlite3.go && make build_all_targets

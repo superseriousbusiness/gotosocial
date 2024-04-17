@@ -2,8 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build !(linux && (amd64 || loong64))
+
 //go.generate echo package libc > ccgo.go
-//go:generate go run generate.go
 //go:generate go fmt ./...
 
 // Package libc provides run time support for ccgo generated programs and
