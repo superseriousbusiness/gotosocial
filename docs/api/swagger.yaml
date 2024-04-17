@@ -2399,6 +2399,27 @@ definitions:
         type: object
         x-go-name: StatusReblogged
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    statusSource:
+        description: |-
+            StatusSource represents the source text of a
+            status as submitted to the API when it was created.
+        properties:
+            id:
+                description: ID of the status.
+                example: 01FBVD42CQ3ZEEVMW180SBX03B
+                type: string
+                x-go-name: ID
+            source:
+                description: Plain-text source of a status.
+                type: string
+                x-go-name: Text
+            spoiler_text:
+                description: Plain-text version of spoiler text.
+                type: string
+                x-go-name: SpoilerText
+        type: object
+        x-go-name: StatusSource
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     swaggerCollection:
         properties:
             '@context':
@@ -7691,6 +7712,42 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: View accounts that have reblogged/boosted the target status.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/source:
+        get:
+            operationId: statusSourceGet
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            $ref: '#/definitions/statusSource'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: View source text of status with the given ID. Requester must own the status.
             tags:
                 - statuses
     /api/v1/statuses/{id}/unbookmark:
