@@ -41,6 +41,44 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
+// SourceGet returns the *apimodel.StatusSource version of the targetStatusID.
+// Status must belong to the requester, and must not be a boost.
+func (p *Processor) SourceGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.StatusSource, gtserror.WithCode) {
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		nil, // default freshness
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Redirect to wrapped status if boost.
+	targetStatus, errWithCode = p.c.UnwrapIfBoost(
+		ctx,
+		requestingAccount,
+		targetStatus,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	if targetStatus.AccountID != requestingAccount.ID {
+		err := gtserror.Newf(
+			"status %s does not belong to account %s",
+			targetStatusID, requestingAccount.ID,
+		)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	statusSource, err := p.converter.StatusToAPIStatusSource(ctx, targetStatus)
+	if err != nil {
+		err = gtserror.Newf("error converting status: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	return statusSource, nil
+}
+
 // WebGet gets the given status for web use, taking account of privacy settings.
 func (p *Processor) WebGet(ctx context.Context, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
 	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
