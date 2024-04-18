@@ -272,10 +272,10 @@ func (c *SQLiteConn) QueryContext(ctx context.Context, query string, args []driv
 func (c *SQLiteConn) Close() (err error) {
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
 	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
-	if r, ok := c.ConnIface.(sqlite3.DriverConn); ok {
-		_ = r.Raw().Exec(onClose)
-		_ = r.Raw().Close()
-	}
+	raw := c.ConnIface.(sqlite3.DriverConn).Raw()
+	_ = raw.Exec(onClose)
+	_ = raw.ReleaseMemory()
+	err = raw.Close()
 	return
 }
 
