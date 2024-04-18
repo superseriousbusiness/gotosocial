@@ -278,11 +278,14 @@ func (c *SQLiteConn) Close() (err error) {
 	// Set a timeout context to limit execution time.
 	ctx, cncl := context.WithTimeout(ctx, 5*time.Second)
 	old := raw.SetInterrupt(ctx)
-	defer func() { cncl(); raw.SetInterrupt(old) }()
 
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
 	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
 	_ = raw.Exec(onClose)
+
+	// Unset timeout context.
+	_ = raw.SetInterrupt(old)
+	cncl()
 
 	// Finally, release + close.
 	_ = raw.ReleaseMemory()
