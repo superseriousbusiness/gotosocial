@@ -29,11 +29,4 @@ var (
 
 	// ErrAlreadyExists is returned when a conflict was encountered in the db when doing an insert.
 	ErrAlreadyExists = errors.New("already exists")
-
-	// ErrTemporarilyBusy should be returned when the database wants to indicate you should retry.
-	ErrTemporarilyBusy = errors.New("temporarily busy")
-
-	// ErrBusyTimeout is returned if the database connection indicates the connection is too busy
-	// to complete the supplied query. This is generally intended to be handled internally by the DB.
-	ErrBusyTimeout = errors.New("busy timeout")
 )
