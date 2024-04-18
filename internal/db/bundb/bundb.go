@@ -355,6 +355,7 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 		err = processSQLiteError(err) // adds error code
 		return nil, fmt.Errorf("sqlite ping: %w", err)
 	}
+
 	log.Infof(ctx, "connected to SQLITE database with address %s", address)
 
 	return db, nil

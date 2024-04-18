@@ -284,10 +284,7 @@ func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedVal
 	if err != nil {
 		return nil, err
 	}
-	return &SQLiteRows{
-		Ctx:       ctx,
-		RowsIface: rows.(sqlite.RowsIface),
-	}, nil
+	return &SQLiteRows{RowsIface: rows.(sqlite.RowsIface)}, nil
 }
 
 func (stmt *SQLiteStmt) Close() (err error) {
@@ -296,10 +293,7 @@ func (stmt *SQLiteStmt) Close() (err error) {
 	return
 }
 
-type SQLiteRows struct {
-	Ctx context.Context
-	sqlite.RowsIface
-}
+type SQLiteRows struct{ sqlite.RowsIface }
 
 func (r *SQLiteRows) Next(dest []driver.Value) (err error) {
 	err = r.RowsIface.Next(dest)
@@ -308,7 +302,6 @@ func (r *SQLiteRows) Next(dest []driver.Value) (err error) {
 }
 
 func (r *SQLiteRows) Close() (err error) {
-	// use background ctx as these rows MUST be closed.
 	err = r.RowsIface.Close()
 	err = processSQLiteError(err)
 	return

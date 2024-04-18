@@ -20,11 +20,14 @@ package sqlite
 import (
 	"context"
 	"database/sql/driver"
+
+	// linkname shenanigans
 	_ "unsafe"
 
-	"github.com/ncruces/go-sqlite3"
-	_ "github.com/ncruces/go-sqlite3/driver"
+	// embed wasm sqlite binary
 	_ "github.com/ncruces/go-sqlite3/embed"
+
+	"github.com/ncruces/go-sqlite3"
 )
 
 // ConnIface is the driver.Conn interface
