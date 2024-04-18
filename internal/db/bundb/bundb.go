@@ -515,7 +515,7 @@ func buildSQLiteAddress(addr string) string {
 
 	// use immediate transaction lock mode to fail quickly if tx can't lock
 	// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
-	// prefs.Add("_txlock", "immediate")
+	prefs.Add("_txlock", "immediate")
 
 	if addr == ":memory:" {
 		log.Warn(nil, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
