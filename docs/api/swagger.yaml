@@ -2433,14 +2433,14 @@ definitions:
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
                 type: string
                 x-go-name: ID
-            source:
-                description: Plain-text source of a status.
-                type: string
-                x-go-name: Text
             spoiler_text:
                 description: Plain-text version of spoiler text.
                 type: string
                 x-go-name: SpoilerText
+            text:
+                description: Plain-text source of a status.
+                type: string
+                x-go-name: Text
         type: object
         x-go-name: StatusSource
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
