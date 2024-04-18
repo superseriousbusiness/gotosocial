@@ -818,6 +818,30 @@ definitions:
         type: object
         x-go-name: Card
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    conversation:
+        description: |-
+            Conversation represents a conversation
+            with "direct message" visibility.
+        properties:
+            accounts:
+                description: Participants in the conversation.
+                items:
+                    $ref: '#/definitions/account'
+                type: array
+                x-go-name: Accounts
+            id:
+                description: Local database ID of the conversation.
+                type: string
+                x-go-name: ID
+            last_status:
+                $ref: '#/definitions/status'
+            unread:
+                description: Is the conversation currently marked as unread?
+                type: boolean
+                x-go-name: Unread
+        type: object
+        x-go-name: Conversation
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     debugAPUrlResponse:
         description: |-
             DebugAPUrlResponse provides detailed debug
@@ -5595,6 +5619,67 @@ paths:
                     - read:bookmarks
             tags:
                 - bookmarks
+    /api/v1/conversations:
+        get:
+            description: |-
+                NOT IMPLEMENTED YET: Will currently always return an array of length 0.
+
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/conversations?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/conversations?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: conversationsGet
+            parameters:
+                - description: 'Return only conversations *OLDER* than the given max ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 'Return only conversations *NEWER* than the given since ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 'Return only conversations *IMMEDIATELY NEWER* than the given min ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of conversations to return.
+                  in: query
+                  maximum: 80
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/conversation'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: Get an array of (direct message) conversations that requesting account is involved in.
+            tags:
+                - conversations
     /api/v1/custom_emojis:
         get:
             operationId: customEmojisGet

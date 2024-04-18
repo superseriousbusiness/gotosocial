@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/apps"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/customemojis"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/featuredtags"
@@ -60,6 +61,7 @@ type Client struct {
 	apps           *apps.Module           // api/v1/apps
 	blocks         *blocks.Module         // api/v1/blocks
 	bookmarks      *bookmarks.Module      // api/v1/bookmarks
+	conversations  *conversations.Module  // api/v1/conversations
 	customEmojis   *customemojis.Module   // api/v1/custom_emojis
 	favourites     *favourites.Module     // api/v1/favourites
 	featuredTags   *featuredtags.Module   // api/v1/featured_tags
@@ -103,6 +105,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.apps.Route(h)
 	c.blocks.Route(h)
 	c.bookmarks.Route(h)
+	c.conversations.Route(h)
 	c.customEmojis.Route(h)
 	c.favourites.Route(h)
 	c.featuredTags.Route(h)
@@ -134,6 +137,7 @@ func NewClient(db db.DB, p *processing.Processor) *Client {
 		apps:           apps.New(p),
 		blocks:         blocks.New(p),
 		bookmarks:      bookmarks.New(p),
+		conversations:  conversations.New(p),
 		customEmojis:   customemojis.New(p),
 		favourites:     favourites.New(p),
 		featuredTags:   featuredtags.New(p),
