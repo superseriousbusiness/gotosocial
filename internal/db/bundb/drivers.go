@@ -270,10 +270,21 @@ func (c *SQLiteConn) QueryContext(ctx context.Context, query string, args []driv
 }
 
 func (c *SQLiteConn) Close() (err error) {
+	ctx := context.Background()
+
+	// Get acces the underlying raw sqlite3 conn.
+	raw := c.ConnIface.(sqlite3.DriverConn).Raw()
+
+	// Set a timeout context to limit execution time.
+	ctx, cncl := context.WithTimeout(ctx, 5*time.Second)
+	old := raw.SetInterrupt(ctx)
+	defer func() { cncl(); raw.SetInterrupt(old) }()
+
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
 	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
-	raw := c.ConnIface.(sqlite3.DriverConn).Raw()
 	_ = raw.Exec(onClose)
+
+	// Finally, release + close.
 	_ = raw.ReleaseMemory()
 	err = raw.Close()
 	return
