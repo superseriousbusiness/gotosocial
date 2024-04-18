@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/sqlite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 var (
@@ -280,8 +281,10 @@ func (c *SQLiteConn) Close() (err error) {
 	old := raw.SetInterrupt(ctx)
 
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
-	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
-	_ = raw.Exec(onClose)
+	const onClose = "PRAGMA analysis_limit=400; PRAGMA optimize;"
+	if err := raw.Exec(onClose); err != nil {
+		log.Error(ctx, "optimize on close error: %v", err)
+	}
 
 	// Unset timeout context.
 	_ = raw.SetInterrupt(old)
