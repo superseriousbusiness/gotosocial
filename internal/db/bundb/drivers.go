@@ -290,8 +290,7 @@ func (c *SQLiteConn) Close() (err error) {
 	_ = raw.SetInterrupt(old)
 	cncl()
 
-	// Finally, release + close.
-	_ = raw.ReleaseMemory()
+	// Finally, close.
 	err = raw.Close()
 	return
 }
