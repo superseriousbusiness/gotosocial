@@ -24,6 +24,9 @@ import (
 	// linkname shenanigans
 	_ "unsafe"
 
+	// the library being unsafely linked to
+	_ "github.com/ncruces/go-sqlite3/driver"
+
 	// embed wasm sqlite binary
 	_ "github.com/ncruces/go-sqlite3/embed"
 
