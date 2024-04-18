@@ -15,19 +15,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package conversations
 
-// Conversation represents a conversation
-// with "direct message" visibility.
-//
-// swagger:model conversation
-type Conversation struct {
-	// Local database ID of the conversation.
-	ID string `json:"id"`
-	// Is the conversation currently marked as unread?
-	Unread bool `json:"unread"`
-	// Participants in the conversation.
-	Accounts []Account `json:"accounts"`
-	// The last status in the conversation. May be `null`.
-	LastStatus *Status `json:"last_status"`
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/processing"
+)
+
+const (
+	// BasePath is the base URI path for serving
+	// conversations, minus the api prefix.
+	BasePath = "/v1/conversations"
+)
+
+type Module struct {
+	processor *processing.Processor
+}
+
+func New(processor *processing.Processor) *Module {
+	return &Module{
+		processor: processor,
+	}
+}
+
+func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, BasePath, m.ConversationsGETHandler)
 }
