@@ -26,6 +26,7 @@ import (
 
 	pgx "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ncruces/go-sqlite3"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/sqlite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -43,8 +44,7 @@ var (
 	// global SQLite3 driver instance.
 	sqliteDriver = &sqlite.Driver{
 		Init: func(c *sqlite3.Conn) error {
-			// unset an busy handler.
-			return c.BusyHandler(nil)
+			return c.BusyTimeout(config.GetDbSqliteBusyTimeout())
 		},
 	}
 
@@ -234,40 +234,12 @@ func (c *SQLiteConn) Exec(query string, args []driver.Value) (driver.Result, err
 }
 
 func (c *SQLiteConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
-	st, err := c.PrepareContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	stmt := st.(*SQLiteStmt)
-	res, err = stmt.ExecContext(ctx, args)
-	return
-}
-
-func (c *SQLiteConn) Query(query string, args []driver.Value) (driver.Rows, error) {
-	return c.QueryContext(context.Background(), query, toNamedValues(args))
-}
-
-func (c *SQLiteConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
-	st, err := c.PrepareContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	stmt := st.(*SQLiteStmt)
 	err = retryOnBusy(ctx, func() error {
-		rows, err = stmt.StmtIface.QueryContext(ctx, args)
+		res, err = c.ConnIface.ExecContext(ctx, query, args)
 		err = processSQLiteError(err)
 		return err
 	})
-	if err != nil {
-		return nil, err
-	}
-	return &SQLiteTmpStmtRows{
-		SQLiteRows: SQLiteRows{
-			Ctx:       ctx,
-			RowsIface: rows.(sqlite.RowsIface),
-		},
-		SQLiteStmt: stmt,
-	}, nil
+	return
 }
 
 func (c *SQLiteConn) Close() (err error) {
@@ -381,17 +353,6 @@ func (r *SQLiteRows) Close() (err error) {
 		return err
 	})
 	return
-}
-
-type SQLiteTmpStmtRows struct {
-	SQLiteRows
-	*SQLiteStmt
-}
-
-func (r *SQLiteTmpStmtRows) Close() (err error) {
-	err = r.SQLiteRows.Close()
-	_ = r.SQLiteStmt.Close()
-	return err
 }
 
 type conn interface {

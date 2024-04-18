@@ -35,12 +35,7 @@ type ConnIface interface {
 	driver.Conn
 	driver.ConnBeginTx
 	driver.ConnPrepareContext
-
-	// we hide ExecerContex
-	// as it follows a weird
-	// logic path in sql.DB,
-	// being only a short-path
-	// for stmts with no args.
+	driver.ExecerContext
 }
 
 // StmtIface is the driver.Stmt interface
