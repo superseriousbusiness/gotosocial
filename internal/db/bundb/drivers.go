@@ -321,10 +321,6 @@ type stmt interface {
 	driver.StmtQueryContext
 }
 
-type rows interface {
-	driver.Rows
-}
-
 // toNamedValues converts older driver.Value types to driver.NamedValue types.
 func toNamedValues(args []driver.Value) []driver.NamedValue {
 	if args == nil {
