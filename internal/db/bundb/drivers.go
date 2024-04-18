@@ -26,10 +26,7 @@ import (
 
 	pgx "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ncruces/go-sqlite3"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/sqlite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 var (
@@ -41,11 +38,7 @@ var (
 	postgresDriver = pgx.GetDefaultDriver()
 
 	// global SQLite3 driver instance.
-	sqliteDriver = &sqlite.Driver{
-		Init: func(c *sqlite3.Conn) error {
-			return c.BusyTimeout(config.GetDbSqliteBusyTimeout())
-		},
-	}
+	sqliteDriver = &sqlite.Driver{}
 
 	// check the postgres connection
 	// conforms to our conn{} interface.
@@ -201,11 +194,8 @@ func (c *SQLiteConn) Begin() (driver.Tx, error) {
 }
 
 func (c *SQLiteConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
-	err = retryOnBusy(ctx, func() error {
-		tx, err = c.ConnIface.BeginTx(ctx, opts)
-		err = processSQLiteError(err)
-		return err
-	})
+	tx, err = c.ConnIface.BeginTx(ctx, opts)
+	err = processSQLiteError(err)
 	if err != nil {
 		return nil, err
 	}
@@ -217,11 +207,8 @@ func (c *SQLiteConn) Prepare(query string) (driver.Stmt, error) {
 }
 
 func (c *SQLiteConn) PrepareContext(ctx context.Context, query string) (stmt driver.Stmt, err error) {
-	err = retryOnBusy(ctx, func() error {
-		stmt, err = c.ConnIface.PrepareContext(ctx, query)
-		err = processSQLiteError(err)
-		return err
-	})
+	stmt, err = c.ConnIface.PrepareContext(ctx, query)
+	err = processSQLiteError(err)
 	if err != nil {
 		return nil, err
 	}
@@ -233,11 +220,8 @@ func (c *SQLiteConn) Exec(query string, args []driver.Value) (driver.Result, err
 }
 
 func (c *SQLiteConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
-	err = retryOnBusy(ctx, func() error {
-		res, err = c.ConnIface.ExecContext(ctx, query, args)
-		err = processSQLiteError(err)
-		return err
-	})
+	res, err = c.ConnIface.ExecContext(ctx, query, args)
+	err = processSQLiteError(err)
 	return
 }
 
@@ -267,21 +251,15 @@ func (c *SQLiteConn) Close() (err error) {
 type SQLiteTx struct{ driver.Tx }
 
 func (tx *SQLiteTx) Commit() (err error) {
-	// use background ctx as this commit MUST happen.
-	return retryOnBusy(context.Background(), func() error {
-		err = tx.Tx.Commit()
-		err = processSQLiteError(err)
-		return err
-	})
+	err = tx.Tx.Commit()
+	err = processSQLiteError(err)
+	return
 }
 
 func (tx *SQLiteTx) Rollback() (err error) {
-	// use background ctx as this rollback MUST happen.
-	return retryOnBusy(context.Background(), func() error {
-		err = tx.Tx.Rollback()
-		err = processSQLiteError(err)
-		return err
-	})
+	err = tx.Tx.Rollback()
+	err = processSQLiteError(err)
+	return
 }
 
 type SQLiteStmt struct{ sqlite.StmtIface }
@@ -291,11 +269,8 @@ func (stmt *SQLiteStmt) Exec(args []driver.Value) (driver.Result, error) {
 }
 
 func (stmt *SQLiteStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res driver.Result, err error) {
-	err = retryOnBusy(ctx, func() error {
-		res, err = stmt.StmtIface.ExecContext(ctx, args)
-		err = processSQLiteError(err)
-		return err
-	})
+	res, err = stmt.StmtIface.ExecContext(ctx, args)
+	err = processSQLiteError(err)
 	return
 }
 
@@ -304,11 +279,8 @@ func (stmt *SQLiteStmt) Query(args []driver.Value) (driver.Rows, error) {
 }
 
 func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (rows driver.Rows, err error) {
-	err = retryOnBusy(ctx, func() error {
-		rows, err = stmt.StmtIface.QueryContext(ctx, args)
-		err = processSQLiteError(err)
-		return err
-	})
+	rows, err = stmt.StmtIface.QueryContext(ctx, args)
+	err = processSQLiteError(err)
 	if err != nil {
 		return nil, err
 	}
@@ -319,12 +291,8 @@ func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedVal
 }
 
 func (stmt *SQLiteStmt) Close() (err error) {
-	// use background ctx as this stmt MUST be closed.
-	err = retryOnBusy(context.Background(), func() error {
-		err = stmt.StmtIface.Close()
-		err = processSQLiteError(err)
-		return err
-	})
+	err = stmt.StmtIface.Close()
+	err = processSQLiteError(err)
 	return
 }
 
@@ -334,21 +302,15 @@ type SQLiteRows struct {
 }
 
 func (r *SQLiteRows) Next(dest []driver.Value) (err error) {
-	err = retryOnBusy(r.Ctx, func() error {
-		err = r.RowsIface.Next(dest)
-		err = processSQLiteError(err)
-		return err
-	})
-	return err
+	err = r.RowsIface.Next(dest)
+	err = processSQLiteError(err)
+	return
 }
 
 func (r *SQLiteRows) Close() (err error) {
 	// use background ctx as these rows MUST be closed.
-	err = retryOnBusy(context.Background(), func() error {
-		err = r.RowsIface.Close()
-		err = processSQLiteError(err)
-		return err
-	})
+	err = r.RowsIface.Close()
+	err = processSQLiteError(err)
 	return
 }
 
@@ -368,61 +330,6 @@ type stmt interface {
 
 type rows interface {
 	driver.Rows
-}
-
-// retryOnBusy will retry given function on returned 'errBusy'.
-func retryOnBusy(ctx context.Context, fn func() error) error {
-	if err := fn(); err != errBusy {
-		return err
-	}
-	return retryOnBusySlow(ctx, fn)
-}
-
-// retryOnBusySlow is the outlined form of retryOnBusy, to allow the fast path (i.e. only
-// 1 attempt) to be inlined, leaving the slow retry loop to be a separate function call.
-func retryOnBusySlow(ctx context.Context, fn func() error) error {
-	var backoff time.Duration
-
-	for i := 0; ; i++ {
-		// backoff according to a multiplier of 2ms * 2^2n,
-		// up to a maximum possible backoff time of 5 minutes.
-		//
-		// this works out as the following:
-		// 4ms
-		// 16ms
-		// 64ms
-		// 256ms
-		// 1.024s
-		// 4.096s
-		// 16.384s
-		// 1m5.536s
-		// 4m22.144s
-		backoff = 2 * time.Millisecond * (1 << (2*i + 1))
-		if backoff >= 5*time.Minute {
-			break
-		}
-
-		select {
-		// Context cancelled.
-		case <-ctx.Done():
-			return ctx.Err()
-
-		// Backoff for some time.
-		case <-time.After(backoff):
-		}
-
-		// Perform func.
-		err := fn()
-
-		if err != errBusy {
-			// May be nil, or may be
-			// some other error, either
-			// way return here.
-			return err
-		}
-	}
-
-	return gtserror.Newf("%w (waited > %s)", db.ErrBusyTimeout, backoff)
 }
 
 // toNamedValues converts older driver.Value types to driver.NamedValue types.

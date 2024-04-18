@@ -59,16 +59,9 @@ func processSQLiteError(err error) error {
 
 	// Handle supplied error code:
 	switch sqliteErr.ExtendedCode() {
-	case sqlite3.BUSY_TIMEOUT:
-		return err // return busy timeouts.
 	case sqlite3.CONSTRAINT_UNIQUE,
 		sqlite3.CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
-	}
-	switch sqliteErr.Code() {
-	case sqlite3.BUSY,
-		sqlite3.LOCKED:
-		return errBusy
 	}
 
 	// Wrap the returned error with the code and

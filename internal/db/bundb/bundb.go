@@ -530,6 +530,12 @@ func buildSQLiteAddress(addr string) string {
 		// prefs.Add("cache", "shared")
 	}
 
+	if dur := config.GetDbSqliteBusyTimeout(); dur > 0 {
+		// Set the user provided SQLite busy timeout
+		// NOTE: MUST BE SET BEFORE THE JOURNAL MODE.
+		prefs.Add("_pragma", fmt.Sprintf("busy_timeout(%d)", dur.Milliseconds()))
+	}
+
 	if mode := config.GetDbSqliteJournalMode(); mode != "" {
 		// Set the user provided SQLite journal mode.
 		prefs.Add("_pragma", fmt.Sprintf("journal_mode(%s)", mode))
