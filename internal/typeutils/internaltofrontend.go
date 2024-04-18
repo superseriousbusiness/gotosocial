@@ -796,9 +796,13 @@ func (c *Converter) StatusToWebStatus(
 // Callers should check beforehand whether a requester has permission to view the
 // source of the status, and ensure they're passing only a local status into this function.
 func (c *Converter) StatusToAPIStatusSource(ctx context.Context, s *gtsmodel.Status) (*apimodel.StatusSource, error) {
+	// TODO: remove this when edit support is added.
+	text := "**STATUS EDITS ARE NOT CURRENTLY SUPPORTED IN GOTOSOCIAL (coming in 2024)**\n" +
+		"You can review the original text of your status below, but you will not be able to submit this edit.\n\n---\n\n" + s.Text
+
 	return &apimodel.StatusSource{
 		ID:          s.ID,
-		Text:        s.Text,
+		Text:        text,
 		SpoilerText: s.ContentWarning,
 	}, nil
 }

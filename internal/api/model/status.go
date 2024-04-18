@@ -259,7 +259,7 @@ type StatusSource struct {
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	ID string `json:"id"`
 	// Plain-text source of a status.
-	Text string `json:"source"`
+	Text string `json:"text"`
 	// Plain-text version of spoiler text.
 	SpoilerText string `json:"spoiler_text"`
 }
