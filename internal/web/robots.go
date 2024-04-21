@@ -29,45 +29,43 @@ const (
 	robotsTxt           = `# GoToSocial robots.txt -- to edit, see internal/web/robots.go
 # More info @ https://developers.google.com/search/docs/crawling-indexing/robots/intro
 
-# Before we commence, a giant fuck you to ChatGPT in particular.
-# https://platform.openai.com/docs/gptbot
-User-agent: GPTBot
-Disallow: /
-
-# As of September 2023, GPTBot and ChatGPT-User are equivalent. But there's no telling
-# when OpenAI might decide to change that, so block this one too.
-User-agent: ChatGPT-User
-Disallow: /
-
-# And a giant fuck you to Google Bard and their other generative AI ventures too.
-# https://developers.google.com/search/docs/crawling-indexing/overview-google-crawlers
-User-agent: Google-Extended
-Disallow: /
-
-# Block CommonCrawl. Used in training LLMs and specifically GPT-3.
-# https://commoncrawl.org/faq
+# AI scrapers and the like.
+# https://github.com/ai-robots-txt/ai.robots.txt/
+User-agent: AdsBot-Google
+User-agent: Amazonbot
+User-agent: anthropic-ai
+User-agent: Applebot
+User-agent: AwarioRssBot
+User-agent: AwarioSmartBot
+User-agent: Bytespider
 User-agent: CCBot
-Disallow: /
-
-# Block Omgilike/Webz.io, a "Big Web Data" engine.
-# https://webz.io/blog/web-data/what-is-the-omgili-bot-and-why-is-it-crawling-your-website/
-User-agent: Omgilibot
-Disallow: /
-
-# Block Faceboobot, because Meta.
-# https://developers.facebook.com/docs/sharing/bot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-Web
+User-agent: cohere-ai
+User-agent: DataForSeoBot
 User-agent: FacebookBot
+User-agent: FriendlyCrawler
+User-agent: Google-Extended
+User-agent: GoogleOther
+User-agent: GPTBot
+User-agent: ImagesiftBot
+User-agent: magpie-crawler
+User-agent: Meltwater
+User-agent: omgili
+User-agent: omgilibot
+User-agent: peer39_crawler
+User-agent: peer39_crawler/1.0
+User-agent: PerplexityBot
+User-agent: PiplBot
+User-agent: Seekr
+User-agent: YouBot
 Disallow: /
 
 # Well-known.dev crawler. Indexes stuff under /.well-known.
 # https://well-known.dev/about/
-User-agent: WellKnownBot
-Disallow: /
-
-# Block Amazonbot, because Amazon.
-# https://developer.amazon.com/amazonbot
-User-agent: Amazonbot
-Disallow: /
+User-agent: WellKnownBot     
+Disallow: /   
 
 # Rules for everything else.
 User-agent: *
