@@ -2,7 +2,7 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.21
 
-replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.7-concurrency-workaround
+replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.8-concurrency-workaround
 
 toolchain go1.21.3
 
@@ -78,7 +78,7 @@ require (
 	golang.org/x/text v0.14.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.29.5
+	modernc.org/sqlite v1.29.8
 	mvdan.cc/xurls/v2 v2.5.0
 )
 
