@@ -2,7 +2,7 @@
 # Dockerfile reference: https://docs.docker.com/engine/reference/builder/
 
 # stage 1: generate up-to-date swagger.yaml to put in the final container
-FROM --platform=${BUILDPLATFORM} golang:1.21-alpine AS swagger
+FROM --platform=${BUILDPLATFORM} golang:1.22-alpine AS swagger
 
 RUN \
     ### Installs goswagger for building swagger definitions inside this container
