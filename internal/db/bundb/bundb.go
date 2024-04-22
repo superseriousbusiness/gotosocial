@@ -337,7 +337,6 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite-gts", address)
 	if err != nil {
-		err = processSQLiteError(err) // this adds error code information
 		return nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
 	}
 
@@ -352,7 +351,6 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 
 	// ping to check the db is there and listening
 	if err := db.PingContext(ctx); err != nil {
-		err = processSQLiteError(err) // adds error code
 		return nil, fmt.Errorf("sqlite ping: %w", err)
 	}
 
@@ -527,8 +525,7 @@ func buildSQLiteAddress(addr string) string {
 
 		// in-mem-specific preferences
 		// (shared cache so that tests don't fail)
-		// prefs.Add("mode", "memory")
-		// prefs.Add("cache", "shared")
+		prefs.Add("vfs", "memdb")
 	}
 
 	if dur := config.GetDbSqliteBusyTimeout(); dur > 0 {

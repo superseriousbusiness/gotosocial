@@ -33,6 +33,8 @@ const (
 	_SHM_DMS   = _SHM_BASE + _SHM_NLOCK
 )
 
+func (f *vfsFile) SharedMemory() SharedMemory { return f }
+
 func (f *vfsFile) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (uint32, error) {
 	// Ensure size is a multiple of the OS page size.
 	if int(size)&(unix.Getpagesize()-1) != 0 {

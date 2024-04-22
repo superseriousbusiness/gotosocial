@@ -143,7 +143,10 @@ func vfsOpen(ctx context.Context, mod api.Module, pVfs, zPath, pFile uint32, fla
 	var err error
 	var parsed bool
 	var params url.Values
-	if pfs, ok := vfs.(VFSParams); ok {
+	if jfs, ok := vfs.(VFSJournal); ok && flags&(OPEN_WAL|OPEN_MAIN_JOURNAL) != 0 {
+		db := vfsDatabaseFileObject(ctx, mod, zPath)
+		file, flags, err = jfs.OpenJournal(path, flags, db)
+	} else if pfs, ok := vfs.(VFSParams); ok {
 		parsed = true
 		params = vfsURIParameters(ctx, mod, zPath, flags)
 		file, flags, err = pfs.OpenParams(path, flags, params)
@@ -167,8 +170,12 @@ func vfsOpen(ctx context.Context, mod api.Module, pVfs, zPath, pFile uint32, fla
 	if pOutFlags != 0 {
 		util.WriteUint32(mod, pOutFlags, uint32(flags))
 	}
-	if pOutVFS != 0 && util.CanMap(ctx) {
-		util.WriteUint32(mod, pOutVFS, 1)
+	if pOutVFS != 0 && util.CanMapFiles(ctx) {
+		if f, ok := file.(FileSharedMemory); ok {
+			if f.SharedMemory() != nil {
+				util.WriteUint32(mod, pOutVFS, 1)
+			}
+		}
 	}
 	vfsFileRegister(ctx, mod, pFile, file)
 	return _OK
@@ -361,7 +368,7 @@ func vfsShmBarrier(ctx context.Context, mod api.Module, pFile uint32) {
 }
 
 func vfsShmMap(ctx context.Context, mod api.Module, pFile uint32, iRegion, szRegion int32, bExtend, pp uint32) _ErrorCode {
-	file := vfsFileGet(ctx, mod, pFile).(fileShm)
+	file := vfsFileGet(ctx, mod, pFile).(FileSharedMemory).SharedMemory()
 	p, err := file.shmMap(ctx, mod, iRegion, szRegion, bExtend != 0)
 	if err != nil {
 		return vfsErrorCode(err, _IOERR_SHMMAP)
@@ -371,30 +378,31 @@ func vfsShmMap(ctx context.Context, mod api.Module, pFile uint32, iRegion, szReg
 }
 
 func vfsShmLock(ctx context.Context, mod api.Module, pFile uint32, offset, n int32, flags _ShmFlag) _ErrorCode {
-	file := vfsFileGet(ctx, mod, pFile).(fileShm)
+	file := vfsFileGet(ctx, mod, pFile).(FileSharedMemory).SharedMemory()
 	err := file.shmLock(offset, n, flags)
 	return vfsErrorCode(err, _IOERR_SHMLOCK)
 }
 
 func vfsShmUnmap(ctx context.Context, mod api.Module, pFile, bDelete uint32) _ErrorCode {
-	file := vfsFileGet(ctx, mod, pFile).(fileShm)
+	file := vfsFileGet(ctx, mod, pFile).(FileSharedMemory).SharedMemory()
 	file.shmUnmap(bDelete != 0)
 	return _OK
 }
 
 func vfsURIParameters(ctx context.Context, mod api.Module, zPath uint32, flags OpenFlag) url.Values {
-	if flags&OPEN_URI == 0 {
-		return nil
-	}
-
-	uriParam := mod.ExportedFunction("sqlite3_uri_parameter")
-	uriKey := mod.ExportedFunction("sqlite3_uri_key")
-	if uriParam == nil || uriKey == nil {
+	switch {
+	case flags&(OPEN_URI|OPEN_MAIN_DB) == OPEN_URI|OPEN_MAIN_DB:
+		// database file with URI
+	case flags&(OPEN_WAL|OPEN_MAIN_JOURNAL) != 0:
+		// journal or WAL file
+	default:
 		return nil
 	}
 
 	var stack [2]uint64
 	var params url.Values
+	uriKey := mod.ExportedFunction("sqlite3_uri_key")
+	uriParam := mod.ExportedFunction("sqlite3_uri_parameter")
 
 	for i := 0; ; i++ {
 		stack[1] = uint64(i)
@@ -420,6 +428,15 @@ func vfsURIParameters(ctx context.Context, mod api.Module, zPath uint32, flags O
 		}
 		params.Set(key, util.ReadString(mod, uint32(stack[0]), _MAX_NAME))
 	}
+}
+
+func vfsDatabaseFileObject(ctx context.Context, mod api.Module, zPath uint32) File {
+	stack := [...]uint64{uint64(zPath)}
+	fn := mod.ExportedFunction("sqlite3_database_file_object")
+	if err := fn.CallWithStack(ctx, stack[:]); err != nil {
+		panic(err)
+	}
+	return vfsFileGet(ctx, mod, uint32(stack[0]))
 }
 
 func vfsGet(mod api.Module, pVfs uint32) VFS {

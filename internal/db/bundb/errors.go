@@ -22,7 +22,6 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/ncruces/go-sqlite3"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -48,26 +47,4 @@ func processPostgresError(err error) error {
 	// Wrap the returned error with the code and
 	// extended code for easier debugging later.
 	return fmt.Errorf("%w (code=%s)", err, pgErr.Code)
-}
-
-func processSQLiteError(err error) error {
-	// Attempt to cast as sqlite error.
-	sqliteErr, ok := err.(*sqlite3.Error)
-	if !ok {
-		return err
-	}
-
-	// Handle supplied error code:
-	switch sqliteErr.ExtendedCode() {
-	case sqlite3.CONSTRAINT_UNIQUE,
-		sqlite3.CONSTRAINT_PRIMARYKEY:
-		return db.ErrAlreadyExists
-	}
-
-	// Wrap the returned error with the code and
-	// extended code for easier debugging later.
-	return fmt.Errorf("%w (code=%d extended=%d)", err,
-		sqliteErr.Code(),
-		sqliteErr.ExtendedCode(),
-	)
 }

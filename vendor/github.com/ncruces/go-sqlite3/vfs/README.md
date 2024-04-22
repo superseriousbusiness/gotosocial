@@ -51,7 +51,7 @@ like SQLite.
 
 To allow `mmap` to work, each connection needs to reserve up to 4GB of address space.\
 To limit the amount of address space each connection needs,
-use [`WithMemoryLimitPages`](../tests/parallel/parallel_test.go#L21).
+use [`WithMemoryLimitPages`](../tests/testcfg/testcfg.go).
 
 On all other platforms, [WAL](https://sqlite.org/wal.html) support is
 [limited](https://sqlite.org/wal.html#noshm).

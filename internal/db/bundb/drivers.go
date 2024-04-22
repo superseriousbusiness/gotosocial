@@ -21,18 +21,16 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"time"
-	_ "unsafe" // linkname shenanigans
 
 	pgx "github.com/jackc/pgx/v5/stdlib"
-	"github.com/ncruces/go-sqlite3"
+
+	// our sqlite driver wrapper.
 	"github.com/superseriousbusiness/gotosocial/internal/db/sqlite"
 )
 
 var (
 	// global wrapped gts driver instances.
 	gtsPostgresDriver = &PostgreSQLDriver{}
-	gtsSQLiteDriver   = &SQLiteDriver{}
 
 	// global PostgreSQL driver instances.
 	postgresDriver = pgx.GetDefaultDriver()
@@ -50,7 +48,7 @@ var (
 
 func init() {
 	sql.Register("pgx-gts", gtsPostgresDriver)
-	sql.Register("sqlite-gts", gtsSQLiteDriver)
+	sql.Register("sqlite-gts", &sqlite.Driver{})
 }
 
 // PostgreSQLDriver is our own wrapper around the
@@ -150,161 +148,6 @@ func (stmt *PostgreSQLStmt) QueryContext(ctx context.Context, args []driver.Name
 	rows, err := stmt.stmt.QueryContext(ctx, args)
 	err = processPostgresError(err)
 	return rows, err
-}
-
-// SQLiteDriver is our own wrapper around the
-// sqlite.Driver{} type in order to wrap further
-// SQL driver types with our own functionality,
-// e.g. hooks, retries and err processing.
-type SQLiteDriver struct{}
-
-func (d *SQLiteDriver) Open(name string) (driver.Conn, error) {
-	cc, err := d.OpenConnector(name)
-	if err != nil {
-		return nil, err
-	}
-	return cc.Connect(context.Background())
-}
-
-func (d *SQLiteDriver) OpenConnector(name string) (driver.Connector, error) {
-	cc, err := sqliteDriver.OpenConnector(name)
-	if err != nil {
-		return nil, err
-	}
-	return &SQLiteConnector{cc}, nil
-}
-
-type SQLiteConnector struct{ driver.Connector }
-
-func (c *SQLiteConnector) Driver() driver.Driver { return gtsSQLiteDriver }
-
-func (c *SQLiteConnector) Connect(ctx context.Context) (driver.Conn, error) {
-	conn, err := c.Connector.Connect(ctx)
-	err = processSQLiteError(err)
-	if err != nil {
-		return nil, err
-	}
-	return &SQLiteConn{conn.(sqlite.ConnIface)}, nil
-}
-
-type SQLiteConn struct{ sqlite.ConnIface }
-
-func (c *SQLiteConn) Begin() (driver.Tx, error) {
-	return c.BeginTx(context.Background(), driver.TxOptions{})
-}
-
-func (c *SQLiteConn) BeginTx(ctx context.Context, opts driver.TxOptions) (tx driver.Tx, err error) {
-	tx, err = c.ConnIface.BeginTx(ctx, opts)
-	err = processSQLiteError(err)
-	if err != nil {
-		return nil, err
-	}
-	return &SQLiteTx{tx}, nil
-}
-
-func (c *SQLiteConn) Prepare(query string) (driver.Stmt, error) {
-	return c.PrepareContext(context.Background(), query)
-}
-
-func (c *SQLiteConn) PrepareContext(ctx context.Context, query string) (stmt driver.Stmt, err error) {
-	stmt, err = c.ConnIface.PrepareContext(ctx, query)
-	err = processSQLiteError(err)
-	if err != nil {
-		return nil, err
-	}
-	return &SQLiteStmt{StmtIface: stmt.(sqlite.StmtIface)}, nil
-}
-
-func (c *SQLiteConn) Exec(query string, args []driver.Value) (driver.Result, error) {
-	return c.ExecContext(context.Background(), query, toNamedValues(args))
-}
-
-func (c *SQLiteConn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (res driver.Result, err error) {
-	res, err = c.ConnIface.ExecContext(ctx, query, args)
-	err = processSQLiteError(err)
-	return
-}
-
-func (c *SQLiteConn) Close() (err error) {
-	ctx := context.Background()
-
-	// Get acces the underlying raw sqlite3 conn.
-	raw := c.ConnIface.(sqlite3.DriverConn).Raw()
-
-	// Set a timeout context to limit execution time.
-	ctx, cncl := context.WithTimeout(ctx, 5*time.Second)
-	old := raw.SetInterrupt(ctx)
-
-	// see: https://www.sqlite.org/pragma.html#pragma_optimize
-	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
-	_ = raw.Exec(onClose)
-
-	// Unset timeout context.
-	_ = raw.SetInterrupt(old)
-	cncl()
-
-	// Finally, close.
-	err = raw.Close()
-	return
-}
-
-type SQLiteTx struct{ driver.Tx }
-
-func (tx *SQLiteTx) Commit() (err error) {
-	err = tx.Tx.Commit()
-	err = processSQLiteError(err)
-	return
-}
-
-func (tx *SQLiteTx) Rollback() (err error) {
-	err = tx.Tx.Rollback()
-	err = processSQLiteError(err)
-	return
-}
-
-type SQLiteStmt struct{ sqlite.StmtIface }
-
-func (stmt *SQLiteStmt) Exec(args []driver.Value) (driver.Result, error) {
-	return stmt.ExecContext(context.Background(), toNamedValues(args))
-}
-
-func (stmt *SQLiteStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res driver.Result, err error) {
-	res, err = stmt.StmtIface.ExecContext(ctx, args)
-	err = processSQLiteError(err)
-	return
-}
-
-func (stmt *SQLiteStmt) Query(args []driver.Value) (driver.Rows, error) {
-	return stmt.QueryContext(context.Background(), toNamedValues(args))
-}
-
-func (stmt *SQLiteStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (rows driver.Rows, err error) {
-	rows, err = stmt.StmtIface.QueryContext(ctx, args)
-	err = processSQLiteError(err)
-	if err != nil {
-		return nil, err
-	}
-	return &SQLiteRows{RowsIface: rows.(sqlite.RowsIface)}, nil
-}
-
-func (stmt *SQLiteStmt) Close() (err error) {
-	err = stmt.StmtIface.Close()
-	err = processSQLiteError(err)
-	return
-}
-
-type SQLiteRows struct{ sqlite.RowsIface }
-
-func (r *SQLiteRows) Next(dest []driver.Value) (err error) {
-	err = r.RowsIface.Next(dest)
-	err = processSQLiteError(err)
-	return
-}
-
-func (r *SQLiteRows) Close() (err error) {
-	err = r.RowsIface.Close()
-	err = processSQLiteError(err)
-	return
 }
 
 type conn interface {

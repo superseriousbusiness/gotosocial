@@ -4,12 +4,13 @@
 [![Go Report](https://goreportcard.com/badge/github.com/ncruces/go-sqlite3)](https://goreportcard.com/report/github.com/ncruces/go-sqlite3)
 [![Go Coverage](https://github.com/ncruces/go-sqlite3/wiki/coverage.svg)](https://github.com/ncruces/go-sqlite3/wiki/Test-coverage-report)
 
-Go module `github.com/ncruces/go-sqlite3` is `cgo`-free [SQLite](https://sqlite.org/) wrapper.\
+Go module `github.com/ncruces/go-sqlite3` is a `cgo`-free [SQLite](https://sqlite.org/) wrapper.\
 It provides a [`database/sql`](https://pkg.go.dev/database/sql) compatible driver,
 as well as direct access to most of the [C SQLite API](https://sqlite.org/cintro.html).
 
-It wraps a [Wasm](https://webassembly.org/) build of SQLite, and uses [wazero](https://wazero.io/) as the runtime.\
-Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ runtime dependencies.
+It wraps a [Wasm](https://webassembly.org/) [build](embed/) of SQLite,
+and uses [wazero](https://wazero.io/) as the runtime.\
+Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ runtime dependencies [^1].
 
 ### Packages
 
@@ -54,6 +55,8 @@ Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ run
   implements an in-memory VFS.
 - [`github.com/ncruces/go-sqlite3/vfs/readervfs`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/vfs/readervfs)
   implements a VFS for immutable databases.
+- [`github.com/ncruces/go-sqlite3/vfs/adiantum`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/vfs/adiantum)
+  wraps a VFS to offer encryption at rest.
 
 ### Advanced features
 
@@ -67,6 +70,7 @@ Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ run
 - [math functions](https://sqlite.org/lang_mathfunc.html)
 - [full-text search](https://sqlite.org/fts5.html)
 - [geospatial search](https://sqlite.org/geopoly.html)
+- [encryption at rest](vfs/adiantum/README.md)
 - [and more…](embed/README.md)
 
 ### Caveats
@@ -101,3 +105,6 @@ The Wasm and VFS layers are also tested by running SQLite's
 - [`crawshaw.io/sqlite`](https://pkg.go.dev/crawshaw.io/sqlite)
 - [`github.com/mattn/go-sqlite3`](https://pkg.go.dev/github.com/mattn/go-sqlite3)
 - [`github.com/zombiezen/go-sqlite`](https://pkg.go.dev/github.com/zombiezen/go-sqlite)
+
+[^1]: anything else you find in [`go.mod`](./go.mod) is either a test dependency,
+      or needed by one of the extensions.

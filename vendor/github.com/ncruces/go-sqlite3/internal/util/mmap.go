@@ -25,7 +25,7 @@ func (s *mmapState) init(ctx context.Context, enabled bool) context.Context {
 	return ctx
 }
 
-func CanMap(ctx context.Context) bool {
+func CanMapFiles(ctx context.Context) bool {
 	s := ctx.Value(moduleKey{}).(*moduleState)
 	return s.mmapState.enabled
 }

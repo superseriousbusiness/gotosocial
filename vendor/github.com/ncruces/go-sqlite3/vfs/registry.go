@@ -23,6 +23,7 @@ func Find(name string) VFS {
 }
 
 // Register registers a VFS.
+// Empty and "os" are reserved names.
 //
 // https://sqlite.org/c3ref/vfs_find.html
 func Register(name string, vfs VFS) {

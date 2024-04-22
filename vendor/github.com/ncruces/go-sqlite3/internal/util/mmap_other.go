@@ -10,6 +10,6 @@ func (s *mmapState) init(ctx context.Context, _ bool) context.Context {
 	return ctx
 }
 
-func CanMap(ctx context.Context) bool {
+func CanMapFiles(ctx context.Context) bool {
 	return false
 }
