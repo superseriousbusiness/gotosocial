@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -121,7 +122,6 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 
 		settings := &gtsmodel.AccountSettings{
 			AccountID: accountID,
-			Reason:    newSignup.Reason,
 			Privacy:   gtsmodel.VisibilityDefault,
 		}
 
@@ -197,6 +197,7 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 		Account:                account,
 		EncryptedPassword:      string(encryptedPassword),
 		SignUpIP:               newSignup.SignUpIP.To4(),
+		Reason:                 newSignup.Reason,
 		Locale:                 newSignup.Locale,
 		UnconfirmedEmail:       newSignup.Email,
 		CreatedByApplicationID: newSignup.AppID,
@@ -329,6 +330,113 @@ func (a *adminDB) CreateInstanceInstance(ctx context.Context) error {
 
 	log.Infof(ctx, "created instance instance %s with id %s", host, i.ID)
 	return nil
+}
+
+func (a *adminDB) CreateInstanceApplication(ctx context.Context) error {
+	// Check if instance application already exists.
+	// Instance application client_id always = the
+	// instance account's ID so this is an easy check.
+	instanceAcct, err := a.state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return err
+	}
+
+	exists, err := exists(
+		ctx,
+		a.db.
+			NewSelect().
+			Column("application.id").
+			TableExpr("? AS ?", bun.Ident("applications"), bun.Ident("application")).
+			Where("? = ?", bun.Ident("application.client_id"), instanceAcct.ID),
+	)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		log.Infof(ctx, "instance application already exists")
+		return nil
+	}
+
+	// Generate new IDs for this
+	// application and its client.
+	protocol := config.GetProtocol()
+	host := config.GetHost()
+	url := protocol + "://" + host
+
+	clientID := instanceAcct.ID
+	clientSecret := uuid.NewString()
+	appID, err := id.NewRandomULID()
+	if err != nil {
+		return err
+	}
+
+	// Generate the application
+	// to put in the database.
+	app := &gtsmodel.Application{
+		ID:           appID,
+		Name:         host + " instance application",
+		Website:      url,
+		RedirectURI:  url,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Scopes:       "write:accounts",
+	}
+
+	// Store it.
+	if err := a.state.DB.PutApplication(ctx, app); err != nil {
+		return err
+	}
+
+	// Model an oauth client
+	// from the application.
+	oc := &gtsmodel.Client{
+		ID:     clientID,
+		Secret: clientSecret,
+		Domain: url,
+	}
+
+	// Store it.
+	return a.state.DB.PutClient(ctx, oc)
+}
+
+func (a *adminDB) GetInstanceApplication(ctx context.Context) (*gtsmodel.Application, error) {
+	// Instance app clientID == instanceAcct.ID,
+	// so get the instance account first.
+	instanceAcct, err := a.state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	app := new(gtsmodel.Application)
+	if err := a.db.
+		NewSelect().
+		Model(app).
+		Where("? = ?", bun.Ident("application.client_id"), instanceAcct.ID).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return app, nil
+}
+
+func (a *adminDB) CountApprovedSignupsSince(ctx context.Context, since time.Time) (int, error) {
+	return a.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
+		Where("? > ?", bun.Ident("user.created_at"), since).
+		Where("? = ?", bun.Ident("user.approved"), true).
+		Count(ctx)
+}
+
+func (a *adminDB) CountUnhandledSignups(ctx context.Context) (int, error) {
+	return a.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
+		// Approved is false by default.
+		// Explicitly rejected sign-ups end up elsewhere.
+		Where("? = ?", bun.Ident("user.approved"), false).
+		Count(ctx)
 }
 
 /*

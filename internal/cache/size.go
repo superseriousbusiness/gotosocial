@@ -176,6 +176,7 @@ func totalOfRatios() float64 {
 		config.GetCacheBlockMemRatio() +
 		config.GetCacheBlockIDsMemRatio() +
 		config.GetCacheBoostOfIDsMemRatio() +
+		config.GetCacheClientMemRatio() +
 		config.GetCacheEmojiMemRatio() +
 		config.GetCacheEmojiCategoryMemRatio() +
 		config.GetCacheFollowMemRatio() +
@@ -198,6 +199,7 @@ func totalOfRatios() float64 {
 		config.GetCacheStatusFaveIDsMemRatio() +
 		config.GetCacheTagMemRatio() +
 		config.GetCacheThreadMuteMemRatio() +
+		config.GetCacheTokenMemRatio() +
 		config.GetCacheTombstoneMemRatio() +
 		config.GetCacheUserMemRatio() +
 		config.GetCacheWebfingerMemRatio() +
@@ -252,7 +254,6 @@ func sizeofAccountSettings() uintptr {
 		AccountID:         exampleID,
 		CreatedAt:         exampleTime,
 		UpdatedAt:         exampleTime,
-		Reason:            exampleText,
 		Privacy:           gtsmodel.VisibilityFollowersOnly,
 		Sensitive:         util.Ptr(true),
 		Language:          "fr",
@@ -260,6 +261,17 @@ func sizeofAccountSettings() uintptr {
 		CustomCSS:         exampleText,
 		EnableRSS:         util.Ptr(true),
 		HideCollections:   util.Ptr(false),
+	}))
+}
+
+func sizeofAccountStats() uintptr {
+	return uintptr(size.Of(&gtsmodel.AccountStats{
+		AccountID:           exampleID,
+		FollowersCount:      util.Ptr(100),
+		FollowingCount:      util.Ptr(100),
+		StatusesCount:       util.Ptr(100),
+		StatusesPinnedCount: util.Ptr(100),
+		LastStatusAt:        exampleTime,
 	}))
 }
 
@@ -285,6 +297,17 @@ func sizeofBlock() uintptr {
 		URI:             exampleURI,
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
+	}))
+}
+
+func sizeofClient() uintptr {
+	return uintptr(size.Of(&gtsmodel.Client{
+		ID:        exampleID,
+		CreatedAt: exampleTime,
+		UpdatedAt: exampleTime,
+		Secret:    exampleID,
+		Domain:    exampleURI,
+		UserID:    exampleID,
 	}))
 }
 
@@ -592,13 +615,36 @@ func sizeofTag() uintptr {
 	}))
 }
 
-func sizeOfThreadMute() uintptr {
+func sizeofThreadMute() uintptr {
 	return uintptr(size.Of(&gtsmodel.ThreadMute{
 		ID:        exampleID,
 		CreatedAt: exampleTime,
 		UpdatedAt: exampleTime,
 		ThreadID:  exampleID,
 		AccountID: exampleID,
+	}))
+}
+
+func sizeofToken() uintptr {
+	return uintptr(size.Of(&gtsmodel.Token{
+		ID:                  exampleID,
+		CreatedAt:           exampleTime,
+		UpdatedAt:           exampleTime,
+		ClientID:            exampleID,
+		UserID:              exampleID,
+		RedirectURI:         exampleURI,
+		Scope:               "r:w",
+		Code:                "", // TODO
+		CodeChallenge:       "", // TODO
+		CodeChallengeMethod: "", // TODO
+		CodeCreateAt:        exampleTime,
+		CodeExpiresAt:       exampleTime,
+		Access:              exampleID + exampleID,
+		AccessCreateAt:      exampleTime,
+		AccessExpiresAt:     exampleTime,
+		Refresh:             "", // TODO: clients don't really support this very well yet
+		RefreshCreateAt:     exampleTime,
+		RefreshExpiresAt:    exampleTime,
 	}))
 }
 
@@ -629,11 +675,8 @@ func sizeofUser() uintptr {
 		Email:                  exampleURI,
 		AccountID:              exampleID,
 		EncryptedPassword:      exampleTextSmall,
-		CurrentSignInAt:        exampleTime,
-		LastSignInAt:           exampleTime,
 		InviteID:               exampleID,
-		ChosenLanguages:        []string{"en", "fr", "jp"},
-		FilteredLanguages:      []string{"en", "fr", "jp"},
+		Reason:                 exampleText,
 		Locale:                 "en",
 		CreatedByApplicationID: exampleID,
 		LastEmailedAt:          exampleTime,
@@ -641,10 +684,10 @@ func sizeofUser() uintptr {
 		ConfirmationSentAt:     exampleTime,
 		ConfirmedAt:            exampleTime,
 		UnconfirmedEmail:       exampleURI,
-		Moderator:              func() *bool { ok := true; return &ok }(),
-		Admin:                  func() *bool { ok := true; return &ok }(),
-		Disabled:               func() *bool { ok := true; return &ok }(),
-		Approved:               func() *bool { ok := true; return &ok }(),
+		Moderator:              util.Ptr(false),
+		Admin:                  util.Ptr(false),
+		Disabled:               util.Ptr(false),
+		Approved:               util.Ptr(false),
 		ResetPasswordToken:     exampleTextSmall,
 		ResetPasswordSentAt:    exampleTime,
 		ExternalID:             exampleID,

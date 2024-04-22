@@ -126,11 +126,12 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Calculate total number of followers available for account.
-	total, err := p.state.DB.CountAccountFollowers(ctx, receiver.ID)
-	if err != nil {
-		err := gtserror.Newf("error counting followers: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
+	// Ensure we have stats for this account.
+	if receiver.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
+			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	var obj vocab.Type
@@ -138,17 +139,27 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 	// Start the AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = total
+	params.Total = *receiver.Stats.FollowersCount
 
-	if page == nil {
+	switch {
+
+	case receiver.IsInstance() ||
+		*receiver.Settings.HideCollections:
+		// Instance account (can't follow/be followed),
+		// or an account that hides followers/following.
+		// Respect this by just returning totalItems.
+		obj = ap.NewASOrderedCollection(params)
+
+	case page == nil:
 		// i.e. paging disabled, return collection
 		// that links to first page (i.e. path below).
+		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
 		obj = ap.NewASOrderedCollection(params)
-	} else {
-		// i.e. paging enabled
 
+	default:
+		// i.e. paging enabled
 		// Get the request page of full follower objects with attached accounts.
 		followers, err := p.state.DB.GetAccountFollowers(ctx, receiver.ID, page)
 		if err != nil {
@@ -225,11 +236,12 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Calculate total number of following available for account.
-	total, err := p.state.DB.CountAccountFollows(ctx, receiver.ID)
-	if err != nil {
-		err := gtserror.Newf("error counting follows: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
+	// Ensure we have stats for this account.
+	if receiver.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
+			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	var obj vocab.Type
@@ -237,17 +249,26 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = total
+	params.Total = *receiver.Stats.FollowingCount
 
-	if page == nil {
+	switch {
+	case receiver.IsInstance() ||
+		*receiver.Settings.HideCollections:
+		// Instance account (can't follow/be followed),
+		// or an account that hides followers/following.
+		// Respect this by just returning totalItems.
+		obj = ap.NewASOrderedCollection(params)
+
+	case page == nil:
 		// i.e. paging disabled, return collection
 		// that links to first page (i.e. path below).
+		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
 		obj = ap.NewASOrderedCollection(params)
-	} else {
-		// i.e. paging enabled
 
+	default:
+		// i.e. paging enabled
 		// Get the request page of full follower objects with attached accounts.
 		follows, err := p.state.DB.GetAccountFollows(ctx, receiver.ID, page)
 		if err != nil {

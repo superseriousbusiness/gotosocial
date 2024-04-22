@@ -10,6 +10,8 @@ goldmark
 
 goldmark is compliant with CommonMark 0.31.2.
 
+- [goldmark playground](https://yuin.github.io/goldmark/playground/) : Try goldmark online. This playground is built with WASM(5-10MB).
+
 Motivation
 ----------------------
 I needed a Markdown parser for Go that satisfies the following requirements:
@@ -282,7 +284,7 @@ markdown := goldmark.New(
                 "https:",
             }),
             extension.WithLinkifyURLRegexp(
-                xurls.Strict,
+                xurls.Strict(),
             ),
         ),
     ),
@@ -493,6 +495,7 @@ Extensions
 - [goldmark-img64](https://github.com/tenkoh/goldmark-img64): Adds support for embedding images into the document as DataURL (base64 encoded).
 - [goldmark-enclave](https://github.com/quail-ink/goldmark-enclave): Adds support for embedding youtube/bilibili video, X's [oembed tweet](https://publish.twitter.com/), [tradingview](https://www.tradingview.com/widget/)'s chart, [quail](https://quail.ink)'s widget into the document.
 - [goldmark-wiki-table](https://github.com/movsb/goldmark-wiki-table): Adds support for embedding Wiki Tables.
+- [goldmark-tgmd](https://github.com/Mad-Pixels/goldmark-tgmd): A Telegram markdown renderer that can be passed to `goldmark.WithRenderer()`.
 
 ### Loading extensions at runtime
 [goldmark-dynamic](https://github.com/yuin/goldmark-dynamic) allows you to write a goldmark extension in Lua and load it at runtime without re-compilation.

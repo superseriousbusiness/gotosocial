@@ -131,10 +131,11 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 	}
 
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ActivityBlock,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         block,
-		ReceivingAccount: receiving,
+		APObjectType:      ap.ActivityBlock,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          block,
+		ReceivingAccount:  receiving,
+		RequestingAccount: requestingAccount,
 	})
 
 	return nil
@@ -307,7 +308,8 @@ func (f *federatingDB) createPollOptionables(
 			PollID:    inReplyTo.PollID,
 			Poll:      inReplyTo.Poll,
 		},
-		ReceivingAccount: receiver,
+		ReceivingAccount:  receiver,
+		RequestingAccount: requester,
 	})
 
 	return nil
@@ -376,12 +378,13 @@ func (f *federatingDB) createStatusable(
 		// Pass the statusable URI (APIri) into the processor
 		// worker and do the rest of the processing asynchronously.
 		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:     ap.ObjectNote,
-			APActivityType:   ap.ActivityCreate,
-			APIri:            ap.GetJSONLDId(statusable),
-			APObjectModel:    nil,
-			GTSModel:         nil,
-			ReceivingAccount: receiver,
+			APObjectType:      ap.ObjectNote,
+			APActivityType:    ap.ActivityCreate,
+			APIri:             ap.GetJSONLDId(statusable),
+			APObjectModel:     nil,
+			GTSModel:          nil,
+			ReceivingAccount:  receiver,
+			RequestingAccount: requester,
 		})
 		return nil
 	}
@@ -389,12 +392,13 @@ func (f *federatingDB) createStatusable(
 	// Do the rest of the processing asynchronously. The processor
 	// will handle inserting/updating + further dereferencing the status.
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ObjectNote,
-		APActivityType:   ap.ActivityCreate,
-		APIri:            nil,
-		GTSModel:         nil,
-		APObjectModel:    statusable,
-		ReceivingAccount: receiver,
+		APObjectType:      ap.ObjectNote,
+		APActivityType:    ap.ActivityCreate,
+		APIri:             nil,
+		GTSModel:          nil,
+		APObjectModel:     statusable,
+		ReceivingAccount:  receiver,
+		RequestingAccount: requester,
 	})
 
 	return nil
@@ -436,10 +440,11 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 	}
 
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ActivityFollow,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         followRequest,
-		ReceivingAccount: receivingAccount,
+		APObjectType:      ap.ActivityFollow,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          followRequest,
+		ReceivingAccount:  receivingAccount,
+		RequestingAccount: requestingAccount,
 	})
 
 	return nil
@@ -480,10 +485,11 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 	}
 
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ActivityLike,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         fave,
-		ReceivingAccount: receivingAccount,
+		APObjectType:      ap.ActivityLike,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          fave,
+		ReceivingAccount:  receivingAccount,
+		RequestingAccount: requestingAccount,
 	})
 
 	return nil
@@ -531,10 +537,11 @@ func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, rece
 	}
 
 	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ActivityFlag,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         report,
-		ReceivingAccount: receivingAccount,
+		APObjectType:      ap.ActivityFlag,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          report,
+		ReceivingAccount:  receivingAccount,
+		RequestingAccount: requestingAccount,
 	})
 
 	return nil

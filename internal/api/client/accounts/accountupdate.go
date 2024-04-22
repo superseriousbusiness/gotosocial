@@ -108,6 +108,14 @@ import (
 //		description: Default content type to use for authored statuses (text/plain or text/markdown).
 //		type: string
 //	-
+//		name: theme
+//		in: formData
+//		description: >-
+//			FileName of the theme to use when rendering this account's profile or statuses.
+//			The theme must exist on this server, as indicated by /api/v1/accounts/themes.
+//			Empty string unsets theme and returns to the default GoToSocial theme.
+//		type: string
+//	-
 //		name: custom_css
 //		in: formData
 //		description: >-
@@ -118,6 +126,11 @@ import (
 //		name: enable_rss
 //		in: formData
 //		description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
+//		type: boolean
+//	-
+//		name: hide_collections
+//		in: formData
+//		description: Hide the account's following/followers collections.
 //		type: boolean
 //	-
 //		name: fields_attributes[0][name]
@@ -311,7 +324,8 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 			form.FieldsAttributes == nil &&
 			form.Theme == nil &&
 			form.CustomCSS == nil &&
-			form.EnableRSS == nil) {
+			form.EnableRSS == nil &&
+			form.HideCollections == nil) {
 		return nil, errors.New("empty form submitted")
 	}
 

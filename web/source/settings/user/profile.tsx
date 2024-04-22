@@ -65,6 +65,7 @@ function UserProfileForm({ data: profile }) {
 		- file avatar
 		- file header
 		- bool enable_rss
+		- bool hide_collections
 		- string custom_css (if enabled)
 		- string theme
 	*/
@@ -98,6 +99,7 @@ function UserProfileForm({ data: profile }) {
 		locked: useBoolInput("locked", { source: profile }),
 		discoverable: useBoolInput("discoverable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
+		hideCollections: useBoolInput("hide_collections", { source: profile }),
 		fields: useFieldArrayInput("fields_attributes", {
 			defaultValue: profile?.source?.fields,
 			length: instanceConfig.maxPinnedFields
@@ -207,6 +209,10 @@ function UserProfileForm({ data: profile }) {
 			<Checkbox
 				field={form.enableRSS}
 				label="Enable RSS feed of Public posts"
+			/>
+			<Checkbox
+				field={form.hideCollections}
+				label="Hide who you follow / are followed by"
 			/>
 
 			<div className="form-section-docs">

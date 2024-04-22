@@ -176,4 +176,13 @@ db-sqlite-cache-size: "8MiB"
 # Examples: ["0s", "1s", "30s", "1m", "5m"]
 # Default: "30m"
 db-sqlite-busy-timeout: "30m"
+
+cache:
+  # cache.memory-target sets a target limit that
+  # the application will try to keep it's caches
+  # within. This is based on estimated sizes of
+  # in-memory objects, and so NOT AT ALL EXACT.
+  # Examples: ["100MiB", "200MiB", "500MiB", "1GiB"]
+  # Default: "100MiB"
+  memory-target: "100MiB"
 ```

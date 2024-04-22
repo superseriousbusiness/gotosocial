@@ -6,7 +6,6 @@ EXPECT=$(cat << "EOF"
 {
     "account-domain": "peepee",
     "accounts-allow-custom-css": true,
-    "accounts-approval-required": false,
     "accounts-custom-css-length": 5000,
     "accounts-reason-required": false,
     "accounts-registration-open": true,
@@ -27,9 +26,11 @@ EXPECT=$(cat << "EOF"
         "account-mem-ratio": 5,
         "account-note-mem-ratio": 1,
         "account-settings-mem-ratio": 0.1,
+        "account-stats-mem-ratio": 2,
         "application-mem-ratio": 0.1,
         "block-mem-ratio": 3,
         "boost-of-ids-mem-ratio": 3,
+        "client-mem-ratio": 0.1,
         "emoji-category-mem-ratio": 0.1,
         "emoji-mem-ratio": 3,
         "filter-keyword-mem-ratio": 0.5,
@@ -58,6 +59,7 @@ EXPECT=$(cat << "EOF"
         "status-mem-ratio": 5,
         "tag-mem-ratio": 2,
         "thread-mute-mem-ratio": 0.2,
+        "token-mem-ratio": 0.75,
         "tombstone-mem-ratio": 0.5,
         "user-mem-ratio": 0.25,
         "visibility-mem-ratio": 2,
@@ -224,7 +226,6 @@ GTS_INSTANCE_LANGUAGES="nl,en-gb" \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
 GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \
-GTS_ACCOUNTS_APPROVAL_REQUIRED=false \
 GTS_ACCOUNTS_REASON_REQUIRED=false \
 GTS_MEDIA_IMAGE_MAX_SIZE=420 \
 GTS_MEDIA_VIDEO_MAX_SIZE=420 \

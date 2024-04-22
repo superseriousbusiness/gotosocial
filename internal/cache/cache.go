@@ -25,6 +25,7 @@ import (
 )
 
 type Caches struct {
+
 	// GTS provides access to the collection of
 	// gtsmodel object caches. (used by the database).
 	GTS GTSCaches
@@ -51,13 +52,14 @@ func (c *Caches) Init() {
 	log.Infof(nil, "init: %p", c)
 
 	c.initAccount()
-	c.initAccountCounts()
 	c.initAccountNote()
 	c.initAccountSettings()
+	c.initAccountStats()
 	c.initApplication()
 	c.initBlock()
 	c.initBlockIDs()
 	c.initBoostOfIDs()
+	c.initClient()
 	c.initDomainAllow()
 	c.initDomainBlock()
 	c.initEmoji()
@@ -84,9 +86,10 @@ func (c *Caches) Init() {
 	c.initReport()
 	c.initStatus()
 	c.initStatusFave()
+	c.initStatusFaveIDs()
 	c.initTag()
 	c.initThreadMute()
-	c.initStatusFaveIDs()
+	c.initToken()
 	c.initTombstone()
 	c.initUser()
 	c.initWebfinger()
@@ -121,6 +124,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Account.Trim(threshold)
 	c.GTS.AccountNote.Trim(threshold)
 	c.GTS.AccountSettings.Trim(threshold)
+	c.GTS.AccountStats.Trim(threshold)
 	c.GTS.Block.Trim(threshold)
 	c.GTS.BlockIDs.Trim(threshold)
 	c.GTS.Emoji.Trim(threshold)

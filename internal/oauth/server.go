@@ -75,7 +75,7 @@ type s struct {
 }
 
 // New returns a new oauth server that implements the Server interface
-func New(ctx context.Context, database db.Basic) Server {
+func New(ctx context.Context, database db.DB) Server {
 	ts := newTokenStore(ctx, database)
 	cs := NewClientStore(database)
 

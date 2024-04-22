@@ -51,22 +51,24 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
 	// so we have to try a few different things...
 	if s, err := f.state.DB.GetStatusByURI(ctx, id.String()); err == nil && requestingAcct.ID == s.AccountID {
-		l.Debugf("uri is for STATUS with id: %s", s.ID)
+		l.Debugf("deleting status: %s", s.ID)
 		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:     ap.ObjectNote,
-			APActivityType:   ap.ActivityDelete,
-			GTSModel:         s,
-			ReceivingAccount: receivingAcct,
+			APObjectType:      ap.ObjectNote,
+			APActivityType:    ap.ActivityDelete,
+			GTSModel:          s,
+			ReceivingAccount:  receivingAcct,
+			RequestingAccount: requestingAcct,
 		})
 	}
 
 	if a, err := f.state.DB.GetAccountByURI(ctx, id.String()); err == nil && requestingAcct.ID == a.ID {
-		l.Debugf("uri is for ACCOUNT with id %s", a.ID)
+		l.Debugf("deleting account: %s", a.ID)
 		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:     ap.ObjectProfile,
-			APActivityType:   ap.ActivityDelete,
-			GTSModel:         a,
-			ReceivingAccount: receivingAcct,
+			APObjectType:      ap.ObjectProfile,
+			APActivityType:    ap.ActivityDelete,
+			GTSModel:          a,
+			ReceivingAccount:  receivingAcct,
+			RequestingAccount: requestingAcct,
 		})
 	}
 

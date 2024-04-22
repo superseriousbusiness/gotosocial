@@ -44,7 +44,7 @@
         <p>
             You can join the fediverse by running your own instance of an ActivityPub software,
             or by finding an existing instance that aligns with your values and expectations,
-            and registering an account there.
+            and registering an account.
         </p>
         <p>
             To help you find an instance that suits you, you can try one of the following tools:
@@ -53,6 +53,9 @@
             <li><a href="https://fediverse.observer" rel="nofollow noreferrer noopener" target="_blank">Fediverse Observer (opens in a new tab)</a></li>
             <li><a href="https://fedidb.org/network" rel="nofollow noreferrer noopener" target="_blank">FediDB (opens in a new tab)</a></li>
         </ul>
+        {{- if .instance.Registrations }}
+        <p>Or, just <a href="signup">register for an account on this instance</a>!</p>
+        {{- end }}
     </div>
 </section>
 {{- end }}

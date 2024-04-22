@@ -100,9 +100,9 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						onClick={() => submitParse()}
 						result={parseResult}
 						showError={false}
-						disabled={false}
+						disabled={form.permType.value === undefined || form.permType.value.length === 0}
 					/>
-					<label className="button with-icon">
+					<label className={`button with-icon${form.permType.value === undefined || form.permType.value.length === 0 ? " disabled" : ""}`}>
 						<i className="fa fa-fw " aria-hidden="true" />
 						Import file
 						<input
@@ -110,6 +110,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 							className="hidden"
 							onChange={fileChanged}
 							accept="application/json,text/plain,text/csv"
+							disabled={form.permType.value === undefined || form.permType.value.length === 0}
 						/>
 					</label>
 					<b /> {/* grid filler */}
@@ -118,7 +119,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						type="button"
 						onClick={() => submitExport("export")}
 						result={exportResult} showError={false}
-						disabled={false}
+						disabled={form.permType.value === undefined || form.permType.value.length === 0}
 					/>
 					<MutationButton
 						label="Export to file"
@@ -127,7 +128,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						onClick={() => submitExport("export-file")}
 						result={exportResult}
 						showError={false}
-						disabled={false}
+						disabled={form.permType.value === undefined || form.permType.value.length === 0}
 					/>
 					<div className="export-file">
 						<span>

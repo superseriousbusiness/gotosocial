@@ -49,6 +49,7 @@ const (
 	settingsPanelGlob  = settingsPathPrefix + "/*panel"
 	userPanelPath      = settingsPathPrefix + "/user"
 	adminPanelPath     = settingsPathPrefix + "/admin"
+	signupPath         = "/signup"
 
 	cacheControlHeader    = "Cache-Control"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 	cacheControlNoCache   = "no-cache"          // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#response_directives
@@ -115,10 +116,13 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)
 	r.AttachHandler(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
 	r.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
+	r.AttachHandler(http.MethodPost, confirmEmailPath, m.confirmEmailPOSTHandler)
 	r.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
 	r.AttachHandler(http.MethodGet, aboutPath, m.aboutGETHandler)
 	r.AttachHandler(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
 	r.AttachHandler(http.MethodGet, tagsPath, m.tagGETHandler)
+	r.AttachHandler(http.MethodGet, signupPath, m.signupGETHandler)
+	r.AttachHandler(http.MethodPost, signupPath, m.signupPOSTHandler)
 
 	// Attach redirects from old endpoints to current ones for backwards compatibility
 	r.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })

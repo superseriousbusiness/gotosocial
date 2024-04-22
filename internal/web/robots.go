@@ -82,6 +82,7 @@ Disallow: /oauth/
 Disallow: /check_your_email
 Disallow: /wait_for_approval
 Disallow: /account_disabled
+Disallow: /signup
 
 # Well-known endpoints.
 Disallow: /.well-known/

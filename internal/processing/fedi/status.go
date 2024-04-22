@@ -156,6 +156,7 @@ func (p *Processor) StatusRepliesGet(
 	if page == nil {
 		// i.e. paging disabled, return collection
 		// that links to first page (i.e. path below).
+		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "20") // enables paging
 		obj = ap.NewASOrderedCollection(params)

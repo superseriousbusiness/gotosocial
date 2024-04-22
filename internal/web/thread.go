@@ -50,7 +50,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	// Parse account targetUsername and status ID from the URL.
-	targetUsername, errWithCode := apiutil.ParseWebUsername(c.Param(apiutil.WebUsernameKey))
+	targetUsername, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return

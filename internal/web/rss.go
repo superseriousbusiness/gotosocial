@@ -38,7 +38,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 	}
 
 	// Fetch + normalize username from URL.
-	username, errWithCode := apiutil.ParseWebUsername(c.Param(apiutil.WebUsernameKey))
+	username, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

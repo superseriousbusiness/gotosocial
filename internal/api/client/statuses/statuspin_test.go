@@ -48,11 +48,12 @@ func (suite *StatusPinTestSuite) createPin(
 	expectedHTTPStatus int,
 	expectedBody string,
 	targetStatusID string,
+	requestingAcct *gtsmodel.Account,
 ) (*apimodel.Status, error) {
 	// instantiate recorder + test context
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, requestingAcct)
 	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
@@ -101,8 +102,10 @@ func (suite *StatusPinTestSuite) createPin(
 func (suite *StatusPinTestSuite) TestPinStatusPublicOK() {
 	// Pin an unpinned public status that this account owns.
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
+	testAccount := new(gtsmodel.Account)
+	*testAccount = *suite.testAccounts["local_account_1"]
 
-	resp, err := suite.createPin(http.StatusOK, "", targetStatus.ID)
+	resp, err := suite.createPin(http.StatusOK, "", targetStatus.ID, testAccount)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -113,8 +116,10 @@ func (suite *StatusPinTestSuite) TestPinStatusPublicOK() {
 func (suite *StatusPinTestSuite) TestPinStatusFollowersOnlyOK() {
 	// Pin an unpinned followers only status that this account owns.
 	targetStatus := suite.testStatuses["local_account_1_status_5"]
+	testAccount := new(gtsmodel.Account)
+	*testAccount = *suite.testAccounts["local_account_1"]
 
-	resp, err := suite.createPin(http.StatusOK, "", targetStatus.ID)
+	resp, err := suite.createPin(http.StatusOK, "", targetStatus.ID, testAccount)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -127,6 +132,8 @@ func (suite *StatusPinTestSuite) TestPinStatusTwiceError() {
 	targetStatus := &gtsmodel.Status{}
 	*targetStatus = *suite.testStatuses["local_account_1_status_5"]
 	targetStatus.PinnedAt = time.Now()
+	testAccount := new(gtsmodel.Account)
+	*testAccount = *suite.testAccounts["local_account_1"]
 
 	if err := suite.db.UpdateStatus(context.Background(), targetStatus, "pinned_at"); err != nil {
 		suite.FailNow(err.Error())
@@ -136,6 +143,7 @@ func (suite *StatusPinTestSuite) TestPinStatusTwiceError() {
 		http.StatusUnprocessableEntity,
 		`{"error":"Unprocessable Entity: status already pinned"}`,
 		targetStatus.ID,
+		testAccount,
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -144,11 +152,14 @@ func (suite *StatusPinTestSuite) TestPinStatusTwiceError() {
 func (suite *StatusPinTestSuite) TestPinStatusOtherAccountError() {
 	// Try to pin a status that doesn't belong to us.
 	targetStatus := suite.testStatuses["admin_account_status_1"]
+	testAccount := new(gtsmodel.Account)
+	*testAccount = *suite.testAccounts["local_account_1"]
 
 	if _, err := suite.createPin(
 		http.StatusUnprocessableEntity,
 		`{"error":"Unprocessable Entity: status 01F8MH75CBF9JFX4ZAD54N0W0R does not belong to account 01F8MH1H7YV1Z7D2C8K2730QBF"}`,
 		targetStatus.ID,
+		testAccount,
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -156,7 +167,8 @@ func (suite *StatusPinTestSuite) TestPinStatusOtherAccountError() {
 
 func (suite *StatusPinTestSuite) TestPinStatusTooManyPins() {
 	// Test pinning too many statuses.
-	testAccount := suite.testAccounts["local_account_1"]
+	testAccount := new(gtsmodel.Account)
+	*testAccount = *suite.testAccounts["local_account_1"]
 
 	// Spam 10 pinned statuses into the database.
 	ctx := context.Background()
@@ -181,12 +193,18 @@ func (suite *StatusPinTestSuite) TestPinStatusTooManyPins() {
 		}
 	}
 
+	// Regenerate account stats to set pinned count.
+	if err := suite.db.RegenerateAccountStats(ctx, testAccount); err != nil {
+		suite.FailNow(err.Error())
+	}
+
 	// Try to pin one more status as a treat.
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 	if _, err := suite.createPin(
 		http.StatusUnprocessableEntity,
 		`{"error":"Unprocessable Entity: status pin limit exceeded, you've already pinned 10 status(es) out of 10"}`,
 		targetStatus.ID,
+		testAccount,
 	); err != nil {
 		suite.FailNow(err.Error())
 	}

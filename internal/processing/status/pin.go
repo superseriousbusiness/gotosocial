@@ -82,24 +82,43 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, errWithCode
 	}
 
+	// Get a lock on this account.
+	unlock := p.state.AccountLocks.Lock(requestingAccount.URI)
+	defer unlock()
+
 	if !targetStatus.PinnedAt.IsZero() {
 		err := errors.New("status already pinned")
 		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
-	pinnedCount, err := p.state.DB.CountAccountPinned(ctx, requestingAccount.ID)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("error checking number of pinned statuses: %w", err))
+	// Ensure account stats populated.
+	if requestingAccount.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
+			err = gtserror.Newf("db error getting account stats: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
+	pinnedCount := *requestingAccount.Stats.StatusesPinnedCount
 	if pinnedCount >= allowedPinnedCount {
-		err = fmt.Errorf("status pin limit exceeded, you've already pinned %d status(es) out of %d", pinnedCount, allowedPinnedCount)
+		err := fmt.Errorf("status pin limit exceeded, you've already pinned %d status(es) out of %d", pinnedCount, allowedPinnedCount)
 		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
 	}
 
 	targetStatus.PinnedAt = time.Now()
 	if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 		err = gtserror.Newf("db error pinning status: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Update account stats.
+	*requestingAccount.Stats.StatusesPinnedCount++
+	if err := p.state.DB.UpdateAccountStats(
+		ctx,
+		requestingAccount.Stats,
+		"statuses_pinned_count",
+	); err != nil {
+		err = gtserror.Newf("db error updating stats: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -128,13 +147,42 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 		return nil, errWithCode
 	}
 
+	// Get a lock on this account.
+	unlock := p.state.AccountLocks.Lock(requestingAccount.URI)
+	defer unlock()
+
 	if targetStatus.PinnedAt.IsZero() {
+		// Status already not pinned.
 		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
+	}
+
+	// Ensure account stats populated.
+	if requestingAccount.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
+			err = gtserror.Newf("db error getting account stats: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	targetStatus.PinnedAt = time.Time{}
 	if err := p.state.DB.UpdateStatus(ctx, targetStatus, "pinned_at"); err != nil {
 		err = gtserror.Newf("db error unpinning status: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Update account stats.
+	//
+	// Clamp to 0 to avoid funny business.
+	*requestingAccount.Stats.StatusesPinnedCount--
+	if *requestingAccount.Stats.StatusesPinnedCount < 0 {
+		*requestingAccount.Stats.StatusesPinnedCount = 0
+	}
+	if err := p.state.DB.UpdateAccountStats(
+		ctx,
+		requestingAccount.Stats,
+		"statuses_pinned_count",
+	); err != nil {
+		err = gtserror.Newf("db error updating stats: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

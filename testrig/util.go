@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
-	wprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/workers"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -44,6 +44,8 @@ func StartNoopWorkers(state *state.State) {
 	state.Workers.ProcessFromClientAPI = func(context.Context, messages.FromClientAPI) error { return nil }
 	state.Workers.ProcessFromFediAPI = func(context.Context, messages.FromFediAPI) error { return nil }
 
+	state.Workers.Delivery.Init(nil)
+
 	_ = state.Workers.Scheduler.Start()
 	_ = state.Workers.ClientAPI.Start(1, 10)
 	_ = state.Workers.Federator.Start(1, 10)
@@ -52,11 +54,13 @@ func StartNoopWorkers(state *state.State) {
 
 // Starts workers on the provided state using processing functions from the given
 // workers processor. Useful when you *do* want to trigger side effects in a test.
-func StartWorkers(state *state.State, wProcessor *wprocessor.Processor) {
-	state.Workers.EnqueueClientAPI = wProcessor.EnqueueClientAPI
-	state.Workers.EnqueueFediAPI = wProcessor.EnqueueFediAPI
-	state.Workers.ProcessFromClientAPI = wProcessor.ProcessFromClientAPI
-	state.Workers.ProcessFromFediAPI = wProcessor.ProcessFromFediAPI
+func StartWorkers(state *state.State, processor *workers.Processor) {
+	state.Workers.EnqueueClientAPI = processor.EnqueueClientAPI
+	state.Workers.EnqueueFediAPI = processor.EnqueueFediAPI
+	state.Workers.ProcessFromClientAPI = processor.ProcessFromClientAPI
+	state.Workers.ProcessFromFediAPI = processor.ProcessFromFediAPI
+
+	state.Workers.Delivery.Init(nil)
 
 	_ = state.Workers.Scheduler.Start()
 	_ = state.Workers.ClientAPI.Start(1, 10)
@@ -91,6 +95,64 @@ func StartTimelines(state *state.State, filter *visibility.Filter, converter *ty
 	if err := state.Timelines.List.Start(); err != nil {
 		panic(fmt.Sprintf("error starting list timeline: %s", err))
 	}
+}
+
+// EqualRequestURIs checks whether inputs have equal request URIs,
+// handling cases of url.URL{}, *url.URL{}, string, *string.
+func EqualRequestURIs(u1, u2 any) bool {
+	var uri1, uri2 string
+
+	requestURI := func(in string) (string, error) {
+		u, err := url.Parse(in)
+		if err != nil {
+			return "", err
+		}
+		return u.RequestURI(), nil
+	}
+
+	switch u1 := u1.(type) {
+	case url.URL:
+		uri1 = u1.RequestURI()
+	case *url.URL:
+		uri1 = u1.RequestURI()
+	case *string:
+		var err error
+		uri1, err = requestURI(*u1)
+		if err != nil {
+			return false
+		}
+	case string:
+		var err error
+		uri1, err = requestURI(u1)
+		if err != nil {
+			return false
+		}
+	default:
+		panic("unsupported type")
+	}
+
+	switch u2 := u2.(type) {
+	case url.URL:
+		uri2 = u2.RequestURI()
+	case *url.URL:
+		uri2 = u2.RequestURI()
+	case *string:
+		var err error
+		uri2, err = requestURI(*u2)
+		if err != nil {
+			return false
+		}
+	case string:
+		var err error
+		uri2, err = requestURI(u2)
+		if err != nil {
+			return false
+		}
+	default:
+		panic("unsupported type")
+	}
+
+	return uri1 == uri2
 }
 
 // CreateMultipartFormData is a handy function for taking a fieldname and a filename, and creating a multipart form bytes buffer

@@ -17,12 +17,46 @@
 
 package httpclient
 
-import "net/http"
+import (
+	"net/http"
+	"time"
+
+	"codeberg.org/gruf/go-byteutil"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+)
 
 // SignFunc is a function signature that provides request signing.
 type SignFunc func(r *http.Request) error
 
-type SigningClient interface {
-	Do(r *http.Request) (*http.Response, error)
-	DoSigned(r *http.Request, sign SignFunc) (*http.Response, error)
+// signingtransport wraps an http.Transport{}
+// (RoundTripper implementer) to check request
+// context for a signing function and using for
+// all subsequent trips through RoundTrip().
+type signingtransport struct{ http.Transport }
+
+func (t *signingtransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	// Ensure updated host always set.
+	r.Header.Set("Host", r.URL.Host)
+
+	if sign := gtscontext.HTTPClientSignFunc(r.Context()); sign != nil {
+		// Reset signing header fields
+		now := time.Now().UTC()
+		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
+		r.Header.Del("Signature")
+		r.Header.Del("Digest")
+
+		// Rewind body reader and content-length if set.
+		if rc, ok := r.Body.(*byteutil.ReadNopCloser); ok {
+			rc.Rewind() // set len AFTER rewind
+			r.ContentLength = int64(rc.Len())
+		}
+
+		// Sign the outgoing request.
+		if err := sign(r); err != nil {
+			return nil, err
+		}
+	}
+
+	// Pass to underlying transport.
+	return t.Transport.RoundTrip(r)
 }

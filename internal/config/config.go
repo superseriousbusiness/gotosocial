@@ -88,7 +88,6 @@ type Configuration struct {
 	InstanceLanguages              language.Languages `name:"instance-languages" usage:"BCP47 language tags for the instance. Used to indicate the preferred languages of instance residents (in order from most-preferred to least-preferred)."`
 
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
-	AccountsApprovalRequired bool `name:"accounts-approval-required" usage:"Do account signups require approval by an admin or moderator before user can log in? If false, new registrations will be automatically approved."`
 	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
 	AccountsAllowCustomCSS   bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
 	AccountsCustomCSSLength  int  `name:"accounts-custom-css-length" usage:"Maximum permitted length (characters) of custom CSS for accounts."`
@@ -196,10 +195,12 @@ type CacheConfiguration struct {
 	AccountMemRatio          float64       `name:"account-mem-ratio"`
 	AccountNoteMemRatio      float64       `name:"account-note-mem-ratio"`
 	AccountSettingsMemRatio  float64       `name:"account-settings-mem-ratio"`
+	AccountStatsMemRatio     float64       `name:"account-stats-mem-ratio"`
 	ApplicationMemRatio      float64       `name:"application-mem-ratio"`
 	BlockMemRatio            float64       `name:"block-mem-ratio"`
 	BlockIDsMemRatio         float64       `name:"block-mem-ratio"`
 	BoostOfIDsMemRatio       float64       `name:"boost-of-ids-mem-ratio"`
+	ClientMemRatio           float64       `name:"client-mem-ratio"`
 	EmojiMemRatio            float64       `name:"emoji-mem-ratio"`
 	EmojiCategoryMemRatio    float64       `name:"emoji-category-mem-ratio"`
 	FilterMemRatio           float64       `name:"filter-mem-ratio"`
@@ -227,6 +228,7 @@ type CacheConfiguration struct {
 	StatusFaveIDsMemRatio    float64       `name:"status-fave-ids-mem-ratio"`
 	TagMemRatio              float64       `name:"tag-mem-ratio"`
 	ThreadMuteMemRatio       float64       `name:"thread-mute-mem-ratio"`
+	TokenMemRatio            float64       `name:"token-mem-ratio"`
 	TombstoneMemRatio        float64       `name:"tombstone-mem-ratio"`
 	UserMemRatio             float64       `name:"user-mem-ratio"`
 	WebfingerMemRatio        float64       `name:"webfinger-mem-ratio"`

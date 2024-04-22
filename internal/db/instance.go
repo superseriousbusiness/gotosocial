@@ -58,4 +58,8 @@ type Instance interface {
 	// GetInstanceModeratorAddresses returns a slice of email addresses belonging to active
 	// (as in, not suspended) moderators + admins on this instance.
 	GetInstanceModeratorAddresses(ctx context.Context) ([]string, error)
+
+	// GetInstanceModerators returns a slice of accounts belonging to active
+	// (as in, non suspended) moderators + admins on this instance.
+	GetInstanceModerators(ctx context.Context) ([]*gtsmodel.Account, error)
 }

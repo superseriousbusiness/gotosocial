@@ -34,12 +34,13 @@ const (
 
 	/* Common keys */
 
-	IDKey      = "id"
-	LimitKey   = "limit"
-	LocalKey   = "local"
-	MaxIDKey   = "max_id"
-	SinceIDKey = "since_id"
-	MinIDKey   = "min_id"
+	IDKey       = "id"
+	LimitKey    = "limit"
+	LocalKey    = "local"
+	MaxIDKey    = "max_id"
+	SinceIDKey  = "since_id"
+	MinIDKey    = "min_id"
+	UsernameKey = "username"
 
 	/* AP endpoint keys */
 
@@ -61,18 +62,61 @@ const (
 
 	/* Web endpoint keys */
 
-	WebUsernameKey = "username"
 	WebStatusIDKey = "status"
 
 	/* Domain permission keys */
 
 	DomainPermissionExportKey = "export"
 	DomainPermissionImportKey = "import"
+
+	/* Admin query keys */
+
+	AdminRemoteKey      = "remote"
+	AdminActiveKey      = "active"
+	AdminPendingKey     = "pending"
+	AdminDisabledKey    = "disabled"
+	AdminSilencedKey    = "silenced"
+	AdminSuspendedKey   = "suspended"
+	AdminSensitizedKey  = "sensitized"
+	AdminDisplayNameKey = "display_name"
+	AdminByDomainKey    = "by_domain"
+	AdminEmailKey       = "email"
+	AdminIPKey          = "ip"
+	AdminStaffKey       = "staff"
+	AdminOriginKey      = "origin"
+	AdminStatusKey      = "status"
+	AdminPermissionsKey = "permissions"
+	AdminRoleIDsKey     = "role_ids[]"
+	AdminInvitedByKey   = "invited_by"
 )
 
 /*
 	Parse functions for *OPTIONAL* parameters with default values.
 */
+
+func ParseMaxID(value string, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+
+	return value
+}
+
+func ParseSinceID(value string, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+
+	return value
+}
+
+func ParseMinID(value string, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+
+	return value
+}
 
 func ParseLimit(value string, defaultValue int, max, min int) (int, gtserror.WithCode) {
 	i, err := parseInt(value, defaultValue, max, min, LimitKey)
@@ -85,14 +129,6 @@ func ParseLimit(value string, defaultValue int, max, min int) (int, gtserror.Wit
 
 func ParseLocal(value string, defaultValue bool) (bool, gtserror.WithCode) {
 	return parseBool(value, defaultValue, LocalKey)
-}
-
-func ParseMaxID(value string, defaultValue string) string {
-	if value == "" {
-		return defaultValue
-	}
-
-	return value
 }
 
 func ParseSearchExcludeUnreviewed(value string, defaultValue bool) (bool, gtserror.WithCode) {
@@ -121,6 +157,34 @@ func ParseDomainPermissionImport(value string, defaultValue bool) (bool, gtserro
 
 func ParseOnlyOtherAccounts(value string, defaultValue bool) (bool, gtserror.WithCode) {
 	return parseBool(value, defaultValue, OnlyOtherAccountsKey)
+}
+
+func ParseAdminRemote(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, AdminRemoteKey)
+}
+
+func ParseAdminActive(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, AdminActiveKey)
+}
+
+func ParseAdminPending(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, AdminPendingKey)
+}
+
+func ParseAdminDisabled(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, AdminDisabledKey)
+}
+
+func ParseAdminSilenced(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, AdminSilencedKey)
+}
+
+func ParseAdminSuspended(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, AdminSuspendedKey)
+}
+
+func ParseAdminStaff(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, AdminStaffKey)
 }
 
 /*
@@ -187,8 +251,8 @@ func ParseTagName(value string) (string, gtserror.WithCode) {
 	return value, nil
 }
 
-func ParseWebUsername(value string) (string, gtserror.WithCode) {
-	key := WebUsernameKey
+func ParseUsername(value string) (string, gtserror.WithCode) {
+	key := UsernameKey
 
 	if value == "" {
 		return "", requiredError(key)

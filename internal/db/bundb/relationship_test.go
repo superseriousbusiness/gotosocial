@@ -773,39 +773,11 @@ func (suite *RelationshipTestSuite) TestGetAccountFollows() {
 	suite.Len(follows, 2)
 }
 
-func (suite *RelationshipTestSuite) TestCountAccountFollowsLocalOnly() {
-	account := suite.testAccounts["local_account_1"]
-	followsCount, err := suite.db.CountAccountLocalFollows(context.Background(), account.ID)
-	suite.NoError(err)
-	suite.Equal(2, followsCount)
-}
-
-func (suite *RelationshipTestSuite) TestCountAccountFollows() {
-	account := suite.testAccounts["local_account_1"]
-	followsCount, err := suite.db.CountAccountFollows(context.Background(), account.ID)
-	suite.NoError(err)
-	suite.Equal(2, followsCount)
-}
-
 func (suite *RelationshipTestSuite) TestGetAccountFollowers() {
 	account := suite.testAccounts["local_account_1"]
 	follows, err := suite.db.GetAccountFollowers(context.Background(), account.ID, nil)
 	suite.NoError(err)
 	suite.Len(follows, 2)
-}
-
-func (suite *RelationshipTestSuite) TestCountAccountFollowers() {
-	account := suite.testAccounts["local_account_1"]
-	followsCount, err := suite.db.CountAccountFollowers(context.Background(), account.ID)
-	suite.NoError(err)
-	suite.Equal(2, followsCount)
-}
-
-func (suite *RelationshipTestSuite) TestCountAccountFollowersLocalOnly() {
-	account := suite.testAccounts["local_account_1"]
-	followsCount, err := suite.db.CountAccountLocalFollowers(context.Background(), account.ID)
-	suite.NoError(err)
-	suite.Equal(2, followsCount)
 }
 
 func (suite *RelationshipTestSuite) TestUnfollowExisting() {

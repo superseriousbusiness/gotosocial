@@ -100,6 +100,8 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
 	suite.Len(statusReply.Reblog.MediaAttachments, 1)
 	suite.Len(statusReply.Reblog.Tags, 1)
 	suite.Len(statusReply.Reblog.Emojis, 1)
+	suite.True(statusReply.Reblogged)
+	suite.True(statusReply.Reblog.Reblogged)
 	suite.Equal("superseriousbusiness", statusReply.Reblog.Application.Name)
 }
 
@@ -165,6 +167,8 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 	suite.Empty(responseStatus.Reblog.MediaAttachments)
 	suite.Empty(responseStatus.Reblog.Tags)
 	suite.Empty(responseStatus.Reblog.Emojis)
+	suite.True(responseStatus.Reblogged)
+	suite.True(responseStatus.Reblog.Reblogged)
 	suite.Equal("really cool gts application", responseStatus.Reblog.Application.Name)
 }
 

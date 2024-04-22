@@ -80,6 +80,7 @@ type Account struct {
 	SuspendedAt             time.Time        `bun:"type:timestamptz,nullzero"`                                   // When was this account suspended (eg., don't allow it to log in/post, don't accept media/posts from this account)
 	SuspensionOrigin        string           `bun:"type:CHAR(26),nullzero"`                                      // id of the database entry that caused this account to become suspended -- can be an account ID or a domain block ID
 	Settings                *AccountSettings `bun:"-"`                                                           // gtsmodel.AccountSettings for this account.
+	Stats                   *AccountStats    `bun:"-"`                                                           // gtsmodel.AccountStats for this account.
 }
 
 // IsLocal returns whether account is a local user account.

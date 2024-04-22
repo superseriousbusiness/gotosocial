@@ -66,18 +66,22 @@ func toMastodonVersion(in string) string {
 // if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 // (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
 func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-	// we can build this sensitive account easily by first getting the public account....
+	// We can build this sensitive account model
+	// by first getting the public account, and
+	// then adding the Source object to it.
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
 	if err != nil {
 		return nil, err
 	}
 
-	// then adding the Source object to it...
-
-	// check pending follow requests aimed at this account
-	frc, err := c.state.DB.CountAccountFollowRequests(ctx, a.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error counting follow requests: %s", err)
+	// Ensure account stats populated.
+	if a.Stats == nil {
+		if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
+			return nil, gtserror.Newf(
+				"error getting stats for account %s: %w",
+				a.ID, err,
+			)
+		}
 	}
 
 	statusContentType := string(apimodel.StatusContentTypeDefault)
@@ -92,7 +96,7 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		StatusContentType:   statusContentType,
 		Note:                a.NoteRaw,
 		Fields:              c.fieldsToAPIFields(a.FieldsRaw),
-		FollowRequestsCount: frc,
+		FollowRequestsCount: *a.Stats.FollowRequestsCount,
 		AlsoKnownAsURIs:     a.AlsoKnownAsURIs,
 	}
 
@@ -103,8 +107,22 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 // if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 // In other words, this is the public record that the server has of an account.
 func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-	if err := c.state.DB.PopulateAccount(ctx, a); err != nil {
+	// Populate account struct fields.
+	err := c.state.DB.PopulateAccount(ctx, a)
+
+	switch {
+	case err == nil:
+		// No problem.
+
+	case err != nil && a.Stats != nil:
+		// We have stats so that's
+		// *maybe* OK, try to continue.
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
+
+	default:
+		// There was an error and we don't
+		// have stats, we can't continue.
+		return nil, gtserror.Newf("account stats not populated, could not continue: %w", err)
 	}
 
 	// Basic account stats:
@@ -113,30 +131,17 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	//   - Statuses count
 	//   - Last status time
 
-	followersCount, err := c.state.DB.CountAccountFollowers(ctx, a.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error counting followers: %w", err)
-	}
-
-	followingCount, err := c.state.DB.CountAccountFollows(ctx, a.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error counting following: %w", err)
-	}
-
-	statusesCount, err := c.state.DB.CountAccountStatuses(ctx, a.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error counting statuses: %w", err)
-	}
-
-	var lastStatusAt *string
-	lastPosted, err := c.state.DB.GetAccountLastPosted(ctx, a.ID, false)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("error getting last posted: %w", err)
-	}
-
-	if !lastPosted.IsZero() {
-		lastStatusAt = util.Ptr(util.FormatISO8601(lastPosted))
-	}
+	var (
+		followersCount = *a.Stats.FollowersCount
+		followingCount = *a.Stats.FollowingCount
+		statusesCount  = *a.Stats.StatusesCount
+		lastStatusAt   = func() *string {
+			if a.Stats.LastStatusAt.IsZero() {
+				return nil
+			}
+			return util.Ptr(util.FormatISO8601(a.Stats.LastStatusAt))
+		}()
+	)
 
 	// Profile media + nice extras:
 	//   - Avatar
@@ -173,14 +178,15 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// Bits that vary between remote + local accounts:
 	//   - Account (acct) string.
 	//   - Role.
-	//   - Settings things (enableRSS, theme, customCSS).
+	//   - Settings things (enableRSS, theme, customCSS, hideCollections).
 
 	var (
-		acct      string
-		role      *apimodel.AccountRole
-		enableRSS bool
-		theme     string
-		customCSS string
+		acct            string
+		role            *apimodel.AccountRole
+		enableRSS       bool
+		theme           string
+		customCSS       string
+		hideCollections bool
 	)
 
 	if a.IsRemote() {
@@ -214,6 +220,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			enableRSS = *a.Settings.EnableRSS
 			theme = a.Settings.Theme
 			customCSS = a.Settings.CustomCSS
+			hideCollections = *a.Settings.HideCollections
 		}
 
 		acct = a.Username // omit domain
@@ -256,32 +263,33 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// can be populated directly below.
 
 	accountFrontend := &apimodel.Account{
-		ID:             a.ID,
-		Username:       a.Username,
-		Acct:           acct,
-		DisplayName:    a.DisplayName,
-		Locked:         locked,
-		Discoverable:   discoverable,
-		Bot:            bot,
-		CreatedAt:      util.FormatISO8601(a.CreatedAt),
-		Note:           a.Note,
-		URL:            a.URL,
-		Avatar:         aviURL,
-		AvatarStatic:   aviURLStatic,
-		Header:         headerURL,
-		HeaderStatic:   headerURLStatic,
-		FollowersCount: followersCount,
-		FollowingCount: followingCount,
-		StatusesCount:  statusesCount,
-		LastStatusAt:   lastStatusAt,
-		Emojis:         apiEmojis,
-		Fields:         fields,
-		Suspended:      !a.SuspendedAt.IsZero(),
-		Theme:          theme,
-		CustomCSS:      customCSS,
-		EnableRSS:      enableRSS,
-		Role:           role,
-		Moved:          moved,
+		ID:              a.ID,
+		Username:        a.Username,
+		Acct:            acct,
+		DisplayName:     a.DisplayName,
+		Locked:          locked,
+		Discoverable:    discoverable,
+		Bot:             bot,
+		CreatedAt:       util.FormatISO8601(a.CreatedAt),
+		Note:            a.Note,
+		URL:             a.URL,
+		Avatar:          aviURL,
+		AvatarStatic:    aviURLStatic,
+		Header:          headerURL,
+		HeaderStatic:    headerURLStatic,
+		FollowersCount:  followersCount,
+		FollowingCount:  followingCount,
+		StatusesCount:   statusesCount,
+		LastStatusAt:    lastStatusAt,
+		Emojis:          apiEmojis,
+		Fields:          fields,
+		Suspended:       !a.SuspendedAt.IsZero(),
+		Theme:           theme,
+		CustomCSS:       customCSS,
+		EnableRSS:       enableRSS,
+		HideCollections: hideCollections,
+		Role:            role,
+		Moved:           moved,
 	}
 
 	// Bodge default avatar + header in,
@@ -414,13 +422,13 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 			email = user.UnconfirmedEmail
 		}
 
-		if i := user.CurrentSignInIP.String(); i != "<nil>" {
+		if i := user.SignUpIP.String(); i != "<nil>" {
 			ip = &i
 		}
 
 		locale = user.Locale
-		if a.Settings.Reason != "" {
-			inviteRequest = &a.Settings.Reason
+		if user.Reason != "" {
+			inviteRequest = &user.Reason
 		}
 
 		if *user.Admin {
@@ -931,6 +939,21 @@ func (c *Converter) StatusToWebStatus(
 	return webStatus, nil
 }
 
+// StatusToAPIStatusSource returns the *apimodel.StatusSource of the given status.
+// Callers should check beforehand whether a requester has permission to view the
+// source of the status, and ensure they're passing only a local status into this function.
+func (c *Converter) StatusToAPIStatusSource(ctx context.Context, s *gtsmodel.Status) (*apimodel.StatusSource, error) {
+	// TODO: remove this when edit support is added.
+	text := "**STATUS EDITS ARE NOT CURRENTLY SUPPORTED IN GOTOSOCIAL (coming in 2024)**\n" +
+		"You can review the original text of your status below, but you will not be able to submit this edit.\n\n---\n\n" + s.Text
+
+	return &apimodel.StatusSource{
+		ID:          s.ID,
+		Text:        text,
+		SpoilerText: s.ContentWarning,
+	}, nil
+}
+
 // statusToFrontend is a package internal function for
 // parsing a status into its initial frontend representation.
 //
@@ -979,14 +1002,6 @@ func (c *Converter) statusToFrontend(
 		return nil, gtserror.Newf("error counting faves: %w", err)
 	}
 
-	interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
-	if err != nil {
-		log.Errorf(ctx, "error getting interactions for status %s for account %s: %v", s.ID, requestingAccount.ID, err)
-
-		// Ensure a non nil object
-		interacts = &statusInteractions{}
-	}
-
 	apiAttachments, err := c.convertAttachmentsToAPIAttachments(ctx, s.Attachments, s.AttachmentIDs)
 	if err != nil {
 		log.Errorf(ctx, "error converting status attachments: %v", err)
@@ -1021,11 +1036,6 @@ func (c *Converter) statusToFrontend(
 		RepliesCount:       repliesCount,
 		ReblogsCount:       reblogsCount,
 		FavouritesCount:    favesCount,
-		Favourited:         interacts.Faved,
-		Bookmarked:         interacts.Bookmarked,
-		Muted:              interacts.Muted,
-		Reblogged:          interacts.Reblogged,
-		Pinned:             interacts.Pinned,
 		Content:            s.Content,
 		Reblog:             nil, // Set below.
 		Application:        nil, // Set below.
@@ -1084,6 +1094,34 @@ func (c *Converter) statusToFrontend(
 		if err != nil {
 			return nil, fmt.Errorf("error converting poll: %w", err)
 		}
+	}
+
+	// Status interactions.
+	//
+	// Take from boosted status if set,
+	// otherwise take from status itself.
+	if apiStatus.Reblog != nil {
+		apiStatus.Favourited = apiStatus.Reblog.Favourited
+		apiStatus.Bookmarked = apiStatus.Reblog.Bookmarked
+		apiStatus.Muted = apiStatus.Reblog.Muted
+		apiStatus.Reblogged = apiStatus.Reblog.Reblogged
+		apiStatus.Pinned = apiStatus.Reblog.Pinned
+	} else {
+		interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
+		if err != nil {
+			log.Errorf(ctx,
+				"error getting interactions for status %s for account %s: %v",
+				s.ID, requestingAccount.ID, err,
+			)
+
+			// Ensure non-nil object.
+			interacts = new(statusInteractions)
+		}
+		apiStatus.Favourited = interacts.Favourited
+		apiStatus.Bookmarked = interacts.Bookmarked
+		apiStatus.Muted = interacts.Muted
+		apiStatus.Reblogged = interacts.Reblogged
+		apiStatus.Pinned = interacts.Pinned
 	}
 
 	// If web URL is empty for whatever
@@ -1160,7 +1198,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		Version:              config.GetSoftwareVersion(),
 		Languages:            config.GetInstanceLanguages().TagStrs(),
 		Registrations:        config.GetAccountsRegistrationOpen(),
-		ApprovalRequired:     config.GetAccountsApprovalRequired(),
+		ApprovalRequired:     true,  // approval always required
 		InvitesEnabled:       false, // todo: not supported yet
 		MaxTootChars:         uint(config.GetStatusesMaxChars()),
 		Rules:                c.InstanceRulesToAPIRules(i.Rules),
@@ -1329,8 +1367,8 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 	// registrations
 	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()
-	instance.Registrations.ApprovalRequired = config.GetAccountsApprovalRequired()
-	instance.Registrations.Message = nil // todo: not implemented
+	instance.Registrations.ApprovalRequired = true // always required
+	instance.Registrations.Message = nil           // todo: not implemented
 
 	// contact
 	instance.Contact.Email = i.ContactEmail

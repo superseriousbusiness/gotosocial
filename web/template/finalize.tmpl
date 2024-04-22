@@ -19,29 +19,35 @@
 
 {{- with . }}
 <main>
-    <form action="/oauth/finalize" method="POST">
-        <h1>Hi {{ .name -}}!</h1>
-        <p>
-            You are about to sign-up to {{ .instance.Title -}}.
-            To ensure the best experience for you, we need you to provide some additional details.
-        </p>
-        <div class="callout">
-            <p class="callout-title">Important</p>
-            <p>Due to the way the ActivityPub standard works, you <strong>cannot</strong> change your username after it has been set.</p>
-        </div>
-        <div class="labelinput">
-            <label for="username">Username <small>(must contain only lowercase letters, numbers, and underscores)</small></label>
-            <input 
-                type="text"
-                class="form-control"
-                name="username"
-                required
-                placeholder="Please enter your desired username"
-                value="{{- .preferredUsername -}}"
-            >
-        </div>
-        <input type="hidden" name="name" value="{{- .name -}}">
-        <button type="submit" style="width: 100%; margin-top: 1rem;" class="btn btn-success">Submit</button>
-    </form>
+    <section class="with-form" aria-labelledby="finalize">
+        <h2 id="finalize">Finalize sign-in to {{ .instance.Title -}}</h2>
+        <form action="/oauth/finalize" method="POST">
+            <p>
+                Hi <b>{{- .name -}}</b>!
+            </p>
+            <p>
+                You are about to create an account on <b>{{- .instance.Title -}}</b>.
+                To finish the process, you must select your username.
+            </p>
+            <div class="labelinput">
+                <label for="username">
+                    Username (lowercase a-z, numbers, and underscores; max 64 characters).<br/>
+                    <small>Your username will be part of your fediverse handle, and cannot be changed later, so choose thoughtfully!</small>
+                </label>
+                <input 
+                    id="username"
+                    type="text"
+                    name="username"
+                    required
+                    placeholder="Please enter your desired username"
+                    pattern="^[a-z0-9_]{1,64}$"
+                    title="lowercase a-z, numbers, and underscores; max 64 characters"
+                    value="{{- .preferredUsername -}}"
+                >
+            </div>
+            <input type="hidden" name="name" value="{{- .name -}}">
+            <button type="submit" class="btn btn-success">Submit</button>
+        </form>
+    </section>
 </main>
 {{- end }}

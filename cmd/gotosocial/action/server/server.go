@@ -100,6 +100,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
 
+	if err := dbService.CreateInstanceApplication(ctx); err != nil {
+		return fmt.Errorf("error creating instance application: %s", err)
+	}
+
 	// Get the instance account
 	// (we'll need this later).
 	instanceAccount, err := dbService.GetInstanceAccount(ctx, "")
@@ -123,6 +127,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		Timeout:               config.GetHTTPClientTimeout(),
 		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
+
+	// Initialize delivery worker with http client.
+	state.Workers.Delivery.Init(client)
 
 	// Initialize workers.
 	state.Workers.Start()

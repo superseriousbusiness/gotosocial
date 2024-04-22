@@ -101,7 +101,7 @@ func (t *dbInstrum) withSpan(
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(attrs...))
 	err := fn(ctx, span)
-	span.End()
+	defer span.End()
 
 	if query != "" {
 		t.queryHistogram.Record(ctx, time.Since(startTime).Milliseconds(), metric.WithAttributes(t.attrs...))

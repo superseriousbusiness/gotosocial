@@ -27,9 +27,11 @@ import (
 	"net/url"
 	"testing"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 	"github.com/superseriousbusiness/httpsig"
@@ -99,7 +101,14 @@ func (suite *FederatingProtocolTestSuite) authenticatePostInbox(
 
 	recorder := httptest.NewRecorder()
 	newContext, authed, err := suite.federator.AuthenticatePostInbox(ctx, recorder, request)
-	if err != nil {
+	if withCode := errorsv2.AsV2[gtserror.WithCode](err); // nocollapse
+	(withCode != nil && withCode.Code() >= 500) || (err != nil && withCode == nil) {
+		// NOTE: the behaviour here is a little strange as we have
+		// the competing code styles of the go-fed interface expecting
+		// that any err is a no-go, but authed bool is intended to be
+		// the main passer of whether failed auth occurred, but we in
+		// the gts codebase use errors to pass-back non-200 status codes,
+		// so we specifically have to check for an internal error code.
 		suite.FailNow(err.Error())
 	}
 

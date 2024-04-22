@@ -162,6 +162,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
         "verified_at": null
       }
     ],
+    "hide_collections": true,
     "role": {
       "name": "user"
     }
@@ -1489,6 +1490,7 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
         "verified_at": null
       }
     ],
+    "hide_collections": true,
     "role": {
       "name": "user"
     }
@@ -1560,7 +1562,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "domain": null,
     "created_at": "2022-06-04T13:12:00.000Z",
     "email": "tortle.dude@example.org",
-    "ip": "118.44.18.196",
+    "ip": null,
     "ips": [],
     "locale": "en",
     "invite_request": null,
@@ -1604,6 +1606,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
           "verified_at": null
         }
       ],
+      "hide_collections": true,
       "role": {
         "name": "user"
       }
@@ -1616,7 +1619,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "domain": null,
     "created_at": "2022-05-17T13:10:59.000Z",
     "email": "admin@example.org",
-    "ip": "89.122.255.1",
+    "ip": null,
     "ips": [],
     "locale": "en",
     "invite_request": null,
@@ -1662,7 +1665,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "domain": null,
     "created_at": "2022-05-17T13:10:59.000Z",
     "email": "admin@example.org",
-    "ip": "89.122.255.1",
+    "ip": null,
     "ips": [],
     "locale": "en",
     "invite_request": null,
@@ -1731,7 +1734,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
     "domain": null,
     "created_at": "2022-06-04T13:12:00.000Z",
     "email": "tortle.dude@example.org",
-    "ip": "118.44.18.196",
+    "ip": null,
     "ips": [],
     "locale": "en",
     "invite_request": null,
@@ -1775,6 +1778,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "verified_at": null
         }
       ],
+      "hide_collections": true,
       "role": {
         "name": "user"
       }
@@ -2040,6 +2044,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "emojis": [],
       "fields": [],
       "suspended": true,
+      "hide_collections": true,
       "role": {
         "name": "user"
       }
@@ -2051,7 +2056,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
     "domain": null,
     "created_at": "2022-05-17T13:10:59.000Z",
     "email": "admin@example.org",
-    "ip": "89.122.255.1",
+    "ip": null,
     "ips": [],
     "locale": "en",
     "invite_request": null,
@@ -2097,7 +2102,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
     "domain": null,
     "created_at": "2022-05-17T13:10:59.000Z",
     "email": "admin@example.org",
-    "ip": "89.122.255.1",
+    "ip": null,
     "ips": [],
     "locale": "en",
     "invite_request": null,

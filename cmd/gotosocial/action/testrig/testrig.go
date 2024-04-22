@@ -98,8 +98,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.StandardStorageSetup(state.Storage, "./testrig/media")
 
 	// Initialize workers.
-	state.Workers.Start()
-	defer state.Workers.Stop()
+	testrig.StartNoopWorkers(&state)
+	defer testrig.StopWorkers(&state)
 
 	// build backend handlers
 	transportController := testrig.NewTestTransportController(&state, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {

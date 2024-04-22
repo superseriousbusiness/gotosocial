@@ -59,37 +59,26 @@
 {{- end }}
 {{- end -}}
 
-{{- define "registrationLimits" -}}
-{{- if .instance.Registrations -}}
-    Registration is enabled; new signups can be submitted to this instance.<br/>
-    {{- if .instance.ApprovalRequired -}}
-        Admin approval is required for new registrations.
-    {{- else -}}
-        Admin approval is not required for registrations; new signups will be automatically approved (pending email confirmation).
-    {{- end -}}
-{{- else -}}
-    Registration is disabled; new signups are currently closed for this instance.
-{{- end -}}
-{{- end -}}
-
 {{- define "customCSSLimits" -}}
+<a href="https://docs.gotosocial.org/en/latest/user_guide/settings/#custom-css" target="_blank" rel="noopener noreferrer">Custom CSS</a> is&nbsp;
 {{- if .instance.Configuration.Accounts.AllowCustomCSS -}}
-Users are allowed to set <a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/" target="_blank" rel="noopener noreferrer">Custom CSS</a> for their profiles.
+<b>enabled</b>
 {{- else -}}
-<a href="https://docs.gotosocial.org/en/latest/user_guide/custom_css/" target="_blank" rel="noopener noreferrer">Custom CSS</a> is not enabled for user profiles.
+</b>disabled</b>
 {{- end -}}
+&nbsp;on account profiles.
 {{- end -}}
 
 {{- define "statusLimits" -}}
-Statuses can contain up to&nbsp;
-{{- .instance.Configuration.Statuses.MaxCharacters }} characters, and&nbsp;
-{{- .instance.Configuration.Statuses.MaxMediaAttachments }} media attachments.
+Statuses can contain up to
+<b>{{- .instance.Configuration.Statuses.MaxCharacters }} characters</b>, and
+<b>{{- .instance.Configuration.Statuses.MaxMediaAttachments }} media attachments</b>.
 {{- end -}}
 
 {{- define "pollLimits" -}}
-Polls can have up to&nbsp;
-{{- .instance.Configuration.Polls.MaxOptions }} options, with&nbsp;
-{{- .instance.Configuration.Polls.MaxCharactersPerOption }} characters per option.
+Polls can have up to
+<b>{{- .instance.Configuration.Polls.MaxOptions }} options</b>, with
+<b>{{- .instance.Configuration.Polls.MaxCharactersPerOption }} characters per option</b>.
 {{- end -}}
 
 {{- with . }}
@@ -102,6 +91,7 @@ Polls can have up to&nbsp;
                 <li><a href="#contact">Contact</a></li>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#languages">Languages</a></li>
+                <li><a href="#signup">Register an Account on {{ .instance.Title -}}</li>
                 <li><a href="#rules">Rules</a></li>
                 <li><a href="#terms">Terms and Conditions</a></li>
                 <li><a href="#moderated-servers">Moderated Servers</a></li>
@@ -145,10 +135,9 @@ Polls can have up to&nbsp;
         <h3 id="features">Instance Features</h3>
         <div class="about-section-contents">
             <ul>
-                <li>{{- template "registrationLimits" . -}}</li>
-                <li>{{- template "customCSSLimits" . -}}</li>
                 <li>{{- template "statusLimits" . -}}</li>
                 <li>{{- template "pollLimits" . -}}</li>
+                <li>{{- template "customCSSLimits" . -}}</li>
             </ul>
         </div>
     </section>
@@ -160,6 +149,7 @@ Polls can have up to&nbsp;
             {{- end }}
         </div>
     </section>
+    {{- include "index_register.tmpl" . | indent 1 }}
     <section class="about-section" role="region" aria-labelledby="rules">
         <h3 id="rules">Instance Rules</h3>
         <div class="about-section-contents">

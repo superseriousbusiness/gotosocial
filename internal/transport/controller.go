@@ -28,7 +28,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"runtime"
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v3"
@@ -37,7 +36,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -54,26 +52,18 @@ type controller struct {
 	state     *state.State
 	fedDB     federatingdb.DB
 	clock     pub.Clock
-	client    httpclient.SigningClient
+	client    pub.HttpClient
 	trspCache cache.TTLCache[string, *transport]
 	userAgent string
-	senders   int // no. concurrent batch delivery routines.
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client httpclient.SigningClient) Controller {
+func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
 	var (
-		host             = config.GetHost()
-		proto            = config.GetProtocol()
-		version          = config.GetSoftwareVersion()
-		senderMultiplier = config.GetAdvancedSenderMultiplier()
+		host    = config.GetHost()
+		proto   = config.GetProtocol()
+		version = config.GetSoftwareVersion()
 	)
-
-	senders := senderMultiplier * runtime.GOMAXPROCS(0)
-	if senders < 1 {
-		// Clamp senders to 1.
-		senders = 1
-	}
 
 	c := &controller{
 		state:     state,
@@ -82,7 +72,6 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 		client:    client,
 		trspCache: cache.NewTTL[string, *transport](0, 100, 0),
 		userAgent: fmt.Sprintf("gotosocial/%s (+%s://%s)", version, proto, host),
-		senders:   senders,
 	}
 
 	return c

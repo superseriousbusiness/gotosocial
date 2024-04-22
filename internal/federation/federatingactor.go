@@ -80,8 +80,23 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	}
 
 	// Authenticate request by checking http signature.
+	//
+	// NOTE: the behaviour here is a little strange as we have
+	// the competing code styles of the go-fed interface expecting
+	// that any 'err' is fatal, but 'authenticated' bool is intended to
+	// be the main passer of whether failed auth occurred, but we in
+	// the gts codebase use errors to pass-back non-200 status codes,
+	// so we specifically have to check for already wrapped with code.
+	//
 	ctx, authenticated, err := f.sideEffectActor.AuthenticatePostInbox(ctx, w, r)
-	if err != nil {
+	if errorsv2.AsV2[gtserror.WithCode](err) != nil {
+		// If it was already wrapped with an
+		// HTTP code then don't bother rewrapping
+		// it, just return it as-is for caller to
+		// handle. AuthenticatePostInbox already
+		// calls WriteHeader() in some situations.
+		return false, err
+	} else if err != nil {
 		err := gtserror.Newf("error authenticating post inbox: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}
@@ -116,7 +131,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// Check authorization of the activity; this will include blocks.
 	authorized, err := f.sideEffectActor.AuthorizePostInbox(ctx, w, activity)
 	if err != nil {
-		if errors.As(err, new(errOtherIRIBlocked)) {
+		if errorsv2.AsV2[*errOtherIRIBlocked](err) != nil {
 			// There's no direct block between requester(s) and
 			// receiver. However, one or more of the other IRIs
 			// involved in the request (account replied to, note
@@ -124,7 +139,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 			// by the receiver. We don't need to return 403 here,
 			// instead, just return 202 accepted but don't do any
 			// further processing of the activity.
-			return true, nil
+			return true, nil //nolint
 		}
 
 		// Real error has occurred.

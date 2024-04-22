@@ -122,7 +122,7 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 
 	// UPDATE SOMETHING
 	case ap.ActivityUpdate:
-		switch fMsg.APObjectType { //nolint:gocritic
+		switch fMsg.APObjectType {
 
 		// UPDATE NOTE/STATUS
 		case ap.ObjectNote:
@@ -131,6 +131,15 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg messages.FromFe
 		// UPDATE PROFILE/ACCOUNT
 		case ap.ObjectProfile:
 			return p.fediAPI.UpdateAccount(ctx, fMsg)
+		}
+
+	// ACCEPT SOMETHING
+	case ap.ActivityAccept:
+		switch fMsg.APObjectType { //nolint:gocritic
+
+		// ACCEPT FOLLOW
+		case ap.ActivityFollow:
+			return p.fediAPI.AcceptFollow(ctx, fMsg)
 		}
 
 	// DELETE SOMETHING
@@ -220,6 +229,11 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 		return nil
 	}
 
+	// Update stats for the remote account.
+	if err := p.utilF.incrementStatusesCount(ctx, fMsg.RequestingAccount, status); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status; uncache the
 		// prepared version from all timelines. The status dereferencer
@@ -290,14 +304,20 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI
 	}
 
 	if *followRequest.TargetAccount.Locked {
-		// Account on our instance is locked: just notify the follow request.
+		// Local account is locked: just notify the follow request.
 		if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
 			log.Errorf(ctx, "error notifying follow request: %v", err)
 		}
+
+		// And update stats for the local account.
+		if err := p.utilF.incrementFollowRequestsCount(ctx, fMsg.ReceivingAccount); err != nil {
+			log.Errorf(ctx, "error updating account stats: %v", err)
+		}
+
 		return nil
 	}
 
-	// Account on our instance is not locked:
+	// Local account is not locked:
 	// Automatically accept the follow request
 	// and notify about the new follower.
 	follow, err := p.state.DB.AcceptFollowRequest(
@@ -307,6 +327,16 @@ func (p *fediAPI) CreateFollowReq(ctx context.Context, fMsg messages.FromFediAPI
 	)
 	if err != nil {
 		return gtserror.Newf("error accepting follow request: %w", err)
+	}
+
+	// Update stats for the local account.
+	if err := p.utilF.incrementFollowersCount(ctx, fMsg.ReceivingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Update stats for the remote account.
+	if err := p.utilF.incrementFollowingCount(ctx, fMsg.RequestingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if err := p.federate.AcceptFollow(ctx, follow); err != nil {
@@ -367,6 +397,11 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg messages.FromFediAPI)
 
 		// Actual error.
 		return gtserror.Newf("error dereferencing announce: %w", err)
+	}
+
+	// Update stats for the remote account.
+	if err := p.utilF.incrementStatusesCount(ctx, fMsg.RequestingAccount, boost); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	// Timeline and notify the announce.
@@ -473,7 +508,7 @@ func (p *fediAPI) CreateFlag(ctx context.Context, fMsg messages.FromFediAPI) err
 	// TODO: handle additional side effects of flag creation:
 	// - notify admins by dm / notification
 
-	if err := p.surface.emailReportOpened(ctx, incomingReport); err != nil {
+	if err := p.surface.emailAdminReportOpened(ctx, incomingReport); err != nil {
 		log.Errorf(ctx, "error emailing report opened: %v", err)
 	}
 
@@ -504,6 +539,24 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg messages.FromFediAPI) 
 	)
 	if err != nil {
 		log.Errorf(ctx, "error refreshing account: %v", err)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) AcceptFollow(ctx context.Context, fMsg messages.FromFediAPI) error {
+	// Update stats for the remote account.
+	if err := p.utilF.decrementFollowRequestsCount(ctx, fMsg.RequestingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	if err := p.utilF.incrementFollowersCount(ctx, fMsg.RequestingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Update stats for the local account.
+	if err := p.utilF.incrementFollowingCount(ctx, fMsg.ReceivingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	return nil
@@ -565,6 +618,11 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg messages.FromFediAPI) e
 
 	if err := p.utilF.wipeStatus(ctx, status, deleteAttachments); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
+	}
+
+	// Update stats for the remote account.
+	if err := p.utilF.decrementStatusesCount(ctx, fMsg.RequestingAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if status.InReplyToID != "" {

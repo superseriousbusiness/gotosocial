@@ -76,23 +76,11 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 
 	defer func() {
 		// Invalidate cached emoji.
-		e.state.Caches.GTS.
-			Emoji.
-			Invalidate("ID", id)
+		e.state.Caches.GTS.Emoji.Invalidate("ID", id)
 
-		for _, accountID := range accountIDs {
-			// Invalidate cached account.
-			e.state.Caches.GTS.
-				Account.
-				Invalidate("ID", accountID)
-		}
-
-		for _, statusID := range statusIDs {
-			// Invalidate cached account.
-			e.state.Caches.GTS.
-				Status.
-				Invalidate("ID", statusID)
-		}
+		// Invalidate cached account and status IDs.
+		e.state.Caches.GTS.Account.InvalidateIDs("ID", accountIDs)
+		e.state.Caches.GTS.Status.InvalidateIDs("ID", statusIDs)
 	}()
 
 	// Load emoji into cache before attempting a delete,
@@ -594,23 +582,10 @@ func (e *emojiDB) GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel
 		return nil, db.ErrNoEntries
 	}
 
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all emoji IDs via cache loader callbacks.
-	emojis, err := e.state.Caches.GTS.Emoji.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached emoji loader function.
-		func() ([]*gtsmodel.Emoji, error) {
+	emojis, err := e.state.Caches.GTS.Emoji.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Emoji, error) {
 			// Preallocate expected length of uncached emojis.
 			emojis := make([]*gtsmodel.Emoji, 0, len(uncached))
 
@@ -671,23 +646,10 @@ func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, ids []string) ([]
 		return nil, db.ErrNoEntries
 	}
 
-	// Preallocate at-worst possible length.
-	uncached := make([]string, 0, len(ids))
-
 	// Load all category IDs via cache loader callbacks.
-	categories, err := e.state.Caches.GTS.EmojiCategory.Load("ID",
-
-		// Load cached + check for uncached.
-		func(load func(keyParts ...any) bool) {
-			for _, id := range ids {
-				if !load(id) {
-					uncached = append(uncached, id)
-				}
-			}
-		},
-
-		// Uncached emoji loader function.
-		func() ([]*gtsmodel.EmojiCategory, error) {
+	categories, err := e.state.Caches.GTS.EmojiCategory.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.EmojiCategory, error) {
 			// Preallocate expected length of uncached categories.
 			categories := make([]*gtsmodel.EmojiCategory, 0, len(uncached))
 

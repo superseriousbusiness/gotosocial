@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -185,9 +186,13 @@ var Confirm action.GTSAction = func(ctx context.Context) error {
 	user.Approved = func() *bool { a := true; return &a }()
 	user.Email = user.UnconfirmedEmail
 	user.ConfirmedAt = time.Now()
+	user.SignUpIP = nil
 	return state.DB.UpdateUser(
 		ctx, user,
-		"approved", "email", "confirmed_at",
+		"approved",
+		"email",
+		"confirmed_at",
+		"sign_up_ip",
 	)
 }
 
@@ -294,7 +299,43 @@ var Disable action.GTSAction = func(ctx context.Context) error {
 		return err
 	}
 
-	user.Disabled = func() *bool { d := true; return &d }()
+	user.Disabled = util.Ptr(true)
+	return state.DB.UpdateUser(
+		ctx, user,
+		"disabled",
+	)
+}
+
+// Enable sets Disabled to false on a user.
+var Enable action.GTSAction = func(ctx context.Context) error {
+	state, err := initState(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		// Ensure state gets stopped on return.
+		if err := stopState(state); err != nil {
+			log.Error(ctx, err)
+		}
+	}()
+
+	username := config.GetAdminAccountUsername()
+	if err := validate.Username(username); err != nil {
+		return err
+	}
+
+	account, err := state.DB.GetAccountByUsernameDomain(ctx, username, "")
+	if err != nil {
+		return err
+	}
+
+	user, err := state.DB.GetUserByAccountID(ctx, account.ID)
+	if err != nil {
+		return err
+	}
+
+	user.Disabled = util.Ptr(false)
 	return state.DB.UpdateUser(
 		ctx, user,
 		"disabled",

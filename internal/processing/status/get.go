@@ -26,7 +26,39 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
+
+// HistoryGet gets edit history for the target status, taking account of privacy settings and blocks etc.
+// TODO: currently this just returns the latest version of the status.
+func (p *Processor) HistoryGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) ([]*apimodel.StatusEdit, gtserror.WithCode) {
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		nil, // default freshness
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	apiStatus, errWithCode := p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	return []*apimodel.StatusEdit{
+		{
+			Content:          apiStatus.Content,
+			SpoilerText:      apiStatus.SpoilerText,
+			Sensitive:        apiStatus.Sensitive,
+			CreatedAt:        util.FormatISO8601(targetStatus.UpdatedAt),
+			Account:          apiStatus.Account,
+			Poll:             apiStatus.Poll,
+			MediaAttachments: apiStatus.MediaAttachments,
+			Emojis:           apiStatus.Emojis,
+		},
+	}, nil
+}
 
 // Get gets the given status, taking account of privacy settings and blocks etc.
 func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
@@ -40,6 +72,44 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	}
 
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
+}
+
+// SourceGet returns the *apimodel.StatusSource version of the targetStatusID.
+// Status must belong to the requester, and must not be a boost.
+func (p *Processor) SourceGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.StatusSource, gtserror.WithCode) {
+	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requestingAccount,
+		targetStatusID,
+		nil, // default freshness
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Redirect to wrapped status if boost.
+	targetStatus, errWithCode = p.c.UnwrapIfBoost(
+		ctx,
+		requestingAccount,
+		targetStatus,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	if targetStatus.AccountID != requestingAccount.ID {
+		err := gtserror.Newf(
+			"status %s does not belong to account %s",
+			targetStatusID, requestingAccount.ID,
+		)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	statusSource, err := p.converter.StatusToAPIStatusSource(ctx, targetStatus)
+	if err != nil {
+		err = gtserror.Newf("error converting status: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	return statusSource, nil
 }
 
 // WebGet gets the given status for web use, taking account of privacy settings.

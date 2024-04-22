@@ -51,10 +51,10 @@ type Transport interface {
 	POST(*http.Request, []byte) (*http.Response, error)
 
 	// Deliver sends an ActivityStreams object.
-	Deliver(ctx context.Context, b []byte, to *url.URL) error
+	Deliver(ctx context.Context, obj map[string]interface{}, to *url.URL) error
 
 	// BatchDeliver sends an ActivityStreams object to multiple recipients.
-	BatchDeliver(ctx context.Context, b []byte, recipients []*url.URL) error
+	BatchDeliver(ctx context.Context, obj map[string]interface{}, recipients []*url.URL) error
 
 	/*
 		GET functions
@@ -77,7 +77,8 @@ type Transport interface {
 	Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error)
 }
 
-// transport implements the Transport interface.
+// transport implements
+// the Transport interface.
 type transport struct {
 	controller *controller
 	pubKeyID   string
@@ -93,30 +94,61 @@ func (t *transport) GET(r *http.Request) (*http.Response, error) {
 	if r.Method != http.MethodGet {
 		return nil, errors.New("must be GET request")
 	}
-	ctx := r.Context() // extract, set pubkey ID.
+
+	// Prepare HTTP GET signing func with opts.
+	sign := t.signGET(httpsig.SignatureOption{
+		ExcludeQueryStringFromPathPseudoHeader: false,
+	})
+
+	ctx := r.Context() // update with signing details.
 	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
+	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
 	r = r.WithContext(ctx) // replace request ctx.
+
+	// Set our predefined controller user-agent.
 	r.Header.Set("User-Agent", t.controller.userAgent)
 
-	resp, err := t.controller.client.DoSigned(r, t.signGET(httpsig.SignatureOption{ExcludeQueryStringFromPathPseudoHeader: false}))
+	// Pass to underlying HTTP client.
+	resp, err := t.controller.client.Do(r)
 	if err != nil || resp.StatusCode != http.StatusUnauthorized {
 		return resp, err
 	}
 
-	// try again without the path included in the HTTP signature for better compatibility
+	// Ignore this response.
 	_ = resp.Body.Close()
-	return t.controller.client.DoSigned(r, t.signGET(httpsig.SignatureOption{ExcludeQueryStringFromPathPseudoHeader: true}))
+
+	// Try again without the path included in
+	// the HTTP signature for better compatibility.
+	sign = t.signGET(httpsig.SignatureOption{
+		ExcludeQueryStringFromPathPseudoHeader: true,
+	})
+
+	ctx = r.Context() // update with signing details.
+	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
+	r = r.WithContext(ctx) // replace request ctx.
+
+	// Pass to underlying HTTP client.
+	return t.controller.client.Do(r)
 }
 
 func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 	if r.Method != http.MethodPost {
 		return nil, errors.New("must be POST request")
 	}
-	ctx := r.Context() // extract, set pubkey ID.
+
+	// Prepare POST signer.
+	sign := t.signPOST(body)
+
+	ctx := r.Context() // update with signing details.
 	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
+	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
 	r = r.WithContext(ctx) // replace request ctx.
+
+	// Set our predefined controller user-agent.
 	r.Header.Set("User-Agent", t.controller.userAgent)
-	return t.controller.client.DoSigned(r, t.signPOST(body))
+
+	// Pass to underlying HTTP client.
+	return t.controller.client.Do(r)
 }
 
 // signGET will safely sign an HTTP GET request.

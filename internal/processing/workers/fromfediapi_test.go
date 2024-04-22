@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 	"time"
 
@@ -54,10 +55,11 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	announceStatus.Visibility = boostedStatus.Visibility
 
 	err := suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
-		APObjectType:     ap.ActivityAnnounce,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         announceStatus,
-		ReceivingAccount: suite.testAccounts["local_account_1"],
+		APObjectType:      ap.ActivityAnnounce,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          announceStatus,
+		ReceivingAccount:  suite.testAccounts["local_account_1"],
+		RequestingAccount: boostingAccount,
 	})
 	suite.NoError(err)
 
@@ -114,10 +116,11 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 
 	// Send the replied status off to the fedi worker to be further processed.
 	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
-		APObjectType:     ap.ObjectNote,
-		APActivityType:   ap.ActivityCreate,
-		APObjectModel:    replyingStatusable,
-		ReceivingAccount: suite.testAccounts["local_account_1"],
+		APObjectType:      ap.ObjectNote,
+		APActivityType:    ap.ActivityCreate,
+		APObjectModel:     replyingStatusable,
+		ReceivingAccount:  repliedAccount,
+		RequestingAccount: replyingAccount,
 	})
 	suite.NoError(err)
 
@@ -177,10 +180,11 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 	suite.NoError(err)
 
 	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
-		APObjectType:     ap.ActivityLike,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         fave,
-		ReceivingAccount: favedAccount,
+		APObjectType:      ap.ActivityLike,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          fave,
+		ReceivingAccount:  favedAccount,
+		RequestingAccount: favingAccount,
 	})
 	suite.NoError(err)
 
@@ -246,10 +250,11 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 	suite.NoError(err)
 
 	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), messages.FromFediAPI{
-		APObjectType:     ap.ActivityLike,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         fave,
-		ReceivingAccount: receivingAccount,
+		APObjectType:      ap.ActivityLike,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          fave,
+		ReceivingAccount:  receivingAccount,
+		RequestingAccount: favingAccount,
 	})
 	suite.NoError(err)
 
@@ -317,10 +322,11 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 
 	// now they are mufos!
 	err = suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ObjectProfile,
-		APActivityType:   ap.ActivityDelete,
-		GTSModel:         deletedAccount,
-		ReceivingAccount: receivingAccount,
+		APObjectType:      ap.ObjectProfile,
+		APActivityType:    ap.ActivityDelete,
+		GTSModel:          deletedAccount,
+		ReceivingAccount:  receivingAccount,
+		RequestingAccount: deletedAccount,
 	})
 	suite.NoError(err)
 
@@ -397,10 +403,11 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	suite.NoError(err)
 
 	err = suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ActivityFollow,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         satanFollowRequestTurtle,
-		ReceivingAccount: targetAccount,
+		APObjectType:      ap.ActivityFollow,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          satanFollowRequestTurtle,
+		ReceivingAccount:  targetAccount,
+		RequestingAccount: originAccount,
 	})
 	suite.NoError(err)
 
@@ -450,28 +457,13 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 	suite.NoError(err)
 
 	err = suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ActivityFollow,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         satanFollowRequestTurtle,
-		ReceivingAccount: targetAccount,
+		APObjectType:      ap.ActivityFollow,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          satanFollowRequestTurtle,
+		ReceivingAccount:  targetAccount,
+		RequestingAccount: originAccount,
 	})
 	suite.NoError(err)
-
-	// an accept message should be sent to satan's inbox
-	var sent [][]byte
-	if !testrig.WaitFor(func() bool {
-		sentI, ok := suite.httpClient.SentMessages.Load(*originAccount.SharedInboxURI)
-		if ok {
-			sent, ok = sentI.([][]byte)
-			if !ok {
-				panic("SentMessages entry was not []byte")
-			}
-			return true
-		}
-		return false
-	}) {
-		suite.FailNow("timed out waiting for message")
-	}
 
 	accept := &struct {
 		Actor  string `json:"actor"`
@@ -486,8 +478,29 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 		To   string `json:"to"`
 		Type string `json:"type"`
 	}{}
-	err = json.Unmarshal(sent[0], accept)
-	suite.NoError(err)
+
+	// an accept message should be sent to satan's inbox
+	var sent []byte
+	if !testrig.WaitFor(func() bool {
+		delivery, ok := suite.state.Workers.Delivery.Queue.Pop()
+		if !ok {
+			return false
+		}
+		if !testrig.EqualRequestURIs(delivery.Request.URL, *originAccount.SharedInboxURI) {
+			panic("differing request uris")
+		}
+		sent, err = io.ReadAll(delivery.Request.Body)
+		if err != nil {
+			panic("error reading body: " + err.Error())
+		}
+		err = json.Unmarshal(sent, accept)
+		if err != nil {
+			panic("error unmarshaling json: " + err.Error())
+		}
+		return true
+	}) {
+		suite.FailNow("timed out waiting for message")
+	}
 
 	suite.Equal(targetAccount.URI, accept.Actor)
 	suite.Equal(originAccount.URI, accept.Object.Actor)
@@ -520,11 +533,12 @@ func (suite *FromFediAPITestSuite) TestCreateStatusFromIRI() {
 	statusCreator := suite.testAccounts["remote_account_2"]
 
 	err := suite.processor.Workers().ProcessFromFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:     ap.ObjectNote,
-		APActivityType:   ap.ActivityCreate,
-		GTSModel:         nil, // gtsmodel is nil because this is a forwarded status -- we want to dereference it using the iri
-		ReceivingAccount: receivingAccount,
-		APIri:            testrig.URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
+		APObjectType:      ap.ObjectNote,
+		APActivityType:    ap.ActivityCreate,
+		GTSModel:          nil, // gtsmodel is nil because this is a forwarded status -- we want to dereference it using the iri
+		ReceivingAccount:  receivingAccount,
+		RequestingAccount: statusCreator,
+		APIri:             testrig.URLMustParse("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1"),
 	})
 	suite.NoError(err)
 

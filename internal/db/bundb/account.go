@@ -20,6 +20,9 @@ package bundb
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/netip"
+	"slices"
 	"strings"
 	"time"
 
@@ -30,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
@@ -56,22 +60,48 @@ func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Ac
 }
 
 func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error) {
-	accounts := make([]*gtsmodel.Account, 0, len(ids))
+	// Load all input account IDs via cache loader callback.
+	accounts, err := a.state.Caches.GTS.Account.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Account, error) {
+			// Preallocate expected length of uncached accounts.
+			accounts := make([]*gtsmodel.Account, 0, len(uncached))
 
-	for _, id := range ids {
-		// Attempt to fetch account from DB.
-		account, err := a.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			id,
-		)
-		if err != nil {
-			log.Errorf(ctx, "error getting account %q: %v", id, err)
-			continue
-		}
+			// Perform database query scanning
+			// the remaining (uncached) account IDs.
+			if err := a.db.NewSelect().
+				Model(&accounts).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
 
-		// Append account to return slice.
-		accounts = append(accounts, account)
+			return accounts, nil
+		},
+	)
+	if err != nil {
+		return nil, err
 	}
+
+	// Reorder the statuses by their
+	// IDs to ensure in correct order.
+	getID := func(a *gtsmodel.Account) string { return a.ID }
+	util.OrderBy(accounts, ids, getID)
+
+	if gtscontext.Barebones(ctx) {
+		// no need to fully populate.
+		return accounts, nil
+	}
+
+	// Populate all loaded accounts, removing those we fail to
+	// populate (removes needing so many nil checks everywhere).
+	accounts = slices.DeleteFunc(accounts, func(account *gtsmodel.Account) bool {
+		if err := a.PopulateAccount(ctx, account); err != nil {
+			log.Errorf(ctx, "error populating account %s: %v", account.ID, err)
+			return true
+		}
+		return false
+	})
 
 	return accounts, nil
 }
@@ -222,6 +252,257 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	return a.GetAccountByUsernameDomain(ctx, username, domain)
 }
 
+func (a *accountDB) GetAccounts(
+	ctx context.Context,
+	origin string,
+	status string,
+	mods bool,
+	invitedBy string,
+	username string,
+	displayName string,
+	domain string,
+	email string,
+	ip netip.Addr,
+	page *paging.Page,
+) (
+	[]*gtsmodel.Account,
+	error,
+) {
+	var (
+		// local users lists,
+		// required for some
+		// limiting parameters.
+		users []*gtsmodel.User
+
+		// lazyLoadUsers only loads the users
+		// slice if it's required by params.
+		lazyLoadUsers = func() (err error) {
+			if users == nil {
+				users, err = a.state.DB.GetAllUsers(gtscontext.SetBarebones(ctx))
+				if err != nil {
+					return fmt.Errorf("error getting users: %w", err)
+				}
+			}
+			return nil
+		}
+
+		// Get paging params.
+		//
+		// Note this may be min_id OR since_id
+		// from the API, this gets handled below
+		// when checking order to reverse slice.
+		minID = page.GetMin()
+		maxID = page.GetMax()
+		limit = page.GetLimit()
+		order = page.GetOrder()
+
+		// Make educated guess for slice size
+		accountIDs  = make([]string, 0, limit)
+		accountIDIn []string
+
+		useAccountIDIn bool
+	)
+
+	q := a.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		// Select only IDs from table
+		Column("account.id")
+
+	// Return only accounts OLDER
+	// than account with maxID.
+	if maxID != "" {
+		maxIDAcct, err := a.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			maxID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error getting maxID account %s: %w", maxID, err)
+		}
+
+		q = q.Where("? < ?", bun.Ident("account.created_at"), maxIDAcct.CreatedAt)
+	}
+
+	// Return only accounts NEWER
+	// than account with minID.
+	if minID != "" {
+		minIDAcct, err := a.GetAccountByID(
+			gtscontext.SetBarebones(ctx),
+			minID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error getting minID account %s: %w", minID, err)
+		}
+
+		q = q.Where("? > ?", bun.Ident("account.created_at"), minIDAcct.CreatedAt)
+	}
+
+	switch status {
+
+	case "active":
+		// Get only enabled accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			if !*user.Disabled {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+
+	case "pending":
+		// Get only unapproved accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			if !*user.Approved {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+
+	case "disabled":
+		// Get only disabled accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			if *user.Disabled {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+
+	case "silenced":
+		// Get only silenced accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.silenced_at"))
+
+	case "suspended":
+		// Get only suspended accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.suspended_at"))
+	}
+
+	if mods {
+		// Get only mod accounts.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			if *user.Moderator || *user.Admin {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+	}
+
+	// TODO: invitedBy
+
+	if username != "" {
+		q = q.Where("? = ?", bun.Ident("account.username"), username)
+	}
+
+	if displayName != "" {
+		q = q.Where("? = ?", bun.Ident("account.display_name"), displayName)
+	}
+
+	if domain != "" {
+		q = q.Where("? = ?", bun.Ident("account.domain"), domain)
+	}
+
+	if email != "" {
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			if user.Email == email || user.UnconfirmedEmail == email {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+	}
+
+	// Use ip if not zero value.
+	if ip.IsValid() {
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			if user.SignUpIP.String() == ip.String() {
+				accountIDIn = append(accountIDIn, user.AccountID)
+			}
+		}
+		useAccountIDIn = true
+	}
+
+	if origin == "local" && !useAccountIDIn {
+		// In the case we're not already limiting
+		// by specific subset of account IDs, just
+		// use existing list of user.AccountIDs
+		// instead of adding WHERE to the query.
+		if err := lazyLoadUsers(); err != nil {
+			return nil, err
+		}
+		for _, user := range users {
+			accountIDIn = append(accountIDIn, user.AccountID)
+		}
+		useAccountIDIn = true
+
+	} else if origin == "remote" {
+		if useAccountIDIn {
+			// useAccountIDIn specifically indicates
+			// a parameter that limits querying to
+			// local accounts, there will be none.
+			return nil, nil
+		}
+
+		// Get only remote accounts.
+		q = q.Where("? IS NOT NULL", bun.Ident("account.domain"))
+	}
+
+	if useAccountIDIn {
+		if len(accountIDIn) == 0 {
+			// There will be no
+			// possible answer.
+			return nil, nil
+		}
+
+		q = q.Where("? IN (?)", bun.Ident("account.id"), bun.In(accountIDIn))
+	}
+
+	if limit > 0 {
+		// Limit amount of
+		// accounts returned.
+		q = q.Limit(limit)
+	}
+
+	if order == paging.OrderAscending {
+		// Page up.
+		q = q.Order("account.created_at ASC")
+	} else {
+		// Page down.
+		q = q.Order("account.created_at DESC")
+	}
+
+	if err := q.Scan(ctx, &accountIDs); err != nil {
+		return nil, err
+	}
+
+	if len(accountIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want accounts
+	// to be sorted by createdAt desc, so reverse ids slice.
+	if order == paging.OrderAscending {
+		slices.Reverse(accountIDs)
+	}
+
+	// Return account IDs loaded from cache + db.
+	return a.state.DB.GetAccountsByIDs(ctx, accountIDs)
+}
+
 func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, error) {
 	// Fetch account from database cache with loader callback
 	account, err := a.state.Caches.GTS.Account.LoadOne(lookup, func() (*gtsmodel.Account, error) {
@@ -349,6 +630,13 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 		}
 	}
 
+	if account.Stats == nil {
+		// Get / Create stats for this account.
+		if err := a.state.DB.PopulateAccountStats(ctx, account); err != nil {
+			errs.Appendf("error populating account stats: %w", err)
+		}
+	}
+
 	return errs.Combine()
 }
 
@@ -454,31 +742,6 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
 	})
 }
 
-func (a *accountDB) GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, error) {
-	createdAt := time.Time{}
-
-	q := a.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		Column("status.created_at").
-		Where("? = ?", bun.Ident("status.account_id"), accountID).
-		Order("status.id DESC").
-		Limit(1)
-
-	if webOnly {
-		q = q.
-			Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
-			Where("? IS NULL", bun.Ident("status.boost_of_id")).
-			Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
-			Where("? = ?", bun.Ident("status.federated"), true)
-	}
-
-	if err := q.Scan(ctx, &createdAt); err != nil {
-		return time.Time{}, err
-	}
-	return createdAt, nil
-}
-
 func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
 	if *mediaAttachment.Avatar && *mediaAttachment.Header {
 		return errors.New("one media attachment cannot be both header and avatar")
@@ -562,59 +825,6 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 	}
 
 	return *faves, nil
-}
-
-func (a *accountDB) CountAccountStatuses(ctx context.Context, accountID string) (int, error) {
-	counts, err := a.getAccountStatusCounts(ctx, accountID)
-	return counts.Statuses, err
-}
-
-func (a *accountDB) CountAccountPinned(ctx context.Context, accountID string) (int, error) {
-	counts, err := a.getAccountStatusCounts(ctx, accountID)
-	return counts.Pinned, err
-}
-
-func (a *accountDB) getAccountStatusCounts(ctx context.Context, accountID string) (struct {
-	Statuses int
-	Pinned   int
-}, error) {
-	// Check for an already cached copy of account status counts.
-	counts, ok := a.state.Caches.GTS.AccountCounts.Get(accountID)
-	if ok {
-		return counts, nil
-	}
-
-	if err := a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		var err error
-
-		// Scan database for account statuses.
-		counts.Statuses, err = tx.NewSelect().
-			Table("statuses").
-			Where("? = ?", bun.Ident("account_id"), accountID).
-			Count(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Scan database for pinned statuses.
-		counts.Pinned, err = tx.NewSelect().
-			Table("statuses").
-			Where("? = ?", bun.Ident("account_id"), accountID).
-			Where("? IS NOT NULL", bun.Ident("pinned_at")).
-			Count(ctx)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return counts, err
-	}
-
-	// Store this account counts result in the cache.
-	a.state.Caches.GTS.AccountCounts.Set(accountID, counts)
-
-	return counts, nil
 }
 
 func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, error) {
@@ -865,4 +1075,186 @@ func (a *accountDB) UpdateAccountSettings(
 
 		return nil
 	})
+}
+
+func (a *accountDB) PopulateAccountStats(ctx context.Context, account *gtsmodel.Account) error {
+	// Fetch stats from db cache with loader callback.
+	stats, err := a.state.Caches.GTS.AccountStats.LoadOne(
+		"AccountID",
+		func() (*gtsmodel.AccountStats, error) {
+			// Not cached! Perform database query.
+			var stats gtsmodel.AccountStats
+			if err := a.db.
+				NewSelect().
+				Model(&stats).
+				Where("? = ?", bun.Ident("account_stats.account_id"), account.ID).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+			return &stats, nil
+		},
+		account.ID,
+	)
+
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// Real error.
+		return err
+	}
+
+	if stats == nil {
+		// Don't have stats yet, generate them.
+		return a.RegenerateAccountStats(ctx, account)
+	}
+
+	// We have a stats, attach
+	// it to the account.
+	account.Stats = stats
+
+	// Check if this is a local
+	// stats by looking at the
+	// account they pertain to.
+	if account.IsRemote() {
+		// Account is remote. Updating
+		// stats for remote accounts is
+		// handled in the dereferencer.
+		//
+		// Nothing more to do!
+		return nil
+	}
+
+	// Stats account is local, check
+	// if we need to regenerate.
+	const statsFreshness = 48 * time.Hour
+	expiry := stats.RegeneratedAt.Add(statsFreshness)
+	if time.Now().After(expiry) {
+		// Stats have expired, regenerate them.
+		return a.RegenerateAccountStats(ctx, account)
+	}
+
+	// Stats are still fresh.
+	return nil
+}
+
+func (a *accountDB) RegenerateAccountStats(ctx context.Context, account *gtsmodel.Account) error {
+	// Initialize a new stats struct.
+	stats := &gtsmodel.AccountStats{
+		AccountID:     account.ID,
+		RegeneratedAt: time.Now(),
+	}
+
+	// Count followers outside of transaction since
+	// it uses a cache + requires its own db calls.
+	followerIDs, err := a.state.DB.GetAccountFollowerIDs(ctx, account.ID, nil)
+	if err != nil {
+		return err
+	}
+	stats.FollowersCount = util.Ptr(len(followerIDs))
+
+	// Count following outside of transaction since
+	// it uses a cache + requires its own db calls.
+	followIDs, err := a.state.DB.GetAccountFollowIDs(ctx, account.ID, nil)
+	if err != nil {
+		return err
+	}
+	stats.FollowingCount = util.Ptr(len(followIDs))
+
+	// Count follow requests outside of transaction since
+	// it uses a cache + requires its own db calls.
+	followRequestIDs, err := a.state.DB.GetAccountFollowRequestIDs(ctx, account.ID, nil)
+	if err != nil {
+		return err
+	}
+	stats.FollowRequestsCount = util.Ptr(len(followRequestIDs))
+
+	// Populate remaining stats struct fields.
+	// This can be done inside a transaction.
+	if err := a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		var err error
+
+		// Scan database for account statuses.
+		statusesCount, err := tx.NewSelect().
+			Table("statuses").
+			Where("? = ?", bun.Ident("account_id"), account.ID).
+			Count(ctx)
+		if err != nil {
+			return err
+		}
+		stats.StatusesCount = &statusesCount
+
+		// Scan database for pinned statuses.
+		statusesPinnedCount, err := tx.NewSelect().
+			Table("statuses").
+			Where("? = ?", bun.Ident("account_id"), account.ID).
+			Where("? IS NOT NULL", bun.Ident("pinned_at")).
+			Count(ctx)
+		if err != nil {
+			return err
+		}
+		stats.StatusesPinnedCount = &statusesPinnedCount
+
+		// Scan database for last status.
+		lastStatusAt := time.Time{}
+		err = tx.
+			NewSelect().
+			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+			Column("status.created_at").
+			Where("? = ?", bun.Ident("status.account_id"), account.ID).
+			Order("status.id DESC").
+			Limit(1).
+			Scan(ctx, &lastStatusAt)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return err
+		}
+		stats.LastStatusAt = lastStatusAt
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	// Upsert this stats in case a race
+	// meant someone else inserted it first.
+	if err := a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+		if _, err := NewUpsert(a.db).
+			Model(stats).
+			Constraint("account_id").
+			Exec(ctx); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	account.Stats = stats
+	return nil
+}
+
+func (a *accountDB) UpdateAccountStats(ctx context.Context, stats *gtsmodel.AccountStats, columns ...string) error {
+	return a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+		if _, err := a.db.
+			NewUpdate().
+			Model(stats).
+			Column(columns...).
+			Where("? = ?", bun.Ident("account_stats.account_id"), stats.AccountID).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func (a *accountDB) DeleteAccountStats(ctx context.Context, accountID string) error {
+	defer a.state.Caches.GTS.AccountStats.Invalidate("AccountID", accountID)
+
+	if _, err := a.db.
+		NewDelete().
+		Table("account_stats").
+		Where("? = ?", bun.Ident("account_id"), accountID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }

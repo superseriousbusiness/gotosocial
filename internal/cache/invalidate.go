@@ -27,8 +27,8 @@ import (
 // HOOKS TO BE CALLED ON DELETE YOU MUST FIRST POPULATE IT IN THE CACHE.
 
 func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
-	// Invalidate status counts for this account.
-	c.GTS.AccountCounts.Invalidate(account.ID)
+	// Invalidate stats for this account.
+	c.GTS.AccountStats.Invalidate("AccountID", account.ID)
 
 	// Invalidate account ID cached visibility.
 	c.Visibility.Invalidate("ItemID", account.ID)
@@ -37,7 +37,7 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's
 	// following / follower lists.
 	// (see FollowIDs() comment for details).
-	c.GTS.FollowIDs.InvalidateAll(
+	c.GTS.FollowIDs.Invalidate(
 		">"+account.ID,
 		"l>"+account.ID,
 		"<"+account.ID,
@@ -47,7 +47,7 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's
 	// follow requesting / request lists.
 	// (see FollowRequestIDs() comment for details).
-	c.GTS.FollowRequestIDs.InvalidateAll(
+	c.GTS.FollowRequestIDs.Invalidate(
 		">"+account.ID,
 		"<"+account.ID,
 	)
@@ -58,6 +58,11 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 	// Invalidate this account's Move(s).
 	c.GTS.Move.Invalidate("OriginURI", account.URI)
 	c.GTS.Move.Invalidate("TargetURI", account.URI)
+}
+
+func (c *Caches) OnInvalidateApplication(app *gtsmodel.Application) {
+	// Invalidate cached client of this application.
+	c.GTS.Client.Invalidate("ID", app.ClientID)
 }
 
 func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
@@ -71,6 +76,11 @@ func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
 
 	// Invalidate source account's block lists.
 	c.GTS.BlockIDs.Invalidate(block.AccountID)
+}
+
+func (c *Caches) OnInvalidateClient(client *gtsmodel.Client) {
+	// Invalidate any tokens under this client.
+	c.GTS.Token.Invalidate("ClientID", client.ID)
 }
 
 func (c *Caches) OnInvalidateEmojiCategory(category *gtsmodel.EmojiCategory) {
@@ -96,7 +106,7 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	// Invalidate source account's following
 	// lists, and destination's follwer lists.
 	// (see FollowIDs() comment for details).
-	c.GTS.FollowIDs.InvalidateAll(
+	c.GTS.FollowIDs.Invalidate(
 		">"+follow.AccountID,
 		"l>"+follow.AccountID,
 		"<"+follow.AccountID,
@@ -115,7 +125,7 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 	// Invalidate source account's followreq
 	// lists, and destinations follow req lists.
 	// (see FollowRequestIDs() comment for details).
-	c.GTS.FollowRequestIDs.InvalidateAll(
+	c.GTS.FollowRequestIDs.Invalidate(
 		">"+followReq.AccountID,
 		"<"+followReq.AccountID,
 		">"+followReq.TargetAccountID,
@@ -158,21 +168,19 @@ func (c *Caches) OnInvalidatePollVote(vote *gtsmodel.PollVote) {
 }
 
 func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
-	// Invalidate status counts for this account.
-	c.GTS.AccountCounts.Invalidate(status.AccountID)
+	// Invalidate stats for this account.
+	c.GTS.AccountStats.Invalidate("AccountID", status.AccountID)
 
 	// Invalidate status ID cached visibility.
 	c.Visibility.Invalidate("ItemID", status.ID)
 
-	for _, id := range status.AttachmentIDs {
-		// Invalidate each media by the IDs we're aware of.
-		// This must be done as the status table is aware of
-		// the media IDs in use before the media table is
-		// aware of the status ID they are linked to.
-		//
-		// c.GTS.Media().Invalidate("StatusID") will not work.
-		c.GTS.Media.Invalidate("ID", id)
-	}
+	// Invalidate each media by the IDs we're aware of.
+	// This must be done as the status table is aware of
+	// the media IDs in use before the media table is
+	// aware of the status ID they are linked to.
+	//
+	// c.GTS.Media().Invalidate("StatusID") will not work.
+	c.GTS.Media.InvalidateIDs("ID", status.AttachmentIDs)
 
 	if status.BoostOfID != "" {
 		// Invalidate boost ID list of the original status.

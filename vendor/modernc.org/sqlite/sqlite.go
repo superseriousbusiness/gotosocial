@@ -21,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 	"unsafe"
 
@@ -491,17 +490,6 @@ func toNamedValues(vals []driver.Value) (r []driver.NamedValue) {
 
 func (s *stmt) exec(ctx context.Context, args []driver.NamedValue) (r driver.Result, err error) {
 	var pstmt uintptr
-	var done int32
-	if ctx != nil {
-		if ctxDone := ctx.Done(); ctxDone != nil {
-			select {
-			case <-ctxDone:
-				return nil, ctx.Err()
-			default:
-			}
-			defer interruptOnDone(ctx, s.c, &done)()
-		}
-	}
 
 	defer func() {
 		if pstmt != 0 {
@@ -514,13 +502,13 @@ func (s *stmt) exec(ctx context.Context, args []driver.NamedValue) (r driver.Res
 				err = e
 			}
 		}
-
-		if ctx != nil && atomic.LoadInt32(&done) != 0 {
-			r, err = nil, ctx.Err()
-		}
 	}()
 
-	for psql := s.psql; *(*byte)(unsafe.Pointer(psql)) != 0 && atomic.LoadInt32(&done) == 0; {
+	for psql := s.psql; *(*byte)(unsafe.Pointer(psql)) != 0; {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		if pstmt, err = s.c.prepareV2(&psql); err != nil {
 			return nil, err
 		}
@@ -528,6 +516,7 @@ func (s *stmt) exec(ctx context.Context, args []driver.NamedValue) (r driver.Res
 		if pstmt == 0 {
 			continue
 		}
+
 		err = func() (err error) {
 			n, err := s.c.bindParameterCount(pstmt)
 			if err != nil {
@@ -604,17 +593,6 @@ func (s *stmt) Query(args []driver.Value) (driver.Rows, error) { //TODO StmtQuer
 
 func (s *stmt) query(ctx context.Context, args []driver.NamedValue) (r driver.Rows, err error) {
 	var pstmt uintptr
-	var done int32
-	if ctx != nil {
-		if ctxDone := ctx.Done(); ctxDone != nil {
-			select {
-			case <-ctxDone:
-				return nil, ctx.Err()
-			default:
-			}
-			defer interruptOnDone(ctx, s.c, &done)()
-		}
-	}
 
 	var allocs []uintptr
 
@@ -630,14 +608,16 @@ func (s *stmt) query(ctx context.Context, args []driver.NamedValue) (r driver.Ro
 			}
 		}
 
-		if ctx != nil && atomic.LoadInt32(&done) != 0 {
-			r, err = nil, ctx.Err()
-		} else if r == nil && err == nil {
+		if r == nil && err == nil {
 			r, err = newRows(s.c, pstmt, allocs, true)
 		}
 	}()
 
-	for psql := s.psql; *(*byte)(unsafe.Pointer(psql)) != 0 && atomic.LoadInt32(&done) == 0; {
+	for psql := s.psql; *(*byte)(unsafe.Pointer(psql)) != 0; {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+
 		if pstmt, err = s.c.prepareV2(&psql); err != nil {
 			return nil, err
 		}
@@ -755,10 +735,6 @@ func (t *tx) exec(ctx context.Context, sql string) (err error) {
 	defer t.c.free(psql)
 	//TODO use t.conn.ExecContext() instead
 
-	if ctx != nil && ctx.Done() != nil {
-		defer interruptOnDone(ctx, t.c, nil)()
-	}
-
 	if rc := sqlite3.Xsqlite3_exec(t.c.tls, t.c.db, psql, 0, 0, 0); rc != sqlite3.SQLITE_OK {
 		return t.c.errstr(rc)
 	}
@@ -766,50 +742,9 @@ func (t *tx) exec(ctx context.Context, sql string) (err error) {
 	return nil
 }
 
-// interruptOnDone sets up a goroutine to interrupt the provided db when the
-// context is canceled, and returns a function the caller must defer so it
-// doesn't interrupt after the caller finishes.
-func interruptOnDone(
-	ctx context.Context,
-	c *conn,
-	done *int32,
-) func() {
-	if done == nil {
-		var d int32
-		done = &d
-	}
-
-	donech := make(chan struct{})
-
-	go func() {
-		select {
-		case <-ctx.Done():
-			// don't call interrupt if we were already done: it indicates that this
-			// call to exec is no longer running and we would be interrupting
-			// nothing, or even possibly an unrelated later call to exec.
-			if atomic.AddInt32(done, 1) == 1 {
-				c.interrupt(c.db)
-			}
-		case <-donech:
-		}
-	}()
-
-	// the caller is expected to defer this function
-	return func() {
-		// set the done flag so that a context cancellation right after the caller
-		// returns doesn't trigger a call to interrupt for some other statement.
-		atomic.AddInt32(done, 1)
-		close(donech)
-	}
-}
-
 type conn struct {
 	db  uintptr // *sqlite3.Xsqlite3
 	tls *libc.TLS
-
-	// Context handling can cause conn.Close and conn.interrupt to be invoked
-	// concurrently.
-	sync.Mutex
 
 	writeTimeFormat string
 	beginMode       string
@@ -1205,32 +1140,6 @@ func (c *conn) bindText(pstmt uintptr, idx1 int, value string) (uintptr, error) 
 
 // C documentation
 //
-//	int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
-func (c *conn) bindBlob(pstmt uintptr, idx1 int, value []byte) (uintptr, error) {
-	if value != nil && len(value) == 0 {
-		if rc := sqlite3.Xsqlite3_bind_zeroblob(c.tls, pstmt, int32(idx1), 0); rc != sqlite3.SQLITE_OK {
-			return 0, c.errstr(rc)
-		}
-		return 0, nil
-	}
-
-	p, err := c.malloc(len(value))
-	if err != nil {
-		return 0, err
-	}
-	if len(value) != 0 {
-		copy((*libc.RawMem)(unsafe.Pointer(p))[:len(value):len(value)], value)
-	}
-	if rc := sqlite3.Xsqlite3_bind_blob(c.tls, pstmt, int32(idx1), p, int32(len(value)), 0); rc != sqlite3.SQLITE_OK {
-		c.free(p)
-		return 0, c.errstr(rc)
-	}
-
-	return p, nil
-}
-
-// C documentation
-//
 //	int sqlite3_bind_int(sqlite3_stmt*, int, int);
 func (c *conn) bindInt(pstmt uintptr, idx1, value int) (err error) {
 	if rc := sqlite3.Xsqlite3_bind_int(c.tls, pstmt, int32(idx1), int32(value)); rc != sqlite3.SQLITE_OK {
@@ -1333,13 +1242,7 @@ func (c *conn) prepareV2(zSQL *uintptr) (pstmt uintptr, err error) {
 //
 //	void sqlite3_interrupt(sqlite3*);
 func (c *conn) interrupt(pdb uintptr) (err error) {
-	c.Lock() // Defend against race with .Close invoked by context handling.
-
-	defer c.Unlock()
-
-	if c.tls != nil {
-		sqlite3.Xsqlite3_interrupt(c.tls, pdb)
-	}
+	sqlite3.Xsqlite3_interrupt(c.tls, pdb)
 	return nil
 }
 
@@ -1460,15 +1363,11 @@ func (c *conn) Close() (err error) {
 			dmesg("conn %p: err %v", c, err)
 		}()
 	}
-	c.Lock() // Defend against race with .interrupt invoked by context handling.
-
-	defer c.Unlock()
 
 	if c.db != 0 {
 		if err := c.closeV2(c.db); err != nil {
 			return err
 		}
-
 		c.db = 0
 	}
 
@@ -1476,6 +1375,7 @@ func (c *conn) Close() (err error) {
 		c.tls.Close()
 		c.tls = nil
 	}
+
 	return nil
 }
 
@@ -1902,6 +1802,21 @@ func (b *Backup) Finish() error {
 type ExecQuerierContext interface {
 	driver.ExecerContext
 	driver.QueryerContext
+}
+
+// Commit releases all resources associated with the Backup object but does not
+// close the destination database connection.
+//
+// The destination database connection is returned to the caller or an error if raised.
+// It is the responsibility of the caller to handle the connection closure.
+func (b *Backup) Commit() (driver.Conn, error) {
+	rc := sqlite3.Xsqlite3_backup_finish(b.srcConn.tls, b.pBackup)
+
+	if rc == sqlite3.SQLITE_OK {
+		return b.dstConn, nil
+	} else {
+		return nil, b.srcConn.errstr(rc)
+	}
 }
 
 // ConnectionHookFn function type for a connection hook on the Driver. Connection

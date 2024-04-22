@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/apps"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/customemojis"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/featuredtags"
@@ -35,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/lists"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/media"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/mutes"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notifications"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/preferences"
@@ -59,6 +61,7 @@ type Client struct {
 	apps           *apps.Module           // api/v1/apps
 	blocks         *blocks.Module         // api/v1/blocks
 	bookmarks      *bookmarks.Module      // api/v1/bookmarks
+	conversations  *conversations.Module  // api/v1/conversations
 	customEmojis   *customemojis.Module   // api/v1/custom_emojis
 	favourites     *favourites.Module     // api/v1/favourites
 	featuredTags   *featuredtags.Module   // api/v1/featured_tags
@@ -68,6 +71,7 @@ type Client struct {
 	lists          *lists.Module          // api/v1/lists
 	markers        *markers.Module        // api/v1/markers
 	media          *media.Module          // api/v1/media, api/v2/media
+	mutes          *mutes.Module          // api/v1/mutes
 	notifications  *notifications.Module  // api/v1/notifications
 	polls          *polls.Module          // api/v1/polls
 	preferences    *preferences.Module    // api/v1/preferences
@@ -101,6 +105,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.apps.Route(h)
 	c.blocks.Route(h)
 	c.bookmarks.Route(h)
+	c.conversations.Route(h)
 	c.customEmojis.Route(h)
 	c.favourites.Route(h)
 	c.featuredTags.Route(h)
@@ -110,6 +115,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.lists.Route(h)
 	c.markers.Route(h)
 	c.media.Route(h)
+	c.mutes.Route(h)
 	c.notifications.Route(h)
 	c.polls.Route(h)
 	c.preferences.Route(h)
@@ -131,6 +137,7 @@ func NewClient(db db.DB, p *processing.Processor) *Client {
 		apps:           apps.New(p),
 		blocks:         blocks.New(p),
 		bookmarks:      bookmarks.New(p),
+		conversations:  conversations.New(p),
 		customEmojis:   customemojis.New(p),
 		favourites:     favourites.New(p),
 		featuredTags:   featuredtags.New(p),
@@ -140,6 +147,7 @@ func NewClient(db db.DB, p *processing.Processor) *Client {
 		lists:          lists.New(p),
 		markers:        markers.New(p),
 		media:          media.New(p),
+		mutes:          mutes.New(p),
 		notifications:  notifications.New(p),
 		polls:          polls.New(p),
 		preferences:    preferences.New(p),

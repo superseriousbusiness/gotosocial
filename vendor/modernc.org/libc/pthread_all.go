@@ -2,8 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build !freebsd && !openbsd
-// +build !freebsd,!openbsd
+//go:build !freebsd && !openbsd && !(linux && (amd64 || loong64))
+// +build !freebsd
+// +build !openbsd
+// +build !linux !amd64,!loong64
 
 package libc // import "modernc.org/libc"
 

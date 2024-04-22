@@ -34,7 +34,7 @@ func (m *Module) customCSSGETHandler(c *gin.Context) {
 		return
 	}
 
-	targetUsername, errWithCode := apiutil.ParseWebUsername(c.Param(apiutil.WebUsernameKey))
+	targetUsername, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // clientAPI wraps processing functions
@@ -141,6 +142,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// ACCEPT FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.AcceptFollow(ctx, cMsg)
+
+		// ACCEPT PROFILE/ACCOUNT (sign-up)
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.AcceptAccount(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -150,6 +155,10 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 		// REJECT FOLLOW (request)
 		case ap.ActivityFollow:
 			return p.clientAPI.RejectFollowRequest(ctx, cMsg)
+
+		// REJECT PROFILE/ACCOUNT (sign-up)
+		case ap.ObjectProfile, ap.ActorPerson:
+			return p.clientAPI.RejectAccount(ctx, cMsg)
 		}
 
 	// UNDO SOMETHING
@@ -209,18 +218,23 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg messages.From
 }
 
 func (p *clientAPI) CreateAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
-	account, ok := cMsg.GTSModel.(*gtsmodel.Account)
+	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.Account", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
 	}
 
-	// Send a confirmation email to the newly created account.
-	user, err := p.state.DB.GetUserByAccountID(ctx, account.ID)
-	if err != nil {
-		return gtserror.Newf("db error getting user for account id %s: %w", account.ID, err)
+	// Notify mods of the new signup.
+	if err := p.surface.notifySignup(ctx, newUser); err != nil {
+		log.Errorf(ctx, "error notifying mods of new sign-up: %v", err)
 	}
 
-	if err := p.surface.emailPleaseConfirm(ctx, user, account.Username); err != nil {
+	// Send "new sign up" email to mods.
+	if err := p.surface.emailAdminNewSignup(ctx, newUser); err != nil {
+		log.Errorf(ctx, "error emailing new signup: %v", err)
+	}
+
+	// Send "please confirm your address" email to the new user.
+	if err := p.surface.emailUserPleaseConfirm(ctx, newUser); err != nil {
 		log.Errorf(ctx, "error emailing confirm: %v", err)
 	}
 
@@ -231,6 +245,11 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg messages.FromClientAP
 	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utilF.incrementStatusesCount(ctx, cMsg.OriginAccount, status); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
@@ -297,6 +316,11 @@ func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg messages.FromClien
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", cMsg.GTSModel)
 	}
 
+	// Update stats for the target account.
+	if err := p.utilF.incrementFollowRequestsCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.surface.notifyFollowRequest(ctx, followRequest); err != nil {
 		log.Errorf(ctx, "error notifying follow request: %v", err)
 	}
@@ -344,6 +368,11 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg messages.FromClient
 	boost, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utilF.incrementStatusesCount(ctx, cMsg.OriginAccount, boost); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	// Timeline and notify the boost wrapper status.
@@ -458,7 +487,7 @@ func (p *clientAPI) UpdateReport(ctx context.Context, cMsg messages.FromClientAP
 		return nil
 	}
 
-	if err := p.surface.emailReportClosed(ctx, report); err != nil {
+	if err := p.surface.emailUserReportClosed(ctx, report); err != nil {
 		log.Errorf(ctx, "error emailing report closed: %v", err)
 	}
 
@@ -469,6 +498,20 @@ func (p *clientAPI) AcceptFollow(ctx context.Context, cMsg messages.FromClientAP
 	follow, ok := cMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Follow", cMsg.GTSModel)
+	}
+
+	// Update stats for the target account.
+	if err := p.utilF.decrementFollowRequestsCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	if err := p.utilF.incrementFollowersCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Update stats for the origin account.
+	if err := p.utilF.incrementFollowingCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if err := p.surface.notifyFollow(ctx, follow); err != nil {
@@ -488,6 +531,11 @@ func (p *clientAPI) RejectFollowRequest(ctx context.Context, cMsg messages.FromC
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", cMsg.GTSModel)
 	}
 
+	// Update stats for the target account.
+	if err := p.utilF.decrementFollowRequestsCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.federate.RejectFollow(
 		ctx,
 		p.converter.FollowRequestToFollow(ctx, followReq),
@@ -502,6 +550,16 @@ func (p *clientAPI) UndoFollow(ctx context.Context, cMsg messages.FromClientAPI)
 	follow, ok := cMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Follow", cMsg.GTSModel)
+	}
+
+	// Update stats for the origin account.
+	if err := p.utilF.decrementFollowingCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Update stats for the target account.
+	if err := p.utilF.decrementFollowersCount(ctx, cMsg.TargetAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if err := p.federate.UndoFollow(ctx, follow); err != nil {
@@ -551,6 +609,11 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg messages.FromClientAP
 		return gtserror.Newf("db error deleting status: %w", err)
 	}
 
+	// Update stats for the origin account.
+	if err := p.utilF.decrementStatusesCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
 	if err := p.surface.deleteStatusFromTimelines(ctx, status.ID); err != nil {
 		log.Errorf(ctx, "error removing timelined status: %v", err)
 	}
@@ -587,6 +650,11 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg messages.FromClientAP
 
 	if err := p.utilF.wipeStatus(ctx, status, deleteAttachments); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
+	}
+
+	// Update stats for the origin account.
+	if err := p.utilF.decrementStatusesCount(ctx, cMsg.OriginAccount); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
 	if status.InReplyToID != "" {
@@ -644,7 +712,7 @@ func (p *clientAPI) ReportAccount(ctx context.Context, cMsg messages.FromClientA
 		}
 	}
 
-	if err := p.surface.emailReportOpened(ctx, report); err != nil {
+	if err := p.surface.emailAdminReportOpened(ctx, report); err != nil {
 		log.Errorf(ctx, "error emailing report opened: %v", err)
 	}
 
@@ -676,6 +744,69 @@ func (p *clientAPI) MoveAccount(ctx context.Context, cMsg messages.FromClientAPI
 		"succeeded_at",
 	); err != nil {
 		return gtserror.Newf("error marking move as successful: %w", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) AcceptAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
+	}
+
+	// Mark user as approved + clear sign-up IP.
+	newUser.Approved = util.Ptr(true)
+	newUser.SignUpIP = nil
+	if err := p.state.DB.UpdateUser(ctx, newUser, "approved", "sign_up_ip"); err != nil {
+		// Error now means we should return without
+		// sending email + let admin try to approve again.
+		return gtserror.Newf("db error updating user %s: %w", newUser.ID, err)
+	}
+
+	// Send "your sign-up has been approved" email to the new user.
+	if err := p.surface.emailUserSignupApproved(ctx, newUser); err != nil {
+		log.Errorf(ctx, "error emailing: %v", err)
+	}
+
+	return nil
+}
+
+func (p *clientAPI) RejectAccount(ctx context.Context, cMsg messages.FromClientAPI) error {
+	deniedUser, ok := cMsg.GTSModel.(*gtsmodel.DeniedUser)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.DeniedUser", cMsg.GTSModel)
+	}
+
+	// Remove the account.
+	if err := p.state.DB.DeleteAccount(ctx, cMsg.TargetAccount.ID); err != nil {
+		log.Errorf(ctx,
+			"db error deleting account %s: %v",
+			cMsg.TargetAccount.ID, err,
+		)
+	}
+
+	// Remove the user.
+	if err := p.state.DB.DeleteUserByID(ctx, deniedUser.ID); err != nil {
+		log.Errorf(ctx,
+			"db error deleting user %s: %v",
+			deniedUser.ID, err,
+		)
+	}
+
+	// Store the deniedUser entry.
+	if err := p.state.DB.PutDeniedUser(ctx, deniedUser); err != nil {
+		log.Errorf(ctx,
+			"db error putting denied user %s: %v",
+			deniedUser.ID, err,
+		)
+	}
+
+	if *deniedUser.SendEmail {
+		// Send "your sign-up has been rejected" email to the denied user.
+		if err := p.surface.emailUserSignupRejected(ctx, deniedUser); err != nil {
+			log.Errorf(ctx, "error emailing: %v", err)
+		}
 	}
 
 	return nil

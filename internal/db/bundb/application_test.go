@@ -123,6 +123,14 @@ func (suite *ApplicationTestSuite) TestDeleteApplicationBy() {
 	}
 }
 
+func (suite *ApplicationTestSuite) TestGetAllTokens() {
+	tokens, err := suite.db.GetAllTokens(context.Background())
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotEmpty(tokens)
+}
+
 func TestApplicationTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplicationTestSuite))
 }

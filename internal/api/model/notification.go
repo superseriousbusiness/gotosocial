@@ -26,13 +26,14 @@ type Notification struct {
 	// The id of the notification in the database.
 	ID string `json:"id"`
 	// The type of event that resulted in the notification.
-	// 	follow = Someone followed you
-	// 	follow_request = Someone requested to follow you
-	// 	mention = Someone mentioned you in their status
-	// 	reblog = Someone boosted one of your statuses
-	// 	favourite = Someone favourited one of your statuses
-	// 	poll = A poll you have voted in or created has ended
-	// 	status = Someone you enabled notifications for has posted a status
+	// 	follow = Someone followed you. `account` will be set.
+	// 	follow_request = Someone requested to follow you. `account` will be set.
+	// 	mention = Someone mentioned you in their status. `status` will be set. `account` will be set.
+	// 	reblog = Someone boosted one of your statuses. `status` will be set. `account` will be set.
+	// 	favourite = Someone favourited one of your statuses. `status` will be set. `account` will be set.
+	// 	poll = A poll you have voted in or created has ended. `status` will be set. `account` will be set.
+	// 	status = Someone you enabled notifications for has posted a status. `status` will be set. `account` will be set.
+	// 	admin.sign_up = Someone has signed up for a new account on the instance. `account` will be set.
 	Type string `json:"type"`
 	// The timestamp of the notification (ISO 8601 Datetime)
 	CreatedAt string `json:"created_at"`

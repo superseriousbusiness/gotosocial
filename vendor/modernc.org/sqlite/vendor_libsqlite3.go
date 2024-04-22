@@ -35,6 +35,7 @@ func main() {
 		{"linux", "amd64"},
 		{"linux", "arm"},
 		{"linux", "arm64"},
+		{"linux", "loong64"},
 		{"linux", "ppc64le"},
 		{"linux", "riscv64"},
 		{"linux", "s390x"},

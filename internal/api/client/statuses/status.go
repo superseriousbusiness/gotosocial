@@ -64,6 +64,12 @@ const (
 
 	// ContextPath is used for fetching context of posts
 	ContextPath = BasePathWithID + "/context"
+
+	// HistoryPath is used for fetching history of posts.
+	HistoryPath = BasePathWithID + "/history"
+
+	// SourcePath is used for fetching source of a post.
+	SourcePath = BasePathWithID + "/source"
 )
 
 type Module struct {
@@ -104,4 +110,8 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// context / status thread
 	attachHandler(http.MethodGet, ContextPath, m.StatusContextGETHandler)
+
+	// history/edit stuff
+	attachHandler(http.MethodGet, HistoryPath, m.StatusHistoryGETHandler)
+	attachHandler(http.MethodGet, SourcePath, m.StatusSourceGETHandler)
 }

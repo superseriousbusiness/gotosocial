@@ -19,15 +19,19 @@ package db
 
 import (
 	"context"
-	"time"
+	"net/netip"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Account contains functions related to account getting/setting/creation.
 type Account interface {
 	// GetAccountByID returns one account with the given ID, or an error if something goes wrong.
 	GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, error)
+
+	// GetAccountsByIDs returns accounts corresponding to given IDs.
+	GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error)
 
 	// GetAccountByURI returns one account with the given URI, or an error if something goes wrong.
 	GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
@@ -53,6 +57,25 @@ type Account interface {
 	// GetAccountByFollowersURI returns one account with the given followers_uri, or an error if something goes wrong.
 	GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
+	// GetAccounts returns accounts
+	// with the given parameters.
+	GetAccounts(
+		ctx context.Context,
+		origin string,
+		status string,
+		mods bool,
+		invitedBy string,
+		username string,
+		displayName string,
+		domain string,
+		email string,
+		ip netip.Addr,
+		page *paging.Page,
+	) (
+		[]*gtsmodel.Account,
+		error,
+	)
+
 	// PopulateAccount ensures that all sub-models of an account are populated (e.g. avatar, header etc).
 	PopulateAccount(ctx context.Context, account *gtsmodel.Account) error
 
@@ -76,12 +99,6 @@ type Account interface {
 	// GetAccountsUsingEmoji fetches all account models using emoji with given ID stored in their 'emojis' column.
 	GetAccountsUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Account, error)
 
-	// GetAccountStatusesCount is a shortcut for the common action of counting statuses produced by accountID.
-	CountAccountStatuses(ctx context.Context, accountID string) (int, error)
-
-	// CountAccountPinned returns the total number of pinned statuses owned by account with the given id.
-	CountAccountPinned(ctx context.Context, accountID string) (int, error)
-
 	// GetAccountStatuses is a shortcut for getting the most recent statuses. accountID is optional, if not provided
 	// then all statuses will be returned. If limit is set to 0, the size of the returned slice will not be limited. This can
 	// be very memory intensive so you probably shouldn't do this!
@@ -104,13 +121,6 @@ type Account interface {
 	// In the case of no statuses, this function will return db.ErrNoEntries.
 	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, error)
 
-	// GetAccountLastPosted simply gets the timestamp of the most recent post by the account.
-	//
-	// If webOnly is true, then the time of the last non-reply, non-boost, public status of the account will be returned.
-	//
-	// The returned time will be zero if account has never posted anything.
-	GetAccountLastPosted(ctx context.Context, accountID string, webOnly bool) (time.Time, error)
-
 	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
 	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error
 
@@ -126,4 +136,24 @@ type Account interface {
 
 	// Update local account settings.
 	UpdateAccountSettings(ctx context.Context, settings *gtsmodel.AccountSettings, columns ...string) error
+
+	// PopulateAccountStats gets (or creates and gets) account stats for
+	// the given account, and attaches them to the account model.
+	PopulateAccountStats(ctx context.Context, account *gtsmodel.Account) error
+
+	// RegenerateAccountStats creates, upserts, and returns stats
+	// for the given account, and attaches them to the account model.
+	//
+	// Unlike GetAccountStats, it will always get the database stats fresh.
+	// This can be used to "refresh" stats.
+	//
+	// Because this involves database calls that can be expensive (on Postgres
+	// specifically), callers should prefer GetAccountStats in 99% of cases.
+	RegenerateAccountStats(ctx context.Context, account *gtsmodel.Account) error
+
+	// Update account stats.
+	UpdateAccountStats(ctx context.Context, stats *gtsmodel.AccountStats, columns ...string) error
+
+	// DeleteAccountStats deletes the accountStats entry for the given accountID.
+	DeleteAccountStats(ctx context.Context, accountID string) error
 }

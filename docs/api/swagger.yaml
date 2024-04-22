@@ -225,7 +225,9 @@ definitions:
                 type: array
                 x-go-name: Emojis
             enable_rss:
-                description: Account has enabled RSS feed.
+                description: |-
+                    Account has enabled RSS feed.
+                    Key/value omitted if false.
                 type: boolean
                 x-go-name: EnableRSS
             fields:
@@ -256,6 +258,12 @@ definitions:
                 example: https://example.org/media/some_user/header/static/header.png
                 type: string
                 x-go-name: HeaderStatic
+            hide_collections:
+                description: |-
+                    Account has opted to hide their followers/following collections.
+                    Key/value omitted if false.
+                type: boolean
+                x-go-name: HideCollections
             id:
                 description: The account id.
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
@@ -431,8 +439,8 @@ definitions:
                 x-go-name: ID
             invite_request:
                 description: |-
-                    The reason given when requesting an invite.
-                    Null if not known / remote account.
+                    The reason given when signing up.
+                    Null if no reason / remote account.
                 example: Pleaaaaaaaaaaaaaaase!!
                 type: string
                 x-go-name: InviteRequest
@@ -809,6 +817,30 @@ definitions:
         title: Card represents a rich preview card that is generated using OpenGraph tags from a URL.
         type: object
         x-go-name: Card
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    conversation:
+        description: |-
+            Conversation represents a conversation
+            with "direct message" visibility.
+        properties:
+            accounts:
+                description: Participants in the conversation.
+                items:
+                    $ref: '#/definitions/account'
+                type: array
+                x-go-name: Accounts
+            id:
+                description: Local database ID of the conversation.
+                type: string
+                x-go-name: ID
+            last_status:
+                $ref: '#/definitions/status'
+            unread:
+                description: Is the conversation currently marked as unread?
+                type: boolean
+                x-go-name: Unread
+        type: object
+        x-go-name: Conversation
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     debugAPUrlResponse:
         description: |-
@@ -1834,13 +1866,14 @@ definitions:
             type:
                 description: |-
                     The type of event that resulted in the notification.
-                    follow = Someone followed you
-                    follow_request = Someone requested to follow you
-                    mention = Someone mentioned you in their status
-                    reblog = Someone boosted one of your statuses
-                    favourite = Someone favourited one of your statuses
-                    poll = A poll you have voted in or created has ended
-                    status = Someone you enabled notifications for has posted a status
+                    follow = Someone followed you. `account` will be set.
+                    follow_request = Someone requested to follow you. `account` will be set.
+                    mention = Someone mentioned you in their status. `status` will be set. `account` will be set.
+                    reblog = Someone boosted one of your statuses. `status` will be set. `account` will be set.
+                    favourite = Someone favourited one of your statuses. `status` will be set. `account` will be set.
+                    poll = A poll you have voted in or created has ended. `status` will be set. `account` will be set.
+                    status = Someone you enabled notifications for has posted a status. `status` will be set. `account` will be set.
+                    admin.sign_up = Someone has signed up for a new account on the instance. `account` will be set.
                 type: string
                 x-go-name: Type
         title: Notification represents a notification of an event relevant to the user.
@@ -2205,6 +2238,52 @@ definitions:
         type: object
         x-go-name: Context
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    statusEdit:
+        description: |-
+            StatusEdit represents one historical revision of a status, containing
+            partial information about the state of the status at that revision.
+        properties:
+            account:
+                $ref: '#/definitions/account'
+            content:
+                description: |-
+                    The content of this status at this revision.
+                    Should be HTML, but might also be plaintext in some cases.
+                example: <p>Hey this is a status!</p>
+                type: string
+                x-go-name: Content
+            created_at:
+                description: The date when this revision was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            emojis:
+                description: Custom emoji to be used when rendering status content.
+                items:
+                    $ref: '#/definitions/emoji'
+                type: array
+                x-go-name: Emojis
+            media_attachments:
+                description: Media that is attached to this status.
+                items:
+                    $ref: '#/definitions/attachment'
+                type: array
+                x-go-name: MediaAttachments
+            poll:
+                $ref: '#/definitions/poll'
+            sensitive:
+                description: Status marked sensitive at this revision.
+                example: false
+                type: boolean
+                x-go-name: Sensitive
+            spoiler_text:
+                description: Subject, summary, or content warning for the status at this revision.
+                example: warning nsfw
+                type: string
+                x-go-name: SpoilerText
+        type: object
+        x-go-name: StatusEdit
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     statusReblogged:
         properties:
             account:
@@ -2343,6 +2422,27 @@ definitions:
         title: StatusReblogged represents a reblogged status.
         type: object
         x-go-name: StatusReblogged
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    statusSource:
+        description: |-
+            StatusSource represents the source text of a
+            status as submitted to the API when it was created.
+        properties:
+            id:
+                description: ID of the status.
+                example: 01FBVD42CQ3ZEEVMW180SBX03B
+                type: string
+                x-go-name: ID
+            spoiler_text:
+                description: Plain-text version of spoiler text.
+                type: string
+                x-go-name: SpoilerText
+            text:
+                description: Plain-text source of a status.
+                type: string
+                x-go-name: Text
+        type: object
+        x-go-name: StatusSource
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     swaggerCollection:
         properties:
@@ -2765,6 +2865,8 @@ paths:
                     description: not found
                 "406":
                     description: not acceptable
+                "422":
+                    description: Unprocessable. Your account creation request cannot be processed because either too many accounts have been created on this instance in the last 24h, or the pending account backlog is full.
                 "500":
                     description: internal server error
             security:
@@ -2898,6 +3000,8 @@ paths:
                 ```
                 <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/followers?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
                 ````
+
+                If account `hide_collections` is true, and requesting account != target account, no results will be returned.
             operationId: accountFollowers
             parameters:
                 - description: Account ID.
@@ -2962,6 +3066,8 @@ paths:
                 ```
                 <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/accounts/0657WMDEC3KQDTD6NZ4XJZBK4M/following?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
                 ````
+
+                If account `hide_collections` is true, and requesting account != target account, no results will be returned.
             operationId: accountFollowing
             parameters:
                 - description: Account ID.
@@ -3552,6 +3658,10 @@ paths:
                   in: formData
                   name: source[status_content_type]
                   type: string
+                - description: FileName of the theme to use when rendering this account's profile or statuses. The theme must exist on this server, as indicated by /api/v1/accounts/themes. Empty string unsets theme and returns to the default GoToSocial theme.
+                  in: formData
+                  name: theme
+                  type: string
                 - description: Custom CSS to use when rendering this account's profile or statuses. String must be no more than 5,000 characters (~5kb).
                   in: formData
                   name: custom_css
@@ -3559,6 +3669,10 @@ paths:
                 - description: Enable RSS feed for this account's Public posts at `/[username]/feed.rss`
                   in: formData
                   name: enable_rss
+                  type: boolean
+                - description: Hide the account's following/followers collections.
+                  in: formData
+                  name: hide_collections
                   type: boolean
                 - description: Name of 1st profile field to be added to this account's profile. (The index may be any string; add more indexes to send more fields.)
                   in: formData
@@ -3657,6 +3771,166 @@ paths:
             summary: Verify a token by returning account details pertaining to it.
             tags:
                 - accounts
+    /api/v1/admin/accounts:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/accounts?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/accounts?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: adminAccountsGetV1
+            parameters:
+                - default: false
+                  description: Filter for local accounts.
+                  in: query
+                  name: local
+                  type: boolean
+                - default: false
+                  description: Filter for remote accounts.
+                  in: query
+                  name: remote
+                  type: boolean
+                - default: false
+                  description: Filter for currently active accounts.
+                  in: query
+                  name: active
+                  type: boolean
+                - default: false
+                  description: Filter for currently pending accounts.
+                  in: query
+                  name: pending
+                  type: boolean
+                - default: false
+                  description: Filter for currently disabled accounts.
+                  in: query
+                  name: disabled
+                  type: boolean
+                - default: false
+                  description: Filter for currently silenced accounts.
+                  in: query
+                  name: silenced
+                  type: boolean
+                - default: false
+                  description: Filter for currently suspended accounts.
+                  in: query
+                  name: suspended
+                  type: boolean
+                - default: false
+                  description: Filter for accounts force-marked as sensitive.
+                  in: query
+                  name: sensitized
+                  type: boolean
+                - description: Search for the given username.
+                  in: query
+                  name: username
+                  type: string
+                - description: Search for the given display name.
+                  in: query
+                  name: display_name
+                  type: string
+                - description: Filter by the given domain.
+                  in: query
+                  name: by_domain
+                  type: string
+                - description: Lookup a user with this email.
+                  in: query
+                  name: email
+                  type: string
+                - description: Lookup users with this IP address.
+                  in: query
+                  name: ip
+                  type: string
+                - default: false
+                  description: Filter for staff accounts.
+                  in: query
+                  name: staff
+                  type: boolean
+                - description: All results returned will be older than the item with this ID.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: All results returned will be newer than the item with this ID.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Returns results immediately newer than the item with this ID.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 100
+                  description: Maximum number of results to return.
+                  in: query
+                  maximum: 200
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminAccountInfo'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View + page through known accounts according to given filters.
+            tags:
+                - admin
+    /api/v1/admin/accounts/{id}:
+        get:
+            operationId: adminAccountGet
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View one account.
+            tags:
+                - admin
     /api/v1/admin/accounts/{id}/action:
         post:
             consumes:
@@ -3700,6 +3974,86 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Perform an admin action on an account.
+            tags:
+                - admin
+    /api/v1/admin/accounts/{id}/approve:
+        post:
+            operationId: adminAccountApprove
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-approved account.
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Approve pending account.
+            tags:
+                - admin
+    /api/v1/admin/accounts/{id}/reject:
+        post:
+            operationId: adminAccountReject
+            parameters:
+                - description: ID of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Comment to leave on why the account was denied. The comment will be visible to admins only.
+                  in: formData
+                  name: private_comment
+                  type: string
+                - description: Message to include in email to applicant. Will be included only if send_email is true.
+                  in: formData
+                  name: message
+                  type: string
+                - description: Send an email to the applicant informing them that their sign-up has been rejected.
+                  in: formData
+                  name: send_email
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-rejected account.
+                    schema:
+                        $ref: '#/definitions/adminAccountInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Reject pending account.
             tags:
                 - admin
     /api/v1/admin/custom_emojis:
@@ -5265,6 +5619,67 @@ paths:
                     - read:bookmarks
             tags:
                 - bookmarks
+    /api/v1/conversations:
+        get:
+            description: |-
+                NOT IMPLEMENTED YET: Will currently always return an array of length 0.
+
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/conversations?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/conversations?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: conversationsGet
+            parameters:
+                - description: 'Return only conversations *OLDER* than the given max ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 'Return only conversations *NEWER* than the given since ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 'Return only conversations *IMMEDIATELY NEWER* than the given min ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of conversations to return.
+                  in: query
+                  maximum: 80
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/conversation'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: Get an array of (direct message) conversations that requesting account is involved in.
+            tags:
+                - conversations
     /api/v1/custom_emojis:
         get:
             operationId: customEmojisGet
@@ -6415,6 +6830,67 @@ paths:
             summary: Update a media attachment.
             tags:
                 - media
+    /api/v1/mutes:
+        get:
+            description: |-
+                NOT IMPLEMENTED YET: Will currently always return an array of length 0.
+
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/mutes?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/mutes?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: mutesGet
+            parameters:
+                - description: 'Return only muted accounts *OLDER* than the given max ID. The muted account with the specified ID will not be included in the response. NOTE: the ID is of the internal mute, NOT any of the returned accounts.'
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 'Return only muted accounts *NEWER* than the given since ID. The muted account with the specified ID will not be included in the response. NOTE: the ID is of the internal mute, NOT any of the returned accounts.'
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 'Return only muted accounts *IMMEDIATELY NEWER* than the given min ID. The muted account with the specified ID will not be included in the response. NOTE: the ID is of the internal mute, NOT any of the returned accounts.'
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of muted accounts to return.
+                  in: query
+                  maximum: 80
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/account'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:mutes
+            summary: Get an array of accounts that requesting account has muted.
+            tags:
+                - mutes
     /api/v1/notification/{id}:
         get:
             operationId: notification
@@ -7201,6 +7677,43 @@ paths:
             summary: View accounts that have faved/starred/liked the target status.
             tags:
                 - statuses
+    /api/v1/statuses/{id}/history:
+        get:
+            description: 'UNIMPLEMENTED: Currently this endpoint will always return an array of length 1, containing only the latest/current version of the status.'
+            operationId: statusHistoryGet
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            $ref: '#/definitions/statusEdit'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: View edit history of status with the given ID.
+            tags:
+                - statuses
     /api/v1/statuses/{id}/mute:
         post:
             description: |-
@@ -7345,6 +7858,42 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: View accounts that have reblogged/boosted the target status.
+            tags:
+                - statuses
+    /api/v1/statuses/{id}/source:
+        get:
+            operationId: statusSourceGet
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            $ref: '#/definitions/statusSource'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: View source text of status with the given ID. Requester must own the status.
             tags:
                 - statuses
     /api/v1/statuses/{id}/unbookmark:
@@ -7911,6 +8460,109 @@ paths:
             summary: Change the password of authenticated user.
             tags:
                 - user
+    /api/v2/admin/accounts:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v2/admin/accounts?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v2/admin/accounts?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: adminAccountsGetV2
+            parameters:
+                - description: Filter for `local` or `remote` accounts.
+                  in: query
+                  name: origin
+                  type: string
+                - description: Filter for `active`, `pending`, `disabled`, `silenced`, or `suspended` accounts.
+                  in: query
+                  name: status
+                  type: string
+                - description: Filter for accounts with staff permissions (users that can manage reports).
+                  in: query
+                  name: permissions
+                  type: string
+                - description: Filter for users with these roles.
+                  in: query
+                  items:
+                    type: string
+                  name: role_ids[]
+                  type: array
+                - description: Lookup users invited by the account with this ID.
+                  in: query
+                  name: invited_by
+                  type: string
+                - description: Search for the given username.
+                  in: query
+                  name: username
+                  type: string
+                - description: Search for the given display name.
+                  in: query
+                  name: display_name
+                  type: string
+                - description: Filter by the given domain.
+                  in: query
+                  name: by_domain
+                  type: string
+                - description: Lookup a user with this email.
+                  in: query
+                  name: email
+                  type: string
+                - description: Lookup users with this IP address.
+                  in: query
+                  name: ip
+                  type: string
+                - description: All results returned will be older than the item with this ID.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: All results returned will be newer than the item with this ID.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Returns results immediately newer than the item with this ID.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 100
+                  description: Maximum number of results to return.
+                  in: query
+                  maximum: 200
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/adminAccountInfo'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View + page through known accounts according to given filters.
+            tags:
+                - admin
     /api/v2/instance:
         get:
             operationId: instanceGetV2

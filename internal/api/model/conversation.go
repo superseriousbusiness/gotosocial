@@ -17,19 +17,17 @@
 
 package model
 
-// Conversation represents a conversation with "direct message" visibility.
+// Conversation represents a conversation
+// with "direct message" visibility.
+//
+// swagger:model conversation
 type Conversation struct {
-	// REQUIRED
-
 	// Local database ID of the conversation.
 	ID string `json:"id"`
-	// Participants in the conversation.
-	Accounts []Account `json:"accounts"`
 	// Is the conversation currently marked as unread?
 	Unread bool `json:"unread"`
-
-	// OPTIONAL
-
-	// The last status in the conversation, to be used for optional display.
+	// Participants in the conversation.
+	Accounts []Account `json:"accounts"`
+	// The last status in the conversation. May be `null`.
 	LastStatus *Status `json:"last_status"`
 }

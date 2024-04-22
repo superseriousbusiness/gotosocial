@@ -40,7 +40,7 @@ func (d *Dereferencer) dereferenceCollection(ctx context.Context, username strin
 
 	rsp, err := transport.Dereference(ctx, pageIRI)
 	if err != nil {
-		return nil, gtserror.Newf("error deferencing %s: %w", pageIRI.String(), err)
+		return nil, gtserror.Newf("error dereferencing %s: %w", pageIRI.String(), err)
 	}
 
 	collect, err := ap.ResolveCollection(ctx, rsp.Body)

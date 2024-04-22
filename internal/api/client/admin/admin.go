@@ -39,9 +39,12 @@ const (
 	HeaderAllowsPathWithID  = HeaderAllowsPath + "/:" + IDKey
 	HeaderBlocksPath        = BasePath + "/header_blocks"
 	HeaderBlocksPathWithID  = HeaderBlocksPath + "/:" + IDKey
-	AccountsPath            = BasePath + "/accounts"
-	AccountsPathWithID      = AccountsPath + "/:" + IDKey
+	AccountsV1Path          = BasePath + "/accounts"
+	AccountsV2Path          = "/v2/admin/accounts"
+	AccountsPathWithID      = AccountsV1Path + "/:" + IDKey
 	AccountsActionPath      = AccountsPathWithID + "/action"
+	AccountsApprovePath     = AccountsPathWithID + "/approve"
+	AccountsRejectPath      = AccountsPathWithID + "/reject"
 	MediaCleanupPath        = BasePath + "/media_cleanup"
 	MediaRefetchPath        = BasePath + "/media_refetch"
 	ReportsPath             = BasePath + "/reports"
@@ -113,7 +116,12 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, DomainKeysExpirePath, m.DomainKeysExpirePOSTHandler)
 
 	// accounts stuff
+	attachHandler(http.MethodGet, AccountsV1Path, m.AccountsGETV1Handler)
+	attachHandler(http.MethodGet, AccountsV2Path, m.AccountsGETV2Handler)
+	attachHandler(http.MethodGet, AccountsPathWithID, m.AccountGETHandler)
 	attachHandler(http.MethodPost, AccountsActionPath, m.AccountActionPOSTHandler)
+	attachHandler(http.MethodPost, AccountsApprovePath, m.AccountApprovePOSTHandler)
+	attachHandler(http.MethodPost, AccountsRejectPath, m.AccountRejectPOSTHandler)
 
 	// media stuff
 	attachHandler(http.MethodPost, MediaCleanupPath, m.MediaCleanupPOSTHandler)

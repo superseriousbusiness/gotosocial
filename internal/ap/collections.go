@@ -105,6 +105,15 @@ func (iter *regularCollectionIterator) PrevItem() TypeOrIRI {
 	return cur
 }
 
+func (iter *regularCollectionIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
+}
+
 func (iter *regularCollectionIterator) initItems() bool {
 	if iter.once {
 		return (iter.items != nil)
@@ -145,6 +154,15 @@ func (iter *orderedCollectionIterator) PrevItem() TypeOrIRI {
 	cur := iter.items
 	iter.items = iter.items.Prev()
 	return cur
+}
+
+func (iter *orderedCollectionIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
 }
 
 func (iter *orderedCollectionIterator) initItems() bool {
@@ -203,6 +221,15 @@ func (iter *regularCollectionPageIterator) PrevItem() TypeOrIRI {
 	return cur
 }
 
+func (iter *regularCollectionPageIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
+}
+
 func (iter *regularCollectionPageIterator) initItems() bool {
 	if iter.once {
 		return (iter.items != nil)
@@ -259,6 +286,15 @@ func (iter *orderedCollectionPageIterator) PrevItem() TypeOrIRI {
 	return cur
 }
 
+func (iter *orderedCollectionPageIterator) TotalItems() int {
+	totalItems := iter.GetActivityStreamsTotalItems()
+	if totalItems == nil || !totalItems.IsXMLSchemaNonNegativeInteger() {
+		return -1
+	}
+
+	return totalItems.Get()
+}
+
 func (iter *orderedCollectionPageIterator) initItems() bool {
 	if iter.once {
 		return (iter.items != nil)
@@ -281,7 +317,7 @@ type CollectionParams struct {
 	ID *url.URL
 
 	// First page details.
-	First paging.Page
+	First *paging.Page
 	Query url.Values
 
 	// Total no. items.
@@ -376,6 +412,11 @@ func buildCollection[C CollectionBuilder](collection C, params CollectionParams)
 	totalItems := streams.NewActivityStreamsTotalItemsProperty()
 	totalItems.Set(params.Total)
 	collection.SetActivityStreamsTotalItems(totalItems)
+
+	// No First page means we're done.
+	if params.First == nil {
+		return
+	}
 
 	// Append paging query params
 	// to those already in ID prop.

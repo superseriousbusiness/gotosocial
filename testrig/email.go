@@ -20,6 +20,7 @@ package testrig
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // NewEmailSender returns a noop email sender that won't make any remote calls.
@@ -37,6 +38,10 @@ func NewEmailSender(templateBaseDir string, sentEmails map[string]string) email.
 	if sentEmails != nil {
 		sendCallback = func(toAddress string, message string) {
 			sentEmails[toAddress] = message
+		}
+	} else {
+		sendCallback = func(toAddress string, message string) {
+			log.Infof(nil, "Sent email to %s: %s", toAddress, message)
 		}
 	}
 

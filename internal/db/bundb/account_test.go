@@ -23,6 +23,7 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
+	"net/netip"
 	"reflect"
 	"strings"
 	"testing"
@@ -33,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
 )
@@ -218,6 +220,8 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 		a2.Emojis = nil
 		a1.Settings = nil
 		a2.Settings = nil
+		a1.Stats = nil
+		a2.Stats = nil
 
 		// Clear database-set fields.
 		a1.CreatedAt = time.Time{}
@@ -411,18 +415,6 @@ func (suite *AccountTestSuite) TestUpdateAccount() {
 	suite.WithinDuration(time.Now(), noCache.UpdatedAt, 5*time.Second)
 }
 
-func (suite *AccountTestSuite) TestGetAccountLastPosted() {
-	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, false)
-	suite.NoError(err)
-	suite.EqualValues(1702200240, lastPosted.Unix())
-}
-
-func (suite *AccountTestSuite) TestGetAccountLastPostedWebOnly() {
-	lastPosted, err := suite.db.GetAccountLastPosted(context.Background(), suite.testAccounts["local_account_1"].ID, true)
-	suite.NoError(err)
-	suite.EqualValues(1702200240, lastPosted.Unix())
-}
-
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	suite.NoError(err)
@@ -464,22 +456,6 @@ func (suite *AccountTestSuite) TestGetAccountPinnedStatusesNothingPinned() {
 	suite.Empty(statuses) // This account has nothing pinned.
 }
 
-func (suite *AccountTestSuite) TestCountAccountPinnedSomeResults() {
-	testAccount := suite.testAccounts["admin_account"]
-
-	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
-	suite.NoError(err)
-	suite.Equal(pinned, 2) // This account has 2 statuses pinned.
-}
-
-func (suite *AccountTestSuite) TestCountAccountPinnedNothingPinned() {
-	testAccount := suite.testAccounts["local_account_1"]
-
-	pinned, err := suite.db.CountAccountPinned(context.Background(), testAccount.ID)
-	suite.NoError(err)
-	suite.Equal(pinned, 0) // This account has nothing pinned.
-}
-
 func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_1"]
@@ -489,6 +465,238 @@ func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {
 	testAccount.MovedToURI = "https://unknown-instance.example.org/users/someone_we_dont_know"
 	err := suite.db.PopulateAccount(context.Background(), testAccount)
 	suite.NoError(err)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsAll() {
+	var (
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
+		page        *paging.Page = nil
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 9)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
+	var (
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = true
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
+		page        = &paging.Page{
+			Limit: 100,
+		}
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
+	var (
+		ctx         = context.Background()
+		origin      = "local"
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = "tortle.dude@example.org"
+		ip          netip.Addr
+		page        = &paging.Page{
+			Limit: 100,
+		}
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsWithIP() {
+	var (
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          = netip.MustParseAddr("199.222.111.89")
+		page        = &paging.Page{
+			Limit: 100,
+		}
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
+}
+
+func (suite *AccountTestSuite) TestGetPendingAccounts() {
+	var (
+		ctx         = context.Background()
+		origin      = ""
+		status      = "pending"
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
+		page        = &paging.Page{
+			Limit: 100,
+		}
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 1)
+}
+
+func (suite *AccountTestSuite) TestAccountStatsAll() {
+	ctx := context.Background()
+	for _, account := range suite.testAccounts {
+		// Get stats for the first time. They
+		// should all be generated now since
+		// they're not stored in the test rig.
+		if err := suite.db.PopulateAccountStats(ctx, account); err != nil {
+			suite.FailNow(err.Error())
+		}
+		stats := account.Stats
+		suite.NotNil(stats)
+		suite.WithinDuration(time.Now(), stats.RegeneratedAt, 5*time.Second)
+
+		// Get stats a second time. They shouldn't
+		// be regenerated since we just did it.
+		if err := suite.db.PopulateAccountStats(ctx, account); err != nil {
+			suite.FailNow(err.Error())
+		}
+		stats2 := account.Stats
+		suite.NotNil(stats2)
+		suite.Equal(stats2.RegeneratedAt, stats.RegeneratedAt)
+
+		// Update the stats to indicate they're out of date.
+		stats2.RegeneratedAt = time.Now().Add(-72 * time.Hour)
+		if err := suite.db.UpdateAccountStats(ctx, stats2, "regenerated_at"); err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		// Get stats for a third time, they
+		// should get regenerated now, but
+		// only for local accounts.
+		if err := suite.db.PopulateAccountStats(ctx, account); err != nil {
+			suite.FailNow(err.Error())
+		}
+		stats3 := account.Stats
+		suite.NotNil(stats3)
+		if account.IsLocal() {
+			suite.True(stats3.RegeneratedAt.After(stats.RegeneratedAt))
+		} else {
+			suite.False(stats3.RegeneratedAt.After(stats.RegeneratedAt))
+		}
+
+		// Now delete the stats.
+		if err := suite.db.DeleteAccountStats(ctx, account.ID); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
 }
 
 func TestAccountTestSuite(t *testing.T) {
