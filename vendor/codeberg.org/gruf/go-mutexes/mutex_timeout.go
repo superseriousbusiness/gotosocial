@@ -1,7 +1,6 @@
 package mutexes
 
 import (
-	"sync"
 	"time"
 )
 
@@ -78,60 +77,9 @@ func mutexTimeout(d time.Duration, unlock func(), fn func()) func() {
 		return unlock
 	}
 
-	// Acquire timer from pool
-	t := timerPool.Get().(*timer)
+	// Start timer to call fn.
+	t := time.AfterFunc(d, fn)
 
-	// Start the timer
-	go t.Start(d, fn)
-
-	// Return func cancelling timeout,
-	// replacing Timeout in pool and
-	// finally unlocking mutex
-	return func() {
-		defer timerPool.Put(t)
-		t.Cancel()
-		unlock()
-	}
-}
-
-// timerPool is the global &timer{} pool.
-var timerPool = sync.Pool{
-	New: func() interface{} {
-		t := time.NewTimer(time.Minute)
-		t.Stop()
-		return &timer{t: t, c: make(chan struct{})}
-	},
-}
-
-// timer represents a reusable cancellable timer.
-type timer struct {
-	t *time.Timer
-	c chan struct{}
-}
-
-// Start will start the timer with duration 'd', performing 'fn' on timeout.
-func (t *timer) Start(d time.Duration, fn func()) {
-	t.t.Reset(d)
-	select {
-	// Timed out
-	case <-t.t.C:
-		fn()
-
-	// Cancelled
-	case <-t.c:
-	}
-}
-
-// Cancel will attempt to cancel the running timer.
-func (t *timer) Cancel() {
-	select {
-	// cancel successful
-	case t.c <- struct{}{}:
-		if !t.t.Stop() {
-			<-t.t.C
-		} // stop timer
-
-	// already stopped
-	default:
-	}
+	// Wrap unlock to stop mutex timer.
+	return func() { t.Stop(); unlock() }
 }

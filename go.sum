@@ -64,8 +64,8 @@ codeberg.org/gruf/go-mangler v1.3.0 h1:cf0vuuLJuEhoIukPHj+MUBIQSWxZcfEYt2Eo/r7Rs
 codeberg.org/gruf/go-mangler v1.3.0/go.mod h1:jnOA76AQoaO2kTHi0DlTTVaFYfRM+9fzs8f4XO6MsOk=
 codeberg.org/gruf/go-maps v1.0.3 h1:VDwhnnaVNUIy5O93CvkcE2IZXnMB1+IJjzfop9V12es=
 codeberg.org/gruf/go-maps v1.0.3/go.mod h1:D5LNDxlC9rsDuVQVM6JObaVGAdHB6g2dTdOdkh1aXWA=
-codeberg.org/gruf/go-mutexes v1.4.0 h1:53H6bFDRcG6rjk3iOTuGaStT/VTFdU5Uw8Dszy88a8g=
-codeberg.org/gruf/go-mutexes v1.4.0/go.mod h1:1j/6/MBeBQUedAtAtysLLnBKogfOZAxdym0E3wlaBD8=
+codeberg.org/gruf/go-mutexes v1.4.1 h1:SgsuktbbrkKYmgZ1reA5jMGEZbXJ6GQ54fSlKRN5iug=
+codeberg.org/gruf/go-mutexes v1.4.1/go.mod h1:1j/6/MBeBQUedAtAtysLLnBKogfOZAxdym0E3wlaBD8=
 codeberg.org/gruf/go-runners v1.6.2 h1:oQef9niahfHu/wch14xNxlRMP8i+ABXH1Cb9PzZ4oYo=
 codeberg.org/gruf/go-runners v1.6.2/go.mod h1:Tq5PrZ/m/rBXbLZz0u5if+yP3nG5Sf6S8O/GnyEePeQ=
 codeberg.org/gruf/go-sched v1.2.3 h1:H5ViDxxzOBR3uIyGBCf0eH8b1L8wMybOXcdtUUTXZHk=
