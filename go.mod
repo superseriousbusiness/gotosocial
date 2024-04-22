@@ -24,7 +24,7 @@ require (
 	codeberg.org/gruf/go-structr v0.6.2
 	codeberg.org/superseriousbusiness/exif-terminator v0.7.0
 	github.com/DmitriyVTitov/size v1.5.0
-	github.com/KimMachineGun/automemlimit v0.5.0
+	github.com/KimMachineGun/automemlimit v0.6.0
 	github.com/abema/go-mp4 v1.2.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.10.0
