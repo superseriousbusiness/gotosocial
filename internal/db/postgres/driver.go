@@ -29,10 +29,10 @@ var (
 	// global PostgreSQL driver instances.
 	postgresDriver = pgx.GetDefaultDriver().(*pgx.Driver)
 
-	// check the postgres connection
-	// conforms to our conn{} interface.
+	// check the postgres driver types
+	// conforms to our interface types.
 	// (note SQLite doesn't export their
-	// conn type, and gets checked in
+	// driver types, and gets checked in
 	// tests very regularly anywho).
 	_ connIface = (*pgx.Conn)(nil)
 	_ stmtIface = (*pgx.Stmt)(nil)

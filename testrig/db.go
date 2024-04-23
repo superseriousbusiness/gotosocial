@@ -19,10 +19,7 @@ package testrig
 
 import (
 	"context"
-	"os"
-	"strconv"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -84,22 +81,6 @@ var testModels = []interface{}{
 // If the environment variable GTS_DB_PORT is set, it will take that
 // value as the port instead.
 func NewTestDB(state *state.State) db.DB {
-	if alternateAddress := os.Getenv("GTS_DB_ADDRESS"); alternateAddress != "" {
-		config.SetDbAddress(alternateAddress)
-	}
-
-	if alternateDBType := os.Getenv("GTS_DB_TYPE"); alternateDBType != "" {
-		config.SetDbType(alternateDBType)
-	}
-
-	if alternateDBPort := os.Getenv("GTS_DB_PORT"); alternateDBPort != "" {
-		port, err := strconv.ParseUint(alternateDBPort, 10, 16)
-		if err != nil {
-			panic(err)
-		}
-		config.SetDbPort(int(port))
-	}
-
 	state.Caches.Init()
 
 	testDB, err := bundb.NewBunDBService(context.Background(), state)

@@ -52,3 +52,9 @@ func LoadEarlyFlags(cmd *cobra.Command) error {
 func BindFlags(cmd *cobra.Command) error {
 	return global.BindFlags(cmd)
 }
+
+// Reset will totally clear global
+// ConfigState{}, loading defaults.
+func Reset() {
+	global.Reset()
+}
