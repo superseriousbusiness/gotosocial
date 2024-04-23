@@ -15,17 +15,32 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package bundb
+package postgres
 
 import (
-	"database/sql"
+	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db/postgres"
-	"github.com/superseriousbusiness/gotosocial/internal/db/sqlite"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
-func init() {
-	// register our SQL driver implementations.
-	sql.Register("pgx-gts", &postgres.Driver{})
-	sql.Register("sqlite-gts", &sqlite.Driver{})
+// processPostgresError processes an error, replacing any
+// postgres specific errors with our own error type
+func processPostgresError(err error) error {
+	// Attempt to cast as postgres
+	pgErr, ok := err.(*pgconn.PgError)
+	if !ok {
+		return err
+	}
+
+	// Handle supplied error code:
+	// (https://www.postgresql.org/docs/10/errcodes-appendix.html)
+	switch pgErr.Code { //nolint
+	case "23505" /* unique_violation */ :
+		return db.ErrAlreadyExists
+	}
+
+	// Wrap the returned error with the code and
+	// extended code for easier debugging later.
+	return fmt.Errorf("%w (code=%s)", err, pgErr.Code)
 }
