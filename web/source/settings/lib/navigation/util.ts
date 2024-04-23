@@ -18,30 +18,53 @@
 */
 
 import { createContext, useContext } from "react";
-const RoleContext = createContext([]);
+const RoleContext = createContext<string[]>([]);
 const BaseUrlContext = createContext<string>("");
+const MenuLevelContext = createContext<number>(0);
 
-function urlSafe(str) {
+function urlSafe(str: string) {
 	return str.toLowerCase().replace(/[\s/]+/g, "-");
 }
 
-function useHasPermission(permissions) {
-	const roles = useContext(RoleContext);
+function useHasPermission(permissions: string[] | undefined) {
+	const roles = useContext<string[]>(RoleContext);
 	return checkPermission(permissions, roles);
 }
 
-function checkPermission(requiredPermissisons, user) {
-	// requiredPermissions can be 'false', in which case there are no restrictions
-	if (requiredPermissisons === false) {
+// checkPermission returns true if the user's roles
+// include requiredPermissions, or false otherwise.
+function checkPermission(requiredPermissions: string[] | undefined, userRoles: string[]): boolean {
+	if (requiredPermissions === undefined) {
+		// No perms defined, so user
+		// implicitly has permission.
 		return true;
 	}
 
-	// or an array of roles, check if one of the user's roles is sufficient
-	return user.some((role) => requiredPermissisons.includes(role));
+	if (requiredPermissions.length === 0) {
+		// No perms defined, so user
+		// implicitly has permission.
+		return true;
+	}
+
+	// Check if one of the user's
+	// roles is sufficient.
+	return userRoles.some((role) => {
+		if (role === "admin") {
+			// Admins can
+			// see everything.
+			return true;
+		}
+
+		return requiredPermissions.includes(role);
+	});
 }
 
 function useBaseUrl() {
 	return useContext(BaseUrlContext);
+}
+
+function useMenuLevel() {
+	return useContext(MenuLevelContext);
 }
 
 export {
@@ -50,5 +73,7 @@ export {
 	useHasPermission,
 	checkPermission,
 	BaseUrlContext,
-	useBaseUrl
+	useBaseUrl,
+	MenuLevelContext,
+	useMenuLevel,
 };

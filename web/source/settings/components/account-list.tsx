@@ -64,11 +64,11 @@ export function AccountList({
 
 	return (
 		<div className="list">
-			{data.map(({ account: acc }) => (		
+			{data.map(({ account: acc }) => (
 				<Link
 					key={acc.acct}
 					className="account entry"
-					href={`/settings/admin/accounts/${acc.id}`}
+					href={`/${acc.id}`}
 				>
 					{acc.display_name?.length > 0
 						? acc.display_name

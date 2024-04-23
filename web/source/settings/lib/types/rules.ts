@@ -17,41 +17,13 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-export interface CustomEmoji {
-	id?: string;
-	shortcode: string;
-	url: string;
-	static_url: string;
-	visible_in_picker: boolean;
-	category?: string;
-	disabled: boolean;
+export interface InstanceRule {
+	id: string;
+	created_at: string;
 	updated_at: string;
-	total_file_size: number;
-	content_type: string;
-	uri: string;
+	text: string;
 }
 
-/**
- * Query parameters for GET to /api/v1/admin/custom_emojis.
- */
-export interface ListEmojiParams {
-
-}
-
-/**
- * Result of searchItemForEmoji mutation.
- */
-export interface EmojisFromItem {
-	/**
-	 * Type of the search item result.
-	 */
-	type: "statuses" | "accounts";
-	/**
-	 * Domain of the returned emojis.
-	 */
-	domain: string;
-	/**
-	 * Discovered emojis.
-	 */
-	list: CustomEmoji[];
+export interface MappedRules {
+	[key: string]: InstanceRule;
 }

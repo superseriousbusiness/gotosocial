@@ -17,41 +17,30 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-export interface CustomEmoji {
-	id?: string;
-	shortcode: string;
-	url: string;
-	static_url: string;
-	visible_in_picker: boolean;
-	category?: string;
-	disabled: boolean;
-	updated_at: string;
-	total_file_size: number;
-	content_type: string;
-	uri: string;
-}
+import React, { useMemo } from "react";
 
-/**
- * Query parameters for GET to /api/v1/admin/custom_emojis.
- */
-export interface ListEmojiParams {
+import StealThisLook from "./steal-this-look";
 
-}
+import Loading from "../../../../components/loading";
+import { Error } from "../../../../components/error";
+import { useListEmojiQuery } from "../../../../lib/query/admin/custom-emoji";
 
-/**
- * Result of searchItemForEmoji mutation.
- */
-export interface EmojisFromItem {
-	/**
-	 * Type of the search item result.
-	 */
-	type: "statuses" | "accounts";
-	/**
-	 * Domain of the returned emojis.
-	 */
-	domain: string;
-	/**
-	 * Discovered emojis.
-	 */
-	list: CustomEmoji[];
+export default function RemoteEmoji() {
+	// Local emoji are queried for
+	// shortcode collision detection
+	const {
+		data: emoji = [],
+		isLoading,
+		error
+	} = useListEmojiQuery({ filter: "domain:local" });
+
+	const emojiCodes = useMemo(() => new Set(emoji.map((e) => e.shortcode)), [emoji]);
+
+	return (
+		<>
+			<h1>Custom Emoji (remote)</h1>
+			{error && <Error error={error} />}
+			{isLoading ? <Loading /> : <StealThisLook emojiCodes={emojiCodes} />}
+		</>
+	);
 }

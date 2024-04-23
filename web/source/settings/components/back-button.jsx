@@ -17,13 +17,11 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const { Link } = require("wouter");
+import React from "react";
+import { Link } from "wouter";
 
-module.exports = function BackButton({ to }) {
+export default function BackButton({ to }) {
 	return (
-		<Link to={to}>
-			<a className="button">&lt; back</a>
-		</Link>
+		<Link className="button" to={to}>&lt; back</Link>
 	);
-};
+}
