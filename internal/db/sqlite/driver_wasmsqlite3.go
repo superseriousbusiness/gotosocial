@@ -28,8 +28,8 @@ import (
 
 	"github.com/ncruces/go-sqlite3"
 	sqlite3driver "github.com/ncruces/go-sqlite3/driver"
-	_ "github.com/ncruces/go-sqlite3/embed" // embed wasm binary
-	_ "github.com/ncruces/go-sqlite3/vfs/memdb"
+	_ "github.com/ncruces/go-sqlite3/embed"     // embed wasm binary
+	_ "github.com/ncruces/go-sqlite3/vfs/memdb" // include memdb vfs
 )
 
 // Driver is our own wrapper around the

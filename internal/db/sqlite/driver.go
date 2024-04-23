@@ -89,7 +89,10 @@ func (c *sqliteConn) Query(query string, args []driver.Value) (driver.Rows, erro
 func (c *sqliteConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
 	rows, err = c.connIface.QueryContext(ctx, query, args)
 	err = processSQLiteError(err)
-	return
+	if err != nil {
+		return nil, err
+	}
+	return &sqliteRows{rows.(rowsIface)}, nil
 }
 
 func (c *sqliteConn) Close() (err error) {
