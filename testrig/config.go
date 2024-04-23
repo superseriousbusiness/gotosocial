@@ -63,7 +63,7 @@ func testDefaults() config.Configuration {
 		DbDatabase:               envStr("GTS_DB_DATABASE", "postgres"),
 		DbTLSMode:                envStr("GTS_DB_TLS_MODE", "disable"),
 		DbTLSCACert:              envStr("GTS_DB_TLS_CA_CERT", ""),
-		DbMaxOpenConnsMultiplier: 1,
+		DbMaxOpenConnsMultiplier: 8,
 		DbSqliteJournalMode:      "WAL",
 		DbSqliteSynchronous:      "NORMAL",
 		DbSqliteCacheSize:        8 * bytesize.MiB,

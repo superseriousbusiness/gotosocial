@@ -355,9 +355,10 @@ func StandardDBTeardown(db db.DB) {
 	if db == nil {
 		return
 	}
+	defer db.Close()
 	for _, m := range testModels {
 		if err := db.DropTable(ctx, m); err != nil {
-			log.Panic(nil, err)
+			log.Error(ctx, err)
 		}
 	}
 }
