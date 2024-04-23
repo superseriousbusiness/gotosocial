@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 # Determine available docker binary
 _docker=$(command -v 'podman') || \
