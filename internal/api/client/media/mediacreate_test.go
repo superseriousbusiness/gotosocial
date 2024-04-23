@@ -38,7 +38,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -77,18 +76,21 @@ type MediaCreateTestSuite struct {
 	TEST INFRASTRUCTURE
 */
 
-func (suite *MediaCreateTestSuite) SetupSuite() {
-	suite.state.Caches.Init()
+func (suite *MediaCreateTestSuite) SetupTest() {
 	testrig.StartNoopWorkers(&suite.state)
 
 	// setup standard items
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.state.DB = suite.db
+	suite.state.Caches.Init()
+
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
+
+	suite.db = testrig.NewTestDB(&suite.state)
+	testrig.StandardDBSetup(suite.db, nil)
+	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 
 	suite.tc = typeutils.NewConverter(&suite.state)
 
@@ -106,21 +108,8 @@ func (suite *MediaCreateTestSuite) SetupSuite() {
 
 	// setup module being tested
 	suite.mediaModule = mediamodule.New(suite.processor)
-}
 
-func (suite *MediaCreateTestSuite) TearDownSuite() {
-	if err := suite.db.Close(); err != nil {
-		log.Panicf(nil, "error closing db connection: %s", err)
-	}
-	testrig.StopWorkers(&suite.state)
-}
-
-func (suite *MediaCreateTestSuite) SetupTest() {
-	suite.state.Caches.Init()
-
-	testrig.StandardDBSetup(suite.db, nil)
-	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
-
+	// setup test data
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -132,6 +121,7 @@ func (suite *MediaCreateTestSuite) SetupTest() {
 func (suite *MediaCreateTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
+	testrig.StopWorkers(&suite.state)
 }
 
 /*
