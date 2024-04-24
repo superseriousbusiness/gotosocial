@@ -57,13 +57,15 @@ type Workers struct {
 	_ nocopy
 }
 
-// Start will start all of the contained
-// worker pools (and global scheduler).
+// StartScheduler starts the job scheduler.
+func (w *Workers) StartScheduler() {
+	tryUntil("starting scheduler", 5, w.Scheduler.Start)
+}
+
+// Start will start contained worker pools.
 func (w *Workers) Start() {
 	// Get currently set GOMAXPROCS.
 	maxprocs := runtime.GOMAXPROCS(0)
-
-	tryUntil("starting scheduler", 5, w.Scheduler.Start)
 
 	tryUntil("start delivery workerpool", 5, func() bool {
 		n := config.GetAdvancedSenderMultiplier()

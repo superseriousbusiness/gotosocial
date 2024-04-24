@@ -198,6 +198,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting list timeline: %s", err)
 	}
 
+	// Start the job scheduler
+	// (this is required for cleaner).
+	state.Workers.StartScheduler()
+
 	// Create a media cleaner
 	// using the given state.
 	cleaner := cleaner.New(&state)
@@ -214,9 +218,16 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		emailSender,
 	)
 
-	// Set state client / federator synchronous processing functions.
+	// Initialize the specialized workers.
+	state.Workers.Client.Init(messages.ClientMsgIndices())
+	state.Workers.Federator.Init(messages.FederatorMsgIndices())
+	state.Workers.Delivery.Init(client)
 	state.Workers.Client.Process = processor.Workers().ProcessFromClientAPI
 	state.Workers.Federator.Process = processor.Workers().ProcessFromFediAPI
+
+	// Initialize workers.
+	state.Workers.Start()
+	defer state.Workers.Stop()
 
 	// Schedule tasks for all existing poll expiries.
 	if err := processor.Polls().ScheduleAll(ctx); err != nil {
