@@ -19,17 +19,14 @@
 
 import React from "react";
 
-import { useActionAccountMutation } from "../../../../lib/query";
-
+import { useActionAccountMutation } from "../../../../lib/query/admin";
 import MutationButton from "../../../../components/form/mutation-button";
-
 import useFormSubmit from "../../../../lib/form/submit";
 import {
 	useValue,
 	useTextInput,
 	useBoolInput,
 } from "../../../../lib/form";
-
 import { Checkbox, TextInput } from "../../../../components/form/inputs";
 import { AdminAccount } from "../../../../lib/types/account";
 

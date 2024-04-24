@@ -42,9 +42,10 @@ import FormWithData from "../../lib/form/form-with-data";
 import FakeProfile from "../../components/fake-profile";
 import MutationButton from "../../components/form/mutation-button";
 
-import { useAccountThemesQuery, useInstanceV1Query } from "../../lib/query";
+import { useAccountThemesQuery } from "../../lib/query/user";
 import { useUpdateCredentialsMutation } from "../../lib/query/user";
 import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
+import { useInstanceV1Query } from "../../lib/query/gts-api";
 
 export default function UserProfile() {
 	return (

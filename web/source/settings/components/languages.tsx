@@ -17,9 +17,18 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-module.exports = {
-	...require("./gts-api"),
-	...require("./oauth"),
-	...require("./user"),
-	...require("./admin")
-};
+import React from "react";
+import { all } from "langs";
+
+const asElements = all().map((l) => {
+	let code = l["1"].toUpperCase();
+	let name = l.name;
+	if (l.name != l.local) {
+		name = `${name} - ${l.local}`;
+	}
+	return <option key={code} value={code}>{name}</option>;
+});
+
+export default function Languages() {
+	return asElements;
+}

@@ -35,10 +35,10 @@
     "wouter": "^3.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.23.0",
-    "@babel/preset-env": "^7.22.20",
-    "@babel/preset-react": "^7.22.15",
-    "@babel/preset-typescript": "^7.23.0",
+    "@babel/core": "^7.24.4",
+    "@babel/preset-env": "^7.24.4",
+    "@babel/preset-react": "^7.24.1",
+    "@babel/preset-typescript": "^7.24.1",
     "@browserify/envify": "^6.0.0",
     "@browserify/uglifyify": "^6.0.0",
     "@joepie91/eslint-config": "^1.1.1",

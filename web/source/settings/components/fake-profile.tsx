@@ -17,9 +17,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-module.exports = function FakeProfile({ avatar, header, display_name, username, role }) {
+export default function FakeProfile({ avatar, header, display_name, username, role }) {
 	return ( // Keep in sync with web/template/profile.tmpl
 		<div className="profile">
 			<div className="profile-header">
@@ -49,4 +49,4 @@ module.exports = function FakeProfile({ avatar, header, display_name, username, 
 			</div>
 		</div>
 	);
-};
+}

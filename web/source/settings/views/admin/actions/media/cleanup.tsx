@@ -19,10 +19,10 @@
 
 import React from "react";
 
-import { useMediaCleanupMutation } from "../../../../lib/query";
 import { useTextInput } from "../../../../lib/form";
 import { TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
+import { useMediaCleanupMutation } from "../../../../lib/query/admin";
 
 export default function Cleanup({}) {
 	const daysField = useTextInput("days", { defaultValue: "30" });

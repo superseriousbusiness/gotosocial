@@ -26,7 +26,7 @@ import { CategorySelect } from '../category-select';
 import FakeToot from "../../../../components/fake-toot";
 import MutationButton from "../../../../components/form/mutation-button";
 import { useAddEmojiMutation } from "../../../../lib/query/admin/custom-emoji";
-import { useInstanceV1Query } from "../../../../lib/query";
+import { useInstanceV1Query } from "../../../../lib/query/gts-api";
 
 export default function NewEmojiForm() {
 	const shortcode = useShortcode();

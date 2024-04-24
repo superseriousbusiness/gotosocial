@@ -18,26 +18,35 @@
 */
 
 import { MenuItem } from "../../lib/navigation/menu";
-import React from "react";
-import { BaseUrlContext, useBaseUrl } from "../../lib/navigation/util";
-import { Route, Router, Switch } from "wouter";
-import EmojiDetail from "./emoji/local/detail";
-import { EmojiOverview } from "./emoji/local/overview";
-import RemoteEmoji from "./emoji/remote";
-import InstanceSettings from "./settings";
-import { InstanceRuleDetail, InstanceRules } from "./settings/rules";
-import Media from "./actions/media";
-import Keys from "./actions/keys";
+import React, { Suspense, lazy } from "react";
+import { BaseUrlContext, useBaseUrl, useHasPermission } from "../../lib/navigation/util";
+import { Redirect, Route, Router, Switch } from "wouter";
+import Loading from "../../components/loading";
+import { ErrorBoundary } from "../../lib/navigation/error";
 
 /*
 	EXPORTED COMPONENTS
 */
 
 /**
- * Admininistration menu. Admin actions,
- * emoji import, instance settings.
+ * - /settings/admin/instance-settings
+ * - /settings/admin/instance-rules
+ * - /settings/admin/instance-rules/:ruleId
+ * - /settings/admin/emojis
+ * - /settings/admin/emojis/local
+ * - /settings/admin/emojis/local/:emojiId
+ * - /settings/admin/emojis/remote
+ * - /settings/admin/actions
+ * - /settings/admin/actions/media
+ * - /settings/admin/actions/keys
  */
 export function AdminMenu() {
+	// Don't route if logged-in user
+	// doesn't have permissions to access.
+	if (!useHasPermission(["admin"])) {
+		return null;
+	}
+	
 	return (
 		<MenuItem
 			name="Administration"
@@ -62,20 +71,39 @@ export function AdminMenu() {
 }
 
 /**
- * Admininistration router. Admin actions,
- * emoji import, instance settings.
+ * - /settings/admin/instance-settings
+ * - /settings/admin/instance-rules
+ * - /settings/admin/instance-rules/:ruleId
+ * - /settings/admin/emojis
+ * - /settings/admin/emojis/local
+ * - /settings/admin/emojis/local/:emojiId
+ * - /settings/admin/emojis/remote
+ * - /settings/admin/actions
+ * - /settings/admin/actions/media
+ * - /settings/admin/actions/keys
  */
 export function AdminRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/admin";
 	const absBase = parentUrl + thisBase;
 	
+	const InstanceSettings = lazy(() => import('./settings/settings'));
+	const InstanceRules = lazy(() => import("./settings/rules"));
+	const InstanceRuleDetail = lazy(() => import('./settings/ruledetail'));
+
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<Route path="/instance-settings" component={InstanceSettings}/>
-				<Route path="/instance-rules" component={InstanceRules} />
-				<Route path="/instance-rules/:ruleId" component={InstanceRuleDetail} />
+				<ErrorBoundary>
+					<Suspense fallback={<Loading/>}>
+						<Switch>
+							<Route path="/instance-settings" component={InstanceSettings}/>
+							<Route path="/instance-rules" component={InstanceRules} />
+							<Route path="/instance-rules/:ruleId" component={InstanceRuleDetail} />
+							<Route><Redirect to="/instance-settings" /></Route>
+						</Switch>
+					</Suspense>
+				</ErrorBoundary>
 				<AdminEmojisRouter />
 				<AdminActionsRouter />
 			</Router>
@@ -139,38 +167,64 @@ function AdminEmojisMenu() {
 	ROUTERS
 */
 
+/**
+ * - /settings/admin/emojis
+ * - /settings/admin/emojis/local
+ * - /settings/admin/emojis/local/:emojiId
+ * - /settings/admin/emojis/remote
+ */
 function AdminEmojisRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/emojis";
 	const absBase = parentUrl + thisBase;
 
+	const EmojiOverview = lazy(() => import('./emoji/local/overview'));
+	const EmojiDetail = lazy(() => import('./emoji/local/detail'));
+	const RemoteEmoji = lazy(() => import('./emoji/remote'));
+
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<Switch>
-					<Route path="/local/:emojiId" component={EmojiDetail} />
-					<Route path="/local" component={EmojiOverview} />
-					<Route path="/remote" component={RemoteEmoji} />
-					<Route component={EmojiOverview}/>
-				</Switch>
+				<ErrorBoundary>
+					<Suspense fallback={<Loading/>}>
+						<Switch>
+							<Route path="/local" component={EmojiOverview} />
+							<Route path="/local/:emojiId" component={EmojiDetail} />
+							<Route path="/remote" component={RemoteEmoji} />
+							<Route><Redirect to="/local" /></Route>
+						</Switch>
+					</Suspense>
+				</ErrorBoundary>
 			</Router>
 		</BaseUrlContext.Provider>
 	);
 }
 
+/**
+ * - /settings/admin/actions
+ * - /settings/admin/actions/media
+ * - /settings/admin/actions/keys
+ */
 function AdminActionsRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/actions";
 	const absBase = parentUrl + thisBase;
 
+	const Media = lazy(() => import('./actions/media'));
+	const Keys = lazy(() => import('./actions/keys'));
+
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<Switch>
-					<Route path="/media" component={Media} />
-					<Route path="/keys" component={Keys} />
-					<Route component={Media}/>
-				</Switch>
+				<ErrorBoundary>
+					<Suspense fallback={<Loading/>}>
+						<Switch>
+							<Route path="/media" component={Media} />
+							<Route path="/keys" component={Keys} />
+							<Route><Redirect to="/media" /></Route>
+						</Switch>
+					</Suspense>
+				</ErrorBoundary>
 			</Router>
 		</BaseUrlContext.Provider>
 	);

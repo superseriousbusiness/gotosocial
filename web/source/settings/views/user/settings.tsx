@@ -18,18 +18,19 @@
 */
 
 import React from "react";
-import query from "../../lib/query";
 import { useTextInput, useBoolInput } from "../../lib/form";
 import useFormSubmit from "../../lib/form/submit";
 import { Select, TextInput, Checkbox } from "../../components/form/inputs";
 import FormWithData from "../../lib/form/form-with-data";
 import Languages from "../../components/languages";
 import MutationButton from "../../components/form/mutation-button";
+import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
+import { usePasswordChangeMutation, useUpdateCredentialsMutation } from "../../lib/query/user";
 
 export default function UserSettings() {
 	return (
 		<FormWithData
-			dataQuery={query.useVerifyCredentialsQuery}
+			dataQuery={useVerifyCredentialsQuery}
 			DataForm={UserSettingsForm}
 		/>
 	);
@@ -50,7 +51,7 @@ function UserSettingsForm({ data }) {
 		statusContentType: useTextInput("source[status_content_type]", { source: data, defaultValue: "text/plain" }),
 	};
 
-	const [submitForm, result] = useFormSubmit(form, query.useUpdateCredentialsMutation());
+	const [submitForm, result] = useFormSubmit(form, useUpdateCredentialsMutation());
 
 	return (
 		<>
@@ -123,7 +124,7 @@ function PasswordChange() {
 		}
 	});
 
-	const [submitForm, result] = useFormSubmit(form, query.usePasswordChangeMutation());
+	const [submitForm, result] = useFormSubmit(form, usePasswordChangeMutation());
 
 	return (
 		<form className="change-password" onSubmit={submitForm}>

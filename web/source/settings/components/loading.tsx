@@ -17,10 +17,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
-module.exports = function Loading() {
+export default function Loading() {
 	return (
 		<i className="fa fa-spin fa-refresh loading-icon" aria-label="Loading" title="Loading" />
 	);
-};
+}

@@ -19,9 +19,7 @@
 
 import React from "react";
 import { Link } from "wouter";
-
 import FormWithData from "../../../lib/form/form-with-data";
-
 import Username from "./username";
 import { useListReportsQuery } from "../../../lib/query/admin/reports";
 

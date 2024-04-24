@@ -19,18 +19,14 @@
 
 import React from "react";
 import { useLocation } from "wouter";
-
-import { useHandleSignupMutation } from "../../../../lib/query";
-
+import { useHandleSignupMutation } from "../../../../lib/query/admin";
 import MutationButton from "../../../../components/form/mutation-button";
-
 import useFormSubmit from "../../../../lib/form/submit";
 import {
 	useValue,
 	useTextInput,
 	useBoolInput,
 } from "../../../../lib/form";
-
 import { Checkbox, Select, TextInput } from "../../../../components/form/inputs";
 import { AdminAccount } from "../../../../lib/types/account";
 

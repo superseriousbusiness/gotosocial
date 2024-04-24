@@ -18,17 +18,13 @@
 */
 
 import { MenuItem } from "../../lib/navigation/menu";
-import React from "react";
-import { BaseUrlContext, useBaseUrl } from "../../lib/navigation/util";
+import React, { lazy, Suspense } from "react";
+import { BaseUrlContext, useBaseUrl, useHasPermission } from "../../lib/navigation/util";
 import { Redirect, Route, Router, Switch } from "wouter";
-import AccountsOverview from "./accounts";
-import AccountsPending from "./accounts/pending";
-import AccountDetail from "./accounts/detail";
 import { ReportOverview } from "./reports/overview";
-import DomainPermissionsOverview from "./domain-permissions/overview";
-import DomainPermDetail from "./domain-permissions/detail";
-import ImportExport from "./domain-permissions/import-export";
 import ReportDetail from "./reports/detail";
+import { ErrorBoundary } from "../../lib/navigation/error";
+import Loading from "../../components/loading";
 
 /*
 	EXPORTED COMPONENTS
@@ -61,7 +57,13 @@ export function ModerationRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/moderation";
 	const absBase = parentUrl + thisBase;
-	
+
+	// Don't route if logged-in user
+	// doesn't have permissions to access.
+	if (!useHasPermission(["moderator"])) {
+		return null;
+	}
+
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
@@ -161,40 +163,65 @@ function ModerationReportsRouter() {
 	);
 }
 
+/**
+ * - /settings/moderation/accounts/overview
+ * - /settings/moderation/accounts/pending
+ * - /settings/moderation/accounts/:accountID
+ */
 function ModerationAccountsRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/accounts";
 	const absBase = parentUrl + thisBase;
 	
+	const AccountsOverview = lazy(() => import('./accounts'));
+	const AccountsPending = lazy(() => import('./accounts/pending'));
+	const AccountDetail = lazy(() => import('./accounts/detail'));
+
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<Switch>
-					<Route path="/overview" component={AccountsOverview}/>
-					<Route path="/pending" component={AccountsPending}/>
-					<Route path="/:accountID" component={AccountDetail}/>
-					<Route><Redirect to="/overview"/></Route>
-				</Switch>
+				<ErrorBoundary>
+					<Switch>
+						<Route path="/overview" component={AccountsOverview}/>
+						<Route path="/pending" component={AccountsPending}/>
+						<Route path="/:accountID" component={AccountDetail}/>
+						<Route><Redirect to="/overview"/></Route>
+					</Switch>
+				</ErrorBoundary>
 			</Router>
 		</BaseUrlContext.Provider>
 	);
 }
 
+/**
+ * - /settings/moderation/domain-permissions/:permType
+ * - /settings/moderation/domain-permissions/:permType/:domain
+ * - /settings/moderation/domain-permissions/import-export
+ * - /settings/moderation/domain-permissions/process
+ */
 function ModerationDomainPermsRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/domain-permissions";
 	const absBase = parentUrl + thisBase;
-	
+
+	const DomainPermissionsOverview = lazy(() => import('./domain-permissions/overview'));
+	const DomainPermDetail = lazy(() => import('./domain-permissions/detail'));
+	const ImportExport = lazy(() => import('./domain-permissions/import-export'));
+
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<Switch>
-					<Route path="/import-export" component={ImportExport} />
-					<Route path="/process" component={ImportExport} />
-					<Route path="/:permType/:domain" component={DomainPermDetail} />
-					<Route path="/:permType" component={DomainPermissionsOverview} />
-					<Route><Redirect to="/blocks"/></Route>
-				</Switch>
+				<ErrorBoundary>
+					<Suspense fallback={<Loading/>}>
+						<Switch>
+							<Route path="/:permType" component={DomainPermissionsOverview} />
+							<Route path="/:permType/:domain" component={DomainPermDetail} />
+							<Route path="/import-export" component={ImportExport} />
+							<Route path="/process" component={ImportExport} />
+							<Route><Redirect to="/blocks"/></Route>
+						</Switch>
+					</Suspense>
+				</ErrorBoundary>
 			</Router>
 		</BaseUrlContext.Provider>
 	);
