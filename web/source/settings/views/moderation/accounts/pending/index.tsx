@@ -17,41 +17,24 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-export interface CustomEmoji {
-	id?: string;
-	shortcode: string;
-	url: string;
-	static_url: string;
-	visible_in_picker: boolean;
-	category?: string;
-	disabled: boolean;
-	updated_at: string;
-	total_file_size: number;
-	content_type: string;
-	uri: string;
-}
+import React from "react";
+import { useSearchAccountsQuery } from "../../../../lib/query";
+import { AccountList } from "../../../../components/account-list";
 
-/**
- * Query parameters for GET to /api/v1/admin/custom_emojis.
- */
-export interface ListEmojiParams {
+export default function AccountsPending() {
+	const searchRes = useSearchAccountsQuery({status: "pending"});
 
-}
-
-/**
- * Result of searchItemForEmoji mutation.
- */
-export interface EmojisFromItem {
-	/**
-	 * Type of the search item result.
-	 */
-	type: "statuses" | "accounts";
-	/**
-	 * Domain of the returned emojis.
-	 */
-	domain: string;
-	/**
-	 * Discovered emojis.
-	 */
-	list: CustomEmoji[];
+	return (
+		<div className="accounts-view">
+			<h1>Pending Accounts</h1>
+			<AccountList
+				isLoading={searchRes.isLoading}
+				isSuccess={searchRes.isSuccess}
+				data={searchRes.data}
+				isError={searchRes.isError}
+				error={searchRes.error}
+				emptyMessage="No pending account sign-ups."
+			/>
+		</div>
+	);
 }

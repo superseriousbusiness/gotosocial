@@ -13,7 +13,6 @@
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.6",
     "ariakit": "^2.0.0-next.41",
-    "bluebird": "^3.7.2",
     "get-by-dot": "^1.0.2",
     "is-valid-domain": "^0.1.6",
     "js-file-download": "^0.4.12",
@@ -33,9 +32,7 @@
     "redux": "^4.2.0",
     "redux-persist": "^6.0.0",
     "skulk": "^0.0.8-fix",
-    "split-filter-n": "^1.1.3",
-    "syncpipe": "^1.0.0",
-    "wouter": "^2.8.0-alpha.2"
+    "wouter": "^3.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.0",
@@ -45,14 +42,13 @@
     "@browserify/envify": "^6.0.0",
     "@browserify/uglifyify": "^6.0.0",
     "@joepie91/eslint-config": "^1.1.1",
-    "@types/bluebird": "^3.5.39",
     "@types/is-valid-domain": "^0.0.2",
     "@types/papaparse": "^5.3.9",
     "@types/psl": "^1.1.1",
     "@types/react-dom": "^18.2.8",
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
-    "autoprefixer": "^10.4.13",
+    "autoprefixer": "^10.4.19",
     "babelify": "^10.0.0",
     "css-extract": "^2.0.0",
     "eslint": "^8.26.0",

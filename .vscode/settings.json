@@ -10,5 +10,14 @@
 	},
 	"eslint.workingDirectories": ["web/source"],
 	"eslint.lintTask.enable": true,
-	"eslint.lintTask.options": "${workspaceFolder}/web/source"
+	"eslint.lintTask.options": "${workspaceFolder}/web/source",
+	"eslint.validate": [
+		"javascript",
+		"javascriptreact",
+		"typescript",
+		"typescriptreact"
+	],
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit"
+	}
 }

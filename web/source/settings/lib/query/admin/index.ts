@@ -21,6 +21,7 @@ import { replaceCacheOnMutation, removeFromCacheOnMutation } from "../query-modi
 import { gtsApi } from "../gts-api";
 import { listToKeyedObject } from "../transforms";
 import { AdminAccount, HandleSignupParams, SearchAccountParams } from "../../types/account";
+import { InstanceRule, MappedRules } from "../../types/rules";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -120,14 +121,14 @@ const extended = gtsApi.injectEndpoints({
 			],
 		}),
 
-		instanceRules: build.query({
+		instanceRules: build.query<MappedRules, void>({
 			query: () => ({
 				url: `/api/v1/admin/instance/rules`
 			}),
-			transformResponse: listToKeyedObject<any>("id")
+			transformResponse: listToKeyedObject<InstanceRule>("id")
 		}),
 
-		addInstanceRule: build.mutation({
+		addInstanceRule: build.mutation<MappedRules, any>({
 			query: (formData) => ({
 				method: "POST",
 				url: `/api/v1/admin/instance/rules`,
@@ -135,11 +136,7 @@ const extended = gtsApi.injectEndpoints({
 				body: formData,
 				discardEmpty: true
 			}),
-			transformResponse: (data) => {
-				return {
-					[data.id]: data
-				};
-			},
+			transformResponse: listToKeyedObject<InstanceRule>("id"),
 			...replaceCacheOnMutation("instanceRules"),
 		}),
 

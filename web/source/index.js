@@ -78,7 +78,7 @@ skulk({
 				// commonjs here, no need for the typescript preset.
 				["babelify", {
 					global: true,
-					ignore: [/node_modules\/(?!nanoid)/],
+					ignore: [/node_modules\/(?!(nanoid)|(wouter))/],
 				}]
 			],
 			presets: [
