@@ -4,7 +4,7 @@ go 1.22
 
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.8-concurrency-workaround
 
-toolchain go1.22.2
+toolchain go1.21.3
 
 require (
 	codeberg.org/gruf/go-bytes v1.0.2
