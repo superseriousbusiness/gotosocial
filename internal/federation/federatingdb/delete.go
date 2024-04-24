@@ -101,24 +101,6 @@ func (f *federatingDB) deleteAccount(
 		}
 
 		log.Debugf(ctx, "deleting account: %s", account.URI)
-
-		// Drop any outgoing queued AP requests to / from / targeting
-		// this account, (stops queued likes, boosts, creates etc).
-		f.state.Workers.Delivery.Queue.Delete("ObjectID", account.URI)
-		f.state.Workers.Delivery.Queue.Delete("TargetID", account.URI)
-
-		// Drop any incoming queued client messages to / from this
-		// account, (stops processing of local origin data for acccount).
-		f.state.Workers.Client.Queue.Delete("Target.ID", account.ID)
-		f.state.Workers.Client.Queue.Delete("TargetURI", account.URI)
-
-		// Drop any incoming queued federator messages to this account,
-		// (stops processing of remote origin data targeting this account).
-		f.state.Workers.Federator.Queue.Delete("Requesting.ID", account.ID)
-		f.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
-
-		// Only AFTER we have finished purging queues do we enqueue,
-		// otherwise we risk purging our own delete message from queue!
 		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 			APObjectType:   ap.ObjectProfile,
 			APActivityType: ap.ActivityDelete,
@@ -154,22 +136,6 @@ func (f *federatingDB) deleteStatus(
 		}
 
 		log.Debugf(ctx, "deleting status: %s", status.URI)
-
-		// Drop any outgoing queued AP requests about / targeting
-		// this status, (stops queued likes, boosts, creates etc).
-		f.state.Workers.Delivery.Queue.Delete("ObjectID", status.URI)
-		f.state.Workers.Delivery.Queue.Delete("TargetID", status.URI)
-
-		// Drop any incoming queued client messages about / targeting
-		// status, (stops processing of local origin data for status).
-		f.state.Workers.Client.Queue.Delete("TargetURI", status.URI)
-
-		// Drop any incoming queued federator messages targeting status,
-		// (stops processing of remote origin data targeting this status).
-		f.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
-
-		// Only AFTER we have finished purging queues do we enqueue,
-		// otherwise we risk purging our own delete message from queue!
 		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityDelete,

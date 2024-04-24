@@ -96,23 +96,6 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 		return err
 	}
 
-	// Drop any outgoing queued AP requests to / from / targeting
-	// this account, (stops queued likes, boosts, creates etc).
-	f.state.Workers.Delivery.Queue.Delete("ActorID", account.URI)
-	f.state.Workers.Delivery.Queue.Delete("ObjectID", account.URI)
-	f.state.Workers.Delivery.Queue.Delete("TargetID", account.URI)
-
-	// Drop any incoming queued client messages to / from this
-	// account, (stops processing of local origin data for acccount).
-	f.state.Workers.Client.Queue.Delete("Origin.ID", account.ID)
-	f.state.Workers.Client.Queue.Delete("Target.ID", account.ID)
-	f.state.Workers.Client.Queue.Delete("TargetURI", account.URI)
-
-	// Drop any incoming queued federator messages to this account,
-	// (stops processing of remote origin data targeting this account).
-	f.state.Workers.Federator.Queue.Delete("Receiving.ID", account.ID)
-	f.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
-
 	// Create a new delete.
 	// todo: tc.AccountToASDelete
 	delete := streams.NewActivityStreamsDelete()
@@ -243,24 +226,6 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 	outboxIRI, err := parseURI(status.Account.OutboxURI)
 	if err != nil {
 		return err
-	}
-
-	// Drop any outgoing queued AP requests about / targeting
-	// this status, (stops queued likes, boosts, creates etc).
-	f.state.Workers.Delivery.Queue.Delete("ObjectID", status.URI)
-	f.state.Workers.Delivery.Queue.Delete("TargetID", status.URI)
-
-	// Drop any incoming queued client messages about / targeting
-	// status, (stops processing of local origin data for status).
-	f.state.Workers.Client.Queue.Delete("TargetURI", status.URI)
-
-	// Drop any incoming queued federator messages targeting status,
-	// (stops processing of remote origin data targeting this status).
-	f.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
-
-	// Ensure the status model is fully populated.
-	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("error populating status: %w", err)
 	}
 
 	// Wrap the status URI in a Delete activity.
