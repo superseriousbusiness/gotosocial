@@ -181,12 +181,14 @@ function ModerationAccountsRouter() {
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
 				<ErrorBoundary>
-					<Switch>
-						<Route path="/overview" component={AccountsOverview}/>
-						<Route path="/pending" component={AccountsPending}/>
-						<Route path="/:accountID" component={AccountDetail}/>
-						<Route><Redirect to="/overview"/></Route>
-					</Switch>
+					<Suspense fallback={<Loading/>}>
+						<Switch>
+							<Route path="/overview" component={AccountsOverview}/>
+							<Route path="/pending" component={AccountsPending}/>
+							<Route path="/:accountID" component={AccountDetail}/>
+							<Route><Redirect to="/overview"/></Route>
+						</Switch>
+					</Suspense>
 				</ErrorBoundary>
 			</Router>
 		</BaseUrlContext.Provider>
@@ -214,10 +216,10 @@ function ModerationDomainPermsRouter() {
 				<ErrorBoundary>
 					<Suspense fallback={<Loading/>}>
 						<Switch>
-							<Route path="/:permType" component={DomainPermissionsOverview} />
-							<Route path="/:permType/:domain" component={DomainPermDetail} />
 							<Route path="/import-export" component={ImportExport} />
 							<Route path="/process" component={ImportExport} />
+							<Route path="/:permType" component={DomainPermissionsOverview} />
+							<Route path="/:permType/:domain" component={DomainPermDetail} />
 							<Route><Redirect to="/blocks"/></Route>
 						</Switch>
 					</Suspense>

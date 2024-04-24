@@ -46,7 +46,7 @@ export default function InstanceRuleDetail() {
 
 	return (
 		<>
-			<BackButton to={`~${baseUrl}/instance-rules`} />
+			<BackButton to={`~${baseUrl}/rules`} />
 			<EditInstanceRuleForm rule={rules[params.ruleId]} />
 		</>
 	);
@@ -65,7 +65,7 @@ function EditInstanceRuleForm({ rule }) {
 
 	if (result.isSuccess || deleteResult.isSuccess) {
 		return (
-			<Redirect to={`~${baseUrl}/instance-rules`} />
+			<Redirect to={`~${baseUrl}/rules`} />
 		);
 	}
 

@@ -29,9 +29,9 @@ import { ErrorBoundary } from "../../lib/navigation/error";
 */
 
 /**
- * - /settings/admin/instance-settings
- * - /settings/admin/instance-rules
- * - /settings/admin/instance-rules/:ruleId
+ * - /settings/admin/instance/settings
+ * - /settings/admin/instance/rules
+ * - /settings/admin/instance/rules/:ruleId
  * - /settings/admin/emojis
  * - /settings/admin/emojis/local
  * - /settings/admin/emojis/local/:emojiId
@@ -54,16 +54,7 @@ export function AdminMenu() {
 			defaultChild="actions"
 			permissions={["admin"]}
 		>
-			<MenuItem
-				name="Instance Settings"
-				itemUrl="instance-settings"
-				icon="fa-sliders"
-			/>
-			<MenuItem
-				name="Instance Rules"
-				itemUrl="instance-rules"
-				icon="fa-dot-circle-o"
-			/>
+			<AdminInstanceMenu />
 			<AdminEmojisMenu />
 			<AdminActionsMenu />
 		</MenuItem>
@@ -71,9 +62,9 @@ export function AdminMenu() {
 }
 
 /**
- * - /settings/admin/instance-settings
- * - /settings/admin/instance-rules
- * - /settings/admin/instance-rules/:ruleId
+ * - /settings/instance/settings
+ * - /settings/instance/rules
+ * - /settings/instance/rules/:ruleId
  * - /settings/admin/emojis
  * - /settings/admin/emojis/local
  * - /settings/admin/emojis/local/:emojiId
@@ -86,24 +77,11 @@ export function AdminRouter() {
 	const parentUrl = useBaseUrl();
 	const thisBase = "/admin";
 	const absBase = parentUrl + thisBase;
-	
-	const InstanceSettings = lazy(() => import('./settings/settings'));
-	const InstanceRules = lazy(() => import("./settings/rules"));
-	const InstanceRuleDetail = lazy(() => import('./settings/ruledetail'));
 
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<ErrorBoundary>
-					<Suspense fallback={<Loading/>}>
-						<Switch>
-							<Route path="/instance-settings" component={InstanceSettings}/>
-							<Route path="/instance-rules" component={InstanceRules} />
-							<Route path="/instance-rules/:ruleId" component={InstanceRuleDetail} />
-							<Route><Redirect to="/instance-settings" /></Route>
-						</Switch>
-					</Suspense>
-				</ErrorBoundary>
+				<AdminInstanceRouter />
 				<AdminEmojisRouter />
 				<AdminActionsRouter />
 			</Router>
@@ -118,6 +96,28 @@ export function AdminRouter() {
 /*
 	MENUS
 */
+
+function AdminInstanceMenu() {
+	return (
+		<MenuItem
+			name="Instance"
+			itemUrl="instance"
+			defaultChild="settings"
+			icon="fa-sitemap"
+		>
+			<MenuItem
+				name="Settings"
+				itemUrl="settings"
+				icon="fa-sliders"
+			/>
+			<MenuItem
+				name="Rules"
+				itemUrl="rules"
+				icon="fa-dot-circle-o"
+			/>
+		</MenuItem>
+	);
+}
 
 function AdminActionsMenu() {
 	return (
@@ -222,6 +222,38 @@ function AdminActionsRouter() {
 							<Route path="/media" component={Media} />
 							<Route path="/keys" component={Keys} />
 							<Route><Redirect to="/media" /></Route>
+						</Switch>
+					</Suspense>
+				</ErrorBoundary>
+			</Router>
+		</BaseUrlContext.Provider>
+	);
+}
+
+/**
+ * - /settings/instance/settings
+ * - /settings/instance/rules
+ * - /settings/instance/rules/:ruleId
+ */
+function AdminInstanceRouter() {
+	const parentUrl = useBaseUrl();
+	const thisBase = "/instance";
+	const absBase = parentUrl + thisBase;
+
+	const InstanceSettings = lazy(() => import('./instance/settings'));
+	const InstanceRules = lazy(() => import("./instance/rules"));
+	const InstanceRuleDetail = lazy(() => import('./instance/ruledetail'));
+
+	return (
+		<BaseUrlContext.Provider value={absBase}>
+			<Router base={thisBase}>
+				<ErrorBoundary>
+					<Suspense fallback={<Loading/>}>
+						<Switch>
+							<Route path="/settings" component={InstanceSettings}/>
+							<Route path="/rules" component={InstanceRules} />
+							<Route path="/rules/:ruleId" component={InstanceRuleDetail} />
+							<Route><Redirect to="/settings" /></Route>
 						</Switch>
 					</Suspense>
 				</ErrorBoundary>

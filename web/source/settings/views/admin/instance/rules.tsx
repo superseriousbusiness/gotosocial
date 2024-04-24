@@ -53,7 +53,7 @@ function InstanceRulesForm({ data: rules }: { data: MappedRules }) {
 		<form onSubmit={submitForm} className="new-rule">
 			<ol className="instance-rules">
 				{Object.values(rules).map((rule: InstanceRule) => (
-					<Link key={"link-"+rule.id} className="rule" to={`~${baseUrl}/instance-rules/${rule.id}`}>
+					<Link key={"link-"+rule.id} className="rule" to={`~${baseUrl}/rules/${rule.id}`}>
 						<li key={rule.id}>
 							<h2>{rule.text} <i className="fa fa-pencil edit-icon" /></h2>
 						</li>

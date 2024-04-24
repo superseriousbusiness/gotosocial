@@ -18,17 +18,16 @@
 */
 
 import { MenuItem } from "../../lib/navigation/menu";
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { BaseUrlContext, useBaseUrl } from "../../lib/navigation/util";
-import UserProfile from "./profile";
-import UserSettings from "./settings";
-import UserMigration from "./migration";
 import { Redirect, Route, Router, Switch } from "wouter";
+import { ErrorBoundary } from "../../lib/navigation/error";
+import Loading from "../../components/loading";
 
 /**
- * 
- * Basic user menu. Profile + accounts 
- * settings, post settings, migration.
+ * - /settings/user/profile
+ * - /settings/user/settings
+ * - /settings/user/migration
  */
 export function UserMenu() {	
 	return (
@@ -59,21 +58,33 @@ export function UserMenu() {
 	);
 }
 
+/**
+ * - /settings/user/profile
+ * - /settings/user/settings
+ * - /settings/user/migration
+ */
 export function UserRouter() {
 	const baseUrl = useBaseUrl();
 	const thisBase = "/user";
 	const absBase = baseUrl + thisBase;
 
+	const UserProfile = lazy(() => import('./profile'));
+	const UserSettings = lazy(() => import('./settings'));
+	const UserMigration = lazy(() => import('./migration'));
+
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<Switch>
-					<Route path="/profile" component={UserProfile} />
-					<Route path="/settings" component={UserSettings} />
-					<Route path="/migration" component={UserMigration} />
-					{/* Fallback component */}
-					<Route><Redirect to="/profile" /></Route>
-				</Switch>
+				<ErrorBoundary>
+					<Suspense fallback={<Loading/>}>
+						<Switch>
+							<Route path="/profile" component={UserProfile} />
+							<Route path="/settings" component={UserSettings} />
+							<Route path="/migration" component={UserMigration} />
+							<Route><Redirect to="/profile" /></Route>
+						</Switch>
+					</Suspense>
+				</ErrorBoundary>
 			</Router>
 		</BaseUrlContext.Provider>
 	);
