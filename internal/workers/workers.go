@@ -37,16 +37,20 @@ type Workers struct {
 	// indexed queue of Delivery{} objects.
 	Delivery delivery.WorkerPool
 
-	// Client ...
+	// Client provides a worker pool that handles
+	// incoming processing jobs from the client API.
 	Client MsgWorkerPool[*messages.FromClientAPI]
 
-	// Federator ...
+	// Federator provides a worker pool that handles
+	// incoming processing jobs from the fedi API.
 	Federator MsgWorkerPool[*messages.FromFediAPI]
 
-	// Dereferencer worker pools.
+	// Dereference provides a worker pool
+	// for asynchronous dereferencer jobs.
 	Dereference FnWorkerPool
 
-	// Media manager worker pools.
+	// Media provides a worker pool for
+	// asynchronous media processing jobs.
 	Media FnWorkerPool
 
 	// prevent pass-by-value.

@@ -49,6 +49,7 @@ func StartNoopWorkers(state *state.State) {
 	_ = state.Workers.Scheduler.Start()
 	_ = state.Workers.Client.Start(1)
 	_ = state.Workers.Federator.Start(1)
+	_ = state.Workers.Dereference.Start(1)
 	_ = state.Workers.Media.Start(1)
 }
 
@@ -65,6 +66,7 @@ func StartWorkers(state *state.State, processor *workers.Processor) {
 	_ = state.Workers.Scheduler.Start()
 	_ = state.Workers.Client.Start(1)
 	_ = state.Workers.Federator.Start(1)
+	_ = state.Workers.Dereference.Start(1)
 	_ = state.Workers.Media.Start(1)
 }
 
@@ -72,6 +74,7 @@ func StopWorkers(state *state.State) {
 	_ = state.Workers.Scheduler.Stop()
 	_ = state.Workers.Client.Stop()
 	_ = state.Workers.Federator.Stop()
+	_ = state.Workers.Dereference.Stop()
 	_ = state.Workers.Media.Stop()
 }
 
