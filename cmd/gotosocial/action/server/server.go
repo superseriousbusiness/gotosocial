@@ -129,27 +129,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
 
-	// Initialize delivery worker with http client.
-	state.Workers.Client.Init(messages.ClientMsgIndices())
-	state.Workers.Federator.Init(messages.FederatorMsgIndices())
-	state.Workers.Delivery.Init(client)
-
-	// Initialize workers.
-	state.Workers.Start()
-	defer state.Workers.Stop()
-
-	// Add a task to the scheduler to sweep caches.
-	// Frequency = 1 * minute
-	// Threshold = 60% capacity
-	_ = state.Workers.Scheduler.AddRecurring(
-		"@cachesweep", // id
-		time.Time{},   // start
-		time.Minute,   // freq
-		func(context.Context, time.Time) {
-			state.Caches.Sweep(60)
-		},
-	)
-
 	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(&state)
 	oauthServer := oauth.New(ctx, dbService)
@@ -202,8 +181,19 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// (this is required for cleaner).
 	state.Workers.StartScheduler()
 
-	// Create a media cleaner
-	// using the given state.
+	// Add a task to the scheduler to sweep caches.
+	// Frequency = 1 * minute
+	// Threshold = 60% capacity
+	_ = state.Workers.Scheduler.AddRecurring(
+		"@cachesweep", // id
+		time.Time{},   // start
+		time.Minute,   // freq
+		func(context.Context, time.Time) {
+			state.Caches.Sweep(60)
+		},
+	)
+
+	// Create background cleaner.
 	cleaner := cleaner.New(&state)
 
 	// Create the processor using all the
