@@ -19,10 +19,13 @@ package federatingdb
 
 import (
 	"context"
+	"errors"
 	"net/url"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
@@ -34,43 +37,149 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"id", id},
-		}...)
-	l.Debug("entering Delete")
-
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
 		return nil // Already processed.
 	}
 
-	requestingAcct := activityContext.requestingAcct
-	receivingAcct := activityContext.receivingAcct
+	// Extract receiving / requesting accounts.
+	requesting := activityContext.requestingAcct
+	receiving := activityContext.receivingAcct
 
-	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
-	// so we have to try a few different things...
-	if s, err := f.state.DB.GetStatusByURI(ctx, id.String()); err == nil && requestingAcct.ID == s.AccountID {
-		l.Debugf("deleting status: %s", s.ID)
-		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-			APObjectType:   ap.ObjectNote,
-			APActivityType: ap.ActivityDelete,
-			GTSModel:       s,
-			Receiving:      receivingAcct,
-			Requesting:     requestingAcct,
-		})
+	// Serialize ID URI.
+	uriStr := id.String()
+
+	var (
+		ok  bool
+		err error
+	)
+
+	// Attempt to delete account.
+	ok, err = f.deleteAccount(ctx,
+		requesting,
+		receiving,
+		uriStr,
+	)
+	if err != nil || ok { // handles success
+		return err
 	}
 
-	if a, err := f.state.DB.GetAccountByURI(ctx, id.String()); err == nil && requestingAcct.ID == a.ID {
-		l.Debugf("deleting account: %s", a.ID)
+	// Attempt to delete status.
+	ok, err = f.deleteStatus(ctx,
+		requesting,
+		receiving,
+		uriStr,
+	)
+	if err != nil || ok { // handles success
+		return err
+	}
+
+	// Log at warning level, as lots of these could indicate federation
+	// issues between remote and this instance, or help with debugging.
+	log.Warnf(ctx, "received delete for unknown target: %s", uriStr)
+	return nil
+}
+
+func (f *federatingDB) deleteAccount(
+	ctx context.Context,
+	requesting *gtsmodel.Account,
+	receiving *gtsmodel.Account,
+	uri string, // target account
+) (
+	bool, // success?
+	error, // any error
+) {
+	account, err := f.state.DB.GetAccountByURI(ctx, uri)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, gtserror.Newf("error getting account: %w", err)
+	}
+
+	if account != nil {
+		if account.ID != requesting.ID {
+			const text = "signing account does not match delete target"
+			return false, gtserror.NewErrorForbidden(err, text)
+		}
+
+		log.Debugf(ctx, "deleting account: %s", account.URI)
+
+		// Drop any outgoing queued AP requests to / from / targeting
+		// this account, (stops queued likes, boosts, creates etc).
+		f.state.Workers.Delivery.Queue.Delete("ObjectID", account.URI)
+		f.state.Workers.Delivery.Queue.Delete("TargetID", account.URI)
+
+		// Drop any incoming queued client messages to / from this
+		// account, (stops processing of local origin data for acccount).
+		f.state.Workers.Client.Queue.Delete("Target.ID", account.ID)
+		f.state.Workers.Client.Queue.Delete("TargetURI", account.URI)
+
+		// Drop any incoming queued federator messages to this account,
+		// (stops processing of remote origin data targeting this account).
+		f.state.Workers.Federator.Queue.Delete("Requesting.ID", account.ID)
+		f.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
+
+		// Only AFTER we have finished purging queues do we enqueue,
+		// otherwise we risk purging our own delete message from queue!
 		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 			APObjectType:   ap.ObjectProfile,
 			APActivityType: ap.ActivityDelete,
-			GTSModel:       a,
-			Receiving:      receivingAcct,
-			Requesting:     requestingAcct,
+			GTSModel:       account,
+			Receiving:      receiving,
+			Requesting:     requesting,
 		})
+
+		return true, nil
 	}
 
-	return nil
+	return false, nil
+}
+
+func (f *federatingDB) deleteStatus(
+	ctx context.Context,
+	requesting *gtsmodel.Account,
+	receiving *gtsmodel.Account,
+	uri string, // target status
+) (
+	bool, // success?
+	error, // any error
+) {
+	status, err := f.state.DB.GetStatusByURI(ctx, uri)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, gtserror.Newf("error getting status: %w", err)
+	}
+
+	if status != nil {
+		if status.AccountID != requesting.ID {
+			const text = "signing account does not match delete target owner"
+			return false, gtserror.NewErrorForbidden(err, text)
+		}
+
+		log.Debugf(ctx, "deleting status: %s", status.URI)
+
+		// Drop any outgoing queued AP requests about / targeting
+		// this status, (stops queued likes, boosts, creates etc).
+		f.state.Workers.Delivery.Queue.Delete("ObjectID", status.URI)
+		f.state.Workers.Delivery.Queue.Delete("TargetID", status.URI)
+
+		// Drop any incoming queued client messages about / targeting
+		// status, (stops processing of local origin data for status).
+		f.state.Workers.Client.Queue.Delete("TargetURI", status.URI)
+
+		// Drop any incoming queued federator messages targeting status,
+		// (stops processing of remote origin data targeting this status).
+		f.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
+
+		// Only AFTER we have finished purging queues do we enqueue,
+		// otherwise we risk purging our own delete message from queue!
+		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityDelete,
+			GTSModel:       status,
+			Receiving:      receiving,
+			Requesting:     requesting,
+		})
+
+		return true, nil
+	}
+
+	return false, nil
 }

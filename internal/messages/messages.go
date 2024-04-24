@@ -34,15 +34,30 @@ type FromClientAPI struct {
 	// APActivityType ...
 	APActivityType string
 
-	// Optional GTS model of
-	// the Activity or Object.
+	// Optional GTS database model
+	// of the Activity / Object.
 	GTSModel interface{}
 
-	// Origin ...
+	// Targeted object URI.
+	TargetURI string
+
+	// Origin is the account that
+	// this message originated from.
 	Origin *gtsmodel.Account
 
-	// Target ...
+	// Target is the account that
+	// this message is targeting.
 	Target *gtsmodel.Account
+}
+
+// ClientMsgIndices defines queue indices this
+// message type should be accessible / stored under.
+func ClientMsgIndices() []structr.IndexConfig {
+	return []structr.IndexConfig{
+		{Fields: "TargetURI", Multiple: true},
+		{Fields: "Origin.ID", Multiple: true},
+		{Fields: "Target.ID", Multiple: true},
+	}
 }
 
 // FromFediAPI wraps a message that
@@ -55,16 +70,17 @@ type FromFediAPI struct {
 	// APActivityType ...
 	APActivityType string
 
-	// APIRI ...
-	APIRI *url.URL
-
-	// Optional AP model of the Object of the
-	// Activity. Likely Accountable or Statusable.
+	// Optional ActivityPub ID (IRI)
+	// and / or model of Activity / Object.
+	APIRI    *url.URL
 	APObject interface{}
 
-	// Optional GTS model of
-	// the Activity or Object.
+	// Optional GTS database model
+	// of the Activity / Object.
 	GTSModel interface{}
+
+	// Targeted object URI.
+	TargetURI string
 
 	// Remote account that posted
 	// this Activity to the inbox.
@@ -75,18 +91,12 @@ type FromFediAPI struct {
 	Receiving *gtsmodel.Account
 }
 
-// ClientMsgIndices ...
-func ClientMsgIndices() []structr.IndexConfig {
-	return []structr.IndexConfig{
-		{Fields: "Origin.ID", Multiple: true},
-		{Fields: "Target.ID", Multiple: true},
-	}
-}
-
-// FederatorMsgIndices ...
+// FederatorMsgIndices defines queue indices this
+// message type should be accessible / stored under.
 func FederatorMsgIndices() []structr.IndexConfig {
 	return []structr.IndexConfig{
 		{Fields: "APIRI", Multiple: true},
+		{Fields: "TargetURI", Multiple: true},
 		{Fields: "Requesting.ID", Multiple: true},
 		{Fields: "Receiving.ID", Multiple: true},
 	}

@@ -96,16 +96,22 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 		return err
 	}
 
-	// Drop any queued outgoing AP requests to / from account,
-	// and drop any client /federator API messages for account.
-	// (this stops any queued likes, boosts, creates etc).
+	// Drop any outgoing queued AP requests to / from / targeting
+	// this account, (stops queued likes, boosts, creates etc).
 	f.state.Workers.Delivery.Queue.Delete("ActorID", account.URI)
 	f.state.Workers.Delivery.Queue.Delete("ObjectID", account.URI)
 	f.state.Workers.Delivery.Queue.Delete("TargetID", account.URI)
+
+	// Drop any incoming queued client messages to / from this
+	// account, (stops processing of local origin data for acccount).
 	f.state.Workers.Client.Queue.Delete("Origin.ID", account.ID)
 	f.state.Workers.Client.Queue.Delete("Target.ID", account.ID)
-	f.state.Workers.Federator.Queue.Delete("APIRI", actorIRI)
+	f.state.Workers.Client.Queue.Delete("TargetURI", account.URI)
+
+	// Drop any incoming queued federator messages to this account,
+	// (stops processing of remote origin data targeting this account).
 	f.state.Workers.Federator.Queue.Delete("Receiving.ID", account.ID)
+	f.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
 
 	// Create a new delete.
 	// todo: tc.AccountToASDelete
@@ -239,16 +245,18 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 		return err
 	}
 
-	// Drop any queued outgoing http requests for status,
-	// and drop any client /federator API messages for status.
-	// (this stops any queued likes, boosts, creates etc).
+	// Drop any outgoing queued AP requests about / targeting
+	// this status, (stops queued likes, boosts, creates etc).
 	f.state.Workers.Delivery.Queue.Delete("ObjectID", status.URI)
 	f.state.Workers.Delivery.Queue.Delete("TargetID", status.URI)
 
-	f.state.Workers.Client.Queue.Delete("Origin.ID", account.ID)
-	f.state.Workers.Client.Queue.Delete("Target.ID", account.ID)
-	f.state.Workers.Federator.Queue.Delete("APIRI", actorIRI)
-	f.state.Workers.Federator.Queue.Delete("Receiving.ID", account.ID)
+	// Drop any incoming queued client messages about / targeting
+	// status, (stops processing of local origin data for status).
+	f.state.Workers.Client.Queue.Delete("TargetURI", status.URI)
+
+	// Drop any incoming queued federator messages targeting status,
+	// (stops processing of remote origin data targeting this status).
+	f.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
 
 	// Ensure the status model is fully populated.
 	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
