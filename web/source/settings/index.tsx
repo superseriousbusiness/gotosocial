@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { StrictMode } from "react";
+import React, { StrictMode, Suspense, useMemo } from "react";
 import "./style.css";
 
 import { createRoot } from "react-dom/client";
@@ -29,18 +29,21 @@ import Loading from "./components/loading";
 import { Account } from "./lib/types/account";
 import { BaseUrlContext, RoleContext } from "./lib/navigation/util";
 import { SidebarMenu } from "./lib/navigation/menu";
-import { UserMenu, UserRouter } from "./views/user/routes";
-import { ModerationMenu, ModerationRouter } from "./views/moderation/routes";
-import { AdminMenu, AdminRouter } from "./views/admin/routes";
 import { Redirect, Route, Router } from "wouter";
+import AdminMenu from "./views/admin/menu";
+import ModerationMenu from "./views/moderation/menu";
+import UserMenu from "./views/user/menu";
+import UserRouter from "./views/user/router";
+import { ErrorBoundary } from "./lib/navigation/error";
+import ModerationRouter from "./views/moderation/router";
+import AdminRouter from "./views/admin/router";
 
 interface AppProps {
 	account: Account;
 }
 
 export function App({ account }: AppProps) {
-	const roles: string[] = [ account.role.name ];
-
+	const roles: string[] = useMemo(() => [ account.role.name ], [account]);
 	return (
 		<RoleContext.Provider value={roles}>
 			<BaseUrlContext.Provider value={"/settings"}>
@@ -51,15 +54,19 @@ export function App({ account }: AppProps) {
 				</SidebarMenu>
 				<section className="with-sidebar">
 					<Router base="/settings">
-						<UserRouter />
-						<ModerationRouter />
-						<AdminRouter />
-						{/*
-							Redirect to first part of UserRouter if
-							just the bare settings page is open, so
-							user isn't greeted with a blank page.
-						*/}
-						<Route><Redirect to="/user/profile" /></Route>
+						<ErrorBoundary>
+							<Suspense fallback={<Loading />}>
+								<UserRouter />
+								<ModerationRouter />
+								<AdminRouter />
+								{/*
+									Redirect to first part of UserRouter if
+									just the bare settings page is open, so
+									user isn't greeted with a blank page.
+								*/}
+								<Route><Redirect to="/user/profile" /></Route>
+							</Suspense>
+						</ErrorBoundary>
 					</Router>
 				</section>
 			</BaseUrlContext.Provider>
