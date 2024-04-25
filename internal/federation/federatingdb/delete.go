@@ -96,8 +96,9 @@ func (f *federatingDB) deleteAccount(
 
 	if account != nil {
 		if account.ID != requesting.ID {
-			log.Warnf(ctx, "%s cannot delete %s", requesting.URI, account.URI)
-			return true, nil // silently drop this
+			// TODO: handled forwarded deletes,
+			// for now we silently drop this.
+			return true, nil
 		}
 
 		log.Debugf(ctx, "deleting account: %s", account.URI)
@@ -131,8 +132,9 @@ func (f *federatingDB) deleteStatus(
 
 	if status != nil {
 		if status.AccountID != requesting.ID {
-			log.Warnf(ctx, "%s cannot delete %s", requesting.URI, status.URI)
-			return true, nil // silently drop this
+			// TODO: handled forwarded deletes,
+			// for now we silently drop this.
+			return true, nil
 		}
 
 		log.Debugf(ctx, "deleting status: %s", status.URI)
