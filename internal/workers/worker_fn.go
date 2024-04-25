@@ -107,21 +107,11 @@ func (w *FnWorker) process(ctx context.Context) {
 		panic("not yet initialized")
 	}
 
-loop:
 	for {
-		select {
-		// Worker ctx done.
-		case <-ctx.Done():
-			return
-
-		// New message enqueued!
-		case <-w.Queue.Wait():
-		}
-
-		// Try pop next function.
-		fn, ok := w.Queue.Pop()
+		// Block until pop next func.
+		fn, ok := w.Queue.PopCtx(ctx)
 		if !ok {
-			continue loop
+			return
 		}
 
 		// run!

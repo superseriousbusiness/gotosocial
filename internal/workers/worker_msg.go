@@ -120,21 +120,11 @@ func (w *MsgWorker[T]) process(ctx context.Context) {
 		panic("not yet initialized")
 	}
 
-loop:
 	for {
-		select {
-		// Worker ctx done.
-		case <-ctx.Done():
-			return
-
-		// New message enqueued!
-		case <-w.Queue.Wait():
-		}
-
-		// Try pop next message.
-		msg, ok := w.Queue.Pop()
+		// Block until pop next message.
+		msg, ok := w.Queue.PopCtx(ctx)
 		if !ok {
-			continue loop
+			return
 		}
 
 		// Attempt to process popped message type.

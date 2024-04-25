@@ -18,7 +18,7 @@
 package queue
 
 import (
-	"sync/atomic"
+	"context"
 
 	"codeberg.org/gruf/go-structr"
 )
@@ -26,15 +26,14 @@ import (
 // StructQueue wraps a structr.Queue{} to
 // provide simple index caching by name.
 type StructQueue[StructType any] struct {
-	queue structr.Queue[StructType]
+	queue structr.QueueCtx[StructType]
 	index map[string]*structr.Index
-	wait  atomic.Pointer[chan struct{}]
 }
 
 // Init initializes queue with structr.QueueConfig{}.
 func (q *StructQueue[T]) Init(config structr.QueueConfig[T]) {
 	q.index = make(map[string]*structr.Index, len(config.Indices))
-	q.queue = structr.Queue[T]{}
+	// q.queue = structr.QueueCtx[T]{}
 	q.queue.Init(config)
 	for _, cfg := range config.Indices {
 		q.index[cfg.Fields] = q.queue.Index(cfg.Fields)
@@ -43,13 +42,22 @@ func (q *StructQueue[T]) Init(config structr.QueueConfig[T]) {
 
 // Pop: see structr.Queue{}.PopFront().
 func (q *StructQueue[T]) Pop() (value T, ok bool) {
-	return q.queue.PopFront()
+	values := q.queue.PopFrontN(1)
+	if ok = (len(values) > 0); !ok {
+		return
+	}
+	value = values[0]
+	return
 }
 
-// Push wraps structr.Queue{}.PushBack() to awaken those blocking on <-.Wait().
+// PopCtx: see structr.QueueCtx{}.PopFront().
+func (q *StructQueue[T]) PopCtx(ctx context.Context) (value T, ok bool) {
+	return q.queue.PopFront(ctx)
+}
+
+// Push: see structr.Queue.PushBack().
 func (q *StructQueue[T]) Push(values ...T) {
 	q.queue.PushBack(values...)
-	q.broadcast()
 }
 
 // Delete pops (and drops!) all queued entries under index with key.
@@ -66,31 +74,5 @@ func (q *StructQueue[T]) Len() int {
 // Wait returns current wait channel, which may be
 // blocked on to awaken when new value pushed to queue.
 func (q *StructQueue[T]) Wait() <-chan struct{} {
-	var ch chan struct{}
-
-	for {
-		// Get channel ptr.
-		ptr := q.wait.Load()
-		if ptr != nil {
-			return *ptr
-		}
-
-		if ch == nil {
-			// Allocate new channel.
-			ch = make(chan struct{})
-		}
-
-		// Try set the new wait channel ptr.
-		if q.wait.CompareAndSwap(ptr, &ch) {
-			return ch
-		}
-	}
-}
-
-// broadcast safely closes wait channel if
-// currently set, releasing waiting goroutines.
-func (q *StructQueue[T]) broadcast() {
-	if ptr := q.wait.Swap(nil); ptr != nil {
-		close(*ptr)
-	}
+	return q.queue.Wait()
 }

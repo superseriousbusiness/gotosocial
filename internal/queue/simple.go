@@ -18,6 +18,7 @@
 package queue
 
 import (
+	"context"
 	"sync"
 
 	"codeberg.org/gruf/go-list"
@@ -39,7 +40,10 @@ func (q *SimpleQueue[T]) Push(value T) {
 	elem := q.alloc()
 	elem.Value = value
 	q.l.PushElemFront(elem)
-	q.broadcast()
+	if q.w != nil {
+		close(q.w)
+		q.w = nil
+	}
 	q.m.Unlock()
 }
 
@@ -56,24 +60,65 @@ func (q *SimpleQueue[T]) Pop() (value T, ok bool) {
 	return
 }
 
+// PopCtx will attempt to pop value from queue, else blocking on context.
+func (q *SimpleQueue[T]) PopCtx(ctx context.Context) (value T, ok bool) {
+
+	// Acquire lock.
+	q.m.Lock()
+
+	var elem *list.Elem[T]
+
+	for {
+		// Get next elem.
+		elem = q.l.Tail
+		if ok = (elem != nil); ok {
+			break
+		}
+
+		if q.w == nil {
+			// Create new wait channel.
+			q.w = make(chan struct{})
+		}
+
+		// Get current
+		// ch pointer.
+		ch := q.w
+
+		// Done with lock.
+		q.m.Unlock()
+
+		select {
+		// Context canceled.
+		case <-ctx.Done():
+			return
+
+		// Pushed!
+		case <-ch:
+		}
+
+		// Relock queue.
+		q.m.Lock()
+	}
+
+	// Extract value.
+	value = elem.Value
+
+	// Remove element.
+	q.l.Remove(elem)
+	q.free(elem)
+
+	// Done with lock.
+	q.m.Unlock()
+
+	return
+}
+
 // Len returns the current length of the queue.
 func (q *SimpleQueue[T]) Len() int {
 	q.m.Lock()
 	l := q.l.Len()
 	q.m.Unlock()
 	return l
-}
-
-// Wait returns current wait channel, which may be
-// blocked on to awaken when new value pushed to queue.
-func (q *SimpleQueue[T]) Wait() (ch <-chan struct{}) {
-	q.m.Lock()
-	if q.w == nil {
-		q.w = make(chan struct{})
-	}
-	ch = q.w
-	q.m.Unlock()
-	return
 }
 
 // alloc will allocate new list element (relying on memory pool).
@@ -93,13 +138,4 @@ func (q *SimpleQueue[T]) free(elem *list.Elem[T]) {
 	elem.Prev = nil
 	elem.Value = zero
 	q.p = append(q.p, elem)
-}
-
-// broadcast safely closes wait channel if
-// currently set, releasing waiting goroutines.
-func (q *SimpleQueue[T]) broadcast() {
-	if q.w != nil {
-		close(q.w)
-		q.w = nil
-	}
 }
