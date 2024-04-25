@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { StrictMode, Suspense, useMemo } from "react";
+import React, { StrictMode, useMemo } from "react";
 import "./style.css";
 
 import { createRoot } from "react-dom/client";
@@ -55,17 +55,15 @@ export function App({ account }: AppProps) {
 				<section className="with-sidebar">
 					<Router base="/settings">
 						<ErrorBoundary>
-							<Suspense fallback={<Loading />}>
-								<UserRouter />
-								<ModerationRouter />
-								<AdminRouter />
-								{/*
+							<UserRouter />
+							<ModerationRouter />
+							<AdminRouter />
+							{/*
 									Redirect to first part of UserRouter if
 									just the bare settings page is open, so
 									user isn't greeted with a blank page.
 								*/}
-								<Route><Redirect to="/user/profile" /></Route>
-							</Suspense>
+							<Route><Redirect to="/user/profile" /></Route>
 						</ErrorBoundary>
 					</Router>
 				</section>
