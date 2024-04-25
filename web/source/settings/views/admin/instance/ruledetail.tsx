@@ -18,66 +18,18 @@
 */
 
 import React from "react";
-import { Link, Redirect, useParams } from "wouter";
-import { useInstanceRulesQuery, useAddInstanceRuleMutation, useUpdateInstanceRuleMutation, useDeleteInstanceRuleMutation } from "../../../lib/query";
+import { Redirect, useParams } from "wouter";
 import { useBaseUrl } from "../../../lib/navigation/util";
 import { useValue, useTextInput } from "../../../lib/form";
 import useFormSubmit from "../../../lib/form/submit";
 import { TextArea } from "../../../components/form/inputs";
 import MutationButton from "../../../components/form/mutation-button";
-import { Error } from "../../../components/error";
 import BackButton from "../../../components/back-button";
-import { InstanceRule, MappedRules } from "../../../lib/types/rules";
 import Loading from "../../../components/loading";
-import FormWithData from "../../../lib/form/form-with-data";
+import { useDeleteInstanceRuleMutation, useInstanceRulesQuery, useUpdateInstanceRuleMutation } from "../../../lib/query/admin";
+import { Error } from "../../../components/error";
 
-export function InstanceRules() {
-	return (
-		<>
-			<h1>Instance Rules</h1>
-			<FormWithData
-				dataQuery={useInstanceRulesQuery}
-				DataForm={InstanceRulesForm}
-			/>
-		</>
-	);
-}
-
-function InstanceRulesForm({ data: rules }: { data: MappedRules }) {
-	const baseUrl = useBaseUrl();
-	const newRule = useTextInput("text");
-
-	const [submitForm, result] = useFormSubmit({ newRule }, useAddInstanceRuleMutation(), {
-		changedOnly: true,
-		onFinish: () => newRule.reset()
-	});
-
-	return (
-		<form onSubmit={submitForm} className="new-rule">
-			<ol className="instance-rules">
-				{Object.values(rules).map((rule: InstanceRule) => (
-					<Link className="rule" to={`~${baseUrl}/instance-rules/${rule.id}`}>
-						<li>
-							<h2>{rule.text} <i className="fa fa-pencil edit-icon" /></h2>
-						</li>
-						<span>{new Date(rule.created_at).toLocaleString()}</span>
-					</Link>
-				))}
-			</ol>
-			<TextArea
-				field={newRule}
-				label="New instance rule"
-			/>
-			<MutationButton
-				disabled={newRule.value === undefined || newRule.value.length === 0}
-				label="Add rule"
-				result={result}
-			/>
-		</form>
-	);
-}
-
-export function InstanceRuleDetail() {
+export default function InstanceRuleDetail() {
 	const baseUrl = useBaseUrl();
 	const params: { ruleId: string } = useParams();
 	
@@ -94,7 +46,7 @@ export function InstanceRuleDetail() {
 
 	return (
 		<>
-			<BackButton to={`~${baseUrl}/instance-rules`} />
+			<BackButton to={`~${baseUrl}/rules`} />
 			<EditInstanceRuleForm rule={rules[params.ruleId]} />
 		</>
 	);
@@ -113,7 +65,7 @@ function EditInstanceRuleForm({ rule }) {
 
 	if (result.isSuccess || deleteResult.isSuccess) {
 		return (
-			<Redirect to={`~${baseUrl}/instance-rules`} />
+			<Redirect to={`~${baseUrl}/rules`} />
 		);
 	}
 

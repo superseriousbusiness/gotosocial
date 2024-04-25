@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
 
 function ErrorFallback({ error, resetErrorBoundary }) {
 	return (
@@ -81,4 +81,4 @@ function Error({ error }) {
 	);
 }
 
-module.exports = { ErrorFallback, Error };
+export { ErrorFallback, Error };

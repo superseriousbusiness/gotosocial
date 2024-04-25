@@ -19,9 +19,8 @@
 
 import React from "react";
 
-import { useLazySearchAccountsQuery } from "../../../../lib/query";
+import { useLazySearchAccountsQuery } from "../../../../lib/query/admin";
 import { useTextInput } from "../../../../lib/form";
-
 import { AccountList } from "../../../../components/account-list";
 import { SearchAccountParams } from "../../../../lib/types/account";
 import { Select, TextInput } from "../../../../components/form/inputs";

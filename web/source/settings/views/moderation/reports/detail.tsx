@@ -52,7 +52,15 @@ function ReportDetailForm({ data: report }) {
 	return (
 		<div className="report detail">
 			<div className="usernames">
-				<Username user={from} /> reported <Username user={target} />
+				<Username
+					user={from}
+					link={`~/settings/moderation/accounts/${from.id}`}
+				/>
+				<> reported </>
+				<Username
+					user={target}
+					link={`~/settings/moderation/accounts/${target.id}`}
+				/>
 			</div>
 
 			{report.action_taken &&

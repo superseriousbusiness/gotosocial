@@ -18,7 +18,7 @@
 */
 
 import React from "react";
-import { useSearchAccountsQuery } from "../../../../lib/query";
+import { useSearchAccountsQuery } from "../../../../lib/query/admin";
 import { AccountList } from "../../../../components/account-list";
 
 export default function AccountsPending() {

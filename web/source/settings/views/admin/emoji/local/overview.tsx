@@ -29,7 +29,7 @@ import { TextInput } from "../../../../components/form/inputs";
 import { useListEmojiQuery } from "../../../../lib/query/admin/custom-emoji";
 import { CustomEmoji } from "../../../../lib/types/custom-emoji";
 
-export function EmojiOverview() {
+export default function EmojiOverview() {
 	const { data: emoji = [], isLoading, isError, error } = useListEmojiQuery({ filter: "domain:local" });
 
 	let content: React.JSX.Element;

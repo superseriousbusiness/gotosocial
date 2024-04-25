@@ -17,16 +17,15 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
+import React from "react";
+import { useVerifyCredentialsQuery } from "../lib/query/oauth";
 
-const query = require("../lib/query");
-
-module.exports = function FakeToot({ children }) {
+export default function FakeToot({ children }) {
 	const { data: account = {
 		avatar: "/assets/default_avatars/GoToSocial_icon1.png",
 		display_name: "",
 		username: ""
-	} } = query.useVerifyCredentialsQuery();
+	} } = useVerifyCredentialsQuery();
 
 	return (
 		<article className="status expanded">
@@ -54,4 +53,4 @@ module.exports = function FakeToot({ children }) {
 			</section>
 		</article>
 	);
-};
+}

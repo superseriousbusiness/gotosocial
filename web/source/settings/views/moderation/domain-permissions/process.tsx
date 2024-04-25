@@ -18,9 +18,7 @@
 */
 
 import React from "react";
-
 import { memo, useMemo, useCallback, useEffect } from "react";
-
 import { isValidDomainPermission, hasBetterScope } from "../../../lib/util/domain-permission";
 
 import {

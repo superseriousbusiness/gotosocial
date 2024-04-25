@@ -17,18 +17,31 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const langs = require("langs");
+import React from "react";
 
-const asElements = langs.all().map((l) => {
-	let code = l["1"].toUpperCase();
-	let name = l.name;
-	if (l.name != l.local) {
-		name = `${name} - ${l.local}`;
-	}
-	return <option key={code} value={code}>{name}</option>;
-});
+import { Combobox, ComboboxItem, ComboboxPopover } from "ariakit/combobox";
 
-module.exports = function Languages() {
-	return asElements;
-};
+export default function ComboBox({ field, items, label, children, ...inputProps }) {
+	return (
+		<div className="form-field combobox-wrapper">
+			<label>
+				{label}
+				<div className="row">
+					<Combobox
+						state={field.state}
+						className="combobox input"
+						{...inputProps}
+					/>
+					{children}
+				</div>
+			</label>
+			<ComboboxPopover state={field.state} className="popover">
+				{items.map(([key, value]) => (
+					<ComboboxItem className="combobox-item" key={key} value={key}>
+						{value}
+					</ComboboxItem>
+				))}
+			</ComboboxPopover>
+		</div>
+	);
+}

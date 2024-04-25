@@ -18,10 +18,10 @@
 */
 
 import React from "react";
-import { useInstanceKeysExpireMutation } from "../../../../lib/query";
 import { TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
 import { useTextInput } from "../../../../lib/form";
+import { useInstanceKeysExpireMutation } from "../../../../lib/query/admin";
 
 export default function ExpireRemote({}) {
 	const domainField = useTextInput("domain");

@@ -22,11 +22,8 @@ import React from "react";
 import { useMemo } from "react";
 import { Link, useLocation, useParams } from "wouter";
 import { matchSorter } from "match-sorter";
-
 import { useTextInput } from "../../../lib/form";
-
 import { TextInput } from "../../../components/form/inputs";
-
 import Loading from "../../../components/loading";
 import { useDomainAllowsQuery, useDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
 import type { MappedDomainPerms, PermType } from "../../../lib/types/domain-permission";

@@ -20,18 +20,14 @@
 import React from "react";
 
 import { useEffect } from "react";
-
 import { useExportDomainListMutation } from "../../../lib/query/admin/domain-permissions/export";
 import useFormSubmit from "../../../lib/form/submit";
-
 import {
 	RadioGroup,
 	TextArea,
 	Select,
 } from "../../../components/form/inputs";
-
 import MutationButton from "../../../components/form/mutation-button";
-
 import { Error } from "../../../components/error";
 import ExportFormatTable from "./export-format-table";
 

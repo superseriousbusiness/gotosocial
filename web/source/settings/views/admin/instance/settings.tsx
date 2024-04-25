@@ -20,17 +20,13 @@
 import React from "react";
 
 import { useTextInput, useFileInput } from "../../../lib/form";
-
-const useFormSubmit = require("../../../lib/form/submit").default;
-
 import { TextInput, TextArea, FileInput } from "../../../components/form/inputs";
-
-const FormWithData = require("../../../lib/form/form-with-data").default;
 import MutationButton from "../../../components/form/mutation-button";
-
-import { useInstanceV1Query } from "../../../lib/query";
+import { useInstanceV1Query } from "../../../lib/query/gts-api";
 import { useUpdateInstanceMutation } from "../../../lib/query/admin";
 import { InstanceV1 } from "../../../lib/types/instance";
+import FormWithData from "../../../lib/form/form-with-data";
+import useFormSubmit from "../../../lib/form/submit";
 
 export default function InstanceSettings() {
 	return (

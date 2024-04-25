@@ -19,9 +19,7 @@
 
 import React from "react";
 import { Link } from "wouter";
-
 import FormWithData from "../../../lib/form/form-with-data";
-
 import Username from "./username";
 import { useListReportsQuery } from "../../../lib/query/admin/reports";
 
@@ -77,7 +75,7 @@ function ReportEntry({ report }) {
 			<div className={`report entry${report.action_taken ? " resolved" : ""}`}>
 				<div className="byline">
 					<div className="usernames">
-						<Username user={from} link={false} /> reported <Username user={target} link={false} />
+						<Username user={from} /> reported <Username user={target} />
 					</div>
 					<h3 className="report-status">
 						{report.action_taken ? "Resolved" : "Open"}

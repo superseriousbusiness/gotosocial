@@ -17,15 +17,12 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-const React = require("react");
-const Loading = require("./loading");
-const {
-	useVerifyCredentialsQuery,
-	useLogoutMutation,
-} = require("../lib/query/oauth");
-const { useInstanceV1Query } = require("../lib/query");
+import React from "react";
+import Loading from "./loading";
+import { useVerifyCredentialsQuery, useLogoutMutation } from "../lib/query/oauth";
+import { useInstanceV1Query } from "../lib/query/gts-api";
 
-module.exports = function UserLogoutCard() {
+export default function UserLogoutCard() {
 	const { data: profile, isLoading } = useVerifyCredentialsQuery();
 	const { data: instance } = useInstanceV1Query();
 	const [logoutQuery] = useLogoutMutation();
@@ -44,4 +41,4 @@ module.exports = function UserLogoutCard() {
 			</div>
 		);
 	}
-};
+}

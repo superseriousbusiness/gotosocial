@@ -19,12 +19,9 @@
 
 import React from "react";
 
-import { useGetAccountQuery } from "../../../../lib/query";
-
+import { useGetAccountQuery } from "../../../../lib/query/admin";
 import FormWithData from "../../../../lib/form/form-with-data";
-
 import FakeProfile from "../../../../components/fake-profile";
-
 import { AdminAccount } from "../../../../lib/types/account";
 import { HandleSignup } from "./handlesignup";
 import { AccountActions } from "./actions";
