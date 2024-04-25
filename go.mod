@@ -16,7 +16,7 @@ require (
 	codeberg.org/gruf/go-fastcopy v1.1.2
 	codeberg.org/gruf/go-iotools v0.0.0-20230811115124-5d4223615a7f
 	codeberg.org/gruf/go-kv v1.6.4
-	codeberg.org/gruf/go-list v0.0.0-20231115200530-cb0fdba14ec9
+	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mutexes v1.4.1
 	codeberg.org/gruf/go-runners v1.6.2
