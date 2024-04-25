@@ -74,9 +74,9 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		return err
 	}
 
-	// Log at warning level, as lots of these could indicate federation
+	// Log at debug level, as lots of these could indicate federation
 	// issues between remote and this instance, or help with debugging.
-	log.Warnf(ctx, "received delete for unknown target: %s", uriStr)
+	log.Debugf(ctx, "received delete for unknown target: %s", uriStr)
 	return nil
 }
 
@@ -96,8 +96,8 @@ func (f *federatingDB) deleteAccount(
 
 	if account != nil {
 		if account.ID != requesting.ID {
-			const text = "signing account does not match delete target"
-			return false, gtserror.NewErrorForbidden(errors.New(text), text)
+			log.Warnf(ctx, "%s cannot delete %s", requesting.URI, account.URI)
+			return true, nil // silently drop this
 		}
 
 		log.Debugf(ctx, "deleting account: %s", account.URI)
@@ -131,8 +131,8 @@ func (f *federatingDB) deleteStatus(
 
 	if status != nil {
 		if status.AccountID != requesting.ID {
-			const text = "signing account does not match delete target owner"
-			return false, gtserror.NewErrorForbidden(errors.New(text), text)
+			log.Warnf(ctx, "%s cannot delete %s", requesting.URI, status.URI)
+			return true, nil // silently drop this
 		}
 
 		log.Debugf(ctx, "deleting status: %s", status.URI)
