@@ -633,14 +633,6 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 		return gtserror.Newf("db error populating status: %w", err)
 	}
 
-	// First perform the actual status deletion.
-	if err := p.utils.wipeStatus(ctx, status, deleteAttachments); err != nil {
-		log.Errorf(ctx, "error wiping status: %v", err)
-	}
-
-	// Now status is deleted, first thing we do is drop any
-	// queued work relating to it ASAP to prevent wasted work.
-
 	// Drop any outgoing queued AP requests about / targeting
 	// this status, (stops queued likes, boosts, creates etc).
 	p.state.Workers.Delivery.Queue.Delete("ObjectID", status.URI)
@@ -653,6 +645,11 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 	// Drop any incoming queued federator messages targeting status,
 	// (stops processing of remote origin data targeting this status).
 	p.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
+
+	// First perform the actual status deletion.
+	if err := p.utils.wipeStatus(ctx, status, deleteAttachments); err != nil {
+		log.Errorf(ctx, "error wiping status: %v", err)
+	}
 
 	// Update stats for the origin account.
 	if err := p.utils.decrementStatusesCount(ctx, cMsg.Origin); err != nil {
@@ -692,14 +689,6 @@ func (p *clientAPI) DeleteAccount(ctx context.Context, cMsg *messages.FromClient
 	// Extract target account.
 	account := cMsg.Target
 
-	// First perform the actual account deletion.
-	if err := p.account.Delete(ctx, cMsg.Target, originID); err != nil {
-		log.Errorf(ctx, "error deleting account: %v", err)
-	}
-
-	// Now account is deleted, first thing we do is drop any
-	// queued work relating to it ASAP to prevent wasted work.
-
 	// Drop any outgoing queued AP requests to / from / targeting
 	// this account, (stops queued likes, boosts, creates etc).
 	p.state.Workers.Delivery.Queue.Delete("ActorID", account.URI)
@@ -716,6 +705,11 @@ func (p *clientAPI) DeleteAccount(ctx context.Context, cMsg *messages.FromClient
 	// (stops processing of remote origin data targeting this account).
 	p.state.Workers.Federator.Queue.Delete("Receiving.ID", account.ID)
 	p.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
+
+	// First perform the actual account deletion.
+	if err := p.account.Delete(ctx, cMsg.Target, originID); err != nil {
+		log.Errorf(ctx, "error deleting account: %v", err)
+	}
 
 	if err := p.federate.DeleteAccount(ctx, cMsg.Target); err != nil {
 		log.Errorf(ctx, "error federating account delete: %v", err)

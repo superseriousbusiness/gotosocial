@@ -611,14 +611,6 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		return gtserror.Newf("db error populating status: %w", err)
 	}
 
-	// First perform the actual status deletion.
-	if err := p.utils.wipeStatus(ctx, status, deleteAttachments); err != nil {
-		log.Errorf(ctx, "error wiping status: %v", err)
-	}
-
-	// Now status is deleted, first thing we do is drop any
-	// queued work relating to it ASAP to prevent wasted work.
-
 	// Drop any outgoing queued AP requests about / targeting
 	// this status, (stops queued likes, boosts, creates etc).
 	p.state.Workers.Delivery.Queue.Delete("ObjectID", status.URI)
@@ -631,6 +623,11 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 	// Drop any incoming queued federator messages targeting status,
 	// (stops processing of remote origin data targeting this status).
 	p.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
+
+	// First perform the actual status deletion.
+	if err := p.utils.wipeStatus(ctx, status, deleteAttachments); err != nil {
+		log.Errorf(ctx, "error wiping status: %v", err)
+	}
 
 	// Update stats for the remote account.
 	if err := p.utils.decrementStatusesCount(ctx, fMsg.Requesting); err != nil {
@@ -652,14 +649,6 @@ func (p *fediAPI) DeleteAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 		return gtserror.Newf("%T not parseable as *gtsmodel.Account", fMsg.GTSModel)
 	}
 
-	// First perform the actual account deletion.
-	if err := p.account.Delete(ctx, account, account.ID); err != nil {
-		log.Errorf(ctx, "error deleting account: %v", err)
-	}
-
-	// Now account is deleted, first thing we do is drop any
-	// queued work relating to it ASAP to prevent wasted work.
-
 	// Drop any outgoing queued AP requests to / from / targeting
 	// this account, (stops queued likes, boosts, creates etc).
 	p.state.Workers.Delivery.Queue.Delete("ObjectID", account.URI)
@@ -674,6 +663,11 @@ func (p *fediAPI) DeleteAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 	// (stops processing of remote origin data targeting this account).
 	p.state.Workers.Federator.Queue.Delete("Requesting.ID", account.ID)
 	p.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
+
+	// First perform the actual account deletion.
+	if err := p.account.Delete(ctx, account, account.ID); err != nil {
+		log.Errorf(ctx, "error deleting account: %v", err)
+	}
 
 	return nil
 }
