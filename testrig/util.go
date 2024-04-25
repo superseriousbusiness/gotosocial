@@ -27,7 +27,10 @@ import (
 	"os"
 	"time"
 
+	"codeberg.org/gruf/go-byteutil"
+	"codeberg.org/gruf/go-kv/format"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
@@ -39,8 +42,15 @@ import (
 // Starts workers on the provided state using noop processing functions.
 // Useful when you *don't* want to trigger side effects in a test.
 func StartNoopWorkers(state *state.State) {
-	state.Workers.Client.Process = func(context.Context, *messages.FromClientAPI) error { return nil }
-	state.Workers.Federator.Process = func(context.Context, *messages.FromFediAPI) error { return nil }
+	state.Workers.Client.Process = func(ctx context.Context, msg *messages.FromClientAPI) error {
+		log.Debugf(ctx, "Workers{}.Client{}.Noop(%s)", dump(msg))
+		return nil // noop
+	}
+
+	state.Workers.Federator.Process = func(ctx context.Context, msg *messages.FromFediAPI) error {
+		log.Debugf(ctx, "Workers{}.Federator{}.Noop(%s)", dump(msg))
+		return nil // noop
+	}
 
 	state.Workers.Client.Init(messages.ClientMsgIndices())
 	state.Workers.Federator.Init(messages.FederatorMsgIndices())
@@ -56,8 +66,15 @@ func StartNoopWorkers(state *state.State) {
 // Starts workers on the provided state using processing functions from the given
 // workers processor. Useful when you *do* want to trigger side effects in a test.
 func StartWorkers(state *state.State, processor *workers.Processor) {
-	state.Workers.Client.Process = processor.ProcessFromClientAPI
-	state.Workers.Federator.Process = processor.ProcessFromFediAPI
+	state.Workers.Client.Process = func(ctx context.Context, msg *messages.FromClientAPI) error {
+		log.Debugf(ctx, "Workers{}.Client{}.Process(%s)", dump(msg))
+		return processor.ProcessFromClientAPI(ctx, msg)
+	}
+
+	state.Workers.Federator.Process = func(ctx context.Context, msg *messages.FromFediAPI) error {
+		log.Debugf(ctx, "Workers{}.Federator{}.Process(%s)", dump(msg))
+		return processor.ProcessFromFediAPI(ctx, msg)
+	}
 
 	state.Workers.Client.Init(messages.ClientMsgIndices())
 	state.Workers.Federator.Init(messages.FederatorMsgIndices())
@@ -243,4 +260,11 @@ func WaitFor(condition func() bool) bool {
 			return false
 		}
 	}
+}
+
+// dump returns debug output of 'v'.
+func dump(v any) string {
+	var buf byteutil.Buffer
+	format.Append(&buf, v)
+	return buf.String()
 }
