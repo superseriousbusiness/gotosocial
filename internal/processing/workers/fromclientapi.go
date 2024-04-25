@@ -706,13 +706,12 @@ func (p *clientAPI) DeleteAccount(ctx context.Context, cMsg *messages.FromClient
 	p.state.Workers.Federator.Queue.Delete("Receiving.ID", account.ID)
 	p.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
 
-	// First perform the actual account deletion.
-	if err := p.account.Delete(ctx, cMsg.Target, originID); err != nil {
-		log.Errorf(ctx, "error deleting account: %v", err)
-	}
-
 	if err := p.federate.DeleteAccount(ctx, cMsg.Target); err != nil {
 		log.Errorf(ctx, "error federating account delete: %v", err)
+	}
+
+	if err := p.account.Delete(ctx, cMsg.Target, originID); err != nil {
+		log.Errorf(ctx, "error deleting account: %v", err)
 	}
 
 	return nil
