@@ -26,25 +26,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 type AccountUpdateTestSuite struct {
 	AccountStandardTestSuite
-}
-
-func (suite *AccountStandardTestSuite) checkClientAPIChan() *messages.FromClientAPI {
-	select {
-	case <-suite.state.Workers.Client.Queue.Wait():
-	case <-time.After(5 * time.Second):
-	}
-
-	msg, ok := suite.state.Workers.Client.Queue.Pop()
-	if !ok {
-		suite.FailNow("no queued message")
-	}
-
-	return msg
 }
 
 func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
@@ -75,7 +60,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	suite.Equal(noteExpected, apiAccount.Note)
 
 	// We should have an update in the client api channel.
-	msg := suite.checkClientAPIChan()
+	msg, _ := suite.getClientMsg(5 * time.Second)
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
@@ -125,7 +110,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 	suite.Equal(noteExpected, apiAccount.Note)
 
 	// We should have an update in the client api channel.
-	msg := suite.checkClientAPIChan()
+	msg, _ := suite.getClientMsg(5 * time.Second)
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
@@ -181,7 +166,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 	suite.Equal(noteExpected, apiAccount.Note)
 
 	// We should have an update in the client api channel.
-	msg := suite.checkClientAPIChan()
+	msg, _ := suite.getClientMsg(5 * time.Second)
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
@@ -266,7 +251,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 	suite.EqualValues(emojisExpected, apiAccount.Emojis)
 
 	// We should have an update in the client api channel.
-	msg := suite.checkClientAPIChan()
+	msg, _ := suite.getClientMsg(5 * time.Second)
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
@@ -323,7 +308,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateNoteNotFields() {
 	suite.Equal(fieldsBefore, len(apiAccount.Fields))
 
 	// We should have an update in the client api channel.
-	msg := suite.checkClientAPIChan()
+	msg, _ := suite.getClientMsg(5 * time.Second)
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)

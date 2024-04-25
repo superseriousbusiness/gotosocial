@@ -71,7 +71,7 @@ func (suite *MoveTestSuite) TestMoveAccountOK() {
 	}
 
 	// There should be a message going to the worker.
-	cMsg := suite.checkClientAPIChan()
+	cMsg, _ := suite.getClientMsg(5 * time.Second)
 	move, ok := cMsg.GTSModel.(*gtsmodel.Move)
 	if !ok {
 		suite.FailNow("", "could not cast %T to *gtsmodel.Move", move)

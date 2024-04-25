@@ -18,6 +18,9 @@
 package account_test
 
 import (
+	"context"
+	"time"
+
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -25,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
@@ -62,6 +66,13 @@ type AccountStandardTestSuite struct {
 
 	// module being tested
 	accountProcessor account.Processor
+}
+
+func (suite *AccountStandardTestSuite) getClientMsg(timeout time.Duration) (*messages.FromClientAPI, bool) {
+	ctx := context.Background()
+	ctx, cncl := context.WithTimeout(ctx, timeout)
+	defer cncl()
+	return suite.state.Workers.Client.Queue.PopCtx(ctx)
 }
 
 func (suite *AccountStandardTestSuite) SetupSuite() {

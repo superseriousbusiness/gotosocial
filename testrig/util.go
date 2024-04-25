@@ -42,25 +42,23 @@ import (
 // Starts workers on the provided state using noop processing functions.
 // Useful when you *don't* want to trigger side effects in a test.
 func StartNoopWorkers(state *state.State) {
-	state.Workers.Client.Process = func(ctx context.Context, msg *messages.FromClientAPI) error {
-		log.Debugf(ctx, "Workers{}.Client{}.Noop(%s)", dump(msg))
-		return nil // noop
-	}
-
-	state.Workers.Federator.Process = func(ctx context.Context, msg *messages.FromFediAPI) error {
-		log.Debugf(ctx, "Workers{}.Federator{}.Noop(%s)", dump(msg))
-		return nil // noop
-	}
+	state.Workers.Client.Process = func(ctx context.Context, msg *messages.FromClientAPI) error { return nil }
+	state.Workers.Federator.Process = func(ctx context.Context, msg *messages.FromFediAPI) error { return nil }
 
 	state.Workers.Client.Init(messages.ClientMsgIndices())
 	state.Workers.Federator.Init(messages.FederatorMsgIndices())
 	state.Workers.Delivery.Init(nil)
 
+	// Specifically do NOT start the workers
+	// as caller may require queue contents.
+	// (i.e. don't want workers pulling)
+	// _ = state.Workers.Client.Start(1)
+	// _ = state.Workers.Federator.Start(1)
+	// _ = state.Workers.Dereference.Start(1)
+	// _ = state.Workers.Media.Start(1)
+	//
+	// (except for the scheduler, that's fine)
 	_ = state.Workers.Scheduler.Start()
-	_ = state.Workers.Client.Start(1)
-	_ = state.Workers.Federator.Start(1)
-	_ = state.Workers.Dereference.Start(1)
-	_ = state.Workers.Media.Start(1)
 }
 
 // Starts workers on the provided state using processing functions from the given

@@ -20,6 +20,7 @@ package account_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -150,7 +151,7 @@ func (suite *FollowTestSuite) TestFollowRequestLocal() {
 	}
 
 	// There should be a message going to the worker.
-	cMsg := suite.checkClientAPIChan()
+	cMsg, _ := suite.getClientMsg(5 * time.Second)
 	suite.Equal(ap.ActivityCreate, cMsg.APActivityType)
 	suite.Equal(ap.ActivityFollow, cMsg.APObjectType)
 	suite.Equal(requestingAccount.ID, cMsg.Origin.ID)
