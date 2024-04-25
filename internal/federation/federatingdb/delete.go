@@ -97,7 +97,7 @@ func (f *federatingDB) deleteAccount(
 	if account != nil {
 		if account.ID != requesting.ID {
 			const text = "signing account does not match delete target"
-			return false, gtserror.NewErrorForbidden(err, text)
+			return false, gtserror.NewErrorForbidden(errors.New(text), text)
 		}
 
 		log.Debugf(ctx, "deleting account: %s", account.URI)
@@ -132,7 +132,7 @@ func (f *federatingDB) deleteStatus(
 	if status != nil {
 		if status.AccountID != requesting.ID {
 			const text = "signing account does not match delete target owner"
-			return false, gtserror.NewErrorForbidden(err, text)
+			return false, gtserror.NewErrorForbidden(errors.New(text), text)
 		}
 
 		log.Debugf(ctx, "deleting status: %s", status.URI)
