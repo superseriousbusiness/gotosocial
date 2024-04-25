@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
@@ -48,7 +49,7 @@ func (suite *CreateTestSuite) TestCreateNote() {
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg := <-suite.fromFederator
+	msg, _ := suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ObjectNote, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 	suite.Equal(note, msg.APObject)
