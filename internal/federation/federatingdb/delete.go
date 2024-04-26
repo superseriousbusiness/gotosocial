@@ -60,8 +60,11 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		receiving,
 		uriStr,
 	)
-	if err != nil || ok { // handles success
+	if err != nil {
 		return err
+	} else if ok {
+		// success!
+		return nil
 	}
 
 	// Attempt to delete status.
@@ -70,8 +73,11 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		receiving,
 		uriStr,
 	)
-	if err != nil || ok { // handles success
+	if err != nil {
 		return err
+	} else if ok {
+		// success!
+		return nil
 	}
 
 	// Log at debug level, as lots of these could indicate federation
