@@ -6,7 +6,7 @@ FROM --platform=${BUILDPLATFORM} golang:1.22-alpine AS swagger
 
 RUN \
     ### Installs goswagger for building swagger definitions inside this container
-    go install "github.com/go-swagger/go-swagger/cmd/swagger@v0.30.5" && \
+    go install "github.com/go-swagger/go-swagger/cmd/swagger@c46c303aaa02" && \
     # Makes swagger executable
     chmod +x /go/bin/swagger
 
