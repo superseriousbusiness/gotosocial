@@ -97,9 +97,6 @@ type Config struct {
 
 	// DisableCompression: see http.Transport{}.DisableCompression.
 	DisableCompression bool
-
-	// HTTPClient ...
-	HTTPClient *http.Client
 }
 
 // Client wraps an underlying http.Client{} to provide the following:
@@ -122,11 +119,6 @@ type Client struct {
 func New(cfg Config) *Client {
 	var c Client
 	c.retries = 5
-
-	if cfg.HTTPClient != nil {
-		// Copy over existing client.
-		c.client = *cfg.HTTPClient
-	}
 
 	d := &net.Dialer{
 		Timeout:   15 * time.Second,
