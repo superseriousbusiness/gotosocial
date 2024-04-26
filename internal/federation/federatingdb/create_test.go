@@ -80,7 +80,7 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg, _ := suite.state.Workers.Federator.Queue.Pop()
+	msg, _ := suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ObjectNote, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 
@@ -121,7 +121,7 @@ func (suite *CreateTestSuite) TestCreateFlag1() {
 	}
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg, _ := suite.state.Workers.Federator.Queue.Pop()
+	msg, _ := suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ActivityFlag, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 
