@@ -19,6 +19,7 @@ package federatingdb_test
 
 import (
 	"context"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -34,11 +35,10 @@ import (
 
 type FederatingDBTestSuite struct {
 	suite.Suite
-	db            db.DB
-	tc            *typeutils.Converter
-	fromFederator chan messages.FromFediAPI
-	federatingDB  federatingdb.DB
-	state         state.State
+	db           db.DB
+	tc           *typeutils.Converter
+	federatingDB federatingdb.DB
+	state        state.State
 
 	testTokens       map[string]*gtsmodel.Token
 	testClients      map[string]*gtsmodel.Client
@@ -49,6 +49,13 @@ type FederatingDBTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 	testBlocks       map[string]*gtsmodel.Block
 	testActivities   map[string]testrig.ActivityWithSignature
+}
+
+func (suite *FederatingDBTestSuite) getFederatorMsg(timeout time.Duration) (*messages.FromFediAPI, bool) {
+	ctx := context.Background()
+	ctx, cncl := context.WithTimeout(ctx, timeout)
+	defer cncl()
+	return suite.state.Workers.Federator.Queue.PopCtx(ctx)
 }
 
 func (suite *FederatingDBTestSuite) SetupSuite() {
@@ -68,13 +75,6 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 
 	suite.state.Caches.Init()
 	testrig.StartNoopWorkers(&suite.state)
-
-	suite.fromFederator = make(chan messages.FromFediAPI, 10)
-	suite.state.Workers.EnqueueFediAPI = func(ctx context.Context, msgs ...messages.FromFediAPI) {
-		for _, msg := range msgs {
-			suite.fromFederator <- msg
-		}
-	}
 
 	suite.db = testrig.NewTestDB(&suite.state)
 
@@ -96,13 +96,6 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 func (suite *FederatingDBTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StopWorkers(&suite.state)
-	for suite.fromFederator != nil {
-		select {
-		case <-suite.fromFederator:
-		default:
-			return
-		}
-	}
 }
 
 func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) context.Context {

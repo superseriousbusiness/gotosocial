@@ -127,9 +127,6 @@ func (suite *WorkersTestSuite) SetupTest() {
 	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
 	testrig.StartWorkers(&suite.state, suite.processor.Workers())
 
-	suite.state.Workers.EnqueueClientAPI = suite.processor.Workers().EnqueueClientAPI
-	suite.state.Workers.EnqueueFediAPI = suite.processor.Workers().EnqueueFediAPI
-
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

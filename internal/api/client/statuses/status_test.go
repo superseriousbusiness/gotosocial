@@ -72,7 +72,6 @@ func (suite *StatusStandardTestSuite) SetupSuite() {
 
 func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
@@ -98,6 +97,8 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
 	suite.statusModule = statuses.New(suite.processor)
+
+	testrig.StartWorkers(&suite.state, suite.processor.Workers())
 }
 
 func (suite *StatusStandardTestSuite) TearDownTest() {

@@ -54,12 +54,12 @@ func (p *Processor) AccountApprove(
 
 	if !*user.Approved {
 		// Process approval side effects asynschronously.
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityAccept,
 			GTSModel:       user,
-			OriginAccount:  adminAcct,
-			TargetAccount:  user.Account,
+			Origin:         adminAcct,
+			Target:         user.Account,
 		})
 	}
 

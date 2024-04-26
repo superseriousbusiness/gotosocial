@@ -27,7 +27,7 @@ import (
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
-	"codeberg.org/superseriousbusiness/exif-terminator"
+	terminator "codeberg.org/superseriousbusiness/exif-terminator"
 	"github.com/disintegration/imaging"
 	"github.com/h2non/filetype"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -82,7 +82,7 @@ func (p *ProcessingMedia) LoadAttachment(ctx context.Context) (*gtsmodel.MediaAt
 		// asynchronous processing, which will
 		// use a background context.
 		log.Warnf(ctx, "reprocessing media %s after canceled ctx", p.media.ID)
-		go p.mgr.state.Workers.Media.Enqueue(p.Process)
+		p.mgr.state.Workers.Media.Queue.Push(p.Process)
 	}
 
 	// Media could not be retrieved FULLY,

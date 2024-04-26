@@ -117,12 +117,12 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	} else {
 		// Otherwise we leave the follow request as it is,
 		// and we handle the rest of the process async.
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       fr,
-			OriginAccount:  requestingAccount,
-			TargetAccount:  targetAccount,
+			Origin:         requestingAccount,
+			Target:         targetAccount,
 		})
 	}
 
@@ -143,7 +143,7 @@ func (p *Processor) FollowRemove(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	// Batch queue accreted client api messages.
-	p.state.Workers.EnqueueClientAPI(ctx, msgs...)
+	p.state.Workers.Client.Queue.Push(msgs...)
 
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }
@@ -225,8 +225,8 @@ func (p *Processor) getFollowTarget(ctx context.Context, requester *gtsmodel.Acc
 // If a follow and/or follow request was removed this way, one or two
 // messages will be returned which should then be processed by a client
 // api worker.
-func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) ([]messages.FromClientAPI, error) {
-	var msgs []messages.FromClientAPI
+func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccount *gtsmodel.Account) ([]*messages.FromClientAPI, error) {
+	var msgs []*messages.FromClientAPI
 
 	// Get follow from requesting account to target account.
 	follow, err := p.state.DB.GetFollow(ctx, requestingAccount.ID, targetAccount.ID)
@@ -251,7 +251,7 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 		}
 
 		// Follow status changed, process side effects.
-		msgs = append(msgs, messages.FromClientAPI{
+		msgs = append(msgs, &messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
@@ -259,8 +259,8 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 				TargetAccountID: targetAccount.ID,
 				URI:             follow.URI,
 			},
-			OriginAccount: requestingAccount,
-			TargetAccount: targetAccount,
+			Origin: requestingAccount,
+			Target: targetAccount,
 		})
 	}
 
@@ -287,7 +287,7 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 		}
 
 		// Follow status changed, process side effects.
-		msgs = append(msgs, messages.FromClientAPI{
+		msgs = append(msgs, &messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
 			GTSModel: &gtsmodel.Follow{
@@ -295,8 +295,8 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 				TargetAccountID: targetAccount.ID,
 				URI:             followReq.URI,
 			},
-			OriginAccount: requestingAccount,
-			TargetAccount: targetAccount,
+			Origin: requestingAccount,
+			Target: targetAccount,
 		})
 	}
 

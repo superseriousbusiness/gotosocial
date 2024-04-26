@@ -80,13 +80,13 @@ func (p *Processor) accountActionSuspend(
 			Text:           text,
 		},
 		func(ctx context.Context) gtserror.MultiError {
-			if err := p.state.Workers.ProcessFromClientAPI(
+			if err := p.state.Workers.Client.Process(
 				ctx,
-				messages.FromClientAPI{
+				&messages.FromClientAPI{
 					APObjectType:   ap.ActorPerson,
 					APActivityType: ap.ActivityDelete,
-					OriginAccount:  adminAcct,
-					TargetAccount:  targetAcct,
+					Origin:         adminAcct,
+					Target:         targetAcct,
 				},
 			); err != nil {
 				errs := gtserror.NewMultiError(1)

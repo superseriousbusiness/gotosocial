@@ -107,12 +107,12 @@ func (p *Processor) FaveCreate(ctx context.Context, requestingAccount *gtsmodel.
 	}
 
 	// Process new status fave side effects.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActivityLike,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       gtsFave,
-		OriginAccount:  requestingAccount,
-		TargetAccount:  targetStatus.Account,
+		Origin:         requestingAccount,
+		Target:         targetStatus.Account,
 	})
 
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
@@ -137,12 +137,12 @@ func (p *Processor) FaveRemove(ctx context.Context, requestingAccount *gtsmodel.
 	}
 
 	// Process remove status fave side effects.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActivityLike,
 		APActivityType: ap.ActivityUndo,
 		GTSModel:       existingFave,
-		OriginAccount:  requestingAccount,
-		TargetAccount:  targetStatus.Account,
+		Origin:         requestingAccount,
+		Target:         targetStatus.Account,
 	})
 
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)

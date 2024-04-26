@@ -30,9 +30,9 @@ import (
 )
 
 type Processor struct {
+	clientAPI clientAPI
+	fediAPI   fediAPI
 	workers   *workers.Workers
-	clientAPI *clientAPI
-	fediAPI   *fediAPI
 }
 
 func New(
@@ -45,6 +45,14 @@ func New(
 	media *media.Processor,
 	stream *stream.Processor,
 ) Processor {
+	// Init federate logic
+	// wrapper struct.
+	federate := &federate{
+		Federator: federator,
+		state:     state,
+		converter: converter,
+	}
+
 	// Init surface logic
 	// wrapper struct.
 	surface := &surface{
@@ -55,16 +63,8 @@ func New(
 		emailSender: emailSender,
 	}
 
-	// Init federate logic
-	// wrapper struct.
-	federate := &federate{
-		Federator: federator,
-		state:     state,
-		converter: converter,
-	}
-
 	// Init shared util funcs.
-	utilF := &utilF{
+	utils := &utils{
 		state:   state,
 		media:   media,
 		account: account,
@@ -73,20 +73,20 @@ func New(
 
 	return Processor{
 		workers: &state.Workers,
-		clientAPI: &clientAPI{
+		clientAPI: clientAPI{
 			state:     state,
 			converter: converter,
 			surface:   surface,
 			federate:  federate,
 			account:   account,
-			utilF:     utilF,
+			utils:     utils,
 		},
-		fediAPI: &fediAPI{
+		fediAPI: fediAPI{
 			state:    state,
 			surface:  surface,
 			federate: federate,
 			account:  account,
-			utilF:    utilF,
+			utils:    utils,
 		},
 	}
 }

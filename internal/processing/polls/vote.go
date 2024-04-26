@@ -96,11 +96,11 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 	poll.IncrementVotes(choices)
 
 	// Enqueue worker task to handle side-effects of user poll vote(s).
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APActivityType: ap.ActivityCreate,
 		APObjectType:   ap.ActivityQuestion,
 		GTSModel:       vote, // the vote choices
-		OriginAccount:  requester,
+		Origin:         requester,
 	})
 
 	// Return converted API model poll.

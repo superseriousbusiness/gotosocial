@@ -32,9 +32,7 @@ func testDeliveryWorkerPool(t *testing.T, sz int, input []*testrequest) {
 			"127.0.0.0/8",
 		}),
 	}))
-	if !wp.Start(sz) {
-		t.Fatal("failed starting pool")
-	}
+	wp.Start(sz)
 	defer wp.Stop()
 	test(t, &wp.Queue, input)
 }

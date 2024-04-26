@@ -126,11 +126,11 @@ func (p *Processor) Create(
 
 	// There are side effects for creating a new account
 	// (confirmation emails etc), perform these async.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       user,
-		OriginAccount:  user.Account,
+		Origin:         user.Account,
 	})
 
 	return user, nil

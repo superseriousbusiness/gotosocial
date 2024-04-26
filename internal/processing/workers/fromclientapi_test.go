@@ -197,11 +197,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -291,11 +291,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -355,11 +355,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -409,11 +409,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -467,11 +467,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -540,11 +540,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -608,11 +608,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -664,11 +664,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -729,11 +729,11 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 	// Process the new status.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
 			APActivityType: ap.ActivityCreate,
 			GTSModel:       status,
-			OriginAccount:  postingAccount,
+			Origin:         postingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
@@ -776,11 +776,11 @@ func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
 	// Process the status delete.
 	if err := suite.processor.Workers().ProcessFromClientAPI(
 		ctx,
-		messages.FromClientAPI{
+		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityDelete,
 			GTSModel:       deletedStatus,
-			OriginAccount:  deletingAccount,
+			Origin:         deletingAccount,
 		},
 	); err != nil {
 		suite.FailNow(err.Error())
