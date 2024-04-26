@@ -12,7 +12,7 @@ steps:
   # We use golangci-lint for linting.
   # See: https://golangci-lint.run/
   - name: lint
-    image: golangci/golangci-lint:v1.55.0
+    image: golangci/golangci-lint:v1.57.2
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.21-alpine
+    image: golang:1.22-alpine
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -80,7 +80,7 @@ steps:
       - yarn --cwd ./web/source build
 
   - name: snapshot
-    image: superseriousbusiness/gotosocial-drone-build:0.4.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.6.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -99,7 +99,7 @@ steps:
     commands:
       # Create a snapshot build with GoReleaser.
       - git fetch --tags
-      - goreleaser release --rm-dist --snapshot
+      - goreleaser release --clean --snapshot
       
       # Login to Docker, push Docker image snapshots + manifests.
       - /go/dockerlogin.sh
@@ -121,7 +121,7 @@ steps:
           - main
 
   - name: release
-    image: superseriousbusiness/gotosocial-drone-build:0.4.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.6.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -136,7 +136,7 @@ steps:
     commands:
       - git fetch --tags
       - /go/dockerlogin.sh
-      - goreleaser release --rm-dist
+      - goreleaser release --clean
     when:
       event:
         include:
@@ -180,7 +180,7 @@ clone:
 
 steps:
   - name: mirror
-    image: superseriousbusiness/gotosocial-drone-build:0.4.0
+    image: superseriousbusiness/gotosocial-drone-build:0.6.0
     environment:
       ORIGIN_REPO: https://github.com/superseriousbusiness/gotosocial
       TARGET_REPO: https://codeberg.org/superseriousbusiness/gotosocial
@@ -193,6 +193,6 @@ steps:
 
 ---
 kind: signature
-hmac: 4789cebf9156b2c3cb0f097311ea7620e709e4332f130dcae51a938515dc952e
+hmac: c07f32c63cbb8180c1a37e46ff1362c1c45586819b52c6de67366ae3504314e4
 
 ...

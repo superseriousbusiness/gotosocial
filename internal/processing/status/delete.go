@@ -51,12 +51,12 @@ func (p *Processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 	}
 
 	// Process delete side effects.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityDelete,
 		GTSModel:       targetStatus,
-		OriginAccount:  requestingAccount,
-		TargetAccount:  requestingAccount,
+		Origin:         requestingAccount,
+		Target:         requestingAccount,
 	})
 
 	return apiStatus, nil

@@ -98,13 +98,13 @@ func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gts
 	// was delivered along with the Update, for further asynchronous
 	// updating of eg., avatar/header, emojis, etc. The actual db
 	// inserts/updates will take place there.
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ObjectProfile,
-		APActivityType:    ap.ActivityUpdate,
-		GTSModel:          requestingAcct,
-		APObjectModel:     accountable,
-		ReceivingAccount:  receivingAcct,
-		RequestingAccount: requestingAcct,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ObjectProfile,
+		APActivityType: ap.ActivityUpdate,
+		GTSModel:       requestingAcct,
+		APObject:       accountable,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
 	})
 
 	return nil
@@ -155,13 +155,13 @@ func (f *federatingDB) updateStatusable(ctx context.Context, receivingAcct *gtsm
 
 	// Queue an UPDATE NOTE activity to our fedi API worker,
 	// this will handle necessary database insertions, etc.
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ObjectNote,
-		APActivityType:    ap.ActivityUpdate,
-		GTSModel:          status, // original status
-		APObjectModel:     (ap.Statusable)(statusable),
-		ReceivingAccount:  receivingAcct,
-		RequestingAccount: requestingAcct,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityUpdate,
+		GTSModel:       status, // original status
+		APObject:       (ap.Statusable)(statusable),
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
 	})
 
 	return nil

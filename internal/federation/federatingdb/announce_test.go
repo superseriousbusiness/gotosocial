@@ -19,6 +19,7 @@ package federatingdb_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -42,7 +43,7 @@ func (suite *AnnounceTestSuite) TestNewAnnounce() {
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg := <-suite.fromFederator
+	msg, _ := suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ActivityAnnounce, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 
@@ -69,7 +70,7 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 	suite.NoError(err)
 
 	// should be a message heading to the processor now, which we can intercept here
-	msg := <-suite.fromFederator
+	msg, _ := suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ActivityAnnounce, msg.APObjectType)
 	suite.Equal(ap.ActivityCreate, msg.APActivityType)
 	boost, ok := msg.GTSModel.(*gtsmodel.Status)
@@ -94,7 +95,8 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 
 	// since this is a repeat announce with the same URI, just delivered to a different inbox,
 	// we should have nothing in the messages channel...
-	suite.Empty(suite.fromFederator)
+	_, ok = suite.getFederatorMsg(time.Second)
+	suite.False(ok)
 }
 
 func TestAnnounceTestSuite(t *testing.T) {

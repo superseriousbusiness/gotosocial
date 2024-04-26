@@ -20,7 +20,15 @@
 export interface CustomEmoji {
 	id?: string;
 	shortcode: string;
+	url: string;
+	static_url: string;
+	visible_in_picker: boolean;
 	category?: string;
+	disabled: boolean;
+	updated_at: string;
+	total_file_size: number;
+	content_type: string;
+	uri: string;
 }
 
 /**

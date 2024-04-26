@@ -255,7 +255,7 @@ func (d *Dereferencer) RefreshStatusAsync(
 	}
 
 	// Enqueue a worker function to re-fetch this status entirely async.
-	d.state.Workers.Federator.MustEnqueueCtx(ctx, func(ctx context.Context) {
+	d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 		latest, statusable, _, err := d.enrichStatusSafely(ctx,
 			requestUser,
 			uri,

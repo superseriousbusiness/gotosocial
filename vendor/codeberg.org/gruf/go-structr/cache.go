@@ -150,10 +150,10 @@ func (c *Cache[T]) Get(index *Index, keys ...Key) []T {
 
 	// Acquire lock.
 	c.mutex.Lock()
+	defer c.mutex.Unlock()
 
 	// Check cache init.
 	if c.copy == nil {
-		c.mutex.Unlock()
 		panic("not initialized")
 	}
 
@@ -173,9 +173,6 @@ func (c *Cache[T]) Get(index *Index, keys ...Key) []T {
 		})
 	}
 
-	// Done with lock.
-	c.mutex.Unlock()
-
 	return values
 }
 
@@ -185,12 +182,12 @@ func (c *Cache[T]) Put(values ...T) {
 	// Acquire lock.
 	c.mutex.Lock()
 
-	// Get func ptrs.
-	invalid := c.invalid
+	// Wrap unlock to only do once.
+	unlock := once(c.mutex.Unlock)
+	defer unlock()
 
 	// Check cache init.
 	if c.copy == nil {
-		c.mutex.Unlock()
 		panic("not initialized")
 	}
 
@@ -203,8 +200,12 @@ func (c *Cache[T]) Put(values ...T) {
 		)
 	}
 
-	// Done with lock.
-	c.mutex.Unlock()
+	// Get func ptrs.
+	invalid := c.invalid
+
+	// Done with
+	// the lock.
+	unlock()
 
 	if invalid != nil {
 		// Pass all invalidated values
@@ -241,13 +242,13 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 	// Acquire lock.
 	c.mutex.Lock()
 
-	// Get func ptrs.
-	ignore := c.ignore
+	// Wrap unlock to only do once.
+	unlock := once(c.mutex.Unlock)
+	defer unlock()
 
 	// Check init'd.
 	if c.copy == nil ||
-		ignore == nil {
-		c.mutex.Unlock()
+		c.ignore == nil {
 		panic("not initialized")
 	}
 
@@ -273,8 +274,12 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 		}
 	}
 
-	// Done with lock.
-	c.mutex.Unlock()
+	// Get func ptrs.
+	ignore := c.ignore
+
+	// Done with
+	// the lock.
+	unlock()
 
 	if ok {
 		// item found!
@@ -325,9 +330,12 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 	// Acquire lock.
 	c.mutex.Lock()
 
+	// Wrap unlock to only do once.
+	unlock := once(c.mutex.Unlock)
+	defer unlock()
+
 	// Check init'd.
 	if c.copy == nil {
-		c.mutex.Unlock()
 		panic("not initialized")
 	}
 
@@ -365,8 +373,9 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 		i++
 	}
 
-	// Done with lock.
-	c.mutex.Unlock()
+	// Done with
+	// the lock.
+	unlock()
 
 	// Load uncached values.
 	uncached, err := load(keys)
@@ -374,8 +383,20 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 		return nil, err
 	}
 
-	// Insert uncached.
-	c.Put(uncached...)
+	// Acquire lock.
+	c.mutex.Lock()
+
+	// Store all uncached values.
+	for i := range uncached {
+		c.store_value(
+			nil,
+			Key{},
+			uncached[i],
+		)
+	}
+
+	// Done with lock.
+	c.mutex.Unlock()
 
 	// Append uncached to return values.
 	values = append(values, uncached...)

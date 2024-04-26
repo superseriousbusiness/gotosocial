@@ -27,7 +27,10 @@ import (
 	"os"
 	"time"
 
+	"codeberg.org/gruf/go-byteutil"
+	"codeberg.org/gruf/go-kv/format"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
@@ -39,40 +42,55 @@ import (
 // Starts workers on the provided state using noop processing functions.
 // Useful when you *don't* want to trigger side effects in a test.
 func StartNoopWorkers(state *state.State) {
-	state.Workers.EnqueueClientAPI = func(context.Context, ...messages.FromClientAPI) {}
-	state.Workers.EnqueueFediAPI = func(context.Context, ...messages.FromFediAPI) {}
-	state.Workers.ProcessFromClientAPI = func(context.Context, messages.FromClientAPI) error { return nil }
-	state.Workers.ProcessFromFediAPI = func(context.Context, messages.FromFediAPI) error { return nil }
+	state.Workers.Client.Process = func(ctx context.Context, msg *messages.FromClientAPI) error { return nil }
+	state.Workers.Federator.Process = func(ctx context.Context, msg *messages.FromFediAPI) error { return nil }
 
+	state.Workers.Client.Init(messages.ClientMsgIndices())
+	state.Workers.Federator.Init(messages.FederatorMsgIndices())
 	state.Workers.Delivery.Init(nil)
 
+	// Specifically do NOT start the workers
+	// as caller may require queue contents.
+	// (i.e. don't want workers pulling)
+	// _ = state.Workers.Client.Start(1)
+	// _ = state.Workers.Federator.Start(1)
+	// _ = state.Workers.Dereference.Start(1)
+	// _ = state.Workers.Media.Start(1)
+	//
+	// (except for the scheduler, that's fine)
 	_ = state.Workers.Scheduler.Start()
-	_ = state.Workers.ClientAPI.Start(1, 10)
-	_ = state.Workers.Federator.Start(1, 10)
-	_ = state.Workers.Media.Start(1, 10)
 }
 
 // Starts workers on the provided state using processing functions from the given
 // workers processor. Useful when you *do* want to trigger side effects in a test.
 func StartWorkers(state *state.State, processor *workers.Processor) {
-	state.Workers.EnqueueClientAPI = processor.EnqueueClientAPI
-	state.Workers.EnqueueFediAPI = processor.EnqueueFediAPI
-	state.Workers.ProcessFromClientAPI = processor.ProcessFromClientAPI
-	state.Workers.ProcessFromFediAPI = processor.ProcessFromFediAPI
+	state.Workers.Client.Process = func(ctx context.Context, msg *messages.FromClientAPI) error {
+		log.Debugf(ctx, "Workers{}.Client{}.Process(%s)", dump(msg))
+		return processor.ProcessFromClientAPI(ctx, msg)
+	}
 
+	state.Workers.Federator.Process = func(ctx context.Context, msg *messages.FromFediAPI) error {
+		log.Debugf(ctx, "Workers{}.Federator{}.Process(%s)", dump(msg))
+		return processor.ProcessFromFediAPI(ctx, msg)
+	}
+
+	state.Workers.Client.Init(messages.ClientMsgIndices())
+	state.Workers.Federator.Init(messages.FederatorMsgIndices())
 	state.Workers.Delivery.Init(nil)
 
 	_ = state.Workers.Scheduler.Start()
-	_ = state.Workers.ClientAPI.Start(1, 10)
-	_ = state.Workers.Federator.Start(1, 10)
-	_ = state.Workers.Media.Start(1, 10)
+	state.Workers.Client.Start(1)
+	state.Workers.Federator.Start(1)
+	state.Workers.Dereference.Start(1)
+	state.Workers.Media.Start(1)
 }
 
 func StopWorkers(state *state.State) {
 	_ = state.Workers.Scheduler.Stop()
-	_ = state.Workers.ClientAPI.Stop()
-	_ = state.Workers.Federator.Stop()
-	_ = state.Workers.Media.Stop()
+	state.Workers.Client.Stop()
+	state.Workers.Federator.Stop()
+	state.Workers.Dereference.Stop()
+	state.Workers.Media.Stop()
 }
 
 func StartTimelines(state *state.State, filter *visibility.Filter, converter *typeutils.Converter) {
@@ -240,4 +258,11 @@ func WaitFor(condition func() bool) bool {
 			return false
 		}
 	}
+}
+
+// dump returns debug output of 'v'.
+func dump(v any) string {
+	var buf byteutil.Buffer
+	format.Append(&buf, v)
+	return buf.String()
 }

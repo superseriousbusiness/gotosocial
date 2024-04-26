@@ -23,6 +23,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -97,8 +98,10 @@ func (a *Actions) Run(
 	// we're done modifying it for now.
 	a.m.Unlock()
 
-	// Do the rest of the work asynchronously.
-	a.state.Workers.ClientAPI.Enqueue(func(ctx context.Context) {
+	go func() {
+		// Use a background context with existing values.
+		ctx = gtscontext.WithValues(context.Background(), ctx)
+
 		// Run the thing and collect errors.
 		if errs := f(ctx); errs != nil {
 			action.Errors = make([]string, 0, len(errs))
@@ -119,7 +122,7 @@ func (a *Actions) Run(
 		if err := a.state.DB.UpdateAdminAction(ctx, action, "completed_at", "errors"); err != nil {
 			log.Errorf(ctx, "db error marking action %s as completed: %q", actionKey, err)
 		}
-	})
+	}()
 
 	return nil
 }

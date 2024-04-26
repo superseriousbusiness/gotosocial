@@ -101,12 +101,12 @@ func (p *Processor) AccountReject(
 	}
 
 	// Process rejection side effects asynschronously.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityReject,
 		GTSModel:       deniedUser,
-		OriginAccount:  adminAcct,
-		TargetAccount:  user.Account,
+		Origin:         adminAcct,
+		Target:         user.Account,
 	})
 
 	return apiAccount, nil

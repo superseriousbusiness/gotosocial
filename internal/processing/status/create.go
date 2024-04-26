@@ -143,11 +143,11 @@ func (p *Processor) Create(
 	}
 
 	// send it back to the client API worker for async side-effects.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       status,
-		OriginAccount:  requester,
+		Origin:         requester,
 	})
 
 	if status.Poll != nil {

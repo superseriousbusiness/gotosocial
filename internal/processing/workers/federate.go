@@ -75,12 +75,6 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 		return nil
 	}
 
-	// Drop any queued outgoing AP requests to / from account,
-	// (this stops any queued likes, boosts, creates etc).
-	f.state.Workers.Delivery.Queue.Delete("ActorID", account.URI)
-	f.state.Workers.Delivery.Queue.Delete("ObjectID", account.URI)
-	f.state.Workers.Delivery.Queue.Delete("TargetID", account.URI)
-
 	// Parse relevant URI(s).
 	outboxIRI, err := parseURI(account.OutboxURI)
 	if err != nil {
@@ -226,16 +220,6 @@ func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) er
 	// isn't our status.
 	if !*status.Local {
 		return nil
-	}
-
-	// Drop any queued outgoing http requests for status,
-	// (this stops any queued likes, boosts, creates etc).
-	f.state.Workers.Delivery.Queue.Delete("ObjectID", status.URI)
-	f.state.Workers.Delivery.Queue.Delete("TargetID", status.URI)
-
-	// Ensure the status model is fully populated.
-	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("error populating status: %w", err)
 	}
 
 	// Parse the outbox URI of the status author.

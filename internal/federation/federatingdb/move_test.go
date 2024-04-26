@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 type MoveTestSuite struct {
@@ -78,13 +77,7 @@ func (suite *MoveTestSuite) TestMove() {
 	suite.move(receivingAcct, requestingAcct, moveStr1)
 
 	// Should be a message heading to the processor.
-	var msg messages.FromFediAPI
-	select {
-	case msg = <-suite.fromFederator:
-		// Fine.
-	case <-time.After(5 * time.Second):
-		suite.FailNow("", "timeout waiting for suite.fromFederator")
-	}
+	msg, _ := suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ObjectProfile, msg.APObjectType)
 	suite.Equal(ap.ActivityMove, msg.APActivityType)
 
@@ -101,12 +94,7 @@ func (suite *MoveTestSuite) TestMove() {
 
 	// Should be a message heading to the processor
 	// since this is just a straight up retry.
-	select {
-	case msg = <-suite.fromFederator:
-		// Fine.
-	case <-time.After(5 * time.Second):
-		suite.FailNow("", "timeout waiting for suite.fromFederator")
-	}
+	msg, _ = suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ObjectProfile, msg.APObjectType)
 	suite.Equal(ap.ActivityMove, msg.APActivityType)
 
@@ -126,12 +114,7 @@ func (suite *MoveTestSuite) TestMove() {
 
 	// Should be a message heading to the processor
 	// since this is just a retry with a different ID.
-	select {
-	case msg = <-suite.fromFederator:
-		// Fine.
-	case <-time.After(5 * time.Second):
-		suite.FailNow("", "timeout waiting for suite.fromFederator")
-	}
+	msg, _ = suite.getFederatorMsg(5 * time.Second)
 	suite.Equal(ap.ObjectProfile, msg.APObjectType)
 	suite.Equal(ap.ActivityMove, msg.APActivityType)
 }

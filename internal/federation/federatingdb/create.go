@@ -99,7 +99,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	BLOCK HANDLERS
 */
 
-func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, receiving *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, receiving *gtsmodel.Account, requesting *gtsmodel.Account) error {
 	blockable, ok := asType.(vocab.ActivityStreamsBlock)
 	if !ok {
 		return errors.New("activityBlock: could not convert type to block")
@@ -110,10 +110,10 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 		return fmt.Errorf("activityBlock: could not convert Block to gts model block")
 	}
 
-	if block.AccountID != requestingAccount.ID {
+	if block.AccountID != requesting.ID {
 		return fmt.Errorf(
 			"activityBlock: requestingAccount %s is not Block actor account %s",
-			requestingAccount.URI, block.Account.URI,
+			requesting.URI, block.Account.URI,
 		)
 	}
 
@@ -130,12 +130,12 @@ func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, rec
 		return fmt.Errorf("activityBlock: database error inserting block: %s", err)
 	}
 
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ActivityBlock,
-		APActivityType:    ap.ActivityCreate,
-		GTSModel:          block,
-		ReceivingAccount:  receiving,
-		RequestingAccount: requestingAccount,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityBlock,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       block,
+		Receiving:      receiving,
+		Requesting:     requesting,
 	})
 
 	return nil
@@ -297,7 +297,7 @@ func (f *federatingDB) createPollOptionables(
 	}
 
 	// Enqueue message to the fedi API worker with poll vote(s).
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 		APActivityType: ap.ActivityCreate,
 		APObjectType:   ap.ActivityQuestion,
 		GTSModel: &gtsmodel.PollVote{
@@ -308,8 +308,8 @@ func (f *federatingDB) createPollOptionables(
 			PollID:    inReplyTo.PollID,
 			Poll:      inReplyTo.Poll,
 		},
-		ReceivingAccount:  receiver,
-		RequestingAccount: requester,
+		Receiving:  receiver,
+		Requesting: requester,
 	})
 
 	return nil
@@ -377,28 +377,28 @@ func (f *federatingDB) createStatusable(
 
 		// Pass the statusable URI (APIri) into the processor
 		// worker and do the rest of the processing asynchronously.
-		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:      ap.ObjectNote,
-			APActivityType:    ap.ActivityCreate,
-			APIri:             ap.GetJSONLDId(statusable),
-			APObjectModel:     nil,
-			GTSModel:          nil,
-			ReceivingAccount:  receiver,
-			RequestingAccount: requester,
+		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			APIRI:          ap.GetJSONLDId(statusable),
+			APObject:       nil,
+			GTSModel:       nil,
+			Receiving:      receiver,
+			Requesting:     requester,
 		})
 		return nil
 	}
 
 	// Do the rest of the processing asynchronously. The processor
 	// will handle inserting/updating + further dereferencing the status.
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ObjectNote,
-		APActivityType:    ap.ActivityCreate,
-		APIri:             nil,
-		GTSModel:          nil,
-		APObjectModel:     statusable,
-		ReceivingAccount:  receiver,
-		RequestingAccount: requester,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityCreate,
+		APIRI:          nil,
+		GTSModel:       nil,
+		APObject:       statusable,
+		Receiving:      receiver,
+		Requesting:     requester,
 	})
 
 	return nil
@@ -439,12 +439,12 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 		return fmt.Errorf("activityFollow: database error inserting follow request: %s", err)
 	}
 
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ActivityFollow,
-		APActivityType:    ap.ActivityCreate,
-		GTSModel:          followRequest,
-		ReceivingAccount:  receivingAccount,
-		RequestingAccount: requestingAccount,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       followRequest,
+		Receiving:      receivingAccount,
+		Requesting:     requestingAccount,
 	})
 
 	return nil
@@ -484,12 +484,12 @@ func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, rece
 		return fmt.Errorf("activityLike: database error inserting fave: %w", err)
 	}
 
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ActivityLike,
-		APActivityType:    ap.ActivityCreate,
-		GTSModel:          fave,
-		ReceivingAccount:  receivingAccount,
-		RequestingAccount: requestingAccount,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityLike,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       fave,
+		Receiving:      receivingAccount,
+		Requesting:     requestingAccount,
 	})
 
 	return nil
@@ -536,12 +536,12 @@ func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, rece
 		return fmt.Errorf("activityFlag: database error inserting report: %w", err)
 	}
 
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ActivityFlag,
-		APActivityType:    ap.ActivityCreate,
-		GTSModel:          report,
-		ReceivingAccount:  receivingAccount,
-		RequestingAccount: requestingAccount,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityFlag,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       report,
+		Receiving:      receivingAccount,
+		Requesting:     requestingAccount,
 	})
 
 	return nil

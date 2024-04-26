@@ -40,12 +40,12 @@ func (p *Processor) FollowRequestAccept(ctx context.Context, requestingAccount *
 	if follow.Account != nil {
 		// Only enqueue work in the case we have a request creating account stored.
 		// NOTE: due to how AcceptFollowRequest works, the inverse shouldn't be possible.
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityAccept,
 			GTSModel:       follow,
-			OriginAccount:  follow.Account,
-			TargetAccount:  follow.TargetAccount,
+			Origin:         follow.Account,
+			Target:         follow.TargetAccount,
 		})
 	}
 
@@ -67,12 +67,12 @@ func (p *Processor) FollowRequestReject(ctx context.Context, requestingAccount *
 	if followRequest.Account != nil {
 		// Only enqueue work in the case we have a request creating account stored.
 		// NOTE: due to how GetFollowRequest works, the inverse shouldn't be possible.
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityReject,
 			GTSModel:       followRequest,
-			OriginAccount:  followRequest.Account,
-			TargetAccount:  followRequest.TargetAccount,
+			Origin:         followRequest.Account,
+			Target:         followRequest.TargetAccount,
 		})
 	}
 

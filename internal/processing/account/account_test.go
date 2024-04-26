@@ -19,6 +19,7 @@ package account_test
 
 import (
 	"context"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -48,7 +49,6 @@ type AccountStandardTestSuite struct {
 	state               state.State
 	mediaManager        *media.Manager
 	oauthServer         oauth.Server
-	fromClientAPIChan   chan messages.FromClientAPI
 	transportController transport.Controller
 	federator           *federation.Federator
 	emailSender         email.Sender
@@ -66,6 +66,13 @@ type AccountStandardTestSuite struct {
 
 	// module being tested
 	accountProcessor account.Processor
+}
+
+func (suite *AccountStandardTestSuite) getClientMsg(timeout time.Duration) (*messages.FromClientAPI, bool) {
+	ctx := context.Background()
+	ctx, cncl := context.WithTimeout(ctx, timeout)
+	defer cncl()
+	return suite.state.Workers.Client.Queue.PopCtx(ctx)
 }
 
 func (suite *AccountStandardTestSuite) SetupSuite() {
@@ -100,13 +107,6 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.state.Storage = suite.storage
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-
-	suite.fromClientAPIChan = make(chan messages.FromClientAPI, 100)
-	suite.state.Workers.EnqueueClientAPI = func(ctx context.Context, msgs ...messages.FromClientAPI) {
-		for _, msg := range msgs {
-			suite.fromClientAPIChan <- msg
-		}
-	}
 
 	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
