@@ -102,7 +102,10 @@ func (f *federatingDB) deleteAccount(
 	}
 
 	if account != nil {
+		// Ensure requesting account is
+		// only trying to delete itself.
 		if account.ID != requesting.ID {
+
 			// TODO: handled forwarded deletes,
 			// for now we silently drop this.
 			return true, nil
@@ -138,7 +141,10 @@ func (f *federatingDB) deleteStatus(
 	}
 
 	if status != nil {
+		// Ensure requesting account is only
+		// trying to delete its own statuses.
 		if status.AccountID != requesting.ID {
+
 			// TODO: handled forwarded deletes,
 			// for now we silently drop this.
 			return true, nil
