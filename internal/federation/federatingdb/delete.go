@@ -46,7 +46,8 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	requesting := activityContext.requestingAcct
 	receiving := activityContext.receivingAcct
 
-	// Serialize ID URI.
+	// Serialize deleted ID URI.
+	// (may be status OR account)
 	uriStr := id.String()
 
 	var (
@@ -54,7 +55,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		err error
 	)
 
-	// Attempt to delete account.
+	// Try delete as an account URI.
 	ok, err = f.deleteAccount(ctx,
 		requesting,
 		receiving,
@@ -67,7 +68,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		return nil
 	}
 
-	// Attempt to delete status.
+	// Try delete as a status URI.
 	ok, err = f.deleteStatus(ctx,
 		requesting,
 		receiving,
