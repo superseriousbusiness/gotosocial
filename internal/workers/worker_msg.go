@@ -71,8 +71,6 @@ func (p *MsgWorkerPool[T]) Start(n int) {
 		// false = already running.
 		_ = p.workers[i].Start()
 	}
-
-	return
 }
 
 // Stop will attempt to stop contained Worker{}s.
@@ -95,7 +93,6 @@ func (p *MsgWorkerPool[T]) Stop() {
 
 	// Unset workers slice.
 	p.workers = p.workers[:0]
-	return
 }
 
 // MsgWorker wraps a processing function to

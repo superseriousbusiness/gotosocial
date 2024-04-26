@@ -61,8 +61,6 @@ func (p *FnWorkerPool) Start(n int) {
 		// false = already running.
 		_ = p.workers[i].Start()
 	}
-
-	return
 }
 
 // Stop will attempt to stop contained FnWorker{}s.
@@ -85,7 +83,6 @@ func (p *FnWorkerPool) Stop() {
 
 	// Unset workers slice.
 	p.workers = p.workers[:0]
-	return
 }
 
 // FnWorker wraps a queue.SimpleQueue{} which

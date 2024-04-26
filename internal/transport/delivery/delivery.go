@@ -123,8 +123,6 @@ func (p *WorkerPool) Start(n int) {
 		// false = already running.
 		_ = p.workers[i].Start()
 	}
-
-	return
 }
 
 // Stop will attempt to stop contained Worker{}s.
@@ -147,7 +145,6 @@ func (p *WorkerPool) Stop() {
 
 	// Unset workers slice.
 	p.workers = p.workers[:0]
-	return
 }
 
 // Worker wraps an httpclient.Client{} to feed
