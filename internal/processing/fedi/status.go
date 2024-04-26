@@ -62,7 +62,7 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusI
 	}
 
 	if !visible {
-		const text = "status not vising to requesting account"
+		const text = "status not visible to requesting account"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
