@@ -59,48 +59,27 @@ type Workers struct {
 
 // StartScheduler starts the job scheduler.
 func (w *Workers) StartScheduler() {
-	tryUntil("starting scheduler", 5, w.Scheduler.Start)
+	_ = w.Scheduler.Start() // false = already running
 }
 
 // Start will start contained worker pools.
 func (w *Workers) Start() {
-	// Get currently set GOMAXPROCS.
 	maxprocs := runtime.GOMAXPROCS(0)
-
-	tryUntil("start delivery workerpool", 5, func() bool {
-		n := config.GetAdvancedSenderMultiplier()
-		if n < 1 {
-			// clamp min senders to 1.
-			return w.Delivery.Start(1)
-		}
-		return w.Delivery.Start(n * maxprocs)
-	})
-
-	tryUntil("starting client workerpool", 5, func() bool {
-		return w.Client.Start(4 * maxprocs)
-	})
-
-	tryUntil("starting federator workerpool", 5, func() bool {
-		return w.Federator.Start(4 * maxprocs)
-	})
-
-	tryUntil("starting dereference workerpool", 5, func() bool {
-		return w.Dereference.Start(4 * maxprocs)
-	})
-
-	tryUntil("starting media workerpool", 5, func() bool {
-		return w.Media.Start(8 * maxprocs)
-	})
+	w.Delivery.Start(deliveryWorkers(maxprocs))
+	w.Client.Start(4 * maxprocs)
+	w.Federator.Start(4 * maxprocs)
+	w.Dereference.Start(4 * maxprocs)
+	w.Media.Start(8 * maxprocs)
 }
 
 // Stop will stop all of the contained worker pools (and global scheduler).
 func (w *Workers) Stop() {
-	tryUntil("stopping scheduler", 5, w.Scheduler.Stop)
-	tryUntil("stopping delivery workerpool", 5, w.Delivery.Stop)
-	tryUntil("stopping client API workerpool", 5, w.Client.Stop)
-	tryUntil("stopping federator workerpool", 5, w.Federator.Stop)
-	tryUntil("stopping dereference workerpool", 5, w.Dereference.Stop)
-	tryUntil("stopping media workerpool", 5, w.Media.Stop)
+	_ = w.Scheduler.Stop() // false = not running
+	w.Delivery.Stop()
+	w.Client.Stop()
+	w.Federator.Stop()
+	w.Dereference.Stop()
+	w.Media.Stop()
 }
 
 // nocopy when embedded will signal linter to
@@ -110,6 +89,15 @@ type nocopy struct{}
 func (*nocopy) Lock() {}
 
 func (*nocopy) Unlock() {}
+
+func deliveryWorkers(maxprocs int) int {
+	n := config.GetAdvancedSenderMultiplier()
+	if n < 1 {
+		// clamp to 1
+		return 1
+	}
+	return n * maxprocs
+}
 
 // tryUntil will attempt to call 'do' for 'count' attempts, before panicking with 'msg'.
 func tryUntil(msg string, count int, do func() bool) {

@@ -39,27 +39,52 @@ type FnWorkerPool struct {
 }
 
 // Start will attempt to start 'n' FnWorker{}s.
-func (p *FnWorkerPool) Start(n int) (ok bool) {
-	if ok = (len(p.workers) == 0); ok {
-		p.workers = make([]*FnWorker, n)
-		for i := range p.workers {
-			p.workers[i] = new(FnWorker)
-			p.workers[i].Queue = &p.Queue
-			ok = p.workers[i].Start() && ok
-		}
+func (p *FnWorkerPool) Start(n int) {
+	// Check whether workers are
+	// set (is already running).
+	ok := (len(p.workers) > 0)
+	if ok {
+		return
 	}
+
+	// Allocate new workers slice.
+	p.workers = make([]*FnWorker, n)
+	for i := range p.workers {
+
+		// Allocate new FnWorker{}.
+		p.workers[i] = new(FnWorker)
+		p.workers[i].Queue = &p.Queue
+
+		// Attempt to start worker.
+		// Return bool not useful
+		// here, as true = started,
+		// false = already running.
+		_ = p.workers[i].Start()
+	}
+
 	return
 }
 
 // Stop will attempt to stop contained FnWorker{}s.
-func (p *FnWorkerPool) Stop() (ok bool) {
-	if ok = (len(p.workers) > 0); ok {
-		for i := range p.workers {
-			ok = p.workers[i].Stop() && ok
-			p.workers[i] = nil
-		}
-		p.workers = p.workers[:0]
+func (p *FnWorkerPool) Stop() {
+	// Check whether workers are
+	// set (is currently running).
+	ok := (len(p.workers) == 0)
+	if ok {
+		return
 	}
+
+	// Stop all running workers.
+	for i := range p.workers {
+
+		// return bool not useful
+		// here, as true = stopped,
+		// false = never running.
+		_ = p.workers[i].Stop()
+	}
+
+	// Unset workers slice.
+	p.workers = p.workers[:0]
 	return
 }
 

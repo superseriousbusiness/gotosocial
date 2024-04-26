@@ -48,28 +48,53 @@ func (p *MsgWorkerPool[T]) Init(indices []structr.IndexConfig) {
 }
 
 // Start will attempt to start 'n' Worker{}s.
-func (p *MsgWorkerPool[T]) Start(n int) (ok bool) {
-	if ok = (len(p.workers) == 0); ok {
-		p.workers = make([]*MsgWorker[T], n)
-		for i := range p.workers {
-			p.workers[i] = new(MsgWorker[T])
-			p.workers[i].Process = p.Process
-			p.workers[i].Queue = &p.Queue
-			ok = p.workers[i].Start() && ok
-		}
+func (p *MsgWorkerPool[T]) Start(n int) {
+	// Check whether workers are
+	// set (is already running).
+	ok := (len(p.workers) > 0)
+	if ok {
+		return
 	}
+
+	// Allocate new msg workers slice.
+	p.workers = make([]*MsgWorker[T], n)
+	for i := range p.workers {
+
+		// Allocate new MsgWorker[T]{}.
+		p.workers[i] = new(MsgWorker[T])
+		p.workers[i].Process = p.Process
+		p.workers[i].Queue = &p.Queue
+
+		// Attempt to start worker.
+		// Return bool not useful
+		// here, as true = started,
+		// false = already running.
+		_ = p.workers[i].Start()
+	}
+
 	return
 }
 
 // Stop will attempt to stop contained Worker{}s.
-func (p *MsgWorkerPool[T]) Stop() (ok bool) {
-	if ok = (len(p.workers) > 0); ok {
-		for i := range p.workers {
-			ok = p.workers[i].Stop() && ok
-			p.workers[i] = nil
-		}
-		p.workers = p.workers[:0]
+func (p *MsgWorkerPool[T]) Stop() {
+	// Check whether workers are
+	// set (is currently running).
+	ok := (len(p.workers) == 0)
+	if ok {
+		return
 	}
+
+	// Stop all running workers.
+	for i := range p.workers {
+
+		// return bool not useful
+		// here, as true = stopped,
+		// false = never running.
+		_ = p.workers[i].Stop()
+	}
+
+	// Unset workers slice.
+	p.workers = p.workers[:0]
 	return
 }
 
