@@ -18,7 +18,6 @@
 package workers
 
 import (
-	"log"
 	"runtime"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -97,14 +96,4 @@ func deliveryWorkers(maxprocs int) int {
 		return 1
 	}
 	return n * maxprocs
-}
-
-// tryUntil will attempt to call 'do' for 'count' attempts, before panicking with 'msg'.
-func tryUntil(msg string, count int, do func() bool) {
-	for i := 0; i < count; i++ {
-		if do() {
-			return
-		}
-	}
-	log.Panicf("failed %s after %d tries", msg, count)
 }
