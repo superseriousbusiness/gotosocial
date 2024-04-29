@@ -42,6 +42,9 @@ type FromFediAPITestSuite struct {
 
 // remote_account_1 boosts the first status of local_account_1
 func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	boostedStatus := suite.testStatuses["local_account_1_status_1"]
 	boostingAccount := suite.testAccounts["remote_account_1"]
 	announceStatus := &gtsmodel.Status{}
@@ -54,7 +57,7 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	announceStatus.Account = boostingAccount
 	announceStatus.Visibility = boostedStatus.Visibility
 
-	err := suite.processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
+	err := testStructs.Processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
 		APObjectType:   ap.ActivityAnnounce,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       announceStatus,
@@ -66,7 +69,7 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	// side effects should be triggered
 	// 1. status should have an ID, and be in the database
 	suite.NotEmpty(announceStatus.ID)
-	_, err = suite.db.GetStatusByID(context.Background(), announceStatus.ID)
+	_, err = testStructs.State.DB.GetStatusByID(context.Background(), announceStatus.ID)
 	suite.NoError(err)
 
 	// 2. a notification should exist for the announce
@@ -77,7 +80,7 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 		},
 	}
 	notif := &gtsmodel.Notification{}
-	err = suite.db.GetWhere(context.Background(), where, notif)
+	err = testStructs.State.DB.GetWhere(context.Background(), where, notif)
 	suite.NoError(err)
 	suite.Equal(gtsmodel.NotificationReblog, notif.NotificationType)
 	suite.Equal(boostedStatus.AccountID, notif.TargetAccountID)
@@ -87,6 +90,9 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	repliedAccount := suite.testAccounts["local_account_1"]
 	repliedStatus := suite.testStatuses["local_account_1_status_1"]
 	replyingAccount := suite.testAccounts["remote_account_1"]
@@ -97,7 +103,7 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	replyingAccount.FetchedAt = time.Now()
 	replyingAccount.SuspendedAt = time.Time{}
 	replyingAccount.SuspensionOrigin = ""
-	err := suite.state.DB.UpdateAccount(context.Background(),
+	err := testStructs.State.DB.UpdateAccount(context.Background(),
 		replyingAccount,
 		"fetched_at",
 		"suspended_at",
@@ -111,11 +117,11 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	ap.AppendInReplyTo(replyingStatusable, testrig.URLMustParse(repliedStatus.URI))
 
 	// Open a websocket stream to later test the streamed status reply.
-	wssStream, errWithCode := suite.processor.Stream().Open(context.Background(), repliedAccount, stream.TimelineHome)
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(context.Background(), repliedAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// Send the replied status off to the fedi worker to be further processed.
-	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
 		APObject:       replyingStatusable,
@@ -126,12 +132,12 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 
 	// side effects should be triggered
 	// 1. status should be in the database
-	replyingStatus, err := suite.state.DB.GetStatusByURI(context.Background(), replyingURI)
+	replyingStatus, err := testStructs.State.DB.GetStatusByURI(context.Background(), replyingURI)
 	suite.NoError(err)
 
 	// 2. a notification should exist for the mention
 	var notif gtsmodel.Notification
-	err = suite.db.GetWhere(context.Background(), []db.Where{
+	err = testStructs.State.DB.GetWhere(context.Background(), []db.Where{
 		{Key: "status_id", Value: replyingStatus.ID},
 	}, &notif)
 	suite.NoError(err)
@@ -156,11 +162,14 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFave() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	favedAccount := suite.testAccounts["local_account_1"]
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
 
-	wssStream, errWithCode := suite.processor.Stream().Open(context.Background(), favedAccount, stream.TimelineNotifications)
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(context.Background(), favedAccount, stream.TimelineNotifications)
 	suite.NoError(errWithCode)
 
 	fave := &gtsmodel.StatusFave{
@@ -176,10 +185,10 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 		URI:             favingAccount.URI + "/faves/aaaaaaaaaaaa",
 	}
 
-	err := suite.db.Put(context.Background(), fave)
+	err := testStructs.State.DB.Put(context.Background(), fave)
 	suite.NoError(err)
 
-	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
 		APObjectType:   ap.ActivityLike,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       fave,
@@ -202,7 +211,7 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 	}
 
 	notif := &gtsmodel.Notification{}
-	err = suite.db.GetWhere(context.Background(), where, notif)
+	err = testStructs.State.DB.GetWhere(context.Background(), where, notif)
 	suite.NoError(err)
 	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
@@ -225,12 +234,15 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 // This tests for an issue we were seeing where Misskey sends out faves to inboxes of people that don't own
 // the fave, but just follow the actor who received the fave.
 func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	receivingAccount := suite.testAccounts["local_account_2"]
 	favedAccount := suite.testAccounts["local_account_1"]
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
 	favingAccount := suite.testAccounts["remote_account_1"]
 
-	wssStream, errWithCode := suite.processor.Stream().Open(context.Background(), receivingAccount, stream.TimelineHome)
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(context.Background(), receivingAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	fave := &gtsmodel.StatusFave{
@@ -246,10 +258,10 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 		URI:             favingAccount.URI + "/faves/aaaaaaaaaaaa",
 	}
 
-	err := suite.db.Put(context.Background(), fave)
+	err := testStructs.State.DB.Put(context.Background(), fave)
 	suite.NoError(err)
 
-	err = suite.processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
 		APObjectType:   ap.ActivityLike,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       fave,
@@ -272,7 +284,7 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 	}
 
 	notif := &gtsmodel.Notification{}
-	err = suite.db.GetWhere(context.Background(), where, notif)
+	err = testStructs.State.DB.GetWhere(context.Background(), where, notif)
 	suite.NoError(err)
 	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
@@ -287,6 +299,9 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 }
 
 func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	ctx := context.Background()
 
 	deletedAccount := suite.testAccounts["remote_account_1"]
@@ -304,7 +319,7 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 		URI:             fmt.Sprintf("%s/follows/01FGRY72ASHBSET64353DPHK9T", deletedAccount.URI),
 		Notify:          util.Ptr(false),
 	}
-	err := suite.db.Put(ctx, zorkFollowSatan)
+	err := testStructs.State.DB.Put(ctx, zorkFollowSatan)
 	suite.NoError(err)
 
 	satanFollowZork := &gtsmodel.Follow{
@@ -317,11 +332,11 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 		URI:             fmt.Sprintf("%s/follows/01FGRYAVAWWPP926J175QGM0WV", receivingAccount.URI),
 		Notify:          util.Ptr(false),
 	}
-	err = suite.db.Put(ctx, satanFollowZork)
+	err = testStructs.State.DB.Put(ctx, satanFollowZork)
 	suite.NoError(err)
 
 	// now they are mufos!
-	err = suite.processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityDelete,
 		GTSModel:       deletedAccount,
@@ -333,20 +348,20 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 	// local account 2 blocked foss_satan, that block should be gone now
 	testBlock := suite.testBlocks["local_account_2_block_remote_account_1"]
 	dbBlock := &gtsmodel.Block{}
-	err = suite.db.GetByID(ctx, testBlock.ID, dbBlock)
+	err = testStructs.State.DB.GetByID(ctx, testBlock.ID, dbBlock)
 	suite.ErrorIs(err, db.ErrNoEntries)
 
 	// the mufos should be gone now too
-	satanFollowsZork, err := suite.db.IsFollowing(ctx, deletedAccount.ID, receivingAccount.ID)
+	satanFollowsZork, err := testStructs.State.DB.IsFollowing(ctx, deletedAccount.ID, receivingAccount.ID)
 	suite.NoError(err)
 	suite.False(satanFollowsZork)
-	zorkFollowsSatan, err := suite.db.IsFollowing(ctx, receivingAccount.ID, deletedAccount.ID)
+	zorkFollowsSatan, err := testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, deletedAccount.ID)
 	suite.NoError(err)
 	suite.False(zorkFollowsSatan)
 
 	// no statuses from foss satan should be left in the database
 	if !testrig.WaitFor(func() bool {
-		s, err := suite.db.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, false, "", "", false, false)
+		s, err := testStructs.State.DB.GetAccountStatuses(ctx, deletedAccount.ID, 0, false, false, "", "", false, false)
 		return s == nil && err == db.ErrNoEntries
 	}) {
 		suite.FailNow("timeout waiting for statuses to be deleted")
@@ -356,7 +371,7 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 
 	// account data should be zeroed.
 	if !testrig.WaitFor(func() bool {
-		dbAccount, err = suite.db.GetAccountByID(ctx, deletedAccount.ID)
+		dbAccount, err = testStructs.State.DB.GetAccountByID(ctx, deletedAccount.ID)
 		return err == nil && dbAccount.DisplayName == ""
 	}) {
 		suite.FailNow("timeout waiting for statuses to be deleted")
@@ -375,6 +390,9 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	ctx := context.Background()
 
 	originAccount := suite.testAccounts["remote_account_1"]
@@ -382,7 +400,7 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	// target is a locked account
 	targetAccount := suite.testAccounts["local_account_2"]
 
-	wssStream, errWithCode := suite.processor.Stream().Open(context.Background(), targetAccount, stream.TimelineHome)
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(context.Background(), targetAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// put the follow request in the database as though it had passed through the federating db already
@@ -399,10 +417,10 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 		Notify:          util.Ptr(false),
 	}
 
-	err := suite.db.Put(ctx, satanFollowRequestTurtle)
+	err := testStructs.State.DB.Put(ctx, satanFollowRequestTurtle)
 	suite.NoError(err)
 
-	err = suite.processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       satanFollowRequestTurtle,
@@ -425,10 +443,13 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 	suite.Equal(originAccount.ID, notif.Account.ID)
 
 	// no messages should have been sent out, since we didn't need to federate an accept
-	suite.Empty(&suite.httpClient.SentMessages)
+	suite.Empty(testStructs.HTTPClient.SentMessages)
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	ctx := context.Background()
 
 	originAccount := suite.testAccounts["remote_account_1"]
@@ -436,7 +457,7 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 	// target is an unlocked account
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	wssStream, errWithCode := suite.processor.Stream().Open(context.Background(), targetAccount, stream.TimelineHome)
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(context.Background(), targetAccount, stream.TimelineHome)
 	suite.NoError(errWithCode)
 
 	// put the follow request in the database as though it had passed through the federating db already
@@ -453,10 +474,10 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 		Notify:          util.Ptr(false),
 	}
 
-	err := suite.db.Put(ctx, satanFollowRequestTurtle)
+	err := testStructs.State.DB.Put(ctx, satanFollowRequestTurtle)
 	suite.NoError(err)
 
-	err = suite.processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       satanFollowRequestTurtle,
@@ -482,7 +503,7 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 	// an accept message should be sent to satan's inbox
 	var sent []byte
 	if !testrig.WaitFor(func() bool {
-		delivery, ok := suite.state.Workers.Delivery.Queue.Pop()
+		delivery, ok := testStructs.State.Workers.Delivery.Queue.Pop()
 		if !ok {
 			return false
 		}
@@ -527,12 +548,15 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 
 // TestCreateStatusFromIRI checks if a forwarded status can be dereferenced by the processor.
 func (suite *FromFediAPITestSuite) TestCreateStatusFromIRI() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	ctx := context.Background()
 
 	receivingAccount := suite.testAccounts["local_account_1"]
 	statusCreator := suite.testAccounts["remote_account_2"]
 
-	err := suite.processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
+	err := testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       nil, // gtsmodel is nil because this is a forwarded status -- we want to dereference it using the iri
@@ -543,12 +567,15 @@ func (suite *FromFediAPITestSuite) TestCreateStatusFromIRI() {
 	suite.NoError(err)
 
 	// status should now be in the database, attributed to remote_account_2
-	s, err := suite.db.GetStatusByURI(context.Background(), "http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1")
+	s, err := testStructs.State.DB.GetStatusByURI(context.Background(), "http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1")
 	suite.NoError(err)
 	suite.Equal(statusCreator.URI, s.AccountURI)
 }
 
 func (suite *FromFediAPITestSuite) TestMoveAccount() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	// We're gonna migrate foss_satan to our local admin account.
 	ctx := context.Background()
 	receivingAcct := suite.testAccounts["local_account_1"]
@@ -562,12 +589,12 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 
 	// Set alsoKnownAs on the admin account.
 	targetAcct.AlsoKnownAsURIs = []string{requestingAcct.URI}
-	if err := suite.state.DB.UpdateAccount(ctx, targetAcct, "also_known_as_uris"); err != nil {
+	if err := testStructs.State.DB.UpdateAccount(ctx, targetAcct, "also_known_as_uris"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Remove existing follow from zork to admin account.
-	if err := suite.state.DB.DeleteFollowByID(
+	if err := testStructs.State.DB.DeleteFollowByID(
 		ctx,
 		suite.testFollows["local_account_1_admin_account"].ID,
 	); err != nil {
@@ -575,7 +602,7 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 	}
 
 	// Have Zork follow foss_satan instead.
-	if err := suite.state.DB.PutFollow(ctx, &gtsmodel.Follow{
+	if err := testStructs.State.DB.PutFollow(ctx, &gtsmodel.Follow{
 		ID:              "01HRA0XZYFZC5MNWTKEBR58SSE",
 		URI:             "http://localhost:8080/users/the_mighty_zork/follows/01HRA0XZYFZC5MNWTKEBR58SSE",
 		AccountID:       receivingAcct.ID,
@@ -585,7 +612,7 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 	}
 
 	// Process the Move.
-	err := suite.processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
+	err := testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityMove,
 		GTSModel: &gtsmodel.Move{
@@ -601,14 +628,14 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 	suite.NoError(err)
 
 	// Zork should now be following admin account.
-	follows, err := suite.state.DB.IsFollowing(ctx, receivingAcct.ID, targetAcct.ID)
+	follows, err := testStructs.State.DB.IsFollowing(ctx, receivingAcct.ID, targetAcct.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.True(follows)
 
 	// Move should be in the DB.
-	move, err := suite.state.DB.GetMoveByURI(ctx, "https://fossbros-anonymous.io/users/foss_satan/moves/01HRA064871MR8HGVSAFJ333GM")
+	move, err := testStructs.State.DB.GetMoveByURI(ctx, "https://fossbros-anonymous.io/users/foss_satan/moves/01HRA064871MR8HGVSAFJ333GM")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
