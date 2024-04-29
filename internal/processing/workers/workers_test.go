@@ -54,6 +54,15 @@ type WorkersTestSuite struct {
 	testListEntries  map[string]*gtsmodel.ListEntry
 }
 
+// TestStructs encapsulates structs needed to
+// run one test in this package. Each test should
+// call SetupTestStructs to get a new TestStructs,
+// and defer TearDownTestStructs to close it when
+// the test is complete. The reason for doing things
+// this way here is to prevent the tests in this
+// package from overwriting one another's processors
+// and worker queues, which was causing issues
+// when running all tests at once.
 type TestStructs struct {
 	State         *state.State
 	Processor     *processing.Processor
