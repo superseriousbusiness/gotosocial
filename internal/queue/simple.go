@@ -24,6 +24,11 @@ import (
 	"codeberg.org/gruf/go-list"
 )
 
+// frequency of GC cycles
+// per no. unlocks. i.e.
+// every 'gcfreq' unlocks.
+const gcfreq = 1024
+
 // SimpleQueue provides a simple concurrency safe
 // queue using generics and a memory pool of list
 // elements to reduce overall memory usage.
@@ -32,7 +37,7 @@ type SimpleQueue[T any] struct {
 	p elemPool[T]
 	w chan struct{}
 	m sync.Mutex
-	n uint8
+	n uint32 // pop counter (safely wraps around)
 }
 
 // Push will push given value to the queue.
@@ -72,12 +77,11 @@ func (q *SimpleQueue[T]) Pop() (value T, ok bool) {
 		q.l.Remove(tail)
 		q.p.free(tail)
 
-		if q.l.Len() == 0 {
-			// Every 255x we reach a zero
-			// length queue, sweep mem pool.
-			if q.n++; q.n == ^uint8(0) {
-				q.p.GC()
-			}
+		// Every 'gcfreq' pops perform
+		// a garbage collection to keep
+		// us squeaky clean :]
+		if q.n++; q.n%gcfreq == 0 {
+			q.p.GC()
 		}
 	}
 
@@ -132,12 +136,11 @@ func (q *SimpleQueue[T]) PopCtx(ctx context.Context) (value T, ok bool) {
 	q.l.Remove(elem)
 	q.p.free(elem)
 
-	if q.l.Len() == 0 {
-		// Every 255x we reach a zero
-		// length queue, sweep mem pool.
-		if q.n++; q.n == ^uint8(0) {
-			q.p.GC()
-		}
+	// Every 'gcfreq' pops perform
+	// a garbage collection to keep
+	// us squeaky clean :]
+	if q.n++; q.n%gcfreq == 0 {
+		q.p.GC()
 	}
 
 	// Done with lock.
