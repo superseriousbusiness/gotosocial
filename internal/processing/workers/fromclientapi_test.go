@@ -31,7 +31,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -42,6 +44,7 @@ type FromClientAPITestSuite struct {
 
 func (suite *FromClientAPITestSuite) newStatus(
 	ctx context.Context,
+	state *state.State,
 	account *gtsmodel.Account,
 	visibility gtsmodel.Visibility,
 	replyToStatus *gtsmodel.Status,
@@ -86,7 +89,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 			TargetAccountID:  replyToStatus.AccountID,
 		}
 
-		if err := suite.db.PutMention(ctx, mention); err != nil {
+		if err := state.DB.PutMention(ctx, mention); err != nil {
 			suite.FailNow(err.Error())
 		}
 		newStatus.Mentions = []*gtsmodel.Mention{mention}
@@ -103,7 +106,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 
 	// Put the status in the db, to mimic what would
 	// have already happened earlier up the flow.
-	if err := suite.db.PutStatus(ctx, newStatus); err != nil {
+	if err := state.DB.PutStatus(ctx, newStatus); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -143,10 +146,11 @@ func (suite *FromClientAPITestSuite) checkStreamed(
 
 func (suite *FromClientAPITestSuite) statusJSON(
 	ctx context.Context,
+	typeConverter *typeutils.Converter,
 	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 ) string {
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
+	apiStatus, err := typeConverter.StatusToAPIStatus(
 		ctx,
 		status,
 		requestingAccount,
@@ -164,19 +168,27 @@ func (suite *FromClientAPITestSuite) statusJSON(
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	var (
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 		testList         = suite.testLists["local_account_1_list_1"]
-		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
-		homeStream       = streams[stream.TimelineHome]
-		listStream       = streams[stream.TimelineList+":"+testList.ID]
-		notifStream      = streams[stream.TimelineNotifications]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			[]string{testList.ID},
+		)
+		homeStream  = streams[stream.TimelineHome]
+		listStream  = streams[stream.TimelineList+":"+testList.ID]
+		notifStream = streams[stream.TimelineNotifications]
 
 		// Admin account posts a new top-level status.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			nil,
@@ -190,12 +202,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 	*follow = *suite.testFollows["local_account_1_admin_account"]
 
 	follow.Notify = util.Ptr(true)
-	if err := suite.db.UpdateFollow(ctx, follow); err != nil {
+	if err := testStructs.State.DB.UpdateFollow(ctx, follow); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
@@ -209,6 +221,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 
 	statusJSON := suite.statusJSON(
 		ctx,
+		testStructs.TypeConverter,
 		status,
 		receivingAccount,
 	)
@@ -233,7 +246,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 	var notif *gtsmodel.Notification
 	if !testrig.WaitFor(func() bool {
 		var err error
-		notif, err = suite.db.GetNotification(
+		notif, err = testStructs.State.DB.GetNotification(
 			ctx,
 			gtsmodel.NotificationStatus,
 			receivingAccount.ID,
@@ -245,7 +258,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 		suite.FailNow("timed out waiting for new status notification")
 	}
 
-	apiNotif, err := suite.typeconverter.NotificationToAPINotification(ctx, notif)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -265,12 +278,15 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	var (
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 		testList         = suite.testLists["local_account_1_list_1"]
-		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
@@ -281,6 +297,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 		// post should also show in the list stream.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
@@ -289,7 +306,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 	)
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
@@ -303,6 +320,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 
 	statusJSON := suite.statusJSON(
 		ctx,
+		testStructs.TypeConverter,
 		status,
 		receivingAccount,
 	)
@@ -325,6 +343,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	var (
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
@@ -335,6 +356,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 		// for this, but zork mutes this thread.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_1_status_1"],
@@ -348,12 +370,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 	)
 
 	// Store the thread mute before processing new status.
-	if err := suite.db.PutThreadMute(ctx, threadMute); err != nil {
+	if err := testStructs.State.DB.PutThreadMute(ctx, threadMute); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
@@ -366,7 +388,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 	}
 
 	// Ensure no notification received.
-	notif, err := suite.db.GetNotification(
+	notif, err := testStructs.State.DB.GetNotification(
 		ctx,
 		gtsmodel.NotificationMention,
 		receivingAccount.ID,
@@ -379,6 +401,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	var (
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
@@ -389,6 +414,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 		// for this, but zork mutes this thread.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			nil,
@@ -402,12 +428,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 	)
 
 	// Store the thread mute before processing new status.
-	if err := suite.db.PutThreadMute(ctx, threadMute); err != nil {
+	if err := testStructs.State.DB.PutThreadMute(ctx, threadMute); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
@@ -420,7 +446,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 	}
 
 	// Ensure no notification received.
-	notif, err := suite.db.GetNotification(
+	notif, err := testStructs.State.DB.GetNotification(
 		ctx,
 		gtsmodel.NotificationReblog,
 		receivingAccount.ID,
@@ -433,6 +459,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyListOnlyOK() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	// We're modifying the test list so take a copy.
 	testList := new(gtsmodel.List)
 	*testList = *suite.testLists["local_account_1_list_1"]
@@ -441,13 +470,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
-		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
 		// Admin account posts a reply to turtle.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
@@ -460,12 +490,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 	// and admin are in the same list, this means the reply
 	// should be shown in the list.
 	testList.RepliesPolicy = gtsmodel.RepliesPolicyList
-	if err := suite.db.UpdateList(ctx, testList, "replies_policy"); err != nil {
+	if err := testStructs.State.DB.UpdateList(ctx, testList, "replies_policy"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
@@ -479,6 +509,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 
 	statusJSON := suite.statusJSON(
 		ctx,
+		testStructs.TypeConverter,
 		status,
 		receivingAccount,
 	)
@@ -501,6 +532,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyListOnlyNo() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	// We're modifying the test list so take a copy.
 	testList := new(gtsmodel.List)
 	*testList = *suite.testLists["local_account_1_list_1"]
@@ -509,13 +543,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
-		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
 		// Admin account posts a reply to turtle.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
@@ -528,17 +563,17 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 	// about to remove turtle from the same list as admin,
 	// so the new post should not be streamed to the list.
 	testList.RepliesPolicy = gtsmodel.RepliesPolicyList
-	if err := suite.db.UpdateList(ctx, testList, "replies_policy"); err != nil {
+	if err := testStructs.State.DB.UpdateList(ctx, testList, "replies_policy"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Remove turtle from the list.
-	if err := suite.db.DeleteListEntry(ctx, suite.testListEntries["local_account_1_list_1_entry_1"].ID); err != nil {
+	if err := testStructs.State.DB.DeleteListEntry(ctx, suite.testListEntries["local_account_1_list_1_entry_1"].ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
@@ -552,6 +587,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 
 	statusJSON := suite.statusJSON(
 		ctx,
+		testStructs.TypeConverter,
 		status,
 		receivingAccount,
 	)
@@ -574,6 +610,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPolicyNone() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	// We're modifying the test list so take a copy.
 	testList := new(gtsmodel.List)
 	*testList = *suite.testLists["local_account_1_list_1"]
@@ -582,13 +621,14 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
-		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
 		// Admin account posts a reply to turtle.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
@@ -601,12 +641,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 	// show any replies, the post should not
 	// be streamed to the list.
 	testList.RepliesPolicy = gtsmodel.RepliesPolicyNone
-	if err := suite.db.UpdateList(ctx, testList, "replies_policy"); err != nil {
+	if err := testStructs.State.DB.UpdateList(ctx, testList, "replies_policy"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
@@ -620,6 +660,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 
 	statusJSON := suite.statusJSON(
 		ctx,
+		testStructs.TypeConverter,
 		status,
 		receivingAccount,
 	)
@@ -642,18 +683,22 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	var (
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 		testList         = suite.testLists["local_account_1_list_1"]
-		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
 		// Admin account boosts a post by turtle.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			nil,
@@ -662,7 +707,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 	)
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
@@ -676,6 +721,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 
 	statusJSON := suite.statusJSON(
 		ctx,
+		testStructs.TypeConverter,
 		status,
 		receivingAccount,
 	)
@@ -698,18 +744,22 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	var (
 		ctx              = context.Background()
 		postingAccount   = suite.testAccounts["admin_account"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 		testList         = suite.testLists["local_account_1_list_1"]
-		streams          = suite.openStreams(ctx, receivingAccount, []string{testList.ID})
+		streams          = suite.openStreams(ctx, testStructs.Processor, receivingAccount, []string{testList.ID})
 		homeStream       = streams[stream.TimelineHome]
 		listStream       = streams[stream.TimelineList+":"+testList.ID]
 
 		// Admin account boosts a post by turtle.
 		status = suite.newStatus(
 			ctx,
+			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
 			nil,
@@ -722,12 +772,12 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 	follow := new(gtsmodel.Follow)
 	*follow = *suite.testFollows["local_account_1_admin_account"]
 	follow.ShowReblogs = util.Ptr(false)
-	if err := suite.db.UpdateFollow(ctx, follow, "show_reblogs"); err != nil {
+	if err := testStructs.State.DB.UpdateFollow(ctx, follow, "show_reblogs"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the new status.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ActivityAnnounce,
@@ -757,24 +807,27 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
 	var (
 		ctx                  = context.Background()
 		deletingAccount      = suite.testAccounts["local_account_1"]
 		receivingAccount     = suite.testAccounts["local_account_2"]
 		deletedStatus        = suite.testStatuses["local_account_1_status_1"]
 		boostOfDeletedStatus = suite.testStatuses["admin_account_status_4"]
-		streams              = suite.openStreams(ctx, receivingAccount, nil)
+		streams              = suite.openStreams(ctx, testStructs.Processor, receivingAccount, nil)
 		homeStream           = streams[stream.TimelineHome]
 	)
 
 	// Delete the status from the db first, to mimic what
 	// would have already happened earlier up the flow
-	if err := suite.db.DeleteStatusByID(ctx, deletedStatus.ID); err != nil {
+	if err := testStructs.State.DB.DeleteStatusByID(ctx, deletedStatus.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Process the status delete.
-	if err := suite.processor.Workers().ProcessFromClientAPI(
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
 		ctx,
 		&messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
@@ -806,7 +859,7 @@ func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
 
 	// Boost should no longer be in the database.
 	if !testrig.WaitFor(func() bool {
-		_, err := suite.db.GetStatusByID(ctx, boostOfDeletedStatus.ID)
+		_, err := testStructs.State.DB.GetStatusByID(ctx, boostOfDeletedStatus.ID)
 		return errors.Is(err, db.ErrNoEntries)
 	}) {
 		suite.FailNow("timed out waiting for status delete")
