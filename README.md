@@ -128,7 +128,7 @@ Plenty of [config options](./example/config.yaml) for admins to play around with
 
 No external dependencies apart from a database (or just use SQLite!). Simply download the binary + assets (or Docker container), and run.
 
-GoToSocial plays nice with lower-powered machines like Raspberry Pi, old laptops and tiny $5/month VPSes.
+GoToSocial plays nice with single-board computers, old laptops and tiny $5/month VPSes.
 
 ### Safety + security features
 
