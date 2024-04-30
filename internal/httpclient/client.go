@@ -339,7 +339,7 @@ func (c *Client) do(r *Request) (rsp *http.Response, retry bool, err error) {
 		// A retryable error.
 		return nil, true, err
 
-	} else if rsp.StatusCode > 500 ||
+	} else if rsp.StatusCode >= 500 ||
 		rsp.StatusCode == http.StatusTooManyRequests {
 
 		// Codes over 500 (and 429: too many requests)
