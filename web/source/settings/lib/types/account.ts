@@ -17,6 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import { Links } from "parse-link-header";
 import { CustomEmoji } from "./custom-emoji";
 
 export interface AdminAccount {
@@ -77,6 +78,11 @@ export interface SearchAccountParams {
 	since_id?: string,
 	min_id?: string,
 	limit?: number,
+}
+
+export interface SearchAccountResp {
+	accounts: AdminAccount[];
+	links: Links | null;
 }
 
 export interface HandleSignupParams {

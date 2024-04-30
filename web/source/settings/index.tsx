@@ -29,7 +29,7 @@ import Loading from "./components/loading";
 import { Account } from "./lib/types/account";
 import { BaseUrlContext, RoleContext } from "./lib/navigation/util";
 import { SidebarMenu } from "./lib/navigation/menu";
-import { Redirect, Route, Router } from "wouter";
+import { Router } from "wouter";
 import AdminMenu from "./views/admin/menu";
 import ModerationMenu from "./views/moderation/menu";
 import UserMenu from "./views/user/menu";
@@ -58,12 +58,6 @@ export function App({ account }: AppProps) {
 							<UserRouter />
 							<ModerationRouter />
 							<AdminRouter />
-							{/*
-									Redirect to first part of UserRouter if
-									just the bare settings page is open, so
-									user isn't greeted with a blank page.
-								*/}
-							<Route><Redirect to="/user/profile" /></Route>
 						</ErrorBoundary>
 					</Router>
 				</section>

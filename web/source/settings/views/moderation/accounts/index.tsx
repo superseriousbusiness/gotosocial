@@ -20,10 +20,10 @@
 import React from "react";
 import { AccountSearchForm } from "./search";
 
-export default function AccountsOverview({ }) {
+export default function AccountsSearch({ }) {
 	return (
 		<div className="accounts-view">
-			<h1>Accounts Overview</h1>
+			<h1>Accounts Search</h1>
 			<span>
 				You can perform actions on an account by clicking
 				its name in a report, or by searching for the account

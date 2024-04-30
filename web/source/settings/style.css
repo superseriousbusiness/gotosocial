@@ -16,6 +16,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+	This source file uses PostCSS syntax.
+	See: https://postcss.org/
+*/
+
 body {
 	grid-template-rows: auto 1fr;
 }
@@ -518,6 +523,22 @@ span.form-info {
 	.header, .entry {
 		display: grid;
 		gap: 0 1rem;
+	}
+}
+
+.pageable-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+
+	.entries {
+		color: $fg;
+		border: 0.1rem solid var(--gray1);
+	}
+
+	.prev-next {
+		display: flex;
+		justify-content: space-between;
 	}
 }
 
@@ -1098,49 +1119,58 @@ button.with-padding {
 			}
 		}
 	}
+}
 
-	.user {
-		line-height: 1.3rem;
-		display: inline-block;
-		background: $fg-accent;
-		color: $bg;
-		border-radius: $br;
-		padding: 0.15rem 0.15rem;
-		margin: 0 0.1rem;
-		font-weight: bold;
-		text-decoration: none;
+.username-lozenge {
+	line-height: 1.3rem;
+	display: inline-block;
+	background: $fg-accent;
+	color: $bg;
+	border-radius: $br;
+	padding: 0.15rem;
+	font-weight: bold;
+	text-decoration: none;
+	
+	.acct {
+		word-break: break-all;
+	}
 
-		.acct {
-			word-break: break-all;
-		}
+	&.suspended {
+		background: $bg-accent;
+		color: $fg;
+		text-decoration: line-through;
+	}
 
-		&.suspended {
-			background: $bg-accent;
-			color: $fg;
-			text-decoration: line-through;
-		}
-
-		&.local {
-			background: $green1;
-		}
+	&.local {
+		background: $green1;
 	}
 }
 
+.spanlink {
+	cursor: pointer;
+	text-decoration: none;
+}
+
 .accounts-view {
-	form {
-		margin-bottom: 1rem;
-	}
-
-	.list {
-		margin: 0.5rem 0;
-
-		a {
+	.pageable-list {
+		.username-lozenge {
+			line-height: inherit;
 			color: $fg;
-			text-decoration: none;
+			font-weight: initial;
+			width: 100%;
+			border-radius: 0;
+			background: $list-entry-bg;
+	
+			.fa {
+				align-self: center;
+			}
+	
+			&:nth-child(even) {
+				background: $list-entry-alternate-bg;
+			}
 
-			#username {
-				color: $link-fg;
-				margin-left: 0.5em;
+			.acct {
+				color: var(--link-fg);
 			}
 		}
 	}
@@ -1154,6 +1184,7 @@ button.with-padding {
 	.profile {
 		overflow: hidden;
 		max-width: 60rem;
+		margin-top: 1rem;
 	}
 
 	h4, h3, h2 {
@@ -1184,6 +1215,16 @@ button.with-padding {
 
 			dd {
 				word-break: break-word;
+			}
+
+			dt, dd {
+				/*
+					Make sure any fa icons used in keys
+					or values are properly aligned.
+				*/
+				.fa {
+					vertical-align: middle;
+				}
 			}
 		}
 	}

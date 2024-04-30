@@ -17,28 +17,53 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import React, { ReactNode, useEffect, useMemo } from "react";
 
 import { useLazySearchAccountsQuery } from "../../../../lib/query/admin";
 import { useTextInput } from "../../../../lib/form";
-import { AccountList } from "../../../../components/account-list";
-import { SearchAccountParams } from "../../../../lib/types/account";
+import { PageableList } from "../../../../components/pageable-list";
 import { Select, TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
+import { useLocation, useSearch } from "wouter";
+import { AdminAccount } from "../../../../lib/types/account";
+import Username from "../../../../components/username";
 
 export function AccountSearchForm() {
+	const [ location, setLocation ] = useLocation();
+	const search = useSearch();
+	const urlQueryParams = useMemo(() => new URLSearchParams(search), [search]);
+	const [ searchAcct, searchRes ] = useLazySearchAccountsQuery();
+
+	// Populate search form using values from
+	// urlQueryParams, to allow paging.
 	const form = {
-		origin: useTextInput("origin"),
-		status: useTextInput("status"),
-		permissions: useTextInput("permissions"),
-		username: useTextInput("username"),
-		display_name: useTextInput("display_name"),
-		by_domain: useTextInput("by_domain"),
-		email: useTextInput("email"),
-		ip: useTextInput("ip"),
+		origin: useTextInput("origin", { defaultValue: urlQueryParams.get("origin") ?? ""}),
+		status: useTextInput("status", { defaultValue: urlQueryParams.get("status") ?? ""}),
+		permissions: useTextInput("permissions", { defaultValue: urlQueryParams.get("permissions") ?? ""}),
+		username: useTextInput("username", { defaultValue: urlQueryParams.get("username") ?? ""}),
+		display_name: useTextInput("display_name", { defaultValue: urlQueryParams.get("display_name") ?? ""}),
+		by_domain: useTextInput("by_domain", { defaultValue: urlQueryParams.get("by_domain") ?? ""}),
+		email: useTextInput("email", { defaultValue: urlQueryParams.get("email") ?? ""}),
+		ip: useTextInput("ip", { defaultValue: urlQueryParams.get("ip") ?? ""}),
+		limit: useTextInput("limit", { defaultValue: urlQueryParams.get("limit") ?? "50"})
 	};
 
-	function submitSearch(e) {
+	// On mount, if urlQueryParams were provided,
+	// trigger the search. For example, if page
+	// was accessed at /search?origin=local&limit=20,
+	// then run a search with origin=local and
+	// limit=20 and immediately render the results.
+	useEffect(() => {
+		if (urlQueryParams.size > 0) {
+			searchAcct(Object.fromEntries(urlQueryParams), true);
+		}
+	}, [urlQueryParams, searchAcct]);
+
+	// Rather than triggering the search directly,
+	// the "submit" button changes the location
+	// based on form field params, and lets the
+	// useEffect hook above actually do the search.
+	function submitQuery(e) {
 		e.preventDefault();
 		
 		// Parse query parameters.
@@ -52,16 +77,32 @@ export function AccountSearchForm() {
 			// Remove any nulls.
 			return kv || [];
 		});
-		const params: SearchAccountParams = Object.fromEntries(entries);
-		searchAcct(params);
+
+		const searchParams = new URLSearchParams(entries);
+		setLocation(location + "?" + searchParams.toString());
 	}
 
-	const [ searchAcct, searchRes ] = useLazySearchAccountsQuery();
+	// Location to return to when user clicks "back" on the account detail view.
+	const backLocation = location + (urlQueryParams ? `?${urlQueryParams}` : "");
+	
+	// Function to map an item to a list entry.
+	function itemToEntry(account: AdminAccount): ReactNode {
+		const acc = account.account;
+		return (
+			<Username
+				key={acc.acct}
+				account={account}
+				linkTo={`/${account.id}`}
+				backLocation={backLocation}
+				classNames={["entry"]}
+			/>
+		);
+	}
 
 	return (
 		<>
 			<form
-				onSubmit={submitSearch}
+				onSubmit={submitQuery}
 				// Prevent password managers trying
 				// to fill in username/email fields.
 				autoComplete="off"
@@ -117,13 +158,16 @@ export function AccountSearchForm() {
 					result={searchRes}
 				/>
 			</form>
-			<AccountList
+			<PageableList
 				isLoading={searchRes.isLoading}
+				isFetching={searchRes.isFetching}
 				isSuccess={searchRes.isSuccess}
-				data={searchRes.data}
+				items={searchRes.data?.accounts}
+				itemToEntry={itemToEntry}
 				isError={searchRes.isError}
 				error={searchRes.error}
 				emptyMessage="No accounts found that match your query"
+				prevNextLinks={searchRes.data?.links}
 			/>
 		</>
 	);

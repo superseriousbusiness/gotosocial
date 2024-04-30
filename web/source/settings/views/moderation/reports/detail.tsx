@@ -25,7 +25,7 @@ import { useValue, useTextInput } from "../../../lib/form";
 import useFormSubmit from "../../../lib/form/submit";
 import { TextArea } from "../../../components/form/inputs";
 import MutationButton from "../../../components/form/mutation-button";
-import Username from "./username";
+import Username from "../../../components/username";
 import { useGetReportQuery, useResolveReportMutation } from "../../../lib/query/admin/reports";
 import { useBaseUrl } from "../../../lib/navigation/util";
 
@@ -53,13 +53,15 @@ function ReportDetailForm({ data: report }) {
 		<div className="report detail">
 			<div className="usernames">
 				<Username
-					user={from}
-					link={`~/settings/moderation/accounts/${from.id}`}
+					account={from}
+					linkTo={`~/settings/moderation/accounts/${from.id}`}
+					backLocation={`~/settings/moderation/reports/${report.id}`}
 				/>
 				<> reported </>
 				<Username
-					user={target}
-					link={`~/settings/moderation/accounts/${target.id}`}
+					account={target}
+					linkTo={`~/settings/moderation/accounts/${target.id}`}
+					backLocation={`~/settings/moderation/reports/${report.id}`}
 				/>
 			</div>
 

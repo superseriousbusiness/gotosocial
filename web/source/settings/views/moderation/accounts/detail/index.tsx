@@ -23,31 +23,35 @@ import { useGetAccountQuery } from "../../../../lib/query/admin";
 import FormWithData from "../../../../lib/form/form-with-data";
 import FakeProfile from "../../../../components/fake-profile";
 import { AdminAccount } from "../../../../lib/types/account";
-import { HandleSignup } from "./handlesignup";
 import { AccountActions } from "./actions";
 import { useParams } from "wouter";
+import { useBaseUrl } from "../../../../lib/navigation/util";
+import BackButton from "../../../../components/back-button";
 
 export default function AccountDetail() {
 	const params: { accountID: string } = useParams();
-	
+	const baseUrl = useBaseUrl();
+	const backLocation: String = history.state?.backLocation ?? `~${baseUrl}`;
+
 	return (
 		<div className="account-detail">
-			<h1>Account Details</h1>
+			<h1><BackButton to={backLocation} /> Account Details</h1>
 			<FormWithData
 				dataQuery={useGetAccountQuery}
 				queryArg={params.accountID}
 				DataForm={AccountDetailForm}
+				{...{ backLocation: backLocation }}
 			/>
 		</div>
 	);
 }
 
 interface AccountDetailFormProps {
-	backLocation: string,
-	data: AdminAccount,
+	data: AdminAccount;
+	backLocation: string;
 }
 
-function AccountDetailForm({ data: adminAcct, backLocation }: AccountDetailFormProps) {	
+function AccountDetailForm({ data: adminAcct, backLocation }: AccountDetailFormProps) {			
 	let yesOrNo = (b: boolean) => {
 		return b ? "yes" : "no";
 	};
@@ -75,6 +79,18 @@ function AccountDetailForm({ data: adminAcct, backLocation }: AccountDetailFormP
 					<dt>Domain</dt>
 					<dd>{adminAcct.domain}</dd>
 				</div>}
+				<div className="info-list-entry">
+					<dt>Profile URL</dt>
+					<dd>
+						<a
+							href={adminAcct.account.url}
+							target="_blank"
+							rel="noreferrer"
+						>
+							<i className="fa fa-fw fa-external-link" aria-hidden="true"></i> {adminAcct.account.url} (opens in a new tab)
+						</a> 
+					</dd>
+				</div>
 				<div className="info-list-entry">
 					<dt>Created</dt>
 					<dd><time dateTime={adminAcct.created_at}>{created}</time></dd>
@@ -150,15 +166,10 @@ function AccountDetailForm({ data: adminAcct, backLocation }: AccountDetailFormP
 					</div> }
 				</dl>
 			</> }
-			{ local && !adminAcct.approved
-				?
-				<HandleSignup
-					account={adminAcct}
-					backLocation={backLocation}
-				/>
-				:
-				<AccountActions account={adminAcct} />
-			}
+			<AccountActions
+				account={adminAcct}
+				backLocation={backLocation}
+			/>
 		</>
 	);
 }

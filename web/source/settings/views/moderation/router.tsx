@@ -26,7 +26,7 @@ import { ErrorBoundary } from "../../lib/navigation/error";
 import ImportExport from "./domain-permissions/import-export";
 import DomainPermissionsOverview from "./domain-permissions/overview";
 import DomainPermDetail from "./domain-permissions/detail";
-import AccountsOverview from "./accounts";
+import AccountsSearch from "./accounts";
 import AccountsPending from "./accounts/pending";
 import AccountDetail from "./accounts/detail";
 
@@ -37,7 +37,7 @@ import AccountDetail from "./accounts/detail";
 /**
  * - /settings/moderation/reports/overview
  * - /settings/moderation/reports/:reportId
- * - /settings/moderation/accounts/overview
+ * - /settings/moderation/accounts/search
  * - /settings/moderation/accounts/pending
  * - /settings/moderation/accounts/:accountID
  * - /settings/moderation/domain-permissions/:permType
@@ -95,7 +95,7 @@ function ModerationReportsRouter() {
 }
 
 /**
- * - /settings/moderation/accounts/overview
+ * - /settings/moderation/accounts/search
  * - /settings/moderation/accounts/pending
  * - /settings/moderation/accounts/:accountID
  */
@@ -109,10 +109,10 @@ function ModerationAccountsRouter() {
 			<Router base={thisBase}>
 				<ErrorBoundary>
 					<Switch>
-						<Route path="/overview" component={AccountsOverview}/>
+						<Route path="/search" component={AccountsSearch}/>
 						<Route path="/pending" component={AccountsPending}/>
 						<Route path="/:accountID" component={AccountDetail}/>
-						<Route><Redirect to="/overview"/></Route>
+						<Route><Redirect to="/search"/></Route>
 					</Switch>
 				</ErrorBoundary>
 			</Router>

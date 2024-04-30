@@ -28,7 +28,7 @@ import { useHasPermission } from "../../lib/navigation/util";
 /**
  * - /settings/moderation/reports/overview
  * - /settings/moderation/reports/:reportId
- * - /settings/moderation/accounts/overview
+ * - /settings/moderation/accounts/search
  * - /settings/moderation/accounts/pending
  * - /settings/moderation/accounts/:accountID
  * - /settings/moderation/domain-permissions/:permType
@@ -76,12 +76,12 @@ function ModerationAccountsMenu() {
 		<MenuItem
 			name="Accounts"
 			itemUrl="accounts"
-			defaultChild="overview"
+			defaultChild="search"
 			icon="fa-users"
 		>
 			<MenuItem
-				name="Overview"
-				itemUrl="overview"
+				name="Search"
+				itemUrl="search"
 				icon="fa-list"
 			/>
 			<MenuItem

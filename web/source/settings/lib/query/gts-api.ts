@@ -24,7 +24,7 @@ import type {
 	FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react';
 import { serialize as serializeForm } from "object-to-formdata";
-
+import type { FetchBaseQueryMeta } from "@reduxjs/toolkit/dist/query/fetchBaseQuery";
 import type { RootState } from '../../redux/store';
 import { InstanceV1 } from '../types/instance';
 
@@ -65,7 +65,9 @@ export interface GTSFetchArgs extends FetchArgs {
 const gtsBaseQuery: BaseQueryFn<
 	string | GTSFetchArgs,
 	any,
-	FetchBaseQueryError
+	FetchBaseQueryError,
+	{},
+	FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
 	// Retrieve state at the moment
 	// this function was called.
