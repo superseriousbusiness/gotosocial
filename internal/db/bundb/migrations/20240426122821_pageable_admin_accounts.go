@@ -45,7 +45,7 @@ func init() {
 
 		case dialect.PG:
 			q = q.ColumnExpr(
-				"CONCAT(COALESCE(?, ?), ?, ?)",
+				"LOWER(COALESCE(?, ?) || ? || ?)",
 				bun.Ident("domain"), "",
 				"/@",
 				bun.Ident("username"),

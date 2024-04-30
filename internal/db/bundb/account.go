@@ -284,6 +284,11 @@ func (a *accountDB) GetAccounts(
 	error,
 ) {
 	var (
+		// We have to use different
+		// syntax for this query
+		// depending on dialect.
+		dbDialect = a.db.Dialect().Name()
+
 		// local users lists,
 		// required for some
 		// limiting parameters.
@@ -320,11 +325,11 @@ func (a *accountDB) GetAccounts(
 		// Select only IDs from table
 		Column("account.id")
 
-	// SQLite and Postgres use different syntax
-	// for concatenation, so switch on type to
-	// ensure we use the correct syntax.
-	switch d := a.db.Dialect().Name(); d {
-	case dialect.SQLite:
+	var subQ *bun.RawQuery
+	if dbDialect == dialect.SQLite {
+		// For SQLite we can just select
+		// our indexed expression once
+		// as a column alias.
 		q = q.ColumnExpr(
 			"(COALESCE(?, ?) || ? || ?) AS ?",
 			bun.Ident("domain"), "",
@@ -332,28 +337,38 @@ func (a *accountDB) GetAccounts(
 			bun.Ident("username"),
 			bun.Ident("domain_username"),
 		)
-	case dialect.PG:
-		q = q.ColumnExpr(
-			"(CONCAT(COALESCE(?, ?), ?, ?)) AS ?",
+	} else {
+		// Create a subquery for
+		// Postgres to reuse.
+		subQ = a.db.NewRaw(
+			"LOWER(COALESCE(?, ?) || ? || ?)",
 			bun.Ident("domain"), "",
 			"/@",
 			bun.Ident("username"),
 			bun.Ident("domain_username"),
 		)
-	default:
-		log.Panicf(ctx, "dialect %s was neither postgres nor sqlite", d)
 	}
 
 	// Return only accounts with `[domain]/@[username]`
 	// later in the alphabet (a-z) than provided maxID.
 	if maxID != "" {
-		q = q.Where("? > ?", bun.Ident("domain_username"), maxID)
+		if dbDialect == dialect.SQLite {
+			// Use aliased column.
+			q = q.Where("? > ?", bun.Ident("domain_username"), maxID)
+		} else {
+			q = q.Where("(?) > ?", subQ, maxID)
+		}
 	}
 
 	// Return only accounts with `[domain]/@[username]`
 	// earlier in the alphabet (a-z) than provided minID.
 	if minID != "" {
-		q = q.Where("? < ?", bun.Ident("domain_username"), minID)
+		if dbDialect == dialect.SQLite {
+			// Use aliased column.
+			q = q.Where("? < ?", bun.Ident("domain_username"), maxID)
+		} else {
+			q = q.Where("(?) < ?", subQ, maxID)
+		}
 	}
 
 	switch status {
@@ -502,14 +517,22 @@ func (a *accountDB) GetAccounts(
 		// says DESC in the query, but we're
 		// going backwards in the alphabet,
 		// and a < z in a string comparison.
-		q = q.OrderExpr("? DESC", bun.Ident("domain_username"))
+		if dbDialect == dialect.SQLite {
+			q = q.OrderExpr("? DESC", bun.Ident("domain_username"))
+		} else {
+			q = q.OrderExpr("(?) DESC", subQ)
+		}
 	} else {
 		// Page down.
 		// It's counterintuitive because it
 		// says ASC in the query, but we're
 		// going forwards in the alphabet,
 		// and z > a in a string comparison.
-		q = q.OrderExpr("? ASC", bun.Ident("domain_username"))
+		if dbDialect == dialect.SQLite {
+			q = q.OrderExpr("? ASC", bun.Ident("domain_username"))
+		} else {
+			q = q.OrderExpr("(?) ASC", subQ)
+		}
 	}
 
 	if err := q.Scan(ctx, &accountIDs, new([]string)); err != nil {
