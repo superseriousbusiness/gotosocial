@@ -54,6 +54,13 @@ func EitherMinID(minID, sinceID string) Boundary {
 				the cursor value, and max_id provides a
 				limiting value to the results.
 
+				But to further complicate it...
+
+				The "next" and "prev" relative links provided
+				in the link header are ALWAYS DESCENDING. Which
+				means we will ALWAYS provide next=?max_id and
+				prev=?min_id. *shakes fist at mastodon api*
+
 	*/
 	switch {
 	case minID != "":
@@ -67,7 +74,12 @@ func EitherMinID(minID, sinceID string) Boundary {
 // SinceID ...
 func SinceID(sinceID string) Boundary {
 	return Boundary{
-		Name:  "since_id",
+		// even when a since_id query is
+		// provided, the next / prev rel
+		// links are DESCENDING with
+		// next:max_id and prev:min_id.
+		// so ALWAYS use min_id as name.
+		Name:  "min_id",
 		Value: sinceID,
 		Order: OrderDescending,
 	}

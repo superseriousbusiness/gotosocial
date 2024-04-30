@@ -202,8 +202,9 @@ func Page_PageFunc[WithID any](p *Page, in []WithID, get func(WithID) string) []
 	return in
 }
 
-// Next creates a new instance for the next returnable page, using
-// given max value. This preserves original limit and max key name.
+// Prev creates a new instance for the next returnable page, using
+// given max value. This will always assume DESCENDING for Mastodon
+// API compatibility, but in case of change it can support both.
 func (p *Page) Next(lo, hi string) *Page {
 	if p == nil || lo == "" || hi == "" {
 		// no paging.
@@ -216,25 +217,22 @@ func (p *Page) Next(lo, hi string) *Page {
 	// Set original limit.
 	p2.Limit = p.Limit
 
-	if p.order().Ascending() {
-		// When ascending, next page
-		// needs to start with min at
-		// the next highest value.
-		p2.Min = p.Min.new(hi)
-		p2.Max = p.Max.new("")
-	} else {
-		// When descending, next page
-		// needs to start with max at
-		// the next lowest value.
-		p2.Min = p.Min.new("")
-		p2.Max = p.Max.new(lo)
-	}
+	// NOTE:
+	// We ALWAYS assume the order
+	// when creating next / prev
+	// links is DESCENDING. It will
+	// always use prev: ?max_name
+	p2.Min = p.Min.new("")
+	p2.Max = p.Max.new(lo)
+	p2.Min.Order = OrderDescending
+	p2.Max.Order = OrderDescending
 
 	return p2
 }
 
 // Prev creates a new instance for the prev returnable page, using
-// given min value. This preserves original limit and min key name.
+// given min value. This will always assume DESCENDING for Mastodon
+// API compatibility, but in case of change it can support both.
 func (p *Page) Prev(lo, hi string) *Page {
 	if p == nil || lo == "" || hi == "" {
 		// no paging.
@@ -247,19 +245,15 @@ func (p *Page) Prev(lo, hi string) *Page {
 	// Set original limit.
 	p2.Limit = p.Limit
 
-	if p.order().Ascending() {
-		// When ascending, prev page
-		// needs to start with max at
-		// the next lowest value.
-		p2.Min = p.Min.new("")
-		p2.Max = p.Max.new(lo)
-	} else {
-		// When descending, next page
-		// needs to start with max at
-		// the next lowest value.
-		p2.Min = p.Min.new(hi)
-		p2.Max = p.Max.new("")
-	}
+	// NOTE:
+	// We ALWAYS assume the order
+	// when creating next / prev
+	// links is DESCENDING. It will
+	// always use prev: ?min_name
+	p2.Min = p.Min.new(hi)
+	p2.Max = p.Max.new("")
+	p2.Min.Order = OrderDescending
+	p2.Max.Order = OrderDescending
 
 	return p2
 }
