@@ -19,6 +19,7 @@ package httpclient
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -50,10 +51,15 @@ type Request struct {
 func WrapRequest(r *http.Request) Request {
 	var rr Request
 	rr.Request = r
-	rr.Entry = log.WithContext(r.Context()).
-		WithField("method", r.Method).
-		WithField("url", r.URL.String()).
-		WithField("contentType", r.Header.Get("Content-Type"))
+	entry := log.WithContext(r.Context())
+	entry = entry.WithField("method", r.Method)
+	entry = entry.WithField("url", r.URL.String())
+	if r.Body != nil {
+		// Only add content-type header if a request body exists.
+		entry = entry.WithField("contentType", r.Header.Get("Content-Type"))
+	}
+	entry = entry.WithField("attempt", &attemptValue{&rr})
+	rr.Entry = entry
 	return rr
 }
 
@@ -66,4 +72,16 @@ func (r *Request) BackOff() time.Duration {
 		r.backoff = baseBackoff * 1 << (r.attempts + 1)
 	}
 	return r.backoff
+}
+
+// attemptValue wraps a Request{}.attempt value
+// ptr so that each log attempt will invoke the
+// .String() method, fetching current value.
+type attemptValue struct{ ptr *Request }
+
+func (v attemptValue) String() string {
+	if v.ptr == nil {
+		return "<nil>"
+	}
+	return strconv.FormatUint(uint64(v.ptr.attempts), 10)
 }
