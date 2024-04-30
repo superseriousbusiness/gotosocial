@@ -6,7 +6,7 @@ By default, GoToSocial will use Postgres, but this is easy to change.
 
 ## SQLite
 
-SQLite, as the name implies, is the lightest database type that GoToSocial can use. It stores entries in a simple file format, usually in the same directory as the GoToSocial binary itself. SQLite is great for small instances and lower-powered machines like Raspberry Pi, where a dedicated database would be overkill.
+SQLite, as the name implies, is the lightest database type that GoToSocial can use. It stores entries in a simple file format, usually in the same directory as the GoToSocial binary itself. SQLite is great for small instances and single-board computers, where a dedicated database would be overkill.
 
 To configure GoToSocial to use SQLite, change `db-type` to `sqlite`. The `address` setting will then be a filename instead of an address, so you will want to change it to `sqlite.db` or something similar.
 
