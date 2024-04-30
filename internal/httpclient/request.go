@@ -19,7 +19,6 @@ package httpclient
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -58,7 +57,8 @@ func WrapRequest(r *http.Request) Request {
 		// Only add content-type header if a request body exists.
 		entry = entry.WithField("contentType", r.Header.Get("Content-Type"))
 	}
-	entry = entry.WithField("attempt", &attemptValue{&rr})
+	// note our formatting library follows ptr values
+	entry = entry.WithField("attempt", &rr.attempts)
 	rr.Entry = entry
 	return rr
 }
@@ -72,16 +72,4 @@ func (r *Request) BackOff() time.Duration {
 		r.backoff = baseBackoff * 1 << (r.attempts + 1)
 	}
 	return r.backoff
-}
-
-// attemptValue wraps a Request{}.attempt value
-// ptr so that each log attempt will invoke the
-// .String() method, fetching current value.
-type attemptValue struct{ ptr *Request }
-
-func (v attemptValue) String() string {
-	if v.ptr == nil {
-		return "<nil>"
-	}
-	return strconv.FormatUint(uint64(v.ptr.attempts), 10)
 }
