@@ -289,14 +289,27 @@ func (p *Page) ToLinkURL(proto, host, path string, queryParams url.Values) *url.
 		queryParams = cloneQuery(queryParams)
 	}
 
-	if p.Min.Value != "" {
-		// A page-minimum query parameter is available.
-		queryParams.Set(p.Min.Name, p.Min.Value)
+	var cursor string
+
+	// Depending on page ordering, the
+	// page will be cursored by either
+	// the min or max query parameter.
+	if p.order().Ascending() {
+		cursor = p.Min.Name
+	} else {
+		cursor = p.Max.Name
 	}
 
-	if p.Max.Value != "" {
-		// A page-maximum query parameter is available.
-		queryParams.Set(p.Max.Name, p.Max.Value)
+	if cursor != "" {
+		if p.Min.Value != "" {
+			// Set page-minimum cursor value.
+			queryParams.Set(cursor, p.Min.Value)
+		}
+
+		if p.Max.Value != "" {
+			// Set page-maximum cursor value.
+			queryParams.Set(cursor, p.Max.Value)
+		}
 	}
 
 	if p.Limit > 0 {

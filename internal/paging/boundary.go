@@ -23,26 +23,36 @@ package paging
 func EitherMinID(minID, sinceID string) Boundary {
 	/*
 
-	           Paging with `since_id` vs `min_id`:
+				Paging with `since_id` vs `min_id`:
 
-	                limit = 4       limit = 4
-	               +----------+    +----------+
-	     max_id--> |xxxxxxxxxx|    |          | <-- max_id
-	               +----------+    +----------+
-	               |xxxxxxxxxx|    |          |
-	               +----------+    +----------+
-	               |xxxxxxxxxx|    |          |
-	               +----------+    +----------+
-	               |xxxxxxxxxx|    |xxxxxxxxxx|
-	               +----------+    +----------+
-	               |          |    |xxxxxxxxxx|
-	               +----------+    +----------+
-	               |          |    |xxxxxxxxxx|
-	               +----------+    +----------+
-	   since_id--> |          |    |xxxxxxxxxx| <-- min_id
-	               +----------+    +----------+
-	               |          |    |          |
-	               +----------+    +----------+
+					limit = 4       limit = 4
+					+----------+    +----------+
+		  max_id--> |xxxxxxxxxx|    |          | <-- max_id
+					+----------+    +----------+
+					|xxxxxxxxxx|    |          |
+					+----------+    +----------+
+					|xxxxxxxxxx|    |          |
+					+----------+    +----------+
+					|xxxxxxxxxx|    |xxxxxxxxxx|
+					+----------+    +----------+
+					|          |    |xxxxxxxxxx|
+					+----------+    +----------+
+					|          |    |xxxxxxxxxx|
+					+----------+    +----------+
+		since_id--> |          |    |xxxxxxxxxx| <-- min_id
+					+----------+    +----------+
+					|          |    |          |
+					+----------+    +----------+
+
+				To sum it up in words:
+
+				when paging with since_id, max_id is used as
+				the cursor value, and since_id provides a
+				limiting value to the results.
+
+				when paging with min_id, min_id is used as
+				the cursor value, and max_id provides a
+				limiting value to the results.
 
 	*/
 	switch {
