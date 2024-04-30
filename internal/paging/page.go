@@ -295,9 +295,9 @@ func (p *Page) ToLinkURL(proto, host, path string, queryParams url.Values) *url.
 	// page will be cursored by either
 	// the min or max query parameter.
 	if p.order().Ascending() {
-		cursor = p.Max.Name
-	} else {
 		cursor = p.Min.Name
+	} else {
+		cursor = p.Max.Name
 	}
 
 	if cursor != "" {
