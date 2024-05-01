@@ -127,8 +127,6 @@ func setupList(ctx context.Context) (*list, error) {
 	state.Caches.Init()
 	state.Caches.Start()
 
-	state.Workers.Start()
-
 	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return nil, fmt.Errorf("error creating dbservice: %w", err)
@@ -148,7 +146,6 @@ func setupList(ctx context.Context) (*list, error) {
 func (l *list) shutdown() error {
 	l.out.Flush()
 	err := l.dbService.Close()
-	l.state.Workers.Stop()
 	l.state.Caches.Stop()
 	return err
 }
