@@ -521,7 +521,7 @@ func buildSQLiteAddress(addr string) string {
 
 		// Use random name for in-memory instead of ':memory:', so
 		// multiple in-mem databases can be created without conflict.
-		addr = uuid.NewString()
+		addr = "/" + uuid.NewString()
 		prefs.Add("vfs", "memdb")
 	}
 
