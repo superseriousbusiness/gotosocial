@@ -53,6 +53,7 @@ sqlite3_create_module_go
 sqlite3_create_window_function_go
 sqlite3_database_file_object
 sqlite3_db_config
+sqlite3_db_filename
 sqlite3_db_name
 sqlite3_db_readonly
 sqlite3_db_release_memory
@@ -62,6 +63,9 @@ sqlite3_errmsg
 sqlite3_error_offset
 sqlite3_errstr
 sqlite3_exec
+sqlite3_filename_database
+sqlite3_filename_journal
+sqlite3_filename_wal
 sqlite3_finalize
 sqlite3_get_autocommit
 sqlite3_get_auxdata

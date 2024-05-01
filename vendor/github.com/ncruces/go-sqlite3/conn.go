@@ -2,7 +2,6 @@ package sqlite3
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"net/url"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncruces/go-sqlite3/internal/util"
+	"github.com/ncruces/go-sqlite3/vfs"
 	"github.com/tetratelabs/wazero/api"
 )
 
@@ -102,15 +102,14 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (uint32, error) {
 				pragmas.WriteString(`;`)
 			}
 		}
-
-		pragmaPtr := c.arena.string(pragmas.String())
-		r := c.call("sqlite3_exec", uint64(handle), uint64(pragmaPtr), 0, 0, 0)
-		if err := c.sqlite.error(r, handle, pragmas.String()); err != nil {
-			if errors.Is(err, ERROR) {
+		if pragmas.Len() != 0 {
+			pragmaPtr := c.arena.string(pragmas.String())
+			r := c.call("sqlite3_exec", uint64(handle), uint64(pragmaPtr), 0, 0, 0)
+			if err := c.sqlite.error(r, handle, pragmas.String()); err != nil {
 				err = fmt.Errorf("sqlite3: invalid _pragma: %w", err)
+				c.closeDB(handle)
+				return 0, err
 			}
-			c.closeDB(handle)
-			return 0, err
 		}
 	}
 	c.call("sqlite3_progress_handler_go", uint64(handle), 100)
@@ -175,7 +174,7 @@ func (c *Conn) Prepare(sql string) (stmt *Stmt, tail string, err error) {
 //
 // https://sqlite.org/c3ref/prepare.html
 func (c *Conn) PrepareFlags(sql string, flags PrepareFlag) (stmt *Stmt, tail string, err error) {
-	if len(sql) > _MAX_LENGTH {
+	if len(sql) > _MAX_SQL_LENGTH {
 		return nil, "", TOOBIG
 	}
 
@@ -214,6 +213,20 @@ func (c *Conn) DBName(n int) string {
 		return ""
 	}
 	return util.ReadString(c.mod, ptr, _MAX_NAME)
+}
+
+// Filename returns the filename for a database.
+//
+// https://sqlite.org/c3ref/db_filename.html
+func (c *Conn) Filename(schema string) *vfs.Filename {
+	var ptr uint32
+	if schema != "" {
+		defer c.arena.mark()()
+		ptr = c.arena.string(schema)
+	}
+
+	r := c.call("sqlite3_db_filename", uint64(c.handle), uint64(ptr))
+	return vfs.OpenFilename(c.ctx, c.mod, uint32(r), vfs.OPEN_MAIN_DB)
 }
 
 // ReadOnly determines if a database is read-only.
@@ -333,8 +346,8 @@ func (c *Conn) checkInterrupt() {
 }
 
 func progressCallback(ctx context.Context, mod api.Module, pDB uint32) (interrupt uint32) {
-	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.handle == pDB && c.commit != nil {
-		if c.interrupt != nil && c.interrupt.Err() != nil {
+	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.handle == pDB && c.interrupt != nil {
+		if c.interrupt.Err() != nil {
 			interrupt = 1
 		}
 	}

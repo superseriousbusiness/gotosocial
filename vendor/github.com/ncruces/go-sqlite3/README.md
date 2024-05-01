@@ -87,9 +87,10 @@ This project aims for [high test coverage](https://github.com/ncruces/go-sqlite3
 It also benefits greatly from [SQLite's](https://sqlite.org/testing.html) and
 [wazero's](https://tetrate.io/blog/introducing-wazero-from-tetrate/#:~:text=Rock%2Dsolid%20test%20approach) thorough testing.
 
+Every commit is [tested](.github/workflows/test.yml) on
+Linux (amd64/arm64/386/riscv64), macOS (amd64/arm64), Windows, FreeBSD and illumos.
 The Go VFS is tested by running SQLite's
-[mptest](https://github.com/sqlite/sqlite/blob/master/mptest/mptest.c)
-on Linux, macOS, Windows and FreeBSD.
+[mptest](https://github.com/sqlite/sqlite/blob/master/mptest/mptest.c).
 
 ### Performance
 
@@ -106,5 +107,5 @@ The Wasm and VFS layers are also tested by running SQLite's
 - [`github.com/mattn/go-sqlite3`](https://pkg.go.dev/github.com/mattn/go-sqlite3)
 - [`github.com/zombiezen/go-sqlite`](https://pkg.go.dev/github.com/zombiezen/go-sqlite)
 
-[^1]: anything else you find in [`go.mod`](./go.mod) is either a test dependency,
+[^1]: anything else you find in `go.mod` is either a test dependency,
       or needed by one of the extensions.

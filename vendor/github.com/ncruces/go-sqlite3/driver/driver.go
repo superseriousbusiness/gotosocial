@@ -70,8 +70,8 @@ func init() {
 // Open opens the SQLite database specified by dataSourceName as a [database/sql.DB].
 //
 // The init function is called by the driver on new connections.
-// The conn can be used to execute queries, register functions, etc.
-// Any error return closes the conn and passes the error to [database/sql].
+// The [sqlite3.Conn] can be used to execute queries, register functions, etc.
+// Any error returned closes the connection and is returned to [database/sql].
 func Open(dataSourceName string, init func(*sqlite3.Conn) error) (*sql.DB, error) {
 	c, err := (&SQLite{Init: init}).OpenConnector(dataSourceName)
 	if err != nil {
@@ -80,15 +80,15 @@ func Open(dataSourceName string, init func(*sqlite3.Conn) error) (*sql.DB, error
 	return sql.OpenDB(c), nil
 }
 
+// SQLite implements [database/sql/driver.Driver].
 type SQLite struct {
-
-	// The init function is called by the driver on new connections.
-	// The conn can be used to execute queries, register functions, etc.
-	// Any error return closes the conn and passes the error to [database/sql].
+	// Init function is called by the driver on new connections.
+	// The [sqlite3.Conn] can be used to execute queries, register functions, etc.
+	// Any error returned closes the connection and is returned to [database/sql].
 	Init func(*sqlite3.Conn) error
 }
 
-// Open: implements [database/sql.Driver].
+// Open implements [database/sql/driver.Driver].
 func (d *SQLite) Open(name string) (driver.Conn, error) {
 	c, err := d.newConnector(name)
 	if err != nil {
@@ -97,7 +97,7 @@ func (d *SQLite) Open(name string) (driver.Conn, error) {
 	return c.Connect(context.Background())
 }
 
-// OpenConnector: implements [database/sql.DriverContext].
+// OpenConnector implements [database/sql/driver.DriverContext].
 func (d *SQLite) OpenConnector(name string) (driver.Connector, error) {
 	return d.newConnector(name)
 }
@@ -327,7 +327,7 @@ func (c *conn) ExecContext(ctx context.Context, query string, args []driver.Name
 	return newResult(c.Conn), nil
 }
 
-func (*conn) CheckNamedValue(arg *driver.NamedValue) error {
+func (c *conn) CheckNamedValue(arg *driver.NamedValue) error {
 	return nil
 }
 

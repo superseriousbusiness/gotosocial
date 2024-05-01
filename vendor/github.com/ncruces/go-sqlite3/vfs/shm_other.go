@@ -1,17 +1,21 @@
-//go:build !(darwin || linux || illumos) || !(amd64 || arm64 || riscv64) || sqlite3_flock || sqlite3_noshm || sqlite3_nosys
+//go:build !(darwin || linux) || !(amd64 || arm64 || riscv64) || sqlite3_flock || sqlite3_noshm || sqlite3_nosys
 
 package vfs
 
-// SupportsSharedMemory is true on platforms that support shared memory.
-// To enable shared memory support on those platforms,
-// you need to set the appropriate [wazero.RuntimeConfig];
-// otherwise, [EXCLUSIVE locking mode] is activated automatically
-// to use [WAL without shared-memory].
+// SupportsSharedMemory is false on platforms that do not support shared memory.
+// To use [WAL without shared-memory], you need to set [EXCLUSIVE locking mode].
 //
 // [WAL without shared-memory]: https://sqlite.org/wal.html#noshm
 // [EXCLUSIVE locking mode]: https://sqlite.org/pragma.html#pragma_locking_mode
 const SupportsSharedMemory = false
 
-type vfsShm struct{}
-
-func (vfsShm) Close() error { return nil }
+// NewSharedMemory returns a shared-memory WAL-index
+// backed by a file with the given path.
+// It will return nil if shared-memory is not supported,
+// or not appropriate for the given flags.
+// Only [OPEN_MAIN_DB] databases may need a WAL-index.
+// You must ensure all concurrent accesses to a database
+// use shared-memory instances created with the same path.
+func NewSharedMemory(path string, flags OpenFlag) SharedMemory {
+	return nil
+}

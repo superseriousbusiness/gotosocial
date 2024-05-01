@@ -1,4 +1,4 @@
-//go:build !(darwin || linux || illumos) || !(amd64 || arm64 || riscv64) || sqlite3_flock || sqlite3_noshm || sqlite3_nosys
+//go:build !(darwin || linux) || !(amd64 || arm64 || riscv64) || sqlite3_flock || sqlite3_noshm || sqlite3_nosys
 
 package util
 
@@ -6,10 +6,6 @@ import "context"
 
 type mmapState struct{}
 
-func (s *mmapState) init(ctx context.Context, _ bool) context.Context {
+func withMmappedAllocator(ctx context.Context) context.Context {
 	return ctx
-}
-
-func CanMapFiles(ctx context.Context) bool {
-	return false
 }

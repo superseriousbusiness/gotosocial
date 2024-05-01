@@ -4,7 +4,7 @@
 // among multiple database connections in the same process,
 // as long as the database name begins with "/".
 //
-// Importing package memdb registers the VFS.
+// Importing package memdb registers the VFS:
 //
 //	import _ "github.com/ncruces/go-sqlite3/vfs/memdb"
 package memdb

@@ -23,12 +23,11 @@ func (memVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, err
 	// This is not a problem for most SQLite file types:
 	// - databases, which only do page aligned reads/writes;
 	// - temp journals, as used by the sorter, which does the same:
-	//   https://sqlite.org/src/artifact/237840?ln=409-412
+	//   https://github.com/sqlite/sqlite/blob/b74eb0/src/vdbesort.c#L409-L412
 	//
 	// We refuse to open all other file types,
 	// but returning OPEN_MEMORY means SQLite won't ask us to.
 	const types = vfs.OPEN_MAIN_DB |
-		vfs.OPEN_TRANSIENT_DB |
 		vfs.OPEN_TEMP_DB |
 		vfs.OPEN_TEMP_JOURNAL
 	if flags&types == 0 {
@@ -173,7 +172,7 @@ func (m *memFile) truncate(size int64) error {
 	return nil
 }
 
-func (*memFile) Sync(flag vfs.SyncFlag) error {
+func (m *memFile) Sync(flag vfs.SyncFlag) error {
 	return nil
 }
 
@@ -263,11 +262,11 @@ func (m *memFile) CheckReservedLock() (bool, error) {
 	return m.reserved != nil, nil
 }
 
-func (*memFile) SectorSize() int {
+func (m *memFile) SectorSize() int {
 	return sectorSize
 }
 
-func (*memFile) DeviceCharacteristics() vfs.DeviceCharacteristic {
+func (m *memFile) DeviceCharacteristics() vfs.DeviceCharacteristic {
 	return vfs.IOCAP_ATOMIC |
 		vfs.IOCAP_SEQUENTIAL |
 		vfs.IOCAP_SAFE_APPEND |

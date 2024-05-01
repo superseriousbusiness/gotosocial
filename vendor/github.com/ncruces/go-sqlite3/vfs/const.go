@@ -4,8 +4,11 @@ import "github.com/ncruces/go-sqlite3/internal/util"
 
 const (
 	_MAX_NAME            = 1e6 // Self-imposed limit for most NUL terminated strings.
+	_MAX_SQL_LENGTH      = 1e9
 	_MAX_PATHNAME        = 1024
 	_DEFAULT_SECTOR_SIZE = 4096
+
+	ptrlen = 4
 )
 
 // https://sqlite.org/rescode.html
@@ -17,6 +20,7 @@ func (e _ErrorCode) Error() string {
 
 const (
 	_OK                      _ErrorCode = util.OK
+	_ERROR                   _ErrorCode = util.ERROR
 	_PERM                    _ErrorCode = util.PERM
 	_BUSY                    _ErrorCode = util.BUSY
 	_READONLY                _ErrorCode = util.READONLY

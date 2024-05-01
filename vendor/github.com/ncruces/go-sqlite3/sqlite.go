@@ -85,7 +85,7 @@ func instantiateSQLite() (sqlt *sqlite, err error) {
 	}
 
 	sqlt = new(sqlite)
-	sqlt.ctx = util.NewContext(context.Background(), vfs.SupportsSharedMemory)
+	sqlt.ctx = util.NewContext(context.Background())
 
 	sqlt.mod, err = instance.runtime.InstantiateModule(sqlt.ctx,
 		instance.compiled, wazero.NewModuleConfig().WithName(""))

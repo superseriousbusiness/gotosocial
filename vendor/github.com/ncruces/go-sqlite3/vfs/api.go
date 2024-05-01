@@ -3,7 +3,7 @@ package vfs
 
 import (
 	"context"
-	"net/url"
+	"io"
 
 	"github.com/tetratelabs/wazero/api"
 )
@@ -20,22 +20,13 @@ type VFS interface {
 	FullPathname(name string) (string, error)
 }
 
-// VFSParams extends VFS with the ability to handle URI parameters
-// through the OpenParams method.
+// VFSFilename extends VFS with the ability to use Filename
+// objects for opening files.
 //
-// https://sqlite.org/c3ref/uri_boolean.html
-type VFSParams interface {
+// https://sqlite.org/c3ref/filename.html
+type VFSFilename interface {
 	VFS
-	OpenParams(name string, flags OpenFlag, params url.Values) (File, OpenFlag, error)
-}
-
-// VFSJournal extends VFS with the ability to open journals
-// that need a reference to their corresponding database files.
-//
-// https://sqlite.org/c3ref/database_file_object.html
-type VFSJournal interface {
-	VFS
-	OpenJournal(name string, flags OpenFlag, db File) (File, OpenFlag, error)
+	OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error)
 }
 
 // A File represents an open file in the OS interface layer.
@@ -65,6 +56,15 @@ type File interface {
 type FileLockState interface {
 	File
 	LockState() LockLevel
+}
+
+// FileChunkSize extends File to implement the
+// SQLITE_FCNTL_CHUNK_SIZE file control opcode.
+//
+// https://sqlite.org/c3ref/c_fcntl_begin_atomic_write.html#sqlitefcntlchunksize
+type FileChunkSize interface {
+	File
+	ChunkSize(size int)
 }
 
 // FileSizeHint extends File to implement the
@@ -135,17 +135,41 @@ type FileBatchAtomicWrite interface {
 	RollbackAtomicWrite() error
 }
 
-// FileSharedMemory extends File to possibly implement shared memory.
+// FilePragma extends File to implement the
+// SQLITE_FCNTL_PRAGMA file control opcode.
+//
+// https://sqlite.org/c3ref/c_fcntl_begin_atomic_write.html#sqlitefcntlpragma
+type FilePragma interface {
+	File
+	Pragma(name, value string) (string, error)
+}
+
+// FileCheckpoint extends File to implement the
+// SQLITE_FCNTL_CKPT_START and SQLITE_FCNTL_CKPT_DONE
+// file control opcodes.
+//
+// https://sqlite.org/c3ref/c_fcntl_begin_atomic_write.html#sqlitefcntlckptstart
+type FileCheckpoint interface {
+	File
+	CheckpointDone() error
+	CheckpointStart() error
+}
+
+// FileSharedMemory extends File to possibly implement
+// shared-memory for the WAL-index.
+// The same shared-memory instance must be returned
+// for the entire life of the file.
 // It's OK for SharedMemory to return nil.
 type FileSharedMemory interface {
 	File
 	SharedMemory() SharedMemory
 }
 
-// SharedMemory is a shared memory implementation.
-// This cannot be externally implemented.
+// SharedMemory is a shared-memory WAL-index implementation.
+// Use [NewSharedMemory] to create a shared-memory.
 type SharedMemory interface {
 	shmMap(context.Context, api.Module, int32, int32, bool) (uint32, error)
 	shmLock(int32, int32, _ShmFlag) error
 	shmUnmap(bool)
+	io.Closer
 }
