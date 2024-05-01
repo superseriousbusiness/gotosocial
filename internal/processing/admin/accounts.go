@@ -115,8 +115,12 @@ func (p *Processor) AccountsGet(
 		return paging.EmptyResponse(), nil
 	}
 
-	hi := accounts[count-1].ID
-	lo := accounts[0].ID
+	var (
+		loAcct = accounts[count-1]
+		hiAcct = accounts[0]
+		lo     = loAcct.Domain + "/@" + loAcct.Username
+		hi     = hiAcct.Domain + "/@" + hiAcct.Username
+	)
 
 	items := make([]interface{}, 0, count)
 	for _, account := range accounts {

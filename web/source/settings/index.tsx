@@ -59,11 +59,10 @@ export function App({ account }: AppProps) {
 							<ModerationRouter />
 							<AdminRouter />
 							{/*
-									Redirect to first part of UserRouter if
-									just the bare settings page is open, so
-									user isn't greeted with a blank page.
-								*/}
-							<Route><Redirect to="/user/profile" /></Route>
+								Ensure user ends up somewhere
+								if they just open /settings.
+							*/}
+							<Route path="/"><Redirect to="/user" /></Route>
 						</ErrorBoundary>
 					</Router>
 				</section>

@@ -502,6 +502,80 @@ func (suite *AccountTestSuite) TestGetAccountsAll() {
 	suite.Len(accounts, 9)
 }
 
+func (suite *AccountTestSuite) TestGetAccountsMaxID() {
+	var (
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
+		// Get accounts with `[domain]/@[username]`
+		// later in the alphabet than `/@the_mighty_zork`.
+		page = &paging.Page{Max: paging.MaxID("/@the_mighty_zork")}
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 5)
+}
+
+func (suite *AccountTestSuite) TestGetAccountsMinID() {
+	var (
+		ctx         = context.Background()
+		origin      = ""
+		status      = ""
+		mods        = false
+		invitedBy   = ""
+		username    = ""
+		displayName = ""
+		domain      = ""
+		email       = ""
+		ip          netip.Addr
+		// Get accounts with `[domain]/@[username]`
+		// earlier in the alphabet than `/@the_mighty_zork`.
+		page = &paging.Page{Min: paging.MinID("/@the_mighty_zork")}
+	)
+
+	accounts, err := suite.db.GetAccounts(
+		ctx,
+		origin,
+		status,
+		mods,
+		invitedBy,
+		username,
+		displayName,
+		domain,
+		email,
+		ip,
+		page,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(accounts, 3)
+}
+
 func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
 	var (
 		ctx         = context.Background()

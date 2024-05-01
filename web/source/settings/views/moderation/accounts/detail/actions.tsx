@@ -19,7 +19,7 @@
 
 import React from "react";
 
-import { useActionAccountMutation } from "../../../../lib/query/admin";
+import { useActionAccountMutation, useHandleSignupMutation } from "../../../../lib/query/admin";
 import MutationButton from "../../../../components/form/mutation-button";
 import useFormSubmit from "../../../../lib/form/submit";
 import {
@@ -27,22 +27,50 @@ import {
 	useTextInput,
 	useBoolInput,
 } from "../../../../lib/form";
-import { Checkbox, TextInput } from "../../../../components/form/inputs";
+import { Checkbox, Select, TextInput } from "../../../../components/form/inputs";
 import { AdminAccount } from "../../../../lib/types/account";
+import { useLocation } from "wouter";
 
 export interface AccountActionsProps {
 	account: AdminAccount,
+	backLocation: string,
 }
 
-export function AccountActions({ account }: AccountActionsProps) {
+export function AccountActions({ account, backLocation }: AccountActionsProps) {
+	const local = !account.domain;
+	
+	// Available actions differ depending
+	// on the account's current status.
+	switch (true) {
+		case account.suspended:
+			// Can't do anything with
+			// suspended accounts currently.
+			return null;
+		case local && !account.approved:
+			// Unapproved local account sign-up,
+			// only show HandleSignup form.
+			return (
+				<HandleSignup
+					account={account}
+					backLocation={backLocation}
+				/>
+			);
+		default:
+			// Normal local or remote account, show
+			// full range of moderation options.
+			return <ModerateAccount account={account} />;
+	}
+}
+
+function ModerateAccount({ account }: { account: AdminAccount }) {
 	const form = {
 		id: useValue("id", account.id),
 		reason: useTextInput("text")
 	};
-
+	
 	const reallySuspend = useBoolInput("reallySuspend");
 	const [accountAction, result] = useFormSubmit(form, useActionAccountMutation());
-
+	
 	return (
 		<form
 			onSubmit={accountAction}
@@ -60,16 +88,6 @@ export function AccountActions({ account }: AccountActionsProps) {
 				placeholder="Reason for this action"
 			/>
 			<div className="action-buttons">
-				{/* <MutationButton
-					label="Disable"
-					name="disable"
-					result={result}
-				/>
-				<MutationButton
-					label="Silence"
-					name="silence"
-					result={result}
-				/> */}
 				<MutationButton
 					disabled={account.suspended || reallySuspend.value === undefined || reallySuspend.value === false}
 					label="Suspend"
@@ -81,6 +99,84 @@ export function AccountActions({ account }: AccountActionsProps) {
 					field={reallySuspend}
 				></Checkbox>
 			</div>
+		</form>
+	);
+}
+
+function HandleSignup({ account, backLocation }: { account: AdminAccount, backLocation: string }) {
+	const form = {
+		id: useValue("id", account.id),
+		approveOrReject: useTextInput("approve_or_reject", { defaultValue: "approve" }),
+		privateComment: useTextInput("private_comment"),
+		message: useTextInput("message"),
+		sendEmail: useBoolInput("send_email"),
+	};
+
+	const [_location, setLocation] = useLocation();
+
+	const [handleSignup, result] = useFormSubmit(form, useHandleSignupMutation(), {
+		changedOnly: false,
+		// After submitting the form, redirect back to
+		// /settings/admin/accounts if rejecting, since
+		// account will no longer be available at
+		// /settings/admin/accounts/:accountID endpoint.
+		onFinish: (res) => {			
+			if (form.approveOrReject.value === "approve") {
+				// An approve request:
+				// stay on this page and
+				// serve updated details.
+				return;
+			}
+
+			if (res.data) {
+				// "reject" successful,
+				// redirect to accounts page.
+				setLocation(backLocation);
+			}
+		}
+	});
+
+	return (
+		<form
+			onSubmit={handleSignup}
+			aria-labelledby="account-handle-signup"
+		>
+			<h3 id="account-handle-signup">Handle Account Sign-Up</h3>
+			<Select
+				field={form.approveOrReject}
+				label="Approve or Reject"
+				options={
+					<>
+						<option value="approve">Approve</option>
+						<option value="reject">Reject</option>
+					</>
+				}
+			>
+			</Select>
+			{ form.approveOrReject.value === "reject" &&
+			// Only show form fields relevant
+			// to "reject" if rejecting.
+			// On "approve" these fields will
+			// be ignored anyway.
+			<>
+				<TextInput
+					field={form.privateComment}
+					label="(Optional) private comment on why sign-up was rejected (shown to other admins only)"
+				/>
+				<Checkbox
+					field={form.sendEmail}
+					label="Send email to applicant"
+				/>
+				<TextInput
+					field={form.message}
+					label={"(Optional) message to include in email to applicant, if send email is checked"}
+				/>
+			</> }
+			<MutationButton
+				disabled={false}
+				label={form.approveOrReject.value === "approve" ? "Approve" : "Reject"}
+				result={result}
+			/>
 		</form>
 	);
 }

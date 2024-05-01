@@ -18,24 +18,32 @@
 */
 
 import React from "react";
-import { Link } from "wouter";
-import { AdminAccount } from "../../../lib/types/account";
+import { useLocation } from "wouter";
+import { AdminAccount } from "../lib/types/account";
 
 interface UsernameProps {
-	user: AdminAccount;
-	link?: string;
+	account: AdminAccount;
+	linkTo?: string;
+	backLocation?: string;
+	classNames?: string[];
 }
 
-export default function Username({ user, link }: UsernameProps) {
-	let className = "user";
-	let isLocal = user.domain == null;
+export default function Username({ account, linkTo, backLocation, classNames }: UsernameProps) {
+	const [ _location, setLocation ] = useLocation();
+	
+	let className = "username-lozenge";
+	let isLocal = account.domain == null;
 
-	if (user.suspended) {
+	if (account.suspended) {
 		className += " suspended";
 	}
 
 	if (isLocal) {
 		className += " local";
+	}
+
+	if (classNames) {
+		className = [ className, classNames ].flat().join(" ");
 	}
 
 	let icon = isLocal
@@ -44,17 +52,33 @@ export default function Username({ user, link }: UsernameProps) {
 
 	const content = (
 		<>
-			<span className="acct">@{user.account.acct}</span>
 			<i className={`fa fa-fw ${icon.fa}`} aria-hidden="true" title={icon.info} />
 			<span className="sr-only">{icon.info}</span>
+			&nbsp;
+			<span className="acct">@{account.account.acct}</span>
 		</>
 	);
 
-	if (link) {
+	if (linkTo) {
+		className += " spanlink";
 		return (
-			<Link className={className} to={link}>
+			<span
+				className={className}
+				onClick={() => {
+					// When clicking on an account, direct
+					// to the detail view for that account.
+					setLocation(linkTo, {
+						// Store the back location in history so
+						// the detail view can use it to return to
+						// this page (including query parameters).
+						state: { backLocation: backLocation }
+					});
+				}}
+				role="link"
+				tabIndex={0}
+			>
 				{content}
-			</Link>
+			</span>
 		);
 	} else {
 		return (

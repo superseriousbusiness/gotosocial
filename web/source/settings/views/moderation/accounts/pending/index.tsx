@@ -17,20 +17,40 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import React, { ReactNode } from "react";
 import { useSearchAccountsQuery } from "../../../../lib/query/admin";
-import { AccountList } from "../../../../components/account-list";
+import { PageableList } from "../../../../components/pageable-list";
+import { useLocation } from "wouter";
+import Username from "../../../../components/username";
+import { AdminAccount } from "../../../../lib/types/account";
 
 export default function AccountsPending() {
+	const [ location, _setLocation ] = useLocation();
 	const searchRes = useSearchAccountsQuery({status: "pending"});
+
+	// Function to map an item to a list entry.
+	function itemToEntry(account: AdminAccount): ReactNode {
+		const acc = account.account;
+		return (
+			<Username
+				key={acc.acct}
+				account={account}
+				linkTo={`/${account.id}`}
+				backLocation={location}
+				classNames={["entry"]}
+			/>
+		);
+	}
 
 	return (
 		<div className="accounts-view">
 			<h1>Pending Accounts</h1>
-			<AccountList
+			<PageableList
 				isLoading={searchRes.isLoading}
+				isFetching={searchRes.isFetching}
 				isSuccess={searchRes.isSuccess}
-				data={searchRes.data}
+				items={searchRes.data?.accounts}
+				itemToEntry={itemToEntry}
 				isError={searchRes.isError}
 				error={searchRes.error}
 				emptyMessage="No pending account sign-ups."

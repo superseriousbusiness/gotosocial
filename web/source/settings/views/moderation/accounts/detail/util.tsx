@@ -17,19 +17,27 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
-import { AccountSearchForm } from "./search";
+import { useMemo } from "react";
 
-export default function AccountsSearch({ }) {
-	return (
-		<div className="accounts-view">
-			<h1>Accounts Search</h1>
-			<span>
-				You can perform actions on an account by clicking
-				its name in a report, or by searching for the account
-				using the form below and clicking on its name.
-			</span>
-			<AccountSearchForm />
-		</div>
-	);
+import { AdminAccount } from "../../../../lib/types/account";
+import { store } from "../../../../redux/store";
+
+export function yesOrNo(b: boolean): string {
+	return b ? "yes" : "no";
+}
+
+export function UseOurInstanceAccount(account: AdminAccount): boolean {
+	// Pull our own URL out of storage so we can
+	// tell if account is our instance account.
+	const ourDomain = useMemo(() => {
+		const instanceUrlStr = store.getState().oauth.instanceUrl;
+		if (!instanceUrlStr) {
+			return "";
+		}
+
+		const instanceUrl = new URL(instanceUrlStr);
+		return instanceUrl.host;
+	}, []);
+
+	return !account.domain && account.username == ourDomain;
 }

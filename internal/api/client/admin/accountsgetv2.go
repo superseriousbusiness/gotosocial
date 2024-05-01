@@ -19,11 +19,13 @@
 //
 // View + page through known accounts according to given filters.
 //
+// Returned accounts will be ordered alphabetically (a-z) by domain + username.
+//
 // The next and previous queries can be parsed from the returned Link header.
 // Example:
 //
 // ```
-// <https://example.org/api/v2/admin/accounts?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v2/admin/accounts?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+// <https://example.org/api/v2/admin/accounts?limit=80&max_id=example.org%2F%40someone>; rel="next", <https://example.org/api/v2/admin/accounts?limit=80&min_id=example.org%2F%40someone_else>; rel="prev"
 // ````
 //
 //	---
@@ -90,23 +92,30 @@
 //		name: max_id
 //		in: query
 //		type: string
-//		description: All results returned will be older than the item with this ID.
-//	-
-//		name: since_id
-//		in: query
-//		type: string
-//		description: All results returned will be newer than the item with this ID.
+//		description: >-
+//			max_id in the form `[domain]/@[username]`.
+//			All results returned will be later in the alphabet than `[domain]/@[username]`.
+//			For example, if max_id = `example.org/@someone` then returned entries might
+//			contain `example.org/@someone_else`, `later.example.org/@someone`, etc.
+//			Local account IDs in this form use an empty string for the `[domain]` part,
+//			for example local account with username `someone` would be `/@someone`.
 //	-
 //		name: min_id
 //		in: query
 //		type: string
-//		description: Returns results immediately newer than the item with this ID.
+//		description: >-
+//			min_id in the form `[domain]/@[username]`.
+//			All results returned will be earlier in the alphabet than `[domain]/@[username]`.
+//			For example, if min_id = `example.org/@someone` then returned entries might
+//			contain `example.org/@earlier_account`, `earlier.example.org/@someone`, etc.
+//			Local account IDs in this form use an empty string for the `[domain]` part,
+//			for example local account with username `someone` would be `/@someone`.
 //	-
 //		name: limit
 //		in: query
 //		type: integer
 //		description: Maximum number of results to return.
-//		default: 100
+//		default: 50
 //		maximum: 200
 //		minimum: 1
 //
@@ -173,7 +182,7 @@ func (m *Module) AccountsGETV2Handler(c *gin.Context) {
 		return
 	}
 
-	page, errWithCode := paging.ParseIDPage(c, 1, 200, 100)
+	page, errWithCode := paging.ParseIDPage(c, 1, 200, 50)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
