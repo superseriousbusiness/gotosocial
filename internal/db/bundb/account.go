@@ -267,6 +267,17 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 //	FROM "accounts" AS "account"
 //	WHERE ("domain_username" > '/@the_mighty_zork')
 //	ORDER BY "domain_username" ASC
+//
+// **NOTE ABOUT POSTGRES**: Postgres ordering expressions in
+// this function specify COLLATE "C" to ensure that ordering
+// is similar to SQLite (which uses BINARY ordering by default).
+// This unfortunately means that A-Z > a-z, when ordering but
+// that's an acceptable tradeoff for a query like this.
+//
+// See:
+//
+//   - https://www.postgresql.org/docs/current/collation.html#COLLATION-MANAGING-STANDARD
+//   - https://sqlite.org/datatype3.html#collation
 func (a *accountDB) GetAccounts(
 	ctx context.Context,
 	origin string,
@@ -341,11 +352,11 @@ func (a *accountDB) GetAccounts(
 		// Create a subquery for
 		// Postgres to reuse.
 		subQ = a.db.NewRaw(
-			"LOWER(COALESCE(?, ?) || ? || ?)",
+			"(COALESCE(?, ?) || ? || ?) COLLATE ?",
 			bun.Ident("domain"), "",
 			"/@",
 			bun.Ident("username"),
-			bun.Ident("domain_username"),
+			bun.Ident("C"),
 		)
 	}
 
@@ -356,7 +367,7 @@ func (a *accountDB) GetAccounts(
 			// Use aliased column.
 			q = q.Where("? > ?", bun.Ident("domain_username"), maxID)
 		} else {
-			q = q.Where("(?) > ?", subQ, maxID)
+			q = q.Where("? > ?", subQ, maxID)
 		}
 	}
 
@@ -367,7 +378,7 @@ func (a *accountDB) GetAccounts(
 			// Use aliased column.
 			q = q.Where("? < ?", bun.Ident("domain_username"), maxID)
 		} else {
-			q = q.Where("(?) < ?", subQ, maxID)
+			q = q.Where("? < ?", subQ, minID)
 		}
 	}
 
@@ -531,7 +542,7 @@ func (a *accountDB) GetAccounts(
 		if dbDialect == dialect.SQLite {
 			q = q.OrderExpr("? ASC", bun.Ident("domain_username"))
 		} else {
-			q = q.OrderExpr("(?) ASC", subQ)
+			q = q.OrderExpr("? ASC", subQ)
 		}
 	}
 

@@ -43,12 +43,21 @@ func init() {
 				bun.Ident("username"),
 			)
 
+		// Specify C collation for Postgres to ensure
+		// alphabetic sort order is similar enough to
+		// SQLite (which uses BINARY sort by default).
+		//
+		// See:
+		//
+		//   - https://www.postgresql.org/docs/current/collation.html#COLLATION-MANAGING-STANDARD
+		//   - https://sqlite.org/datatype3.html#collation
 		case dialect.PG:
 			q = q.ColumnExpr(
-				"LOWER(COALESCE(?, ?) || ? || ?)",
+				"(COALESCE(?, ?) || ? || ?) COLLATE ?",
 				bun.Ident("domain"), "",
 				"/@",
 				bun.Ident("username"),
+				bun.Ident("C"),
 			)
 
 		default:
