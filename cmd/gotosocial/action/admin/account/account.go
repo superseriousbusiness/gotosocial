@@ -52,7 +52,6 @@ func initState(ctx context.Context) (*state.State, error) {
 
 func stopState(state *state.State) error {
 	err := state.DB.Close()
-	state.Workers.Stop()
 	state.Caches.Stop()
 	return err
 }

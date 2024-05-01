@@ -88,7 +88,7 @@ func (p *prune) shutdown() error {
 		errs.Appendf("error stopping database: %w", err)
 	}
 
-	p.state.Workers.Stop()
+	p.state.Workers.Scheduler.Stop()
 	p.state.Caches.Stop()
 
 	return errs.Combine()
