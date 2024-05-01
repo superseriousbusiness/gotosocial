@@ -38,21 +38,27 @@ export interface AccountActionsProps {
 
 export function AccountActions({ account, backLocation }: AccountActionsProps) {
 	const local = !account.domain;
-
+	
 	// Available actions differ depending
 	// on the account's current status.
-	if (account.suspended) {
-		// Can't do anything with
-		// suspended accounts currently.
-		return null;
-	} else if (local && !account.approved) {
-		// Unapproved local account sign-up,
-		// only show HandleSignup form.
-		return <HandleSignup account={account} backLocation={backLocation} />;	
-	} else {
-		// Normal local or remote account, show
-		// full range of moderation options.
-		return <ModerateAccount account={account} />;
+	switch (true) {
+		case account.suspended:
+			// Can't do anything with
+			// suspended accounts currently.
+			return null;
+		case local && !account.approved:
+			// Unapproved local account sign-up,
+			// only show HandleSignup form.
+			return (
+				<HandleSignup
+					account={account}
+					backLocation={backLocation}
+				/>
+			);
+		default:
+			// Normal local or remote account, show
+			// full range of moderation options.
+			return <ModerateAccount account={account} />;
 	}
 }
 

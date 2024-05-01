@@ -29,7 +29,7 @@ import Loading from "./components/loading";
 import { Account } from "./lib/types/account";
 import { BaseUrlContext, RoleContext } from "./lib/navigation/util";
 import { SidebarMenu } from "./lib/navigation/menu";
-import { Router } from "wouter";
+import { Redirect, Route, Router } from "wouter";
 import AdminMenu from "./views/admin/menu";
 import ModerationMenu from "./views/moderation/menu";
 import UserMenu from "./views/user/menu";
@@ -58,6 +58,11 @@ export function App({ account }: AppProps) {
 							<UserRouter />
 							<ModerationRouter />
 							<AdminRouter />
+							{/*
+								Ensure user ends up somewhere
+								if they just open /settings.
+							*/}
+							<Route path="/"><Redirect to="/user" /></Route>
 						</ErrorBoundary>
 					</Router>
 				</section>

@@ -27,6 +27,7 @@ import { AccountActions } from "./actions";
 import { useParams } from "wouter";
 import { useBaseUrl } from "../../../../lib/navigation/util";
 import BackButton from "../../../../components/back-button";
+import { UseOurInstanceAccount, yesOrNo } from "./util";
 
 export default function AccountDetail() {
 	const params: { accountID: string } = useParams();
@@ -51,27 +52,60 @@ interface AccountDetailFormProps {
 	backLocation: string;
 }
 
-function AccountDetailForm({ data: adminAcct, backLocation }: AccountDetailFormProps) {			
-	let yesOrNo = (b: boolean) => {
-		return b ? "yes" : "no";
-	};
+function AccountDetailForm({ data: adminAcct, backLocation }: AccountDetailFormProps) {
+	// If this is our instance account, don't
+	// bother returning detailed account information.
+	const ourInstanceAccount = UseOurInstanceAccount(adminAcct);
+	if (ourInstanceAccount) {
+		return (
+			<>
+				<FakeProfile {...adminAcct.account} />
+				<div className="info">
+					<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
+					<b>
+						This is the service account for your instance; you
+						cannot perform moderation actions on this account.
+					</b>
+				</div>
+			</>
+		);
+	}
 
-	let created = new Date(adminAcct.created_at).toDateString();
+	const local = !adminAcct.domain;
+	return (
+		<>
+			<FakeProfile {...adminAcct.account} />
+			<GeneralAccountDetails adminAcct={adminAcct} />
+			{
+				// Only show local account details
+				// if this is a local account!
+				local && <LocalAccountDetails adminAcct={adminAcct} />
+			}
+			<AccountActions
+				account={adminAcct}
+				backLocation={backLocation}
+			/>
+		</>
+	);
+}
+
+function GeneralAccountDetails({ adminAcct } : { adminAcct: AdminAccount }) {
+	const local = !adminAcct.domain;
+	const created = new Date(adminAcct.created_at).toDateString();
+	
 	let lastPosted = "never";
 	if (adminAcct.account.last_status_at) {
 		lastPosted = new Date(adminAcct.account.last_status_at).toDateString();
 	}
-	const local = !adminAcct.domain;
 
 	return (
 		<>
-			<FakeProfile {...adminAcct.account} />
 			<h3>General Account Details</h3>
-			{ adminAcct.suspended &&
-				<div className="info">
-					<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
-					<b>Account is suspended.</b>
-				</div>
+			{ adminAcct.suspended && 
+			<div className="info">
+				<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
+				<b>Account is suspended.</b>
+			</div>
 			}
 			<dl className="info-list">
 				{ !local &&
@@ -120,56 +154,54 @@ function AccountDetailForm({ data: adminAcct, backLocation }: AccountDetailFormP
 					<dd>{adminAcct.account.following_count}</dd>
 				</div>
 			</dl>
-			{ local &&
-			// Only show local account details
-			// if this is a local account!
-			<>
-				<h3>Local Account Details</h3>
-				{ !adminAcct.approved &&
+		</>
+	);
+}
+
+function LocalAccountDetails({ adminAcct }: { adminAcct: AdminAccount }) {	
+	return (
+		<>
+			<h3>Local Account Details</h3>
+			{ !adminAcct.approved &&
 					<div className="info">
 						<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
 						<b>Account is pending.</b>
 					</div>
-				}
-				{ !adminAcct.confirmed && 
+			}
+			{ !adminAcct.confirmed && 
 					<div className="info">
 						<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
 						<b>Account email not yet confirmed.</b>
 					</div>
-				}
-				<dl className="info-list">
-					<div className="info-list-entry">
-						<dt>Email</dt>
-						<dd>{adminAcct.email} {<b>{adminAcct.confirmed ? "(confirmed)" : "(not confirmed)"}</b> }</dd>
-					</div>
-					<div className="info-list-entry">
-						<dt>Disabled</dt>
-						<dd>{yesOrNo(adminAcct.disabled)}</dd>
-					</div>
-					<div className="info-list-entry">
-						<dt>Approved</dt>
-						<dd>{yesOrNo(adminAcct.approved)}</dd>
-					</div>
-					<div className="info-list-entry">
-						<dt>Sign-Up Reason</dt>
-						<dd>{adminAcct.invite_request ?? <i>none provided</i>}</dd>
-					</div>
-					{ (adminAcct.ip && adminAcct.ip !== "0.0.0.0") &&
+			}
+			<dl className="info-list">
+				<div className="info-list-entry">
+					<dt>Email</dt>
+					<dd>{adminAcct.email} {<b>{adminAcct.confirmed ? "(confirmed)" : "(not confirmed)"}</b> }</dd>
+				</div>
+				<div className="info-list-entry">
+					<dt>Disabled</dt>
+					<dd>{yesOrNo(adminAcct.disabled)}</dd>
+				</div>
+				<div className="info-list-entry">
+					<dt>Approved</dt>
+					<dd>{yesOrNo(adminAcct.approved)}</dd>
+				</div>
+				<div className="info-list-entry">
+					<dt>Sign-Up Reason</dt>
+					<dd>{adminAcct.invite_request ?? <i>none provided</i>}</dd>
+				</div>
+				{ (adminAcct.ip && adminAcct.ip !== "0.0.0.0") &&
 					<div className="info-list-entry">
 						<dt>Sign-Up IP</dt>
 						<dd>{adminAcct.ip}</dd>
 					</div> }
-					{ adminAcct.locale &&
+				{ adminAcct.locale &&
 					<div className="info-list-entry">
 						<dt>Locale</dt>
 						<dd>{adminAcct.locale}</dd>
 					</div> }
-				</dl>
-			</> }
-			<AccountActions
-				account={adminAcct}
-				backLocation={backLocation}
-			/>
-		</>
+			</dl>
+		</> 
 	);
 }
