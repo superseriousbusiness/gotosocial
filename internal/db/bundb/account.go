@@ -376,7 +376,7 @@ func (a *accountDB) GetAccounts(
 	if minID != "" {
 		if dbDialect == dialect.SQLite {
 			// Use aliased column.
-			q = q.Where("? < ?", bun.Ident("domain_username"), maxID)
+			q = q.Where("? < ?", bun.Ident("domain_username"), minID)
 		} else {
 			q = q.Where("? < ?", subQ, minID)
 		}

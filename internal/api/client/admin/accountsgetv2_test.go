@@ -25,6 +25,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 )
@@ -445,6 +446,86 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "created_at": "2020-08-10T12:13:28.000Z",
       "note": "",
       "url": "https://xn--xample-ova.org/users/@%C3%BCser",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.png",
+      "header_static": "http://localhost:8080/assets/default_header.png",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 0,
+      "last_status_at": null,
+      "emojis": [],
+      "fields": []
+    }
+  }
+]`, dst.String())
+}
+
+func (suite *AccountsGetTestSuite) TestAccountsMinID() {
+	recorder := httptest.NewRecorder()
+
+	path := admin.AccountsV2Path + "?limit=1&min_id=/@the_mighty_zork"
+	ctx := suite.newContext(recorder, http.MethodGet, nil, path, "application/json")
+
+	ctx.Params = gin.Params{
+		{
+			Key:   "min_id",
+			Value: "/@the_mighty_zork",
+		},
+		{
+			Key:   "limit",
+			Value: "1",
+		},
+	}
+
+	suite.adminModule.AccountsGETV2Handler(ctx)
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	b, err := io.ReadAll(recorder.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotNil(b)
+
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	link := recorder.Header().Get("Link")
+	suite.Equal(`<http://localhost:8080/api/v2/admin/accounts?limit=1&max_id=%2F%40localhost%3A8080>; rel="next", <http://localhost:8080/api/v2/admin/accounts?limit=1&min_id=%2F%40localhost%3A8080>; rel="prev"`, link)
+
+	suite.Equal(`[
+  {
+    "id": "01AY6P665V14JJR0AFVRT7311Y",
+    "username": "localhost:8080",
+    "domain": null,
+    "created_at": "2020-05-17T13:10:59.000Z",
+    "email": "",
+    "ip": null,
+    "ips": [],
+    "locale": "",
+    "invite_request": null,
+    "role": {
+      "name": "user"
+    },
+    "confirmed": false,
+    "approved": false,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01AY6P665V14JJR0AFVRT7311Y",
+      "username": "localhost:8080",
+      "acct": "localhost:8080",
+      "display_name": "",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2020-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@localhost:8080",
       "avatar": "",
       "avatar_static": "",
       "header": "http://localhost:8080/assets/default_header.png",
