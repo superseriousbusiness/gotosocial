@@ -20,7 +20,7 @@
 import { replaceCacheOnMutation, removeFromCacheOnMutation } from "../query-modifiers";
 import { gtsApi } from "../gts-api";
 import { listToKeyedObject } from "../transforms";
-import { AdminAccount, HandleSignupParams, SearchAccountParams, SearchAccountResp } from "../../types/account";
+import { ActionAccountParams, AdminAccount, HandleSignupParams, SearchAccountParams, SearchAccountResp } from "../../types/account";
 import { InstanceRule, MappedRules } from "../../types/rules";
 import parse from "parse-link-header";
 
@@ -84,22 +84,19 @@ const extended = gtsApi.injectEndpoints({
 					url: `/api/v2/admin/accounts${query}`
 				};
 			},
+			// Headers required for paging.
 			transformResponse: (apiResp: AdminAccount[], meta) => {
 				const accounts = apiResp;
 				const linksStr = meta?.response?.headers.get("Link");
 				const links = parse(linksStr);
 				return { accounts, links };
 			},
-			providesTags: (res) =>
-				res
-					? [
-						...res.accounts.map(({ id }) => ({ type: 'Account' as const, id })),
-						{ type: 'Account', id: 'LIST' },
-					  ]
-					: [{ type: 'Account', id: 'LIST' }],
+			// Only provide LIST tag id since this model is not the
+			// same as getAccount model (due to transformResponse).
+			providesTags: [{ type: "Account", id: "TRANSFORMED" }]
 		}),
 
-		actionAccount: build.mutation<string, { id: string, action: string, reason: string }>({
+		actionAccount: build.mutation<string, ActionAccountParams>({
 			query: ({ id, action, reason }) => ({
 				method: "POST",
 				url: `/api/v1/admin/accounts/${id}/action`,
@@ -109,9 +106,26 @@ const extended = gtsApi.injectEndpoints({
 					text: reason
 				}
 			}),
-			invalidatesTags: (_result, _error, { id }) => [
-				{ type: 'Account', id },
-			],
+			// Do an optimistic update on this account to mark
+			// it according to whatever action was submitted.
+			async onQueryStarted({ id, action }, { dispatch, queryFulfilled }) {
+				const patchResult = dispatch(
+					extended.util.updateQueryData("getAccount", id, (draft) => {
+						if (action === "suspend") {
+							draft.suspended = true;
+							draft.account.suspended = true;
+						}
+					})
+				);
+
+				// Revert optimistic
+				// update if query fails.
+				try {
+					await queryFulfilled;
+				} catch {
+					patchResult.undo();
+				}
+			}
 		}),
 
 		handleSignup: build.mutation<AdminAccount, HandleSignupParams>({
@@ -123,9 +137,32 @@ const extended = gtsApi.injectEndpoints({
 					body: approve_or_reject === "reject" ?? formData,
 				};
 			},
-			invalidatesTags: (_result, _error, { id }) => [
-				{ type: 'Account', id },
-			],
+			// Do an optimistic update on this account to mark it approved
+			// if approved was true, else just invalidate getAccount.
+			async onQueryStarted({ id, approve_or_reject }, { dispatch, queryFulfilled }) {
+				if (approve_or_reject === "reject") {
+					// Just invalidate this ID and getAccounts.
+					dispatch(extended.util.invalidateTags([
+						{ type: "Account", id: id },
+						{ type: "Account", id: "TRANSFORMED" }
+					]));
+					return;
+				}
+				
+				const patchResult = dispatch(
+					extended.util.updateQueryData("getAccount", id, (draft) => {
+						draft.approved = true;
+					})
+				);
+
+				// Revert optimistic
+				// update if query fails.
+				try {
+					await queryFulfilled;
+				} catch {
+					patchResult.undo();
+				}
+			}
 		}),
 
 		instanceRules: build.query<MappedRules, void>({
