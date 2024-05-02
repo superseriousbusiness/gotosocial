@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
+	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -68,6 +69,7 @@ type TestStructs struct {
 	Processor     *processing.Processor
 	HTTPClient    *testrig.MockHTTPClient
 	TypeConverter *typeutils.Converter
+	EmailSender   email.Sender
 }
 
 func (suite *WorkersTestSuite) SetupSuite() {
@@ -168,6 +170,7 @@ func (suite *WorkersTestSuite) SetupTestStructs() *TestStructs {
 		Processor:     processor,
 		HTTPClient:    httpClient,
 		TypeConverter: typeconverter,
+		EmailSender:   emailSender,
 	}
 }
 

@@ -25,16 +25,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// surface wraps functions for 'surfacing' the result
+// Surface wraps functions for 'surfacing' the result
 // of processing a message, eg:
 //   - timelining a status
 //   - removing a status from timelines
 //   - sending a notification to a user
 //   - sending an email
-type surface struct {
-	state       *state.State
-	converter   *typeutils.Converter
-	stream      *stream.Processor
-	filter      *visibility.Filter
-	emailSender email.Sender
+type Surface struct {
+	State       *state.State
+	Converter   *typeutils.Converter
+	Stream      *stream.Processor
+	Filter      *visibility.Filter
+	EmailSender email.Sender
 }

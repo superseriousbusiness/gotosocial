@@ -41,7 +41,7 @@ import (
 // from the federation/ActivityPub API.
 type fediAPI struct {
 	state    *state.State
-	surface  *surface
+	surface  *Surface
 	federate *federate
 	account  *account.Processor
 	utils    *utils

@@ -38,7 +38,7 @@ type utils struct {
 	state   *state.State
 	media   *media.Processor
 	account *account.Processor
-	surface *surface
+	surface *Surface
 }
 
 // wipeStatus encapsulates common logic
