@@ -41,7 +41,7 @@ import (
 type clientAPI struct {
 	state     *state.State
 	converter *typeutils.Converter
-	surface   *surface
+	surface   *Surface
 	federate  *federate
 	account   *account.Processor
 	utils     *utils

@@ -49,7 +49,7 @@ func (p *Processor) AccountApprove(
 	// Get a lock on the account URI,
 	// to ensure it's not also being
 	// rejected at the same time!
-	unlock := p.state.AccountLocks.Lock(user.Account.URI)
+	unlock := p.state.ProcessingLocks.Lock(user.Account.URI)
 	defer unlock()
 
 	if !*user.Approved {

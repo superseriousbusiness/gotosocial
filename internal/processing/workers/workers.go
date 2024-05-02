@@ -55,12 +55,12 @@ func New(
 
 	// Init surface logic
 	// wrapper struct.
-	surface := &surface{
-		state:       state,
-		converter:   converter,
-		stream:      stream,
-		filter:      filter,
-		emailSender: emailSender,
+	surface := &Surface{
+		State:       state,
+		Converter:   converter,
+		Stream:      stream,
+		Filter:      filter,
+		EmailSender: emailSender,
 	}
 
 	// Init shared util funcs.

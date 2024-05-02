@@ -113,7 +113,7 @@ func (p *Processor) MoveSelf(
 	// in quick succession, so get a lock on
 	// this account.
 	lockKey := originAcct.URI
-	unlock := p.state.AccountLocks.Lock(lockKey)
+	unlock := p.state.ProcessingLocks.Lock(lockKey)
 	defer unlock()
 
 	// Ensure we have a valid, up-to-date representation of the target account.
