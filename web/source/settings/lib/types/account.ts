@@ -63,6 +63,7 @@ export interface Account {
 	fields: [],
 	enable_rss: boolean,
 	role: any,
+	suspended?: boolean,
 }
 
 export interface SearchAccountParams {
@@ -91,4 +92,10 @@ export interface HandleSignupParams {
 	private_comment?: string,
 	message?: string,
 	send_email?: boolean,
+}
+
+export interface ActionAccountParams {
+	id: string;
+	action: "suspend";
+	reason: string;
 }
