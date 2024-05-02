@@ -63,6 +63,8 @@ type FilterV2 struct {
 type FilterAction string
 
 const (
+	// FilterActionNone filters should not exist, except internally, for partially constructed or invalid filters.
+	FilterActionNone FilterAction = ""
 	// FilterActionWarn filters will include this status in API results with a warning.
 	FilterActionWarn FilterAction = "warn"
 	// FilterActionHide filters will remove this status from API results.

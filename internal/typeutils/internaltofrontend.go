@@ -1922,7 +1922,7 @@ func filterActionToAPIFilterAction(m gtsmodel.FilterAction) apimodel.FilterActio
 	case gtsmodel.FilterActionHide:
 		return apimodel.FilterActionHide
 	}
-	return ""
+	return apimodel.FilterActionNone
 }
 
 // convertEmojisToAPIEmojis will convert a slice of GTS model emojis to frontend API model emojis, falling back to IDs if no GTS models supplied.
