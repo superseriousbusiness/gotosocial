@@ -49,17 +49,17 @@ func (p *Processor) AccountApprove(
 	// Get a lock on the account URI,
 	// to ensure it's not also being
 	// rejected at the same time!
-	unlock := p.state.AccountLocks.Lock(user.Account.URI)
+	unlock := p.state.ProcessingLocks.Lock(user.Account.URI)
 	defer unlock()
 
 	if !*user.Approved {
 		// Process approval side effects asynschronously.
-		p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityAccept,
 			GTSModel:       user,
-			OriginAccount:  adminAcct,
-			TargetAccount:  user.Account,
+			Origin:         adminAcct,
+			Target:         user.Account,
 		})
 	}
 

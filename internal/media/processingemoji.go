@@ -67,7 +67,7 @@ func (p *ProcessingEmoji) LoadEmoji(ctx context.Context) (*gtsmodel.Emoji, error
 		// Provided context was cancelled, e.g. request cancelled
 		// early. Queue this item for asynchronous processing.
 		log.Warnf(ctx, "reprocessing emoji %s after canceled ctx", p.emoji.ID)
-		go p.mgr.state.Workers.Media.Enqueue(p.Process)
+		p.mgr.state.Workers.Media.Queue.Push(p.Process)
 	}
 
 	return nil, err

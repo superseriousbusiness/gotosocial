@@ -91,12 +91,12 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityFlag,
 		GTSModel:       report,
-		OriginAccount:  account,
-		TargetAccount:  targetAccount,
+		Origin:         account,
+		Target:         targetAccount,
 	})
 
 	apiReport, err := p.converter.ReportToAPIReport(ctx, report)

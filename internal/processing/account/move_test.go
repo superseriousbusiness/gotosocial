@@ -70,29 +70,23 @@ func (suite *MoveTestSuite) TestMoveAccountOK() {
 		suite.FailNow(err.Error())
 	}
 
-	// There should be a msg heading back to fromClientAPI.
-	select {
-	case msg := <-suite.fromClientAPIChan:
-		move, ok := msg.GTSModel.(*gtsmodel.Move)
-		if !ok {
-			suite.FailNow("", "could not cast %T to *gtsmodel.Move", move)
-		}
-
-		now := time.Now()
-		suite.WithinDuration(now, move.CreatedAt, 5*time.Second)
-		suite.WithinDuration(now, move.UpdatedAt, 5*time.Second)
-		suite.WithinDuration(now, move.AttemptedAt, 5*time.Second)
-		suite.Zero(move.SucceededAt)
-		suite.NotZero(move.ID)
-		suite.Equal(requestingAcct.URI, move.OriginURI)
-		suite.NotNil(move.Origin)
-		suite.Equal(targetAcct.URI, move.TargetURI)
-		suite.NotNil(move.Target)
-		suite.NotZero(move.URI)
-
-	case <-time.After(5 * time.Second):
-		suite.FailNow("time out waiting for message")
+	// There should be a message going to the worker.
+	cMsg, _ := suite.getClientMsg(5 * time.Second)
+	move, ok := cMsg.GTSModel.(*gtsmodel.Move)
+	if !ok {
+		suite.FailNow("", "could not cast %T to *gtsmodel.Move", move)
 	}
+	now := time.Now()
+	suite.WithinDuration(now, move.CreatedAt, 5*time.Second)
+	suite.WithinDuration(now, move.UpdatedAt, 5*time.Second)
+	suite.WithinDuration(now, move.AttemptedAt, 5*time.Second)
+	suite.Zero(move.SucceededAt)
+	suite.NotZero(move.ID)
+	suite.Equal(requestingAcct.URI, move.OriginURI)
+	suite.NotNil(move.Origin)
+	suite.Equal(targetAcct.URI, move.TargetURI)
+	suite.NotNil(move.Target)
+	suite.NotZero(move.URI)
 
 	// Move should be in the database now.
 	move, err := suite.state.DB.GetMoveByOriginTarget(

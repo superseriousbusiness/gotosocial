@@ -19,10 +19,13 @@ package federatingdb
 
 import (
 	"context"
+	"errors"
 	"net/url"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
@@ -34,43 +37,130 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"id", id},
-		}...)
-	l.Debug("entering Delete")
-
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
 		return nil // Already processed.
 	}
 
-	requestingAcct := activityContext.requestingAcct
-	receivingAcct := activityContext.receivingAcct
+	// Extract receiving / requesting accounts.
+	requesting := activityContext.requestingAcct
+	receiving := activityContext.receivingAcct
 
-	// in a delete we only get the URI, we can't know if we have a status or a profile or something else,
-	// so we have to try a few different things...
-	if s, err := f.state.DB.GetStatusByURI(ctx, id.String()); err == nil && requestingAcct.ID == s.AccountID {
-		l.Debugf("deleting status: %s", s.ID)
-		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:      ap.ObjectNote,
-			APActivityType:    ap.ActivityDelete,
-			GTSModel:          s,
-			ReceivingAccount:  receivingAcct,
-			RequestingAccount: requestingAcct,
-		})
+	// Serialize deleted ID URI.
+	// (may be status OR account)
+	uriStr := id.String()
+
+	var (
+		ok  bool
+		err error
+	)
+
+	// Try delete as an account URI.
+	ok, err = f.deleteAccount(ctx,
+		requesting,
+		receiving,
+		uriStr,
+	)
+	if err != nil {
+		return err
+	} else if ok {
+		// success!
+		return nil
 	}
 
-	if a, err := f.state.DB.GetAccountByURI(ctx, id.String()); err == nil && requestingAcct.ID == a.ID {
-		l.Debugf("deleting account: %s", a.ID)
-		f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-			APObjectType:      ap.ObjectProfile,
-			APActivityType:    ap.ActivityDelete,
-			GTSModel:          a,
-			ReceivingAccount:  receivingAcct,
-			RequestingAccount: requestingAcct,
-		})
+	// Try delete as a status URI.
+	ok, err = f.deleteStatus(ctx,
+		requesting,
+		receiving,
+		uriStr,
+	)
+	if err != nil {
+		return err
+	} else if ok {
+		// success!
+		return nil
 	}
 
+	// Log at debug level, as lots of these could indicate federation
+	// issues between remote and this instance, or help with debugging.
+	log.Debugf(ctx, "received delete for unknown target: %s", uriStr)
 	return nil
+}
+
+func (f *federatingDB) deleteAccount(
+	ctx context.Context,
+	requesting *gtsmodel.Account,
+	receiving *gtsmodel.Account,
+	uri string, // target account
+) (
+	bool, // success?
+	error, // any error
+) {
+	account, err := f.state.DB.GetAccountByURI(ctx, uri)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, gtserror.Newf("error getting account: %w", err)
+	}
+
+	if account != nil {
+		// Ensure requesting account is
+		// only trying to delete itself.
+		if account.ID != requesting.ID {
+
+			// TODO: handled forwarded deletes,
+			// for now we silently drop this.
+			return true, nil
+		}
+
+		log.Debugf(ctx, "deleting account: %s", account.URI)
+		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+			APObjectType:   ap.ObjectProfile,
+			APActivityType: ap.ActivityDelete,
+			GTSModel:       account,
+			Receiving:      receiving,
+			Requesting:     requesting,
+		})
+
+		return true, nil
+	}
+
+	return false, nil
+}
+
+func (f *federatingDB) deleteStatus(
+	ctx context.Context,
+	requesting *gtsmodel.Account,
+	receiving *gtsmodel.Account,
+	uri string, // target status
+) (
+	bool, // success?
+	error, // any error
+) {
+	status, err := f.state.DB.GetStatusByURI(ctx, uri)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, gtserror.Newf("error getting status: %w", err)
+	}
+
+	if status != nil {
+		// Ensure requesting account is only
+		// trying to delete its own statuses.
+		if status.AccountID != requesting.ID {
+
+			// TODO: handled forwarded deletes,
+			// for now we silently drop this.
+			return true, nil
+		}
+
+		log.Debugf(ctx, "deleting status: %s", status.URI)
+		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityDelete,
+			GTSModel:       status,
+			Receiving:      receiving,
+			Requesting:     requesting,
+		})
+
+		return true, nil
+	}
+
+	return false, nil
 }

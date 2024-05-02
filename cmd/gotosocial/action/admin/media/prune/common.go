@@ -44,7 +44,10 @@ func setupPrune(ctx context.Context) (*prune, error) {
 	state.Caches.Init()
 	state.Caches.Start()
 
-	state.Workers.Start()
+	// Scheduler is required for the
+	// claner, but no other workers
+	// are needed for this CLI action.
+	state.Workers.StartScheduler()
 
 	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
@@ -85,7 +88,7 @@ func (p *prune) shutdown() error {
 		errs.Appendf("error stopping database: %w", err)
 	}
 
-	p.state.Workers.Stop()
+	p.state.Workers.Scheduler.Stop()
 	p.state.Caches.Stop()
 
 	return errs.Combine()

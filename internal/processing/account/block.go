@@ -83,16 +83,16 @@ func (p *Processor) BlockCreate(ctx context.Context, requestingAccount *gtsmodel
 	}
 
 	// Process block side effects (federation etc).
-	msgs = append(msgs, messages.FromClientAPI{
+	msgs = append(msgs, &messages.FromClientAPI{
 		APObjectType:   ap.ActivityBlock,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       block,
-		OriginAccount:  requestingAccount,
-		TargetAccount:  targetAccount,
+		Origin:         requestingAccount,
+		Target:         targetAccount,
 	})
 
 	// Batch queue accreted client api messages.
-	p.state.Workers.EnqueueClientAPI(ctx, msgs...)
+	p.state.Workers.Client.Queue.Push(msgs...)
 
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
 }
@@ -120,12 +120,12 @@ func (p *Processor) BlockRemove(ctx context.Context, requestingAccount *gtsmodel
 	existingBlock.TargetAccount = targetAccount
 
 	// Process block removal side effects (federation etc).
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActivityBlock,
 		APActivityType: ap.ActivityUndo,
 		GTSModel:       existingBlock,
-		OriginAccount:  requestingAccount,
-		TargetAccount:  targetAccount,
+		Origin:         requestingAccount,
+		Target:         targetAccount,
 	})
 
 	return p.RelationshipGet(ctx, requestingAccount, targetAccountID)

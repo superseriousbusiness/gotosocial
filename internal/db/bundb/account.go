@@ -252,6 +252,32 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	return a.GetAccountByUsernameDomain(ctx, username, domain)
 }
 
+// GetAccounts selects accounts using the given parameters.
+// Unlike with other functions, the paging for GetAccounts
+// is done not by ID, but by a concatenation of `[domain]/@[username]`,
+// which allows callers to page through accounts in alphabetical
+// order (much more useful for an admin overview of accounts,
+// for example, than paging by ID (which is random) or by account
+// created at date, which is not particularly interesting).
+//
+// Generated queries will look something like this
+// (SQLite example, maxID was provided so we're paging down):
+//
+//	SELECT "account"."id", (COALESCE("domain", '') || '/@' || "username") AS "domain_username"
+//	FROM "accounts" AS "account"
+//	WHERE ("domain_username" > '/@the_mighty_zork')
+//	ORDER BY "domain_username" ASC
+//
+// **NOTE ABOUT POSTGRES**: Postgres ordering expressions in
+// this function specify COLLATE "C" to ensure that ordering
+// is similar to SQLite (which uses BINARY ordering by default).
+// This unfortunately means that A-Z > a-z, when ordering but
+// that's an acceptable tradeoff for a query like this.
+//
+// See:
+//
+//   - https://www.postgresql.org/docs/current/collation.html#COLLATION-MANAGING-STANDARD
+//   - https://sqlite.org/datatype3.html#collation
 func (a *accountDB) GetAccounts(
 	ctx context.Context,
 	origin string,
@@ -269,6 +295,11 @@ func (a *accountDB) GetAccounts(
 	error,
 ) {
 	var (
+		// We have to use different
+		// syntax for this query
+		// depending on dialect.
+		dbDialect = a.db.Dialect().Name()
+
 		// local users lists,
 		// required for some
 		// limiting parameters.
@@ -287,10 +318,6 @@ func (a *accountDB) GetAccounts(
 		}
 
 		// Get paging params.
-		//
-		// Note this may be min_id OR since_id
-		// from the API, this gets handled below
-		// when checking order to reverse slice.
 		minID = page.GetMin()
 		maxID = page.GetMax()
 		limit = page.GetLimit()
@@ -309,32 +336,50 @@ func (a *accountDB) GetAccounts(
 		// Select only IDs from table
 		Column("account.id")
 
-	// Return only accounts OLDER
-	// than account with maxID.
-	if maxID != "" {
-		maxIDAcct, err := a.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			maxID,
+	var subQ *bun.RawQuery
+	if dbDialect == dialect.SQLite {
+		// For SQLite we can just select
+		// our indexed expression once
+		// as a column alias.
+		q = q.ColumnExpr(
+			"(COALESCE(?, ?) || ? || ?) AS ?",
+			bun.Ident("domain"), "",
+			"/@",
+			bun.Ident("username"),
+			bun.Ident("domain_username"),
 		)
-		if err != nil {
-			return nil, fmt.Errorf("error getting maxID account %s: %w", maxID, err)
-		}
-
-		q = q.Where("? < ?", bun.Ident("account.created_at"), maxIDAcct.CreatedAt)
+	} else {
+		// Create a subquery for
+		// Postgres to reuse.
+		subQ = a.db.NewRaw(
+			"(COALESCE(?, ?) || ? || ?) COLLATE ?",
+			bun.Ident("domain"), "",
+			"/@",
+			bun.Ident("username"),
+			bun.Ident("C"),
+		)
 	}
 
-	// Return only accounts NEWER
-	// than account with minID.
-	if minID != "" {
-		minIDAcct, err := a.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			minID,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error getting minID account %s: %w", minID, err)
+	// Return only accounts with `[domain]/@[username]`
+	// later in the alphabet (a-z) than provided maxID.
+	if maxID != "" {
+		if dbDialect == dialect.SQLite {
+			// Use aliased column.
+			q = q.Where("? > ?", bun.Ident("domain_username"), maxID)
+		} else {
+			q = q.Where("? > ?", subQ, maxID)
 		}
+	}
 
-		q = q.Where("? > ?", bun.Ident("account.created_at"), minIDAcct.CreatedAt)
+	// Return only accounts with `[domain]/@[username]`
+	// earlier in the alphabet (a-z) than provided minID.
+	if minID != "" {
+		if dbDialect == dialect.SQLite {
+			// Use aliased column.
+			q = q.Where("? < ?", bun.Ident("domain_username"), minID)
+		} else {
+			q = q.Where("? < ?", subQ, minID)
+		}
 	}
 
 	switch status {
@@ -479,13 +524,29 @@ func (a *accountDB) GetAccounts(
 
 	if order == paging.OrderAscending {
 		// Page up.
-		q = q.Order("account.created_at ASC")
+		// It's counterintuitive because it
+		// says DESC in the query, but we're
+		// going backwards in the alphabet,
+		// and a < z in a string comparison.
+		if dbDialect == dialect.SQLite {
+			q = q.OrderExpr("? DESC", bun.Ident("domain_username"))
+		} else {
+			q = q.OrderExpr("(?) DESC", subQ)
+		}
 	} else {
 		// Page down.
-		q = q.Order("account.created_at DESC")
+		// It's counterintuitive because it
+		// says ASC in the query, but we're
+		// going forwards in the alphabet,
+		// and z > a in a string comparison.
+		if dbDialect == dialect.SQLite {
+			q = q.OrderExpr("? ASC", bun.Ident("domain_username"))
+		} else {
+			q = q.OrderExpr("? ASC", subQ)
+		}
 	}
 
-	if err := q.Scan(ctx, &accountIDs); err != nil {
+	if err := q.Scan(ctx, &accountIDs, new([]string)); err != nil {
 		return nil, err
 	}
 

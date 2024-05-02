@@ -52,7 +52,7 @@ func (p *Processor) AccountReject(
 	// Get a lock on the account URI,
 	// since we're going to be deleting
 	// it and its associated user.
-	unlock := p.state.AccountLocks.Lock(user.Account.URI)
+	unlock := p.state.ProcessingLocks.Lock(user.Account.URI)
 	defer unlock()
 
 	// Can't reject an account with a
@@ -101,12 +101,12 @@ func (p *Processor) AccountReject(
 	}
 
 	// Process rejection side effects asynschronously.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityReject,
 		GTSModel:       deniedUser,
-		OriginAccount:  adminAcct,
-		TargetAccount:  user.Account,
+		Origin:         adminAcct,
+		Target:         user.Account,
 	})
 
 	return apiAccount, nil

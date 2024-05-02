@@ -16,6 +16,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+	This source file uses PostCSS syntax.
+	See: https://postcss.org/
+*/
+
 body {
 	grid-template-rows: auto 1fr;
 }
@@ -53,21 +58,13 @@ ul li::before {
 
 		& > div,
 		& > form {
-			border-left: 0.2rem solid $border-accent;
-			padding-left: 0.4rem;
 			display: flex;
 			flex-direction: column;
 			gap: 0.5rem;
 			margin: 1rem 0;
 
-			h1, h2 {
+			h1, h2, h3, h4, h5 {
 				margin: 0;
-				margin-top: 0.1rem;
-			}
-
-			&:only-child {
-				border-left: none;
-				padding-left: none;
 			}
 
 			&:first-child {
@@ -76,12 +73,6 @@ ul li::before {
 
 			&:last-child {
 				margin-bottom: 0;
-			}
-
-			&.without-border,
-			.without-border {
-				border-left: 0;
-				padding-left: 0;
 			}
 		}
 
@@ -305,7 +296,8 @@ input, select, textarea {
 	) !important;
 }
 
-section.with-sidebar > div, section.with-sidebar > form {
+section.with-sidebar > div,
+section.with-sidebar > form {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
@@ -348,10 +340,6 @@ section.with-sidebar > div, section.with-sidebar > form {
 		display: flex;
 		flex-direction: column;
 		gap: 0.2rem;
-
-		h3 {
-			margin: 0;
-		}
 	}
 	
 	.labelinput .border {
@@ -538,6 +526,22 @@ span.form-info {
 	}
 }
 
+.pageable-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+
+	.entries {
+		color: $fg;
+		border: 0.1rem solid var(--gray1);
+	}
+
+	.prev-next {
+		display: flex;
+		justify-content: space-between;
+	}
+}
+
 .domain-permissions-list {
 	p {
 		margin-top: 0;
@@ -618,29 +622,31 @@ span.form-info {
 @media screen and (max-width: 60rem) {
 	/* vertical layout */
 	#root {
-		padding: 1rem;
+		padding: 0.5rem;
+		margin: 0;
 		grid-template-columns: 100%;
 		grid-template-rows: auto auto;
 
-		.sidebar {
+		div.sidebar {
 			justify-self: auto;
-			margin-bottom: 2rem;
+			margin-bottom: 0;
 		}
 
-		.sidebar, section.with-sidebar {
+		div.sidebar, section.with-sidebar {
 			border-top-left-radius: $br;
 			border-top-right-radius: $br;
 			border-bottom-left-radius: $br;
 			border-bottom-right-radius: $br;
 		}
 
-		.sidebar a:first-child h2 {
+		section.with-sidebar {
+			grid-column: 1;
+			padding: 1rem;
+		}
+
+		div.sidebar a:first-child h2 {
 			border-top-right-radius: $br;
 		}
-	}
-
-	section {
-		grid-column: 1;
 	}
 
 	.user-profile .overview {
@@ -1113,49 +1119,58 @@ button.with-padding {
 			}
 		}
 	}
+}
 
-	.user {
-		line-height: 1.3rem;
-		display: inline-block;
-		background: $fg-accent;
-		color: $bg;
-		border-radius: $br;
-		padding: 0.15rem 0.15rem;
-		margin: 0 0.1rem;
-		font-weight: bold;
-		text-decoration: none;
+.username-lozenge {
+	line-height: 1.3rem;
+	display: inline-block;
+	background: $fg-accent;
+	color: $bg;
+	border-radius: $br;
+	padding: 0.15rem;
+	font-weight: bold;
+	text-decoration: none;
+	
+	.acct {
+		word-break: break-all;
+	}
 
-		.acct {
-			word-break: break-all;
-		}
+	&.suspended {
+		background: $bg-accent;
+		color: $fg;
+		text-decoration: line-through;
+	}
 
-		&.suspended {
-			background: $bg-accent;
-			color: $fg;
-			text-decoration: line-through;
-		}
-
-		&.local {
-			background: $green1;
-		}
+	&.local {
+		background: $green1;
 	}
 }
 
+.spanlink {
+	cursor: pointer;
+	text-decoration: none;
+}
+
 .accounts-view {
-	form {
-		margin-bottom: 1rem;
-	}
-
-	.list {
-		margin: 0.5rem 0;
-
-		a {
+	.pageable-list {
+		.username-lozenge {
+			line-height: inherit;
 			color: $fg;
-			text-decoration: none;
+			font-weight: initial;
+			width: 100%;
+			border-radius: 0;
+			background: $list-entry-bg;
+	
+			.fa {
+				align-self: center;
+			}
+	
+			&:nth-child(even) {
+				background: $list-entry-alternate-bg;
+			}
 
-			#username {
-				color: $link-fg;
-				margin-left: 0.5em;
+			.acct {
+				color: var(--link-fg);
 			}
 		}
 	}
@@ -1169,6 +1184,7 @@ button.with-padding {
 	.profile {
 		overflow: hidden;
 		max-width: 60rem;
+		margin-top: 1rem;
 	}
 
 	h4, h3, h2 {
@@ -1199,6 +1215,16 @@ button.with-padding {
 
 			dd {
 				word-break: break-word;
+			}
+
+			dt, dd {
+				/*
+					Make sure any fa icons used in keys
+					or values are properly aligned.
+				*/
+				.fa {
+					vertical-align: middle;
+				}
 			}
 		}
 	}

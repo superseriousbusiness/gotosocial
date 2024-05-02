@@ -37,14 +37,14 @@ import (
 // It will also handle notifications for any mentions attached to
 // the account, and notifications for any local accounts that want
 // to know when this account posts.
-func (s *surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.Status) error {
+func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Ensure status fully populated; including account, mentions, etc.
-	if err := s.state.DB.PopulateStatus(ctx, status); err != nil {
+	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error populating status with id %s: %w", status.ID, err)
 	}
 
 	// Get all local followers of the account that posted the status.
-	follows, err := s.state.DB.GetAccountLocalFollowers(ctx, status.AccountID)
+	follows, err := s.State.DB.GetAccountLocalFollowers(ctx, status.AccountID)
 	if err != nil {
 		return gtserror.Newf("error getting local followers of account %s: %w", status.AccountID, err)
 	}
@@ -80,7 +80,7 @@ func (s *surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 // adding the status to list timelines + home timelines of each
 // follower, as appropriate, and notifying each follower of the
 // new status, if the status is eligible for notification.
-func (s *surface) timelineAndNotifyStatusForFollowers(
+func (s *Surface) timelineAndNotifyStatusForFollowers(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follows []*gtsmodel.Follow,
@@ -99,7 +99,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 		// If it's not timelineable, we can just stop early, since lists
 		// are prettymuch subsets of the home timeline, so if it shouldn't
 		// appear there, it shouldn't appear in lists either.
-		timelineable, err := s.filter.StatusHomeTimelineable(
+		timelineable, err := s.Filter.StatusHomeTimelineable(
 			ctx, follow.Account, status,
 		)
 		if err != nil {
@@ -112,7 +112,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 			continue
 		}
 
-		filters, err := s.state.DB.GetFiltersForAccountID(ctx, follow.AccountID)
+		filters, err := s.State.DB.GetFiltersForAccountID(ctx, follow.AccountID)
 		if err != nil {
 			return gtserror.Newf("couldn't retrieve filters for account %s: %w", follow.AccountID, err)
 		}
@@ -131,7 +131,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 		// of this follow, if applicable.
 		homeTimelined, err := s.timelineStatus(
 			ctx,
-			s.state.Timelines.Home.IngestOne,
+			s.State.Timelines.Home.IngestOne,
 			follow.AccountID, // home timelines are keyed by account ID
 			follow.Account,
 			status,
@@ -168,7 +168,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 		//   - This is a top-level post (not a reply or boost).
 		//
 		// That means we can officially notify this one.
-		if err := s.notify(ctx,
+		if err := s.Notify(ctx,
 			gtsmodel.NotificationStatus,
 			follow.Account,
 			status.Account,
@@ -183,7 +183,7 @@ func (s *surface) timelineAndNotifyStatusForFollowers(
 
 // listTimelineStatusForFollow puts the given status
 // in any eligible lists owned by the given follower.
-func (s *surface) listTimelineStatusForFollow(
+func (s *Surface) listTimelineStatusForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
@@ -198,7 +198,7 @@ func (s *surface) listTimelineStatusForFollow(
 	// inclusion in the list.
 
 	// Get every list entry that targets this follow's ID.
-	listEntries, err := s.state.DB.GetListEntriesForFollowID(
+	listEntries, err := s.State.DB.GetListEntriesForFollowID(
 		// We only need the list IDs.
 		gtscontext.SetBarebones(ctx),
 		follow.ID,
@@ -226,7 +226,7 @@ func (s *surface) listTimelineStatusForFollow(
 		// list that this list entry belongs to.
 		if _, err := s.timelineStatus(
 			ctx,
-			s.state.Timelines.List.IngestOne,
+			s.State.Timelines.List.IngestOne,
 			listEntry.ListID, // list timelines are keyed by list ID
 			follow.Account,
 			status,
@@ -242,7 +242,7 @@ func (s *surface) listTimelineStatusForFollow(
 // listEligible checks if the given status is eligible
 // for inclusion in the list that that the given listEntry
 // belongs to, based on the replies policy of the list.
-func (s *surface) listEligible(
+func (s *Surface) listEligible(
 	ctx context.Context,
 	listEntry *gtsmodel.ListEntry,
 	status *gtsmodel.Status,
@@ -263,7 +263,7 @@ func (s *surface) listEligible(
 	// We need to fetch the list that this
 	// entry belongs to, in order to check
 	// the list's replies policy.
-	list, err := s.state.DB.GetListByID(
+	list, err := s.State.DB.GetListByID(
 		ctx, listEntry.ListID,
 	)
 	if err != nil {
@@ -283,7 +283,7 @@ func (s *surface) listEligible(
 		//
 		// Check if replied-to account is
 		// also included in this list.
-		includes, err := s.state.DB.ListIncludesAccount(
+		includes, err := s.State.DB.ListIncludesAccount(
 			ctx,
 			list.ID,
 			status.InReplyToAccountID,
@@ -305,7 +305,7 @@ func (s *surface) listEligible(
 		//
 		// Check if replied-to account is
 		// followed by list owner account.
-		follows, err := s.state.DB.IsFollowing(
+		follows, err := s.State.DB.IsFollowing(
 			ctx,
 			list.AccountID,
 			status.InReplyToAccountID,
@@ -335,7 +335,7 @@ func (s *surface) listEligible(
 //
 // If the status was inserted into the timeline, true will be returned
 // + it will also be streamed to the user using the given streamType.
-func (s *surface) timelineStatus(
+func (s *Surface) timelineStatus(
 	ctx context.Context,
 	ingest func(context.Context, string, timeline.Timelineable) (bool, error),
 	timelineID string,
@@ -354,26 +354,31 @@ func (s *surface) timelineStatus(
 	}
 
 	// The status was inserted so stream it to the user.
-	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account, custom.FilterContextHome, filters)
+	apiStatus, err := s.Converter.StatusToAPIStatus(ctx,
+		status,
+		account,
+		custom.FilterContextHome,
+		filters,
+	)
 	if err != nil {
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return true, err
 	}
-	s.stream.Update(ctx, account, apiStatus, streamType)
+	s.Stream.Update(ctx, account, apiStatus, streamType)
 
 	return true, nil
 }
 
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
-func (s *surface) deleteStatusFromTimelines(ctx context.Context, statusID string) error {
-	if err := s.state.Timelines.Home.WipeItemFromAllTimelines(ctx, statusID); err != nil {
+func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) error {
+	if err := s.State.Timelines.Home.WipeItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
-	if err := s.state.Timelines.List.WipeItemFromAllTimelines(ctx, statusID); err != nil {
+	if err := s.State.Timelines.List.WipeItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
-	s.stream.Delete(ctx, statusID)
+	s.Stream.Delete(ctx, statusID)
 	return nil
 }
 
@@ -381,15 +386,15 @@ func (s *surface) deleteStatusFromTimelines(ctx context.Context, statusID string
 // unpreparing it from all timelines, forcing it to be prepared again (with updated
 // stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
 // both for the status itself, and for any boosts of the status.
-func (s *surface) invalidateStatusFromTimelines(ctx context.Context, statusID string) {
-	if err := s.state.Timelines.Home.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
+func (s *Surface) invalidateStatusFromTimelines(ctx context.Context, statusID string) {
+	if err := s.State.Timelines.Home.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
 		log.
 			WithContext(ctx).
 			WithField("statusID", statusID).
 			Errorf("error unpreparing status from home timelines: %v", err)
 	}
 
-	if err := s.state.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
+	if err := s.State.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
 		log.
 			WithContext(ctx).
 			WithField("statusID", statusID).
@@ -403,14 +408,14 @@ func (s *surface) invalidateStatusFromTimelines(ctx context.Context, statusID st
 // Note that calling invalidateStatusFromTimelines takes care of the
 // state in general, we just need to do this for any streams that are
 // open right now.
-func (s *surface) timelineStatusUpdate(ctx context.Context, status *gtsmodel.Status) error {
+func (s *Surface) timelineStatusUpdate(ctx context.Context, status *gtsmodel.Status) error {
 	// Ensure status fully populated; including account, mentions, etc.
-	if err := s.state.DB.PopulateStatus(ctx, status); err != nil {
+	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
 		return gtserror.Newf("error populating status with id %s: %w", status.ID, err)
 	}
 
 	// Get all local followers of the account that posted the status.
-	follows, err := s.state.DB.GetAccountLocalFollowers(ctx, status.AccountID)
+	follows, err := s.State.DB.GetAccountLocalFollowers(ctx, status.AccountID)
 	if err != nil {
 		return gtserror.Newf("error getting local followers of account %s: %w", status.AccountID, err)
 	}
@@ -438,7 +443,7 @@ func (s *surface) timelineStatusUpdate(ctx context.Context, status *gtsmodel.Sta
 // slice of followers of the account that posted the given status,
 // pushing update messages into open list/home streams of each
 // follower.
-func (s *surface) timelineStatusUpdateForFollowers(
+func (s *Surface) timelineStatusUpdateForFollowers(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follows []*gtsmodel.Follow,
@@ -455,7 +460,7 @@ func (s *surface) timelineStatusUpdateForFollowers(
 		// If it's not timelineable, we can just stop early, since lists
 		// are prettymuch subsets of the home timeline, so if it shouldn't
 		// appear there, it shouldn't appear in lists either.
-		timelineable, err := s.filter.StatusHomeTimelineable(
+		timelineable, err := s.Filter.StatusHomeTimelineable(
 			ctx, follow.Account, status,
 		)
 		if err != nil {
@@ -468,7 +473,7 @@ func (s *surface) timelineStatusUpdateForFollowers(
 			continue
 		}
 
-		filters, err := s.state.DB.GetFiltersForAccountID(ctx, follow.AccountID)
+		filters, err := s.State.DB.GetFiltersForAccountID(ctx, follow.AccountID)
 		if err != nil {
 			return gtserror.Newf("couldn't retrieve filters for account %s: %w", follow.AccountID, err)
 		}
@@ -503,7 +508,7 @@ func (s *surface) timelineStatusUpdateForFollowers(
 
 // listTimelineStatusUpdateForFollow pushes edits of the given status
 // into any eligible lists streams opened by the given follower.
-func (s *surface) listTimelineStatusUpdateForFollow(
+func (s *Surface) listTimelineStatusUpdateForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
@@ -518,7 +523,7 @@ func (s *surface) listTimelineStatusUpdateForFollow(
 	// inclusion in the list.
 
 	// Get every list entry that targets this follow's ID.
-	listEntries, err := s.state.DB.GetListEntriesForFollowID(
+	listEntries, err := s.State.DB.GetListEntriesForFollowID(
 		// We only need the list IDs.
 		gtscontext.SetBarebones(ctx),
 		follow.ID,
@@ -559,14 +564,14 @@ func (s *surface) listTimelineStatusUpdateForFollow(
 
 // timelineStatusUpdate streams the edited status to the user using the
 // given streamType.
-func (s *surface) timelineStreamStatusUpdate(
+func (s *Surface) timelineStreamStatusUpdate(
 	ctx context.Context,
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 	streamType string,
 	filters []*gtsmodel.Filter,
 ) error {
-	apiStatus, err := s.converter.StatusToAPIStatus(ctx, status, account, custom.FilterContextHome, filters)
+	apiStatus, err := s.Converter.StatusToAPIStatus(ctx, status, account, custom.FilterContextHome, filters)
 	if errors.Is(err, custom.ErrHideStatus) {
 		// Don't put this status in the stream.
 		return nil
@@ -575,6 +580,6 @@ func (s *surface) timelineStreamStatusUpdate(
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return err
 	}
-	s.stream.StatusUpdate(ctx, account, apiStatus, streamType)
+	s.Stream.StatusUpdate(ctx, account, apiStatus, streamType)
 	return nil
 }

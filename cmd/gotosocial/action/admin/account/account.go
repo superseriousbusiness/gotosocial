@@ -39,7 +39,6 @@ func initState(ctx context.Context) (*state.State, error) {
 	var state state.State
 	state.Caches.Init()
 	state.Caches.Start()
-	state.Workers.Start()
 
 	// Set the state DB connection
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
@@ -53,7 +52,6 @@ func initState(ctx context.Context) (*state.State, error) {
 
 func stopState(state *state.State) error {
 	err := state.DB.Close()
-	state.Workers.Stop()
 	state.Caches.Stop()
 	return err
 }

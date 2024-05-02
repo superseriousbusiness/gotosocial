@@ -50,10 +50,16 @@ type Request struct {
 func WrapRequest(r *http.Request) Request {
 	var rr Request
 	rr.Request = r
-	rr.Entry = log.WithContext(r.Context()).
-		WithField("method", r.Method).
-		WithField("url", r.URL.String()).
-		WithField("contentType", r.Header.Get("Content-Type"))
+	entry := log.WithContext(r.Context())
+	entry = entry.WithField("method", r.Method)
+	entry = entry.WithField("url", r.URL.String())
+	if r.Body != nil {
+		// Only add content-type header if a request body exists.
+		entry = entry.WithField("contentType", r.Header.Get("Content-Type"))
+	}
+	// note our formatting library follows ptr values
+	entry = entry.WithField("attempt", &rr.attempts)
+	rr.Entry = entry
 	return rr
 }
 

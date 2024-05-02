@@ -81,12 +81,12 @@ func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStre
 	}
 
 	// This is a new boost. Process side effects asynchronously.
-	f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-		APObjectType:      ap.ActivityAnnounce,
-		APActivityType:    ap.ActivityCreate,
-		GTSModel:          boost,
-		ReceivingAccount:  receivingAcct,
-		RequestingAccount: requestingAcct,
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityAnnounce,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       boost,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
 	})
 
 	return nil

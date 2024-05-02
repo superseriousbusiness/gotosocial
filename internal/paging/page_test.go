@@ -20,15 +20,13 @@ package paging_test
 import (
 	"math/rand"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
-	"github.com/oklog/ulid"
+	"github.com/stretchr/testify/assert"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
-
-// random reader according to current-time source seed.
-var randRd = rand.New(rand.NewSource(time.Now().Unix()))
 
 type Case struct {
 	// Name is the test case name.
@@ -63,13 +61,9 @@ func TestPage(t *testing.T) {
 			// Page the input slice.
 			out := c.Page.Page(c.Input)
 
-			// Log the results for case of error returns.
-			t.Logf("%s\npage=%+v input=%v expect=%v output=%v", c.Name, c.Page, c.Input, c.Expect, out)
-
-			// Check paged output is as expected.
-			if !slices.Equal(out, c.Expect) {
-				t.Error("unexpected paged output")
-			}
+			// Check paged output is expected.
+			assert.Equal(t, c.Expect, out,
+				"input=%#v page=%v", c.Input, c.Page)
 		})
 	}
 }
@@ -80,8 +74,7 @@ var cases = []Case{
 		slices.SortFunc(ids, ascending)
 
 		// Select random indices in slice.
-		minIdx := randRd.Intn(len(ids))
-		maxIdx := randRd.Intn(len(ids))
+		minIdx, maxIdx, _ := generateParams(len(ids))
 
 		// Select the boundaries.
 		minID := ids[minIdx]
@@ -104,9 +97,7 @@ var cases = []Case{
 		slices.SortFunc(ids, ascending)
 
 		// Select random parameters in slice.
-		minIdx := randRd.Intn(len(ids))
-		maxIdx := randRd.Intn(len(ids))
-		limit := randRd.Intn(len(ids)) + 1
+		minIdx, maxIdx, limit := generateParams(len(ids))
 
 		// Select the boundaries.
 		minID := ids[minIdx]
@@ -116,12 +107,10 @@ var cases = []Case{
 		expect := slices.Clone(ids)
 		expect = cutLower(expect, minID)
 		expect = cutUpper(expect, maxID)
-		slices.Reverse(expect)
-
-		// Now limit the slice.
 		if limit < len(expect) {
 			expect = expect[:limit]
 		}
+		slices.Reverse(expect)
 
 		// Return page and expected IDs.
 		return ids, &paging.Page{
@@ -135,8 +124,7 @@ var cases = []Case{
 		slices.SortFunc(ids, ascending)
 
 		// Select random parameters in slice.
-		minIdx := randRd.Intn(len(ids))
-		maxIdx := randRd.Intn(len(ids))
+		minIdx, maxIdx, _ := generateParams(len(ids))
 
 		// Select the boundaries.
 		minID := ids[minIdx]
@@ -160,8 +148,7 @@ var cases = []Case{
 		slices.SortFunc(ids, descending)
 
 		// Select random indices in slice.
-		sinceIdx := randRd.Intn(len(ids))
-		maxIdx := randRd.Intn(len(ids))
+		sinceIdx, maxIdx, _ := generateParams(len(ids))
 
 		// Select the boundaries.
 		sinceID := ids[sinceIdx]
@@ -183,7 +170,7 @@ var cases = []Case{
 		slices.SortFunc(ids, descending)
 
 		// Select random indices in slice.
-		maxIdx := randRd.Intn(len(ids))
+		_, maxIdx, _ := generateParams(len(ids))
 
 		// Select the boundaries.
 		maxID := ids[maxIdx]
@@ -202,7 +189,7 @@ var cases = []Case{
 		slices.SortFunc(ids, descending)
 
 		// Select random indices in slice.
-		sinceIdx := randRd.Intn(len(ids))
+		sinceIdx, _, _ := generateParams(len(ids))
 
 		// Select the boundaries.
 		sinceID := ids[sinceIdx]
@@ -221,7 +208,7 @@ var cases = []Case{
 		slices.SortFunc(ids, ascending)
 
 		// Select random indices in slice.
-		minIdx := randRd.Intn(len(ids))
+		minIdx, _, _ := generateParams(len(ids))
 
 		// Select the boundaries.
 		minID := ids[minIdx]
@@ -258,32 +245,34 @@ func cutUpper(in []string, bound string) []string {
 	return in
 }
 
+// random reader according to current-time source seed.
+var randRd = rand.New(rand.NewSource(time.Now().Unix()))
+
+// generateParams ...
+func generateParams(n int) (minIdx int, maxIdx int, limit int) {
+	maxIdx = max(1, randRd.Intn(n))
+	minIdx = randRd.Intn(maxIdx)
+	limit = randRd.Intn(max(1, maxIdx-minIdx)) + 1
+	return
+}
+
 // generateSlice generates a new slice of len containing ascending sorted slice.
 func generateSlice(len int) []string {
-	if len <= 0 {
+	if len <= 1 {
 		// minimum testable
 		// pageable amount
 		len = 2
 	}
-	now := time.Now()
 	in := make([]string, len)
 	for i := 0; i < len; i++ {
-		// Convert now to timestamp.
-		t := ulid.Timestamp(now)
-
-		// Create anew ulid for now.
-		u := ulid.MustNew(t, randRd)
-
-		// Add to slice.
-		in[i] = u.String()
-
-		// Bump now by 1 second.
-		now = now.Add(time.Second)
+		in[i] = strconv.Itoa(i)
 	}
 	return in
 }
 
-func ascending(a, b string) int {
+func ascending(sa, sb string) int {
+	a, _ := strconv.Atoi(sa)
+	b, _ := strconv.Atoi(sb)
 	if a > b {
 		return 1
 	} else if a < b {
@@ -292,7 +281,9 @@ func ascending(a, b string) int {
 	return 0
 }
 
-func descending(a, b string) int {
+func descending(sa, sb string) int {
+	a, _ := strconv.Atoi(sa)
+	b, _ := strconv.Atoi(sb)
 	if a < b {
 		return 1
 	} else if a > b {

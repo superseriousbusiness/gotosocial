@@ -21,8 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -41,9 +40,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 	"github.com/tomnomnom/linkheader"
 )
-
-// random reader according to current-time source seed.
-var randRd = rand.New(rand.NewSource(time.Now().Unix()))
 
 type FollowTestSuite struct {
 	AccountStandardTestSuite
@@ -76,33 +72,33 @@ func (suite *FollowTestSuite) TestFollowSelf() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	_ = b
 	assert.NoError(suite.T(), err)
 }
 
-func (suite *FollowTestSuite) TestGetFollowersPageBackwardLimit2() {
-	suite.testGetFollowersPage(2, "backward")
+func (suite *FollowTestSuite) TestGetFollowersPageNewestToOldestLimit2() {
+	suite.testGetFollowersPage(2, "newestToOldest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowersPageBackwardLimit4() {
-	suite.testGetFollowersPage(4, "backward")
+func (suite *FollowTestSuite) TestGetFollowersPageNewestToOldestLimit4() {
+	suite.testGetFollowersPage(4, "newestToOldest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowersPageBackwardLimit6() {
-	suite.testGetFollowersPage(6, "backward")
+func (suite *FollowTestSuite) TestGetFollowersPageNewestToOldestLimit6() {
+	suite.testGetFollowersPage(6, "newestToOldest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowersPageForwardLimit2() {
-	suite.testGetFollowersPage(2, "forward")
+func (suite *FollowTestSuite) TestGetFollowersPageOldestToNewestLimit2() {
+	suite.testGetFollowersPage(2, "oldestToNewest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowersPageForwardLimit4() {
-	suite.testGetFollowersPage(4, "forward")
+func (suite *FollowTestSuite) TestGetFollowersPageOldestToNewestLimit4() {
+	suite.testGetFollowersPage(4, "oldestToNewest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowersPageForwardLimit6() {
-	suite.testGetFollowersPage(6, "forward")
+func (suite *FollowTestSuite) TestGetFollowersPageOldestToNewestLimit6() {
+	suite.testGetFollowersPage(6, "oldestToNewest")
 }
 
 func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) {
@@ -117,8 +113,11 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 
 	var i int
 
-	for _, targetAccount := range suite.testAccounts {
-		if targetAccount.ID == requestingAccount.ID {
+	// Have each account in the testrig follow the account
+	// that is requesting their followers from the API.
+	for _, account := range suite.testAccounts {
+		targetAccount := requestingAccount
+		if account.ID == targetAccount.ID {
 			// we cannot be our own target...
 			continue
 		}
@@ -132,9 +131,9 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 			ID:              id,
 			CreatedAt:       now,
 			UpdatedAt:       now,
-			URI:             fmt.Sprintf("%s/follow/%s", targetAccount.URI, id),
-			AccountID:       targetAccount.ID,
-			TargetAccountID: requestingAccount.ID,
+			URI:             fmt.Sprintf("%s/follow/%s", account.URI, id),
+			AccountID:       account.ID,
+			TargetAccountID: targetAccount.ID,
 		})
 		suite.NoError(err)
 
@@ -152,15 +151,17 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 	var query string
 
 	switch direction {
-	case "backward":
-		// Set the starting query to page backward from newest.
+	case "newestToOldest":
+		// Set the starting query to page from
+		// newest (ie., first entry in slice).
 		acc := expectAccounts[0].(*model.Account)
 		newest, _ := suite.db.GetFollow(ctx, acc.ID, requestingAccount.ID)
 		expectAccounts = expectAccounts[1:]
 		query = fmt.Sprintf("limit=%d&max_id=%s", limit, newest.ID)
 
-	case "forward":
-		// Set the starting query to page forward from the oldest.
+	case "oldestToNewest":
+		// Set the starting query to page from
+		// oldest (ie., last entry in slice).
 		acc := expectAccounts[len(expectAccounts)-1].(*model.Account)
 		oldest, _ := suite.db.GetFollow(ctx, acc.ID, requestingAccount.ID)
 		expectAccounts = expectAccounts[:len(expectAccounts)-1]
@@ -208,9 +209,9 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 		)
 
 		switch direction {
-		case "backward":
-			// When paging backwards (DESC) we:
-			// - iter from end of received accounts
+		case "newestToOldest":
+			// When paging newest to oldest (ie., first page to last page):
+			// - iter from start of received accounts
 			// - iterate backward through received accounts
 			// - stop when we reach last index of received accounts
 			// - compare each received with the first index of expected accounts
@@ -221,8 +222,8 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 			expect = func(i []interface{}) interface{} { return i[0] }
 			trunc = func(i []interface{}) []interface{} { return i[1:] }
 
-		case "forward":
-			// When paging forwards (ASC) we:
+		case "oldestToNewest":
+			// When paging oldest to newest (ie., last page to first page):
 			// - iter from end of received accounts
 			// - iterate backward through received accounts
 			// - stop when we reach first index of received accounts
@@ -230,7 +231,7 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 			// - after each compare, drop the last index of expected accounts
 			start = func(i []*model.Account) int { return len(i) - 1 }
 			iter = func(i int) int { return i - 1 }
-			check = func(idx int, i []*model.Account) bool { return idx >= 0 }
+			check = func(idx int, _ []*model.Account) bool { return idx >= 0 }
 			expect = func(i []interface{}) interface{} { return i[len(i)-1] }
 			trunc = func(i []interface{}) []interface{} { return i[:len(i)-1] }
 		}
@@ -256,7 +257,14 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 		// Parse response link header values.
 		values := result.Header.Values("Link")
 		links := linkheader.ParseMultiple(values)
-		filteredLinks := links.FilterByRel("next")
+
+		var filteredLinks linkheader.Links
+		if direction == "newestToOldest" {
+			filteredLinks = links.FilterByRel("next")
+		} else {
+			filteredLinks = links.FilterByRel("prev")
+		}
+
 		suite.NotEmpty(filteredLinks, "no next link provided with more remaining accounts on page=%d", p)
 
 		// A ref link header was set.
@@ -271,28 +279,28 @@ func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) 
 	}
 }
 
-func (suite *FollowTestSuite) TestGetFollowingPageBackwardLimit2() {
-	suite.testGetFollowingPage(2, "backward")
+func (suite *FollowTestSuite) TestGetFollowingPageNewestToOldestLimit2() {
+	suite.testGetFollowingPage(2, "newestToOldest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowingPageBackwardLimit4() {
-	suite.testGetFollowingPage(4, "backward")
+func (suite *FollowTestSuite) TestGetFollowingPageNewestToOldestLimit4() {
+	suite.testGetFollowingPage(4, "newestToOldest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowingPageBackwardLimit6() {
-	suite.testGetFollowingPage(6, "backward")
+func (suite *FollowTestSuite) TestGetFollowingPageNewestToOldestLimit6() {
+	suite.testGetFollowingPage(6, "newestToOldest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowingPageForwardLimit2() {
-	suite.testGetFollowingPage(2, "forward")
+func (suite *FollowTestSuite) TestGetFollowingPageOldestToNewestLimit2() {
+	suite.testGetFollowingPage(2, "oldestToNewest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowingPageForwardLimit4() {
-	suite.testGetFollowingPage(4, "forward")
+func (suite *FollowTestSuite) TestGetFollowingPageOldestToNewestLimit4() {
+	suite.testGetFollowingPage(4, "oldestToNewest")
 }
 
-func (suite *FollowTestSuite) TestGetFollowingPageForwardLimit6() {
-	suite.testGetFollowingPage(6, "forward")
+func (suite *FollowTestSuite) TestGetFollowingPageOldestToNewestLimit6() {
+	suite.testGetFollowingPage(6, "oldestToNewest")
 }
 
 func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) {
@@ -307,8 +315,11 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 
 	var i int
 
+	// Have the account that is requesting their following
+	// list from the API follow each account in the testrig.
 	for _, targetAccount := range suite.testAccounts {
-		if targetAccount.ID == requestingAccount.ID {
+		account := requestingAccount
+		if targetAccount.ID == account.ID {
 			// we cannot be our own target...
 			continue
 		}
@@ -322,8 +333,8 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 			ID:              id,
 			CreatedAt:       now,
 			UpdatedAt:       now,
-			URI:             fmt.Sprintf("%s/follow/%s", requestingAccount.URI, id),
-			AccountID:       requestingAccount.ID,
+			URI:             fmt.Sprintf("%s/follow/%s", account.URI, id),
+			AccountID:       account.ID,
 			TargetAccountID: targetAccount.ID,
 		})
 		suite.NoError(err)
@@ -342,15 +353,17 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 	var query string
 
 	switch direction {
-	case "backward":
-		// Set the starting query to page backward from newest.
+	case "newestToOldest":
+		// Set the starting query to page from
+		// newest (ie., first entry in slice).
 		acc := expectAccounts[0].(*model.Account)
 		newest, _ := suite.db.GetFollow(ctx, requestingAccount.ID, acc.ID)
 		expectAccounts = expectAccounts[1:]
 		query = fmt.Sprintf("limit=%d&max_id=%s", limit, newest.ID)
 
-	case "forward":
-		// Set the starting query to page forward from the oldest.
+	case "oldestToNewest":
+		// Set the starting query to page from
+		// oldest (ie., last entry in slice).
 		acc := expectAccounts[len(expectAccounts)-1].(*model.Account)
 		oldest, _ := suite.db.GetFollow(ctx, requestingAccount.ID, acc.ID)
 		expectAccounts = expectAccounts[:len(expectAccounts)-1]
@@ -397,9 +410,9 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 		)
 
 		switch direction {
-		case "backward":
-			// When paging backwards (DESC) we:
-			// - iter from end of received accounts
+		case "newestToOldest":
+			// When paging newest to oldest (ie., first page to last page):
+			// - iter from start of received accounts
 			// - iterate backward through received accounts
 			// - stop when we reach last index of received accounts
 			// - compare each received with the first index of expected accounts
@@ -410,8 +423,8 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 			expect = func(i []interface{}) interface{} { return i[0] }
 			trunc = func(i []interface{}) []interface{} { return i[1:] }
 
-		case "forward":
-			// When paging forwards (ASC) we:
+		case "oldestToNewest":
+			// When paging oldest to newest (ie., last page to first page):
 			// - iter from end of received accounts
 			// - iterate backward through received accounts
 			// - stop when we reach first index of received accounts
@@ -419,7 +432,7 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 			// - after each compare, drop the last index of expected accounts
 			start = func(i []*model.Account) int { return len(i) - 1 }
 			iter = func(i int) int { return i - 1 }
-			check = func(idx int, i []*model.Account) bool { return idx >= 0 }
+			check = func(idx int, _ []*model.Account) bool { return idx >= 0 }
 			expect = func(i []interface{}) interface{} { return i[len(i)-1] }
 			trunc = func(i []interface{}) []interface{} { return i[:len(i)-1] }
 		}
@@ -445,7 +458,14 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 		// Parse response link header values.
 		values := result.Header.Values("Link")
 		links := linkheader.ParseMultiple(values)
-		filteredLinks := links.FilterByRel("next")
+
+		var filteredLinks linkheader.Links
+		if direction == "newestToOldest" {
+			filteredLinks = links.FilterByRel("next")
+		} else {
+			filteredLinks = links.FilterByRel("prev")
+		}
+
 		suite.NotEmpty(filteredLinks, "no next link provided with more remaining accounts on page=%d", p)
 
 		// A ref link header was set.

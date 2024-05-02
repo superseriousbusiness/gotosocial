@@ -23,26 +23,43 @@ package paging
 func EitherMinID(minID, sinceID string) Boundary {
 	/*
 
-	           Paging with `since_id` vs `min_id`:
+				Paging with `since_id` vs `min_id`:
 
-	                limit = 4       limit = 4
-	               +----------+    +----------+
-	     max_id--> |xxxxxxxxxx|    |          | <-- max_id
-	               +----------+    +----------+
-	               |xxxxxxxxxx|    |          |
-	               +----------+    +----------+
-	               |xxxxxxxxxx|    |          |
-	               +----------+    +----------+
-	               |xxxxxxxxxx|    |xxxxxxxxxx|
-	               +----------+    +----------+
-	               |          |    |xxxxxxxxxx|
-	               +----------+    +----------+
-	               |          |    |xxxxxxxxxx|
-	               +----------+    +----------+
-	   since_id--> |          |    |xxxxxxxxxx| <-- min_id
-	               +----------+    +----------+
-	               |          |    |          |
-	               +----------+    +----------+
+					limit = 4       limit = 4
+					+----------+    +----------+
+		  max_id--> |xxxxxxxxxx|    |          | <-- max_id
+					+----------+    +----------+
+					|xxxxxxxxxx|    |          |
+					+----------+    +----------+
+					|xxxxxxxxxx|    |          |
+					+----------+    +----------+
+					|xxxxxxxxxx|    |xxxxxxxxxx|
+					+----------+    +----------+
+					|          |    |xxxxxxxxxx|
+					+----------+    +----------+
+					|          |    |xxxxxxxxxx|
+					+----------+    +----------+
+		since_id--> |          |    |xxxxxxxxxx| <-- min_id
+					+----------+    +----------+
+					|          |    |          |
+					+----------+    +----------+
+
+				To sum it up in words:
+
+				when paging with since_id, max_id is used as
+				the cursor value, and since_id provides a
+				limiting value to the results.
+
+				when paging with min_id, min_id is used as
+				the cursor value, and max_id provides a
+				limiting value to the results.
+
+				But to further complicate it...
+
+				The "next" and "prev" relative links provided
+				in the link header are ALWAYS DESCENDING. Which
+				means we will ALWAYS provide next=?max_id and
+				prev=?min_id. *shakes fist at mastodon api*
 
 	*/
 	switch {
@@ -57,7 +74,12 @@ func EitherMinID(minID, sinceID string) Boundary {
 // SinceID ...
 func SinceID(sinceID string) Boundary {
 	return Boundary{
-		Name:  "since_id",
+		// even when a since_id query is
+		// provided, the next / prev rel
+		// links are DESCENDING with
+		// next:max_id and prev:min_id.
+		// so ALWAYS use min_id as name.
+		Name:  "min_id",
 		Value: sinceID,
 		Order: OrderDescending,
 	}

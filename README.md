@@ -128,7 +128,7 @@ Plenty of [config options](./example/config.yaml) for admins to play around with
 
 No external dependencies apart from a database (or just use SQLite!). Simply download the binary + assets (or Docker container), and run.
 
-GoToSocial plays nice with lower-powered machines like Raspberry Pi, old laptops and tiny $5/month VPSes.
+GoToSocial plays nice with single-board computers, old laptops and tiny $5/month VPSes.
 
 ### Safety + security features
 
@@ -277,10 +277,11 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [gruf/go-cache](https://codeberg.org/gruf/go-cache); LRU and TTL caches. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-debug](https://codeberg.org/gruf/go-debug); debug build tag. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-errors](https://codeberg.org/gruf/go-errors); context-like error w/ value wrapping  [MIT License](https://spdx.org/licenses/MIT.html).
-  - [gruf/go-fastcopy](https://codeberg.org/gruf/go-fastcopy); performant pooled I/O copying [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-fastcopy](https://codeberg.org/gruf/go-fastcopy); performant (buffer pooled) I/O copying [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-kv](https://codeberg.org/gruf/go-kv); log field formatting. [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-list](https://codeberg.org/gruf/go-list); generic doubly linked list. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); safemutex & mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
-  - [gruf/go-runners](https://codeberg.org/gruf/go-runners); workerpools and synchronization. [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-runners](https://codeberg.org/gruf/go-runners); synchronization utilities. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-sched](https://codeberg.org/gruf/go-sched); task scheduler. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-store](https://codeberg.org/gruf/go-store); file storage backend (local & s3). [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-structr](https://codeberg.org/gruf/go-structr); struct caching + queueing with automated indexing by field. [MIT License](https://spdx.org/licenses/MIT.html).

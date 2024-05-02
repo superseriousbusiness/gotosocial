@@ -140,12 +140,12 @@ func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account
 	}
 
 	// Process side effects of closing the report.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActivityFlag,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       report,
-		OriginAccount:  account,
-		TargetAccount:  report.Account,
+		Origin:         account,
+		Target:         report.Account,
 	})
 
 	apimodelReport, err := p.converter.ReportToAdminAPIReport(ctx, updatedReport, account)

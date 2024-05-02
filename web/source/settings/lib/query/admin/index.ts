@@ -20,7 +20,9 @@
 import { replaceCacheOnMutation, removeFromCacheOnMutation } from "../query-modifiers";
 import { gtsApi } from "../gts-api";
 import { listToKeyedObject } from "../transforms";
-import { AdminAccount, HandleSignupParams, SearchAccountParams } from "../../types/account";
+import { AdminAccount, HandleSignupParams, SearchAccountParams, SearchAccountResp } from "../../types/account";
+import { InstanceRule, MappedRules } from "../../types/rules";
+import parse from "parse-link-header";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -64,7 +66,7 @@ const extended = gtsApi.injectEndpoints({
 			],
 		}),
 
-		searchAccounts: build.query<AdminAccount[], SearchAccountParams>({
+		searchAccounts: build.query<SearchAccountResp, SearchAccountParams>({
 			query: (form) => {
 				const params = new(URLSearchParams);
 				Object.entries(form).forEach(([k, v]) => {
@@ -82,10 +84,16 @@ const extended = gtsApi.injectEndpoints({
 					url: `/api/v2/admin/accounts${query}`
 				};
 			},
+			transformResponse: (apiResp: AdminAccount[], meta) => {
+				const accounts = apiResp;
+				const linksStr = meta?.response?.headers.get("Link");
+				const links = parse(linksStr);
+				return { accounts, links };
+			},
 			providesTags: (res) =>
 				res
 					? [
-						...res.map(({ id }) => ({ type: 'Account' as const, id })),
+						...res.accounts.map(({ id }) => ({ type: 'Account' as const, id })),
 						{ type: 'Account', id: 'LIST' },
 					  ]
 					: [{ type: 'Account', id: 'LIST' }],
@@ -120,14 +128,14 @@ const extended = gtsApi.injectEndpoints({
 			],
 		}),
 
-		instanceRules: build.query({
+		instanceRules: build.query<MappedRules, void>({
 			query: () => ({
 				url: `/api/v1/admin/instance/rules`
 			}),
-			transformResponse: listToKeyedObject<any>("id")
+			transformResponse: listToKeyedObject<InstanceRule>("id")
 		}),
 
-		addInstanceRule: build.mutation({
+		addInstanceRule: build.mutation<MappedRules, any>({
 			query: (formData) => ({
 				method: "POST",
 				url: `/api/v1/admin/instance/rules`,
@@ -135,11 +143,7 @@ const extended = gtsApi.injectEndpoints({
 				body: formData,
 				discardEmpty: true
 			}),
-			transformResponse: (data) => {
-				return {
-					[data.id]: data
-				};
-			},
+			transformResponse: listToKeyedObject<InstanceRule>("id"),
 			...replaceCacheOnMutation("instanceRules"),
 		}),
 

@@ -220,10 +220,7 @@ func (p *fediAPI) GetOrCreateMove(
 //	APActivityType:   "Move"
 //	GTSModel:         stub *gtsmodel.Move.
 //	ReceivingAccount: Account of inbox owner receiving the Move.
-func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) error {
-	// The account who received the Move message.
-	receiver := fMsg.ReceivingAccount
-
+func (p *fediAPI) MoveAccount(ctx context.Context, fMsg *messages.FromFediAPI) error {
 	// *gtsmodel.Move activity.
 	stubMove, ok := fMsg.GTSModel.(*gtsmodel.Move)
 	if !ok {
@@ -236,7 +233,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 	// Move origin and target info.
 	var (
 		originAcctURIStr = stubMove.OriginURI
-		originAcct       = fMsg.RequestingAccount
+		originAcct       = fMsg.Requesting
 		targetAcctURIStr = stubMove.TargetURI
 		targetAcctURI    = stubMove.Target
 	)
@@ -308,7 +305,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 	// Account to which the Move is taking place.
 	targetAcct, targetAcctable, err := p.federate.GetAccountByURI(
 		ctx,
-		receiver.Username,
+		fMsg.Receiving.Username,
 		targetAcctURI,
 	)
 	if err != nil {
@@ -340,7 +337,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 		// Force refresh Move target account
 		// to ensure we have up-to-date version.
 		targetAcct, _, err = p.federate.RefreshAccount(ctx,
-			receiver.Username,
+			fMsg.Receiving.Username,
 			targetAcct,
 			targetAcctable,
 			dereferencing.Freshest,
@@ -379,7 +376,7 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg messages.FromFediAPI) er
 
 	// Transfer originAcct's followers
 	// on this instance to targetAcct.
-	redirectOK := p.utilF.redirectFollowers(
+	redirectOK := p.utils.redirectFollowers(
 		ctx,
 		originAcct,
 		targetAcct,

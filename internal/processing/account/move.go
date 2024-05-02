@@ -113,7 +113,7 @@ func (p *Processor) MoveSelf(
 	// in quick succession, so get a lock on
 	// this account.
 	lockKey := originAcct.URI
-	unlock := p.state.AccountLocks.Lock(lockKey)
+	unlock := p.state.ProcessingLocks.Lock(lockKey)
 	defer unlock()
 
 	// Ensure we have a valid, up-to-date representation of the target account.
@@ -317,12 +317,12 @@ func (p *Processor) MoveSelf(
 	}
 
 	// Everything seems OK, process Move side effects async.
-	p.state.Workers.EnqueueClientAPI(ctx, messages.FromClientAPI{
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityMove,
 		GTSModel:       move,
-		OriginAccount:  originAcct,
-		TargetAccount:  targetAcct,
+		Origin:         originAcct,
+		Target:         targetAcct,
 	})
 
 	return nil

@@ -50,10 +50,10 @@ func (suite *StatusHistoryTestSuite) TestGetHistory() {
 
 	// Setup request.
 	recorder := httptest.NewRecorder()
-	request :=  httptest.NewRequest(http.MethodGet, target, nil)
+	request := httptest.NewRequest(http.MethodGet, target, nil)
 	request.Header.Set("accept", "application/json")
 	ctx, _ := testrig.CreateGinTestContext(recorder, request)
-	
+
 	// Set auth + path params.
 	ctx.Set(oauth.SessionAuthorizedApplication, testApplication)
 	ctx.Set(oauth.SessionAuthorizedToken, testToken)

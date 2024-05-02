@@ -81,7 +81,8 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	suite.NoError(err)
 
 	// there should be nothing in the federator channel since nothing needs to be passed
-	suite.Empty(suite.fromFederator)
+	_, ok := suite.getFederatorMsg(time.Second)
+	suite.False(ok)
 
 	// the follow request should not be in the database anymore -- it's been rejected
 	err = suite.db.GetByID(ctx, fr.ID, &gtsmodel.FollowRequest{})

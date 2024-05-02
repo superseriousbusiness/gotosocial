@@ -20,25 +20,84 @@ package messages
 import (
 	"net/url"
 
+	"codeberg.org/gruf/go-structr"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// FromClientAPI wraps a message that travels from the client API into the processor.
+// FromClientAPI wraps a message that
+// travels from the client API into the processor.
 type FromClientAPI struct {
-	APObjectType   string
+
+	// APObjectType ...
+	APObjectType string
+
+	// APActivityType ...
 	APActivityType string
-	GTSModel       interface{}
-	OriginAccount  *gtsmodel.Account
-	TargetAccount  *gtsmodel.Account
+
+	// Optional GTS database model
+	// of the Activity / Object.
+	GTSModel interface{}
+
+	// Targeted object URI.
+	TargetURI string
+
+	// Origin is the account that
+	// this message originated from.
+	Origin *gtsmodel.Account
+
+	// Target is the account that
+	// this message is targeting.
+	Target *gtsmodel.Account
 }
 
-// FromFediAPI wraps a message that travels from the federating API into the processor.
+// ClientMsgIndices defines queue indices this
+// message type should be accessible / stored under.
+func ClientMsgIndices() []structr.IndexConfig {
+	return []structr.IndexConfig{
+		{Fields: "TargetURI", Multiple: true},
+		{Fields: "Origin.ID", Multiple: true},
+		{Fields: "Target.ID", Multiple: true},
+	}
+}
+
+// FromFediAPI wraps a message that
+// travels from the federating API into the processor.
 type FromFediAPI struct {
-	APObjectType      string
-	APActivityType    string
-	APIri             *url.URL
-	APObjectModel     interface{}       // Optional AP model of the Object of the Activity. Should be Accountable or Statusable.
-	GTSModel          interface{}       // Optional GTS model of the Activity or Object.
-	RequestingAccount *gtsmodel.Account // Remote account that posted this Activity to the inbox.
-	ReceivingAccount  *gtsmodel.Account // Local account which owns the inbox that this Activity was posted to.
+
+	// APObjectType ...
+	APObjectType string
+
+	// APActivityType ...
+	APActivityType string
+
+	// Optional ActivityPub ID (IRI)
+	// and / or model of Activity / Object.
+	APIRI    *url.URL
+	APObject interface{}
+
+	// Optional GTS database model
+	// of the Activity / Object.
+	GTSModel interface{}
+
+	// Targeted object URI.
+	TargetURI string
+
+	// Remote account that posted
+	// this Activity to the inbox.
+	Requesting *gtsmodel.Account
+
+	// Local account which owns the inbox
+	// that this Activity was posted to.
+	Receiving *gtsmodel.Account
+}
+
+// FederatorMsgIndices defines queue indices this
+// message type should be accessible / stored under.
+func FederatorMsgIndices() []structr.IndexConfig {
+	return []structr.IndexConfig{
+		{Fields: "APIRI", Multiple: true},
+		{Fields: "TargetURI", Multiple: true},
+		{Fields: "Requesting.ID", Multiple: true},
+		{Fields: "Receiving.ID", Multiple: true},
+	}
 }

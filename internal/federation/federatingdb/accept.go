@@ -89,13 +89,12 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					return err
 				}
 
-				// Process side effects asynchronously.
-				f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-					APObjectType:      ap.ActivityFollow,
-					APActivityType:    ap.ActivityAccept,
-					GTSModel:          follow,
-					ReceivingAccount:  receivingAcct,
-					RequestingAccount: requestingAcct,
+				f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+					APObjectType:   ap.ActivityFollow,
+					APActivityType: ap.ActivityAccept,
+					GTSModel:       follow,
+					Receiving:      receivingAcct,
+					Requesting:     requestingAcct,
 				})
 			}
 
@@ -138,13 +137,12 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				return err
 			}
 
-			// Process side effects asynchronously.
-			f.state.Workers.EnqueueFediAPI(ctx, messages.FromFediAPI{
-				APObjectType:      ap.ActivityFollow,
-				APActivityType:    ap.ActivityAccept,
-				GTSModel:          follow,
-				ReceivingAccount:  receivingAcct,
-				RequestingAccount: requestingAcct,
+			f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+				APObjectType:   ap.ActivityFollow,
+				APActivityType: ap.ActivityAccept,
+				GTSModel:       follow,
+				Receiving:      receivingAcct,
+				Requesting:     requestingAcct,
 			})
 
 			continue

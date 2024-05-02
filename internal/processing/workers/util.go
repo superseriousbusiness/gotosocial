@@ -32,20 +32,20 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
-// utilF wraps util functions used by both
+// util provides util functions used by both
 // the fromClientAPI and fromFediAPI functions.
-type utilF struct {
+type utils struct {
 	state   *state.State
 	media   *media.Processor
 	account *account.Processor
-	surface *surface
+	surface *Surface
 }
 
 // wipeStatus encapsulates common logic
 // used to totally delete a status + all
 // its attachments, notifications, boosts,
 // and timeline entries.
-func (u *utilF) wipeStatus(
+func (u *utils) wipeStatus(
 	ctx context.Context,
 	statusToDelete *gtsmodel.Status,
 	deleteAttachments bool,
@@ -152,7 +152,7 @@ func (u *utilF) wipeStatus(
 // already, and the Move must be valid.
 //
 // Return bool will be true if all goes OK.
-func (u *utilF) redirectFollowers(
+func (u *utils) redirectFollowers(
 	ctx context.Context,
 	originAcct *gtsmodel.Account,
 	targetAcct *gtsmodel.Account,
@@ -239,13 +239,13 @@ func (u *utilF) redirectFollowers(
 	return true
 }
 
-func (u *utilF) incrementStatusesCount(
+func (u *utils) incrementStatusesCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.
@@ -271,12 +271,12 @@ func (u *utilF) incrementStatusesCount(
 	return nil
 }
 
-func (u *utilF) decrementStatusesCount(
+func (u *utils) decrementStatusesCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.
@@ -305,12 +305,12 @@ func (u *utilF) decrementStatusesCount(
 	return nil
 }
 
-func (u *utilF) incrementFollowersCount(
+func (u *utils) incrementFollowersCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.
@@ -334,12 +334,12 @@ func (u *utilF) incrementFollowersCount(
 	return nil
 }
 
-func (u *utilF) decrementFollowersCount(
+func (u *utils) decrementFollowersCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.
@@ -368,12 +368,12 @@ func (u *utilF) decrementFollowersCount(
 	return nil
 }
 
-func (u *utilF) incrementFollowingCount(
+func (u *utils) incrementFollowingCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.
@@ -397,12 +397,12 @@ func (u *utilF) incrementFollowingCount(
 	return nil
 }
 
-func (u *utilF) decrementFollowingCount(
+func (u *utils) decrementFollowingCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.
@@ -431,12 +431,12 @@ func (u *utilF) decrementFollowingCount(
 	return nil
 }
 
-func (u *utilF) incrementFollowRequestsCount(
+func (u *utils) incrementFollowRequestsCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.
@@ -460,12 +460,12 @@ func (u *utilF) incrementFollowRequestsCount(
 	return nil
 }
 
-func (u *utilF) decrementFollowRequestsCount(
+func (u *utils) decrementFollowRequestsCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
 ) error {
 	// Lock on this account since we're changing stats.
-	unlock := u.state.AccountLocks.Lock(account.URI)
+	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
 	// Populate stats.

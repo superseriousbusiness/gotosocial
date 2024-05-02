@@ -22,18 +22,13 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -41,16 +36,6 @@ import (
 type WorkersTestSuite struct {
 	// standard suite interfaces
 	suite.Suite
-	db                  db.DB
-	storage             *storage.Driver
-	state               state.State
-	mediaManager        *media.Manager
-	typeconverter       *typeutils.Converter
-	httpClient          *testrig.MockHTTPClient
-	transportController transport.Controller
-	federator           *federation.Federator
-	oauthServer         oauth.Server
-	emailSender         email.Sender
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -68,8 +53,23 @@ type WorkersTestSuite struct {
 	testActivities   map[string]testrig.ActivityWithSignature
 	testLists        map[string]*gtsmodel.List
 	testListEntries  map[string]*gtsmodel.ListEntry
+}
 
-	processor *processing.Processor
+// TestStructs encapsulates structs needed to
+// run one test in this package. Each test should
+// call SetupTestStructs to get a new TestStructs,
+// and defer TearDownTestStructs to close it when
+// the test is complete. The reason for doing things
+// this way here is to prevent the tests in this
+// package from overwriting one another's processors
+// and worker queues, which was causing issues
+// when running all tests at once.
+type TestStructs struct {
+	State         *state.State
+	Processor     *processing.Processor
+	HTTPClient    *testrig.MockHTTPClient
+	TypeConverter *typeutils.Converter
+	EmailSender   email.Sender
 }
 
 func (suite *WorkersTestSuite) SetupSuite() {
@@ -96,51 +96,12 @@ func (suite *WorkersTestSuite) SetupSuite() {
 }
 
 func (suite *WorkersTestSuite) SetupTest() {
-	suite.state.Caches.Init()
-
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
-
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.state.DB = suite.db
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
-	suite.storage = testrig.NewInMemoryStorage()
-	suite.state.Storage = suite.storage
-	suite.typeconverter = typeutils.NewConverter(&suite.state)
-
-	testrig.StartTimelines(
-		&suite.state,
-		visibility.NewFilter(&suite.state),
-		suite.typeconverter,
-	)
-
-	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../../testrig/media")
-	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
-	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
-
-	suite.transportController = testrig.NewTestTransportController(&suite.state, suite.httpClient)
-	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
-	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
-
-	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
-	testrig.StartWorkers(&suite.state, suite.processor.Workers())
-
-	suite.state.Workers.EnqueueClientAPI = suite.processor.Workers().EnqueueClientAPI
-	suite.state.Workers.EnqueueFediAPI = suite.processor.Workers().EnqueueFediAPI
-
-	testrig.StandardDBSetup(suite.db, suite.testAccounts)
-	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }
 
-func (suite *WorkersTestSuite) TearDownTest() {
-	testrig.StandardDBTeardown(suite.db)
-	testrig.StandardStorageTeardown(suite.storage)
-	testrig.StopWorkers(&suite.state)
-}
-
-func (suite *WorkersTestSuite) openStreams(ctx context.Context, account *gtsmodel.Account, listIDs []string) map[string]*stream.Stream {
+func (suite *WorkersTestSuite) openStreams(ctx context.Context, processor *processing.Processor, account *gtsmodel.Account, listIDs []string) map[string]*stream.Stream {
 	streams := make(map[string]*stream.Stream)
 
 	for _, streamType := range []string{
@@ -148,7 +109,7 @@ func (suite *WorkersTestSuite) openStreams(ctx context.Context, account *gtsmode
 		stream.TimelinePublic,
 		stream.TimelineNotifications,
 	} {
-		stream, err := suite.processor.Stream().Open(ctx, account, streamType)
+		stream, err := processor.Stream().Open(ctx, account, streamType)
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -159,7 +120,7 @@ func (suite *WorkersTestSuite) openStreams(ctx context.Context, account *gtsmode
 	for _, listID := range listIDs {
 		streamType := stream.TimelineList + ":" + listID
 
-		stream, err := suite.processor.Stream().Open(ctx, account, streamType)
+		stream, err := processor.Stream().Open(ctx, account, streamType)
 		if err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -168,4 +129,53 @@ func (suite *WorkersTestSuite) openStreams(ctx context.Context, account *gtsmode
 	}
 
 	return streams
+}
+
+func (suite *WorkersTestSuite) SetupTestStructs() *TestStructs {
+	state := state.State{}
+
+	state.Caches.Init()
+
+	db := testrig.NewTestDB(&state)
+	state.DB = db
+
+	storage := testrig.NewInMemoryStorage()
+	state.Storage = storage
+	typeconverter := typeutils.NewConverter(&state)
+
+	testrig.StartTimelines(
+		&state,
+		visibility.NewFilter(&state),
+		typeconverter,
+	)
+
+	httpClient := testrig.NewMockHTTPClient(nil, "../../../testrig/media")
+	httpClient.TestRemotePeople = testrig.NewTestFediPeople()
+	httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
+
+	transportController := testrig.NewTestTransportController(&state, httpClient)
+	mediaManager := testrig.NewTestMediaManager(&state)
+	federator := testrig.NewTestFederator(&state, transportController, mediaManager)
+	oauthServer := testrig.NewTestOauthServer(db)
+	emailSender := testrig.NewEmailSender("../../../web/template/", nil)
+
+	processor := processing.NewProcessor(cleaner.New(&state), typeconverter, federator, oauthServer, mediaManager, &state, emailSender)
+	testrig.StartWorkers(&state, processor.Workers())
+
+	testrig.StandardDBSetup(db, suite.testAccounts)
+	testrig.StandardStorageSetup(storage, "../../../testrig/media")
+
+	return &TestStructs{
+		State:         &state,
+		Processor:     processor,
+		HTTPClient:    httpClient,
+		TypeConverter: typeconverter,
+		EmailSender:   emailSender,
+	}
+}
+
+func (suite *WorkersTestSuite) TearDownTestStructs(testStructs *TestStructs) {
+	testrig.StandardDBTeardown(testStructs.State.DB)
+	testrig.StandardStorageTeardown(testStructs.State.Storage)
+	testrig.StopWorkers(testStructs.State)
 }
