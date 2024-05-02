@@ -59,8 +59,8 @@ func (p *Processor) GetAll(ctx context.Context, account *gtsmodel.Account) ([]*a
 	}
 
 	apiFilters := make([]*apimodel.FilterV1, 0, len(filters))
-	for _, list := range filters {
-		apiFilter, errWithCode := p.apiFilter(ctx, list)
+	for _, filter := range filters {
+		apiFilter, errWithCode := p.apiFilter(ctx, filter)
 		if errWithCode != nil {
 			return nil, errWithCode
 		}
