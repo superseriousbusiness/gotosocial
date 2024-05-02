@@ -22,7 +22,7 @@ import (
 	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -357,7 +357,7 @@ func (s *Surface) timelineStatus(
 	apiStatus, err := s.Converter.StatusToAPIStatus(ctx,
 		status,
 		account,
-		custom.FilterContextHome,
+		statusfilter.FilterContextHome,
 		filters,
 	)
 	if err != nil {
@@ -571,8 +571,8 @@ func (s *Surface) timelineStreamStatusUpdate(
 	streamType string,
 	filters []*gtsmodel.Filter,
 ) error {
-	apiStatus, err := s.Converter.StatusToAPIStatus(ctx, status, account, custom.FilterContextHome, filters)
-	if errors.Is(err, custom.ErrHideStatus) {
+	apiStatus, err := s.Converter.StatusToAPIStatus(ctx, status, account, statusfilter.FilterContextHome, filters)
+	if errors.Is(err, statusfilter.ErrHideStatus) {
 		// Don't put this status in the stream.
 		return nil
 	}

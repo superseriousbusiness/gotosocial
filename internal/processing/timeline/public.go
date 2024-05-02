@@ -24,7 +24,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -98,8 +98,8 @@ outer:
 				continue inner
 			}
 
-			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester, custom.FilterContextPublic, filters)
-			if errors.Is(err, custom.ErrHideStatus) {
+			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester, statusfilter.FilterContextPublic, filters)
+			if errors.Is(err, statusfilter.ErrHideStatus) {
 				continue
 			}
 			if err != nil {

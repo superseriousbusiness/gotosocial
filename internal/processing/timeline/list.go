@@ -23,7 +23,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -117,7 +117,7 @@ func ListTimelineStatusPrepare(state *state.State, converter *typeutils.Converte
 			return nil, err
 		}
 
-		return converter.StatusToAPIStatus(ctx, status, requestingAccount, custom.FilterContextHome, filters)
+		return converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextHome, filters)
 	}
 }
 

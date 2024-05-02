@@ -67,8 +67,6 @@ const (
 	FilterActionWarn FilterAction = "warn"
 	// FilterActionHide filters will remove this status from API results.
 	FilterActionHide FilterAction = "hide"
-
-	FilterActionNumValues = 2
 )
 
 // FilterKeyword represents text to filter within a v2 filter.

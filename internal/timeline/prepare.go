@@ -24,7 +24,7 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
@@ -122,7 +122,7 @@ func (t *timeline) prepareXBetweenIDs(ctx context.Context, amount int, behindID 
 	for e, entry := range toPrepare {
 		prepared, err := t.prepareFunction(ctx, t.timelineID, entry.itemID)
 		if err != nil {
-			if errors.Is(err, custom.ErrHideStatus) {
+			if errors.Is(err, statusfilter.ErrHideStatus) {
 				// This item has been filtered out by the requesting user's filters.
 				// Remove it and skip past it.
 				t.items.data.Remove(e)

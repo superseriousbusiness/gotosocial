@@ -23,7 +23,7 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -287,7 +287,7 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	convert := func(ctx context.Context, status *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
-		return p.converter.StatusToAPIStatus(ctx, status, requestingAccount, custom.FilterContextThread, filters)
+		return p.converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextThread, filters)
 	}
 	return p.contextGet(ctx, requestingAccount, targetStatusID, convert)
 }

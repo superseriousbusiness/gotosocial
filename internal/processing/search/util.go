@@ -21,6 +21,7 @@ import (
 	"context"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -113,7 +114,7 @@ func (p *Processor) packageStatuses(
 			continue
 		}
 
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount, "", nil)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextNone, nil)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", status.ID, err)
 			continue

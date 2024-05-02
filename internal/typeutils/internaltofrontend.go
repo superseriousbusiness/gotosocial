@@ -30,12 +30,13 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/custom"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -696,7 +697,7 @@ func (c *Converter) StatusToAPIStatus(
 	ctx context.Context,
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext custom.FilterContext,
+	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 ) (*apimodel.Status, error) {
 	apiStatus, err := c.statusToFrontend(ctx, s, requestingAccount, filterContext, filters)
@@ -721,7 +722,7 @@ func (c *Converter) statusToAPIFilterResults(
 	ctx context.Context,
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext custom.FilterContext,
+	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 ) ([]apimodel.FilterResult, error) {
 	if filterContext == "" || len(filters) == 0 || s.AccountID == requestingAccount.ID {
@@ -791,7 +792,7 @@ func (c *Converter) statusToAPIFilterResults(
 
 			case gtsmodel.FilterActionHide:
 				// Don't show this status. Immediate return.
-				return nil, custom.ErrHideStatus
+				return nil, statusfilter.ErrHideStatus
 			}
 		}
 	}
@@ -812,8 +813,7 @@ func filterableTextFields(s *gtsmodel.Status) []string {
 	fields := make([]string, 0, fieldCount)
 
 	if s.Content != "" {
-		// TODO: (Vyr) convert this HTML field to plain text before returning
-		fields = append(fields, s.Content)
+		fields = append(fields, text.SanitizeToPlaintext(s.Content))
 	}
 	if s.ContentWarning != "" {
 		fields = append(fields, s.ContentWarning)
@@ -835,17 +835,17 @@ func filterableTextFields(s *gtsmodel.Status) []string {
 }
 
 // filterAppliesInContext returns whether a given filter applies in a given context.
-func filterAppliesInContext(filter *gtsmodel.Filter, filterContext custom.FilterContext) bool {
+func filterAppliesInContext(filter *gtsmodel.Filter, filterContext statusfilter.FilterContext) bool {
 	switch filterContext {
-	case custom.FilterContextHome:
+	case statusfilter.FilterContextHome:
 		return util.PtrValueOr(filter.ContextHome, false)
-	case custom.FilterContextNotifications:
+	case statusfilter.FilterContextNotifications:
 		return util.PtrValueOr(filter.ContextNotifications, false)
-	case custom.FilterContextPublic:
+	case statusfilter.FilterContextPublic:
 		return util.PtrValueOr(filter.ContextPublic, false)
-	case custom.FilterContextThread:
+	case statusfilter.FilterContextThread:
 		return util.PtrValueOr(filter.ContextThread, false)
-	case custom.FilterContextAccount:
+	case statusfilter.FilterContextAccount:
 		return util.PtrValueOr(filter.ContextAccount, false)
 	}
 	return false
@@ -860,7 +860,7 @@ func (c *Converter) StatusToWebStatus(
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 ) (*apimodel.Status, error) {
-	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, custom.FilterContextNone, nil)
+	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -962,7 +962,7 @@ func (c *Converter) statusToFrontend(
 	ctx context.Context,
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext custom.FilterContext,
+	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 ) (*apimodel.Status, error) {
 	// Try to populate status struct pointer fields.
@@ -1063,7 +1063,7 @@ func (c *Converter) statusToFrontend(
 
 	if s.BoostOf != nil {
 		reblog, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount, filterContext, filters)
-		if errors.Is(err, custom.ErrHideStatus) {
+		if errors.Is(err, statusfilter.ErrHideStatus) {
 			// If we'd hide the original status, hide the boost.
 			return nil, err
 		}
@@ -1453,7 +1453,7 @@ func (c *Converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 		}
 
 		var err error
-		apiStatus, err = c.StatusToAPIStatus(ctx, n.Status, n.TargetAccount, custom.FilterContextNotifications, filters)
+		apiStatus, err = c.StatusToAPIStatus(ctx, n.Status, n.TargetAccount, statusfilter.FilterContextNotifications, filters)
 		if err != nil {
 			return nil, fmt.Errorf("NotificationToapi: error converting status to api: %s", err)
 		}
@@ -1606,7 +1606,7 @@ func (c *Converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 		}
 	}
 	for _, s := range r.Statuses {
-		status, err := c.StatusToAPIStatus(ctx, s, requestingAccount, "", nil)
+		status, err := c.StatusToAPIStatus(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error converting status with id %s to api status: %w", s.ID, err)
 		}

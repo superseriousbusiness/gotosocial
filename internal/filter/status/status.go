@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Package custom represents custom filters managed by the user through the API.
-package custom
+// Package status represents status filters managed by the user through the API.
+package status
 
 import (
 	"errors"
