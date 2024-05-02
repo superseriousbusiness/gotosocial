@@ -52,7 +52,7 @@ func (p *Processor) AccountReject(
 	// Get a lock on the account URI,
 	// since we're going to be deleting
 	// it and its associated user.
-	unlock := p.state.AccountLocks.Lock(user.Account.URI)
+	unlock := p.state.ProcessingLocks.Lock(user.Account.URI)
 	defer unlock()
 
 	// Can't reject an account with a

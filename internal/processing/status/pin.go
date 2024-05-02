@@ -83,7 +83,7 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 	}
 
 	// Get a lock on this account.
-	unlock := p.state.AccountLocks.Lock(requestingAccount.URI)
+	unlock := p.state.ProcessingLocks.Lock(requestingAccount.URI)
 	defer unlock()
 
 	if !targetStatus.PinnedAt.IsZero() {
@@ -148,7 +148,7 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 	}
 
 	// Get a lock on this account.
-	unlock := p.state.AccountLocks.Lock(requestingAccount.URI)
+	unlock := p.state.ProcessingLocks.Lock(requestingAccount.URI)
 	defer unlock()
 
 	if targetStatus.PinnedAt.IsZero() {

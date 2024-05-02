@@ -20,12 +20,14 @@ package workers
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // notifyMentions iterates through mentions on the
@@ -372,6 +374,23 @@ func (s *surface) notifySignup(ctx context.Context, newUser *gtsmodel.User) erro
 	return errs.Combine()
 }
 
+func getNotifyLockURI(
+	notificationType gtsmodel.NotificationType,
+	targetAccount *gtsmodel.Account,
+	originAccount *gtsmodel.Account,
+	statusID string,
+) string {
+	builder := strings.Builder{}
+	builder.WriteString("notification:?")
+	builder.WriteString("type=" + string(notificationType))
+	builder.WriteString("&target=" + targetAccount.URI)
+	builder.WriteString("&origin=" + originAccount.URI)
+	if statusID != "" {
+		builder.WriteString("&statusID=" + statusID)
+	}
+	return builder.String()
+}
+
 // notify creates, inserts, and streams a new
 // notification to the target account if it
 // doesn't yet exist with the given parameters.
@@ -394,6 +413,21 @@ func (s *surface) notify(
 		// nothing to do.
 		return nil
 	}
+
+	// We're doing state-y stuff so get a
+	// lock on this combo of notif params.
+	lockURI := getNotifyLockURI(
+		notificationType,
+		targetAccount,
+		originAccount,
+		statusID,
+	)
+	unlock := s.state.ProcessingLocks.Lock(lockURI)
+
+	// Wrap the unlock so we
+	// can do granular unlocking.
+	unlock = util.DoOnce(unlock)
+	defer unlock()
 
 	// Make sure a notification doesn't
 	// already exist with these params.
@@ -427,6 +461,10 @@ func (s *surface) notify(
 	if err := s.state.DB.PutNotification(ctx, notif); err != nil {
 		return gtserror.Newf("error putting notification in database: %w", err)
 	}
+
+	// Unlock already, we're done
+	// with the state-y stuff.
+	unlock()
 
 	// Stream notification to the user.
 	apiNotif, err := s.converter.NotificationToAPINotification(ctx, notif)
