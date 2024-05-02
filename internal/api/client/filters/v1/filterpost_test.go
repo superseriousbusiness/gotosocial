@@ -226,14 +226,3 @@ func (suite *FiltersTestSuite) TestPostFilterTitleConflict() {
 		suite.FailNow(err.Error())
 	}
 }
-
-// FUTURE: this should be removed once we support server-side filters.
-func (suite *FiltersTestSuite) TestPostFilterIrreversibleNotSupported() {
-	phrase := "GNU/Linux"
-	context := []string{"home"}
-	irreversible := true
-	_, err := suite.postFilter(&phrase, &context, &irreversible, nil, nil, nil, http.StatusUnprocessableEntity, "")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-}

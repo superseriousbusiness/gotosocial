@@ -238,16 +238,6 @@ func (suite *FiltersTestSuite) TestPutFilterTitleConflict() {
 	}
 }
 
-// FUTURE: this should be removed once we support server-side filters.
-func (suite *FiltersTestSuite) TestPutFilterIrreversibleNotSupported() {
-	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
-	irreversible := true
-	_, err := suite.putFilter(id, nil, nil, &irreversible, nil, nil, nil, http.StatusUnprocessableEntity, "")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-}
-
 func (suite *FiltersTestSuite) TestPutAnotherAccountsFilter() {
 	id := suite.testFilterKeywords["local_account_2_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
