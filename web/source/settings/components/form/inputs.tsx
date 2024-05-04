@@ -34,7 +34,7 @@ export interface TextInputProps extends React.DetailedHTMLProps<
 	React.InputHTMLAttributes<HTMLInputElement>,
 	HTMLInputElement
 > {
-	label?: string;
+	label?: ReactNode;
 	field: TextFormInputHook;
 }
 
@@ -60,7 +60,7 @@ export interface TextAreaProps extends React.DetailedHTMLProps<
 	React.TextareaHTMLAttributes<HTMLTextAreaElement>,
 	HTMLTextAreaElement
 > {
-	label?: string;
+	label?: ReactNode;
 	field: TextFormInputHook;
 }
 
@@ -86,7 +86,7 @@ export interface FileInputProps extends React.DetailedHTMLProps<
 	React.InputHTMLAttributes<HTMLInputElement>,
 	HTMLInputElement
 > {
-	label?: string;
+	label?: ReactNode;
 	field: FileFormInputHook;
 }
 
@@ -133,7 +133,7 @@ export interface SelectProps extends React.DetailedHTMLProps<
 	React.SelectHTMLAttributes<HTMLSelectElement>,
 	HTMLSelectElement
 > {
-	label?: string;
+	label?: ReactNode;
 	field: TextFormInputHook;
 	children?: ReactNode;
 	options: React.JSX.Element;
@@ -164,7 +164,7 @@ export interface RadioGroupProps extends React.DetailedHTMLProps<
 	React.InputHTMLAttributes<HTMLInputElement>,
 	HTMLInputElement
 > {
-	label?: string;
+	label?: ReactNode;
 	field: RadioFormInputHook;
 }
 

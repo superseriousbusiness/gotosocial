@@ -166,7 +166,7 @@ export function AccountSearchForm() {
 				itemToEntry={itemToEntry}
 				isError={searchRes.isError}
 				error={searchRes.error}
-				emptyMessage="No accounts found that match your query"
+				emptyMessage={<b>No accounts found that match your query.</b>}
 				prevNextLinks={searchRes.data?.links}
 			/>
 		</>

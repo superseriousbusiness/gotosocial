@@ -52,7 +52,7 @@ func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, strin
 		return
 	}
 
-	filterID, errWithCode := apiutil.ParseID(c.Param("ID"))
+	filterID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -167,7 +167,7 @@ func (m *Module) deleteHeaderFilter(c *gin.Context, delete func(context.Context,
 		return
 	}
 
-	filterID, errWithCode := apiutil.ParseID(c.Param("ID"))
+	filterID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

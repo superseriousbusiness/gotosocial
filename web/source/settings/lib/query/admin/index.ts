@@ -217,6 +217,7 @@ export const {
 	useMediaCleanupMutation,
 	useInstanceKeysExpireMutation,
 	useGetAccountQuery,
+	useLazyGetAccountQuery,
 	useActionAccountMutation,
 	useSearchAccountsQuery,
 	useLazySearchAccountsQuery,

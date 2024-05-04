@@ -92,5 +92,5 @@ func (m *Module) HeaderFilterAllowDELETE(c *gin.Context) {
 //		'500':
 //			description: internal server error
 func (m *Module) HeaderFilterBlockDELETE(c *gin.Context) {
-	m.deleteHeaderFilter(c, m.processor.Admin().DeleteAllowHeaderFilter)
+	m.deleteHeaderFilter(c, m.processor.Admin().DeleteBlockHeaderFilter)
 }

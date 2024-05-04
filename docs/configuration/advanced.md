@@ -163,4 +163,23 @@ advanced-sender-multiplier: 2
 # Example: ["s3.example.org", "some-bucket-name.s3.example.org"]
 # Default: []
 advanced-csp-extra-uris: []
+
+# String. HTTP request header filtering mode to use for this instance.
+#
+# "block" -- only requests that are explicitly blocked by header filters
+#            will be denied (unless they are also explicitly allowed).
+#
+# "allow" -- only requests that are explicitly allowed by header filters
+#            will be accepted (unless they are also explicitly blocked).
+#            This mode is considered experimental and will almost certainly
+#            break access to your instance unless you are very careful.
+#
+#   ""    -- request header filtering disabled.
+#
+# For more details on block and allow modes, check the documentation at:
+# https://docs.gotosocial.org/en/latest/admin/request_filtering_modes
+#
+# Options: ["block", "allow", ""]
+# Default: ""
+advanced-header-filter-mode: ""
 ```

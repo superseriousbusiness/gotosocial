@@ -17,10 +17,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
+import { useLogoutMutation, useVerifyCredentialsQuery } from "../../lib/query/oauth";
 import { store } from "../../redux/store";
-
-import React from "react";
+import React, { ReactNode } from "react";
 
 import Login from "./login";
 import Loading from "../loading";
@@ -30,18 +29,20 @@ import { NoArg } from "../../lib/types/query";
 export function Authorization({ App }) {
 	const { loginState, expectingRedirect } = store.getState().oauth;
 	const skip = (loginState == "none" || loginState == "logout" || expectingRedirect);
+	const [ logoutQuery ] = useLogoutMutation();
 
 	const {
 		isLoading,
+		isFetching,
 		isSuccess,
 		data: account,
 		error,
 	} = useVerifyCredentialsQuery(NoArg, { skip: skip });
 
 	let showLogin = true;
-	let content: React.JSX.Element | null = null;
+	let content: ReactNode;
 
-	if (isLoading) {
+	if (isLoading || isFetching) {
 		showLogin = false;
 
 		let loadingInfo = "";
@@ -56,7 +57,15 @@ export function Authorization({ App }) {
 				<Loading /> {loadingInfo}
 			</div>
 		);
-	} else if (error != undefined) {
+	} else if (error !== undefined) {
+		if ("status" in error && error.status === 401) {
+			// 401 unauthorized was received.
+			// That means the token or app we
+			// were using is no longer valid,
+			// so just log the user out.
+			logoutQuery(NoArg);
+		}
+
 		content = (
 			<div>
 				<Error error={error} />
