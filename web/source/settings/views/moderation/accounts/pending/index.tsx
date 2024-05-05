@@ -53,7 +53,7 @@ export default function AccountsPending() {
 				itemToEntry={itemToEntry}
 				isError={searchRes.isError}
 				error={searchRes.error}
-				emptyMessage="No pending account sign-ups."
+				emptyMessage={<b>No pending account sign-ups.</b>}
 			/>
 		</div>
 	);

@@ -36,6 +36,10 @@ import { useHasPermission } from "../../lib/navigation/util";
  * - /settings/admin/actions
  * - /settings/admin/actions/media
  * - /settings/admin/actions/keys
+ * - /settings/admin/http-header-permissions/blocks
+ * - /settings/admin/http-header-permissions/blocks/:blockId\
+ * - /settings/admin/http-header-permissions/allows
+ * - /settings/admin/http-header-permissions/allows/:allowId
  */
 export default function AdminMenu() {	
 	const permissions = ["admin"];
@@ -54,6 +58,7 @@ export default function AdminMenu() {
 			<AdminInstanceMenu />
 			<AdminEmojisMenu />
 			<AdminActionsMenu />
+			<AdminHTTPHeaderPermissionsMenu />
 		</MenuItem>
 	);
 }
@@ -123,6 +128,28 @@ function AdminEmojisMenu() {
 				name="Remote"
 				itemUrl="remote"
 				icon="fa-cloud"
+			/>
+		</MenuItem>
+	);
+}
+
+function AdminHTTPHeaderPermissionsMenu() {
+	return (
+		<MenuItem
+			name="HTTP Header Permissions"
+			itemUrl="http-header-permissions"
+			defaultChild="blocks"
+			icon="fa-hubzilla"
+		>
+			<MenuItem
+				name="Blocks"
+				itemUrl="blocks"
+				icon="fa-close"
+			/>
+			<MenuItem
+				name="Allows"
+				itemUrl="allows"
+				icon="fa-check"
 			/>
 		</MenuItem>
 	);

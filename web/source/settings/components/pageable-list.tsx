@@ -33,7 +33,7 @@ export interface PageableListProps<T> {
 	isFetching: boolean;
 	isError: boolean;
 	error: FetchBaseQueryError | SerializedError | undefined;
-	emptyMessage: string;
+	emptyMessage: ReactNode;
 	prevNextLinks?: Links | null | undefined;
 }
 

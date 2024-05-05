@@ -29,15 +29,17 @@ import Keys from "./actions/keys";
 import EmojiOverview from "./emoji/local/overview";
 import EmojiDetail from "./emoji/local/detail";
 import RemoteEmoji from "./emoji/remote";
+import HeaderPermsOverview from "./http-header-permissions/overview";
+import HeaderPermDetail from "./http-header-permissions/detail";
 
 /*
 	EXPORTED COMPONENTS
 */
 
 /**
- * - /settings/instance/settings
- * - /settings/instance/rules
- * - /settings/instance/rules/:ruleId
+ * - /settings/admin/instance/settings
+ * - /settings/admin/instance/rules
+ * - /settings/admin/instance/rules/:ruleId
  * - /settings/admin/emojis
  * - /settings/admin/emojis/local
  * - /settings/admin/emojis/local/:emojiId
@@ -45,6 +47,10 @@ import RemoteEmoji from "./emoji/remote";
  * - /settings/admin/actions
  * - /settings/admin/actions/media
  * - /settings/admin/actions/keys
+ * - /settings/admin/http-header-permissions/allows
+ * - /settings/admin/http-header-permissions/allows/:allowId
+ * - /settings/admin/http-header-permissions/blocks
+ * - /settings/admin/http-header-permissions/blocks/:blockId
  */
 export default function AdminRouter() {
 	const parentUrl = useBaseUrl();
@@ -57,6 +63,7 @@ export default function AdminRouter() {
 				<AdminInstanceRouter />
 				<AdminEmojisRouter />
 				<AdminActionsRouter />
+				<AdminHTTPHeaderPermissionsRouter />
 			</Router>
 		</BaseUrlContext.Provider>
 	);
@@ -125,9 +132,9 @@ function AdminActionsRouter() {
 }
 
 /**
- * - /settings/instance/settings
- * - /settings/instance/rules
- * - /settings/instance/rules/:ruleId
+ * - /settings/admin/instance/settings
+ * - /settings/admin/instance/rules
+ * - /settings/admin/instance/rules/:ruleId
  */
 function AdminInstanceRouter() {
 	const parentUrl = useBaseUrl();
@@ -143,6 +150,32 @@ function AdminInstanceRouter() {
 						<Route path="/rules" component={InstanceRules} />
 						<Route path="/rules/:ruleId" component={InstanceRuleDetail} />
 						<Route><Redirect to="/settings" /></Route>
+					</Switch>
+				</ErrorBoundary>
+			</Router>
+		</BaseUrlContext.Provider>
+	);
+}
+
+/**
+ * - /settings/admin/http-header-permissions/blocks
+ * - /settings/admin/http-header-permissions/blocks/:blockId
+ * - /settings/admin/http-header-permissions/allows
+ * - /settings/admin/http-header-permissions/allows/:allowId
+ */
+function AdminHTTPHeaderPermissionsRouter() {
+	const parentUrl = useBaseUrl();
+	const thisBase = "/http-header-permissions";
+	const absBase = parentUrl + thisBase;
+
+	return (
+		<BaseUrlContext.Provider value={absBase}>
+			<Router base={thisBase}>
+				<ErrorBoundary>
+					<Switch>
+						<Route path="/:permType" component={HeaderPermsOverview} />
+						<Route path="/:permType/:permId" component={HeaderPermDetail} />
+						<Route><Redirect to="/blocks" /></Route>
 					</Switch>
 				</ErrorBoundary>
 			</Router>

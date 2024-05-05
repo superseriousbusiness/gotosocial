@@ -139,6 +139,8 @@ export const gtsApi = createApi({
 		"Reports",
 		"Account",
 		"InstanceRules",
+		"HTTPHeaderAllows",
+		"HTTPHeaderBlocks",
 	],
 	endpoints: (build) => ({
 		instanceV1: build.query<InstanceV1, void>({

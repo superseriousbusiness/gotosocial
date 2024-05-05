@@ -7,8 +7,6 @@ GoToSocial currently offers 'block', 'allow' and disabled HTTP request header fi
 
     HTTP request header filtering is also still considered "experimental". It should do what it says on the box, but it may cause bugs or edge cases to appear elsewhere, we're not sure yet!
 
-    Management via settings panel is TBA. Until then you will need to manage these directly via API endpoints.
-
 ## Disabled header filtering mode (default)
 
 When `advanced-header-filter-mode` is set to `""`, i.e. an empty string, all request header filtering will be disabled.

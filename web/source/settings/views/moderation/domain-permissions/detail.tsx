@@ -34,10 +34,11 @@ import MutationButton from "../../../components/form/mutation-button";
 
 import { useDomainAllowsQuery, useDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
 import { useAddDomainAllowMutation, useAddDomainBlockMutation, useRemoveDomainAllowMutation, useRemoveDomainBlockMutation } from "../../../lib/query/admin/domain-permissions/update";
-import { DomainPerm, PermType } from "../../../lib/types/domain-permission";
+import { DomainPerm } from "../../../lib/types/domain-permission";
 import { NoArg } from "../../../lib/types/query";
 import { Error } from "../../../components/error";
 import { useBaseUrl } from "../../../lib/navigation/util";
+import { PermType } from "../../../lib/types/perm";
 
 export default function DomainPermDetail() {
 	const baseUrl = useBaseUrl();

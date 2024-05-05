@@ -1090,6 +1090,8 @@ advanced-csp-extra-uris: []
 #
 # "allow" -- only requests that are explicitly allowed by header filters
 #            will be accepted (unless they are also explicitly blocked).
+#            This mode is considered experimental and will almost certainly
+#            break access to your instance unless you are very careful.
 #
 #   ""    -- request header filtering disabled.
 #

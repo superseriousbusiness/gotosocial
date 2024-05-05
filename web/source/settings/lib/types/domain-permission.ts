@@ -18,10 +18,9 @@
 */
 
 import typia from "typia";
+import { PermType } from "./perm";
 
 export const validateDomainPerms = typia.createValidate<DomainPerm[]>();
-
-export type PermType = "block" | "allow";
 
 /**
  * A single domain permission entry (block or allow).

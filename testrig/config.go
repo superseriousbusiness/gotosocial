@@ -146,6 +146,7 @@ var testDefaults = config.Configuration{
 	AdvancedRateLimitRequests:    0, // disabled
 	AdvancedThrottlingMultiplier: 0, // disabled
 	AdvancedSenderMultiplier:     0, // 1 sender only, regardless of CPU
+	AdvancedHeaderFilterMode:     config.RequestHeaderFilterModeBlock,
 
 	SoftwareVersion: "0.0.0-testrig",
 

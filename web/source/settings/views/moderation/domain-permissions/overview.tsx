@@ -26,8 +26,9 @@ import { useTextInput } from "../../../lib/form";
 import { TextInput } from "../../../components/form/inputs";
 import Loading from "../../../components/loading";
 import { useDomainAllowsQuery, useDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
-import type { MappedDomainPerms, PermType } from "../../../lib/types/domain-permission";
+import type { MappedDomainPerms } from "../../../lib/types/domain-permission";
 import { NoArg } from "../../../lib/types/query";
+import { PermType } from "../../../lib/types/perm";
 
 export default function DomainPermissionsOverview() {	
 	// Parse perm type from routing params.
