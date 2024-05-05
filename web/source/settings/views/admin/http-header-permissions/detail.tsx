@@ -175,11 +175,11 @@ function PermDeets({
 					<dd>{createdByAccount}</dd>
 				</div>
 				<div className="info-list-entry">
-					<dt>Header</dt>
+					<dt>Header Name</dt>
 					<dd>{perm.header}</dd>
 				</div>
 				<div className="info-list-entry">
-					<dt>Value Regex</dt>
+					<dt>Header Value Regex</dt>
 					<dd className="monospace">{perm.regex}</dd>
 				</div>
 				<div className="info-list-entry">

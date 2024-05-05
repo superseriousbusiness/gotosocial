@@ -99,7 +99,7 @@ export default function HeaderPermCreateForm({ permType }: { permType: PermType 
 				field={form.header}
 				label={
 					<>
-						HTTP Header Key&nbsp;
+						HTTP Header Name&nbsp;
 						 <a
 							href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers"
 							target="_blank"
@@ -111,7 +111,6 @@ export default function HeaderPermCreateForm({ permType }: { permType: PermType 
 					</>
 				}
 				placeholder={"User-Agent"}
-				{...{className: "monospace"}}
 			/>
 			<TextInput
 				field={form.regex}
