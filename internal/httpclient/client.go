@@ -400,6 +400,7 @@ func (c *Client) do(r *Request) (rsp *http.Response, retry bool, err error) {
 
 	// Check response body not too large.
 	if rsp.ContentLength > c.bodyMax {
+		_ = rsp.Body.Close()
 		return nil, false, ErrBodyTooLarge
 	}
 
