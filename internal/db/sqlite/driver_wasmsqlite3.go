@@ -22,7 +22,6 @@ package sqlite
 import (
 	"context"
 	"database/sql/driver"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 
@@ -110,22 +109,12 @@ func (c *sqliteConn) ExecContext(ctx context.Context, query string, args []drive
 }
 
 func (c *sqliteConn) Close() (err error) {
-	ctx := context.Background()
-
 	// Get acces the underlying raw sqlite3 conn.
 	raw := c.connIface.(sqlite3.DriverConn).Raw()
-
-	// Set a timeout context to limit execution time.
-	ctx, cncl := context.WithTimeout(ctx, 5*time.Second)
-	old := raw.SetInterrupt(ctx)
 
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
 	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
 	_ = raw.Exec(onClose)
-
-	// Unset timeout context.
-	_ = raw.SetInterrupt(old)
-	cncl()
 
 	// Finally, close.
 	err = raw.Close()
