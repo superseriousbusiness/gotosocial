@@ -148,14 +148,14 @@ type GTSCaches struct {
 	// Tag provides access to the gtsmodel Tag database cache.
 	Tag StructCache[*gtsmodel.Tag]
 
+	// ThreadMute provides access to the gtsmodel ThreadMute database cache.
+	ThreadMute StructCache[*gtsmodel.ThreadMute]
+
 	// Token provides access to the gtsmodel Token database cache.
 	Token StructCache[*gtsmodel.Token]
 
 	// Tombstone provides access to the gtsmodel Tombstone database cache.
 	Tombstone StructCache[*gtsmodel.Tombstone]
-
-	// ThreadMute provides access to the gtsmodel ThreadMute database cache.
-	ThreadMute StructCache[*gtsmodel.ThreadMute]
 
 	// User provides access to the gtsmodel User database cache.
 	User StructCache[*gtsmodel.User]
