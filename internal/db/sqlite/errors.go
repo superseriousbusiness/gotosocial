@@ -20,6 +20,7 @@
 package sqlite
 
 import (
+	"database/sql/driver"
 	"fmt"
 
 	"modernc.org/sqlite"
@@ -42,6 +43,15 @@ func processSQLiteError(err error) error {
 	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
 		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
+
+	// Busy should be very rare, but
+	// on busy tell the database to close
+	// the connection, re-open and re-attempt
+	// which should give a necessary timeout.
+	case sqlite3.SQLITE_BUSY,
+		sqlite3.SQLITE_BUSY_RECOVERY,
+		sqlite3.SQLITE_BUSY_SNAPSHOT:
+		return driver.ErrBadConn
 	}
 
 	// Wrap the returned error with the code and
