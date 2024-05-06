@@ -24,6 +24,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -184,93 +185,12 @@ func (p *Processor) GetAPIStatus(
 	apiStatus *apimodel.Status,
 	errWithCode gtserror.WithCode,
 ) {
-	apiStatus, err := p.converter.StatusToAPIStatus(ctx, target, requester)
+	apiStatus, err := p.converter.StatusToAPIStatus(ctx, target, requester, statusfilter.FilterContextNone, nil)
 	if err != nil {
 		err = gtserror.Newf("error converting status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	return apiStatus, nil
-}
-
-// GetVisibleAPIStatuses converts an array of gtsmodel.Status (inputted by next function) into
-// API model statuses, checking first for visibility. Please note that all errors will be
-// logged at ERROR level, but will not be returned. Callers are likely to run into show-stopping
-// errors in the lead-up to this function, whereas calling this should not be a show-stopper.
-func (p *Processor) GetVisibleAPIStatuses(
-	ctx context.Context,
-	requester *gtsmodel.Account,
-	next func(int) *gtsmodel.Status,
-	length int,
-) []*apimodel.Status {
-	return p.getVisibleAPIStatuses(ctx, 3, requester, next, length)
-}
-
-// GetVisibleAPIStatusesPaged is functionally equivalent to GetVisibleAPIStatuses(),
-// except the statuses are returned as a converted slice of statuses as interface{}.
-func (p *Processor) GetVisibleAPIStatusesPaged(
-	ctx context.Context,
-	requester *gtsmodel.Account,
-	next func(int) *gtsmodel.Status,
-	length int,
-) []interface{} {
-	statuses := p.getVisibleAPIStatuses(ctx, 3, requester, next, length)
-	if len(statuses) == 0 {
-		return nil
-	}
-	items := make([]interface{}, len(statuses))
-	for i, status := range statuses {
-		items[i] = status
-	}
-	return items
-}
-
-func (p *Processor) getVisibleAPIStatuses(
-	ctx context.Context,
-	calldepth int, // used to skip wrapping func above these's names
-	requester *gtsmodel.Account,
-	next func(int) *gtsmodel.Status,
-	length int,
-) []*apimodel.Status {
-	// Start new log entry with
-	// the above calling func's name.
-	l := log.
-		WithContext(ctx).
-		WithField("caller", log.Caller(calldepth+1))
-
-	// Preallocate slice according to expected length.
-	statuses := make([]*apimodel.Status, 0, length)
-
-	for i := 0; i < length; i++ {
-		// Get next status.
-		status := next(i)
-		if status == nil {
-			continue
-		}
-
-		// Check whether this status is visible to requesting account.
-		visible, err := p.filter.StatusVisible(ctx, requester, status)
-		if err != nil {
-			l.Errorf("error checking status visibility: %v", err)
-			continue
-		}
-
-		if !visible {
-			// Not visible to requester.
-			continue
-		}
-
-		// Convert the status to an API model representation.
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requester)
-		if err != nil {
-			l.Errorf("error converting status: %v", err)
-			continue
-		}
-
-		// Append API model to return slice.
-		statuses = append(statuses, apiStatus)
-	}
-
-	return statuses
 }
 
 // InvalidateTimelinedStatus is a shortcut function for invalidating the cached

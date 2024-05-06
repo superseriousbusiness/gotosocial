@@ -1,5 +1,9 @@
 basePath: /
 definitions:
+    FilterAction:
+        title: FilterAction is the action to apply to statuses matching a filter.
+        type: string
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     InstanceConfigurationEmojis:
         properties:
             emoji_size_limit:
@@ -1037,6 +1041,60 @@ definitions:
         type: string
         x-go-name: FilterContext
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    filterKeyword:
+        properties:
+            id:
+                description: The ID of the filter keyword entry in the database.
+                type: string
+                x-go-name: ID
+            keyword:
+                description: The text to be filtered.
+                example: fnord
+                type: string
+                x-go-name: Keyword
+            whole_word:
+                description: Should the filter consider word boundaries?
+                example: true
+                type: boolean
+                x-go-name: WholeWord
+        title: FilterKeyword represents text to filter within a v2 filter.
+        type: object
+        x-go-name: FilterKeyword
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    filterResult:
+        properties:
+            filter:
+                $ref: '#/definitions/filterV2'
+            keyword_matches:
+                description: The keywords within the filter that were matched.
+                items:
+                    type: string
+                type: array
+                x-go-name: KeywordMatches
+            status_matches:
+                description: The status IDs within the filter that were matched.
+                items:
+                    type: string
+                type: array
+                x-go-name: StatusMatches
+        title: FilterResult is returned along with a filtered status to explain why it was filtered.
+        type: object
+        x-go-name: FilterResult
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    filterStatus:
+        properties:
+            id:
+                description: The ID of the filter status entry in the database.
+                type: string
+                x-go-name: ID
+            phrase:
+                description: The status ID to be filtered.
+                type: string
+                x-go-name: StatusID
+        title: FilterStatus represents a single status to filter within a v2 filter.
+        type: object
+        x-go-name: FilterStatus
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     filterV1:
         description: |-
             Note that v1 filters are mapped to v2 filters and v2 filter keywords internally.
@@ -1085,6 +1143,52 @@ definitions:
         title: FilterV1 represents a user-defined filter for determining which statuses should not be shown to the user.
         type: object
         x-go-name: FilterV1
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    filterV2:
+        description: v2 filters have names and can include multiple phrases and status IDs to filter.
+        properties:
+            context:
+                description: The contexts in which the filter should be applied.
+                example:
+                    - home
+                    - public
+                items:
+                    $ref: '#/definitions/filterContext'
+                minItems: 1
+                type: array
+                uniqueItems: true
+                x-go-name: Context
+            expires_at:
+                description: When the filter should no longer be applied. Null if the filter does not expire.
+                example: "2024-02-01T02:57:49Z"
+                type: string
+                x-go-name: ExpiresAt
+            filter_action:
+                $ref: '#/definitions/FilterAction'
+            id:
+                description: The ID of the filter in the database.
+                type: string
+                x-go-name: ID
+            keywords:
+                description: The keywords grouped under this filter.
+                items:
+                    $ref: '#/definitions/filterKeyword'
+                type: array
+                x-go-name: Keywords
+            statuses:
+                description: The statuses grouped under this filter.
+                items:
+                    $ref: '#/definitions/filterStatus'
+                type: array
+                x-go-name: Statuses
+            title:
+                description: The name of the filter.
+                example: Linux Words
+                type: string
+                x-go-name: Title
+        title: FilterV2 represents a user-defined filter for determining which statuses should not be shown to the user.
+        type: object
+        x-go-name: FilterV2
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     headerFilter:
         properties:
@@ -2118,6 +2222,12 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: FavouritesCount
+            filtered:
+                description: A list of filters that matched this status and why they matched, if there are any such filters.
+                items:
+                    $ref: '#/definitions/filterResult'
+                type: array
+                x-go-name: Filtered
             id:
                 description: ID of the status.
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
@@ -2321,6 +2431,12 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: FavouritesCount
+            filtered:
+                description: A list of filters that matched this status and why they matched, if there are any such filters.
+                items:
+                    $ref: '#/definitions/filterResult'
+                type: array
+                x-go-name: Filtered
             id:
                 description: ID of the status.
                 example: 01FBVD42CQ3ZEEVMW180SBX03B

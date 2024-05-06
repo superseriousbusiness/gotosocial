@@ -467,7 +467,12 @@ func (s *Surface) Notify(
 	unlock()
 
 	// Stream notification to the user.
-	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif)
+	filters, err := s.State.DB.GetFiltersForAccountID(ctx, targetAccount.ID)
+	if err != nil {
+		return gtserror.Newf("couldn't retrieve filters for account %s: %w", targetAccount.ID, err)
+	}
+
+	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, filters)
 	if err != nil {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}

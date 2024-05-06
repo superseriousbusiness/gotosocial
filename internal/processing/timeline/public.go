@@ -24,6 +24,7 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -45,6 +46,16 @@ func (p *Processor) PublicTimelineGet(
 		prevMinIDValue string
 		items          = make([]any, 0, limit)
 	)
+
+	var filters []*gtsmodel.Filter
+	if requester != nil {
+		var err error
+		filters, err = p.state.DB.GetFiltersForAccountID(ctx, requester.ID)
+		if err != nil {
+			err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requester.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	}
 
 	// Try a few times to select appropriate public
 	// statuses from the db, paging up or down to
@@ -87,7 +98,10 @@ outer:
 				continue inner
 			}
 
-			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester)
+			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester, statusfilter.FilterContextPublic, filters)
+			if errors.Is(err, statusfilter.ErrHideStatus) {
+				continue
+			}
 			if err != nil {
 				log.Errorf(ctx, "error converting to api status: %v", err)
 				continue inner

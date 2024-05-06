@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -39,7 +40,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	suite.NoError(errWithCode)
 
 	editedStatus := suite.testStatuses["remote_account_1_status_1"]
-	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(context.Background(), editedStatus, account)
+	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(context.Background(), editedStatus, account, statusfilter.FilterContextNotifications, nil)
 	suite.NoError(err)
 
 	suite.streamProcessor.StatusUpdate(context.Background(), account, apiStatus, stream.TimelineHome)

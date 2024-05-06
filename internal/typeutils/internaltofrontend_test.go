@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -427,7 +428,7 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBloc
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -537,11 +538,186 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 }`, string(b))
 }
 
+// Test that a status which is filtered with a warn filter by the requesting user has `filtered` set correctly.
+func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	testStatus.Content += " fnord"
+	testStatus.Text += " fnord"
+	requestingAccount := suite.testAccounts["local_account_1"]
+	expectedMatchingFilter := suite.testFilters["local_account_1_filter_1"]
+	expectedMatchingFilterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	expectedMatchingFilterKeyword.Filter = expectedMatchingFilter
+	expectedMatchingFilter.Keywords = []*gtsmodel.FilterKeyword{expectedMatchingFilterKeyword}
+	requestingAccountFilters := []*gtsmodel.Filter{expectedMatchingFilter}
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextHome,
+		requestingAccountFilters,
+	)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01F8MH75CBF9JFX4ZAD54N0W0R",
+  "created_at": "2021-10-20T11:36:45.000Z",
+  "in_reply_to_id": null,
+  "in_reply_to_account_id": null,
+  "sensitive": false,
+  "spoiler_text": "",
+  "visibility": "public",
+  "language": "en",
+  "uri": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "replies_count": 1,
+  "reblogs_count": 0,
+  "favourites_count": 1,
+  "favourited": true,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": true,
+  "pinned": false,
+  "content": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+  "reblog": null,
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.png",
+    "header_static": "http://localhost:8080/assets/default_header.png",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "role": {
+      "name": "admin"
+    }
+  },
+  "media_attachments": [
+    {
+      "id": "01F8MH6NEM8D7527KZAECTCR76",
+      "type": "image",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "remote_url": null,
+      "preview_remote_url": null,
+      "meta": {
+        "original": {
+          "width": 1200,
+          "height": 630,
+          "size": "1200x630",
+          "aspect": 1.9047619
+        },
+        "small": {
+          "width": 256,
+          "height": 134,
+          "size": "256x134",
+          "aspect": 1.9104477
+        },
+        "focus": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "description": "Black and white image of some 50's style text saying: Welcome On Board",
+      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+    }
+  ],
+  "mentions": [],
+  "tags": [
+    {
+      "name": "welcome",
+      "url": "http://localhost:8080/tags/welcome"
+    }
+  ],
+  "emojis": [
+    {
+      "shortcode": "rainbow",
+      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "visible_in_picker": true,
+      "category": "reactions"
+    }
+  ],
+  "card": null,
+  "poll": null,
+  "text": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+  "filtered": [
+    {
+      "filter": {
+        "id": "01HN26VM6KZTW1ANNRVSBMA461",
+        "title": "fnord",
+        "context": [
+          "home",
+          "public"
+        ],
+        "expires_at": null,
+        "filter_action": "warn",
+        "keywords": [
+          {
+            "id": "01HN272TAVWAXX72ZX4M8JZ0PS",
+            "keyword": "fnord",
+            "whole_word": true
+          }
+        ],
+        "statuses": []
+      },
+      "keyword_matches": [
+        "fnord"
+      ],
+      "status_matches": []
+    }
+  ]
+}`, string(b))
+}
+
+// Test that a status which is filtered with a hide filter by the requesting user results in the ErrHideStatus error.
+func (suite *InternalToFrontendTestSuite) TestHideFilteredStatusToFrontend() {
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	testStatus.Content += " fnord"
+	testStatus.Text += " fnord"
+	requestingAccount := suite.testAccounts["local_account_1"]
+	expectedMatchingFilter := suite.testFilters["local_account_1_filter_1"]
+	expectedMatchingFilter.Action = gtsmodel.FilterActionHide
+	expectedMatchingFilterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	expectedMatchingFilterKeyword.Filter = expectedMatchingFilter
+	expectedMatchingFilter.Keywords = []*gtsmodel.FilterKeyword{expectedMatchingFilterKeyword}
+	requestingAccountFilters := []*gtsmodel.Filter{expectedMatchingFilter}
+	_, err := suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextHome,
+		requestingAccountFilters,
+	)
+	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+}
+
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments() {
 	testStatus := suite.testStatuses["remote_account_2_status_1"]
 	requestingAccount := suite.testAccounts["admin_account"]
 
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -774,7 +950,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
 	*testStatus = *suite.testStatuses["admin_account_status_1"]
 	testStatus.Language = ""
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")

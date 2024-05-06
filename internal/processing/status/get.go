@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -280,7 +281,15 @@ func TopoSort(apiStatuses []*apimodel.Status, targetAccountID string) {
 
 // ContextGet returns the context (previous and following posts) from the given status ID.
 func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Context, gtserror.WithCode) {
-	return p.contextGet(ctx, requestingAccount, targetStatusID, p.converter.StatusToAPIStatus)
+	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	convert := func(ctx context.Context, status *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
+		return p.converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextThread, filters)
+	}
+	return p.contextGet(ctx, requestingAccount, targetStatusID, convert)
 }
 
 // WebContextGet is like ContextGet, but is explicitly
