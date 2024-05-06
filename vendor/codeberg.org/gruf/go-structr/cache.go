@@ -556,6 +556,12 @@ func (c *Cache[T]) Cap() int {
 func (c *Cache[T]) store_value(index *Index, key Key, value T) {
 	// Alloc new index item.
 	item := new_indexed_item()
+	if cap(item.indexed) < len(c.indices) {
+
+		// Preallocate item indices slice to prevent Go auto
+		// allocating overlying large slices we don't need.
+		item.indexed = make([]*index_entry, 0, len(c.indices))
+	}
 
 	// Create COPY of value.
 	value = c.copy(value)
@@ -622,6 +628,14 @@ func (c *Cache[T]) store_error(index *Index, key Key, err error) {
 
 	// Alloc new index item.
 	item := new_indexed_item()
+	if cap(item.indexed) < len(c.indices) {
+
+		// Preallocate item indices slice to prevent Go auto
+		// allocating overlying large slices we don't need.
+		item.indexed = make([]*index_entry, 0, len(c.indices))
+	}
+
+	// Set error val.
 	item.data = err
 
 	// Append item to index.
