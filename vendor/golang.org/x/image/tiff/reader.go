@@ -40,7 +40,7 @@ var errNoPixels = FormatError("not enough pixel data")
 
 const maxChunkSize = 10 << 20 // 10M
 
-// safeReadtAt is a verbatim copy of internal/saferio.ReadDataAt from the
+// safeReadAt is a verbatim copy of internal/saferio.ReadDataAt from the
 // standard library, which is used to read data from a reader using a length
 // provided by untrusted data, without allocating the entire slice ahead of time
 // if it is large (>maxChunkSize). This allows us to avoid allocating giant
