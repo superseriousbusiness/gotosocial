@@ -527,6 +527,24 @@ func (c *Cache[T]) Len() int {
 	return l
 }
 
+// Debug returns debug stats about cache.
+func (c *Cache[T]) Debug() map[string]any {
+	m := make(map[string]any)
+	c.mutex.Lock()
+	m["lru"] = c.lru.len
+	indices := make(map[string]any)
+	m["indices"] = indices
+	for i := range c.indices {
+		var n uint64
+		for _, list := range c.indices[i].data {
+			n += uint64(list.len)
+		}
+		indices[c.indices[i].name] = n
+	}
+	c.mutex.Unlock()
+	return m
+}
+
 // Cap returns the maximum capacity (size) of cache.
 func (c *Cache[T]) Cap() int {
 	c.mutex.Lock()
