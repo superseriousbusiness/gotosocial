@@ -74,8 +74,8 @@ codeberg.org/gruf/go-sched v1.2.3 h1:H5ViDxxzOBR3uIyGBCf0eH8b1L8wMybOXcdtUUTXZHk
 codeberg.org/gruf/go-sched v1.2.3/go.mod h1:vT9uB6KWFIIwnG9vcPY2a0alYNoqdL1mSzRM8I+PK7A=
 codeberg.org/gruf/go-store/v2 v2.2.4 h1:8HO1Jh2gg7boQKA3hsDAIXd9zwieu5uXwDXEcTOD9js=
 codeberg.org/gruf/go-store/v2 v2.2.4/go.mod h1:zI4VWe5CpXAktYMtaBMrgA5QmO0sQH53LBRvfn1huys=
-codeberg.org/gruf/go-structr v0.7.0 h1:gy0/wD7718HwJDoBMeMumk4+7veLrkumgCEOnCyzS8w=
-codeberg.org/gruf/go-structr v0.7.0/go.mod h1:K1FXkUyO6N/JKt8aWqyQ8rtW7Z9ZmXKWP8mFAQ2OJjE=
+codeberg.org/gruf/go-structr v0.8.0 h1:aZ+ziv2R6zTU16PW7B2d349wY9Du3mObc3hCeUIqtME=
+codeberg.org/gruf/go-structr v0.8.0/go.mod h1:K1FXkUyO6N/JKt8aWqyQ8rtW7Z9ZmXKWP8mFAQ2OJjE=
 codeberg.org/superseriousbusiness/exif-terminator v0.7.0 h1:Y6VApSXhKqExG0H2hZ2JelRK4xmWdjDQjn13CpEfzko=
 codeberg.org/superseriousbusiness/exif-terminator v0.7.0/go.mod h1:gCWKduudUWFzsnixoMzu0FYVdxHWG+AbXnZ50DqxsUE=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
