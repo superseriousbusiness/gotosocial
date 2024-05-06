@@ -172,6 +172,8 @@ func totalOfRatios() float64 {
 	return 0 +
 		config.GetCacheAccountMemRatio() +
 		config.GetCacheAccountNoteMemRatio() +
+		config.GetCacheAccountSettingsMemRatio() +
+		config.GetCacheAccountStatsMemRatio() +
 		config.GetCacheApplicationMemRatio() +
 		config.GetCacheBlockMemRatio() +
 		config.GetCacheBlockIDsMemRatio() +
@@ -179,17 +181,21 @@ func totalOfRatios() float64 {
 		config.GetCacheClientMemRatio() +
 		config.GetCacheEmojiMemRatio() +
 		config.GetCacheEmojiCategoryMemRatio() +
+		config.GetCacheFilterMemRatio() +
+		config.GetCacheFilterKeywordMemRatio() +
+		config.GetCacheFilterStatusMemRatio() +
 		config.GetCacheFollowMemRatio() +
 		config.GetCacheFollowIDsMemRatio() +
 		config.GetCacheFollowRequestMemRatio() +
 		config.GetCacheFollowRequestIDsMemRatio() +
-		config.GetCacheInReplyToIDsMemRatio() +
 		config.GetCacheInstanceMemRatio() +
+		config.GetCacheInReplyToIDsMemRatio() +
 		config.GetCacheListMemRatio() +
 		config.GetCacheListEntryMemRatio() +
 		config.GetCacheMarkerMemRatio() +
 		config.GetCacheMediaMemRatio() +
 		config.GetCacheMentionMemRatio() +
+		config.GetCacheMoveMemRatio() +
 		config.GetCacheNotificationMemRatio() +
 		config.GetCachePollMemRatio() +
 		config.GetCachePollVoteMemRatio() +
