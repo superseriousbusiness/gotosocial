@@ -56,7 +56,7 @@ type FilterKeyword struct {
 // Compile will compile this FilterKeyword as a prepared regular expression.
 func (k *FilterKeyword) Compile() (err error) {
 	var wordBreak string
-	if k != nil && *k.WholeWord {
+	if k.WholeWord != nil && *k.WholeWord {
 		wordBreak = `\b`
 	}
 
