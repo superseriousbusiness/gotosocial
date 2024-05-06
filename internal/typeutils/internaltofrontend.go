@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -746,18 +745,9 @@ func (c *Converter) statusToAPIFilterResults(
 		keywordMatches := make([]string, 0, len(filter.Keywords))
 		fields := filterableTextFields(s)
 		for _, filterKeyword := range filter.Keywords {
-			wholeWord := util.PtrValueOr(filterKeyword.WholeWord, false)
-			wordBreak := ``
-			if wholeWord {
-				wordBreak = `\b`
-			}
-			re, err := regexp.Compile(`(?i)` + wordBreak + regexp.QuoteMeta(filterKeyword.Keyword) + wordBreak)
-			if err != nil {
-				return nil, err
-			}
 			var isMatch bool
 			for _, field := range fields {
-				if re.MatchString(field) {
+				if filterKeyword.Regexp.MatchString(field) {
 					isMatch = true
 					break
 				}

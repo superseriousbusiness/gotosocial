@@ -17,7 +17,10 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"regexp"
+	"time"
+)
 
 // Filter stores a filter created by a local account.
 type Filter struct {
@@ -39,14 +42,28 @@ type Filter struct {
 
 // FilterKeyword stores a single keyword to filter statuses against.
 type FilterKeyword struct {
-	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                     // id of this item in the database
-	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                  // when was item created
-	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                  // when was item last updated
-	AccountID string    `bun:"type:CHAR(26),notnull,nullzero"`                                               // ID of the local account that created the filter keyword.
-	FilterID  string    `bun:"type:CHAR(26),notnull,nullzero,unique:filter_keywords_filter_id_keyword_uniq"` // ID of the filter that this keyword belongs to.
-	Filter    *Filter   `bun:"-"`                                                                            // Filter corresponding to FilterID
-	Keyword   string    `bun:",nullzero,notnull,unique:filter_keywords_filter_id_keyword_uniq"`              // The keyword or phrase to filter against.
-	WholeWord *bool     `bun:",nullzero,notnull,default:false"`                                              // Should the filter consider word boundaries?
+	ID        string         `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                     // id of this item in the database
+	CreatedAt time.Time      `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                  // when was item created
+	UpdatedAt time.Time      `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                  // when was item last updated
+	AccountID string         `bun:"type:CHAR(26),notnull,nullzero"`                                               // ID of the local account that created the filter keyword.
+	FilterID  string         `bun:"type:CHAR(26),notnull,nullzero,unique:filter_keywords_filter_id_keyword_uniq"` // ID of the filter that this keyword belongs to.
+	Filter    *Filter        `bun:"-"`                                                                            // Filter corresponding to FilterID
+	Keyword   string         `bun:",nullzero,notnull,unique:filter_keywords_filter_id_keyword_uniq"`              // The keyword or phrase to filter against.
+	WholeWord *bool          `bun:",nullzero,notnull,default:false"`                                              // Should the filter consider word boundaries?
+	Regexp    *regexp.Regexp `bun:"-"`                                                                            // pre-prepared regular expression
+}
+
+// Compile will compile this FilterKeyword as a prepared regular expression.
+func (k *FilterKeyword) Compile() (err error) {
+	var wordBreak string
+	if k != nil && *k.WholeWord {
+		wordBreak = `\b`
+	}
+
+	// Compile keyword filter regexp.
+	quoted := regexp.QuoteMeta(k.Keyword)
+	k.Regexp, err = regexp.Compile(`(?i)` + wordBreak + quoted + wordBreak)
+	return // caller is expected to wrap this error
 }
 
 // FilterStatus stores a single status to filter.

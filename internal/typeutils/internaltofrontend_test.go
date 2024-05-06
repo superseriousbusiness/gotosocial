@@ -546,6 +546,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
 	requestingAccount := suite.testAccounts["local_account_1"]
 	expectedMatchingFilter := suite.testFilters["local_account_1_filter_1"]
 	expectedMatchingFilterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	suite.NoError(expectedMatchingFilterKeyword.Compile())
 	expectedMatchingFilterKeyword.Filter = expectedMatchingFilter
 	expectedMatchingFilter.Keywords = []*gtsmodel.FilterKeyword{expectedMatchingFilterKeyword}
 	requestingAccountFilters := []*gtsmodel.Filter{expectedMatchingFilter}
@@ -700,6 +701,7 @@ func (suite *InternalToFrontendTestSuite) TestHideFilteredStatusToFrontend() {
 	expectedMatchingFilter := suite.testFilters["local_account_1_filter_1"]
 	expectedMatchingFilter.Action = gtsmodel.FilterActionHide
 	expectedMatchingFilterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	suite.NoError(expectedMatchingFilterKeyword.Compile())
 	expectedMatchingFilterKeyword.Filter = expectedMatchingFilter
 	expectedMatchingFilter.Keywords = []*gtsmodel.FilterKeyword{expectedMatchingFilterKeyword}
 	requestingAccountFilters := []*gtsmodel.Filter{expectedMatchingFilter}
