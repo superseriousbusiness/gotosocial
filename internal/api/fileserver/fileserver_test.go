@@ -70,8 +70,6 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
-	suite.db = testrig.NewTestDB(&suite.state)
-	suite.state.DB = suite.db
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
@@ -98,8 +96,12 @@ func (suite *FileserverTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	testrig.StartNoopWorkers(&suite.state)
 
+	suite.db = testrig.NewTestDB(&suite.state)
+	suite.state.DB = suite.db
+
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
+
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
