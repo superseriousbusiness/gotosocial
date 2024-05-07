@@ -7,6 +7,8 @@ import (
 	"unsafe"
 
 	"codeberg.org/gruf/go-byteutil"
+
+	"github.com/dolthub/swiss"
 )
 
 // IndexConfig defines config variables
@@ -70,7 +72,7 @@ type Index struct {
 	// index_entry{} which also contains the exact
 	// key each result is stored under. the hash map
 	// only keys by the xxh3 hash checksum for speed.
-	data map[string]*list // [*index_entry]
+	data *swiss.Map[string, *list]
 
 	// struct fields encompassed by
 	// keys (+ hashes) of this index.
@@ -153,13 +155,13 @@ func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
 	}
 
 	// Initialize index_entry list store.
-	i.data = make(map[string]*list, cap+1)
+	i.data = swiss.NewMap[string, *list](uint32(cap))
 }
 
 // get_one will fetch one indexed item under key.
 func (i *Index) get_one(key Key) *indexed_item {
 	// Get list at hash.
-	l := i.data[key.key]
+	l, _ := i.data.Get(key.key)
 	if l == nil {
 		return nil
 	}
@@ -182,7 +184,7 @@ func (i *Index) get(key Key, hook func(*indexed_item)) {
 	}
 
 	// Get list at hash.
-	l := i.data[key.key]
+	l, _ := i.data.Get(key.key)
 	if l == nil {
 		return
 	}
@@ -242,13 +244,13 @@ func (i *Index) key(buf *byteutil.Buffer, parts []any) Key {
 // of key collisions and overwriting 'unique' entries.
 func (i *Index) append(key Key, item *indexed_item) {
 	// Look for existing.
-	l := i.data[key.key]
+	l, _ := i.data.Get(key.key)
 
 	if l == nil {
 
 		// Allocate new.
 		l = new_list()
-		i.data[key.key] = l
+		i.data.Put(key.key, l)
 
 	} else if is_unique(i.flags) {
 
@@ -284,7 +286,7 @@ func (i *Index) delete(key Key, hook func(*indexed_item)) {
 	}
 
 	// Get list at hash.
-	l := i.data[key.key]
+	l, _ := i.data.Get(key.key)
 	if l == nil {
 		return
 	}
@@ -298,7 +300,7 @@ func (i *Index) delete(key Key, hook func(*indexed_item)) {
 	}
 
 	// Delete data at hash.
-	delete(i.data, key.key)
+	i.data.Delete(key.key)
 
 	// Iterate entries in list.
 	for x := 0; x < l.len; x++ {
@@ -328,7 +330,7 @@ func (i *Index) delete(key Key, hook func(*indexed_item)) {
 // delete_entry deletes the given index entry.
 func (i *Index) delete_entry(entry *index_entry) {
 	// Get list at hash sum.
-	l := i.data[entry.key.key]
+	l, _ := i.data.Get(entry.key.key)
 	if l == nil {
 		return
 	}
@@ -338,7 +340,7 @@ func (i *Index) delete_entry(entry *index_entry) {
 
 	if l.len == 0 {
 		// Remove entry list from map.
-		delete(i.data, entry.key.key)
+		i.data.Delete(entry.key.key)
 
 		// Release list.
 		free_list(l)
@@ -346,6 +348,33 @@ func (i *Index) delete_entry(entry *index_entry) {
 
 	// Drop this index from item.
 	entry.item.drop_index(entry)
+}
+
+// compact will reduce the size of underlying
+// index map if the cap vastly exceeds len.
+func (i *Index) compact() {
+
+	// Maximum load factor before
+	// 'swiss' allocates new hmap:
+	// maxLoad = 7 / 8
+	//
+	// So we apply the inverse/2, once
+	// $maxLoad/2 % of hmap is empty we
+	// compact the map to drop buckets.
+	len := i.data.Count()
+	cap := i.data.Capacity()
+	if cap-len > (cap*7)/(8*2) {
+
+		// Create a new map only as big as required.
+		data := swiss.NewMap[string, *list](uint32(len))
+		i.data.Iter(func(k string, v *list) (stop bool) {
+			data.Put(k, v)
+			return false
+		})
+
+		// Set new map.
+		i.data = data
+	}
 }
 
 // index_entry represents a single entry

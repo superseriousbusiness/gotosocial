@@ -536,9 +536,10 @@ func (c *Cache[T]) Debug() map[string]any {
 	m["indices"] = indices
 	for i := range c.indices {
 		var n uint64
-		for _, list := range c.indices[i].data {
-			n += uint64(list.len)
-		}
+		c.indices[i].data.Iter(func(_ string, l *list) (stop bool) {
+			n += uint64(l.len)
+			return
+		})
 		indices[c.indices[i].name] = n
 	}
 	c.mutex.Unlock()
