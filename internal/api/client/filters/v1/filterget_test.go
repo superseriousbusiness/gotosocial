@@ -68,6 +68,9 @@ func (suite *FiltersTestSuite) getFilter(
 	// check code + body
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
 		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
+		if expectedBody == "" {
+			return nil, errs.Combine()
+		}
 	}
 
 	// if we got an expected body, return early
