@@ -52,6 +52,7 @@ import (
 //			The text to be filtered.
 //
 //			Sample: fnord
+//		minLength: 1
 //		maxLength: 40
 //		type: string
 //	-
