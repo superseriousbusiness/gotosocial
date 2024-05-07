@@ -1268,7 +1268,7 @@ modernc.org/mathutil
 # modernc.org/memory v1.8.0
 ## explicit; go 1.18
 modernc.org/memory
-# modernc.org/sqlite v1.29.8 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.8-concurrency-workaround
+# modernc.org/sqlite v1.29.8 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.9-concurrency-workaround
 ## explicit; go 1.20
 modernc.org/sqlite
 modernc.org/sqlite/lib
@@ -1281,4 +1281,4 @@ modernc.org/token
 # mvdan.cc/xurls/v2 v2.5.0
 ## explicit; go 1.19
 mvdan.cc/xurls/v2
-# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.8-concurrency-workaround
+# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.9-concurrency-workaround
