@@ -27,6 +27,7 @@ import type {
 	HookOpts,
 	FileFormInputHook,
 } from "./types";
+import { Error as ErrorC } from "../../components/error";
 
 const _default = undefined;
 export default function useFileInput(
@@ -40,6 +41,15 @@ export default function useFileInput(
 	const [file, setFile] = useState<File>();
 	const [imageURL, setImageURL] = useState<string>();
 	const [info, setInfo] = useState<React.JSX.Element>();
+
+	function reset() {
+		if (imageURL) {
+			URL.revokeObjectURL(imageURL);
+		}
+		setImageURL(undefined);
+		setFile(undefined);
+		setInfo(undefined);
+	}
 
 	function onChange(e: React.ChangeEvent<HTMLInputElement>) {
 		const files = e.target.files;
@@ -59,25 +69,18 @@ export default function useFileInput(
 			setImageURL(URL.createObjectURL(file));
 		}
 
-		let size = prettierBytes(file.size);
+		const sizePrettier = prettierBytes(file.size);
 		if (maxSize && file.size > maxSize) {
-			size = <span className="error-text">{size}</span>;
+			const maxSizePrettier = prettierBytes(maxSize);
+			setInfo(
+				<ErrorC
+					error={new Error(`file size ${sizePrettier} is larger than max size ${maxSizePrettier}`)}
+					reset={(reset)}
+				/>
+			);
+		} else {
+			setInfo(<>{file.name} ({sizePrettier})</>);
 		}
-
-		setInfo(
-			<>
-				{file.name} ({size})
-			</>
-		);
-	}
-
-	function reset() {
-		if (imageURL) {
-			URL.revokeObjectURL(imageURL);
-		}
-		setImageURL(undefined);
-		setFile(undefined);
-		setInfo(undefined);
 	}
 
 	const infoComponent = (

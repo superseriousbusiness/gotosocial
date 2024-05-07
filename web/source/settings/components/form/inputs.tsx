@@ -29,6 +29,7 @@ import type {
 	RadioFormInputHook,
 	TextFormInputHook,
 } from "../../lib/form/types";
+import { nanoid } from "nanoid";
 
 export interface TextInputProps extends React.DetailedHTMLProps<
 	React.InputHTMLAttributes<HTMLInputElement>,
@@ -92,22 +93,25 @@ export interface FileInputProps extends React.DetailedHTMLProps<
 
 export function FileInput({ label, field, ...props }: FileInputProps) {
 	const { onChange, ref, infoComponent } = field;
+	const id = nanoid();
 
 	return (
 		<div className="form-field file">
-			<label>
-				<div className="label">{label}</div>
-				<div className="file-input button">Browse</div>
-				{infoComponent}
-				{/* <a onClick={removeFile("header")}>remove</a> */}
-				<input
-					type="file"
-					className="hidden"
-					onChange={onChange}
-					ref={ref ? ref as RefObject<HTMLInputElement> : undefined}
-					{...props}
-				/>
+			<label className="label-label" htmlFor={id}>
+				{label}
 			</label>
+			<label className="label-button" htmlFor={id}>
+				<div className="file-input button">Browse</div>
+			</label>
+			<input
+				id={id}
+				type="file"
+				className="hidden"
+				onChange={onChange}
+				ref={ref ? ref as RefObject<HTMLInputElement> : undefined}
+				{...props}
+			/>
+			{infoComponent}
 		</div>
 	);
 }

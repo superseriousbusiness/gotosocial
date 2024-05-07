@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, ReactNode } from "react";
 import { useFileInput, useComboBoxInput } from "../../../../lib/form";
 import useShortcode from "./use-shortcode";
 import useFormSubmit from "../../../../lib/form/submit";
@@ -27,52 +27,74 @@ import FakeToot from "../../../../components/fake-toot";
 import MutationButton from "../../../../components/form/mutation-button";
 import { useAddEmojiMutation } from "../../../../lib/query/admin/custom-emoji";
 import { useInstanceV1Query } from "../../../../lib/query/gts-api";
+import prettierBytes from "prettier-bytes";
 
 export default function NewEmojiForm() {
-	const shortcode = useShortcode();
-
 	const { data: instance } = useInstanceV1Query();
 	const emojiMaxSize = useMemo(() => {
 		return instance?.configuration?.emojis?.emoji_size_limit ?? 50 * 1024;
 	}, [instance]);
 
-	const image = useFileInput("image", {
-		withPreview: true,
-		maxSize: emojiMaxSize
-	});
+	const prettierMaxSize = useMemo(() => {
+		return prettierBytes(emojiMaxSize);
+	}, [emojiMaxSize]);
 
-	const category = useComboBoxInput("category");
+	const form = {
+		shortcode: useShortcode(),
+		image: useFileInput("image", {
+			withPreview: true,
+			maxSize: emojiMaxSize
+		}),
+		category: useComboBoxInput("category"),
+	};
 
-	const [submitForm, result] = useFormSubmit({
-		shortcode, image, category
-	}, useAddEmojiMutation());
+	const [submitForm, result] = useFormSubmit(
+		form,
+		useAddEmojiMutation(),
+		{
+			changedOnly: false,
+			// On submission, reset form values
+			// no matter what the result was.
+			onFinish: (_res) => {
+				form.shortcode.reset();
+				form.image.reset();
+				form.category.reset();
+			}
+		},
+	);
 
 	useEffect(() => {
-		if (shortcode.value === undefined || shortcode.value.length == 0) {
-			if (image.value != undefined) {
-				let [name, _ext] = image.value.name.split(".");
-				shortcode.setter(name);
-			}
+		// If shortcode has not been entered yet, but an image file
+		// has been submitted, suggest a shortcode based on filename.
+		if (
+			(form.shortcode.value === undefined || form.shortcode.value.length === 0) &&
+			form.image.value !== undefined
+		) {
+			let [name, _ext] = form.image.value.name.split(".");
+			form.shortcode.setter(name);
 		}
 
-		/* We explicitly don't want to have 'shortcode' as a dependency here
-			 because we only want to change the shortcode to the filename if the field is empty
-			 at the moment the file is selected, not some time after when the field is emptied
-		*/
-		/* eslint-disable-next-line react-hooks/exhaustive-deps */
-	}, [image.value]);
+		// We explicitly don't want to have 'shortcode' as a
+		// dependency here because we only want to change the
+		// shortcode to the filename if the field is empty at
+		// the moment the file is selected, not some time after
+		// when the field is emptied.
+		//
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [form.image.value]);
 
-	let emojiOrShortcode;
-
-	if (image.previewValue != undefined) {
-		emojiOrShortcode = <img
-			className="emoji"
-			src={image.previewValue}
-			title={`:${shortcode.value}:`}
-			alt={shortcode.value}
-		/>;
-	} else if (shortcode.value !== undefined && shortcode.value.length > 0) {
-		emojiOrShortcode = `:${shortcode.value}:`;
+	let emojiOrShortcode: ReactNode;
+	if (form.image.previewValue !== undefined) {
+		emojiOrShortcode = (
+			<img
+				className="emoji"
+				src={form.image.previewValue}
+				title={`:${form.shortcode.value}:`}
+				alt={form.shortcode.value}
+			/>
+		);
+	} else if (form.shortcode.value !== undefined && form.shortcode.value.length > 0) {
+		emojiOrShortcode = `:${form.shortcode.value}:`;
 	} else {
 		emojiOrShortcode = `:your_emoji_here:`;
 	}
@@ -87,22 +109,23 @@ export default function NewEmojiForm() {
 
 			<form onSubmit={submitForm} className="form-flex">
 				<FileInput
-					field={image}
+					field={form.image}
+					label={`Image file: png, gif, or static webp; max size ${prettierMaxSize}`}
 					accept="image/png,image/gif,image/webp"
 				/>
 
 				<TextInput
-					field={shortcode}
+					field={form.shortcode}
 					label="Shortcode, must be unique among the instance's local emoji"
+					{...{pattern: "^\\w{2,30}$"}}
 				/>
 
 				<CategorySelect
-					field={category}
-					children={[]}
+					field={form.category}
 				/>
 
 				<MutationButton
-					disabled={image.previewValue === undefined}
+					disabled={form.image.previewValue === undefined || form.shortcode.value?.length === 0}
 					label="Upload emoji"
 					result={result}
 				/>

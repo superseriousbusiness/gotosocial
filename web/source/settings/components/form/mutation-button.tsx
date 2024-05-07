@@ -51,9 +51,9 @@ export default function MutationButton({
 	}
 
 	return (
-		<div className={wrapperClassName}>
+		<div className={wrapperClassName ? wrapperClassName : "mutation-button"}>
 			{(showError && targetsThisButton && result.error) &&
-				<Error error={result.error} />
+				<Error error={result.error} reset={result.reset} />
 			}
 			<button
 				type="submit"

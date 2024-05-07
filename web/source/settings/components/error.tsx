@@ -17,7 +17,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import { SerializedError } from "@reduxjs/toolkit";
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import React, { ReactNode } from "react";
 
 function ErrorFallback({ error, resetErrorBoundary }) {
 	return (
@@ -44,39 +46,70 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 	);
 }
 
-function Error({ error }) {
-	/* eslint-disable-next-line no-console */
-	console.error("Rendering error:", error);
-	let message;
+interface GtsError {
+	/**
+	 * Error message returned from the API.
+	 */
+	error: string;
 
-	if (error.data != undefined) { // RTK Query error with data
-		if (error.status) {
-			message = (<>
-				<b>{error.status}:</b> {error.data.error}
-				{error.data.error_description &&
-					<p>
-						{error.data.error_description}
-					</p>
-				}
-			</>);
-		} else {
-			message = error.data.error;
-		}
-	} else if (error.name != undefined || error.type != undefined) { // JS error
-		message = (<>
-			<b>{error.type && error.name}:</b> {error.message}
-		</>);
-	} else if (error.status && typeof error.error == "string") {
-		message = (<>
-			<b>{error.status}:</b> {error.error}
-		</>);
+	/**
+	 * For OAuth errors: description of the error.
+	 */
+	error_description?: string;
+}
+
+interface ErrorProps {
+	error: FetchBaseQueryError | SerializedError | Error | undefined;
+	
+	/**
+	 * Optional function to clear the error.
+	 * If provided, rendered error will have
+	 * a "dismiss" button.
+	 */
+	reset?: () => void;
+}
+
+function Error({ error, reset }: ErrorProps) {
+	if (error === undefined) {
+		return null;
+	}
+	
+	/* eslint-disable-next-line no-console */
+	console.error("caught error: ", error);
+	
+	let message: ReactNode;
+	if ("status" in error) {
+		// RTK Query error with data.
+		const gtsError = error.data as GtsError;
+		const errMsg = gtsError.error_description ?? gtsError.error;
+		message = <>Code {error.status} {errMsg}</>;
 	} else {
-		message = error.message ?? error;
+		// SerializedError or Error.
+		const errMsg = error.message ?? JSON.stringify(error);
+		message = (
+			<>{error.name && `${error.name}: `}{errMsg}</>
+		);
+	}
+
+	let className = "error";
+	if (reset) {
+		className += " with-dismiss";
 	}
 
 	return (
-		<div className="error">
-			{message}
+		<div className={className}>
+			<span>{message}</span>
+			{ reset && 
+				<span 
+					className="dismiss"
+					onClick={reset}
+					role="button"
+					tabIndex={0}
+				>
+					<span>Dismiss</span>
+					<i className="fa fa-fw fa-close" aria-hidden="true" />
+				</span>
+			}
 		</div>
 	);
 }
