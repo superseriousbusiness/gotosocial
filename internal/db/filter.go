@@ -42,11 +42,13 @@ type Filter interface {
 	// and deletes indicated filter keywords and statuses by ID.
 	// It uses a transaction to ensure no partial updates.
 	// The column lists are optional; if not specified, all columns will be updated.
+	// The filter keyword columns list is *per keyword*.
+	// To update all keyword columns, provide a list where every element is an empty list.
 	UpdateFilter(
 		ctx context.Context,
 		filter *gtsmodel.Filter,
 		filterColumns []string,
-		filterKeywordColumns []string,
+		filterKeywordColumns [][]string,
 		deleteFilterKeywordIDs []string,
 		deleteFilterStatusIDs []string,
 	) error

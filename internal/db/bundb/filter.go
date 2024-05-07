@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"time"
 
@@ -197,10 +198,14 @@ func (f *filterDB) UpdateFilter(
 	ctx context.Context,
 	filter *gtsmodel.Filter,
 	filterColumns []string,
-	filterKeywordColumns []string,
+	filterKeywordColumns [][]string,
 	deleteFilterKeywordIDs []string,
 	deleteFilterStatusIDs []string,
 ) error {
+	if len(filter.Keywords) != len(filterKeywordColumns) {
+		return errors.New("number of filter keywords must match number of lists of filter keyword columns")
+	}
+
 	updatedAt := time.Now()
 	filter.UpdatedAt = updatedAt
 	for _, filterKeyword := range filter.Keywords {
@@ -214,8 +219,10 @@ func (f *filterDB) UpdateFilter(
 	if len(filterColumns) > 0 {
 		filterColumns = append(filterColumns, "updated_at")
 	}
-	if len(filterKeywordColumns) > 0 {
-		filterKeywordColumns = append(filterKeywordColumns, "updated_at")
+	for i := range filterKeywordColumns {
+		if len(filterKeywordColumns[i]) > 0 {
+			filterKeywordColumns[i] = append(filterKeywordColumns[i], "updated_at")
+		}
 	}
 
 	// Update database.
@@ -229,11 +236,11 @@ func (f *filterDB) UpdateFilter(
 			return err
 		}
 
-		if len(filter.Keywords) > 0 {
+		for i, filterKeyword := range filter.Keywords {
 			if _, err := NewUpsert(tx).
-				Model(&filter.Keywords).
+				Model(filterKeyword).
 				Constraint("id").
-				Column(filterKeywordColumns...).
+				Column(filterKeywordColumns[i]...).
 				Exec(ctx); err != nil {
 				return err
 			}
