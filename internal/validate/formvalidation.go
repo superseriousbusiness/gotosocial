@@ -45,6 +45,7 @@ const (
 	maximumProfileFields          = 6
 	maximumListTitleLength        = 200
 	maximumFilterKeywordLength    = 40
+	maximumFilterTitleLength      = 200
 )
 
 // Password returns a helpful error if the given password
@@ -308,7 +309,7 @@ func MarkerName(name string) error {
 	return fmt.Errorf("marker timeline name '%s' was not recognized, valid options are '%s', '%s'", name, apimodel.MarkerNameHome, apimodel.MarkerNameNotifications)
 }
 
-// FilterKeyword validates the title of a new or updated List.
+// FilterKeyword validates a filter keyword.
 func FilterKeyword(keyword string) error {
 	if keyword == "" {
 		return fmt.Errorf("filter keyword must be provided, and must be no more than %d chars", maximumFilterKeywordLength)
@@ -316,6 +317,19 @@ func FilterKeyword(keyword string) error {
 
 	if length := len([]rune(keyword)); length > maximumFilterKeywordLength {
 		return fmt.Errorf("filter keyword length must be no more than %d chars, provided keyword was %d chars", maximumFilterKeywordLength, length)
+	}
+
+	return nil
+}
+
+// FilterTitle validates the title of a new or updated filter.
+func FilterTitle(title string) error {
+	if title == "" {
+		return fmt.Errorf("filter title must be provided, and must be no more than %d chars", maximumFilterTitleLength)
+	}
+
+	if length := len([]rune(title)); length > maximumFilterTitleLength {
+		return fmt.Errorf("filter title length must be no more than %d chars, provided title was %d chars", maximumFilterTitleLength, length)
 	}
 
 	return nil
