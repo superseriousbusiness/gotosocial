@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/fedi"
 	filtersv1 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v1"
+	filtersv2 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/list"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
@@ -73,6 +74,7 @@ type Processor struct {
 	admin     admin.Processor
 	fedi      fedi.Processor
 	filtersv1 filtersv1.Processor
+	filtersv2 filtersv2.Processor
 	list      list.Processor
 	markers   markers.Processor
 	media     media.Processor
@@ -100,6 +102,10 @@ func (p *Processor) Fedi() *fedi.Processor {
 
 func (p *Processor) FiltersV1() *filtersv1.Processor {
 	return &p.filtersv1
+}
+
+func (p *Processor) FiltersV2() *filtersv2.Processor {
+	return &p.filtersv2
 }
 
 func (p *Processor) List() *list.Processor {
@@ -184,6 +190,7 @@ func NewProcessor(
 	processor.admin = admin.New(state, cleaner, converter, mediaManager, federator.TransportController(), emailSender)
 	processor.fedi = fedi.New(state, &common, converter, federator, filter)
 	processor.filtersv1 = filtersv1.New(state, converter)
+	processor.filtersv2 = filtersv2.New(state, converter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)
 	processor.polls = polls.New(&common, state, converter)

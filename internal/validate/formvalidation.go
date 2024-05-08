@@ -243,9 +243,16 @@ func SiteTerms(t string) error {
 	return nil
 }
 
-// ULID returns true if the passed string is a valid ULID.
-func ULID(i string) bool {
-	return regexes.ULID.MatchString(i)
+// ULID returns an error if the passed string is not a valid ULID.
+// The name param is used to form error messages.
+func ULID(i string, name string) error {
+	if i == "" {
+		return fmt.Errorf("%s must be provided", name)
+	}
+	if !regexes.ULID.MatchString(i) {
+		return fmt.Errorf("%s didn't match the expected ULID format for an ID (26 characters from the set 0123456789ABCDEFGHJKMNPQRSTVWXYZ)", name)
+	}
+	return nil
 }
 
 // ProfileFields validates the length of provided fields slice,
@@ -361,6 +368,20 @@ func FilterContexts(contexts []apimodel.FilterContext) error {
 		}
 	}
 	return nil
+}
+
+func FilterAction(action apimodel.FilterAction) error {
+	switch action {
+	case apimodel.FilterActionWarn,
+		apimodel.FilterActionHide:
+		return nil
+	}
+	return fmt.Errorf(
+		"filter action '%s' was not recognized, valid options are '%s', '%s'",
+		action,
+		apimodel.FilterActionWarn,
+		apimodel.FilterActionHide,
+	)
 }
 
 // CreateAccount checks through all the prerequisites for

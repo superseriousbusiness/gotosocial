@@ -64,6 +64,8 @@ type FilterStatus struct {
 type FilterAction string
 
 const (
+	// FilterActionNone filters should not exist, except internally, for partially constructed or invalid filters.
+	FilterActionNone FilterAction = ""
 	// FilterActionWarn means that the status should be shown behind a warning.
 	FilterActionWarn FilterAction = "warn"
 	// FilterActionHide means that the status should be removed from timeline results entirely.

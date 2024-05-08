@@ -1862,19 +1862,12 @@ func (c *Converter) FilterKeywordToAPIFilterV1(ctx context.Context, filterKeywor
 func (c *Converter) FilterToAPIFilterV2(ctx context.Context, filter *gtsmodel.Filter) (*apimodel.FilterV2, error) {
 	apiFilterKeywords := make([]apimodel.FilterKeyword, 0, len(filter.Keywords))
 	for _, filterKeyword := range filter.Keywords {
-		apiFilterKeywords = append(apiFilterKeywords, apimodel.FilterKeyword{
-			ID:        filterKeyword.ID,
-			Keyword:   filterKeyword.Keyword,
-			WholeWord: util.PtrValueOr(filterKeyword.WholeWord, false),
-		})
+		apiFilterKeywords = append(apiFilterKeywords, *c.FilterKeywordToAPIFilterKeyword(ctx, filterKeyword))
 	}
 
 	apiFilterStatuses := make([]apimodel.FilterStatus, 0, len(filter.Keywords))
 	for _, filterStatus := range filter.Statuses {
-		apiFilterStatuses = append(apiFilterStatuses, apimodel.FilterStatus{
-			ID:       filterStatus.ID,
-			StatusID: filterStatus.StatusID,
-		})
+		apiFilterStatuses = append(apiFilterStatuses, *c.FilterStatusToAPIFilterStatus(ctx, filterStatus))
 	}
 
 	return &apimodel.FilterV2{
@@ -1923,6 +1916,23 @@ func filterActionToAPIFilterAction(m gtsmodel.FilterAction) apimodel.FilterActio
 		return apimodel.FilterActionHide
 	}
 	return apimodel.FilterActionNone
+}
+
+// FilterKeywordToAPIFilterKeyword converts a GTS model filter status into an API filter status.
+func (c *Converter) FilterKeywordToAPIFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) *apimodel.FilterKeyword {
+	return &apimodel.FilterKeyword{
+		ID:        filterKeyword.ID,
+		Keyword:   filterKeyword.Keyword,
+		WholeWord: util.PtrValueOr(filterKeyword.WholeWord, false),
+	}
+}
+
+// FilterStatusToAPIFilterStatus converts a GTS model filter status into an API filter status.
+func (c *Converter) FilterStatusToAPIFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus) *apimodel.FilterStatus {
+	return &apimodel.FilterStatus{
+		ID:       filterStatus.ID,
+		StatusID: filterStatus.StatusID,
+	}
 }
 
 // convertEmojisToAPIEmojis will convert a slice of GTS model emojis to frontend API model emojis, falling back to IDs if no GTS models supplied.
