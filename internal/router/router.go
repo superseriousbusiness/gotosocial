@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
@@ -31,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"go.balki.me/anyhttp"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -73,6 +75,11 @@ func New(ctx context.Context) (*Router, error) {
 	engine := gin.New()
 	engine.MaxMultipartMemory = maxMultipartMemory
 	engine.HandleMethodNotAllowed = true
+
+	// Custom header set by trusted upstream
+	if tp := config.GetTrustedPlatform(); tp != "" {
+		engine.TrustedPlatform = tp
+	}
 
 	// Set up client IP forwarding via
 	// trusted x-forwarded-* headers.
@@ -134,6 +141,7 @@ func (r *Router) Start() {
 		certFile  = config.GetTLSCertificateChain()
 		keyFile   = config.GetTLSCertificateKey()
 		leEnabled = config.GetLetsEncryptEnabled()
+		bindAddr  = config.GetBindAddress()
 	)
 
 	switch {
@@ -147,6 +155,18 @@ func (r *Router) Start() {
 	// TLS with letsencrypt.
 	case leEnabled:
 		listen, err = r.letsEncryptTLS()
+
+	// TLS handled by reverse proxy connecting using unix socket
+	case strings.HasPrefix(bindAddr, "unix/"):
+		listen, err = func() (func() error, error) {
+			_, listener, err := anyhttp.GetListener(bindAddr)
+			if err != nil {
+				return nil, err
+			}
+			return func() error {
+				return r.srv.Serve(listener)
+			}, nil
+		}()
 
 	// Default listen. TLS must
 	// be handled by reverse proxy.

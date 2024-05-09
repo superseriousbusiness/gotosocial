@@ -97,13 +97,13 @@ account-domain: ""
 protocol: "https"
 
 # String. Address to bind the GoToSocial server to.
-# This can be an IPv4 address or an IPv6 address (surrounded in square brackets), or a hostname.
+# This can be an IPv4 address or an IPv6 address (surrounded in square brackets), or a hostname or unix socket
 # The default value will bind to all interfaces, which makes the server
 # accessible by other machines. For most setups there is no need to change this.
 # If you are using GoToSocial in a reverse proxy setup with the proxy running on
 # the same machine, you will want to set this to "localhost" or an equivalent,
 # so that the proxy can't be bypassed.
-# Examples: ["0.0.0.0", "172.128.0.16", "localhost", "[::]", "[2001:db8::fed1]"]
+# Examples: ["0.0.0.0", "172.128.0.16", "localhost", "[::]", "[2001:db8::fed1]", "unix//run/gts/sock]
 # Default: "0.0.0.0"
 bind-address: "0.0.0.0"
 
@@ -115,6 +115,13 @@ bind-address: "0.0.0.0"
 # Examples: [443, 6666, 8080]
 # Default: 8080
 port: 8080
+
+# String, HTTP header name that contains the client ip
+# Reverse proxy may need to be configured to set this header
+# This setting is required when using unix socket as bind address as there is no other way to get client ip for rate limiting
+# Examples: ["X-Client-IP","X-CDN-Client-IP"]
+# Default: ""
+trusted-platform: ""
 
 # Array of string. CIDRs or IP addresses of proxies that should be trusted when determining real client IP from behind a reverse proxy.
 # If you're running inside a Docker container behind Traefik or Nginx, for example, add the subnet of your docker network,
@@ -147,7 +154,7 @@ db-type: "postgres"
 # If address is set to :memory: then an in-memory database will be used (no file).
 # WARNING: :memory: should NOT BE USED except for testing purposes.
 #
-# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db"]
+# Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db", "/run/postgresql/"]
 # Default: ""
 db-address: ""
 

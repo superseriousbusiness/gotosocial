@@ -350,6 +350,31 @@ func GetTrustedProxies() []string { return global.GetTrustedProxies() }
 // SetTrustedProxies safely sets the value for global configuration 'TrustedProxies' field
 func SetTrustedProxies(v []string) { global.SetTrustedProxies(v) }
 
+// GetTrustedPlatform safely fetches the Configuration value for state's 'TrustedPlatform' field
+func (st *ConfigState) GetTrustedPlatform() (v string) {
+	st.mutex.RLock()
+	v = st.config.TrustedPlatform
+	st.mutex.RUnlock()
+	return
+}
+
+// SetTrustedPlatform safely sets the Configuration value for state's 'TrustedPlatform' field
+func (st *ConfigState) SetTrustedPlatform(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TrustedPlatform = v
+	st.reloadToViper()
+}
+
+// TrustedPlatformFlag returns the flag name for the 'TrustedPlatform' field
+func TrustedPlatformFlag() string { return "trusted-platform" }
+
+// GetTrustedPlatform safely fetches the value for global configuration 'TrustedPlatform' field
+func GetTrustedPlatform() string { return global.GetTrustedPlatform() }
+
+// SetTrustedPlatform safely sets the value for global configuration 'TrustedPlatform' field
+func SetTrustedPlatform(v string) { global.SetTrustedPlatform(v) }
+
 // GetSoftwareVersion safely fetches the Configuration value for state's 'SoftwareVersion' field
 func (st *ConfigState) GetSoftwareVersion() (v string) {
 	st.mutex.RLock()

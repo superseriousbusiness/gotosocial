@@ -58,6 +58,7 @@ type Configuration struct {
 	BindAddress        string   `name:"bind-address" usage:"Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces."`
 	Port               int      `name:"port" usage:"Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine."`
 	TrustedProxies     []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
+	TrustedPlatform    string   `name:"trusted-platform" usage:"HTTP header that contains the real client ip"`
 	SoftwareVersion    string   `name:"software-version" usage:""`
 
 	DbType                   string        `name:"db-type" usage:"Database type: eg., postgres"`
