@@ -266,8 +266,9 @@ func (s *searchDB) accountText(following bool) *bun.SelectQuery {
 //	ORDER BY "status"."id" DESC LIMIT 10
 func (s *searchDB) SearchForStatuses(
 	ctx context.Context,
-	accountID string,
+	requestingAccountID string,
 	query string,
+	fromAccountID string,
 	maxID string,
 	minID string,
 	limit int,
@@ -295,9 +296,12 @@ func (s *searchDB) SearchForStatuses(
 		// accountID or replying to accountID.
 		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.
-				Where("? = ?", bun.Ident("status.account_id"), accountID).
-				WhereOr("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
+				Where("? = ?", bun.Ident("status.account_id"), requestingAccountID).
+				WhereOr("? = ?", bun.Ident("status.in_reply_to_account_id"), requestingAccountID)
 		})
+	if fromAccountID != "" {
+		q = q.Where("? = ?", bun.Ident("status.account_id"), fromAccountID)
+	}
 
 	// Return only items with a LOWER id than maxID.
 	if maxID == "" {

@@ -99,6 +99,9 @@ import (
 //			- `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will only ever return 1 result at most.
 //			- `#[hashtag_name]` -- search for a hashtag with the given hashtag name, or starting with the given hashtag name. Case insensitive. Can return multiple results.
 //			- any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
+//
+//			Arbitrary string queries may include the following operators:
+//			- `from:localuser`, `from:remoteuser@instance.tld`: restrict results to statuses created by the specified account.
 //		in: query
 //		required: true
 //	-
@@ -137,6 +140,12 @@ import (
 //			If searching for hashtags, exclude those not yet approved by instance admin.
 //			Currently this parameter is unused.
 //		default: false
+//		in: query
+// -
+//		name: account_id
+//		type: string
+//		description: >-
+//			Restrict results to statuses created by the specified account.
 //		in: query
 //
 //	security:
@@ -238,6 +247,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		Resolve:           resolve,
 		Following:         following,
 		ExcludeUnreviewed: excludeUnreviewed,
+		AccountID:         c.Query(apiutil.SearchAccountIDKey),
 		APIv1:             apiVersion == apiutil.APIv1,
 	}
 

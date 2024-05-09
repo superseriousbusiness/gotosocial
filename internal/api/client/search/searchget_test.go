@@ -60,6 +60,7 @@ func (suite *SearchGetTestSuite) getSearch(
 	queryType *string,
 	resolve *bool,
 	following *bool,
+	fromAccountID *string,
 	expectedHTTPStatus int,
 	expectedBody string,
 ) (*apimodel.SearchResult, error) {
@@ -101,6 +102,10 @@ func (suite *SearchGetTestSuite) getSearch(
 
 	if following != nil {
 		queryParts = append(queryParts, apiutil.SearchFollowingKey+"="+strconv.FormatBool(*following))
+	}
+
+	if fromAccountID != nil {
+		queryParts = append(queryParts, apiutil.SearchAccountIDKey+"="+url.QueryEscape(*fromAccountID))
 	}
 
 	requestURL.RawQuery = strings.Join(queryParts, "&")
@@ -174,6 +179,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByURI() {
 		query                      = "https://unknown-instance.com/users/brand_new_person"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -191,6 +197,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByURI() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -218,6 +225,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestring() {
 		query                      = "@brand_new_person@unknown-instance.com"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -235,6 +243,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestring() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -262,6 +271,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringUppercase() 
 		query                      = "@Some_User@example.org"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -279,6 +289,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringUppercase() 
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -306,6 +317,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoLeadingAt(
 		query                      = "brand_new_person@unknown-instance.com"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -323,6 +335,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoLeadingAt(
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -350,6 +363,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() 
 		query                      = "@brand_new_person@unknown-instance.com"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -367,6 +381,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringNoResolve() 
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -389,6 +404,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 		query                      = "@üser@ëxample.org"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -406,6 +422,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -431,6 +448,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 		query                      = "@üser@xn--xample-ova.org"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -448,6 +466,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteAccountByNamestringSpecialChars
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -473,6 +492,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
 		query                      = "@the_mighty_zork"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -490,6 +510,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestring() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -517,6 +538,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestringWithDomain() 
 		query                      = "@the_mighty_zork@localhost:8080"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -534,6 +556,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByNamestringWithDomain() 
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -561,6 +584,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByNamestringRe
 		query                      = "@somone_made_up@localhost:8080"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -578,6 +602,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByNamestringRe
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -600,6 +625,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURI() {
 		query                      = "http://localhost:8080/users/the_mighty_zork"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -617,6 +643,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURI() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -644,6 +671,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURL() {
 		query                      = "http://localhost:8080/@the_mighty_zork"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -661,6 +689,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalAccountByURL() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -688,6 +717,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByURL() {
 		query                      = "http://localhost:8080/@the_shmighty_shmork"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -705,6 +735,7 @@ func (suite *SearchGetTestSuite) TestSearchNonexistingLocalAccountByURL() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -727,6 +758,7 @@ func (suite *SearchGetTestSuite) TestSearchStatusByURL() {
 		query                      = "https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"
 		queryType          *string = func() *string { i := "statuses"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -744,6 +776,7 @@ func (suite *SearchGetTestSuite) TestSearchStatusByURL() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -771,6 +804,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedDomainURL() {
 		query                      = "https://replyguys.com/@someone"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -788,6 +822,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedDomainURL() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -812,6 +847,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedDomainNamestring() {
 		query                      = "@someone@replyguys.com"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -829,6 +865,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedDomainNamestring() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -853,6 +890,7 @@ func (suite *SearchGetTestSuite) TestSearchAAny() {
 		query                      = "a"
 		queryType          *string = nil // Return anything.
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -870,6 +908,7 @@ func (suite *SearchGetTestSuite) TestSearchAAny() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -894,6 +933,7 @@ func (suite *SearchGetTestSuite) TestSearchAAnyFollowingOnly() {
 		query                      = "a"
 		queryType          *string = nil // Return anything.
 		following          *bool   = func() *bool { i := true; return &i }()
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -911,6 +951,7 @@ func (suite *SearchGetTestSuite) TestSearchAAnyFollowingOnly() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -935,6 +976,7 @@ func (suite *SearchGetTestSuite) TestSearchAStatuses() {
 		query                      = "a"
 		queryType          *string = func() *string { i := "statuses"; return &i }() // Only statuses.
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -952,6 +994,7 @@ func (suite *SearchGetTestSuite) TestSearchAStatuses() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -960,6 +1003,92 @@ func (suite *SearchGetTestSuite) TestSearchAStatuses() {
 
 	suite.Len(searchResult.Accounts, 0)
 	suite.Len(searchResult.Statuses, 6)
+	suite.Len(searchResult.Hashtags, 0)
+}
+
+func (suite *SearchGetTestSuite) TestSearchHiStatusesWithAccountIDInQueryParam() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = func() *bool { i := true; return &i }()
+		query                      = "hi"
+		queryType          *string = func() *string { i := "statuses"; return &i }() // Only statuses.
+		following          *bool   = nil
+		fromAccountID      *string = func() *string { i := suite.testAccounts["local_account_2"].ID; return &i }()
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ""
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		fromAccountID,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 1)
+	suite.Len(searchResult.Hashtags, 0)
+}
+
+func (suite *SearchGetTestSuite) TestSearchHiStatusesWithAccountIDInQueryText() {
+	var (
+		requestingAccount          = suite.testAccounts["local_account_1"]
+		token                      = suite.testTokens["local_account_1"]
+		user                       = suite.testUsers["local_account_1"]
+		maxID              *string = nil
+		minID              *string = nil
+		limit              *int    = nil
+		offset             *int    = nil
+		resolve            *bool   = func() *bool { i := true; return &i }()
+		query                      = "hi from:1happyturtle"
+		queryType          *string = func() *string { i := "statuses"; return &i }() // Only statuses.
+		following          *bool   = nil
+		fromAccountID      *string = nil
+		expectedHTTPStatus         = http.StatusOK
+		expectedBody               = ""
+	)
+
+	searchResult, err := suite.getSearch(
+		requestingAccount,
+		token,
+		apiutil.APIv2,
+		user,
+		maxID,
+		minID,
+		limit,
+		offset,
+		query,
+		queryType,
+		resolve,
+		following,
+		fromAccountID,
+		expectedHTTPStatus,
+		expectedBody)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Len(searchResult.Accounts, 0)
+	suite.Len(searchResult.Statuses, 1)
 	suite.Len(searchResult.Hashtags, 0)
 }
 
@@ -976,6 +1105,7 @@ func (suite *SearchGetTestSuite) TestSearchAAccounts() {
 		query                      = "a"
 		queryType          *string = func() *string { i := "accounts"; return &i }() // Only accounts.
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -993,6 +1123,7 @@ func (suite *SearchGetTestSuite) TestSearchAAccounts() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1017,6 +1148,7 @@ func (suite *SearchGetTestSuite) TestSearchAccountsLimit1() {
 		query                      = "a"
 		queryType          *string = func() *string { i := "accounts"; return &i }() // Only accounts.
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1034,6 +1166,7 @@ func (suite *SearchGetTestSuite) TestSearchAccountsLimit1() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1058,6 +1191,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountByURI() {
 		query                      = "http://localhost:8080/users/localhost:8080"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1075,6 +1209,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountByURI() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1107,6 +1242,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountFull() {
 		query                      = "@" + newDomain + "@" + newDomain
 		queryType          *string = nil
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1124,6 +1260,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountFull() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1156,6 +1293,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountPartial() {
 		query                      = "@" + newDomain
 		queryType          *string = nil
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1173,6 +1311,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountPartial() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1206,6 +1345,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountEvenMorePartial()
 		query                      = newDomain
 		queryType          *string = nil
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1223,6 +1363,7 @@ func (suite *SearchGetTestSuite) TestSearchLocalInstanceAccountEvenMorePartial()
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1280,6 +1421,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteInstanceAccountPartial() {
 		query                      = "@" + theirDomain
 		queryType          *string = nil
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1297,6 +1439,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteInstanceAccountPartial() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1323,6 +1466,7 @@ func (suite *SearchGetTestSuite) TestSearchBadQueryType() {
 		query                      = "whatever"
 		queryType          *string = func() *string { i := "aaaaaaaaaaa"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusBadRequest
 		expectedBody               = `{"error":"Bad Request: search query type aaaaaaaaaaa was not recognized, valid options are ['', 'accounts', 'statuses', 'hashtags']"}`
 	)
@@ -1340,6 +1484,7 @@ func (suite *SearchGetTestSuite) TestSearchBadQueryType() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1360,6 +1505,7 @@ func (suite *SearchGetTestSuite) TestSearchEmptyQuery() {
 		query                      = ""
 		queryType          *string = func() *string { i := "aaaaaaaaaaa"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusBadRequest
 		expectedBody               = `{"error":"Bad Request: required key q was not set or had empty value"}`
 	)
@@ -1377,6 +1523,7 @@ func (suite *SearchGetTestSuite) TestSearchEmptyQuery() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1397,6 +1544,7 @@ func (suite *SearchGetTestSuite) TestSearchHashtagV1() {
 		query                      = "#welcome"
 		queryType          *string = func() *string { i := "hashtags"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = `{"accounts":[],"statuses":[],"hashtags":[{"name":"welcome","url":"http://localhost:8080/tags/welcome","history":[]}]}`
 	)
@@ -1414,6 +1562,7 @@ func (suite *SearchGetTestSuite) TestSearchHashtagV1() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1438,6 +1587,7 @@ func (suite *SearchGetTestSuite) TestSearchHashtagV2() {
 		query                      = "#welcome"
 		queryType          *string = func() *string { i := "hashtags"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = `{"accounts":[],"statuses":[],"hashtags":["welcome"]}`
 	)
@@ -1455,6 +1605,7 @@ func (suite *SearchGetTestSuite) TestSearchHashtagV2() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1479,6 +1630,7 @@ func (suite *SearchGetTestSuite) TestSearchHashtagButWithAccountSearch() {
 		query                      = "#welcome"
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ``
 	)
@@ -1496,6 +1648,7 @@ func (suite *SearchGetTestSuite) TestSearchHashtagButWithAccountSearch() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1520,6 +1673,7 @@ func (suite *SearchGetTestSuite) TestSearchNotHashtagButWithTypeHashtag() {
 		query                      = "welco"
 		queryType          *string = func() *string { i := "hashtags"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ``
 	)
@@ -1537,6 +1691,7 @@ func (suite *SearchGetTestSuite) TestSearchNotHashtagButWithTypeHashtag() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1562,6 +1717,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountFullNamestring() {
 		query                      = "@" + targetAccount.Username + "@" + targetAccount.Domain
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1593,6 +1749,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountFullNamestring() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1624,6 +1781,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountPartialNamestring() {
 		query                      = "@" + targetAccount.Username
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1655,6 +1813,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountPartialNamestring() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
@@ -1683,6 +1842,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountURI() {
 		query                      = targetAccount.URI
 		queryType          *string = func() *string { i := "accounts"; return &i }()
 		following          *bool   = nil
+		fromAccountID      *string = nil
 		expectedHTTPStatus         = http.StatusOK
 		expectedBody               = ""
 	)
@@ -1714,6 +1874,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountURI() {
 		queryType,
 		resolve,
 		following,
+		fromAccountID,
 		expectedHTTPStatus,
 		expectedBody)
 	if err != nil {
