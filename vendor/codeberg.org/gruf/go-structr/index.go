@@ -222,7 +222,7 @@ func (i *Index) key(buf *byteutil.Buffer, parts []any) Key {
 		for x, field := range i.fields {
 			before := len(buf.B)
 			buf.B = field.mangle(buf.B, parts[x])
-			if string(buf.B[before:]) == field.zero {
+			if string(buf.B[before:]) == field.zerostr {
 				return Key{}
 			}
 			buf.B = append(buf.B, '.')

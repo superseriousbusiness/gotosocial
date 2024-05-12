@@ -289,9 +289,8 @@ func (c *Cache[T]) LoadOne(index *Index, key Key, load func() (T, error)) (T, er
 	// Load new result.
 	val, err = load()
 
-	// Check for ignored
-	// (transient) errors.
-	if ignore(err) {
+	// Check for ignored error types.
+	if err != nil && ignore(err) {
 		return val, err
 	}
 
