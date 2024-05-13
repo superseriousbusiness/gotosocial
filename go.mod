@@ -1,10 +1,7 @@
 module github.com/superseriousbusiness/gotosocial
 
 go 1.22
-
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.9-concurrency-workaround
-
-toolchain go1.22.2
 
 require (
 	codeberg.org/gruf/go-bytes v1.0.2
@@ -18,7 +15,7 @@ require (
 	codeberg.org/gruf/go-kv v1.6.4
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-logger/v2 v2.2.1
-	codeberg.org/gruf/go-mutexes v1.4.1
+	codeberg.org/gruf/go-mutexes v1.5.0
 	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-store/v2 v2.2.4
@@ -89,6 +86,7 @@ require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-mangler v1.3.0 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
+	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
@@ -107,6 +105,8 @@ require (
 	github.com/cornelk/hashmap v1.0.8 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/go-units v0.5.0 // indirect
+	github.com/dolthub/maphash v0.1.0 // indirect
+	github.com/dolthub/swiss v0.2.1 // indirect
 	github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b // indirect
 	github.com/dsoprea/go-iptc v0.0.0-20200610044640-bc9ca208b413 // indirect
 	github.com/dsoprea/go-logging v0.0.0-20200710184922-b02d349568dd // indirect
