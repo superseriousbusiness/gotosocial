@@ -73,9 +73,10 @@ func (q *QueueCtx[T]) Debug() map[string]any {
 	m["indices"] = indices
 	for i := range q.indices {
 		var n uint64
-		for _, list := range q.indices[i].data {
-			n += uint64(list.len)
-		}
+		q.indices[i].data.Iter(func(_ string, l *list) (stop bool) {
+			n += uint64(l.len)
+			return
+		})
 		indices[q.indices[i].name] = n
 	}
 	q.mutex.Unlock()

@@ -29,10 +29,15 @@ type struct_field struct {
 	// (i.e. fast serializing) fn.
 	mangle mangler.Mangler
 
+	// zero value data, used when
+	// nil encountered during ptr
+	// offset following.
+	zero unsafe.Pointer
+
 	// mangled zero value string,
 	// if set this indicates zero
 	// values of field not allowed
-	zero string
+	zerostr string
 }
 
 // next_offset defines a next offset location
@@ -106,13 +111,14 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 
 	// Get field type as reflect2.
 	sfield.type2 = reflect2.Type2(t)
-	i := sfield.type2.New()
 
 	// Find mangler for field type.
 	sfield.mangle = mangler.Get(t)
 
-	// Set possible mangled zero value.
-	sfield.zero = string(sfield.mangle(nil, i))
+	// Set possible zero value and its string.
+	sfield.zero = sfield.type2.UnsafeNew()
+	i := sfield.type2.UnsafeIndirect(sfield.zero)
+	sfield.zerostr = string(sfield.mangle(nil, i))
 
 	return
 }
@@ -130,8 +136,11 @@ func extract_fields(ptr unsafe.Pointer, fields []struct_field) []any {
 		for _, offset := range field.offsets {
 			// Dereference any ptrs to offset.
 			fptr = deref(fptr, offset.derefs)
+
 			if fptr == nil {
-				return nil
+				// Use zero value.
+				fptr = field.zero
+				break
 			}
 
 			// Jump forward by offset to next ptr.

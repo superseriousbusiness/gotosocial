@@ -20,24 +20,20 @@ package queue
 import (
 	"context"
 	"sync"
+	"unsafe"
 
 	"codeberg.org/gruf/go-list"
+	"codeberg.org/gruf/go-mempool"
 )
-
-// frequency of GC cycles
-// per no. unlocks. i.e.
-// every 'gcfreq' unlocks.
-const gcfreq = 1024
 
 // SimpleQueue provides a simple concurrency safe
 // queue using generics and a memory pool of list
 // elements to reduce overall memory usage.
 type SimpleQueue[T any] struct {
 	l list.List[T]
-	p elemPool[T]
+	p mempool.UnsafePool
 	w chan struct{}
 	m sync.Mutex
-	n uint32 // pop counter (safely wraps around)
 }
 
 // Push will push given value to the queue.
@@ -45,7 +41,7 @@ func (q *SimpleQueue[T]) Push(value T) {
 	q.m.Lock()
 
 	// Wrap in element.
-	elem := q.p.alloc()
+	elem := q.acquire()
 	elem.Value = value
 
 	// Push new elem to queue.
@@ -75,14 +71,7 @@ func (q *SimpleQueue[T]) Pop() (value T, ok bool) {
 
 		// Remove tail.
 		q.l.Remove(tail)
-		q.p.free(tail)
-
-		// Every 'gcfreq' pops perform
-		// a garbage collection to keep
-		// us squeaky clean :]
-		if q.n++; q.n%gcfreq == 0 {
-			q.p.GC()
-		}
+		q.release(tail)
 	}
 
 	q.m.Unlock()
@@ -134,14 +123,7 @@ func (q *SimpleQueue[T]) PopCtx(ctx context.Context) (value T, ok bool) {
 
 	// Remove element.
 	q.l.Remove(elem)
-	q.p.free(elem)
-
-	// Every 'gcfreq' pops perform
-	// a garbage collection to keep
-	// us squeaky clean :]
-	if q.n++; q.n%gcfreq == 0 {
-		q.p.GC()
-	}
+	q.release(elem)
 
 	// Done with lock.
 	q.m.Unlock()
@@ -157,45 +139,20 @@ func (q *SimpleQueue[T]) Len() int {
 	return l
 }
 
-// elemPool is a very simple
-// list.Elem[T] memory pool.
-type elemPool[T any] struct {
-	current []*list.Elem[T]
-	victim  []*list.Elem[T]
+// acquire will acquire list elem from pool, else alloc new.
+func (q *SimpleQueue[T]) acquire() *list.Elem[T] {
+	if ptr := q.p.Get(); ptr != nil {
+		return (*list.Elem[T])(ptr)
+	}
+	return new(list.Elem[T])
 }
 
-func (p *elemPool[T]) alloc() *list.Elem[T] {
-	// First try the current queue
-	if l := len(p.current) - 1; l >= 0 {
-		mu := p.current[l]
-		p.current = p.current[:l]
-		return mu
-	}
-
-	// Next try the victim queue.
-	if l := len(p.victim) - 1; l >= 0 {
-		mu := p.victim[l]
-		p.victim = p.victim[:l]
-		return mu
-	}
-
-	// Lastly, alloc new.
-	mu := new(list.Elem[T])
-	return mu
-}
-
-// free will release given element to pool.
-func (p *elemPool[T]) free(elem *list.Elem[T]) {
+// release will reset list elem and release to pool.
+func (q *SimpleQueue[T]) release(e *list.Elem[T]) {
 	var zero T
-	elem.Next = nil
-	elem.Prev = nil
-	elem.Value = zero
-	p.current = append(p.current, elem)
-}
-
-// GC will clear out unused entries from the elemPool.
-func (p *elemPool[T]) GC() {
-	current := p.current
-	p.current = nil
-	p.victim = current
+	e.Next = nil
+	e.Prev = nil
+	e.Value = zero
+	ptr := unsafe.Pointer(e)
+	q.p.Put(ptr)
 }

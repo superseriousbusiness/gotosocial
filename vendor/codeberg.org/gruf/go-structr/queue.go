@@ -214,9 +214,10 @@ func (q *Queue[T]) Debug() map[string]any {
 	m["indices"] = indices
 	for i := range q.indices {
 		var n uint64
-		for _, list := range q.indices[i].data {
-			n += uint64(list.len)
-		}
+		q.indices[i].data.Iter(func(_ string, l *list) (stop bool) {
+			n += uint64(l.len)
+			return
+		})
 		indices[q.indices[i].name] = n
 	}
 	q.mutex.Unlock()
@@ -324,8 +325,14 @@ func (q *Queue[T]) delete(item *indexed_item) {
 		entry := item.indexed[len(item.indexed)-1]
 		item.indexed = item.indexed[:len(item.indexed)-1]
 
-		// Drop index_entry from index.
-		entry.index.delete_entry(entry)
+		// Get entry's index.
+		index := entry.index
+
+		// Drop this index_entry.
+		index.delete_entry(entry)
+
+		// Check compact.
+		index.compact()
 	}
 
 	// Drop entry from queue list.
