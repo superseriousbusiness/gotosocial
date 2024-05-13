@@ -226,8 +226,8 @@ github.com/gin-contrib/cors
 # github.com/gin-contrib/gzip v1.0.1
 ## explicit; go 1.18
 github.com/gin-contrib/gzip
-# github.com/gin-contrib/sessions v1.0.0
-## explicit; go 1.18
+# github.com/gin-contrib/sessions v1.0.1
+## explicit; go 1.19
 github.com/gin-contrib/sessions
 github.com/gin-contrib/sessions/memstore
 # github.com/gin-contrib/sse v0.1.0

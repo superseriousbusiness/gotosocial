@@ -31,7 +31,7 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.7.1
 	github.com/gin-contrib/gzip v1.0.1
-	github.com/gin-contrib/sessions v1.0.0
+	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/form/v4 v4.2.1
 	github.com/go-swagger/go-swagger v0.30.6-0.20240418033037-c46c303aaa02
