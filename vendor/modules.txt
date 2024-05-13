@@ -49,8 +49,11 @@ codeberg.org/gruf/go-mangler
 # codeberg.org/gruf/go-maps v1.0.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-maps
-# codeberg.org/gruf/go-mutexes v1.4.1
-## explicit; go 1.14
+# codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
+## explicit; go 1.22.2
+codeberg.org/gruf/go-mempool
+# codeberg.org/gruf/go-mutexes v1.5.0
+## explicit; go 1.22.2
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-runners v1.6.2
 ## explicit; go 1.19
@@ -62,7 +65,7 @@ codeberg.org/gruf/go-sched
 ## explicit; go 1.19
 codeberg.org/gruf/go-store/v2/storage
 codeberg.org/gruf/go-store/v2/util
-# codeberg.org/gruf/go-structr v0.8.2
+# codeberg.org/gruf/go-structr v0.8.4
 ## explicit; go 1.21
 codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/exif-terminator v0.7.0
@@ -177,6 +180,13 @@ github.com/disintegration/imaging
 # github.com/docker/go-units v0.5.0
 ## explicit
 github.com/docker/go-units
+# github.com/dolthub/maphash v0.1.0
+## explicit; go 1.18
+github.com/dolthub/maphash
+# github.com/dolthub/swiss v0.2.1
+## explicit; go 1.18
+github.com/dolthub/swiss
+github.com/dolthub/swiss/simd
 # github.com/dsoprea/go-exif/v3 v3.0.0-20210625224831-a6301f85c82b
 ## explicit; go 1.12
 github.com/dsoprea/go-exif/v3
