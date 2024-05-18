@@ -20,10 +20,11 @@ package migrations
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
-	"path"
 
-	"codeberg.org/gruf/go-store/v2/storage"
+	"codeberg.org/gruf/go-storage"
+	"codeberg.org/gruf/go-storage/disk"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -32,13 +33,13 @@ import (
 
 func init() {
 	deleteAttachment := func(ctx context.Context, l log.Entry, a *gtsmodel.MediaAttachment, s storage.Storage, tx bun.Tx) {
-		if err := s.Remove(ctx, a.File.Path); err != nil && err != storage.ErrNotFound {
+		if err := s.Remove(ctx, a.File.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			l.Errorf("error removing file %s: %s", a.File.Path, err)
 		} else {
 			l.Debugf("deleted %s", a.File.Path)
 		}
 
-		if err := s.Remove(ctx, a.Thumbnail.Path); err != nil && err != storage.ErrNotFound {
+		if err := s.Remove(ctx, a.Thumbnail.Path); err != nil && !errors.Is(err, storage.ErrNotFound) {
 			l.Errorf("error removing file %s: %s", a.Thumbnail.Path, err)
 		} else {
 			l.Debugf("deleted %s", a.Thumbnail.Path)
@@ -68,13 +69,10 @@ func init() {
 		}
 
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			s, err := storage.OpenDisk(storageBasePath, &storage.DiskConfig{
-				LockFile: path.Join(storageBasePath, "store.lock"),
-			})
+			s, err := disk.Open(storageBasePath, nil)
 			if err != nil {
 				return fmt.Errorf("error creating storage backend: %s", err)
 			}
-			defer s.Close()
 
 			// step 1. select all media attachment remote URLs that have duplicates
 			var dupes int

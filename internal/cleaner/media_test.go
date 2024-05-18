@@ -364,13 +364,13 @@ func (suite *MediaTestSuite) TestUncacheAndRecache() {
 
 	// media should no longer be stored
 	_, err = suite.storage.Get(ctx, testStatusAttachment.File.Path)
-	suite.ErrorIs(err, storage.ErrNotFound)
+	suite.True(storage.IsNotFound(err))
 	_, err = suite.storage.Get(ctx, testStatusAttachment.Thumbnail.Path)
-	suite.ErrorIs(err, storage.ErrNotFound)
+	suite.True(storage.IsNotFound(err))
 	_, err = suite.storage.Get(ctx, testHeader.File.Path)
-	suite.ErrorIs(err, storage.ErrNotFound)
+	suite.True(storage.IsNotFound(err))
 	_, err = suite.storage.Get(ctx, testHeader.Thumbnail.Path)
-	suite.ErrorIs(err, storage.ErrNotFound)
+	suite.True(storage.IsNotFound(err))
 
 	// now recache the image....
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {

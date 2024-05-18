@@ -96,7 +96,7 @@ func (m *Media) PruneOrphaned(ctx context.Context) (int, error) {
 	var files []string
 
 	// All media files in storage will have path fitting: {$account}/{$type}/{$size}/{$id}.{$ext}
-	if err := m.state.Storage.WalkKeys(ctx, func(ctx context.Context, path string) error {
+	if err := m.state.Storage.WalkKeys(ctx, func(path string) error {
 		// Check for our expected fileserver path format.
 		if !regexes.FilePath.MatchString(path) {
 			log.Warn(ctx, "unexpected storage item: %s", path)

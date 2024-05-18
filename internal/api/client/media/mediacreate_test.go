@@ -19,7 +19,6 @@ package media_test
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
@@ -152,7 +151,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// see what's in storage *before* the request
 	var storageKeysBeforeRequest []string
-	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+	if err := suite.storage.WalkKeys(ctx, func(key string) error {
 		storageKeysBeforeRequest = append(storageKeysBeforeRequest, key)
 		return nil
 	}); err != nil {
@@ -177,7 +176,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 
 	// check what's in storage *after* the request
 	var storageKeysAfterRequest []string
-	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+	if err := suite.storage.WalkKeys(ctx, func(key string) error {
 		storageKeysAfterRequest = append(storageKeysAfterRequest, key)
 		return nil
 	}); err != nil {
@@ -237,7 +236,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 
 	// see what's in storage *before* the request
 	var storageKeysBeforeRequest []string
-	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+	if err := suite.storage.WalkKeys(ctx, func(key string) error {
 		storageKeysBeforeRequest = append(storageKeysBeforeRequest, key)
 		return nil
 	}); err != nil {
@@ -262,7 +261,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 
 	// check what's in storage *after* the request
 	var storageKeysAfterRequest []string
-	if err := suite.storage.WalkKeys(ctx, func(ctx context.Context, key string) error {
+	if err := suite.storage.WalkKeys(ctx, func(key string) error {
 		storageKeysAfterRequest = append(storageKeysAfterRequest, key)
 		return nil
 	}); err != nil {
