@@ -515,7 +515,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 
 			// skip text in select and optgroup tags
 			if t.Hash == Select || t.Hash == Optgroup {
-				if next := tb.Peek(0); next.TokenType == html.TextToken {
+				if next := tb.Peek(0); next.TokenType == html.TextToken && !next.HasTemplate {
 					tb.Shift()
 				}
 			}
