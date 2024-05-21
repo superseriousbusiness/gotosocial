@@ -74,6 +74,8 @@ codeberg.org/gruf/go-runners v1.6.2 h1:oQef9niahfHu/wch14xNxlRMP8i+ABXH1Cb9PzZ4o
 codeberg.org/gruf/go-runners v1.6.2/go.mod h1:Tq5PrZ/m/rBXbLZz0u5if+yP3nG5Sf6S8O/GnyEePeQ=
 codeberg.org/gruf/go-sched v1.2.3 h1:H5ViDxxzOBR3uIyGBCf0eH8b1L8wMybOXcdtUUTXZHk=
 codeberg.org/gruf/go-sched v1.2.3/go.mod h1:vT9uB6KWFIIwnG9vcPY2a0alYNoqdL1mSzRM8I+PK7A=
+codeberg.org/gruf/go-storage v0.0.0-20240518131505-6145c96fbf85 h1:pNGn0E8TUSx/P8mp6UdGw4zf573yMm/O3ciaCC7qszU=
+codeberg.org/gruf/go-storage v0.0.0-20240518131505-6145c96fbf85/go.mod h1:plYZhxQEb3236oPpCcvBq+06lE9OyRVof98+SuctVm8=
 codeberg.org/gruf/go-structr v0.8.4 h1:2eT1VOTWG6T9gIGZwF/1Jop6k6plvfdUY5yBcvbizVg=
 codeberg.org/gruf/go-structr v0.8.4/go.mod h1:c5UvVDSA3lZ1kv05V+7pXkO8u8Jea+VRWFDRFBCOxSA=
 codeberg.org/superseriousbusiness/exif-terminator v0.7.0 h1:Y6VApSXhKqExG0H2hZ2JelRK4xmWdjDQjn13CpEfzko=
