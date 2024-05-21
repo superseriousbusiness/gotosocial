@@ -14,6 +14,13 @@ import (
 // ensure S3Storage conforms to storage.Storage.
 var _ storage.Storage = (*S3Storage)(nil)
 
+// ensure bytes.Reader conforms to ReaderSize.
+var _ ReaderSize = (*bytes.Reader)(nil)
+
+// ReaderSize is an extension of the io.Reader interface
+// that may be implemented by callers of WriteStream() in
+// order to improve performance. When the size is known it
+// is passed onto the underlying minio S3 library.
 type ReaderSize interface {
 	io.Reader
 	Size() int64
