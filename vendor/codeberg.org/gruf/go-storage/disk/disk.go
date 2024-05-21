@@ -62,10 +62,6 @@ type Config struct {
 	// WriteBufSize is the buffer size
 	// to use when writing file streams.
 	WriteBufSize int
-
-	// Transform is the supplied
-	// key <--> path KeyTransform.
-	Transform KeyTransform
 }
 
 // getDiskConfig returns valid (and owned!) Config for given ptr.
@@ -101,7 +97,6 @@ func getDiskConfig(cfg *Config) Config {
 		OpenRead:     cfg.OpenRead,
 		OpenWrite:    cfg.OpenWrite,
 		MkdirPerms:   cfg.MkdirPerms,
-		Transform:    cfg.Transform,
 		WriteBufSize: cfg.WriteBufSize,
 	}
 }
@@ -400,11 +395,6 @@ func (st *DiskStorage) WalkKeys(ctx context.Context, opts storage.WalkKeysOpts) 
 
 		// Storage key without base.
 		key := kpath[len(st.path):]
-		if st.cfg.Transform != nil {
-
-			// Pass storage path through transform.
-			key = st.cfg.Transform.PathToKey(key)
-		}
 
 		// Ignore filtered keys.
 		if opts.Filter != nil &&
@@ -438,11 +428,6 @@ func (st *DiskStorage) Filepath(key string) (path string, err error) {
 
 // filepath performs the "meat" of Filepath(), returning also if path *may* be a subdir of base.
 func (st *DiskStorage) filepath(pb *fastpath.Builder, key string) (path string, subdir bool, err error) {
-	if st.cfg.Transform != nil {
-		// Pass storage key through transform.
-		key = st.cfg.Transform.KeyToPath(key)
-	}
-
 	// Fast check for whether this may be a
 	// sub-directory. This is not a definitive
 	// check, it's only for a fastpath check.

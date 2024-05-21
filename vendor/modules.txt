@@ -61,7 +61,7 @@ codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.2.3
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
-# codeberg.org/gruf/go-storage v0.1.0
+# codeberg.org/gruf/go-storage v0.1.1
 ## explicit; go 1.22
 codeberg.org/gruf/go-storage
 codeberg.org/gruf/go-storage/disk

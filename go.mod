@@ -20,7 +20,7 @@ require (
 	codeberg.org/gruf/go-mutexes v1.5.0
 	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
-	codeberg.org/gruf/go-storage v0.1.0
+	codeberg.org/gruf/go-storage v0.1.1
 	codeberg.org/gruf/go-structr v0.8.4
 	codeberg.org/superseriousbusiness/exif-terminator v0.7.0
 	github.com/DmitriyVTitov/size v1.5.0
