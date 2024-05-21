@@ -531,6 +531,11 @@ func (c *Caches) initFilterKeyword() {
 		// See internal/db/bundb/filter.go.
 		filterKeyword2.Filter = nil
 
+		// We specifically DO NOT unset
+		// the regexp field here, as any
+		// regexp.Regexp instance is safe
+		// for concurrent access.
+
 		return filterKeyword2
 	}
 
