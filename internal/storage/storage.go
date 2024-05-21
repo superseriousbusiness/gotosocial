@@ -51,12 +51,14 @@ type PresignedURL struct {
 	Expiry time.Time // link expires at this time
 }
 
-// IsAlreadyExist ...
+// IsAlreadyExist returns whether error is an already-exists
+// type error returned by the underlying storage library.
 func IsAlreadyExist(err error) bool {
 	return errors.Is(err, storage.ErrAlreadyExists)
 }
 
-// IsNotFound ...
+// IsNotFound returns whether error is a not-found error
+// type returned by the underlying storage library.
 func IsNotFound(err error) bool {
 	return errors.Is(err, storage.ErrNotFound)
 }
