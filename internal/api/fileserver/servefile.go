@@ -224,10 +224,20 @@ func serveFileRange(rw http.ResponseWriter, r *http.Request, src io.Reader, rng 
 		return
 	}
 
-	// Dump the first 'start' many bytes into the void...
-	if _, err := fastcopy.CopyN(io.Discard, src, start); err != nil {
-		log.Errorf(r.Context(), "error reading from source: %v", err)
-		return
+	if rs, ok := src.(io.ReadSeeker); ok {
+		// Source supports seeking (usually *os.File),
+		// seek to the 'start' byte position in file.
+		if _, err := rs.Seek(start, 0); err != nil {
+			log.Errorf(r.Context(), "error seeking in source: %v", err)
+			return
+		}
+	} else {
+		// Compat for when no seek call is implemented,
+		// dump the first 'start' many bytes into void.
+		if _, err := fastcopy.CopyN(io.Discard, src, start); err != nil {
+			log.Errorf(r.Context(), "error reading from source: %v", err)
+			return
+		}
 	}
 
 	// Determine new content length
