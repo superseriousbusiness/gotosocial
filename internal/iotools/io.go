@@ -20,6 +20,8 @@ package iotools
 import (
 	"io"
 	"os"
+
+	"codeberg.org/gruf/go-fastcopy"
 )
 
 // ReadFnCloser takes an io.Reader and wraps it to use the provided function to implement io.Closer.
@@ -179,7 +181,7 @@ func TempFileSeeker(r io.Reader) (io.ReadSeekCloser, error) {
 		return nil, err
 	}
 
-	if _, err := io.Copy(tmp, r); err != nil {
+	if _, err := fastcopy.Copy(tmp, r); err != nil {
 		return nil, err
 	}
 
