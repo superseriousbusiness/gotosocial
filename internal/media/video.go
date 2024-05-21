@@ -36,20 +36,30 @@ type gtsVideo struct {
 // decodeVideoFrame decodes and returns an image from a single frame in the given video stream.
 // (note: currently this only returns a blank image resized to fit video dimensions).
 func decodeVideoFrame(r io.Reader) (*gtsVideo, error) {
-	// we need a readseeker to decode the video...
-	tfs, err := iotools.TempFileSeeker(r)
-	if err != nil {
-		return nil, fmt.Errorf("error creating temp file seeker: %w", err)
-	}
-	defer func() {
-		if err := tfs.Close(); err != nil {
-			log.Errorf(nil, "error closing temp file seeker: %s", err)
+	// Check if video stream supports
+	// seeking, usually when *os.File.
+	rsc, ok := r.(io.ReadSeekCloser)
+	if !ok {
+		var err error
+
+		// Store stream to temporary location
+		// in order that we can get seek-reads.
+		rsc, err = iotools.TempFileSeeker(r)
+		if err != nil {
+			return nil, fmt.Errorf("error creating temp file seeker: %w", err)
 		}
-	}()
+
+		defer func() {
+			// Ensure temp. read seeker closed.
+			if err := rsc.Close(); err != nil {
+				log.Errorf(nil, "error closing temp file seeker: %s", err)
+			}
+		}()
+	}
 
 	// probe the video file to extract useful metadata from it; for methodology, see:
 	// https://github.com/abema/go-mp4/blob/7d8e5a7c5e644e0394261b0cf72fef79ce246d31/mp4tool/probe/probe.go#L85-L154
-	info, err := mp4.Probe(tfs)
+	info, err := mp4.Probe(rsc)
 	if err != nil {
 		return nil, fmt.Errorf("error during mp4 probe: %w", err)
 	}
