@@ -18,8 +18,6 @@
 package gotosocial
 
 import (
-	"context"
-
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -50,7 +48,7 @@ func NewServer(
 // Start starts up the GoToSocial server by starting the router,
 // then the cleaner. If something goes wrong while starting the
 // server, then an error will be returned.
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start() error {
 	s.apiRouter.Start()
 	return s.cleaner.ScheduleJobs()
 }
@@ -58,8 +56,8 @@ func (s *Server) Start(ctx context.Context) error {
 // Stop closes down the GoToSocial server, first closing the cleaner,
 // then the router, then the database. If something goes wrong while
 // stopping, an error will be returned.
-func (s *Server) Stop(ctx context.Context) error {
-	if err := s.apiRouter.Stop(ctx); err != nil {
+func (s *Server) Stop() error {
+	if err := s.apiRouter.Stop(); err != nil {
 		return err
 	}
 	return s.db.Close()

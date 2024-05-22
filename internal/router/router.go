@@ -122,7 +122,7 @@ func New(ctx context.Context) (*Router, error) {
 //
 // It will serve two handlers if letsencrypt is enabled,
 // and only the web/API handler if letsencrypt is not enabled.
-func (r *Router) Start() {
+func (r *Router) Start() error {
 	var (
 		// listen is the server start function.
 		// By default this points to a regular
@@ -143,19 +143,21 @@ func (r *Router) Start() {
 		// that either both or neither of Chain and Key
 		// are set, so we can forego checking again here.
 		listen, err = r.customTLS(certFile, keyFile)
+		if err != nil {
+			return err
+		}
 
 	// TLS with letsencrypt.
 	case leEnabled:
 		listen, err = r.letsEncryptTLS()
+		if err != nil {
+			return err
+		}
 
 	// Default listen. TLS must
 	// be handled by reverse proxy.
 	default:
 		listen = r.srv.ListenAndServe
-	}
-
-	if err != nil {
-		log.Fatal(nil, err)
 	}
 
 	// Pass the server handler through a debug pprof middleware handler.
@@ -177,12 +179,14 @@ func (r *Router) Start() {
 			log.Fatalf(nil, "listen: %s", err)
 		}
 	}()
+
+	return nil
 }
 
-// Stop shuts down the router nicely
-func (r *Router) Stop(ctx context.Context) error {
+// Stop shuts down the router nicely.
+func (r *Router) Stop() error {
 	log.Infof(nil, "shutting down http router with %s grace period", shutdownTimeout)
-	timeout, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	timeout, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	if err := r.srv.Shutdown(timeout); err != nil {

@@ -79,8 +79,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	testrig.StandardDBSetup(state.DB, nil)
 
-	// Get the instance account
-	// (we'll need this later).
+	// Get the instance account (we'll need this later).
 	instanceAccount, err := state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return fmt.Errorf("error retrieving instance account: %w", err)
@@ -249,7 +248,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	cleaner := cleaner.New(&state)
 
 	gts := gotosocial.NewServer(state.DB, router, cleaner)
-	if err := gts.Start(ctx); err != nil {
+	if err := gts.Start(); err != nil {
 		return fmt.Errorf("error starting gotosocial service: %s", err)
 	}
 
@@ -263,7 +262,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.StandardStorageTeardown(state.Storage)
 
 	// close down all running services in order
-	if err := gts.Stop(ctx); err != nil {
+	if err := gts.Stop(); err != nil {
 		return fmt.Errorf("error closing gotosocial service: %s", err)
 	}
 
