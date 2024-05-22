@@ -142,6 +142,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
+	// Set DB on state.
+	state.DB = dbService
+
 	// Ensure necessary database instance prerequisites exist.
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
