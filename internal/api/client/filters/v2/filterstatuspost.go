@@ -129,9 +129,5 @@ func (m *Module) FilterStatusPOSTHandler(c *gin.Context) {
 }
 
 func validateCreateFilterStatus(form *apimodel.FilterStatusCreateRequest) error {
-	if err := validate.ULID(form.StatusID, "status_id"); err != nil {
-		return err
-	}
-
-	return nil
+	return validate.ULID(form.StatusID, "status_id")
 }

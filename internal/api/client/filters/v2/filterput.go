@@ -306,12 +306,13 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 		destroy := util.PtrValueOr(formStatus.Destroy, false)
 		form.Statuses[i].Destroy = &destroy
 
-		if destroy && formStatus.ID == nil {
+		switch {
+		case destroy && formStatus.ID == nil:
 			return errors.New("can't delete a filter status without an ID")
-		} else if formStatus.ID != nil {
+		case formStatus.ID != nil:
 			return errors.New("filter status IDs here can only be used to delete them")
-		} else if formStatus.StatusID == nil {
-			return errors.New("can't create a filter keyword without a status ID")
+		case formStatus.StatusID == nil:
+			return errors.New("can't create a filter status without a status ID")
 		}
 	}
 

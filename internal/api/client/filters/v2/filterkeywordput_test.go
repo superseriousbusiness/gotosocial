@@ -107,7 +107,7 @@ func (suite *FiltersTestSuite) putFilterKeyword(
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordFull() {
-	filterKeywordID := suite.testFilters["local_account_1_filter_1_keyword_1"].ID
+	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	keyword := "fnords"
 	wholeWord := true
 	filterKeyword, err := suite.putFilterKeyword(filterKeywordID, &keyword, &wholeWord, nil, http.StatusOK, "")
@@ -120,7 +120,7 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordFull() {
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordFullJSON() {
-	filterKeywordID := suite.testFilters["local_account_1_filter_1_keyword_1"].ID
+	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	requestJson := `{
 		"keyword": "fnords",
 		"whole_word": true
@@ -135,7 +135,7 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordFullJSON() {
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordMinimal() {
-	filterKeywordID := suite.testFilters["local_account_1_filter_1_keyword_1"].ID
+	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	keyword := "fnords"
 	filterKeyword, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusOK, "")
 	if err != nil {
@@ -147,7 +147,7 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordMinimal() {
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordEmptyKeyword() {
-	filterKeywordID := suite.testFilters["local_account_1_filter_1_keyword_1"].ID
+	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	keyword := ""
 	_, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusUnprocessableEntity, `{"error":"Unprocessable Entity: filter keyword must be provided, and must be no more than 40 chars"}`)
 	if err != nil {
@@ -156,7 +156,7 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordEmptyKeyword() {
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordMissingKeyword() {
-	filterKeywordID := suite.testFilters["local_account_1_filter_1_keyword_1"].ID
+	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	_, err := suite.putFilterKeyword(filterKeywordID, nil, nil, nil, http.StatusUnprocessableEntity, `{"error":"Unprocessable Entity: filter keyword must be provided, and must be no more than 40 chars"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -174,7 +174,7 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordKeywordConflict() {
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordAnotherAccountsFilterKeyword() {
-	filterKeywordID := suite.testFilters["local_account_2_filter_1_keyword_1"].ID
+	filterKeywordID := suite.testFilterKeywords["local_account_2_filter_1_keyword_1"].ID
 	keyword := "fnord"
 	_, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
 	if err != nil {
