@@ -56,6 +56,11 @@ const (
 	MovePath          = BasePath + "/move"
 	AliasPath         = BasePath + "/alias"
 	ThemesPath        = BasePath + "/themes"
+
+	// ProfileBasePath for the profile API, an extension of the account update API with a different path.
+	ProfileBasePath = "/v1/profile"
+	AvatarPath      = ProfileBasePath + "/avatar"
+	HeaderPath      = ProfileBasePath + "/header"
 )
 
 type Module struct {
@@ -83,6 +88,10 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// modify account
 	attachHandler(http.MethodPatch, UpdatePath, m.AccountUpdateCredentialsPATCHHandler)
+
+	// modify account profile media
+	attachHandler(http.MethodDelete, AvatarPath, m.AccountAvatarDELETEHandler)
+	attachHandler(http.MethodDelete, HeaderPath, m.AccountHeaderDELETEHandler)
 
 	// get account's statuses
 	attachHandler(http.MethodGet, StatusesPath, m.AccountStatusesGETHandler)
