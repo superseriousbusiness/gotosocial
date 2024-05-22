@@ -208,7 +208,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		HTTP router initialization
 	*/
 
-	router := testrig.NewTestRouter(state.DB)
+	route = testrig.NewTestRouter(state.DB)
 	middlewares := []gin.HandlerFunc{
 		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
 	}
@@ -252,10 +252,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	middlewares = append(middlewares, middleware.ContentSecurityPolicy(cspExtraURIs...))
 
 	// attach global middlewares which are used for every request
-	router.AttachGlobalMiddleware(middlewares...)
+	route.AttachGlobalMiddleware(middlewares...)
 
 	// attach global no route / 404 handler to the router
-	router.AttachNoRouteHandler(func(c *gin.Context) {
+	route.AttachNoRouteHandler(func(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGetV1)
 	})
 
@@ -291,17 +291,17 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	)
 
 	// these should be routed in order
-	authModule.Route(router)
-	clientModule.Route(router)
-	metricsModule.Route(router)
-	healthModule.Route(router)
-	fileserverModule.Route(router)
-	fileserverModule.RouteEmojis(router, instanceAccount.ID)
-	wellKnownModule.Route(router)
-	nodeInfoModule.Route(router)
-	activityPubModule.Route(router)
-	activityPubModule.RoutePublicKey(router)
-	webModule.Route(router)
+	authModule.Route(route)
+	clientModule.Route(route)
+	metricsModule.Route(route)
+	healthModule.Route(route)
+	fileserverModule.Route(route)
+	fileserverModule.RouteEmojis(route, instanceAccount.ID)
+	wellKnownModule.Route(route)
+	nodeInfoModule.Route(route)
+	activityPubModule.Route(route)
+	activityPubModule.RoutePublicKey(route)
+	webModule.Route(route)
 
 	// Create background cleaner.
 	cleaner := cleaner.New(&state)
