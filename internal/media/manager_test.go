@@ -23,15 +23,15 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"testing"
 	"time"
 
-	"codeberg.org/gruf/go-store/v2/storage"
+	"codeberg.org/gruf/go-storage/disk"
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -189,9 +189,9 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 
 	// the old image files should no longer be in storage
 	_, err = suite.storage.Get(ctx, oldEmojiImagePath)
-	suite.ErrorIs(err, storage.ErrNotFound)
+	suite.True(storage.IsNotFound(err))
 	_, err = suite.storage.Get(ctx, oldEmojiImageStaticPath)
-	suite.ErrorIs(err, storage.ErrNotFound)
+	suite.True(storage.IsNotFound(err))
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
@@ -1189,9 +1189,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	temp := fmt.Sprintf("%s/gotosocial-test", os.TempDir())
 	defer os.RemoveAll(temp)
 
-	disk, err := storage.OpenDisk(temp, &storage.DiskConfig{
-		LockFile: path.Join(temp, "store.lock"),
-	})
+	disk, err := disk.Open(temp, nil)
 	if err != nil {
 		panic(err)
 	}

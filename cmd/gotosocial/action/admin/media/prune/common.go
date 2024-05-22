@@ -80,10 +80,6 @@ func setupPrune(ctx context.Context) (*prune, error) {
 func (p *prune) shutdown() error {
 	errs := gtserror.NewMultiError(2)
 
-	if err := p.storage.Close(); err != nil {
-		errs.Appendf("error closing storage backend: %w", err)
-	}
-
 	if err := p.dbService.Close(); err != nil {
 		errs.Appendf("error stopping database: %w", err)
 	}

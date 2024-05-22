@@ -20,7 +20,6 @@ package media
 import (
 	"bytes"
 	"context"
-	"errors"
 	"image/jpeg"
 	"io"
 	"time"
@@ -156,7 +155,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 		// never decoded). Try to clean up in this case.
 		if p.media.Type == gtsmodel.FileTypeUnknown {
 			deleteErr := p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
-			if deleteErr != nil && !errors.Is(deleteErr, storage.ErrNotFound) {
+			if deleteErr != nil && !storage.IsNotFound(deleteErr) {
 				errs.Append(deleteErr)
 			}
 		}

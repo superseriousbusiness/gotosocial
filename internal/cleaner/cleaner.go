@@ -19,15 +19,14 @@ package cleaner
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"codeberg.org/gruf/go-store/v2/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 const (
@@ -89,7 +88,7 @@ func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error)
 		// Remove each provided storage path.
 		log.Debugf(ctx, "removing file: %s", path)
 		err := c.state.Storage.Delete(ctx, path)
-		if err != nil && !errors.Is(err, storage.ErrNotFound) {
+		if err != nil && !storage.IsNotFound(err) {
 			errs.Appendf("error removing %s: %w", path, err)
 			errCount++
 		}

@@ -23,13 +23,13 @@ import (
 	"os"
 	"path"
 
-	"codeberg.org/gruf/go-store/v2/storage"
+	"codeberg.org/gruf/go-storage/memory"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // NewInMemoryStorage returns a new in memory storage with the default test config
 func NewInMemoryStorage() *gtsstorage.Driver {
-	storage := storage.OpenMemory(200, false)
+	storage := memory.Open(200, false)
 	return &gtsstorage.Driver{
 		Storage: storage,
 	}
@@ -98,7 +98,7 @@ func StandardStorageTeardown(storage *gtsstorage.Driver) {
 
 	var keys []string
 
-	_ = storage.WalkKeys(context.Background(), func(ctx context.Context, key string) error {
+	_ = storage.WalkKeys(context.Background(), func(key string) error {
 		keys = append(keys, key)
 		return nil
 	})

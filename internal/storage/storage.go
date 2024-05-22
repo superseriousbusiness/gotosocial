@@ -19,16 +19,20 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
 	"net/url"
 	"path"
+	"syscall"
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-cache/v3/ttl"
-	"codeberg.org/gruf/go-store/v2/storage"
+	"codeberg.org/gruf/go-storage"
+	"codeberg.org/gruf/go-storage/disk"
+	"codeberg.org/gruf/go-storage/s3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -48,11 +52,17 @@ type PresignedURL struct {
 	Expiry time.Time // link expires at this time
 }
 
-var (
-	// Ptrs to underlying storage library errors.
-	ErrAlreadyExists = storage.ErrAlreadyExists
-	ErrNotFound      = storage.ErrNotFound
-)
+// IsAlreadyExist returns whether error is an already-exists
+// type error returned by the underlying storage library.
+func IsAlreadyExist(err error) bool {
+	return errors.Is(err, storage.ErrAlreadyExists)
+}
+
+// IsNotFound returns whether error is a not-found error
+// type returned by the underlying storage library.
+func IsNotFound(err error) bool {
+	return errors.Is(err, storage.ErrNotFound)
+}
 
 // Driver wraps a kv.KVStore to also provide S3 presigned GET URLs.
 type Driver struct {
@@ -92,30 +102,23 @@ func (d *Driver) Delete(ctx context.Context, key string) error {
 
 // Has checks if the supplied key is in the storage.
 func (d *Driver) Has(ctx context.Context, key string) (bool, error) {
-	return d.Storage.Stat(ctx, key)
+	stat, err := d.Storage.Stat(ctx, key)
+	return (stat != nil), err
 }
 
 // WalkKeys walks the keys in the storage.
-func (d *Driver) WalkKeys(ctx context.Context, walk func(context.Context, string) error) error {
-	return d.Storage.WalkKeys(ctx, storage.WalkKeysOptions{
-		WalkFn: func(ctx context.Context, entry storage.Entry) error {
-			if entry.Key == "store.lock" {
-				return nil // skip this.
-			}
-			return walk(ctx, entry.Key)
+func (d *Driver) WalkKeys(ctx context.Context, walk func(string) error) error {
+	return d.Storage.WalkKeys(ctx, storage.WalkKeysOpts{
+		Step: func(entry storage.Entry) error {
+			return walk(entry.Key)
 		},
 	})
-}
-
-// Close will close the storage, releasing any file locks.
-func (d *Driver) Close() error {
-	return d.Storage.Close()
 }
 
 // URL will return a presigned GET object URL, but only if running on S3 storage with proxying disabled.
 func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
 	// Check whether S3 *without* proxying is enabled
-	s3, ok := d.Storage.(*storage.S3Storage)
+	s3, ok := d.Storage.(*s3.S3Storage)
 	if !ok || d.Proxy {
 		return nil
 	}
@@ -166,7 +169,7 @@ func (d *Driver) ProbeCSPUri(ctx context.Context) (string, error) {
 	// Check whether S3 without proxying
 	// is enabled. If it's not, there's
 	// no need to add anything to the CSP.
-	s3, ok := d.Storage.(*storage.S3Storage)
+	s3, ok := d.Storage.(*s3.S3Storage)
 	if !ok || d.Proxy {
 		return "", nil
 	}
@@ -217,16 +220,17 @@ func NewFileStorage() (*Driver, error) {
 	// Load runtime configuration
 	basePath := config.GetStorageLocalBasePath()
 
+	// Use default disk config but with
+	// increased write buffer size and
+	// 'exclusive' bit sets when creating
+	// files to ensure we don't overwrite
+	// existing files unless intending to.
+	diskCfg := disk.DefaultConfig()
+	diskCfg.OpenWrite.Flags |= syscall.O_EXCL
+	diskCfg.WriteBufSize = int(16 * bytesize.KiB)
+
 	// Open the disk storage implementation
-	disk, err := storage.OpenDisk(basePath, &storage.DiskConfig{
-		// Put the store lockfile in the storage dir itself.
-		// Normally this would not be safe, since we could end up
-		// overwriting the lockfile if we store a file called 'store.lock'.
-		// However, in this case it's OK because the keys are set by
-		// GtS and not the user, so we know we're never going to overwrite it.
-		LockFile:     path.Join(basePath, "store.lock"),
-		WriteBufSize: int(16 * bytesize.KiB),
-	})
+	disk, err := disk.Open(basePath, &diskCfg)
 	if err != nil {
 		return nil, fmt.Errorf("error opening disk storage: %w", err)
 	}
@@ -245,7 +249,7 @@ func NewS3Storage() (*Driver, error) {
 	bucket := config.GetStorageS3BucketName()
 
 	// Open the s3 storage implementation
-	s3, err := storage.OpenS3(endpoint, bucket, &storage.S3Config{
+	s3, err := s3.Open(endpoint, bucket, &s3.Config{
 		CoreOpts: minio.Options{
 			Creds:  credentials.NewStaticV4(access, secret, ""),
 			Secure: secure,
