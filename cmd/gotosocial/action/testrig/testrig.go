@@ -85,7 +85,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// Stop any currently running
 		// worker processes / scheduled
 		// tasks from being executed.
-		state.Workers.Stop()
+		testrig.StopWorkers(&state)
 
 		if state.Timelines.Home != nil {
 			// Home timeline mgr was setup, ensure it gets stopped.
