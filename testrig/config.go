@@ -31,9 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 )
 
-// initialize with test defaults.
-func init() { InitTestConfig() }
-
 // InitTestConfig initializes viper
 // configuration with test defaults.
 func InitTestConfig() {
