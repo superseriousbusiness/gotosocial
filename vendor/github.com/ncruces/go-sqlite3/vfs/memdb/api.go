@@ -33,8 +33,11 @@ func Create(name string, data []byte) {
 	memoryMtx.Lock()
 	defer memoryMtx.Unlock()
 
-	db := new(memDB)
-	db.size = int64(len(data))
+	db := &memDB{
+		refs: 1,
+		name: name,
+		size: int64(len(data)),
+	}
 
 	// Convert data from WAL to rollback journal.
 	if len(data) >= 20 && data[18] == 2 && data[19] == 2 {

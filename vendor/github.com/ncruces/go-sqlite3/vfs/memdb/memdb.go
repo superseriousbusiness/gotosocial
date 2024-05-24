@@ -3,7 +3,6 @@ package memdb
 import (
 	"io"
 	"runtime"
-	"strings"
 	"sync"
 	"time"
 
@@ -34,22 +33,25 @@ func (memVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, err
 		return nil, flags, sqlite3.CANTOPEN
 	}
 
-	var db *memDB
+	// A shared database has a name that begins with "/".
+	shared := len(name) > 1 && name[0] == '/'
 
-	shared := strings.HasPrefix(name, "/")
+	var db *memDB
 	if shared {
+		name = name[1:]
 		memoryMtx.Lock()
 		defer memoryMtx.Unlock()
-		db = memoryDBs[name[1:]]
+		db = memoryDBs[name]
 	}
 	if db == nil {
 		if flags&vfs.OPEN_CREATE == 0 {
 			return nil, flags, sqlite3.CANTOPEN
 		}
-		db = new(memDB)
+		db = &memDB{name: name}
 	}
 	if shared {
-		memoryDBs[name[1:]] = db // +checklocksignore: lock is held
+		db.refs++ // +checklocksforce: memoryMtx is held
+		memoryDBs[name] = db
 	}
 
 	return &memFile{
@@ -71,6 +73,8 @@ func (memVFS) FullPathname(name string) (string, error) {
 }
 
 type memDB struct {
+	name string
+
 	// +checklocks:lockMtx
 	pending *memFile
 	// +checklocks:lockMtx
@@ -85,8 +89,19 @@ type memDB struct {
 	// +checklocks:lockMtx
 	shared int
 
+	// +checklocks:memoryMtx
+	refs int
+
 	lockMtx sync.Mutex
 	dataMtx sync.RWMutex
+}
+
+func (m *memDB) release() {
+	memoryMtx.Lock()
+	defer memoryMtx.Unlock()
+	if m.refs--; m.refs == 0 && m == memoryDBs[m.name] {
+		delete(memoryDBs, m.name)
+	}
 }
 
 type memFile struct {
@@ -102,6 +117,7 @@ var (
 )
 
 func (m *memFile) Close() error {
+	m.release()
 	return m.Unlock(vfs.LOCK_NONE)
 }
 
