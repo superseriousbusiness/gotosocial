@@ -70,27 +70,27 @@ import (
 //		maxLength: 200
 //	-
 //		name: keywords_attributes[][keyword]
+//		in: formData
 //		type: array
 //		items:
 //			type: string
 //		description: Keywords to be added to the created filter.
-//		in: query
 //		collectionFormat: multi
 //	-
 //		name: keywords_attributes[][whole_word]
+//		in: formData
 //		type: array
 //		items:
-//			type: bool
+//			type: boolean
 //		description: Should each keyword consider word boundaries?
-//		in: query
 //		collectionFormat: multi
 //	-
 //		name: statuses_attributes[][status_id]
+//		in: formData
 //		type: array
 //		items:
 //			type: string
 //		description: Statuses to be added to the newly created filter.
-//		in: query
 //		collectionFormat: multi
 //	-
 //		name: context[]

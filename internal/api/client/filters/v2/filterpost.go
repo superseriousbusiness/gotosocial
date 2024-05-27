@@ -102,27 +102,27 @@ import (
 //		default: warn
 //	-
 //		name: keywords_attributes[][keyword]
+//		in: formData
 //		type: array
 //		items:
 //			type: string
 //		description: Keywords to be added (if not using id param) or updated (if using id param).
-//		in: query
 //		collectionFormat: multi
 //	-
 //		name: keywords_attributes[][whole_word]
+//		in: formData
 //		type: array
 //		items:
-//			type: bool
+//			type: boolean
 //		description: Should each keyword consider word boundaries?
-//		in: query
 //		collectionFormat: multi
 //	-
 //		name: statuses_attributes[][status_id]
+//		in: formData
 //		type: array
 //		items:
 //			type: string
 //		description: Statuses to be added to the filter.
-//		in: query
 //		collectionFormat: multi
 //
 //	security:
