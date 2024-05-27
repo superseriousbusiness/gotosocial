@@ -29,8 +29,11 @@ import { useDomainAllowsQuery, useDomainBlocksQuery } from "../../../lib/query/a
 import type { MappedDomainPerms } from "../../../lib/types/domain-permission";
 import { NoArg } from "../../../lib/types/query";
 import { PermType } from "../../../lib/types/perm";
+import { useBaseUrl } from "../../../lib/navigation/util";
 
 export default function DomainPermissionsOverview() {	
+	const baseUrl = useBaseUrl();
+	
 	// Parse perm type from routing params.
 	let params = useParams();
 	if (params.permType !== "blocks" && params.permType !== "allows") {
@@ -71,7 +74,7 @@ export default function DomainPermissionsOverview() {
 				permType={permType}
 				permTypeUpper={permTypeUpper}
 			/>
-			<Link to="/settings/admin/domain-permissions/import-export">
+			<Link to={`~${baseUrl}/import-export`}>
 				Or use the bulk import/export interface
 			</Link>
 		</>
