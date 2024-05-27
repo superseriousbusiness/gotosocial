@@ -1053,7 +1053,7 @@ definitions:
                 type: string
                 x-go-name: Keyword
             whole_word:
-                description: Should the filter consider word boundaries?
+                description: Should the filter keyword consider word boundaries?
                 example: true
                 type: boolean
                 x-go-name: WholeWord
@@ -5941,6 +5941,7 @@ paths:
                     Sample: fnord
                   in: formData
                   maxLength: 40
+                  minLength: 1
                   name: phrase
                   required: true
                   type: string
@@ -6001,6 +6002,8 @@ paths:
                     description: not found
                 "406":
                     description: not acceptable
+                "409":
+                    description: conflict (duplicate keyword)
                 "422":
                     description: unprocessable content
                 "500":
@@ -6015,7 +6018,7 @@ paths:
         delete:
             operationId: filterV1Delete
             parameters:
-                - description: ID of the list
+                - description: ID of the filter
                   in: path
                   name: id
                   required: true
@@ -6090,6 +6093,7 @@ paths:
                     Sample: fnord
                   in: formData
                   maxLength: 40
+                  minLength: 1
                   name: phrase
                   required: true
                   type: string
@@ -6150,6 +6154,8 @@ paths:
                     description: not found
                 "406":
                     description: not acceptable
+                "409":
+                    description: conflict (duplicate keyword)
                 "422":
                     description: unprocessable content
                 "500":
@@ -8675,6 +8681,589 @@ paths:
             summary: View + page through known accounts according to given filters.
             tags:
                 - admin
+    /api/v2/filters:
+        get:
+            operationId: filtersV2Get
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filters.
+                    schema:
+                        items:
+                            $ref: '#/definitions/filterV2'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Get all filters for the authenticated account.
+            tags:
+                - filters
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: filterV2Post
+            parameters:
+                - description: |-
+                    The name of the filter.
+
+                    Sample: illuminati nonsense
+                  in: formData
+                  maxLength: 200
+                  minLength: 1
+                  name: title
+                  required: true
+                  type: string
+                - collectionFormat: multi
+                  description: |-
+                    The contexts in which the filter should be applied.
+
+                    Sample: home, public
+                  enum:
+                    - home
+                    - notifications
+                    - public
+                    - thread
+                    - account
+                  in: formData
+                  items:
+                    type: string
+                  minItems: 1
+                  name: context[]
+                  required: true
+                  type: array
+                  uniqueItems: true
+                - description: |-
+                    Number of seconds from now that the filter should expire. If omitted, filter never expires.
+
+                    Sample: 86400
+                  in: formData
+                  name: expires_in
+                  type: number
+                - default: warn
+                  description: |-
+                    The action to be taken when a status matches this filter.
+
+                    Sample: warn
+                  enum:
+                    - warn
+                    - hide
+                  in: formData
+                  name: filter_action
+                  type: string
+                - collectionFormat: multi
+                  description: Keywords to be added (if not using id param) or updated (if using id param).
+                  in: query
+                  items:
+                    type: string
+                  name: keywords_attributes[][keyword]
+                  type: array
+                - collectionFormat: multi
+                  description: Should each keyword consider word boundaries?
+                  in: query
+                  items:
+                    type: bool
+                  name: keywords_attributes[][whole_word]
+                  type: array
+                - collectionFormat: multi
+                  description: Statuses to be added to the filter.
+                  in: query
+                  items:
+                    type: string
+                  name: statuses_attributes[][status_id]
+                  type: array
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: New filter.
+                    schema:
+                        $ref: '#/definitions/filterV2'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict (duplicate title, keyword, or status)
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Create a single filter.
+            tags:
+                - filters
+    /api/v2/filters/{id}:
+        delete:
+            operationId: filterV2Delete
+            parameters:
+                - description: ID of the filter
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: filter deleted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Delete a single filter with the given ID.
+            tags:
+                - filters
+        get:
+            operationId: filterV2Get
+            parameters:
+                - description: ID of the filter
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filter.
+                    schema:
+                        $ref: '#/definitions/filterV2'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Get a single filter with the given ID.
+            tags:
+                - filters
+        put:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            description: |-
+                Note that this is actually closer to a PATCH operation:
+                only provided fields will be updated, and omitted fields will remain set to previous values.
+            operationId: filterV2Put
+            parameters:
+                - description: ID of the filter.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    The name of the filter.
+
+                    Sample: illuminati nonsense
+                  in: formData
+                  maxLength: 200
+                  minLength: 1
+                  name: title
+                  required: true
+                  type: string
+                - collectionFormat: multi
+                  description: Keywords to be added to the created filter.
+                  in: query
+                  items:
+                    type: string
+                  name: keywords_attributes[][keyword]
+                  type: array
+                - collectionFormat: multi
+                  description: Should each keyword consider word boundaries?
+                  in: query
+                  items:
+                    type: bool
+                  name: keywords_attributes[][whole_word]
+                  type: array
+                - collectionFormat: multi
+                  description: Statuses to be added to the newly created filter.
+                  in: query
+                  items:
+                    type: string
+                  name: statuses_attributes[][status_id]
+                  type: array
+                - collectionFormat: multi
+                  description: |-
+                    The contexts in which the filter should be applied.
+
+                    Sample: home, public
+                  enum:
+                    - home
+                    - notifications
+                    - public
+                    - thread
+                    - account
+                  in: formData
+                  items:
+                    type: string
+                  minItems: 1
+                  name: context[]
+                  required: true
+                  type: array
+                  uniqueItems: true
+                - description: |-
+                    Number of seconds from now that the filter should expire.
+
+                    Sample: 86400
+                  in: formData
+                  name: expires_in
+                  type: number
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Updated filter.
+                    schema:
+                        $ref: '#/definitions/filterV2'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict (duplicate title, keyword, or status)
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Update a single filter with the given ID.
+            tags:
+                - filters
+    /api/v2/filters/{id}/keywords:
+        get:
+            operationId: filterKeywordsGet
+            parameters:
+                - description: ID of the filter
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filter keywords.
+                    schema:
+                        items:
+                            $ref: '#/definitions/filterKeyword'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Get all filter keywords for a given filter.
+            tags:
+                - filters
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: filterKeywordPost
+            parameters:
+                - description: ID of the filter to add the filtered status to.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    The text to be filtered
+
+                    Sample: fnord
+                  in: formData
+                  maxLength: 40
+                  minLength: 1
+                  name: keyword
+                  required: true
+                  type: string
+                - default: false
+                  description: |-
+                    Should the filter consider word boundaries?
+
+                    Sample: true
+                  in: formData
+                  name: whole_word
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: New filter keyword.
+                    schema:
+                        $ref: '#/definitions/filterKeyword'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict (duplicate keyword)
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Add a filter keyword to an existing filter.
+            tags:
+                - filters
+    /api/v2/filters/{id}/statuses:
+        get:
+            operationId: filterStatusesGet
+            parameters:
+                - description: ID of the filter
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filter statuses.
+                    schema:
+                        items:
+                            $ref: '#/definitions/filterStatus'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Get all filter statuses for a given filter.
+            tags:
+                - filters
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: filterStatusPost
+            parameters:
+                - description: ID of the filter to add the filtered status to.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    The ID of the status to filter.
+
+                    Sample: 01HXA2NE0K8T1C70K90E74GYD0
+                  in: formData
+                  name: status_id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: New filter status.
+                    schema:
+                        $ref: '#/definitions/filterStatus'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict (duplicate status)
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Add a filter status to an existing filter.
+            tags:
+                - filters
+    /api/v2/filters/keywords/{id}:
+        get:
+            operationId: filterKeywordGet
+            parameters:
+                - description: ID of the filter keyword
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filter keyword.
+                    schema:
+                        $ref: '#/definitions/filterKeyword'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Get a single filter keyword with the given ID.
+            tags:
+                - filters
+    /api/v2/filters/keywords{id}:
+        put:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: filterKeywordPut
+            parameters:
+                - description: ID of the filter keyword to update.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: |-
+                    The text to be filtered
+
+                    Sample: fnord
+                  in: formData
+                  maxLength: 40
+                  minLength: 1
+                  name: keyword
+                  required: true
+                  type: string
+                - description: |-
+                    Should the filter consider word boundaries?
+
+                    Sample: true
+                  in: formData
+                  name: whole_word
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Updated filter keyword.
+                    schema:
+                        $ref: '#/definitions/filterKeyword'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict (duplicate keyword)
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Update a single filter keyword with the given ID.
+            tags:
+                - filters
+    /api/v2/filters/statuses/{id}:
+        get:
+            operationId: filterStatusGet
+            parameters:
+                - description: ID of the filter status
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Requested filter status.
+                    schema:
+                        $ref: '#/definitions/filterStatus'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:filters
+            summary: Get a single filter status with the given ID.
+            tags:
+                - filters
     /api/v2/instance:
         get:
             operationId: instanceGetV2
