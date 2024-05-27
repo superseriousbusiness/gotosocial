@@ -22,3 +22,10 @@ This is a test email from {{.InstanceName}} ({{.InstanceURL}}).
 If you're seeing this email, that means the SMTP configuration is correct!
 
 This email was sent by the admin user @{{.SendingUsername}}.
+{{- if .Message }}
+
+The following message was included by the admin user:
+
+{{ .Message }}
+{{- else }}
+{{- end }}

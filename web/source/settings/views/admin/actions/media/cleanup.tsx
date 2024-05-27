@@ -22,10 +22,10 @@ import React from "react";
 import { useTextInput } from "../../../../lib/form";
 import { TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
-import { useMediaCleanupMutation } from "../../../../lib/query/admin";
+import { useMediaCleanupMutation } from "../../../../lib/query/admin/actions";
 
 export default function Cleanup({}) {
-	const daysField = useTextInput("days", { defaultValue: "30" });
+	const daysField = useTextInput("days", { defaultValue: "7" });
 
 	const [mediaCleanup, mediaCleanupResult] = useMediaCleanupMutation();
 
@@ -36,12 +36,24 @@ export default function Cleanup({}) {
     
 	return (
 		<form onSubmit={submitCleanup}>
-			<h2>Cleanup</h2>
-			<p>
+			<div className="form-section-docs">
+				<h2>Cleanup</h2>
+				<p>
 					Clean up remote media older than the specified number of days.
+					<br/>
 					If the remote instance is still online they will be refetched when needed.
+					<br/>
 					Also cleans up unused headers and avatars from the media cache.
-			</p>
+				</p>
+				<a
+					href="https://docs.gotosocial.org/en/latest/admin/media_caching/"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about media caching + cleanup (opens in a new tab)
+				</a>
+			</div>
 			<TextInput
 				field={daysField}
 				label="Days"

@@ -18,12 +18,12 @@
 */
 
 import React from "react";
-import Cleanup from "./cleanup";
+import Test from "./test";
 
-export default function Media() {
+export default function Email() {
 	return (
-		<div className="admin-actions-media">
-			<Cleanup />
+		<div className="admin-actions-email">
+			<Test />
 		</div>
 	);
 }

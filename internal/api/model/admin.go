@@ -201,7 +201,9 @@ type MediaCleanupRequest struct {
 // AdminSendTestEmailRequest models a test email send request (woah).
 type AdminSendTestEmailRequest struct {
 	// Email address to send the test email to.
-	Email string `form:"email" json:"email" xml:"email"`
+	Email string `form:"email" json:"email"`
+	// Optional message to include in the test email.
+	Message string `form:"message" json:"message"`
 }
 
 type AdminInstanceRule struct {

@@ -21,7 +21,7 @@ import React from "react";
 import { TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
 import { useTextInput } from "../../../../lib/form";
-import { useInstanceKeysExpireMutation } from "../../../../lib/query/admin";
+import { useInstanceKeysExpireMutation } from "../../../../lib/query/admin/actions";
 
 export default function ExpireRemote({}) {
 	const domainField = useTextInput("domain");
@@ -35,15 +35,20 @@ export default function ExpireRemote({}) {
 
 	return (
 		<form onSubmit={submitExpire}>
-			<h2>Expire remote instance keys</h2>
-			<p>
-				Mark all public keys from the given remote instance as expired.<br/><br/>
-				This is useful in cases where the remote domain has had to rotate their keys for whatever
-				reason (security issue, data leak, routine safety procedure, etc), and your instance can no
-				longer communicate with theirs properly using cached keys. A key marked as expired in this way
-				will be lazily refetched next time a request is made to your instance signed by the owner of that
-				key.
-			</p>
+			<div className="form-section-docs">
+				<h2>Expire remote instance keys</h2>
+				<p>
+					Mark all public keys from the given remote instance as expired.
+					<br/>
+					This is useful in cases where the remote domain has had to rotate
+					their keys for whatever reason (security issue, data leak, routine
+					safety procedure, etc), and your instance can no longer communicate
+					with theirs properly using cached keys.
+					<br/>
+					A key marked as expired in this way will be lazily refetched next time
+					a request is made to your instance signed by the owner of that key.
+				</p>
+			</div>
 			<TextInput
 				field={domainField}
 				label="Domain"

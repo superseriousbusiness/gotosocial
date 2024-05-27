@@ -31,6 +31,7 @@ import EmojiDetail from "./emoji/local/detail";
 import RemoteEmoji from "./emoji/remote";
 import HeaderPermsOverview from "./http-header-permissions/overview";
 import HeaderPermDetail from "./http-header-permissions/detail";
+import Email from "./actions/email";
 
 /*
 	EXPORTED COMPONENTS
@@ -47,6 +48,7 @@ import HeaderPermDetail from "./http-header-permissions/detail";
  * - /settings/admin/actions
  * - /settings/admin/actions/media
  * - /settings/admin/actions/keys
+ * - /settings/admin/actions/email
  * - /settings/admin/http-header-permissions/allows
  * - /settings/admin/http-header-permissions/allows/:allowId
  * - /settings/admin/http-header-permissions/blocks
@@ -108,6 +110,7 @@ function AdminEmojisRouter() {
 
 /**
  * - /settings/admin/actions
+ * - /settings/admin/actions/email
  * - /settings/admin/actions/media
  * - /settings/admin/actions/keys
  */
@@ -121,9 +124,10 @@ function AdminActionsRouter() {
 			<Router base={thisBase}>
 				<ErrorBoundary>
 					<Switch>
+						<Route path="/email" component={Email} />
 						<Route path="/media" component={Media} />
 						<Route path="/keys" component={Keys} />
-						<Route><Redirect to="/media" /></Route>
+						<Route><Redirect to="/email" /></Route>
 					</Switch>
 				</ErrorBoundary>
 			</Router>

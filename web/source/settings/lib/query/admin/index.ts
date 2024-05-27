@@ -37,26 +37,6 @@ const extended = gtsApi.injectEndpoints({
 			...replaceCacheOnMutation("instanceV1"),
 		}),
 
-		mediaCleanup: build.mutation({
-			query: (days) => ({
-				method: "POST",
-				url: `/api/v1/admin/media_cleanup`,
-				params: {
-					remote_cache_days: days
-				}
-			})
-		}),
-
-		instanceKeysExpire: build.mutation({
-			query: (domain) => ({
-				method: "POST",
-				url: `/api/v1/admin/domain_keys_expire`,
-				params: {
-					domain: domain
-				}
-			})
-		}),
-
 		getAccount: build.query<AdminAccount, string>({
 			query: (id) => ({
 				url: `/api/v1/admin/accounts/${id}`
@@ -214,8 +194,6 @@ const extended = gtsApi.injectEndpoints({
 
 export const {
 	useUpdateInstanceMutation,
-	useMediaCleanupMutation,
-	useInstanceKeysExpireMutation,
 	useGetAccountQuery,
 	useLazyGetAccountQuery,
 	useActionAccountMutation,
