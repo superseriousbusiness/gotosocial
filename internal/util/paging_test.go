@@ -30,6 +30,7 @@ type PagingSuite struct {
 }
 
 func (suite *PagingSuite) TestPagingStandard() {
+	config.SetProtocol("https")
 	config.SetHost("example.org")
 
 	params := util.PageableResponseParams{
@@ -52,6 +53,7 @@ func (suite *PagingSuite) TestPagingStandard() {
 }
 
 func (suite *PagingSuite) TestPagingNoLimit() {
+	config.SetProtocol("https")
 	config.SetHost("example.org")
 
 	params := util.PageableResponseParams{
@@ -73,6 +75,7 @@ func (suite *PagingSuite) TestPagingNoLimit() {
 }
 
 func (suite *PagingSuite) TestPagingNoNextID() {
+	config.SetProtocol("https")
 	config.SetHost("example.org")
 
 	params := util.PageableResponseParams{
@@ -94,6 +97,7 @@ func (suite *PagingSuite) TestPagingNoNextID() {
 }
 
 func (suite *PagingSuite) TestPagingNoPrevID() {
+	config.SetProtocol("https")
 	config.SetHost("example.org")
 
 	params := util.PageableResponseParams{
@@ -115,6 +119,7 @@ func (suite *PagingSuite) TestPagingNoPrevID() {
 }
 
 func (suite *PagingSuite) TestPagingNoItems() {
+	config.SetProtocol("https")
 	config.SetHost("example.org")
 
 	params := util.PageableResponseParams{

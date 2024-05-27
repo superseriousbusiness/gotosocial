@@ -37,25 +37,9 @@ type ConfigState struct { //nolint
 
 // NewState returns a new initialized ConfigState instance.
 func NewState() *ConfigState {
-	viper := viper.New()
-
-	// Flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.SetEnvPrefix("gts")
-
-	// Load appropriate named vals from env
-	viper.AutomaticEnv()
-
-	// Create new ConfigState with defaults
-	state := &ConfigState{
-		viper:  viper,
-		config: Defaults,
-	}
-
-	// Perform initial load into viper
-	state.reloadToViper()
-
-	return state
+	st := new(ConfigState)
+	st.Reset()
+	return st
 }
 
 // Config provides safe access to the ConfigState's contained Configuration,
@@ -114,6 +98,32 @@ func (st *ConfigState) Reload() (err error) {
 		}
 	})
 	return
+}
+
+// Reset will totally clear
+// ConfigState{}, loading defaults.
+func (st *ConfigState) Reset() {
+	// Do within lock.
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+
+	// Create new viper.
+	viper := viper.New()
+
+	// Flag 'some-flag-name' becomes env var 'GTS_SOME_FLAG_NAME'
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.SetEnvPrefix("gts")
+
+	// Load appropriate
+	// named vals from env.
+	viper.AutomaticEnv()
+
+	// Reset variables.
+	st.viper = viper
+	st.config = Defaults
+
+	// Load into viper.
+	st.reloadToViper()
 }
 
 // reloadToViper will reload Configuration{} values into viper.

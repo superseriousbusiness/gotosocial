@@ -74,6 +74,7 @@ func (suite *AdminTestSuite) TestCreateInstanceAccount() {
 	// we need to take an empty db for this...
 	testrig.StandardDBTeardown(suite.db)
 	// ...with tables created but no data
+	suite.db = testrig.NewTestDB(&suite.state)
 	testrig.CreateTestTables(suite.db)
 
 	// make sure there's no instance account in the db yet

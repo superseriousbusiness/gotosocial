@@ -43,10 +43,6 @@ func TestMultiError(t *testing.T) {
 		t.Error("should be db.ErrAlreadyExists")
 	}
 
-	if errors.Is(err, db.ErrBusyTimeout) {
-		t.Error("should not be db.ErrBusyTimeout")
-	}
-
 	errString := err.Error()
 	expected := `sql: no rows in result set
 oopsie woopsie we did a fucky wucky etc

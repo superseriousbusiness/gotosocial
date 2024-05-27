@@ -48,8 +48,6 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
-
-	"modernc.org/sqlite"
 )
 
 // DBService satisfies the DB interface
@@ -133,12 +131,12 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 
 	switch t {
 	case "postgres":
-		db, err = pgConn(ctx, state)
+		db, err = pgConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	case "sqlite":
-		db, err = sqliteConn(ctx, state)
+		db, err = sqliteConn(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -295,7 +293,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	return ps, nil
 }
 
-func pgConn(ctx context.Context, state *state.State) (*bun.DB, error) {
+func pgConn(ctx context.Context) (*bun.DB, error) {
 	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
 	if err != nil {
 		return nil, fmt.Errorf("could not create bundb postgres options: %w", err)
@@ -326,7 +324,7 @@ func pgConn(ctx context.Context, state *state.State) (*bun.DB, error) {
 	return db, nil
 }
 
-func sqliteConn(ctx context.Context, state *state.State) (*bun.DB, error) {
+func sqliteConn(ctx context.Context) (*bun.DB, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
 	if address == "" {
@@ -339,9 +337,6 @@ func sqliteConn(ctx context.Context, state *state.State) (*bun.DB, error) {
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite-gts", address)
 	if err != nil {
-		if errWithCode, ok := err.(*sqlite.Error); ok {
-			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
-		}
 		return nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
 	}
 
@@ -356,11 +351,9 @@ func sqliteConn(ctx context.Context, state *state.State) (*bun.DB, error) {
 
 	// ping to check the db is there and listening
 	if err := db.PingContext(ctx); err != nil {
-		if errWithCode, ok := err.(*sqlite.Error); ok {
-			err = errors.New(sqlite.ErrorCodeString[errWithCode.Code()])
-		}
 		return nil, fmt.Errorf("sqlite ping: %w", err)
 	}
+
 	log.Infof(ctx, "connected to SQLITE database with address %s", address)
 
 	return db, nil
@@ -528,12 +521,8 @@ func buildSQLiteAddress(addr string) string {
 
 		// Use random name for in-memory instead of ':memory:', so
 		// multiple in-mem databases can be created without conflict.
-		addr = uuid.NewString()
-
-		// in-mem-specific preferences
-		// (shared cache so that tests don't fail)
-		prefs.Add("mode", "memory")
-		prefs.Add("cache", "shared")
+		addr = "/" + uuid.NewString()
+		prefs.Add("vfs", "memdb")
 	}
 
 	if dur := config.GetDbSqliteBusyTimeout(); dur > 0 {
