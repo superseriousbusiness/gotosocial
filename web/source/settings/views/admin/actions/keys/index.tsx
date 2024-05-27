@@ -22,9 +22,8 @@ import ExpireRemote from "./expireremote";
 
 export default function Keys() {
 	return (
-		<>
-			<h1>Key Actions</h1>
+		<div className="admin-actions-keys">
 			<ExpireRemote />
-		</>
+		</div>
 	);
 }

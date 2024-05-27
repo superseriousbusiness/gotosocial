@@ -4894,6 +4894,11 @@ paths:
                 - description: The email address that the test email should be sent to.
                   in: formData
                   name: email
+                  required: true
+                  type: string
+                - description: Optional message to include in the email.
+                  in: formData
+                  name: message
                   type: string
             produces:
                 - application/json

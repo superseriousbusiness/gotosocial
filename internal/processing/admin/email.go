@@ -27,11 +27,19 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// EmailTest sends a generic test email to the given toAddress (which
-// should be a valid email address). To help callers differentiate between
-// proper errors and the smtp errors they're likely fishing for, will return
-// 422 + help text on an SMTP error, or error 500 otherwise.
-func (p *Processor) EmailTest(ctx context.Context, account *gtsmodel.Account, toAddress string) gtserror.WithCode {
+// EmailTest sends a generic test email to the given
+// toAddress (which should be a valid email address).
+// Message is optional and can be an empty string.
+//
+// To help callers differentiate between proper errors
+// and the smtp errors they're likely fishing for, will
+// return 422 + help text on an SMTP error, or 500 otherwise.
+func (p *Processor) EmailTest(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	toAddress string,
+	message string,
+) gtserror.WithCode {
 	// Pull our instance entry from the database,
 	// so we can greet the email recipient nicely.
 	instance, err := p.state.DB.GetInstance(ctx, config.GetHost())
@@ -42,6 +50,7 @@ func (p *Processor) EmailTest(ctx context.Context, account *gtsmodel.Account, to
 
 	testData := email.TestData{
 		SendingUsername: account.Username,
+		Message:         message,
 		InstanceURL:     instance.URI,
 		InstanceName:    instance.Title,
 	}

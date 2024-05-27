@@ -54,6 +54,12 @@ import (
 //		in: formData
 //		description: The email address that the test email should be sent to.
 //		type: string
+//		required: true
+//	-
+//		name: message
+//		in: formData
+//		description: Optional message to include in the email.
+//		type: string
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -115,7 +121,12 @@ func (m *Module) EmailTestPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	errWithCode := m.processor.Admin().EmailTest(c.Request.Context(), authed.Account, email.Address)
+	errWithCode := m.processor.Admin().EmailTest(
+		c.Request.Context(),
+		authed.Account,
+		email.Address,
+		form.Message,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -6,6 +6,8 @@ Configuring GoToSocial to send emails is **not required** in order to have a pro
 
 In order to make GoToSocial email sending work, you need an smtp-compatible mail service running somewhere, either as a server on the same machine that GoToSocial is running on, or via an external service like [Mailgun](https://mailgun.com). It may also be possible to use a free personal email address for sending emails, if your email provider supports smtp (check with them--most do), but you might run into trouble sending lots of emails.
 
+To validate your configuration, you can use the "Administration -> Actions -> Email" section of the settings panel to send a test email.
+
 ## Settings
 
 The configuration options for smtp are as follows:

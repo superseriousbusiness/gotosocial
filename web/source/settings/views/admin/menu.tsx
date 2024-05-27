@@ -34,6 +34,7 @@ import { useHasPermission } from "../../lib/navigation/util";
  * - /settings/admin/emojis/local/:emojiId
  * - /settings/admin/emojis/remote
  * - /settings/admin/actions
+ * - /settings/admin/actions/email
  * - /settings/admin/actions/media
  * - /settings/admin/actions/keys
  * - /settings/admin/http-header-permissions/blocks
@@ -94,9 +95,14 @@ function AdminActionsMenu() {
 		<MenuItem
 			name="Actions"
 			itemUrl="actions"
-			defaultChild="media"
+			defaultChild="email"
 			icon="fa-bolt"
 		>
+			<MenuItem
+				name="Email"
+				itemUrl="email"
+				icon="fa-email-bulk"
+			/>
 			<MenuItem
 				name="Media"
 				itemUrl="media"

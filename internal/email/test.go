@@ -25,6 +25,8 @@ const (
 type TestData struct {
 	// Username of admin user who sent the test.
 	SendingUsername string
+	// (Optional) message to include in the email.
+	Message string
 	// URL of the instance to present to the receiver.
 	InstanceURL string
 	// Name of the instance to present to the receiver.
