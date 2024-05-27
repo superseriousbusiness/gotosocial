@@ -22,9 +22,6 @@ import (
 	"strconv"
 	"time"
 
-	// linkname shenanigans
-	_ "unsafe"
-
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
