@@ -278,11 +278,7 @@ input, select, textarea {
 	}
 }
 
-.mutation-button {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
+
 
 .hidden {
 	display: none;
@@ -846,7 +842,15 @@ span.form-info {
 	}
 }
 
-button.with-icon, .button.with-icon {
+.mutation-button {
+	width: fit-content;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+button.with-icon,
+.button.with-icon {
 	display: flex;
 	align-content: center;
 	padding-right: calc(0.5rem + $fa-fw);
