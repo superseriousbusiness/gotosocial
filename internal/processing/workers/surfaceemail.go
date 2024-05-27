@@ -216,7 +216,7 @@ func (s *Surface) emailAdminReportOpened(ctx context.Context, report *gtsmodel.R
 	reportData := email.NewReportData{
 		InstanceURL:        instance.URI,
 		InstanceName:       instance.Title,
-		ReportURL:          instance.URI + "/settings/admin/reports/" + report.ID,
+		ReportURL:          instance.URI + "/settings/moderation/reports/" + report.ID,
 		ReportDomain:       report.Account.Domain,
 		ReportTargetDomain: report.TargetAccount.Domain,
 	}
