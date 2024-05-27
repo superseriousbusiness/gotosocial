@@ -61,6 +61,9 @@ const useMediaCleanupMutation = extended.useMediaCleanupMutation;
  */
 const useInstanceKeysExpireMutation = extended.useInstanceKeysExpireMutation;
 
+/**
+ * POST to /api/v1/admin/email/test to send a test email to the given address.
+ */
 const useSendTestEmailMutation = extended.useSendTestEmailMutation;
 
 export {
