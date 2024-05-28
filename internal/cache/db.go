@@ -194,6 +194,7 @@ func (c *Caches) initAccount() {
 		a2.Emojis = nil
 		a2.AlsoKnownAs = nil
 		a2.Move = nil
+		a2.MovedTo = nil
 		a2.Settings = nil
 		a2.Stats = nil
 
