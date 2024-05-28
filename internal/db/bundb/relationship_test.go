@@ -510,6 +510,43 @@ func (suite *RelationshipTestSuite) TestDeleteAccountBlocks() {
 	suite.Nil(block)
 }
 
+func (suite *RelationshipTestSuite) TestDeleteAccountMutes() {
+	ctx := context.Background()
+
+	// Add a mute.
+	accountID1 := suite.testAccounts["local_account_1"].ID
+	accountID2 := suite.testAccounts["local_account_2"].ID
+	muteID := "01HZGZ3F3C7S1TTPE8F9VPZDCB"
+	err := suite.db.PutMute(ctx, &gtsmodel.UserMute{
+		ID:              muteID,
+		AccountID:       accountID1,
+		TargetAccountID: accountID2,
+	})
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Make sure the mute is in the DB.
+	mute, err := suite.db.GetMute(ctx, accountID1, accountID2)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	if suite.NotNil(mute) {
+		suite.Equal(muteID, mute.ID)
+	}
+
+	// Delete all mutes owned by that account.
+	err = suite.db.DeleteAccountMutes(ctx, accountID1)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Mute should be gone.
+	mute, err = suite.db.GetMute(ctx, accountID1, accountID2)
+	suite.ErrorIs(err, db.ErrNoEntries)
+	suite.Nil(mute)
+}
+
 func (suite *RelationshipTestSuite) TestGetRelationship() {
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]

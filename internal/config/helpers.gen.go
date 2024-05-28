@@ -2917,7 +2917,7 @@ func (st *ConfigState) SetCacheBlockIDsMemRatio(v float64) {
 }
 
 // CacheBlockIDsMemRatioFlag returns the flag name for the 'Cache.BlockIDsMemRatio' field
-func CacheBlockIDsMemRatioFlag() string { return "cache-block-mem-ratio" }
+func CacheBlockIDsMemRatioFlag() string { return "cache-block-ids-mem-ratio" }
 
 // GetCacheBlockIDsMemRatio safely fetches the value for global configuration 'Cache.BlockIDsMemRatio' field
 func GetCacheBlockIDsMemRatio() float64 { return global.GetCacheBlockIDsMemRatio() }
@@ -3724,6 +3724,56 @@ func GetCacheUserMemRatio() float64 { return global.GetCacheUserMemRatio() }
 
 // SetCacheUserMemRatio safely sets the value for global configuration 'Cache.UserMemRatio' field
 func SetCacheUserMemRatio(v float64) { global.SetCacheUserMemRatio(v) }
+
+// GetCacheUserMuteMemRatio safely fetches the Configuration value for state's 'Cache.UserMuteMemRatio' field
+func (st *ConfigState) GetCacheUserMuteMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.UserMuteMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheUserMuteMemRatio safely sets the Configuration value for state's 'Cache.UserMuteMemRatio' field
+func (st *ConfigState) SetCacheUserMuteMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.UserMuteMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheUserMuteMemRatioFlag returns the flag name for the 'Cache.UserMuteMemRatio' field
+func CacheUserMuteMemRatioFlag() string { return "cache-user-mute-mem-ratio" }
+
+// GetCacheUserMuteMemRatio safely fetches the value for global configuration 'Cache.UserMuteMemRatio' field
+func GetCacheUserMuteMemRatio() float64 { return global.GetCacheUserMuteMemRatio() }
+
+// SetCacheUserMuteMemRatio safely sets the value for global configuration 'Cache.UserMuteMemRatio' field
+func SetCacheUserMuteMemRatio(v float64) { global.SetCacheUserMuteMemRatio(v) }
+
+// GetCacheUserMuteIDsMemRatio safely fetches the Configuration value for state's 'Cache.UserMuteIDsMemRatio' field
+func (st *ConfigState) GetCacheUserMuteIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.UserMuteIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheUserMuteIDsMemRatio safely sets the Configuration value for state's 'Cache.UserMuteIDsMemRatio' field
+func (st *ConfigState) SetCacheUserMuteIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.UserMuteIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheUserMuteIDsMemRatioFlag returns the flag name for the 'Cache.UserMuteIDsMemRatio' field
+func CacheUserMuteIDsMemRatioFlag() string { return "cache-user-mute-ids-mem-ratio" }
+
+// GetCacheUserMuteIDsMemRatio safely fetches the value for global configuration 'Cache.UserMuteIDsMemRatio' field
+func GetCacheUserMuteIDsMemRatio() float64 { return global.GetCacheUserMuteIDsMemRatio() }
+
+// SetCacheUserMuteIDsMemRatio safely sets the value for global configuration 'Cache.UserMuteIDsMemRatio' field
+func SetCacheUserMuteIDsMemRatio(v float64) { global.SetCacheUserMuteIDsMemRatio(v) }
 
 // GetCacheWebfingerMemRatio safely fetches the Configuration value for state's 'Cache.WebfingerMemRatio' field
 func (st *ConfigState) GetCacheWebfingerMemRatio() (v float64) {

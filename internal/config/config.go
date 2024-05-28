@@ -198,7 +198,7 @@ type CacheConfiguration struct {
 	AccountStatsMemRatio     float64       `name:"account-stats-mem-ratio"`
 	ApplicationMemRatio      float64       `name:"application-mem-ratio"`
 	BlockMemRatio            float64       `name:"block-mem-ratio"`
-	BlockIDsMemRatio         float64       `name:"block-mem-ratio"`
+	BlockIDsMemRatio         float64       `name:"block-ids-mem-ratio"`
 	BoostOfIDsMemRatio       float64       `name:"boost-of-ids-mem-ratio"`
 	ClientMemRatio           float64       `name:"client-mem-ratio"`
 	EmojiMemRatio            float64       `name:"emoji-mem-ratio"`
@@ -231,6 +231,8 @@ type CacheConfiguration struct {
 	TokenMemRatio            float64       `name:"token-mem-ratio"`
 	TombstoneMemRatio        float64       `name:"tombstone-mem-ratio"`
 	UserMemRatio             float64       `name:"user-mem-ratio"`
+	UserMuteMemRatio         float64       `name:"user-mute-mem-ratio"`
+	UserMuteIDsMemRatio      float64       `name:"user-mute-ids-mem-ratio"`
 	WebfingerMemRatio        float64       `name:"webfinger-mem-ratio"`
 	VisibilityMemRatio       float64       `name:"visibility-mem-ratio"`
 }

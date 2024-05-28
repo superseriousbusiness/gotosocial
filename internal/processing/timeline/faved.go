@@ -55,7 +55,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 			continue
 		}
 
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, authed.Account, statusfilter.FilterContextNone, nil)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, authed.Account, statusfilter.FilterContextNone, nil, nil)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue

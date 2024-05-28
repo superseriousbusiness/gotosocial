@@ -45,12 +45,14 @@ const (
 	FollowPath        = BasePathWithID + "/follow"
 	ListsPath         = BasePathWithID + "/lists"
 	LookupPath        = BasePath + "/lookup"
+	MutePath          = BasePathWithID + "/mute"
 	NotePath          = BasePathWithID + "/note"
 	RelationshipsPath = BasePath + "/relationships"
 	SearchPath        = BasePath + "/search"
 	StatusesPath      = BasePathWithID + "/statuses"
 	UnblockPath       = BasePathWithID + "/unblock"
 	UnfollowPath      = BasePathWithID + "/unfollow"
+	UnmutePath        = BasePathWithID + "/unmute"
 	UpdatePath        = BasePath + "/update_credentials"
 	VerifyPath        = BasePath + "/verify_credentials"
 	MovePath          = BasePath + "/move"
@@ -116,6 +118,10 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// account note
 	attachHandler(http.MethodPost, NotePath, m.AccountNotePOSTHandler)
+
+	// mute or unmute account
+	attachHandler(http.MethodPost, MutePath, m.AccountMutePOSTHandler)
+	attachHandler(http.MethodPost, UnmutePath, m.AccountUnmutePOSTHandler)
 
 	// search for accounts
 	attachHandler(http.MethodGet, SearchPath, m.AccountSearchGETHandler)

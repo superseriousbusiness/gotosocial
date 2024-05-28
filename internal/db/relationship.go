@@ -187,4 +187,25 @@ type Relationship interface {
 
 	// PopulateNote populates the struct pointers on the given note.
 	PopulateNote(ctx context.Context, note *gtsmodel.AccountNote) error
+
+	// IsMuted checks whether source account has a mute in place against target.
+	IsMuted(ctx context.Context, sourceAccountID string, targetAccountID string) (bool, error)
+
+	// GetMuteByID fetches mute with given ID from the database.
+	GetMuteByID(ctx context.Context, id string) (*gtsmodel.UserMute, error)
+
+	// GetMute returns the mute from account1 targeting account2, if it exists, or an error if it doesn't.
+	GetMute(ctx context.Context, account1 string, account2 string) (*gtsmodel.UserMute, error)
+
+	// PutMute attempts to insert or update the given account mute in the database.
+	PutMute(ctx context.Context, mute *gtsmodel.UserMute) error
+
+	// DeleteMuteByID removes mute with given ID from the database.
+	DeleteMuteByID(ctx context.Context, id string) error
+
+	// DeleteAccountMutes will delete all database mutes to / from the given account ID.
+	DeleteAccountMutes(ctx context.Context, accountID string) error
+
+	// GetAccountMutes returns all mutes originating from the given account, with given optional paging parameters.
+	GetAccountMutes(ctx context.Context, accountID string, paging *paging.Page) ([]*gtsmodel.UserMute, error)
 }

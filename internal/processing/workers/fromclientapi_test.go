@@ -157,6 +157,7 @@ func (suite *FromClientAPITestSuite) statusJSON(
 		requestingAccount,
 		statusfilter.FilterContextNone,
 		nil,
+		nil,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -261,7 +262,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 		suite.FailNow("timed out waiting for new status notification")
 	}
 
-	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

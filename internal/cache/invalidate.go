@@ -208,3 +208,8 @@ func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 	c.Visibility.Invalidate("ItemID", user.AccountID)
 	c.Visibility.Invalidate("RequesterID", user.AccountID)
 }
+
+func (c *Caches) OnInvalidateUserMute(mute *gtsmodel.UserMute) {
+	// Invalidate source account's user mute lists.
+	c.GTS.UserMuteIDs.Invalidate(mute.AccountID)
+}

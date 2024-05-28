@@ -25,6 +25,8 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -48,6 +50,7 @@ func (p *Processor) PublicTimelineGet(
 	)
 
 	var filters []*gtsmodel.Filter
+	var compiledMutes *usermute.CompiledUserMuteList
 	if requester != nil {
 		var err error
 		filters, err = p.state.DB.GetFiltersForAccountID(ctx, requester.ID)
@@ -55,6 +58,13 @@ func (p *Processor) PublicTimelineGet(
 			err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requester.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
+
+		mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requester.ID, nil)
+		if err != nil {
+			err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requester.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		compiledMutes = usermute.NewCompiledUserMuteList(mutes)
 	}
 
 	// Try a few times to select appropriate public
@@ -98,7 +108,7 @@ outer:
 				continue inner
 			}
 
-			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester, statusfilter.FilterContextPublic, filters)
+			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester, statusfilter.FilterContextPublic, filters, compiledMutes)
 			if errors.Is(err, statusfilter.ErrHideStatus) {
 				continue
 			}

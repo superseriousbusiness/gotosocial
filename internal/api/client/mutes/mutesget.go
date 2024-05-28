@@ -24,13 +24,12 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // MutesGETHandler swagger:operation GET /api/v1/mutes mutesGet
 //
 // Get an array of accounts that requesting account has muted.
-//
-// NOT IMPLEMENTED YET: Will currently always return an array of length 0.
 //
 // The next and previous queries can be parsed from the returned Link header.
 // Example:
@@ -89,6 +88,7 @@ import (
 //
 //	responses:
 //		'200':
+//			description: List of muted accounts, including when their mutes expire (if applicable).
 //			headers:
 //				Link:
 //					type: string
@@ -108,7 +108,8 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) MutesGETHandler(c *gin.Context) {
-	if _, err := oauth.Authed(c, true, true, true, true); err != nil {
+	authed, err := oauth.Authed(c, true, true, true, true)
+	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -118,5 +119,29 @@ func (m *Module) MutesGETHandler(c *gin.Context) {
 		return
 	}
 
-	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		80, // max limit
+		40, // default limit
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	resp, errWithCode := m.processor.Account().MutesGet(
+		c.Request.Context(),
+		authed.Account,
+		page,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if resp.LinkHeader != "" {
+		c.Header("Link", resp.LinkHeader)
+	}
+
+	apiutil.JSON(c, http.StatusOK, resp.Items)
 }

@@ -699,3 +699,15 @@ func sizeofUser() uintptr {
 		ExternalID:             exampleID,
 	}))
 }
+
+func sizeofUserMute() uintptr {
+	return uintptr(size.Of(&gtsmodel.UserMute{
+		ID:              exampleID,
+		CreatedAt:       exampleTime,
+		UpdatedAt:       exampleTime,
+		ExpiresAt:       exampleTime,
+		AccountID:       exampleID,
+		TargetAccountID: exampleID,
+		Notifications:   util.Ptr(false),
+	}))
+}

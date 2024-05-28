@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -428,7 +429,7 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBloc
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -556,6 +557,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
 		requestingAccount,
 		statusfilter.FilterContextHome,
 		requestingAccountFilters,
+		nil,
 	)
 	suite.NoError(err)
 
@@ -711,6 +713,58 @@ func (suite *InternalToFrontendTestSuite) TestHideFilteredStatusToFrontend() {
 		requestingAccount,
 		statusfilter.FilterContextHome,
 		requestingAccountFilters,
+		nil,
+	)
+	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+}
+
+// Test that a status from a user muted by the requesting user results in the ErrHideStatus error.
+func (suite *InternalToFrontendTestSuite) TestMutedStatusToFrontend() {
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	requestingAccount := suite.testAccounts["local_account_1"]
+	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
+		{
+			AccountID:       requestingAccount.ID,
+			TargetAccountID: testStatus.AccountID,
+		},
+	})
+	_, err := suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextHome,
+		nil,
+		mutes,
+	)
+	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+}
+
+// Test that a status replying to a user muted by the requesting user results in the ErrHideStatus error.
+func (suite *InternalToFrontendTestSuite) TestMutedReplyStatusToFrontend() {
+	mutedAccount := suite.testAccounts["local_account_2"]
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	testStatus.InReplyToID = suite.testStatuses["local_account_2_status_1"].ID
+	testStatus.InReplyToAccountID = mutedAccount.ID
+	requestingAccount := suite.testAccounts["local_account_1"]
+	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
+		{
+			AccountID:       requestingAccount.ID,
+			TargetAccountID: mutedAccount.ID,
+		},
+	})
+	// Populate status so the converter has the account objects it needs for muting.
+	err := suite.db.PopulateStatus(context.Background(), testStatus)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	// Convert the status to API format, which should fail.
+	_, err = suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextHome,
+		nil,
+		mutes,
 	)
 	suite.ErrorIs(err, statusfilter.ErrHideStatus)
 }
@@ -719,7 +773,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
 	testStatus := suite.testStatuses["remote_account_2_status_1"]
 	requestingAccount := suite.testAccounts["admin_account"]
 
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -952,7 +1006,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
 	*testStatus = *suite.testStatuses["admin_account_status_1"]
 	testStatus.Language = ""
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")

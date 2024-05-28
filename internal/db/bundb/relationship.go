@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -106,6 +107,16 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 	}
 	if note != nil {
 		rel.Note = note.Comment
+	}
+
+	// check if the requesting account is muting the target account
+	mute, err := r.GetMute(ctx, requestingAccount, targetAccount)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("error checking muting: %w", err)
+	}
+	if mute != nil && !mute.Expired(time.Now()) {
+		rel.Muting = true
+		rel.MutingNotifications = mute.MutingNotifications()
 	}
 
 	return &rel, nil

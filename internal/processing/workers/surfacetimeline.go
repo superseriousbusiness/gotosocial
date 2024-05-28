@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -117,6 +118,12 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 			return gtserror.Newf("couldn't retrieve filters for account %s: %w", follow.AccountID, err)
 		}
 
+		mutes, err := s.State.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), follow.AccountID, nil)
+		if err != nil {
+			return gtserror.Newf("couldn't retrieve mutes for account %s: %w", follow.AccountID, err)
+		}
+		compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+
 		// Add status to any relevant lists
 		// for this follow, if applicable.
 		s.listTimelineStatusForFollow(
@@ -125,6 +132,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 			follow,
 			&errs,
 			filters,
+			compiledMutes,
 		)
 
 		// Add status to home timeline for owner
@@ -137,6 +145,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 			status,
 			stream.TimelineHome,
 			filters,
+			compiledMutes,
 		)
 		if err != nil {
 			errs.Appendf("error home timelining status: %w", err)
@@ -189,6 +198,7 @@ func (s *Surface) listTimelineStatusForFollow(
 	follow *gtsmodel.Follow,
 	errs *gtserror.MultiError,
 	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
 ) {
 	// To put this status in appropriate list timelines,
 	// we need to get each listEntry that pertains to
@@ -232,6 +242,7 @@ func (s *Surface) listTimelineStatusForFollow(
 			status,
 			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
 			filters,
+			mutes,
 		); err != nil {
 			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
 			// implicit continue
@@ -343,6 +354,7 @@ func (s *Surface) timelineStatus(
 	status *gtsmodel.Status,
 	streamType string,
 	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
 ) (bool, error) {
 	// Ingest status into given timeline using provided function.
 	if inserted, err := ingest(ctx, timelineID, status); err != nil {
@@ -359,6 +371,7 @@ func (s *Surface) timelineStatus(
 		account,
 		statusfilter.FilterContextHome,
 		filters,
+		mutes,
 	)
 	if err != nil {
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
@@ -478,6 +491,12 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			return gtserror.Newf("couldn't retrieve filters for account %s: %w", follow.AccountID, err)
 		}
 
+		mutes, err := s.State.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), follow.AccountID, nil)
+		if err != nil {
+			return gtserror.Newf("couldn't retrieve mutes for account %s: %w", follow.AccountID, err)
+		}
+		compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+
 		// Add status to any relevant lists
 		// for this follow, if applicable.
 		s.listTimelineStatusUpdateForFollow(
@@ -486,6 +505,7 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			follow,
 			&errs,
 			filters,
+			compiledMutes,
 		)
 
 		// Add status to home timeline for owner
@@ -496,6 +516,7 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			status,
 			stream.TimelineHome,
 			filters,
+			compiledMutes,
 		)
 		if err != nil {
 			errs.Appendf("error home timelining status: %w", err)
@@ -514,6 +535,7 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	follow *gtsmodel.Follow,
 	errs *gtserror.MultiError,
 	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
 ) {
 	// To put this status in appropriate list timelines,
 	// we need to get each listEntry that pertains to
@@ -555,6 +577,7 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 			status,
 			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
 			filters,
+			mutes,
 		); err != nil {
 			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
 			// implicit continue
@@ -570,8 +593,9 @@ func (s *Surface) timelineStreamStatusUpdate(
 	status *gtsmodel.Status,
 	streamType string,
 	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
 ) error {
-	apiStatus, err := s.Converter.StatusToAPIStatus(ctx, status, account, statusfilter.FilterContextHome, filters)
+	apiStatus, err := s.Converter.StatusToAPIStatus(ctx, status, account, statusfilter.FilterContextHome, filters, mutes)
 	if errors.Is(err, statusfilter.ErrHideStatus) {
 		// Don't put this status in the stream.
 		return nil

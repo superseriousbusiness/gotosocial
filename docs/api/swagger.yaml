@@ -3288,6 +3288,49 @@ paths:
             summary: See all lists of yours that contain requested account.
             tags:
                 - accounts
+    /api/v1/accounts/{id}/mute:
+        post:
+            description: If account was already muted, succeeds anyway. This can be used to update the details of a mute.
+            operationId: accountMute
+            parameters:
+                - description: The ID of the account to block.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: Mute notifications as well as posts.
+                  in: formData
+                  name: notifications
+                  type: boolean
+                - default: 0
+                  description: How long the mute should last, in seconds. If 0 or not provided, mute lasts indefinitely.
+                  in: formData
+                  name: duration
+                  type: number
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Your relationship to the account.
+                    schema:
+                        $ref: '#/definitions/accountRelationship'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:mutes
+            summary: Mute account by ID.
+            tags:
+                - accounts
     /api/v1/accounts/{id}/note:
         post:
             consumes:
@@ -3466,6 +3509,39 @@ paths:
                 - OAuth2 Bearer:
                     - write:follows
             summary: Unfollow account with id.
+            tags:
+                - accounts
+    /api/v1/accounts/{id}/unmute:
+        post:
+            description: If account was already unmuted (or has never been muted), succeeds anyway.
+            operationId: accountUnmute
+            parameters:
+                - description: The ID of the account to unmute.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Your relationship to this account.
+                    schema:
+                        $ref: '#/definitions/accountRelationship'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:mutes
+            summary: Unmute account by ID.
             tags:
                 - accounts
     /api/v1/accounts/alias:
@@ -6998,8 +7074,6 @@ paths:
     /api/v1/mutes:
         get:
             description: |-
-                NOT IMPLEMENTED YET: Will currently always return an array of length 0.
-
                 The next and previous queries can be parsed from the returned Link header.
                 Example:
 
@@ -7031,7 +7105,7 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: ""
+                    description: List of muted accounts, including when their mutes expire (if applicable).
                     headers:
                         Link:
                             description: Links to the next and previous queries.

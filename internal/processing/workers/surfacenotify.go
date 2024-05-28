@@ -23,6 +23,8 @@ import (
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -472,8 +474,17 @@ func (s *Surface) Notify(
 		return gtserror.Newf("couldn't retrieve filters for account %s: %w", targetAccount.ID, err)
 	}
 
-	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, filters)
+	mutes, err := s.State.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), targetAccount.ID, nil)
 	if err != nil {
+		return gtserror.Newf("couldn't retrieve mutes for account %s: %w", targetAccount.ID, err)
+	}
+	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+
+	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, filters, compiledMutes)
+	if err != nil {
+		if errors.Is(err, status.ErrHideStatus) {
+			return nil
+		}
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
 	s.Stream.Notify(ctx, targetAccount, apiNotif)
