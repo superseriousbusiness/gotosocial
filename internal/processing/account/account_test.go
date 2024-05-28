@@ -33,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
-	processingmedia "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
@@ -116,8 +115,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 
 	filter := visibility.NewFilter(&suite.state)
 	common := common.New(&suite.state, suite.tc, suite.federator, filter)
-	mediaProcessor := processingmedia.New(&suite.state, suite.tc, suite.mediaManager, suite.transportController)
-	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, &mediaProcessor, suite.mediaManager, suite.oauthServer, suite.federator, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
+	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.oauthServer, suite.federator, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

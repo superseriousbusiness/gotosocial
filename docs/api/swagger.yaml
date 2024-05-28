@@ -7254,7 +7254,7 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: The updated account, including source and role information.
+                    description: The updated account, including profile source information.
                     schema:
                         $ref: '#/definitions/account'
                 "400":
@@ -7281,7 +7281,7 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: The updated account, including source and role information.
+                    description: The updated account, including profile source information.
                     schema:
                         $ref: '#/definitions/account'
                 "400":

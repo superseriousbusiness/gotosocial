@@ -47,7 +47,7 @@ import (
 //
 //	responses:
 //		'200':
-//			description: The updated account, including source and role information.
+//			description: The updated account, including profile source information.
 //			schema:
 //				"$ref": "#/definitions/account"
 //		'400':
@@ -61,7 +61,7 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) AccountAvatarDELETEHandler(c *gin.Context) {
-	m.accountDeleteProfileAttachment(c, m.processor.Account().DeleteAvatar)
+	m.accountDeleteProfileAttachment(c, m.processor.Media().DeleteAvatar)
 }
 
 // AccountHeaderDELETEHandler swagger:operation DELETE /api/v1/profile/header accountHeaderDelete
@@ -82,7 +82,7 @@ func (m *Module) AccountAvatarDELETEHandler(c *gin.Context) {
 //
 //	responses:
 //		'200':
-//			description: The updated account, including source and role information.
+//			description: The updated account, including profile source information.
 //			schema:
 //				"$ref": "#/definitions/account"
 //		'400':
@@ -96,7 +96,7 @@ func (m *Module) AccountAvatarDELETEHandler(c *gin.Context) {
 //		'500':
 //			description: internal server error
 func (m *Module) AccountHeaderDELETEHandler(c *gin.Context) {
-	m.accountDeleteProfileAttachment(c, m.processor.Account().DeleteHeader)
+	m.accountDeleteProfileAttachment(c, m.processor.Media().DeleteHeader)
 }
 
 // accountDeleteProfileAttachment checks that an authenticated account is present and allowed to alter itself,

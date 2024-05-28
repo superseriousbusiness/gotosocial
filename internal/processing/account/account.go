@@ -24,7 +24,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
-	processingmedia "github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -39,7 +38,6 @@ type Processor struct {
 
 	state        *state.State
 	converter    *typeutils.Converter
-	media        *processingmedia.Processor
 	mediaManager *media.Manager
 	oauthServer  oauth.Server
 	filter       *visibility.Filter
@@ -54,7 +52,6 @@ func New(
 	common *common.Processor,
 	state *state.State,
 	converter *typeutils.Converter,
-	media *processingmedia.Processor,
 	mediaManager *media.Manager,
 	oauthServer oauth.Server,
 	federator *federation.Federator,
@@ -65,7 +62,6 @@ func New(
 		c:            common,
 		state:        state,
 		converter:    converter,
-		media:        media,
 		mediaManager: mediaManager,
 		oauthServer:  oauthServer,
 		filter:       filter,

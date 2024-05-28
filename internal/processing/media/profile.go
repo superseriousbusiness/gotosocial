@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package account
+package media
 
 import (
 	"context"
@@ -26,8 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DeleteAvatar deletes the account's avatar, if one exists.
-// If not, it returns with no error.
+// DeleteAvatar deletes the account's avatar, if one exists, and returns the updated account.
+// If no avatar exists, it returns anyway with no error.
 func (p *Processor) DeleteAvatar(
 	ctx context.Context,
 	account *gtsmodel.Account,
@@ -37,8 +37,8 @@ func (p *Processor) DeleteAvatar(
 	return p.deleteProfileAttachment(ctx, account, "avatar_media_attachment_id", attachmentID)
 }
 
-// DeleteHeader deletes the account's header, if one exists.
-// If not, it returns with no error.
+// DeleteHeader deletes the account's header, if one exists, and returns the updated account.
+// If no header exists, it returns anyway with no error.
 func (p *Processor) DeleteHeader(
 	ctx context.Context,
 	account *gtsmodel.Account,
@@ -49,7 +49,7 @@ func (p *Processor) DeleteHeader(
 }
 
 // deleteProfileAttachment updates an attachment ID column and then deletes the attachment.
-// Precondition: the attachment ID field of the account model has already been set to the empty string.
+// Precondition: the relevant attachment ID field of the account model has already been set to the empty string.
 func (p *Processor) deleteProfileAttachment(
 	ctx context.Context,
 	account *gtsmodel.Account,
@@ -63,7 +63,7 @@ func (p *Processor) deleteProfileAttachment(
 		}
 
 		// Delete attachment media.
-		if err := p.media.Delete(ctx, attachmentID); err != nil {
+		if err := p.Delete(ctx, attachmentID); err != nil {
 			return nil, err
 		}
 	}
