@@ -78,5 +78,5 @@ func (m *Module) DebugClearCachesHandler(c *gin.Context) {
 	// Sweep all caches down to 0 (empty).
 	m.state.Caches.Sweep(0)
 
-	c.JSON(http.StatusOK, gin.H{"status":"OK"})
+	c.JSON(http.StatusOK, gin.H{"status": "OK"})
 }
