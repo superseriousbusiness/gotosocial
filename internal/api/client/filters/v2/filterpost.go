@@ -100,30 +100,6 @@ import (
 //			- warn
 //			- hide
 //		default: warn
-//	-
-//		name: keywords_attributes[][keyword]
-//		in: formData
-//		type: array
-//		items:
-//			type: string
-//		description: Keywords to be added (if not using id param) or updated (if using id param).
-//		collectionFormat: multi
-//	-
-//		name: keywords_attributes[][whole_word]
-//		in: formData
-//		type: array
-//		items:
-//			type: boolean
-//		description: Should each keyword consider word boundaries?
-//		collectionFormat: multi
-//	-
-//		name: statuses_attributes[][status_id]
-//		in: formData
-//		type: array
-//		items:
-//			type: string
-//		description: Statuses to be added to the filter.
-//		collectionFormat: multi
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -198,30 +174,6 @@ func validateNormalizeCreateFilter(form *apimodel.FilterCreateRequestV2) error {
 		return err
 	}
 
-	// Parse form variant of normal filter keyword creation structs.
-	if len(form.KeywordsAttributesKeyword) > 0 {
-		form.Keywords = make([]apimodel.FilterKeywordCreateUpdateRequest, 0, len(form.KeywordsAttributesKeyword))
-		for i, keyword := range form.KeywordsAttributesKeyword {
-			formKeyword := apimodel.FilterKeywordCreateUpdateRequest{
-				Keyword: keyword,
-			}
-			if i < len(form.KeywordsAttributesWholeWord) {
-				formKeyword.WholeWord = &form.KeywordsAttributesWholeWord[i]
-			}
-			form.Keywords = append(form.Keywords, formKeyword)
-		}
-	}
-
-	// Parse form variant of normal filter status creation structs.
-	if len(form.StatusesAttributesStatusID) > 0 {
-		form.Statuses = make([]apimodel.FilterStatusCreateRequest, 0, len(form.StatusesAttributesStatusID))
-		for _, statusID := range form.StatusesAttributesStatusID {
-			form.Statuses = append(form.Statuses, apimodel.FilterStatusCreateRequest{
-				StatusID: statusID,
-			})
-		}
-	}
-
 	// Apply defaults for missing fields.
 	form.FilterAction = util.Ptr(action)
 
@@ -243,19 +195,6 @@ func validateNormalizeCreateFilter(form *apimodel.FilterCreateRequestV2) error {
 
 		default:
 			return fmt.Errorf("could not parse expires_in type %T as integer", ei)
-		}
-	}
-
-	// Normalize and validate new keywords and statuses.
-	for i, formKeyword := range form.Keywords {
-		if err := validate.FilterKeyword(formKeyword.Keyword); err != nil {
-			return err
-		}
-		form.Keywords[i].WholeWord = util.Ptr(util.PtrValueOr(formKeyword.WholeWord, false))
-	}
-	for _, formStatus := range form.Statuses {
-		if err := validate.ULID(formStatus.StatusID, "status_id"); err != nil {
-			return err
 		}
 	}
 

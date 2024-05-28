@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -40,8 +39,6 @@ func (p *Processor) Update(
 	filterID string,
 	form *apimodel.FilterUpdateRequestV2,
 ) (*apimodel.FilterV2, gtserror.WithCode) {
-	var errWithCode gtserror.WithCode
-
 	// Get the filter by ID, with existing keywords and statuses.
 	filter, err := p.state.DB.GetFilterByID(ctx, filterID)
 	if err != nil {
@@ -104,17 +101,13 @@ func (p *Processor) Update(
 		}
 	}
 
-	filterKeywordColumns, deleteFilterKeywordIDs, errWithCode := applyKeywordChanges(filter, form.Keywords)
-	if err != nil {
-		return nil, errWithCode
-	}
+	// Temporarily detach keywords and statuses from filter, since we're not updating them below.
+	filterKeywords := filter.Keywords
+	filterStatuses := filter.Statuses
+	filter.Keywords = nil
+	filter.Statuses = nil
 
-	deleteFilterStatusIDs, errWithCode := applyStatusChanges(filter, form.Statuses)
-	if err != nil {
-		return nil, errWithCode
-	}
-
-	if err := p.state.DB.UpdateFilter(ctx, filter, filterColumns, filterKeywordColumns, deleteFilterKeywordIDs, deleteFilterStatusIDs); err != nil {
+	if err := p.state.DB.UpdateFilter(ctx, filter, filterColumns, nil, nil, nil); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			err = errors.New("you already have a filter with this title")
 			return nil, gtserror.NewErrorConflict(err, err.Error())
@@ -122,129 +115,9 @@ func (p *Processor) Update(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Re-attach keywords and statuses before returning.
+	filter.Keywords = filterKeywords
+	filter.Statuses = filterStatuses
+
 	return p.apiFilter(ctx, filter)
-}
-
-// applyKeywordChanges applies the provided changes to the filter's keywords in place,
-// and returns a list of lists of filter columns to update, and a list of filter keyword IDs to delete.
-func applyKeywordChanges(filter *gtsmodel.Filter, formKeywords []apimodel.FilterKeywordCreateUpdateDeleteRequest) ([][]string, []string, gtserror.WithCode) {
-	if len(formKeywords) == 0 {
-		// Detach currently existing keywords from the filter so we don't change them.
-		filter.Keywords = nil
-		return nil, nil, nil
-	}
-
-	filterKeywordColumns := [][]string{}
-	deleteFilterKeywordIDs := []string{}
-	filterKeywordsByID := map[string]*gtsmodel.FilterKeyword{}
-	for _, filterKeyword := range filter.Keywords {
-		filterKeywordsByID[filterKeyword.ID] = filterKeyword
-	}
-
-	for i, formKeyword := range formKeywords {
-		filterKeywordColumns = append(filterKeywordColumns, nil)
-
-		if formKeyword.ID != nil {
-			id := *formKeyword.ID
-			filterKeyword, ok := filterKeywordsByID[id]
-			if !ok {
-				return nil, nil, gtserror.NewErrorNotFound(
-					fmt.Errorf("couldn't find filter keyword '%s' to update or delete", id),
-				)
-			}
-
-			// Process deletes.
-			if *formKeyword.Destroy {
-				delete(filterKeywordsByID, id)
-				deleteFilterKeywordIDs = append(deleteFilterKeywordIDs, id)
-				continue
-			}
-
-			// Process updates.
-			if formKeyword.Keyword != nil {
-				filterKeywordColumns[i] = append(filterKeywordColumns[i], "keyword")
-				filterKeyword.Keyword = *formKeyword.Keyword
-			}
-			if formKeyword.WholeWord != nil {
-				filterKeywordColumns[i] = append(filterKeywordColumns[i], "whole_word")
-				filterKeyword.WholeWord = formKeyword.WholeWord
-			}
-			continue
-		}
-
-		// Process creates.
-		filterKeyword := &gtsmodel.FilterKeyword{
-			ID:        id.NewULID(),
-			AccountID: filter.AccountID,
-			FilterID:  filter.ID,
-			Filter:    filter,
-			Keyword:   *formKeyword.Keyword,
-			WholeWord: util.Ptr(util.PtrValueOr(formKeyword.WholeWord, false)),
-		}
-		filterKeywordsByID[filterKeyword.ID] = filterKeyword
-	}
-
-	// Replace the filter's keywords list with our updated version.
-	filter.Keywords = nil
-	for _, filterKeyword := range filterKeywordsByID {
-		filter.Keywords = append(filter.Keywords, filterKeyword)
-	}
-
-	return filterKeywordColumns, deleteFilterKeywordIDs, nil
-}
-
-// applyKeywordChanges applies the provided changes to the filter's keywords in place,
-// and returns a list of filter status IDs to delete.
-func applyStatusChanges(filter *gtsmodel.Filter, formStatuses []apimodel.FilterStatusCreateDeleteRequest) ([]string, gtserror.WithCode) {
-	if len(formStatuses) == 0 {
-		// Detach currently existing statuses from the filter so we don't change them.
-		filter.Statuses = nil
-		return nil, nil
-	}
-
-	deleteFilterStatusIDs := []string{}
-	filterStatusesByID := map[string]*gtsmodel.FilterStatus{}
-	for _, filterStatus := range filter.Statuses {
-		filterStatusesByID[filterStatus.ID] = filterStatus
-	}
-
-	for _, formStatus := range formStatuses {
-		if formStatus.ID != nil {
-			id := *formStatus.ID
-			_, ok := filterStatusesByID[id]
-			if !ok {
-				return nil, gtserror.NewErrorNotFound(
-					fmt.Errorf("couldn't find filter status '%s' to delete", id),
-				)
-			}
-
-			// Process deletes.
-			if *formStatus.Destroy {
-				delete(filterStatusesByID, id)
-				deleteFilterStatusIDs = append(deleteFilterStatusIDs, id)
-				continue
-			}
-
-			// Filter statuses don't have updates.
-			continue
-		}
-
-		// Process creates.
-		filterStatus := &gtsmodel.FilterStatus{
-			ID:        id.NewULID(),
-			AccountID: filter.AccountID,
-			FilterID:  filter.ID,
-			Filter:    filter,
-			StatusID:  *formStatus.StatusID,
-		}
-		filterStatusesByID[filterStatus.ID] = filterStatus
-	}
-
-	// Replace the filter's keywords list with our updated version.
-	filter.Statuses = nil
-	for _, filterStatus := range filterStatusesByID {
-		filter.Statuses = append(filter.Statuses, filterStatus)
-	}
-
-	return deleteFilterStatusIDs, nil
 }

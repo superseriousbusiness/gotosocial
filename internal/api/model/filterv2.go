@@ -135,21 +135,9 @@ type FilterCreateRequestV2 struct {
 	//
 	// Example: 86400
 	ExpiresInI interface{} `json:"expires_in"`
-
-	// Keywords to be added to the newly created filter.
-	Keywords []FilterKeywordCreateUpdateRequest `form:"-" json:"keywords_attributes" xml:"keywords_attributes"`
-	// Form data version of Keywords[].Keyword.
-	KeywordsAttributesKeyword []string `form:"keywords_attributes[][keyword]" json:"-" xml:"-"`
-	// Form data version of Keywords[].WholeWord.
-	KeywordsAttributesWholeWord []bool `form:"keywords_attributes[][whole_word]" json:"-" xml:"-"`
-
-	// Statuses to be added to the newly created filter.
-	Statuses []FilterStatusCreateRequest `form:"-" json:"statuses_attributes" xml:"statuses_attributes"`
-	// Form data version of Statuses[].StatusID.
-	StatusesAttributesStatusID []string `form:"statuses_attributes[][status_id]" json:"-" xml:"-"`
 }
 
-// FilterKeywordCreateUpdateRequest captures params for creating or updating a filter keyword while creating a v2 filter or as a standalone operation.
+// FilterKeywordCreateUpdateRequest captures params for creating or updating a filter keyword.
 //
 // swagger:ignore
 type FilterKeywordCreateUpdateRequest struct {
@@ -164,7 +152,7 @@ type FilterKeywordCreateUpdateRequest struct {
 	WholeWord *bool `form:"whole_word" json:"whole_word" xml:"whole_word"`
 }
 
-// FilterStatusCreateRequest captures params for a status while creating a v2 filter or filter status.
+// FilterStatusCreateRequest captures params for creating a filter status.
 //
 // swagger:ignore
 type FilterStatusCreateRequest struct {
@@ -200,57 +188,4 @@ type FilterUpdateRequestV2 struct {
 	//
 	// Example: 86400
 	ExpiresInI interface{} `json:"expires_in"`
-
-	// Keywords to be added to the filter, modified, or removed.
-	Keywords []FilterKeywordCreateUpdateDeleteRequest `form:"-" json:"keywords_attributes" xml:"keywords_attributes"`
-	// Form data version of Keywords[].ID.
-	KeywordsAttributesID []string `form:"keywords_attributes[][id]" json:"-" xml:"-"`
-	// Form data version of Keywords[].Keyword.
-	KeywordsAttributesKeyword []string `form:"keywords_attributes[][keyword]" json:"-" xml:"-"`
-	// Form data version of Keywords[].WholeWord.
-	KeywordsAttributesWholeWord []bool `form:"keywords_attributes[][whole_word]" json:"-" xml:"-"`
-	// Form data version of Keywords[].Destroy.
-	KeywordsAttributesDestroy []bool `form:"keywords_attributes[][_destroy]" json:"-" xml:"-"`
-
-	// Statuses to be added to the filter, or removed.
-	Statuses []FilterStatusCreateDeleteRequest `form:"-" json:"statuses_attributes" xml:"statuses_attributes"`
-	// Form data version of Statuses[].ID.
-	StatusesAttributesID []string `form:"statuses_attributes[][id]" json:"-" xml:"-"`
-	// Form data version of Statuses[].ID.
-	StatusesAttributesStatusID []string `form:"statuses_attributes[][status_id]" json:"-" xml:"-"`
-	// Form data version of Statuses[].Destroy.
-	StatusesAttributesDestroy []bool `form:"statuses_attributes[][_destroy]" json:"-" xml:"-"`
-}
-
-// FilterKeywordCreateUpdateDeleteRequest captures params for creating, updating, or deleting a keyword while updating a v2 filter.
-//
-// swagger:ignore
-type FilterKeywordCreateUpdateDeleteRequest struct {
-	// The ID of the filter keyword entry in the database.
-	// Optional: use to modify or delete an existing keyword instead of adding a new one.
-	ID *string `json:"id" xml:"id"`
-	// The text to be filtered.
-	//
-	// Example: fnord
-	// Maximum length: 40
-	Keyword *string `json:"keyword" xml:"keyword"`
-	// Should the filter keyword consider word boundaries?
-	//
-	// Example: true
-	WholeWord *bool `json:"whole_word" xml:"whole_word"`
-	// Remove this filter keyword. Requires an ID.
-	Destroy *bool `json:"_destroy" xml:"_destroy"`
-}
-
-// FilterStatusCreateDeleteRequest captures params for creating or deleting a status while updating a v2 filter.
-//
-// swagger:ignore
-type FilterStatusCreateDeleteRequest struct {
-	// The ID of the filter status entry in the database.
-	// Optional: use to delete an existing status instead of adding a new one.
-	ID *string `json:"id" xml:"id"`
-	// The status ID to be filtered.
-	StatusID *string `json:"status_id" xml:"status_id"`
-	// Remove this filter status. Requires an ID.
-	Destroy *bool `json:"_destroy" xml:"_destroy"`
 }

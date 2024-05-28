@@ -8763,27 +8763,6 @@ paths:
                   in: formData
                   name: filter_action
                   type: string
-                - collectionFormat: multi
-                  description: Keywords to be added (if not using id param) or updated (if using id param).
-                  in: formData
-                  items:
-                    type: string
-                  name: keywords_attributes[][keyword]
-                  type: array
-                - collectionFormat: multi
-                  description: Should each keyword consider word boundaries?
-                  in: formData
-                  items:
-                    type: boolean
-                  name: keywords_attributes[][whole_word]
-                  type: array
-                - collectionFormat: multi
-                  description: Statuses to be added to the filter.
-                  in: formData
-                  items:
-                    type: string
-                  name: statuses_attributes[][status_id]
-                  type: array
             produces:
                 - application/json
             responses:
@@ -8897,27 +8876,6 @@ paths:
                   name: title
                   required: true
                   type: string
-                - collectionFormat: multi
-                  description: Keywords to be added to the created filter.
-                  in: formData
-                  items:
-                    type: string
-                  name: keywords_attributes[][keyword]
-                  type: array
-                - collectionFormat: multi
-                  description: Should each keyword consider word boundaries?
-                  in: formData
-                  items:
-                    type: boolean
-                  name: keywords_attributes[][whole_word]
-                  type: array
-                - collectionFormat: multi
-                  description: Statuses to be added to the newly created filter.
-                  in: formData
-                  items:
-                    type: string
-                  name: statuses_attributes[][status_id]
-                  type: array
                 - collectionFormat: multi
                   description: |-
                     The contexts in which the filter should be applied.
