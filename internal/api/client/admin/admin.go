@@ -23,6 +23,7 @@ import (
 	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 const (
@@ -56,6 +57,7 @@ const (
 	InstanceRulesPathWithID = InstanceRulesPath + "/:" + IDKey
 	DebugPath               = BasePath + "/debug"
 	DebugAPUrlPath          = DebugPath + "/apurl"
+	DebugClearCachesPath    = DebugPath + "/caches/clear"
 
 	IDKey                 = "id"
 	FilterQueryKey        = "filter"
@@ -73,11 +75,13 @@ const (
 
 type Module struct {
 	processor *processing.Processor
+	state     *state.State
 }
 
-func New(processor *processing.Processor) *Module {
+func New(state *state.State, processor *processing.Processor) *Module {
 	return &Module{
 		processor: processor,
+		state:     state,
 	}
 }
 
@@ -145,5 +149,6 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	// debug stuff
 	if debug.DEBUG {
 		attachHandler(http.MethodGet, DebugAPUrlPath, m.DebugAPUrlHandler)
+		attachHandler(http.MethodPost, DebugClearCachesPath, m.DebugClearCachesHandler)
 	}
 }
