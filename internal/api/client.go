@@ -50,6 +50,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 type Client struct {
@@ -127,13 +128,13 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.user.Route(h)
 }
 
-func NewClient(db db.DB, p *processing.Processor) *Client {
+func NewClient(state *state.State, p *processing.Processor) *Client {
 	return &Client{
 		processor: p,
-		db:        db,
+		db:        state.DB,
 
 		accounts:       accounts.New(p),
-		admin:          admin.New(p),
+		admin:          admin.New(state, p),
 		apps:           apps.New(p),
 		blocks:         blocks.New(p),
 		bookmarks:      bookmarks.New(p),

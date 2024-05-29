@@ -73,3 +73,35 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) DebugAPUrlHandler(c *gin.Context) {}
+
+// DebugClearCachesHandler swagger:operation POST /api/v1/admin/debug/caches/clear debugClearCaches
+//
+// Sweep/clear all in-memory caches.
+//
+// Only enabled / exposed if GoToSocial was built and is running with flag DEBUG=1.
+//
+//	---
+//	tags:
+//	- debug
+//
+//	produces:
+//	- application/json
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- admin
+//
+//	responses:
+//		'200':
+//			description: All good baby!
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
+func (m *Module) DebugClearCachesHandler(c *gin.Context) {}

@@ -4494,6 +4494,31 @@ paths:
             summary: Perform a GET to the specified ActivityPub URL and return detailed debugging information.
             tags:
                 - debug
+    /api/v1/admin/debug/caches/clear:
+        post:
+            description: Only enabled / exposed if GoToSocial was built and is running with flag DEBUG=1.
+            operationId: debugClearCaches
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: All good baby!
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Sweep/clear all in-memory caches.
+            tags:
+                - debug
     /api/v1/admin/domain_allows:
         get:
             operationId: domainAllowsGet

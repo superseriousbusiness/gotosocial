@@ -223,7 +223,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	var (
 		authModule        = api.NewAuth(state.DB, processor, idp, routerSession, sessionName) // auth/oauth paths
-		clientModule      = api.NewClient(state.DB, processor)                                // api client endpoints
+		clientModule      = api.NewClient(&state, processor)                                  // api client endpoints
 		metricsModule     = api.NewMetrics()                                                  // Metrics endpoints
 		healthModule      = api.NewHealth(state.DB.Ready)                                     // Health check endpoints
 		fileserverModule  = api.NewFileserver(processor)                                      // fileserver endpoints
