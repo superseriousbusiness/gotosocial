@@ -114,8 +114,8 @@ func (w *FnWorker) run(ctx context.Context) {
 	if w.Queue == nil {
 		panic("not yet initialized")
 	}
-	log.Infof(ctx, "%p: starting worker", w)
-	defer log.Infof(ctx, "%p: stopped worker", w)
+	log.Debugf(ctx, "%p: starting worker", w)
+	defer log.Debugf(ctx, "%p: stopped worker", w)
 	util.Must(func() { w.process(ctx) })
 }
 
