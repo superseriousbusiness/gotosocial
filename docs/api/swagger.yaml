@@ -7276,6 +7276,60 @@ paths:
             summary: Return an object of user preferences.
             tags:
                 - preferences
+    /api/v1/profile/avatar:
+        delete:
+            description: If the account doesn't have an avatar, the call succeeds anyway.
+            operationId: accountAvatarDelete
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated account, including profile source information.
+                    schema:
+                        $ref: '#/definitions/account'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Delete the authenticated account's avatar.
+            tags:
+                - accounts
+    /api/v1/profile/header:
+        delete:
+            description: If the account doesn't have a header, the call succeeds anyway.
+            operationId: accountHeaderDelete
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated account, including profile source information.
+                    schema:
+                        $ref: '#/definitions/account'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Delete the authenticated account's header.
+            tags:
+                - accounts
     /api/v1/reports:
         get:
             description: |-

@@ -119,7 +119,7 @@ func (c *Converter) ensureAvatar(account *apimodel.Account) {
 	account.AvatarStatic = avatar
 }
 
-// EnsureAvatar ensures that the given account has a value set
+// ensureHeader ensures that the given account has a value set
 // for the header URL.
 //
 // If no value is set, the default header will be set.
