@@ -35,7 +35,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -43,6 +42,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
@@ -54,10 +54,70 @@ import (
 
 // Start creates and starts a gotosocial testrig server
 var Start action.GTSAction = func(ctx context.Context) error {
-	var state state.State
-
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
+
+	var (
+		// Define necessary core variables
+		// before anything so we can prepare
+		// defer function for safe shutdown
+		// depending on what services were
+		// managed to be started.
+
+		state state.State
+		route *router.Router
+	)
+
+	defer func() {
+		// Stop caches with
+		// background tasks.
+		state.Caches.Stop()
+
+		if route != nil {
+			// We reached a point where the API router
+			// was created + setup. Ensure it gets stopped
+			// first to stop processing new information.
+			if err := route.Stop(); err != nil {
+				log.Errorf(ctx, "error stopping router: %v", err)
+			}
+		}
+
+		// Stop any currently running
+		// worker processes / scheduled
+		// tasks from being executed.
+		testrig.StopWorkers(&state)
+
+		if state.Timelines.Home != nil {
+			// Home timeline mgr was setup, ensure it gets stopped.
+			if err := state.Timelines.Home.Stop(); err != nil {
+				log.Errorf(ctx, "error stopping home timeline: %v", err)
+			}
+		}
+
+		if state.Timelines.List != nil {
+			// List timeline mgr was setup, ensure it gets stopped.
+			if err := state.Timelines.List.Stop(); err != nil {
+				log.Errorf(ctx, "error stopping list timeline: %v", err)
+			}
+		}
+
+		if state.Storage != nil {
+			// If storage was created, ensure torn down.
+			testrig.StandardStorageTeardown(state.Storage)
+		}
+
+		if state.DB != nil {
+			// Lastly, if database service was started,
+			// ensure it gets closed now all else stopped.
+			testrig.StandardDBTeardown(state.DB)
+			if err := state.DB.Close(); err != nil {
+				log.Errorf(ctx, "error stopping database: %v", err)
+			}
+		}
+
+		// Finally reached end of shutdown.
+		log.Info(ctx, "done! exiting...")
+	}()
 
 	parsedLangs, err := language.InitLangs(config.GetInstanceLanguages().TagStrs())
 	if err != nil {
@@ -75,12 +135,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// New test db inits caches so we don't need to do
 	// that twice, we can just start the initialized caches.
 	state.Caches.Start()
-	defer state.Caches.Stop()
 
 	testrig.StandardDBSetup(state.DB, nil)
 
-	// Get the instance account
-	// (we'll need this later).
+	// Get the instance account (we'll need this later).
 	instanceAccount, err := state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return fmt.Errorf("error retrieving instance account: %w", err)
@@ -119,7 +177,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	typeConverter := typeutils.NewConverter(&state)
 	filter := visibility.NewFilter(&state)
 
-	// Initialize timelines.
+	// Initialize both home / list timelines.
 	state.Timelines.Home = timeline.NewManager(
 		tlprocessor.HomeTimelineGrab(&state),
 		tlprocessor.HomeTimelineFilter(&state, filter),
@@ -129,7 +187,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	if err := state.Timelines.Home.Start(); err != nil {
 		return fmt.Errorf("error starting home timeline: %s", err)
 	}
-
 	state.Timelines.List = timeline.NewManager(
 		tlprocessor.ListTimelineGrab(&state),
 		tlprocessor.ListTimelineFilter(&state, filter),
@@ -151,7 +208,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		HTTP router initialization
 	*/
 
-	router := testrig.NewTestRouter(state.DB)
+	route = testrig.NewTestRouter(state.DB)
 	middlewares := []gin.HandlerFunc{
 		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
 	}
@@ -195,10 +252,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	middlewares = append(middlewares, middleware.ContentSecurityPolicy(cspExtraURIs...))
 
 	// attach global middlewares which are used for every request
-	router.AttachGlobalMiddleware(middlewares...)
+	route.AttachGlobalMiddleware(middlewares...)
 
 	// attach global no route / 404 handler to the router
-	router.AttachNoRouteHandler(func(c *gin.Context) {
+	route.AttachNoRouteHandler(func(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGetV1)
 	})
 
@@ -234,23 +291,29 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	)
 
 	// these should be routed in order
-	authModule.Route(router)
-	clientModule.Route(router)
-	metricsModule.Route(router)
-	healthModule.Route(router)
-	fileserverModule.Route(router)
-	fileserverModule.RouteEmojis(router, instanceAccount.ID)
-	wellKnownModule.Route(router)
-	nodeInfoModule.Route(router)
-	activityPubModule.Route(router)
-	activityPubModule.RoutePublicKey(router)
-	webModule.Route(router)
+	authModule.Route(route)
+	clientModule.Route(route)
+	metricsModule.Route(route)
+	healthModule.Route(route)
+	fileserverModule.Route(route)
+	fileserverModule.RouteEmojis(route, instanceAccount.ID)
+	wellKnownModule.Route(route)
+	nodeInfoModule.Route(route)
+	activityPubModule.Route(route)
+	activityPubModule.RoutePublicKey(route)
+	webModule.Route(route)
 
+	// Create background cleaner.
 	cleaner := cleaner.New(&state)
 
-	gts := gotosocial.NewServer(state.DB, router, cleaner)
-	if err := gts.Start(ctx); err != nil {
-		return fmt.Errorf("error starting gotosocial service: %s", err)
+	// Now schedule background cleaning tasks.
+	if err := cleaner.ScheduleJobs(); err != nil {
+		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
+	}
+
+	// Finally start the main http server!
+	if err := route.Start(); err != nil {
+		return fmt.Errorf("error starting router: %w", err)
 	}
 
 	// catch shutdown signals from the operating system
@@ -259,14 +322,5 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sig := <-sigs
 	log.Infof(ctx, "received signal %s, shutting down", sig)
 
-	testrig.StandardDBTeardown(state.DB)
-	testrig.StandardStorageTeardown(state.Storage)
-
-	// close down all running services in order
-	if err := gts.Stop(ctx); err != nil {
-		return fmt.Errorf("error closing gotosocial service: %s", err)
-	}
-
-	log.Info(ctx, "done! exiting...")
 	return nil
 }

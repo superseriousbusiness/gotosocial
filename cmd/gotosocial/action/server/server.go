@@ -48,7 +48,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
-	"github.com/superseriousbusiness/gotosocial/internal/gotosocial"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -69,59 +68,107 @@ import (
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
 	if _, err := maxprocs.Set(maxprocs.Logger(nil)); err != nil {
-		log.Infof(ctx, "could not set CPU limits from cgroup: %s", err)
+		log.Warnf(ctx, "could not set CPU limits from cgroup: %s", err)
 	}
 
-	var state state.State
+	var (
+		// Define necessary core variables
+		// before anything so we can prepare
+		// defer function for safe shutdown
+		// depending on what services were
+		// managed to be started.
 
-	// Initialize caches
-	state.Caches.Init()
-	state.Caches.Start()
-	defer state.Caches.Stop()
+		state state.State
+		route *router.Router
+	)
 
-	// Initialize Tracing
+	defer func() {
+		// Stop caches with
+		// background tasks.
+		state.Caches.Stop()
+
+		if route != nil {
+			// We reached a point where the API router
+			// was created + setup. Ensure it gets stopped
+			// first to stop processing new information.
+			if err := route.Stop(); err != nil {
+				log.Errorf(ctx, "error stopping router: %v", err)
+			}
+		}
+
+		// Stop any currently running
+		// worker processes / scheduled
+		// tasks from being executed.
+		state.Workers.Stop()
+
+		if state.Timelines.Home != nil {
+			// Home timeline mgr was setup, ensure it gets stopped.
+			if err := state.Timelines.Home.Stop(); err != nil {
+				log.Errorf(ctx, "error stopping home timeline: %v", err)
+			}
+		}
+
+		if state.Timelines.List != nil {
+			// List timeline mgr was setup, ensure it gets stopped.
+			if err := state.Timelines.List.Stop(); err != nil {
+				log.Errorf(ctx, "error stopping list timeline: %v", err)
+			}
+		}
+
+		if state.DB != nil {
+			// Lastly, if database service was started,
+			// ensure it gets closed now all else stopped.
+			if err := state.DB.Close(); err != nil {
+				log.Errorf(ctx, "error stopping database: %v", err)
+			}
+		}
+
+		// Finally reached end of shutdown.
+		log.Info(ctx, "done! exiting...")
+	}()
+
+	// Initialize tracing (noop if not enabled).
 	if err := tracing.Initialize(); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
 
-	// Open connection to the database
+	// Initialize caches
+	state.Caches.Init()
+	state.Caches.Start()
+
+	// Open connection to the database now caches started.
 	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
 
-	// Set the state DB connection
+	// Set DB on state.
 	state.DB = dbService
 
+	// Ensure necessary database instance prerequisites exist.
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
 	}
-
 	if err := dbService.CreateInstanceInstance(ctx); err != nil {
 		return fmt.Errorf("error creating instance instance: %s", err)
 	}
-
 	if err := dbService.CreateInstanceApplication(ctx); err != nil {
 		return fmt.Errorf("error creating instance application: %s", err)
 	}
 
-	// Get the instance account
-	// (we'll need this later).
+	// Get the instance account (we'll need this later).
 	instanceAccount, err := dbService.GetInstanceAccount(ctx, "")
 	if err != nil {
 		return fmt.Errorf("error retrieving instance account: %w", err)
 	}
 
-	// Open the storage backend
-	storage, err := gtsstorage.AutoConfig()
+	// Open the storage backend according to config.
+	state.Storage, err = gtsstorage.AutoConfig()
 	if err != nil {
-		return fmt.Errorf("error creating storage backend: %w", err)
+		return fmt.Errorf("error opening storage backend: %w", err)
 	}
 
-	// Set the state storage driver
-	state.Storage = storage
-
-	// Build HTTP client
+	// Prepare wrapped httpclient with config.
 	client := httpclient.New(httpclient.Config{
 		AllowRanges:           config.MustParseIPPrefixes(config.GetHTTPClientAllowIPs()),
 		BlockRanges:           config.MustParseIPPrefixes(config.GetHTTPClientBlockIPs()),
@@ -156,7 +203,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 	}
 
-	// Initialize timelines.
+	// Initialize both home / list timelines.
 	state.Timelines.Home = timeline.NewManager(
 		tlprocessor.HomeTimelineGrab(&state),
 		tlprocessor.HomeTimelineFilter(&state, visFilter),
@@ -166,7 +213,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	if err := state.Timelines.Home.Start(); err != nil {
 		return fmt.Errorf("error starting home timeline: %s", err)
 	}
-
 	state.Timelines.List = timeline.NewManager(
 		tlprocessor.ListTimelineGrab(&state),
 		tlprocessor.ListTimelineFilter(&state, visFilter),
@@ -196,6 +242,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Create background cleaner.
 	cleaner := cleaner.New(&state)
 
+	// Now schedule background cleaning tasks.
+	if err := cleaner.ScheduleJobs(); err != nil {
+		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
+	}
+
 	// Create the processor using all the
 	// other services we've created so far.
 	processor := processing.NewProcessor(
@@ -208,18 +259,17 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		emailSender,
 	)
 
-	// Initialize the specialized workers.
+	// Initialize the specialized workers pools.
 	state.Workers.Client.Init(messages.ClientMsgIndices())
 	state.Workers.Federator.Init(messages.FederatorMsgIndices())
 	state.Workers.Delivery.Init(client)
 	state.Workers.Client.Process = processor.Workers().ProcessFromClientAPI
 	state.Workers.Federator.Process = processor.Workers().ProcessFromFediAPI
 
-	// Initialize workers.
+	// Now start workers!
 	state.Workers.Start()
-	defer state.Workers.Stop()
 
-	// Schedule tasks for all existing poll expiries.
+	// Schedule notif tasks for all existing poll expiries.
 	if err := processor.Polls().ScheduleAll(ctx); err != nil {
 		return fmt.Errorf("error scheduling poll expiries: %w", err)
 	}
@@ -233,7 +283,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		HTTP router initialization
 	*/
 
-	router, err := router.New(ctx)
+	route, err = router.New(ctx)
 	if err != nil {
 		return fmt.Errorf("error creating router: %s", err)
 	}
@@ -288,10 +338,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	middlewares = append(middlewares, middleware.ContentSecurityPolicy(cspExtraURIs...))
 
 	// attach global middlewares which are used for every request
-	router.AttachGlobalMiddleware(middlewares...)
+	route.AttachGlobalMiddleware(middlewares...)
 
 	// attach global no route / 404 handler to the router
-	router.AttachNoRouteHandler(func(c *gin.Context) {
+	route.AttachNoRouteHandler(func(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(http.StatusText(http.StatusNotFound))), processor.InstanceGetV1)
 	})
 
@@ -347,22 +397,21 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
-	authModule.Route(router, clLimit, clThrottle, gzip)
-	clientModule.Route(router, clLimit, clThrottle, gzip)
-	metricsModule.Route(router, clLimit, clThrottle, gzip)
-	healthModule.Route(router, clLimit, clThrottle)
-	fileserverModule.Route(router, fsMainLimit, fsThrottle)
-	fileserverModule.RouteEmojis(router, instanceAccount.ID, fsEmojiLimit, fsThrottle)
-	wellKnownModule.Route(router, gzip, s2sLimit, s2sThrottle)
-	nodeInfoModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.Route(router, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.RoutePublicKey(router, s2sLimit, pkThrottle, gzip)
-	webModule.Route(router, fsMainLimit, fsThrottle, gzip)
+	authModule.Route(route, clLimit, clThrottle, gzip)
+	clientModule.Route(route, clLimit, clThrottle, gzip)
+	metricsModule.Route(route, clLimit, clThrottle, gzip)
+	healthModule.Route(route, clLimit, clThrottle)
+	fileserverModule.Route(route, fsMainLimit, fsThrottle)
+	fileserverModule.RouteEmojis(route, instanceAccount.ID, fsEmojiLimit, fsThrottle)
+	wellKnownModule.Route(route, gzip, s2sLimit, s2sThrottle)
+	nodeInfoModule.Route(route, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.Route(route, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.RoutePublicKey(route, s2sLimit, pkThrottle, gzip)
+	webModule.Route(route, fsMainLimit, fsThrottle, gzip)
 
-	// Start the GoToSocial server.
-	server := gotosocial.NewServer(dbService, router, cleaner)
-	if err := server.Start(ctx); err != nil {
-		return fmt.Errorf("error starting gotosocial service: %s", err)
+	// Finally start the main http server!
+	if err := route.Start(); err != nil {
+		return fmt.Errorf("error starting router: %w", err)
 	}
 
 	// catch shutdown signals from the operating system
@@ -371,11 +420,5 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sig := <-sigs // block until signal received
 	log.Infof(ctx, "received signal %s, shutting down", sig)
 
-	// close down all running services in order
-	if err := server.Stop(ctx); err != nil {
-		return fmt.Errorf("error closing gotosocial service: %s", err)
-	}
-
-	log.Info(ctx, "done! exiting...")
 	return nil
 }
