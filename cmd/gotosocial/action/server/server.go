@@ -78,7 +78,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// depending on what services were
 		// managed to be started.
 
-		state state.State
+		state = new(state.State)
 		route *router.Router
 	)
 
@@ -137,7 +137,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	state.Caches.Start()
 
 	// Open connection to the database now caches started.
-	dbService, err := bundb.NewBunDBService(ctx, &state)
+	dbService, err := bundb.NewBunDBService(ctx, state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
@@ -177,14 +177,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	})
 
 	// Build handlers used in later initializations.
-	mediaManager := media.NewManager(&state)
+	mediaManager := media.NewManager(state)
 	oauthServer := oauth.New(ctx, dbService)
-	typeConverter := typeutils.NewConverter(&state)
-	visFilter := visibility.NewFilter(&state)
-	spamFilter := spam.NewFilter(&state)
-	federatingDB := federatingdb.New(&state, typeConverter, visFilter, spamFilter)
-	transportController := transport.NewController(&state, federatingDB, &federation.Clock{}, client)
-	federator := federation.NewFederator(&state, federatingDB, transportController, typeConverter, visFilter, mediaManager)
+	typeConverter := typeutils.NewConverter(state)
+	visFilter := visibility.NewFilter(state)
+	spamFilter := spam.NewFilter(state)
+	federatingDB := federatingdb.New(state, typeConverter, visFilter, spamFilter)
+	transportController := transport.NewController(state, federatingDB, &federation.Clock{}, client)
+	federator := federation.NewFederator(state, federatingDB, transportController, typeConverter, visFilter, mediaManager)
 
 	// Decide whether to create a noop email
 	// sender (won't send emails) or a real one.
@@ -205,18 +205,18 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize both home / list timelines.
 	state.Timelines.Home = timeline.NewManager(
-		tlprocessor.HomeTimelineGrab(&state),
-		tlprocessor.HomeTimelineFilter(&state, visFilter),
-		tlprocessor.HomeTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.HomeTimelineGrab(state),
+		tlprocessor.HomeTimelineFilter(state, visFilter),
+		tlprocessor.HomeTimelineStatusPrepare(state, typeConverter),
 		tlprocessor.SkipInsert(),
 	)
 	if err := state.Timelines.Home.Start(); err != nil {
 		return fmt.Errorf("error starting home timeline: %s", err)
 	}
 	state.Timelines.List = timeline.NewManager(
-		tlprocessor.ListTimelineGrab(&state),
-		tlprocessor.ListTimelineFilter(&state, visFilter),
-		tlprocessor.ListTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.ListTimelineGrab(state),
+		tlprocessor.ListTimelineFilter(state, visFilter),
+		tlprocessor.ListTimelineStatusPrepare(state, typeConverter),
 		tlprocessor.SkipInsert(),
 	)
 	if err := state.Timelines.List.Start(); err != nil {
@@ -230,17 +230,19 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Add a task to the scheduler to sweep caches.
 	// Frequency = 1 * minute
 	// Threshold = 60% capacity
-	_ = state.Workers.Scheduler.AddRecurring(
+	if !state.Workers.Scheduler.AddRecurring(
 		"@cachesweep", // id
 		time.Time{},   // start
 		time.Minute,   // freq
 		func(context.Context, time.Time) {
 			state.Caches.Sweep(60)
 		},
-	)
+	) {
+		return fmt.Errorf("error scheduling cache sweep: %w", err)
+	}
 
 	// Create background cleaner.
-	cleaner := cleaner.New(&state)
+	cleaner := cleaner.New(state)
 
 	// Now schedule background cleaning tasks.
 	if err := cleaner.ScheduleJobs(); err != nil {
@@ -255,7 +257,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		federator,
 		oauthServer,
 		mediaManager,
-		&state,
+		state,
 		emailSender,
 	)
 
@@ -308,7 +310,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// note: hooks adding ctx fields must be ABOVE
 		// the logger, otherwise won't be accessible.
 		middleware.Logger(config.GetLogClientIP()),
-		middleware.HeaderFilter(&state),
+		middleware.HeaderFilter(state),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
@@ -366,7 +368,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	var (
 		authModule        = api.NewAuth(dbService, processor, idp, routerSession, sessionName) // auth/oauth paths
-		clientModule      = api.NewClient(&state, processor)                                   // api client endpoints
+		clientModule      = api.NewClient(state, processor)                                    // api client endpoints
 		metricsModule     = api.NewMetrics()                                                   // Metrics endpoints
 		healthModule      = api.NewHealth(dbService.Ready)                                     // Health check endpoints
 		fileserverModule  = api.NewFileserver(processor)                                       // fileserver endpoints

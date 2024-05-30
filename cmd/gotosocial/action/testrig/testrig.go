@@ -64,7 +64,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// depending on what services were
 		// managed to be started.
 
-		state state.State
+		state = new(state.State)
 		route *router.Router
 	)
 
@@ -85,7 +85,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// Stop any currently running
 		// worker processes / scheduled
 		// tasks from being executed.
-		testrig.StopWorkers(&state)
+		testrig.StopWorkers(state)
 
 		if state.Timelines.Home != nil {
 			// Home timeline mgr was setup, ensure it gets stopped.
@@ -130,7 +130,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Initialize caches and database
-	state.DB = testrig.NewTestDB(&state)
+	state.DB = testrig.NewTestDB(state)
 
 	// New test db inits caches so we don't need to do
 	// that twice, we can just start the initialized caches.
@@ -156,11 +156,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.StandardStorageSetup(state.Storage, "./testrig/media")
 
 	// Initialize workers.
-	testrig.StartNoopWorkers(&state)
-	defer testrig.StopWorkers(&state)
+	testrig.StartNoopWorkers(state)
+	defer testrig.StopWorkers(state)
 
 	// build backend handlers
-	transportController := testrig.NewTestTransportController(&state, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+	transportController := testrig.NewTestTransportController(state, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
 		r := io.NopCloser(bytes.NewReader([]byte{}))
 		return &http.Response{
 			StatusCode: 200,
@@ -170,34 +170,34 @@ var Start action.GTSAction = func(ctx context.Context) error {
 			},
 		}, nil
 	}, ""))
-	mediaManager := testrig.NewTestMediaManager(&state)
-	federator := testrig.NewTestFederator(&state, transportController, mediaManager)
+	mediaManager := testrig.NewTestMediaManager(state)
+	federator := testrig.NewTestFederator(state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
-	typeConverter := typeutils.NewConverter(&state)
-	filter := visibility.NewFilter(&state)
+	typeConverter := typeutils.NewConverter(state)
+	filter := visibility.NewFilter(state)
 
 	// Initialize both home / list timelines.
 	state.Timelines.Home = timeline.NewManager(
-		tlprocessor.HomeTimelineGrab(&state),
-		tlprocessor.HomeTimelineFilter(&state, filter),
-		tlprocessor.HomeTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.HomeTimelineGrab(state),
+		tlprocessor.HomeTimelineFilter(state, filter),
+		tlprocessor.HomeTimelineStatusPrepare(state, typeConverter),
 		tlprocessor.SkipInsert(),
 	)
 	if err := state.Timelines.Home.Start(); err != nil {
 		return fmt.Errorf("error starting home timeline: %s", err)
 	}
 	state.Timelines.List = timeline.NewManager(
-		tlprocessor.ListTimelineGrab(&state),
-		tlprocessor.ListTimelineFilter(&state, filter),
-		tlprocessor.ListTimelineStatusPrepare(&state, typeConverter),
+		tlprocessor.ListTimelineGrab(state),
+		tlprocessor.ListTimelineFilter(state, filter),
+		tlprocessor.ListTimelineStatusPrepare(state, typeConverter),
 		tlprocessor.SkipInsert(),
 	)
 	if err := state.Timelines.List.Start(); err != nil {
 		return fmt.Errorf("error starting list timeline: %s", err)
 	}
 
-	processor := testrig.NewTestProcessor(&state, federator, emailSender, mediaManager)
+	processor := testrig.NewTestProcessor(state, federator, emailSender, mediaManager)
 
 	// Initialize metrics.
 	if err := metrics.Initialize(state.DB); err != nil {
@@ -222,7 +222,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	middlewares = append(middlewares, []gin.HandlerFunc{
 		middleware.Logger(config.GetLogClientIP()),
-		middleware.HeaderFilter(&state),
+		middleware.HeaderFilter(state),
 		middleware.UserAgent(),
 		middleware.CORS(),
 		middleware.ExtraHeaders(),
@@ -280,7 +280,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	var (
 		authModule        = api.NewAuth(state.DB, processor, idp, routerSession, sessionName) // auth/oauth paths
-		clientModule      = api.NewClient(&state, processor)                                  // api client endpoints
+		clientModule      = api.NewClient(state, processor)                                   // api client endpoints
 		metricsModule     = api.NewMetrics()                                                  // Metrics endpoints
 		healthModule      = api.NewHealth(state.DB.Ready)                                     // Health check endpoints
 		fileserverModule  = api.NewFileserver(processor)                                      // fileserver endpoints
@@ -304,7 +304,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	webModule.Route(route)
 
 	// Create background cleaner.
-	cleaner := cleaner.New(&state)
+	cleaner := cleaner.New(state)
 
 	// Now schedule background cleaning tasks.
 	if err := cleaner.ScheduleJobs(); err != nil {
