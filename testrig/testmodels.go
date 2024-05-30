@@ -3298,6 +3298,16 @@ func NewTestFilters() map[string]*gtsmodel.Filter {
 			ContextHome:   util.Ptr(true),
 			ContextPublic: util.Ptr(true),
 		},
+		"local_account_1_filter_4": {
+			ID:            "01HZ55WWWP82WYP2A1BKWK8Y9Q",
+			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			UpdatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Title:         "empty filter with no keywords or statuses",
+			Action:        gtsmodel.FilterActionWarn,
+			ContextHome:   util.Ptr(true),
+			ContextPublic: util.Ptr(true),
+		},
 		"local_account_2_filter_1": {
 			ID:            "01HNGFYJBED9FS0VWRVMY4TKXH",
 			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),

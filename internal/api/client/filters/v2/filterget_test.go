@@ -120,3 +120,14 @@ func (suite *FiltersTestSuite) TestGetNonexistentFilter() {
 		suite.FailNow(err.Error())
 	}
 }
+
+// Test that an empty filter with no keywords or statuses serializes the keywords and statuses arrays as empty arrays,
+// not as null values or entirely omitted fields.
+func (suite *FiltersTestSuite) TestGetEmptyFilter() {
+	id := suite.testFilters["local_account_1_filter_4"].ID
+
+	_, err := suite.getFilter(id, http.StatusOK, `{"id":"01HZ55WWWP82WYP2A1BKWK8Y9Q","title":"empty filter with no keywords or statuses","context":["home","public"],"expires_at":null,"filter_action":"warn","keywords":[],"statuses":[]}`)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+}
