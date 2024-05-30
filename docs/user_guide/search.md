@@ -8,7 +8,7 @@ GotoSocial accepts several kinds of search query:
 - `@username@domain`: search for a remote account with exact username and domain. Will only ever return 1 result at most.
 - `https://example.org/some/arbitrary/url`: search for an account or post with the given URL. If the account or post hasn't already federated to GotoSocial, it will try to retrieve it. Will only ever return 1 result at most.
 - `#hashtag_name`: search for a hashtag with the given hashtag name, or starting with the given hashtag name. Case insensitive. Can return multiple results.
-- `any arbitrary text`: search for posts containing the text, hashtags containing the text, and accounts with usernames, display names, or bios containing the text, exactly as written. Can return multiple results. Bios will only be searched for accounts that you follow.
+- `any arbitrary text`: search for posts containing the text, hashtags containing the text, and accounts with usernames, display names, or bios containing the text, exactly as written. Both posts you've written as well as posts replying to you will be searched. Account bios will only be searched for accounts that you follow. Can return multiple results.
 
 ## Search operators
 
