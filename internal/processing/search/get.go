@@ -834,24 +834,16 @@ func (p *Processor) statusesByText(
 	fromAccountID string,
 	appendStatus func(*gtsmodel.Status),
 ) error {
-	var err error
-
+	parsed, err := p.parseQuery(ctx, query)
+	if err != nil {
+		return err
+	}
+	query = parsed.query
 	// If the owning account for statuses was not provided as the account_id query parameter,
 	// it may still have been provided as a search operator in the query string.
-	queryPartSeparator := " "
-	queryParts := strings.Split(query, queryPartSeparator)
-	nonOperatorQueryParts := make([]string, 0, len(queryParts))
-	for _, queryPart := range queryParts {
-		if arg, hasPrefix := strings.CutPrefix(queryPart, "from:"); hasPrefix {
-			fromAccountID, err = p.parseFromOperatorArg(ctx, arg)
-			if err != nil {
-				return err
-			}
-		} else {
-			nonOperatorQueryParts = append(nonOperatorQueryParts, queryPart)
-		}
+	if fromAccountID == "" {
+		fromAccountID = parsed.fromAccountID
 	}
-	query = strings.Join(nonOperatorQueryParts, queryPartSeparator)
 
 	statuses, err := p.state.DB.SearchForStatuses(
 		ctx,
@@ -872,6 +864,33 @@ func (p *Processor) statusesByText(
 	}
 
 	return nil
+}
+
+// parsedQuery represents the results of parsing the search operator terms within a query.
+type parsedQuery struct {
+	// query is the original search query text with operator terms removed.
+	query string
+	// fromAccountID is the account from a successfully resolved `from:` operator, if present.
+	fromAccountID string
+}
+
+// parseQuery parses query text and handles any search operator terms present.
+func (p *Processor) parseQuery(ctx context.Context, query string) (parsed parsedQuery, err error) {
+	queryPartSeparator := " "
+	queryParts := strings.Split(query, queryPartSeparator)
+	nonOperatorQueryParts := make([]string, 0, len(queryParts))
+	for _, queryPart := range queryParts {
+		if arg, hasPrefix := strings.CutPrefix(queryPart, "from:"); hasPrefix {
+			parsed.fromAccountID, err = p.parseFromOperatorArg(ctx, arg)
+			if err != nil {
+				return
+			}
+		} else {
+			nonOperatorQueryParts = append(nonOperatorQueryParts, queryPart)
+		}
+	}
+	parsed.query = strings.Join(nonOperatorQueryParts, queryPartSeparator)
+	return
 }
 
 // parseFromOperatorArg attempts to parse the from: operator's argument as an account name,
