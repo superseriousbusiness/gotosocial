@@ -19,6 +19,7 @@ package v2
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -38,7 +39,9 @@ func (p *Processor) KeywordDelete(
 
 	// Check that the account owns it.
 	if filterKeyword.AccountID != account.ID {
-		return gtserror.NewErrorNotFound(nil)
+		return gtserror.NewErrorNotFound(
+			fmt.Errorf("filter keyword %s doesn't belong to account %s", filterKeyword.ID, account.ID),
+		)
 	}
 
 	// Delete the filter keyword.

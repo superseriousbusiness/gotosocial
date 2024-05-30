@@ -48,7 +48,9 @@ func (p *Processor) Update(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+		return nil, gtserror.NewErrorNotFound(
+			fmt.Errorf("filter %s doesn't belong to account %s", filter.ID, account.ID),
+		)
 	}
 
 	// Filter columns that we're going to update.

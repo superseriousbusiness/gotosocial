@@ -20,6 +20,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -45,7 +46,9 @@ func (p *Processor) KeywordUpdate(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if filterKeyword.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+		return nil, gtserror.NewErrorNotFound(
+			fmt.Errorf("filter keyword %s doesn't belong to account %s", filterKeyword.ID, account.ID),
+		)
 	}
 
 	filterKeyword.Keyword = form.Keyword

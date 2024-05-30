@@ -20,6 +20,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -39,7 +40,9 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, filterID
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+		return nil, gtserror.NewErrorNotFound(
+			fmt.Errorf("filter %s doesn't belong to account %s", filter.ID, account.ID),
+		)
 	}
 
 	return p.apiFilter(ctx, filter)

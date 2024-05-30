@@ -20,6 +20,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -40,7 +41,9 @@ func (p *Processor) StatusGet(ctx context.Context, account *gtsmodel.Account, fi
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if filterStatus.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+		return nil, gtserror.NewErrorNotFound(
+			fmt.Errorf("filter status %s doesn't belong to account %s", filterStatus.ID, account.ID),
+		)
 	}
 
 	return p.converter.FilterStatusToAPIFilterStatus(ctx, filterStatus), nil

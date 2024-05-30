@@ -20,6 +20,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 
@@ -40,7 +41,9 @@ func (p *Processor) KeywordGet(ctx context.Context, account *gtsmodel.Account, f
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if filterKeyword.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+		return nil, gtserror.NewErrorNotFound(
+			fmt.Errorf("filter keyword %s doesn't belong to account %s", filterKeyword.ID, account.ID),
+		)
 	}
 
 	return p.converter.FilterKeywordToAPIFilterKeyword(ctx, filterKeyword), nil

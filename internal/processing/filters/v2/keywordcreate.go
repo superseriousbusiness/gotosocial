@@ -20,6 +20,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -41,7 +42,9 @@ func (p *Processor) KeywordCreate(ctx context.Context, account *gtsmodel.Account
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+		return nil, gtserror.NewErrorNotFound(
+			fmt.Errorf("filter %s doesn't belong to account %s", filter.ID, account.ID),
+		)
 	}
 
 	filterKeyword := &gtsmodel.FilterKeyword{
