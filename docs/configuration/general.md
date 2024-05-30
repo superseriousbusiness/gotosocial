@@ -74,7 +74,7 @@ host: "localhost"
 # DO NOT change this after your server has already run once, or you will break things!
 #
 # Please read the appropriate section of the installation guide before you go messing around with this setting:
-# https://docs.gotosocial.org/installation_guide/advanced/#can-i-host-my-instance-at-fediexampleorg-but-have-just-exampleorg-in-my-username
+# https://docs.gotosocial.org/en/latest/advanced/host-account-domain/
 #
 # Examples: ["example.org","server.com"]
 # Default: ""
