@@ -28,6 +28,7 @@ type SearchRequest struct {
 	Resolve           bool
 	Following         bool
 	ExcludeUnreviewed bool
+	AccountID         string
 	APIv1             bool // Set to 'true' if using version 1 of the search API.
 }
 

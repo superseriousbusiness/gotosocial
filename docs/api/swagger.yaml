@@ -2872,6 +2872,9 @@ paths:
                     - `https://example.org/some/arbitrary/url` -- search for an account OR a status with the given URL. Will only ever return 1 result at most.
                     - `#[hashtag_name]` -- search for a hashtag with the given hashtag name, or starting with the given hashtag name. Case insensitive. Can return multiple results.
                     - any arbitrary string -- search for accounts or statuses containing the given string. Can return multiple results.
+
+                    Arbitrary string queries may include the following operators:
+                    - `from:localuser`, `from:remoteuser@instance.tld`: restrict results to statuses created by the specified account.
                   in: query
                   name: q
                   required: true
@@ -2902,6 +2905,10 @@ paths:
                   in: query
                   name: exclude_unreviewed
                   type: boolean
+                - description: Restrict results to statuses created by the specified account.
+                  in: query
+                  name: account_id
+                  type: string
             produces:
                 - application/json
             responses:

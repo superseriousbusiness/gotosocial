@@ -55,6 +55,7 @@ const (
 	SearchQueryKey             = "q"
 	SearchResolveKey           = "resolve"
 	SearchTypeKey              = "type"
+	SearchAccountIDKey         = "account_id"
 
 	/* Tag keys */
 
