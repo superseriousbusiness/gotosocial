@@ -41,7 +41,7 @@ import (
 //	-
 //		name: id
 //		type: string
-//		description: ID of the list
+//		description: ID of the filter
 //		in: path
 //		required: true
 //

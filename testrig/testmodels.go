@@ -3288,6 +3288,26 @@ func NewTestFilters() map[string]*gtsmodel.Filter {
 			ContextHome:   util.Ptr(true),
 			ContextPublic: util.Ptr(true),
 		},
+		"local_account_1_filter_3": {
+			ID:            "01HWXQDXE4QX4R9EGMG729Y76C",
+			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			UpdatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Title:         "puppies",
+			Action:        gtsmodel.FilterActionWarn,
+			ContextHome:   util.Ptr(true),
+			ContextPublic: util.Ptr(true),
+		},
+		"local_account_1_filter_4": {
+			ID:            "01HZ55WWWP82WYP2A1BKWK8Y9Q",
+			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			UpdatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
+			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
+			Title:         "empty filter with no keywords or statuses",
+			Action:        gtsmodel.FilterActionWarn,
+			ContextHome:   util.Ptr(true),
+			ContextPublic: util.Ptr(true),
+		},
 		"local_account_2_filter_1": {
 			ID:            "01HNGFYJBED9FS0VWRVMY4TKXH",
 			CreatedAt:     TimeMustParse("2024-01-25T12:20:03+02:00"),
@@ -3330,6 +3350,15 @@ func NewTestFilterKeywords() map[string]*gtsmodel.FilterKeyword {
 			Keyword:   "bar",
 			WholeWord: util.Ptr(true),
 		},
+		"local_account_1_filter_2_keyword_3": {
+			ID:        "01HXATJTGYT4BTG2YASE5M7GSD",
+			CreatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+			UpdatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
+			AccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			FilterID:  "01HN277FSPQAWXZXK92QPPYF79",
+			Keyword:   "quux",
+			WholeWord: util.Ptr(true),
+		},
 		"local_account_2_filter_1_keyword_1": {
 			ID:        "01HNGG51HV2JT67XQ5MQ7RA1WE",
 			CreatedAt: TimeMustParse("2024-01-25T12:20:03+02:00"),
@@ -3343,8 +3372,24 @@ func NewTestFilterKeywords() map[string]*gtsmodel.FilterKeyword {
 }
 
 func NewTestFilterStatuses() map[string]*gtsmodel.FilterStatus {
-	// FUTURE: (filters v2) test filter statuses
-	return map[string]*gtsmodel.FilterStatus{}
+	return map[string]*gtsmodel.FilterStatus{
+		"local_account_1_filter_3_status_1": {
+			ID:        "01HWXQDY8EE182AWQKS45JV50W",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			AccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			FilterID:  "01HWXQDXE4QX4R9EGMG729Y76C",
+			StatusID:  "01F8MHAAY43M6RJ473VQFCVH37",
+		},
+		"local_account_2_filter_1_status_1": {
+			ID:        "01HX9WXVEH05E78ABR81FZFFFY",
+			CreatedAt: time.Time{},
+			UpdatedAt: time.Time{},
+			AccountID: "01F8MH1VYJAE00TVVGMM5JNJ8X",
+			FilterID:  "01HNGFYJBED9FS0VWRVMY4TKXH",
+			StatusID:  "01FVW7JHQFSFK166WWKR8CBA6M",
+		},
+	}
 }
 
 // GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.

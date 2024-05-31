@@ -31,6 +31,10 @@ func validateNormalizeCreateUpdateFilter(form *model.FilterCreateUpdateRequestV1
 	if err := validate.FilterKeyword(form.Phrase); err != nil {
 		return err
 	}
+	// For filter v1 forwards compatibility, the phrase is used as the title of a v2 filter, so it must pass that as well.
+	if err := validate.FilterTitle(form.Phrase); err != nil {
+		return err
+	}
 	if err := validate.FilterContexts(form.Context); err != nil {
 		return err
 	}

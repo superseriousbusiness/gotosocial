@@ -149,9 +149,11 @@ func (p *Processor) Update(
 		"context_thread",
 		"context_account",
 	}
-	filterKeywordColumns := []string{
-		"keyword",
-		"whole_word",
+	filterKeywordColumns := [][]string{
+		{
+			"keyword",
+			"whole_word",
+		},
 	}
 	if err := p.state.DB.UpdateFilter(ctx, filter, filterColumns, filterKeywordColumns, nil, nil); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {

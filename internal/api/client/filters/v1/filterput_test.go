@@ -97,6 +97,9 @@ func (suite *FiltersTestSuite) putFilter(
 	// check code + body
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
 		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
+		if expectedBody == "" {
+			return nil, errs.Combine()
+		}
 	}
 
 	// if we got an expected body, return early
@@ -233,16 +236,6 @@ func (suite *FiltersTestSuite) TestPutFilterTitleConflict() {
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := "metasyntactic variables"
 	_, err := suite.putFilter(id, &phrase, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-}
-
-// FUTURE: this should be removed once we support server-side filters.
-func (suite *FiltersTestSuite) TestPutFilterIrreversibleNotSupported() {
-	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
-	irreversible := true
-	_, err := suite.putFilter(id, nil, nil, &irreversible, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

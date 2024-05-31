@@ -45,6 +45,7 @@ const (
 	maximumProfileFields          = 6
 	maximumListTitleLength        = 200
 	maximumFilterKeywordLength    = 40
+	maximumFilterTitleLength      = 200
 )
 
 // Password returns a helpful error if the given password
@@ -242,9 +243,16 @@ func SiteTerms(t string) error {
 	return nil
 }
 
-// ULID returns true if the passed string is a valid ULID.
-func ULID(i string) bool {
-	return regexes.ULID.MatchString(i)
+// ULID returns an error if the passed string is not a valid ULID.
+// The name param is used to form error messages.
+func ULID(i string, name string) error {
+	if i == "" {
+		return fmt.Errorf("%s must be provided", name)
+	}
+	if !regexes.ULID.MatchString(i) {
+		return fmt.Errorf("%s didn't match the expected ULID format for an ID (26 characters from the set 0123456789ABCDEFGHJKMNPQRSTVWXYZ)", name)
+	}
+	return nil
 }
 
 // ProfileFields validates the length of provided fields slice,
@@ -308,7 +316,7 @@ func MarkerName(name string) error {
 	return fmt.Errorf("marker timeline name '%s' was not recognized, valid options are '%s', '%s'", name, apimodel.MarkerNameHome, apimodel.MarkerNameNotifications)
 }
 
-// FilterKeyword validates the title of a new or updated List.
+// FilterKeyword validates a filter keyword.
 func FilterKeyword(keyword string) error {
 	if keyword == "" {
 		return fmt.Errorf("filter keyword must be provided, and must be no more than %d chars", maximumFilterKeywordLength)
@@ -316,6 +324,19 @@ func FilterKeyword(keyword string) error {
 
 	if length := len([]rune(keyword)); length > maximumFilterKeywordLength {
 		return fmt.Errorf("filter keyword length must be no more than %d chars, provided keyword was %d chars", maximumFilterKeywordLength, length)
+	}
+
+	return nil
+}
+
+// FilterTitle validates the title of a new or updated filter.
+func FilterTitle(title string) error {
+	if title == "" {
+		return fmt.Errorf("filter title must be provided, and must be no more than %d chars", maximumFilterTitleLength)
+	}
+
+	if length := len([]rune(title)); length > maximumFilterTitleLength {
+		return fmt.Errorf("filter title length must be no more than %d chars, provided title was %d chars", maximumFilterTitleLength, length)
 	}
 
 	return nil
@@ -347,6 +368,20 @@ func FilterContexts(contexts []apimodel.FilterContext) error {
 		}
 	}
 	return nil
+}
+
+func FilterAction(action apimodel.FilterAction) error {
+	switch action {
+	case apimodel.FilterActionWarn,
+		apimodel.FilterActionHide:
+		return nil
+	}
+	return fmt.Errorf(
+		"filter action '%s' was not recognized, valid options are '%s', '%s'",
+		action,
+		apimodel.FilterActionWarn,
+		apimodel.FilterActionHide,
+	)
 }
 
 // CreateAccount checks through all the prerequisites for

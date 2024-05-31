@@ -127,7 +127,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	}
 	check.Statuses = append(check.Statuses, newStatus)
 
-	if err := suite.db.UpdateFilter(ctx, check, nil, nil, nil, nil); err != nil {
+	if err := suite.db.UpdateFilter(ctx, check, nil, [][]string{nil, nil}, nil, nil); err != nil {
 		t.Fatalf("error updating filter: %v", err)
 	}
 	// Now fetch newly updated filter.
@@ -175,7 +175,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	check.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 	check.Statuses = nil
 
-	if err := suite.db.UpdateFilter(ctx, check, nil, nil, []string{newKeyword.ID}, nil); err != nil {
+	if err := suite.db.UpdateFilter(ctx, check, nil, [][]string{{"whole_word"}}, []string{newKeyword.ID}, nil); err != nil {
 		t.Fatalf("error updating filter: %v", err)
 	}
 	check, err = suite.db.GetFilterByID(ctx, filter.ID)
@@ -222,7 +222,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 		StatusID:  newStatus.StatusID,
 	}
 	check.Statuses = []*gtsmodel.FilterStatus{redundantStatus}
-	if err := suite.db.UpdateFilter(ctx, check, nil, nil, nil, nil); err != nil {
+	if err := suite.db.UpdateFilter(ctx, check, nil, [][]string{nil}, nil, nil); err != nil {
 		t.Fatalf("error updating filter: %v", err)
 	}
 	check, err = suite.db.GetFilterByID(ctx, filter.ID)

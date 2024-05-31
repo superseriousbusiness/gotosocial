@@ -94,6 +94,9 @@ func (suite *FiltersTestSuite) postFilter(
 	// check code + body
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
 		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
+		if expectedBody == "" {
+			return nil, errs.Combine()
+		}
 	}
 
 	// if we got an expected body, return early
@@ -222,17 +225,6 @@ func (suite *FiltersTestSuite) TestPostFilterMissingContext() {
 func (suite *FiltersTestSuite) TestPostFilterTitleConflict() {
 	phrase := "fnord"
 	_, err := suite.postFilter(&phrase, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-}
-
-// FUTURE: this should be removed once we support server-side filters.
-func (suite *FiltersTestSuite) TestPostFilterIrreversibleNotSupported() {
-	phrase := "GNU/Linux"
-	context := []string{"home"}
-	irreversible := true
-	_, err := suite.postFilter(&phrase, &context, &irreversible, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

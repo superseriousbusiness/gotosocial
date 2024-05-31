@@ -66,6 +66,9 @@ func (suite *FiltersTestSuite) deleteFilter(
 	// check code + body
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
 		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
+		if expectedBody == "" {
+			return errs.Combine()
+		}
 	}
 
 	// if we got an expected body, return early

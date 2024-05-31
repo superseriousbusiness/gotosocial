@@ -52,6 +52,7 @@ import (
 //			The text to be filtered.
 //
 //			Sample: fnord
+//		minLength: 1
 //		maxLength: 40
 //		type: string
 //	-
@@ -120,6 +121,8 @@ import (
 //			description: not found
 //		'406':
 //			description: not acceptable
+//		'409':
+//			description: conflict (duplicate keyword)
 //		'422':
 //			description: unprocessable content
 //		'500':

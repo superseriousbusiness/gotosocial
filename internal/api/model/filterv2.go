@@ -85,7 +85,7 @@ type FilterKeyword struct {
 	//
 	// Example: fnord
 	Keyword string `json:"keyword"`
-	// Should the filter consider word boundaries?
+	// Should the filter keyword consider word boundaries?
 	//
 	// Example: true
 	WholeWord bool `json:"whole_word"`
@@ -103,4 +103,89 @@ type FilterStatus struct {
 	ID string `json:"id"`
 	// The status ID to be filtered.
 	StatusID string `json:"phrase"`
+}
+
+// FilterCreateRequestV2 captures params for creating a v2 filter.
+//
+// swagger:ignore
+type FilterCreateRequestV2 struct {
+	// The name of the filter.
+	//
+	// Required: true
+	// Example: fnord
+	Title string `form:"title" json:"title" xml:"title"`
+	// The contexts in which the filter should be applied.
+	//
+	// Required: true
+	// Minimum length: 1
+	// Unique: true
+	// Enum: home,notifications,public,thread,account
+	// Example: ["home", "public"]
+	Context []FilterContext `form:"context[]" json:"context" xml:"context"`
+	// The action to be taken when a status matches this filter. If omitted, defaults to warn.
+	// Enum:
+	//	- warn
+	//	- hide
+	// Example: warn
+	FilterAction *FilterAction `form:"filter_action" json:"filter_action" xml:"filter_action"`
+
+	// Number of seconds from now that the filter should expire. If omitted, filter never expires.
+	ExpiresIn *int `json:"-" form:"expires_in" xml:"expires_in"`
+	// Number of seconds from now that the filter should expire. If omitted, filter never expires.
+	//
+	// Example: 86400
+	ExpiresInI interface{} `json:"expires_in"`
+}
+
+// FilterKeywordCreateUpdateRequest captures params for creating or updating a filter keyword.
+//
+// swagger:ignore
+type FilterKeywordCreateUpdateRequest struct {
+	// The text to be filtered.
+	//
+	// Example: fnord
+	// Maximum length: 40
+	Keyword string `form:"keyword" json:"keyword" xml:"keyword"`
+	// Should the filter keyword consider word boundaries?
+	//
+	// Example: true
+	WholeWord *bool `form:"whole_word" json:"whole_word" xml:"whole_word"`
+}
+
+// FilterStatusCreateRequest captures params for creating a filter status.
+//
+// swagger:ignore
+type FilterStatusCreateRequest struct {
+	// The status ID to be filtered.
+	StatusID string `form:"status_id" json:"status_id" xml:"status_id"`
+}
+
+// FilterUpdateRequestV2 captures params for creating a v2 filter.
+//
+// swagger:ignore
+type FilterUpdateRequestV2 struct {
+	// The name of the filter.
+	//
+	// Example: illuminati nonsense
+	Title *string `form:"title" json:"title" xml:"title"`
+	// The contexts in which the filter should be applied.
+	//
+	// Minimum length: 1
+	// Unique: true
+	// Enum: home,notifications,public,thread,account
+	// Example: ["home", "public"]
+	Context *[]FilterContext `form:"context[]" json:"context" xml:"context"`
+	// The action to be taken when a status matches this filter.
+	// Enum:
+	//	- warn
+	//	- hide
+	// Example: warn
+	FilterAction *FilterAction `form:"filter_action" json:"filter_action" xml:"filter_action"`
+
+	// Number of seconds from now that the filter should expire. If omitted, filter never expires.
+	ExpiresIn *int `json:"-" form:"expires_in" xml:"expires_in"`
+	// Number of seconds from now that the filter should expire. If omitted, filter never expires.
+	//
+	// Example: 86400
+	ExpiresInI interface{} `json:"expires_in"`
 }
