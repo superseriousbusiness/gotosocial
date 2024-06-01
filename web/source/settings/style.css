@@ -1354,12 +1354,12 @@ button.with-padding {
 	width: 100%;
 	
 	.prism-highlighted {
-		width: 100%;
+		max-width: 40rem;
 
 		/*
-			Normally we'd want to use a scrollbar for
-			pre and code, but because of the way the
-			section + sidebar combo works, wrap instead.
+			Normally we'd want to use a scrollbar for pre
+			and code, but it actually looks a bit better
+			to wrap here because there are many long lines.
 		*/
 		pre, code {
 			white-space: pre-wrap;
