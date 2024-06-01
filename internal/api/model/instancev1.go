@@ -59,6 +59,8 @@ type InstanceV1 struct {
 	//
 	// example: 0.1.1 cb85f65
 	Version string `json:"version"`
+	// Whether or not instance is running in DEBUG mode. Omitted if false.
+	Debug *bool `json:"debug,omitempty"`
 	// Primary language of the instance.
 	// example: ["en"]
 	Languages []string `json:"languages"`

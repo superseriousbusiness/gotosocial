@@ -1350,6 +1350,23 @@ button.with-padding {
 	}
 }
 
+.admin-debug-apurl {
+	width: 100%;
+	
+	.prism-highlighted {
+		width: 100%;
+
+		/*
+			Normally we'd want to use a scrollbar for
+			pre and code, but because of the way the
+			section + sidebar combo works, wrap instead.
+		*/
+		pre, code {
+			white-space: pre-wrap;
+		}
+	}
+}
+
 @media screen and (orientation: portrait) {
 	.reports .report .byline {
 		grid-template-columns: 1fr;

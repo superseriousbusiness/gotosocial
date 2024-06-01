@@ -27,6 +27,7 @@ export interface InstanceV1 {
     short_description_text?: string;
     email:                  string;
     version:                string;
+    debug?:                 boolean;
     languages:              any[]; // TODO: define this
     registrations:          boolean;
     approval_required:      boolean;
