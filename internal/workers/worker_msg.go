@@ -127,8 +127,6 @@ func (w *MsgWorker[T]) run(ctx context.Context) {
 	if w.Process == nil || w.Queue == nil {
 		panic("not yet initialized")
 	}
-	log.Debugf(ctx, "%p: starting worker", w)
-	defer log.Debugf(ctx, "%p: stopped worker", w)
 	util.Must(func() { w.process(ctx) })
 }
 
