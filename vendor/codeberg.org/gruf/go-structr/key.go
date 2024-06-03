@@ -22,7 +22,7 @@ func (k Key) Key() string {
 
 // Equal returns whether keys are equal.
 func (k Key) Equal(o Key) bool {
-	return k.key == o.key
+	return (k.key == o.key)
 }
 
 // Value returns the raw slice of
@@ -33,7 +33,7 @@ func (k Key) Values() []any {
 
 // Zero indicates a zero value key.
 func (k Key) Zero() bool {
-	return k.raw == nil
+	return (k.raw == nil)
 }
 
 var buf_pool sync.Pool

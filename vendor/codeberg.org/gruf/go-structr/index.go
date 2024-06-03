@@ -96,7 +96,10 @@ func (i *Index) Key(parts ...any) Key {
 	buf := new_buffer()
 	key := i.key(buf, parts)
 	free_buffer(buf)
-	return key
+	return Key{
+		raw: parts,
+		key: key,
+	}
 }
 
 // Keys generates []Key{} from given (multiple) parts
@@ -107,10 +110,13 @@ func (i *Index) Keys(parts ...[]any) []Key {
 	buf := new_buffer()
 	for _, parts := range parts {
 		key := i.key(buf, parts)
-		if key.Zero() {
+		if key == "" {
 			continue
 		}
-		keys = append(keys, key)
+		keys = append(keys, Key{
+			raw: parts,
+			key: key,
+		})
 	}
 	free_buffer(buf)
 	return keys
@@ -169,31 +175,18 @@ func (i *Index) get_one(key Key) *indexed_item {
 	// Extract entry from first list elem.
 	entry := (*index_entry)(l.head.data)
 
-	// Check contains expected key.
-	if !entry.key.Equal(key) {
-		return nil
-	}
-
 	return entry.item
 }
 
 // get will fetch all indexed items under key, passing each to hook.
-func (i *Index) get(key Key, hook func(*indexed_item)) {
+func (i *Index) get(key string, hook func(*indexed_item)) {
 	if hook == nil {
 		panic("nil hook")
 	}
 
 	// Get list at hash.
-	l, _ := i.data.Get(key.key)
+	l, _ := i.data.Get(key)
 	if l == nil {
-		return
-	}
-
-	// Extract entry from first list elem.
-	entry := (*index_entry)(l.head.data)
-
-	// Check contains expected key.
-	if !entry.key.Equal(key) {
 		return
 	}
 
@@ -210,7 +203,7 @@ func (i *Index) get(key Key, hook func(*indexed_item)) {
 }
 
 // key uses hasher to generate Key{} from given raw parts.
-func (i *Index) key(buf *byteutil.Buffer, parts []any) Key {
+func (i *Index) key(buf *byteutil.Buffer, parts []any) string {
 	if len(parts) != len(i.fields) {
 		panicf("incorrect number key parts: want=%d received=%d",
 			len(i.fields),
@@ -223,7 +216,7 @@ func (i *Index) key(buf *byteutil.Buffer, parts []any) Key {
 			before := len(buf.B)
 			buf.B = field.mangle(buf.B, parts[x])
 			if string(buf.B[before:]) == field.zerostr {
-				return Key{}
+				return ""
 			}
 			buf.B = append(buf.B, '.')
 		}
@@ -233,24 +226,21 @@ func (i *Index) key(buf *byteutil.Buffer, parts []any) Key {
 			buf.B = append(buf.B, '.')
 		}
 	}
-	return Key{
-		raw: parts,
-		key: string(buf.B),
-	}
+	return string(buf.B)
 }
 
 // append will append the given index entry to appropriate
 // doubly-linked-list in index hashmap. this handles case
 // of key collisions and overwriting 'unique' entries.
-func (i *Index) append(key Key, item *indexed_item) {
+func (i *Index) append(key string, item *indexed_item) {
 	// Look for existing.
-	l, _ := i.data.Get(key.key)
+	l, _ := i.data.Get(key)
 
 	if l == nil {
 
 		// Allocate new.
 		l = new_list()
-		i.data.Put(key.key, l)
+		i.data.Put(key, l)
 
 	} else if is_unique(i.flags) {
 
@@ -280,27 +270,19 @@ func (i *Index) append(key Key, item *indexed_item) {
 }
 
 // delete will remove all indexed items under key, passing each to hook.
-func (i *Index) delete(key Key, hook func(*indexed_item)) {
+func (i *Index) delete(key string, hook func(*indexed_item)) {
 	if hook == nil {
 		panic("nil hook")
 	}
 
 	// Get list at hash.
-	l, _ := i.data.Get(key.key)
+	l, _ := i.data.Get(key)
 	if l == nil {
 		return
 	}
 
-	// Extract entry from first list elem.
-	entry := (*index_entry)(l.head.data)
-
-	// Check contains expected key.
-	if !entry.key.Equal(key) {
-		return
-	}
-
-	// Delete data at hash.
-	i.data.Delete(key.key)
+	// Delete at hash.
+	i.data.Delete(key)
 
 	// Iterate entries in list.
 	for x := 0; x < l.len; x++ {
@@ -330,7 +312,7 @@ func (i *Index) delete(key Key, hook func(*indexed_item)) {
 // delete_entry deletes the given index entry.
 func (i *Index) delete_entry(entry *index_entry) {
 	// Get list at hash sum.
-	l, _ := i.data.Get(entry.key.key)
+	l, _ := i.data.Get(entry.key)
 	if l == nil {
 		return
 	}
@@ -339,8 +321,8 @@ func (i *Index) delete_entry(entry *index_entry) {
 	l.remove(&entry.elem)
 
 	if l.len == 0 {
-		// Remove entry list from map.
-		i.data.Delete(entry.key.key)
+		// Remove entry from map.
+		i.data.Delete(entry.key)
 
 		// Release list.
 		free_list(l)
@@ -387,9 +369,9 @@ type index_entry struct {
 	// elem.data is ptr to index_entry.
 	elem list_elem
 
-	// hash checksum
-	// + raw key data
-	key Key
+	// raw cache key
+	// for this entry.
+	key string
 
 	// index this is stored in.
 	index *Index
@@ -415,7 +397,7 @@ func new_index_entry() *index_entry {
 // free_index_entry releases the index_entry.
 func free_index_entry(entry *index_entry) {
 	entry.elem.data = nil
-	entry.key = Key{}
+	entry.key = ""
 	entry.index = nil
 	entry.item = nil
 	index_entry_pool.Put(entry)
