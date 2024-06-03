@@ -127,7 +127,7 @@ func (p *Processor) Create(
 	// There are side effects for creating a new account
 	// (confirmation emails etc), perform these async.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ObjectProfile,
+		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       user,
 		Origin:         user.Account,

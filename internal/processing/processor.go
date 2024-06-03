@@ -198,7 +198,7 @@ func NewProcessor(
 	processor.timeline = timeline.New(state, converter, filter)
 	processor.search = search.New(state, federator, converter, filter)
 	processor.status = status.New(state, &common, &processor.polls, federator, converter, filter, parseMentionFunc)
-	processor.user = user.New(state, emailSender)
+	processor.user = user.New(state, converter, emailSender)
 
 	// Workers processor handles asynchronous
 	// worker jobs; instantiate it separately

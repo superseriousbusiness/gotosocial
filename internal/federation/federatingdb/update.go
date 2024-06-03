@@ -99,7 +99,7 @@ func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gts
 	// updating of eg., avatar/header, emojis, etc. The actual db
 	// inserts/updates will take place there.
 	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-		APObjectType:   ap.ObjectProfile,
+		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       requestingAcct,
 		APObject:       accountable,

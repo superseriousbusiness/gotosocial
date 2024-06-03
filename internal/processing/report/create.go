@@ -92,7 +92,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ObjectProfile,
+		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityFlag,
 		GTSModel:       report,
 		Origin:         account,

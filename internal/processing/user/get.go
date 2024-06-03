@@ -18,22 +18,15 @@
 package user
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"context"
+
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-type Processor struct {
-	state       *state.State
-	converter   *typeutils.Converter
-	emailSender email.Sender
-}
-
-// New returns a new user processor
-func New(state *state.State, converter *typeutils.Converter, emailSender email.Sender) Processor {
-	return Processor{
-		state:       state,
-		converter:   converter,
-		emailSender: emailSender,
-	}
+// Get returns the API model of the given user.
+// Should only be served if user == the user doing the request.
+func (p *Processor) Get(ctx context.Context, user *gtsmodel.User) (*apimodel.User, gtserror.WithCode) {
+	return p.converter.UserToAPIUser(ctx, user), nil
 }

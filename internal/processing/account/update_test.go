@@ -64,7 +64,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 
 	// Correct account updated.
 	if msg.Origin == nil {
@@ -114,7 +114,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 
 	// Correct account updated.
 	if msg.Origin == nil {
@@ -170,7 +170,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 
 	// Correct account updated.
 	if msg.Origin == nil {
@@ -255,7 +255,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 
 	// Correct account updated.
 	if msg.Origin == nil {
@@ -312,7 +312,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateNoteNotFields() {
 
 	// Profile update.
 	suite.Equal(ap.ActivityUpdate, msg.APActivityType)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 
 	// Correct account updated.
 	if msg.Origin == nil {
