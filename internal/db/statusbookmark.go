@@ -25,11 +25,10 @@ import (
 
 type StatusBookmark interface {
 	// GetStatusBookmark gets one status bookmark with the given ID.
-	GetStatusBookmark(ctx context.Context, id string) (*gtsmodel.StatusBookmark, error)
+	GetStatusBookmarkByID(ctx context.Context, id string) (*gtsmodel.StatusBookmark, error)
 
-	// GetStatusBookmarkID is a shortcut function for returning just the database ID
-	// of a status bookmark created by the given accountID, targeting the given statusID.
-	GetStatusBookmarkID(ctx context.Context, accountID string, statusID string) (string, error)
+	// GetStatusBookmark ...
+	GetStatusBookmark(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusBookmark, error)
 
 	// IsStatusBookmarked returns whether status has been bookmarked by any active account.
 	IsStatusBookmarked(ctx context.Context, statusID string) (bool, error)
@@ -45,7 +44,7 @@ type StatusBookmark interface {
 	PutStatusBookmark(ctx context.Context, statusBookmark *gtsmodel.StatusBookmark) error
 
 	// DeleteStatusBookmark deletes one status bookmark with the given ID.
-	DeleteStatusBookmark(ctx context.Context, id string) error
+	DeleteStatusBookmarkByID(ctx context.Context, id string) error
 
 	// DeleteStatusBookmarks mass deletes status bookmarks targeting targetAccountID
 	// and/or originating from originAccountID and/or bookmarking statusID.

@@ -20,42 +20,23 @@ package status
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 )
 
-func (p *Processor) getBookmarkableStatus(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*gtsmodel.Status, string, gtserror.WithCode) {
-	targetStatus, errWithCode := p.c.GetVisibleTargetStatus(ctx,
-		requestingAccount,
-		targetStatusID,
-		nil, // default freshness
-	)
-	if errWithCode != nil {
-		return nil, "", errWithCode
-	}
-
-	bookmarkID, err := p.state.DB.GetStatusBookmarkID(ctx, requestingAccount.ID, targetStatus.ID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("getBookmarkTarget: error checking existing bookmark: %w", err)
-		return nil, "", gtserror.NewErrorInternalError(err)
-	}
-
-	return targetStatus, bookmarkID, nil
-}
-
 // BookmarkCreate adds a bookmark for the requestingAccount, targeting the given status (no-op if bookmark already exists).
 func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkableStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, existing, errWithCode := p.getBookmarkableStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if existingBookmarkID != "" {
+	if existing != nil {
 		// Status is already bookmarked.
 		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
@@ -86,18 +67,18 @@ func (p *Processor) BookmarkCreate(ctx context.Context, requestingAccount *gtsmo
 
 // BookmarkRemove removes a bookmark for the requesting account, targeting the given status (no-op if bookmark doesn't exist).
 func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmodel.Account, targetStatusID string) (*apimodel.Status, gtserror.WithCode) {
-	targetStatus, existingBookmarkID, errWithCode := p.getBookmarkableStatus(ctx, requestingAccount, targetStatusID)
+	targetStatus, existing, errWithCode := p.getBookmarkableStatus(ctx, requestingAccount, targetStatusID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	if existingBookmarkID == "" {
+	if existing == nil {
 		// Status isn't bookmarked.
 		return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 	}
 
 	// We have a bookmark to remove.
-	if err := p.state.DB.DeleteStatusBookmark(ctx, existingBookmarkID); err != nil {
+	if err := p.state.DB.DeleteStatusBookmarkByID(ctx, existing.ID); err != nil {
 		err = gtserror.Newf("error removing status bookmark: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -108,4 +89,35 @@ func (p *Processor) BookmarkRemove(ctx context.Context, requestingAccount *gtsmo
 	}
 
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
+}
+
+func (p *Processor) getBookmarkableStatus(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	statusID string,
+) (
+	*gtsmodel.Status,
+	*gtsmodel.StatusBookmark,
+	gtserror.WithCode,
+) {
+	target, errWithCode := p.c.GetVisibleTargetStatus(ctx,
+		requester,
+		statusID,
+		nil, // default freshness
+	)
+	if errWithCode != nil {
+		return nil, nil, errWithCode
+	}
+
+	bookmark, err := p.state.DB.GetStatusBookmark(
+		gtscontext.SetBarebones(ctx),
+		requester.ID,
+		statusID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting bookmark: %w", err)
+		return nil, nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return target, bookmark, nil
 }
