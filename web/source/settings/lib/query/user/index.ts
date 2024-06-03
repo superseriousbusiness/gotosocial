@@ -24,6 +24,7 @@ import type {
 	UpdateAliasesFormData
 } from "../../types/migration";
 import type { Theme } from "../../types/theme";
+import { User } from "../../types/user";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -37,12 +38,23 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			...replaceCacheOnMutation("verifyCredentials")
 		}),
+		user: build.query<User, void>({
+			query: () => ({url: `/api/v1/user`})
+		}),
 		passwordChange: build.mutation({
 			query: (data) => ({
 				method: "POST",
 				url: `/api/v1/user/password_change`,
 				body: data
 			})
+		}),
+		emailChange: build.mutation<User, { password: string, new_email: string }>({
+			query: (data) => ({
+				method: "POST",
+				url: `/api/v1/user/email_change`,
+				body: data
+			}),
+			...replaceCacheOnMutation("user")
 		}),
 		aliasAccount: build.mutation<any, UpdateAliasesFormData>({
 			async queryFn(formData, _api, _extraOpts, fetchWithBQ) {
@@ -78,7 +90,9 @@ const extended = gtsApi.injectEndpoints({
 
 export const {
 	useUpdateCredentialsMutation,
+	useUserQuery,
 	usePasswordChangeMutation,
+	useEmailChangeMutation,
 	useAliasAccountMutation,
 	useMoveAccountMutation,
 	useAccountThemesQuery,
