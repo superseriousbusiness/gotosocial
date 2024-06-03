@@ -159,7 +159,7 @@ func (c *Cache[T]) Get(index *Index, keys ...Key) []T {
 
 	for i := range keys {
 		// Concatenate all *values* from cached items.
-		index.get(keys[i], func(item *indexed_item) {
+		index.get(keys[i].key, func(item *indexed_item) {
 			if value, ok := item.data.(T); ok {
 				// Append value COPY.
 				value = c.copy(value)
@@ -344,7 +344,7 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 		before := len(values)
 
 		// Concatenate all *values* from cached items.
-		index.get(keys[i], func(item *indexed_item) {
+		index.get(keys[i].key, func(item *indexed_item) {
 			if value, ok := item.data.(T); ok {
 				// Append value COPY.
 				value = c.copy(value)
@@ -446,10 +446,10 @@ func (c *Cache[T]) Invalidate(index *Index, keys ...Key) {
 	// Preallocate expected ret slice.
 	values := make([]T, 0, len(keys))
 
-	for _, key := range keys {
+	for i := range keys {
 		// Delete all items under key from index, collecting
 		// value items and dropping them from all their indices.
-		index.delete(key, func(item *indexed_item) {
+		index.delete(keys[i].key, func(item *indexed_item) {
 
 			if value, ok := item.data.(T); ok {
 				// No need to copy, as item
@@ -569,7 +569,7 @@ func (c *Cache[T]) store_value(index *Index, key Key, value T) {
 
 	if index != nil {
 		// Append item to index.
-		index.append(key, item)
+		index.append(key.key, item)
 	}
 
 	// Get ptr to value data.
@@ -596,7 +596,7 @@ func (c *Cache[T]) store_value(index *Index, key Key, value T) {
 
 		// Calculate index key.
 		key := idx.key(buf, parts)
-		if key.Zero() {
+		if key == "" {
 			continue
 		}
 
@@ -639,7 +639,7 @@ func (c *Cache[T]) store_error(index *Index, key Key, err error) {
 	item.data = err
 
 	// Append item to index.
-	index.append(key, item)
+	index.append(key.key, item)
 
 	// Add item to main lru list.
 	c.lru.push_front(&item.elem)

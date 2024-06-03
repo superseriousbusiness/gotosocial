@@ -127,7 +127,7 @@ func (q *Queue[T]) Pop(index *Index, keys ...Key) []T {
 	for i := range keys {
 		// Delete all items under key from index, collecting
 		// value items and dropping them from all their indices.
-		index.delete(keys[i], func(item *indexed_item) {
+		index.delete(keys[i].key, func(item *indexed_item) {
 
 			// Append deleted to values.
 			value := item.data.(T)
@@ -179,7 +179,7 @@ func (q *Queue[T]) PushBack(values ...T) {
 func (q *Queue[T]) MoveFront(index *Index, keys ...Key) {
 	q.mutex.Lock()
 	for i := range keys {
-		index.get(keys[i], func(item *indexed_item) {
+		index.get(keys[i].key, func(item *indexed_item) {
 			q.queue.move_front(&item.elem)
 		})
 	}
@@ -190,7 +190,7 @@ func (q *Queue[T]) MoveFront(index *Index, keys ...Key) {
 func (q *Queue[T]) MoveBack(index *Index, keys ...Key) {
 	q.mutex.Lock()
 	for i := range keys {
-		index.get(keys[i], func(item *indexed_item) {
+		index.get(keys[i].key, func(item *indexed_item) {
 			q.queue.move_back(&item.elem)
 		})
 	}
@@ -305,7 +305,7 @@ func (q *Queue[T]) index(value T) *indexed_item {
 
 		// Calculate index key.
 		key := idx.key(buf, parts)
-		if key.Zero() {
+		if key == "" {
 			continue
 		}
 
