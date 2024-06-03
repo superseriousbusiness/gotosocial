@@ -19,7 +19,7 @@
 
 import { MenuItem } from "../../lib/navigation/menu";
 import React from "react";
-import { useHasPermission } from "../../lib/navigation/util";
+import { useHasPermission, useInstanceDebug } from "../../lib/navigation/util";
 
 /*
 	EXPORTED COMPONENTS
@@ -60,6 +60,7 @@ export default function AdminMenu() {
 			<AdminEmojisMenu />
 			<AdminActionsMenu />
 			<AdminHTTPHeaderPermissionsMenu />
+			<AdminDebugMenu />
 		</MenuItem>
 	);
 }
@@ -156,6 +157,35 @@ function AdminHTTPHeaderPermissionsMenu() {
 				name="Allows"
 				itemUrl="allows"
 				icon="fa-check"
+			/>
+		</MenuItem>
+	);
+}
+
+function AdminDebugMenu() {
+	// Don't attach this menu if instance
+	// is not running in debug mode.
+	const debug = useInstanceDebug();
+	if (!debug) {
+		return null;
+	}
+	
+	return (
+		<MenuItem
+			name="Debug"
+			itemUrl="debug"
+			defaultChild="apurl"
+			icon="fa-bug"
+		>
+			<MenuItem
+				name="AP URL"
+				itemUrl="apurl"
+				icon="fa-file-code-o"
+			/>
+			<MenuItem
+				name="Caches"
+				itemUrl="caches"
+				icon="fa-archive"
 			/>
 		</MenuItem>
 	);

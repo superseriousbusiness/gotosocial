@@ -40,6 +40,8 @@ type InstanceV2 struct {
 	//
 	// example: 0.1.1 cb85f65
 	Version string `json:"version"`
+	// Whether or not instance is running in DEBUG mode. Omitted if false.
+	Debug *bool `json:"debug,omitempty"`
 	// The URL for the source code of the software running on this instance, in keeping with AGPL license requirements.
 	// example: https://github.com/superseriousbusiness/gotosocial
 	SourceURL string `json:"source_url"`

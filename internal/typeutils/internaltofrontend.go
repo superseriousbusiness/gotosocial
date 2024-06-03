@@ -26,6 +26,7 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/gruf/go-debug"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -1200,6 +1201,10 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		instance.Version = toMastodonVersion(instance.Version)
 	}
 
+	if debug.DEBUG {
+		instance.Debug = util.Ptr(true)
+	}
+
 	// configuration
 	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
 	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
@@ -1305,6 +1310,10 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 	if config.GetInstanceInjectMastodonVersion() {
 		instance.Version = toMastodonVersion(instance.Version)
+	}
+
+	if debug.DEBUG {
+		instance.Debug = util.Ptr(true)
 	}
 
 	// thumbnail

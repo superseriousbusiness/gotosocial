@@ -18,7 +18,7 @@
 */
 
 import React from "react";
-import { BaseUrlContext, useBaseUrl, useHasPermission } from "../../lib/navigation/util";
+import { BaseUrlContext, useBaseUrl, useHasPermission, useInstanceDebug } from "../../lib/navigation/util";
 import { Redirect, Route, Router, Switch } from "wouter";
 import { ErrorBoundary } from "../../lib/navigation/error";
 import InstanceSettings from "./instance/settings";
@@ -32,6 +32,8 @@ import RemoteEmoji from "./emoji/remote";
 import HeaderPermsOverview from "./http-header-permissions/overview";
 import HeaderPermDetail from "./http-header-permissions/detail";
 import Email from "./actions/email";
+import ApURL from "./debug/apurl";
+import Caches from "./debug/caches";
 
 /*
 	EXPORTED COMPONENTS
@@ -53,6 +55,7 @@ import Email from "./actions/email";
  * - /settings/admin/http-header-permissions/allows/:allowId
  * - /settings/admin/http-header-permissions/blocks
  * - /settings/admin/http-header-permissions/blocks/:blockId
+ * - /settings/admin/debug
  */
 export default function AdminRouter() {
 	const parentUrl = useBaseUrl();
@@ -66,6 +69,7 @@ export default function AdminRouter() {
 				<AdminEmojisRouter />
 				<AdminActionsRouter />
 				<AdminHTTPHeaderPermissionsRouter />
+				<AdminDebugRouter />
 			</Router>
 		</BaseUrlContext.Provider>
 	);
@@ -180,6 +184,33 @@ function AdminHTTPHeaderPermissionsRouter() {
 						<Route path="/:permType" component={HeaderPermsOverview} />
 						<Route path="/:permType/:permId" component={HeaderPermDetail} />
 						<Route><Redirect to="/blocks" /></Route>
+					</Switch>
+				</ErrorBoundary>
+			</Router>
+		</BaseUrlContext.Provider>
+	);
+}
+
+function AdminDebugRouter() {
+	const parentUrl = useBaseUrl();
+	const thisBase = "/debug";
+	const absBase = parentUrl + thisBase;
+
+	// Don't attach this route if instance
+	// is not running in debug mode.
+	const debug = useInstanceDebug();
+	if (!debug) {
+		return null;
+	}
+
+	return (
+		<BaseUrlContext.Provider value={absBase}>
+			<Router base={thisBase}>
+				<ErrorBoundary>
+					<Switch>
+						<Route path="/apurl" component={ApURL} />
+						<Route path="/caches" component={Caches} />
+						<Route><Redirect to="/apurl" /></Route>
 					</Switch>
 				</ErrorBoundary>
 			</Router>

@@ -1350,6 +1350,23 @@ button.with-padding {
 	}
 }
 
+.admin-debug-apurl {
+	width: 100%;
+	
+	.prism-highlighted {
+		max-width: 40rem;
+
+		/*
+			Normally we'd want to use a scrollbar for pre
+			and code, but it actually looks a bit better
+			to wrap here because there are many long lines.
+		*/
+		pre, code {
+			white-space: pre-wrap;
+		}
+	}
+}
+
 @media screen and (orientation: portrait) {
 	.reports .report .byline {
 		grid-template-columns: 1fr;
