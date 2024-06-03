@@ -79,6 +79,6 @@ type Status interface {
 	// GetStatusChildren gets the child statuses of a given status.
 	GetStatusChildren(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
 
-	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID
+	// IsStatusBookmarkedBy checks if a given status has been bookmarked by a given account ID.
 	IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error)
 }

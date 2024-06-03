@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -61,6 +62,47 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, id string) (*g
 	}
 
 	return bookmark, nil
+}
+
+func (s *statusBookmarkDB) IsStatusBookmarked(ctx context.Context, statusID string) (bool, error) {
+	var accountIDs []string
+
+	// Fetch account IDs of
+	// those bookmarking status.
+	err := s.db.NewSelect().
+		Table("status_bookmarks").
+		Column("account_id").
+		Where("? = ?", bun.Ident("status_id"), statusID).
+		Scan(ctx, &accountIDs)
+	if err != nil {
+		return false, err
+	}
+
+	if len(accountIDs) == 0 {
+		return false, nil
+	}
+
+	// Fetch full account models for account IDs.
+	accounts, err := s.state.DB.GetAccountsByIDs(
+		gtscontext.SetBarebones(ctx),
+		accountIDs,
+	)
+	if err != nil {
+		return false, err
+	}
+
+	for _, account := range accounts {
+		// Skip any inactive accounts.
+		if account.IsSuspended() {
+			continue
+		}
+
+		// An active account was
+		// found bookmarking status!
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func (s *statusBookmarkDB) GetStatusBookmarkID(ctx context.Context, accountID string, statusID string) (string, error) {
@@ -137,7 +179,6 @@ func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, statusBookmark
 		NewInsert().
 		Model(statusBookmark).
 		Exec(ctx)
-
 	return err
 }
 
@@ -147,7 +188,6 @@ func (s *statusBookmarkDB) DeleteStatusBookmark(ctx context.Context, id string) 
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Where("? = ?", bun.Ident("status_bookmark.id"), id).
 		Exec(ctx)
-
 	return err
 }
 

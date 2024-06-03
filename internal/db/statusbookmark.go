@@ -31,6 +31,9 @@ type StatusBookmark interface {
 	// of a status bookmark created by the given accountID, targeting the given statusID.
 	GetStatusBookmarkID(ctx context.Context, accountID string, statusID string) (string, error)
 
+	// IsStatusBookmarked returns whether status has been bookmarked by any active account.
+	IsStatusBookmarked(ctx context.Context, statusID string) (bool, error)
+
 	// GetStatusBookmarks retrieves status bookmarks created by the given accountID,
 	// and using the provided parameters. If limit is < 0 then no limit will be set.
 	//

@@ -35,9 +35,7 @@ import (
 
 // Media encompasses a set of
 // media cleanup / admin utils.
-type Media struct {
-	*Cleaner
-}
+type Media struct{ *Cleaner }
 
 // All will execute all cleaner.Media utilities synchronously, including output logging.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.
@@ -475,9 +473,21 @@ func (m *Media) uncacheRemote(ctx context.Context, after time.Time, media *gtsmo
 			return false, nil
 		}
 
-		if status != nil && status.FetchedAt.After(after) {
-			l.Debug("skipping due to recently fetched status")
-			return false, nil
+		if status != nil {
+			// Check if recently used status.
+			if status.FetchedAt.After(after) {
+				l.Debug("skipping due to recently fetched status")
+				return false, nil
+			}
+
+			// Check whether status is bookmarked by active accounts.
+			bookmarked, err := m.state.DB.IsStatusBookmarked(ctx, status.ID)
+			if err != nil {
+				return false, err
+			} else if bookmarked {
+				l.Debug("skipping due to bookmarked status")
+				return false, nil
+			}
 		}
 	}
 
