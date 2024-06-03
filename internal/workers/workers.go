@@ -21,6 +21,7 @@ import (
 	"runtime"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/scheduler"
 	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
@@ -59,26 +60,54 @@ type Workers struct {
 // StartScheduler starts the job scheduler.
 func (w *Workers) StartScheduler() {
 	_ = w.Scheduler.Start() // false = already running
+	log.Info(nil, "started scheduler")
 }
 
 // Start will start contained worker pools.
 func (w *Workers) Start() {
+	var n int
+
 	maxprocs := runtime.GOMAXPROCS(0)
-	w.Delivery.Start(deliveryWorkers(maxprocs))
-	w.Client.Start(4 * maxprocs)
-	w.Federator.Start(4 * maxprocs)
-	w.Dereference.Start(4 * maxprocs)
-	w.Media.Start(8 * maxprocs)
+
+	n = deliveryWorkers(maxprocs)
+	w.Delivery.Start(n)
+	log.Infof(nil, "started %d delivery workers", n)
+
+	n = 4 * maxprocs
+	w.Client.Start(n)
+	log.Infof(nil, "started %d client workers", n)
+
+	n = 4 * maxprocs
+	w.Federator.Start(n)
+	log.Infof(nil, "started %d federator workers", n)
+
+	n = 4 * maxprocs
+	w.Dereference.Start(n)
+	log.Infof(nil, "started %d dereference workers", n)
+
+	n = 8 * maxprocs
+	w.Media.Start(n)
+	log.Infof(nil, "started %d media workers", n)
 }
 
 // Stop will stop all of the contained worker pools (and global scheduler).
 func (w *Workers) Stop() {
 	_ = w.Scheduler.Stop() // false = not running
+
 	w.Delivery.Stop()
+	log.Info(nil, "stopped delivery workers")
+
 	w.Client.Stop()
+	log.Info(nil, "stopped client workers")
+
 	w.Federator.Stop()
+	log.Info(nil, "stopped federator workers")
+
 	w.Dereference.Stop()
+	log.Info(nil, "stopped dereference workers")
+
 	w.Media.Stop()
+	log.Info(nil, "stopped media workers")
 }
 
 // nocopy when embedded will signal linter to

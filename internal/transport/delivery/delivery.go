@@ -26,7 +26,6 @@ import (
 	"codeberg.org/gruf/go-structr"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -181,8 +180,6 @@ func (w *Worker) run(ctx context.Context) {
 	if w.Client == nil || w.Queue == nil {
 		panic("not yet initialized")
 	}
-	log.Debugf(ctx, "%p: starting worker", w)
-	defer log.Debugf(ctx, "%p: stopped worker", w)
 	util.Must(func() { w.process(ctx) })
 }
 
