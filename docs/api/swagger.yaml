@@ -1409,6 +1409,10 @@ definitions:
                 $ref: '#/definitions/instanceV1Configuration'
             contact_account:
                 $ref: '#/definitions/account'
+            debug:
+                description: Whether or not instance is running in DEBUG mode. Omitted if false.
+                type: boolean
+                x-go-name: Debug
             description:
                 description: |-
                     Description of the instance.
@@ -1571,6 +1575,10 @@ definitions:
                 $ref: '#/definitions/instanceV2Configuration'
             contact:
                 $ref: '#/definitions/instanceV2Contact'
+            debug:
+                description: Whether or not instance is running in DEBUG mode. Omitted if false.
+                type: boolean
+                x-go-name: Debug
             description:
                 description: |-
                     Description of the instance.
