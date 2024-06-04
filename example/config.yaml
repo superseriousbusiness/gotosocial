@@ -214,6 +214,11 @@ db-max-open-conns-multiplier: 8
 # SQLite only -- unused otherwise.
 # If set to empty string, the sqlite default will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_journal_mode
+#
+# WARNING: when running the experimental WASM SQLite build on
+# anything other than Linux, set this to "TRUNCATE" instead.
+# The server will complain about this on startup.
+#
 # Examples: ["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
 # Default: "WAL"
 db-sqlite-journal-mode: "WAL"

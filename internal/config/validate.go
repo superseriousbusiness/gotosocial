@@ -19,6 +19,10 @@ package config
 
 import (
 	"fmt"
+	"runtime"
+	"runtime/debug"
+	"slices"
+	"strings"
 
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -144,5 +148,42 @@ func Validate() error {
 		)
 	}
 
+	if err := checkSQLiteJournalMode(); err != nil {
+		errf("%s", err)
+	}
+
 	return errs.Combine()
+}
+
+func checkSQLiteJournalMode() error {
+	// check if we're running SQLite
+	if GetDbDatabase() != "sqlite" {
+		return nil
+	}
+
+	// check if this uses the WASM build
+	info, _ := debug.ReadBuildInfo()
+	isWasm := false
+	for _, s := range info.Settings {
+		// check the build tags
+		if s.Key == "-tags" {
+			vals := strings.Split(s.Value, ",")
+			if slices.Contains(vals, "wasmsqlite3") {
+				isWasm = true
+				break
+			}
+			// we don't need to process other build setting keys
+			break
+		}
+	}
+
+	if !isWasm {
+		return nil
+	}
+
+	if runtime.GOOS != "linux" && GetDbSqliteJournalMode() == "WAL" {
+		return fmt.Errorf("when using the WASM SQLite build on a non-Linux platform the %s configuration value must be set to TRUNCATE", DbSqliteJournalModeFlag())
+	}
+
+	return nil
 }

@@ -12,6 +12,9 @@ To configure GoToSocial to use SQLite, change `db-type` to `sqlite`. The `addres
 
 Note that the `:memory:` setting will use an *in-memory database* which will be wiped when your GoToSocial instance stops running. This is for testing only and is absolutely not suitable for running a proper instance, so *don't do this*.
 
+!!! warning "WASM SQLite build"
+    When running the experimental WASM SQLite build on anything other than Linux, you have to set `db-sqlite-journal-mode` to `TRUNCATE` instead of `WAL`. You'll experience abysmal performance otherwise.
+
 ## Postgres
 
 Postgres is a heavier database format, which is useful for larger instances where you need to scale performance, or where you need to run your database on a dedicated machine separate from your GoToSocial instance (or do funky stuff like run a database cluster).
@@ -143,6 +146,11 @@ db-max-open-conns-multiplier: 8
 # SQLite only -- unused otherwise.
 # If set to empty string, the sqlite default will be used.
 # See: https://www.sqlite.org/pragma.html#pragma_journal_mode
+#
+# WARNING: when running the experimental WASM SQLite build on
+# anything other than Linux, set this to "TRUNCATE" instead.
+# The server will complain about this on startup.
+#
 # Examples: ["DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"]
 # Default: "WAL"
 db-sqlite-journal-mode: "WAL"
