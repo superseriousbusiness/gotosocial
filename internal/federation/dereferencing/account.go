@@ -35,7 +35,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // accountFresh returns true if the given account is
@@ -404,61 +403,75 @@ func (d *Dereferencer) enrichAccountSafely(
 		uriStr = "https://" + account.Domain + "/users/" + account.Username
 	}
 
-	// Acquire per-URI deref lock, wraping unlock
-	// to safely defer in case of panic, while still
-	// performing more granular unlocks when needed.
-	unlock := d.state.FedLocks.Lock(uriStr)
-	unlock = util.DoOnce(unlock)
-	defer unlock()
+	// Safely catch locked
+	// mutexes during panic.
+	var unlock func()
+	defer func() {
+		if unlock != nil {
+			unlock()
+		}
+	}()
 
-	// Perform status enrichment with passed vars.
-	latest, apubAcc, err := d.enrichAccount(ctx,
-		requestUser,
-		uri,
-		account,
-		accountable,
-	)
+	// Limit number of retries
+	// we perform on data race.
+	const attempts = 3
+	for i := 0; i < attempts; i++ {
 
-	if gtserror.StatusCode(err) >= 400 {
-		if account.IsNew() {
-			// This was a new account enrich
-			// attempt which failed before we
-			// got to store it, so we can't
-			// return anything useful.
-			return nil, nil, err
+		// Acquire per-URI deref lock, this will be
+		// safely called on panic if not yet unset.
+		unlock = d.state.FedLocks.Lock(uriStr)
+
+		// Perform status enrichment with passed vars.
+		latest, apubAcc, err := d.enrichAccount(ctx,
+			requestUser,
+			uri,
+			account,
+			accountable,
+		)
+
+		if gtserror.StatusCode(err) >= 400 {
+			if account.IsNew() {
+				// This was a new account enrich
+				// attempt which failed before we
+				// got to store it, so we can't
+				// return anything useful.
+				return nil, nil, err
+			}
+
+			// We had this account stored already
+			// before this enrichment attempt.
+			//
+			// Update fetched_at to slow re-attempts
+			// but don't return early. We can still
+			// return the model we had stored already.
+			account.FetchedAt = time.Now()
+			if err := d.state.DB.UpdateAccount(ctx, account, "fetched_at"); err != nil {
+				log.Error(ctx, "error updating %s fetched_at: %v", uriStr, err)
+			}
 		}
 
-		// We had this account stored already
-		// before this enrichment attempt.
-		//
-		// Update fetched_at to slow re-attempts
-		// but don't return early. We can still
-		// return the model we had stored already.
-		account.FetchedAt = time.Now()
-		if err := d.state.DB.UpdateAccount(ctx, account, "fetched_at"); err != nil {
-			log.Error(ctx, "error updating %s fetched_at: %v", uriStr, err)
+		// Unlock now
+		// we're done.
+		unlock()
+		unlock = nil
+
+		if errors.Is(err, db.ErrAlreadyExists) {
+			if apubAcc != nil {
+				// If an account model was fetched,
+				// provide this in the next call to
+				// prevent further required derefs.
+				accountable = apubAcc
+			}
+
+			// A data race occurred, retry
+			// account enrichment procedure.
+			continue
 		}
+
+		return latest, apubAcc, err
 	}
 
-	// Unlock now
-	// we're done.
-	unlock()
-
-	if errors.Is(err, db.ErrAlreadyExists) {
-		// Ensure AP model isn't set,
-		// otherwise this indicates WE
-		// enriched the account.
-		apubAcc = nil
-
-		// DATA RACE! We likely lost out to another goroutine
-		// in a call to db.Put(Account). Look again in DB by URI.
-		latest, err = d.state.DB.GetAccountByURI(ctx, account.URI)
-		if err != nil {
-			err = gtserror.Newf("error getting account %s from database after race: %w", uriStr, err)
-		}
-	}
-
-	return latest, apubAcc, err
+	return nil, nil, gtserror.Newf("failed after %d data races", attempts)
 }
 
 // enrichAccount will enrich the given account, whether a
@@ -496,7 +509,7 @@ func (d *Dereferencer) enrichAccount(
 				account.Username, account.Domain, err,
 			)
 
-		case err == nil && account.Domain != accDomain:
+		case account.Domain != accDomain:
 			// After webfinger, we now have correct account domain from which we can do a final DB check.
 			alreadyAcc, err := d.state.DB.GetAccountByUsernameDomain(ctx, account.Username, accDomain)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -518,7 +531,7 @@ func (d *Dereferencer) enrichAccount(
 			// or the stub account we were passed.
 			fallthrough
 
-		case err == nil:
+		default:
 			// Update account with latest info.
 			account.URI = accURI.String()
 			account.Domain = accDomain
@@ -797,40 +810,16 @@ func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport tran
 	if err != nil {
 		return gtserror.Newf("error parsing url %s: %w", latestAcc.AvatarRemoteURL, err)
 	}
-
-	// Acquire lock for derefs map.
-	unlock := d.state.FedLocks.Lock(latestAcc.AvatarRemoteURL)
-	unlock = util.DoOnce(unlock)
-	defer unlock()
-
-	// Look for an existing dereference in progress.
-	processing, ok := d.derefAvatars[latestAcc.AvatarRemoteURL]
-
-	if !ok {
-		// Set the media data function to dereference avatar from URI.
-		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-			return tsport.DereferenceMedia(ctx, avatarURI)
-		}
-
-		// Create new media processing request from the media manager instance.
-		processing = d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
-			Avatar:    func() *bool { v := true; return &v }(),
-			RemoteURL: &latestAcc.AvatarRemoteURL,
-		})
-
-		// Store media in map to mark as processing.
-		d.derefAvatars[latestAcc.AvatarRemoteURL] = processing
-
-		defer func() {
-			// On exit safely remove media from map.
-			unlock := d.state.FedLocks.Lock(latestAcc.AvatarRemoteURL)
-			delete(d.derefAvatars, latestAcc.AvatarRemoteURL)
-			unlock()
-		}()
+	// Set the media data function to dereference avatar from URI.
+	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
+		return tsport.DereferenceMedia(ctx, avatarURI)
 	}
 
-	// Unlock map.
-	unlock()
+	// Create new media processing request from the media manager instance.
+	processing := d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
+		Avatar:    func() *bool { v := true; return &v }(),
+		RemoteURL: &latestAcc.AvatarRemoteURL,
+	})
 
 	// Start media attachment loading (blocking call).
 	if _, err := processing.LoadAttachment(ctx); err != nil {
@@ -884,39 +873,16 @@ func (d *Dereferencer) fetchRemoteAccountHeader(ctx context.Context, tsport tran
 		return gtserror.Newf("error parsing url %s: %w", latestAcc.HeaderRemoteURL, err)
 	}
 
-	// Acquire lock for derefs map.
-	unlock := d.state.FedLocks.Lock(latestAcc.HeaderRemoteURL)
-	unlock = util.DoOnce(unlock)
-	defer unlock()
-
-	// Look for an existing dereference in progress.
-	processing, ok := d.derefHeaders[latestAcc.HeaderRemoteURL]
-
-	if !ok {
-		// Set the media data function to dereference avatar from URI.
-		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-			return tsport.DereferenceMedia(ctx, headerURI)
-		}
-
-		// Create new media processing request from the media manager instance.
-		processing = d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
-			Header:    func() *bool { v := true; return &v }(),
-			RemoteURL: &latestAcc.HeaderRemoteURL,
-		})
-
-		// Store media in map to mark as processing.
-		d.derefHeaders[latestAcc.HeaderRemoteURL] = processing
-
-		defer func() {
-			// On exit safely remove media from map.
-			unlock := d.state.FedLocks.Lock(latestAcc.HeaderRemoteURL)
-			delete(d.derefHeaders, latestAcc.HeaderRemoteURL)
-			unlock()
-		}()
+	// Set the media data function to dereference avatar from URI.
+	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
+		return tsport.DereferenceMedia(ctx, headerURI)
 	}
 
-	// Unlock map.
-	unlock()
+	// Create new media processing request from the media manager instance.
+	processing := d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
+		Header:    func() *bool { v := true; return &v }(),
+		RemoteURL: &latestAcc.HeaderRemoteURL,
+	})
 
 	// Start media attachment loading (blocking call).
 	if _, err := processing.LoadAttachment(ctx); err != nil {

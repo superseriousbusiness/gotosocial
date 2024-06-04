@@ -24,6 +24,7 @@ import (
 	"net/url"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -31,11 +32,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
-	var (
-		shortcodeDomain = shortcode + "@" + domain
-		processingEmoji *media.ProcessingEmoji
-	)
+func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestUser string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
+	var shortcodeDomain = shortcode + "@" + domain
 
 	// Ensure we have been passed a valid URL.
 	derefURI, err := url.Parse(remoteURL)
@@ -43,52 +41,61 @@ func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestingUsername st
 		return nil, fmt.Errorf("GetRemoteEmoji: error parsing url for emoji %s: %s", shortcodeDomain, err)
 	}
 
-	// Acquire lock for derefs map.
-	unlock := d.state.FedLocks.Lock(remoteURL)
+	// Acquire derefs lock.
+	d.derefEmojisMu.Lock()
+
+	// Ensure unlock only done once.
+	unlock := d.derefEmojisMu.Unlock
 	unlock = util.DoOnce(unlock)
 	defer unlock()
 
-	// first check if we're already processing this emoji
-	if alreadyProcessing, ok := d.derefEmojis[shortcodeDomain]; ok {
-		// we're already on it, no worries
-		processingEmoji = alreadyProcessing
-	} else {
-		// not processing it yet, let's start
-		t, err := d.transportController.NewTransportForUsername(ctx, requestingUsername)
+	// Look for an existing dereference in progress.
+	processing, ok := d.derefEmojis[shortcodeDomain]
+
+	if !ok {
+		// Fetch a transport for current request user in order to perform request.
+		tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 		if err != nil {
-			return nil, fmt.Errorf("GetRemoteEmoji: error creating transport to fetch emoji %s: %s", shortcodeDomain, err)
+			return nil, gtserror.Newf("couldn't create transport: %w", err)
 		}
 
-		dataFunc := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
-			return t.DereferenceMedia(innerCtx, derefURI)
+		// Set the media data function to dereference emoji from URI.
+		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
+			return tsport.DereferenceMedia(ctx, derefURI)
 		}
 
-		newProcessing, err := d.mediaManager.PreProcessEmoji(ctx, dataFunc, shortcode, id, emojiURI, ai, refresh)
+		// Create new emoji processing request from the media manager.
+		processing, err = d.mediaManager.PreProcessEmoji(ctx, data,
+			shortcode,
+			id,
+			emojiURI,
+			ai,
+			refresh,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("GetRemoteEmoji: error processing emoji %s: %s", shortcodeDomain, err)
+			return nil, gtserror.Newf("error preprocessing emoji %s: %s", shortcodeDomain, err)
 		}
 
-		// store it in our map to indicate it's in process
-		d.derefEmojis[shortcodeDomain] = newProcessing
-		processingEmoji = newProcessing
+		// Store media in map to mark as processing.
+		d.derefEmojis[shortcodeDomain] = processing
+
+		defer func() {
+			// On exit safely remove emoji from map.
+			d.derefEmojisMu.Lock()
+			delete(d.derefEmojis, shortcodeDomain)
+			d.derefEmojisMu.Unlock()
+		}()
 	}
 
 	// Unlock map.
 	unlock()
 
-	defer func() {
-		// On exit safely remove emoji from map.
-		unlock := d.state.FedLocks.Lock(remoteURL)
-		delete(d.derefEmojis, shortcodeDomain)
-		unlock()
-	}()
-
 	// Start emoji attachment loading (blocking call).
-	if _, err := processingEmoji.LoadEmoji(ctx); err != nil {
+	if _, err := processing.LoadEmoji(ctx); err != nil {
 		return nil, err
 	}
 
-	return processingEmoji, nil
+	return processing, nil
 }
 
 func (d *Dereferencer) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji, requestingUsername string) ([]*gtsmodel.Emoji, error) {

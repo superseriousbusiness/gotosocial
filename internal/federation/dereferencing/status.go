@@ -285,7 +285,7 @@ func (d *Dereferencer) enrichStatusSafely(
 	requestUser string,
 	uri *url.URL,
 	status *gtsmodel.Status,
-	apubStatus ap.Statusable,
+	statusable ap.Statusable,
 ) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	uriStr := status.URI
 
@@ -301,70 +301,84 @@ func (d *Dereferencer) enrichStatusSafely(
 		}
 	}
 
-	// Acquire per-URI deref lock, wraping unlock
-	// to safely defer in case of panic, while still
-	// performing more granular unlocks when needed.
-	unlock := d.state.FedLocks.Lock(uriStr)
-	unlock = util.DoOnce(unlock)
-	defer unlock()
+	// Safely catch locked
+	// mutexes during panic.
+	var unlock func()
+	defer func() {
+		if unlock != nil {
+			unlock()
+		}
+	}()
 
-	// Perform status enrichment with passed vars.
-	latest, apubStatus, err := d.enrichStatus(ctx,
-		requestUser,
-		uri,
-		status,
-		apubStatus,
-	)
+	// Limit number of retries
+	// we perform on data race.
+	const attempts = 3
+	for i := 0; i < attempts; i++ {
 
-	if gtserror.StatusCode(err) >= 400 {
-		if isNew {
-			// This was a new status enrich
-			// attempt which failed before we
-			// got to store it, so we can't
-			// return anything useful.
-			return nil, nil, isNew, err
+		// Acquire per-URI deref lock, this will be
+		// safely called on panic if not yet unset.
+		unlock = d.state.FedLocks.Lock(uriStr)
+
+		// Perform status enrichment with passed vars.
+		latest, apubStatus, err := d.enrichStatus(ctx,
+			requestUser,
+			uri,
+			status,
+			statusable,
+		)
+
+		if gtserror.StatusCode(err) >= 400 {
+			if isNew {
+				// This was a new status enrich
+				// attempt which failed before we
+				// got to store it, so we can't
+				// return anything useful.
+				return nil, nil, isNew, err
+			}
+
+			// We had this status stored already
+			// before this enrichment attempt.
+			//
+			// Update fetched_at to slow re-attempts
+			// but don't return early. We can still
+			// return the model we had stored already.
+			status.FetchedAt = time.Now()
+			if err := d.state.DB.UpdateStatus(ctx, status, "fetched_at"); err != nil {
+				log.Error(ctx, "error updating %s fetched_at: %v", uriStr, err)
+			}
 		}
 
-		// We had this status stored already
-		// before this enrichment attempt.
-		//
-		// Update fetched_at to slow re-attempts
-		// but don't return early. We can still
-		// return the model we had stored already.
-		status.FetchedAt = time.Now()
-		if err := d.state.DB.UpdateStatus(ctx, status, "fetched_at"); err != nil {
-			log.Error(ctx, "error updating %s fetched_at: %v", uriStr, err)
+		// Unlock now
+		// we're done.
+		unlock()
+		unlock = nil
+
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// We leave 'isNew' set so that caller
+			// still dereferences parents, otherwise
+			// the version we pass back may not have
+			// these attached as inReplyTos yet (since
+			// those happen OUTSIDE federator lock).
+			//
+			// TODO: performance-wise, this won't be
+			// great. should improve this if we can!
+
+			if apubStatus != nil {
+				// If a status model was fetched,
+				// provide this in the next call to
+				// prevent further required derefs.
+				statusable = apubStatus
+			}
+
+			// A data race occurred, retry
+			// status enrichment procedure.
+			continue
 		}
+
+		return latest, apubStatus, isNew, err
 	}
 
-	// Unlock now
-	// we're done.
-	unlock()
-
-	if errors.Is(err, db.ErrAlreadyExists) {
-		// Ensure AP model isn't set,
-		// otherwise this indicates WE
-		// enriched the status.
-		apubStatus = nil
-
-		// We leave 'isNew' set so that caller
-		// still dereferences parents, otherwise
-		// the version we pass back may not have
-		// these attached as inReplyTos yet (since
-		// those happen OUTSIDE federator lock).
-		//
-		// TODO: performance-wise, this won't be
-		// great. should improve this if we can!
-
-		// DATA RACE! We likely lost out to another goroutine
-		// in a call to db.Put(Status). Look again in DB by URI.
-		latest, err = d.state.DB.GetStatusByURI(ctx, status.URI)
-		if err != nil {
-			err = gtserror.Newf("error getting status %s from database after race: %w", uriStr, err)
-		}
-	}
-
-	return latest, apubStatus, isNew, err
+	return nil, nil, false, gtserror.Newf("failed after %d data races", attempts)
 }
 
 // enrichStatus will enrich the given status, whether a new
