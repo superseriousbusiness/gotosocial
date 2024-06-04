@@ -403,6 +403,10 @@ func (d *Dereferencer) enrichAccountSafely(
 		uriStr = "https://" + account.Domain + "/users/" + account.Username
 	}
 
+	// Create reference to original incoming
+	// account model before any modifications.
+	original := account
+
 	// Safely catch locked
 	// mutexes during panic.
 	var unlock func()
@@ -416,6 +420,15 @@ func (d *Dereferencer) enrichAccountSafely(
 	// we perform on data race.
 	const attempts = 3
 	for i := 0; i < attempts; i++ {
+
+		// Start with fresh copy of acc.
+		account := new(gtsmodel.Account)
+		*account = *original
+
+		// Try populate account beforehand to get any existing fields.
+		if err := d.state.DB.PopulateAccount(ctx, account); err != nil {
+			log.Errorf(ctx, "error(s) pre-populating account: %v", err)
+		}
 
 		// Acquire per-URI deref lock, this will be
 		// safely called on panic if not yet unset.
@@ -471,7 +484,7 @@ func (d *Dereferencer) enrichAccountSafely(
 		return latest, apubAcc, err
 	}
 
-	return nil, nil, gtserror.Newf("failed after %d data races", attempts)
+	return nil, nil, gtserror.Newf("reached max retries: %d", attempts)
 }
 
 // enrichAccount will enrich the given account, whether a
@@ -544,19 +557,14 @@ func (d *Dereferencer) enrichAccount(
 		// must parse from account.
 		uri, err = url.Parse(account.URI)
 		if err != nil {
-			return nil, nil, gtserror.Newf(
-				"invalid uri %q: %w",
-				account.URI, gtserror.SetUnretrievable(err),
-			)
+			err := gtserror.Newf("invalid uri %q: %w", account.URI, err)
+			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 
 		// Check URI scheme ahead of time for more useful errs.
 		if uri.Scheme != "http" && uri.Scheme != "https" {
-			err := errors.New("account URI scheme must be http or https")
-			return nil, nil, gtserror.Newf(
-				"invalid uri %q: %w",
-				account.URI, gtserror.SetUnretrievable(err),
-			)
+			err := gtserror.Newf("invalid uri %q: scheme must be http(s)", account.URI)
+			return nil, nil, gtserror.SetUnretrievable(err)
 		}
 	}
 
@@ -647,7 +655,7 @@ func (d *Dereferencer) enrichAccount(
 	if err != nil {
 		// ASRepresentationToAccount will set Malformed on the
 		// returned error, so we don't need to do it here.
-		err = gtserror.Newf("error converting accountable to gts model for account %s: %w", uri, err)
+		err = gtserror.Newf("error converting %s to gts model: %w", uri, err)
 		return nil, nil, err
 	}
 
@@ -810,6 +818,7 @@ func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport tran
 	if err != nil {
 		return gtserror.Newf("error parsing url %s: %w", latestAcc.AvatarRemoteURL, err)
 	}
+
 	// Set the media data function to dereference avatar from URI.
 	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
 		return tsport.DereferenceMedia(ctx, avatarURI)

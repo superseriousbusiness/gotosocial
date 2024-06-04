@@ -301,6 +301,10 @@ func (d *Dereferencer) enrichStatusSafely(
 		}
 	}
 
+	// Create reference to original incoming
+	// status model before any modifications.
+	original := status
+
 	// Safely catch locked
 	// mutexes during panic.
 	var unlock func()
@@ -314,6 +318,10 @@ func (d *Dereferencer) enrichStatusSafely(
 	// we perform on data race.
 	const attempts = 3
 	for i := 0; i < attempts; i++ {
+
+		// Start with fresh status copy.
+		status := new(gtsmodel.Status)
+		*status = *original
 
 		// Acquire per-URI deref lock, this will be
 		// safely called on panic if not yet unset.
