@@ -23,15 +23,15 @@ import (
 
 // UserMute refers to the muting of one account by another.
 type UserMute struct {
-	ID              string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	ExpiresAt       time.Time `bun:"type:timestamptz,nullzero"`                                   // Time mute should expire. If null, should not expire.
-	AccountID       string    `bun:"type:CHAR(26),unique:mutesrctarget,notnull,nullzero"`         // Who does this mute originate from?
-	Account         *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to accountID
-	TargetAccountID string    `bun:"type:CHAR(26),unique:mutesrctarget,notnull,nullzero"`         // Who is the target of this mute?
-	TargetAccount   *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to targetAccountID
-	Notifications   *bool     `bun:",nullzero,notnull,default:false"`                             // Apply mute to notifications as well as statuses.
+	ID              string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                           // id of this item in the database
+	CreatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                        // when was item created
+	UpdatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                        // when was item last updated
+	ExpiresAt       time.Time `bun:"type:timestamptz,nullzero"`                                                          // Time mute should expire. If null, should not expire.
+	AccountID       string    `bun:"type:CHAR(26),unique:user_mutes_account_id_target_account_id_uniq,notnull,nullzero"` // Who does this mute originate from?
+	Account         *Account  `bun:"rel:belongs-to"`                                                                     // Account corresponding to accountID
+	TargetAccountID string    `bun:"type:CHAR(26),unique:user_mutes_account_id_target_account_id_uniq,notnull,nullzero"` // Who is the target of this mute?
+	TargetAccount   *Account  `bun:"rel:belongs-to"`                                                                     // Account corresponding to targetAccountID
+	Notifications   *bool     `bun:",nullzero,notnull,default:false"`                                                    // Apply mute to notifications as well as statuses.
 }
 
 // Expired returns whether the mute has expired at a given time.
