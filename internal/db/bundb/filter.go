@@ -154,6 +154,13 @@ func (f *filterDB) populateFilter(ctx context.Context, filter *gtsmodel.Filter) 
 }
 
 func (f *filterDB) PutFilter(ctx context.Context, filter *gtsmodel.Filter) error {
+	// Pre-compile filter keyword regular expressions.
+	for _, filterKeyword := range filter.Keywords {
+		if err := filterKeyword.Compile(); err != nil {
+			return gtserror.Newf("error compiling filter keyword regex: %w", err)
+		}
+	}
+
 	// Update database.
 	if err := f.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.
@@ -222,6 +229,13 @@ func (f *filterDB) UpdateFilter(
 	for i := range filterKeywordColumns {
 		if len(filterKeywordColumns[i]) > 0 {
 			filterKeywordColumns[i] = append(filterKeywordColumns[i], "updated_at")
+		}
+	}
+
+	// Pre-compile filter keyword regular expressions.
+	for _, filterKeyword := range filter.Keywords {
+		if err := filterKeyword.Compile(); err != nil {
+			return gtserror.Newf("error compiling filter keyword regex: %w", err)
 		}
 	}
 
