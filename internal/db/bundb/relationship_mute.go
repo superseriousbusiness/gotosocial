@@ -293,7 +293,7 @@ func (r *relationshipDB) getAccountMuteIDs(ctx context.Context, accountID string
 				}
 				return q.
 					Where("? IS NULL", bun.Ident("expires_at")).
-					WhereOr(notYetExpiredSQL, bun.Ident("expires_at"), accountID)
+					WhereOr(notYetExpiredSQL, bun.Ident("expires_at"))
 			}).
 			OrderExpr("? DESC", bun.Ident("id")).
 			Exec(ctx, &muteIDs); // nocollapse
