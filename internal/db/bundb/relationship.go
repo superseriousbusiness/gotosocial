@@ -116,7 +116,7 @@ func (r *relationshipDB) GetRelationship(ctx context.Context, requestingAccount 
 	}
 	if mute != nil && !mute.Expired(time.Now()) {
 		rel.Muting = true
-		rel.MutingNotifications = mute.MutingNotifications()
+		rel.MutingNotifications = *mute.Notifications
 	}
 
 	return &rel, nil

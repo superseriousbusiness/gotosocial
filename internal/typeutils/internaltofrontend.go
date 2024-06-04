@@ -728,46 +728,69 @@ func (c *Converter) statusToAPIFilterResults(
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
 ) ([]apimodel.FilterResult, error) {
+	// If there are no filters or mutes, we're done.
+	// We never hide statuses authored by the requesting account,
+	// since not being able to see your own posts is confusing.
 	if filterContext == "" || (len(filters) == 0 && mutes.Len() == 0) || s.AccountID == requestingAccount.ID {
 		return nil, nil
 	}
 
-	filterResults := make([]apimodel.FilterResult, 0, len(filters))
+	// Both mutes and filters can expire.
 	now := time.Now()
 
-	// If the requesting account mutes the account that created this status, we're done.
+	// If the requesting account mutes the account that created this status, hide the status.
 	if mutes.Matches(s.AccountID, filterContext, now) {
 		return nil, statusfilter.ErrHideStatus
 	}
-	// If this is a multi-party conversation and all of the accounts replied to or mentioned are
-	// invisible to the requesting account (due to blocks, domain blocks, moderation, etc.),
-	// or muted, do not show this status.
-	otherParties := make([]*gtsmodel.Account, 0, 1+len(s.Mentions))
+	// If this status is part of a multi-account discussion,
+	// and all of the accounts replied to or mentioned are invisible to the requesting account
+	// (due to blocks, domain blocks, moderation, etc.),
+	// or are muted, hide the status.
+	// First, collect the accounts we have to check.
+	otherAccounts := make([]*gtsmodel.Account, 0, 1+len(s.Mentions))
 	if s.InReplyToAccount != nil {
-		otherParties = append(otherParties, s.InReplyToAccount)
+		otherAccounts = append(otherAccounts, s.InReplyToAccount)
 	}
 	for _, mention := range s.Mentions {
-		otherParties = append(otherParties, mention.TargetAccount)
+		otherAccounts = append(otherAccounts, mention.TargetAccount)
 	}
-	if len(otherParties) > 0 {
-		allOtherPartiesInvisibleOrMuted := true
-		for _, account := range otherParties {
+	// If there are no other accounts, skip this check.
+	if len(otherAccounts) > 0 {
+		// Start by assuming that they're all invisible or muted.
+		allOtherAccountsInvisibleOrMuted := true
+
+		for _, account := range otherAccounts {
+			// Is this account visible?
 			visible, err := c.filter.AccountVisible(ctx, requestingAccount, account)
 			if err != nil {
 				return nil, err
 			}
-			if visible {
-				if !mutes.Matches(account.ID, filterContext, now) {
-					allOtherPartiesInvisibleOrMuted = false
-					break
-				}
+			if !visible {
+				// It's invisible. Check the next account.
+				continue
 			}
+
+			// If visible, is it muted?
+			if mutes.Matches(account.ID, filterContext, now) {
+				// It's muted. Check the next account.
+				continue
+			}
+
+			// If we get here, the account is visible and not muted.
+			// We should show this status, and don't have to check any more accounts.
+			allOtherAccountsInvisibleOrMuted = false
+			break
 		}
-		if allOtherPartiesInvisibleOrMuted {
+
+		// If we didn't find any visible non-muted accounts, hide the status.
+		if allOtherAccountsInvisibleOrMuted {
 			return nil, statusfilter.ErrHideStatus
 		}
 	}
 
+	// At this point, the status isn't muted, but might still be filtered.
+	// Record all matching warn filters and the reasons they matched.
+	filterResults := make([]apimodel.FilterResult, 0, len(filters))
 	for _, filter := range filters {
 		if !filterAppliesInContext(filter, filterContext) {
 			// Filter doesn't apply to this context.

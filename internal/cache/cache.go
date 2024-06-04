@@ -163,5 +163,6 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Tombstone.Trim(threshold)
 	c.GTS.User.Trim(threshold)
 	c.GTS.UserMute.Trim(threshold)
+	c.GTS.UserMuteIDs.Trim(threshold)
 	c.Visibility.Trim(threshold)
 }

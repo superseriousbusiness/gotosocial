@@ -39,12 +39,3 @@ type UserMute struct {
 func (u *UserMute) Expired(now time.Time) bool {
 	return !u.ExpiresAt.IsZero() && !u.ExpiresAt.After(now)
 }
-
-// MutingNotifications returns whether the mute applies to notifications as well as statuses.
-func (u *UserMute) MutingNotifications() bool {
-	// Importing `util.PtrValueOr` would cause an import cycle.
-	if u.Notifications == nil {
-		return false
-	}
-	return *u.Notifications
-}

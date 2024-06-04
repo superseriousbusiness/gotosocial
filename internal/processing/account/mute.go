@@ -20,7 +20,6 @@ package account
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -47,7 +46,7 @@ func (p *Processor) MuteCreate(
 	}
 
 	if existingMute != nil &&
-		existingMute.MutingNotifications() == *form.Notifications &&
+		*existingMute.Notifications == *form.Notifications &&
 		existingMute.ExpiresAt.IsZero() && form.Duration == nil {
 		// Mute already exists and doesn't require updating, nothing to do.
 		return p.RelationshipGet(ctx, requestingAccount, targetAccountID)
@@ -71,7 +70,7 @@ func (p *Processor) MuteCreate(
 	}
 
 	if err := p.state.DB.PutMute(ctx, mute); err != nil {
-		err = fmt.Errorf("MuteCreate: error creating or updating mute in db: %w", err)
+		err = gtserror.Newf("error creating or updating mute in db: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -96,7 +95,7 @@ func (p *Processor) MuteRemove(
 
 	// We got a mute, remove it from the db.
 	if err := p.state.DB.DeleteMuteByID(ctx, existingMute.ID); err != nil {
-		err := fmt.Errorf("MuteRemove: error removing mute from db: %w", err)
+		err := gtserror.Newf("error removing mute from db: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -114,6 +113,7 @@ func (p *Processor) MutesGet(
 		page,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err = gtserror.Newf("couldn't list account's mutes: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -167,7 +167,7 @@ func (p *Processor) getMuteTarget(
 ) (*gtsmodel.Account, *gtsmodel.UserMute, gtserror.WithCode) {
 	// Account should not mute or unmute itself.
 	if requestingAccount.ID == targetAccountID {
-		err := fmt.Errorf("getMuteTarget: account %s cannot mute or unmute itself", requestingAccount.ID)
+		err := gtserror.Newf("account %s cannot mute or unmute itself", requestingAccount.ID)
 		return nil, nil, gtserror.NewErrorNotAcceptable(err, err.Error())
 	}
 
@@ -176,18 +176,18 @@ func (p *Processor) getMuteTarget(
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// Real db error.
-			err = fmt.Errorf("getMuteTarget: db error looking for target account %s: %w", targetAccountID, err)
+			err = gtserror.Newf("db error looking for target account %s: %w", targetAccountID, err)
 			return nil, nil, gtserror.NewErrorInternalError(err)
 		}
 		// Account not found.
-		err = fmt.Errorf("getMuteTarget: target account %s not found in the db", targetAccountID)
+		err = gtserror.Newf("target account %s not found in the db", targetAccountID)
 		return nil, nil, gtserror.NewErrorNotFound(err, err.Error())
 	}
 
 	// Check if currently muted.
 	mute, err := p.state.DB.GetMute(ctx, requestingAccount.ID, targetAccountID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = fmt.Errorf("getMuteTarget: db error checking existing mute: %w", err)
+		err = gtserror.Newf("db error checking existing mute: %w", err)
 		return nil, nil, gtserror.NewErrorInternalError(err)
 	}
 

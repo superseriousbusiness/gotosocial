@@ -28,6 +28,7 @@ import (
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -726,6 +727,7 @@ func (suite *InternalToFrontendTestSuite) TestMutedStatusToFrontend() {
 		{
 			AccountID:       requestingAccount.ID,
 			TargetAccountID: testStatus.AccountID,
+			Notifications:   util.Ptr(false),
 		},
 	})
 	_, err := suite.typeconverter.StatusToAPIStatus(
@@ -750,6 +752,7 @@ func (suite *InternalToFrontendTestSuite) TestMutedReplyStatusToFrontend() {
 		{
 			AccountID:       requestingAccount.ID,
 			TargetAccountID: mutedAccount.ID,
+			Notifications:   util.Ptr(false),
 		},
 	})
 	// Populate status so the converter has the account objects it needs for muting.

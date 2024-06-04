@@ -1310,6 +1310,13 @@ func (c *Caches) initUserMute() {
 	copyF := func(u1 *gtsmodel.UserMute) *gtsmodel.UserMute {
 		u2 := new(gtsmodel.UserMute)
 		*u2 = *u1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/relationship_mute.go.
+		u2.Account = nil
+		u2.TargetAccount = nil
+
 		return u2
 	}
 

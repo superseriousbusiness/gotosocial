@@ -54,11 +54,11 @@ type CompiledUserMuteList struct {
 }
 
 func NewCompiledUserMuteList(mutes []*gtsmodel.UserMute) (c *CompiledUserMuteList) {
-	c = &CompiledUserMuteList{byTargetAccountID: map[string]compiledUserMuteListEntry{}}
+	c = &CompiledUserMuteList{byTargetAccountID: make(map[string]compiledUserMuteListEntry, len(mutes))}
 	for _, mute := range mutes {
 		c.byTargetAccountID[mute.TargetAccountID] = compiledUserMuteListEntry{
 			ExpiresAt:     mute.ExpiresAt,
-			Notifications: mute.MutingNotifications(),
+			Notifications: *mute.Notifications,
 		}
 	}
 	return
