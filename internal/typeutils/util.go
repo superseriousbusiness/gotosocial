@@ -65,7 +65,7 @@ func (c *Converter) interactionsWithStatusForAccount(ctx context.Context, s *gts
 		}
 		si.Muted = muted
 
-		bookmarked, err := c.state.DB.IsStatusBookmarkedBy(ctx, s, requestingAccount.ID)
+		bookmarked, err := c.state.DB.IsStatusBookmarkedBy(ctx, requestingAccount.ID, s.ID)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if requesting account has bookmarked status: %s", err)
 		}

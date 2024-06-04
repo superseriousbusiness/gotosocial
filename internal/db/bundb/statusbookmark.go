@@ -22,6 +22,7 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -112,6 +113,14 @@ func (s *statusBookmarkDB) GetStatusBookmarksByIDs(ctx context.Context, ids []st
 func (s *statusBookmarkDB) IsStatusBookmarked(ctx context.Context, statusID string) (bool, error) {
 	bookmarkIDs, err := s.getStatusBookmarkIDs(ctx, statusID)
 	return (len(bookmarkIDs) > 0), err
+}
+
+func (s *statusBookmarkDB) IsStatusBookmarkedBy(ctx context.Context, accountID string, statusID string) (bool, error) {
+	bookmark, err := s.GetStatusBookmark(ctx, accountID, statusID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, err
+	}
+	return (bookmark != nil), nil
 }
 
 func (s *statusBookmarkDB) getStatusBookmark(ctx context.Context, lookup string, dbQuery func(*gtsmodel.StatusBookmark) error, keyParts ...any) (*gtsmodel.StatusBookmark, error) {

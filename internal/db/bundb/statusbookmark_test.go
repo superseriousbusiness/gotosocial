@@ -46,6 +46,17 @@ func (suite *StatusBookmarkTestSuite) TestGetStatusBookmarkNonexisting() {
 	suite.ErrorIs(err, db.ErrNoEntries)
 }
 
+func (suite *StatusBookmarkTestSuite) IsStatusBookmarked() {
+	for _, bookmark := range suite.testBookmarks {
+		ok, err := suite.db.IsStatusBookmarked(
+			context.Background(),
+			bookmark.StatusID,
+		)
+		suite.NoError(err)
+		suite.True(ok)
+	}
+}
+
 func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarksOriginatingFromAccount() {
 	testAccount := suite.testAccounts["local_account_1"]
 

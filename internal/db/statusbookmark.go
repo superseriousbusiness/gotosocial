@@ -27,11 +27,14 @@ type StatusBookmark interface {
 	// GetStatusBookmark gets one status bookmark with the given ID.
 	GetStatusBookmarkByID(ctx context.Context, id string) (*gtsmodel.StatusBookmark, error)
 
-	// GetStatusBookmark ...
+	// GetStatusBookmark fetches a status bookmark by the given account ID on the given status ID, if it exists.
 	GetStatusBookmark(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusBookmark, error)
 
-	// IsStatusBookmarked returns whether status has been bookmarked by any active account.
+	// IsStatusBookmarked returns whether status has been bookmarked by any account.
 	IsStatusBookmarked(ctx context.Context, statusID string) (bool, error)
+
+	// IsStatusBookmarkedBy returns whether status ID is bookmarked by the given account ID.
+	IsStatusBookmarkedBy(ctx context.Context, accountID string, statusID string) (bool, error)
 
 	// GetStatusBookmarks retrieves status bookmarks created by the given accountID,
 	// and using the provided parameters. If limit is < 0 then no limit will be set.
