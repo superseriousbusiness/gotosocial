@@ -3392,6 +3392,11 @@ func NewTestFilterStatuses() map[string]*gtsmodel.FilterStatus {
 	}
 }
 
+func NewTestUserMutes() map[string]*gtsmodel.UserMute {
+	// Not currently used.
+	return map[string]*gtsmodel.UserMute{}
+}
+
 // GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.
 func GetSignatureForActivity(activity pub.Activity, pubKeyID string, privkey *rsa.PrivateKey, destination *url.URL) (signatureHeader string, digestHeader string, dateHeader string) {
 	// convert the activity into json bytes
