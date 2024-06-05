@@ -20,12 +20,12 @@ package bundb_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -78,7 +78,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 		}
 	}
 
-	fmt.Printf("\n\n\nput %d notifs in the db\n\n\n", notifCount)
+	suite.T().Logf("put %d notifs in the db\n", notifCount)
 }
 
 type NotificationTestSuite struct {
@@ -89,10 +89,18 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, id.Highest, id.Lowest, "", 20, nil)
+	notifications, err := suite.db.GetAccountNotifications(
+		gtscontext.SetBarebones(context.Background()),
+		testAccount.ID,
+		id.Highest,
+		id.Lowest,
+		"",
+		20,
+		nil,
+	)
 	suite.NoError(err)
 	timeTaken := time.Since(before)
-	fmt.Printf("\n\n\n withSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)
+	suite.T().Logf("withSpam: got %d notifications in %s\n", len(notifications), timeTaken)
 
 	suite.NotNil(notifications)
 	for _, n := range notifications {
@@ -103,10 +111,18 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithSpam() {
 func (suite *NotificationTestSuite) TestGetAccountNotificationsWithoutSpam() {
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
-	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, id.Highest, id.Lowest, "", 20, nil)
+	notifications, err := suite.db.GetAccountNotifications(
+		gtscontext.SetBarebones(context.Background()),
+		testAccount.ID,
+		id.Highest,
+		id.Lowest,
+		"",
+		20,
+		nil,
+	)
 	suite.NoError(err)
 	timeTaken := time.Since(before)
-	fmt.Printf("\n\n\n withoutSpam: got %d notifications in %s\n\n\n", len(notifications), timeTaken)
+	suite.T().Logf("withoutSpam: got %d notifications in %s\n", len(notifications), timeTaken)
 
 	suite.NotNil(notifications)
 	for _, n := range notifications {
@@ -120,7 +136,15 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, "")
 	suite.NoError(err)
 
-	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, id.Highest, id.Lowest, "", 20, nil)
+	notifications, err := suite.db.GetAccountNotifications(
+		gtscontext.SetBarebones(context.Background()),
+		testAccount.ID,
+		id.Highest,
+		id.Lowest,
+		"",
+		20,
+		nil,
+	)
 	suite.NoError(err)
 	suite.Nil(notifications)
 	suite.Empty(notifications)
@@ -132,7 +156,15 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 	err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, "")
 	suite.NoError(err)
 
-	notifications, err := suite.db.GetAccountNotifications(context.Background(), testAccount.ID, id.Highest, id.Lowest, "", 20, nil)
+	notifications, err := suite.db.GetAccountNotifications(
+		gtscontext.SetBarebones(context.Background()),
+		testAccount.ID,
+		id.Highest,
+		id.Lowest,
+		"",
+		20,
+		nil,
+	)
 	suite.NoError(err)
 	suite.Nil(notifications)
 	suite.Empty(notifications)
