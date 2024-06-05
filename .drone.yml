@@ -42,9 +42,8 @@ steps:
         go test
         -failfast
         -timeout=20m
-        ./...
         -tags "netgo osusergo static_build kvformat timetzdata"
-        -ldflags="-s -w -extldflags '-static'"
+        ./...
       - ./test/envparsing.sh
       - ./test/swagger.sh
     depends_on:
@@ -205,6 +204,6 @@ steps:
 
 ---
 kind: signature
-hmac: 96df36d9deff55931f79553d3be3cb93377818bab20747c71b3d09d6534d833b
+hmac: 86ebddcd630792cac43aa92fa7f45118943c51b5157491d05eb480ac21762329
 
 ...
