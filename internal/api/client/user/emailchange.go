@@ -89,7 +89,13 @@ func (m *Module) EmailChangePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	user, errWithCode := m.processor.User().EmailChange(c.Request.Context(), authed.User, form.Password, form.NewEmail)
+	user, errWithCode := m.processor.User().EmailChange(
+		c.Request.Context(),
+		authed.User,
+		authed.Account,
+		form.Password,
+		form.NewEmail,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -34,7 +34,13 @@ import (
 )
 
 // EmailChange processes an email address change request for the given user.
-func (p *Processor) EmailChange(ctx context.Context, user *gtsmodel.User, password string, newEmail string) (*apimodel.User, gtserror.WithCode) {
+func (p *Processor) EmailChange(
+	ctx context.Context,
+	user *gtsmodel.User,
+	account *gtsmodel.Account,
+	password string,
+	newEmail string,
+) (*apimodel.User, gtserror.WithCode) {
 	// Ensure provided password is correct.
 	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password)); err != nil {
 		err := gtserror.Newf("%w", err)
@@ -83,6 +89,11 @@ func (p *Processor) EmailChange(ctx context.Context, user *gtsmodel.User, passwo
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// If account isn't set on User yet, do it here.
+	if user.Account == nil {
+		user.Account = account
+	}
+
 	// Add email sending job to the queue.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		// Use ap.ObjectProfile here to
@@ -91,6 +102,8 @@ func (p *Processor) EmailChange(ctx context.Context, user *gtsmodel.User, passwo
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       user,
+		Origin:         account,
+		Target:         account,
 	})
 
 	return p.converter.UserToAPIUser(ctx, user), nil

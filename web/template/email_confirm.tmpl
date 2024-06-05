@@ -18,11 +18,15 @@
 */ -}}
 
 Hello {{ .Username -}}!
-
+{{ if .NewSignup }}
 You are receiving this mail because you've requested an account on {{ .InstanceURL -}}.
 
 To use your account, you must confirm that this is your email address.
+{{ else }}
+You are receiving this mail because you've requested an email address change on {{ .InstanceURL -}}.
 
+To complete the change, you must confirm that this is your email address.
+{{ end }}
 To confirm your email, paste the following in your browser's address bar:
 
 {{ .ConfirmLink }}

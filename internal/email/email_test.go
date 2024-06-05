@@ -40,17 +40,32 @@ func (suite *EmailTestSuite) SetupTest() {
 	suite.sender = testrig.NewEmailSender("../../web/template/", suite.sentEmails)
 }
 
+func (suite *EmailTestSuite) TestTemplateConfirmNewSignup() {
+	confirmData := email.ConfirmData{
+		Username:     "test",
+		InstanceURL:  "https://example.org",
+		InstanceName: "Test Instance",
+		ConfirmLink:  "https://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa",
+		NewSignup:    true,
+	}
+
+	suite.sender.SendConfirmEmail("user@example.org", confirmData)
+	suite.Len(suite.sentEmails, 1)
+	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because you've requested an account on https://example.org.\r\n\r\nTo use your account, you must confirm that this is your email address.\r\n\r\nTo confirm your email, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
+}
+
 func (suite *EmailTestSuite) TestTemplateConfirm() {
 	confirmData := email.ConfirmData{
 		Username:     "test",
 		InstanceURL:  "https://example.org",
 		InstanceName: "Test Instance",
 		ConfirmLink:  "https://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa",
+		NewSignup:    false,
 	}
 
 	suite.sender.SendConfirmEmail("user@example.org", confirmData)
 	suite.Len(suite.sentEmails, 1)
-	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because you've requested an account on https://example.org.\r\n\r\nTo use your account, you must confirm that this is your email address.\r\n\r\nTo confirm your email, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
+	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because you've requested an email address change on https://example.org.\r\n\r\nTo complete the change, you must confirm that this is your email address.\r\n\r\nTo confirm your email, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
 
 func (suite *EmailTestSuite) TestTemplateReset() {

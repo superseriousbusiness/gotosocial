@@ -111,7 +111,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ObjectNote:
 			return p.clientAPI.UpdateStatus(ctx, cMsg)
 
-		// UPDATE ACCOUNT (ie., profile)
+		// UPDATE ACCOUNT (ie., bio, settings, etc)
 		case ap.ActorPerson:
 			return p.clientAPI.UpdateAccount(ctx, cMsg)
 
@@ -119,7 +119,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ActivityFlag:
 			return p.clientAPI.UpdateReport(ctx, cMsg)
 
-		// UPDATE PROFILE (ie., user-level info)
+		// UPDATE USER (ie., email address)
 		case ap.ObjectProfile:
 			return p.clientAPI.UpdateUser(ctx, cMsg)
 		}
@@ -223,7 +223,7 @@ func (p *clientAPI) CreateUser(ctx context.Context, cMsg *messages.FromClientAPI
 	}
 
 	// Send "please confirm your address" email to the new user.
-	if err := p.surface.emailUserPleaseConfirm(ctx, newUser); err != nil {
+	if err := p.surface.emailUserPleaseConfirm(ctx, newUser, true); err != nil {
 		log.Errorf(ctx, "error emailing confirm: %v", err)
 	}
 
@@ -492,7 +492,7 @@ func (p *clientAPI) UpdateUser(ctx context.Context, cMsg *messages.FromClientAPI
 	// The only possible "UpdateUser" action is to update the
 	// user's email address, so we can safely assume by this
 	// point that a new unconfirmed email address has been set.
-	if err := p.surface.emailUserPleaseConfirm(ctx, user); err != nil {
+	if err := p.surface.emailUserPleaseConfirm(ctx, user, false); err != nil {
 		log.Errorf(ctx, "error emailing report closed: %v", err)
 	}
 
