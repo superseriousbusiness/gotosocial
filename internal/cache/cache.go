@@ -94,6 +94,8 @@ func (c *Caches) Init() {
 	c.initToken()
 	c.initTombstone()
 	c.initUser()
+	c.initUserMute()
+	c.initUserMuteIDs()
 	c.initWebfinger()
 	c.initVisibility()
 }
@@ -164,5 +166,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.Token.Trim(threshold)
 	c.GTS.Tombstone.Trim(threshold)
 	c.GTS.User.Trim(threshold)
+	c.GTS.UserMute.Trim(threshold)
+	c.GTS.UserMuteIDs.Trim(threshold)
 	c.Visibility.Trim(threshold)
 }

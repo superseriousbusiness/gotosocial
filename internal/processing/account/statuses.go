@@ -105,7 +105,7 @@ func (p *Processor) StatusesGet(
 
 	for _, s := range filtered {
 		// Convert filtered statuses to API statuses.
-		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount, statusfilter.FilterContextAccount, filters)
+		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount, statusfilter.FilterContextAccount, filters, nil)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue

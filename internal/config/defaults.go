@@ -197,6 +197,8 @@ var Defaults = Configuration{
 		TokenMemRatio:             0.75,
 		TombstoneMemRatio:         0.5,
 		UserMemRatio:              0.25,
+		UserMuteMemRatio:          2,
+		UserMuteIDsMemRatio:       3,
 		WebfingerMemRatio:         0.1,
 		VisibilityMemRatio:        2,
 	},

@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
@@ -741,8 +742,9 @@ func (c *Converter) StatusToAPIStatus(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Status, error) {
-	apiStatus, err := c.statusToFrontend(ctx, s, requestingAccount, filterContext, filters)
+	apiStatus, err := c.statusToFrontend(ctx, s, requestingAccount, filterContext, filters, mutes)
 	if err != nil {
 		return nil, err
 	}
@@ -757,7 +759,7 @@ func (c *Converter) StatusToAPIStatus(
 	return apiStatus, nil
 }
 
-// statusToAPIFilterResults applies filters to a status and returns an API filter result object.
+// statusToAPIFilterResults applies filters and mutes to a status and returns an API filter result object.
 // The result may be nil if no filters matched.
 // If the status should not be returned at all, it returns the ErrHideStatus error.
 func (c *Converter) statusToAPIFilterResults(
@@ -766,14 +768,71 @@ func (c *Converter) statusToAPIFilterResults(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
 ) ([]apimodel.FilterResult, error) {
-	if filterContext == "" || len(filters) == 0 || s.AccountID == requestingAccount.ID {
+	// If there are no filters or mutes, we're done.
+	// We never hide statuses authored by the requesting account,
+	// since not being able to see your own posts is confusing.
+	if filterContext == "" || (len(filters) == 0 && mutes.Len() == 0) || s.AccountID == requestingAccount.ID {
 		return nil, nil
 	}
 
-	filterResults := make([]apimodel.FilterResult, 0, len(filters))
-
+	// Both mutes and filters can expire.
 	now := time.Now()
+
+	// If the requesting account mutes the account that created this status, hide the status.
+	if mutes.Matches(s.AccountID, filterContext, now) {
+		return nil, statusfilter.ErrHideStatus
+	}
+	// If this status is part of a multi-account discussion,
+	// and all of the accounts replied to or mentioned are invisible to the requesting account
+	// (due to blocks, domain blocks, moderation, etc.),
+	// or are muted, hide the status.
+	// First, collect the accounts we have to check.
+	otherAccounts := make([]*gtsmodel.Account, 0, 1+len(s.Mentions))
+	if s.InReplyToAccount != nil {
+		otherAccounts = append(otherAccounts, s.InReplyToAccount)
+	}
+	for _, mention := range s.Mentions {
+		otherAccounts = append(otherAccounts, mention.TargetAccount)
+	}
+	// If there are no other accounts, skip this check.
+	if len(otherAccounts) > 0 {
+		// Start by assuming that they're all invisible or muted.
+		allOtherAccountsInvisibleOrMuted := true
+
+		for _, account := range otherAccounts {
+			// Is this account visible?
+			visible, err := c.filter.AccountVisible(ctx, requestingAccount, account)
+			if err != nil {
+				return nil, err
+			}
+			if !visible {
+				// It's invisible. Check the next account.
+				continue
+			}
+
+			// If visible, is it muted?
+			if mutes.Matches(account.ID, filterContext, now) {
+				// It's muted. Check the next account.
+				continue
+			}
+
+			// If we get here, the account is visible and not muted.
+			// We should show this status, and don't have to check any more accounts.
+			allOtherAccountsInvisibleOrMuted = false
+			break
+		}
+
+		// If we didn't find any visible non-muted accounts, hide the status.
+		if allOtherAccountsInvisibleOrMuted {
+			return nil, statusfilter.ErrHideStatus
+		}
+	}
+
+	// At this point, the status isn't muted, but might still be filtered.
+	// Record all matching warn filters and the reasons they matched.
+	filterResults := make([]apimodel.FilterResult, 0, len(filters))
 	for _, filter := range filters {
 		if !filterAppliesInContext(filter, filterContext) {
 			// Filter doesn't apply to this context.
@@ -893,7 +952,7 @@ func (c *Converter) StatusToWebStatus(
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 ) (*apimodel.Status, error) {
-	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil)
+	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -997,6 +1056,7 @@ func (c *Converter) statusToFrontend(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Status, error) {
 	// Try to populate status struct pointer fields.
 	// We can continue in many cases of partial failure,
@@ -1095,7 +1155,7 @@ func (c *Converter) statusToFrontend(
 	}
 
 	if s.BoostOf != nil {
-		reblog, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount, filterContext, filters)
+		reblog, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount, filterContext, filters, mutes)
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			// If we'd hide the original status, hide the boost.
 			return nil, err
@@ -1164,8 +1224,11 @@ func (c *Converter) statusToFrontend(
 	}
 
 	// Apply filters.
-	filterResults, err := c.statusToAPIFilterResults(ctx, s, requestingAccount, filterContext, filters)
+	filterResults, err := c.statusToAPIFilterResults(ctx, s, requestingAccount, filterContext, filters, mutes)
 	if err != nil {
+		if errors.Is(err, statusfilter.ErrHideStatus) {
+			return nil, err
+		}
 		return nil, fmt.Errorf("error applying filters: %w", err)
 	}
 	apiStatus.Filtered = filterResults
@@ -1453,7 +1516,12 @@ func (c *Converter) RelationshipToAPIRelationship(ctx context.Context, r *gtsmod
 }
 
 // NotificationToAPINotification converts a gts notification into a api notification
-func (c *Converter) NotificationToAPINotification(ctx context.Context, n *gtsmodel.Notification, filters []*gtsmodel.Filter) (*apimodel.Notification, error) {
+func (c *Converter) NotificationToAPINotification(
+	ctx context.Context,
+	n *gtsmodel.Notification,
+	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
+) (*apimodel.Notification, error) {
 	if n.TargetAccount == nil {
 		tAccount, err := c.state.DB.GetAccountByID(ctx, n.TargetAccountID)
 		if err != nil {
@@ -1494,8 +1562,11 @@ func (c *Converter) NotificationToAPINotification(ctx context.Context, n *gtsmod
 		}
 
 		var err error
-		apiStatus, err = c.StatusToAPIStatus(ctx, n.Status, n.TargetAccount, statusfilter.FilterContextNotifications, filters)
+		apiStatus, err = c.StatusToAPIStatus(ctx, n.Status, n.TargetAccount, statusfilter.FilterContextNotifications, filters, mutes)
 		if err != nil {
+			if errors.Is(err, statusfilter.ErrHideStatus) {
+				return nil, err
+			}
 			return nil, fmt.Errorf("NotificationToapi: error converting status to api: %s", err)
 		}
 	}
@@ -1647,7 +1718,7 @@ func (c *Converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 		}
 	}
 	for _, s := range r.Statuses {
-		status, err := c.StatusToAPIStatus(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil)
+		status, err := c.StatusToAPIStatus(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error converting status with id %s to api status: %w", s.ID, err)
 		}

@@ -25,6 +25,8 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -118,6 +120,13 @@ func (p *Processor) packageTagResponse(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAcct.ID, nil)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requestingAcct.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+
 	for _, s := range statuses {
 		timelineable, err := p.filter.StatusTagTimelineable(ctx, requestingAcct, s)
 		if err != nil {
@@ -129,7 +138,7 @@ func (p *Processor) packageTagResponse(
 			continue
 		}
 
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requestingAcct, statusfilter.FilterContextPublic, filters)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requestingAcct, statusfilter.FilterContextPublic, filters, compiledMutes)
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			continue
 		}

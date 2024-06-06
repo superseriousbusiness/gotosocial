@@ -24,6 +24,9 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -48,6 +51,13 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", authed.Account.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), authed.Account.ID, nil)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", authed.Account.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 
 	var (
 		items          = make([]interface{}, 0, count)
@@ -76,9 +86,11 @@ func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, ma
 			continue
 		}
 
-		item, err := p.converter.NotificationToAPINotification(ctx, n, filters)
+		item, err := p.converter.NotificationToAPINotification(ctx, n, filters, compiledMutes)
 		if err != nil {
-			log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
+			if !errors.Is(err, status.ErrHideStatus) {
+				log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
+			}
 			continue
 		}
 
@@ -116,7 +128,14 @@ func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Accou
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, filters)
+	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), account.ID, nil)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", account.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+
+	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, filters, compiledMutes)
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorNotFound(err)

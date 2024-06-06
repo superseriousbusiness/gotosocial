@@ -24,6 +24,8 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -286,8 +288,16 @@ func (p *Processor) ContextGet(ctx context.Context, requestingAccount *gtsmodel.
 		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAccount.ID, nil)
+	if err != nil {
+		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requestingAccount.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+
 	convert := func(ctx context.Context, status *gtsmodel.Status, requestingAccount *gtsmodel.Account) (*apimodel.Status, error) {
-		return p.converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextThread, filters)
+		return p.converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextThread, filters, compiledMutes)
 	}
 	return p.contextGet(ctx, requestingAccount, targetStatusID, convert)
 }

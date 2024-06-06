@@ -86,9 +86,6 @@ type Account struct {
 	Fields []Field `json:"fields"`
 	// Account has been suspended by our instance.
 	Suspended bool `json:"suspended,omitempty"`
-	// If this account has been muted, when will the mute expire (ISO 8601 Datetime).
-	// example: 2021-07-30T09:20:25+00:00
-	MuteExpiresAt string `json:"mute_expires_at,omitempty"`
 	// Extra profile information. Shown only if the requester owns the account being requested.
 	Source *Source `json:"source,omitempty"`
 	// Filename of user-selected CSS theme to include when rendering this account's profile or statuses. Eg., `blurple-light.css`.
@@ -107,6 +104,17 @@ type Account struct {
 	// If set, indicates that this account is currently inactive, and has migrated to the given account.
 	// Key/value omitted for accounts that haven't moved, and for suspended accounts.
 	Moved *Account `json:"moved,omitempty"`
+}
+
+// MutedAccount extends Account with a field used only by the muted user list.
+//
+// swagger:model mutedAccount
+type MutedAccount struct {
+	Account
+	// If this account has been muted, when will the mute expire (ISO 8601 Datetime).
+	// If the mute is indefinite, this will be null.
+	// example: 2021-07-30T09:20:25+00:00
+	MuteExpiresAt *string `json:"mute_expires_at"`
 }
 
 // AccountCreateRequest models account creation parameters.

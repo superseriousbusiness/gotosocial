@@ -288,11 +288,6 @@ definitions:
                 x-go-name: Locked
             moved:
                 $ref: '#/definitions/account'
-            mute_expires_at:
-                description: If this account has been muted, when will the mute expire (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
-                type: string
-                x-go-name: MuteExpiresAt
             note:
                 description: Bio/description of this account.
                 type: string
@@ -1931,6 +1926,157 @@ definitions:
         type: object
         x-go-name: MediaMeta
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    mutedAccount:
+        properties:
+            acct:
+                description: |-
+                    The account URI as discovered via webfinger.
+                    Equal to username for local users, or username@domain for remote users.
+                example: some_user@example.org
+                type: string
+                x-go-name: Acct
+            avatar:
+                description: Web location of the account's avatar.
+                example: https://example.org/media/some_user/avatar/original/avatar.jpeg
+                type: string
+                x-go-name: Avatar
+            avatar_static:
+                description: |-
+                    Web location of a static version of the account's avatar.
+                    Only relevant when the account's main avatar is a video or a gif.
+                example: https://example.org/media/some_user/avatar/static/avatar.png
+                type: string
+                x-go-name: AvatarStatic
+            bot:
+                description: Account identifies as a bot.
+                type: boolean
+                x-go-name: Bot
+            created_at:
+                description: When the account was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            custom_css:
+                description: CustomCSS to include when rendering this account's profile or statuses.
+                type: string
+                x-go-name: CustomCSS
+            discoverable:
+                description: Account has opted into discovery features.
+                type: boolean
+                x-go-name: Discoverable
+            display_name:
+                description: The account's display name.
+                example: big jeff (he/him)
+                type: string
+                x-go-name: DisplayName
+            emojis:
+                description: |-
+                    Array of custom emojis used in this account's note or display name.
+                    Empty for blocked accounts.
+                items:
+                    $ref: '#/definitions/emoji'
+                type: array
+                x-go-name: Emojis
+            enable_rss:
+                description: |-
+                    Account has enabled RSS feed.
+                    Key/value omitted if false.
+                type: boolean
+                x-go-name: EnableRSS
+            fields:
+                description: |-
+                    Additional metadata attached to this account's profile.
+                    Empty for blocked accounts.
+                items:
+                    $ref: '#/definitions/field'
+                type: array
+                x-go-name: Fields
+            followers_count:
+                description: Number of accounts following this account, according to our instance.
+                format: int64
+                type: integer
+                x-go-name: FollowersCount
+            following_count:
+                description: Number of account's followed by this account, according to our instance.
+                format: int64
+                type: integer
+                x-go-name: FollowingCount
+            header:
+                description: Web location of the account's header image.
+                example: https://example.org/media/some_user/header/original/header.jpeg
+                type: string
+                x-go-name: Header
+            header_static:
+                description: |-
+                    Web location of a static version of the account's header.
+                    Only relevant when the account's main header is a video or a gif.
+                example: https://example.org/media/some_user/header/static/header.png
+                type: string
+                x-go-name: HeaderStatic
+            hide_collections:
+                description: |-
+                    Account has opted to hide their followers/following collections.
+                    Key/value omitted if false.
+                type: boolean
+                x-go-name: HideCollections
+            id:
+                description: The account id.
+                example: 01FBVD42CQ3ZEEVMW180SBX03B
+                type: string
+                x-go-name: ID
+            last_status_at:
+                description: When the account's most recent status was posted (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: LastStatusAt
+            locked:
+                description: Account manually approves follow requests.
+                type: boolean
+                x-go-name: Locked
+            moved:
+                $ref: '#/definitions/account'
+            mute_expires_at:
+                description: |-
+                    If this account has been muted, when will the mute expire (ISO 8601 Datetime).
+                    If the mute is indefinite, this will be null.
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: MuteExpiresAt
+            note:
+                description: Bio/description of this account.
+                type: string
+                x-go-name: Note
+            role:
+                $ref: '#/definitions/accountRole'
+            source:
+                $ref: '#/definitions/Source'
+            statuses_count:
+                description: Number of statuses posted by this account, according to our instance.
+                format: int64
+                type: integer
+                x-go-name: StatusesCount
+            suspended:
+                description: Account has been suspended by our instance.
+                type: boolean
+                x-go-name: Suspended
+            theme:
+                description: Filename of user-selected CSS theme to include when rendering this account's profile or statuses. Eg., `blurple-light.css`.
+                type: string
+                x-go-name: Theme
+            url:
+                description: Web location of the account's profile page.
+                example: https://example.org/@some_user
+                type: string
+                x-go-name: URL
+            username:
+                description: The username of the account, not including domain.
+                example: some_user
+                type: string
+                x-go-name: Username
+        title: MutedAccount extends Account with a field used only by the muted user list.
+        type: object
+        x-go-name: MutedAccount
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     nodeinfo:
         description: 'See: https://nodeinfo.diaspora.software/schema.html'
         properties:
@@ -3363,6 +3509,51 @@ paths:
             summary: See all lists of yours that contain requested account.
             tags:
                 - accounts
+    /api/v1/accounts/{id}/mute:
+        post:
+            description: If account was already muted, succeeds anyway. This can be used to update the details of a mute.
+            operationId: accountMute
+            parameters:
+                - description: The ID of the account to block.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: Mute notifications as well as posts.
+                  in: formData
+                  name: notifications
+                  type: boolean
+                - default: 0
+                  description: How long the mute should last, in seconds. If 0 or not provided, mute lasts indefinitely.
+                  in: formData
+                  name: duration
+                  type: number
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Your relationship to the account.
+                    schema:
+                        $ref: '#/definitions/accountRelationship'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:mutes
+            summary: Mute account by ID.
+            tags:
+                - accounts
     /api/v1/accounts/{id}/note:
         post:
             consumes:
@@ -3541,6 +3732,39 @@ paths:
                 - OAuth2 Bearer:
                     - write:follows
             summary: Unfollow account with id.
+            tags:
+                - accounts
+    /api/v1/accounts/{id}/unmute:
+        post:
+            description: If account was already unmuted (or has never been muted), succeeds anyway.
+            operationId: accountUnmute
+            parameters:
+                - description: The ID of the account to unmute.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Your relationship to this account.
+                    schema:
+                        $ref: '#/definitions/accountRelationship'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:mutes
+            summary: Unmute account by ID.
             tags:
                 - accounts
     /api/v1/accounts/alias:
@@ -7073,8 +7297,6 @@ paths:
     /api/v1/mutes:
         get:
             description: |-
-                NOT IMPLEMENTED YET: Will currently always return an array of length 0.
-
                 The next and previous queries can be parsed from the returned Link header.
                 Example:
 
@@ -7106,14 +7328,14 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: ""
+                    description: List of muted accounts, including when their mutes expire (if applicable).
                     headers:
                         Link:
                             description: Links to the next and previous queries.
                             type: string
                     schema:
                         items:
-                            $ref: '#/definitions/account'
+                            $ref: '#/definitions/mutedAccount'
                         type: array
                 "400":
                     description: bad request

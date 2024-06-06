@@ -15,26 +15,20 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package typeutils
+package model
 
-import (
-	"sync"
-
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-)
-
-type Converter struct {
-	state          *state.State
-	defaultAvatars []string
-	randAvatars    sync.Map
-	filter         *visibility.Filter
-}
-
-func NewConverter(state *state.State) *Converter {
-	return &Converter{
-		state:          state,
-		defaultAvatars: populateDefaultAvatars(),
-		filter:         visibility.NewFilter(state),
-	}
+// UserMuteCreateUpdateRequest captures params for creating or updating a user mute.
+//
+// swagger:ignore
+type UserMuteCreateUpdateRequest struct {
+	// Should the mute apply to notifications from that user?
+	//
+	// Example: true
+	Notifications *bool `form:"notifications" json:"notifications" xml:"notifications"`
+	// Number of seconds from now that the mute should expire. If omitted or 0, mute never expires.
+	Duration *int `json:"-" form:"duration" xml:"duration"`
+	// Number of seconds from now that the mute should expire. If omitted or 0, mute never expires.
+	//
+	// Example: 86400
+	DurationI interface{} `json:"duration"`
 }

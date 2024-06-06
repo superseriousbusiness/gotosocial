@@ -24,7 +24,9 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -105,7 +107,14 @@ func HomeTimelineStatusPrepare(state *state.State, converter *typeutils.Converte
 			return nil, err
 		}
 
-		return converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextHome, filters)
+		mutes, err := state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAccount.ID, nil)
+		if err != nil {
+			err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requestingAccount.ID, err)
+			return nil, err
+		}
+		compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+
+		return converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextHome, filters, compiledMutes)
 	}
 }
 

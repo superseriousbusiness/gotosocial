@@ -28,7 +28,8 @@ EXPECT=$(cat << "EOF"
         "account-settings-mem-ratio": 0.1,
         "account-stats-mem-ratio": 2,
         "application-mem-ratio": 0.1,
-        "block-mem-ratio": 3,
+        "block-ids-mem-ratio": 3,
+        "block-mem-ratio": 2,
         "boost-of-ids-mem-ratio": 3,
         "client-mem-ratio": 0.1,
         "emoji-category-mem-ratio": 0.1,
@@ -64,6 +65,8 @@ EXPECT=$(cat << "EOF"
         "token-mem-ratio": 0.75,
         "tombstone-mem-ratio": 0.5,
         "user-mem-ratio": 0.25,
+        "user-mute-ids-mem-ratio": 3,
+        "user-mute-mem-ratio": 2,
         "visibility-mem-ratio": 2,
         "webfinger-mem-ratio": 0.1
     },

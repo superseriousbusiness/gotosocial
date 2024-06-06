@@ -47,7 +47,7 @@ type GTSCaches struct {
 	// Block provides access to the gtsmodel Block (account) database cache.
 	Block StructCache[*gtsmodel.Block]
 
-	// FollowIDs provides access to the block IDs database cache.
+	// BlockIDs provides access to the block IDs database cache.
 	BlockIDs SliceCache[string]
 
 	// BoostOfIDs provides access to the boost of IDs list database cache.
@@ -165,6 +165,12 @@ type GTSCaches struct {
 
 	// User provides access to the gtsmodel User database cache.
 	User StructCache[*gtsmodel.User]
+
+	// UserMute provides access to the gtsmodel UserMute database cache.
+	UserMute StructCache[*gtsmodel.UserMute]
+
+	// UserMuteIDs provides access to the user mute IDs database cache.
+	UserMuteIDs SliceCache[string]
 
 	// Webfinger provides access to the webfinger URL cache.
 	// TODO: move out of GTS caches since unrelated to DB.
@@ -1345,6 +1351,51 @@ func (c *Caches) initUser() {
 		Copy:       copyF,
 		Invalidate: c.OnInvalidateUser,
 	})
+}
+
+func (c *Caches) initUserMute() {
+	cap := calculateResultCacheMax(
+		sizeofUserMute(), // model in-mem size.
+		config.GetCacheUserMuteMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(u1 *gtsmodel.UserMute) *gtsmodel.UserMute {
+		u2 := new(gtsmodel.UserMute)
+		*u2 = *u1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/relationship_mute.go.
+		u2.Account = nil
+		u2.TargetAccount = nil
+
+		return u2
+	}
+
+	c.GTS.UserMute.Init(structr.CacheConfig[*gtsmodel.UserMute]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "AccountID,TargetAccountID"},
+			{Fields: "AccountID", Multiple: true},
+			{Fields: "TargetAccountID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateUserMute,
+	})
+}
+
+func (c *Caches) initUserMuteIDs() {
+	cap := calculateSliceCacheMax(
+		config.GetCacheUserMuteIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.GTS.UserMuteIDs.Init(0, cap)
 }
 
 func (c *Caches) initWebfinger() {

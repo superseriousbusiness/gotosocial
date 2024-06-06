@@ -56,6 +56,7 @@ var testModels = []interface{}{
 	&gtsmodel.ThreadMute{},
 	&gtsmodel.ThreadToStatus{},
 	&gtsmodel.User{},
+	&gtsmodel.UserMute{},
 	&gtsmodel.Emoji{},
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
@@ -333,6 +334,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestFilterStatuses() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
+	for _, v := range NewTestUserMutes() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}
