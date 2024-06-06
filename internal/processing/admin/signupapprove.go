@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *Processor) AccountApprove(
+func (p *Processor) SignupApprove(
 	ctx context.Context,
 	adminAcct *gtsmodel.Account,
 	accountID string,
@@ -55,7 +55,10 @@ func (p *Processor) AccountApprove(
 	if !*user.Approved {
 		// Process approval side effects asynschronously.
 		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-			APObjectType:   ap.ActorPerson,
+			// Use ap.ObjectProfile here to
+			// distinguish this message (user model)
+			// from ap.ActorPerson (account model).
+			APObjectType:   ap.ObjectProfile,
 			APActivityType: ap.ActivityAccept,
 			GTSModel:       user,
 			Origin:         adminAcct,

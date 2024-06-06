@@ -91,7 +91,7 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if errWithCode := m.processor.Account().DeleteSelf(c.Request.Context(), authed.Account); errWithCode != nil {
+	if errWithCode := m.processor.User().DeleteSelf(c.Request.Context(), authed.Account); errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

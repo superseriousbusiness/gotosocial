@@ -105,9 +105,9 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	}
 	form.IP = signUpIP
 
-	// Create the new account + user.
+	// Create the new user+account.
 	ctx := c.Request.Context()
-	user, errWithCode := m.processor.Account().Create(
+	user, errWithCode := m.processor.User().Create(
 		ctx,
 		authed.Application,
 		form,
@@ -118,7 +118,7 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 	}
 
 	// Get a token for the new user.
-	ti, errWithCode := m.processor.Account().TokenForNewUser(
+	ti, errWithCode := m.processor.User().TokenForNewUser(
 		ctx,
 		authed.Token,
 		authed.Application,

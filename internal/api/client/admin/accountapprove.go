@@ -91,7 +91,7 @@ func (m *Module) AccountApprovePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	account, errWithCode := m.processor.Admin().AccountApprove(
+	account, errWithCode := m.processor.Admin().SignupApprove(
 		c.Request.Context(),
 		authed.Account,
 		targetAcctID,

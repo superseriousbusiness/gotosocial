@@ -180,13 +180,13 @@ func NewProcessor(
 	// Start with sub processors that will
 	// be required by the workers processor.
 	common := common.New(state, converter, federator, filter)
-	processor.account = account.New(&common, state, converter, mediaManager, oauthServer, federator, filter, parseMentionFunc)
+	processor.account = account.New(&common, state, converter, mediaManager, federator, filter, parseMentionFunc)
 	processor.media = media.New(state, converter, mediaManager, federator.TransportController())
 	processor.stream = stream.New(state, oauthServer)
 
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
-	processor.account = account.New(&common, state, converter, mediaManager, oauthServer, federator, filter, parseMentionFunc)
+	processor.account = account.New(&common, state, converter, mediaManager, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(state, cleaner, converter, mediaManager, federator.TransportController(), emailSender)
 	processor.fedi = fedi.New(state, &common, converter, federator, filter)
 	processor.filtersv1 = filtersv1.New(state, converter)
@@ -198,7 +198,7 @@ func NewProcessor(
 	processor.timeline = timeline.New(state, converter, filter)
 	processor.search = search.New(state, federator, converter, filter)
 	processor.status = status.New(state, &common, &processor.polls, federator, converter, filter, parseMentionFunc)
-	processor.user = user.New(state, converter, emailSender)
+	processor.user = user.New(state, converter, oauthServer, emailSender)
 
 	// Workers processor handles asynchronous
 	// worker jobs; instantiate it separately

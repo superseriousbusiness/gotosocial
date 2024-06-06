@@ -108,9 +108,9 @@ func (m *Module) signupPOSTHandler(c *gin.Context) {
 	}
 	form.IP = signUpIP
 
-	// We have all the info we need, call account create
+	// We have all the info we need, call user+account create
 	// (this will also trigger side effects like sending emails etc).
-	user, errWithCode := m.processor.Account().Create(
+	user, errWithCode := m.processor.User().Create(
 		c.Request.Context(),
 		// nil to use
 		// instance app.

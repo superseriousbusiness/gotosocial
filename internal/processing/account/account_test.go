@@ -29,7 +29,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
@@ -48,7 +47,6 @@ type AccountStandardTestSuite struct {
 	storage             *storage.Driver
 	state               state.State
 	mediaManager        *media.Manager
-	oauthServer         oauth.Server
 	transportController transport.Controller
 	federator           *federation.Federator
 	emailSender         email.Sender
@@ -106,7 +104,6 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 
 	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
@@ -115,7 +112,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 
 	filter := visibility.NewFilter(&suite.state)
 	common := common.New(&suite.state, suite.tc, suite.federator, filter)
-	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.oauthServer, suite.federator, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
+	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.federator, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

@@ -22,7 +22,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -39,7 +38,6 @@ type Processor struct {
 	state        *state.State
 	converter    *typeutils.Converter
 	mediaManager *media.Manager
-	oauthServer  oauth.Server
 	filter       *visibility.Filter
 	formatter    *text.Formatter
 	federator    *federation.Federator
@@ -53,7 +51,6 @@ func New(
 	state *state.State,
 	converter *typeutils.Converter,
 	mediaManager *media.Manager,
-	oauthServer oauth.Server,
 	federator *federation.Federator,
 	filter *visibility.Filter,
 	parseMention gtsmodel.ParseMentionFunc,
@@ -63,7 +60,6 @@ func New(
 		state:        state,
 		converter:    converter,
 		mediaManager: mediaManager,
-		oauthServer:  oauthServer,
 		filter:       filter,
 		formatter:    text.NewFormatter(state.DB),
 		federator:    federator,

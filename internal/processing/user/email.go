@@ -97,7 +97,7 @@ func (p *Processor) EmailChange(
 	// Add email sending job to the queue.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		// Use ap.ObjectProfile here to
-		// distinguish this update (user model)
+		// distinguish this message (user model)
 		// from ap.ActorPerson (account model).
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,

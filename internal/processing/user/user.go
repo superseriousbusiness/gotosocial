@@ -19,6 +19,7 @@ package user
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -26,11 +27,17 @@ import (
 type Processor struct {
 	state       *state.State
 	converter   *typeutils.Converter
+	oauthServer oauth.Server
 	emailSender email.Sender
 }
 
-// New returns a new user processor
-func New(state *state.State, converter *typeutils.Converter, emailSender email.Sender) Processor {
+// New returns a new user processor.
+func New(
+	state *state.State,
+	converter *typeutils.Converter,
+	oauthServer oauth.Server,
+	emailSender email.Sender,
+) Processor {
 	return Processor{
 		state:       state,
 		converter:   converter,

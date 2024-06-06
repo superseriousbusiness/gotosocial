@@ -71,8 +71,8 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 	case ap.ActivityCreate:
 		switch cMsg.APObjectType {
 
-		// CREATE USER (ie., new user sign-up)
-		case ap.ActorPerson:
+		// CREATE USER (ie., new user+account sign-up)
+		case ap.ObjectProfile:
 			return p.clientAPI.CreateUser(ctx, cMsg)
 
 		// CREATE NOTE/STATUS
@@ -132,9 +132,9 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ActivityFollow:
 			return p.clientAPI.AcceptFollow(ctx, cMsg)
 
-		// ACCEPT ACCOUNT (sign-up)
-		case ap.ActorPerson:
-			return p.clientAPI.AcceptAccount(ctx, cMsg)
+		// ACCEPT USER (ie., new user+account sign-up)
+		case ap.ObjectProfile:
+			return p.clientAPI.AcceptUser(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -145,9 +145,9 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ActivityFollow:
 			return p.clientAPI.RejectFollowRequest(ctx, cMsg)
 
-		// REJECT ACCOUNT (sign-up)
-		case ap.ActorPerson:
-			return p.clientAPI.RejectAccount(ctx, cMsg)
+		// REJECT USER (ie., new user+account sign-up)
+		case ap.ObjectProfile:
+			return p.clientAPI.RejectUser(ctx, cMsg)
 		}
 
 	// UNDO SOMETHING
@@ -179,9 +179,9 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ObjectNote:
 			return p.clientAPI.DeleteStatus(ctx, cMsg)
 
-		// DELETE ACCOUNT
-		case ap.ActorPerson:
-			return p.clientAPI.DeleteAccount(ctx, cMsg)
+		// DELETE REMOTE ACCOUNT or LOCAL USER+ACCOUNT
+		case ap.ActorPerson, ap.ObjectProfile:
+			return p.clientAPI.DeleteAccountOrUser(ctx, cMsg)
 		}
 
 	// FLAG/REPORT SOMETHING
@@ -689,7 +689,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 	return nil
 }
 
-func (p *clientAPI) DeleteAccount(ctx context.Context, cMsg *messages.FromClientAPI) error {
+func (p *clientAPI) DeleteAccountOrUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	// The originID of the delete, one of:
 	//   - ID of a domain block, for which
 	//     this account delete is a side effect.
@@ -788,7 +788,7 @@ func (p *clientAPI) MoveAccount(ctx context.Context, cMsg *messages.FromClientAP
 	return nil
 }
 
-func (p *clientAPI) AcceptAccount(ctx context.Context, cMsg *messages.FromClientAPI) error {
+func (p *clientAPI) AcceptUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
@@ -811,7 +811,7 @@ func (p *clientAPI) AcceptAccount(ctx context.Context, cMsg *messages.FromClient
 	return nil
 }
 
-func (p *clientAPI) RejectAccount(ctx context.Context, cMsg *messages.FromClientAPI) error {
+func (p *clientAPI) RejectUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	deniedUser, ok := cMsg.GTSModel.(*gtsmodel.DeniedUser)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.DeniedUser", cMsg.GTSModel)
