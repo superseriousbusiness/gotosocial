@@ -143,13 +143,16 @@ func (p *Processor) MutesGet(
 			log.Errorf(ctx, "error converting account to public api account: %v", err)
 			continue
 		}
+		mutedAccount := &apimodel.MutedAccount{
+			Account: *account,
+		}
 		// Add the mute expiration field (unique to this API).
 		if !mute.ExpiresAt.IsZero() {
-			account.MuteExpiresAt = util.FormatISO8601(mute.ExpiresAt)
+			mutedAccount.MuteExpiresAt = util.Ptr(util.FormatISO8601(mute.ExpiresAt))
 		}
 
 		// Append target to return items.
-		items = append(items, account)
+		items = append(items, mutedAccount)
 	}
 
 	return paging.PackageResponse(paging.ResponseParams{

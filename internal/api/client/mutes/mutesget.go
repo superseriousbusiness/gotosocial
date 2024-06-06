@@ -96,7 +96,7 @@ import (
 //			schema:
 //				type: array
 //				items:
-//					"$ref": "#/definitions/account"
+//					"$ref": "#/definitions/mutedAccount"
 //		'400':
 //			description: bad request
 //		'401':
