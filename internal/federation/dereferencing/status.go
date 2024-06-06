@@ -20,7 +20,6 @@ package dereferencing
 import (
 	"context"
 	"errors"
-	"io"
 	"net/url"
 	"slices"
 	"time"
@@ -1000,45 +999,45 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 
 		// Look for existing media attachment with remote URL first.
 		existing, ok := existing.GetAttachmentByRemoteURL(attachment.RemoteURL)
-		if ok && existing.ID != "" && *existing.Cached {
+		if ok && existing.ID != "" {
+
+			// Ensure the existing media attachment is up-to-date and cached.
+			existing, err := d.updateAttachment(ctx, tsport, existing, attachment)
+			if err != nil {
+				log.Errorf(ctx, "error updating existing attachment: %v", err)
+
+				// specifically do NOT continue here,
+				// we already have a model, we don't
+				// want to drop it from the status, just
+				// log that an update for it failed.
+			}
+
+			// Set the existing attachment.
 			status.Attachments[i] = existing
 			status.AttachmentIDs[i] = existing.ID
 			continue
 		}
 
-		// Ensure a valid media attachment remote URL.
-		remoteURL, err := url.Parse(attachment.RemoteURL)
-		if err != nil {
-			log.Errorf(ctx, "invalid remote media url %q: %v", attachment.RemoteURL, err)
+		// Load this new media attachment.
+		attachment, err := d.loadAttachment(
+			ctx,
+			tsport,
+			status.AccountID,
+			attachment.RemoteURL,
+			&media.AdditionalMediaInfo{
+				StatusID:    &status.ID,
+				RemoteURL:   &attachment.RemoteURL,
+				Description: &attachment.Description,
+				Blurhash:    &attachment.Blurhash,
+			},
+		)
+		if err != nil && attachment == nil {
+			log.Errorf(ctx, "error loading attachment: %v", err)
 			continue
 		}
 
-		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-			return tsport.DereferenceMedia(ctx, remoteURL)
-		}
-
-		ai := &media.AdditionalMediaInfo{
-			StatusID:    &status.ID,
-			RemoteURL:   &attachment.RemoteURL,
-			Description: &attachment.Description,
-			Blurhash:    &attachment.Blurhash,
-		}
-
-		// Start pre-processing remote media at remote URL.
-		processing := d.mediaManager.PreProcessMedia(data, status.AccountID, ai)
-
-		// Force attachment loading *right now*.
-		attachment, err = processing.LoadAttachment(ctx)
 		if err != nil {
-			if attachment == nil {
-				// Totally failed to load;
-				// bail on this attachment.
-				log.Errorf(ctx, "error loading attachment: %v", err)
-				continue
-			}
-
-			// Partially loaded. Keep as
-			// placeholder and try again later.
+			// A non-fatal error occurred during loading.
 			log.Warnf(ctx, "partially loaded attachment: %v", err)
 		}
 

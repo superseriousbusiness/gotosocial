@@ -20,7 +20,6 @@ package dereferencing
 import (
 	"context"
 	"errors"
-	"io"
 	"net/url"
 	"time"
 
@@ -752,128 +751,146 @@ func (d *Dereferencer) enrichAccount(
 	return latestAcc, apubAcc, nil
 }
 
-func (d *Dereferencer) fetchRemoteAccountAvatar(ctx context.Context, tsport transport.Transport, existing, latestAcc *gtsmodel.Account) error {
+func (d *Dereferencer) fetchRemoteAccountAvatar(
+	ctx context.Context,
+	tsport transport.Transport,
+	existingAcc *gtsmodel.Account,
+	latestAcc *gtsmodel.Account,
+) error {
 	if latestAcc.AvatarRemoteURL == "" {
 		// No avatar set on newest model, leave
 		// latest avatar attachment ID empty.
 		return nil
 	}
 
-	// By default we keep the previous media attachment ID. This will only
-	// be changed if and when we have the new media loaded into storage.
-	latestAcc.AvatarMediaAttachmentID = existing.AvatarMediaAttachmentID
+	// Check for an existing stored media attachment
+	// specifically with unchanged remote URL we can use.
+	if existingAcc.AvatarMediaAttachmentID != "" &&
+		existingAcc.AvatarRemoteURL == latestAcc.AvatarRemoteURL {
 
-	// If we had a media attachment ID already, and the URL
-	// of the attachment hasn't changed from existing -> latest,
-	// then we may be able to just keep our existing attachment
-	// without having to make any remote calls.
-	if latestAcc.AvatarMediaAttachmentID != "" &&
-		existing.AvatarRemoteURL == latestAcc.AvatarRemoteURL {
-
-		// Ensure we have media attachment with the known ID.
-		media, err := d.state.DB.GetAttachmentByID(ctx, existing.AvatarMediaAttachmentID)
+		// Fetch the existing avatar media attachment with ID.
+		existing, err := d.state.DB.GetAttachmentByID(ctx,
+			existingAcc.AvatarMediaAttachmentID,
+		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return gtserror.Newf("error getting attachment %s: %w", existing.AvatarMediaAttachmentID, err)
+			return gtserror.Newf("error getting attachment %s: %w", existingAcc.AvatarMediaAttachmentID, err)
 		}
 
-		// Ensure attachment has correct properties.
-		if media != nil && media.RemoteURL == latestAcc.AvatarRemoteURL {
-			// We already have the most up-to-date
-			// media attachment, keep using it.
+		if existing != nil {
+			// Ensuring existing attachment is up-to-date
+			// and any recaching is performed if required.
+			existing, err := d.updateAttachment(ctx,
+				tsport,
+				existing,
+				nil,
+			)
+
+			if err != nil {
+				log.Errorf(ctx, "error updating existing attachment: %v", err)
+
+				// specifically do NOT return nil here,
+				// we already have a model, we don't
+				// want to drop it from the account, just
+				// log that an update for it failed.
+			}
+
+			// Set the avatar attachment on account model.
+			latestAcc.AvatarMediaAttachment = existing
+			latestAcc.AvatarMediaAttachmentID = existing.ID
+
 			return nil
 		}
 	}
 
-	// If we reach here, we know we need to fetch the most
-	// up-to-date version of the attachment from remote.
-
-	// Parse and validate the newly provided media URL.
-	avatarURI, err := url.Parse(latestAcc.AvatarRemoteURL)
+	// Fetch newly changed avatar from remote.
+	attachment, err := d.loadAttachment(ctx,
+		tsport,
+		latestAcc.ID,
+		latestAcc.AvatarRemoteURL,
+		&media.AdditionalMediaInfo{
+			Avatar:    util.Ptr(true),
+			RemoteURL: &latestAcc.AvatarRemoteURL,
+		},
+	)
 	if err != nil {
-		return gtserror.Newf("error parsing url %s: %w", latestAcc.AvatarRemoteURL, err)
-	}
-
-	// Set the media data function to dereference avatar from URI.
-	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-		return tsport.DereferenceMedia(ctx, avatarURI)
-	}
-
-	// Create new media processing request from the media manager instance.
-	processing := d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
-		Avatar:    func() *bool { v := true; return &v }(),
-		RemoteURL: &latestAcc.AvatarRemoteURL,
-	})
-
-	// Start media attachment loading (blocking call).
-	if _, err := processing.LoadAttachment(ctx); err != nil {
 		return gtserror.Newf("error loading attachment %s: %w", latestAcc.AvatarRemoteURL, err)
 	}
 
-	// Set the newly loaded avatar media attachment ID.
-	latestAcc.AvatarMediaAttachmentID = processing.AttachmentID()
+	// Set the avatar attachment on account model.
+	latestAcc.AvatarMediaAttachment = attachment
+	latestAcc.AvatarMediaAttachmentID = attachment.ID
 
 	return nil
 }
 
-func (d *Dereferencer) fetchRemoteAccountHeader(ctx context.Context, tsport transport.Transport, existing, latestAcc *gtsmodel.Account) error {
+func (d *Dereferencer) fetchRemoteAccountHeader(
+	ctx context.Context,
+	tsport transport.Transport,
+	existingAcc *gtsmodel.Account,
+	latestAcc *gtsmodel.Account,
+) error {
 	if latestAcc.HeaderRemoteURL == "" {
 		// No header set on newest model, leave
 		// latest header attachment ID empty.
 		return nil
 	}
 
-	// By default we keep the previous media attachment ID. This will only
-	// be changed if and when we have the new media loaded into storage.
-	latestAcc.HeaderMediaAttachmentID = existing.HeaderMediaAttachmentID
+	// Check for an existing stored media attachment
+	// specifically with unchanged remote URL we can use.
+	if existingAcc.HeaderMediaAttachmentID != "" &&
+		existingAcc.HeaderRemoteURL == latestAcc.HeaderRemoteURL {
 
-	// If we had a media attachment ID already, and the URL
-	// of the attachment hasn't changed from existing -> latest,
-	// then we may be able to just keep our existing attachment
-	// without having to make any remote calls.
-	if latestAcc.HeaderMediaAttachmentID != "" &&
-		existing.HeaderRemoteURL == latestAcc.HeaderRemoteURL {
-
-		// Ensure we have media attachment with the known ID.
-		media, err := d.state.DB.GetAttachmentByID(ctx, existing.HeaderMediaAttachmentID)
+		// Fetch the existing header media attachment with ID.
+		existing, err := d.state.DB.GetAttachmentByID(ctx,
+			existingAcc.HeaderMediaAttachmentID,
+		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return gtserror.Newf("error getting attachment %s: %w", existing.HeaderMediaAttachmentID, err)
+			return gtserror.Newf("error getting attachment %s: %w", existingAcc.HeaderMediaAttachmentID, err)
 		}
 
-		// Ensure attachment has correct properties.
-		if media != nil && media.RemoteURL == latestAcc.HeaderRemoteURL {
-			// We already have the most up-to-date
-			// media attachment, keep using it.
+		if existing != nil {
+			// Ensuring existing attachment is up-to-date
+			// and any recaching is performed if required.
+			existing, err := d.updateAttachment(ctx,
+				tsport,
+				existing,
+				nil,
+			)
+
+			if err != nil {
+				log.Errorf(ctx, "error updating existing attachment: %v", err)
+
+				// specifically do NOT return nil here,
+				// we already have a model, we don't
+				// want to drop it from the account, just
+				// log that an update for it failed.
+			}
+
+			// Set the header attachment on account model.
+			latestAcc.HeaderMediaAttachment = existing
+			latestAcc.HeaderMediaAttachmentID = existing.ID
+
 			return nil
 		}
 	}
 
-	// If we reach here, we know we need to fetch the most
-	// up-to-date version of the attachment from remote.
-
-	// Parse and validate the newly provided media URL.
-	headerURI, err := url.Parse(latestAcc.HeaderRemoteURL)
+	// Fetch newly changed header from remote.
+	attachment, err := d.loadAttachment(ctx,
+		tsport,
+		latestAcc.ID,
+		latestAcc.HeaderRemoteURL,
+		&media.AdditionalMediaInfo{
+			Header:    util.Ptr(true),
+			RemoteURL: &latestAcc.HeaderRemoteURL,
+		},
+	)
 	if err != nil {
-		return gtserror.Newf("error parsing url %s: %w", latestAcc.HeaderRemoteURL, err)
-	}
-
-	// Set the media data function to dereference avatar from URI.
-	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-		return tsport.DereferenceMedia(ctx, headerURI)
-	}
-
-	// Create new media processing request from the media manager instance.
-	processing := d.mediaManager.PreProcessMedia(data, latestAcc.ID, &media.AdditionalMediaInfo{
-		Header:    func() *bool { v := true; return &v }(),
-		RemoteURL: &latestAcc.HeaderRemoteURL,
-	})
-
-	// Start media attachment loading (blocking call).
-	if _, err := processing.LoadAttachment(ctx); err != nil {
 		return gtserror.Newf("error loading attachment %s: %w", latestAcc.HeaderRemoteURL, err)
 	}
 
-	// Set the newly loaded avatar media attachment ID.
-	latestAcc.HeaderMediaAttachmentID = processing.AttachmentID()
+	// Set the header attachment on account model.
+	latestAcc.HeaderMediaAttachment = attachment
+	latestAcc.HeaderMediaAttachmentID = attachment.ID
 
 	return nil
 }
