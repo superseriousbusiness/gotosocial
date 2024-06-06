@@ -46,7 +46,7 @@ func (e *compiledUserMuteListEntry) appliesInContext(filterContext statusfilter.
 }
 
 func (e *compiledUserMuteListEntry) expired(now time.Time) bool {
-	return !e.ExpiresAt.IsZero() && e.ExpiresAt.Before(now)
+	return !e.ExpiresAt.IsZero() && !e.ExpiresAt.After(now)
 }
 
 type CompiledUserMuteList struct {
