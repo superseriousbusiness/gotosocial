@@ -26,6 +26,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// FilterStatusDELETEHandler swagger:operation DELETE /api/v2/filters/statuses/{id} filterStatusDelete
+//
+// Delete a single filter status with the given ID.
+//
+//	---
+//	tags:
+//	- filters
+//
+//	produces:
+//	- application/json
+//
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: ID of the filter status
+//		in: path
+//		required: true
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- write:filters
+//
+//	responses:
+//		'200':
+//			description: filter status deleted
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) FilterStatusDELETEHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {

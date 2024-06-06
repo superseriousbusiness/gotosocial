@@ -84,6 +84,8 @@ import (
 //			description: bad request
 //		'401':
 //			description: unauthorized
+//		'403':
+//			description: forbidden to moved accounts
 //		'404':
 //			description: not found
 //		'406':
