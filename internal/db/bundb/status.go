@@ -677,12 +677,3 @@ func (s *statusDB) getStatusBoostIDs(ctx context.Context, statusID string) ([]st
 		return statusIDs, nil
 	})
 }
-
-func (s *statusDB) IsStatusBookmarkedBy(ctx context.Context, status *gtsmodel.Status, accountID string) (bool, error) {
-	q := s.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
-		Where("? = ?", bun.Ident("status_bookmark.status_id"), status.ID).
-		Where("? = ?", bun.Ident("status_bookmark.account_id"), accountID)
-	return exists(ctx, q)
-}

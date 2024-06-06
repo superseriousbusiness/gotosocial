@@ -201,6 +201,8 @@ func totalOfRatios() float64 {
 		config.GetCachePollVoteMemRatio() +
 		config.GetCacheReportMemRatio() +
 		config.GetCacheStatusMemRatio() +
+		config.GetCacheStatusBookmarkMemRatio() +
+		config.GetCacheStatusBookmarkIDsMemRatio() +
 		config.GetCacheStatusFaveMemRatio() +
 		config.GetCacheStatusFaveIDsMemRatio() +
 		config.GetCacheTagMemRatio() +
@@ -566,7 +568,7 @@ func sizeofReport() uintptr {
 
 func sizeofStatus() uintptr {
 	return uintptr(size.Of(&gtsmodel.Status{
-		ID:                       exampleURI,
+		ID:                       exampleID,
 		URI:                      exampleURI,
 		URL:                      exampleURI,
 		Content:                  exampleText,
@@ -596,6 +598,20 @@ func sizeofStatus() uintptr {
 		Replyable:                func() *bool { ok := true; return &ok }(),
 		Likeable:                 func() *bool { ok := true; return &ok }(),
 		ActivityStreamsType:      ap.ObjectNote,
+	}))
+}
+
+func sizeofStatusBookmark() uintptr {
+	return uintptr(size.Of(&gtsmodel.StatusBookmark{
+		ID:              exampleID,
+		AccountID:       exampleID,
+		Account:         nil,
+		TargetAccountID: exampleID,
+		TargetAccount:   nil,
+		StatusID:        exampleID,
+		Status:          nil,
+		CreatedAt:       exampleTime,
+		UpdatedAt:       exampleTime,
 	}))
 }
 

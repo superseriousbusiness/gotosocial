@@ -139,6 +139,12 @@ type GTSCaches struct {
 	// Status provides access to the gtsmodel Status database cache.
 	Status StructCache[*gtsmodel.Status]
 
+	// StatusBookmark ...
+	StatusBookmark StructCache[*gtsmodel.StatusBookmark]
+
+	// StatusBookmarkIDs ...
+	StatusBookmarkIDs SliceCache[string]
+
 	// StatusFave provides access to the gtsmodel StatusFave database cache.
 	StatusFave StructCache[*gtsmodel.StatusFave]
 
@@ -1100,6 +1106,54 @@ func (c *Caches) initStatus() {
 		Copy:       copyF,
 		Invalidate: c.OnInvalidateStatus,
 	})
+}
+
+func (c *Caches) initStatusBookmark() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofStatusBookmark(), // model in-mem size.
+		config.GetCacheStatusBookmarkMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.StatusBookmark) *gtsmodel.StatusBookmark {
+		s2 := new(gtsmodel.StatusBookmark)
+		*s2 = *s1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		s2.Account = nil
+		s2.TargetAccount = nil
+		s2.Status = nil
+
+		return s2
+	}
+
+	c.GTS.StatusBookmark.Init(structr.CacheConfig[*gtsmodel.StatusBookmark]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "AccountID,StatusID"},
+			{Fields: "AccountID", Multiple: true},
+			{Fields: "TargetAccountID", Multiple: true},
+			{Fields: "StatusID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateStatusBookmark,
+	})
+}
+
+func (c *Caches) initStatusBookmarkIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheStatusBookmarkIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.GTS.StatusBookmarkIDs.Init(0, cap)
 }
 
 func (c *Caches) initStatusFave() {

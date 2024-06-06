@@ -3550,6 +3550,56 @@ func GetCacheStatusMemRatio() float64 { return global.GetCacheStatusMemRatio() }
 // SetCacheStatusMemRatio safely sets the value for global configuration 'Cache.StatusMemRatio' field
 func SetCacheStatusMemRatio(v float64) { global.SetCacheStatusMemRatio(v) }
 
+// GetCacheStatusBookmarkMemRatio safely fetches the Configuration value for state's 'Cache.StatusBookmarkMemRatio' field
+func (st *ConfigState) GetCacheStatusBookmarkMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.StatusBookmarkMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheStatusBookmarkMemRatio safely sets the Configuration value for state's 'Cache.StatusBookmarkMemRatio' field
+func (st *ConfigState) SetCacheStatusBookmarkMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.StatusBookmarkMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheStatusBookmarkMemRatioFlag returns the flag name for the 'Cache.StatusBookmarkMemRatio' field
+func CacheStatusBookmarkMemRatioFlag() string { return "cache-status-bookmark-mem-ratio" }
+
+// GetCacheStatusBookmarkMemRatio safely fetches the value for global configuration 'Cache.StatusBookmarkMemRatio' field
+func GetCacheStatusBookmarkMemRatio() float64 { return global.GetCacheStatusBookmarkMemRatio() }
+
+// SetCacheStatusBookmarkMemRatio safely sets the value for global configuration 'Cache.StatusBookmarkMemRatio' field
+func SetCacheStatusBookmarkMemRatio(v float64) { global.SetCacheStatusBookmarkMemRatio(v) }
+
+// GetCacheStatusBookmarkIDsMemRatio safely fetches the Configuration value for state's 'Cache.StatusBookmarkIDsMemRatio' field
+func (st *ConfigState) GetCacheStatusBookmarkIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.StatusBookmarkIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheStatusBookmarkIDsMemRatio safely sets the Configuration value for state's 'Cache.StatusBookmarkIDsMemRatio' field
+func (st *ConfigState) SetCacheStatusBookmarkIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.StatusBookmarkIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheStatusBookmarkIDsMemRatioFlag returns the flag name for the 'Cache.StatusBookmarkIDsMemRatio' field
+func CacheStatusBookmarkIDsMemRatioFlag() string { return "cache-status-bookmark-ids-mem-ratio" }
+
+// GetCacheStatusBookmarkIDsMemRatio safely fetches the value for global configuration 'Cache.StatusBookmarkIDsMemRatio' field
+func GetCacheStatusBookmarkIDsMemRatio() float64 { return global.GetCacheStatusBookmarkIDsMemRatio() }
+
+// SetCacheStatusBookmarkIDsMemRatio safely sets the value for global configuration 'Cache.StatusBookmarkIDsMemRatio' field
+func SetCacheStatusBookmarkIDsMemRatio(v float64) { global.SetCacheStatusBookmarkIDsMemRatio(v) }
+
 // GetCacheStatusFaveMemRatio safely fetches the Configuration value for state's 'Cache.StatusFaveMemRatio' field
 func (st *ConfigState) GetCacheStatusFaveMemRatio() (v float64) {
 	st.mutex.RLock()
