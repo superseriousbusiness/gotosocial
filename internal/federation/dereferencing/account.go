@@ -808,7 +808,7 @@ func (d *Dereferencer) fetchRemoteAccountAvatar(
 		latestAcc.ID,
 		latestAcc.AvatarRemoteURL,
 		&media.AdditionalMediaInfo{
-			Header:    util.Ptr(true),
+			Avatar:    util.Ptr(true),
 			RemoteURL: &latestAcc.AvatarRemoteURL,
 		},
 	)
