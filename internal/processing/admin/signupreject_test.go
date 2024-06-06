@@ -42,7 +42,7 @@ func (suite *AdminRejectTestSuite) TestReject() {
 		message        = "Too stinky."
 	)
 
-	acct, errWithCode := suite.adminProcessor.AccountReject(
+	acct, errWithCode := suite.adminProcessor.SignupReject(
 		ctx,
 		adminAcct,
 		targetAcct.ID,
@@ -104,7 +104,7 @@ func (suite *AdminRejectTestSuite) TestRejectRemote() {
 	)
 
 	// Try to reject a remote account.
-	_, err := suite.adminProcessor.AccountReject(
+	_, err := suite.adminProcessor.SignupReject(
 		ctx,
 		adminAcct,
 		targetAcct.ID,
@@ -126,7 +126,7 @@ func (suite *AdminRejectTestSuite) TestRejectApproved() {
 	)
 
 	// Try to reject an already-approved account.
-	_, err := suite.adminProcessor.AccountReject(
+	_, err := suite.adminProcessor.SignupReject(
 		ctx,
 		adminAcct,
 		targetAcct.ID,

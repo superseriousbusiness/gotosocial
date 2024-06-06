@@ -42,7 +42,7 @@ func (suite *AdminApproveTestSuite) TestApprove() {
 	*targetUser = *suite.testUsers["unconfirmed_account"]
 
 	// Approve the sign-up.
-	acct, errWithCode := suite.adminProcessor.AccountApprove(
+	acct, errWithCode := suite.adminProcessor.SignupApprove(
 		ctx,
 		adminAcct,
 		targetAcct.ID,

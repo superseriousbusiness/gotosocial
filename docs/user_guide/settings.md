@@ -133,11 +133,13 @@ See the [Custom CSS](./custom_css.md) page for some tips on writing custom CSS f
 !!! tip
     Any custom CSS you add in this box will be applied *after* your selected theme, so you can pick a preset theme that you like and then make your own tweaks!
 
-## Post Settings
+## Settings
 
-![Screenshot of the user settings section, providing drop-down menu's to select default post settings, and form fields to change your password](../assets/user-settings-post-settings.png)
+![Screenshot of the settings section](../assets/user-settings-settings.png)
 
-In the 'Settings' section, you can set various defaults for new posts.
+In the 'Settings' section, you can set various defaults for new posts, and change your password / email address.
+
+### Post Settings
 
 The default post language setting allows you to indicate to other fediverse users which language your posts are usually written in. This is helpful for fediverse users who speak (for example) Korean, and would prefer to filter out posts written in other languages.
 
@@ -151,11 +153,17 @@ The markdown setting indicates that your posts should be parsed as Markdown, whi
 
 When you are finished updating your post settings, remember to click the `Save post settings` button at the bottom of the section to save your changes.
 
-## Password Change
+### Password Change
 
-You can use the Password Change section of the User Settings Panel to set a new password for your account.
+You can use the Password Change section of the panel to set a new password for your account. For security reasons, you must provide your current password to validate the change.
 
 For more information on the way GoToSocial manages passwords, please see the [Password management document](./password_management.md).
+
+### Email Change
+
+You can use the Email Change section of the panel to change the email address for your account. For security reasons, you must provide your current password to validate the change.
+
+Once a new email address has been entered, and you have clicked "Change email address", you must open the inbox of the new email address and confirm your address via the link provided. Once you've done that, your email address change will be confirmed, and you should use the new email address to log in.
 
 ## Migration
 

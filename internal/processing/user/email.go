@@ -23,10 +23,91 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"golang.org/x/crypto/bcrypt"
 )
+
+// EmailChange processes an email address change request for the given user.
+func (p *Processor) EmailChange(
+	ctx context.Context,
+	user *gtsmodel.User,
+	password string,
+	newEmail string,
+) (*apimodel.User, gtserror.WithCode) {
+	// Ensure provided password is correct.
+	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password)); err != nil {
+		err := gtserror.Newf("%w", err)
+		return nil, gtserror.NewErrorUnauthorized(err, "password was incorrect")
+	}
+
+	// Ensure new email address is valid.
+	if err := validate.Email(newEmail); err != nil {
+		return nil, gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	// Ensure new email address is different
+	// from current email address.
+	if newEmail == user.Email {
+		const help = "new email address cannot be the same as current email address"
+		err := gtserror.New(help)
+		return nil, gtserror.NewErrorBadRequest(err, help)
+	}
+
+	if newEmail == user.UnconfirmedEmail {
+		const help = "you already have an email change request pending for given email address"
+		err := gtserror.New(help)
+		return nil, gtserror.NewErrorBadRequest(err, help)
+	}
+
+	// Ensure this address isn't already used by another account.
+	emailAvailable, err := p.state.DB.IsEmailAvailable(ctx, newEmail)
+	if err != nil {
+		err := gtserror.Newf("db error checking email availability: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if !emailAvailable {
+		const help = "new email address is already in use on this instance"
+		err := gtserror.New(help)
+		return nil, gtserror.NewErrorConflict(err, help)
+	}
+
+	// Set new email address on user.
+	user.UnconfirmedEmail = newEmail
+	if err := p.state.DB.UpdateUser(
+		ctx, user,
+		"unconfirmed_email",
+	); err != nil {
+		err := gtserror.Newf("db error updating user: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Ensure user populated (we need account).
+	if err := p.state.DB.PopulateUser(ctx, user); err != nil {
+		err := gtserror.Newf("db error populating user: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Add email sending job to the queue.
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+		// Use ap.ObjectProfile here to
+		// distinguish this message (user model)
+		// from ap.ActorPerson (account model).
+		APObjectType:   ap.ObjectProfile,
+		APActivityType: ap.ActivityUpdate,
+		GTSModel:       user,
+		Origin:         user.Account,
+		Target:         user.Account,
+	})
+
+	return p.converter.UserToAPIUser(ctx, user), nil
+}
 
 // EmailGetUserForConfirmToken retrieves the user (with account) from
 // the database for the given "confirm your email" token string.

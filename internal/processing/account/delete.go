@@ -95,23 +95,6 @@ func (p *Processor) Delete(
 	return nil
 }
 
-// DeleteSelf is like Delete, but specifically for local accounts deleting themselves.
-//
-// Calling DeleteSelf results in a delete message being enqueued in the processor,
-// which causes side effects to occur: delete will be federated out to other instances,
-// and the above Delete function will be called afterwards from the processor, to clear
-// out the account's bits and bobs, and stubbify it.
-func (p *Processor) DeleteSelf(ctx context.Context, account *gtsmodel.Account) gtserror.WithCode {
-	// Process the delete side effects asynchronously.
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActorPerson,
-		APActivityType: ap.ActivityDelete,
-		Origin:         account,
-		Target:         account,
-	})
-	return nil
-}
-
 // deleteUserAndTokensForAccount deletes the gtsmodel.User and
 // any OAuth tokens and applications for the given account.
 //

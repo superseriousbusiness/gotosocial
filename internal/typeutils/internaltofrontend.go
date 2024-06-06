@@ -63,6 +63,44 @@ func toMastodonVersion(in string) string {
 	return instanceMastodonVersion + "+" + strings.ReplaceAll(in, " ", "-")
 }
 
+// UserToAPIUser converts a *gtsmodel.User to an API
+// representation suitable for serving to that user.
+//
+// Contains sensitive info so should only
+// ever be served to the user themself.
+func (c *Converter) UserToAPIUser(ctx context.Context, u *gtsmodel.User) *apimodel.User {
+	user := &apimodel.User{
+		ID:               u.ID,
+		CreatedAt:        util.FormatISO8601(u.CreatedAt),
+		Email:            u.Email,
+		UnconfirmedEmail: u.UnconfirmedEmail,
+		Reason:           u.Reason,
+		Moderator:        *u.Moderator,
+		Admin:            *u.Admin,
+		Disabled:         *u.Disabled,
+		Approved:         *u.Approved,
+	}
+
+	// Zero-able dates.
+	if !u.LastEmailedAt.IsZero() {
+		user.LastEmailedAt = util.FormatISO8601(u.LastEmailedAt)
+	}
+
+	if !u.ConfirmedAt.IsZero() {
+		user.ConfirmedAt = util.FormatISO8601(u.ConfirmedAt)
+	}
+
+	if !u.ConfirmationSentAt.IsZero() {
+		user.ConfirmationSentAt = util.FormatISO8601(u.ConfirmationSentAt)
+	}
+
+	if !u.ResetPasswordSentAt.IsZero() {
+		user.ResetPasswordSentAt = util.FormatISO8601(u.ResetPasswordSentAt)
+	}
+
+	return user
+}
+
 // AppToAPIAppSensitive takes a db model application as a param, and returns a populated apitype application, or an error
 // if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 // (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.

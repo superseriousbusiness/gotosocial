@@ -113,7 +113,7 @@ func (f *federatingDB) deleteAccount(
 
 		log.Debugf(ctx, "deleting account: %s", account.URI)
 		f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-			APObjectType:   ap.ObjectProfile,
+			APObjectType:   ap.ActorPerson,
 			APActivityType: ap.ActivityDelete,
 			GTSModel:       account,
 			Receiving:      receiving,

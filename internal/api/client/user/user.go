@@ -29,6 +29,8 @@ const (
 	BasePath = "/v1/user"
 	// PasswordChangePath is the path for POSTing a password change request.
 	PasswordChangePath = BasePath + "/password_change"
+	// EmailChangePath is the path for POSTing an email address change request.
+	EmailChangePath = BasePath + "/email_change"
 )
 
 type Module struct {
@@ -42,5 +44,7 @@ func New(processor *processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
+	attachHandler(http.MethodGet, BasePath, m.UserGETHandler)
 	attachHandler(http.MethodPost, PasswordChangePath, m.PasswordChangePOSTHandler)
+	attachHandler(http.MethodPost, EmailChangePath, m.EmailChangePOSTHandler)
 }

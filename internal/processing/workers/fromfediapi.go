@@ -115,8 +115,8 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ObjectNote:
 			return p.fediAPI.UpdateStatus(ctx, fMsg)
 
-		// UPDATE PROFILE/ACCOUNT
-		case ap.ObjectProfile:
+		// UPDATE ACCOUNT
+		case ap.ActorPerson:
 			return p.fediAPI.UpdateAccount(ctx, fMsg)
 		}
 
@@ -137,17 +137,17 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ObjectNote:
 			return p.fediAPI.DeleteStatus(ctx, fMsg)
 
-		// DELETE PROFILE/ACCOUNT
-		case ap.ObjectProfile:
+		// DELETE ACCOUNT
+		case ap.ActorPerson:
 			return p.fediAPI.DeleteAccount(ctx, fMsg)
 		}
 
 	// MOVE SOMETHING
 	case ap.ActivityMove:
 
-		// MOVE PROFILE/ACCOUNT
+		// MOVE ACCOUNT
 		// fromfediapi_move.go.
-		if fMsg.APObjectType == ap.ObjectProfile {
+		if fMsg.APObjectType == ap.ActorPerson {
 			return p.fediAPI.MoveAccount(ctx, fMsg)
 		}
 	}

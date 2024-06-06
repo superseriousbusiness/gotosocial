@@ -26,13 +26,20 @@ const (
 type ConfirmData struct {
 	// Username to be addressed.
 	Username string
-	// URL of the instance to present to the receiver.
+	// URL of the instance to
+	// present to the receiver.
 	InstanceURL string
-	// Name of the instance to present to the receiver.
+	// Name of the instance to
+	// present to the receiver.
 	InstanceName string
-	// Link to present to the receiver to click on and do the confirmation.
-	// Should be a full link with protocol eg., https://example.org/confirm_email?token=some-long-token
+	// Link to present to the receiver to
+	// click on and do the confirmation.
+	// Should be a full link with protocol
+	// eg., https://example.org/confirm_email?token=some-long-token
 	ConfirmLink string
+	// Is this confirm email being sent
+	// because this is a new sign-up?
+	NewSignup bool
 }
 
 func (s *sender) SendConfirmEmail(toAddress string, data ConfirmData) error {

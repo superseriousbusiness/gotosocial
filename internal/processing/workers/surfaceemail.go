@@ -74,7 +74,10 @@ func (s *Surface) emailUserReportClosed(ctx context.Context, report *gtsmodel.Re
 
 // emailUserPleaseConfirm emails the given user
 // to ask them to confirm their email address.
-func (s *Surface) emailUserPleaseConfirm(ctx context.Context, user *gtsmodel.User) error {
+//
+// If newSignup is true, template will be geared
+// towards someone who just created an account.
+func (s *Surface) emailUserPleaseConfirm(ctx context.Context, user *gtsmodel.User, newSignup bool) error {
 	if user.UnconfirmedEmail == "" ||
 		user.UnconfirmedEmail == user.Email {
 		// User has already confirmed this
@@ -104,6 +107,7 @@ func (s *Surface) emailUserPleaseConfirm(ctx context.Context, user *gtsmodel.Use
 			InstanceURL:  instance.URI,
 			InstanceName: instance.Title,
 			ConfirmLink:  confirmLink,
+			NewSignup:    newSignup,
 		},
 	); err != nil {
 		return err
