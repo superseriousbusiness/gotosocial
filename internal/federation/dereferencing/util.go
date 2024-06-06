@@ -125,13 +125,12 @@ func (d *Dereferencer) updateAttachment(
 	// Force load attachment recache *right now*.
 	recached, err := processing.LoadAttachment(ctx)
 
+	// Always return the error we
+	// receive, but ensure we return
+	// most up-to-date media file.
 	if recached != nil {
-		// Only set recached media
-		// file if it was at least
-		// partially downloaded.
-		existing = recached
+		return recached, err
 	}
-
 	return existing, err
 }
 
