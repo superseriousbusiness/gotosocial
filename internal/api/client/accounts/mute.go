@@ -79,6 +79,8 @@ import (
 //			description: bad request
 //		'401':
 //			description: unauthorized
+//		'403':
+//			description: forbidden to moved accounts
 //		'404':
 //			description: not found
 //		'406':
@@ -89,6 +91,11 @@ func (m *Module) AccountMutePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
 		return
 	}
 

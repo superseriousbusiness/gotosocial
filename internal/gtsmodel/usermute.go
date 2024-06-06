@@ -28,9 +28,9 @@ type UserMute struct {
 	UpdatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                        // when was item last updated
 	ExpiresAt       time.Time `bun:"type:timestamptz,nullzero"`                                                          // Time mute should expire. If null, should not expire.
 	AccountID       string    `bun:"type:CHAR(26),unique:user_mutes_account_id_target_account_id_uniq,notnull,nullzero"` // Who does this mute originate from?
-	Account         *Account  `bun:"rel:belongs-to"`                                                                     // Account corresponding to accountID
+	Account         *Account  `bun:"-"`                                                                                  // Account corresponding to accountID
 	TargetAccountID string    `bun:"type:CHAR(26),unique:user_mutes_account_id_target_account_id_uniq,notnull,nullzero"` // Who is the target of this mute?
-	TargetAccount   *Account  `bun:"rel:belongs-to"`                                                                     // Account corresponding to targetAccountID
+	TargetAccount   *Account  `bun:"-"`                                                                                  // Account corresponding to targetAccountID
 	Notifications   *bool     `bun:",nullzero,notnull,default:false"`                                                    // Apply mute to notifications as well as statuses.
 }
 
