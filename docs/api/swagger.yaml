@@ -6342,6 +6342,8 @@ paths:
                     description: bad request
                 "401":
                     description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
                 "404":
                     description: not found
                 "406":
@@ -6494,6 +6496,8 @@ paths:
                     description: bad request
                 "401":
                     description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
                 "404":
                     description: not found
                 "406":
@@ -9241,6 +9245,8 @@ paths:
                     description: bad request
                 "401":
                     description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
                 "404":
                     description: not found
                 "406":
@@ -9380,6 +9386,8 @@ paths:
                     description: bad request
                 "401":
                     description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
                 "404":
                     description: not found
                 "406":
@@ -9471,6 +9479,8 @@ paths:
                     description: bad request
                 "401":
                     description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
                 "404":
                     description: not found
                 "406":
@@ -9552,6 +9562,8 @@ paths:
                     description: bad request
                 "401":
                     description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
                 "404":
                     description: not found
                 "406":
@@ -9569,6 +9581,35 @@ paths:
             tags:
                 - filters
     /api/v2/filters/keywords/{id}:
+        delete:
+            operationId: filterKeywordDelete
+            parameters:
+                - description: ID of the filter keyword
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: filter keyword deleted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Delete a single filter keyword with the given ID.
+            tags:
+                - filters
         get:
             operationId: filterKeywordGet
             parameters:
@@ -9641,6 +9682,8 @@ paths:
                     description: bad request
                 "401":
                     description: unauthorized
+                "403":
+                    description: forbidden to moved accounts
                 "404":
                     description: not found
                 "406":
@@ -9658,6 +9701,35 @@ paths:
             tags:
                 - filters
     /api/v2/filters/statuses/{id}:
+        delete:
+            operationId: filterStatusDelete
+            parameters:
+                - description: ID of the filter status
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: filter status deleted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:filters
+            summary: Delete a single filter status with the given ID.
+            tags:
+                - filters
         get:
             operationId: filterStatusGet
             parameters:

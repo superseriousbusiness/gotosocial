@@ -26,6 +26,42 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// FilterKeywordDELETEHandler swagger:operation DELETE /api/v2/filters/keywords/{id} filterKeywordDelete
+//
+// Delete a single filter keyword with the given ID.
+//
+//	---
+//	tags:
+//	- filters
+//
+//	produces:
+//	- application/json
+//
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: ID of the filter keyword
+//		in: path
+//		required: true
+//
+//	security:
+//	- OAuth2 Bearer:
+//		- write:filters
+//
+//	responses:
+//		'200':
+//			description: filter keyword deleted
+//		'400':
+//			description: bad request
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
 func (m *Module) FilterKeywordDELETEHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
