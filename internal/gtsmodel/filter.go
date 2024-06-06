@@ -40,6 +40,12 @@ type Filter struct {
 	ContextAccount       *bool            `bun:",nullzero,notnull,default:false"`                             // Apply filter when viewing an account profile.
 }
 
+// Expired returns whether the filter has expired at a given time.
+// Filters without an expiration timestamp never expire.
+func (f *Filter) Expired(now time.Time) bool {
+	return !f.ExpiresAt.IsZero() && !f.ExpiresAt.After(now)
+}
+
 // FilterKeyword stores a single keyword to filter statuses against.
 type FilterKeyword struct {
 	ID        string         `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                     // id of this item in the database

@@ -838,8 +838,7 @@ func (c *Converter) statusToAPIFilterResults(
 			// Filter doesn't apply to this context.
 			continue
 		}
-		if !filter.ExpiresAt.IsZero() && filter.ExpiresAt.Before(now) {
-			// Filter is expired.
+		if filter.Expired(now) {
 			continue
 		}
 
