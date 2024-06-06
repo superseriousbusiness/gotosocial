@@ -78,7 +78,7 @@ func (suite *MoveTestSuite) TestMove() {
 
 	// Should be a message heading to the processor.
 	msg, _ := suite.getFederatorMsg(5 * time.Second)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 	suite.Equal(ap.ActivityMove, msg.APActivityType)
 
 	// Stub Move should be on the message.
@@ -95,7 +95,7 @@ func (suite *MoveTestSuite) TestMove() {
 	// Should be a message heading to the processor
 	// since this is just a straight up retry.
 	msg, _ = suite.getFederatorMsg(5 * time.Second)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 	suite.Equal(ap.ActivityMove, msg.APActivityType)
 
 	// Same as the first Move, but with a different ID.
@@ -115,7 +115,7 @@ func (suite *MoveTestSuite) TestMove() {
 	// Should be a message heading to the processor
 	// since this is just a retry with a different ID.
 	msg, _ = suite.getFederatorMsg(5 * time.Second)
-	suite.Equal(ap.ObjectProfile, msg.APObjectType)
+	suite.Equal(ap.ActorPerson, msg.APObjectType)
 	suite.Equal(ap.ActivityMove, msg.APActivityType)
 }
 

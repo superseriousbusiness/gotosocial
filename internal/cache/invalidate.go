@@ -198,6 +198,11 @@ func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
 	}
 }
 
+func (c *Caches) OnInvalidateStatusBookmark(bookmark *gtsmodel.StatusBookmark) {
+	// Invalidate status bookmark ID list for this status.
+	c.GTS.StatusBookmarkIDs.Invalidate(bookmark.StatusID)
+}
+
 func (c *Caches) OnInvalidateStatusFave(fave *gtsmodel.StatusFave) {
 	// Invalidate status fave ID list for this status.
 	c.GTS.StatusFaveIDs.Invalidate(fave.StatusID)

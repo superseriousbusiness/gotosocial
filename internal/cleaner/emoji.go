@@ -32,9 +32,7 @@ import (
 
 // Emoji encompasses a set of
 // emoji cleanup / admin utils.
-type Emoji struct {
-	*Cleaner
-}
+type Emoji struct{ *Cleaner }
 
 // All will execute all cleaner.Emoji utilities synchronously, including output logging.
 // Context will be checked for `gtscontext.DryRun()` in order to actually perform the action.
@@ -381,8 +379,18 @@ func (e *Emoji) uncacheRemote(ctx context.Context, after time.Time, emoji *gtsmo
 	}
 
 	for _, status := range statuses {
+		// Check if recently used status.
 		if status.FetchedAt.After(after) {
 			l.Debug("skipping due to recently fetched status")
+			return false, nil
+		}
+
+		// Check whether status is bookmarked by active accounts.
+		bookmarked, err := e.state.DB.IsStatusBookmarked(ctx, status.ID)
+		if err != nil {
+			return false, err
+		} else if bookmarked {
+			l.Debug("skipping due to bookmarked status")
 			return false, nil
 		}
 	}

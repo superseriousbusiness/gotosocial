@@ -55,6 +55,8 @@ EXPECT=$(cat << "EOF"
         "poll-vote-ids-mem-ratio": 2,
         "poll-vote-mem-ratio": 2,
         "report-mem-ratio": 1,
+        "status-bookmark-ids-mem-ratio": 2,
+        "status-bookmark-mem-ratio": 0.5,
         "status-fave-ids-mem-ratio": 3,
         "status-fave-mem-ratio": 2,
         "status-mem-ratio": 5,

@@ -18,14 +18,19 @@
 package user_test
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -39,7 +44,6 @@ type UserStandardTestSuite struct {
 	tc           *typeutils.Converter
 	mediaManager *media.Manager
 	federator    *federation.Federator
-	emailSender  email.Sender
 	processor    *processing.Processor
 	storage      *storage.Driver
 	state        state.State
@@ -49,8 +53,6 @@ type UserStandardTestSuite struct {
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
-
-	sentEmails map[string]string
 
 	userModule *user.Module
 }
@@ -83,9 +85,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
-	suite.sentEmails = make(map[string]string)
-	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, testrig.NewEmailSender("../../../../web/template/", nil), suite.mediaManager)
 	suite.userModule = user.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
@@ -95,4 +95,33 @@ func (suite *UserStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 	testrig.StopWorkers(&suite.state)
+}
+
+func (suite *UserStandardTestSuite) POST(path string, formValues map[string][]string, handler gin.HandlerFunc) (*http.Response, int) {
+	var (
+		oauthToken = oauth.DBTokenToToken(suite.testTokens["local_account_1"])
+		app        = suite.testApplications["application_1"]
+		user       = suite.testUsers["local_account_1"]
+		account    = suite.testAccounts["local_account_1"]
+		target     = "http://localhost:8080" + path
+	)
+
+	// Prepare context.
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, app)
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, user)
+	ctx.Set(oauth.SessionAuthorizedAccount, account)
+
+	// Prepare request.
+	ctx.Request = httptest.NewRequest(http.MethodPost, target, nil)
+	ctx.Request.Header.Set("accept", "application/json")
+	ctx.Request.Form = url.Values(formValues)
+
+	// Call the handler.
+	handler(ctx)
+
+	// Return response.
+	return recorder.Result(), recorder.Code
 }

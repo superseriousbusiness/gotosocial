@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package account
+package user
 
 import (
 	"context"
@@ -32,10 +32,9 @@ import (
 	"github.com/superseriousbusiness/oauth2/v4"
 )
 
-// Create processes the given form for creating a new account,
-// returning a new user (with attached account) if successful.
+// Create processes the given form for creating a new user+account.
 //
-// App should be the app used to create the account.
+// App should be the app used to create the user+account.
 // If nil, the instance app will be used.
 //
 // Precondition: the form's fields should have already been
@@ -124,9 +123,12 @@ func (p *Processor) Create(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// There are side effects for creating a new account
+	// There are side effects for creating a new user+account
 	// (confirmation emails etc), perform these async.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+		// Use ap.ObjectProfile here to
+		// distinguish this message (user model)
+		// from ap.ActorPerson (account model).
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       user,

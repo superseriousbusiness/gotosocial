@@ -297,7 +297,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ObjectProfile,
+		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       account,
 		Origin:         account,

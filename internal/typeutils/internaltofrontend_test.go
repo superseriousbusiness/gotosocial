@@ -422,8 +422,8 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBloc
   "following_count": 0,
   "statuses_count": 0,
   "last_status_at": null,
-  "emojis": null,
-  "fields": null
+  "emojis": [],
+  "fields": []
 }`, string(b))
 }
 

@@ -71,9 +71,9 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 	case ap.ActivityCreate:
 		switch cMsg.APObjectType {
 
-		// CREATE PROFILE/ACCOUNT
-		case ap.ObjectProfile, ap.ActorPerson:
-			return p.clientAPI.CreateAccount(ctx, cMsg)
+		// CREATE USER (ie., new user+account sign-up)
+		case ap.ObjectProfile:
+			return p.clientAPI.CreateUser(ctx, cMsg)
 
 		// CREATE NOTE/STATUS
 		case ap.ObjectNote:
@@ -111,13 +111,17 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ObjectNote:
 			return p.clientAPI.UpdateStatus(ctx, cMsg)
 
-		// UPDATE PROFILE/ACCOUNT
-		case ap.ObjectProfile, ap.ActorPerson:
+		// UPDATE ACCOUNT (ie., bio, settings, etc)
+		case ap.ActorPerson:
 			return p.clientAPI.UpdateAccount(ctx, cMsg)
 
 		// UPDATE A FLAG/REPORT (mark as resolved/closed)
 		case ap.ActivityFlag:
 			return p.clientAPI.UpdateReport(ctx, cMsg)
+
+		// UPDATE USER (ie., email address)
+		case ap.ObjectProfile:
+			return p.clientAPI.UpdateUser(ctx, cMsg)
 		}
 
 	// ACCEPT SOMETHING
@@ -128,9 +132,9 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ActivityFollow:
 			return p.clientAPI.AcceptFollow(ctx, cMsg)
 
-		// ACCEPT PROFILE/ACCOUNT (sign-up)
-		case ap.ObjectProfile, ap.ActorPerson:
-			return p.clientAPI.AcceptAccount(ctx, cMsg)
+		// ACCEPT USER (ie., new user+account sign-up)
+		case ap.ObjectProfile:
+			return p.clientAPI.AcceptUser(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -141,9 +145,9 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ActivityFollow:
 			return p.clientAPI.RejectFollowRequest(ctx, cMsg)
 
-		// REJECT PROFILE/ACCOUNT (sign-up)
-		case ap.ObjectProfile, ap.ActorPerson:
-			return p.clientAPI.RejectAccount(ctx, cMsg)
+		// REJECT USER (ie., new user+account sign-up)
+		case ap.ObjectProfile:
+			return p.clientAPI.RejectUser(ctx, cMsg)
 		}
 
 	// UNDO SOMETHING
@@ -175,17 +179,17 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		case ap.ObjectNote:
 			return p.clientAPI.DeleteStatus(ctx, cMsg)
 
-		// DELETE PROFILE/ACCOUNT
-		case ap.ObjectProfile, ap.ActorPerson:
-			return p.clientAPI.DeleteAccount(ctx, cMsg)
+		// DELETE REMOTE ACCOUNT or LOCAL USER+ACCOUNT
+		case ap.ActorPerson, ap.ObjectProfile:
+			return p.clientAPI.DeleteAccountOrUser(ctx, cMsg)
 		}
 
 	// FLAG/REPORT SOMETHING
 	case ap.ActivityFlag:
 		switch cMsg.APObjectType { //nolint:gocritic
 
-		// FLAG/REPORT A PROFILE
-		case ap.ObjectProfile:
+		// FLAG/REPORT ACCOUNT
+		case ap.ActorPerson:
 			return p.clientAPI.ReportAccount(ctx, cMsg)
 		}
 
@@ -193,8 +197,8 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 	case ap.ActivityMove:
 		switch cMsg.APObjectType { //nolint:gocritic
 
-		// MOVE PROFILE/ACCOUNT
-		case ap.ObjectProfile, ap.ActorPerson:
+		// MOVE ACCOUNT
+		case ap.ActorPerson:
 			return p.clientAPI.MoveAccount(ctx, cMsg)
 		}
 	}
@@ -202,7 +206,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 	return gtserror.Newf("unhandled: %s %s", cMsg.APActivityType, cMsg.APObjectType)
 }
 
-func (p *clientAPI) CreateAccount(ctx context.Context, cMsg *messages.FromClientAPI) error {
+func (p *clientAPI) CreateUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
@@ -219,7 +223,7 @@ func (p *clientAPI) CreateAccount(ctx context.Context, cMsg *messages.FromClient
 	}
 
 	// Send "please confirm your address" email to the new user.
-	if err := p.surface.emailUserPleaseConfirm(ctx, newUser); err != nil {
+	if err := p.surface.emailUserPleaseConfirm(ctx, newUser, true); err != nil {
 		log.Errorf(ctx, "error emailing confirm: %v", err)
 	}
 
@@ -479,6 +483,22 @@ func (p *clientAPI) UpdateReport(ctx context.Context, cMsg *messages.FromClientA
 	return nil
 }
 
+func (p *clientAPI) UpdateUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	user, ok := cMsg.GTSModel.(*gtsmodel.User)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.User", cMsg.GTSModel)
+	}
+
+	// The only possible "UpdateUser" action is to update the
+	// user's email address, so we can safely assume by this
+	// point that a new unconfirmed email address has been set.
+	if err := p.surface.emailUserPleaseConfirm(ctx, user, false); err != nil {
+		log.Errorf(ctx, "error emailing report closed: %v", err)
+	}
+
+	return nil
+}
+
 func (p *clientAPI) AcceptFollow(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	follow, ok := cMsg.GTSModel.(*gtsmodel.Follow)
 	if !ok {
@@ -669,7 +689,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 	return nil
 }
 
-func (p *clientAPI) DeleteAccount(ctx context.Context, cMsg *messages.FromClientAPI) error {
+func (p *clientAPI) DeleteAccountOrUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	// The originID of the delete, one of:
 	//   - ID of a domain block, for which
 	//     this account delete is a side effect.
@@ -768,7 +788,7 @@ func (p *clientAPI) MoveAccount(ctx context.Context, cMsg *messages.FromClientAP
 	return nil
 }
 
-func (p *clientAPI) AcceptAccount(ctx context.Context, cMsg *messages.FromClientAPI) error {
+func (p *clientAPI) AcceptUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	newUser, ok := cMsg.GTSModel.(*gtsmodel.User)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.User", cMsg.GTSModel)
@@ -791,7 +811,7 @@ func (p *clientAPI) AcceptAccount(ctx context.Context, cMsg *messages.FromClient
 	return nil
 }
 
-func (p *clientAPI) RejectAccount(ctx context.Context, cMsg *messages.FromClientAPI) error {
+func (p *clientAPI) RejectUser(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	deniedUser, ok := cMsg.GTSModel.(*gtsmodel.DeniedUser)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.DeniedUser", cMsg.GTSModel)

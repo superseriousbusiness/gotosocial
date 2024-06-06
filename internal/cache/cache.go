@@ -85,6 +85,8 @@ func (c *Caches) Init() {
 	c.initPollVoteIDs()
 	c.initReport()
 	c.initStatus()
+	c.initStatusBookmark()
+	c.initStatusBookmarkIDs()
 	c.initStatusFave()
 	c.initStatusFaveIDs()
 	c.initTag()
@@ -103,7 +105,7 @@ func (c *Caches) Init() {
 func (c *Caches) Start() {
 	log.Infof(nil, "start: %p", c)
 
-	tryUntil("starting *gtsmodel.Webfinger cache", 5, func() bool {
+	tryUntil("starting webfinger cache", 5, func() bool {
 		return c.GTS.Webfinger.Start(5 * time.Minute)
 	})
 }
@@ -113,7 +115,7 @@ func (c *Caches) Start() {
 func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
-	tryUntil("stopping *gtsmodel.Webfinger cache", 5, c.GTS.Webfinger.Stop)
+	tryUntil("stopping webfinger cache", 5, c.GTS.Webfinger.Stop)
 }
 
 // Sweep will sweep all the available caches to ensure none
@@ -155,6 +157,8 @@ func (c *Caches) Sweep(threshold float64) {
 	c.GTS.PollVoteIDs.Trim(threshold)
 	c.GTS.Report.Trim(threshold)
 	c.GTS.Status.Trim(threshold)
+	c.GTS.StatusBookmark.Trim(threshold)
+	c.GTS.StatusBookmarkIDs.Trim(threshold)
 	c.GTS.StatusFave.Trim(threshold)
 	c.GTS.StatusFaveIDs.Trim(threshold)
 	c.GTS.Tag.Trim(threshold)

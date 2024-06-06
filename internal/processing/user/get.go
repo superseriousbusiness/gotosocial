@@ -1,4 +1,3 @@
-{{- /*
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -15,22 +14,19 @@
 //
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/ -}}
 
-Hello {{ .Username -}}!
-{{ if .NewSignup }}
-You are receiving this mail because you've requested an account on {{ .InstanceURL -}}.
+package user
 
-To use your account, you must confirm that this is your email address.
-{{ else }}
-You are receiving this mail because you've requested an email address change on {{ .InstanceURL -}}.
+import (
+	"context"
 
-To complete the change, you must confirm that this is your email address.
-{{ end }}
-To confirm your email, paste the following in your browser's address bar:
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+)
 
-{{ .ConfirmLink }}
-
----
-
-If you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of {{ .InstanceURL -}}.
+// Get returns the API model of the given user.
+// Should only be served if user == the user doing the request.
+func (p *Processor) Get(ctx context.Context, user *gtsmodel.User) (*apimodel.User, gtserror.WithCode) {
+	return p.converter.UserToAPIUser(ctx, user), nil
+}

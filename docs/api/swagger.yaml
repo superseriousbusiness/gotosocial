@@ -223,7 +223,9 @@ definitions:
                 type: string
                 x-go-name: DisplayName
             emojis:
-                description: Array of custom emojis used in this account's note or display name.
+                description: |-
+                    Array of custom emojis used in this account's note or display name.
+                    Empty for blocked accounts.
                 items:
                     $ref: '#/definitions/emoji'
                 type: array
@@ -235,7 +237,9 @@ definitions:
                 type: boolean
                 x-go-name: EnableRSS
             fields:
-                description: Additional metadata attached to this account's profile.
+                description: |-
+                    Additional metadata attached to this account's profile.
+                    Empty for blocked accounts.
                 items:
                     $ref: '#/definitions/field'
                 type: array
@@ -2708,6 +2712,77 @@ definitions:
         title: Theme represents one user-selectable preset CSS theme.
         type: object
         x-go-name: Theme
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    user:
+        properties:
+            admin:
+                description: User is an admin.
+                example: false
+                type: boolean
+                x-go-name: Admin
+            approved:
+                description: User was approved by an admin.
+                example: true
+                type: boolean
+                x-go-name: Approved
+            confirmation_sent_at:
+                description: Time when the last "please confirm your email address" email was sent, if at all. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: ConfirmationSentAt
+            confirmed_at:
+                description: Time at which the email given in the `email` field was confirmed, if at all. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: ConfirmedAt
+            created_at:
+                description: Time this user was created. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            disabled:
+                description: User's account is disabled.
+                example: false
+                type: boolean
+                x-go-name: Disabled
+            email:
+                description: Confirmed email address of this user, if set.
+                example: someone@example.org
+                type: string
+                x-go-name: Email
+            id:
+                description: Database ID of this user.
+                example: 01FBVD42CQ3ZEEVMW180SBX03B
+                type: string
+                x-go-name: ID
+            last_emailed_at:
+                description: Time at which this user was last emailed, if at all. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: LastEmailedAt
+            moderator:
+                description: User is a moderator.
+                example: false
+                type: boolean
+                x-go-name: Moderator
+            reason:
+                description: Reason for sign-up, if provided.
+                example: Please! Pretty please!
+                type: string
+                x-go-name: Reason
+            reset_password_sent_at:
+                description: Time when the last "please reset your password" email was sent, if at all. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: ResetPasswordSentAt
+            unconfirmed_email:
+                description: Unconfirmed email address of this user, if set.
+                example: someone.else@somewhere.else.example.org
+                type: string
+                x-go-name: UnconfirmedEmail
+        title: User models fields relevant to one user.
+        type: object
+        x-go-name: User
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         description: See https://webfinger.net/
@@ -8706,6 +8781,77 @@ paths:
             summary: See public statuses that use the given hashtag (case insensitive).
             tags:
                 - timelines
+    /api/v1/user:
+        get:
+            operationId: getUser
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested user.
+                    schema:
+                        $ref: '#/definitions/user'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal error
+            security:
+                - OAuth2 Bearer:
+                    - read:user
+            summary: Get your own user model.
+            tags:
+                - user
+    /api/v1/user/email_change:
+        post:
+            consumes:
+                - application/json
+                - application/xml
+                - application/x-www-form-urlencoded
+            operationId: userEmailChange
+            parameters:
+                - description: User's current password, for verification.
+                  in: formData
+                  name: password
+                  required: true
+                  type: string
+                  x-go-name: Password
+                - description: Desired new email address.
+                  in: formData
+                  name: new_email
+                  required: true
+                  type: string
+                  x-go-name: NewEmail
+            produces:
+                - application/json
+            responses:
+                "202":
+                    description: 'Accepted: email change is processing; check your inbox to confirm new address.'
+                    schema:
+                        $ref: '#/definitions/user'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: 'Conflict: desired email address already in use'
+                "500":
+                    description: internal error
+            security:
+                - OAuth2 Bearer:
+                    - write:user
+            summary: Request changing the email address of authenticated user.
+            tags:
+                - user
     /api/v1/user/password_change:
         post:
             consumes:

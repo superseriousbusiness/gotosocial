@@ -25,7 +25,9 @@ import FormWithData from "../../lib/form/form-with-data";
 import Languages from "../../components/languages";
 import MutationButton from "../../components/form/mutation-button";
 import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
-import { usePasswordChangeMutation, useUpdateCredentialsMutation } from "../../lib/query/user";
+import { useEmailChangeMutation, usePasswordChangeMutation, useUpdateCredentialsMutation, useUserQuery } from "../../lib/query/user";
+import Loading from "../../components/loading";
+import { User } from "../../lib/types/user";
 
 export default function UserSettings() {
 	return (
@@ -98,6 +100,7 @@ function UserSettingsForm({ data }) {
 				/>
 			</form>
 			<PasswordChange />
+			<EmailChange />
 		</>
 	);
 }
@@ -163,6 +166,108 @@ function PasswordChange() {
 			<MutationButton
 				disabled={false}
 				label="Change password"
+				result={result}
+			/>
+		</form>
+	);
+}
+
+function EmailChange() {
+	// Load existing user data.
+	const { data: user, isFetching, isLoading } = useUserQuery();
+	if (isFetching || isLoading) {
+		return <Loading />;
+	}
+
+	if (user === undefined) {
+		throw "could not fetch user";
+	}
+
+	return <EmailChangeForm user={user} />;
+}
+
+function EmailChangeForm({user}: {user: User}) {
+	const form = {
+		currentEmail: useTextInput("current_email", {
+			defaultValue: user.email,
+			nosubmit: true
+		}),
+		newEmail: useTextInput("new_email", {
+			validator: (value: string | undefined) => {
+				if (!value) {
+					return "";
+				}
+
+				if (value.toLowerCase() === user.email?.toLowerCase()) {
+					return "cannot change to your existing address";
+				}
+
+				if (value.toLowerCase() === user.unconfirmed_email?.toLowerCase()) {
+					return "you already have a pending email address change to this address";
+				}
+
+				return "";
+			},
+		}),
+		password: useTextInput("password"),
+	};
+	const [submitForm, result] = useFormSubmit(form, useEmailChangeMutation());
+
+	return (
+		<form className="change-email" onSubmit={submitForm}>
+			<div className="form-section-docs">
+				<h3>Change Email</h3>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#email-change"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about this (opens in a new tab)
+				</a>
+			</div>
+
+			{ user.unconfirmed_email && <>
+				<div className="info">
+					<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
+					<b>
+						You currently have a pending email address
+						change to the address: {user.unconfirmed_email}
+						<br />
+						To confirm {user.unconfirmed_email} as your new
+						address for this account, please check your email inbox.
+					</b>
+				</div>
+			</> }
+
+			<TextInput
+				type="email"
+				name="current-email"
+				field={form.currentEmail}
+				label="Current email address"
+				autoComplete="none"
+				disabled={true}
+			/>
+
+			<TextInput
+				type="password"
+				name="password"
+				field={form.password}
+				label="Current password"
+				autoComplete="current-password"
+			/>
+
+			<TextInput
+				type="email"
+				name="new-email"
+				field={form.newEmail}
+				label="New email address"
+				autoComplete="none"
+			/>
+			
+			<MutationButton
+				disabled={!form.password || !form.newEmail || !form.newEmail.valid}
+				label="Change email address"
 				result={result}
 			/>
 		</form>

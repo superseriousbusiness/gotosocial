@@ -15,10 +15,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package admin
+package user
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,79 +26,53 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AccountApprovePOSTHandler swagger:operation POST /api/v1/admin/accounts/{id}/approve adminAccountApprove
+// UserGETHandler swagger:operation GET /api/v1/user getUser
 //
-// Approve pending account.
+// Get your own user model.
 //
 //	---
 //	tags:
-//	- admin
+//	- user
 //
 //	produces:
 //	- application/json
 //
-//	parameters:
-//	-
-//		name: id
-//		required: true
-//		in: path
-//		description: ID of the account.
-//		type: string
-//
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- read:user
 //
 //	responses:
 //		'200':
-//			description: The now-approved account.
+//			description: The requested user.
 //			schema:
-//				"$ref": "#/definitions/adminAccountInfo"
+//				"$ref": "#/definitions/user"
 //		'400':
 //			description: bad request
 //		'401':
 //			description: unauthorized
 //		'403':
 //			description: forbidden
-//		'404':
-//			description: not found
 //		'406':
 //			description: not acceptable
 //		'500':
-//			description: internal server error
-func (m *Module) AccountApprovePOSTHandler(c *gin.Context) {
+//			description: internal error
+func (m *Module) UserGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if !*authed.User.Admin {
-		err := fmt.Errorf("user %s not an admin", authed.User.ID)
-		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if authed.Account.IsMoving() {
-		apiutil.ForbiddenAfterMove(c)
-		return
-	}
-
-	targetAcctID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	user, errWithCode := m.processor.User().Get(c.Request.Context(), authed.User)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	account, errWithCode := m.processor.Admin().SignupApprove(
-		c.Request.Context(),
-		authed.Account,
-		targetAcctID,
-	)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	apiutil.JSON(c, http.StatusOK, account)
+	apiutil.JSON(c, http.StatusOK, user)
 }

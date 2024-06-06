@@ -119,7 +119,7 @@ func (m *Module) AccountRejectPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	account, errWithCode := m.processor.Admin().AccountReject(
+	account, errWithCode := m.processor.Admin().SignupReject(
 		c.Request.Context(),
 		authed.Account,
 		targetAcctID,

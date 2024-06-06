@@ -15,11 +15,10 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package accounts
+package user
 
 import (
 	"errors"
-	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,19 +26,15 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-// AccountCreatePOSTHandler swagger:operation POST /api/v1/accounts accountCreate
+// EmailChangePOSTHandler swagger:operation POST /api/v1/user/email_change userEmailChange
 //
-// Create a new account using an application token.
-//
-// The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
-// The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
+// Request changing the email address of authenticated user.
 //
 //	---
 //	tags:
-//	- accounts
+//	- user
 //
 //	consumes:
 //	- application/json
@@ -50,31 +45,28 @@ import (
 //	- application/json
 //
 //	security:
-//	- OAuth2 Application:
-//		- write:accounts
+//	- OAuth2 Bearer:
+//		- write:user
 //
 //	responses:
-//		'200':
-//			description: "An OAuth2 access token for the newly-created account."
+//		'202':
+//			description: "Accepted: email change is processing; check your inbox to confirm new address."
 //			schema:
-//				"$ref": "#/definitions/oauthToken"
+//				"$ref": "#/definitions/user"
 //		'400':
 //			description: bad request
 //		'401':
 //			description: unauthorized
-//		'404':
-//			description: not found
+//		'403':
+//			description: forbidden
 //		'406':
 //			description: not acceptable
-//		'422':
-//			description: >-
-//				Unprocessable. Your account creation request cannot be processed
-//				because either too many accounts have been created on this instance
-//				in the last 24h, or the pending account backlog is full.
+//		'409':
+//			description: "Conflict: desired email address already in use"
 //		'500':
-//			description: internal server error
-func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, false, false)
+//			description: internal error
+func (m *Module) EmailChangePOSTHandler(c *gin.Context) {
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -85,49 +77,28 @@ func (m *Module) AccountCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	form := &apimodel.AccountCreateRequest{}
+	form := &apimodel.EmailChangeRequest{}
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if err := validate.CreateAccount(form); err != nil {
+	if form.Password == "" {
+		err := errors.New("email change request missing field password")
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	clientIP := c.ClientIP()
-	signUpIP := net.ParseIP(clientIP)
-	if signUpIP == nil {
-		err := errors.New("ip address could not be parsed from request")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-	form.IP = signUpIP
-
-	// Create the new user+account.
-	ctx := c.Request.Context()
-	user, errWithCode := m.processor.User().Create(
-		ctx,
-		authed.Application,
-		form,
+	user, errWithCode := m.processor.User().EmailChange(
+		c.Request.Context(),
+		authed.User,
+		form.Password,
+		form.NewEmail,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	// Get a token for the new user.
-	ti, errWithCode := m.processor.User().TokenForNewUser(
-		ctx,
-		authed.Token,
-		authed.Application,
-		user,
-	)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	apiutil.JSON(c, http.StatusOK, ti)
+	apiutil.JSON(c, http.StatusAccepted, user)
 }

@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
-func (p *Processor) AccountReject(
+func (p *Processor) SignupReject(
 	ctx context.Context,
 	adminAcct *gtsmodel.Account,
 	accountID string,
@@ -102,7 +102,10 @@ func (p *Processor) AccountReject(
 
 	// Process rejection side effects asynschronously.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActorPerson,
+		// Use ap.ObjectProfile here to
+		// distinguish this message (user model)
+		// from ap.ActorPerson (account model).
+		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityReject,
 		GTSModel:       deniedUser,
 		Origin:         adminAcct,

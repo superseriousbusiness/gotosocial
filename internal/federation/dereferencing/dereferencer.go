@@ -85,11 +85,22 @@ type Dereferencer struct {
 	mediaManager        *media.Manager
 	visibility          *visibility.Filter
 
-	// all protected by State{}.FedLocks.
-	derefAvatars map[string]*media.ProcessingMedia
-	derefHeaders map[string]*media.ProcessingMedia
-	derefEmojis  map[string]*media.ProcessingEmoji
+	// in-progress dereferencing emoji. we already perform
+	// locks per-status and per-account so we don't need
+	// processing maps for other media which won't often
+	// end up being repeated. worst case we run into an
+	// db.ErrAlreadyExists error which then gets handled
+	// appropriately by enrich{Account,Status}Safely().
+	derefEmojis   map[string]*media.ProcessingEmoji
+	derefEmojisMu sync.Mutex
 
+	// handshakes marks current in-progress handshakes
+	// occurring, useful to prevent a deadlock between
+	// gotosocial instances attempting to dereference
+	// accounts for the first time. when a handshake is
+	// currently ongoing we know not to block waiting
+	// on certain data and instead return an in-progress
+	// form of the data as we currently see it.
 	handshakes   map[string][]*url.URL
 	handshakesMu sync.Mutex
 }
@@ -108,8 +119,6 @@ func NewDereferencer(
 		transportController: transportController,
 		mediaManager:        mediaManager,
 		visibility:          visFilter,
-		derefAvatars:        make(map[string]*media.ProcessingMedia),
-		derefHeaders:        make(map[string]*media.ProcessingMedia),
 		derefEmojis:         make(map[string]*media.ProcessingEmoji),
 		handshakes:          make(map[string][]*url.URL),
 	}

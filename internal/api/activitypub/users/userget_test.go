@@ -97,7 +97,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	userModule := users.New(suite.processor)
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	suite.processor.Account().DeleteSelf(context.Background(), suite.testAccounts["local_account_1"])
+	suite.processor.User().DeleteSelf(context.Background(), suite.testAccounts["local_account_1"])
 
 	// wait for the account delete to be processed
 	if !testrig.WaitFor(func() bool {

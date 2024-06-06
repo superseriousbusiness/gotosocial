@@ -337,7 +337,7 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 
 	// now they are mufos!
 	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
-		APObjectType:   ap.ObjectProfile,
+		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityDelete,
 		GTSModel:       deletedAccount,
 		Receiving:      receivingAccount,
@@ -613,7 +613,7 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 
 	// Process the Move.
 	err := testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
-		APObjectType:   ap.ObjectProfile,
+		APObjectType:   ap.ActorPerson,
 		APActivityType: ap.ActivityMove,
 		GTSModel: &gtsmodel.Move{
 			OriginURI: requestingAcct.URI,
