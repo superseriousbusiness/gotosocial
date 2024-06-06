@@ -79,8 +79,10 @@ type Account struct {
 	// example: 2021-07-30T09:20:25+00:00
 	LastStatusAt *string `json:"last_status_at"`
 	// Array of custom emojis used in this account's note or display name.
+	// Empty for blocked accounts.
 	Emojis []Emoji `json:"emojis"`
 	// Additional metadata attached to this account's profile.
+	// Empty for blocked accounts.
 	Fields []Field `json:"fields"`
 	// Account has been suspended by our instance.
 	Suspended bool `json:"suspended,omitempty"`
