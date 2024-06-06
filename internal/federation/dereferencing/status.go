@@ -285,7 +285,7 @@ func (d *Dereferencer) enrichStatusSafely(
 	requestUser string,
 	uri *url.URL,
 	status *gtsmodel.Status,
-	apubStatus ap.Statusable,
+	statusable ap.Statusable,
 ) (*gtsmodel.Status, ap.Statusable, bool, error) {
 	uriStr := status.URI
 
@@ -313,7 +313,7 @@ func (d *Dereferencer) enrichStatusSafely(
 		requestUser,
 		uri,
 		status,
-		apubStatus,
+		statusable,
 	)
 
 	if gtserror.StatusCode(err) >= 400 {
