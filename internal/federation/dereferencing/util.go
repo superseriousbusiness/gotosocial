@@ -67,44 +67,45 @@ func (d *Dereferencer) loadAttachment(
 func (d *Dereferencer) updateAttachment(
 	ctx context.Context,
 	tsport transport.Transport,
-	existing *gtsmodel.MediaAttachment,
-	media *gtsmodel.MediaAttachment,
+	existing *gtsmodel.MediaAttachment, // existing attachment
+	media *gtsmodel.MediaAttachment, // (optional) changed media
 ) (
 	*gtsmodel.MediaAttachment, // always set
 	error,
 ) {
+	if media != nil {
+		// Possible changed media columns.
+		changed := make([]string, 0, 3)
 
-	// Possible changed media columns.
-	changed := make([]string, 0, 3)
+		// Check if attachment description has changed.
+		if existing.Description != media.Description {
+			changed = append(changed, "description")
+			existing.Description = media.Description
+		}
 
-	// Check if attachment description has changed.
-	if existing.Description != media.Description {
-		changed = append(changed, "description")
-		existing.Description = media.Description
-	}
+		// Check if attachment blurhash has changed (i.e. content change).
+		if existing.Blurhash != media.Blurhash && media.Blurhash != "" {
+			changed = append(changed, "blurhash", "cached")
+			existing.Blurhash = media.Blurhash
+			existing.Cached = util.Ptr(false)
+		}
 
-	// Check if attachment blurhash has changed (i.e. content change).
-	if existing.Blurhash != media.Blurhash && media.Blurhash != "" {
-		changed = append(changed, "blurhash", "cached")
-		existing.Blurhash = media.Blurhash
-		existing.Cached = util.Ptr(false)
-	}
-
-	if len(changed) > 0 {
-		// Update the existing attachment model in the database.
-		err := d.state.DB.UpdateAttachment(ctx, existing, changed...)
-		if err != nil {
-			return media, gtserror.Newf("error updating media: %w", err)
+		if len(changed) > 0 {
+			// Update the existing attachment model in the database.
+			err := d.state.DB.UpdateAttachment(ctx, existing, changed...)
+			if err != nil {
+				return media, gtserror.Newf("error updating media: %w", err)
+			}
 		}
 	}
 
 	// Check if cached.
-	if *media.Cached {
-		return media, nil
+	if *existing.Cached {
+		return existing, nil
 	}
 
 	// Parse str as valid URL object.
-	url, err := url.Parse(media.RemoteURL)
+	url, err := url.Parse(existing.RemoteURL)
 	if err != nil {
 		return nil, gtserror.Newf("invalid remote media url %q: %v", media.RemoteURL, err)
 	}
@@ -115,7 +116,7 @@ func (d *Dereferencer) updateAttachment(
 		func(ctx context.Context) (io.ReadCloser, int64, error) {
 			return tsport.DereferenceMedia(ctx, url)
 		},
-		media.ID,
+		existing.ID,
 	)
 	if err != nil {
 		return nil, gtserror.Newf("error processing recache: %w", err)
@@ -128,10 +129,10 @@ func (d *Dereferencer) updateAttachment(
 		// Only set recached media
 		// file if it was at least
 		// partially downloaded.
-		media = recached
+		existing = recached
 	}
 
-	return media, err
+	return existing, err
 }
 
 // pollChanged returns whether a poll has changed in way that
