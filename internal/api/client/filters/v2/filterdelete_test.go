@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -88,12 +89,16 @@ func (suite *FiltersTestSuite) deleteFilter(
 }
 
 func (suite *FiltersTestSuite) TestDeleteFilter() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilters["local_account_1_filter_1"].ID
 
 	err := suite.deleteFilter(id, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestDeleteAnotherAccountsFilter() {

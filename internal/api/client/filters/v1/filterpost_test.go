@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -116,6 +117,8 @@ func (suite *FiltersTestSuite) postFilter(
 }
 
 func (suite *FiltersTestSuite) TestPostFilterFull() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	phrase := "GNU/Linux"
 	context := []string{"home", "public"}
 	irreversible := false
@@ -137,9 +140,13 @@ func (suite *FiltersTestSuite) TestPostFilterFull() {
 	if suite.NotNil(filter.ExpiresAt) {
 		suite.NotEmpty(*filter.ExpiresAt)
 	}
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterFullJSON() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	// Use a numeric literal with a fractional part to test the JSON-specific handling for non-integer "expires_in".
 	requestJson := `{
 		"phrase":"GNU/Linux",
@@ -166,9 +173,13 @@ func (suite *FiltersTestSuite) TestPostFilterFullJSON() {
 	if suite.NotNil(filter.ExpiresAt) {
 		suite.NotEmpty(*filter.ExpiresAt)
 	}
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterMinimal() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	phrase := "GNU/Linux"
 	context := []string{"home"}
 	filter, err := suite.postFilter(&phrase, &context, nil, nil, nil, nil, http.StatusOK, "")
@@ -185,6 +196,8 @@ func (suite *FiltersTestSuite) TestPostFilterMinimal() {
 	suite.False(filter.Irreversible)
 	suite.False(filter.WholeWord)
 	suite.Nil(filter.ExpiresAt)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterEmptyPhrase() {

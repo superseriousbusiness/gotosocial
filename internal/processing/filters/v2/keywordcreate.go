@@ -63,5 +63,8 @@ func (p *Processor) KeywordCreate(ctx context.Context, account *gtsmodel.Account
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Send a filters changed event.
+	p.stream.FiltersChanged(ctx, account)
+
 	return p.converter.FilterKeywordToAPIFilterKeyword(ctx, filterKeyword), nil
 }

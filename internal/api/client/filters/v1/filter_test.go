@@ -18,6 +18,10 @@
 package v1_test
 
 import (
+	"context"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/suite"
 	filtersV1 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v1"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -30,9 +34,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
-	"testing"
 )
 
 type FiltersTestSuite struct {
@@ -110,6 +114,44 @@ func (suite *FiltersTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 	testrig.StopWorkers(&suite.state)
+}
+
+func (suite *FiltersTestSuite) openHomeStream(account *gtsmodel.Account) *stream.Stream {
+	stream, err := suite.processor.Stream().Open(context.Background(), account, stream.TimelineHome)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	return stream
+}
+
+func (suite *FiltersTestSuite) checkStreamed(
+	str *stream.Stream,
+	expectMessage bool,
+	expectPayload string,
+	expectEventType string,
+) {
+	// Set a 5s timeout on context.
+	ctx := context.Background()
+	ctx, cncl := context.WithTimeout(ctx, time.Second*5)
+	defer cncl()
+
+	msg, ok := str.Recv(ctx)
+
+	if expectMessage && !ok {
+		suite.FailNow("expected a message but message was not received")
+	}
+
+	if !expectMessage && ok {
+		suite.FailNow("expected no message but message was received")
+	}
+
+	if expectPayload != "" && msg.Payload != expectPayload {
+		suite.FailNow("", "expected payload %s but payload was: %s", expectPayload, msg.Payload)
+	}
+
+	if expectEventType != "" && msg.Event != expectEventType {
+		suite.FailNow("", "expected event type %s but event type was: %s", expectEventType, msg.Event)
+	}
 }
 
 func TestFiltersTestSuite(t *testing.T) {

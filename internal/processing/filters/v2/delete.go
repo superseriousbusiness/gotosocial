@@ -49,5 +49,8 @@ func (p *Processor) Delete(
 		return gtserror.NewErrorInternalError(err)
 	}
 
+	// Send a filters changed event.
+	p.stream.FiltersChanged(ctx, account)
+
 	return nil
 }

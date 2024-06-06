@@ -42,6 +42,10 @@ const (
 	// user's timeline has been edited (yes this
 	// is a confusing name, blame Mastodon ...).
 	EventTypeStatusUpdate = "status.update"
+
+	// EventTypeFiltersChanged -- the user's filters
+	// (including keywords and statuses) have changed.
+	EventTypeFiltersChanged = "filters_changed"
 )
 
 const (

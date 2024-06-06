@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -50,7 +51,7 @@ func (suite *FiltersTestSuite) deleteFilterStatus(
 	ctx.AddParam("id", filterStatusID)
 
 	// trigger the handler
-	suite.filtersModule.FilterDELETEHandler(ctx)
+	suite.filtersModule.FilterStatusDELETEHandler(ctx)
 
 	// read the response
 	result := recorder.Result()
@@ -85,12 +86,16 @@ func (suite *FiltersTestSuite) deleteFilterStatus(
 }
 
 func (suite *FiltersTestSuite) TestDeleteFilterStatus() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilterStatuses["local_account_1_filter_3_status_1"].ID
 
 	err := suite.deleteFilterStatus(id, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestDeleteAnotherAccountsFilterStatus() {

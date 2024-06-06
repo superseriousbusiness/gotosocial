@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -106,6 +107,8 @@ func (suite *FiltersTestSuite) putFilter(filterID string, title *string, context
 }
 
 func (suite *FiltersTestSuite) TestPutFilterFull() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilters["local_account_1_filter_2"].ID
 	title := "messy synoptic varblabbles"
 	context := []string{"home", "public"}
@@ -128,9 +131,13 @@ func (suite *FiltersTestSuite) TestPutFilterFull() {
 	}
 	suite.Len(filter.Keywords, 3)
 	suite.Len(filter.Statuses, 0)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterFullJSON() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilters["local_account_1_filter_2"].ID
 	// Use a numeric literal with a fractional part to test the JSON-specific handling for non-integer "expires_in".
 	requestJson := `{
@@ -158,9 +165,13 @@ func (suite *FiltersTestSuite) TestPutFilterFullJSON() {
 	}
 	suite.Len(filter.Keywords, 3)
 	suite.Len(filter.Statuses, 0)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterMinimal() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilters["local_account_1_filter_1"].ID
 	title := "GNU/Linux"
 	context := []string{"home"}
@@ -177,6 +188,8 @@ func (suite *FiltersTestSuite) TestPutFilterMinimal() {
 	suite.ElementsMatch(context, filterContext)
 	suite.Equal(apimodel.FilterActionWarn, filter.FilterAction)
 	suite.Nil(filter.ExpiresAt)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterEmptyTitle() {

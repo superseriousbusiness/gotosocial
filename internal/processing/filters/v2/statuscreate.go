@@ -62,5 +62,8 @@ func (p *Processor) StatusCreate(ctx context.Context, account *gtsmodel.Account,
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Send a filters changed event.
+	p.stream.FiltersChanged(ctx, account)
+
 	return p.converter.FilterStatusToAPIFilterStatus(ctx, filterStatus), nil
 }

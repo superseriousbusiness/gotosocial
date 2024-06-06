@@ -163,5 +163,13 @@ func (p *Processor) Update(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.apiFilter(ctx, filterKeyword)
+	apiFilter, errWithCode := p.apiFilter(ctx, filterKeyword)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Send a filters changed event.
+	p.stream.FiltersChanged(ctx, account)
+
+	return apiFilter, nil
 }
