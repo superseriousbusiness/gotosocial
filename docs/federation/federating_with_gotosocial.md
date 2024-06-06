@@ -44,8 +44,8 @@ GoToSocial request signing is implemented in [internal/transport](https://github
 
 When assembling signatures:
 
-- outgoing `GET` requests use `(request-target) host date`
-- outgoing `POST` requests use `(request-target) host date digest` 
+- outgoing `GET` requests use `(request-target) (created) host`
+- outgoing `POST` requests use `(request-target) (created) host digest` 
 
 GoToSocial sets the "algorithm" field in signatures to the value `hs2019`, which essentially means "derive the algorithm from metadata associated with the keyId". The *actual* algorithm used for generating signatures is `RSA_SHA256`, which is in line with other ActivityPub implementations. When validating a GoToSocial HTTP signature, remote servers can safely assume that the signature is generated using `sha256`.
 
