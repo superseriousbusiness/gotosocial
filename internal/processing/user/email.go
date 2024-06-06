@@ -37,7 +37,6 @@ import (
 func (p *Processor) EmailChange(
 	ctx context.Context,
 	user *gtsmodel.User,
-	account *gtsmodel.Account,
 	password string,
 	newEmail string,
 ) (*apimodel.User, gtserror.WithCode) {
@@ -89,9 +88,10 @@ func (p *Processor) EmailChange(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// If account isn't set on User yet, do it here.
-	if user.Account == nil {
-		user.Account = account
+	// Ensure user populated (we need account).
+	if err := p.state.DB.PopulateUser(ctx, user); err != nil {
+		err := gtserror.Newf("db error populating user: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Add email sending job to the queue.
@@ -102,8 +102,8 @@ func (p *Processor) EmailChange(
 		APObjectType:   ap.ObjectProfile,
 		APActivityType: ap.ActivityUpdate,
 		GTSModel:       user,
-		Origin:         account,
-		Target:         account,
+		Origin:         user.Account,
+		Target:         user.Account,
 	})
 
 	return p.converter.UserToAPIUser(ctx, user), nil

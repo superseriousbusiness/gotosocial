@@ -92,7 +92,6 @@ func (m *Module) EmailChangePOSTHandler(c *gin.Context) {
 	user, errWithCode := m.processor.User().EmailChange(
 		c.Request.Context(),
 		authed.User,
-		authed.Account,
 		form.Password,
 		form.NewEmail,
 	)
