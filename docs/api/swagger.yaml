@@ -223,7 +223,9 @@ definitions:
                 type: string
                 x-go-name: DisplayName
             emojis:
-                description: Array of custom emojis used in this account's note or display name.
+                description: |-
+                    Array of custom emojis used in this account's note or display name.
+                    Empty for blocked accounts.
                 items:
                     $ref: '#/definitions/emoji'
                 type: array
@@ -235,7 +237,9 @@ definitions:
                 type: boolean
                 x-go-name: EnableRSS
             fields:
-                description: Additional metadata attached to this account's profile.
+                description: |-
+                    Additional metadata attached to this account's profile.
+                    Empty for blocked accounts.
                 items:
                     $ref: '#/definitions/field'
                 type: array

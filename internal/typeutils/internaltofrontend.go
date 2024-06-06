@@ -368,6 +368,10 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		Bot:       *a.Bot,
 		CreatedAt: util.FormatISO8601(a.CreatedAt),
 		URL:       a.URL,
+		// Empty array (not nillable).
+		Emojis: make([]apimodel.Emoji, 0),
+		// Empty array (not nillable).
+		Fields:    make([]apimodel.Field, 0),
 		Suspended: !a.SuspendedAt.IsZero(),
 		Role:      role,
 	}
