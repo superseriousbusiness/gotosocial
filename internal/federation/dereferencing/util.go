@@ -18,10 +18,121 @@
 package dereferencing
 
 import (
+	"context"
+	"io"
+	"net/url"
 	"slices"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
+
+// loadAttachment handles the case of a new media attachment
+// that requires loading. it stores and caches from given data.
+func (d *Dereferencer) loadAttachment(
+	ctx context.Context,
+	tsport transport.Transport,
+	accountID string, // media account owner
+	remoteURL string,
+	info *media.AdditionalMediaInfo,
+) (
+	*gtsmodel.MediaAttachment,
+	error,
+) {
+	// Parse str as valid URL object.
+	url, err := url.Parse(remoteURL)
+	if err != nil {
+		return nil, gtserror.Newf("invalid remote media url %q: %v", remoteURL, err)
+	}
+
+	// Start pre-processing remote media at remote URL.
+	processing := d.mediaManager.PreProcessMedia(
+		func(ctx context.Context) (io.ReadCloser, int64, error) {
+			return tsport.DereferenceMedia(ctx, url)
+		},
+		accountID,
+		info,
+	)
+
+	// Force attachment loading *right now*.
+	return processing.LoadAttachment(ctx)
+}
+
+// updateAttachment handles the case of an existing media attachment
+// that *may* have changes or need recaching. it checks for changed
+// fields, updating in the database if so, and recaches uncached media.
+func (d *Dereferencer) updateAttachment(
+	ctx context.Context,
+	tsport transport.Transport,
+	existing *gtsmodel.MediaAttachment,
+	media *gtsmodel.MediaAttachment,
+) (
+	*gtsmodel.MediaAttachment, // always set
+	error,
+) {
+
+	// Possible changed media columns.
+	changed := make([]string, 0, 3)
+
+	// Check if attachment description has changed.
+	if existing.Description != media.Description {
+		changed = append(changed, "description")
+		existing.Description = media.Description
+	}
+
+	// Check if attachment blurhash has changed (i.e. content change).
+	if existing.Blurhash != media.Blurhash && media.Blurhash != "" {
+		changed = append(changed, "blurhash", "cached")
+		existing.Blurhash = media.Blurhash
+		existing.Cached = util.Ptr(false)
+	}
+
+	if len(changed) > 0 {
+		// Update the existing attachment model in the database.
+		err := d.state.DB.UpdateAttachment(ctx, existing, changed...)
+		if err != nil {
+			return media, gtserror.Newf("error updating media: %w", err)
+		}
+	}
+
+	// Check if cached.
+	if *media.Cached {
+		return media, nil
+	}
+
+	// Parse str as valid URL object.
+	url, err := url.Parse(media.RemoteURL)
+	if err != nil {
+		return nil, gtserror.Newf("invalid remote media url %q: %v", media.RemoteURL, err)
+	}
+
+	// Start pre-processing remote media recaching from remote.
+	processing, err := d.mediaManager.PreProcessMediaRecache(
+		ctx,
+		func(ctx context.Context) (io.ReadCloser, int64, error) {
+			return tsport.DereferenceMedia(ctx, url)
+		},
+		media.ID,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("error processing recache: %w", err)
+	}
+
+	// Force load attachment recache *right now*.
+	recached, err := processing.LoadAttachment(ctx)
+
+	if recached != nil {
+		// Only set recached media
+		// file if it was at least
+		// partially downloaded.
+		media = recached
+	}
+
+	return media, err
+}
 
 // pollChanged returns whether a poll has changed in way that
 // indicates that this should be an entirely new poll. i.e. if
