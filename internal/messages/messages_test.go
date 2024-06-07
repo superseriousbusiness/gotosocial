@@ -1,6 +1,7 @@
 package messages_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 var fromClientAPICases = []struct {
@@ -33,6 +35,25 @@ var fromClientAPICases = []struct {
 			"target_id":        "123456",
 		}),
 	},
+	{
+		msg: messages.FromClientAPI{
+			APObjectType:   ap.ObjectProfile,
+			APActivityType: ap.ActivityUpdate,
+			GTSModel:       &gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)},
+			TargetURI:      "https://uk-queen-is-dead.org",
+			Origin:         &gtsmodel.Account{ID: "123456"},
+			Target:         &gtsmodel.Account{ID: "654321"},
+		},
+		data: toJSON(map[string]any{
+			"ap_object_type":   ap.ObjectProfile,
+			"ap_activity_type": ap.ActivityUpdate,
+			"gts_model":        json.RawMessage(toJSON(&gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)})),
+			"gts_model_type":   "*gtsmodel.Account",
+			"target_uri":       "https://uk-queen-is-dead.org",
+			"origin_id":        "123456",
+			"target_id":        "654321",
+		}),
+	},
 }
 
 var fromFediAPICases = []struct {
@@ -53,14 +74,14 @@ func TestSerializeFromClientAPI(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Check that data is as expected.
-		assert.Equal(t, test.data, data)
+		// Check that serialized JSON data is as expected.
+		assert.JSONEq(t, string(test.data), string(data))
 	}
 }
 
 func TestDeserializeFromClientAPI(t *testing.T) {
 	for _, test := range fromClientAPICases {
-		msg := new(messages.FromClientAPI)
+		var msg messages.FromClientAPI
 
 		// Deserialize test message blob.
 		err := msg.Deserialize(test.data)
@@ -100,6 +121,15 @@ func TestDeserializeFromFediAPI(t *testing.T) {
 		assert.Equal(t, test.msg, msg)
 	}
 
+}
+
+func indent(b []byte) string {
+	buf := bytes.NewBuffer(nil)
+	err := json.Indent(buf, b, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+	return buf.String()
 }
 
 func toJSON(a any) []byte {
