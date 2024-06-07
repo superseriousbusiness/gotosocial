@@ -230,11 +230,11 @@ func (msg *FromFediAPI) Serialize() ([]byte, error) {
 
 	// Set serialized AP object data if set.
 	if t, ok := msg.APObject.(vocab.Type); ok {
-		var err error
-		apObject, err = t.Serialize()
+		obj, err := t.Serialize()
 		if err != nil {
 			return nil, err
 		}
+		apObject = obj
 	}
 
 	// Set database model type if any provided.
@@ -291,7 +291,6 @@ func (msg *FromFediAPI) Deserialize(data []byte) error {
 
 	// Resolve AP object from JSON data.
 	msg.APObject, err = resolveAPObject(
-		imsg.APObjectType,
 		imsg.APObject,
 	)
 	if err != nil {
@@ -335,22 +334,16 @@ func FederatorMsgIndices() []structr.IndexConfig {
 	}
 }
 
-// resolveAPObject ...
-func resolveAPObject(typ string, data map[string]interface{}) (interface{}, error) {
-	if typ == "" && data == nil {
+// resolveAPObject resolves an ActivityPub object from its "serialized" JSON map
+// (yes the terminology here is weird, but that's how go-fed/activity is written).
+func resolveAPObject(data map[string]interface{}) (interface{}, error) {
+	if len(data) == 0 {
+		// No data given.
 		return nil, nil
 	}
 
-	stype, err := streams.ToType(context.Background(), data)
-	if err != nil {
-		return nil, err
-	}
-
-	if name := stype.GetTypeName(); name != typ {
-		return nil, gtserror.Newf("type name and data mismatch: want=%q have=%q", typ, name)
-	}
-
-	return stype, nil
+	// Resolve vocab.Type from "raw" input data map.
+	return streams.ToType(context.Background(), data)
 }
 
 // resolveGTSModel is unfortunately where things get messy... our data is stored as JSON

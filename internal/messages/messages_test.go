@@ -143,7 +143,7 @@ func TestSerializeFromFediAPI(t *testing.T) {
 
 func TestDeserializeFromFediAPI(t *testing.T) {
 	for _, test := range fromFediAPICases {
-		msg := new(messages.FromFediAPI)
+		var msg messages.FromFediAPI
 
 		// Deserialize test message blob.
 		err := msg.Deserialize(test.data)
