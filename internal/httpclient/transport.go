@@ -37,10 +37,10 @@ func (t *signingtransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Ensure updated host always set.
 	r.Header.Set("Host", r.URL.Host)
 
-	// Rewind request body if needed.
-	if err := rewind(r); err != nil {
-		return nil, err
-	}
+	// // Rewind request body if needed.
+	// if err := rewind(r); err != nil {
+	// 	return nil, err
+	// }
 
 	if sign := gtscontext.HTTPClientSignFunc(r.Context()); sign != nil {
 		// Reset signing header fields
