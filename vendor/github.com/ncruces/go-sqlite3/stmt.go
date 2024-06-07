@@ -441,12 +441,12 @@ func (s *Stmt) ColumnOriginName(col int) string {
 // ColumnBool returns the value of the result column as a bool.
 // The leftmost column of the result set has the index 0.
 // SQLite does not have a separate boolean storage class.
-// Instead, boolean values are retrieved as integers,
+// Instead, boolean values are retrieved as numbers,
 // with 0 converted to false and any other value to true.
 //
 // https://sqlite.org/c3ref/column_blob.html
 func (s *Stmt) ColumnBool(col int) bool {
-	return s.ColumnInt64(col) != 0
+	return s.ColumnFloat(col) != 0
 }
 
 // ColumnInt returns the value of the result column as an int.

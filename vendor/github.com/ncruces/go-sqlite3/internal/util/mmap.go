@@ -1,4 +1,4 @@
-//go:build (darwin || linux) && (amd64 || arm64 || riscv64) && !(sqlite3_noshm || sqlite3_nosys)
+//go:build unix && (amd64 || arm64 || riscv64) && !(sqlite3_noshm || sqlite3_nosys)
 
 package util
 
@@ -7,6 +7,7 @@ import (
 	"os"
 	"unsafe"
 
+	"github.com/ncruces/go-sqlite3/internal/alloc"
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental"
 	"golang.org/x/sys/unix"
@@ -14,7 +15,7 @@ import (
 
 func withAllocator(ctx context.Context) context.Context {
 	return experimental.WithMemoryAllocator(ctx,
-		experimental.MemoryAllocatorFunc(virtualAlloc))
+		experimental.MemoryAllocatorFunc(alloc.Virtual))
 }
 
 type mmapState struct {
