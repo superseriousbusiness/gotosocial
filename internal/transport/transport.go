@@ -181,7 +181,8 @@ func (t *transport) newPOST(ctx context.Context, url string, data []byte) (*http
 
 	// Use *bytes.Reader for request body,
 	// as NewRequest() automatically will
-	// set .GetBody and content-length.
+	// set .GetBody fn and content-length
+	// (this handles necessary rewinding).
 	body := bytes.NewReader(data)
 
 	// Update to-be-used request context with signing details.
