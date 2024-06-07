@@ -18,12 +18,15 @@
 package transport
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"net/http"
 	"net/url"
 
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
@@ -127,11 +130,27 @@ func (t *transport) prepare(
 	*delivery.Delivery,
 	error,
 ) {
-	// Prepare new POST request to recipient.
-	r, err := t.newPOST(ctx, to.String(), data)
+	// Prepare POST signer.
+	sign := t.signPOST(data)
+
+	// Use *bytes.Reader for request body,
+	// as NewRequest() automatically will
+	// set .GetBody and content-length.
+	// (this handles necessary rewinding).
+	body := bytes.NewReader(data)
+
+	// Update to-be-used request context with signing details.
+	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
+	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
+
+	// Prepare a new request with data body directed at URL.
+	r, err := http.NewRequestWithContext(ctx, "POST", to.String(), body)
 	if err != nil {
-		return nil, err
+		return nil, gtserror.Newf("error preparing request: %w", err)
 	}
+
+	// Set our predefined controller user-agent.
+	r.Header.Set("User-Agent", t.controller.userAgent)
 
 	// Set the standard ActivityPub content-type + charset headers.
 	r.Header.Add("Content-Type", string(apiutil.AppActivityLDJSON))

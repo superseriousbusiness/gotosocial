@@ -18,7 +18,6 @@
 package transport
 
 import (
-	"bytes"
 	"context"
 	"crypto"
 	"errors"
@@ -29,7 +28,6 @@ import (
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/httpsig"
@@ -151,54 +149,6 @@ func (t *transport) POST(r *http.Request, body []byte) (*http.Response, error) {
 
 	// Pass to underlying HTTP client.
 	return t.controller.client.Do(r)
-}
-
-// newGET prepares a new get request relying on context, to recipient at URL with given signing options.
-func (t *transport) newGET(ctx context.Context, url string, opts httpsig.SignatureOption) (*http.Request, error) {
-	// Prepare GET signer.
-	sign := t.signGET(opts)
-
-	// Update to-be-used request context with signing details.
-	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
-	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
-
-	// Prepare a new request to fetch data from URL.
-	r, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, gtserror.Newf("error preparing request: %w", err)
-	}
-
-	// Set our predefined controller user-agent.
-	r.Header.Set("User-Agent", t.controller.userAgent)
-
-	return r, nil
-}
-
-// newPOST prepares a new post request relying on context, to recipient at URL with given data body.
-func (t *transport) newPOST(ctx context.Context, url string, data []byte) (*http.Request, error) {
-	// Prepare POST signer.
-	sign := t.signPOST(data)
-
-	// Use *bytes.Reader for request body,
-	// as NewRequest() automatically will
-	// set .GetBody fn and content-length
-	// (this handles necessary rewinding).
-	body := bytes.NewReader(data)
-
-	// Update to-be-used request context with signing details.
-	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
-	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
-
-	// Prepare a new request with data body directed at URL.
-	r, err := http.NewRequestWithContext(ctx, "POST", url, body)
-	if err != nil {
-		return nil, gtserror.Newf("error preparing request: %w", err)
-	}
-
-	// Set our predefined controller user-agent.
-	r.Header.Set("User-Agent", t.controller.userAgent)
-
-	return r, nil
 }
 
 // signGET will safely sign an HTTP GET request.
