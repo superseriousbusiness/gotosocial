@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"time"
 
-	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 )
 
@@ -38,18 +37,17 @@ func (t *signingtransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Ensure updated host always set.
 	r.Header.Set("Host", r.URL.Host)
 
+	// Rewind request body if needed.
+	if err := rewind(r); err != nil {
+		return nil, err
+	}
+
 	if sign := gtscontext.HTTPClientSignFunc(r.Context()); sign != nil {
 		// Reset signing header fields
 		now := time.Now().UTC()
 		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 		r.Header.Del("Signature")
 		r.Header.Del("Digest")
-
-		// Rewind body reader and content-length if set.
-		if rc, ok := r.Body.(*byteutil.ReadNopCloser); ok {
-			rc.Rewind() // set len AFTER rewind
-			r.ContentLength = int64(rc.Len())
-		}
 
 		// Sign the outgoing request.
 		if err := sign(r); err != nil {
@@ -59,4 +57,48 @@ func (t *signingtransport) RoundTrip(r *http.Request) (*http.Response, error) {
 
 	// Pass to underlying transport.
 	return t.Transport.RoundTrip(r)
+}
+
+// rewind attempts to rewind a request body
+// if required, i.e. starts it from beginning.
+func rewind(r *http.Request) error {
+	// No rewind needed.
+	if r.Body == nil {
+		return nil
+	}
+
+	// Check for size support.
+	szer, ok := r.Body.(sizer)
+
+	// Both sizing and body func
+	// are required for rewinding.
+	if !ok || r.GetBody == nil {
+		return nil
+	}
+
+	// Check whether body is at start of in data.
+	if s := szer.Size(); s != int64(szer.Len()) {
+		var err error
+
+		// Get new copy of body.
+		r.Body, err = r.GetBody()
+		if err != nil {
+			return err
+		}
+
+		// Reset content-length.
+		r.ContentLength = s
+	}
+
+	return nil
+}
+
+// sizer is an interface supported by
+// common stdlib implementers of io
+// interfaces. e.g. strings.Reader,
+// bytes.Reader (the only types we
+// use with known rewindable bodies).
+type sizer interface {
+	Len() int
+	Size() int64
 }

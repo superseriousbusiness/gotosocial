@@ -20,13 +20,10 @@ package transport
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"net/url"
 
-	"codeberg.org/gruf/go-byteutil"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
@@ -130,23 +127,10 @@ func (t *transport) prepare(
 	*delivery.Delivery,
 	error,
 ) {
-	url := to.String()
-
-	// Use rewindable reader for body.
-	var body byteutil.ReadNopCloser
-	body.Reset(data)
-
-	// Prepare POST signer.
-	sign := t.signPOST(data)
-
-	// Update to-be-used request context with signing details.
-	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
-	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
-
-	// Prepare a new request with data body directed at URL.
-	r, err := http.NewRequestWithContext(ctx, "POST", url, &body)
+	// Prepare new POST request to recipient.
+	r, err := t.newPOST(ctx, to.String(), data)
 	if err != nil {
-		return nil, gtserror.Newf("error preparing request: %w", err)
+		return nil, err
 	}
 
 	// Set the standard ActivityPub content-type + charset headers.

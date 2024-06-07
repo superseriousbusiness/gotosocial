@@ -55,13 +55,13 @@ type Delivery struct {
 }
 
 type delivery struct {
-	ActorID  string
-	ObjectID string
-	TargetID string
-	Method   string
-	Headers  map[string][]string
-	URL      string
-	Body     []byte
+	ActorID  string              `json:"actor_id,omitempty"`
+	ObjectID string              `json:"object_id,omitempty"`
+	TargetID string              `json:"target_id,omitempty"`
+	Method   string              `json:"method,omitempty"`
+	Headers  map[string][]string `json:"headers,omitempty"`
+	URL      string              `json:"url,omitempty"`
+	Body     []byte              `json:"body,omitempty"`
 }
 
 // Serialize ...
