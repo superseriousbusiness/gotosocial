@@ -1,7 +1,6 @@
 package messages_test
 
 import (
-	"bytes"
 	"encoding/json"
 	"testing"
 
@@ -157,15 +156,7 @@ func TestDeserializeFromFediAPI(t *testing.T) {
 
 }
 
-func indent(b []byte) string {
-	buf := bytes.NewBuffer(nil)
-	err := json.Indent(buf, b, "", "    ")
-	if err != nil {
-		panic(err)
-	}
-	return buf.String()
-}
-
+// toJSON marshals input type as JSON data.
 func toJSON(a any) []byte {
 	b, err := json.Marshal(a)
 	if err != nil {
