@@ -18,6 +18,10 @@
 package delivery
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
@@ -29,6 +33,9 @@ import (
 // be indexed (and so, dropped from queue)
 // by any of these possible ID IRIs.
 type Delivery struct {
+	// PubKeyID is the signing public key
+	// ID of the actor performing request.
+	PubKeyID string
 
 	// ActorID contains the ActivityPub
 	// actor ID IRI (if any) of the activity
@@ -54,27 +61,95 @@ type Delivery struct {
 	next time.Time
 }
 
+// delivery is an internal type
+// for Delivery{} that provides
+// a json serialize / deserialize
+// able shape that minimizes data.
 type delivery struct {
+	PubKeyID string              `json:"pub_key_id,omitempty"`
 	ActorID  string              `json:"actor_id,omitempty"`
 	ObjectID string              `json:"object_id,omitempty"`
 	TargetID string              `json:"target_id,omitempty"`
 	Method   string              `json:"method,omitempty"`
-	Headers  map[string][]string `json:"headers,omitempty"`
+	Header   map[string][]string `json:"header,omitempty"`
 	URL      string              `json:"url,omitempty"`
 	Body     []byte              `json:"body,omitempty"`
 }
 
-// Serialize ...
+// Serialize will serialize the delivery data as data blob for storage,
+// note that this will flatten some of the data, dropping signing funcs.
 func (dlv *Delivery) Serialize() ([]byte, error) {
-	panic("TODO")
+	var body []byte
+
+	if dlv.Request.GetBody != nil {
+		// Fetch a fresh copy of request body.
+		rbody, err := dlv.Request.GetBody()
+		if err != nil {
+			return nil, err
+		}
+
+		// Read request body into memory.
+		body, err = io.ReadAll(rbody)
+
+		// Done with body.
+		_ = rbody.Close()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Marshal as internal JSON type.
+	return json.Marshal(delivery{
+		PubKeyID: dlv.PubKeyID,
+		ActorID:  dlv.ActorID,
+		ObjectID: dlv.ObjectID,
+		TargetID: dlv.TargetID,
+		Method:   dlv.Request.Method,
+		Header:   dlv.Request.Header,
+		URL:      dlv.Request.URL.String(),
+		Body:     body,
+	})
 }
 
-// Deserialize ...
+// Deserialize will attempt to deserialize a blob of task data,
+// which will involve unflattening previously serialized data and
+// leave delivery incomplete, still requiring signing func setup.
 func (dlv *Delivery) Deserialize(data []byte) error {
-	panic("TODO")
+	var idlv delivery
+
+	// Unmarshal as internal JSON type.
+	err := json.Unmarshal(data, &idlv)
+	if err != nil {
+		return err
+	}
+
+	// Copy over simplest fields.
+	dlv.PubKeyID = idlv.PubKeyID
+	dlv.ActorID = idlv.ActorID
+	dlv.ObjectID = idlv.ObjectID
+	dlv.TargetID = idlv.TargetID
+
+	var body io.Reader
+
+	if idlv.Body != nil {
+		// Create new body reader from data.
+		body = bytes.NewReader(idlv.Body)
+	}
+
+	// Create a new request object from unmarshaled details.
+	r, err := http.NewRequest(idlv.Method, idlv.URL, body)
+	if err != nil {
+		return err
+	}
+
+	// Wrap request in httpclient type.
+	dlv.Request = httpclient.WrapRequest(r)
+
+	return nil
 }
 
-// backoff ...
+// backoff returns a valid (>= 0) backoff duration.
 func (dlv *Delivery) backoff() time.Duration {
 	if dlv.next.IsZero() {
 		return 0
