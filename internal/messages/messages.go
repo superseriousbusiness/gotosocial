@@ -337,6 +337,10 @@ func FederatorMsgIndices() []structr.IndexConfig {
 
 // resolveAPObject ...
 func resolveAPObject(typ string, data map[string]interface{}) (interface{}, error) {
+	if typ == "" && data == nil {
+		return nil, nil
+	}
+
 	stype, err := streams.ToType(context.Background(), data)
 	if err != nil {
 		return nil, err
