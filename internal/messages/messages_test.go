@@ -60,10 +60,44 @@ var fromFediAPICases = []struct {
 	msg  messages.FromFediAPI
 	data []byte
 }{
-	// {
-	// 	msg:  messages.FromFediAPI{},
-	// 	data: toJSON(map[string]any{}),
-	// },
+	{
+		msg: messages.FromFediAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       &gtsmodel.Status{ID: "69", Content: "hehe"},
+			TargetURI:      "https://gotosocial.org",
+			Requesting:     &gtsmodel.Account{ID: "654321"},
+			Receiving:      &gtsmodel.Account{ID: "123456"},
+		},
+		data: toJSON(map[string]any{
+			"ap_object_type":   ap.ObjectNote,
+			"ap_activity_type": ap.ActivityCreate,
+			"gts_model":        json.RawMessage(toJSON(&gtsmodel.Status{ID: "69", Content: "hehe"})),
+			"gts_model_type":   "*gtsmodel.Status",
+			"target_uri":       "https://gotosocial.org",
+			"requesting_id":    "654321",
+			"receiving_id":     "123456",
+		}),
+	},
+	{
+		msg: messages.FromFediAPI{
+			APObjectType:   ap.ObjectProfile,
+			APActivityType: ap.ActivityUpdate,
+			GTSModel:       &gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)},
+			TargetURI:      "https://uk-queen-is-dead.org",
+			Requesting:     &gtsmodel.Account{ID: "123456"},
+			Receiving:      &gtsmodel.Account{ID: "654321"},
+		},
+		data: toJSON(map[string]any{
+			"ap_object_type":   ap.ObjectProfile,
+			"ap_activity_type": ap.ActivityUpdate,
+			"gts_model":        json.RawMessage(toJSON(&gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)})),
+			"gts_model_type":   "*gtsmodel.Account",
+			"target_uri":       "https://uk-queen-is-dead.org",
+			"requesting_id":    "123456",
+			"receiving_id":     "654321",
+		}),
+	},
 }
 
 func TestSerializeFromClientAPI(t *testing.T) {
@@ -102,8 +136,8 @@ func TestSerializeFromFediAPI(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Check that data is as expected.
-		assert.Equal(t, test.data, data)
+		// Check that serialized JSON data is as expected.
+		assert.JSONEq(t, string(test.data), string(data))
 	}
 }
 
