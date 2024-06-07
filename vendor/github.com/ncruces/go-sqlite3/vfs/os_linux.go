@@ -56,7 +56,7 @@ func osLock(file *os.File, typ int16, start, len int64, timeout time.Duration, d
 			if timeout < time.Since(before) {
 				break
 			}
-			osSleep(time.Duration(rand.Int63n(int64(time.Millisecond))))
+			time.Sleep(time.Duration(rand.Int63n(int64(time.Millisecond))))
 		}
 	}
 	return osLockErrorCode(err, def)

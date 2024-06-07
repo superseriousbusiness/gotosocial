@@ -46,13 +46,18 @@ to check if your build supports file locking.
 
 ### Write-Ahead Logging
 
-On 64-bit Linux and macOS, this module uses `mmap` to implement
+On 64-bit Unix, this module uses `mmap` to implement
 [shared-memory for the WAL-index](https://sqlite.org/wal.html#implementation_of_shared_memory_for_the_wal_index),
 like SQLite.
 
 To allow `mmap` to work, each connection needs to reserve up to 4GB of address space.
 To limit the address space each connection reserves,
 use [`WithMemoryLimitPages`](../tests/testcfg/testcfg.go).
+
+With [BSD locks](https://man.freebsd.org/cgi/man.cgi?query=flock&sektion=2)
+a WAL database can only be accessed by a single proccess.
+Other processes that attempt to access a database locked with BSD locks,
+will fail with the `SQLITE_PROTOCOL` error code.
 
 Otherwise, [WAL support is limited](https://sqlite.org/wal.html#noshm),
 and `EXCLUSIVE` locking mode must be set to create, read, and write WAL databases.
@@ -79,8 +84,9 @@ The VFS can be customized with a few build tags:
 - `sqlite3_noshm` disables shared memory on all platforms.
 
 > [!IMPORTANT]
-> The default configuration of this package is compatible with
-> the standard [Unix and Windows SQLite VFSes](https://sqlite.org/vfs.html#multiple_vfses);
-> `sqlite3_flock` is compatible with the [`unix-flock` VFS](https://sqlite.org/compile.html#enable_locking_style).
-> If incompatible file locking is used, accessing databases concurrently with _other_ SQLite libraries
-> will eventually corrupt data.
+> The default configuration of this package is compatible with the standard
+> [Unix and Windows SQLite VFSes](https://sqlite.org/vfs.html#multiple_vfses);
+> `sqlite3_flock` builds are compatible with the
+> [`unix-flock` VFS](https://sqlite.org/compile.html#enable_locking_style).
+> If incompatible file locking is used, accessing databases concurrently with
+> _other_ SQLite libraries will eventually corrupt data.

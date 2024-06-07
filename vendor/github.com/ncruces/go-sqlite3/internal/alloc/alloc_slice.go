@@ -1,21 +1,20 @@
 //go:build !(darwin || linux) || !(amd64 || arm64 || riscv64) || sqlite3_noshm || sqlite3_nosys
 
-package util
+package alloc
 
 import "github.com/tetratelabs/wazero/experimental"
 
-func sliceAlloc(cap, max uint64) experimental.LinearMemory {
-	return &sliceBuffer{make([]byte, cap), max}
+func Slice(cap, _ uint64) experimental.LinearMemory {
+	return &sliceMemory{make([]byte, 0, cap)}
 }
 
-type sliceBuffer struct {
+type sliceMemory struct {
 	buf []byte
-	max uint64
 }
 
-func (b *sliceBuffer) Free() {}
+func (b *sliceMemory) Free() {}
 
-func (b *sliceBuffer) Reallocate(size uint64) []byte {
+func (b *sliceMemory) Reallocate(size uint64) []byte {
 	if cap := uint64(cap(b.buf)); size > cap {
 		b.buf = append(b.buf[:cap], make([]byte, size-cap)...)
 	} else {

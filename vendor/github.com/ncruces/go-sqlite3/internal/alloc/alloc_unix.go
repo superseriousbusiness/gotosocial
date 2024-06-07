@@ -1,6 +1,6 @@
 //go:build unix && !sqlite3_nosys
 
-package util
+package alloc
 
 import (
 	"math"
@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func virtualAlloc(cap, max uint64) experimental.LinearMemory {
+func Virtual(_, max uint64) experimental.LinearMemory {
 	// Round up to the page size.
 	rnd := uint64(unix.Getpagesize() - 1)
 	max = (max + rnd) &^ rnd

@@ -1,6 +1,6 @@
 //go:build !sqlite3_nosys
 
-package util
+package alloc
 
 import (
 	"math"
@@ -11,7 +11,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func virtualAlloc(cap, max uint64) experimental.LinearMemory {
+func Virtual(_, max uint64) experimental.LinearMemory {
 	// Round up to the page size.
 	rnd := uint64(windows.Getpagesize() - 1)
 	max = (max + rnd) &^ rnd
@@ -32,7 +32,7 @@ func virtualAlloc(cap, max uint64) experimental.LinearMemory {
 	mem := virtualMemory{addr: r}
 	// SliceHeader, although deprecated, avoids a go vet warning.
 	sh := (*reflect.SliceHeader)(unsafe.Pointer(&mem.buf))
-	sh.Cap = int(max) // Not a bug.
+	sh.Cap = int(max)
 	sh.Data = r
 	return &mem
 }

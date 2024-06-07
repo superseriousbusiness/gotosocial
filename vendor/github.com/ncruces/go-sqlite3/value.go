@@ -68,12 +68,12 @@ func (v Value) NumericType() Datatype {
 
 // Bool returns the value as a bool.
 // SQLite does not have a separate boolean storage class.
-// Instead, boolean values are retrieved as integers,
+// Instead, boolean values are retrieved as numbers,
 // with 0 converted to false and any other value to true.
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) Bool() bool {
-	return v.Int64() != 0
+	return v.Float() != 0
 }
 
 // Int returns the value as an int.
