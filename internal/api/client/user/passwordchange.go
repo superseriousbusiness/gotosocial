@@ -24,9 +24,12 @@ import (
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
+
+const OIDCPasswordHelp = "password change request cannot be processed by GoToSocial as this instance is running with OIDC enabled; you must change password using your OIDC provider"
 
 // PasswordChangePOSTHandler swagger:operation POST /api/v1/user/password_change userPasswordChange
 //
@@ -62,6 +65,8 @@ import (
 //			description: forbidden
 //		'406':
 //			description: not acceptable
+//		'422':
+//			description: unprocessable request because instance is running with OIDC backend
 //		'500':
 //			description: internal error
 func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
@@ -73,6 +78,12 @@ func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if config.GetOIDCEnabled() {
+		err := errors.New("instance running with OIDC")
+		apiutil.ErrorHandler(c, gtserror.NewErrorUnprocessableEntity(err, OIDCPasswordHelp), m.processor.InstanceGetV1)
 		return
 	}
 

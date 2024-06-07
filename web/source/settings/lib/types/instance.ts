@@ -49,6 +49,7 @@ export interface InstanceConfiguration {
     polls:             InstancePolls;
     accounts:          InstanceAccounts;
     emojis:            InstanceEmojis;
+    oidc_enabled?:     boolean;
 }
 
 export interface InstanceAccounts {

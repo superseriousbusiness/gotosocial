@@ -127,4 +127,6 @@ type InstanceV1Configuration struct {
 	Accounts InstanceConfigurationAccounts `json:"accounts"`
 	// Instance configuration pertaining to emojis.
 	Emojis InstanceConfigurationEmojis `json:"emojis"`
+	// True if instance is running with OIDC as auth/identity backend, else omitted.
+	OIDCEnabled bool `json:"oidc_enabled,omitempty"`
 }
