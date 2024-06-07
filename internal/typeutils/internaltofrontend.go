@@ -1328,6 +1328,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
 	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
+	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
 	// URLs
 	instance.URLs.StreamingAPI = "wss://" + i.Domain
@@ -1467,6 +1468,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
 	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
+	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
 	// registrations
 	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()

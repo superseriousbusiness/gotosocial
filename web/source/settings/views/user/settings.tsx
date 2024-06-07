@@ -28,6 +28,7 @@ import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
 import { useEmailChangeMutation, usePasswordChangeMutation, useUpdateCredentialsMutation, useUserQuery } from "../../lib/query/user";
 import Loading from "../../components/loading";
 import { User } from "../../lib/types/user";
+import { useInstanceV1Query } from "../../lib/query/gts-api";
 
 export default function UserSettings() {
 	return (
@@ -106,6 +107,24 @@ function UserSettingsForm({ data }) {
 }
 
 function PasswordChange() {
+	// Load instance data.
+	const {
+		data: instance,
+		isFetching: isFetchingInstance,
+		isLoading: isLoadingInstance
+	} = useInstanceV1Query();
+	if (isFetchingInstance || isLoadingInstance) {
+		return <Loading />;
+	}
+
+	if (instance === undefined) {
+		throw "could not fetch instance";
+	}
+
+	return <PasswordChangeForm oidcEnabled={instance.configuration.oidc_enabled} />;
+}
+
+function PasswordChangeForm({ oidcEnabled }: { oidcEnabled?: boolean }) {
 	const form = {
 		oldPassword: useTextInput("old_password"),
 		newPassword: useTextInput("new_password", {
@@ -133,6 +152,13 @@ function PasswordChange() {
 		<form className="change-password" onSubmit={submitForm}>
 			<div className="form-section-docs">
 				<h3>Change Password</h3>
+				{ oidcEnabled && <p>
+					This instance is running with OIDC as its authorization + identity provider.
+					<br/>
+					This means <strong>you cannot change your password using this settings panel</strong>.
+					<br/>
+					To change your password, you should instead contact your OIDC provider.
+				</p> }
 				<a
 					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#password-change"
 					target="_blank"
@@ -142,12 +168,14 @@ function PasswordChange() {
 					Learn more about this (opens in a new tab)
 				</a>
 			</div>
+			
 			<TextInput
 				type="password"
 				name="password"
 				field={form.oldPassword}
 				label="Current password"
 				autoComplete="current-password"
+				disabled={oidcEnabled}
 			/>
 			<TextInput
 				type="password"
@@ -155,6 +183,7 @@ function PasswordChange() {
 				field={form.newPassword}
 				label="New password"
 				autoComplete="new-password"
+				disabled={oidcEnabled}
 			/>
 			<TextInput
 				type="password"
@@ -162,20 +191,36 @@ function PasswordChange() {
 				field={verifyNewPassword}
 				label="Confirm new password"
 				autoComplete="new-password"
+				disabled={oidcEnabled}
 			/>
 			<MutationButton
-				disabled={false}
 				label="Change password"
 				result={result}
+				disabled={oidcEnabled ?? false}
 			/>
 		</form>
 	);
 }
 
 function EmailChange() {
-	// Load existing user data.
-	const { data: user, isFetching, isLoading } = useUserQuery();
-	if (isFetching || isLoading) {
+	// Load instance data.
+	const {
+		data: instance,
+		isFetching: isFetchingInstance,
+		isLoading: isLoadingInstance
+	} = useInstanceV1Query();
+	
+	// Load user data.
+	const {
+		data: user,
+		isFetching: isFetchingUser,
+		isLoading: isLoadingUser
+	} = useUserQuery();
+
+	if (
+		(isFetchingInstance || isLoadingInstance) ||
+		(isFetchingUser || isLoadingUser)
+	) {
 		return <Loading />;
 	}
 
@@ -183,10 +228,14 @@ function EmailChange() {
 		throw "could not fetch user";
 	}
 
-	return <EmailChangeForm user={user} />;
+	if (instance === undefined) {
+		throw "could not fetch instance";
+	}
+
+	return <EmailChangeForm user={user} oidcEnabled={instance.configuration.oidc_enabled} />;
 }
 
-function EmailChangeForm({user}: {user: User}) {
+function EmailChangeForm({user, oidcEnabled}: { user: User, oidcEnabled?: boolean }) {
 	const form = {
 		currentEmail: useTextInput("current_email", {
 			defaultValue: user.email,
@@ -217,6 +266,15 @@ function EmailChangeForm({user}: {user: User}) {
 		<form className="change-email" onSubmit={submitForm}>
 			<div className="form-section-docs">
 				<h3>Change Email</h3>
+				{ oidcEnabled && <p>
+					This instance is running with OIDC as its authorization + identity provider.
+					<br/>
+					You can still change your email address using this settings panel,
+					but it will only affect which address GoToSocial uses to contact you,
+					not the email address you use to log in.
+					<br/>
+					To change the email address you use to log in, contact your OIDC provider.
+				</p> }
 				<a
 					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#email-change"
 					target="_blank"
@@ -227,7 +285,7 @@ function EmailChangeForm({user}: {user: User}) {
 				</a>
 			</div>
 
-			{ user.unconfirmed_email && <>
+			{ (user.unconfirmed_email && user.unconfirmed_email !== user.email) && <>
 				<div className="info">
 					<i className="fa fa-fw fa-info-circle" aria-hidden="true"></i>
 					<b>

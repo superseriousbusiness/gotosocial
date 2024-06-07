@@ -163,6 +163,8 @@ type InstanceV2Configuration struct {
 	Translation InstanceV2ConfigurationTranslation `json:"translation"`
 	// Instance configuration pertaining to emojis.
 	Emojis InstanceConfigurationEmojis `json:"emojis"`
+	// True if instance is running with OIDC as auth/identity backend, else omitted.
+	OIDCEnabled bool `json:"oidc_enabled,omitempty"`
 }
 
 // Information about registering for this instance.

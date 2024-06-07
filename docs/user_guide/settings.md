@@ -157,13 +157,19 @@ When you are finished updating your post settings, remember to click the `Save p
 
 You can use the Password Change section of the panel to set a new password for your account. For security reasons, you must provide your current password to validate the change.
 
+!!! info
+    If your instance is using OIDC as its authorization/identity provider, you will not be able to change your password via the GoToSocial settings panel, and you should contact your OIDC provider instead.
+
 For more information on the way GoToSocial manages passwords, please see the [Password management document](./password_management.md).
 
 ### Email Change
 
 You can use the Email Change section of the panel to change the email address for your account. For security reasons, you must provide your current password to validate the change.
 
-Once a new email address has been entered, and you have clicked "Change email address", you must open the inbox of the new email address and confirm your address via the link provided. Once you've done that, your email address change will be confirmed, and you should use the new email address to log in.
+Once a new email address has been entered, and you have clicked "Change email address", you must open the inbox of the new email address and confirm your address via the link provided. Once you've done that, your email address change will be confirmed.
+
+!!! info
+    If your instance is using OIDC as its authorization/identity provider, you will be able to change your email address via the settings panel, but it will only affect the email address GoToSocial uses to contact you, it will not change the email address you need to use to log in to your account. To change that, you should contact your OIDC provider.
 
 ## Migration
 

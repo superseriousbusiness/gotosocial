@@ -1541,6 +1541,10 @@ definitions:
                 $ref: '#/definitions/InstanceConfigurationEmojis'
             media_attachments:
                 $ref: '#/definitions/instanceConfigurationMediaAttachments'
+            oidc_enabled:
+                description: True if instance is running with OIDC as auth/identity backend, else omitted.
+                type: boolean
+                x-go-name: OIDCEnabled
             polls:
                 $ref: '#/definitions/instanceConfigurationPolls'
             statuses:
@@ -1656,6 +1660,10 @@ definitions:
                 $ref: '#/definitions/InstanceConfigurationEmojis'
             media_attachments:
                 $ref: '#/definitions/instanceConfigurationMediaAttachments'
+            oidc_enabled:
+                description: True if instance is running with OIDC as auth/identity backend, else omitted.
+                type: boolean
+                x-go-name: OIDCEnabled
             polls:
                 $ref: '#/definitions/instanceConfigurationPolls'
             statuses:
@@ -9044,6 +9052,8 @@ paths:
                     description: forbidden
                 "406":
                     description: not acceptable
+                "422":
+                    description: unprocessable request because instance is running with OIDC backend
                 "500":
                     description: internal error
             security:
