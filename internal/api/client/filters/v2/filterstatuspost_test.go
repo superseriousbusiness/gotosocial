@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -102,6 +103,8 @@ func (suite *FiltersTestSuite) postFilterStatus(
 }
 
 func (suite *FiltersTestSuite) TestPostFilterStatus() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterID := suite.testFilters["local_account_1_filter_1"].ID
 	statusID := suite.testStatuses["admin_account_status_1"].ID
 	filterStatus, err := suite.postFilterStatus(filterID, &statusID, nil, http.StatusOK, "")
@@ -110,9 +113,13 @@ func (suite *FiltersTestSuite) TestPostFilterStatus() {
 	}
 
 	suite.Equal(statusID, filterStatus.StatusID)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterStatusJSON() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterID := suite.testFilters["local_account_1_filter_1"].ID
 	requestJson := `{
 		"status_id": "01F8MH75CBF9JFX4ZAD54N0W0R"
@@ -123,6 +130,8 @@ func (suite *FiltersTestSuite) TestPostFilterStatusJSON() {
 	}
 
 	suite.Equal(suite.testStatuses["admin_account_status_1"].ID, filterStatus.StatusID)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterStatusEmptyStatusID() {

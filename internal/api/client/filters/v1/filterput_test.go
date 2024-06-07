@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -119,6 +120,8 @@ func (suite *FiltersTestSuite) putFilter(
 }
 
 func (suite *FiltersTestSuite) TestPutFilterFull() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
 	context := []string{"home", "public"}
@@ -141,9 +144,13 @@ func (suite *FiltersTestSuite) TestPutFilterFull() {
 	if suite.NotNil(filter.ExpiresAt) {
 		suite.NotEmpty(*filter.ExpiresAt)
 	}
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterFullJSON() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	// Use a numeric literal with a fractional part to test the JSON-specific handling for non-integer "expires_in".
 	requestJson := `{
@@ -171,9 +178,13 @@ func (suite *FiltersTestSuite) TestPutFilterFullJSON() {
 	if suite.NotNil(filter.ExpiresAt) {
 		suite.NotEmpty(*filter.ExpiresAt)
 	}
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterMinimal() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
 	context := []string{"home"}
@@ -191,6 +202,8 @@ func (suite *FiltersTestSuite) TestPutFilterMinimal() {
 	suite.False(filter.Irreversible)
 	suite.False(filter.WholeWord)
 	suite.Nil(filter.ExpiresAt)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterEmptyPhrase() {

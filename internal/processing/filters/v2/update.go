@@ -121,5 +121,13 @@ func (p *Processor) Update(
 	filter.Keywords = filterKeywords
 	filter.Statuses = filterStatuses
 
-	return p.apiFilter(ctx, filter)
+	apiFilter, errWithCode := p.apiFilter(ctx, filter)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Send a filters changed event.
+	p.stream.FiltersChanged(ctx, account)
+
+	return apiFilter, nil
 }

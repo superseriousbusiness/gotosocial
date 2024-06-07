@@ -18,6 +18,7 @@
 package v1
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -25,11 +26,13 @@ import (
 type Processor struct {
 	state     *state.State
 	converter *typeutils.Converter
+	stream    *stream.Processor
 }
 
-func New(state *state.State, converter *typeutils.Converter) Processor {
+func New(state *state.State, converter *typeutils.Converter, stream *stream.Processor) Processor {
 	return Processor{
 		state:     state,
 		converter: converter,
+		stream:    stream,
 	}
 }

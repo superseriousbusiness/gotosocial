@@ -63,5 +63,8 @@ func (p *Processor) Delete(
 		}
 	}
 
+	// Send a filters changed event.
+	p.stream.FiltersChanged(ctx, account)
+
 	return nil
 }

@@ -15,24 +15,22 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package v2
+package stream
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
-type Processor struct {
-	state     *state.State
-	converter *typeutils.Converter
-	stream    *stream.Processor
-}
-
-func New(state *state.State, converter *typeutils.Converter, stream *stream.Processor) Processor {
-	return Processor{
-		state:     state,
-		converter: converter,
-		stream:    stream,
-	}
+// FiltersChanged streams a filters changed event to any open, appropriate streams belonging to the given account.
+// Filter changes have no payload.
+func (p *Processor) FiltersChanged(ctx context.Context, account *gtsmodel.Account) {
+	p.streams.Post(ctx, account.ID, stream.Message{
+		Event: stream.EventTypeFiltersChanged,
+		Stream: []string{
+			stream.TimelineHome,
+		},
+	})
 }

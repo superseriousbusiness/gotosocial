@@ -125,7 +125,7 @@ import (
 //							`update`: a new status has been received.
 //							`notification`: a new notification has been received.
 //							`delete`: a status has been deleted.
-//							`filters_changed`: not implemented.
+//							`filters_changed`: filters (including keywords and statuses) have changed.
 //						type: string
 //						enum:
 //						- update
@@ -142,6 +142,7 @@ import (
 //							If `event` = `update`, then the payload will be a JSON string of a status.
 //							If `event` = `notification`, then the payload will be a JSON string of a notification.
 //							If `event` = `delete`, then the payload will be a status ID.
+//							If `event` = `filters_changed`, then there is no payload.
 //						type: string
 //						example: "{\"id\":\"01FC3TZ5CFG6H65GCKCJRKA669\",\"created_at\":\"2021-08-02T16:25:52Z\",\"sensitive\":false,\"spoiler_text\":\"\",\"visibility\":\"public\",\"language\":\"en\",\"uri\":\"https://gts.superseriousbusiness.org/users/dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669\",\"url\":\"https://gts.superseriousbusiness.org/@dumpsterqueer/statuses/01FC3TZ5CFG6H65GCKCJRKA669\",\"replies_count\":0,\"reblogs_count\":0,\"favourites_count\":0,\"favourited\":false,\"reblogged\":false,\"muted\":false,\"bookmarked\":fals…//gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/original/019036W043D8FXPJKSKCX7G965.png\",\"header_static\":\"https://gts.superseriousbusiness.org/fileserver/01JNN207W98SGG3CBJ76R5MVDN/header/small/019036W043D8FXPJKSKCX7G965.png\",\"followers_count\":33,\"following_count\":28,\"statuses_count\":126,\"last_status_at\":\"2021-08-02T16:25:52Z\",\"emojis\":[],\"fields\":[]},\"media_attachments\":[],\"mentions\":[],\"tags\":[],\"emojis\":[],\"card\":null,\"poll\":null,\"text\":\"a\"}"
 //		'401':

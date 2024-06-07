@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -107,6 +108,8 @@ func (suite *FiltersTestSuite) putFilterKeyword(
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordFull() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	keyword := "fnords"
 	wholeWord := true
@@ -117,9 +120,13 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordFull() {
 
 	suite.Equal(keyword, filterKeyword.Keyword)
 	suite.Equal(wholeWord, filterKeyword.WholeWord)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordFullJSON() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	requestJson := `{
 		"keyword": "fnords",
@@ -132,9 +139,13 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordFullJSON() {
 
 	suite.Equal("fnords", filterKeyword.Keyword)
 	suite.True(filterKeyword.WholeWord)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordMinimal() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterKeywordID := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	keyword := "fnords"
 	filterKeyword, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusOK, "")
@@ -144,6 +155,8 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordMinimal() {
 
 	suite.Equal(keyword, filterKeyword.Keyword)
 	suite.False(filterKeyword.WholeWord)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPutFilterKeywordEmptyKeyword() {

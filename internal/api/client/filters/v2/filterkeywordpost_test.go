@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -107,6 +108,8 @@ func (suite *FiltersTestSuite) postFilterKeyword(
 }
 
 func (suite *FiltersTestSuite) TestPostFilterKeywordFull() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterID := suite.testFilters["local_account_1_filter_1"].ID
 	keyword := "fnords"
 	wholeWord := true
@@ -117,9 +120,13 @@ func (suite *FiltersTestSuite) TestPostFilterKeywordFull() {
 
 	suite.Equal(keyword, filterKeyword.Keyword)
 	suite.Equal(wholeWord, filterKeyword.WholeWord)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterKeywordFullJSON() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterID := suite.testFilters["local_account_1_filter_1"].ID
 	requestJson := `{
 		"keyword": "fnords",
@@ -132,9 +139,13 @@ func (suite *FiltersTestSuite) TestPostFilterKeywordFullJSON() {
 
 	suite.Equal("fnords", filterKeyword.Keyword)
 	suite.True(filterKeyword.WholeWord)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterKeywordMinimal() {
+	homeStream := suite.openHomeStream(suite.testAccounts["local_account_1"])
+
 	filterID := suite.testFilters["local_account_1_filter_1"].ID
 	keyword := "fnords"
 	filterKeyword, err := suite.postFilterKeyword(filterID, &keyword, nil, nil, http.StatusOK, "")
@@ -144,6 +155,8 @@ func (suite *FiltersTestSuite) TestPostFilterKeywordMinimal() {
 
 	suite.Equal(keyword, filterKeyword.Keyword)
 	suite.False(filterKeyword.WholeWord)
+
+	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
 
 func (suite *FiltersTestSuite) TestPostFilterKeywordEmptyKeyword() {
