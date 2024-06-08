@@ -5513,6 +5513,11 @@ raw-body@~1.1.0:
     bytes "1"
     string_decoder "0.10"
 
+re2js@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/re2js/-/re2js-0.4.1.tgz#74a87a90b79ab5dc1effed818151354c8faccb3d"
+  integrity sha512-Kxb+OKXrEPowP4bXAF07NDXtgYX07S8HeVGgadx5/D/R41LzWg1kgTD2szIv2iHJM3vrAPnDKaBzfUE/7QWX9w==
+
 react-dom@^18.2.0:
   version "18.2.0"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-18.2.0.tgz#22aaf38708db2674ed9ada224ca4aa708d821e3d"

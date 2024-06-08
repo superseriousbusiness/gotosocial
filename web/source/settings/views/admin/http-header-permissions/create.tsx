@@ -24,6 +24,7 @@ import useFormSubmit from "../../../lib/form/submit";
 import { TextInput } from "../../../components/form/inputs";
 import MutationButton from "../../../components/form/mutation-button";
 import { PermType } from "../../../lib/types/perm";
+import { RE2JS } from "re2js";
 
 export default function HeaderPermCreateForm({ permType }: { permType: PermType }) {
 	const form = {
@@ -56,7 +57,7 @@ export default function HeaderPermCreateForm({ permType }: { permType: PermType 
 
 				// Ensure regex compiles.
 				try {
-					new RegExp(val);
+					RE2JS.compile(val);
 				} catch (e) {
 					return e;
 				}
@@ -116,14 +117,14 @@ export default function HeaderPermCreateForm({ permType }: { permType: PermType 
 				field={form.regex}
 				label={
 					<>
-						HTTP Header Value Regex&nbsp;
+						HTTP Header Value RE2 Regex&nbsp;
 						<a
-							href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_expressions"
+							href="https://github.com/google/re2/wiki/Syntax"
 							target="_blank"
 							className="docslink"
 							rel="noreferrer"
 						>
-							Learn more about regular expressions (opens in a new tab)
+							Learn more about RE2 regular expressions (opens in a new tab)
 						</a>
 					</>
 				}
