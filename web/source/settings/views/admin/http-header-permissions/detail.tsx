@@ -154,7 +154,7 @@ function PermDeets({
 	// with this regular expression prepopulated.
 	const testParams = new URLSearchParams();
 	testParams.set("regex", perm.regex);
-	testParams.set("flags", "g");
+	testParams.set("flags", "gm");
 	testParams.set("testString", testString);
 	const regexLink = `https://regex101.com/?${testParams.toString()}`;	
 
