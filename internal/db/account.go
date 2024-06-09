@@ -57,6 +57,9 @@ type Account interface {
 	// GetAccountByFollowersURI returns one account with the given followers_uri, or an error if something goes wrong.
 	GetAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
+	// GetAccountByMovedToURI returns any accounts with given moved_to_uri set.
+	GetAccountsByMovedToURI(ctx context.Context, uri string) ([]*gtsmodel.Account, error)
+
 	// GetAccounts returns accounts
 	// with the given parameters.
 	GetAccounts(

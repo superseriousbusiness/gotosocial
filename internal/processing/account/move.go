@@ -27,7 +27,9 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -44,8 +46,8 @@ func (p *Processor) MoveSelf(
 ) gtserror.WithCode {
 	// Ensure valid MovedToURI.
 	if form.MovedToURI == "" {
-		err := errors.New("no moved_to_uri provided in account Move request")
-		return gtserror.NewErrorBadRequest(err, err.Error())
+		const text = "no moved_to_uri provided in Move request"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
 	targetAcctURIStr := form.MovedToURI
@@ -56,29 +58,30 @@ func (p *Processor) MoveSelf(
 	}
 
 	if targetAcctURI.Scheme != "https" && targetAcctURI.Scheme != "http" {
-		err := errors.New("invalid moved_to_uri provided in account Move request: uri scheme must be http or https")
-		return gtserror.NewErrorBadRequest(err, err.Error())
+		const text = "invalid move_to_uri in Move request: scheme must be http(s)"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	// Self account Move requires password to ensure it's for real.
+	// Self account Move requires
+	// password to ensure it's for real.
 	if form.Password == "" {
-		err := errors.New("no password provided in account Move request")
-		return gtserror.NewErrorBadRequest(err, err.Error())
+		const text = "no password provided in Move request"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
 		[]byte(authed.User.EncryptedPassword),
 		[]byte(form.Password),
 	); err != nil {
-		err := errors.New("invalid password provided in account Move request")
-		return gtserror.NewErrorBadRequest(err, err.Error())
+		const text = "invalid password provided in Move request"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
 	// We can't/won't validate Move activities
 	// to domains we have blocked, so check this.
 	targetDomainBlocked, err := p.state.DB.IsDomainBlocked(ctx, targetAcctURI.Host)
 	if err != nil {
-		err := fmt.Errorf(
+		err := gtserror.Newf(
 			"db error checking if target domain %s blocked: %w",
 			targetAcctURI.Host, err,
 		)
@@ -86,12 +89,12 @@ func (p *Processor) MoveSelf(
 	}
 
 	if targetDomainBlocked {
-		err := fmt.Errorf(
+		text := fmt.Sprintf(
 			"domain of %s is blocked from this instance; "+
 				"you will not be able to Move to that account",
 			targetAcctURIStr,
 		)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 	}
 
 	var (
@@ -123,22 +126,24 @@ func (p *Processor) MoveSelf(
 		targetAcctURI,
 	)
 	if err != nil {
-		err := fmt.Errorf("error dereferencing moved_to_uri account: %w", err)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		const text = "error dereferencing moved_to_uri"
+		err := gtserror.Newf("error dereferencing move_to_uri: %w", err)
+		return gtserror.NewErrorUnprocessableEntity(err, text)
 	}
 
 	if !targetAcct.SuspendedAt.IsZero() {
-		err := fmt.Errorf(
+		text := fmt.Sprintf(
 			"target account %s is suspended from this instance; "+
 				"you will not be able to Move to that account",
 			targetAcct.URI,
 		)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 	}
 
-	if targetAcct.IsRemote() {
-		// Force refresh Move target account
-		// to ensure we have up-to-date version.
+	if targetAcctable == nil {
+		// Target account was not dereferenced, now
+		// force refresh Move target account to ensure we
+		// have most up-to-date version (non remote = no-op).
 		targetAcct, _, err = p.federator.RefreshAccount(ctx,
 			originAcct.Username,
 			targetAcct,
@@ -146,11 +151,9 @@ func (p *Processor) MoveSelf(
 			dereferencing.Freshest,
 		)
 		if err != nil {
-			err := fmt.Errorf(
-				"error refreshing target account %s: %w",
-				targetAcctURIStr, err,
-			)
-			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+			const text = "error dereferencing moved_to_uri"
+			err := gtserror.Newf("error dereferencing move_to_uri: %w", err)
+			return gtserror.NewErrorUnprocessableEntity(err, text)
 		}
 	}
 
@@ -158,33 +161,41 @@ func (p *Processor) MoveSelf(
 	// this move reattempt is to the same account.
 	if originAcct.IsMoving() &&
 		originAcct.MovedToURI != targetAcct.URI {
-		err := fmt.Errorf(
+		text := fmt.Sprintf(
 			"your account is already Moving or has Moved to %s; you cannot also Move to %s",
 			originAcct.MovedToURI, targetAcct.URI,
 		)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 	}
 
 	// Target account MUST be aliased to this
 	// account for this to be a valid Move.
 	if !slices.Contains(targetAcct.AlsoKnownAsURIs, originAcct.URI) {
-		err := fmt.Errorf(
+		text := fmt.Sprintf(
 			"target account %s is not aliased to this account via alsoKnownAs; "+
 				"if you just changed it, please wait a few minutes and try the Move again",
 			targetAcct.URI,
 		)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 	}
 
 	// Target account cannot itself have
 	// already Moved somewhere else.
 	if targetAcct.MovedToURI != "" {
-		err := fmt.Errorf(
+		text := fmt.Sprintf(
 			"target account %s has already Moved somewhere else (%s); "+
 				"you will not be able to Move to that account",
 			targetAcct.URI, targetAcct.MovedToURI,
 		)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Check this isn't a recursive loop of moves.
+	if errWithCode := p.checkMoveRecursion(ctx,
+		originAcct,
+		targetAcct,
+	); errWithCode != nil {
+		return errWithCode
 	}
 
 	// If a Move has been *attempted* within last 5m,
@@ -194,7 +205,7 @@ func (p *Processor) MoveSelf(
 		ctx, originAcct.URI, targetAcct.URI,
 	)
 	if err != nil {
-		err := fmt.Errorf(
+		err := gtserror.Newf(
 			"error checking latest Move attempt involving origin %s and target %s: %w",
 			originAcct.URI, targetAcct.URI, err,
 		)
@@ -203,12 +214,12 @@ func (p *Processor) MoveSelf(
 
 	if !latestMoveAttempt.IsZero() &&
 		time.Since(latestMoveAttempt) < 5*time.Minute {
-		err := fmt.Errorf(
+		text := fmt.Sprintf(
 			"your account or target account have been involved in a Move attempt within "+
 				"the last 5 minutes, will not process Move; please try again after %s",
 			latestMoveAttempt.Add(5*time.Minute),
 		)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 	}
 
 	// If a Move has *succeeded* within the last week
@@ -218,7 +229,7 @@ func (p *Processor) MoveSelf(
 		ctx, originAcct.URI, targetAcct.URI,
 	)
 	if err != nil {
-		err := fmt.Errorf(
+		err := gtserror.Newf(
 			"error checking latest Move success involving origin %s and target %s: %w",
 			originAcct.URI, targetAcct.URI, err,
 		)
@@ -227,12 +238,12 @@ func (p *Processor) MoveSelf(
 
 	if !latestMoveSuccess.IsZero() &&
 		time.Since(latestMoveSuccess) < 168*time.Hour {
-		err := fmt.Errorf(
+		text := fmt.Sprintf(
 			"your account or target account have been involved in a successful Move within "+
 				"the last 7 days, will not process Move; please try again after %s",
 			latestMoveSuccess.Add(168*time.Hour),
 		)
-		return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 	}
 
 	// See if we have a Move stored already
@@ -246,21 +257,21 @@ func (p *Processor) MoveSelf(
 		move = originAcct.Move
 		if move == nil {
 			// This shouldn't happen...
-			err := fmt.Errorf("nil move for id %s", originAcct.MoveID)
+			err := gtserror.Newf("error fetching move %s (was nil)", originAcct.MovedToURI)
 			return gtserror.NewErrorInternalError(err)
 		}
 
 		if move.OriginURI != originAcct.URI ||
 			move.TargetURI != targetAcct.URI {
 			// This is also weird...
-			err := errors.New("a Move is already stored for your account but contains invalid fields")
-			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+			const text = "existing stored Move contains invalid fields"
+			return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 		}
 
 		if originAcct.MovedToURI != move.TargetURI {
 			// Huh... I'll be damned.
-			err := errors.New("stored Move target URI does not equal your moved_to_uri value")
-			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+			const text = "existing stored Move target URI != moved_to_uri"
+			return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 		}
 	} else {
 		// Move not stored yet, create it.
@@ -295,7 +306,7 @@ func (p *Processor) MoveSelf(
 			URI:         moveURIStr,
 		}
 		if err := p.state.DB.PutMove(ctx, move); err != nil {
-			err := fmt.Errorf("db error storing move %s: %w", moveURIStr, err)
+			err := gtserror.Newf("db error storing move %s: %w", moveURIStr, err)
 			return gtserror.NewErrorInternalError(err)
 		}
 
@@ -311,7 +322,7 @@ func (p *Processor) MoveSelf(
 			"move_id",
 			"moved_to_uri",
 		); err != nil {
-			err := fmt.Errorf("db error updating account: %w", err)
+			err := gtserror.Newf("db error updating account: %w", err)
 			return gtserror.NewErrorInternalError(err)
 		}
 	}
@@ -324,6 +335,58 @@ func (p *Processor) MoveSelf(
 		Origin:         originAcct,
 		Target:         targetAcct,
 	})
+
+	return nil
+}
+
+// checkMoveRecursion checks that a move from origin to target would
+// not cause a loop of account moved_from_uris pointing in a loop.
+func (p *Processor) checkMoveRecursion(
+	ctx context.Context,
+	origin *gtsmodel.Account,
+	target *gtsmodel.Account,
+) gtserror.WithCode {
+	// We only ever need barebones models.
+	ctx = gtscontext.SetBarebones(ctx)
+
+	// Stack based account move following loop.
+	stack := []*gtsmodel.Account{origin}
+	checked := make(map[string]struct{})
+	for len(stack) > 0 {
+
+		// Pop account from stack.
+		next := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		// Add account URI to checked.
+		checked[next.URI] = struct{}{}
+
+		// Fetch any accounts that list 'next' as their 'moved_to_uri'.
+		movedFrom, err := p.state.DB.GetAccountsByMovedToURI(ctx, next.URI)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("error fetching accounts by moved_to_uri: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+
+		for _, account := range movedFrom {
+			if _, ok := checked[account.URI]; ok {
+				// Account with URI has
+				// already been checked.
+				continue
+			}
+
+			// Check movedFrom accounts to ensure
+			// none of them actually come from target,
+			// which would cause a recursion loop.
+			if account.URI == target.URI {
+				text := fmt.Sprintf("move %s -> %s would cause move recursion due to %s", origin.URI, target.URI, account.URI)
+				return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+			}
+
+			// Append 'from' account to stack.
+			stack = append(stack, account)
+		}
+	}
 
 	return nil
 }
