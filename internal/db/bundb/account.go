@@ -259,7 +259,8 @@ func (a *accountDB) GetAccountsByMovedToURI(ctx context.Context, uri string) ([]
 	// given moved_to_uri column.
 	if err := a.db.NewSelect().
 		Table("accounts").
-		Column("id").Where("? = ?", bun.Ident("moved_to_uri"), uri).
+		Column("id").
+		Where("? = ?", bun.Ident("moved_to_uri"), uri).
 		Scan(ctx, &accountIDs); err != nil {
 		return nil, err
 	}
