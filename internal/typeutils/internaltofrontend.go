@@ -1144,12 +1144,17 @@ func (c *Converter) statusToFrontend(
 	}
 
 	if s.BoostOf != nil {
+		if s.BoostOf.BoostOfID != "" {
+			// impossible situation, we do not allow boost wrappers to be boosted.
+			// this is a defensive check to prevent *possible* recursion issues.
+			return nil, gtserror.New("boost target %s is itself a boost wrapper %s")
+		}
+
 		reblog, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount, filterContext, filters, mutes)
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			// If we'd hide the original status, hide the boost.
 			return nil, err
-		}
-		if err != nil {
+		} else if err != nil {
 			return nil, gtserror.Newf("error converting boosted status: %w", err)
 		}
 
