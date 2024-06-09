@@ -49,6 +49,7 @@ func (p *Processor) BoostCreate(
 		return nil, errWithCode
 	}
 
+	// Unwrap target in case it is a boost.
 	target, errWithCode = p.c.UnwrapIfBoost(
 		ctx,
 		requester,
@@ -58,7 +59,7 @@ func (p *Processor) BoostCreate(
 		return nil, errWithCode
 	}
 
-	// Ensure valid boost target.
+	// Ensure valid boost target for requester.
 	boostable, err := p.filter.StatusBoostable(ctx,
 		requester,
 		target,
@@ -69,7 +70,7 @@ func (p *Processor) BoostCreate(
 	}
 
 	if !boostable {
-		err := gtserror.New("status is not boostable")
+		err := errors.New("status is not boostable")
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
