@@ -15,3 +15,4 @@ We consider these topics advanced because applying them incorrectly does have th
 * [Firewall configuration](security/firewall.md)
 * [Tracing](tracing.md)
 * [Metrics](metrics.md)
+* [Replicating SQLite](replicating-sqlite.md)
