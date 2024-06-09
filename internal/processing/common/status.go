@@ -169,19 +169,11 @@ func (p *Processor) UnwrapIfBoost(
 	if status.BoostOfID == "" {
 		return status, nil
 	}
-	status, errWithCode := p.GetVisibleTargetStatus(ctx,
+	return p.GetVisibleTargetStatus(ctx,
 		requester,
 		status.BoostOfID,
 		nil,
 	)
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
-	if status.BoostOfID != "" {
-		err := gtserror.Newf("unwrapped status %s is still a boost", status.URI)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	return status, nil
 }
 
 // GetAPIStatus fetches the appropriate API status model for target.
