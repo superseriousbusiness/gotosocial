@@ -147,6 +147,24 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 // if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 // In other words, this is the public record that the server has of an account.
 func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+	account, err := c.accountToAPIAccountPublic(ctx, a)
+	if err != nil {
+		return nil, err
+	}
+
+	if a.MovedTo != nil {
+		account.Moved, err = c.accountToAPIAccountPublic(ctx, a.MovedTo)
+		if err != nil {
+			log.Errorf(ctx, "error converting account movedTo: %v", err)
+		}
+	}
+
+	return account, nil
+}
+
+// accountToAPIAccountPublic provides all the logic for AccountToAPIAccount, MINUS fetching moved account, to prevent possible recursion.
+func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+
 	// Populate account struct fields.
 	err := c.state.DB.PopulateAccount(ctx, a)
 
@@ -154,7 +172,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	case err == nil:
 		// No problem.
 
-	case err != nil && a.Stats != nil:
+	case a.Stats != nil:
 		// We have stats so that's
 		// *maybe* OK, try to continue.
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
@@ -266,37 +284,10 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		acct = a.Username // omit domain
 	}
 
-	// Populate moved.
-	var moved *apimodel.Account
-	if a.MovedTo != nil {
-		moved, err = c.AccountToAPIAccountPublic(ctx, a.MovedTo)
-		if err != nil {
-			log.Errorf(ctx, "error converting account movedTo: %v", err)
-		}
-	}
-
-	// Bool ptrs should be set, but warn
-	// and use a default if they're not.
-	var boolPtrDef = func(
-		pName string,
-		p *bool,
-		d bool,
-	) bool {
-		if p != nil {
-			return *p
-		}
-
-		log.Warnf(ctx,
-			"%s ptr was nil, using default %t",
-			pName, d,
-		)
-		return d
-	}
-
 	var (
-		locked       = boolPtrDef("locked", a.Locked, true)
-		discoverable = boolPtrDef("discoverable", a.Discoverable, false)
-		bot          = boolPtrDef("bot", a.Bot, false)
+		locked       = util.PtrValueOr(a.Locked, true)
+		discoverable = util.PtrValueOr(a.Discoverable, false)
+		bot          = util.PtrValueOr(a.Bot, false)
 	)
 
 	// Remaining properties are simple and
@@ -329,7 +320,6 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		EnableRSS:       enableRSS,
 		HideCollections: hideCollections,
 		Role:            role,
-		Moved:           moved,
 	}
 
 	// Bodge default avatar + header in,
