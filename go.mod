@@ -42,7 +42,7 @@ require (
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/miekg/dns v1.1.59
-	github.com/minio/minio-go/v7 v7.0.70
+	github.com/minio/minio-go/v7 v7.0.71
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.16.1
 	github.com/oklog/ulid v1.3.1
