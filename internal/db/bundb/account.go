@@ -252,6 +252,27 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	return a.GetAccountByUsernameDomain(ctx, username, domain)
 }
 
+func (a *accountDB) GetAccountsByMovedToURI(ctx context.Context, uri string) ([]*gtsmodel.Account, error) {
+	var accountIDs []string
+
+	// Find all account IDs with
+	// given moved_to_uri column.
+	if err := a.db.NewSelect().
+		Table("accounts").
+		Column("id").
+		Where("? = ?", bun.Ident("moved_to_uri"), uri).
+		Scan(ctx, &accountIDs); err != nil {
+		return nil, err
+	}
+
+	if len(accountIDs) == 0 {
+		return nil, nil
+	}
+
+	// Return account models for all found IDs.
+	return a.GetAccountsByIDs(ctx, accountIDs)
+}
+
 // GetAccounts selects accounts using the given parameters.
 // Unlike with other functions, the paging for GetAccounts
 // is done not by ID, but by a concatenation of `[domain]/@[username]`,

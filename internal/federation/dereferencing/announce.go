@@ -22,7 +22,6 @@ import (
 	"errors"
 	"net/url"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -56,25 +55,17 @@ func (d *Dereferencer) EnrichAnnounce(
 		)
 	}
 
-	// Fetch/deref status being boosted.
-	var target *gtsmodel.Status
-
-	if targetURIObj.Host == config.GetHost() {
-		// This is a local status, fetch from the database
-		target, err = d.state.DB.GetStatusByURI(ctx, targetURI)
-	} else {
-		// This is a remote status, we need to dereference it.
-		//
-		// d.GetStatusByURI will handle domain block checking for us,
-		// so we don't try to deref an announce target on a blocked host.
-		target, _, err = d.GetStatusByURI(ctx, requestUser, targetURIObj)
+	// Fetch and dereference status being boosted, noting that
+	// d.GetStatusByURI handles domain blocks and local statuses.
+	target, _, err := d.GetStatusByURI(ctx, requestUser, targetURIObj)
+	if err != nil {
+		return nil, gtserror.Newf("error fetching boost target %s: %w", targetURI, err)
 	}
 
-	if err != nil {
-		return nil, gtserror.Newf(
-			"error getting boost target status %s: %w",
-			targetURI, err,
-		)
+	if target.BoostOfID != "" {
+		// Ensure that the target is not a boost (should not be possible).
+		err := gtserror.Newf("target status %s is a boost", targetURI)
+		return nil, err
 	}
 
 	// Generate an ID for the boost wrapper status.

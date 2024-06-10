@@ -49,6 +49,7 @@ func (p *Processor) BoostCreate(
 		return nil, errWithCode
 	}
 
+	// Unwrap target in case it is a boost.
 	target, errWithCode = p.c.UnwrapIfBoost(
 		ctx,
 		requester,
@@ -58,7 +59,13 @@ func (p *Processor) BoostCreate(
 		return nil, errWithCode
 	}
 
-	// Ensure valid boost target.
+	// Check is viable target.
+	if target.BoostOfID != "" {
+		err := gtserror.Newf("target status %s is boost wrapper", target.URI)
+		return nil, gtserror.NewErrorUnprocessableEntity(err)
+	}
+
+	// Ensure valid boost target for requester.
 	boostable, err := p.filter.StatusBoostable(ctx,
 		requester,
 		target,
