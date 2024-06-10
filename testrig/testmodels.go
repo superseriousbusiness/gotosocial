@@ -3227,7 +3227,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
-	target = URLMustParse(accounts["local_account_1"].OutboxURI + "?page=true")
+	target = URLMustParse(accounts["local_account_1"].OutboxURI + "?limit=40")
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceZorkOutboxFirst := ActivityWithSignature{
 		SignatureHeader: sig,
@@ -3235,7 +3235,7 @@ func NewTestDereferenceRequests(accounts map[string]*gtsmodel.Account) map[strin
 		DateHeader:      date,
 	}
 
-	target = URLMustParse(accounts["local_account_1"].OutboxURI + "?page=true&max_id=01F8MHAMCHF6Y650WCRSCP4WMY")
+	target = URLMustParse(accounts["local_account_1"].OutboxURI + "?limit=40&max_id=01F8MHAMCHF6Y650WCRSCP4WMY")
 	sig, digest, date = GetSignatureForDereference(accounts["remote_account_1"].PublicKeyURI, accounts["remote_account_1"].PrivateKey, target)
 	fossSatanDereferenceZorkOutboxNext := ActivityWithSignature{
 		SignatureHeader: sig,

@@ -102,10 +102,14 @@ func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, 
 	}
 
 	if accountable != nil {
-		// This account was updated, enqueue re-dereference featured posts.
+		// This account was updated, enqueue re-dereference featured posts + stats.
 		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
+
+			if err := d.dereferenceAccountStats(ctx, requestUser, account); err != nil {
+				log.Errorf(ctx, "error fetching account stats: %v", err)
 			}
 		})
 	}
@@ -199,10 +203,14 @@ func (d *Dereferencer) GetAccountByUsernameDomain(ctx context.Context, requestUs
 	}
 
 	if accountable != nil {
-		// This account was updated, enqueue re-dereference featured posts.
+		// This account was updated, enqueue re-dereference featured posts + stats.
 		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, account); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
+
+			if err := d.dereferenceAccountStats(ctx, requestUser, account); err != nil {
+				log.Errorf(ctx, "error fetching account stats: %v", err)
 			}
 		})
 	}
@@ -320,10 +328,14 @@ func (d *Dereferencer) RefreshAccount(
 	}
 
 	if accountable != nil {
-		// This account was updated, enqueue re-dereference featured posts.
+		// This account was updated, enqueue re-dereference featured posts + stats.
 		d.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
+
+			if err := d.dereferenceAccountStats(ctx, requestUser, latest); err != nil {
+				log.Errorf(ctx, "error fetching account stats: %v", err)
 			}
 		})
 	}
@@ -369,9 +381,13 @@ func (d *Dereferencer) RefreshAccountAsync(
 		}
 
 		if accountable != nil {
-			// This account was updated, enqueue re-dereference featured posts.
+			// This account was updated, enqueue re-dereference featured posts + stats.
 			if err := d.dereferenceAccountFeatured(ctx, requestUser, latest); err != nil {
 				log.Errorf(ctx, "error fetching account featured collection: %v", err)
+			}
+
+			if err := d.dereferenceAccountStats(ctx, requestUser, latest); err != nil {
+				log.Errorf(ctx, "error fetching account stats: %v", err)
 			}
 		}
 	})
@@ -697,12 +713,12 @@ func (d *Dereferencer) enrichAccount(
 	latestAcc.ID = account.ID
 	latestAcc.FetchedAt = time.Now()
 
-	// Ensure the account's avatar media is populated, passing in existing to check for chages.
+	// Ensure the account's avatar media is populated, passing in existing to check for changes.
 	if err := d.fetchRemoteAccountAvatar(ctx, tsport, account, latestAcc); err != nil {
 		log.Errorf(ctx, "error fetching remote avatar for account %s: %v", uri, err)
 	}
 
-	// Ensure the account's avatar media is populated, passing in existing to check for chages.
+	// Ensure the account's avatar media is populated, passing in existing to check for changes.
 	if err := d.fetchRemoteAccountHeader(ctx, tsport, account, latestAcc); err != nil {
 		log.Errorf(ctx, "error fetching remote header for account %s: %v", uri, err)
 	}
@@ -712,9 +728,11 @@ func (d *Dereferencer) enrichAccount(
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
 
-	// Fetch followers/following count for this account.
-	if err := d.fetchRemoteAccountStats(ctx, latestAcc, requestUser); err != nil {
-		log.Errorf(ctx, "error fetching remote stats for account %s: %v", uri, err)
+	// Ensure basic account stats populated; real stats will be fetched from remote asynchronously.
+	if err := d.state.DB.PopulateAccountStats(ctx, latestAcc); err != nil {
+		// We're not calling remote yet: any error here
+		// is a real database error we should return from.
+		return nil, nil, gtserror.Newf("error populating account stats: %w", err)
 	}
 
 	if account.IsNew() {
@@ -1007,7 +1025,7 @@ func (d *Dereferencer) fetchRemoteAccountEmojis(ctx context.Context, targetAccou
 	return changed, nil
 }
 
-func (d *Dereferencer) fetchRemoteAccountStats(ctx context.Context, account *gtsmodel.Account, requestUser string) error {
+func (d *Dereferencer) dereferenceAccountStats(ctx context.Context, requestUser string, account *gtsmodel.Account) error {
 	// Ensure we have a stats model for this account.
 	if account.Stats == nil {
 		if err := d.state.DB.PopulateAccountStats(ctx, account); err != nil {

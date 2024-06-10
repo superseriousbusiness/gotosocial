@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // InboxPost handles POST requests to a user's inbox for new activitypub messages.
@@ -45,91 +46,32 @@ func (p *Processor) InboxPost(ctx context.Context, w http.ResponseWriter, r *htt
 	return p.federator.FederatingActor().PostInbox(ctx, w, r)
 }
 
-// OutboxGet returns the activitypub representation of a local user's outbox.
-// This contains links to PUBLIC posts made by this user.
+// OutboxGet returns the serialized ActivityPub
+// collection of a local account's outbox, which
+// contains links to PUBLIC posts by this account.
 func (p *Processor) OutboxGet(
 	ctx context.Context,
 	requestedUser string,
-	page bool,
-	maxID string,
-	minID string,
+	page *paging.Page,
 ) (interface{}, gtserror.WithCode) {
-	// Authenticate the incoming request, getting related user accounts.
-	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
+	// Authenticate incoming request, getting related accounts.
+	auth, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
-
-	var data map[string]interface{}
-	// There are two scenarios:
-	// 1. we're asked for the whole collection and not a page -- we can just return the collection, with no items, but a link to 'first' page.
-	// 2. we're asked for a specific page; this can be either the first page or any other page
-
-	if !page {
-		/*
-			scenario 1: return the collection with no items
-			we want something that looks like this:
-			{
-				"@context": "https://www.w3.org/ns/activitystreams",
-				"id": "https://example.org/users/whatever/outbox",
-				"type": "OrderedCollection",
-				"first": "https://example.org/users/whatever/outbox?page=true",
-				"last": "https://example.org/users/whatever/outbox?min_id=0&page=true"
-			}
-		*/
-		collection, err := p.converter.OutboxToASCollection(ctx, receiver.OutboxURI)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		data, err = ap.Serialize(collection)
-		if err != nil {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		return data, nil
-	}
-
-	// scenario 2 -- get the requested page
-	// limit pages to 30 entries per page
-	publicStatuses, err := p.state.DB.GetAccountStatuses(ctx, receiver.ID, 30, true, true, maxID, minID, false, true)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	outboxPage, err := p.converter.StatusesToASOutboxPage(ctx, receiver.OutboxURI, maxID, minID, publicStatuses)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	data, err = ap.Serialize(outboxPage)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return data, nil
-}
-
-// FollowersGet handles the getting of a fedi/activitypub representation of a user/account's followers, performing appropriate
-// authentication before returning a JSON serializable interface to the caller.
-func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page *paging.Page) (interface{}, gtserror.WithCode) {
-	// Authenticate the incoming request, getting related user accounts.
-	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
+	receivingAcct := auth.receivingAcct
 
 	// Parse the collection ID object from account's followers URI.
-	collectionID, err := url.Parse(receiver.FollowersURI)
+	collectionID, err := url.Parse(receivingAcct.OutboxURI)
 	if err != nil {
-		err := gtserror.Newf("error parsing account followers uri %s: %w", receiver.FollowersURI, err)
+		err := gtserror.Newf("error parsing account outbox uri %s: %w", receivingAcct.OutboxURI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Ensure we have stats for this account.
-	if receiver.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
-			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
+	if receivingAcct.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
+			err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
@@ -139,29 +81,159 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 	// Start the AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = *receiver.Stats.FollowersCount
+	params.Total = *receivingAcct.Stats.StatusesCount
 
 	switch {
 
-	case receiver.IsInstance() ||
-		*receiver.Settings.HideCollections:
-		// Instance account (can't follow/be followed),
-		// or an account that hides followers/following.
-		// Respect this by just returning totalItems.
+	case *receivingAcct.Settings.HideCollections ||
+		receivingAcct.IsInstance():
+		// If account that hides collections, or instance
+		// account (ie., can't post / have relationships),
+		// just return totalItems.
 		obj = ap.NewASOrderedCollection(params)
 
-	case page == nil:
-		// i.e. paging disabled, return collection
-		// that links to first page (i.e. path below).
+	case page == nil || auth.handshakingURI != nil:
+		// If paging disabled, or we're currently handshaking
+		// the requester, just return collection that links
+		// to first page (i.e. path below), with no items.
 		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
 		obj = ap.NewASOrderedCollection(params)
 
 	default:
-		// i.e. paging enabled
-		// Get the request page of full follower objects with attached accounts.
-		followers, err := p.state.DB.GetAccountFollowers(ctx, receiver.ID, page)
+		// Paging enabled.
+		// Get page of full public statuses.
+		statuses, err := p.state.DB.GetAccountStatuses(
+			ctx,
+			receivingAcct.ID,
+			page.Limit,    // limit
+			true,          // excludeReplies
+			true,          // excludeReblogs
+			page.GetMax(), // maxID
+			page.GetMin(), // minID
+			false,         // mediaOnly
+			true,          // publicOnly
+		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("error getting statuses: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// page ID values.
+		var lo, hi string
+
+		if len(statuses) > 0 {
+			// Get the lowest and highest
+			// ID values, used for paging.
+			lo = statuses[len(statuses)-1].ID
+			hi = statuses[0].ID
+		}
+
+		// Start building AS collection page params.
+		var pageParams ap.CollectionPageParams
+		pageParams.CollectionParams = params
+
+		// Current page details.
+		pageParams.Current = page
+		pageParams.Count = len(statuses)
+
+		// Set linked next/prev parameters.
+		pageParams.Next = page.Next(lo, hi)
+		pageParams.Prev = page.Prev(lo, hi)
+
+		// Set the collection item property builder function.
+		pageParams.Append = func(i int, itemsProp ap.ItemsPropertyBuilder) {
+			// Get status at index.
+			status := statuses[i]
+
+			// Derive statusable from status.
+			statusable, err := p.converter.StatusToAS(ctx, status)
+			if err != nil {
+				log.Errorf(ctx, "error converting %s to statusable: %v", status.URI, err)
+				return
+			}
+
+			// Derive create from statusable, using the IRI only.
+			create := typeutils.WrapStatusableInCreate(statusable, true)
+
+			// Add to item property.
+			itemsProp.AppendActivityStreamsCreate(create)
+		}
+
+		// Build AS collection page object from params.
+		obj = ap.NewASOrderedCollectionPage(pageParams)
+	}
+
+	// Serialize the prepared object.
+	data, err := ap.Serialize(obj)
+	if err != nil {
+		err := gtserror.Newf("error serializing: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return data, nil
+}
+
+// FollowersGet returns the serialized ActivityPub
+// collection of a local account's followers collection,
+// which contains links to accounts following this account.
+func (p *Processor) FollowersGet(
+	ctx context.Context,
+	requestedUser string,
+	page *paging.Page,
+) (interface{}, gtserror.WithCode) {
+	// Authenticate incoming request, getting related accounts.
+	auth, errWithCode := p.authenticate(ctx, requestedUser)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+	receivingAcct := auth.receivingAcct
+
+	// Parse the collection ID object from account's followers URI.
+	collectionID, err := url.Parse(receivingAcct.FollowersURI)
+	if err != nil {
+		err := gtserror.Newf("error parsing account followers uri %s: %w", receivingAcct.FollowersURI, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Ensure we have stats for this account.
+	if receivingAcct.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
+			err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	}
+
+	var obj vocab.Type
+
+	// Start the AS collection params.
+	var params ap.CollectionParams
+	params.ID = collectionID
+	params.Total = *receivingAcct.Stats.FollowersCount
+
+	switch {
+
+	case receivingAcct.IsInstance() ||
+		*receivingAcct.Settings.HideCollections:
+		// If account that hides collections, or instance
+		// account (ie., can't post / have relationships),
+		// just return totalItems.
+		obj = ap.NewASOrderedCollection(params)
+
+	case page == nil || auth.handshakingURI != nil:
+		// If paging disabled, or we're currently handshaking
+		// the requester, just return collection that links
+		// to first page (i.e. path below), with no items.
+		params.First = new(paging.Page)
+		params.Query = make(url.Values, 1)
+		params.Query.Set("limit", "40") // enables paging
+		obj = ap.NewASOrderedCollection(params)
+
+	default:
+		// Paging enabled.
+		// Get page of full follower objects with attached accounts.
+		followers, err := p.state.DB.GetAccountFollowers(ctx, receivingAcct.ID, page)
 		if err != nil {
 			err := gtserror.Newf("error getting followers: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -210,7 +282,7 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 		obj = ap.NewASOrderedCollectionPage(pageParams)
 	}
 
-	// Serialized the prepared object.
+	// Serialize the prepared object.
 	data, err := ap.Serialize(obj)
 	if err != nil {
 		err := gtserror.Newf("error serializing: %w", err)
@@ -220,26 +292,28 @@ func (p *Processor) FollowersGet(ctx context.Context, requestedUser string, page
 	return data, nil
 }
 
-// FollowingGet handles the getting of a fedi/activitypub representation of a user/account's following, performing appropriate
-// authentication before returning a JSON serializable interface to the caller.
+// FollowingGet returns the serialized ActivityPub
+// collection of a local account's following collection,
+// which contains links to accounts followed by this account.
 func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page *paging.Page) (interface{}, gtserror.WithCode) {
-	// Authenticate the incoming request, getting related user accounts.
-	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
+	// Authenticate incoming request, getting related accounts.
+	auth, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
+	receivingAcct := auth.receivingAcct
 
 	// Parse collection ID from account's following URI.
-	collectionID, err := url.Parse(receiver.FollowingURI)
+	collectionID, err := url.Parse(receivingAcct.FollowingURI)
 	if err != nil {
-		err := gtserror.Newf("error parsing account following uri %s: %w", receiver.FollowingURI, err)
+		err := gtserror.Newf("error parsing account following uri %s: %w", receivingAcct.FollowingURI, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Ensure we have stats for this account.
-	if receiver.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, receiver); err != nil {
-			err := gtserror.Newf("error getting stats for account %s: %w", receiver.ID, err)
+	if receivingAcct.Stats == nil {
+		if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
+			err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
@@ -249,28 +323,29 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = *receiver.Stats.FollowingCount
+	params.Total = *receivingAcct.Stats.FollowingCount
 
 	switch {
-	case receiver.IsInstance() ||
-		*receiver.Settings.HideCollections:
-		// Instance account (can't follow/be followed),
-		// or an account that hides followers/following.
-		// Respect this by just returning totalItems.
+	case receivingAcct.IsInstance() ||
+		*receivingAcct.Settings.HideCollections:
+		// If account that hides collections, or instance
+		// account (ie., can't post / have relationships),
+		// just return totalItems.
 		obj = ap.NewASOrderedCollection(params)
 
-	case page == nil:
-		// i.e. paging disabled, return collection
-		// that links to first page (i.e. path below).
+	case page == nil || auth.handshakingURI != nil:
+		// If paging disabled, or we're currently handshaking
+		// the requester, just return collection that links
+		// to first page (i.e. path below), with no items.
 		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
 		obj = ap.NewASOrderedCollection(params)
 
 	default:
-		// i.e. paging enabled
-		// Get the request page of full follower objects with attached accounts.
-		follows, err := p.state.DB.GetAccountFollows(ctx, receiver.ID, page)
+		// Paging enabled.
+		// Get page of full follower objects with attached accounts.
+		follows, err := p.state.DB.GetAccountFollows(ctx, receivingAcct.ID, page)
 		if err != nil {
 			err := gtserror.Newf("error getting follows: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
@@ -319,7 +394,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 		obj = ap.NewASOrderedCollectionPage(pageParams)
 	}
 
-	// Serialized the prepared object.
+	// Serialize the prepared object.
 	data, err := ap.Serialize(obj)
 	if err != nil {
 		err := gtserror.Newf("error serializing: %w", err)
@@ -332,20 +407,21 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 // FeaturedCollectionGet returns an ordered collection of the requested username's Pinned posts.
 // The returned collection have an `items` property which contains an ordered list of status URIs.
 func (p *Processor) FeaturedCollectionGet(ctx context.Context, requestedUser string) (interface{}, gtserror.WithCode) {
-	// Authenticate the incoming request, getting related user accounts.
-	_, receiver, errWithCode := p.authenticate(ctx, requestedUser)
+	// Authenticate incoming request, getting related accounts.
+	auth, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
+	receivingAcct := auth.receivingAcct
 
-	statuses, err := p.state.DB.GetAccountPinnedStatuses(ctx, receiver.ID)
+	statuses, err := p.state.DB.GetAccountPinnedStatuses(ctx, receivingAcct.ID)
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 	}
 
-	collection, err := p.converter.StatusesToASFeaturedCollection(ctx, receiver.FeaturedCollectionURI, statuses)
+	collection, err := p.converter.StatusesToASFeaturedCollection(ctx, receivingAcct.FeaturedCollectionURI, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

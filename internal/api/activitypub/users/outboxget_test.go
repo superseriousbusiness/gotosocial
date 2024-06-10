@@ -80,8 +80,9 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 	suite.NoError(err)
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "first": "http://localhost:8080/users/the_mighty_zork/outbox?page=true",
+  "first": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40",
   "id": "http://localhost:8080/users/the_mighty_zork/outbox",
+  "totalItems": 7,
   "type": "OrderedCollection"
 }`, dst.String())
 
@@ -105,7 +106,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?page=true", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?limit=40", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
@@ -138,8 +139,8 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	suite.NoError(err)
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "id": "http://localhost:8080/users/the_mighty_zork/outbox?page=true",
-  "next": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
+  "id": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40",
+  "next": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
   "orderedItems": [
     {
       "actor": "http://localhost:8080/users/the_mighty_zork",
@@ -159,7 +160,8 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
     }
   ],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?page=true\u0026min_id=01HH9KYNQPA416TNJ53NSATP40",
+  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026min_id=01HH9KYNQPA416TNJ53NSATP40",
+  "totalItems": 7,
   "type": "OrderedCollectionPage"
 }`, dst.String())
 
@@ -183,7 +185,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	// setup request
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?page=true&max_id=01F8MHAMCHF6Y650WCRSCP4WMY", nil) // the endpoint we're hitting
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.OutboxURI+"?limit=40&max_id=01F8MHAMCHF6Y650WCRSCP4WMY", nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/activity+json")
 	ctx.Request.Header.Set("Signature", signedRequest.SignatureHeader)
 	ctx.Request.Header.Set("Date", signedRequest.DateHeader)
@@ -219,9 +221,10 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	suite.NoError(err)
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
-  "id": "http://localhost:8080/users/the_mighty_zork/outbox?page=true&maxID=01F8MHAMCHF6Y650WCRSCP4WMY",
+  "id": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40&max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
   "orderedItems": [],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
+  "totalItems": 7,
   "type": "OrderedCollectionPage"
 }`, dst.String())
 

@@ -367,6 +367,7 @@ type CollectionPageBuilder interface {
 // vocab.ActivityStreamsOrderedItemsProperty
 type ItemsPropertyBuilder interface {
 	AppendIRI(*url.URL)
+	AppendActivityStreamsCreate(vocab.ActivityStreamsCreate)
 
 	// NOTE: add more of the items-property-like interface
 	// functions here as you require them for building pages.
