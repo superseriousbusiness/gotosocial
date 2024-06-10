@@ -41,13 +41,12 @@ import (
 // currently being processed. It exposes functions
 // for retrieving data from the process.
 type ProcessingMedia struct {
-	media   *gtsmodel.MediaAttachment // processing media attachment details
-	dataFn  DataFunc                  // load-data function, returns media stream
-	recache bool                      // recaching existing (uncached) media
-	done    bool                      // done is set when process finishes with non ctx canceled type error
-	proc    runners.Processor         // proc helps synchronize only a singular running processing instance
-	err     error                     // error stores permanent error value when done
-	mgr     *Manager                  // mgr instance (access to db / storage)
+	media  *gtsmodel.MediaAttachment // processing media attachment details
+	dataFn DataFunc                  // load-data function, returns media stream
+	done   bool                      // done is set when process finishes with non ctx canceled type error
+	proc   runners.Processor         // proc helps synchronize only a singular running processing instance
+	err    error                     // error stores permanent error value when done
+	mgr    *Manager                  // mgr instance (access to db / storage)
 }
 
 // AttachmentID returns the ID of the underlying
@@ -99,7 +98,7 @@ func (p *ProcessingMedia) Process(ctx context.Context) {
 }
 
 // load performs a concurrency-safe load of ProcessingMedia, only
-// marking itself as complete when returned error is NOT a context cancel.
+// marking itself as complete when returned error != context.Canceled.
 func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, bool, error) {
 	var (
 		done bool
@@ -128,8 +127,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 			p.err = err
 		}()
 
-		// Gather errors as we proceed.
-		var errs = gtserror.NewMultiError(4)
+		var errs gtserror.MultiError
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.
@@ -160,24 +158,15 @@ func (p *ProcessingMedia) load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 			}
 		}
 
-		var dbErr error
-		switch {
-		case !p.recache:
-			// First time caching this attachment, insert it.
-			dbErr = p.mgr.state.DB.PutAttachment(ctx, p.media)
-
-		case p.recache && len(errs) == 0:
-			// Existing attachment we're recaching, update it.
-			//
-			// (We only want to update if everything went OK so far,
-			// otherwise we'd better leave previous version alone.)
-			dbErr = p.mgr.state.DB.UpdateAttachment(ctx, p.media)
+		if len(errs) == 0 {
+			// Update attachment with latest details now its cached.
+			dbErr := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
+			if dbErr != nil {
+				errs.Append(dbErr)
+			}
 		}
 
-		if dbErr != nil {
-			errs.Append(dbErr)
-		}
-
+		// Combine all errors.
 		err = errs.Combine()
 		return err
 	})
@@ -286,7 +275,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	// Fill in correct attachment
-	// data now we're parsed it.
+	// data now we've parsed it.
 	p.media.URL = uris.URIForAttachment(
 		p.media.AccountID,
 		string(TypeAttachment),
@@ -303,7 +292,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 	p.media.File.ContentType = mime
 
-	// Calculate attachment file path.
+	// Calculate final media attachment file path.
 	p.media.File.Path = uris.StoragePathForAttachment(
 		p.media.AccountID,
 		string(TypeAttachment),
@@ -357,6 +346,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 		string(TypeAttachment),
 		string(SizeSmall),
 		p.media.ID,
+
 		// Always encode attachment
 		// thumbnails as jpg.
 		"jpg",
@@ -368,6 +358,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 		string(TypeAttachment),
 		string(SizeSmall),
 		p.media.ID,
+
 		// Always encode attachment
 		// thumbnails as jpg.
 		"jpg",
@@ -398,8 +389,7 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 
 	// .jpeg, .gif, .webp image type
 	case mimeImageJpeg, mimeImageGif, mimeImageWebp:
-		fullImg, err = decodeImage(
-			rc,
+		fullImg, err = decodeImage(rc,
 			imaging.AutoOrientation(true),
 		)
 		if err != nil {
@@ -451,9 +441,9 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 	}
 
 	// Set full-size dimensions in attachment info.
-	p.media.FileMeta.Original.Width = int(fullImg.Width())
-	p.media.FileMeta.Original.Height = int(fullImg.Height())
-	p.media.FileMeta.Original.Size = int(fullImg.Size())
+	p.media.FileMeta.Original.Width = fullImg.Width()
+	p.media.FileMeta.Original.Height = fullImg.Height()
+	p.media.FileMeta.Original.Size = fullImg.Size()
 	p.media.FileMeta.Original.Aspect = fullImg.AspectRatio()
 
 	// Get smaller thumbnail image
@@ -501,9 +491,9 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 
 	// Set thumbnail dimensions in attachment info.
 	p.media.FileMeta.Small = gtsmodel.Small{
-		Width:  int(thumbImg.Width()),
-		Height: int(thumbImg.Height()),
-		Size:   int(thumbImg.Size()),
+		Width:  thumbImg.Width(),
+		Height: thumbImg.Height(),
+		Size:   thumbImg.Size(),
 		Aspect: thumbImg.AspectRatio(),
 	}
 
