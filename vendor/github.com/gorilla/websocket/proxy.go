@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"encoding/base64"
 	"errors"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -58,9 +57,7 @@ func (hpd *httpProxyDialer) Dial(network string, addr string) (net.Conn, error) 
 	}
 
 	if err := connectReq.Write(conn); err != nil {
-		if err := conn.Close(); err != nil {
-			log.Printf("httpProxyDialer: failed to close connection: %v", err)
-		}
+		conn.Close()
 		return nil, err
 	}
 
@@ -69,16 +66,12 @@ func (hpd *httpProxyDialer) Dial(network string, addr string) (net.Conn, error) 
 	br := bufio.NewReader(conn)
 	resp, err := http.ReadResponse(br, connectReq)
 	if err != nil {
-		if err := conn.Close(); err != nil {
-			log.Printf("httpProxyDialer: failed to close connection: %v", err)
-		}
+		conn.Close()
 		return nil, err
 	}
 
-	if resp.StatusCode != 200 {
-		if err := conn.Close(); err != nil {
-			log.Printf("httpProxyDialer: failed to close connection: %v", err)
-		}
+	if resp.StatusCode != http.StatusOK {
+		conn.Close()
 		f := strings.SplitN(resp.Status, " ", 2)
 		return nil, errors.New(f[1])
 	}

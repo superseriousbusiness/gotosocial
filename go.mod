@@ -37,7 +37,7 @@ require (
 	github.com/go-swagger/go-swagger v0.31.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.1.2
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.2
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/microcosm-cc/bluemonday v1.0.26

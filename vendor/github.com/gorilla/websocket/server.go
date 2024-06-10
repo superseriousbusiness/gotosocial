@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -34,6 +33,7 @@ type Upgrader struct {
 	// size is zero, then buffers allocated by the HTTP server are used. The
 	// I/O buffer sizes do not limit the size of the messages that can be sent
 	// or received.
+	// The default value is 4096 bytes, 4kb.
 	ReadBufferSize, WriteBufferSize int
 
 	// WriteBufferPool is a pool of buffers for write operations. If the value
@@ -102,8 +102,8 @@ func checkSameOrigin(r *http.Request) bool {
 func (u *Upgrader) selectSubprotocol(r *http.Request, responseHeader http.Header) string {
 	if u.Subprotocols != nil {
 		clientProtocols := Subprotocols(r)
-		for _, serverProtocol := range u.Subprotocols {
-			for _, clientProtocol := range clientProtocols {
+		for _, clientProtocol := range clientProtocols {
+			for _, serverProtocol := range u.Subprotocols {
 				if clientProtocol == serverProtocol {
 					return clientProtocol
 				}
@@ -173,20 +173,13 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 		}
 	}
 
-	h, ok := w.(http.Hijacker)
-	if !ok {
-		return u.returnError(w, r, http.StatusInternalServerError, "websocket: response does not implement http.Hijacker")
-	}
-	var brw *bufio.ReadWriter
-	netConn, brw, err := h.Hijack()
+	netConn, brw, err := http.NewResponseController(w).Hijack()
 	if err != nil {
 		return u.returnError(w, r, http.StatusInternalServerError, err.Error())
 	}
 
 	if brw.Reader.Buffered() > 0 {
-		if err := netConn.Close(); err != nil {
-			log.Printf("websocket: failed to close network connection: %v", err)
-		}
+		netConn.Close()
 		return nil, errors.New("websocket: client sent data before handshake is complete")
 	}
 
@@ -251,34 +244,17 @@ func (u *Upgrader) Upgrade(w http.ResponseWriter, r *http.Request, responseHeade
 	p = append(p, "\r\n"...)
 
 	// Clear deadlines set by HTTP server.
-	if err := netConn.SetDeadline(time.Time{}); err != nil {
-		if err := netConn.Close(); err != nil {
-			log.Printf("websocket: failed to close network connection: %v", err)
-		}
-		return nil, err
-	}
+	netConn.SetDeadline(time.Time{})
 
 	if u.HandshakeTimeout > 0 {
-		if err := netConn.SetWriteDeadline(time.Now().Add(u.HandshakeTimeout)); err != nil {
-			if err := netConn.Close(); err != nil {
-				log.Printf("websocket: failed to close network connection: %v", err)
-			}
-			return nil, err
-		}
+		netConn.SetWriteDeadline(time.Now().Add(u.HandshakeTimeout))
 	}
 	if _, err = netConn.Write(p); err != nil {
-		if err := netConn.Close(); err != nil {
-			log.Printf("websocket: failed to close network connection: %v", err)
-		}
+		netConn.Close()
 		return nil, err
 	}
 	if u.HandshakeTimeout > 0 {
-		if err := netConn.SetWriteDeadline(time.Time{}); err != nil {
-			if err := netConn.Close(); err != nil {
-				log.Printf("websocket: failed to close network connection: %v", err)
-			}
-			return nil, err
-		}
+		netConn.SetWriteDeadline(time.Time{})
 	}
 
 	return c, nil
@@ -376,12 +352,8 @@ func bufioWriterBuffer(originalWriter io.Writer, bw *bufio.Writer) []byte {
 	// bufio.Writer's underlying writer.
 	var wh writeHook
 	bw.Reset(&wh)
-	if err := bw.WriteByte(0); err != nil {
-		panic(err)
-	}
-	if err := bw.Flush(); err != nil {
-		log.Printf("websocket: bufioWriterBuffer: Flush: %v", err)
-	}
+	bw.WriteByte(0)
+	bw.Flush()
 
 	bw.Reset(originalWriter)
 
