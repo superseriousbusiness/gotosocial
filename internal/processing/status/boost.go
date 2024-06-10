@@ -62,7 +62,7 @@ func (p *Processor) BoostCreate(
 	// Check is viable target.
 	if target.BoostOfID != "" {
 		err := gtserror.Newf("target status %s is boost wrapper", target.URI)
-		return nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorUnprocessableEntity(err)
 	}
 
 	// Ensure valid boost target for requester.
