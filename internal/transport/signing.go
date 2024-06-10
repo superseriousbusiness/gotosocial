@@ -23,10 +23,12 @@ import (
 
 var (
 	// http signer preferences
-	prefs       = []httpsig.Algorithm{httpsig.RSA_SHA256}
-	digestAlgo  = httpsig.DigestSha256
-	getHeaders  = []string{httpsig.RequestTarget, "(created)", "host"}
-	postHeaders = []string{httpsig.RequestTarget, "(created)", "host", "digest"}
+	prefs      = []httpsig.Algorithm{httpsig.RSA_SHA256}
+	digestAlgo = httpsig.DigestSha256
+
+	// TODO: Update these to use `(created)` pseudo-header instead of `Date`.
+	getHeaders  = []string{httpsig.RequestTarget, "host", "date"}
+	postHeaders = []string{httpsig.RequestTarget, "host", "date", "digest"}
 )
 
 // NewGETSigner returns a new httpsig.Signer instance initialized with GTS GET preferences.
