@@ -108,13 +108,13 @@ func (p *Processor) OutboxGet(
 		statuses, err := p.state.DB.GetAccountStatuses(
 			ctx,
 			receivingAcct.ID,
-			page.Limit,    // limit
-			true,          // excludeReplies
-			true,          // excludeReblogs
-			page.GetMax(), // maxID
-			page.GetMin(), // minID
-			false,         // mediaOnly
-			true,          // publicOnly
+			page.GetLimit(), // limit
+			true,            // excludeReplies
+			true,            // excludeReblogs
+			page.GetMax(),   // maxID
+			page.GetMin(),   // minID
+			false,           // mediaOnly
+			true,            // publicOnly
 		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err := gtserror.Newf("error getting statuses: %w", err)
