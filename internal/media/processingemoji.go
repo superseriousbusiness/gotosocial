@@ -121,15 +121,14 @@ func (p *ProcessingEmoji) load(ctx context.Context) (*gtsmodel.Emoji, bool, erro
 			return err
 		}
 
-		if p.existing {
-			// Existing emoji we're updating, so only update.
-			err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
+		// Update emoji with latest details now cached.
+		err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
+		if err != nil {
+			err = gtserror.Newf("error updating updating emoji: %w", err)
 			return err
 		}
 
-		// New emoji media, first time caching.
-		err = p.mgr.state.DB.PutEmoji(ctx, p.emoji)
-		return err
+		return nil
 	})
 
 	if err != nil {

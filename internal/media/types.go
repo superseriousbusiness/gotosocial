@@ -61,47 +61,81 @@ const (
 	TypeEmoji      Type = "emoji"      // TypeEmoji is the key for emoji type requests
 )
 
-// AdditionalMediaInfo represents additional information that should be added to an attachment
-// when processing a piece of media.
+// AdditionalMediaInfo represents additional information that
+// should be added to attachment when processing a piece of media.
 type AdditionalMediaInfo struct {
-	// Time that this media was created; defaults to time.Now().
+
+	// Time that this media was
+	// created; defaults to time.Now().
 	CreatedAt *time.Time
-	// ID of the status to which this media is attached; defaults to "".
+
+	// ID of the status to which this
+	// media is attached; defaults to "".
 	StatusID *string
-	// URL of the media on a remote instance; defaults to "".
+
+	// URL of the media on a
+	// remote instance; defaults to "".
 	RemoteURL *string
-	// Image description of this media; defaults to "".
+
+	// Image description of
+	// this media; defaults to "".
 	Description *string
-	// Blurhash of this media; defaults to "".
+
+	// Blurhash of this
+	// media; defaults to "".
 	Blurhash *string
-	// ID of the scheduled status to which this media is attached; defaults to "".
+
+	// ID of the scheduled status to which
+	// this media is attached; defaults to "".
 	ScheduledStatusID *string
-	// Mark this media as in-use as an avatar; defaults to false.
+
+	// Mark this media as in-use
+	// as an avatar; defaults to false.
 	Avatar *bool
-	// Mark this media as in-use as a header; defaults to false.
+
+	// Mark this media as in-use
+	// as a header; defaults to false.
 	Header *bool
-	// X focus coordinate for this media; defaults to 0.
+
+	// X focus coordinate for
+	// this media; defaults to 0.
 	FocusX *float32
-	// Y focus coordinate for this media; defaults to 0.
+
+	// Y focus coordinate for
+	// this media; defaults to 0.
 	FocusY *float32
 }
 
 // AdditionalEmojiInfo represents additional information
 // that should be taken into account when processing an emoji.
 type AdditionalEmojiInfo struct {
-	// Time that this emoji was created; defaults to time.Now().
+
+	// Time that this emoji was
+	// created; defaults to time.Now().
 	CreatedAt *time.Time
-	// Domain the emoji originated from. Blank for this instance's domain. Defaults to "".
+
+	// Domain the emoji originated from. Blank
+	// for this instance's domain. Defaults to "".
 	Domain *string
-	// URL of this emoji on a remote instance; defaults to "".
+
+	// URL of this emoji on a
+	// remote instance; defaults to "".
 	ImageRemoteURL *string
-	// URL of the static version of this emoji on a remote instance; defaults to "".
+
+	// URL of the static version of this emoji
+	// on a remote instance; defaults to "".
 	ImageStaticRemoteURL *string
-	// Whether this emoji should be disabled (not shown) on this instance; defaults to false.
+
+	// Whether this emoji should be disabled (not
+	// shown) on this instance; defaults to false.
 	Disabled *bool
-	// Whether this emoji should be visible in the instance's emoji picker; defaults to true.
+
+	// Whether this emoji should be visible in
+	// the instance's emoji picker; defaults to true.
 	VisibleInPicker *bool
-	// ID of the category this emoji should be placed in; defaults to "".
+
+	// ID of the category this emoji
+	// should be placed in; defaults to "".
 	CategoryID *string
 }
 
