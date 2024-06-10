@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func TestASCollection(t *testing.T) {
@@ -51,7 +52,7 @@ func TestASCollection(t *testing.T) {
 		ID:    parseURI(idURI),
 		First: new(paging.Page),
 		Query: url.Values{"limit": []string{"40"}},
-		Total: total,
+		Total: util.Ptr(total),
 	})
 
 	// Serialize collection.
@@ -82,7 +83,7 @@ func TestASCollectionTotalOnly(t *testing.T) {
 	// Create new collection using builder function.
 	c := ap.NewASCollection(ap.CollectionParams{
 		ID:    parseURI(idURI),
-		Total: total,
+		Total: util.Ptr(total),
 	})
 
 	// Serialize collection.
@@ -128,7 +129,7 @@ func TestASCollectionPage(t *testing.T) {
 	p := ap.NewASCollectionPage(ap.CollectionPageParams{
 		CollectionParams: ap.CollectionParams{
 			ID:    parseURI(idURI),
-			Total: total,
+			Total: util.Ptr(total),
 		},
 
 		Current: currPg,
@@ -166,7 +167,7 @@ func TestASOrderedCollection(t *testing.T) {
 		ID:    parseURI(idURI),
 		First: new(paging.Page),
 		Query: url.Values{"limit": []string{"40"}},
-		Total: total,
+		Total: util.Ptr(total),
 	})
 
 	// Serialize collection.
@@ -193,7 +194,31 @@ func TestASOrderedCollectionTotalOnly(t *testing.T) {
 	// Create new collection using builder function.
 	c := ap.NewASOrderedCollection(ap.CollectionParams{
 		ID:    parseURI(idURI),
-		Total: total,
+		Total: util.Ptr(total),
+	})
+
+	// Serialize collection.
+	s := toJSON(c)
+
+	// Ensure outputs are equal.
+	assert.Equal(t, expect, s)
+}
+
+func TestASOrderedCollectionNoTotal(t *testing.T) {
+	const (
+		idURI = "https://zorg.flabormagorg.xyz/users/itsa_me_mario"
+	)
+
+	// Create JSON string of expected output.
+	expect := toJSON(map[string]any{
+		"@context":   "https://www.w3.org/ns/activitystreams",
+		"type":       "OrderedCollection",
+		"id":         idURI,
+	})
+
+	// Create new collection using builder function.
+	c := ap.NewASOrderedCollection(ap.CollectionParams{
+		ID:    parseURI(idURI),
 	})
 
 	// Serialize collection.
@@ -239,7 +264,7 @@ func TestASOrderedCollectionPage(t *testing.T) {
 	p := ap.NewASOrderedCollectionPage(ap.CollectionPageParams{
 		CollectionParams: ap.CollectionParams{
 			ID:    parseURI(idURI),
-			Total: total,
+			Total: util.Ptr(total),
 		},
 
 		Current: currPg,

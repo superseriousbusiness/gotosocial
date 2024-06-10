@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // InboxPost handles POST requests to a user's inbox for new activitypub messages.
@@ -81,7 +82,6 @@ func (p *Processor) OutboxGet(
 	// Start the AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = *receivingAcct.Stats.StatusesCount
 
 	switch {
 
@@ -89,13 +89,14 @@ func (p *Processor) OutboxGet(
 		receivingAcct.IsInstance():
 		// If account that hides collections, or instance
 		// account (ie., can't post / have relationships),
-		// just return totalItems.
+		// just return barest stub of collection.
 		obj = ap.NewASOrderedCollection(params)
 
 	case page == nil || auth.handshakingURI != nil:
 		// If paging disabled, or we're currently handshaking
 		// the requester, just return collection that links
 		// to first page (i.e. path below), with no items.
+		params.Total = util.Ptr(*receivingAcct.Stats.StatusesCount)
 		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
@@ -131,6 +132,7 @@ func (p *Processor) OutboxGet(
 		}
 
 		// Start building AS collection page params.
+		params.Total = util.Ptr(*receivingAcct.Stats.StatusesCount)
 		var pageParams ap.CollectionPageParams
 		pageParams.CollectionParams = params
 
@@ -210,7 +212,6 @@ func (p *Processor) FollowersGet(
 	// Start the AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = *receivingAcct.Stats.FollowersCount
 
 	switch {
 
@@ -218,13 +219,14 @@ func (p *Processor) FollowersGet(
 		*receivingAcct.Settings.HideCollections:
 		// If account that hides collections, or instance
 		// account (ie., can't post / have relationships),
-		// just return totalItems.
+		// just return barest stub of collection.
 		obj = ap.NewASOrderedCollection(params)
 
 	case page == nil || auth.handshakingURI != nil:
 		// If paging disabled, or we're currently handshaking
 		// the requester, just return collection that links
 		// to first page (i.e. path below), with no items.
+		params.Total = util.Ptr(*receivingAcct.Stats.FollowersCount)
 		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
@@ -250,6 +252,7 @@ func (p *Processor) FollowersGet(
 		}
 
 		// Start building AS collection page params.
+		params.Total = util.Ptr(*receivingAcct.Stats.FollowersCount)
 		var pageParams ap.CollectionPageParams
 		pageParams.CollectionParams = params
 
@@ -323,20 +326,20 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = *receivingAcct.Stats.FollowingCount
 
 	switch {
 	case receivingAcct.IsInstance() ||
 		*receivingAcct.Settings.HideCollections:
 		// If account that hides collections, or instance
 		// account (ie., can't post / have relationships),
-		// just return totalItems.
+		// just return barest stub of collection.
 		obj = ap.NewASOrderedCollection(params)
 
 	case page == nil || auth.handshakingURI != nil:
 		// If paging disabled, or we're currently handshaking
 		// the requester, just return collection that links
 		// to first page (i.e. path below), with no items.
+		params.Total = util.Ptr(*receivingAcct.Stats.FollowingCount)
 		params.First = new(paging.Page)
 		params.Query = make(url.Values, 1)
 		params.Query.Set("limit", "40") // enables paging
@@ -362,6 +365,7 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 		}
 
 		// Start AS collection page params.
+		params.Total = util.Ptr(*receivingAcct.Stats.FollowingCount)
 		var pageParams ap.CollectionPageParams
 		pageParams.CollectionParams = params
 

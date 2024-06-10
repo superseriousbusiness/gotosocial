@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusGet handles the getting of a fedi/activitypub representation of a local status.
@@ -173,7 +174,7 @@ func (p *Processor) StatusRepliesGet(
 	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = len(replies)
+	params.Total = util.Ptr(len(replies))
 
 	if page == nil {
 		// i.e. paging disabled, return collection
