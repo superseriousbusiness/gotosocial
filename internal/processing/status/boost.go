@@ -76,7 +76,7 @@ func (p *Processor) BoostCreate(
 	}
 
 	if !boostable {
-		err := errors.New("status is not boostable")
+		err := gtserror.New("status is not boostable")
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
