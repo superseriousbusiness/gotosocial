@@ -18,6 +18,7 @@
 package v2
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -67,6 +68,30 @@ import (
 //		type: string
 //		minLength: 1
 //		maxLength: 200
+//	-
+//		name: keywords_attributes[][keyword]
+//		in: formData
+//		type: array
+//		items:
+//			type: string
+//		description: Keywords to be added to the created filter.
+//		collectionFormat: multi
+//	-
+//		name: keywords_attributes[][whole_word]
+//		in: formData
+//		type: array
+//		items:
+//			type: boolean
+//		description: Should each keyword consider word boundaries?
+//		collectionFormat: multi
+//	-
+//		name: statuses_attributes[][status_id]
+//		in: formData
+//		type: array
+//		items:
+//			type: string
+//		description: Statuses to be added to the newly created filter.
+//		collectionFormat: multi
 //	-
 //		name: context[]
 //		in: formData
@@ -183,6 +208,58 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 		}
 	}
 
+	// Parse form variant of normal filter keyword update structs.
+	// All filter keyword update struct fields are optional.
+	numFormKeywords := max(
+		len(form.KeywordsAttributesID),
+		len(form.KeywordsAttributesKeyword),
+		len(form.KeywordsAttributesWholeWord),
+		len(form.KeywordsAttributesDestroy),
+	)
+	if numFormKeywords > 0 {
+		form.Keywords = make([]apimodel.FilterKeywordCreateUpdateDeleteRequest, 0, numFormKeywords)
+		for i := 0; i < numFormKeywords; i++ {
+			formKeyword := apimodel.FilterKeywordCreateUpdateDeleteRequest{}
+			if i < len(form.KeywordsAttributesID) && form.KeywordsAttributesID[i] != "" {
+				formKeyword.ID = &form.KeywordsAttributesID[i]
+			}
+			if i < len(form.KeywordsAttributesKeyword) && form.KeywordsAttributesKeyword[i] != "" {
+				formKeyword.Keyword = &form.KeywordsAttributesKeyword[i]
+			}
+			if i < len(form.KeywordsAttributesWholeWord) {
+				formKeyword.WholeWord = &form.KeywordsAttributesWholeWord[i]
+			}
+			if i < len(form.KeywordsAttributesDestroy) {
+				formKeyword.Destroy = &form.KeywordsAttributesDestroy[i]
+			}
+			form.Keywords = append(form.Keywords, formKeyword)
+		}
+	}
+
+	// Parse form variant of normal filter status update structs.
+	// All filter status update struct fields are optional.
+	numFormStatuses := max(
+		len(form.StatusesAttributesID),
+		len(form.StatusesAttributesStatusID),
+		len(form.StatusesAttributesDestroy),
+	)
+	if numFormStatuses > 0 {
+		form.Statuses = make([]apimodel.FilterStatusCreateDeleteRequest, 0, numFormStatuses)
+		for i := 0; i < numFormStatuses; i++ {
+			formStatus := apimodel.FilterStatusCreateDeleteRequest{}
+			if i < len(form.StatusesAttributesID) && form.StatusesAttributesID[i] != "" {
+				formStatus.ID = &form.StatusesAttributesID[i]
+			}
+			if i < len(form.StatusesAttributesStatusID) && form.StatusesAttributesStatusID[i] != "" {
+				formStatus.StatusID = &form.StatusesAttributesStatusID[i]
+			}
+			if i < len(form.StatusesAttributesDestroy) {
+				formStatus.Destroy = &form.StatusesAttributesDestroy[i]
+			}
+			form.Statuses = append(form.Statuses, formStatus)
+		}
+	}
+
 	// Normalize filter expiry if necessary.
 	// If we parsed this as JSON, expires_in
 	// may be either a float64 or a string.
@@ -201,6 +278,43 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 
 		default:
 			return fmt.Errorf("could not parse expires_in type %T as integer", ei)
+		}
+	}
+
+	// Normalize and validate updates.
+	for i, formKeyword := range form.Keywords {
+		if formKeyword.Keyword != nil {
+			if err := validate.FilterKeyword(*formKeyword.Keyword); err != nil {
+				return err
+			}
+		}
+
+		destroy := util.PtrValueOr(formKeyword.Destroy, false)
+		form.Keywords[i].Destroy = &destroy
+
+		if destroy && formKeyword.ID == nil {
+			return errors.New("can't delete a filter keyword without an ID")
+		} else if formKeyword.ID == nil && formKeyword.Keyword == nil {
+			return errors.New("can't create a filter keyword without a keyword")
+		}
+	}
+	for i, formStatus := range form.Statuses {
+		if formStatus.StatusID != nil {
+			if err := validate.ULID(*formStatus.StatusID, "status_id"); err != nil {
+				return err
+			}
+		}
+
+		destroy := util.PtrValueOr(formStatus.Destroy, false)
+		form.Statuses[i].Destroy = &destroy
+
+		switch {
+		case destroy && formStatus.ID == nil:
+			return errors.New("can't delete a filter status without an ID")
+		case formStatus.ID != nil:
+			return errors.New("filter status IDs here can only be used to delete them")
+		case formStatus.StatusID == nil:
+			return errors.New("can't create a filter status without a status ID")
 		}
 	}
 
