@@ -154,11 +154,22 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 		}
 
 		// Create and pass-through a new bare-bones model for dereferencing.
-		return d.enrichAccountSafely(ctx, requestUser, uri, &gtsmodel.Account{
+		account, accountable, err := d.enrichAccountSafely(ctx, requestUser, uri, &gtsmodel.Account{
 			ID:     id.NewULID(),
 			Domain: uri.Host,
 			URI:    uriStr,
 		}, nil)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// We have a new account. Ensure basic account stats populated;
+		// real stats will be fetched from remote asynchronously.
+		if err := d.state.DB.StubAccountStats(ctx, account); err != nil {
+			return nil, nil, gtserror.Newf("error stubbing account stats: %w", err)
+		}
+
+		return account, accountable, nil
 	}
 
 	if accountFresh(account, nil) {
@@ -257,6 +268,12 @@ func (d *Dereferencer) getAccountByUsernameDomain(
 		}, nil)
 		if err != nil {
 			return nil, nil, err
+		}
+
+		// We have a new account. Ensure basic account stats populated;
+		// real stats will be fetched from remote asynchronously.
+		if err := d.state.DB.StubAccountStats(ctx, account); err != nil {
+			return nil, nil, gtserror.Newf("error stubbing account stats: %w", err)
 		}
 
 		return account, accountable, nil
@@ -726,13 +743,6 @@ func (d *Dereferencer) enrichAccount(
 	// Fetch the latest remote account emoji IDs used in account display name/bio.
 	if _, err = d.fetchRemoteAccountEmojis(ctx, latestAcc, requestUser); err != nil {
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
-	}
-
-	// Ensure basic account stats populated; real stats will be fetched from remote asynchronously.
-	if err := d.state.DB.PopulateAccountStats(ctx, latestAcc); err != nil {
-		// We're not calling remote yet: any error here
-		// is a real database error we should return from.
-		return nil, nil, gtserror.Newf("error populating account stats: %w", err)
 	}
 
 	if account.IsNew() {

@@ -211,14 +211,14 @@ func TestASOrderedCollectionNoTotal(t *testing.T) {
 
 	// Create JSON string of expected output.
 	expect := toJSON(map[string]any{
-		"@context":   "https://www.w3.org/ns/activitystreams",
-		"type":       "OrderedCollection",
-		"id":         idURI,
+		"@context": "https://www.w3.org/ns/activitystreams",
+		"type":     "OrderedCollection",
+		"id":       idURI,
 	})
 
 	// Create new collection using builder function.
 	c := ap.NewASOrderedCollection(ap.CollectionParams{
-		ID:    parseURI(idURI),
+		ID: parseURI(idURI),
 	})
 
 	// Serialize collection.
