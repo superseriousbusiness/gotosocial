@@ -15,11 +15,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package util
+package conversations_test
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+import "context"
 
-// ShortcodeDomain returns the [shortcode]@[domain] for the given emoji.
-func ShortcodeDomain(emoji *gtsmodel.Emoji) string {
-	return emoji.Shortcode + "@" + emoji.Domain
+func (suite *ConversationsTestSuite) TestDelete() {
+	err := suite.conversationsProcessor.Delete(context.Background(), suite.testAccount, suite.testConversation.ID)
+	suite.NoError(err)
 }

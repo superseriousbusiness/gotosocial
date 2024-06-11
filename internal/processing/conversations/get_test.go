@@ -15,43 +15,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package conversations_test
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Conversation
-	Domain
-	Emoji
-	HeaderFilter
-	Instance
-	Filter
-	List
-	Marker
-	Media
-	Mention
-	Move
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+func (suite *ConversationsTestSuite) TestGetAll() {
+	resp, err := suite.conversationsProcessor.GetAll(context.Background(), suite.testAccount, nil)
+	if suite.NoError(err) && suite.Len(resp.Items, 1) && suite.IsType((*apimodel.Conversation)(nil), resp.Items[0]) {
+		apiConversation := resp.Items[0].(*apimodel.Conversation)
+		suite.Equal(suite.testConversation.ID, apiConversation.ID)
+		suite.True(apiConversation.Unread)
+	}
 }

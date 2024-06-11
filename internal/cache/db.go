@@ -56,6 +56,12 @@ type GTSCaches struct {
 	// Client provides access to the gtsmodel Client database cache.
 	Client StructCache[*gtsmodel.Client]
 
+	// Conversation provides access to the gtsmodel Conversation database cache.
+	Conversation StructCache[*gtsmodel.Conversation]
+
+	// ConversationIDs provides access to the conversation IDs database cache.
+	ConversationIDs SliceCache[string]
+
 	// DomainAllow provides access to the domain allow database cache.
 	DomainAllow *domain.Cache
 
@@ -421,6 +427,51 @@ func (c *Caches) initClient() {
 		Copy:       copyF,
 		Invalidate: c.OnInvalidateClient,
 	})
+}
+
+func (c *Caches) initConversation() {
+	cap := calculateResultCacheMax(
+		sizeofConversation(), // model in-mem size.
+		config.GetCacheConversationMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(c1 *gtsmodel.Conversation) *gtsmodel.Conversation {
+		c2 := new(gtsmodel.Conversation)
+		*c2 = *c1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/conversation.go.
+		c2.Account = nil
+		c2.OtherAccounts = nil
+		c2.LastStatus = nil
+
+		return c2
+	}
+
+	c.GTS.Conversation.Init(structr.CacheConfig[*gtsmodel.Conversation]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "ThreadID,AccountID,OtherAccountsKey"},
+			{Fields: "AccountID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateConversation,
+	})
+}
+
+func (c *Caches) initConversationIDs() {
+	cap := calculateSliceCacheMax(
+		config.GetCacheConversationIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.GTS.ConversationIDs.Init(0, cap)
 }
 
 func (c *Caches) initDomainAllow() {

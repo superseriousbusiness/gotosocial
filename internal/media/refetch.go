@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
@@ -68,7 +67,7 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 
 			if refetch, err := m.emojiRequiresRefetch(ctx, emoji); err != nil {
 				// an error here indicates something is wrong with storage, so we should stop
-				return 0, fmt.Errorf("error checking refetch requirement for emoji %s: %w", util.ShortcodeDomain(emoji), err)
+				return 0, fmt.Errorf("error checking refetch requirement for emoji %s: %w", emoji.ShortcodeDomain(), err)
 			} else if !refetch {
 				continue
 			}
@@ -77,7 +76,7 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		}
 
 		// Update next maxShortcodeDomain from last emoji
-		maxShortcodeDomain = util.ShortcodeDomain(emojis[len(emojis)-1])
+		maxShortcodeDomain = emojis[len(emojis)-1].ShortcodeDomain()
 	}
 
 	// bail early if we've got nothing to do
@@ -95,7 +94,7 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			// this shouldn't happen--since we know we have the emoji--so return if it does
 			return 0, fmt.Errorf("error getting emoji %s: %w", emojiID, err)
 		}
-		shortcodeDomain := util.ShortcodeDomain(emoji)
+		shortcodeDomain := emoji.ShortcodeDomain()
 
 		if emoji.ImageRemoteURL == "" {
 			log.Errorf(ctx, "remote emoji %s could not be refreshed because it has no ImageRemoteURL set", shortcodeDomain)

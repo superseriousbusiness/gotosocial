@@ -108,6 +108,7 @@ func (suite *WorkersTestSuite) openStreams(ctx context.Context, processor *proce
 		stream.TimelineHome,
 		stream.TimelinePublic,
 		stream.TimelineNotifications,
+		stream.TimelineDirect,
 	} {
 		stream, err := processor.Stream().Open(ctx, account, streamType)
 		if err != nil {
