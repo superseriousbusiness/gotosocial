@@ -112,9 +112,9 @@ func (p *Processor) EmojisGet(
 		Items:          items,
 		Path:           "api/v1/admin/custom_emojis",
 		NextMaxIDKey:   "max_shortcode_domain",
-		NextMaxIDValue: util.ShortcodeDomain(emojis[count-1]),
+		NextMaxIDValue: emojis[count-1].ShortcodeDomain(),
 		PrevMinIDKey:   "min_shortcode_domain",
-		PrevMinIDValue: util.ShortcodeDomain(emojis[0]),
+		PrevMinIDValue: emojis[0].ShortcodeDomain(),
 		Limit:          limit,
 		ExtraQueryParams: []string{
 			emojisGetFilterParams(

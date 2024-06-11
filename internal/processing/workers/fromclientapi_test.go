@@ -50,6 +50,8 @@ func (suite *FromClientAPITestSuite) newStatus(
 	visibility gtsmodel.Visibility,
 	replyToStatus *gtsmodel.Status,
 	boostOfStatus *gtsmodel.Status,
+	mentionedAccounts []*gtsmodel.Account,
+	createThread bool,
 ) *gtsmodel.Status {
 	var (
 		protocol = config.GetProtocol()
@@ -103,6 +105,39 @@ func (suite *FromClientAPITestSuite) newStatus(
 		newStatus.BoostOfAccountID = boostOfStatus.AccountID
 		newStatus.BoostOfID = boostOfStatus.ID
 		newStatus.Visibility = boostOfStatus.Visibility
+	}
+
+	for _, mentionedAccount := range mentionedAccounts {
+		newMention := &gtsmodel.Mention{
+			ID:               id.NewULID(),
+			StatusID:         newStatus.ID,
+			Status:           newStatus,
+			OriginAccountID:  account.ID,
+			OriginAccountURI: account.URI,
+			OriginAccount:    account,
+			TargetAccountID:  mentionedAccount.ID,
+			TargetAccount:    mentionedAccount,
+			Silent:           util.Ptr(false),
+		}
+
+		newStatus.Mentions = append(newStatus.Mentions, newMention)
+		newStatus.MentionIDs = append(newStatus.MentionIDs, newMention.ID)
+
+		if err := state.DB.PutMention(ctx, newMention); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	if createThread {
+		newThread := &gtsmodel.Thread{
+			ID: id.NewULID(),
+		}
+
+		newStatus.ThreadID = newThread.ID
+
+		if err := state.DB.PutThread(ctx, newThread); err != nil {
+			suite.FailNow(err.Error())
+		}
 	}
 
 	// Put the status in the db, to mimic what would
@@ -171,6 +206,31 @@ func (suite *FromClientAPITestSuite) statusJSON(
 	return string(statusJSON)
 }
 
+func (suite *FromClientAPITestSuite) conversationJSON(
+	ctx context.Context,
+	typeConverter *typeutils.Converter,
+	conversation *gtsmodel.Conversation,
+	requestingAccount *gtsmodel.Account,
+) string {
+	apiConversation, err := typeConverter.ConversationToAPIConversation(
+		ctx,
+		conversation,
+		requestingAccount,
+		nil,
+		nil,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	conversationJSON, err := json.Marshal(apiConversation)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return string(conversationJSON)
+}
+
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 	testStructs := suite.SetupTestStructs()
 	defer suite.TearDownTestStructs(testStructs)
@@ -197,6 +257,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 			gtsmodel.VisibilityPublic,
 			nil,
 			nil,
+			nil,
+			false,
 		)
 	)
 
@@ -306,6 +368,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
+			nil,
+			false,
 		)
 	)
 
@@ -365,6 +429,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_1_status_1"],
 			nil,
+			nil,
+			false,
 		)
 		threadMute = &gtsmodel.ThreadMute{
 			ID:        "01HD3KRMBB1M85QRWHD912QWRE",
@@ -423,6 +489,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 			gtsmodel.VisibilityPublic,
 			nil,
 			suite.testStatuses["local_account_1_status_1"],
+			nil,
+			false,
 		)
 		threadMute = &gtsmodel.ThreadMute{
 			ID:        "01HD3KRMBB1M85QRWHD912QWRE",
@@ -486,6 +554,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
+			nil,
+			false,
 		)
 	)
 
@@ -559,6 +629,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
+			nil,
+			false,
 		)
 	)
 
@@ -637,6 +709,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 			gtsmodel.VisibilityPublic,
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
+			nil,
+			false,
 		)
 	)
 
@@ -707,6 +781,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 			gtsmodel.VisibilityPublic,
 			nil,
 			suite.testStatuses["local_account_2_status_1"],
+			nil,
+			false,
 		)
 	)
 
@@ -768,6 +844,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 			gtsmodel.VisibilityPublic,
 			nil,
 			suite.testStatuses["local_account_2_status_1"],
+			nil,
+			false,
 		)
 	)
 
@@ -807,6 +885,90 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 		false,
 		"",
 		"",
+	)
+}
+
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichBeginsConversation() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["local_account_2"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream   = streams[stream.TimelineHome]
+		directStream = streams[stream.TimelineDirect]
+
+		// turtle posts a new top-level DM mentioning zork.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityDirect,
+			nil,
+			nil,
+			[]*gtsmodel.Account{receivingAccount},
+			true,
+		)
+	)
+
+	// Process the new status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Locate the conversation which should now exist for zork.
+	conversation, err := testStructs.State.DB.GetConversationByThreadAndAccountIDs(
+		ctx,
+		status.ThreadID,
+		receivingAccount.ID,
+		[]string{postingAccount.ID},
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+
+	// Check mention notification in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeNotification,
+	)
+
+	// Check conversation in direct stream.
+	conversationJSON := suite.conversationJSON(
+		ctx,
+		testStructs.TypeConverter,
+		conversation,
+		receivingAccount,
+	)
+	suite.checkStreamed(
+		directStream,
+		true,
+		conversationJSON,
+		stream.EventTypeConversation,
 	)
 }
 

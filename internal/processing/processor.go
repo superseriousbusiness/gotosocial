@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/fedi"
 	filtersv1 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v1"
 	filtersv2 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v2"
@@ -70,22 +71,23 @@ type Processor struct {
 		SUB-PROCESSORS
 	*/
 
-	account   account.Processor
-	admin     admin.Processor
-	fedi      fedi.Processor
-	filtersv1 filtersv1.Processor
-	filtersv2 filtersv2.Processor
-	list      list.Processor
-	markers   markers.Processor
-	media     media.Processor
-	polls     polls.Processor
-	report    report.Processor
-	search    search.Processor
-	status    status.Processor
-	stream    stream.Processor
-	timeline  timeline.Processor
-	user      user.Processor
-	workers   workers.Processor
+	account       account.Processor
+	admin         admin.Processor
+	conversations conversations.Processor
+	fedi          fedi.Processor
+	filtersv1     filtersv1.Processor
+	filtersv2     filtersv2.Processor
+	list          list.Processor
+	markers       markers.Processor
+	media         media.Processor
+	polls         polls.Processor
+	report        report.Processor
+	search        search.Processor
+	status        status.Processor
+	stream        stream.Processor
+	timeline      timeline.Processor
+	user          user.Processor
+	workers       workers.Processor
 }
 
 func (p *Processor) Account() *account.Processor {
@@ -94,6 +96,10 @@ func (p *Processor) Account() *account.Processor {
 
 func (p *Processor) Admin() *admin.Processor {
 	return &p.admin
+}
+
+func (p *Processor) Conversations() *conversations.Processor {
+	return &p.conversations
 }
 
 func (p *Processor) Fedi() *fedi.Processor {
@@ -188,6 +194,7 @@ func NewProcessor(
 	// processors + pin them to this struct.
 	processor.account = account.New(&common, state, converter, mediaManager, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(&common, state, cleaner, federator, converter, mediaManager, federator.TransportController(), emailSender)
+	processor.conversations = conversations.New(state, converter)
 	processor.fedi = fedi.New(state, &common, converter, federator, filter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
 	processor.filtersv2 = filtersv2.New(state, converter, &processor.stream)

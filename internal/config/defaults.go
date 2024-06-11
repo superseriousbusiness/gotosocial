@@ -165,6 +165,8 @@ var Defaults = Configuration{
 		BlockIDsMemRatio:          3,
 		BoostOfIDsMemRatio:        3,
 		ClientMemRatio:            0.1,
+		ConversationMemRatio:      2,
+		ConversationIDsMemRatio:   3,
 		EmojiMemRatio:             3,
 		EmojiCategoryMemRatio:     0.1,
 		FilterMemRatio:            0.5,
