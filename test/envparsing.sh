@@ -32,6 +32,8 @@ EXPECT=$(cat << "EOF"
         "block-mem-ratio": 2,
         "boost-of-ids-mem-ratio": 3,
         "client-mem-ratio": 0.1,
+        "conversation-ids-mem-ratio": 3,
+        "conversation-mem-ratio": 2,
         "emoji-category-mem-ratio": 0.1,
         "emoji-mem-ratio": 3,
         "filter-keyword-mem-ratio": 0.5,
