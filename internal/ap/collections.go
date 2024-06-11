@@ -321,7 +321,8 @@ type CollectionParams struct {
 	Query url.Values
 
 	// Total no. items.
-	Total int
+	// Omitted if nil.
+	Total *int
 }
 
 type CollectionPageParams struct {
@@ -367,6 +368,7 @@ type CollectionPageBuilder interface {
 // vocab.ActivityStreamsOrderedItemsProperty
 type ItemsPropertyBuilder interface {
 	AppendIRI(*url.URL)
+	AppendActivityStreamsCreate(vocab.ActivityStreamsCreate)
 
 	// NOTE: add more of the items-property-like interface
 	// functions here as you require them for building pages.
@@ -409,9 +411,11 @@ func buildCollection[C CollectionBuilder](collection C, params CollectionParams)
 	collection.SetJSONLDId(idProp)
 
 	// Add the collection totalItems count property.
-	totalItems := streams.NewActivityStreamsTotalItemsProperty()
-	totalItems.Set(params.Total)
-	collection.SetActivityStreamsTotalItems(totalItems)
+	if params.Total != nil {
+		totalItems := streams.NewActivityStreamsTotalItemsProperty()
+		totalItems.Set(*params.Total)
+		collection.SetActivityStreamsTotalItems(totalItems)
+	}
 
 	// No First page means we're done.
 	if params.First == nil {
@@ -497,9 +501,11 @@ func buildCollectionPage[C CollectionPageBuilder, I ItemsPropertyBuilder](collec
 	}
 
 	// Add the collection totalItems count property.
-	totalItems := streams.NewActivityStreamsTotalItemsProperty()
-	totalItems.Set(params.Total)
-	collectionPage.SetActivityStreamsTotalItems(totalItems)
+	if params.Total != nil {
+		totalItems := streams.NewActivityStreamsTotalItemsProperty()
+		totalItems.Set(*params.Total)
+		collectionPage.SetActivityStreamsTotalItems(totalItems)
+	}
 
 	if params.Append == nil {
 		// nil check outside the for loop.

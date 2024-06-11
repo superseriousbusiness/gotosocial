@@ -120,16 +120,6 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 			return nil, err
 		}
 
-		settings := &gtsmodel.AccountSettings{
-			AccountID: accountID,
-			Privacy:   gtsmodel.VisibilityDefault,
-		}
-
-		// Insert the settings!
-		if err := a.state.DB.PutAccountSettings(ctx, settings); err != nil {
-			return nil, err
-		}
-
 		account = &gtsmodel.Account{
 			ID:                    accountID,
 			Username:              newSignup.Username,
@@ -145,11 +135,24 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 			PrivateKey:            privKey,
 			PublicKey:             &privKey.PublicKey,
 			PublicKeyURI:          uris.PublicKeyURI,
-			Settings:              settings,
 		}
 
 		// Insert the new account!
 		if err := a.state.DB.PutAccount(ctx, account); err != nil {
+			return nil, err
+		}
+
+		// Insert basic settings for new account.
+		account.Settings = &gtsmodel.AccountSettings{
+			AccountID: accountID,
+			Privacy:   gtsmodel.VisibilityDefault,
+		}
+		if err := a.state.DB.PutAccountSettings(ctx, account.Settings); err != nil {
+			return nil, err
+		}
+
+		// Stub empty stats for new account.
+		if err := a.state.DB.StubAccountStats(ctx, account); err != nil {
 			return nil, err
 		}
 	}

@@ -366,27 +366,6 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
 }`, trimmed)
 }
 
-func (suite *InternalToASTestSuite) TestOutboxToASCollection() {
-	testAccount := suite.testAccounts["admin_account"]
-	ctx := context.Background()
-
-	collection, err := suite.typeconverter.OutboxToASCollection(ctx, testAccount.OutboxURI)
-	suite.NoError(err)
-
-	ser, err := ap.Serialize(collection)
-	suite.NoError(err)
-
-	bytes, err := json.MarshalIndent(ser, "", "  ")
-	suite.NoError(err)
-
-	suite.Equal(`{
-  "@context": "https://www.w3.org/ns/activitystreams",
-  "first": "http://localhost:8080/users/admin/outbox?page=true",
-  "id": "http://localhost:8080/users/admin/outbox",
-  "type": "OrderedCollection"
-}`, string(bytes))
-}
-
 func (suite *InternalToASTestSuite) TestStatusToAS() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 	ctx := context.Background()

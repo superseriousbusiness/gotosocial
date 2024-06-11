@@ -19,14 +19,13 @@ package users
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // OutboxGETHandler swagger:operation GET /users/{username}/outbox s2sOutboxGet
@@ -105,30 +104,17 @@ func (m *Module) OutboxGETHandler(c *gin.Context) {
 		return
 	}
 
-	var page bool
-	if pageString := c.Query(PageKey); pageString != "" {
-		i, err := strconv.ParseBool(pageString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", PageKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		page = i
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		80, // max limit
+		0,  // default = disabled
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	minID := ""
-	minIDString := c.Query(MinIDKey)
-	if minIDString != "" {
-		minID = minIDString
-	}
-
-	maxID := ""
-	maxIDString := c.Query(MaxIDKey)
-	if maxIDString != "" {
-		maxID = maxIDString
-	}
-
-	resp, errWithCode := m.processor.Fedi().OutboxGet(c.Request.Context(), requestedUsername, page, maxID, minID)
+	resp, errWithCode := m.processor.Fedi().OutboxGet(c.Request.Context(), requestedUsername, page)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

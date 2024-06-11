@@ -140,9 +140,22 @@ type Account interface {
 	// Update local account settings.
 	UpdateAccountSettings(ctx context.Context, settings *gtsmodel.AccountSettings, columns ...string) error
 
-	// PopulateAccountStats gets (or creates and gets) account stats for
-	// the given account, and attaches them to the account model.
+	// PopulateAccountStats either creates account stats for the given
+	// account by performing COUNT(*) database queries, or retrieves
+	// existing stats from the database, and attaches stats to account.
+	//
+	// If account is local and stats were last regenerated > 48 hours ago,
+	// stats will always be regenerated using COUNT(*) queries, to prevent drift.
 	PopulateAccountStats(ctx context.Context, account *gtsmodel.Account) error
+
+	// StubAccountStats creates zeroed account stats for the given account,
+	// skipping COUNT(*) queries, upserts them in the DB, and attaches them
+	// to the account model.
+	//
+	// Useful following fresh dereference of a remote account, or fresh
+	// creation of a local account, when you know all COUNT(*) queries
+	// would return 0 anyway.
+	StubAccountStats(ctx context.Context, account *gtsmodel.Account) error
 
 	// RegenerateAccountStats creates, upserts, and returns stats
 	// for the given account, and attaches them to the account model.

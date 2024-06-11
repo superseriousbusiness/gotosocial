@@ -1217,6 +1217,35 @@ func (a *accountDB) PopulateAccountStats(ctx context.Context, account *gtsmodel.
 	return nil
 }
 
+func (a *accountDB) StubAccountStats(ctx context.Context, account *gtsmodel.Account) error {
+	stats := &gtsmodel.AccountStats{
+		AccountID:           account.ID,
+		RegeneratedAt:       time.Now(),
+		FollowersCount:      util.Ptr(0),
+		FollowingCount:      util.Ptr(0),
+		FollowRequestsCount: util.Ptr(0),
+		StatusesCount:       util.Ptr(0),
+		StatusesPinnedCount: util.Ptr(0),
+	}
+
+	// Upsert this stats in case a race
+	// meant someone else inserted it first.
+	if err := a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+		if _, err := NewUpsert(a.db).
+			Model(stats).
+			Constraint("account_id").
+			Exec(ctx); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	account.Stats = stats
+	return nil
+}
+
 func (a *accountDB) RegenerateAccountStats(ctx context.Context, account *gtsmodel.Account) error {
 	// Initialize a new stats struct.
 	stats := &gtsmodel.AccountStats{

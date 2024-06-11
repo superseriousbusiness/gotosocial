@@ -30,23 +30,35 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusGet handles the getting of a fedi/activitypub representation of a local status.
 // It performs appropriate authentication before returning a JSON serializable interface.
 func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusID string) (interface{}, gtserror.WithCode) {
-	// Authenticate the incoming request, getting related user accounts.
-	requester, receiver, errWithCode := p.authenticate(ctx, requestedUser)
+	// Authenticate incoming request, getting related accounts.
+	auth, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
+
+	if auth.handshakingURI != nil {
+		// We're currently handshaking, which means
+		// we don't know this account yet. This should
+		// be a very rare race condition.
+		err := gtserror.Newf("network race handshaking %s", auth.handshakingURI)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	receivingAcct := auth.receivingAcct
+	requestingAcct := auth.requestingAcct
 
 	status, err := p.state.DB.GetStatusByID(ctx, statusID)
 	if err != nil {
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if status.AccountID != receiver.ID {
+	if status.AccountID != receivingAcct.ID {
 		const text = "status does not belong to receiving account"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
@@ -56,7 +68,7 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusI
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, requester, status)
+	visible, err := p.filter.StatusVisible(ctx, requestingAcct, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -90,15 +102,26 @@ func (p *Processor) StatusRepliesGet(
 	page *paging.Page,
 	onlyOtherAccounts bool,
 ) (interface{}, gtserror.WithCode) {
-	// Authenticate the incoming request, getting related user accounts.
-	requester, receiver, errWithCode := p.authenticate(ctx, requestedUser)
+	// Authenticate incoming request, getting related accounts.
+	auth, errWithCode := p.authenticate(ctx, requestedUser)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
+	if auth.handshakingURI != nil {
+		// We're currently handshaking, which means
+		// we don't know this account yet. This should
+		// be a very rare race condition.
+		err := gtserror.Newf("network race handshaking %s", auth.handshakingURI)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	receivingAcct := auth.receivingAcct
+	requestingAcct := auth.requestingAcct
+
 	// Get target status and ensure visible to requester.
 	status, errWithCode := p.c.GetVisibleTargetStatus(ctx,
-		requester,
+		requestingAcct,
 		statusID,
 		nil, // default freshness
 	)
@@ -107,7 +130,7 @@ func (p *Processor) StatusRepliesGet(
 	}
 
 	// Ensure status is by receiving account.
-	if status.AccountID != receiver.ID {
+	if status.AccountID != receivingAcct.ID {
 		const text = "status does not belong to receiving account"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
@@ -140,7 +163,7 @@ func (p *Processor) StatusRepliesGet(
 	}
 
 	// Reslice replies dropping all those invisible to requester.
-	replies, err = p.filter.StatusesVisible(ctx, requester, replies)
+	replies, err = p.filter.StatusesVisible(ctx, requestingAcct, replies)
 	if err != nil {
 		err := gtserror.Newf("error filtering status replies: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -151,7 +174,7 @@ func (p *Processor) StatusRepliesGet(
 	// Start AS collection params.
 	var params ap.CollectionParams
 	params.ID = collectionID
-	params.Total = len(replies)
+	params.Total = util.Ptr(len(replies))
 
 	if page == nil {
 		// i.e. paging disabled, return collection
