@@ -82,7 +82,6 @@ func StartWorkers(state *state.State, processor *workers.Processor) {
 	state.Workers.Client.Start(1)
 	state.Workers.Federator.Start(1)
 	state.Workers.Dereference.Start(1)
-	state.Workers.Media.Start(1)
 }
 
 func StopWorkers(state *state.State) {
@@ -90,7 +89,6 @@ func StopWorkers(state *state.State) {
 	state.Workers.Client.Stop()
 	state.Workers.Federator.Stop()
 	state.Workers.Dereference.Stop()
-	state.Workers.Media.Stop()
 }
 
 func StartTimelines(state *state.State, filter *visibility.Filter, converter *typeutils.Converter) {
