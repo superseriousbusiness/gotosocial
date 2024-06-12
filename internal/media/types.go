@@ -110,6 +110,10 @@ type AdditionalMediaInfo struct {
 // that should be taken into account when processing an emoji.
 type AdditionalEmojiInfo struct {
 
+	// ActivityPub URI of
+	// this remote emoji.
+	URI *string
+
 	// Time that this emoji was
 	// created; defaults to time.Now().
 	CreatedAt *time.Time

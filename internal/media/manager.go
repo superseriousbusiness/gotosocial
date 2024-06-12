@@ -87,8 +87,8 @@ func (m *Manager) CreateMedia(
 	// Generate new ID.
 	id := id.NewULID()
 
-	// Calculate URI for attachment.
-	uri := uris.URIForAttachment(
+	// Placeholder URL for attachment.
+	url := uris.URIForAttachment(
 		accountID,
 		string(TypeAttachment),
 		string(SizeOriginal),
@@ -96,7 +96,7 @@ func (m *Manager) CreateMedia(
 		"unknown",
 	)
 
-	// Calculate storage path for attachment.
+	// Placeholder storage path for attachment.
 	path := uris.StoragePathForAttachment(
 		accountID,
 		string(TypeAttachment),
@@ -112,7 +112,7 @@ func (m *Manager) CreateMedia(
 		ID:         id,
 		CreatedAt:  now,
 		UpdatedAt:  now,
-		URL:        uri,
+		URL:        url,
 		Type:       gtsmodel.FileTypeUnknown,
 		AccountID:  accountID,
 		Processing: gtsmodel.ProcessingStatusReceived,
@@ -230,8 +230,11 @@ func (m *Manager) CreateEmoji(
 		return nil, gtserror.Newf("error fetching instance account: %w", err)
 	}
 
-	// Create new ActivityPub URI.
-	uri := uris.URIForEmoji(id)
+	if domain == "" && info.URI == nil {
+		// Generate URI for local emoji.
+		uri := uris.URIForEmoji(id)
+		info.URI = &uri
+	}
 
 	// Generate static URL for attachment.
 	staticURL := uris.URIForAttachment(
@@ -270,7 +273,6 @@ func (m *Manager) CreateEmoji(
 		ImageUpdatedAt:         now,
 		Disabled:               util.Ptr(false),
 		VisibleInPicker:        util.Ptr(true),
-		URI:                    uri,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
@@ -409,6 +411,9 @@ func (m *Manager) createEmoji(
 ) {
 	// Check if we have additional info to add to the emoji,
 	// and overwrite some of the emoji fields if so.
+	if info.URI != nil {
+		emoji.URI = *info.URI
+	}
 	if info.CreatedAt != nil {
 		emoji.CreatedAt = *info.CreatedAt
 	}

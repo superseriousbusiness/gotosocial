@@ -53,9 +53,17 @@ func (d *Dereferencer) GetEmoji(
 	}
 
 	if emoji != nil {
-		if emoji.ImageRemoteURL != remoteURL {
-			// Remote URL has oddly changed...
-			// Force an emoji refresh.
+		// Check emoji is up-to-date
+		// with provided extra info.
+		switch {
+		case info.URI != nil &&
+			*info.URI != emoji.URI:
+			refresh = true
+		case info.ImageRemoteURL != nil &&
+			*info.ImageRemoteURL != emoji.ImageRemoteURL:
+			refresh = true
+		case info.ImageStaticRemoteURL != nil &&
+			*info.ImageStaticRemoteURL != emoji.ImageStaticRemoteURL:
 			refresh = true
 		}
 
@@ -229,7 +237,8 @@ func (d *Dereferencer) fetchEmojis(
 			// Ensure that the existing emoji model is up-to-date and cached.
 			existing, err := d.RefreshEmoji(ctx, existing, media.AdditionalEmojiInfo{
 
-				// Set the newly fetched image remote URLs.
+				// Set latest values from emoji.
+				URI:                  &emoji.URI,
 				ImageRemoteURL:       &emoji.ImageRemoteURL,
 				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
 
