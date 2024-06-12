@@ -55,7 +55,7 @@ func (p *Processor) EmailTest(
 		InstanceName:    instance.Title,
 	}
 
-	if err := p.emailSender.SendTestEmail(toAddress, testData); err != nil {
+	if err := p.email.SendTestEmail(toAddress, testData); err != nil {
 		if gtserror.IsSMTP(err) {
 			// An error occurred during the SMTP part.
 			// We should indicate this to the caller, as

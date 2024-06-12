@@ -37,6 +37,5 @@ func newHdrBuf(fileSize int) []byte {
 	if fileSize > 0 && fileSize < bufSize {
 		bufSize = fileSize
 	}
-
 	return make([]byte, bufSize)
 }

@@ -386,11 +386,11 @@ func (suite *MediaTestSuite) TestUncacheAndRecache() {
 		testStatusAttachment,
 		testHeader,
 	} {
-		processingRecache, err := suite.manager.PreProcessMediaRecache(ctx, data, original.ID)
+		processingRecache := suite.manager.RecacheMedia(ctx, original, data)
 		suite.NoError(err)
 
 		// synchronously load the recached attachment
-		recachedAttachment, err := processingRecache.LoadAttachment(ctx)
+		recachedAttachment, err := processingRecache.Load(ctx)
 		suite.NoError(err)
 		suite.NotNil(recachedAttachment)
 

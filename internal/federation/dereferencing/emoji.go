@@ -19,31 +19,156 @@ package dereferencing
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io"
 	"net/url"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestUser string, remoteURL string, shortcode string, domain string, id string, emojiURI string, ai *media.AdditionalEmojiInfo, refresh bool) (*media.ProcessingEmoji, error) {
-	var shortcodeDomain = shortcode + "@" + domain
-
-	// Ensure we have been passed a valid URL.
-	derefURI, err := url.Parse(remoteURL)
-	if err != nil {
-		return nil, fmt.Errorf("GetRemoteEmoji: error parsing url for emoji %s: %s", shortcodeDomain, err)
+// GetEmoji ...
+func (d *Dereferencer) GetEmoji(
+	ctx context.Context,
+	shortcode string,
+	domain string,
+	remoteURL string,
+	info media.AdditionalEmojiInfo,
+	refresh bool,
+) (
+	*gtsmodel.Emoji,
+	error,
+) {
+	// Look for an existing emoji with shortcode domain.
+	emoji, err := d.state.DB.GetEmojiByShortcodeDomain(ctx,
+		shortcode,
+		domain,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("error fetching emoji from db: %w", err)
 	}
 
-	// Acquire derefs lock.
-	d.derefEmojisMu.Lock()
+	if emoji != nil {
+		if emoji.ImageRemoteURL != remoteURL {
+			// Remote URL has oddly changed...
+			// Force an emoji refresh.
+			refresh = true
+		}
 
+		// This was an existing emoji, pass to refresh func.
+		return d.RefreshEmoji(ctx, emoji, info, refresh)
+	}
+
+	if domain == "" {
+		// failed local lookup, will be db.ErrNoEntries.
+		return nil, gtserror.SetUnretrievable(err)
+	}
+
+	// Generate shortcode domain for locks + logging.
+	shortcodeDomain := emoji.Shortcode + "@" + emoji.Domain
+
+	// Ensure we have a valid remote URL.
+	url, err := url.Parse(remoteURL)
+	if err != nil {
+		err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", remoteURL, shortcodeDomain, err)
+		return nil, err
+	}
+
+	// Acquire new instance account transport for emoji dereferencing.
+	tsport, err := d.transportController.NewTransportForUsername(ctx, "")
+	if err != nil {
+		err := gtserror.Newf("error getting instance transport: %w", err)
+		return nil, err
+	}
+
+	// Prepare data function to dereference remote emoji media.
+	data := func(context.Context) (io.ReadCloser, int64, error) {
+		return tsport.DereferenceMedia(ctx, url)
+	}
+
+	// Pass along for safe processing.
+	return d.processEmojiSafely(ctx,
+		shortcodeDomain,
+		func() (*media.ProcessingEmoji, error) {
+			return d.mediaManager.CreateEmoji(ctx,
+				shortcode,
+				domain,
+				data,
+				info,
+			)
+		},
+	)
+}
+
+// RefreshEmoji ...
+func (d *Dereferencer) RefreshEmoji(
+	ctx context.Context,
+	emoji *gtsmodel.Emoji,
+	info media.AdditionalEmojiInfo,
+	force bool,
+) (
+	*gtsmodel.Emoji,
+	error,
+) {
+	// Can't refresh local.
+	if emoji.IsLocal() {
+		return emoji, nil
+	}
+
+	// Check if refresh needed.
+	if *emoji.Cached && !force {
+		return emoji, nil
+	}
+
+	// Generate shortcode domain for locks + logging.
+	shortcodeDomain := emoji.Shortcode + "@" + emoji.Domain
+
+	// Ensure we have a valid image remote URL.
+	url, err := url.Parse(emoji.ImageRemoteURL)
+	if err != nil {
+		err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", emoji.ImageRemoteURL, shortcodeDomain, err)
+		return nil, err
+	}
+
+	// Acquire new instance account transport for emoji dereferencing.
+	tsport, err := d.transportController.NewTransportForUsername(ctx, "")
+	if err != nil {
+		err := gtserror.Newf("error getting instance transport: %w", err)
+		return nil, err
+	}
+
+	// Prepare data function to dereference remote emoji media.
+	data := func(context.Context) (io.ReadCloser, int64, error) {
+		return tsport.DereferenceMedia(ctx, url)
+	}
+
+	// Pass along for safe processing.
+	return d.processEmojiSafely(ctx,
+		shortcodeDomain,
+		func() (*media.ProcessingEmoji, error) {
+			return d.mediaManager.RefreshEmoji(ctx,
+				emoji,
+				data,
+				info,
+			)
+		},
+	)
+}
+
+// processingEmojiSafely ...
+func (d *Dereferencer) processEmojiSafely(
+	ctx context.Context,
+	shortcodeDomain string,
+	process func() (*media.ProcessingEmoji, error),
+) (
+	*gtsmodel.Emoji,
+	error,
+) {
 	// Ensure unlock only done once.
 	unlock := d.derefEmojisMu.Unlock
 	unlock = util.DoOnce(unlock)
@@ -53,146 +178,112 @@ func (d *Dereferencer) GetRemoteEmoji(ctx context.Context, requestUser string, r
 	processing, ok := d.derefEmojis[shortcodeDomain]
 
 	if !ok {
-		// Fetch a transport for current request user in order to perform request.
-		tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
+		var err error
+
+		// Start new processing emoji.
+		processing, err = process()
 		if err != nil {
-			return nil, gtserror.Newf("couldn't create transport: %w", err)
+			return nil, err
 		}
-
-		// Set the media data function to dereference emoji from URI.
-		data := func(ctx context.Context) (io.ReadCloser, int64, error) {
-			return tsport.DereferenceMedia(ctx, derefURI)
-		}
-
-		// Create new emoji processing request from the media manager.
-		processing, err = d.mediaManager.PreProcessEmoji(ctx, data,
-			shortcode,
-			id,
-			emojiURI,
-			ai,
-			refresh,
-		)
-		if err != nil {
-			return nil, gtserror.Newf("error preprocessing emoji %s: %s", shortcodeDomain, err)
-		}
-
-		// Store media in map to mark as processing.
-		d.derefEmojis[shortcodeDomain] = processing
-
-		defer func() {
-			// On exit safely remove emoji from map.
-			d.derefEmojisMu.Lock()
-			delete(d.derefEmojis, shortcodeDomain)
-			d.derefEmojisMu.Unlock()
-		}()
 	}
 
 	// Unlock map.
 	unlock()
 
-	// Start emoji attachment loading (blocking call).
-	if _, err := processing.LoadEmoji(ctx); err != nil {
+	// Perform (blocking) load operation.
+	emoji, err := processing.Load(ctx)
+	if err != nil {
+		err := gtserror.Newf("error loading emoji %s: %w", shortcodeDomain, err)
 		return nil, err
 	}
 
-	return processing, nil
+	// Return a COPY of emoji.
+	emoji2 := new(gtsmodel.Emoji)
+	*emoji2 = *emoji
+	return emoji2, nil
 }
 
-func (d *Dereferencer) populateEmojis(ctx context.Context, rawEmojis []*gtsmodel.Emoji, requestingUsername string) ([]*gtsmodel.Emoji, error) {
-	// At this point we should know:
-	// * the AP uri of the emoji
-	// * the domain of the emoji
-	// * the shortcode of the emoji
-	// * the remote URL of the image
-	// This should be enough to dereference the emoji
-	gotEmojis := make([]*gtsmodel.Emoji, 0, len(rawEmojis))
+func (d *Dereferencer) fetchEmojis(
+	ctx context.Context,
+	tsport transport.Transport,
+	existing []*gtsmodel.Emoji,
+	emojis []*gtsmodel.Emoji, // newly dereferenced
+) (
+	[]*gtsmodel.Emoji,
+	bool, // any changes?
+	error,
+) {
+	// Track any changes.
+	changed := false
 
-	for _, e := range rawEmojis {
-		var gotEmoji *gtsmodel.Emoji
-		var err error
-		shortcodeDomain := e.Shortcode + "@" + e.Domain
+	for i, emoji := range emojis {
+		// Look for an existing emoji with shortcode + domain.
+		existing, ok := getEmojiByShortcodeDomain(existing,
+			emoji.Shortcode,
+			emoji.Domain,
+		)
+		if ok && existing.ID != "" {
 
-		// check if we already know this emoji
-		if e.ID != "" {
-			// we had an ID for this emoji already, which means
-			// it should be fleshed out already and we won't
-			// have to get it from the database again
-			gotEmoji = e
-		} else if gotEmoji, err = d.state.DB.GetEmojiByShortcodeDomain(ctx, e.Shortcode, e.Domain); err != nil && err != db.ErrNoEntries {
-			log.Errorf(ctx, "error checking database for emoji %s: %s", shortcodeDomain, err)
+			// Ensure that the existing emoji model is up-to-date and cached.
+			existing, err := d.RefreshEmoji(ctx, existing, media.AdditionalEmojiInfo{
+
+				// Set the newly fetched image remote URLs.
+				ImageRemoteURL:       &emoji.ImageRemoteURL,
+				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
+
+				// Refresh is only forced if image URL changed.
+			}, (existing.ImageRemoteURL != emoji.ImageRemoteURL))
+			if err != nil {
+				log.Errorf(ctx, "error refreshing emoji: %v", err)
+
+				// specifically do NOT continue here,
+				// we already have a model, we don't
+				// want to drop it from the slice, just
+				// log that an update for it failed.
+			}
+
+			// Set existing emoji.
+			emojis[i] = existing
 			continue
 		}
 
-		var refresh bool
+		// Emojis changed!
+		changed = true
 
-		if gotEmoji != nil {
-			// we had the emoji already, but refresh it if necessary
-			if e.UpdatedAt.Unix() > gotEmoji.ImageUpdatedAt.Unix() {
-				log.Tracef(ctx, "emoji %s was updated since we last saw it, will refresh", shortcodeDomain)
-				refresh = true
-			}
-
-			if !refresh && (e.URI != gotEmoji.URI) {
-				log.Tracef(ctx, "emoji %s changed URI since we last saw it, will refresh", shortcodeDomain)
-				refresh = true
-			}
-
-			if !refresh && (e.ImageRemoteURL != gotEmoji.ImageRemoteURL) {
-				log.Tracef(ctx, "emoji %s changed image URL since we last saw it, will refresh", shortcodeDomain)
-				refresh = true
-			}
-
-			if !refresh {
-				log.Tracef(ctx, "emoji %s is up to date, will not refresh", shortcodeDomain)
-			} else {
-				log.Tracef(ctx, "refreshing emoji %s", shortcodeDomain)
-				emojiID := gotEmoji.ID // use existing ID
-				processingEmoji, err := d.GetRemoteEmoji(ctx, requestingUsername, e.ImageRemoteURL, e.Shortcode, e.Domain, emojiID, e.URI, &media.AdditionalEmojiInfo{
-					Domain:               &e.Domain,
-					ImageRemoteURL:       &e.ImageRemoteURL,
-					ImageStaticRemoteURL: &e.ImageStaticRemoteURL,
-					Disabled:             gotEmoji.Disabled,
-					VisibleInPicker:      gotEmoji.VisibleInPicker,
-				}, refresh)
-				if err != nil {
-					log.Errorf(ctx, "couldn't refresh remote emoji %s: %s", shortcodeDomain, err)
-					continue
-				}
-
-				if gotEmoji, err = processingEmoji.LoadEmoji(ctx); err != nil {
-					log.Errorf(ctx, "couldn't load refreshed remote emoji %s: %s", shortcodeDomain, err)
-					continue
-				}
-			}
-		} else {
-			// it's new! go get it!
-			newEmojiID, err := id.NewRandomULID()
-			if err != nil {
-				log.Errorf(ctx, "error generating id for remote emoji %s: %s", shortcodeDomain, err)
+		// Fetch this newly added emoji,
+		// this function handles the case
+		// of existing cached emojis and
+		// new ones requiring dereference.
+		emoji, err := d.GetEmoji(ctx,
+			emoji.Shortcode,
+			emoji.Domain,
+			emoji.ImageRemoteURL,
+			media.AdditionalEmojiInfo{
+				ImageRemoteURL:       &emoji.ImageRemoteURL,
+				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
+			},
+			false,
+		)
+		if err != nil {
+			if emoji == nil {
+				log.Errorf(ctx, "error loading emoji %s: %v", emoji.ImageRemoteURL, err)
 				continue
 			}
 
-			processingEmoji, err := d.GetRemoteEmoji(ctx, requestingUsername, e.ImageRemoteURL, e.Shortcode, e.Domain, newEmojiID, e.URI, &media.AdditionalEmojiInfo{
-				Domain:               &e.Domain,
-				ImageRemoteURL:       &e.ImageRemoteURL,
-				ImageStaticRemoteURL: &e.ImageStaticRemoteURL,
-				Disabled:             e.Disabled,
-				VisibleInPicker:      e.VisibleInPicker,
-			}, refresh)
-			if err != nil {
-				log.Errorf(ctx, "couldn't get remote emoji %s: %s", shortcodeDomain, err)
-				continue
-			}
-
-			if gotEmoji, err = processingEmoji.LoadEmoji(ctx); err != nil {
-				log.Errorf(ctx, "couldn't load remote emoji %s: %s", shortcodeDomain, err)
-				continue
-			}
+			// non-fatal error occurred during loading, still use it.
+			log.Warnf(ctx, "partially loaded emoji: %v", err)
 		}
-
-		// if we get here, we either had the emoji already or we successfully fetched it
-		gotEmojis = append(gotEmojis, gotEmoji)
 	}
 
-	return gotEmojis, nil
+	for i := 0; i < len(emojis); {
+		if emojis[i].ID == "" {
+			// Remove failed emoji populations.
+			copy(emojis[i:], emojis[i+1:])
+			emojis = emojis[:len(emojis)-1]
+			continue
+		}
+		i++
+	}
+
+	return emojis, changed, nil
 }

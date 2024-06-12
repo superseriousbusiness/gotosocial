@@ -19,12 +19,16 @@ package media
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type Processor struct {
+	// common processor logic
+	c *common.Processor
+
 	state               *state.State
 	converter           *typeutils.Converter
 	mediaManager        *media.Manager

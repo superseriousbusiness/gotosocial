@@ -179,7 +179,7 @@ func NewProcessor(
 	//
 	// Start with sub processors that will
 	// be required by the workers processor.
-	common := common.New(state, converter, federator, filter)
+	common := common.New(state, mediaManager, converter, federator, filter)
 	processor.account = account.New(&common, state, converter, mediaManager, federator, filter, parseMentionFunc)
 	processor.media = media.New(state, converter, mediaManager, federator.TransportController())
 	processor.stream = stream.New(state, oauthServer)

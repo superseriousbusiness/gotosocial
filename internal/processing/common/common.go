@@ -20,6 +20,7 @@ package common
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -29,6 +30,7 @@ import (
 // processing subsection of the codebase.
 type Processor struct {
 	state     *state.State
+	media     *media.Manager
 	converter *typeutils.Converter
 	federator *federation.Federator
 	filter    *visibility.Filter
@@ -37,12 +39,14 @@ type Processor struct {
 // New returns a new Processor instance.
 func New(
 	state *state.State,
+	media *media.Manager,
 	converter *typeutils.Converter,
 	federator *federation.Federator,
 	filter *visibility.Filter,
 ) Processor {
 	return Processor{
 		state:     state,
+		media:     media,
 		converter: converter,
 		federator: federator,
 		filter:    filter,

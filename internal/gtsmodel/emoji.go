@@ -42,7 +42,7 @@ type Emoji struct {
 	VisibleInPicker        *bool          `bun:",nullzero,notnull,default:true"`                              // Is this emoji visible in the admin emoji picker?
 	Category               *EmojiCategory `bun:"rel:belongs-to"`                                              // In which emoji category is this emoji visible?
 	CategoryID             string         `bun:"type:CHAR(26),nullzero"`                                      // ID of the category this emoji belongs to.
-	Cached                 *bool          `bun:",nullzero,notnull,default:false"`
+	Cached                 *bool          `bun:",nullzero,notnull,default:false"`                             // whether emoji is cached in locally in gotosocial storage.
 }
 
 // IsLocal returns true if the emoji is
