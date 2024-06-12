@@ -386,7 +386,7 @@ func (suite *MediaTestSuite) TestUncacheAndRecache() {
 		testStatusAttachment,
 		testHeader,
 	} {
-		processingRecache := suite.manager.RecacheMedia(ctx, original, data)
+		processingRecache := suite.manager.RecacheMedia(original, data)
 		suite.NoError(err)
 
 		// synchronously load the recached attachment
