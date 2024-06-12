@@ -487,4 +487,5 @@ func (p *ProcessingMedia) cleanup(ctx context.Context) {
 	// processing so gets inserted as placeholder URL.
 	p.media.Processing = gtsmodel.ProcessingStatusProcessed
 	p.media.Type = gtsmodel.FileTypeUnknown
+	p.media.Cached = util.Ptr(false)
 }
