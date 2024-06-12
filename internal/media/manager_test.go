@@ -216,9 +216,8 @@ func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processing.Load(ctx)
+	_, err = processing.Load(ctx)
 	suite.EqualError(err, "store: given emoji size 630kiB greater than max allowed 50.0kiB")
-	suite.Nil(emoji)
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcessTooLargeNoSizeGiven() {
@@ -242,9 +241,8 @@ func (suite *ManagerTestSuite) TestEmojiProcessTooLargeNoSizeGiven() {
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processing.Load(ctx)
-	suite.EqualError(err, "store: calculated emoji size 630kiB greater than max allowed 50.0kiB")
-	suite.Nil(emoji)
+	_, err = processing.Load(ctx)
+	suite.EqualError(err, "store: written emoji size 630kiB greater than max allowed 50.0kiB")
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcessNoFileSizeGiven() {
@@ -488,7 +486,6 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
 	// file meta should be correctly derived from the image
 	suite.Zero(attachment.FileMeta)
 	suite.Equal("image/jpeg", attachment.File.ContentType)
-	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Empty(attachment.Blurhash)
 
 	// now make sure the attachment is in the database

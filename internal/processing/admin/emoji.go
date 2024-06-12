@@ -407,7 +407,7 @@ func (p *Processor) emojiUpdateModify(
 			err := gtserror.Newf("error updating emoji in db: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
-	} else {
+	} else if imageUpdated {
 		var err error
 
 		// Updating image and maybe categoryID.

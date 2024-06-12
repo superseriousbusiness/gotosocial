@@ -94,11 +94,19 @@ func (d *Dereferencer) updateAttachment(
 		}
 
 		if len(changed) > 0 {
+			// Remember previous 'updated_at'.
+			updatedAt := existing.UpdatedAt
+
 			// Update the existing attachment model in the database.
 			err := d.state.DB.UpdateAttachment(ctx, existing, changed...)
 			if err != nil {
 				return media, gtserror.Newf("error updating media: %w", err)
 			}
+
+			// Set old 'updated_at' for below,
+			// (used internally in RecachedMedia
+			// to slow down repeated failures).
+			existing.UpdatedAt = updatedAt
 		}
 	}
 
