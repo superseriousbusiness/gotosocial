@@ -36,8 +36,15 @@ type Processor struct {
 }
 
 // New returns a new media processor.
-func New(state *state.State, converter *typeutils.Converter, mediaManager *media.Manager, transportController transport.Controller) Processor {
+func New(
+	common *common.Processor,
+	state *state.State,
+	converter *typeutils.Converter,
+	mediaManager *media.Manager,
+	transportController transport.Controller,
+) Processor {
 	return Processor{
+		c:                   common,
 		state:               state,
 		converter:           converter,
 		mediaManager:        mediaManager,

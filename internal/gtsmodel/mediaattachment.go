@@ -30,8 +30,8 @@ type MediaAttachment struct {
 	StatusID          string           `bun:"type:CHAR(26),nullzero"`                                      // ID of the status to which this is attached
 	URL               string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on a remote server (empty for local media)
-	Type              FileType         `bun:",nullzero,notnull"`                                           // Type of file (image/gifv/audio/video/unknown)
-	FileMeta          FileMeta         `bun:",embed:,nullzero,notnull"`                                    // Metadata about the file
+	Type              FileType         `bun:",notnull"`                                                    // Type of file (image/gifv/audio/video/unknown)
+	FileMeta          FileMeta         `bun:",embed:,notnull"`                                             // Metadata about the file
 	AccountID         string           `bun:"type:CHAR(26),nullzero,notnull"`                              // To which account does this attachment belong
 	Description       string           `bun:""`                                                            // Description of the attachment (for screenreaders)
 	ScheduledStatusID string           `bun:"type:CHAR(26),nullzero"`                                      // To which scheduled status does this attachment belong
@@ -46,16 +46,16 @@ type MediaAttachment struct {
 
 // File refers to the metadata for the whole file
 type File struct {
-	Path        string    `bun:",nullzero,notnull"`                                           // Path of the file in storage.
-	ContentType string    `bun:",nullzero,notnull"`                                           // MIME content type of the file.
+	Path        string    `bun:",notnull"`                                                    // Path of the file in storage.
+	ContentType string    `bun:",notnull"`                                                    // MIME content type of the file.
 	FileSize    int       `bun:",notnull"`                                                    // File size in bytes
 	UpdatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
 type Thumbnail struct {
-	Path        string    `bun:",nullzero,notnull"`                                           // Path of the file in storage.
-	ContentType string    `bun:",nullzero,notnull"`                                           // MIME content type of the file.
+	Path        string    `bun:",notnull"`                                                    // Path of the file in storage.
+	ContentType string    `bun:",notnull"`                                                    // MIME content type of the file.
 	FileSize    int       `bun:",notnull"`                                                    // File size in bytes
 	UpdatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
 	URL         string    `bun:",nullzero"`                                                   // What is the URL of the thumbnail on the local server
