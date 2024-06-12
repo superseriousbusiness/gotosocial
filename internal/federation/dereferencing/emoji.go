@@ -271,6 +271,7 @@ func (d *Dereferencer) fetchEmojis(
 			emoji.Domain,
 			emoji.ImageRemoteURL,
 			media.AdditionalEmojiInfo{
+				URI:                  &emoji.URI,
 				ImageRemoteURL:       &remoteURL,
 				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
 			},

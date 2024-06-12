@@ -103,15 +103,9 @@ func (p *ProcessingMedia) Load(ctx context.Context) (media *gtsmodel.MediaAttach
 				ctx, // values
 			)
 
-			// On error or unknown media types, delete any downloaded
-			// files as they were either failures or misunderstood types.
+			// On error or unknown media types, perform error cleanup.
 			if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
 				p.cleanup(ctx)
-
-				// Also ensure marked as unknown and finished
-				// processing so gets inserted as placeholder URL.
-				p.media.Processing = gtsmodel.ProcessingStatusProcessed
-				p.media.Type = gtsmodel.FileTypeUnknown
 			}
 
 			// Update with latest details, whatever happened.
@@ -469,16 +463,28 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 }
 
 // cleanup will remove any traces of processing media from storage.
+// and perform any other necessary cleanup steps after failure.
 func (p *ProcessingMedia) cleanup(ctx context.Context) {
 	var err error
 
-	err = p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
-	if err != nil && !storage.IsNotFound(err) {
-		log.Errorf(ctx, "error deleting %s: %v", p.media.File.Path, err)
+	if p.media.File.Path != "" {
+		// Ensure media file at path is deleted from storage.
+		err = p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
+		if err != nil && !storage.IsNotFound(err) {
+			log.Errorf(ctx, "error deleting %s: %v", p.media.File.Path, err)
+		}
 	}
 
-	err = p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path)
-	if err != nil && !storage.IsNotFound(err) {
-		log.Errorf(ctx, "error deleting %s: %v", p.media.Thumbnail.Path, err)
+	if p.media.Thumbnail.Path != "" {
+		// Ensure media thumbnail at path is deleted from storage.
+		err = p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path)
+		if err != nil && !storage.IsNotFound(err) {
+			log.Errorf(ctx, "error deleting %s: %v", p.media.Thumbnail.Path, err)
+		}
 	}
+
+	// Also ensure marked as unknown and finished
+	// processing so gets inserted as placeholder URL.
+	p.media.Processing = gtsmodel.ProcessingStatusProcessed
+	p.media.Type = gtsmodel.FileTypeUnknown
 }
