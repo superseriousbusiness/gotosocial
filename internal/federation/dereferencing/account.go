@@ -745,11 +745,6 @@ func (d *Dereferencer) enrichAccount(
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
 
-	// Fetch followers/following count for this account.
-	if err := d.dereferenceAccountStats(ctx, requestUser, latestAcc); err != nil {
-		log.Errorf(ctx, "error fetching remote stats for account %s: %v", uri, err)
-	}
-
 	if account.IsNew() {
 		// Prefer published/created time from
 		// apubAcc, fall back to FetchedAt value.
