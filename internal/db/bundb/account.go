@@ -252,6 +252,27 @@ func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gts
 	return a.GetAccountByUsernameDomain(ctx, username, domain)
 }
 
+func (a *accountDB) GetAccountsByMovedToURI(ctx context.Context, uri string) ([]*gtsmodel.Account, error) {
+	var accountIDs []string
+
+	// Find all account IDs with
+	// given moved_to_uri column.
+	if err := a.db.NewSelect().
+		Table("accounts").
+		Column("id").
+		Where("? = ?", bun.Ident("moved_to_uri"), uri).
+		Scan(ctx, &accountIDs); err != nil {
+		return nil, err
+	}
+
+	if len(accountIDs) == 0 {
+		return nil, nil
+	}
+
+	// Return account models for all found IDs.
+	return a.GetAccountsByIDs(ctx, accountIDs)
+}
+
 // GetAccounts selects accounts using the given parameters.
 // Unlike with other functions, the paging for GetAccounts
 // is done not by ID, but by a concatenation of `[domain]/@[username]`,
@@ -1193,6 +1214,35 @@ func (a *accountDB) PopulateAccountStats(ctx context.Context, account *gtsmodel.
 	}
 
 	// Stats are still fresh.
+	return nil
+}
+
+func (a *accountDB) StubAccountStats(ctx context.Context, account *gtsmodel.Account) error {
+	stats := &gtsmodel.AccountStats{
+		AccountID:           account.ID,
+		RegeneratedAt:       time.Now(),
+		FollowersCount:      util.Ptr(0),
+		FollowingCount:      util.Ptr(0),
+		FollowRequestsCount: util.Ptr(0),
+		StatusesCount:       util.Ptr(0),
+		StatusesPinnedCount: util.Ptr(0),
+	}
+
+	// Upsert this stats in case a race
+	// meant someone else inserted it first.
+	if err := a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+		if _, err := NewUpsert(a.db).
+			Model(stats).
+			Constraint("account_id").
+			Exec(ctx); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	account.Stats = stats
 	return nil
 }
 

@@ -20,55 +20,64 @@ package fedi
 import (
 	"context"
 	"errors"
+	"net/url"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (p *Processor) authenticate(ctx context.Context, requestedUser string) (
-	*gtsmodel.Account, // requester: i.e. user making the request
-	*gtsmodel.Account, // receiver: i.e. the receiving inbox user
-	gtserror.WithCode,
-) {
+type commonAuth struct {
+	handshakingURI *url.URL          // Set to requestingAcct's URI if we're currently handshaking them.
+	requestingAcct *gtsmodel.Account // Remote account making request to this instance.
+	receivingAcct  *gtsmodel.Account // Local account receiving the request.
+}
+
+func (p *Processor) authenticate(ctx context.Context, requestedUser string) (*commonAuth, gtserror.WithCode) {
 	// First get the requested (receiving) LOCAL account with username from database.
 	receiver, err := p.state.DB.GetAccountByUsernameDomain(ctx, requestedUser, "")
 	if err != nil {
 		if !errors.Is(err, db.ErrNoEntries) {
 			// Real db error.
 			err = gtserror.Newf("db error getting account %s: %w", requestedUser, err)
-			return nil, nil, gtserror.NewErrorInternalError(err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
 		// Account just not found in the db.
-		return nil, nil, gtserror.NewErrorNotFound(err)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	// Ensure request signed, and use signature URI to
 	// get requesting account, dereferencing if necessary.
 	pubKeyAuth, errWithCode := p.federator.AuthenticateFederatedRequest(ctx, requestedUser)
 	if errWithCode != nil {
-		return nil, nil, errWithCode
+		return nil, errWithCode
 	}
 
 	if pubKeyAuth.Handshaking {
-		// This should happen very rarely, we are in the middle of handshaking.
-		err := gtserror.Newf("network race handshaking %s", pubKeyAuth.OwnerURI)
-		return nil, nil, gtserror.NewErrorInternalError(err)
+		// We're still handshaking so we
+		// don't know the requester yet.
+		return &commonAuth{
+			handshakingURI: pubKeyAuth.OwnerURI,
+			receivingAcct:  receiver,
+		}, nil
 	}
 
 	// Get requester from auth.
 	requester := pubKeyAuth.Owner
 
-	// Check that block does not exist between receiver and requester.
+	// Ensure block does not exist between receiver and requester.
 	blocked, err := p.state.DB.IsEitherBlocked(ctx, receiver.ID, requester.ID)
 	if err != nil {
 		err := gtserror.Newf("error checking block: %w", err)
-		return nil, nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	} else if blocked {
 		const text = "block exists between accounts"
-		return nil, nil, gtserror.NewErrorForbidden(errors.New(text))
+		return nil, gtserror.NewErrorForbidden(errors.New(text))
 	}
 
-	return requester, receiver, nil
+	return &commonAuth{
+		requestingAcct: requester,
+		receivingAcct:  receiver,
+	}, nil
 }

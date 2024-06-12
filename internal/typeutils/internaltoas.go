@@ -1560,39 +1560,6 @@ func (c *Converter) StatusesToASOutboxPage(ctx context.Context, outboxID string,
 	return page, nil
 }
 
-// OutboxToASCollection returns an ordered collection with appropriate id, next, and last fields.
-// The returned collection won't have any actual entries; just links to where entries can be obtained.
-// we want something that looks like this:
-//
-//	{
-//		"@context": "https://www.w3.org/ns/activitystreams",
-//		"id": "https://example.org/users/whatever/outbox",
-//		"type": "OrderedCollection",
-//		"first": "https://example.org/users/whatever/outbox?page=true"
-//	}
-func (c *Converter) OutboxToASCollection(ctx context.Context, outboxID string) (vocab.ActivityStreamsOrderedCollection, error) {
-	collection := streams.NewActivityStreamsOrderedCollection()
-
-	collectionIDProp := streams.NewJSONLDIdProperty()
-	outboxIDURI, err := url.Parse(outboxID)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing url %s", outboxID)
-	}
-	collectionIDProp.SetIRI(outboxIDURI)
-	collection.SetJSONLDId(collectionIDProp)
-
-	collectionFirstProp := streams.NewActivityStreamsFirstProperty()
-	collectionFirstPropID := fmt.Sprintf("%s?page=true", outboxID)
-	collectionFirstPropIDURI, err := url.Parse(collectionFirstPropID)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing url %s", collectionFirstPropID)
-	}
-	collectionFirstProp.SetIRI(collectionFirstPropIDURI)
-	collection.SetActivityStreamsFirst(collectionFirstProp)
-
-	return collection, nil
-}
-
 // StatusesToASFeaturedCollection converts a slice of statuses into an ordered collection
 // of URIs, suitable for serializing and serving via the activitypub API.
 func (c *Converter) StatusesToASFeaturedCollection(ctx context.Context, featuredCollectionID string, statuses []*gtsmodel.Status) (vocab.ActivityStreamsOrderedCollection, error) {

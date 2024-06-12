@@ -161,7 +161,7 @@ func (suite *MoveTestSuite) TestMoveAccountBadPassword() {
 			MovedToURI: targetAcct.URI,
 		},
 	)
-	suite.EqualError(err, "invalid password provided in account Move request")
+	suite.EqualError(err, "invalid password provided in Move request")
 }
 
 func TestMoveTestSuite(t *testing.T) {

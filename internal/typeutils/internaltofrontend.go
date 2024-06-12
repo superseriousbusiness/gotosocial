@@ -147,6 +147,24 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 // if something goes wrong. The returned account should be ready to serialize on an API level, and may NOT have sensitive fields.
 // In other words, this is the public record that the server has of an account.
 func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+	account, err := c.accountToAPIAccountPublic(ctx, a)
+	if err != nil {
+		return nil, err
+	}
+
+	if a.MovedTo != nil {
+		account.Moved, err = c.accountToAPIAccountPublic(ctx, a.MovedTo)
+		if err != nil {
+			log.Errorf(ctx, "error converting account movedTo: %v", err)
+		}
+	}
+
+	return account, nil
+}
+
+// accountToAPIAccountPublic provides all the logic for AccountToAPIAccount, MINUS fetching moved account, to prevent possible recursion.
+func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
+
 	// Populate account struct fields.
 	err := c.state.DB.PopulateAccount(ctx, a)
 
@@ -154,7 +172,7 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	case err == nil:
 		// No problem.
 
-	case err != nil && a.Stats != nil:
+	case a.Stats != nil:
 		// We have stats so that's
 		// *maybe* OK, try to continue.
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
@@ -266,37 +284,10 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		acct = a.Username // omit domain
 	}
 
-	// Populate moved.
-	var moved *apimodel.Account
-	if a.MovedTo != nil {
-		moved, err = c.AccountToAPIAccountPublic(ctx, a.MovedTo)
-		if err != nil {
-			log.Errorf(ctx, "error converting account movedTo: %v", err)
-		}
-	}
-
-	// Bool ptrs should be set, but warn
-	// and use a default if they're not.
-	var boolPtrDef = func(
-		pName string,
-		p *bool,
-		d bool,
-	) bool {
-		if p != nil {
-			return *p
-		}
-
-		log.Warnf(ctx,
-			"%s ptr was nil, using default %t",
-			pName, d,
-		)
-		return d
-	}
-
 	var (
-		locked       = boolPtrDef("locked", a.Locked, true)
-		discoverable = boolPtrDef("discoverable", a.Discoverable, false)
-		bot          = boolPtrDef("bot", a.Bot, false)
+		locked       = util.PtrValueOr(a.Locked, true)
+		discoverable = util.PtrValueOr(a.Discoverable, false)
+		bot          = util.PtrValueOr(a.Bot, false)
 	)
 
 	// Remaining properties are simple and
@@ -329,7 +320,6 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		EnableRSS:       enableRSS,
 		HideCollections: hideCollections,
 		Role:            role,
-		Moved:           moved,
 	}
 
 	// Bodge default avatar + header in,
@@ -350,7 +340,8 @@ func (c *Converter) fieldsToAPIFields(f []*gtsmodel.Field) []apimodel.Field {
 		}
 
 		if !field.VerifiedAt.IsZero() {
-			mField.VerifiedAt = func() *string { s := util.FormatISO8601(field.VerifiedAt); return &s }()
+			verified := util.FormatISO8601(field.VerifiedAt)
+			mField.VerifiedAt = util.Ptr(verified)
 		}
 
 		fields[i] = mField
@@ -755,6 +746,10 @@ func (c *Converter) StatusToAPIStatus(
 	var aside string
 	aside, apiStatus.MediaAttachments = placeholdUnknownAttachments(apiStatus.MediaAttachments)
 	apiStatus.Content += aside
+	if apiStatus.Reblog != nil {
+		aside, apiStatus.Reblog.MediaAttachments = placeholdUnknownAttachments(apiStatus.Reblog.MediaAttachments)
+		apiStatus.Reblog.Content += aside
+	}
 
 	return apiStatus, nil
 }
@@ -1051,27 +1046,81 @@ func (c *Converter) StatusToAPIStatusSource(ctx context.Context, s *gtsmodel.Sta
 // Requesting account can be nil.
 func (c *Converter) statusToFrontend(
 	ctx context.Context,
+	status *gtsmodel.Status,
+	requestingAccount *gtsmodel.Account,
+	filterContext statusfilter.FilterContext,
+	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
+) (
+	*apimodel.Status,
+	error,
+) {
+	apiStatus, err := c.baseStatusToFrontend(ctx,
+		status,
+		requestingAccount,
+		filterContext,
+		filters,
+		mutes,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if status.BoostOf != nil {
+		reblog, err := c.baseStatusToFrontend(ctx,
+			status.BoostOf,
+			requestingAccount,
+			filterContext,
+			filters,
+			mutes,
+		)
+		if errors.Is(err, statusfilter.ErrHideStatus) {
+			// If we'd hide the original status, hide the boost.
+			return nil, err
+		} else if err != nil {
+			return nil, gtserror.Newf("error converting boosted status: %w", err)
+		}
+
+		// Set boosted status and set interactions from original.
+		apiStatus.Reblog = &apimodel.StatusReblogged{reblog}
+		apiStatus.Favourited = apiStatus.Reblog.Favourited
+		apiStatus.Bookmarked = apiStatus.Reblog.Bookmarked
+		apiStatus.Muted = apiStatus.Reblog.Muted
+		apiStatus.Reblogged = apiStatus.Reblog.Reblogged
+		apiStatus.Pinned = apiStatus.Reblog.Pinned
+	}
+
+	return apiStatus, nil
+}
+
+// baseStatusToFrontend performs the main logic
+// of statusToFrontend() without handling of boost
+// logic, to prevent *possible* recursion issues.
+func (c *Converter) baseStatusToFrontend(
+	ctx context.Context,
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-) (*apimodel.Status, error) {
+) (
+	*apimodel.Status,
+	error,
+) {
 	// Try to populate status struct pointer fields.
 	// We can continue in many cases of partial failure,
 	// but there are some fields we actually need.
 	if err := c.state.DB.PopulateStatus(ctx, s); err != nil {
-		if s.Account == nil {
-			err = gtserror.Newf("error(s) populating status, cannot continue (status.Account not set): %w", err)
-			return nil, err
-		}
+		switch {
+		case s.Account == nil:
+			return nil, gtserror.Newf("error(s) populating status, required account not set: %w", err)
 
-		if s.BoostOfID != "" && s.BoostOf == nil {
-			err = gtserror.Newf("error(s) populating status, cannot continue (status.BoostOfID set, but status.Boost not set): %w", err)
-			return nil, err
-		}
+		case s.BoostOfID != "" && s.BoostOf == nil:
+			return nil, gtserror.Newf("error(s) populating status, required boost not set: %w", err)
 
-		log.Errorf(ctx, "error(s) populating status, will continue: %v", err)
+		default:
+			log.Errorf(ctx, "error(s) populating status, will continue: %v", err)
+		}
 	}
 
 	apiAuthorAccount, err := c.AccountToAPIAccountPublic(ctx, s.Account)
@@ -1153,19 +1202,6 @@ func (c *Converter) statusToFrontend(
 		apiStatus.Language = util.Ptr(s.Language)
 	}
 
-	if s.BoostOf != nil {
-		reblog, err := c.StatusToAPIStatus(ctx, s.BoostOf, requestingAccount, filterContext, filters, mutes)
-		if errors.Is(err, statusfilter.ErrHideStatus) {
-			// If we'd hide the original status, hide the boost.
-			return nil, err
-		}
-		if err != nil {
-			return nil, gtserror.Newf("error converting boosted status: %w", err)
-		}
-
-		apiStatus.Reblog = &apimodel.StatusReblogged{reblog}
-	}
-
 	if app := s.CreatedWithApplication; app != nil {
 		apiStatus.Application, err = c.AppToAPIAppPublic(ctx, app)
 		if err != nil {
@@ -1190,14 +1226,9 @@ func (c *Converter) statusToFrontend(
 
 	// Status interactions.
 	//
-	// Take from boosted status if set,
-	// otherwise take from status itself.
-	if apiStatus.Reblog != nil {
-		apiStatus.Favourited = apiStatus.Reblog.Favourited
-		apiStatus.Bookmarked = apiStatus.Reblog.Bookmarked
-		apiStatus.Muted = apiStatus.Reblog.Muted
-		apiStatus.Reblogged = apiStatus.Reblog.Reblogged
-		apiStatus.Pinned = apiStatus.Reblog.Pinned
+	if s.BoostOf != nil { //nolint
+		// populated *outside* this
+		// function to prevent recursion.
 	} else {
 		interacts, err := c.interactionsWithStatusForAccount(ctx, s, requestingAccount)
 		if err != nil {
@@ -1230,6 +1261,7 @@ func (c *Converter) statusToFrontend(
 		}
 		return nil, fmt.Errorf("error applying filters: %w", err)
 	}
+
 	apiStatus.Filtered = filterResults
 
 	return apiStatus, nil

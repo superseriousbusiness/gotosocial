@@ -37,12 +37,12 @@ require (
 	github.com/go-swagger/go-swagger v0.31.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.1.2
-	github.com/gorilla/websocket v1.5.1
+	github.com/gorilla/websocket v1.5.2
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/miekg/dns v1.1.59
-	github.com/minio/minio-go/v7 v7.0.70
+	github.com/minio/minio-go/v7 v7.0.71
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.16.1
 	github.com/oklog/ulid v1.3.1
@@ -53,7 +53,7 @@ require (
 	github.com/superseriousbusiness/activity v1.6.0-gts.0.20240408131430-247f7f7110f0
 	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
-	github.com/tdewolff/minify/v2 v2.20.32
+	github.com/tdewolff/minify/v2 v2.20.33
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
@@ -73,8 +73,8 @@ require (
 	go.opentelemetry.io/otel/trace v1.26.0
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/crypto v0.24.0
-	golang.org/x/image v0.16.0
-	golang.org/x/net v0.25.0
+	golang.org/x/image v0.17.0
+	golang.org/x/net v0.26.0
 	golang.org/x/oauth2 v0.20.0
 	golang.org/x/text v0.16.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
