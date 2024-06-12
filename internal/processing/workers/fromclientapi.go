@@ -305,6 +305,30 @@ func (p *clientAPI) CreateFollowReq(ctx context.Context, cMsg *messages.FromClie
 		return gtserror.Newf("%T not parseable as *gtsmodel.FollowRequest", cMsg.GTSModel)
 	}
 
+	// If target is a local, unlocked account,
+	// we can skip side effects for the follow
+	// request and accept the follow immediately.
+	if cMsg.Target.IsLocal() && !*cMsg.Target.Locked {
+		// Accept the FR first to get the Follow.
+		follow, err := p.state.DB.AcceptFollowRequest(
+			ctx,
+			cMsg.Origin.ID,
+			cMsg.Target.ID,
+		)
+		if err != nil {
+			return gtserror.Newf("db error accepting follow req: %w", err)
+		}
+
+		// Use AcceptFollow to do side effects.
+		return p.AcceptFollow(ctx, &messages.FromClientAPI{
+			APObjectType:   ap.ActivityFollow,
+			APActivityType: ap.ActivityAccept,
+			GTSModel:       follow,
+			Origin:         cMsg.Origin,
+			Target:         cMsg.Target,
+		})
+	}
+
 	// Update stats for the target account.
 	if err := p.utils.incrementFollowRequestsCount(ctx, cMsg.Target); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)

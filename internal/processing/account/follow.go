@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FollowCreate handles a follow request to an account, either remote or local.
@@ -98,35 +99,38 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 		Notify:          form.Notify,
 	}
 
+	// Insert the new follow request.
 	if err := p.state.DB.PutFollowRequest(ctx, fr); err != nil {
 		err = gtserror.Newf("error creating follow request in db: %s", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if targetAccount.IsLocal() && !*targetAccount.Locked {
-		// If the target account is local and not locked,
-		// we can already accept the follow request and
-		// skip any further processing.
-		//
-		// Because we know the requestingAccount is also
-		// local, we don't need to federate the accept out.
-		if _, err := p.state.DB.AcceptFollowRequest(ctx, requestingAccount.ID, form.ID); err != nil {
-			err = gtserror.Newf("error accepting follow request for local unlocked account: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-	} else {
-		// Otherwise we leave the follow request as it is,
-		// and we handle the rest of the process async.
-		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-			APObjectType:   ap.ActivityFollow,
-			APActivityType: ap.ActivityCreate,
-			GTSModel:       fr,
-			Origin:         requestingAccount,
-			Target:         targetAccount,
-		})
+	// And get the new relationship state.
+	rel, errWithCode := p.RelationshipGet(ctx, requestingAccount, form.ID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	return p.RelationshipGet(ctx, requestingAccount, form.ID)
+	// For unlocked accounts on the same instance,
+	// we can already optimistically show the follow
+	// request as accepted in the returned relationship.
+	if targetAccount.IsLocal() && !*targetAccount.Locked {
+		rel.Requested = false
+		rel.Following = true
+		rel.ShowingReblogs = util.PtrValueOr(fr.ShowReblogs, true)
+		rel.Notifying = util.PtrValueOr(fr.Notify, false)
+	}
+
+	// Handle side effects async.
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       fr,
+		Origin:         requestingAccount,
+		Target:         targetAccount,
+	})
+
+	return rel, nil
 }
 
 // FollowRemove handles the removal of a follow/follow request to an account, either remote or local.
