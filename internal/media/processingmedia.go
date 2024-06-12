@@ -30,6 +30,7 @@ import (
 	terminator "codeberg.org/superseriousbusiness/exif-terminator"
 	"github.com/disintegration/imaging"
 	"github.com/h2non/filetype"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -71,6 +72,22 @@ func (p *ProcessingMedia) Load(ctx context.Context) (media *gtsmodel.MediaAttach
 			return p.err
 		}
 
+		// TODO: in time update this
+		// to perhaps follow a similar
+		// freshness window to statuses
+		// / accounts? But that's a big
+		// maybe, media don't change in
+		// the same way so this is largely
+		// just to slow down fail retries.
+		const maxfreq = 6 * time.Hour
+
+		// Check whether media is uncached but repeatedly failing,
+		// specifically limit the frequency at which we allow this.
+		if !p.media.UpdatedAt.Equal(p.media.CreatedAt) && // i.e. not new
+			p.media.UpdatedAt.Add(maxfreq).Before(time.Now()) {
+			return nil
+		}
+
 		defer func() {
 			// This is only done when ctx NOT cancelled.
 			done := err == nil || !errorsv2.IsV2(err,
@@ -78,10 +95,29 @@ func (p *ProcessingMedia) Load(ctx context.Context) (media *gtsmodel.MediaAttach
 				context.DeadlineExceeded,
 			)
 
+			// Anything from here, we
+			// need to ensure happens
+			// (i.e. no ctx canceled).
+			ctx = gtscontext.WithValues(
+				context.Background(),
+				ctx, // values
+			)
+
 			// On error or unknown media types, delete any downloaded
 			// files as they were either failures or misunderstood types.
 			if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
-				p.cleanup(context.Background())
+				p.cleanup(ctx)
+
+				// Also ensure marked as unknown and finished
+				// processing so gets inserted as placeholder URL.
+				p.media.Processing = gtsmodel.ProcessingStatusProcessed
+				p.media.Type = gtsmodel.FileTypeUnknown
+			}
+
+			// Update with latest details, whatever happened.
+			e := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
+			if e != nil {
+				log.Errorf(ctx, "error updating media in db: %v", e)
 			}
 
 			if !done {
@@ -106,14 +142,7 @@ func (p *ProcessingMedia) Load(ctx context.Context) (media *gtsmodel.MediaAttach
 		//
 		// This will update p.media as it goes.
 		if err = p.finish(ctx); err != nil {
-			return err
-		}
-
-		// Update attachment with details now its cached.
-		err = p.mgr.state.DB.UpdateAttachment(ctx, p.media)
-		if err != nil {
-			err = gtserror.Newf("error updating media in db: %w", err)
-			return err
+			return err //nolint:revive
 		}
 
 		return nil
@@ -297,11 +326,9 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 		"jpg",
 	)
 
-	// If original file hasn't been stored, there's
-	// likely something wrong with the data, or we
-	// don't want to store it. Skip everything else.
+	// Nothing else to do if
+	// media was not cached.
 	if !*p.media.Cached {
-		p.media.Processing = gtsmodel.ProcessingStatusProcessed
 		return nil
 	}
 

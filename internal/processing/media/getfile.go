@@ -85,9 +85,18 @@ func (p *Processor) GetFile(
 	// so we need to take different steps depending on the media type being requested
 	switch mediaType {
 	case media.TypeEmoji:
-		return p.getEmojiContent(ctx, wantedMediaID, owningAccountID, mediaSize)
+		return p.getEmojiContent(ctx,
+			owningAccountID,
+			wantedMediaID,
+			mediaSize,
+		)
 	case media.TypeAttachment, media.TypeHeader, media.TypeAvatar:
-		return p.getAttachmentContent(ctx, requestingAccount, wantedMediaID, owningAccountID, mediaSize)
+		return p.getAttachmentContent(ctx,
+			requestingAccount,
+			owningAccountID,
+			wantedMediaID,
+			mediaSize,
+		)
 	default:
 		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not recognized", mediaType))
 	}

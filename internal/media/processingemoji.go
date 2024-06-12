@@ -22,12 +22,14 @@ import (
 	"context"
 	"io"
 	"slices"
+	"time"
 
 	"codeberg.org/gruf/go-bytesize"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
 	"github.com/h2non/filetype"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -62,6 +64,22 @@ func (p *ProcessingEmoji) Load(ctx context.Context) (emoji *gtsmodel.Emoji, err 
 			return p.err
 		}
 
+		// TODO: in time update this
+		// to perhaps follow a similar
+		// freshness window to statuses
+		// / accounts? But that's a big
+		// maybe, media don't change in
+		// the same way so this is largely
+		// just to slow down fail retries.
+		const maxfreq = 6 * time.Hour
+
+		// Check whether media is uncached but repeatedly failing,
+		// specifically limit the frequency at which we allow this.
+		if !p.emoji.UpdatedAt.Equal(p.emoji.CreatedAt) && // i.e. not new
+			p.emoji.UpdatedAt.Add(maxfreq).Before(time.Now()) {
+			return nil
+		}
+
 		defer func() {
 			// This is only done when ctx NOT cancelled.
 			done := err == nil || !errorsv2.IsV2(err,
@@ -69,14 +87,28 @@ func (p *ProcessingEmoji) Load(ctx context.Context) (emoji *gtsmodel.Emoji, err 
 				context.DeadlineExceeded,
 			)
 
+			// Anything from here, we
+			// need to ensure happens
+			// (i.e. no ctx canceled).
+			ctx = gtscontext.WithValues(
+				context.Background(),
+				ctx, // values
+			)
+
 			// On error, clean
 			// downloaded files.
 			if err != nil {
-				p.cleanup(context.Background())
+				p.cleanup(ctx)
 			}
 
 			if !done {
 				return
+			}
+
+			// Update with latest details, whatever happened.
+			e := p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
+			if e != nil {
+				log.Errorf(ctx, "error updating emoji in db: %v", e)
 			}
 
 			// Store final values.
@@ -97,14 +129,7 @@ func (p *ProcessingEmoji) Load(ctx context.Context) (emoji *gtsmodel.Emoji, err 
 		//
 		// This will update p.emoji as it goes.
 		if err = p.finish(ctx); err != nil {
-			return err
-		}
-
-		// Update emoji with latest details now cached.
-		err = p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
-		if err != nil {
-			err = gtserror.Newf("error updating emoji in db: %w", err)
-			return err
+			return err //nolint:revive
 		}
 
 		return nil
@@ -142,7 +167,8 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 
 	// Check that provided size isn't beyond max. We check beforehand
 	// so that we don't attempt to stream the emoji into storage if not needed.
-	if sz := bytesize.Size(sz); sz > 0 && sz > maxSize {
+	if sz > 0 && sz > int64(maxSize) {
+		sz := bytesize.Size(sz) // improves log readability
 		return gtserror.Newf("given emoji size %s greater than max allowed %s", sz, maxSize)
 	}
 
@@ -236,7 +262,8 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Perform final size check in case none was
 	// given previously, or size was mis-reported.
 	// (error here will later perform p.cleanup()).
-	if sz := bytesize.Size(sz); sz > maxSize {
+	if sz > int64(maxSize) {
+		sz := bytesize.Size(sz) // improves log readability
 		return gtserror.Newf("written emoji size %s greater than max allowed %s", sz, maxSize)
 	}
 
