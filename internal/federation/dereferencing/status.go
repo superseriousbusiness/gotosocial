@@ -541,7 +541,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Ensure the status' emoji attachments are populated, passing in existing to check for changes.
-	if err := d.fetchStatusEmojis(ctx, tsport, status, latestStatus); err != nil {
+	if err := d.fetchStatusEmojis(ctx, status, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating emojis for status %s: %w", uri, err)
 	}
 
@@ -965,6 +965,7 @@ func (d *Dereferencer) fetchStatusAttachments(
 		}
 
 		// Load this new media attachment.
+		remoteURL := attachment.RemoteURL
 		attachment, err := d.loadAttachment(
 			ctx,
 			tsport,
@@ -972,14 +973,14 @@ func (d *Dereferencer) fetchStatusAttachments(
 			attachment.RemoteURL,
 			media.AdditionalMediaInfo{
 				StatusID:    &status.ID,
-				RemoteURL:   &attachment.RemoteURL,
+				RemoteURL:   &remoteURL,
 				Description: &attachment.Description,
 				Blurhash:    &attachment.Blurhash,
 			},
 		)
 		if err != nil {
 			if attachment == nil {
-				log.Errorf(ctx, "error loading attachment %s: %v", attachment.RemoteURL, err)
+				log.Errorf(ctx, "error loading attachment %s: %v", remoteURL, err)
 				continue
 			}
 
@@ -1009,13 +1010,11 @@ func (d *Dereferencer) fetchStatusAttachments(
 
 func (d *Dereferencer) fetchStatusEmojis(
 	ctx context.Context,
-	tsport transport.Transport,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) error {
 	// Fetch the updated emojis for our status.
 	emojis, changed, err := d.fetchEmojis(ctx,
-		tsport,
 		existing.Emojis,
 		status.Emojis,
 	)

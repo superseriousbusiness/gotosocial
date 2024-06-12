@@ -741,7 +741,7 @@ func (d *Dereferencer) enrichAccount(
 	}
 
 	// Fetch the latest remote account emoji IDs used in account display name/bio.
-	if err = d.fetchAccountEmojis(ctx, tsport, account, latestAcc); err != nil {
+	if err = d.fetchAccountEmojis(ctx, account, latestAcc); err != nil {
 		log.Errorf(ctx, "error fetching remote emojis for account %s: %v", uri, err)
 	}
 
@@ -940,13 +940,11 @@ func (d *Dereferencer) fetchAccountHeader(
 
 func (d *Dereferencer) fetchAccountEmojis(
 	ctx context.Context,
-	tsport transport.Transport,
 	existing *gtsmodel.Account,
 	account *gtsmodel.Account,
 ) error {
 	// Fetch the updated emojis for our account.
 	emojis, changed, err := d.fetchEmojis(ctx,
-		tsport,
 		existing.Emojis,
 		account.Emojis,
 	)

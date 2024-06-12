@@ -111,7 +111,7 @@ func (suite *AccountStandardTestSuite) SetupTest() {
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 
 	filter := visibility.NewFilter(&suite.state)
-	common := common.New(&suite.state, suite.tc, suite.federator, filter)
+	common := common.New(&suite.state, suite.mediaManager, suite.tc, suite.federator, filter)
 	suite.accountProcessor = account.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.federator, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
