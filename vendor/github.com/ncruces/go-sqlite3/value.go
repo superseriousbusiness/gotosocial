@@ -177,7 +177,7 @@ func (v Value) JSON(ptr any) error {
 	var data []byte
 	switch v.Type() {
 	case NULL:
-		data = append(data, "null"...)
+		data = []byte("null")
 	case TEXT:
 		data = v.RawText()
 	case BLOB:

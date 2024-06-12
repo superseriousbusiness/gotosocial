@@ -75,11 +75,6 @@ func (memVFS) FullPathname(name string) (string, error) {
 type memDB struct {
 	name string
 
-	// +checklocks:lockMtx
-	pending *memFile
-	// +checklocks:lockMtx
-	reserved *memFile
-
 	// +checklocks:dataMtx
 	data []*[sectorSize]byte
 
@@ -88,6 +83,10 @@ type memDB struct {
 
 	// +checklocks:lockMtx
 	shared int
+	// +checklocks:lockMtx
+	reserved bool
+	// +checklocks:lockMtx
+	pending bool
 
 	// +checklocks:memoryMtx
 	refs int
@@ -214,24 +213,24 @@ func (m *memFile) Lock(lock vfs.LockLevel) error {
 
 	switch lock {
 	case vfs.LOCK_SHARED:
-		if m.pending != nil {
+		if m.pending {
 			return sqlite3.BUSY
 		}
 		m.shared++
 
 	case vfs.LOCK_RESERVED:
-		if m.reserved != nil {
+		if m.reserved {
 			return sqlite3.BUSY
 		}
-		m.reserved = m
+		m.reserved = true
 
 	case vfs.LOCK_EXCLUSIVE:
 		if m.lock < vfs.LOCK_PENDING {
-			if m.pending != nil {
+			if m.pending {
 				return sqlite3.BUSY
 			}
 			m.lock = vfs.LOCK_PENDING
-			m.pending = m
+			m.pending = true
 		}
 
 		for before := time.Now(); m.shared > 1; {
@@ -256,11 +255,11 @@ func (m *memFile) Unlock(lock vfs.LockLevel) error {
 	m.lockMtx.Lock()
 	defer m.lockMtx.Unlock()
 
-	if m.pending == m {
-		m.pending = nil
+	if m.pending && m.lock >= vfs.LOCK_PENDING {
+		m.pending = false
 	}
-	if m.reserved == m {
-		m.reserved = nil
+	if m.reserved && m.lock >= vfs.LOCK_RESERVED {
+		m.reserved = false
 	}
 	if lock < vfs.LOCK_SHARED {
 		m.shared--
@@ -275,7 +274,7 @@ func (m *memFile) CheckReservedLock() (bool, error) {
 	}
 	m.lockMtx.Lock()
 	defer m.lockMtx.Unlock()
-	return m.reserved != nil, nil
+	return m.reserved, nil
 }
 
 func (m *memFile) SectorSize() int {
