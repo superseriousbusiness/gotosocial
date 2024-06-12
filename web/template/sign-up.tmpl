@@ -21,6 +21,9 @@
 <main>
     <section class="with-form" aria-labelledby="sign-up">
         <h2 id="sign-up">Sign up for an account on {{ .instance.Title -}}</h2>
+        {{- if not .registrationOpen }}
+        <p>This instance is not currently open to new sign-ups.</p>
+        {{- else }}
         <form action="/signup" method="POST">
             <div class="labelinput">
                 <label for="email">Email</label>
@@ -40,6 +43,7 @@
                     name="password"
                     required
                     placeholder="Please enter your desired password"
+                    autocomplete="new-password"
                 >
             </div>
             <div class="labelinput">
@@ -88,6 +92,7 @@
             <input type="hidden" name="locale" value="en">
             <button type="submit" class="btn btn-success">Submit</button>
         </form>
+        {{- end }}
     </section>
 </main>
 {{- end }}

@@ -58,7 +58,8 @@ func (m *Module) signupGETHandler(c *gin.Context) {
 		Instance: instance,
 		OGMeta:   apiutil.OGBase(instance),
 		Extra: map[string]any{
-			"reasonRequired": config.GetAccountsReasonRequired(),
+			"reasonRequired":   config.GetAccountsReasonRequired(),
+			"registrationOpen": config.GetAccountsRegistrationOpen(),
 		},
 	}
 
