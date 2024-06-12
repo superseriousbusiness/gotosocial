@@ -24,9 +24,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
@@ -60,15 +62,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
-
-	// Inherit memory limit if set from cgroup
-	_ "github.com/KimMachineGun/automemlimit"
 )
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
 	if _, err := maxprocs.Set(maxprocs.Logger(nil)); err != nil {
 		log.Warnf(ctx, "could not set CPU limits from cgroup: %s", err)
+	}
+
+	if _, err := memlimit.SetGoMemLimitWithOpts(); err != nil {
+		if !strings.Contains(err.Error(), "cgroup mountpoint does not exist") {
+			log.Warnf(ctx, "could not set Memory limits from cgroup: %s", err)
+		}
 	}
 
 	var (
