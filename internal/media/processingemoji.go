@@ -348,6 +348,9 @@ func (p *ProcessingEmoji) cleanup(ctx context.Context) {
 			log.Errorf(ctx, "error deleting %s: %v", p.emoji.ImageStaticPath, err)
 		}
 	}
+
+	// Ensure marked as not cached.
+	p.emoji.Cached = util.Ptr(false)
 }
 
 // getInstanceAccountID determines the instance account ID from
