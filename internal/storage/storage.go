@@ -95,7 +95,7 @@ func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64,
 	return d.Storage.WriteStream(ctx, key, r)
 }
 
-// Remove attempts to remove the supplied key (and corresponding value) from storage.
+// Delete attempts to remove the supplied key (and corresponding value) from storage.
 func (d *Driver) Delete(ctx context.Context, key string) error {
 	return d.Storage.Remove(ctx, key)
 }

@@ -540,8 +540,8 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating attachments for status %s: %w", uri, err)
 	}
 
-	// Ensure the status' emoji attachments are populated, (changes are expected / okay).
-	if err := d.fetchStatusEmojis(ctx, requestUser, latestStatus); err != nil {
+	// Ensure the status' emoji attachments are populated, passing in existing to check for changes.
+	if err := d.fetchStatusEmojis(ctx, tsport, status, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating emojis for status %s: %w", uri, err)
 	}
 
@@ -643,79 +643,12 @@ func (d *Dereferencer) isPermittedStatus(
 	return onFail()
 }
 
-// populateMentionTarget tries to populate the given
-// mention with the correct TargetAccount and (if not
-// yet set) TargetAccountURI, returning the populated
-// mention.
-//
-// Will check on the existing status if the mention
-// is already there and populated; if so, existing
-// mention will be returned along with `true`.
-//
-// Otherwise, this function will try to parse first
-// the Href of the mention, and then the namestring,
-// to see who it targets, and go fetch that account.
-func (d *Dereferencer) populateMentionTarget(
+func (d *Dereferencer) fetchStatusMentions(
 	ctx context.Context,
-	mention *gtsmodel.Mention,
 	requestUser string,
-	existing, status *gtsmodel.Status,
-) (
-	*gtsmodel.Mention,
-	bool, // True if mention already exists in the DB.
-	error,
-) {
-	// Mentions can be created using Name or Href.
-	// Prefer Href (TargetAccountURI), fall back to Name.
-	if mention.TargetAccountURI != "" {
-		// Look for existing mention with this URI.
-		// If we already have it we can return early.
-		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
-		if ok && existingMention.ID != "" {
-			return existingMention, true, nil
-		}
-
-		// Ensure that mention account URI is parseable.
-		accountURI, err := url.Parse(mention.TargetAccountURI)
-		if err != nil {
-			err = gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
-			return nil, false, err
-		}
-
-		// Ensure we have the account of the mention target dereferenced.
-		mention.TargetAccount, _, err = d.getAccountByURI(ctx, requestUser, accountURI)
-		if err != nil {
-			err = gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
-			return nil, false, err
-		}
-	} else {
-		// Href wasn't set. Find the target account using namestring.
-		username, domain, err := util.ExtractNamestringParts(mention.NameString)
-		if err != nil {
-			err = gtserror.Newf("failed to parse namestring %s: %w", mention.NameString, err)
-			return nil, false, err
-		}
-
-		mention.TargetAccount, _, err = d.getAccountByUsernameDomain(ctx, requestUser, username, domain)
-		if err != nil {
-			err = gtserror.Newf("failed to dereference account %s: %w", mention.NameString, err)
-			return nil, false, err
-		}
-
-		// Look for existing mention with this URI.
-		mention.TargetAccountURI = mention.TargetAccount.URI
-		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
-		if ok && existingMention.ID != "" {
-			return existingMention, true, nil
-		}
-	}
-
-	// At this point, mention.TargetAccountURI
-	// and mention.TargetAccount must be set.
-	return mention, false, nil
-}
-
-func (d *Dereferencer) fetchStatusMentions(ctx context.Context, requestUser string, existing, status *gtsmodel.Status) error {
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+) error {
 	// Allocate new slice to take the yet-to-be created mention IDs.
 	status.MentionIDs = make([]string, len(status.Mentions))
 
@@ -728,10 +661,10 @@ func (d *Dereferencer) fetchStatusMentions(ctx context.Context, requestUser stri
 
 		mention, alreadyExists, err = d.populateMentionTarget(
 			ctx,
-			mention,
 			requestUser,
 			existing,
 			status,
+			mention,
 		)
 		if err != nil {
 			log.Errorf(ctx, "failed to derive mention: %v", err)
@@ -845,7 +778,11 @@ func (d *Dereferencer) threadStatus(ctx context.Context, status *gtsmodel.Status
 	return nil
 }
 
-func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gtsmodel.Status) error {
+func (d *Dereferencer) fetchStatusTags(
+	ctx context.Context,
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+) error {
 	// Allocate new slice to take the yet-to-be determined tag IDs.
 	status.TagIDs = make([]string, len(status.Tags))
 
@@ -900,7 +837,11 @@ func (d *Dereferencer) fetchStatusTags(ctx context.Context, existing, status *gt
 	return nil
 }
 
-func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gtsmodel.Status) error {
+func (d *Dereferencer) fetchStatusPoll(
+	ctx context.Context,
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+) error {
 	var (
 		// insertStatusPoll generates ID and inserts the poll attached to status into the database.
 		insertStatusPoll = func(ctx context.Context, status *gtsmodel.Status) error {
@@ -990,7 +931,12 @@ func (d *Dereferencer) fetchStatusPoll(ctx context.Context, existing, status *gt
 	}
 }
 
-func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transport.Transport, existing, status *gtsmodel.Status) error {
+func (d *Dereferencer) fetchStatusAttachments(
+	ctx context.Context,
+	tsport transport.Transport,
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+) error {
 	// Allocate new slice to take the yet-to-be fetched attachment IDs.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
@@ -1024,20 +970,20 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 			tsport,
 			status.AccountID,
 			attachment.RemoteURL,
-			&media.AdditionalMediaInfo{
+			media.AdditionalMediaInfo{
 				StatusID:    &status.ID,
 				RemoteURL:   &attachment.RemoteURL,
 				Description: &attachment.Description,
 				Blurhash:    &attachment.Blurhash,
 			},
 		)
-		if err != nil && attachment == nil {
-			log.Errorf(ctx, "error loading attachment: %v", err)
-			continue
-		}
-
 		if err != nil {
-			// A non-fatal error occurred during loading.
+			if attachment == nil {
+				log.Errorf(ctx, "error loading attachment %s: %v", attachment.RemoteURL, err)
+				continue
+			}
+
+			// non-fatal error occurred during loading, still use it.
 			log.Warnf(ctx, "partially loaded attachment: %v", err)
 		}
 
@@ -1061,22 +1007,110 @@ func (d *Dereferencer) fetchStatusAttachments(ctx context.Context, tsport transp
 	return nil
 }
 
-func (d *Dereferencer) fetchStatusEmojis(ctx context.Context, requestUser string, status *gtsmodel.Status) error {
-	// Fetch the full-fleshed-out emoji objects for our status.
-	emojis, err := d.populateEmojis(ctx, status.Emojis, requestUser)
+func (d *Dereferencer) fetchStatusEmojis(
+	ctx context.Context,
+	tsport transport.Transport,
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+) error {
+	// Fetch the updated emojis for our status.
+	emojis, changed, err := d.fetchEmojis(ctx,
+		tsport,
+		existing.Emojis,
+		status.Emojis,
+	)
 	if err != nil {
-		return gtserror.Newf("failed to populate emojis: %w", err)
+		return gtserror.Newf("error fetching emojis: %w", err)
 	}
 
-	// Iterate over and get their IDs.
-	emojiIDs := make([]string, 0, len(emojis))
-	for _, e := range emojis {
-		emojiIDs = append(emojiIDs, e.ID)
+	if !changed {
+		// Use existing status emoji objects.
+		status.EmojiIDs = existing.EmojiIDs
+		status.Emojis = existing.Emojis
+		return nil
 	}
 
-	// Set known emoji details.
+	// Set latest emojis.
 	status.Emojis = emojis
-	status.EmojiIDs = emojiIDs
+
+	// Iterate over and set changed emoji IDs.
+	status.EmojiIDs = make([]string, len(emojis))
+	for i, emoji := range emojis {
+		status.EmojiIDs[i] = emoji.ID
+	}
 
 	return nil
+}
+
+// populateMentionTarget tries to populate the given
+// mention with the correct TargetAccount and (if not
+// yet set) TargetAccountURI, returning the populated
+// mention.
+//
+// Will check on the existing status if the mention
+// is already there and populated; if so, existing
+// mention will be returned along with `true`.
+//
+// Otherwise, this function will try to parse first
+// the Href of the mention, and then the namestring,
+// to see who it targets, and go fetch that account.
+func (d *Dereferencer) populateMentionTarget(
+	ctx context.Context,
+	requestUser string,
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+	mention *gtsmodel.Mention,
+) (
+	*gtsmodel.Mention,
+	bool, // True if mention already exists in the DB.
+	error,
+) {
+	// Mentions can be created using Name or Href.
+	// Prefer Href (TargetAccountURI), fall back to Name.
+	if mention.TargetAccountURI != "" {
+		// Look for existing mention with this URI.
+		// If we already have it we can return early.
+		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
+		if ok && existingMention.ID != "" {
+			return existingMention, true, nil
+		}
+
+		// Ensure that mention account URI is parseable.
+		accountURI, err := url.Parse(mention.TargetAccountURI)
+		if err != nil {
+			err = gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
+			return nil, false, err
+		}
+
+		// Ensure we have the account of the mention target dereferenced.
+		mention.TargetAccount, _, err = d.getAccountByURI(ctx, requestUser, accountURI)
+		if err != nil {
+			err = gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
+			return nil, false, err
+		}
+	} else {
+		// Href wasn't set. Find the target account using namestring.
+		username, domain, err := util.ExtractNamestringParts(mention.NameString)
+		if err != nil {
+			err = gtserror.Newf("failed to parse namestring %s: %w", mention.NameString, err)
+			return nil, false, err
+		}
+
+		mention.TargetAccount, _, err = d.getAccountByUsernameDomain(ctx, requestUser, username, domain)
+		if err != nil {
+			err = gtserror.Newf("failed to dereference account %s: %w", mention.NameString, err)
+			return nil, false, err
+		}
+
+		// Look for existing mention with this URI.
+		mention.TargetAccountURI = mention.TargetAccount.URI
+		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
+		if ok && existingMention.ID != "" {
+			return existingMention, true, nil
+		}
+	}
+
+	// At this point, mention.TargetAccountURI
+	// and mention.TargetAccount must be set.
+	return mention, false, nil
 }

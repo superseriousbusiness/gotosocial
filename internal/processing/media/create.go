@@ -30,7 +30,7 @@ import (
 
 // Create creates a new media attachment belonging to the given account, using the request form.
 func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode) {
-	data := func(innerCtx context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, int64, error) {
 		f, err := form.File.Open()
 		return f, form.File.Size, err
 	}
@@ -41,19 +41,18 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	// process the media attachment and load it immediately
-	media := p.mediaManager.PreProcessMedia(data, account.ID, &media.AdditionalMediaInfo{
-		Description: &form.Description,
-		FocusX:      &focusX,
-		FocusY:      &focusY,
-	})
-
-	attachment, err := media.LoadAttachment(ctx)
-	if err != nil {
-		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
-	} else if attachment.Type == gtsmodel.FileTypeUnknown {
-		err = gtserror.Newf("could not process uploaded file with extension %s", attachment.File.ContentType)
-		return nil, gtserror.NewErrorUnprocessableEntity(err, err.Error())
+	// Create local media and write to instance storage.
+	attachment, errWithCode := p.c.StoreLocalMedia(ctx,
+		account.ID,
+		data,
+		media.AdditionalMediaInfo{
+			Description: &form.Description,
+			FocusX:      &focusX,
+			FocusY:      &focusY,
+		},
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	apiAttachment, err := p.converter.AttachmentToAPIAttachment(ctx, attachment)

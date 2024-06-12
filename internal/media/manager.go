@@ -75,8 +75,8 @@ func NewManager(state *state.State) *Manager {
 // CreateMedia ...
 func (m *Manager) CreateMedia(
 	ctx context.Context,
-	data DataFunc,
 	accountID string,
+	data DataFunc,
 	info AdditionalMediaInfo,
 ) (
 	*ProcessingMedia,
@@ -167,14 +167,8 @@ func (m *Manager) CreateMedia(
 		return nil, err
 	}
 
-	// Return wrapped media for later processing.
-	processingMedia := &ProcessingMedia{
-		media:  attachment,
-		dataFn: data,
-		mgr:    m,
-	}
-
-	return processingMedia, nil
+	// Pass prepared media as ready to be cached.
+	return m.RecacheMedia(attachment, data), nil
 }
 
 // PreProcessMediaRecache refetches, reprocesses,
@@ -186,27 +180,14 @@ func (m *Manager) CreateMedia(
 
 // RecacheMedia ...
 func (m *Manager) RecacheMedia(
-	ctx context.Context,
+	media *gtsmodel.MediaAttachment,
 	data DataFunc,
-	mediaID string,
-) (
-	*ProcessingMedia,
-	error,
-) {
-	// Get the existing media attachment from database.
-	attachment, err := m.state.DB.GetAttachmentByID(ctx, mediaID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Return wrapped media for later processing.
-	processingMedia := &ProcessingMedia{
-		media:  attachment,
+) *ProcessingMedia {
+	return &ProcessingMedia{
+		media:  media,
 		dataFn: data,
 		mgr:    m,
 	}
-
-	return processingMedia, nil
 }
 
 // PreProcessEmoji begins the process of decoding and storing
@@ -230,17 +211,18 @@ func (m *Manager) RecacheMedia(
 // CreateEmoji ...
 func (m *Manager) CreateEmoji(
 	ctx context.Context,
-	data DataFunc,
 	shortcode string,
-	emojiID string,
-	uri string,
+	domain string,
+	data DataFunc,
 	info AdditionalEmojiInfo,
-	refresh bool,
 ) (
 	*ProcessingEmoji,
 	error,
 ) {
 	now := time.Now()
+
+	// Generate new ID.
+	id := id.NewULID()
 
 	// Fetch the local instance account for emoji path generation.
 	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
@@ -248,24 +230,27 @@ func (m *Manager) CreateEmoji(
 		return nil, gtserror.Newf("error fetching instance account: %w", err)
 	}
 
-	// Generate new static URL for attachment.
-	imageStaticURL := uris.URIForAttachment(
+	// Create new ActivityPub URI.
+	uri := uris.URIForEmoji(id)
+
+	// Generate static URL for attachment.
+	staticURL := uris.URIForAttachment(
 		instanceAcc.ID,
 		string(TypeEmoji),
 		string(SizeStatic),
-		emojiID,
+		id,
 
 		// All static emojis
 		// are encoded as png.
 		mimePng,
 	)
 
-	// Generate new static image storage path for attachment.
-	imageStaticPath := uris.StoragePathForAttachment(
+	// Generate static image path for attachment.
+	staticPath := uris.StoragePathForAttachment(
 		instanceAcc.ID,
 		string(TypeEmoji),
 		string(SizeStatic),
-		emojiID,
+		id,
 
 		// All static emojis
 		// are encoded as png.
@@ -276,21 +261,23 @@ func (m *Manager) CreateEmoji(
 	// leaving out fields with values we don't know
 	// yet. These will be overwritten as we go.
 	emoji := &gtsmodel.Emoji{
-		ID:                     emojiID,
+		ID:                     id,
 		Shortcode:              shortcode,
-		ImageStaticURL:         imageStaticURL,
-		ImageStaticPath:        imageStaticPath,
+		Domain:                 domain,
+		ImageStaticURL:         staticURL,
+		ImageStaticPath:        staticPath,
 		ImageStaticContentType: mimeImagePng,
 		ImageUpdatedAt:         now,
 		Disabled:               util.Ptr(false),
-		URI:                    uri,
 		VisibleInPicker:        util.Ptr(true),
+		URI:                    uri,
 		CreatedAt:              now,
 		UpdatedAt:              now,
 	}
 
 	// Finally, create new emoji.
 	return m.createEmoji(ctx,
+		m.state.DB.PutEmoji,
 		data,
 		emoji,
 		info,
@@ -300,10 +287,8 @@ func (m *Manager) CreateEmoji(
 // RefreshEmoji ...
 func (m *Manager) RefreshEmoji(
 	ctx context.Context,
+	emoji *gtsmodel.Emoji,
 	data DataFunc,
-	shortcode string,
-	emojiID string,
-	uri string,
 	info AdditionalEmojiInfo,
 ) (
 	*ProcessingEmoji,
@@ -315,47 +300,50 @@ func (m *Manager) RefreshEmoji(
 		return nil, gtserror.Newf("error fetching instance account: %w", err)
 	}
 
-	// Fetch existing emoji with ID from database.
-	emoji, err := m.state.DB.GetEmojiByID(ctx, emojiID)
-	if err != nil {
-		err = gtserror.Newf("error fetching emoji to refresh from the db: %w", err)
-		return nil, err
-	}
+	// Create references to old emoji image
+	// paths before they get updated with new
+	// path ID. These are required for later
+	// deleting the old image files on refresh.
+	shortcodeDomain := util.ShortcodeDomain(emoji)
+	oldStaticPath := emoji.ImageStaticPath
+	oldPath := emoji.ImagePath
 
-	// Since this is a refresh, we will end up with
-	// new images stored for this emoji, so we should
-	// use an io.Closer callback to perform clean up
-	// of the original images from storage.
-	originalImageStaticPath := emoji.ImageStaticPath
-	originalImagePath := emoji.ImagePath
-	originalData := data
+	// Since this is a refresh we will end up storing new images at new
+	// paths, so we should wrap closer to delete old paths at completion.
+	wrapped := func(ctx context.Context) (io.ReadCloser, int64, error) {
 
-	data = func(ctx context.Context) (io.ReadCloser, int64, error) {
 		// Call original data func.
-		rc, sz, err := originalData(ctx)
+		rc, sz, err := data(ctx)
 		if err != nil {
 			return nil, 0, err
 		}
 
 		// Wrap closer to cleanup old data.
-		c := iotools.CloserCallback(rc, func() {
-			if err := m.state.Storage.Delete(ctx, originalImagePath); err != nil && !storage.IsNotFound(err) {
-				log.Errorf(ctx, "error removing old emoji %s@%s from storage: %v", emoji.Shortcode, emoji.Domain, err)
+		c := iotools.CloserFunc(func() error {
+
+			// First try close original.
+			if rc.Close(); err != nil {
+				return err
 			}
 
-			if err := m.state.Storage.Delete(ctx, originalImageStaticPath); err != nil && !storage.IsNotFound(err) {
-				log.Errorf(ctx, "error removing old static emoji %s@%s from storage: %v", emoji.Shortcode, emoji.Domain, err)
+			// Remove any *old* emoji image file path now stream is closed.
+			if err := m.state.Storage.Delete(ctx, oldPath); err != nil &&
+				!storage.IsNotFound(err) {
+				log.Errorf(ctx, "error deleting old emoji %s from storage: %v", shortcodeDomain, err)
 			}
+
+			// Remove any *old* emoji static image file path now stream is closed.
+			if err := m.state.Storage.Delete(ctx, oldStaticPath); err != nil &&
+				!storage.IsNotFound(err) {
+				log.Errorf(ctx, "error deleting old static emoji %s from storage: %v", shortcodeDomain, err)
+			}
+
+			return nil
 		})
 
 		// Return newly wrapped readcloser and size.
 		return iotools.ReadCloser(rc, c), sz, nil
 	}
-
-	// Reuse existing shortcode and URI -
-	// these don't change when we refresh.
-	emoji.Shortcode = shortcode
-	emoji.URI = uri
 
 	// Use a new ID to create a new path
 	// for the new images, to get around
@@ -365,6 +353,7 @@ func (m *Manager) RefreshEmoji(
 		return nil, gtserror.Newf("error generating newPathID for emoji refresh: %s", err)
 	}
 
+	// Generate new static URL for emoji.
 	emoji.ImageStaticURL = uris.URIForAttachment(
 		instanceAcc.ID,
 		string(TypeEmoji),
@@ -376,6 +365,7 @@ func (m *Manager) RefreshEmoji(
 		mimePng,
 	)
 
+	// Generate new static image storage path for emoji.
 	emoji.ImageStaticPath = uris.StoragePathForAttachment(
 		instanceAcc.ID,
 		string(TypeEmoji),
@@ -389,7 +379,10 @@ func (m *Manager) RefreshEmoji(
 
 	// Finally, create new emoji in database.
 	processingEmoji, err := m.createEmoji(ctx,
-		data,
+		func(ctx context.Context, emoji *gtsmodel.Emoji) error {
+			return m.state.DB.UpdateEmoji(ctx, emoji)
+		},
+		wrapped,
 		emoji,
 		info,
 	)
@@ -397,16 +390,16 @@ func (m *Manager) RefreshEmoji(
 		return nil, err
 	}
 
-	// Indicate this was existing
-	// emoji requiring refresh.
-	processingEmoji.existing = true
+	// Set the refreshed path ID used.
 	processingEmoji.newPathID = newPathID
 
 	return processingEmoji, nil
 }
 
+// createEmoji ...
 func (m *Manager) createEmoji(
 	ctx context.Context,
+	putDB func(context.Context, *gtsmodel.Emoji) error,
 	data DataFunc,
 	emoji *gtsmodel.Emoji,
 	info AdditionalEmojiInfo,
@@ -438,6 +431,11 @@ func (m *Manager) createEmoji(
 		emoji.CategoryID = *info.CategoryID
 	}
 
+	// Store emoji in database in initial form.
+	if err := putDB(ctx, emoji); err != nil {
+		return nil, err
+	}
+
 	// Return wrapped emoji for later processing.
 	processingEmoji := &ProcessingEmoji{
 		emoji:  emoji,
@@ -456,25 +454,12 @@ func (m *Manager) createEmoji(
 
 // RecacheEmoji ...
 func (m *Manager) RecacheEmoji(
-	ctx context.Context,
+	emoji *gtsmodel.Emoji,
 	data DataFunc,
-	emojiID string,
-) (
-	*ProcessingEmoji,
-	error,
-) {
-	// Get the existing emoji from the database.
-	emoji, err := m.state.DB.GetEmojiByID(ctx, emojiID)
-	if err != nil {
-		return nil, err
+) *ProcessingEmoji {
+	return &ProcessingEmoji{
+		emoji:  emoji,
+		dataFn: data,
+		mgr:    m,
 	}
-
-	processingEmoji := &ProcessingEmoji{
-		emoji:    emoji,
-		dataFn:   data,
-		existing: true, // Indicate recache.
-		mgr:      m,
-	}
-
-	return processingEmoji, nil
 }

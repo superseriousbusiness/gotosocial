@@ -23,7 +23,9 @@ GO_GCFLAGS=${GO_GCFLAGS-}
 # - debug:       enables /debug/pprof endpoint                               (adds debug, at performance cost)
 # - debugenv:    enables /debug/pprof endpoint if DEBUG=1 env during runtime (adds debug, at performance cost)
 # - wasmsqlite3: uses SQLite through WASM instead of the C-to-Go transpilation (experimental)
-log_exec env CGO_ENABLED=0 go build -trimpath -v \
+log_exec env CGO_ENABLED=0 \
+             GOEXPERIMENT=newinliner \
+             go build -trimpath -v \
                        -tags "${GO_BUILDTAGS}" \
                        -ldflags="${GO_LDFLAGS}" \
                        -gcflags="${GO_GCFLAGS}" \
