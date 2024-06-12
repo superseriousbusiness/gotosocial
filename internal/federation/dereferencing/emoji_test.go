@@ -32,7 +32,6 @@ type EmojiTestSuite struct {
 
 func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 	ctx := context.Background()
-	fetchingAccount := suite.testAccounts["local_account_1"]
 	emojiImageRemoteURL := "http://example.org/media/emojis/1781772.gif"
 	emojiImageStaticRemoteURL := "http://example.org/media/emojis/1781772.gif"
 	emojiURI := "http://example.org/emojis/1781772"
@@ -42,19 +41,20 @@ func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 	emojiDisabled := false
 	emojiVisibleInPicker := false
 
-	ai := &media.AdditionalEmojiInfo{
-		Domain:               &emojiDomain,
-		ImageRemoteURL:       &emojiImageRemoteURL,
-		ImageStaticRemoteURL: &emojiImageStaticRemoteURL,
-		Disabled:             &emojiDisabled,
-		VisibleInPicker:      &emojiVisibleInPicker,
-	}
-
-	processingEmoji, err := suite.dereferencer.GetRemoteEmoji(ctx, fetchingAccount.Username, emojiImageRemoteURL, emojiShortcode, emojiDomain, emojiID, emojiURI, ai, false)
-	suite.NoError(err)
-
-	// make a blocking call to load the emoji from the in-process media
-	emoji, err := processingEmoji.LoadEmoji(ctx)
+	emoji, err := suite.dereferencer.GetEmoji(
+		ctx,
+		emojiShortcode,
+		emojiDomain,
+		emojiImageRemoteURL,
+		media.AdditionalEmojiInfo{
+			Domain:               &emojiDomain,
+			ImageRemoteURL:       &emojiImageRemoteURL,
+			ImageStaticRemoteURL: &emojiImageStaticRemoteURL,
+			Disabled:             &emojiDisabled,
+			VisibleInPicker:      &emojiVisibleInPicker,
+		},
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(emoji)
 

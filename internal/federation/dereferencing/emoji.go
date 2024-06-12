@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -70,7 +69,7 @@ func (d *Dereferencer) GetEmoji(
 	}
 
 	// Generate shortcode domain for locks + logging.
-	shortcodeDomain := emoji.Shortcode + "@" + emoji.Domain
+	shortcodeDomain := shortcode + "@" + domain
 
 	// Ensure we have a valid remote URL.
 	url, err := url.Parse(remoteURL)
@@ -169,6 +168,10 @@ func (d *Dereferencer) processEmojiSafely(
 	*gtsmodel.Emoji,
 	error,
 ) {
+
+	// Acquire map lock.
+	d.derefEmojisMu.Lock()
+
 	// Ensure unlock only done once.
 	unlock := d.derefEmojisMu.Unlock
 	unlock = util.DoOnce(unlock)
@@ -205,7 +208,6 @@ func (d *Dereferencer) processEmojiSafely(
 
 func (d *Dereferencer) fetchEmojis(
 	ctx context.Context,
-	tsport transport.Transport,
 	existing []*gtsmodel.Emoji,
 	emojis []*gtsmodel.Emoji, // newly dereferenced
 ) (
@@ -254,19 +256,20 @@ func (d *Dereferencer) fetchEmojis(
 		// this function handles the case
 		// of existing cached emojis and
 		// new ones requiring dereference.
+		remoteURL := emoji.ImageRemoteURL
 		emoji, err := d.GetEmoji(ctx,
 			emoji.Shortcode,
 			emoji.Domain,
 			emoji.ImageRemoteURL,
 			media.AdditionalEmojiInfo{
-				ImageRemoteURL:       &emoji.ImageRemoteURL,
+				ImageRemoteURL:       &remoteURL,
 				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
 			},
 			false,
 		)
 		if err != nil {
 			if emoji == nil {
-				log.Errorf(ctx, "error loading emoji %s: %v", emoji.ImageRemoteURL, err)
+				log.Errorf(ctx, "error loading emoji %s: %v", remoteURL, err)
 				continue
 			}
 
