@@ -6,17 +6,11 @@ For this to work properly, SQLite needs the journal mode to be configured in `WA
 
 You can check your settings in the configuration file. The journal mode is set in `db-sqlite-journal-mode` and the synchronous mode in `db-sqlite-synchronous`.
 
-## Litestream on Linux or MacOS
+## Litestream on Linux
 
 A relatively light, and fast way to set up replication with SQLite is by using [Litestream](https://litestream.io). It can be configured very easily and supports different backends like file based replication, S3 compatible storage and many other setups.
 
-You can then install the prebuilt package by either using Homebrew on MacOS or the deb file on Linux.
-
-Using Homebrew on MacOS:
-
-```bash
-brew install benbjohnson/litestream/litestream
-```
+You can then install the prebuilt package by either the deb file on Linux, or building it from source on other distributions.
 
 Using a .deb package on Linux:
 
