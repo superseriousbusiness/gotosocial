@@ -7522,7 +7522,7 @@ paths:
             summary: View poll with given ID.
             tags:
                 - polls
-    /api/v1/polls/{id}/vote:
+    /api/v1/polls/{id}/votes:
         post:
             operationId: pollVote
             parameters:
