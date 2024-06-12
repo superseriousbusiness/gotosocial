@@ -564,7 +564,7 @@ func (s *Stmt) ColumnJSON(col int, ptr any) error {
 	var data []byte
 	switch s.ColumnType(col) {
 	case NULL:
-		data = append(data, "null"...)
+		data = []byte("null")
 	case TEXT:
 		data = s.ColumnRawText(col)
 	case BLOB:

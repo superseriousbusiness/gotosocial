@@ -125,6 +125,9 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 		return 0, _IOERR_SHMMAP
 	}
 	s.regions = append(s.regions, r)
+	if s.readOnly {
+		return r.Ptr, _READONLY
+	}
 	return r.Ptr, _OK
 }
 

@@ -101,13 +101,13 @@ func (s *vfsShm) shmOpen() (rc _ErrorCode) {
 		return _OK
 	}
 
-	// Open file read-write, as it will be shared.
+	// Always open file read-write, as it will be shared.
 	f, err := os.OpenFile(s.path,
 		unix.O_RDWR|unix.O_CREAT|unix.O_NOFOLLOW, 0666)
 	if err != nil {
 		return _CANTOPEN
 	}
-	// Close if file if it's not nil.
+	// Closes file if it's not nil.
 	defer func() { f.Close() }()
 
 	fi, err := f.Stat()
@@ -145,17 +145,14 @@ func (s *vfsShm) shmOpen() (rc _ErrorCode) {
 		info: fi,
 		refs: 1,
 	}
-	f = nil
-	add := true
+	f = nil // Don't close the file.
 	for i, g := range vfsShmFiles {
 		if g == nil {
 			vfsShmFiles[i] = s.vfsShmFile
-			add = false
+			return rc
 		}
 	}
-	if add {
-		vfsShmFiles = append(vfsShmFiles, s.vfsShmFile)
-	}
+	vfsShmFiles = append(vfsShmFiles, s.vfsShmFile)
 	return rc
 }
 
@@ -195,6 +192,9 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 		return 0, _IOERR_SHMMAP
 	}
 	s.regions = append(s.regions, r)
+	if s.readOnly {
+		return r.Ptr, _READONLY
+	}
 	return r.Ptr, _OK
 }
 
