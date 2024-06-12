@@ -281,7 +281,7 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateAlreadyExists() {
 	suite.NoError(err)
 	suite.NotEmpty(b)
 
-	suite.Equal(`{"error":"Conflict: emoji with shortcode rainbow already exists"}`, string(b))
+	suite.Equal(`{"error":"Conflict: emoji with shortcode already exists"}`, string(b))
 }
 
 func TestEmojiCreateTestSuite(t *testing.T) {

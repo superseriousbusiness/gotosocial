@@ -36,7 +36,7 @@ type Processor struct {
 	state     *state.State
 	cleaner   *cleaner.Cleaner
 	converter *typeutils.Converter
-	federator federation.Federator
+	federator *federation.Federator
 	media     *media.Manager
 	transport transport.Controller
 	email     email.Sender
@@ -52,17 +52,21 @@ func (p *Processor) Actions() *Actions {
 
 // New returns a new admin processor.
 func New(
+	common *common.Processor,
 	state *state.State,
 	cleaner *cleaner.Cleaner,
+	federator *federation.Federator,
 	converter *typeutils.Converter,
 	mediaManager *media.Manager,
 	transportController transport.Controller,
 	emailSender email.Sender,
 ) Processor {
 	return Processor{
+		c:         common,
 		state:     state,
 		cleaner:   cleaner,
 		converter: converter,
+		federator: federator,
 		media:     mediaManager,
 		transport: transportController,
 		email:     emailSender,
