@@ -328,20 +328,26 @@ func (p *ProcessingEmoji) finish(ctx context.Context) error {
 	return nil
 }
 
-// cleanup will remove any traces of processing emoji from storage.
+// cleanup will remove any traces of processing emoji from storage,
+// and perform any other necessary cleanup steps after failure.
 func (p *ProcessingEmoji) cleanup(ctx context.Context) {
 	var err error
 
-	err = p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath)
-	if err != nil && !storage.IsNotFound(err) {
-		log.Errorf(ctx, "error deleting %s: %v", p.emoji.ImagePath, err)
+	if p.emoji.ImagePath != "" {
+		// Ensure emoji file at path is deleted from storage.
+		err = p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath)
+		if err != nil && !storage.IsNotFound(err) {
+			log.Errorf(ctx, "error deleting %s: %v", p.emoji.ImagePath, err)
+		}
 	}
 
-	err = p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath)
-	if err != nil && !storage.IsNotFound(err) {
-		log.Errorf(ctx, "error deleting %s: %v", p.emoji.ImageStaticPath, err)
+	if p.emoji.ImageStaticPath != "" {
+		// Ensure emoji static file at path is deleted from storage.
+		err = p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath)
+		if err != nil && !storage.IsNotFound(err) {
+			log.Errorf(ctx, "error deleting %s: %v", p.emoji.ImageStaticPath, err)
+		}
 	}
-
 }
 
 // getInstanceAccountID determines the instance account ID from
