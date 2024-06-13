@@ -44,6 +44,16 @@ type MediaAttachment struct {
 	Cached            *bool            `bun:",nullzero,notnull,default:false"`                             // Is this attachment currently cached by our instance?
 }
 
+// IsLocal returns whether media attachment is local.
+func (m *MediaAttachment) IsLocal() bool {
+	return m.RemoteURL == ""
+}
+
+// IsRemote returns whether media attachment is remote.
+func (m *MediaAttachment) IsRemote() bool {
+	return m.RemoteURL != ""
+}
+
 // File refers to the metadata for the whole file
 type File struct {
 	Path        string `bun:",notnull"` // Path of the file in storage.
