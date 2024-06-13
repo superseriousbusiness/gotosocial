@@ -176,6 +176,7 @@ func (p *Processor) getAttachmentContent(
 		ctx,
 		requestUser,
 		attach,
+		media.AdditionalMediaInfo{},
 		false,
 	)
 	if err != nil {

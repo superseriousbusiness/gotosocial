@@ -198,15 +198,11 @@ func (d *Dereferencer) updateAttachment(
 	var info media.AdditionalMediaInfo
 
 	if attach != nil {
-		// Check if attachment blurhash has changed.
-		if existing.Blurhash != attach.Blurhash {
-			info.Blurhash = &attach.Blurhash
-		}
-
-		// Check if attachment description has changed.
-		if existing.Description != attach.Description {
-			info.Description = &attach.Description
-		}
+		// Set optional extra information,
+		// (will later check for changes).
+		info.Description = &attach.Description
+		info.Blurhash = &attach.Blurhash
+		info.RemoteURL = &attach.RemoteURL
 	}
 
 	// Ensure media is cached.
