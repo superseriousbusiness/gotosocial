@@ -21,19 +21,17 @@ import (
 	"context"
 	"io"
 	"net/url"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// loadAttachment handles the case of a new media attachment
-// that requires loading. it stores and caches from given data.
-func (d *Dereferencer) loadAttachment(
+// GetMedia ...
+func (d *Dereferencer) GetMedia(
 	ctx context.Context,
-	tsport transport.Transport,
+	requestUser string,
 	accountID string, // media account owner
 	remoteURL string,
 	info media.AdditionalMediaInfo,
@@ -45,6 +43,14 @@ func (d *Dereferencer) loadAttachment(
 	url, err := url.Parse(remoteURL)
 	if err != nil {
 		return nil, gtserror.Newf("invalid remote media url %q: %v", remoteURL, err)
+	}
+
+	// Fetch transport for the provided request user from controller.
+	tsport, err := d.transportController.NewTransportForUsername(ctx,
+		requestUser,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
 	}
 
 	// Start processing remote attachment at URL.
@@ -64,66 +70,62 @@ func (d *Dereferencer) loadAttachment(
 	return processing.Load(ctx)
 }
 
-// updateAttachment handles the case of an existing media attachment
-// that *may* have changes or need recaching. it checks for changed
-// fields, updating in the database if so, and recaches uncached media.
-func (d *Dereferencer) updateAttachment(
+// RefreshMedia ...
+func (d *Dereferencer) RefreshMedia(
 	ctx context.Context,
-	tsport transport.Transport,
-	existing *gtsmodel.MediaAttachment, // existing attachment
-	media *gtsmodel.MediaAttachment, // (optional) changed media
+	requestUser string,
+	media *gtsmodel.MediaAttachment,
+	force bool,
 ) (
-	*gtsmodel.MediaAttachment, // always set
+	*gtsmodel.MediaAttachment,
 	error,
 ) {
-	if media != nil {
-		// Possible changed media columns.
-		changed := make([]string, 0, 3)
+	// Can't refresh local.
+	if media.IsLocal() {
+		return media, nil
+	}
 
-		// Check if attachment description has changed.
-		if existing.Description != media.Description {
-			changed = append(changed, "description")
-			existing.Description = media.Description
+	if !force {
+		// Already cached.
+		if *media.Cached {
+			return media, nil
 		}
 
-		// Check if attachment blurhash has changed (i.e. content change).
-		if existing.Blurhash != media.Blurhash && media.Blurhash != "" {
-			changed = append(changed, "blurhash", "cached")
-			existing.Blurhash = media.Blurhash
-			existing.Cached = util.Ptr(false)
-		}
+		// TODO: in time update this
+		// to perhaps follow a similar
+		// freshness window to statuses
+		// / accounts? But that's a big
+		// maybe, media don't change in
+		// the same way so this is largely
+		// just to slow down fail retries.
+		const maxfreq = 6 * time.Hour
 
-		if len(changed) > 0 {
-			// Remember previous 'updated_at'.
-			updatedAt := existing.UpdatedAt
-
-			// Update the existing attachment model in the database.
-			err := d.state.DB.UpdateAttachment(ctx, existing, changed...)
-			if err != nil {
-				return media, gtserror.Newf("error updating media: %w", err)
-			}
-
-			// Set old 'updated_at' for below,
-			// (used internally in RecachedMedia
-			// to slow down repeated failures).
-			existing.UpdatedAt = updatedAt
+		// Check whether media is uncached but repeatedly failing,
+		// specifically limit the frequency at which we allow this.
+		if !media.UpdatedAt.Equal(media.CreatedAt) && // i.e. not new
+			media.UpdatedAt.Add(maxfreq).Before(time.Now()) {
+			return media, nil
 		}
 	}
 
-	// Check if cached.
-	if *existing.Cached {
-		return existing, nil
-	}
-
-	// Parse str as valid URL object.
-	url, err := url.Parse(existing.RemoteURL)
+	// Ensure we have a valid remote URL.
+	url, err := url.Parse(media.RemoteURL)
 	if err != nil {
-		return nil, gtserror.Newf("invalid remote media url %q: %v", media.RemoteURL, err)
+		err := gtserror.Newf("invalid media remote url %s: %w", media.RemoteURL, err)
+		return nil, err
 	}
 
-	// Start processing remote attachment at URL.
+	// Fetch transport for the provided request user from controller.
+	tsport, err := d.transportController.NewTransportForUsername(ctx,
+		requestUser,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
+	}
+
+	// Start processing remote attachment recache.
 	processing := d.mediaManager.RecacheMedia(
-		existing,
+		media,
 		func(ctx context.Context) (io.ReadCloser, int64, error) {
 			return tsport.DereferenceMedia(ctx, url)
 		},
@@ -131,4 +133,38 @@ func (d *Dereferencer) updateAttachment(
 
 	// Force attachment loading.
 	return processing.Load(ctx)
+}
+
+// updateAttachment handles the case of an existing media attachment
+// that *may* have changes or need recaching. it checks for changed
+// fields, updating in the database if so, and recaches uncached media.
+func (d *Dereferencer) updateAttachment(
+	ctx context.Context,
+	requestUser string,
+	existing *gtsmodel.MediaAttachment, // existing attachment
+	attach *gtsmodel.MediaAttachment, // (optional) changed media
+) (
+	*gtsmodel.MediaAttachment, // always set
+	error,
+) {
+	var force bool
+
+	// Check if attachment description has changed.
+	if existing.Description != attach.Description {
+		existing.Description = attach.Description
+		force = true
+	}
+
+	// Check if attachment blurhash has changed.
+	if existing.Blurhash != attach.Blurhash {
+		existing.Blurhash = attach.Blurhash
+		force = true
+	}
+
+	// Ensure media is cached.
+	return d.RefreshMedia(ctx,
+		requestUser,
+		existing,
+		force,
+	)
 }

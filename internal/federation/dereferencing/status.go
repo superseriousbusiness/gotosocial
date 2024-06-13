@@ -33,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -536,7 +535,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Ensure the status' media attachments are populated, passing in existing to check for changes.
-	if err := d.fetchStatusAttachments(ctx, tsport, status, latestStatus); err != nil {
+	if err := d.fetchStatusAttachments(ctx, requestUser, status, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating attachments for status %s: %w", uri, err)
 	}
 
@@ -933,7 +932,7 @@ func (d *Dereferencer) fetchStatusPoll(
 
 func (d *Dereferencer) fetchStatusAttachments(
 	ctx context.Context,
-	tsport transport.Transport,
+	requestUser string,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) error {
@@ -941,14 +940,14 @@ func (d *Dereferencer) fetchStatusAttachments(
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
 	for i := range status.Attachments {
-		attachment := status.Attachments[i]
+		placeholder := status.Attachments[i]
 
 		// Look for existing media attachment with remote URL first.
-		existing, ok := existing.GetAttachmentByRemoteURL(attachment.RemoteURL)
+		existing, ok := existing.GetAttachmentByRemoteURL(placeholder.RemoteURL)
 		if ok && existing.ID != "" {
 
 			// Ensure the existing media attachment is up-to-date and cached.
-			existing, err := d.updateAttachment(ctx, tsport, existing, attachment)
+			existing, err := d.updateAttachment(ctx, requestUser, existing, placeholder)
 			if err != nil {
 				log.Errorf(ctx, "error updating existing attachment: %v", err)
 
@@ -965,22 +964,21 @@ func (d *Dereferencer) fetchStatusAttachments(
 		}
 
 		// Load this new media attachment.
-		remoteURL := attachment.RemoteURL
-		attachment, err := d.loadAttachment(
+		attachment, err := d.GetMedia(
 			ctx,
-			tsport,
+			requestUser,
 			status.AccountID,
-			attachment.RemoteURL,
+			placeholder.RemoteURL,
 			media.AdditionalMediaInfo{
 				StatusID:    &status.ID,
-				RemoteURL:   &remoteURL,
-				Description: &attachment.Description,
-				Blurhash:    &attachment.Blurhash,
+				RemoteURL:   &placeholder.RemoteURL,
+				Description: &placeholder.Description,
+				Blurhash:    &placeholder.Blurhash,
 			},
 		)
 		if err != nil {
 			if attachment == nil {
-				log.Errorf(ctx, "error loading attachment %s: %v", remoteURL, err)
+				log.Errorf(ctx, "error loading attachment %s: %v", placeholder.RemoteURL, err)
 				continue
 			}
 

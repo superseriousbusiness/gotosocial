@@ -33,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -731,12 +730,12 @@ func (d *Dereferencer) enrichAccount(
 	latestAcc.FetchedAt = time.Now()
 
 	// Ensure the account's avatar media is populated, passing in existing to check for chages.
-	if err := d.fetchAccountAvatar(ctx, tsport, account, latestAcc); err != nil {
+	if err := d.fetchAccountAvatar(ctx, requestUser, account, latestAcc); err != nil {
 		log.Errorf(ctx, "error fetching remote avatar for account %s: %v", uri, err)
 	}
 
 	// Ensure the account's avatar media is populated, passing in existing to check for chages.
-	if err := d.fetchAccountHeader(ctx, tsport, account, latestAcc); err != nil {
+	if err := d.fetchAccountHeader(ctx, requestUser, account, latestAcc); err != nil {
 		log.Errorf(ctx, "error fetching remote header for account %s: %v", uri, err)
 	}
 
@@ -781,7 +780,7 @@ func (d *Dereferencer) enrichAccount(
 
 func (d *Dereferencer) fetchAccountAvatar(
 	ctx context.Context,
-	tsport transport.Transport,
+	requestUser string,
 	existingAcc *gtsmodel.Account,
 	latestAcc *gtsmodel.Account,
 ) error {
@@ -808,7 +807,7 @@ func (d *Dereferencer) fetchAccountAvatar(
 			// Ensuring existing attachment is up-to-date
 			// and any recaching is performed if required.
 			existing, err := d.updateAttachment(ctx,
-				tsport,
+				requestUser,
 				existing,
 				nil,
 			)
@@ -830,9 +829,9 @@ func (d *Dereferencer) fetchAccountAvatar(
 		}
 	}
 
-	// Fetch newly changed avatar from remote.
-	attachment, err := d.loadAttachment(ctx,
-		tsport,
+	// Fetch newly changed avatar.
+	attachment, err := d.GetMedia(ctx,
+		requestUser,
 		latestAcc.ID,
 		latestAcc.AvatarRemoteURL,
 		media.AdditionalMediaInfo{
@@ -858,7 +857,7 @@ func (d *Dereferencer) fetchAccountAvatar(
 
 func (d *Dereferencer) fetchAccountHeader(
 	ctx context.Context,
-	tsport transport.Transport,
+	requestUser string,
 	existingAcc *gtsmodel.Account,
 	latestAcc *gtsmodel.Account,
 ) error {
@@ -885,7 +884,7 @@ func (d *Dereferencer) fetchAccountHeader(
 			// Ensuring existing attachment is up-to-date
 			// and any recaching is performed if required.
 			existing, err := d.updateAttachment(ctx,
-				tsport,
+				requestUser,
 				existing,
 				nil,
 			)
@@ -907,9 +906,9 @@ func (d *Dereferencer) fetchAccountHeader(
 		}
 	}
 
-	// Fetch newly changed header from remote.
-	attachment, err := d.loadAttachment(ctx,
-		tsport,
+	// Fetch newly changed header.
+	attachment, err := d.GetMedia(ctx,
+		requestUser,
 		latestAcc.ID,
 		latestAcc.HeaderRemoteURL,
 		media.AdditionalMediaInfo{
