@@ -334,7 +334,6 @@ func sizeofEmoji() uintptr {
 		ImageStaticPath:        exampleURI,
 		ImageContentType:       "image/png",
 		ImageStaticContentType: "image/png",
-		ImageUpdatedAt:         exampleTime,
 		Disabled:               func() *bool { ok := false; return &ok }(),
 		URI:                    "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ",
 		VisibleInPicker:        func() *bool { ok := true; return &ok }(),
