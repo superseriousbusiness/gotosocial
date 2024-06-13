@@ -179,7 +179,7 @@ func (p *Processor) getAttachmentContent(
 		false,
 	)
 	if err != nil {
-		err := gtserror.Newf("error recaching media %s: %w", attach.RemoteURL, err)
+		err := gtserror.Newf("error recaching media: %w", err)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
@@ -261,7 +261,7 @@ func (p *Processor) getEmojiContent(
 		false,
 	)
 	if err != nil {
-		err := gtserror.Newf("error recaching emoji %s: %w", emoji.ImageRemoteURL, err)
+		err := gtserror.Newf("error recaching emoji: %w", err)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
