@@ -42,6 +42,14 @@ func getEmojiByShortcodeDomain(
 	return nil, false
 }
 
+// emojiChanged returns whether an emoji has changed in a way
+// that indicates that it should be refetched and refreshed.
+func emojiChanged(existing, latest *gtsmodel.Emoji) bool {
+	return existing.URI != latest.URI ||
+		existing.ImageRemoteURL != latest.ImageRemoteURL ||
+		existing.ImageStaticRemoteURL != latest.ImageStaticRemoteURL
+}
+
 // pollChanged returns whether a poll has changed in way that
 // indicates that this should be an entirely new poll. i.e. if
 // the available options have changed, or the expiry has increased.
