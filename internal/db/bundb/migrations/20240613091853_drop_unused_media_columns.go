@@ -21,30 +21,36 @@ import (
 	"context"
 
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if _, err := tx.NewDropColumn().
-				Table("media_attachments").
-				Column("file_updated_at").
-				Exec(ctx); err != nil {
-				return err
-			}
 
-			if _, err := tx.NewDropColumn().
-				Table("media_attachments").
-				Column("thumbnail_updated_at").
-				Exec(ctx); err != nil {
-				return err
-			}
+			for _, dropcase := range []struct {
+				table string
+				col   string
+			}{
+				{table: "media_attachments", col: "file_updated_at"},
+				{table: "media_attachments", col: "thumbnail_updated_at"},
+				{table: "emojis", col: "thumbnail_updated_at"},
+			} {
+				// For each case check the column actually exists on database.
+				exists, err := doesColumnExist(ctx, tx, dropcase.table, dropcase.col)
+				if err != nil {
+					return err
+				}
 
-			if _, err := tx.NewDropColumn().
-				Table("emojis").
-				Column("image_updated_at").
-				Exec(ctx); err != nil {
-				return err
+				if exists {
+					// Now actually drop the column.
+					if _, err := tx.NewDropColumn().
+						Table(dropcase.table).
+						Column(dropcase.col).
+						Exec(ctx); err != nil {
+						return err
+					}
+				}
 			}
 
 			return nil
@@ -60,4 +66,18 @@ func init() {
 	if err := Migrations.Register(up, down); err != nil {
 		panic(err)
 	}
+}
+
+func doesColumnExist(ctx context.Context, tx bun.Tx, table, col string) (bool, error) {
+	var n int
+	var err error
+	switch tx.Dialect().Name() {
+	case dialect.SQLite:
+		err = tx.NewRaw("SELECT COUNT(*) FROM pragma_table_info(?) WHERE name=?", table, col).Scan(ctx, &n)
+	case dialect.PG:
+		err = tx.NewRaw("SELECT COUNT(*) FROM information_schema.columns WHERE table_name=? and column_name=?", table, col).Scan(ctx, &n)
+	default:
+		panic("unexpected dialect")
+	}
+	return (n > 0), err
 }
