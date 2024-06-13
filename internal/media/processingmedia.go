@@ -65,35 +65,41 @@ func (p *ProcessingMedia) ID() string {
 // will still be returned in that case, but it will
 // only be partially complete and should be treated
 // as a placeholder.
-func (p *ProcessingMedia) Load(ctx context.Context) (media *gtsmodel.MediaAttachment, err error) {
+func (p *ProcessingMedia) Load(ctx context.Context) (*gtsmodel.MediaAttachment, error) {
+	media, done, err := p.load(ctx)
+	if !done {
+		// On a context-canceled error (marked as !done), requeue for loading.
+		p.mgr.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
+			if _, _, err := p.load(ctx); err != nil {
+				log.Errorf(ctx, "error loading media: %v", err)
+			}
+		})
+	}
+	return media, err
+}
+
+// load is the package private form of load() that is wrapped to catch context canceled.
+func (p *ProcessingMedia) load(ctx context.Context) (
+	media *gtsmodel.MediaAttachment,
+	done bool,
+	err error,
+) {
 	err = p.proc.Process(func() error {
-		if p.done {
+		if done = p.done; done {
 			// Already proc'd.
 			return p.err
 		}
 
-		// TODO: in time update this
-		// to perhaps follow a similar
-		// freshness window to statuses
-		// / accounts? But that's a big
-		// maybe, media don't change in
-		// the same way so this is largely
-		// just to slow down fail retries.
-		const maxfreq = 6 * time.Hour
-
-		// Check whether media is uncached but repeatedly failing,
-		// specifically limit the frequency at which we allow this.
-		if !p.media.UpdatedAt.Equal(p.media.CreatedAt) && // i.e. not new
-			p.media.UpdatedAt.Add(maxfreq).Before(time.Now()) {
-			return nil
-		}
-
 		defer func() {
 			// This is only done when ctx NOT cancelled.
-			done := err == nil || !errorsv2.IsV2(err,
+			done = (err == nil || !errorsv2.IsV2(err,
 				context.Canceled,
 				context.DeadlineExceeded,
-			)
+			))
+
+			if !done {
+				return
+			}
 
 			// Anything from here, we
 			// need to ensure happens
@@ -114,14 +120,26 @@ func (p *ProcessingMedia) Load(ctx context.Context) (media *gtsmodel.MediaAttach
 				log.Errorf(ctx, "error updating media in db: %v", e)
 			}
 
-			if !done {
-				return
-			}
-
 			// Store final values.
 			p.done = true
 			p.err = err
 		}()
+
+		// TODO: in time update this
+		// to perhaps follow a similar
+		// freshness window to statuses
+		// / accounts? But that's a big
+		// maybe, media don't change in
+		// the same way so this is largely
+		// just to slow down fail retries.
+		const maxfreq = 6 * time.Hour
+
+		// Check whether media is uncached but repeatedly failing,
+		// specifically limit the frequency at which we allow this.
+		if !p.media.UpdatedAt.Equal(p.media.CreatedAt) && // i.e. not new
+			p.media.UpdatedAt.Add(maxfreq).Before(time.Now()) {
+			return nil
+		}
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.
@@ -293,33 +311,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 }
 
 func (p *ProcessingMedia) finish(ctx context.Context) error {
-	// Make a jolly assumption about thumbnail type.
-	p.media.Thumbnail.ContentType = mimeImageJpeg
-
-	// Calculate attachment thumbnail file path
-	p.media.Thumbnail.Path = uris.StoragePathForAttachment(
-		p.media.AccountID,
-		string(TypeAttachment),
-		string(SizeSmall),
-		p.media.ID,
-
-		// Always encode attachment
-		// thumbnails as jpg.
-		"jpg",
-	)
-
-	// Calculate attachment thumbnail serve path.
-	p.media.Thumbnail.URL = uris.URIForAttachment(
-		p.media.AccountID,
-		string(TypeAttachment),
-		string(SizeSmall),
-		p.media.ID,
-
-		// Always encode attachment
-		// thumbnails as jpg.
-		"jpg",
-	)
-
 	// Nothing else to do if
 	// media was not cached.
 	if !*p.media.Cached {
@@ -455,9 +446,8 @@ func (p *ProcessingMedia) finish(ctx context.Context) error {
 		Aspect: thumbImg.AspectRatio(),
 	}
 
-	// Finally set the attachment as processed and update time.
+	// Finally set the attachment as processed.
 	p.media.Processing = gtsmodel.ProcessingStatusProcessed
-	p.media.File.UpdatedAt = time.Now()
 
 	return nil
 }

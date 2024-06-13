@@ -46,20 +46,18 @@ type MediaAttachment struct {
 
 // File refers to the metadata for the whole file
 type File struct {
-	Path        string    `bun:",notnull"`                                                    // Path of the file in storage.
-	ContentType string    `bun:",notnull"`                                                    // MIME content type of the file.
-	FileSize    int       `bun:",notnull"`                                                    // File size in bytes
-	UpdatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
+	Path        string `bun:",notnull"` // Path of the file in storage.
+	ContentType string `bun:",notnull"` // MIME content type of the file.
+	FileSize    int    `bun:",notnull"` // File size in bytes
 }
 
 // Thumbnail refers to a small image thumbnail derived from a larger image, video, or audio file.
 type Thumbnail struct {
-	Path        string    `bun:",notnull"`                                                    // Path of the file in storage.
-	ContentType string    `bun:",notnull"`                                                    // MIME content type of the file.
-	FileSize    int       `bun:",notnull"`                                                    // File size in bytes
-	UpdatedAt   time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // When was the file last updated.
-	URL         string    `bun:",nullzero"`                                                   // What is the URL of the thumbnail on the local server
-	RemoteURL   string    `bun:",nullzero"`                                                   // What is the remote URL of the thumbnail (empty for local media)
+	Path        string `bun:",notnull"`  // Path of the file in storage.
+	ContentType string `bun:",notnull"`  // MIME content type of the file.
+	FileSize    int    `bun:",notnull"`  // File size in bytes
+	URL         string `bun:",nullzero"` // What is the URL of the thumbnail on the local server
+	RemoteURL   string `bun:",nullzero"` // What is the remote URL of the thumbnail (empty for local media)
 }
 
 // ProcessingStatus refers to how far along in the processing stage the attachment is.

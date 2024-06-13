@@ -173,8 +173,8 @@ func (d *Dereferencer) processEmojiSafely(
 	shortcodeDomain string,
 	process func() (*media.ProcessingEmoji, error),
 ) (
-	*gtsmodel.Emoji,
-	error,
+	emoji *gtsmodel.Emoji,
+	err error,
 ) {
 
 	// Acquire map lock.
@@ -189,8 +189,6 @@ func (d *Dereferencer) processEmojiSafely(
 	processing, ok := d.derefEmojis[shortcodeDomain]
 
 	if !ok {
-		var err error
-
 		// Start new processing emoji.
 		processing, err = process()
 		if err != nil {
@@ -202,7 +200,7 @@ func (d *Dereferencer) processEmojiSafely(
 	unlock()
 
 	// Perform (blocking) load operation.
-	emoji, err := processing.Load(ctx)
+	emoji, err = processing.Load(ctx)
 	if err != nil {
 		err := gtserror.Newf("error loading emoji %s: %w", shortcodeDomain, err)
 		return nil, err
@@ -234,6 +232,10 @@ func (d *Dereferencer) fetchEmojis(
 		)
 		if ok && existing.ID != "" {
 
+			// Check for any emoji changes that
+			// indicate we should force a refresh.
+			force := emojiChanged(existing, emoji)
+
 			// Ensure that the existing emoji model is up-to-date and cached.
 			existing, err := d.RefreshEmoji(ctx, existing, media.AdditionalEmojiInfo{
 
@@ -241,9 +243,7 @@ func (d *Dereferencer) fetchEmojis(
 				URI:                  &emoji.URI,
 				ImageRemoteURL:       &emoji.ImageRemoteURL,
 				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
-
-				// Refresh is only forced if image URL changed.
-			}, (existing.ImageRemoteURL != emoji.ImageRemoteURL))
+			}, force)
 			if err != nil {
 				log.Errorf(ctx, "error refreshing emoji: %v", err)
 

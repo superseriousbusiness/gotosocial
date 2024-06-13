@@ -473,12 +473,10 @@ func sizeofMedia() uintptr {
 		File: gtsmodel.File{
 			Path:        exampleURI,
 			ContentType: "image/jpeg",
-			UpdatedAt:   exampleTime,
 		},
 		Thumbnail: gtsmodel.Thumbnail{
 			Path:        exampleURI,
 			ContentType: "image/jpeg",
-			UpdatedAt:   exampleTime,
 			URL:         exampleURI,
 			RemoteURL:   exampleURI,
 		},

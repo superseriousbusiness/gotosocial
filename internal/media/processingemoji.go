@@ -57,35 +57,41 @@ func (p *ProcessingEmoji) ID() string {
 }
 
 // LoadEmoji blocks until the static and fullsize image has been processed, and then returns the completed emoji.
-func (p *ProcessingEmoji) Load(ctx context.Context) (emoji *gtsmodel.Emoji, err error) {
+func (p *ProcessingEmoji) Load(ctx context.Context) (*gtsmodel.Emoji, error) {
+	emoji, done, err := p.load(ctx)
+	if !done {
+		// On a context-canceled error (marked as !done), requeue for loading.
+		p.mgr.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
+			if _, _, err := p.load(ctx); err != nil {
+				log.Errorf(ctx, "error loading emoji: %v", err)
+			}
+		})
+	}
+	return emoji, err
+}
+
+// load is the package private form of load() that is wrapped to catch context canceled.
+func (p *ProcessingEmoji) load(ctx context.Context) (
+	emoji *gtsmodel.Emoji,
+	done bool,
+	err error,
+) {
 	err = p.proc.Process(func() error {
-		if p.done {
+		if done = p.done; done {
 			// Already proc'd.
 			return p.err
 		}
 
-		// TODO: in time update this
-		// to perhaps follow a similar
-		// freshness window to statuses
-		// / accounts? But that's a big
-		// maybe, media don't change in
-		// the same way so this is largely
-		// just to slow down fail retries.
-		const maxfreq = 6 * time.Hour
-
-		// Check whether media is uncached but repeatedly failing,
-		// specifically limit the frequency at which we allow this.
-		if !p.emoji.UpdatedAt.Equal(p.emoji.CreatedAt) && // i.e. not new
-			p.emoji.UpdatedAt.Add(maxfreq).Before(time.Now()) {
-			return nil
-		}
-
 		defer func() {
 			// This is only done when ctx NOT cancelled.
-			done := err == nil || !errorsv2.IsV2(err,
+			done = (err == nil || !errorsv2.IsV2(err,
 				context.Canceled,
 				context.DeadlineExceeded,
-			)
+			))
+
+			if !done {
+				return
+			}
 
 			// Anything from here, we
 			// need to ensure happens
@@ -115,6 +121,22 @@ func (p *ProcessingEmoji) Load(ctx context.Context) (emoji *gtsmodel.Emoji, err 
 			p.done = true
 			p.err = err
 		}()
+
+		// TODO: in time update this
+		// to perhaps follow a similar
+		// freshness window to statuses
+		// / accounts? But that's a big
+		// maybe, media don't change in
+		// the same way so this is largely
+		// just to slow down fail retries.
+		const maxfreq = 6 * time.Hour
+
+		// Check whether media is uncached but repeatedly failing,
+		// specifically limit the frequency at which we allow this.
+		if !p.emoji.UpdatedAt.Equal(p.emoji.CreatedAt) && // i.e. not new
+			p.emoji.UpdatedAt.Add(maxfreq).Before(time.Now()) {
+			return nil
+		}
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.

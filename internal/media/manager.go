@@ -105,6 +105,30 @@ func (m *Manager) CreateMedia(
 		"unknown",
 	)
 
+	// Calculate attachment thumbnail file path
+	thumbPath := uris.StoragePathForAttachment(
+		accountID,
+		string(TypeAttachment),
+		string(SizeSmall),
+		id,
+
+		// Always encode attachment
+		// thumbnails as jpg.
+		"jpg",
+	)
+
+	// Calculate attachment thumbnail URL.
+	thumbURL := uris.URIForAttachment(
+		accountID,
+		string(TypeAttachment),
+		string(SizeSmall),
+		id,
+
+		// Always encode attachment
+		// thumbnails as jpg.
+		"jpg",
+	)
+
 	// Populate initial fields on the new media,
 	// leaving out fields with values we don't know
 	// yet. These will be overwritten as we go.
@@ -117,14 +141,17 @@ func (m *Manager) CreateMedia(
 		AccountID:  accountID,
 		Processing: gtsmodel.ProcessingStatusReceived,
 		File: gtsmodel.File{
-			UpdatedAt:   now,
 			ContentType: "application/octet-stream",
 			Path:        path,
 		},
-		Thumbnail: gtsmodel.Thumbnail{UpdatedAt: now},
-		Avatar:    util.Ptr(false),
-		Header:    util.Ptr(false),
-		Cached:    util.Ptr(false),
+		Thumbnail: gtsmodel.Thumbnail{
+			ContentType: mimeImageJpeg, // thumbs always jpg.
+			Path:        thumbPath,
+			URL:         thumbURL,
+		},
+		Avatar: util.Ptr(false),
+		Header: util.Ptr(false),
+		Cached: util.Ptr(false),
 	}
 
 	// Check if we were provided additional info
@@ -270,7 +297,6 @@ func (m *Manager) CreateEmoji(
 		ImageStaticURL:         staticURL,
 		ImageStaticPath:        staticPath,
 		ImageStaticContentType: mimeImagePng,
-		ImageUpdatedAt:         now,
 		Disabled:               util.Ptr(false),
 		VisibleInPicker:        util.Ptr(true),
 		CreatedAt:              now,
