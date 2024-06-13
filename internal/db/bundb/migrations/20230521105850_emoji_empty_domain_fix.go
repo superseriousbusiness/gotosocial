@@ -85,7 +85,6 @@ func init() {
 				"image_static_content_type",
 				"image_file_size",
 				"image_static_file_size",
-				"image_updated_at",
 				"disabled",
 				"uri",
 				"visible_in_picker",
