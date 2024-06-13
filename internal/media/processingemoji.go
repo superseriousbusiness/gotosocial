@@ -22,7 +22,6 @@ import (
 	"context"
 	"io"
 	"slices"
-	"time"
 
 	"codeberg.org/gruf/go-bytesize"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
@@ -121,22 +120,6 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 			p.done = true
 			p.err = err
 		}()
-
-		// TODO: in time update this
-		// to perhaps follow a similar
-		// freshness window to statuses
-		// / accounts? But that's a big
-		// maybe, media don't change in
-		// the same way so this is largely
-		// just to slow down fail retries.
-		const maxfreq = 6 * time.Hour
-
-		// Check whether media is uncached but repeatedly failing,
-		// specifically limit the frequency at which we allow this.
-		if !p.emoji.UpdatedAt.Equal(p.emoji.CreatedAt) && // i.e. not new
-			p.emoji.UpdatedAt.Add(maxfreq).Before(time.Now()) {
-			return nil
-		}
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.

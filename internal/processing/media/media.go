@@ -18,6 +18,7 @@
 package media
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -31,6 +32,7 @@ type Processor struct {
 
 	state               *state.State
 	converter           *typeutils.Converter
+	federator           *federation.Federator
 	mediaManager        *media.Manager
 	transportController transport.Controller
 }
@@ -40,6 +42,7 @@ func New(
 	common *common.Processor,
 	state *state.State,
 	converter *typeutils.Converter,
+	federator *federation.Federator,
 	mediaManager *media.Manager,
 	transportController transport.Controller,
 ) Processor {
@@ -47,6 +50,7 @@ func New(
 		c:                   common,
 		state:               state,
 		converter:           converter,
+		federator:           federator,
 		mediaManager:        mediaManager,
 		transportController: transportController,
 	}
