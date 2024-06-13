@@ -149,16 +149,18 @@ func (d *Dereferencer) updateAttachment(
 ) {
 	var force bool
 
-	// Check if attachment description has changed.
-	if existing.Description != attach.Description {
-		existing.Description = attach.Description
-		force = true
-	}
+	if attach != nil {
+		// Check if attachment description has changed.
+		if existing.Description != attach.Description {
+			existing.Description = attach.Description
+			force = true
+		}
 
-	// Check if attachment blurhash has changed.
-	if existing.Blurhash != attach.Blurhash {
-		existing.Blurhash = attach.Blurhash
-		force = true
+		// Check if attachment blurhash has changed.
+		if existing.Blurhash != attach.Blurhash {
+			existing.Blurhash = attach.Blurhash
+			force = true
+		}
 	}
 
 	// Ensure media is cached.
