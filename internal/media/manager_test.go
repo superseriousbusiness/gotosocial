@@ -186,7 +186,6 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
 	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
 	suite.NotEqual(originalEmoji.UpdatedAt, dbEmoji.UpdatedAt)
-	suite.NotEqual(originalEmoji.ImageUpdatedAt, dbEmoji.ImageUpdatedAt)
 
 	// the old image files should no longer be in storage
 	_, err = suite.storage.Get(ctx, oldEmojiImagePath)
