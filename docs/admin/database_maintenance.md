@@ -46,6 +46,10 @@ The basic steps are:
 2. While connected to your GoToSocial database file in the `sqlite3` shell, run `VACUUM;` (this may take quite a few minutes).
 3. Start GoToSocial.
 
+### Replication
+
+It's a common practice to set up safeguards for your database like replication. SQLite can be replicated using external software. The basic steps are described on the [Replicating SQLite](../advanced/replicating-sqlite.md) page.
+
 ## Postgres
 
 TODO: Maintenance recommendations for Postgres. 
