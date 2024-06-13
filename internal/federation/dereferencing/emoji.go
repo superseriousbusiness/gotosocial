@@ -261,11 +261,13 @@ func (d *Dereferencer) fetchEmojis(
 		// Emojis changed!
 		changed = true
 
+		// Take ref to URL before change.
+		remoteURL := emoji.ImageRemoteURL
+
 		// Fetch this newly added emoji,
 		// this function handles the case
 		// of existing cached emojis and
 		// new ones requiring dereference.
-		remoteURL := emoji.ImageRemoteURL
 		emoji, err := d.GetEmoji(ctx,
 			emoji.Shortcode,
 			emoji.Domain,
@@ -286,6 +288,9 @@ func (d *Dereferencer) fetchEmojis(
 			// non-fatal error occurred during loading, still use it.
 			log.Warnf(ctx, "partially loaded emoji: %v", err)
 		}
+
+		// Set updated emoji.
+		emojis[i] = emoji
 	}
 
 	for i := 0; i < len(emojis); {
