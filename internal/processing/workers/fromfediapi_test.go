@@ -627,12 +627,17 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 	})
 	suite.NoError(err)
 
+	// Wait for side effects to trigger:
 	// Zork should now be following admin account.
-	follows, err := testStructs.State.DB.IsFollowing(ctx, receivingAcct.ID, targetAcct.ID)
-	if err != nil {
-		suite.FailNow(err.Error())
+	if !testrig.WaitFor(func() bool {
+		follows, err := testStructs.State.DB.IsFollowing(ctx, receivingAcct.ID, targetAcct.ID)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		return follows
+	}) {
+		suite.FailNow("timed out waiting for zork to follow admin account")
 	}
-	suite.True(follows)
 
 	// Move should be in the DB.
 	move, err := testStructs.State.DB.GetMoveByURI(ctx, "https://fossbros-anonymous.io/users/foss_satan/moves/01HRA064871MR8HGVSAFJ333GM")
