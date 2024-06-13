@@ -22,7 +22,6 @@ import (
 	"errors"
 	"io"
 	"net/url"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -134,21 +133,7 @@ func (d *Dereferencer) RefreshEmoji(
 			return emoji, nil
 		}
 
-		// TODO: in time update this
-		// to perhaps follow a similar
-		// freshness window to statuses
-		// / accounts? But that's a big
-		// maybe, media don't change in
-		// the same way so this is largely
-		// just to slow down fail retries.
-		const maxfreq = 6 * time.Hour
-
-		// Check whether media is uncached but repeatedly failing,
-		// specifically limit the frequency at which we allow this.
-		if !emoji.UpdatedAt.Equal(emoji.CreatedAt) && // i.e. not new
-			emoji.UpdatedAt.Add(maxfreq).Before(time.Now()) {
-			return emoji, nil
-		}
+		// TODO: some kind of freshness period?
 	}
 
 	// Generate shortcode domain for locks + logging.

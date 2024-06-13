@@ -21,7 +21,6 @@ import (
 	"context"
 	"io"
 	"net/url"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -91,21 +90,7 @@ func (d *Dereferencer) RefreshMedia(
 			return media, nil
 		}
 
-		// TODO: in time update this
-		// to perhaps follow a similar
-		// freshness window to statuses
-		// / accounts? But that's a big
-		// maybe, media don't change in
-		// the same way so this is largely
-		// just to slow down fail retries.
-		const maxfreq = 6 * time.Hour
-
-		// Check whether media is uncached but repeatedly failing,
-		// specifically limit the frequency at which we allow this.
-		if !media.UpdatedAt.Equal(media.CreatedAt) && // i.e. not new
-			media.UpdatedAt.Add(maxfreq).Before(time.Now()) {
-			return media, nil
-		}
+		// TODO: some kind of freshness period?
 	}
 
 	// Ensure we have a valid remote URL.
