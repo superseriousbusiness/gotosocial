@@ -1,3 +1,4 @@
+<!--overview-start-->
 # GoToSocial <!-- omit in toc -->
 
 GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
@@ -5,16 +6,19 @@ GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server
 With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles. All without being tracked or advertised to!
 
 <p align="middle">
-  <img src="./docs/assets/sloth.png" width="300"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/sloth.png" width="300"/>
 </p>
 
 **GoToSocial is still [ALPHA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We foresee entering beta around the beginning of 2024.
 
-Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/). To build from source, check the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
+Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/).
+
+To build from source, check the [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) file.
 
 Here's a screenshot of the instance landing page!
 
-![Screenshot of the landing page for the GoToSocial instance goblin.technology. It shows basic information about the instance; number of users and posts etc.](./docs/assets/instancesplash.png)
+![Screenshot of the landing page for the GoToSocial instance goblin.technology. It shows basic information about the instance; number of users and posts etc.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/instancesplash.png)
+<!--overview-end-->
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -24,27 +28,21 @@ Here's a screenshot of the instance landing page!
 - [Features](#features)
   - [Mastodon API compatibility](#mastodon-api-compatibility)
   - [Granular post settings](#granular-post-settings)
-  - [Customizability for admins](#customizability-for-admins)
+  - [Customizability](#customizability)
   - [Easy to run](#easy-to-run)
   - [Safety + security features](#safety--security-features)
   - [Various federation modes](#various-federation-modes)
   - [OIDC integration](#oidc-integration)
   - [Backend-first design](#backend-first-design)
-- [Wishlist](#wishlist)
-- [Getting Started](#getting-started)
-- [Third-Party Packaging](#third-party-packaging)
-  - [Distribution packaging](#distribution-packaging)
-  - [Self-hosting](#self-hosting)
 - [Known Issues](#known-issues)
-  - [Client App Issues](#client-app-issues)
-  - [Federation Issues](#federation-issues)
-- [Contributing](#contributing)
-- [Building](#building)
-- [Releases](#releases)
-  - [Stable](#stable)
-  - [Snapshots](#snapshots)
+- [Getting Started](#getting-started)
+  - [Stable Releases](#stable-releases)
+  - [Snapshot Releases](#snapshot-releases)
     - [Docker](#docker)
     - [Binary release .tar.gz](#binary-release-targz)
+  - [From Source](#from-source)
+  - [Third-party Packaging](#third-party-packaging)
+- [Contributing](#contributing)
 - [Contact](#contact)
 - [Credits](#credits)
   - [Libraries](#libraries)
@@ -56,13 +54,14 @@ Here's a screenshot of the instance landing page!
   - [NLnet](#nlnet)
 - [License](#license)
 
+<!--body-1-start-->
 ## What is GoToSocial?
 
 GoToSocial provides a lightweight, customizable, and safety-focused entryway into the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), and is comparable to (but distinct from) existing projects such as [Mastodon](https://joinmastodon.org/), [Pleroma](https://pleroma.social/), [Friendica](https://friendi.ca), and [PixelFed](https://pixelfed.org/).
 
 If you've ever used something like Twitter or Tumblr (or even Myspace!) GoToSocial will probably feel familiar to you: You can follow people and have followers, you make posts which people can favourite and reply to and share, and you scroll through posts from people you follow using a timeline. You can write long posts or short posts, or just post images, it's up to you. You can also, of course, block people or otherwise limit interactions that you don't want by posting just to your friends.
 
-![Screenshot of the web view of a profile in GoToSocial, showing header and avatar, bio, and numbers of followers/following.](./docs/assets/profile1.png)
+![Screenshot of the web view of a profile in GoToSocial, showing header and avatar, bio, and numbers of followers/following.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/profile1.png)
 
 **GoToSocial does NOT use recommendation algorithms or collect data about you to suggest content or 'improve your experience'**. The timeline is chronological: whatever you see at the top of your timeline is there because it's *just been posted*, not because it's been selected as interesting (or controversial) based on your personal profile.
 
@@ -74,7 +73,7 @@ GoToSocial doesn't claim to be *better* than any other application, but it offer
 
 Because GoToSocial uses [ActivityPub](https://activitypub.rocks/), you can hang out not just with people on your home server, but with people all over the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), seamlessly.
 
-![the activitypub logo](docs/assets/ap_logo.svg)
+![the activitypub logo](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/ap_logo.svg)
 
 Federation means that your home server is part of a network of servers all over the world that all communicate using the same protocol. Your data is no longer centralized on one company's servers, but resides on your own server and is shared — as you see fit — across a resilient web of servers run by other people.
 
@@ -88,7 +87,9 @@ This project sprang up in February/March 2021 out of a dissatisfaction with the 
 
 It began as a solo project, and then picked up steam as more developers became interested and jumped on.
 
-For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](./ROADMAP.md). The [FAQ](docs/faq.md) contains a higher-level overview.
+For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md).
+
+---
 
 ## Features
 
@@ -117,18 +118,17 @@ It also allows you to customize how people interact with your posts:
 - 'Likeable' toggle.
 - 'Replyable' toggle.
 
-### Customizability for admins
+### Customizability
 
-Plenty of [config options](./example/config.yaml) for admins to play around with, including:
+Users can [choose from a variety of fun themes](https://docs.gotosocial.org/en/latest/user_guide/settings/#select-theme) for their profile, or even write their own [custom CSS](https://docs.gotosocial.org/en/latest/user_guide/settings/#custom-css).
 
-- Easily adjustable post length.
-- Media upload size settings.
+Plenty of [config options](https://github.com/superseriousbusiness/gotosocial/blob/main/example/config.yaml) for admins to play around with too.
 
 ### Easy to run
 
 No external dependencies apart from a database (or just use SQLite!). Simply download the binary + assets (or Docker container), and run.
 
-GoToSocial plays nice with single-board computers, old laptops and tiny $5/month VPSes.
+GoToSocial uses only about 150-250MiB of RAM, so it plays nice with single-board computers, old laptops and tiny $5/month VPSes.
 
 ### Safety + security features
 
@@ -159,73 +159,27 @@ Instead, like Matrix.org's [Synapse](https://github.com/matrix-org/synapse) proj
 
 On top of this API, web developers are encouraged to build any front-end implementation or mobile application that they wish, whether Tumblr-like, Facebook-like, Twitter-like, or something else entirely.
 
-## Wishlist
-
-These cool things will be implemented if time allows (because we really want them):
-
-- **Groups** and group posting!
-- Reputation-based 'slow' federation.
-- Community decision-making for federation and moderation actions.
-- User-selectable custom templates for rendering public posts:
-  - Twitter-style
-  - Blogpost
-  - Gallery
-  - Etc.
-
-## Getting Started
-
-All docs for installation and configuration are hosted at [docs.gotosocial.org](https://docs.gotosocial.org).
-
-## Third-Party Packaging
-
-Thank you so much to the cool people who have put time and energy into packaging GoToSocial! 
-
-### Distribution packaging
-
-These packages are not maintained by GoToSocial, so please direct questions and issues to the repository maintainers (and donate to them!).
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/gotosocial.svg)](https://repology.org/project/gotosocial/versions)
-
-### Self-hosting
-
-You can deploy your own instance of GoToSocial with the help of:
-
-- [YunoHost GoToSocial Packaging](https://github.com/YunoHost-Apps/gotosocial_ynh) by [OniriCorpe](https://github.com/OniriCorpe).
-- [Ansible Playbook (MASH)](https://github.com/mother-of-all-self-hosting/mash-playbook): The playbook supports a many services, including GoToSocial. [Documentation](https://github.com/mother-of-all-self-hosting/mash-playbook/blob/main/docs/services/gotosocial.md)
-- GoToSocial Helm Charts:
-  - [GoToSocial Helm Chart](https://github.com/fSocietySocial/charts/tree/main/charts/gotosocial) by [0hlov3](https://github.com/0hlov3).
+---
 
 ## Known Issues
 
-Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these. The [FAQ](docs/faq.md) also describes some of the features that haven't been implemented yet.
-
-### Client App Issues
-
-GoToSocial works great with Tusky and Semaphore, but some other client applications still need work or have issues connecting to GoToSocial. We're tracking them [right here](https://github.com/superseriousbusiness/gotosocial/projects/5). It's our goal to make any app that's compatible with the Mastodon API work seamlessly with GoToSocial.
-
-### Federation Issues
+Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
 
 Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://github.com/superseriousbusiness/gotosocial/projects/4). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
 
-## Contributing
+---
 
-You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](./CONTRIBUTING.md) file for guidelines and setting up your dev environment.
-
-## Building
-
-Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](./CONTRIBUTING.md) file.
-
-## Releases
-
-### Stable
-
-We package our stable releases for both binary builds and Docker containers, so that you don't have to build from source yourself.
+## Getting Started
 
 Check our [releases page](https://github.com/superseriousbusiness/gotosocial/releases) and our [getting started](https://docs.gotosocial.org/en/latest/getting_started/) documentation.
 
+### Stable Releases
+
+We package our stable releases for both binary builds and Docker containers, so that you don't have to build from source yourself.
+
 The Docker image `superseriousbusiness/gotosocial:latest` will always correspond to the latest stable release. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag. Alternatively, run `docker pull superseriousbusiness/gotosocial:latest` manually just before use.
 
-### Snapshots
+### Snapshot Releases
 
 We also make snapshot builds every time something is merged into the main branch, so you can run from whatever code is on main if you wish.
 
@@ -241,13 +195,42 @@ To run from main using a binary release, download the appropriate .tar.gz file f
 
 Snapshot binary releases in the S3 bucket are keyed by Github commit hash. To get the latest one, sort by Last Modified, or check out the list of commits [here](https://github.com/superseriousbusiness/gotosocial/commits/main), copy the SHA of the latest one, and paste it in the Minio console filter. Snapshot binary releases are expired after 28 days, to keep our hosting costs down.
 
+### From Source
+
+Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) file.
+
+### Third-party Packaging
+
+Thank you so much to the cool people who have put time and energy into packaging GoToSocial! 
+
+These packages are not maintained by GoToSocial, so please direct questions and issues to the repository maintainers (and donate to them!).
+
+[![Packaging status](https://repology.org/badge/vertical-allrepos/gotosocial.svg)](https://repology.org/project/gotosocial/versions)
+
+You can also deploy your own instance of GoToSocial with the help of:
+
+- [YunoHost GoToSocial Packaging](https://github.com/YunoHost-Apps/gotosocial_ynh) by [OniriCorpe](https://github.com/OniriCorpe).
+- [Ansible Playbook (MASH)](https://github.com/mother-of-all-self-hosting/mash-playbook): The playbook supports a many services, including GoToSocial. [Documentation](https://github.com/mother-of-all-self-hosting/mash-playbook/blob/main/docs/services/gotosocial.md)
+- [GoToSocial Helm Chart](https://github.com/fSocietySocial/charts/tree/main/charts/gotosocial) by [0hlov3](https://github.com/0hlov3).
+
+---
+
+## Contributing
+
+You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) file for guidelines and setting up your dev environment.
+
+---
+
 ## Contact
 
 For questions and comments, you can [join our Matrix space](https://matrix.to/#/#gotosocial-space:superseriousbusiness.org) at `#gotosocial-space:superseriousbusiness.org`. This is the quickest way to reach the devs. You can also mail [admin@gotosocial.org](mailto:admin@gotosocial.org).
 
 For bugs and feature requests, please check to see if there's [already an issue](https://github.com/superseriousbusiness/gotosocial/issues), and if not, open one or use one of the above channels to make a request (if you don't have a Github account).
 
+---
+
 ## Credits
+<!--body-1-end-->
 
 ### Libraries
 
@@ -315,6 +298,7 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
 - [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); password strength validation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [yuin/goldmark](https://github.com/yuin/goldmark); markdown parser. [MIT License](https://spdx.org/licenses/MIT.html).
 
+<!--body-2-start-->
 ### Image Attribution and Licensing
 
 Sloth logo by [Anna Abramek](https://abramek.art/).
@@ -323,9 +307,9 @@ Sloth logo by [Anna Abramek](https://abramek.art/).
 
 The Creative Commons Attribution-ShareAlike 4.0 International License license applies specifically to the following files and subdirectories of this repository:
 
-- [sloth logo png](./web/assets/logo.png)
-- [sloth logo svg](./web/assets/logo.svg)
-- [all default avatars](./web/assets/default_avatars)
+- [sloth logo png](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.png)
+- [sloth logo svg](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.svg)
+- [all default avatars](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/default_avatars)
 
 Under the terms of the license, you are free to:
 
@@ -340,13 +324,15 @@ In alphabetical order (... and order of smell):
 - f0x \[[donate with liberapay](https://liberapay.com/f0x)\]
 - kim \[check out my code @ [codeberg](https://codeberg.org/gruf), or find me @ [@kim](https://k.iim.gay/@kim)\]
 - tobi \[[donate with liberapay](https://liberapay.com/GoToSocial/)\]
-- maloki \[[@maloki@goblin.technology](https://goblin.technology/@maloki)\]
+- vyr
 
 ### Special Thanks
 
 A huge thank you to CJ from [go-fed](https://github.com/go-fed/activity): without your work, GoToSocial would not have been possible.
 
 Thanks to everyone who has used GtS, opened an issue, suggested something, given funding, and otherwise encouraged or supported the project!
+
+---
 
 ## Sponsorship + Funding
 
@@ -370,13 +356,17 @@ Crowdfunded donations to our OpenCollective and Liberapay accounts go towards pa
 
 <img src="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" width="75" alt="NGIZero logo"/>
 
-Combined with the above crowdfunding sources, 2023 Alpha development of GoToSocial is also funded by a 50,000 EUR grant from the [NGI0 Entrust Fund](https://nlnet.nl/entrust/), via [NLnet](https://nlnet.nl/). See [here](https://nlnet.nl/project/GoToSocial/#ack) for more details. The successful grant application is archived [here](https://github.com/superseriousbusiness/gotosocial/blob/main/archive/nlnet/2022-next-generation-internet-zero.md).
+Combined with the above crowdfunding sources, 2023 Alpha development of GoToSocial was funded by a 50,000 EUR grant from the [NGI0 Entrust Fund](https://nlnet.nl/entrust/), via [NLnet](https://nlnet.nl/). See [here](https://nlnet.nl/project/GoToSocial/#ack) for more details. The successful grant application is archived [here](https://github.com/superseriousbusiness/gotosocial/blob/main/archive/nlnet/2022-next-generation-internet-zero.md).
+
+2024 Beta development of GoToSocial is being funded by an additional 50,000 EUR grant from the [NGI0 Entrust Fund](https://nlnet.nl/entrust/), via [NLnet](https://nlnet.nl/).
+
+---
 
 ## License
 
 ![the gnu AGPL logo](https://www.gnu.org/graphics/agplv3-155x51.png)
 
-GoToSocial is free software, licensed under the [GNU AGPL v3 LICENSE](LICENSE). We encourage forking and changing the code, hacking around with it, and experimenting.
+GoToSocial is free software, licensed under the [GNU AGPL v3 LICENSE](https://github.com/superseriousbusiness/gotosocial/blob/main/LICENSE). We encourage forking and changing the code, hacking around with it, and experimenting.
 
 See [here](https://www.gnu.org/licenses/why-affero-gpl.html) for the differences between AGPL versus GPL licensing, and [here](https://www.gnu.org/licenses/gpl-faq.html) for FAQ's about GPL licenses, including the AGPL.
 
@@ -386,4 +376,5 @@ If you modify the GoToSocial source code, and run that modified code in a way th
 
 Copyright (C) GoToSocial Authors
 
-(I'm adding this here to take the crown of having the 1000th commit ~ kim)
+<!--I'm adding this here to take the crown of having the 1000th commit ~ kim-->
+<!--body-2-end-->

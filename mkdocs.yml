@@ -32,6 +32,7 @@ plugins:
   - swagger-ui-tag:
       supportedSubmitMethods: []
       syntaxHighlightTheme: obsidian
+  - include-markdown
 
 extra_css:
   - assets/css/colours.css
