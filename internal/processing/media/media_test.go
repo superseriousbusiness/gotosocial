@@ -85,7 +85,7 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	filter := visibility.NewFilter(&suite.state)
 	common := common.New(&suite.state, suite.mediaManager, suite.tc, federator, filter)
 
-	suite.mediaProcessor = mediaprocessing.New(&common, &suite.state, suite.tc, suite.mediaManager, suite.transportController)
+	suite.mediaProcessor = mediaprocessing.New(&common, &suite.state, suite.tc, federator, suite.mediaManager, suite.transportController)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 }

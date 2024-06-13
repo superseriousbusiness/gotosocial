@@ -286,49 +286,16 @@ func (p *Processor) getEmojiContent(
 		return nil, gtserror.NewErrorNotFound(errors.New(text), text)
 	}
 
-	var remoteURL *url.URL
-	if emoji.ImageRemoteURL != "" {
-
-		// Parse emoji remote URL to valid URL object.
-		remoteURL, err = url.Parse(emoji.ImageRemoteURL)
-		if err != nil {
-			err := gtserror.Newf("invalid emoji remote url %s: %w", emoji.ImageRemoteURL, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-	}
-
-	if !*emoji.Cached {
-		// if we don't have it cached, then we can assume two things:
-		// 1. this is remote emoji, since local emoji should never be uncached
-		// 2. we need to fetch it again using a transport and the media manager
-
-		if remoteURL == nil {
-			err := gtserror.Newf("missing remote url for uncached emoji %s: %w", emoji.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		// Fetch transport for requesting username (emoji use instance account).
-		tsport, err := p.transportController.NewTransportForUsername(ctx, "")
-		if err != nil {
-			err := gtserror.Newf("could not get transport: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		// Prepare data function to dereference media from parsed IRI.
-		dataFn := func(ctx context.Context) (io.ReadCloser, int64, error) {
-			ctx = gtscontext.SetFastFail(ctx) // don't retry on failures
-			return tsport.DereferenceMedia(ctx, remoteURL)
-		}
-
-		// Wrap original emoji to process a recache operation.
-		processing := p.mediaManager.RecacheEmoji(emoji, dataFn)
-
-		// Block until emoji recached.
-		emoji, err = processing.Load(ctx)
-		if err != nil {
-			err := gtserror.Newf("error recaching emoji %s: %w", emoji.ImageRemoteURL, err)
-			return nil, gtserror.NewErrorNotFound(err)
-		}
+	// Ensure that stored emoji is cached.
+	emoji, err = p.federator.RefreshEmoji(
+		ctx,
+		emoji,
+		media.AdditionalEmojiInfo{},
+		false,
+	)
+	if err != nil {
+		err := gtserror.Newf("error recaching emoji %s: %w", emoji.ImageRemoteURL, err)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	// Start preparing API content model.
