@@ -376,7 +376,17 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	}
 
 	// emojis should be updated
-	suite.Contains(dbUpdatedAccount.EmojiIDs, testEmoji.ID)
+	var haveUpdatedEmoji bool
+	for _, emoji := range dbUpdatedAccount.Emojis {
+		if emoji.Shortcode == testEmoji.Shortcode &&
+			emoji.Domain == testEmoji.Domain &&
+			emoji.ImageRemoteURL == emoji.ImageRemoteURL &&
+			emoji.ImageStaticRemoteURL == emoji.ImageStaticRemoteURL {
+			haveUpdatedEmoji = true
+			break
+		}
+	}
+	suite.True(haveUpdatedEmoji)
 
 	// account should be freshly fetched
 	suite.WithinDuration(time.Now(), dbUpdatedAccount.FetchedAt, 10*time.Second)
