@@ -10,5 +10,6 @@ dependencies:
   - pillow==10.2.0
   - pip==24
   - python==3.12
+  - mkdocs-include-markdown-plugin=6.2.0
   - pip:
     - mkdocs-swagger-ui-tag==0.6.9

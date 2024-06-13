@@ -34,18 +34,8 @@ To see posts, you have to start following people! Once you've followed a few peo
 
 ## How can I sign up for a server?
 
-Right now the only way to create an account is by the server's admin to run a command directly on the server. A web-based signup flow is in the roadmap but not implemented yet.
+We introduced a sign-up flow in v0.16.0. The server you want to sign up to must have enabled registrations/sign-ups, as detailed [right here](./admin/signups.md).
 
 ## Why's it still in alpha?
 
-Take a look at the [list of open bugs](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and the [roadmap](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md) for a more detailed rundown, but the main missing features at the time of this writing are:
-
-- backfill of posts
-- web-based signup
-- scheduling posts
-- account migration
-- shared block lists across servers
-
-## Will you support tables in Markdown?
-
-Not at the moment, as most clients handle them terribly.
+Take a look at the [list of open bugs](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and the [roadmap](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md) for a more detailed rundown.

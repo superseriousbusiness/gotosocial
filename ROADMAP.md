@@ -14,10 +14,10 @@ Big thank you to all of our [Open Collective](https://opencollective.com/gotosoc
 - [Timeline](#timeline)
   - [Mid 2023](#mid-2023)
   - [Mid/late 2023](#midlate-2023)
-  - [Late 2023](#late-2023)
   - [Early 2024](#early-2024)
-  - [BETA Milestone](#beta-milestone)
+  - [BETA milestone](#beta-milestone)
   - [Remainder 2024 - early 2025](#remainder-2024---early-2025)
+- [Wishlist](#wishlist)
 
 ## Beta Aims
 
@@ -56,8 +56,8 @@ What follows is a rough timeline of features that will be implemented on the roa
 
 ### Early 2024
 
-- [ ] **Move activity** -- use the ActivityPub `Move` activity to support migration of a user's profile across servers.
-- [ ] **Sign-up flow** -- allow users to submit a sign-up request to an instance; allow admins to moderate sign-up requests.
+- [x] **Move activity** -- use the ActivityPub `Move` activity to support migration of a user's profile across servers.
+- [x] **Sign-up flow** -- allow users to submit a sign-up request to an instance; allow admins to moderate sign-up requests.
 
 ### BETA milestone
 
@@ -77,3 +77,16 @@ These are provided in no specific order.
 - [ ] **Moderation: Append content warning / mark-as-sensitive all content from an instance/account**.
 
 More tbd!
+
+## Wishlist
+
+These cool things will be implemented if time allows (because we really want them):
+
+- **Groups** and group posting!
+- Reputation-based 'slow' federation.
+- Community decision-making for federation and moderation actions.
+- User-selectable custom templates for rendering public posts:
+  - Twitter-style
+  - Blogpost
+  - Gallery
+  - Etc.
