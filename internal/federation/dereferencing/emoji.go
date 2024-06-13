@@ -31,7 +31,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// GetEmoji ...
+// GetEmoji fetches the emoji with given shortcode,
+// domain and remote URL to dereference it by. This
+// handles the case of existing emojis by passing them
+// to RefreshEmoji(), which in the case of a local
+// emoji will be a no-op. If the emoji does not yet
+// exist it will be newly inserted into the database
+// followed by dereferencing the actual media file.
+//
+// Please note that even if an error is returned,
+// an emoji model may still be returned if the error
+// was only encountered during actual dereferencing.
+// In this case, it will act as a placeholder.
 func (d *Dereferencer) GetEmoji(
 	ctx context.Context,
 	shortcode string,
@@ -53,20 +64,6 @@ func (d *Dereferencer) GetEmoji(
 	}
 
 	if emoji != nil {
-		// Check emoji is up-to-date
-		// with provided extra info.
-		switch {
-		case info.URI != nil &&
-			*info.URI != emoji.URI:
-			refresh = true
-		case info.ImageRemoteURL != nil &&
-			*info.ImageRemoteURL != emoji.ImageRemoteURL:
-			refresh = true
-		case info.ImageStaticRemoteURL != nil &&
-			*info.ImageStaticRemoteURL != emoji.ImageStaticRemoteURL:
-			refresh = true
-		}
-
 		// This was an existing emoji, pass to refresh func.
 		return d.RefreshEmoji(ctx, emoji, info, refresh)
 	}
@@ -112,7 +109,16 @@ func (d *Dereferencer) GetEmoji(
 	)
 }
 
-// RefreshEmoji ...
+// RefreshEmoji ensures that the given emoji is
+// up-to-date, both in terms of being cached in
+// in local instance storage, and compared to extra
+// information provided in media.AdditionEmojiInfo{}.
+// (note that is a no-op to pass in a local emoji).
+//
+// Please note that even if an error is returned,
+// an emoji model may still be returned if the error
+// was only encountered during actual dereferencing.
+// In this case, it will act as a placeholder.
 func (d *Dereferencer) RefreshEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
@@ -127,14 +133,26 @@ func (d *Dereferencer) RefreshEmoji(
 		return emoji, nil
 	}
 
-	if !force {
-		// Already cached.
-		if *emoji.Cached {
-			return emoji, nil
-		}
-
-		// TODO: some kind of freshness period?
+	// Check emoji is up-to-date
+	// with provided extra info.
+	switch {
+	case info.URI != nil &&
+		*info.URI != emoji.URI:
+		force = true
+	case info.ImageRemoteURL != nil &&
+		*info.ImageRemoteURL != emoji.ImageRemoteURL:
+		force = true
+	case info.ImageStaticRemoteURL != nil &&
+		*info.ImageStaticRemoteURL != emoji.ImageStaticRemoteURL:
+		force = true
 	}
+
+	// Check if needs updating.
+	if !force && *emoji.Cached {
+		return emoji, nil
+	}
+
+	// TODO: more finegrained freshness checks.
 
 	// Generate shortcode domain for locks + logging.
 	shortcodeDomain := emoji.Shortcode + "@" + emoji.Domain
@@ -171,7 +189,10 @@ func (d *Dereferencer) RefreshEmoji(
 	)
 }
 
-// processingEmojiSafely ...
+// processingEmojiSafely provides concurrency-safe processing of
+// an emoji with given shortcode+domain. if a copy of the emoji is
+// not already being processed, the given 'process' callback will
+// be used to generate new *media.ProcessingEmoji{} instance.
 func (d *Dereferencer) processEmojiSafely(
 	ctx context.Context,
 	shortcodeDomain string,
@@ -203,17 +224,19 @@ func (d *Dereferencer) processEmojiSafely(
 	// Unlock map.
 	unlock()
 
-	// Perform (blocking) load operation.
+	// Perform emoji load operation.
 	emoji, err = processing.Load(ctx)
 	if err != nil {
-		err := gtserror.Newf("error loading emoji %s: %w", shortcodeDomain, err)
-		return nil, err
+		err = gtserror.Newf("error loading emoji %s: %w", shortcodeDomain, err)
+
+		// TODO: in time we should return checkable flags by gtserror.Is___()
+		// which can determine if loading error should allow remaining placeholder.
 	}
 
 	// Return a COPY of emoji.
 	emoji2 := new(gtsmodel.Emoji)
 	*emoji2 = *emoji
-	return emoji2, nil
+	return emoji2, err
 }
 
 func (d *Dereferencer) fetchEmojis(

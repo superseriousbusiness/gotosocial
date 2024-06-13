@@ -27,7 +27,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
-// GetMedia ...
+// GetMedia fetches the media at given remote URL by
+// dereferencing it. The passed accountID is used to
+// store it as being owned by that account. Additional
+// information to set on the media attachment may also
+// be provided.
+//
+// Please note that even if an error is returned,
+// a media model may still be returned if the error
+// was only encountered during actual dereferencing.
+// In this case, it will act as a placeholder.
+//
+// Also note that since account / status dereferencing is
+// already protected by per-uri locks, and that fediverse
+// media is generally not shared between accounts (etc),
+// there aren't any concurrency protections against multiple
+// insertion / dereferencing of media at remoteURL. Worst
+// case scenario, an extra media entry will be inserted
+// and the scheduled cleaner.Cleaner{} will catch it!
 func (d *Dereferencer) GetMedia(
 	ctx context.Context,
 	requestUser string,
@@ -65,15 +82,41 @@ func (d *Dereferencer) GetMedia(
 		return nil, err
 	}
 
-	// Force attachment loading.
-	return processing.Load(ctx)
+	// Perform media load operation.
+	media, err := processing.Load(ctx)
+	if err != nil {
+		err = gtserror.Newf("error loading media %s: %w", media.RemoteURL, err)
+
+		// TODO: in time we should return checkable flags by gtserror.Is___()
+		// which can determine if loading error should allow remaining placeholder.
+	}
+
+	return media, err
 }
 
-// RefreshMedia ...
+// RefreshMedia ensures that given media is up-to-date,
+// both in terms of being cached in local instance,
+// storage and compared to extra info in information
+// in given gtsmodel.AdditionMediaInfo{}. This handles
+// the case of local emoji by returning early.
+//
+// Please note that even if an error is returned,
+// a media model may still be returned if the error
+// was only encountered during actual dereferencing.
+// In this case, it will act as a placeholder.
+//
+// Also note that since account / status dereferencing is
+// already protected by per-uri locks, and that fediverse
+// media is generally not shared between accounts (etc),
+// there aren't any concurrency protections against multiple
+// insertion / dereferencing of media at remoteURL. Worst
+// case scenario, an extra media entry will be inserted
+// and the scheduled cleaner.Cleaner{} will catch it!
 func (d *Dereferencer) RefreshMedia(
 	ctx context.Context,
 	requestUser string,
 	media *gtsmodel.MediaAttachment,
+	info media.AdditionalMediaInfo,
 	force bool,
 ) (
 	*gtsmodel.MediaAttachment,
@@ -84,14 +127,26 @@ func (d *Dereferencer) RefreshMedia(
 		return media, nil
 	}
 
-	if !force {
-		// Already cached.
-		if *media.Cached {
-			return media, nil
-		}
-
-		// TODO: some kind of freshness period?
+	// Check emoji is up-to-date
+	// with provided extra info.
+	switch {
+	case info.Blurhash != nil &&
+		*info.Blurhash != media.Blurhash:
+		force = true
+	case info.Description != nil &&
+		*info.Description != media.Description:
+		force = true
+	case info.RemoteURL != nil &&
+		*info.RemoteURL != media.RemoteURL:
+		force = true
 	}
+
+	// Check if needs updating.
+	if !force && *media.Cached {
+		return media, nil
+	}
+
+	// TODO: more finegrained freshness checks.
 
 	// Ensure we have a valid remote URL.
 	url, err := url.Parse(media.RemoteURL)
@@ -116,8 +171,16 @@ func (d *Dereferencer) RefreshMedia(
 		},
 	)
 
-	// Force attachment loading.
-	return processing.Load(ctx)
+	// Perform media load operation.
+	media, err = processing.Load(ctx)
+	if err != nil {
+		err = gtserror.Newf("error loading media %s: %w", media.RemoteURL, err)
+
+		// TODO: in time we should return checkable flags by gtserror.Is___()
+		// which can determine if loading error should allow remaining placeholder.
+	}
+
+	return media, err
 }
 
 // updateAttachment handles the case of an existing media attachment
@@ -132,19 +195,17 @@ func (d *Dereferencer) updateAttachment(
 	*gtsmodel.MediaAttachment, // always set
 	error,
 ) {
-	var force bool
+	var info media.AdditionalMediaInfo
 
 	if attach != nil {
-		// Check if attachment description has changed.
-		if existing.Description != attach.Description {
-			existing.Description = attach.Description
-			force = true
-		}
-
 		// Check if attachment blurhash has changed.
 		if existing.Blurhash != attach.Blurhash {
-			existing.Blurhash = attach.Blurhash
-			force = true
+			info.Blurhash = &attach.Blurhash
+		}
+
+		// Check if attachment description has changed.
+		if existing.Description != attach.Description {
+			info.Description = &attach.Description
 		}
 	}
 
@@ -152,6 +213,7 @@ func (d *Dereferencer) updateAttachment(
 	return d.RefreshMedia(ctx,
 		requestUser,
 		existing,
-		force,
+		info,
+		false,
 	)
 }
