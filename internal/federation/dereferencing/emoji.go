@@ -224,25 +224,25 @@ func (d *Dereferencer) fetchEmojis(
 	// Track any changes.
 	changed := false
 
-	for i, emoji := range emojis {
+	for i, placeholder := range emojis {
 		// Look for an existing emoji with shortcode + domain.
 		existing, ok := getEmojiByShortcodeDomain(existing,
-			emoji.Shortcode,
-			emoji.Domain,
+			placeholder.Shortcode,
+			placeholder.Domain,
 		)
 		if ok && existing.ID != "" {
 
 			// Check for any emoji changes that
 			// indicate we should force a refresh.
-			force := emojiChanged(existing, emoji)
+			force := emojiChanged(existing, placeholder)
 
 			// Ensure that the existing emoji model is up-to-date and cached.
 			existing, err := d.RefreshEmoji(ctx, existing, media.AdditionalEmojiInfo{
 
-				// Set latest values from emoji.
-				URI:                  &emoji.URI,
-				ImageRemoteURL:       &emoji.ImageRemoteURL,
-				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
+				// Set latest values from placeholder.
+				URI:                  &placeholder.URI,
+				ImageRemoteURL:       &placeholder.ImageRemoteURL,
+				ImageStaticRemoteURL: &placeholder.ImageStaticRemoteURL,
 			}, force)
 			if err != nil {
 				log.Errorf(ctx, "error refreshing emoji: %v", err)
@@ -261,27 +261,24 @@ func (d *Dereferencer) fetchEmojis(
 		// Emojis changed!
 		changed = true
 
-		// Take ref to URL before change.
-		remoteURL := emoji.ImageRemoteURL
-
 		// Fetch this newly added emoji,
 		// this function handles the case
 		// of existing cached emojis and
 		// new ones requiring dereference.
 		emoji, err := d.GetEmoji(ctx,
-			emoji.Shortcode,
-			emoji.Domain,
-			emoji.ImageRemoteURL,
+			placeholder.Shortcode,
+			placeholder.Domain,
+			placeholder.ImageRemoteURL,
 			media.AdditionalEmojiInfo{
-				URI:                  &emoji.URI,
-				ImageRemoteURL:       &remoteURL,
-				ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
+				URI:                  &placeholder.URI,
+				ImageRemoteURL:       &placeholder.ImageRemoteURL,
+				ImageStaticRemoteURL: &placeholder.ImageStaticRemoteURL,
 			},
 			false,
 		)
 		if err != nil {
 			if emoji == nil {
-				log.Errorf(ctx, "error loading emoji %s: %v", remoteURL, err)
+				log.Errorf(ctx, "error loading emoji %s: %v", placeholder.ImageRemoteURL, err)
 				continue
 			}
 
