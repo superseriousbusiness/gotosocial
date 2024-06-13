@@ -56,23 +56,12 @@ func NewManager(state *state.State) *Manager {
 	return &Manager{state: state}
 }
 
-// PreProcessMedia begins the process of decoding
-// and storing the given data as an attachment.
-// It will return a pointer to a ProcessingMedia
-// struct upon which further actions can be performed,
-// such as getting the finished media, thumbnail,
-// attachment, etc.
-//
-//   - data: a function that the media manager can call
-//     to return a reader containing the media data.
-//   - accountID: the account that the media belongs to.
-//   - ai: optional and can be nil. Any additional information
-//     about the attachment provided will be put in the database.
-//
-// Note: unlike ProcessMedia, this will NOT
-// queue the media to be asynchronously processed.
-
-// CreateMedia ...
+// CreateMedia creates a new media attachment entry
+// in the database for given owning account ID and
+// extra information, and prepares a new processing
+// media entry to dereference it using the given
+// data function, decode the media and finish filling
+// out remaining media fields (e.g. type, path, etc).
 func (m *Manager) CreateMedia(
 	ctx context.Context,
 	accountID string,
@@ -198,14 +187,10 @@ func (m *Manager) CreateMedia(
 	return m.RecacheMedia(attachment, data), nil
 }
 
-// PreProcessMediaRecache refetches, reprocesses,
-// and recaches an existing attachment that has
-// been uncached via cleaner pruning.
-//
-// Note: unlike ProcessMedia, this will NOT queue
-// the media to be asychronously processed.
-
-// RecacheMedia ...
+// RecacheMedia wraps a media model (assumed already
+// inserted in the database!) with given data function
+// to perform a blocking dereference / decode operation
+// from the data stream returned.
 func (m *Manager) RecacheMedia(
 	media *gtsmodel.MediaAttachment,
 	data DataFunc,
@@ -217,25 +202,12 @@ func (m *Manager) RecacheMedia(
 	}
 }
 
-// PreProcessEmoji begins the process of decoding and storing
-// the given data as an emoji. It will return a pointer to a
-// ProcessingEmoji struct upon which further actions can be
-// performed, such as getting the finished media, thumbnail,
-// attachment, etc.
-//
-//   - data: function that the media manager can call
-//     to return a reader containing the emoji data.
-//   - shortcode: the emoji shortcode without the ':'s around it.
-//   - emojiID: database ID that should be used to store the emoji.
-//   - uri: ActivityPub URI/ID of the emoji.
-//   - ai: optional and can be nil. Any additional information
-//     about the emoji provided will be put in the database.
-//   - refresh: refetch/refresh the emoji.
-//
-// Note: unlike ProcessEmoji, this will NOT queue
-// the emoji to be asynchronously processed.
-
-// CreateEmoji ...
+// CreateEmoji creates a new emoji entry in the
+// database for given shortcode, domain and extra
+// information, and prepares a new processing emoji
+// entry to dereference it using the given data
+// function, decode the media and finish filling
+// out remaining fields (e.g. type, path, etc).
 func (m *Manager) CreateEmoji(
 	ctx context.Context,
 	shortcode string,
@@ -312,7 +284,11 @@ func (m *Manager) CreateEmoji(
 	)
 }
 
-// RefreshEmoji ...
+// RefreshEmoji will prepare a recache operation
+// for the given emoji, updating it with extra
+// information, and in particular using new storage
+// paths for the dereferenced media files to skirt
+// around browser caching of the old files.
 func (m *Manager) RefreshEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
@@ -424,7 +400,6 @@ func (m *Manager) RefreshEmoji(
 	return processingEmoji, nil
 }
 
-// createEmoji ...
 func (m *Manager) createEmoji(
 	ctx context.Context,
 	putDB func(context.Context, *gtsmodel.Emoji) error,
@@ -477,13 +452,10 @@ func (m *Manager) createEmoji(
 	return processingEmoji, nil
 }
 
-// PreProcessEmojiRecache refetches, reprocesses, and recaches
-// an existing emoji that has been uncached via cleaner pruning.
-//
-// Note: unlike ProcessEmoji, this will NOT queue the emoji to
-// be asychronously processed.
-
-// RecacheEmoji ...
+// RecacheEmoji wraps an emoji model (assumed already
+// inserted in the database!) with given data function
+// to perform a blocking dereference / decode operation
+// from the data stream returned.
 func (m *Manager) RecacheEmoji(
 	emoji *gtsmodel.Emoji,
 	data DataFunc,
