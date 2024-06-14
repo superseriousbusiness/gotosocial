@@ -34,8 +34,26 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *Processor) NotificationsGet(ctx context.Context, authed *oauth.Auth, maxID string, sinceID string, minID string, limit int, excludeTypes []string) (*apimodel.PageableResponse, gtserror.WithCode) {
-	notifs, err := p.state.DB.GetAccountNotifications(ctx, authed.Account.ID, maxID, sinceID, minID, limit, excludeTypes)
+func (p *Processor) NotificationsGet(
+	ctx context.Context,
+	authed *oauth.Auth,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+	includeTypes []string,
+	excludeTypes []string,
+) (*apimodel.PageableResponse, gtserror.WithCode) {
+	notifs, err := p.state.DB.GetAccountNotifications(
+		ctx,
+		authed.Account.ID,
+		maxID,
+		sinceID,
+		minID,
+		limit,
+		includeTypes,
+		excludeTypes,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("NotificationsGet: db error getting notifications: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
