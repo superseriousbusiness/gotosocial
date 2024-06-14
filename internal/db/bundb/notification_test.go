@@ -73,7 +73,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 			Read:             util.Ptr(false),
 		}
 
-		if err := suite.db.Put(context.Background(), notif); err != nil {
+		if err := suite.db.PutNotification(context.Background(), notif); err != nil {
 			panic(err)
 		}
 	}
@@ -133,9 +133,8 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithoutSpam() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, "")
-	suite.NoError(err)
 
+	// Test getting notifs first.
 	notifications, err := suite.db.GetAccountNotifications(
 		gtscontext.SetBarebones(context.Background()),
 		testAccount.ID,
@@ -145,8 +144,29 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 		20,
 		nil,
 	)
-	suite.NoError(err)
-	suite.Nil(notifications)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Len(notifications, 20)
+
+	// Now delete.
+	if err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, ""); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Now try getting again.
+	notifications, err = suite.db.GetAccountNotifications(
+		gtscontext.SetBarebones(context.Background()),
+		testAccount.ID,
+		id.Highest,
+		id.Lowest,
+		"",
+		20,
+		nil,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 	suite.Empty(notifications)
 }
 
