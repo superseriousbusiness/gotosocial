@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -35,7 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-func (suite *FiltersTestSuite) postFilter(title *string, context *[]string, action *string, expiresIn *int, requestJson *string, expectedHTTPStatus int, expectedBody string) (*apimodel.FilterV2, error) {
+func (suite *FiltersTestSuite) postFilter(title *string, context *[]string, action *string, expiresIn *int, keywordsAttributesKeyword *[]string, keywordsAttributesWholeWord *[]bool, statusesAttributesStatusID *[]string, requestJson *string, expectedHTTPStatus int, expectedBody string) (*apimodel.FilterV2, error) {
 	// instantiate recorder + test context
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -63,6 +64,19 @@ func (suite *FiltersTestSuite) postFilter(title *string, context *[]string, acti
 		}
 		if expiresIn != nil {
 			ctx.Request.Form["expires_in"] = []string{strconv.Itoa(*expiresIn)}
+		}
+		if keywordsAttributesKeyword != nil {
+			ctx.Request.Form["keywords_attributes[][keyword]"] = *keywordsAttributesKeyword
+		}
+		if keywordsAttributesWholeWord != nil {
+			formatted := []string{}
+			for _, value := range *keywordsAttributesWholeWord {
+				formatted = append(formatted, strconv.FormatBool(value))
+			}
+			ctx.Request.Form["keywords_attributes[][whole_word]"] = formatted
+		}
+		if statusesAttributesStatusID != nil {
+			ctx.Request.Form["statuses_attributes[][status_id]"] = *statusesAttributesStatusID
 		}
 	}
 
@@ -111,7 +125,12 @@ func (suite *FiltersTestSuite) TestPostFilterFull() {
 	context := []string{"home", "public"}
 	action := "warn"
 	expiresIn := 86400
-	filter, err := suite.postFilter(&title, &context, &action, &expiresIn, nil, http.StatusOK, "")
+	// Checked in lexical order by keyword, so keep this sorted.
+	keywordsAttributesKeyword := []string{"GNU", "Linux"}
+	keywordsAttributesWholeWord := []bool{true, false}
+	// Checked in lexical order by status ID, so keep this sorted.
+	statusAttributesStatusID := []string{"01HEN2QRFA8H3C6QPN7RD4KSR6", "01HEWV37MHV8BAC8ANFGVRRM5D"}
+	filter, err := suite.postFilter(&title, &context, &action, &expiresIn, &keywordsAttributesKeyword, &keywordsAttributesWholeWord, &statusAttributesStatusID, nil, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -126,8 +145,25 @@ func (suite *FiltersTestSuite) TestPostFilterFull() {
 	if suite.NotNil(filter.ExpiresAt) {
 		suite.NotEmpty(*filter.ExpiresAt)
 	}
-	suite.Empty(filter.Keywords)
-	suite.Empty(filter.Statuses)
+
+	if suite.Len(filter.Keywords, len(keywordsAttributesKeyword)) {
+		slices.SortFunc(filter.Keywords, func(lhs, rhs apimodel.FilterKeyword) int {
+			return strings.Compare(lhs.Keyword, rhs.Keyword)
+		})
+		for i, filterKeyword := range filter.Keywords {
+			suite.Equal(keywordsAttributesKeyword[i], filterKeyword.Keyword)
+			suite.Equal(keywordsAttributesWholeWord[i], filterKeyword.WholeWord)
+		}
+	}
+
+	if suite.Len(filter.Statuses, len(statusAttributesStatusID)) {
+		slices.SortFunc(filter.Statuses, func(lhs, rhs apimodel.FilterStatus) int {
+			return strings.Compare(lhs.StatusID, rhs.StatusID)
+		})
+		for i, filterStatus := range filter.Statuses {
+			suite.Equal(statusAttributesStatusID[i], filterStatus.StatusID)
+		}
+	}
 
 	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
@@ -141,9 +177,27 @@ func (suite *FiltersTestSuite) TestPostFilterFullJSON() {
 		"context": ["home", "public"],
 		"filter_action": "warn",
 		"whole_word": true,
-		"expires_in": 86400.1
+		"expires_in": 86400.1,
+		"keywords_attributes": [
+			{
+				"keyword": "GNU",
+				"whole_word": true
+			},
+			{
+				"keyword": "Linux",
+				"whole_word": false
+			}
+		],
+		"statuses_attributes": [
+			{
+				"status_id": "01HEN2QRFA8H3C6QPN7RD4KSR6"
+			},
+			{
+				"status_id": "01HEWV37MHV8BAC8ANFGVRRM5D"
+			}
+		]
 	}`
-	filter, err := suite.postFilter(nil, nil, nil, nil, &requestJson, http.StatusOK, "")
+	filter, err := suite.postFilter(nil, nil, nil, nil, nil, nil, nil, &requestJson, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -160,8 +214,28 @@ func (suite *FiltersTestSuite) TestPostFilterFullJSON() {
 	if suite.NotNil(filter.ExpiresAt) {
 		suite.NotEmpty(*filter.ExpiresAt)
 	}
-	suite.Empty(filter.Keywords)
-	suite.Empty(filter.Statuses)
+
+	if suite.Len(filter.Keywords, 2) {
+		slices.SortFunc(filter.Keywords, func(lhs, rhs apimodel.FilterKeyword) int {
+			return strings.Compare(lhs.Keyword, rhs.Keyword)
+		})
+
+		suite.Equal("GNU", filter.Keywords[0].Keyword)
+		suite.True(filter.Keywords[0].WholeWord)
+
+		suite.Equal("Linux", filter.Keywords[1].Keyword)
+		suite.False(filter.Keywords[1].WholeWord)
+	}
+
+	if suite.Len(filter.Statuses, 2) {
+		slices.SortFunc(filter.Statuses, func(lhs, rhs apimodel.FilterStatus) int {
+			return strings.Compare(lhs.StatusID, rhs.StatusID)
+		})
+
+		suite.Equal("01HEN2QRFA8H3C6QPN7RD4KSR6", filter.Statuses[0].StatusID)
+
+		suite.Equal("01HEWV37MHV8BAC8ANFGVRRM5D", filter.Statuses[1].StatusID)
+	}
 
 	suite.checkStreamed(homeStream, true, "", stream.EventTypeFiltersChanged)
 }
@@ -171,7 +245,7 @@ func (suite *FiltersTestSuite) TestPostFilterMinimal() {
 
 	title := "GNU/Linux"
 	context := []string{"home"}
-	filter, err := suite.postFilter(&title, &context, nil, nil, nil, http.StatusOK, "")
+	filter, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -193,7 +267,7 @@ func (suite *FiltersTestSuite) TestPostFilterMinimal() {
 func (suite *FiltersTestSuite) TestPostFilterEmptyTitle() {
 	title := ""
 	context := []string{"home"}
-	_, err := suite.postFilter(&title, &context, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -201,7 +275,7 @@ func (suite *FiltersTestSuite) TestPostFilterEmptyTitle() {
 
 func (suite *FiltersTestSuite) TestPostFilterMissingTitle() {
 	context := []string{"home"}
-	_, err := suite.postFilter(nil, &context, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(nil, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -210,7 +284,7 @@ func (suite *FiltersTestSuite) TestPostFilterMissingTitle() {
 func (suite *FiltersTestSuite) TestPostFilterEmptyContext() {
 	title := "GNU/Linux"
 	context := []string{}
-	_, err := suite.postFilter(&title, &context, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -218,7 +292,7 @@ func (suite *FiltersTestSuite) TestPostFilterEmptyContext() {
 
 func (suite *FiltersTestSuite) TestPostFilterMissingContext() {
 	title := "GNU/Linux"
-	_, err := suite.postFilter(&title, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, nil, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -227,7 +301,7 @@ func (suite *FiltersTestSuite) TestPostFilterMissingContext() {
 // Creating another filter with the same title should fail.
 func (suite *FiltersTestSuite) TestPostFilterTitleConflict() {
 	title := suite.testFilters["local_account_1_filter_1"].Title
-	_, err := suite.postFilter(&title, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, nil, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

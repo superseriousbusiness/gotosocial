@@ -63,6 +63,29 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
+	for _, formKeyword := range form.Keywords {
+		filterKeyword := &gtsmodel.FilterKeyword{
+			ID:        id.NewULID(),
+			AccountID: account.ID,
+			FilterID:  filter.ID,
+			Filter:    filter,
+			Keyword:   formKeyword.Keyword,
+			WholeWord: formKeyword.WholeWord,
+		}
+		filter.Keywords = append(filter.Keywords, filterKeyword)
+	}
+
+	for _, formStatus := range form.Statuses {
+		filterStatus := &gtsmodel.FilterStatus{
+			ID:        id.NewULID(),
+			AccountID: account.ID,
+			FilterID:  filter.ID,
+			Filter:    filter,
+			StatusID:  formStatus.StatusID,
+		}
+		filter.Statuses = append(filter.Statuses, filterStatus)
+	}
+
 	if err := p.state.DB.PutFilter(ctx, filter); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
 			err = errors.New("duplicate title, keyword, or status")
