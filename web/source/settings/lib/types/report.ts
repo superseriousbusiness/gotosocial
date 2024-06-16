@@ -17,6 +17,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+import { Links } from "parse-link-header";
+import { AdminAccount } from "./account";
+
 /**
  * Admin model of a report. Differs from the client
  * model, which contains less detailed information.
@@ -58,22 +61,22 @@ export interface AdminReport {
 	 * Account that created the report.
 	 * TODO: model this properly.
 	 */
-	account: Object;
+	account: AdminAccount;
 	/**
 	 * Reported account.
 	 * TODO: model this properly.
 	 */
-	target_account: Object;
+	target_account: AdminAccount;
 	/**
 	 * Admin account assigned to handle this report, if any.
 	 * TODO: model this properly.
 	 */
-	assigned_account?: Object;
+	assigned_account?: AdminAccount;
 	/**
 	 * Admin account that has taken action on this report, if any.
 	 * TODO: model this properly.
 	 */
-	action_taken_by_account?: Object;
+	action_taken_by_account?: AdminAccount;
 	/**
 	 * Statuses cited by this report, if any.
 	 * TODO: model this properly.
@@ -108,7 +111,7 @@ export interface AdminReportResolveParams {
 /**
  * Parameters for GET to /api/v1/admin/reports.
  */
-export interface AdminReportListParams {
+export interface AdminSearchReportParams {
 	/**
 	 * If set, show only resolved (true) or only unresolved (false) reports.
 	 */
@@ -141,4 +144,9 @@ export interface AdminReportListParams {
 	 * Else, fall back to GtS API defaults.
 	 */
 	limit?: number;
+}
+
+export interface AdminSearchReportResp {
+	accounts: AdminReport[];
+	links: Links | null;
 }
