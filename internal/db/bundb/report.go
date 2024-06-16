@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -27,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
 )
@@ -51,12 +53,22 @@ func (r *reportDB) GetReportByID(ctx context.Context, id string) (*gtsmodel.Repo
 	)
 }
 
-func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, error) {
-	reportIDs := []string{}
+func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, page *paging.Page) ([]*gtsmodel.Report, error) {
+	var (
+		// Get paging params.
+		minID = page.GetMin()
+		maxID = page.GetMax()
+		limit = page.GetLimit()
+		order = page.GetOrder()
+
+		// Make educated guess for slice size
+		reportIDs = make([]string, 0, limit)
+	)
 
 	q := r.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
+		// Select only IDs from table.
 		Column("report.id").
 		Order("report.id DESC")
 
@@ -77,20 +89,30 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 		q = q.Where("? = ?", bun.Ident("report.target_account_id"), targetAccountID)
 	}
 
+	// Return only reports with id
+	// lower than provided maxID.
 	if maxID != "" {
 		q = q.Where("? < ?", bun.Ident("report.id"), maxID)
 	}
 
-	if sinceID != "" {
-		q = q.Where("? > ?", bun.Ident("report.id"), minID)
-	}
-
+	// Return only reports with id
+	// greater than provided minID.
 	if minID != "" {
-		q = q.Where("? > ?", bun.Ident("report.id"), minID)
+		q = q.Where("? > ?", bun.Ident("report.id"), maxID)
 	}
 
-	if limit != 0 {
+	if limit > 0 {
+		// Limit amount of
+		// reports returned.
 		q = q.Limit(limit)
+	}
+
+	if order == paging.OrderAscending {
+		// Page up.
+		q = q.OrderExpr("? ASC", bun.Ident("report.id"))
+	} else {
+		// Page down.
+		q = q.OrderExpr("? DESC", bun.Ident("report.id"))
 	}
 
 	if err := q.Scan(ctx, &reportIDs); err != nil {
@@ -100,6 +122,12 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 	// Catch case of no reports early
 	if len(reportIDs) == 0 {
 		return nil, db.ErrNoEntries
+	}
+
+	// If we're paging up, we still want reports
+	// to be sorted by ID desc, so reverse ids slice.
+	if order == paging.OrderAscending {
+		slices.Reverse(reportIDs)
 	}
 
 	// Allocate return slice (will be at most len reportIDs)

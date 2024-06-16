@@ -116,10 +116,9 @@ func (m *Module) AccountActionPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	targetAcctID := c.Param(IDKey)
-	if targetAcctID == "" {
-		err := errors.New("no account id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	targetAcctID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 	form.TargetID = targetAcctID

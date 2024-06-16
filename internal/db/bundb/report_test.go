@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -61,14 +62,26 @@ func (suite *ReportTestSuite) TestGetReportByURI() {
 }
 
 func (suite *ReportTestSuite) TestGetAllReports() {
-	reports, err := suite.db.GetReports(context.Background(), nil, "", "", "", "", "", 0)
+	reports, err := suite.db.GetReports(
+		context.Background(),
+		nil,
+		"",
+		"",
+		&paging.Page{},
+	)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 }
 
 func (suite *ReportTestSuite) TestGetAllReportsByAccountID() {
 	accountID := suite.testAccounts["local_account_2"].ID
-	reports, err := suite.db.GetReports(context.Background(), nil, accountID, "", "", "", "", 0)
+	reports, err := suite.db.GetReports(
+		context.Background(),
+		nil,
+		accountID,
+		"",
+		&paging.Page{},
+	)
 	suite.NoError(err)
 	suite.NotEmpty(reports)
 	for _, r := range reports {

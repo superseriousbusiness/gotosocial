@@ -18,7 +18,6 @@
 package reports
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -77,10 +76,9 @@ func (m *Module) ReportGETHandler(c *gin.Context) {
 		return
 	}
 
-	targetReportID := c.Param(IDKey)
-	if targetReportID == "" {
-		err := errors.New("no report id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	targetReportID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

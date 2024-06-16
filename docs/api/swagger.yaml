@@ -4525,6 +4525,8 @@ paths:
                 - default: 50
                   description: Number of emojis to return. Less than 1, or not set, means unlimited (all emojis).
                   in: query
+                  maximum: 200
+                  minimum: 0
                   name: limit
                   type: integer
                 - description: |-
@@ -5739,21 +5741,23 @@ paths:
                   in: query
                   name: target_account_id
                   type: string
-                - description: Return only reports *OLDER* than the given max ID. The report with the specified ID will not be included in the response.
+                - description: Return only reports *OLDER* than the given max ID (for paging downwards). The report with the specified ID will not be included in the response.
                   in: query
                   name: max_id
                   type: string
-                - description: Return only reports *NEWER* than the given since ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to min_id.
+                - description: Return only reports *NEWER* than the given since ID. The report with the specified ID will not be included in the response.
                   in: query
                   name: since_id
                   type: string
-                - description: Return only reports *NEWER* than the given min ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to since_id.
+                - description: Return only reports immediately *NEWER* than the given min ID (for paging upwards). The report with the specified ID will not be included in the response.
                   in: query
                   name: min_id
                   type: string
                 - default: 20
-                  description: Number of reports to return. If more than 100 or less than 1, will be clamped to 100.
+                  description: Number of reports to return.
                   in: query
+                  maximum: 100
+                  minimum: 1
                   name: limit
                   type: integer
             produces:
@@ -7682,21 +7686,23 @@ paths:
                   in: query
                   name: target_account_id
                   type: string
-                - description: Return only reports *OLDER* than the given max ID. The report with the specified ID will not be included in the response.
+                - description: Return only reports *OLDER* than the given max ID (for paging downwards). The report with the specified ID will not be included in the response.
                   in: query
                   name: max_id
                   type: string
-                - description: Return only reports *NEWER* than the given since ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to min_id.
+                - description: Return only reports *NEWER* than the given since ID. The report with the specified ID will not be included in the response.
                   in: query
                   name: since_id
                   type: string
-                - description: Return only reports *NEWER* than the given min ID. The report with the specified ID will not be included in the response. This parameter is functionally equivalent to since_id.
+                - description: Return only reports immediately *NEWER* than the given min ID (for paging upwards). The report with the specified ID will not be included in the response.
                   in: query
                   name: min_id
                   type: string
                 - default: 20
-                  description: Number of reports to return. If less than 1, will be clamped to 1. If more than 100, will be clamped to 100.
+                  description: Number of reports to return.
                   in: query
+                  maximum: 100
+                  minimum: 1
                   name: limit
                   type: integer
             produces:
