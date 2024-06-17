@@ -37,6 +37,11 @@ import (
 )
 
 var (
+	// TODO: move these test values into
+	// the testrig test models area. They'll
+	// need to be as both WorkerTask and as
+	// the raw types themselves.
+
 	testDeliveries = []*delivery.Delivery{
 		{
 			PubKeyID: "https://google.com/users/bigboy#pubkey",
