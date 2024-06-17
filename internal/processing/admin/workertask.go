@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
 )
 
@@ -97,7 +98,7 @@ loop:
 		// task depending on worker type.
 		switch task.WorkerType {
 		case gtsmodel.DeliveryWorker:
-			err = p.pushDelivery(task)
+			err = p.pushDelivery(ctx, task)
 			counter = &delivery
 		case gtsmodel.FederatorWorker:
 			err = p.pushFederator(ctx, task)
@@ -242,12 +243,41 @@ func (p *Processor) PersistWorkerQueues(ctx context.Context) error {
 }
 
 // pushDelivery parses a valid delivery.Delivery{} from serialized task data and pushes to queue.
-func (p *Processor) pushDelivery(task *gtsmodel.WorkerTask) error {
+func (p *Processor) pushDelivery(ctx context.Context, task *gtsmodel.WorkerTask) error {
 	var delivery delivery.Delivery
 
 	// Deserialize the raw worker task data into delivery.
 	if err := delivery.Deserialize(task.TaskData); err != nil {
 		return gtserror.Newf("error deserializing delivery: %w", err)
+	}
+
+	var tsport transport.Transport
+
+	if uri := delivery.ActorID; uri != "" {
+		// Fetch the actor account by provided URI from db.
+		account, err := p.state.DB.GetAccountByURI(ctx, uri)
+		if err != nil {
+			return gtserror.Newf("error getting actor account %s from db: %w", uri, err)
+		}
+
+		// Fetch a transport for request signing for actor's account username.
+		tsport, err = p.transport.NewTransportForUsername(ctx, account.Username)
+		if err != nil {
+			return gtserror.Newf("error getting transport for actor %s: %w", uri, err)
+		}
+	} else {
+		var err error
+
+		// No actor was given, will be signed by instance account.
+		tsport, err = p.transport.NewTransportForUsername(ctx, "")
+		if err != nil {
+			return gtserror.Newf("error getting instance account transport: %w", err)
+		}
+	}
+
+	// Using transport, add actor signature to delivery.
+	if err := tsport.SignDelivery(&delivery); err != nil {
+		return gtserror.Newf("error signing delivery: %w", err)
 	}
 
 	// Push deserialized task to the delivery queue.

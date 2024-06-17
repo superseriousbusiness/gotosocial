@@ -33,10 +33,6 @@ import (
 // be indexed (and so, dropped from queue)
 // by any of these possible ID IRIs.
 type Delivery struct {
-	// PubKeyID is the signing public key
-	// ID of the actor performing request.
-	PubKeyID string
-
 	// ActorID contains the ActivityPub
 	// actor ID IRI (if any) of the activity
 	// being sent out by this request.
@@ -66,7 +62,6 @@ type Delivery struct {
 // a json serialize / deserialize
 // able shape that minimizes data.
 type delivery struct {
-	PubKeyID string              `json:"pub_key_id,omitempty"`
 	ActorID  string              `json:"actor_id,omitempty"`
 	ObjectID string              `json:"object_id,omitempty"`
 	TargetID string              `json:"target_id,omitempty"`
@@ -101,7 +96,6 @@ func (dlv *Delivery) Serialize() ([]byte, error) {
 
 	// Marshal as internal JSON type.
 	return json.Marshal(delivery{
-		PubKeyID: dlv.PubKeyID,
 		ActorID:  dlv.ActorID,
 		ObjectID: dlv.ObjectID,
 		TargetID: dlv.TargetID,
@@ -125,7 +119,6 @@ func (dlv *Delivery) Deserialize(data []byte) error {
 	}
 
 	// Copy over simplest fields.
-	dlv.PubKeyID = idlv.PubKeyID
 	dlv.ActorID = idlv.ActorID
 	dlv.ObjectID = idlv.ObjectID
 	dlv.TargetID = idlv.TargetID
