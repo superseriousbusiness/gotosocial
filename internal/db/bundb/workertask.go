@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
@@ -37,8 +38,14 @@ func (w *workerTaskDB) GetWorkerTasks(ctx context.Context) ([]*gtsmodel.WorkerTa
 }
 
 func (w *workerTaskDB) PutWorkerTasks(ctx context.Context, tasks []*gtsmodel.WorkerTask) error {
-	_, err := w.db.NewInsert().Model(&tasks).Exec(ctx)
-	return err
+	var errs []error
+	for _, task := range tasks {
+		_, err := w.db.NewInsert().Model(task).Exec(ctx)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
 
 func (w *workerTaskDB) DeleteWorkerTaskByID(ctx context.Context, id uint) error {
