@@ -79,7 +79,6 @@ codeberg.org/superseriousbusiness/exif-terminator
 github.com/DmitriyVTitov/size
 # github.com/KimMachineGun/automemlimit v0.6.1
 ## explicit; go 1.21
-github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
 # github.com/Masterminds/goutils v1.1.1
 ## explicit
@@ -940,7 +939,7 @@ github.com/vmihailenco/tagparser/v2/internal/parser
 # github.com/wagslane/go-password-validator v0.3.0
 ## explicit; go 1.16
 github.com/wagslane/go-password-validator
-# github.com/yuin/goldmark v1.7.1
+# github.com/yuin/goldmark v1.7.2
 ## explicit; go 1.19
 github.com/yuin/goldmark
 github.com/yuin/goldmark/ast
