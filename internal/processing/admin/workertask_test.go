@@ -47,10 +47,10 @@ var (
 		{
 			ObjectID: "https://google.com/users/bigboy/follow/1",
 			TargetID: "https://askjeeves.com/users/smallboy",
-			Request:  toRequest("POST", "https://askjeeves.com/users/smallboy/inbox", []byte("data!")),
+			Request:  toRequest("POST", "https://askjeeves.com/users/smallboy/inbox", []byte("data!"), http.Header{"Host": {"https://askjeeves.com"}}),
 		},
 		{
-			Request: toRequest("GET", "https://google.com", []byte("uwu im just a wittle seawch engwin")),
+			Request: toRequest("GET", "https://google.com", []byte("uwu im just a wittle seawch engwin"), http.Header{"Host": {"https://google.com"}}),
 		},
 	}
 
@@ -394,7 +394,7 @@ func accountID(account *gtsmodel.Account) string {
 }
 
 // toRequest creates httpclient.Request from HTTP method, URL and body data.
-func toRequest(method string, url string, body []byte) *httpclient.Request {
+func toRequest(method string, url string, body []byte, hdr http.Header) *httpclient.Request {
 	var rbody io.Reader
 	if body != nil {
 		rbody = bytes.NewReader(body)
@@ -402,6 +402,11 @@ func toRequest(method string, url string, body []byte) *httpclient.Request {
 	req, err := http.NewRequest(method, url, rbody)
 	if err != nil {
 		panic(err)
+	}
+	for key, values := range hdr {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
 	}
 	return httpclient.WrapRequest(req)
 }

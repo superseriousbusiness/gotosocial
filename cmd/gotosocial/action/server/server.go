@@ -295,11 +295,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		intFilter,
 	)
 
-	// Fill worker queues from persisted task data in database.
-	if err := process.Admin().FillWorkerQueues(ctx); err != nil {
-		return fmt.Errorf("error filling worker queues: %w", err)
-	}
-
 	// Initialize the specialized workers pools.
 	state.Workers.Client.Init(messages.ClientMsgIndices())
 	state.Workers.Federator.Init(messages.FederatorMsgIndices())
@@ -459,6 +454,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Finally start the main http server!
 	if err := route.Start(); err != nil {
 		return fmt.Errorf("error starting router: %w", err)
+	}
+
+	// Fill worker queues from persisted task data in database.
+	if err := process.Admin().FillWorkerQueues(ctx); err != nil {
+		return fmt.Errorf("error filling worker queues: %w", err)
 	}
 
 	// catch shutdown signals from the operating system
