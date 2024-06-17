@@ -19,6 +19,7 @@ package delivery
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"time"
 
@@ -160,6 +161,13 @@ func (w *Worker) process(ctx context.Context) bool {
 
 loop:
 	for {
+		// Before trying to get
+		// next delivery, check
+		// context still valid.
+		if ctx.Err() != nil {
+			return true
+		}
+
 		// Get next delivery.
 		dlv, ok := w.next(ctx)
 		if !ok {
@@ -198,13 +206,27 @@ loop:
 			&dlv.Request,
 		)
 
-		if err == nil {
+		switch {
+		case err == nil:
 			// Ensure body closed.
 			_ = rsp.Body.Close()
 			continue loop
-		}
 
-		if !retry {
+		case errors.Is(err, context.Canceled) &&
+			ctx.Err() != nil:
+			// In the case of our own context
+			// being cancelled, push delivery
+			// back onto queue for persisting.
+			//
+			// Note we specifically check against
+			// context.Canceled here as it will
+			// be faster than the mutex lock of
+			// ctx.Err(), so gives an initial
+			// faster check in the if-clause.
+			w.Queue.Push(dlv)
+			continue loop
+
+		case !retry:
 			// Drop deliveries when no
 			// retry requested, or they
 			// reached max (either).
@@ -224,7 +246,8 @@ loop:
 func (w *Worker) next(ctx context.Context) (*Delivery, bool) {
 loop:
 	for {
-		// Try pop next queued.
+		// Try a fast-pop of queued
+		// delivery before anything.
 		dlv, ok := w.Queue.Pop()
 
 		if !ok {

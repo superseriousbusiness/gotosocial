@@ -19,6 +19,7 @@ package workers
 
 import (
 	"context"
+	"errors"
 
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-structr"
@@ -147,9 +148,25 @@ func (w *MsgWorker[T]) process(ctx context.Context) {
 			return
 		}
 
-		// Attempt to process popped message type.
-		if err := w.Process(ctx, msg); err != nil {
+		// Attempt to process message.
+		err := w.Process(ctx, msg)
+		if err != nil {
 			log.Errorf(ctx, "%p: error processing: %v", w, err)
+
+			if errors.Is(err, context.Canceled) &&
+				ctx.Err() != nil {
+				// In the case of our own context
+				// being cancelled, push message
+				// back onto queue for persisting.
+				//
+				// Note we specifically check against
+				// context.Canceled here as it will
+				// be faster than the mutex lock of
+				// ctx.Err(), so gives an initial
+				// faster check in the if-clause.
+				w.Queue.Push(msg)
+				break
+			}
 		}
 	}
 }
