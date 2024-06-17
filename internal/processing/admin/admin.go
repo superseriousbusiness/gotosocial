@@ -20,20 +20,26 @@ package admin
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type Processor struct {
-	state               *state.State
-	cleaner             *cleaner.Cleaner
-	converter           *typeutils.Converter
-	mediaManager        *media.Manager
-	transportController transport.Controller
-	emailSender         email.Sender
+	// common processor logic
+	c *common.Processor
+
+	state     *state.State
+	cleaner   *cleaner.Cleaner
+	converter *typeutils.Converter
+	federator *federation.Federator
+	media     *media.Manager
+	transport transport.Controller
+	email     email.Sender
 
 	// admin Actions currently
 	// undergoing processing
@@ -46,21 +52,24 @@ func (p *Processor) Actions() *Actions {
 
 // New returns a new admin processor.
 func New(
+	common *common.Processor,
 	state *state.State,
 	cleaner *cleaner.Cleaner,
+	federator *federation.Federator,
 	converter *typeutils.Converter,
 	mediaManager *media.Manager,
 	transportController transport.Controller,
 	emailSender email.Sender,
 ) Processor {
 	return Processor{
-		state:               state,
-		cleaner:             cleaner,
-		converter:           converter,
-		mediaManager:        mediaManager,
-		transportController: transportController,
-		emailSender:         emailSender,
-
+		c:         common,
+		state:     state,
+		cleaner:   cleaner,
+		converter: converter,
+		federator: federator,
+		media:     mediaManager,
+		transport: transportController,
+		email:     emailSender,
 		actions: &Actions{
 			r:     make(map[string]*gtsmodel.AdminAction),
 			state: state,

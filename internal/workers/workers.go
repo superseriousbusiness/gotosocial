@@ -49,10 +49,6 @@ type Workers struct {
 	// for asynchronous dereferencer jobs.
 	Dereference FnWorkerPool
 
-	// Media provides a worker pool for
-	// asynchronous media processing jobs.
-	Media FnWorkerPool
-
 	// prevent pass-by-value.
 	_ nocopy
 }
@@ -84,10 +80,6 @@ func (w *Workers) Start() {
 	n = 4 * maxprocs
 	w.Dereference.Start(n)
 	log.Infof(nil, "started %d dereference workers", n)
-
-	n = 8 * maxprocs
-	w.Media.Start(n)
-	log.Infof(nil, "started %d media workers", n)
 }
 
 // Stop will stop all of the contained worker pools (and global scheduler).
@@ -105,9 +97,6 @@ func (w *Workers) Stop() {
 
 	w.Dereference.Stop()
 	log.Info(nil, "stopped dereference workers")
-
-	w.Media.Stop()
-	log.Info(nil, "stopped media workers")
 }
 
 // nocopy when embedded will signal linter to

@@ -43,12 +43,9 @@ var (
 		BufferPool:       &pngEncoderBufferPool{},
 	}
 
-	// jpegBufferPool is a memory pool of byte buffers for JPEG encoding.
-	jpegBufferPool = sync.Pool{
-		New: func() any {
-			return bufio.NewWriter(nil)
-		},
-	}
+	// jpegBufferPool is a memory pool
+	// of byte buffers for JPEG encoding.
+	jpegBufferPool sync.Pool
 )
 
 // gtsImage is a thin wrapper around the standard library image
@@ -80,25 +77,29 @@ func decodeImage(r io.Reader, opts ...imaging.DecodeOption) (*gtsImage, error) {
 }
 
 // Width returns the image width in pixels.
-func (m *gtsImage) Width() uint32 {
-	return uint32(m.image.Bounds().Size().X)
+func (m *gtsImage) Width() int {
+	return m.image.Bounds().Size().X
 }
 
 // Height returns the image height in pixels.
-func (m *gtsImage) Height() uint32 {
-	return uint32(m.image.Bounds().Size().Y)
+func (m *gtsImage) Height() int {
+	return m.image.Bounds().Size().Y
 }
 
 // Size returns the total number of image pixels.
-func (m *gtsImage) Size() uint64 {
-	return uint64(m.image.Bounds().Size().X) *
-		uint64(m.image.Bounds().Size().Y)
+func (m *gtsImage) Size() int {
+	return m.image.Bounds().Size().X *
+		m.image.Bounds().Size().Y
 }
 
 // AspectRatio returns the image ratio of width:height.
 func (m *gtsImage) AspectRatio() float32 {
-	return float32(m.image.Bounds().Size().X) /
-		float32(m.image.Bounds().Size().Y)
+
+	// note: we cast bounds to float64 to prevent truncation
+	// and only at the end aspect ratio do we cast to float32
+	// (as the sizes are likely to be much larger than ratio).
+	return float32(float64(m.image.Bounds().Size().X) /
+		float64(m.image.Bounds().Size().Y))
 }
 
 // Thumbnail returns a small sized copy of gtsImage{}, limited to 512x512 if not small enough.
@@ -160,7 +161,11 @@ func (m *gtsImage) ToPNG() io.Reader {
 
 // getJPEGBuffer fetches a reset JPEG encoding buffer from global JPEG buffer pool.
 func getJPEGBuffer(w io.Writer) *bufio.Writer {
-	buf, _ := jpegBufferPool.Get().(*bufio.Writer)
+	v := jpegBufferPool.Get()
+	if v == nil {
+		v = bufio.NewWriter(nil)
+	}
+	buf := v.(*bufio.Writer)
 	buf.Reset(w)
 	return buf
 }

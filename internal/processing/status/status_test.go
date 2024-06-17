@@ -96,7 +96,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 		suite.typeConverter,
 	)
 
-	common := common.New(&suite.state, suite.typeConverter, suite.federator, filter)
+	common := common.New(&suite.state, suite.mediaManager, suite.typeConverter, suite.federator, filter)
 	polls := polls.New(&common, &suite.state, suite.typeConverter)
 	suite.status = status.New(&suite.state, &common, &polls, suite.federator, suite.typeConverter, filter, processing.GetParseMentionFunc(&suite.state, suite.federator))
 

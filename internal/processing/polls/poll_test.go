@@ -57,7 +57,7 @@ func (suite *PollTestSuite) SetupTest() {
 	mediaMgr := media.NewManager(&suite.state)
 	federator := testrig.NewTestFederator(&suite.state, controller, mediaMgr)
 	suite.filter = visibility.NewFilter(&suite.state)
-	common := common.New(&suite.state, converter, federator, suite.filter)
+	common := common.New(&suite.state, mediaMgr, converter, federator, suite.filter)
 	suite.polls = polls.New(&common, &suite.state, converter)
 }
 

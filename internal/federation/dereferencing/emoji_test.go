@@ -19,6 +19,7 @@ package dereferencing_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -32,48 +33,50 @@ type EmojiTestSuite struct {
 
 func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 	ctx := context.Background()
-	fetchingAccount := suite.testAccounts["local_account_1"]
 	emojiImageRemoteURL := "http://example.org/media/emojis/1781772.gif"
 	emojiImageStaticRemoteURL := "http://example.org/media/emojis/1781772.gif"
 	emojiURI := "http://example.org/emojis/1781772"
 	emojiShortcode := "peglin"
-	emojiID := "01GCBMGNZBKMEE1KTZ6PMJEW5D"
 	emojiDomain := "example.org"
 	emojiDisabled := false
 	emojiVisibleInPicker := false
 
-	ai := &media.AdditionalEmojiInfo{
-		Domain:               &emojiDomain,
-		ImageRemoteURL:       &emojiImageRemoteURL,
-		ImageStaticRemoteURL: &emojiImageStaticRemoteURL,
-		Disabled:             &emojiDisabled,
-		VisibleInPicker:      &emojiVisibleInPicker,
-	}
-
-	processingEmoji, err := suite.dereferencer.GetRemoteEmoji(ctx, fetchingAccount.Username, emojiImageRemoteURL, emojiShortcode, emojiDomain, emojiID, emojiURI, ai, false)
-	suite.NoError(err)
-
-	// make a blocking call to load the emoji from the in-process media
-	emoji, err := processingEmoji.LoadEmoji(ctx)
+	emoji, err := suite.dereferencer.GetEmoji(
+		ctx,
+		emojiShortcode,
+		emojiDomain,
+		emojiImageRemoteURL,
+		media.AdditionalEmojiInfo{
+			URI:                  &emojiURI,
+			Domain:               &emojiDomain,
+			ImageRemoteURL:       &emojiImageRemoteURL,
+			ImageStaticRemoteURL: &emojiImageStaticRemoteURL,
+			Disabled:             &emojiDisabled,
+			VisibleInPicker:      &emojiVisibleInPicker,
+		},
+		false,
+	)
 	suite.NoError(err)
 	suite.NotNil(emoji)
 
-	suite.Equal(emojiID, emoji.ID)
+	expectPath := fmt.Sprintf("/emoji/original/%s.gif", emoji.ID)
+	expectStaticPath := fmt.Sprintf("/emoji/static/%s.png", emoji.ID)
+
 	suite.WithinDuration(time.Now(), emoji.CreatedAt, 10*time.Second)
 	suite.WithinDuration(time.Now(), emoji.UpdatedAt, 10*time.Second)
 	suite.Equal(emojiShortcode, emoji.Shortcode)
 	suite.Equal(emojiDomain, emoji.Domain)
 	suite.Equal(emojiImageRemoteURL, emoji.ImageRemoteURL)
 	suite.Equal(emojiImageStaticRemoteURL, emoji.ImageStaticRemoteURL)
-	suite.Contains(emoji.ImageURL, "/emoji/original/01GCBMGNZBKMEE1KTZ6PMJEW5D.gif")
-	suite.Contains(emoji.ImageStaticURL, "emoji/static/01GCBMGNZBKMEE1KTZ6PMJEW5D.png")
-	suite.Contains(emoji.ImagePath, "/emoji/original/01GCBMGNZBKMEE1KTZ6PMJEW5D.gif")
-	suite.Contains(emoji.ImageStaticPath, "/emoji/static/01GCBMGNZBKMEE1KTZ6PMJEW5D.png")
+	suite.Contains(emoji.ImageURL, expectPath)
+	suite.Contains(emoji.ImageStaticURL, expectStaticPath)
+	suite.Contains(emoji.ImagePath, expectPath)
+	suite.Contains(emoji.ImageStaticPath, expectStaticPath)
 	suite.Equal("image/gif", emoji.ImageContentType)
 	suite.Equal("image/png", emoji.ImageStaticContentType)
 	suite.Equal(37796, emoji.ImageFileSize)
 	suite.Equal(7951, emoji.ImageStaticFileSize)
-	suite.WithinDuration(time.Now(), emoji.ImageUpdatedAt, 10*time.Second)
+	suite.WithinDuration(time.Now(), emoji.UpdatedAt, 10*time.Second)
 	suite.False(*emoji.Disabled)
 	suite.Equal(emojiURI, emoji.URI)
 	suite.False(*emoji.VisibleInPicker)
