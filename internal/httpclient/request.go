@@ -47,8 +47,8 @@ type Request struct {
 
 // WrapRequest wraps an existing http.Request within
 // our own httpclient.Request with retry / backoff tracking.
-func WrapRequest(r *http.Request) Request {
-	var rr Request
+func WrapRequest(r *http.Request) *Request {
+	rr := new(Request)
 	rr.Request = r
 	entry := log.WithContext(r.Context())
 	entry = entry.WithField("method", r.Method)

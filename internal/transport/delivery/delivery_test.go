@@ -98,7 +98,7 @@ func TestDeserializeDelivery(t *testing.T) {
 }
 
 // toRequest creates httpclient.Request from HTTP method, URL and body data.
-func toRequest(method string, url string, body []byte, hdr http.Header) httpclient.Request {
+func toRequest(method string, url string, body []byte, hdr http.Header) *httpclient.Request {
 	var rbody io.Reader
 	if body != nil {
 		rbody = bytes.NewReader(body)
