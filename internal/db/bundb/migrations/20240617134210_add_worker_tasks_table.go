@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package bundb
+package migrations
 
 import (
 	"context"
@@ -24,27 +24,28 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type workerTaskDB struct{ db *bun.DB }
-
-func (w *workerTaskDB) GetWorkerTasks(ctx context.Context) ([]*gtsmodel.WorkerTask, error) {
-	var tasks []*gtsmodel.WorkerTask
-	if err := w.db.NewSelect().
-		Model(&tasks).
-		Scan(ctx); err != nil {
-		return nil, err
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			// WorkerTask table.
+			if _, err := tx.
+				NewCreateTable().
+				Model(&gtsmodel.WorkerTask{}).
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+			return nil
+		})
 	}
-	return tasks, nil
-}
 
-func (w *workerTaskDB) PutWorkerTasks(ctx context.Context, tasks []*gtsmodel.WorkerTask) error {
-	_, err := w.db.NewInsert().Model(&tasks).Exec(ctx)
-	return err
-}
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
 
-func (w *workerTaskDB) DeleteWorkerTaskByID(ctx context.Context, id uint) error {
-	_, err := w.db.NewDelete().
-		Table("worker_tasks").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	return err
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }
