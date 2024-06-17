@@ -29,6 +29,8 @@ import (
 
 var testModels = []interface{}{
 	&gtsmodel.Account{},
+	&gtsmodel.AccountNote{},
+	&gtsmodel.AccountSettings{},
 	&gtsmodel.AccountToEmoji{},
 	&gtsmodel.Application{},
 	&gtsmodel.Block{},
@@ -67,8 +69,7 @@ var testModels = []interface{}{
 	&gtsmodel.Tombstone{},
 	&gtsmodel.Report{},
 	&gtsmodel.Rule{},
-	&gtsmodel.AccountNote{},
-	&gtsmodel.AccountSettings{},
+	&gtsmodel.WorkerTask{},
 }
 
 // NewTestDB returns a new initialized, empty database for testing.
