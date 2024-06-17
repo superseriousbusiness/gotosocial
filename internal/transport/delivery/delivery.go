@@ -51,7 +51,7 @@ type Delivery struct {
 	// Request is the prepared (+ wrapped)
 	// httpclient.Client{} request that
 	// constitutes this ActivtyPub delivery.
-	Request httpclient.Request
+	Request *httpclient.Request
 
 	// internal fields.
 	next time.Time

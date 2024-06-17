@@ -394,7 +394,7 @@ func accountID(account *gtsmodel.Account) string {
 }
 
 // toRequest creates httpclient.Request from HTTP method, URL and body data.
-func toRequest(method string, url string, body []byte) httpclient.Request {
+func toRequest(method string, url string, body []byte) *httpclient.Request {
 	var rbody io.Reader
 	if body != nil {
 		rbody = bytes.NewReader(body)
