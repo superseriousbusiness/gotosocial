@@ -79,7 +79,6 @@ codeberg.org/superseriousbusiness/exif-terminator
 github.com/DmitriyVTitov/size
 # github.com/KimMachineGun/automemlimit v0.6.1
 ## explicit; go 1.21
-github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
 # github.com/Masterminds/goutils v1.1.1
 ## explicit
@@ -1106,7 +1105,7 @@ golang.org/x/net/ipv6
 golang.org/x/net/proxy
 golang.org/x/net/publicsuffix
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.20.0
+# golang.org/x/oauth2 v0.21.0
 ## explicit; go 1.18
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
