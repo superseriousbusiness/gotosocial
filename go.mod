@@ -47,7 +47,7 @@ require (
 	github.com/ncruces/go-sqlite3 v0.16.2
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.19.1
-	github.com/spf13/cobra v1.8.0
+	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	github.com/superseriousbusiness/activity v1.6.0-gts.0.20240408131430-247f7f7110f0
