@@ -244,7 +244,6 @@ loop:
 
 // next gets the next available delivery, blocking until available if necessary.
 func (w *Worker) next(ctx context.Context) (*Delivery, bool) {
-loop:
 	for {
 		// Try a fast-pop of queued
 		// delivery before anything.
@@ -263,14 +262,10 @@ loop:
 				return dlv, true
 			}
 
-			select {
-			// Backlog is empty, we MUST
-			// block until next enqueued.
-			case <-w.Queue.Wait():
-				continue loop
-
-			// Worker was stopped.
-			case <-ctx.Done():
+			// Block on next delivery push
+			// OR worker context canceled.
+			dlv, ok = w.Queue.PopCtx(ctx)
+			if !ok {
 				return nil, false
 			}
 		}
