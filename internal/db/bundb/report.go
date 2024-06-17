@@ -69,8 +69,7 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
 		// Select only IDs from table.
-		Column("report.id").
-		Order("report.id DESC")
+		Column("report.id")
 
 	if resolved != nil {
 		i := bun.Ident("report.action_taken_by_account_id")
@@ -98,7 +97,7 @@ func (r *reportDB) GetReports(ctx context.Context, resolved *bool, accountID str
 	// Return only reports with id
 	// greater than provided minID.
 	if minID != "" {
-		q = q.Where("? > ?", bun.Ident("report.id"), maxID)
+		q = q.Where("? > ?", bun.Ident("report.id"), minID)
 	}
 
 	if limit > 0 {
