@@ -17,41 +17,19 @@
 
 package db
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	Application
-	Basic
-	Domain
-	Emoji
-	HeaderFilter
-	Instance
-	Filter
-	List
-	Marker
-	Media
-	Mention
-	Move
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
-	WorkerTask
+type WorkerTask interface {
+	// GetWorkerTasks fetches all persisted worker tasks from the database.
+	GetWorkerTasks(ctx context.Context) ([]*gtsmodel.WorkerTask, error)
+
+	// PutWorkerTasks persists the given worker tasks to the database.
+	PutWorkerTasks(ctx context.Context, tasks []*gtsmodel.WorkerTask) error
+
+	// DeleteWorkerTask deletes worker task with given ID from database.
+	DeleteWorkerTaskByID(ctx context.Context, id uint) error
 }
