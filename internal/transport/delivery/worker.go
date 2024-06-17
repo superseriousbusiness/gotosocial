@@ -244,38 +244,36 @@ loop:
 
 // next gets the next available delivery, blocking until available if necessary.
 func (w *Worker) next(ctx context.Context) (*Delivery, bool) {
-	for {
-		// Try a fast-pop of queued
-		// delivery before anything.
-		dlv, ok := w.Queue.Pop()
+	// Try a fast-pop of queued
+	// delivery before anything.
+	dlv, ok := w.Queue.Pop()
 
-		if !ok {
-			// Check the backlog.
-			if len(w.backlog) > 0 {
+	if !ok {
+		// Check the backlog.
+		if len(w.backlog) > 0 {
 
-				// Sort by 'next' time.
-				sortDeliveries(w.backlog)
+			// Sort by 'next' time.
+			sortDeliveries(w.backlog)
 
-				// Pop next delivery.
-				dlv := w.popBacklog()
+			// Pop next delivery.
+			dlv := w.popBacklog()
 
-				return dlv, true
-			}
-
-			// Block on next delivery push
-			// OR worker context canceled.
-			dlv, ok = w.Queue.PopCtx(ctx)
-			if !ok {
-				return nil, false
-			}
+			return dlv, true
 		}
 
-		// Replace request context for worker state canceling.
-		ctx := gtscontext.WithValues(ctx, dlv.Request.Context())
-		dlv.Request.Request = dlv.Request.Request.WithContext(ctx)
-
-		return dlv, true
+		// Block on next delivery push
+		// OR worker context canceled.
+		dlv, ok = w.Queue.PopCtx(ctx)
+		if !ok {
+			return nil, false
+		}
 	}
+
+	// Replace request context for worker state canceling.
+	ctx = gtscontext.WithValues(ctx, dlv.Request.Context())
+	dlv.Request.Request = dlv.Request.Request.WithContext(ctx)
+
+	return dlv, true
 }
 
 // popBacklog pops next available from the backlog.
