@@ -44,8 +44,6 @@ var (
 
 	testDeliveries = []*delivery.Delivery{
 		{
-			PubKeyID: "https://google.com/users/bigboy#pubkey",
-			ActorID:  "https://google.com/users/bigboy",
 			ObjectID: "https://google.com/users/bigboy/follow/1",
 			TargetID: "https://askjeeves.com/users/smallboy",
 			Request:  toRequest("POST", "https://askjeeves.com/users/smallboy/inbox", []byte("data!")),

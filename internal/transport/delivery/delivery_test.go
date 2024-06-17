@@ -35,7 +35,6 @@ var deliveryCases = []struct {
 }{
 	{
 		msg: delivery.Delivery{
-			PubKeyID: "https://google.com/users/bigboy#pubkey",
 			ActorID:  "https://google.com/users/bigboy",
 			ObjectID: "https://google.com/users/bigboy/follow/1",
 			TargetID: "https://askjeeves.com/users/smallboy",
@@ -89,7 +88,6 @@ func TestDeserializeDelivery(t *testing.T) {
 		}
 
 		// Check that delivery fields are as expected.
-		assert.Equal(t, test.msg.PubKeyID, msg.PubKeyID)
 		assert.Equal(t, test.msg.ActorID, msg.ActorID)
 		assert.Equal(t, test.msg.ObjectID, msg.ObjectID)
 		assert.Equal(t, test.msg.TargetID, msg.TargetID)
