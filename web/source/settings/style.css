@@ -1045,62 +1045,62 @@ button.with-padding {
 	}
 }
 
-.reports {
-	p {
-		margin: 0;
-	}
-
+.reports-view {
 	.report {
 		display: flex;
 		flex-direction: column;
+		flex-wrap: nowrap;
 		gap: 0.5rem;
-		margin: 0.5rem 0;
-
-		text-decoration: none;
 		color: $fg;
-
-		padding: 1rem;
-
-		border: none;
 		border-left: 0.3rem solid $border-accent;
 
-		.usernames {
-			line-height: 2rem;
-		}
+		.username-lozenge {
+			display: flex;
+			flex-wrap: nowrap;
+			height: 100%;
+			align-items: center;
+			padding-top: 0;
+			padding-bottom: 0;
 
-		.byline {
-			display: grid;
-			grid-template-columns: 1fr auto;
-			gap: 0.5rem;
-
-			.report-status {
-				color: $border-accent;
+			.fa {
+				flex-shrink: 0;
 			}
 		}
 
-		.details {
-			display: grid;
-			grid-template-columns: auto 1fr;
-			gap: 0.2rem 0.5rem;
-			padding: 0.5rem;
-
-			justify-items: start;
+		.report-byline {
+			max-width: fit-content;
 		}
 
-		h3 {
-			margin: 0;
+		.info-list {
+			border: none;
+
+			.info-list-entry {
+				background: none;
+				padding: 0;
+
+				.report-target .username-lozenge {
+					color: $bg;
+				}
+
+				.reported-by .username-lozenge {
+					color: $fg;
+					font-weight: initial;
+					border-radius: 0;
+					background: none;
+				}
+			}
 		}
 
 		&.resolved {
-			color: $fg-reduced;
-			border-left: 0.4rem solid $bg;
+			border-left: 0.3rem solid $list-entry-bg;
 
-			.byline .report-status {
+			.info-list,
+			.info-list .info-list-entry .reported-by .username-lozenge {
 				color: $fg-reduced;
 			}
-			
-			.user {
-				opacity: 0.8;
+
+			&:hover {
+				border-color: $fg-accent;
 			}
 		}
 
@@ -1143,36 +1143,6 @@ button.with-padding {
 			}
 		}
 	}
-}
-
-.username-lozenge {
-	line-height: 1.3rem;
-	display: inline-block;
-	background: $fg-accent;
-	color: $bg;
-	border-radius: $br;
-	padding: 0.15rem;
-	font-weight: bold;
-	text-decoration: none;
-	
-	.acct {
-		word-break: break-all;
-	}
-
-	&.suspended {
-		background: $bg-accent;
-		color: $fg;
-		text-decoration: line-through;
-	}
-
-	&.local {
-		background: $green1;
-	}
-}
-
-.spanlink {
-	cursor: pointer;
-	text-decoration: none;
 }
 
 .accounts-view {
@@ -1221,6 +1191,36 @@ button.with-padding {
 		gap: 0.5rem;
 		align-items: center;
 	}
+}
+
+.username-lozenge {
+	line-height: 1.3rem;
+	display: inline-block;
+	background: $fg-accent;
+	color: $bg;
+	border-radius: $br;
+	padding: 0.15rem;
+	font-weight: bold;
+	text-decoration: none;
+	
+	.acct {
+		word-break: break-all;
+	}
+
+	&.suspended {
+		background: $bg-accent;
+		color: $fg;
+		text-decoration: line-through;
+	}
+
+	&.local {
+		background: $green1;
+	}
+}
+
+.spanlink {
+	cursor: pointer;
+	text-decoration: none;
 }
 
 .info-list {

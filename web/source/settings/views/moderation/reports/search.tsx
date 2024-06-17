@@ -50,7 +50,7 @@ function ReportSearchForm() {
 	// Populate search form using values from
 	// urlQueryParams, to allow paging.
 	const form = {
-		resolved: useTextInput("resolved", { defaultValue: urlQueryParams.get("resolved") ?? "" }),
+		resolved: useTextInput("resolved", { defaultValue: urlQueryParams.get("resolved") ?? "false" }),
 		account_id: useTextInput("account_id", { defaultValue: urlQueryParams.get("account_id") ?? "" }),
 		target_account_id: useTextInput("target_account_id", { defaultValue: urlQueryParams.get("target_account_id") ?? "" }),
 		limit: useTextInput("limit", { defaultValue: urlQueryParams.get("limit") ?? "20" })
@@ -61,9 +61,14 @@ function ReportSearchForm() {
 	// was accessed at /search?origin=local&limit=20,
 	// then run a search with origin=local and
 	// limit=20 and immediately render the results.
+	//
+	// If no urlQueryParams set, use the default
+	// search (just show unresolved reports).
 	useEffect(() => {
 		if (urlQueryParams.size > 0) {
 			searchReports(Object.fromEntries(urlQueryParams), true);
+		} else {
+			searchReports({resolved: false}, true);
 		}
 	}, [urlQueryParams, searchReports]);
 
@@ -116,9 +121,9 @@ function ReportSearchForm() {
 					label="Report status"
 					options={
 						<>
-							<option value="">Any</option>
 							<option value="false">Unresolved only</option>
 							<option value="true">Resolved only</option>
+							<option value="">Any</option>
 						</>
 					}
 				></Select>
@@ -143,34 +148,6 @@ function ReportSearchForm() {
 	);
 }
 
-
-// function ReportsList({ data: reports }) {
-// 	return (
-// 		<div className="reports">
-// 			<div className="form-section-docs">
-// 				<h1>Reports</h1>
-// 				<p>
-// 					Here you can view and resolve reports made to your
-// 					instance, originating from local and remote users.
-// 				</p>
-// 				<a
-// 					href="https://docs.gotosocial.org/en/latest/admin/settings/#reports"
-// 					target="_blank"
-// 					className="docslink"
-// 					rel="noreferrer"
-// 				>
-// 					Learn more about this (opens in a new tab)
-// 				</a>
-// 			</div>
-// 			<div className="list">
-// 				{reports.map((report) => (
-// 					<ReportEntry key={report.id} report={report} />
-// 				))}
-// 			</div>
-// 		</div>
-// 	);
-// }
-
 interface ReportEntryProps {
 	report: AdminReport;
 	linkTo?: string;
@@ -180,36 +157,63 @@ interface ReportEntryProps {
 function ReportEntry({ report }: ReportEntryProps) {
 	const from = report.account;
 	const target = report.target_account;
-
-	let comment = report.comment.length > 200
-		? report.comment.slice(0, 200) + "..."
-		: report.comment;
+	const comment = report.comment;
+	const status = report.action_taken ? "Resolved" : "Unresolved";
+	const created = new Date(report.created_at).toLocaleString();
+	const title = `${status}. @${from.account.acct} reported @${target.account.acct} on ${created}. Reason: "${comment}"`;
 
 	return (
 		<Link
 			to={`/${report.id}`}
-			className="nounderline"
+			className={`nounderline report entry${report.action_taken ? " resolved" : ""}`}
+			aria-label={title}
+			title={title}
 		>
-			<div className={`report entry${report.action_taken ? " resolved" : ""}`}>
-				<div className="byline">
-					<div className="usernames">
-						<Username account={from} /> reported <Username account={target} />
-					</div>
-					<h3 className="report-status">
-						{report.action_taken ? "Resolved" : "Open"}
-					</h3>
+			<dl className="info-list">
+				<div className="info-list-entry">
+					<dt>Target</dt>
+					<dd className="text-cutoff">
+						<Username
+							account={target}
+							classNames={["text-cutoff report-byline"]}
+						/>
+					</dd>
 				</div>
-				<div className="details">
-					<b>Created: </b>
-					<span>{new Date(report.created_at).toLocaleString()}</span>
+				
+				<div className="info-list-entry">
+					<dt>Reported by</dt>
+					<dd className="text-cutoff reported-by">
+						<Username account={from} />
+					</dd>
+				</div>
 
-					<b>Reason: </b>
-					{comment.length > 0
-						? <p>{comment}</p>
-						: <i className="no-comment">none provided</i>
-					}
+				<div className="info-list-entry">
+					<dt>Status</dt>
+					<dd className="text-cutoff">
+						{ report.action_taken
+							? <>{status}</>
+							: <b>{status}</b>
+						}
+					</dd>
 				</div>
-			</div>
+
+				<div className="info-list-entry">
+					<dt>Reason</dt>
+					<dd className="text-cutoff">
+						{ comment.length > 0
+							? <>{comment}</>
+							: <i>none provided</i>
+						}
+					</dd>
+				</div>
+
+				<div className="info-list-entry">
+					<dt>Created</dt>
+					<dd className="text-cutoff">
+						<time dateTime={report.created_at}>{created}</time>
+					</dd>
+				</div>
+			</dl>
 		</Link>
 	);
 }
