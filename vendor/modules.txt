@@ -79,7 +79,6 @@ codeberg.org/superseriousbusiness/exif-terminator
 github.com/DmitriyVTitov/size
 # github.com/KimMachineGun/automemlimit v0.6.1
 ## explicit; go 1.21
-github.com/KimMachineGun/automemlimit
 github.com/KimMachineGun/automemlimit/memlimit
 # github.com/Masterminds/goutils v1.1.1
 ## explicit
@@ -819,15 +818,14 @@ github.com/superseriousbusiness/oauth2/v4/generates
 github.com/superseriousbusiness/oauth2/v4/manage
 github.com/superseriousbusiness/oauth2/v4/models
 github.com/superseriousbusiness/oauth2/v4/server
-# github.com/tdewolff/minify/v2 v2.20.33
+# github.com/tdewolff/minify/v2 v2.20.34
 ## explicit; go 1.18
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.7.14
+# github.com/tdewolff/parse/v2 v2.7.15
 ## explicit; go 1.13
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer
-github.com/tdewolff/parse/v2/css
 github.com/tdewolff/parse/v2/html
 github.com/tdewolff/parse/v2/strconv
 # github.com/technologize/otel-go-contrib v1.1.1
