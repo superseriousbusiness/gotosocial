@@ -20,6 +20,8 @@ package admin
 import (
 	"context"
 	"fmt"
+	"slices"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -49,6 +51,20 @@ func (p *Processor) FillWorkerQueues(ctx context.Context) error {
 	if err != nil {
 		return gtserror.Newf("error fetching worker tasks from db: %w", err)
 	}
+
+	// Ensure fetched tasks are ordered by creation time ASCENDING.
+	// i.e. we want to push tasks in the order they should happen.
+	slices.SortFunc(tasks, func(a, b *gtsmodel.WorkerTask) int {
+		const k = +1
+		switch {
+		case a.CreatedAt.Before(b.CreatedAt):
+			return +k
+		case b.CreatedAt.Before(a.CreatedAt):
+			return -k
+		default:
+			return 0
+		}
+	})
 
 	var (
 		// Counts of each task type
@@ -259,6 +275,7 @@ func (p *Processor) popDelivery() (*gtsmodel.WorkerTask, error) {
 		// ID is autoincrement
 		WorkerType: gtsmodel.DeliveryWorker,
 		TaskData:   data,
+		CreatedAt:  time.Now(),
 	}, nil
 }
 
@@ -322,6 +339,7 @@ func (p *Processor) popFederator() (*gtsmodel.WorkerTask, error) {
 		// ID is autoincrement
 		WorkerType: gtsmodel.FederatorWorker,
 		TaskData:   data,
+		CreatedAt:  time.Now(),
 	}, nil
 }
 
@@ -385,5 +403,6 @@ func (p *Processor) popClient() (*gtsmodel.WorkerTask, error) {
 		// ID is autoincrement
 		WorkerType: gtsmodel.ClientWorker,
 		TaskData:   data,
+		CreatedAt:  time.Now(),
 	}, nil
 }
