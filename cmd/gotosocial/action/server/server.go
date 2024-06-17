@@ -267,11 +267,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
 	}
 
-	// Now schedule background cleaning tasks.
-	if err := cleaner.ScheduleJobs(); err != nil {
-		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
-	}
-
 	// Create the processor using all the
 	// other services we've created so far.
 	process = processing.NewProcessor(
