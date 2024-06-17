@@ -136,6 +136,13 @@ func (dlv *Delivery) Deserialize(data []byte) error {
 		return err
 	}
 
+	// Copy over any stored header values.
+	for key, values := range idlv.Header {
+		for _, value := range values {
+			r.Header.Add(key, value)
+		}
+	}
+
 	// Wrap request in httpclient type.
 	dlv.Request = httpclient.WrapRequest(r)
 
