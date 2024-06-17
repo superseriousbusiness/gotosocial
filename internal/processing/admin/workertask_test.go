@@ -29,6 +29,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -192,6 +193,10 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 		nclient    int
 	)
 
+	// Fetch current gotosocial instance account, for later checks.
+	instanceAcc, err := suite.state.DB.GetInstanceAccount(ctx, "")
+	suite.NoError(err)
+
 	for {
 		// Pop all queued delivery tasks from worker queue.
 		dlv, ok := suite.state.Workers.Delivery.Queue.Pop()
@@ -205,6 +210,10 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 		// Check that we have this message in slice.
 		err = containsSerializable(testDeliveries, dlv)
 		suite.NoError(err)
+
+		// Check that delivery request context has instance account pubkey.
+		pubKeyID := gtscontext.OutgoingPublicKeyID(dlv.Request.Context())
+		suite.Equal(instanceAcc.PublicKeyURI, pubKeyID)
 	}
 
 	for {

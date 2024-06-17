@@ -171,6 +171,10 @@ func (t *transport) prepare(
 }
 
 func (t *transport) SignDelivery(dlv *delivery.Delivery) error {
+	if dlv.Request.GetBody == nil {
+		return gtserror.New("delivery request body not rewindable")
+	}
+
 	// Get a new copy of the request body.
 	body, err := dlv.Request.GetBody()
 	if err != nil {
