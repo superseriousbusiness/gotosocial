@@ -80,11 +80,37 @@ import (
 //		in: query
 //		required: false
 //	-
-//		name: exclude_types
+//		name: types[]
 //		type: array
 //		items:
 //			type: string
-//			description: Array of types of notifications to exclude (follow, favourite, reblog, mention, poll, follow_request)
+//			enum:
+//				- follow
+//				- follow_request
+//				- mention
+//				- reblog
+//				- favourite
+//				- poll
+//				- status
+//				- admin.sign_up
+//		description: Types of notifications to include. If not provided, all notification types will be included.
+//		in: query
+//		required: false
+//	-
+//		name: exclude_types[]
+//		type: array
+//		items:
+//			type: string
+//			enum:
+//				- follow
+//				- follow_request
+//				- mention
+//				- reblog
+//				- favourite
+//				- poll
+//				- status
+//				- admin.sign_up
+//		description: Types of notifications to exclude.
 //		in: query
 //		required: false
 //
@@ -145,6 +171,7 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		c.Query(SinceIDKey),
 		c.Query(MinIDKey),
 		limit,
+		c.QueryArray(IncludeTypesKey),
 		c.QueryArray(ExcludeTypesKey),
 	)
 	if errWithCode != nil {
