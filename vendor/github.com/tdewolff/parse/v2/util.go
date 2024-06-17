@@ -196,6 +196,10 @@ func NewIndenter(w io.Writer, n int) Indenter {
 	}
 }
 
+func (in Indenter) Indent() int {
+	return len(in.b)
+}
+
 func (in Indenter) Write(b []byte) (int, error) {
 	n, j := 0, 0
 	for i, c := range b {
