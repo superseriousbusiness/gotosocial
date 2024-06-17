@@ -244,16 +244,16 @@ func (p *Processor) PersistWorkerQueues(ctx context.Context) error {
 
 // pushDelivery parses a valid delivery.Delivery{} from serialized task data and pushes to queue.
 func (p *Processor) pushDelivery(ctx context.Context, task *gtsmodel.WorkerTask) error {
-	var delivery delivery.Delivery
+	dlv := new(delivery.Delivery)
 
 	// Deserialize the raw worker task data into delivery.
-	if err := delivery.Deserialize(task.TaskData); err != nil {
+	if err := dlv.Deserialize(task.TaskData); err != nil {
 		return gtserror.Newf("error deserializing delivery: %w", err)
 	}
 
 	var tsport transport.Transport
 
-	if uri := delivery.ActorID; uri != "" {
+	if uri := dlv.ActorID; uri != "" {
 		// Fetch the actor account by provided URI from db.
 		account, err := p.state.DB.GetAccountByURI(ctx, uri)
 		if err != nil {
@@ -276,12 +276,12 @@ func (p *Processor) pushDelivery(ctx context.Context, task *gtsmodel.WorkerTask)
 	}
 
 	// Using transport, add actor signature to delivery.
-	if err := tsport.SignDelivery(&delivery); err != nil {
+	if err := tsport.SignDelivery(dlv); err != nil {
 		return gtserror.Newf("error signing delivery: %w", err)
 	}
 
-	// Push deserialized task to the delivery queue.
-	p.state.Workers.Delivery.Queue.Push(&delivery)
+	// Push deserialized task to delivery queue.
+	p.state.Workers.Delivery.Queue.Push(dlv)
 
 	return nil
 }
