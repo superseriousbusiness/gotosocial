@@ -214,6 +214,8 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 		// Check that delivery request context has instance account pubkey.
 		pubKeyID := gtscontext.OutgoingPublicKeyID(dlv.Request.Context())
 		suite.Equal(instanceAcc.PublicKeyURI, pubKeyID)
+		signfn := gtscontext.HTTPClientSignFunc(dlv.Request.Context())
+		suite.NotNil(signfn)
 	}
 
 	for {
