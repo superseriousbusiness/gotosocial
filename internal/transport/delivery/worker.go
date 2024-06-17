@@ -203,7 +203,7 @@ loop:
 
 		// Attempt delivery of AP request.
 		rsp, retry, err := w.Client.DoOnce(
-			&dlv.Request,
+			dlv.Request,
 		)
 
 		switch {
