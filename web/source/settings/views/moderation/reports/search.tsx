@@ -24,7 +24,7 @@ import { useTextInput } from "../../../lib/form";
 import { PageableList } from "../../../components/pageable-list";
 import { Select } from "../../../components/form/inputs";
 import MutationButton from "../../../components/form/mutation-button";
-import { Link, useLocation, useSearch } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import Username from "../../../components/username";
 import { AdminReport } from "../../../lib/types/report";
 
@@ -45,16 +45,26 @@ function ReportSearchForm() {
 	const [ location, setLocation ] = useLocation();
 	const search = useSearch();
 	const urlQueryParams = useMemo(() => new URLSearchParams(search), [search]);
+	const hasParams = urlQueryParams.size != 0;
 	const [ searchReports, searchRes ] = useLazySearchReportsQuery();
 
 	// Populate search form using values from
 	// urlQueryParams, to allow paging.
+	const resolved = useMemo(() => {
+		const resolvedRaw = urlQueryParams.get("resolved");
+		if (resolvedRaw !== null) {
+			return resolvedRaw;
+		}
+	}, [urlQueryParams]);
+
 	const form = {
-		resolved: useTextInput("resolved", { defaultValue: urlQueryParams.get("resolved") ?? "false" }),
+		resolved: useTextInput("resolved", { defaultValue: resolved }),
 		account_id: useTextInput("account_id", { defaultValue: urlQueryParams.get("account_id") ?? "" }),
 		target_account_id: useTextInput("target_account_id", { defaultValue: urlQueryParams.get("target_account_id") ?? "" }),
 		limit: useTextInput("limit", { defaultValue: urlQueryParams.get("limit") ?? "20" })
 	};
+
+	const setResolved = form.resolved.setter;
 
 	// On mount, if urlQueryParams were provided,
 	// trigger the search. For example, if page
@@ -65,12 +75,20 @@ function ReportSearchForm() {
 	// If no urlQueryParams set, use the default
 	// search (just show unresolved reports).
 	useEffect(() => {
-		if (urlQueryParams.size > 0) {
+		if (hasParams) {
 			searchReports(Object.fromEntries(urlQueryParams), true);
 		} else {
-			searchReports({resolved: false}, true);
+			setResolved("false");
+			setLocation(location + "?resolved=false");
 		}
-	}, [urlQueryParams, searchReports]);
+	}, [
+		urlQueryParams,
+		hasParams,
+		searchReports,
+		location,
+		setLocation,
+		setResolved,
+	]);
 
 	// Rather than triggering the search directly,
 	// the "submit" button changes the location
@@ -82,7 +100,7 @@ function ReportSearchForm() {
 		// Parse query parameters.
 		const entries = Object.entries(form).map(([k, v]) => {
 			// Take only defined form fields.
-			if (v.value === undefined || v.value.length === 0) {
+			if (v.value === undefined || v.value.length === 0 || v.value === "any") {
 				return null;
 			}
 			return [[k, v.value]];
@@ -96,13 +114,15 @@ function ReportSearchForm() {
 	}
 
 	// Location to return to when user clicks "back" on the detail view.
-	const backLocation = location + (urlQueryParams ? `?${urlQueryParams}` : "");
+	const backLocation = location + (hasParams ? `?${urlQueryParams}` : "");
 	
 	// Function to map an item to a list entry.
 	function itemToEntry(report: AdminReport): ReactNode {
 		return (
-			<ReportEntry
+			<ReportListEntry
+				key={report.id}	
 				report={report}
+				linkTo={`/${report.id}`}
 				backLocation={backLocation}
 			/>
 		);
@@ -150,24 +170,37 @@ function ReportSearchForm() {
 
 interface ReportEntryProps {
 	report: AdminReport;
-	linkTo?: string;
-	backLocation?: string;
+	linkTo: string;
+	backLocation: string;
 }
 
-function ReportEntry({ report }: ReportEntryProps) {
+function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
+	const [ _location, setLocation ] = useLocation();
+	
 	const from = report.account;
 	const target = report.target_account;
 	const comment = report.comment;
 	const status = report.action_taken ? "Resolved" : "Unresolved";
 	const created = new Date(report.created_at).toLocaleString();
-	const title = `${status}. @${from.account.acct} reported @${target.account.acct} on ${created}. Reason: "${comment}"`;
+	const title = `${status}. @${target.account.acct} was reported by @${from.account.acct} on ${created}. Reason: "${comment}"`;
 
 	return (
-		<Link
-			to={`/${report.id}`}
-			className={`nounderline report entry${report.action_taken ? " resolved" : ""}`}
+		<span
+			className={`pseudolink report entry${report.action_taken ? " resolved" : ""}`}
 			aria-label={title}
 			title={title}
+			onClick={() => {
+				// When clicking on a report, direct
+				// to the detail view for that report.
+				setLocation(linkTo, {
+					// Store the back location in history so
+					// the detail view can use it to return to
+					// this page (including query parameters).
+					state: { backLocation: backLocation }
+				});
+			}}
+			role="link"
+			tabIndex={0}
 		>
 			<dl className="info-list">
 				<div className="info-list-entry">
@@ -214,6 +247,6 @@ function ReportEntry({ report }: ReportEntryProps) {
 					</dd>
 				</div>
 			</dl>
-		</Link>
+		</span>
 	);
 }

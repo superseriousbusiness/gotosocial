@@ -22,7 +22,7 @@ import { Redirect, useParams } from "wouter";
 import { useComboBoxInput, useFileInput, useValue } from "../../../../lib/form";
 import useFormSubmit from "../../../../lib/form/submit";
 import { useBaseUrl } from "../../../../lib/navigation/util";
-import FakeToot from "../../../../components/fake-toot";
+import FakeStatus from "../../../../components/status";
 import FormWithData from "../../../../lib/form/form-with-data";
 import Loading from "../../../../components/loading";
 import { FileInput } from "../../../../components/form/inputs";
@@ -124,14 +124,14 @@ function EmojiDetailForm({ data: emoji }) {
 						disabled={!form.image.value}
 					/>
 
-					<FakeToot>
+					<FakeStatus>
 						Look at this new custom emoji <img
 							className="emoji"
 							src={form.image.previewValue ?? emoji.url}
 							title={`:${emoji.shortcode}:`}
 							alt={emoji.shortcode}
 						/> isn&apos;t it cool?
-					</FakeToot>
+					</FakeStatus>
 
 					{result.error && <Error error={result.error} />}
 					{deleteResult.error && <Error error={deleteResult.error} />}

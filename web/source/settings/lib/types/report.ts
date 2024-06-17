@@ -59,22 +59,18 @@ export interface AdminReport {
 	updated_at: string;
 	/**
 	 * Account that created the report.
-	 * TODO: model this properly.
 	 */
 	account: AdminAccount;
 	/**
 	 * Reported account.
-	 * TODO: model this properly.
 	 */
 	target_account: AdminAccount;
 	/**
 	 * Admin account assigned to handle this report, if any.
-	 * TODO: model this properly.
 	 */
 	assigned_account?: AdminAccount;
 	/**
 	 * Admin account that has taken action on this report, if any.
-	 * TODO: model this properly.
 	 */
 	action_taken_by_account?: AdminAccount;
 	/**

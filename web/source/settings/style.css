@@ -1145,6 +1145,26 @@ button.with-padding {
 	}
 }
 
+.report-detail {
+	.info-list {
+		margin-top: 1rem;
+
+		.username-lozenge {
+			display: flex;
+			flex-wrap: nowrap;
+			height: 100%;
+			align-items: center;
+			padding-top: 0;
+			padding-bottom: 0;
+			max-width: fit-content;
+
+			.fa {
+				flex-shrink: 0;
+			}
+		}
+	}
+}
+
 .accounts-view {
 	.pageable-list {
 		.username-lozenge {
@@ -1218,7 +1238,7 @@ button.with-padding {
 	}
 }
 
-.spanlink {
+.pseudolink {
 	cursor: pointer;
 	text-decoration: none;
 }

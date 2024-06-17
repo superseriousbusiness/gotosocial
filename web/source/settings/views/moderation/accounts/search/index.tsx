@@ -83,7 +83,7 @@ export function AccountSearchForm() {
 	}
 
 	// Location to return to when user clicks "back" on the account detail view.
-	const backLocation = location + (urlQueryParams ? `?${urlQueryParams}` : "");
+	const backLocation = location + (urlQueryParams.size > 0 ? `?${urlQueryParams}` : "");
 	
 	// Function to map an item to a list entry.
 	function itemToEntry(account: AdminAccount): ReactNode {

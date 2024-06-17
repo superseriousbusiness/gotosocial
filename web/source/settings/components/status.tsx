@@ -20,7 +20,7 @@
 import React from "react";
 import { useVerifyCredentialsQuery } from "../lib/query/oauth";
 
-export default function FakeToot({ children }) {
+export default function FakeStatus({ children }) {
 	const { data: account = {
 		avatar: "/assets/default_avatars/GoToSocial_icon1.png",
 		display_name: "",

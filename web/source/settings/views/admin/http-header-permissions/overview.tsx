@@ -69,7 +69,7 @@ export default function HeaderPermsOverview() {
 		return (
 			<dl
 				key={perm.id}
-				className="entry spanlink"
+				className="entry pseudolink"
 				onClick={() => {
 					// When clicking on a header perm,
 					// go to the detail view for perm.

@@ -18,7 +18,7 @@
 */
 
 import React, { useState } from "react";
-import { useParams } from "wouter";
+import { useLocation, useParams } from "wouter";
 import FormWithData from "../../../lib/form/form-with-data";
 import BackButton from "../../../components/back-button";
 import { useValue, useTextInput } from "../../../lib/form";
@@ -28,85 +28,147 @@ import MutationButton from "../../../components/form/mutation-button";
 import Username from "../../../components/username";
 import { useGetReportQuery, useResolveReportMutation } from "../../../lib/query/admin/reports";
 import { useBaseUrl } from "../../../lib/navigation/util";
+import { AdminReport } from "../../../lib/types/report";
 
 export default function ReportDetail({ }) {
+	const params: { reportId: string } = useParams();
 	const baseUrl = useBaseUrl();
-	const params = useParams();
+	const backLocation: String = history.state?.backLocation ?? `~${baseUrl}`;
 
 	return (
-		<div className="reports">
-			<h1><BackButton to={`~${baseUrl}`}/> Report Details</h1>
+		<div className="report-detail">
+			<h1><BackButton to={backLocation}/> Report Details</h1>
 			<FormWithData
 				dataQuery={useGetReportQuery}
 				queryArg={params.reportId}
 				DataForm={ReportDetailForm}
+				{...{ backLocation: backLocation }}
 			/>
 		</div>
 	);
 }
 
-function ReportDetailForm({ data: report }) {
+function ReportDetailForm({ data: report }: { data: AdminReport }) {
+	const [ location ] = useLocation();
+	const baseUrl = useBaseUrl();
+	
 	const from = report.account;
 	const target = report.target_account;
+	const comment = report.comment;
+	const status = report.action_taken ? "Resolved" : "Unresolved";
+	const created = new Date(report.created_at).toLocaleString();
 
 	return (
-		<div className="report detail">
-			<div className="usernames">
-				<Username
-					account={from}
-					linkTo={`~/settings/moderation/accounts/${from.id}`}
-					backLocation={`~/settings/moderation/reports/${report.id}`}
-				/>
-				<> reported </>
-				<Username
-					account={target}
-					linkTo={`~/settings/moderation/accounts/${target.id}`}
-					backLocation={`~/settings/moderation/reports/${report.id}`}
-				/>
+		<dl className="info-list">
+			<div className="info-list-entry">
+				<dt>Target</dt>
+				<dd>
+					<Username
+						account={target}
+						linkTo={`~/settings/moderation/accounts/${target.id}`}
+						backLocation={`~${baseUrl}${location}`}
+					/>
+				</dd>
+			</div>
+		
+			<div className="info-list-entry">
+				<dt>Reported by</dt>
+				<dd>
+					<Username
+						account={from}
+						linkTo={`~/settings/moderation/accounts/${from.id}`}
+						backLocation={`~${baseUrl}${location}`}
+					/>
+				</dd>
 			</div>
 
-			{report.action_taken &&
-				<div className="info">
-					<h3>Resolved by @{report.action_taken_by_account.account.acct}</h3>
-					<span className="timestamp">at {new Date(report.action_taken_at).toLocaleString()}</span>
-					<br />
-					<b>Comment: </b><span>{report.action_taken_comment}</span>
-				</div>
-			}
-
-			<div className="info-block">
-				<h3>Report info:</h3>
-				<div className="details">
-					<b>Created: </b>
-					<span>{new Date(report.created_at).toLocaleString()}</span>
-
-					<b>Forwarded: </b> <span>{report.forwarded ? "Yes" : "No"}</span>
-					<b>Category: </b> <span>{report.category}</span>
-
-					<b>Reason: </b>
-					{report.comment.length > 0
-						? <p>{report.comment}</p>
-						: <i className="no-comment">none provided</i>
+			<div className="info-list-entry">
+				<dt>Status</dt>
+				<dd>
+					{ report.action_taken
+						? <>{status}</>
+						: <b>{status}</b>
 					}
-
-				</div>
+				</dd>
 			</div>
 
-			{!report.action_taken && <ReportActionForm report={report} />}
+			<div className="info-list-entry">
+				<dt>Reason</dt>
+				<dd>
+					{ comment.length > 0
+						? <>{comment}</>
+						: <i>none provided</i>
+					}
+				</dd>
+			</div>
 
-			{
-				report.statuses.length > 0 &&
-				<div className="info-block">
-					<h3>Reported toots ({report.statuses.length}):</h3>
-					<div className="reported-toots">
-						{report.statuses.map((status) => (
-							<ReportedToot key={status.id} toot={status} />
-						))}
-					</div>
-				</div>
-			}
-		</div>
+			<div className="info-list-entry">
+				<dt>Created</dt>
+				<dd>
+					<time dateTime={report.created_at}>{created}</time>
+				</dd>
+			</div>
+		</dl>
 	);
+
+	// return (
+	// 	<>
+	// 		<div className="usernames">
+	// 			<Username
+	// 				account={from}
+	// 				linkTo={`~/settings/moderation/accounts/${from.id}`}
+	// 				backLocation={`~/settings/moderation/reports/${report.id}`}
+	// 			/>
+	// 			<> reported </>
+	// 			<Username
+	// 				account={target}
+	// 				linkTo={`~/settings/moderation/accounts/${target.id}`}
+	// 				backLocation={`~/settings/moderation/reports/${report.id}`}
+	// 			/>
+	// 		</div>
+
+	// 		{report.action_taken &&
+	// 			<div className="info">
+	// 				<h3>Resolved by @{report.action_taken_by_account.account.acct}</h3>
+	// 				<span className="timestamp">at {new Date(report.action_taken_at).toLocaleString()}</span>
+	// 				<br />
+	// 				<b>Comment: </b><span>{report.action_taken_comment}</span>
+	// 			</div>
+	// 		}
+
+	// 		<div className="info-block">
+	// 			<h3>Report info:</h3>
+	// 			<div className="details">
+	// 				<b>Created: </b>
+	// 				<span>{new Date(report.created_at).toLocaleString()}</span>
+
+	// 				<b>Forwarded: </b> <span>{report.forwarded ? "Yes" : "No"}</span>
+	// 				<b>Category: </b> <span>{report.category}</span>
+
+	// 				<b>Reason: </b>
+	// 				{report.comment.length > 0
+	// 					? <p>{report.comment}</p>
+	// 					: <i className="no-comment">none provided</i>
+	// 				}
+
+	// 			</div>
+	// 		</div>
+
+	// 		{!report.action_taken && <ReportActionForm report={report} />}
+
+	// 		{
+	// 			report.statuses.length > 0 &&
+	// 			<div className="info-block">
+	// 				<h3>Reported toots ({report.statuses.length}):</h3>
+	// 				<div className="reported-toots">
+	// 					{report.statuses.map((status) => (
+	// 						<ReportedToot key={status.id} toot={status} />
+	// 					))}
+	// 				</div>
+	// 			</div>
+	// 		}
+	// 	</>
+	// );
 }
 
 function ReportActionForm({ report }) {
