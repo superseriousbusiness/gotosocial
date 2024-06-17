@@ -93,9 +93,151 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
-	// Fill the worker queues from persisted task data.
-	err := suite.adminProcessor.FillWorkerQueues(ctx)
+	var tasks []*gtsmodel.WorkerTask
+
+	for _, dlv := range testDeliveries {
+		// Serialize all test deliveries.
+		data, err := dlv.Serialize()
+		if err != nil {
+			panic(err)
+		}
+
+		// Append each serialized delivery to tasks.
+		tasks = append(tasks, &gtsmodel.WorkerTask{
+			WorkerType: gtsmodel.DeliveryWorker,
+			TaskData:   data,
+		})
+	}
+
+	for _, msg := range testFederatorMsgs {
+		// Serialize all test messages.
+		data, err := msg.Serialize()
+		if err != nil {
+			panic(err)
+		}
+
+		if msg.Receiving != nil {
+			// Quick hack to bypass database errors for non-existing
+			// accounts, instead we just insert this into cache ;).
+			suite.state.Caches.GTS.Account.Put(msg.Receiving)
+			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+				AccountID: msg.Receiving.ID,
+			})
+		}
+
+		if msg.Requesting != nil {
+			// Quick hack to bypass database errors for non-existing
+			// accounts, instead we just insert this into cache ;).
+			suite.state.Caches.GTS.Account.Put(msg.Requesting)
+			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+				AccountID: msg.Requesting.ID,
+			})
+		}
+
+		// Append each serialized message to tasks.
+		tasks = append(tasks, &gtsmodel.WorkerTask{
+			WorkerType: gtsmodel.FederatorWorker,
+			TaskData:   data,
+		})
+	}
+
+	for _, msg := range testClientMsgs {
+		// Serialize all test messages.
+		data, err := msg.Serialize()
+		if err != nil {
+			panic(err)
+		}
+
+		if msg.Origin != nil {
+			// Quick hack to bypass database errors for non-existing
+			// accounts, instead we just insert this into cache ;).
+			suite.state.Caches.GTS.Account.Put(msg.Origin)
+			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+				AccountID: msg.Origin.ID,
+			})
+		}
+
+		if msg.Target != nil {
+			// Quick hack to bypass database errors for non-existing
+			// accounts, instead we just insert this into cache ;).
+			suite.state.Caches.GTS.Account.Put(msg.Target)
+			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+				AccountID: msg.Target.ID,
+			})
+		}
+
+		// Append each serialized message to tasks.
+		tasks = append(tasks, &gtsmodel.WorkerTask{
+			WorkerType: gtsmodel.ClientWorker,
+			TaskData:   data,
+		})
+	}
+
+	// Persist all test worker tasks to the database.
+	err := suite.state.DB.PutWorkerTasks(ctx, tasks)
 	suite.NoError(err)
+
+	// Fill the worker queues from persisted task data.
+	err = suite.adminProcessor.FillWorkerQueues(ctx)
+	suite.NoError(err)
+
+	var (
+		// Recovered
+		// task counts.
+		ndelivery  int
+		nfederator int
+		nclient    int
+	)
+
+	for {
+		// Pop all queued delivery tasks from worker queue.
+		dlv, ok := suite.state.Workers.Delivery.Queue.Pop()
+		if !ok {
+			break
+		}
+
+		// Incr count.
+		ndelivery++
+
+		// Check that we have this message in slice.
+		err = containsSerializable(testDeliveries, dlv)
+		suite.NoError(err)
+	}
+
+	for {
+		// Pop all queued federator messages from worker queue.
+		msg, ok := suite.state.Workers.Federator.Queue.Pop()
+		if !ok {
+			break
+		}
+
+		// Incr count.
+		nfederator++
+
+		// Check that we have this message in slice.
+		err = containsSerializable(testFederatorMsgs, msg)
+		suite.NoError(err)
+	}
+
+	for {
+		// Pop all queued client messages from worker queue.
+		msg, ok := suite.state.Workers.Client.Queue.Pop()
+		if !ok {
+			break
+		}
+
+		// Incr count.
+		nclient++
+
+		// Check that we have this message in slice.
+		err = containsSerializable(testClientMsgs, msg)
+		suite.NoError(err)
+	}
+
+	// Ensure recovered task counts as expected.
+	suite.Equal(len(testDeliveries), ndelivery)
+	suite.Equal(len(testFederatorMsgs), nfederator)
+	suite.Equal(len(testClientMsgs), nclient)
 }
 
 func (suite *WorkerTaskTestSuite) TestPersistWorkerQueues() {
@@ -116,7 +258,7 @@ func (suite *WorkerTaskTestSuite) TestPersistWorkerQueues() {
 	suite.NoError(err)
 
 	var (
-		// Deserialized
+		// Persisted
 		// task counts.
 		ndelivery  int
 		nfederator int
