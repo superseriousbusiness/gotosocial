@@ -38,7 +38,7 @@ var deliveryCases = []struct {
 			ActorID:  "https://google.com/users/bigboy",
 			ObjectID: "https://google.com/users/bigboy/follow/1",
 			TargetID: "https://askjeeves.com/users/smallboy",
-			Request:  toRequest("POST", "https://askjeeves.com/users/smallboy/inbox", []byte("data!")),
+			Request:  toRequest("POST", "https://askjeeves.com/users/smallboy/inbox", []byte("data!"), http.Header{"Hello": {"world1", "world2"}}),
 		},
 		data: toJSON(map[string]any{
 			"actor_id":  "https://google.com/users/bigboy",
@@ -47,18 +47,18 @@ var deliveryCases = []struct {
 			"method":    "POST",
 			"url":       "https://askjeeves.com/users/smallboy/inbox",
 			"body":      []byte("data!"),
-			// "header":     map[string][]string{},
+			"header":    map[string][]string{"Hello": {"world1", "world2"}},
 		}),
 	},
 	{
 		msg: delivery.Delivery{
-			Request: toRequest("GET", "https://google.com", []byte("uwu im just a wittle seawch engwin")),
+			Request: toRequest("GET", "https://google.com", []byte("uwu im just a wittle seawch engwin"), nil),
 		},
 		data: toJSON(map[string]any{
 			"method": "GET",
 			"url":    "https://google.com",
 			"body":   []byte("uwu im just a wittle seawch engwin"),
-			// "header":     map[string][]string{},
+			// "header": map[string][]string{},
 		}),
 	},
 }
@@ -93,11 +93,12 @@ func TestDeserializeDelivery(t *testing.T) {
 		assert.Equal(t, test.msg.Request.Method, msg.Request.Method)
 		assert.Equal(t, test.msg.Request.URL, msg.Request.URL)
 		assert.Equal(t, readBody(test.msg.Request.Body), readBody(msg.Request.Body))
+		assert.Equal(t, test.msg.Request.Header, msg.Request.Header)
 	}
 }
 
 // toRequest creates httpclient.Request from HTTP method, URL and body data.
-func toRequest(method string, url string, body []byte) httpclient.Request {
+func toRequest(method string, url string, body []byte, hdr http.Header) httpclient.Request {
 	var rbody io.Reader
 	if body != nil {
 		rbody = bytes.NewReader(body)
@@ -105,6 +106,11 @@ func toRequest(method string, url string, body []byte) httpclient.Request {
 	req, err := http.NewRequest(method, url, rbody)
 	if err != nil {
 		panic(err)
+	}
+	for key, values := range hdr {
+		for _, value := range values {
+			req.Header.Add(key, value)
+		}
 	}
 	return httpclient.WrapRequest(req)
 }
