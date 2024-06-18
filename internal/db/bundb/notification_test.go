@@ -97,6 +97,7 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithSpam() {
 		"",
 		20,
 		nil,
+		nil,
 	)
 	suite.NoError(err)
 	timeTaken := time.Since(before)
@@ -118,6 +119,7 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithoutSpam() {
 		id.Lowest,
 		"",
 		20,
+		nil,
 		nil,
 	)
 	suite.NoError(err)
@@ -143,6 +145,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 		"",
 		20,
 		nil,
+		nil,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -162,6 +165,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 		id.Lowest,
 		"",
 		20,
+		nil,
 		nil,
 	)
 	if err != nil {
@@ -183,6 +187,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 		id.Lowest,
 		"",
 		20,
+		nil,
 		nil,
 	)
 	suite.NoError(err)

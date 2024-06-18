@@ -7431,10 +7431,35 @@ paths:
                   in: query
                   name: limit
                   type: integer
-                - in: query
+                - description: Types of notifications to include. If not provided, all notification types will be included.
+                  in: query
                   items:
+                    enum:
+                        - follow
+                        - follow_request
+                        - mention
+                        - reblog
+                        - favourite
+                        - poll
+                        - status
+                        - admin.sign_up
                     type: string
-                  name: exclude_types
+                  name: types[]
+                  type: array
+                - description: Types of notifications to exclude.
+                  in: query
+                  items:
+                    enum:
+                        - follow
+                        - follow_request
+                        - mention
+                        - reblog
+                        - favourite
+                        - poll
+                        - status
+                        - admin.sign_up
+                    type: string
+                  name: exclude_types[]
                   type: array
             produces:
                 - application/json
