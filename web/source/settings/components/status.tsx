@@ -20,6 +20,7 @@
 import React from "react";
 import { useVerifyCredentialsQuery } from "../lib/query/oauth";
 import { MediaAttachment, Status as StatusType } from "../lib/types/status";
+import sanitize from "sanitize-html";
 
 export function FakeStatus({ children }) {
 	const { data: account = {
@@ -111,6 +112,16 @@ function StatusHeader({ status }: { status: StatusType }) {
 }
 
 function StatusBody({ status }: { status: StatusType }) {
+	let content: string;
+	if (status.content.length === 0) {
+		content = "[no content set]";
+	} else {
+		// HTML has already been through
+		// the instance sanitizer by now,
+		// but do it again just in case.
+		content = sanitize(status.content);
+	}
+
 	return (
 		<div className="status-body">
 			<details className="text-spoiler">
@@ -133,12 +144,10 @@ function StatusBody({ status }: { status: StatusType }) {
 						Toggle content visibility
 					</span>
 				</summary>
-				<div className="text">
-					{ status.content
-						? status.content
-						: "[no content set] "
-					}
-				</div>
+				<div
+					className="text"
+					dangerouslySetInnerHTML={{__html: content}}
+				/>
 			</details>
 			<StatusMedia status={status} />
 		</div>
