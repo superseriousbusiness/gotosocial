@@ -129,32 +129,36 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 		return
 	}
 	if user == nil {
-		// no user exists yet - let's ask them for their preferred username
-		instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
-		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-			return
-		}
+		if config.GetOIDCUsernameWizzard() {
+			// no user exists yet - let's ask them for their preferred username
+			instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
+			if errWithCode != nil {
+				apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+				return
+			}
 
-		// store the claims in the session - that way we know the user is authenticated when processing the form later
-		s.Set(sessionClaims, claims)
-		s.Set(sessionAppID, app.ID)
-		if err := s.Save(); err != nil {
-			m.clearSession(s)
-			apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-			return
-		}
+			// store the claims in the session - that way we know the user is authenticated when processing the form later
+			s.Set(sessionClaims, claims)
+			s.Set(sessionAppID, app.ID)
+			if err := s.Save(); err != nil {
+				m.clearSession(s)
+				apiutil.ErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
+				return
+			}
 
-		page := apiutil.WebPage{
-			Template: "finalize.tmpl",
-			Instance: instance,
-			Extra: map[string]any{
-				"name":              claims.Name,
-				"preferredUsername": claims.PreferredUsername,
-			},
-		}
+			page := apiutil.WebPage{
+				Template: "finalize.tmpl",
+				Instance: instance,
+				Extra: map[string]any{
+					"name":              claims.Name,
+					"preferredUsername": claims.PreferredUsername,
+				},
+			}
 
-		apiutil.TemplateWebPage(c, page)
+			apiutil.TemplateWebPage(c, page)
+		} else {
+			m.finalizerCreateUsername(claims.PreferredUsername)
+		}
 		return
 	}
 
@@ -184,6 +188,11 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
+	m.finalizerCreateUsername(form.Username)
+}
+
+// FinalizePOSTHandler registers the user after additional data has been provided
+func (m *Module) finalizerCreateUsername(name, username string) {
 
 	// since we have multiple possible validation error, `validationError` is a shorthand for rendering them
 	validationError := func(err error) {
@@ -197,8 +206,8 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 			Template: "finalize.tmpl",
 			Instance: instance,
 			Extra: map[string]any{
-				"name":              form.Name,
-				"preferredUsername": form.Username,
+				"name":              name,
+				"preferredUsername": username,
 				"error":             err,
 			},
 		}
@@ -207,19 +216,19 @@ func (m *Module) FinalizePOSTHandler(c *gin.Context) {
 	}
 
 	// check if the username conforms to the spec
-	if err := validate.Username(form.Username); err != nil {
+	if err := validate.Username(username); err != nil {
 		validationError(err)
 		return
 	}
 
 	// see if the username is still available
-	usernameAvailable, err := m.db.IsUsernameAvailable(c.Request.Context(), form.Username)
+	usernameAvailable, err := m.db.IsUsernameAvailable(c.Request.Context(), username)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
 		return
 	}
 	if !usernameAvailable {
-		validationError(fmt.Errorf("Username %s is already taken", form.Username))
+		validationError(fmt.Errorf("Username %s is already taken", username))
 		return
 	}
 
