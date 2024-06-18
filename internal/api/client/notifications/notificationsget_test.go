@@ -45,7 +45,7 @@ func (suite *NotificationsTestSuite) getNotifications(
 	maxID string,
 	minID string,
 	limit int,
-	includeTypes []string,
+	types []string,
 	excludeTypes []string,
 	expectedHTTPStatus int,
 	expectedBody string,
@@ -71,8 +71,8 @@ func (suite *NotificationsTestSuite) getNotifications(
 	if limit != 0 {
 		query.Set(notifications.LimitKey, strconv.Itoa(limit))
 	}
-	if len(includeTypes) > 0 {
-		query[notifications.IncludeTypesKey] = includeTypes
+	if len(types) > 0 {
+		query[notifications.TypesKey] = types
 	}
 	if len(excludeTypes) > 0 {
 		query[notifications.ExcludeTypesKey] = excludeTypes
@@ -123,7 +123,7 @@ func (suite *NotificationsTestSuite) TestGetNotificationsSingle() {
 	maxID := ""
 	minID := ""
 	limit := 10
-	includeTypes := []string(nil)
+	types := []string(nil)
 	excludeTypes := []string(nil)
 	expectedHTTPStatus := http.StatusOK
 	expectedBody := ""
@@ -135,7 +135,7 @@ func (suite *NotificationsTestSuite) TestGetNotificationsSingle() {
 		maxID,
 		minID,
 		limit,
-		includeTypes,
+		types,
 		excludeTypes,
 		expectedHTTPStatus,
 		expectedBody,
@@ -181,7 +181,7 @@ func (suite *NotificationsTestSuite) TestGetNotificationsExcludeOneType() {
 	maxID := ""
 	minID := ""
 	limit := 10
-	includeTypes := []string(nil)
+	types := []string(nil)
 	excludeTypes := []string{"follow_request"}
 	expectedHTTPStatus := http.StatusOK
 	expectedBody := ""
@@ -193,7 +193,7 @@ func (suite *NotificationsTestSuite) TestGetNotificationsExcludeOneType() {
 		maxID,
 		minID,
 		limit,
-		includeTypes,
+		types,
 		excludeTypes,
 		expectedHTTPStatus,
 		expectedBody,
@@ -220,7 +220,7 @@ func (suite *NotificationsTestSuite) TestGetNotificationsIncludeOneType() {
 	maxID := ""
 	minID := ""
 	limit := 10
-	includeTypes := []string{"favourite"}
+	types := []string{"favourite"}
 	excludeTypes := []string(nil)
 	expectedHTTPStatus := http.StatusOK
 	expectedBody := ""
@@ -232,7 +232,7 @@ func (suite *NotificationsTestSuite) TestGetNotificationsIncludeOneType() {
 		maxID,
 		minID,
 		limit,
-		includeTypes,
+		types,
 		excludeTypes,
 		expectedHTTPStatus,
 		expectedBody,

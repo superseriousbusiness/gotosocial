@@ -28,8 +28,8 @@ type Notification interface {
 	// GetAccountNotifications returns a slice of notifications that pertain to the given accountID.
 	//
 	// Returned notifications will be ordered ID descending (ie., highest/newest to lowest/oldest).
-	// If includeTypes is empty, *all* notification types will be included.
-	GetAccountNotifications(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, includeTypes []string, excludeTypes []string) ([]*gtsmodel.Notification, error)
+	// If types is empty, *all* notification types will be included.
+	GetAccountNotifications(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, types []string, excludeTypes []string) ([]*gtsmodel.Notification, error)
 
 	// GetNotificationByID returns one notification according to its id.
 	GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, error)
