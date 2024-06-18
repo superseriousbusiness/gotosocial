@@ -21,19 +21,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 const (
-	BasePath           = "/v1/reports"
-	IDKey              = "id"
-	ResolvedKey        = "resolved"
-	TargetAccountIDKey = "target_account_id"
-	MaxIDKey           = "max_id"
-	SinceIDKey         = "since_id"
-	MinIDKey           = "min_id"
-	LimitKey           = "limit"
-	BasePathWithID     = BasePath + "/:" + IDKey
+	BasePath       = "/v1/reports"
+	BasePathWithID = BasePath + "/:" + apiutil.IDKey
 )
 
 type Module struct {

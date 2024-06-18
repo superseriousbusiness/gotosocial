@@ -28,6 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -41,7 +42,7 @@ func (suite *EmojiDeleteTestSuite) TestEmojiDelete1() {
 
 	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodDelete, nil, path, "application/json")
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	suite.adminModule.EmojiDELETEHandler(ctx)
 	suite.Equal(http.StatusOK, recorder.Code)
@@ -78,7 +79,7 @@ func (suite *EmojiDeleteTestSuite) TestEmojiDelete2() {
 
 	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodDelete, nil, path, "application/json")
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	suite.adminModule.EmojiDELETEHandler(ctx)
 	suite.Equal(http.StatusBadRequest, recorder.Code)
@@ -100,7 +101,7 @@ func (suite *EmojiDeleteTestSuite) TestEmojiDeleteNotFound() {
 
 	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodDelete, nil, path, "application/json")
-	ctx.AddParam(admin.IDKey, "01GF8VRXX1R00X7XH8973Z29R1")
+	ctx.AddParam(apiutil.IDKey, "01GF8VRXX1R00X7XH8973Z29R1")
 
 	suite.adminModule.EmojiDELETEHandler(ctx)
 	suite.Equal(http.StatusNotFound, recorder.Code)

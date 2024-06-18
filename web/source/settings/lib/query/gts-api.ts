@@ -136,7 +136,7 @@ export const gtsApi = createApi({
 	tagTypes: [
 		"Auth",
 		"Emoji",
-		"Reports",
+		"Report",
 		"Account",
 		"InstanceRules",
 		"HTTPHeaderAllows",

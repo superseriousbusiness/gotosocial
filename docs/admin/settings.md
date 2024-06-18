@@ -20,11 +20,13 @@ Instance moderation settings.
 
 ### Reports
 
-![List of reports for testing, one resolved and one open.](../assets/admin-settings-reports.png)
+![List of reports for testing, showing one open report.](../assets/admin-settings-reports.png)
 
 The reports section shows a list of reports, originating from your local users, or remote instances (shown anonymously as just the name of the instance, without specific username).
 
 Clicking a report shows if it was resolved (with the reasoning if available), more information, and a list of reported toots if selected by the reporting user. You can also use this view to mark a report as resolved, and fill in a comment. Whatever comment you enter here will be visible to the user that created the report, if that user is from your instance.
+
+![The detailed view of an open report, showing the reported status and the reason for the report.](../assets/admin-settings-report-detail.png)
 
 Clicking on the username of the reported account opens that account in the 'Accounts' view, allowing you to perform moderation actions on it.
 

@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -53,7 +54,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -130,7 +131,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateSwitchCategory() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -208,7 +209,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -284,7 +285,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableEmoji() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -325,7 +326,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableLocalEmoji() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -358,7 +359,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyRemoteEmoji() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -391,7 +392,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyNoParams() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -425,7 +426,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyLocalToLocal() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -459,7 +460,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyEmptyShortcode() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -492,7 +493,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyNoShortcode() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)
@@ -526,7 +527,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyShortcodeAlreadyInUse() {
 	bodyBytes := requestBody.Bytes()
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	// call the handler
 	suite.adminModule.EmojiPATCHHandler(ctx)

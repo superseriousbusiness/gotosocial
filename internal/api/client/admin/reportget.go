@@ -18,7 +18,6 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -85,10 +84,9 @@ func (m *Module) ReportGETHandler(c *gin.Context) {
 		return
 	}
 
-	reportID := c.Param(IDKey)
-	if reportID == "" {
-		err := errors.New("no report id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	reportID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

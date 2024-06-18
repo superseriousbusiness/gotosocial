@@ -21,29 +21,51 @@ import { gtsApi } from "../../gts-api";
 
 import type {
 	AdminReport,
-	AdminReportListParams,
+	AdminSearchReportParams,
 	AdminReportResolveParams,
+	AdminSearchReportResp,
 } from "../../../types/report";
+import parse from "parse-link-header";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
-		listReports: build.query<AdminReport[], AdminReportListParams | void>({
-			query: (params) => ({
-				url: "/api/v1/admin/reports",
-				params: {
-					// Override provided limit.
-					limit: 100,
-					...params
+		searchReports: build.query<AdminSearchReportResp, AdminSearchReportParams>({
+			query: (form) => {
+				const params = new(URLSearchParams);
+				Object.entries(form).forEach(([k, v]) => {
+					if (v !== undefined) {
+						params.append(k, v);
+					}
+				});
+
+				let query = "";
+				if (params.size !== 0) {
+					query = `?${params.toString()}`;
 				}
-			}),
-			providesTags: [{ type: "Reports", id: "LIST" }]
+
+				return {
+					url: `/api/v1/admin/reports${query}`
+				};
+			},
+			// Headers required for paging.
+			transformResponse: (apiResp: AdminReport[], meta) => {
+				const accounts = apiResp;
+				const linksStr = meta?.response?.headers.get("Link");
+				const links = parse(linksStr);
+				return { accounts, links };
+			},
+			// Only provide LIST tag id since this model is not the
+			// same as getReport model (due to transformResponse).
+			providesTags: [{ type: "Report", id: "TRANSFORMED" }]
 		}),
 
 		getReport: build.query<AdminReport, string>({
 			query: (id) => ({
 				url: `/api/v1/admin/reports/${id}`
 			}),
-			providesTags: (_res, _error, id) => [{ type: "Reports", id }]
+			providesTags: (_result, _error, id) => [
+				{ type: 'Report', id }
+			],
 		}),
 	
 		resolveReport: build.mutation<AdminReport, AdminReportResolveParams>({
@@ -55,8 +77,8 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			invalidatesTags: (res) =>
 				res
-					? [{ type: "Reports", id: "LIST" }, { type: "Reports", id: res.id }]
-					: [{ type: "Reports", id: "LIST" }]
+					? [{ type: "Report", id: "LIST" }, { type: "Report", id: res.id }]
+					: [{ type: "Report", id: "LIST" }]
 		})
 	})
 });
@@ -64,7 +86,7 @@ const extended = gtsApi.injectEndpoints({
 /**
  * List reports received on this instance, filtered using given parameters.
  */
-const useListReportsQuery = extended.useListReportsQuery;
+const useLazySearchReportsQuery = extended.useLazySearchReportsQuery;
 
 /**
  * Get a single report by its ID.
@@ -77,7 +99,7 @@ const useGetReportQuery = extended.useGetReportQuery;
 const useResolveReportMutation = extended.useResolveReportMutation;
 
 export {
-	useListReportsQuery,
+	useLazySearchReportsQuery,
 	useGetReportQuery,
 	useResolveReportMutation,
 };

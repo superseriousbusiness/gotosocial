@@ -18,7 +18,6 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -97,10 +96,9 @@ func (m *Module) EmojiDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	emojiID := c.Param(IDKey)
-	if emojiID == "" {
-		err := errors.New("no emoji id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	emojiID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

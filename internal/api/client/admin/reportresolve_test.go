@@ -29,6 +29,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -65,7 +66,7 @@ func (suite *ReportResolveTestSuite) resolveReport(
 
 	// create the request
 	ctx.Request = httptest.NewRequest(http.MethodPost, requestURI, nil)
-	ctx.AddParam(admin.IDKey, targetReportID)
+	ctx.AddParam(apiutil.IDKey, targetReportID)
 	ctx.Request.Header.Set("accept", "application/json")
 	if actionTakenComment != nil {
 		ctx.Request.Form = url.Values{"action_taken_comment": {*actionTakenComment}}

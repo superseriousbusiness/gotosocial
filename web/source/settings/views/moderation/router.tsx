@@ -20,7 +20,7 @@
 import React from "react";
 import { BaseUrlContext, useBaseUrl, useHasPermission } from "../../lib/navigation/util";
 import { Redirect, Route, Router, Switch } from "wouter";
-import { ReportOverview } from "./reports/overview";
+import ReportsSearch from "./reports/search";
 import ReportDetail from "./reports/detail";
 import { ErrorBoundary } from "../../lib/navigation/error";
 import ImportExport from "./domain-permissions/import-export";
@@ -85,8 +85,9 @@ function ModerationReportsRouter() {
 			<Router base={thisBase}>
 				<ErrorBoundary>
 					<Switch>
+						<Route path="/search" component={ReportsSearch}/>
 						<Route path={"/:reportId"} component={ReportDetail} />
-						<Route component={ReportOverview}/>
+						<Route><Redirect to="/search"/></Route>
 					</Switch>
 				</ErrorBoundary>
 			</Router>
