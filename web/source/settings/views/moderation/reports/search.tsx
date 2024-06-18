@@ -76,7 +76,7 @@ function ReportSearchForm() {
 	// search (just show unresolved reports).
 	useEffect(() => {
 		if (hasParams) {
-			searchReports(Object.fromEntries(urlQueryParams), true);
+			searchReports(Object.fromEntries(urlQueryParams));
 		} else {
 			setResolved("false");
 			setLocation(location + "?resolved=false");
@@ -204,7 +204,7 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 		>
 			<dl className="info-list">
 				<div className="info-list-entry">
-					<dt>Target</dt>
+					<dt>Reported account:</dt>
 					<dd className="text-cutoff">
 						<Username
 							account={target}
@@ -214,14 +214,14 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 				</div>
 				
 				<div className="info-list-entry">
-					<dt>Reported by</dt>
+					<dt>Reported by:</dt>
 					<dd className="text-cutoff reported-by">
 						<Username account={from} />
 					</dd>
 				</div>
 
 				<div className="info-list-entry">
-					<dt>Status</dt>
+					<dt>Status:</dt>
 					<dd className="text-cutoff">
 						{ report.action_taken
 							? <>{status}</>
@@ -231,7 +231,7 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 				</div>
 
 				<div className="info-list-entry">
-					<dt>Reason</dt>
+					<dt>Reason:</dt>
 					<dd className="text-cutoff">
 						{ comment.length > 0
 							? <>{comment}</>
@@ -241,7 +241,7 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 				</div>
 
 				<div className="info-list-entry">
-					<dt>Created</dt>
+					<dt>Created:</dt>
 					<dd className="text-cutoff">
 						<time dateTime={report.created_at}>{created}</time>
 					</dd>

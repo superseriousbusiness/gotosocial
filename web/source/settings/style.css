@@ -1109,45 +1109,14 @@ button.with-padding {
 			padding: 0;
 		}
 	}
-
-	.report.detail {
-		display: flex;
-		flex-direction: column;
-		margin-top: 1rem;
-		gap: 1rem;
-
-		.info-block {
-			padding: 0.5rem;
-			background: $gray2;
-		}
-
-		.info {
-			display: block;
-		}
-
-		.reported-toots {
-			margin-top: 0.5rem;
-		}
-
-		.toot .toot-info {
-			padding: 0.5rem;
-			background: $toot-info-bg;
-
-			a {
-				color: $fg-reduced;
-			}
-
-			&:last-child {
-				border-bottom-left-radius: $br;
-				border-bottom-right-radius: $br;
-			}
-		}
-	}
 }
 
 .report-detail {
 	.info-list {
-		margin-top: 1rem;
+		
+		&.overview {
+			margin-top: 1rem;
+		}
 
 		.username-lozenge {
 			display: flex;
@@ -1161,6 +1130,17 @@ button.with-padding {
 			.fa {
 				flex-shrink: 0;
 			}
+		}
+	}
+
+	.report-statuses {
+		width: min(100%, 50rem);
+
+		.thread {
+			display: flex;
+			flex-direction: column;
+			gap: 2rem;
+			padding: 0;
 		}
 	}
 }

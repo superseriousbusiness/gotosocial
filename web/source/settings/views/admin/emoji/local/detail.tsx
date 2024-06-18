@@ -22,7 +22,7 @@ import { Redirect, useParams } from "wouter";
 import { useComboBoxInput, useFileInput, useValue } from "../../../../lib/form";
 import useFormSubmit from "../../../../lib/form/submit";
 import { useBaseUrl } from "../../../../lib/navigation/util";
-import FakeStatus from "../../../../components/status";
+import { FakeStatus } from "../../../../components/status";
 import FormWithData from "../../../../lib/form/form-with-data";
 import Loading from "../../../../components/loading";
 import { FileInput } from "../../../../components/form/inputs";

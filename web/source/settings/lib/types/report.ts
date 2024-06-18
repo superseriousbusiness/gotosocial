@@ -19,6 +19,7 @@
 
 import { Links } from "parse-link-header";
 import { AdminAccount } from "./account";
+import { Status } from "./status";
 
 /**
  * Admin model of a report. Differs from the client
@@ -77,7 +78,7 @@ export interface AdminReport {
 	 * Statuses cited by this report, if any.
 	 * TODO: model this properly.
 	 */
-	statuses: Object[];
+	statuses: Status[];
 	/**
 	 * Rules broken according to the reporter, if any.
 	 * TODO: model this properly.

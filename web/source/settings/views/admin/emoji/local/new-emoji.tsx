@@ -23,7 +23,7 @@ import useShortcode from "./use-shortcode";
 import useFormSubmit from "../../../../lib/form/submit";
 import { TextInput, FileInput } from "../../../../components/form/inputs";
 import { CategorySelect } from '../category-select';
-import FakeStatus from "../../../../components/status";
+import { FakeStatus } from "../../../../components/status";
 import MutationButton from "../../../../components/form/mutation-button";
 import { useAddEmojiMutation } from "../../../../lib/query/admin/custom-emoji";
 import { useInstanceV1Query } from "../../../../lib/query/gts-api";
