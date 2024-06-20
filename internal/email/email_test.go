@@ -18,6 +18,7 @@
 package email_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -40,6 +41,15 @@ func (suite *EmailTestSuite) SetupTest() {
 	suite.sender = testrig.NewEmailSender("../../web/template/", suite.sentEmails)
 }
 
+// strips non deteministic headers from mails
+func (suite *EmailTestSuite) stripHeaders() {
+	re := regexp.MustCompile(`(?m)^(Date:|Message-ID:) .*$\n`)
+	for key, mail := range suite.sentEmails {
+		res := re.ReplaceAllString(mail, "")
+		suite.sentEmails[key] = res
+	}
+}
+
 func (suite *EmailTestSuite) TestTemplateConfirmNewSignup() {
 	confirmData := email.ConfirmData{
 		Username:     "test",
@@ -50,6 +60,7 @@ func (suite *EmailTestSuite) TestTemplateConfirmNewSignup() {
 	}
 
 	suite.sender.SendConfirmEmail("user@example.org", confirmData)
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because you've requested an account on https://example.org.\r\n\r\nTo use your account, you must confirm that this is your email address.\r\n\r\nTo confirm your email, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -64,6 +75,7 @@ func (suite *EmailTestSuite) TestTemplateConfirm() {
 	}
 
 	suite.sender.SendConfirmEmail("user@example.org", confirmData)
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Email Confirmation\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because you've requested an email address change on https://example.org.\r\n\r\nTo complete the change, you must confirm that this is your email address.\r\n\r\nTo confirm your email, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/confirm_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -77,6 +89,7 @@ func (suite *EmailTestSuite) TestTemplateReset() {
 	}
 
 	suite.sender.SendResetEmail("user@example.org", resetData)
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Password Reset\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello test!\r\n\r\nYou are receiving this mail because a password reset has been requested for your account on https://example.org.\r\n\r\nTo reset your password, paste the following in your browser's address bar:\r\n\r\nhttps://example.org/reset_email?token=ee24f71d-e615-43f9-afae-385c0799b7fa\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -94,6 +107,7 @@ func (suite *EmailTestSuite) TestTemplateReportRemoteToLocal() {
 	if err := suite.sender.SendNewReportEmail([]string{"user@example.org"}, reportData); err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial New Report\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from fossbros-anonymous.io has reported a user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -111,6 +125,7 @@ func (suite *EmailTestSuite) TestTemplateReportLocalToRemote() {
 	if err := suite.sender.SendNewReportEmail([]string{"user@example.org"}, reportData); err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial New Report\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from your instance has reported a user from fossbros-anonymous.io.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -128,6 +143,7 @@ func (suite *EmailTestSuite) TestTemplateReportLocalToLocal() {
 	if err := suite.sender.SendNewReportEmail([]string{"user@example.org"}, reportData); err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial New Report\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from your instance has reported another user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -145,6 +161,7 @@ func (suite *EmailTestSuite) TestTemplateReportMoreThanOneModeratorAddress() {
 	if err := suite.sender.SendNewReportEmail([]string{"user@example.org", "admin@example.org"}, reportData); err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: Undisclosed Recipients:;\r\nFrom: test@example.org\r\nSubject: GoToSocial New Report\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from fossbros-anonymous.io has reported a user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -164,6 +181,7 @@ func (suite *EmailTestSuite) TestTemplateReportMoreThanOneModeratorAddressDisclo
 	if err := suite.sender.SendNewReportEmail([]string{"user@example.org", "admin@example.org"}, reportData); err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org, admin@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial New Report\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello moderator of Test Instance (https://example.org)!\r\n\r\nSomeone from fossbros-anonymous.io has reported a user from your instance.\r\n\r\nTo view the report, paste the following link into your browser: https://example.org/settings/admin/reports/01GVJHN1RTYZCZTCXVPPPKBX6R\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -180,6 +198,7 @@ func (suite *EmailTestSuite) TestTemplateReportClosedOK() {
 	if err := suite.sender.SendReportClosedEmail("user@example.org", reportClosedData); err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Report Closed\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello !\r\n\r\nYou recently reported the account @foss_satan@fossbros-anonymous.io to the moderator(s) of Test Instance (https://example.org).\r\n\r\nThe report you submitted has now been closed.\r\n\r\nThe moderator who closed the report left the following comment: User was yeeted. Thank you for reporting!\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
@@ -196,6 +215,7 @@ func (suite *EmailTestSuite) TestTemplateReportClosedLocalAccountNoComment() {
 	if err := suite.sender.SendReportClosedEmail("user@example.org", reportClosedData); err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.stripHeaders()
 	suite.Len(suite.sentEmails, 1)
 	suite.Equal("To: user@example.org\r\nFrom: test@example.org\r\nSubject: GoToSocial Report Closed\r\nMIME-Version: 1.0\r\nContent-Transfer-Encoding: 8bit\r\nContent-Type: text/plain; charset=\"UTF-8\"\r\n\r\nHello !\r\n\r\nYou recently reported the account @1happyturtle to the moderator(s) of Test Instance (https://example.org).\r\n\r\nThe report you submitted has now been closed.\r\n\r\nThe moderator who closed the report did not leave a comment.\r\n\r\n---\r\n\r\nIf you believe you've been sent this email in error, feel free to ignore it, or contact the administrator of https://example.org.\r\n\r\n", suite.sentEmails["user@example.org"])
 }
