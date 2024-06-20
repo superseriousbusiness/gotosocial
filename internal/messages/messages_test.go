@@ -18,15 +18,22 @@
 package messages_test
 
 import (
+	"bytes"
 	"encoding/json"
+	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/testrig"
+
+	"github.com/google/go-cmp/cmp"
 )
+
+var testStatus = testrig.NewTestStatuses()["admin_account_status_1"]
+
+var testAccount = testrig.NewTestAccounts()["admin_account"]
 
 var fromClientAPICases = []struct {
 	msg  messages.FromClientAPI
@@ -36,7 +43,7 @@ var fromClientAPICases = []struct {
 		msg: messages.FromClientAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
-			GTSModel:       &gtsmodel.Status{ID: "69", Content: "hehe"},
+			GTSModel:       testStatus,
 			TargetURI:      "https://gotosocial.org",
 			Origin:         &gtsmodel.Account{ID: "654321"},
 			Target:         &gtsmodel.Account{ID: "123456"},
@@ -44,7 +51,7 @@ var fromClientAPICases = []struct {
 		data: toJSON(map[string]any{
 			"ap_object_type":   ap.ObjectNote,
 			"ap_activity_type": ap.ActivityCreate,
-			"gts_model":        json.RawMessage(toJSON(&gtsmodel.Status{ID: "69", Content: "hehe"})),
+			"gts_model":        json.RawMessage(toJSON(testStatus)),
 			"gts_model_type":   "*gtsmodel.Status",
 			"target_uri":       "https://gotosocial.org",
 			"origin_id":        "654321",
@@ -55,7 +62,7 @@ var fromClientAPICases = []struct {
 		msg: messages.FromClientAPI{
 			APObjectType:   ap.ObjectProfile,
 			APActivityType: ap.ActivityUpdate,
-			GTSModel:       &gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)},
+			GTSModel:       testAccount,
 			TargetURI:      "https://uk-queen-is-dead.org",
 			Origin:         &gtsmodel.Account{ID: "123456"},
 			Target:         &gtsmodel.Account{ID: "654321"},
@@ -63,7 +70,7 @@ var fromClientAPICases = []struct {
 		data: toJSON(map[string]any{
 			"ap_object_type":   ap.ObjectProfile,
 			"ap_activity_type": ap.ActivityUpdate,
-			"gts_model":        json.RawMessage(toJSON(&gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)})),
+			"gts_model":        json.RawMessage(toJSON(testAccount)),
 			"gts_model_type":   "*gtsmodel.Account",
 			"target_uri":       "https://uk-queen-is-dead.org",
 			"origin_id":        "123456",
@@ -80,7 +87,7 @@ var fromFediAPICases = []struct {
 		msg: messages.FromFediAPI{
 			APObjectType:   ap.ObjectNote,
 			APActivityType: ap.ActivityCreate,
-			GTSModel:       &gtsmodel.Status{ID: "69", Content: "hehe"},
+			GTSModel:       testStatus,
 			TargetURI:      "https://gotosocial.org",
 			Requesting:     &gtsmodel.Account{ID: "654321"},
 			Receiving:      &gtsmodel.Account{ID: "123456"},
@@ -88,7 +95,7 @@ var fromFediAPICases = []struct {
 		data: toJSON(map[string]any{
 			"ap_object_type":   ap.ObjectNote,
 			"ap_activity_type": ap.ActivityCreate,
-			"gts_model":        json.RawMessage(toJSON(&gtsmodel.Status{ID: "69", Content: "hehe"})),
+			"gts_model":        json.RawMessage(toJSON(testStatus)),
 			"gts_model_type":   "*gtsmodel.Status",
 			"target_uri":       "https://gotosocial.org",
 			"requesting_id":    "654321",
@@ -99,7 +106,7 @@ var fromFediAPICases = []struct {
 		msg: messages.FromFediAPI{
 			APObjectType:   ap.ObjectProfile,
 			APActivityType: ap.ActivityUpdate,
-			GTSModel:       &gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)},
+			GTSModel:       testAccount,
 			TargetURI:      "https://uk-queen-is-dead.org",
 			Requesting:     &gtsmodel.Account{ID: "123456"},
 			Receiving:      &gtsmodel.Account{ID: "654321"},
@@ -107,7 +114,7 @@ var fromFediAPICases = []struct {
 		data: toJSON(map[string]any{
 			"ap_object_type":   ap.ObjectProfile,
 			"ap_activity_type": ap.ActivityUpdate,
-			"gts_model":        json.RawMessage(toJSON(&gtsmodel.Account{ID: "420", DisplayName: "Her Fuckin' Maj Queen Liz", Memorial: util.Ptr(true)})),
+			"gts_model":        json.RawMessage(toJSON(testAccount)),
 			"gts_model_type":   "*gtsmodel.Account",
 			"target_uri":       "https://uk-queen-is-dead.org",
 			"requesting_id":    "123456",
@@ -124,8 +131,8 @@ func TestSerializeFromClientAPI(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Check that serialized JSON data is as expected.
-		assert.JSONEq(t, string(test.data), string(data))
+		// Check serialized JSON data as expected.
+		assertJSONEqual(t, test.data, data)
 	}
 }
 
@@ -140,7 +147,12 @@ func TestDeserializeFromClientAPI(t *testing.T) {
 		}
 
 		// Check that msg is as expected.
-		assert.Equal(t, test.msg, msg)
+		assertEqual(t, test.msg.APActivityType, msg.APActivityType)
+		assertEqual(t, test.msg.APObjectType, msg.APObjectType)
+		assertEqual(t, test.msg.GTSModel, msg.GTSModel)
+		assertEqual(t, test.msg.TargetURI, msg.TargetURI)
+		assertEqual(t, accountID(test.msg.Origin), accountID(msg.Origin))
+		assertEqual(t, accountID(test.msg.Target), accountID(msg.Target))
 	}
 }
 
@@ -152,8 +164,8 @@ func TestSerializeFromFediAPI(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		// Check that serialized JSON data is as expected.
-		assert.JSONEq(t, string(test.data), string(data))
+		// Check serialized JSON data as expected.
+		assertJSONEqual(t, test.data, data)
 	}
 }
 
@@ -168,9 +180,64 @@ func TestDeserializeFromFediAPI(t *testing.T) {
 		}
 
 		// Check that msg is as expected.
-		assert.Equal(t, test.msg, msg)
+		assertEqual(t, test.msg.APActivityType, msg.APActivityType)
+		assertEqual(t, test.msg.APObjectType, msg.APObjectType)
+		assertEqual(t, urlStr(test.msg.APIRI), urlStr(msg.APIRI))
+		assertEqual(t, test.msg.APObject, msg.APObject)
+		assertEqual(t, test.msg.GTSModel, msg.GTSModel)
+		assertEqual(t, test.msg.TargetURI, msg.TargetURI)
+		assertEqual(t, accountID(test.msg.Receiving), accountID(msg.Receiving))
+		assertEqual(t, accountID(test.msg.Requesting), accountID(msg.Requesting))
 	}
+}
 
+// assertEqual asserts that two values (of any type!) are equal,
+// note we use the 'cmp' library here as it's much more useful in
+// outputting debug information than testify, and handles more complex
+// types like rsa public / private key comparisons correctly.
+func assertEqual(t *testing.T, expect, receive any) bool {
+	if diff := cmp.Diff(expect, receive); diff != "" {
+		t.Error(diff)
+		return false
+	}
+	return true
+}
+
+// assertJSONEqual asserts that two slices of JSON data are equal.
+func assertJSONEqual(t *testing.T, expect, receive []byte) bool {
+	return assertEqual(t, fromJSON(expect), fromJSON(receive))
+}
+
+// urlStr returns url as string, or empty.
+func urlStr(url *url.URL) string {
+	if url == nil {
+		return ""
+	}
+	return url.String()
+}
+
+// accountID returns account's ID, or empty.
+func accountID(account *gtsmodel.Account) string {
+	if account == nil {
+		return ""
+	}
+	return account.ID
+}
+
+// fromJSON unmarshals input data as JSON.
+func fromJSON(b []byte) any {
+	r := bytes.NewReader(b)
+	d := json.NewDecoder(r)
+	d.UseNumber()
+	var a any
+	err := d.Decode(&a)
+	if err != nil {
+		panic(err)
+	}
+	if d.More() {
+		panic("multiple json values in b")
+	}
+	return a
 }
 
 // toJSON marshals input type as JSON data.
