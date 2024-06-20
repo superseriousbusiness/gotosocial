@@ -18,16 +18,13 @@
 package delivery
 
 import (
-	"context"
-	"slices"
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http"
 	"time"
 
-	"codeberg.org/gruf/go-runners"
-	"codeberg.org/gruf/go-structr"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
-	"github.com/superseriousbusiness/gotosocial/internal/queue"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Delivery wraps an httpclient.Request{}
@@ -36,6 +33,9 @@ import (
 // be indexed (and so, dropped from queue)
 // by any of these possible ID IRIs.
 type Delivery struct {
+	// PubKeyID is the signing public key
+	// ID of the actor performing request.
+	PubKeyID string
 
 	// ActorID contains the ActivityPub
 	// actor ID IRI (if any) of the activity
@@ -61,273 +61,98 @@ type Delivery struct {
 	next time.Time
 }
 
+// delivery is an internal type
+// for Delivery{} that provides
+// a json serialize / deserialize
+// able shape that minimizes data.
+type delivery struct {
+	PubKeyID string              `json:"pub_key_id,omitempty"`
+	ActorID  string              `json:"actor_id,omitempty"`
+	ObjectID string              `json:"object_id,omitempty"`
+	TargetID string              `json:"target_id,omitempty"`
+	Method   string              `json:"method,omitempty"`
+	Header   map[string][]string `json:"header,omitempty"`
+	URL      string              `json:"url,omitempty"`
+	Body     []byte              `json:"body,omitempty"`
+}
+
+// Serialize will serialize the delivery data as data blob for storage,
+// note that this will flatten some of the data, dropping signing funcs.
+func (dlv *Delivery) Serialize() ([]byte, error) {
+	var body []byte
+
+	if dlv.Request.GetBody != nil {
+		// Fetch a fresh copy of request body.
+		rbody, err := dlv.Request.GetBody()
+		if err != nil {
+			return nil, err
+		}
+
+		// Read request body into memory.
+		body, err = io.ReadAll(rbody)
+
+		// Done with body.
+		_ = rbody.Close()
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Marshal as internal JSON type.
+	return json.Marshal(delivery{
+		PubKeyID: dlv.PubKeyID,
+		ActorID:  dlv.ActorID,
+		ObjectID: dlv.ObjectID,
+		TargetID: dlv.TargetID,
+		Method:   dlv.Request.Method,
+		Header:   dlv.Request.Header,
+		URL:      dlv.Request.URL.String(),
+		Body:     body,
+	})
+}
+
+// Deserialize will attempt to deserialize a blob of task data,
+// which will involve unflattening previously serialized data and
+// leave delivery incomplete, still requiring signing func setup.
+func (dlv *Delivery) Deserialize(data []byte) error {
+	var idlv delivery
+
+	// Unmarshal as internal JSON type.
+	err := json.Unmarshal(data, &idlv)
+	if err != nil {
+		return err
+	}
+
+	// Copy over simplest fields.
+	dlv.PubKeyID = idlv.PubKeyID
+	dlv.ActorID = idlv.ActorID
+	dlv.ObjectID = idlv.ObjectID
+	dlv.TargetID = idlv.TargetID
+
+	var body io.Reader
+
+	if idlv.Body != nil {
+		// Create new body reader from data.
+		body = bytes.NewReader(idlv.Body)
+	}
+
+	// Create a new request object from unmarshaled details.
+	r, err := http.NewRequest(idlv.Method, idlv.URL, body)
+	if err != nil {
+		return err
+	}
+
+	// Wrap request in httpclient type.
+	dlv.Request = httpclient.WrapRequest(r)
+
+	return nil
+}
+
+// backoff returns a valid (>= 0) backoff duration.
 func (dlv *Delivery) backoff() time.Duration {
 	if dlv.next.IsZero() {
 		return 0
 	}
 	return time.Until(dlv.next)
-}
-
-// WorkerPool wraps multiple Worker{}s in
-// a singular struct for easy multi start/stop.
-type WorkerPool struct {
-
-	// Client defines httpclient.Client{}
-	// passed to each of delivery pool Worker{}s.
-	Client *httpclient.Client
-
-	// Queue is the embedded queue.StructQueue{}
-	// passed to each of delivery pool Worker{}s.
-	Queue queue.StructQueue[*Delivery]
-
-	// internal fields.
-	workers []*Worker
-}
-
-// Init will initialize the Worker{} pool
-// with given http client, request queue to pull
-// from and number of delivery workers to spawn.
-func (p *WorkerPool) Init(client *httpclient.Client) {
-	p.Client = client
-	p.Queue.Init(structr.QueueConfig[*Delivery]{
-		Indices: []structr.IndexConfig{
-			{Fields: "ActorID", Multiple: true},
-			{Fields: "ObjectID", Multiple: true},
-			{Fields: "TargetID", Multiple: true},
-		},
-	})
-}
-
-// Start will attempt to start 'n' Worker{}s.
-func (p *WorkerPool) Start(n int) {
-	// Check whether workers are
-	// set (is already running).
-	ok := (len(p.workers) > 0)
-	if ok {
-		return
-	}
-
-	// Allocate new workers slice.
-	p.workers = make([]*Worker, n)
-	for i := range p.workers {
-
-		// Allocate new Worker{}.
-		p.workers[i] = new(Worker)
-		p.workers[i].Client = p.Client
-		p.workers[i].Queue = &p.Queue
-
-		// Attempt to start worker.
-		// Return bool not useful
-		// here, as true = started,
-		// false = already running.
-		_ = p.workers[i].Start()
-	}
-}
-
-// Stop will attempt to stop contained Worker{}s.
-func (p *WorkerPool) Stop() {
-	// Check whether workers are
-	// set (is currently running).
-	ok := (len(p.workers) == 0)
-	if ok {
-		return
-	}
-
-	// Stop all running workers.
-	for i := range p.workers {
-
-		// return bool not useful
-		// here, as true = stopped,
-		// false = never running.
-		_ = p.workers[i].Stop()
-	}
-
-	// Unset workers slice.
-	p.workers = p.workers[:0]
-}
-
-// Worker wraps an httpclient.Client{} to feed
-// from queue.StructQueue{} for ActivityPub reqs
-// to deliver. It does so while prioritizing new
-// queued requests over backlogged retries.
-type Worker struct {
-
-	// Client is the httpclient.Client{} that
-	// delivery worker will use for requests.
-	Client *httpclient.Client
-
-	// Queue is the Delivery{} message queue
-	// that delivery worker will feed from.
-	Queue *queue.StructQueue[*Delivery]
-
-	// internal fields.
-	backlog []*Delivery
-	service runners.Service
-}
-
-// Start will attempt to start the Worker{}.
-func (w *Worker) Start() bool {
-	return w.service.GoRun(w.run)
-}
-
-// Stop will attempt to stop the Worker{}.
-func (w *Worker) Stop() bool {
-	return w.service.Stop()
-}
-
-// run wraps process to restart on any panic.
-func (w *Worker) run(ctx context.Context) {
-	if w.Client == nil || w.Queue == nil {
-		panic("not yet initialized")
-	}
-	util.Must(func() { w.process(ctx) })
-}
-
-// process is the main delivery worker processing routine.
-func (w *Worker) process(ctx context.Context) bool {
-	if w.Client == nil || w.Queue == nil {
-		// we perform this check here just
-		// to ensure the compiler knows these
-		// variables aren't nil in the loop,
-		// even if already checked by caller.
-		panic("not yet initialized")
-	}
-
-loop:
-	for {
-		// Get next delivery.
-		dlv, ok := w.next(ctx)
-		if !ok {
-			return true
-		}
-
-		// Check whether backoff required.
-		const min = 100 * time.Millisecond
-		if d := dlv.backoff(); d > min {
-
-			// Start backoff sleep timer.
-			backoff := time.NewTimer(d)
-
-			select {
-			case <-ctx.Done():
-				// Main ctx
-				// cancelled.
-				backoff.Stop()
-				return true
-
-			case <-w.Queue.Wait():
-				// A new message was
-				// queued, re-add this
-				// to backlog + retry.
-				w.pushBacklog(dlv)
-				backoff.Stop()
-				continue loop
-
-			case <-backoff.C:
-				// success!
-			}
-		}
-
-		// Attempt delivery of AP request.
-		rsp, retry, err := w.Client.DoOnce(
-			&dlv.Request,
-		)
-
-		if err == nil {
-			// Ensure body closed.
-			_ = rsp.Body.Close()
-			continue loop
-		}
-
-		if !retry {
-			// Drop deliveries when no
-			// retry requested, or they
-			// reached max (either).
-			continue loop
-		}
-
-		// Determine next delivery attempt.
-		backoff := dlv.Request.BackOff()
-		dlv.next = time.Now().Add(backoff)
-
-		// Push to backlog.
-		w.pushBacklog(dlv)
-	}
-}
-
-// next gets the next available delivery, blocking until available if necessary.
-func (w *Worker) next(ctx context.Context) (*Delivery, bool) {
-loop:
-	for {
-		// Try pop next queued.
-		dlv, ok := w.Queue.Pop()
-
-		if !ok {
-			// Check the backlog.
-			if len(w.backlog) > 0 {
-
-				// Sort by 'next' time.
-				sortDeliveries(w.backlog)
-
-				// Pop next delivery.
-				dlv := w.popBacklog()
-
-				return dlv, true
-			}
-
-			select {
-			// Backlog is empty, we MUST
-			// block until next enqueued.
-			case <-w.Queue.Wait():
-				continue loop
-
-			// Worker was stopped.
-			case <-ctx.Done():
-				return nil, false
-			}
-		}
-
-		// Replace request context for worker state canceling.
-		ctx := gtscontext.WithValues(ctx, dlv.Request.Context())
-		dlv.Request.Request = dlv.Request.Request.WithContext(ctx)
-
-		return dlv, true
-	}
-}
-
-// popBacklog pops next available from the backlog.
-func (w *Worker) popBacklog() *Delivery {
-	if len(w.backlog) == 0 {
-		return nil
-	}
-
-	// Pop from backlog.
-	dlv := w.backlog[0]
-
-	// Shift backlog down by one.
-	copy(w.backlog, w.backlog[1:])
-	w.backlog = w.backlog[:len(w.backlog)-1]
-
-	return dlv
-}
-
-// pushBacklog pushes the given delivery to backlog.
-func (w *Worker) pushBacklog(dlv *Delivery) {
-	w.backlog = append(w.backlog, dlv)
-}
-
-// sortDeliveries sorts deliveries according
-// to when is the first requiring re-attempt.
-func sortDeliveries(d []*Delivery) {
-	slices.SortFunc(d, func(a, b *Delivery) int {
-		const k = +1
-		switch {
-		case a.next.Before(b.next):
-			return +k
-		case b.next.Before(a.next):
-			return -k
-		default:
-			return 0
-		}
-	})
 }
