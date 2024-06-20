@@ -153,6 +153,10 @@ func TestDeserializeFromClientAPI(t *testing.T) {
 		assertEqual(t, test.msg.TargetURI, msg.TargetURI)
 		assertEqual(t, accountID(test.msg.Origin), accountID(msg.Origin))
 		assertEqual(t, accountID(test.msg.Target), accountID(msg.Target))
+
+		// Perform final check to ensure
+		// account model keys deserialized.
+		assertEqualRSA(t, test.msg.GTSModel, msg.GTSModel)
 	}
 }
 
@@ -188,7 +192,43 @@ func TestDeserializeFromFediAPI(t *testing.T) {
 		assertEqual(t, test.msg.TargetURI, msg.TargetURI)
 		assertEqual(t, accountID(test.msg.Receiving), accountID(msg.Receiving))
 		assertEqual(t, accountID(test.msg.Requesting), accountID(msg.Requesting))
+
+		// Perform final check to ensure
+		// account model keys deserialized.
+		assertEqualRSA(t, test.msg.GTSModel, msg.GTSModel)
 	}
+}
+
+// assertEqualRSA asserts that test account model RSA keys are equal.
+func assertEqualRSA(t *testing.T, expect, receive any) bool {
+	t.Helper()
+
+	account1, ok1 := expect.(*gtsmodel.Account)
+
+	account2, ok2 := receive.(*gtsmodel.Account)
+
+	if ok1 != ok2 {
+		t.Errorf("different model types: expect=%T receive=%T", expect, receive)
+		return false
+	} else if !ok1 {
+		return true
+	}
+
+	if !account1.PublicKey.Equal(account2.PublicKey) {
+		t.Error("public keys do not match")
+		return false
+	}
+
+	t.Logf("publickey=%v", account1.PublicKey)
+
+	if !account1.PrivateKey.Equal(account2.PrivateKey) {
+		t.Error("private keys do not match")
+		return false
+	}
+
+	t.Logf("privatekey=%v", account1.PrivateKey)
+
+	return true
 }
 
 // assertEqual asserts that two values (of any type!) are equal,
@@ -196,6 +236,7 @@ func TestDeserializeFromFediAPI(t *testing.T) {
 // outputting debug information than testify, and handles more complex
 // types like rsa public / private key comparisons correctly.
 func assertEqual(t *testing.T, expect, receive any) bool {
+	t.Helper()
 	if diff := cmp.Diff(expect, receive); diff != "" {
 		t.Error(diff)
 		return false
@@ -205,6 +246,7 @@ func assertEqual(t *testing.T, expect, receive any) bool {
 
 // assertJSONEqual asserts that two slices of JSON data are equal.
 func assertJSONEqual(t *testing.T, expect, receive []byte) bool {
+	t.Helper()
 	return assertEqual(t, fromJSON(expect), fromJSON(receive))
 }
 
