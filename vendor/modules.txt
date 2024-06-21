@@ -43,7 +43,7 @@ codeberg.org/gruf/go-list
 # codeberg.org/gruf/go-logger/v2 v2.2.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-logger/v2/level
-# codeberg.org/gruf/go-mangler v1.3.0
+# codeberg.org/gruf/go-mangler v1.4.0
 ## explicit; go 1.19
 codeberg.org/gruf/go-mangler
 # codeberg.org/gruf/go-maps v1.0.3
@@ -68,7 +68,7 @@ codeberg.org/gruf/go-storage/disk
 codeberg.org/gruf/go-storage/internal
 codeberg.org/gruf/go-storage/memory
 codeberg.org/gruf/go-storage/s3
-# codeberg.org/gruf/go-structr v0.8.5
+# codeberg.org/gruf/go-structr v0.8.7
 ## explicit; go 1.21
 codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/exif-terminator v0.7.0
