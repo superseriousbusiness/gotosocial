@@ -48,7 +48,7 @@ func osDowngradeLock(file *os.File, state LockLevel) _ErrorCode {
 			// In theory, the downgrade to a SHARED cannot fail because another
 			// process is holding an incompatible lock. If it does, this
 			// indicates that the other process is not following the locking
-			// protocol. If this happens, return _IOERR_RDLOCK. Returning
+			// protocol. If this happens, return IOERR_RDLOCK. Returning
 			// BUSY would confuse the upper layer.
 			return _IOERR_RDLOCK
 		}
