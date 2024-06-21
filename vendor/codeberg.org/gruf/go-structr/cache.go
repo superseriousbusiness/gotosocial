@@ -509,6 +509,11 @@ func (c *Cache[T]) Trim(perc float64) {
 		c.delete(item)
 	}
 
+	// Compact index data stores.
+	for i := range c.indices {
+		c.indices[i].data.Compact()
+	}
+
 	// Done with lock.
 	c.mutex.Unlock()
 }
