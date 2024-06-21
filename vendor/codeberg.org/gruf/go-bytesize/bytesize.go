@@ -3,7 +3,7 @@ package bytesize
 import (
 	"errors"
 	"math/bits"
-	_ "strconv"
+	"strconv"
 	"unsafe"
 )
 
@@ -102,10 +102,10 @@ func ParseSize(s string) (Size, error) {
 		return 0, err
 	}
 
-	// Parse remaining string as float
-	f, n, err := atof64(s[:l])
-	if err != nil || n != l {
-		return 0, ErrInvalidFormat
+	// Parse remaining string as 64bit float
+	f, err := strconv.ParseFloat(s[:l], 64)
+	if err != nil {
+		return 0, errctx(ErrInvalidFormat, err.Error())
 	}
 
 	return Size(f * unit), nil
@@ -236,7 +236,7 @@ func parseUnit(s string) (float64, int, error) {
 
 		// Check valid unit char was provided
 		if len(iecvals) < c || iecvals[c] == 0 {
-			return 0, 0, ErrInvalidUnit
+			return 0, 0, errctx(ErrInvalidUnit, s[l:])
 		}
 
 		// Return parsed IEC unit size
@@ -250,7 +250,7 @@ func parseUnit(s string) (float64, int, error) {
 	switch {
 	// Check valid unit char provided
 	case len(sivals) < c || sivals[c] == 0:
-		return 0, 0, ErrInvalidUnit
+		return 0, 0, errctx(ErrInvalidUnit, s[l:])
 
 	// No unit char (only ascii number)
 	case sivals[c] == 1:
@@ -349,10 +349,21 @@ func itoa(dst []byte, i uint64) []byte {
 	return append(dst, b[bp:]...)
 }
 
-// We use the following internal strconv function usually
-// used internally to parse float values, as we know that
-// are value passed will always be of 64bit type, and knowing
-// the returned float string length is very helpful!
-//
-//go:linkname atof64 strconv.atof64
-func atof64(string) (float64, int, error)
+// errwithctx wraps an error
+// with extra context info.
+type errwithctx struct {
+	err error
+	ctx string
+}
+
+func errctx(err error, ctx string) error {
+	return &errwithctx{err: err, ctx: ctx}
+}
+
+func (err *errwithctx) Unwrap() error {
+	return err.err
+}
+
+func (err *errwithctx) Error() string {
+	return err.err.Error() + ": " + err.ctx
+}
