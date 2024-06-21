@@ -1,7 +1,7 @@
 package mangler
 
 import (
-	"math/bits"
+	"unsafe"
 	_ "unsafe"
 )
 
@@ -11,12 +11,12 @@ import (
 //   not only those types directly, but anything type-aliased to those
 //   types. e.g. `time.Duration` directly as int64.
 
-func mangle_string(buf []byte, a any) []byte {
-	return append(buf, *(*string)(eface_data(a))...)
+func mangle_string(buf []byte, ptr unsafe.Pointer) []byte {
+	return append(buf, *(*string)(ptr)...)
 }
 
-func mangle_string_slice(buf []byte, a any) []byte {
-	s := *(*[]string)(eface_data(a))
+func mangle_string_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	s := *(*[]string)(ptr)
 	for _, s := range s {
 		buf = append(buf, s...)
 		buf = append(buf, ',')
@@ -27,15 +27,15 @@ func mangle_string_slice(buf []byte, a any) []byte {
 	return buf
 }
 
-func mangle_bool(buf []byte, a any) []byte {
-	if *(*bool)(eface_data(a)) {
+func mangle_bool(buf []byte, ptr unsafe.Pointer) []byte {
+	if *(*bool)(ptr) {
 		return append(buf, '1')
 	}
 	return append(buf, '0')
 }
 
-func mangle_bool_slice(buf []byte, a any) []byte {
-	for _, b := range *(*[]bool)(eface_data(a)) {
+func mangle_bool_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	for _, b := range *(*[]bool)(ptr) {
 		if b {
 			buf = append(buf, '1')
 		} else {
@@ -45,146 +45,69 @@ func mangle_bool_slice(buf []byte, a any) []byte {
 	return buf
 }
 
-func mangle_8bit(buf []byte, a any) []byte {
-	return append(buf, *(*uint8)(eface_data(a)))
+func mangle_8bit(buf []byte, ptr unsafe.Pointer) []byte {
+	return append(buf, *(*uint8)(ptr))
 }
 
-func mangle_8bit_slice(buf []byte, a any) []byte {
-	return append(buf, *(*[]uint8)(eface_data(a))...)
+func mangle_8bit_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	return append(buf, *(*[]uint8)(ptr)...)
 }
 
-func mangle_16bit(buf []byte, a any) []byte {
-	return append_uint16(buf, *(*uint16)(eface_data(a)))
+func mangle_16bit(buf []byte, ptr unsafe.Pointer) []byte {
+	return append_uint16(buf, *(*uint16)(ptr))
 }
 
-func mangle_16bit_slice(buf []byte, a any) []byte {
-	for _, u := range *(*[]uint16)(eface_data(a)) {
+func mangle_16bit_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	for _, u := range *(*[]uint16)(ptr) {
 		buf = append_uint16(buf, u)
 	}
 	return buf
 }
 
-func mangle_32bit(buf []byte, a any) []byte {
-	return append_uint32(buf, *(*uint32)(eface_data(a)))
+func mangle_32bit(buf []byte, ptr unsafe.Pointer) []byte {
+	return append_uint32(buf, *(*uint32)(ptr))
 }
 
-func mangle_32bit_slice(buf []byte, a any) []byte {
-	for _, u := range *(*[]uint32)(eface_data(a)) {
+func mangle_32bit_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	for _, u := range *(*[]uint32)(ptr) {
 		buf = append_uint32(buf, u)
 	}
 	return buf
 }
 
-func mangle_64bit(buf []byte, a any) []byte {
-	return append_uint64(buf, *(*uint64)(eface_data(a)))
+func mangle_64bit(buf []byte, ptr unsafe.Pointer) []byte {
+	return append_uint64(buf, *(*uint64)(ptr))
 }
 
-func mangle_64bit_slice(buf []byte, a any) []byte {
-	for _, u := range *(*[]uint64)(eface_data(a)) {
+func mangle_64bit_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	for _, u := range *(*[]uint64)(ptr) {
 		buf = append_uint64(buf, u)
 	}
 	return buf
 }
 
-func mangle_platform_int() Mangler {
-	switch bits.UintSize {
-	case 32:
-		return mangle_32bit
-	case 64:
-		return mangle_64bit
-	default:
-		panic("unexpected platform int size")
-	}
+func mangle_int(buf []byte, ptr unsafe.Pointer) []byte {
+	return append_uint64(buf, uint64(*(*uint)(ptr)))
 }
 
-func mangle_platform_int_slice() Mangler {
-	switch bits.UintSize {
-	case 32:
-		return mangle_32bit_slice
-	case 64:
-		return mangle_64bit_slice
-	default:
-		panic("unexpected platform int size")
+func mangle_int_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	for _, u := range *(*[]uint)(ptr) {
+		buf = append_uint64(buf, uint64(u))
 	}
+	return buf
 }
 
-func mangle_128bit(buf []byte, a any) []byte {
-	u2 := *(*[2]uint64)(eface_data(a))
+func mangle_128bit(buf []byte, ptr unsafe.Pointer) []byte {
+	u2 := *(*[2]uint64)(ptr)
 	buf = append_uint64(buf, u2[0])
 	buf = append_uint64(buf, u2[1])
 	return buf
 }
 
-func mangle_128bit_slice(buf []byte, a any) []byte {
-	for _, u2 := range *(*[][2]uint64)(eface_data(a)) {
+func mangle_128bit_slice(buf []byte, ptr unsafe.Pointer) []byte {
+	for _, u2 := range *(*[][2]uint64)(ptr) {
 		buf = append_uint64(buf, u2[0])
 		buf = append_uint64(buf, u2[1])
 	}
-	return buf
-}
-
-func mangle_mangled(buf []byte, a any) []byte {
-	if v := a.(Mangled); v != nil {
-		buf = append(buf, '1')
-		return v.Mangle(buf)
-	}
-	buf = append(buf, '0')
-	return buf
-}
-
-func mangle_binary(buf []byte, a any) []byte {
-	if v := a.(binarymarshaler); v != nil {
-		b, err := v.MarshalBinary()
-		if err != nil {
-			panic("mangle_binary: " + err.Error())
-		}
-		buf = append(buf, '1')
-		return append(buf, b...)
-	}
-	buf = append(buf, '0')
-	return buf
-}
-
-func mangle_byteser(buf []byte, a any) []byte {
-	if v := a.(byteser); v != nil {
-		buf = append(buf, '1')
-		return append(buf, v.Bytes()...)
-	}
-	buf = append(buf, '0')
-	return buf
-}
-
-func mangle_stringer(buf []byte, a any) []byte {
-	if v := a.(stringer); v != nil {
-		buf = append(buf, '1')
-		return append(buf, v.String()...)
-	}
-	buf = append(buf, '0')
-	return buf
-}
-
-func mangle_text(buf []byte, a any) []byte {
-	if v := a.(textmarshaler); v != nil {
-		b, err := v.MarshalText()
-		if err != nil {
-			panic("mangle_text: " + err.Error())
-		}
-		buf = append(buf, '1')
-		return append(buf, b...)
-	}
-	buf = append(buf, '0')
-	return buf
-}
-
-func mangle_json(buf []byte, a any) []byte {
-	if v := a.(jsonmarshaler); v != nil {
-		b, err := v.MarshalJSON()
-		if err != nil {
-			panic("mangle_json: " + err.Error())
-		}
-		buf = append(buf, '1')
-		return append(buf, b...)
-	}
-	buf = append(buf, '0')
 	return buf
 }

@@ -10,15 +10,11 @@ import (
 // type ptrs => Mangler functions.
 var manglers sync.Map
 
-// Mangled is an interface that allows any type to implement a custom
-// Mangler function to improve performance when mangling this type.
-type Mangled interface{ Mangle(buf []byte) []byte }
-
 // Mangler is a function that will take an input interface value of known
 // type, and append it in mangled serialized form to the given byte buffer.
 // While the value type is an interface, the Mangler functions are accessed
 // by the value's runtime type pointer, allowing the input value type to be known.
-type Mangler func(buf []byte, value any) []byte
+type Mangler func(buf []byte, ptr unsafe.Pointer) []byte
 
 // Get will fetch the Mangler function for given runtime type.
 // Note that the returned mangler will be a no-op in the case
@@ -34,27 +30,19 @@ func Get(t reflect.Type) Mangler {
 
 	if !ok {
 		// Load mangler function
-		mng = loadMangler(nil, t)
+		mng = loadMangler(t)
 	} else {
 		// cast cached value
 		mng = v.(Mangler)
 	}
 
-	// Get platform int mangler func.
-	mangle_int := mangle_platform_int()
-
-	return func(buf []byte, value any) []byte {
-		// Type check passed against original type.
-		if vt := reflect.TypeOf(value); vt != t {
-			return buf
-		}
-
+	return func(buf []byte, ptr unsafe.Pointer) []byte {
 		// First write the type ptr (this adds
 		// a unique prefix for each runtime type).
-		buf = mangle_int(buf, uptr)
+		buf = append_uint64(buf, uint64(uptr))
 
 		// Finally, mangle value
-		return mng(buf, value)
+		return mng(buf, ptr)
 	}
 }
 
@@ -94,23 +82,21 @@ func Append(b []byte, a any) []byte {
 	v, ok := manglers.Load(uptr)
 
 	if !ok {
-		// Load mangler into cache
-		mng = loadMangler(nil, t)
+		// Load into cache
+		mng = loadMangler(t)
 		manglers.Store(uptr, mng)
 	} else {
 		// cast cached value
 		mng = v.(Mangler)
 	}
 
-	// Get platform int mangler func.
-	mangle_int := mangle_platform_int()
-
 	// First write the type ptr (this adds
 	// a unique prefix for each runtime type).
-	b = mangle_int(b, uptr)
+	b = append_uint64(b, uint64(uptr))
 
 	// Finally, mangle value
-	return mng(b, a)
+	ptr := eface_data(a)
+	return mng(b, ptr)
 }
 
 // String will return the mangled format of input value 'a'. This
@@ -136,18 +122,8 @@ func Append(b []byte, a any) []byte {
 // - complex64,complex128
 // - arbitrary structs
 // - all type aliases of above
-// - time.Time{}
-// - url.URL{}
-// - net.IPAddr{}
-// - netip.Addr{}, netip.AddrPort{}
-// - mangler.Mangled{}
-// - fmt.Stringer{}
-// - json.Marshaler{}
-// - encoding.BinaryMarshaler{}
-// - encoding.TextMarshaler{}
 // - all pointers to the above
 // - all slices / arrays of the above
-// - all map keys / values of the above
 func String(a any) string {
 	b := Append(make([]byte, 0, 32), a)
 	return *(*string)(unsafe.Pointer(&b))

@@ -3,16 +3,6 @@ package mangler
 import (
 	"reflect"
 	"unsafe"
-
-	"github.com/modern-go/reflect2"
-)
-
-type (
-	byteser         interface{ Bytes() []byte }
-	stringer        interface{ String() string }
-	binarymarshaler interface{ MarshalBinary() ([]byte, error) }
-	textmarshaler   interface{ MarshalText() ([]byte, error) }
-	jsonmarshaler   interface{ MarshalJSON() ([]byte, error) }
 )
 
 func append_uint16(b []byte, u uint16) []byte {
@@ -44,21 +34,28 @@ func append_uint64(b []byte, u uint64) []byte {
 	)
 }
 
-func deref_ptr_mangler(rtype reflect.Type, mangle Mangler, count int) Mangler {
-	if rtype == nil || mangle == nil || count == 0 {
+type typecontext struct {
+	ntype reflect.Type
+	rtype reflect.Type
+}
+
+func deref_ptr_mangler(ctx typecontext, mangle Mangler, n uint) Mangler {
+	if mangle == nil || n == 0 {
 		panic("bad input")
 	}
 
-	// Get reflect2's type for later
-	// unsafe interface data repacking,
-	type2 := reflect2.Type2(rtype)
+	// Non-nested value types,
+	// i.e. just direct ptrs to
+	// primitives require one
+	// less dereference to ptr.
+	if ctx.ntype == nil {
+		n--
+	}
 
-	return func(buf []byte, value any) []byte {
-		// Get raw value data.
-		ptr := eface_data(value)
+	return func(buf []byte, ptr unsafe.Pointer) []byte {
 
-		// Deref n - 1 number times.
-		for i := 0; i < count-1; i++ {
+		// Deref n number times.
+		for i := n; i > 0; i-- {
 
 			if ptr == nil {
 				// Check for nil values
@@ -72,38 +69,63 @@ func deref_ptr_mangler(rtype reflect.Type, mangle Mangler, count int) Mangler {
 		}
 
 		if ptr == nil {
-			// Final nil value check.
+			// Check for nil values
 			buf = append(buf, '0')
 			return buf
 		}
 
-		// Repack and mangle fully deref'd
-		value = type2.UnsafeIndirect(ptr)
+		// Mangle fully deref'd
 		buf = append(buf, '1')
-		return mangle(buf, value)
+		buf = mangle(buf, ptr)
+		return buf
 	}
 }
 
-func iter_slice_mangler(rtype reflect.Type, mangle Mangler) Mangler {
-	if rtype == nil || mangle == nil {
+func iter_slice_mangler(ctx typecontext, mangle Mangler) Mangler {
+	if ctx.rtype == nil || mangle == nil {
 		panic("bad input")
 	}
 
-	// Get reflect2's type for later
-	// unsafe slice data manipulation.
-	slice2 := reflect2.Type2(rtype).(*reflect2.UnsafeSliceType)
+	// memory size of elem.
+	esz := ctx.rtype.Size()
 
-	return func(buf []byte, value any) []byte {
-		// Get raw value data.
-		ptr := eface_data(value)
+	return func(buf []byte, ptr unsafe.Pointer) []byte {
+		// Get data as slice hdr.
+		hdr := (*slice_header)(ptr)
 
-		// Get length of slice value.
-		n := slice2.UnsafeLengthOf(ptr)
+		for i := 0; i < hdr.len; i++ {
+			// Mangle data at slice index.
+			eptr := array_at(hdr.data, esz, i)
+			buf = mangle(buf, eptr)
+			buf = append(buf, ',')
+		}
 
+		if hdr.len > 0 {
+			// Drop final comma.
+			buf = buf[:len(buf)-1]
+		}
+
+		return buf
+	}
+}
+
+func iter_array_mangler(ctx typecontext, mangle Mangler) Mangler {
+	if ctx.rtype == nil || mangle == nil {
+		panic("bad input")
+	}
+
+	// no. array elements.
+	n := ctx.ntype.Len()
+
+	// memory size of elem.
+	esz := ctx.rtype.Size()
+
+	return func(buf []byte, ptr unsafe.Pointer) []byte {
 		for i := 0; i < n; i++ {
-			// Mangle data at each slice index.
-			e := slice2.UnsafeGetIndex(ptr, i)
-			buf = mangle(buf, e)
+			// Mangle data at array index.
+			offset := esz * uintptr(i)
+			eptr := add(ptr, offset)
+			buf = mangle(buf, eptr)
 			buf = append(buf, ',')
 		}
 
@@ -116,118 +138,34 @@ func iter_slice_mangler(rtype reflect.Type, mangle Mangler) Mangler {
 	}
 }
 
-func iter_array_mangler(rtype reflect.Type, mangle Mangler) Mangler {
-	if rtype == nil || mangle == nil {
-		panic("bad input")
-	}
-
-	// Get reflect2's type for later
-	// unsafe slice data manipulation.
-	array2 := reflect2.Type2(rtype).(*reflect2.UnsafeArrayType)
-	n := array2.Len()
-
-	return func(buf []byte, value any) []byte {
-		// Get raw value data.
-		ptr := eface_data(value)
-
-		for i := 0; i < n; i++ {
-			// Mangle data at each slice index.
-			e := array2.UnsafeGetIndex(ptr, i)
-			buf = mangle(buf, e)
-			buf = append(buf, ',')
-		}
-
-		if n > 0 {
-			// Drop final comma.
-			buf = buf[:len(buf)-1]
-		}
-
-		return buf
-	}
-}
-
-func iter_map_mangler(rtype reflect.Type, kmangle, emangle Mangler) Mangler {
-	if rtype == nil || kmangle == nil || emangle == nil {
-		panic("bad input")
-	}
-
-	// Get reflect2's type for later
-	// unsafe map data manipulation.
-	map2 := reflect2.Type2(rtype).(*reflect2.UnsafeMapType)
-	key2, elem2 := map2.Key(), map2.Elem()
-
-	return func(buf []byte, value any) []byte {
-		// Get raw value data.
-		ptr := eface_data(value)
-		ptr = indirect_ptr(ptr)
-
-		// Create iterator for map value.
-		iter := map2.UnsafeIterate(ptr)
-
-		// Check if empty map.
-		empty := !iter.HasNext()
-
-		for iter.HasNext() {
-			// Get key + elem data as ifaces.
-			kptr, eptr := iter.UnsafeNext()
-			key := key2.UnsafeIndirect(kptr)
-			elem := elem2.UnsafeIndirect(eptr)
-
-			// Mangle data for key + elem.
-			buf = kmangle(buf, key)
-			buf = append(buf, ':')
-			buf = emangle(buf, elem)
-			buf = append(buf, ',')
-		}
-
-		if !empty {
-			// Drop final comma.
-			buf = buf[:len(buf)-1]
-		}
-
-		return buf
-	}
-}
-
-func iter_struct_mangler(rtype reflect.Type, manglers []Mangler) Mangler {
-	if rtype == nil || len(manglers) != rtype.NumField() {
+func iter_struct_mangler(ctx typecontext, manglers []Mangler) Mangler {
+	if ctx.rtype == nil || len(manglers) != ctx.rtype.NumField() {
 		panic("bad input")
 	}
 
 	type field struct {
-		type2  reflect2.Type
-		field  *reflect2.UnsafeStructField
+		offset uintptr
 		mangle Mangler
 	}
 
-	// Get reflect2's type for later
-	// unsafe struct field data access.
-	struct2 := reflect2.Type2(rtype).(*reflect2.UnsafeStructType)
-
 	// Bundle together the fields and manglers.
-	fields := make([]field, rtype.NumField())
+	fields := make([]field, ctx.rtype.NumField())
 	for i := range fields {
-		fields[i].field = struct2.Field(i).(*reflect2.UnsafeStructField)
-		fields[i].type2 = fields[i].field.Type()
+		rfield := ctx.rtype.FieldByIndex([]int{i})
+		fields[i].offset = rfield.Offset
 		fields[i].mangle = manglers[i]
-		if fields[i].type2 == nil ||
-			fields[i].field == nil ||
-			fields[i].mangle == nil {
+		if fields[i].mangle == nil {
 			panic("bad input")
 		}
 	}
 
-	return func(buf []byte, value any) []byte {
-		// Get raw value data.
-		ptr := eface_data(value)
-
+	return func(buf []byte, ptr unsafe.Pointer) []byte {
 		for i := range fields {
-			// Get struct field as iface via offset.
-			fptr := fields[i].field.UnsafeGet(ptr)
-			field := fields[i].type2.UnsafeIndirect(fptr)
+			// Get struct field ptr via offset.
+			fptr := add(ptr, fields[i].offset)
 
 			// Mangle the struct field data.
-			buf = fields[i].mangle(buf, field)
+			buf = fields[i].mangle(buf, fptr)
 			buf = append(buf, ',')
 		}
 
@@ -240,8 +178,20 @@ func iter_struct_mangler(rtype reflect.Type, manglers []Mangler) Mangler {
 	}
 }
 
-func indirect_ptr(p unsafe.Pointer) unsafe.Pointer {
-	return unsafe.Pointer(&p)
+// array_at returns ptr to index in array at ptr, given element size.
+func array_at(ptr unsafe.Pointer, esz uintptr, i int) unsafe.Pointer {
+	return unsafe.Pointer(uintptr(ptr) + esz*uintptr(i))
+}
+
+// add returns the ptr addition of starting ptr and a delta.
+func add(ptr unsafe.Pointer, delta uintptr) unsafe.Pointer {
+	return unsafe.Pointer(uintptr(ptr) + delta)
+}
+
+type slice_header struct {
+	data unsafe.Pointer
+	len  int
+	cap  int
 }
 
 func eface_data(a any) unsafe.Pointer {

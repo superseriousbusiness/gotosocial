@@ -7,8 +7,6 @@ import (
 	"unsafe"
 
 	"codeberg.org/gruf/go-byteutil"
-
-	"github.com/dolthub/swiss"
 )
 
 // IndexConfig defines config variables
@@ -72,7 +70,7 @@ type Index struct {
 	// index_entry{} which also contains the exact
 	// key each result is stored under. the hash map
 	// only keys by the xxh3 hash checksum for speed.
-	data *swiss.Map[string, *list]
+	data hashmap
 
 	// struct fields encompassed by
 	// keys (+ hashes) of this index.
@@ -93,8 +91,12 @@ func (i *Index) Name() string {
 // the type of lookup this Index uses in cache.
 // NOTE: panics on incorrect no. parts / types given.
 func (i *Index) Key(parts ...any) Key {
+	ptrs := make([]unsafe.Pointer, len(parts))
+	for x, part := range parts {
+		ptrs[x] = eface_data(part)
+	}
 	buf := new_buffer()
-	key := i.key(buf, parts)
+	key := i.key(buf, ptrs)
 	free_buffer(buf)
 	return Key{
 		raw: parts,
@@ -109,7 +111,11 @@ func (i *Index) Keys(parts ...[]any) []Key {
 	keys := make([]Key, 0, len(parts))
 	buf := new_buffer()
 	for _, parts := range parts {
-		key := i.key(buf, parts)
+		ptrs := make([]unsafe.Pointer, len(parts))
+		for x, part := range parts {
+			ptrs[x] = eface_data(part)
+		}
+		key := i.key(buf, ptrs)
 		if key == "" {
 			continue
 		}
@@ -160,8 +166,9 @@ func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
 		i.fields[x] = find_field(t, names)
 	}
 
-	// Initialize index_entry list store.
-	i.data = swiss.NewMap[string, *list](uint32(cap))
+	// Initialize store for
+	// index_entry lists.
+	i.data.init(cap)
 }
 
 // get_one will fetch one indexed item under key.
@@ -203,7 +210,7 @@ func (i *Index) get(key string, hook func(*indexed_item)) {
 }
 
 // key uses hasher to generate Key{} from given raw parts.
-func (i *Index) key(buf *byteutil.Buffer, parts []any) string {
+func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
 	if len(parts) != len(i.fields) {
 		panicf("incorrect number key parts: want=%d received=%d",
 			len(i.fields),
@@ -330,33 +337,6 @@ func (i *Index) delete_entry(entry *index_entry) {
 
 	// Drop this index from item.
 	entry.item.drop_index(entry)
-}
-
-// compact will reduce the size of underlying
-// index map if the cap vastly exceeds len.
-func (i *Index) compact() {
-
-	// Maximum load factor before
-	// 'swiss' allocates new hmap:
-	// maxLoad = 7 / 8
-	//
-	// So we apply the inverse/2, once
-	// $maxLoad/2 % of hmap is empty we
-	// compact the map to drop buckets.
-	len := i.data.Count()
-	cap := i.data.Capacity()
-	if cap-len > (cap*7)/(8*2) {
-
-		// Create a new map only as big as required.
-		data := swiss.NewMap[string, *list](uint32(len))
-		i.data.Iter(func(k string, v *list) (stop bool) {
-			data.Put(k, v)
-			return false
-		})
-
-		// Set new map.
-		i.data = data
-	}
 }
 
 // index_entry represents a single entry

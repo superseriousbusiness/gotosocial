@@ -62,8 +62,8 @@ codeberg.org/gruf/go-logger/v2 v2.2.1 h1:RP2u059EQKTBFV3cN8X6xDxNk2RkzqdgXGKflKq
 codeberg.org/gruf/go-logger/v2 v2.2.1/go.mod h1:m/vBfG5jNUmYXI8Hg9aVSk7Pn8YgEBITQB/B/CzdRss=
 codeberg.org/gruf/go-loosy v0.0.0-20231007123304-bb910d1ab5c4 h1:IXwfoU7f2whT6+JKIKskNl/hBlmWmnF1vZd84Eb3cyA=
 codeberg.org/gruf/go-loosy v0.0.0-20231007123304-bb910d1ab5c4/go.mod h1:fiO8HE1wjZCephcYmRRsVnNI/i0+mhy44Z5dQalS0rM=
-codeberg.org/gruf/go-mangler v1.3.0 h1:cf0vuuLJuEhoIukPHj+MUBIQSWxZcfEYt2Eo/r7Rstk=
-codeberg.org/gruf/go-mangler v1.3.0/go.mod h1:jnOA76AQoaO2kTHi0DlTTVaFYfRM+9fzs8f4XO6MsOk=
+codeberg.org/gruf/go-mangler v1.4.0 h1:yOQMygLgCnU0ERt1JDAtv/LsjDwJtAdRpwhm648rA/E=
+codeberg.org/gruf/go-mangler v1.4.0/go.mod h1:TVbrburPF+UjuRSwxH1tHP3pZZXzdyJJO8+PToTEiKg=
 codeberg.org/gruf/go-maps v1.0.3 h1:VDwhnnaVNUIy5O93CvkcE2IZXnMB1+IJjzfop9V12es=
 codeberg.org/gruf/go-maps v1.0.3/go.mod h1:D5LNDxlC9rsDuVQVM6JObaVGAdHB6g2dTdOdkh1aXWA=
 codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760 h1:m2/UCRXhjDwAg4vyji6iKCpomKw6P4PmBOUi5DvAMH4=
@@ -76,8 +76,6 @@ codeberg.org/gruf/go-sched v1.2.3 h1:H5ViDxxzOBR3uIyGBCf0eH8b1L8wMybOXcdtUUTXZHk
 codeberg.org/gruf/go-sched v1.2.3/go.mod h1:vT9uB6KWFIIwnG9vcPY2a0alYNoqdL1mSzRM8I+PK7A=
 codeberg.org/gruf/go-storage v0.1.1 h1:CSX1PMMg/7vqqK8aCFtq94xCrOB3xhj7eWIvzILdLpY=
 codeberg.org/gruf/go-storage v0.1.1/go.mod h1:145IWMUOc6YpIiZIiCIEwkkNZZPiSbwMnZxRjSc5q6c=
-codeberg.org/gruf/go-structr v0.8.5 h1:WQuvLSQFyFwMjdU7dCWvgcjuhk07oWdSl9guShekzGQ=
-codeberg.org/gruf/go-structr v0.8.5/go.mod h1:c5UvVDSA3lZ1kv05V+7pXkO8u8Jea+VRWFDRFBCOxSA=
 codeberg.org/superseriousbusiness/exif-terminator v0.7.0 h1:Y6VApSXhKqExG0H2hZ2JelRK4xmWdjDQjn13CpEfzko=
 codeberg.org/superseriousbusiness/exif-terminator v0.7.0/go.mod h1:gCWKduudUWFzsnixoMzu0FYVdxHWG+AbXnZ50DqxsUE=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=

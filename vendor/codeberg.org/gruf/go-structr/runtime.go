@@ -8,18 +8,13 @@ import (
 	"unsafe"
 
 	"codeberg.org/gruf/go-mangler"
-	"github.com/modern-go/reflect2"
 )
 
 // struct_field contains pre-prepared type
 // information about a struct's field member,
 // including memory offset and hash function.
 type struct_field struct {
-
-	// type2 contains the reflect2
-	// type information for this field,
-	// used in repacking it as eface.
-	type2 reflect2.Type
+	rtype reflect.Type
 
 	// offsets defines whereabouts in
 	// memory this field is located.
@@ -109,25 +104,27 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 		t = field.Type
 	}
 
-	// Get field type as reflect2.
-	sfield.type2 = reflect2.Type2(t)
+	// Set final type.
+	sfield.rtype = t
 
 	// Find mangler for field type.
 	sfield.mangle = mangler.Get(t)
 
-	// Set possible zero value and its string.
-	sfield.zero = sfield.type2.UnsafeNew()
-	i := sfield.type2.UnsafeIndirect(sfield.zero)
-	sfield.zerostr = string(sfield.mangle(nil, i))
+	// Get new zero value data ptr.
+	v := reflect.New(t).Elem()
+	zptr := eface_data(v.Interface())
+	zstr := sfield.mangle(nil, zptr)
+	sfield.zerostr = string(zstr)
+	sfield.zero = zptr
 
 	return
 }
 
 // extract_fields extracts given structfields from the provided value type,
 // this is done using predetermined struct field memory offset locations.
-func extract_fields(ptr unsafe.Pointer, fields []struct_field) []any {
-	// Prepare slice of field ifaces.
-	ifaces := make([]any, len(fields))
+func extract_fields(ptr unsafe.Pointer, fields []struct_field) []unsafe.Pointer {
+	// Prepare slice of field value pointers.
+	ptrs := make([]unsafe.Pointer, len(fields))
 	for i, field := range fields {
 
 		// loop scope.
@@ -136,10 +133,7 @@ func extract_fields(ptr unsafe.Pointer, fields []struct_field) []any {
 		for _, offset := range field.offsets {
 			// Dereference any ptrs to offset.
 			fptr = deref(fptr, offset.derefs)
-
 			if fptr == nil {
-				// Use zero value.
-				fptr = field.zero
 				break
 			}
 
@@ -148,11 +142,31 @@ func extract_fields(ptr unsafe.Pointer, fields []struct_field) []any {
 				offset.offset)
 		}
 
-		// Repack value data ptr as empty interface.
-		ifaces[i] = field.type2.UnsafeIndirect(fptr)
-	}
+		if like_ptr(field.rtype) && fptr != nil {
+			// Further dereference value ptr.
+			fptr = *(*unsafe.Pointer)(fptr)
+		}
 
-	return ifaces
+		if fptr == nil {
+			// Use zero value.
+			fptr = field.zero
+		}
+
+		ptrs[i] = fptr
+	}
+	return ptrs
+}
+
+// like_ptr returns whether type's kind is ptr-like.
+func like_ptr(t reflect.Type) bool {
+	switch t.Kind() {
+	case reflect.Pointer,
+		reflect.Map,
+		reflect.Chan,
+		reflect.Func:
+		return true
+	}
+	return false
 }
 
 // deref will dereference ptr 'n' times (or until nil).

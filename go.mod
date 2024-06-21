@@ -2,6 +2,8 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.22.2
 
+replace codeberg.org/gruf/go-structr => ../go-structr
+
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.29.9-concurrency-workaround
 
 require (
@@ -88,7 +90,7 @@ require (
 	codeberg.org/gruf/go-atomics v1.1.0 // indirect
 	codeberg.org/gruf/go-bitutil v1.1.0 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
-	codeberg.org/gruf/go-mangler v1.3.0 // indirect
+	codeberg.org/gruf/go-mangler v1.4.0 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
