@@ -18,7 +18,6 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -95,10 +94,9 @@ func (m *Module) RuleDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	ruleID := c.Param(IDKey)
-	if ruleID == "" {
-		err := errors.New("no rule id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	ruleID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

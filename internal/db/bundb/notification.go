@@ -200,7 +200,7 @@ func (n *notificationDB) GetAccountNotifications(
 	sinceID string,
 	minID string,
 	limit int,
-	includeTypes []string,
+	types []string,
 	excludeTypes []string,
 ) ([]*gtsmodel.Notification, error) {
 	// Ensure reasonable
@@ -238,9 +238,9 @@ func (n *notificationDB) GetAccountNotifications(
 		frontToBack = false // page up
 	}
 
-	if len(includeTypes) > 0 {
+	if len(types) > 0 {
 		// Include only requested notification types.
-		q = q.Where("? IN (?)", bun.Ident("notification.notification_type"), bun.In(includeTypes))
+		q = q.Where("? IN (?)", bun.Ident("notification.notification_type"), bun.In(types))
 	}
 
 	if len(excludeTypes) > 0 {

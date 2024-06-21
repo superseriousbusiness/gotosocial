@@ -60,7 +60,7 @@ export default function Username({ account, linkTo, backLocation, classNames }: 
 	);
 
 	if (linkTo) {
-		className += " spanlink";
+		className += " pseudolink";
 		return (
 			<span
 				className={className}

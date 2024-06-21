@@ -171,7 +171,7 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		c.Query(SinceIDKey),
 		c.Query(MinIDKey),
 		limit,
-		c.QueryArray(IncludeTypesKey),
+		c.QueryArray(TypesKey),
 		c.QueryArray(ExcludeTypesKey),
 	)
 	if errWithCode != nil {

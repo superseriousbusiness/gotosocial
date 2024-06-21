@@ -41,7 +41,7 @@ func (p *Processor) NotificationsGet(
 	sinceID string,
 	minID string,
 	limit int,
-	includeTypes []string,
+	types []string,
 	excludeTypes []string,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	notifs, err := p.state.DB.GetAccountNotifications(
@@ -51,7 +51,7 @@ func (p *Processor) NotificationsGet(
 		sinceID,
 		minID,
 		limit,
-		includeTypes,
+		types,
 		excludeTypes,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {

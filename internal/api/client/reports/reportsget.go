@@ -18,14 +18,13 @@
 package reports
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // ReportsGETHandler swagger:operation GET /api/v1/reports reports
@@ -67,7 +66,7 @@ import (
 //		name: max_id
 //		type: string
 //		description: >-
-//			Return only reports *OLDER* than the given max ID.
+//			Return only reports *OLDER* than the given max ID (for paging downwards).
 //			The report with the specified ID will not be included in the response.
 //		in: query
 //	-
@@ -76,24 +75,21 @@ import (
 //		description: >-
 //			Return only reports *NEWER* than the given since ID.
 //			The report with the specified ID will not be included in the response.
-//			This parameter is functionally equivalent to min_id.
 //		in: query
 //	-
 //		name: min_id
 //		type: string
 //		description: >-
-//			Return only reports *NEWER* than the given min ID.
+//			Return only reports immediately *NEWER* than the given min ID (for paging upwards).
 //			The report with the specified ID will not be included in the response.
-//			This parameter is functionally equivalent to since_id.
 //		in: query
 //	-
 //		name: limit
 //		type: integer
-//		description: >-
-//			Number of reports to return.
-//			If less than 1, will be clamped to 1.
-//			If more than 100, will be clamped to 100.
+//		description: Number of reports to return.
 //		default: 20
+//		minimum: 1
+//		maximum: 100
 //		in: query
 //
 //	security:
@@ -134,36 +130,29 @@ func (m *Module) ReportsGETHandler(c *gin.Context) {
 		return
 	}
 
-	var resolved *bool
-	if resolvedString := c.Query(ResolvedKey); resolvedString != "" {
-		i, err := strconv.ParseBool(resolvedString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", ResolvedKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		resolved = &i
+	resolved, errWithCode := apiutil.ParseResolved(c.Query(apiutil.ResolvedKey), nil)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	limit := 20
-	if limitString := c.Query(LimitKey); limitString != "" {
-		i, err := strconv.Atoi(limitString)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-
-		// normalize
-		if i <= 0 {
-			i = 1
-		} else if i >= 100 {
-			i = 100
-		}
-		limit = i
+	page, errWithCode := paging.ParseIDPage(c,
+		1,   // min limit
+		100, // max limit
+		20,  // default limit
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
-	resp, errWithCode := m.processor.Report().GetMultiple(c.Request.Context(), authed.Account, resolved, c.Query(TargetAccountIDKey), c.Query(MaxIDKey), c.Query(SinceIDKey), c.Query(MinIDKey), limit)
+	resp, errWithCode := m.processor.Report().GetMultiple(
+		c.Request.Context(),
+		authed.Account,
+		resolved,
+		c.Query(apiutil.TargetAccountIDKey),
+		page,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"time"
 
-	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 )
 
@@ -44,12 +43,6 @@ func (t *signingtransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		r.Header.Set("Date", now.Format("Mon, 02 Jan 2006 15:04:05")+" GMT")
 		r.Header.Del("Signature")
 		r.Header.Del("Digest")
-
-		// Rewind body reader and content-length if set.
-		if rc, ok := r.Body.(*byteutil.ReadNopCloser); ok {
-			rc.Rewind() // set len AFTER rewind
-			r.ContentLength = int64(rc.Len())
-		}
 
 		// Sign the outgoing request.
 		if err := sign(r); err != nil {

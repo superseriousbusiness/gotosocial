@@ -247,7 +247,7 @@ func (m *Module) SearchGETHandler(c *gin.Context) {
 		Resolve:           resolve,
 		Following:         following,
 		ExcludeUnreviewed: excludeUnreviewed,
-		AccountID:         c.Query(apiutil.SearchAccountIDKey),
+		AccountID:         c.Query(apiutil.AccountIDKey),
 		APIv1:             apiVersion == apiutil.APIv1,
 	}
 

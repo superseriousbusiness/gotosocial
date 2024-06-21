@@ -27,6 +27,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 type EmojiGetTestSuite struct {
@@ -39,7 +40,7 @@ func (suite *EmojiGetTestSuite) TestEmojiGet1() {
 
 	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodGet, nil, path, "application/json")
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	suite.adminModule.EmojiGETHandler(ctx)
 	suite.Equal(http.StatusOK, recorder.Code)
@@ -71,7 +72,7 @@ func (suite *EmojiGetTestSuite) TestEmojiGet2() {
 
 	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodGet, nil, path, "application/json")
-	ctx.AddParam(admin.IDKey, testEmoji.ID)
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
 
 	suite.adminModule.EmojiGETHandler(ctx)
 	suite.Equal(http.StatusOK, recorder.Code)
@@ -102,7 +103,7 @@ func (suite *EmojiGetTestSuite) TestEmojiGetNotFound() {
 
 	path := admin.EmojiPathWithID
 	ctx := suite.newContext(recorder, http.MethodGet, nil, path, "application/json")
-	ctx.AddParam(admin.IDKey, "01GF8VRXX1R00X7XH8973Z29R1")
+	ctx.AddParam(apiutil.IDKey, "01GF8VRXX1R00X7XH8973Z29R1")
 
 	suite.adminModule.EmojiGETHandler(ctx)
 	suite.Equal(http.StatusNotFound, recorder.Code)

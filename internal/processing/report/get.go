@@ -21,13 +21,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Get returns the user view of a moderation report, with the given id.
@@ -53,53 +55,61 @@ func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, id strin
 	return apiReport, nil
 }
 
-// GetMultiple returns multiple reports created by the given account, filtered according to the provided parameters.
+// GetMultiple returns reports created by the given account,
+// filtered according to the provided parameters.
 func (p *Processor) GetMultiple(
 	ctx context.Context,
 	account *gtsmodel.Account,
 	resolved *bool,
 	targetAccountID string,
-	maxID string,
-	sinceID string,
-	minID string,
-	limit int,
+	page *paging.Page,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
-	reports, err := p.state.DB.GetReports(ctx, resolved, account.ID, targetAccountID, maxID, sinceID, minID, limit)
+	reports, err := p.state.DB.GetReports(
+		ctx,
+		resolved,
+		account.ID,
+		targetAccountID,
+		page,
+	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	count := len(reports)
 	if count == 0 {
-		return util.EmptyPageableResponse(), nil
+		return paging.EmptyResponse(), nil
 	}
 
-	items := make([]interface{}, 0, count)
-	nextMaxIDValue := reports[count-1].ID
-	prevMinIDValue := reports[0].ID
+	// Get the lowest and highest
+	// ID values, used for paging.
+	lo := reports[count-1].ID
+	hi := reports[0].ID
 
+	// Convert each report to API model.
+	items := make([]interface{}, 0, count)
 	for _, r := range reports {
 		item, err := p.converter.ReportToAPIReport(ctx, r)
 		if err != nil {
-			return nil, gtserror.NewErrorInternalError(fmt.Errorf("error converting report to api: %s", err))
+			err := fmt.Errorf("error converting report to api: %s", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 		items = append(items, item)
 	}
 
-	extraQueryParams := []string{}
+	// Assemble next/prev page queries.
+	query := make(url.Values, 3)
 	if resolved != nil {
-		extraQueryParams = append(extraQueryParams, "resolved="+strconv.FormatBool(*resolved))
+		query.Set(apiutil.ResolvedKey, strconv.FormatBool(*resolved))
 	}
 	if targetAccountID != "" {
-		extraQueryParams = append(extraQueryParams, "target_account_id="+targetAccountID)
+		query.Set(apiutil.TargetAccountIDKey, targetAccountID)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:            items,
-		Path:             "/api/v1/reports",
-		NextMaxIDValue:   nextMaxIDValue,
-		PrevMinIDValue:   prevMinIDValue,
-		Limit:            limit,
-		ExtraQueryParams: extraQueryParams,
-	})
+	return paging.PackageResponse(paging.ResponseParams{
+		Items: items,
+		Path:  "/api/v1/reports",
+		Next:  page.Next(lo, hi),
+		Prev:  page.Prev(lo, hi),
+		Query: query,
+	}), nil
 }

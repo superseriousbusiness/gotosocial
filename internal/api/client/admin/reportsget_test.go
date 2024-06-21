@@ -28,6 +28,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -63,24 +64,24 @@ func (suite *ReportsGetTestSuite) getReports(
 	ctx.Set(oauth.SessionAuthorizedUser, user)
 
 	// create the request URI
-	requestPath := admin.ReportsPath + "?" + admin.LimitKey + "=" + strconv.Itoa(limit)
+	requestPath := admin.ReportsPath + "?" + apiutil.LimitKey + "=" + strconv.Itoa(limit)
 	if resolved != nil {
-		requestPath = requestPath + "&" + admin.ResolvedKey + "=" + strconv.FormatBool(*resolved)
+		requestPath = requestPath + "&" + apiutil.ResolvedKey + "=" + strconv.FormatBool(*resolved)
 	}
 	if accountID != "" {
-		requestPath = requestPath + "&" + admin.AccountIDKey + "=" + accountID
+		requestPath = requestPath + "&" + apiutil.AccountIDKey + "=" + accountID
 	}
 	if targetAccountID != "" {
-		requestPath = requestPath + "&" + admin.TargetAccountIDKey + "=" + targetAccountID
+		requestPath = requestPath + "&" + apiutil.TargetAccountIDKey + "=" + targetAccountID
 	}
 	if maxID != "" {
-		requestPath = requestPath + "&" + admin.MaxIDKey + "=" + maxID
+		requestPath = requestPath + "&" + apiutil.MaxIDKey + "=" + maxID
 	}
 	if sinceID != "" {
-		requestPath = requestPath + "&" + admin.SinceIDKey + "=" + sinceID
+		requestPath = requestPath + "&" + apiutil.SinceIDKey + "=" + sinceID
 	}
 	if minID != "" {
-		requestPath = requestPath + "&" + admin.MinIDKey + "=" + minID
+		requestPath = requestPath + "&" + apiutil.MinIDKey + "=" + minID
 	}
 	baseURI := config.GetProtocol() + "://" + config.GetHost()
 	requestURI := baseURI + "/api/" + requestPath
@@ -766,7 +767,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
   }
 ]`, string(b))
 
-	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R&account_id=01F8MH5NBDF2MV7CTC4Q5128HF>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R&account_id=01F8MH5NBDF2MV7CTC4Q5128HF>; rel="prev"`, link)
+	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?account_id=01F8MH5NBDF2MV7CTC4Q5128HF&limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?account_id=01F8MH5NBDF2MV7CTC4Q5128HF&limit=20&min_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="prev"`, link)
 }
 
 func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
@@ -1028,8 +1029,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetZeroLimit() {
 	suite.NoError(err)
 	suite.Len(reports, 2)
 
-	// Limit in Link header should be set to 100
-	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=100&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=100&min_id=01GP3DFY9XQ1TJMZT5BGAZPXX7>; rel="prev"`, link)
+	// Limit in Link header should be set to default (20)
+	suite.Equal(`<http://localhost:8080/api/v1/admin/reports?limit=20&max_id=01GP3AWY4CRDVRNZKW0TEAMB5R>; rel="next", <http://localhost:8080/api/v1/admin/reports?limit=20&min_id=01GP3DFY9XQ1TJMZT5BGAZPXX7>; rel="prev"`, link)
 }
 
 func (suite *ReportsGetTestSuite) TestReportsGetHighLimit() {

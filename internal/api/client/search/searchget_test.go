@@ -105,7 +105,7 @@ func (suite *SearchGetTestSuite) getSearch(
 	}
 
 	if fromAccountID != nil {
-		queryParts = append(queryParts, apiutil.SearchAccountIDKey+"="+url.QueryEscape(*fromAccountID))
+		queryParts = append(queryParts, apiutil.AccountIDKey+"="+url.QueryEscape(*fromAccountID))
 	}
 
 	requestURL.RawQuery = strings.Join(queryParts, "&")

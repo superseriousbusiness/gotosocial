@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Report handles getting/creation/deletion/updating of user reports/flags.
@@ -30,7 +31,7 @@ type Report interface {
 
 	// GetReports gets limit n reports using the given parameters.
 	// Parameters that are empty / zero are ignored.
-	GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Report, error)
+	GetReports(ctx context.Context, resolved *bool, accountID string, targetAccountID string, page *paging.Page) ([]*gtsmodel.Report, error)
 
 	// PopulateReport populates the struct pointers on the given report.
 	PopulateReport(ctx context.Context, report *gtsmodel.Report) error

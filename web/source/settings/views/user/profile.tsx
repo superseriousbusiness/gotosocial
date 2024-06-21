@@ -39,7 +39,7 @@ import {
 } from "../../components/form/inputs";
 
 import FormWithData from "../../lib/form/form-with-data";
-import FakeProfile from "../../components/fake-profile";
+import FakeProfile from "../../components/profile";
 import MutationButton from "../../components/form/mutation-button";
 
 import { useAccountThemesQuery } from "../../lib/query/user";

@@ -145,7 +145,7 @@ func (suite *ReportGetTestSuite) TestGetReport2() {
 }
 
 func (suite *ReportGetTestSuite) TestGetReport3() {
-	report, err := suite.getReport(http.StatusBadRequest, `{"error":"Bad Request: no report id specified"}`, "")
+	report, err := suite.getReport(http.StatusBadRequest, `{"error":"Bad Request: required key id was not set or had empty value"}`, "")
 	suite.NoError(err)
 	suite.Nil(report)
 }

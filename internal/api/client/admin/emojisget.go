@@ -20,7 +20,6 @@ package admin
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -76,6 +75,8 @@ import (
 //		type: integer
 //		description: Number of emojis to return. Less than 1, or not set, means unlimited (all emojis).
 //		default: 50
+//		minimum: 0
+//		maximum: 200
 //		in: query
 //	-
 //		name: max_shortcode_domain
@@ -142,19 +143,10 @@ func (m *Module) EmojisGETHandler(c *gin.Context) {
 	maxShortcodeDomain := c.Query(MaxShortcodeDomainKey)
 	minShortcodeDomain := c.Query(MinShortcodeDomainKey)
 
-	limit := 50
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
-	}
-	if limit < 0 {
-		limit = 0
+	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 50, 200, 0)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
 	var domain string

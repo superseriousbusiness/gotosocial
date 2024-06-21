@@ -22,6 +22,7 @@ import (
 
 	"codeberg.org/gruf/go-debug"
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
@@ -29,48 +30,40 @@ import (
 const (
 	BasePath                = "/v1/admin"
 	EmojiPath               = BasePath + "/custom_emojis"
-	EmojiPathWithID         = EmojiPath + "/:" + IDKey
+	EmojiPathWithID         = EmojiPath + "/:" + apiutil.IDKey
 	EmojiCategoriesPath     = EmojiPath + "/categories"
 	DomainBlocksPath        = BasePath + "/domain_blocks"
-	DomainBlocksPathWithID  = DomainBlocksPath + "/:" + IDKey
+	DomainBlocksPathWithID  = DomainBlocksPath + "/:" + apiutil.IDKey
 	DomainAllowsPath        = BasePath + "/domain_allows"
-	DomainAllowsPathWithID  = DomainAllowsPath + "/:" + IDKey
+	DomainAllowsPathWithID  = DomainAllowsPath + "/:" + apiutil.IDKey
 	DomainKeysExpirePath    = BasePath + "/domain_keys_expire"
 	HeaderAllowsPath        = BasePath + "/header_allows"
-	HeaderAllowsPathWithID  = HeaderAllowsPath + "/:" + IDKey
+	HeaderAllowsPathWithID  = HeaderAllowsPath + "/:" + apiutil.IDKey
 	HeaderBlocksPath        = BasePath + "/header_blocks"
-	HeaderBlocksPathWithID  = HeaderBlocksPath + "/:" + IDKey
+	HeaderBlocksPathWithID  = HeaderBlocksPath + "/:" + apiutil.IDKey
 	AccountsV1Path          = BasePath + "/accounts"
 	AccountsV2Path          = "/v2/admin/accounts"
-	AccountsPathWithID      = AccountsV1Path + "/:" + IDKey
+	AccountsPathWithID      = AccountsV1Path + "/:" + apiutil.IDKey
 	AccountsActionPath      = AccountsPathWithID + "/action"
 	AccountsApprovePath     = AccountsPathWithID + "/approve"
 	AccountsRejectPath      = AccountsPathWithID + "/reject"
 	MediaCleanupPath        = BasePath + "/media_cleanup"
 	MediaRefetchPath        = BasePath + "/media_refetch"
 	ReportsPath             = BasePath + "/reports"
-	ReportsPathWithID       = ReportsPath + "/:" + IDKey
+	ReportsPathWithID       = ReportsPath + "/:" + apiutil.IDKey
 	ReportsResolvePath      = ReportsPathWithID + "/resolve"
 	EmailPath               = BasePath + "/email"
 	EmailTestPath           = EmailPath + "/test"
 	InstanceRulesPath       = BasePath + "/instance/rules"
-	InstanceRulesPathWithID = InstanceRulesPath + "/:" + IDKey
+	InstanceRulesPathWithID = InstanceRulesPath + "/:" + apiutil.IDKey
 	DebugPath               = BasePath + "/debug"
 	DebugAPUrlPath          = DebugPath + "/apurl"
 	DebugClearCachesPath    = DebugPath + "/caches/clear"
 
-	IDKey                 = "id"
 	FilterQueryKey        = "filter"
 	MaxShortcodeDomainKey = "max_shortcode_domain"
 	MinShortcodeDomainKey = "min_shortcode_domain"
-	LimitKey              = "limit"
 	DomainQueryKey        = "domain"
-	ResolvedKey           = "resolved"
-	AccountIDKey          = "account_id"
-	TargetAccountIDKey    = "target_account_id"
-	MaxIDKey              = "max_id"
-	SinceIDKey            = "since_id"
-	MinIDKey              = "min_id"
 )
 
 type Module struct {
