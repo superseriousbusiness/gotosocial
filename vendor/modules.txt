@@ -7,7 +7,7 @@ codeberg.org/gruf/go-bitutil
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
-# codeberg.org/gruf/go-bytesize v1.0.2
+# codeberg.org/gruf/go-bytesize v1.0.3
 ## explicit; go 1.17
 codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.2.0
@@ -21,7 +21,7 @@ codeberg.org/gruf/go-cache/v3/ttl
 # codeberg.org/gruf/go-debug v1.3.0
 ## explicit; go 1.16
 codeberg.org/gruf/go-debug
-# codeberg.org/gruf/go-errors/v2 v2.3.1
+# codeberg.org/gruf/go-errors/v2 v2.3.2
 ## explicit; go 1.19
 codeberg.org/gruf/go-errors/v2
 # codeberg.org/gruf/go-fastcopy v1.1.2
