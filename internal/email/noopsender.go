@@ -31,6 +31,7 @@ import (
 // Passing a nil function is also acceptable, in which case the send functions will just return nil.
 func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender, error) {
 	templateBaseDir := config.GetWebTemplateBaseDir()
+	msgIDHost := config.GetHost()
 
 	t, err := loadTemplates(templateBaseDir)
 	if err != nil {
@@ -39,12 +40,14 @@ func NewNoopSender(sendCallback func(toAddress string, message string)) (Sender,
 
 	return &noopSender{
 		sendCallback: sendCallback,
+		msgIDHost:    msgIDHost,
 		template:     t,
 	}, nil
 }
 
 type noopSender struct {
 	sendCallback func(toAddress string, message string)
+	msgIDHost    string
 	template     *template.Template
 }
 
@@ -86,7 +89,7 @@ func (s *noopSender) sendTemplate(template string, subject string, data any, toA
 		return err
 	}
 
-	msg, err := assembleMessage(subject, buf.String(), "test@example.org", toAddresses...)
+	msg, err := assembleMessage(subject, buf.String(), "test@example.org", s.msgIDHost, toAddresses...)
 	if err != nil {
 		return err
 	}
