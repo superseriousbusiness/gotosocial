@@ -25,3 +25,6 @@ and [patches](../sqlite3) applied.
 
 Built using [`wasi-sdk`](https://github.com/WebAssembly/wasi-sdk),
 and [`binaryen`](https://github.com/WebAssembly/binaryen).
+
+The build is easily reproducible, and verifiable, using
+[Artifact Attestations](https://github.com/ncruces/go-sqlite3/attestations).

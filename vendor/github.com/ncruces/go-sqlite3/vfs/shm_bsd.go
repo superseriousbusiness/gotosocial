@@ -128,10 +128,11 @@ func (s *vfsShm) shmOpen() (rc _ErrorCode) {
 	}
 
 	// Lock and truncate the file, if not readonly.
+	// The lock is only released by closing the file.
 	if s.readOnly {
 		rc = _READONLY_CANTINIT
 	} else {
-		if rc := osWriteLock(f, 0, 0, 0); rc != _OK {
+		if rc := osLock(f, unix.LOCK_EX|unix.LOCK_NB, _IOERR_LOCK); rc != _OK {
 			return rc
 		}
 		if err := f.Truncate(0); err != nil {
