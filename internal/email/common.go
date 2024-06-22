@@ -39,7 +39,7 @@ func (s *sender) sendTemplate(template string, subject string, data any, toAddre
 		return err
 	}
 
-	msg, err := assembleMessage(subject, buf.String(), s.from, s.msgIdHost, toAddresses...)
+	msg, err := assembleMessage(subject, buf.String(), s.from, s.msgIDHost, toAddresses...)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func loadTemplates(templateBaseDir string) (*template.Template, error) {
 // assembleMessage assembles a valid email message following:
 //   - https://datatracker.ietf.org/doc/html/rfc2822
 //   - https://pkg.go.dev/net/smtp#SendMail
-func assembleMessage(mailSubject string, mailBody string, mailFrom string, msgIdHost string, mailTo ...string) ([]byte, error) {
+func assembleMessage(mailSubject string, mailBody string, mailFrom string, msgIDHost string, mailTo ...string) ([]byte, error) {
 	if strings.ContainsAny(mailSubject, "\r\n") {
 		return nil, errors.New("email subject must not contain newline characters")
 	}
@@ -107,7 +107,7 @@ func assembleMessage(mailSubject string, mailBody string, mailFrom string, msgId
 	}
 	msg.WriteString("Date: " + time.Now().Format(time.RFC822Z) + CRLF)
 	msg.WriteString("From: " + mailFrom + CRLF)
-	msg.WriteString("Message-ID: <" + uuid.New().String() + "@" + msgIdHost + ">" + CRLF)
+	msg.WriteString("Message-ID: <" + uuid.New().String() + "@" + msgIDHost + ">" + CRLF)
 	msg.WriteString("Subject: " + mailSubject + CRLF)
 	msg.WriteString("MIME-Version: 1.0" + CRLF)
 	msg.WriteString("Content-Transfer-Encoding: 8bit" + CRLF)
