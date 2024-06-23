@@ -34,32 +34,38 @@ const (
 User-agent: AdsBot-Google
 User-agent: Amazonbot
 User-agent: anthropic-ai
-User-agent: Applebot
-User-agent: AwarioRssBot
-User-agent: AwarioSmartBot
+User-agent: Applebot-Extended
 User-agent: Bytespider
 User-agent: CCBot
 User-agent: ChatGPT-User
 User-agent: ClaudeBot
 User-agent: Claude-Web
 User-agent: cohere-ai
-User-agent: DataForSeoBot
+User-agent: Diffbot
 User-agent: FacebookBot
 User-agent: FriendlyCrawler
 User-agent: Google-Extended
 User-agent: GoogleOther
 User-agent: GPTBot
-User-agent: ImagesiftBot
-User-agent: magpie-crawler
-User-agent: Meltwater
+User-agent: img2dataset
 User-agent: omgili
 User-agent: omgilibot
 User-agent: peer39_crawler
 User-agent: peer39_crawler/1.0
 User-agent: PerplexityBot
-User-agent: PiplBot
-User-agent: Seekr
 User-agent: YouBot
+Disallow: /
+
+# Marketing/SEO "intelligence" data scrapers
+User-agent: AwarioRssBot
+User-agent: AwarioSmartBot
+User-agent: DataForSeoBot
+User-agent: ImagesiftBot
+User-agent: magpie-crawler
+User-agent: Meltwater
+User-agent: PiplBot
+User-agent: scoop.it
+User-agent: Seekr
 Disallow: /
 
 # Well-known.dev crawler. Indexes stuff under /.well-known.
