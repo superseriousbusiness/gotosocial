@@ -1,0 +1,119 @@
+/*
+  theme-title: Rain Forest
+  theme-description: Rain Forest is dark and green, with sunlight spots. Sloth's home.
+*/
+
+/* based on Rain Forest color palette and elements
+   color names as reference
+   v1.0 by xmgz at github */
+
+:root {
+/* color definitions */
+--dgreen1: #003333;
+--dgreen2: #196C41;
+--dgreen3: #027C68;
+--dgreen4: #009933;
+--dblue1: #141E46;   /* very dark blue */
+--typecolor: #F8F4EC;
+--linkcolor: #c0f0c0; /* very soft lime green */
+--sunny: #FCDC2A;
+--lesssunny: #FF7431; /* papaya */
+/* wood/earth colors */
+--codebg: #3A2722;  /* darker caoba */
+--quotebg: #800000; /* maroon */
+/* water, post's date and stats. User stats */
+--fg-reduced: #BBEBFF;
+
+  /* Restyle basic colors  */
+  --blue1: var(--dgreen2);
+  --blue2: var(--lesssunny);
+  --blue3: var(--linkcolor);
+  --bg-accent: var(--dblue1);
+  --orange2: var(--sunny);
+  --profile-bg: var(--dgreen2);
+  /* dark blues */
+  --gray2: #29485A; /* black forest blue */
+  --gray4: #2B3246; /* vintage dark blue */
+  /*  statuses */
+  --status-bg: var(--dgreen1);
+  --status-focus-bg: var(--dgreen1);
+  --status-info-bg: var(--dgreen3);
+  --status-focus-info-bg: var(--dgreen3);
+    /* «show more» button */
+  --button-bg: var(--lesssunny);
+  --button-fg: var(--dblue1);
+
+
+
+  /* Used around statuses + other items */
+  --boxshadow: 0 0.4rem 0.7rem -0.1rem rgba(252,220,42,0.15); /* subtle status glow */
+  --boxshadow-border: 0.07rem solid var(--lesssunny);  /* thin papaya border */
+
+}
+
+
+html, body {
+  /* background */
+        --bg: linear-gradient(180deg, var(--dgreen2) 0%, var(--dgreen1) 40%, var(--dblue1) 100%);
+
+  /* browser's scrollbar, papaya and green */
+        scrollbar-color: var(--lesssunny) var(--dgreen2);
+
+}
+
+/* header */
+.profile .profile-header {
+  border-color: var(--sunny);
+  border-width: 8px;
+  border-style: solid;
+}
+
+/* about user */
+.profile .about-user .bio {
+  background: var(--gray4);
+}
+
+.button {
+box-shadow: none; /* no "glow" for buttons */
+}
+
+.profile .about-user .accountstats {
+  background: var(--fg-reduced);
+  color: var(--dgreen2);
+}
+
+/* Profile fields */
+.profile .about-user .fields .field {
+  border-bottom: 0.1rem solid var(--sunny);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: 0.1rem solid var(--sunny);
+}
+
+/* Block quotes */
+blockquote {
+  background-color: var(--quotebg);
+  color: var(--typecolor);
+  font-style: italic;
+}
+
+/* Code snippets */
+pre {
+  border: 1px solid var(--fg-accent); /* box's border */
+  border-radius: 0px; /* and not rounded */
+}
+/* kept this because other people know more */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+  background-color: var(--codebg);
+}
+
+
+/* status language */
+.status .status-info .status-stats .language {
+  color: var(--quotebg);
+  font-weight: bold;
+  background-color: var(--typecolor);
+  padding: 3px;
+  border-radius: 5px 10px;
+}
