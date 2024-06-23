@@ -98,8 +98,8 @@ myservice:
   labels:
     - 'traefik.http.routers.myservice.rule=Host(`example.org`)'                                                                # account-domain
     - 'traefik.http.middlewares.myservice-gts.redirectregex.permanent=true'
-    - 'traefik.http.middlewares.myservice-gts.redirectregex.regex=^https://(.*)/.well-known/(webfinger|nodeinfo|host-meta)$$'  # host
-    - 'traefik.http.middlewares.myservice-gts.redirectregex.replacement=https://social.$${1}/.well-known/$${2}'                # host
+    - 'traefik.http.middlewares.myservice-gts.redirectregex.regex=^https://(.*)/.well-known/(webfinger|nodeinfo|host-meta)(\?.*)?$'  # host
+    - 'traefik.http.middlewares.myservice-gts.redirectregex.replacement=https://social.$${1}/.well-known/$${2}$${3}'                # host
     - 'traefik.http.routers.myservice.middlewares=myservice-gts@docker'
 ```
 
