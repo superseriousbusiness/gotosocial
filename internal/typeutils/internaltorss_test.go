@@ -130,6 +130,7 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem3() {
   </Author>
   <Description>@admin@localhost:8080 made a new post</Description>
   <Id>http://localhost:8080/@admin/statuses/01H7G0VW1ACBZTRHN6RSA4JWVH</Id>
+  <IsPermaLink>true</IsPermaLink>
   <Updated>0001-01-01T00:00:00Z</Updated>
   <Created>0001-01-01T00:00:00Z</Created>
   <Enclosure>

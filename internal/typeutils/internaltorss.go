@@ -160,6 +160,7 @@ func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 		Source:      source,
 		Description: description,
 		Id:          id,
+		IsPermaLink: "true",
 		Updated:     s.UpdatedAt,
 		Created:     s.CreatedAt,
 		Enclosure:   enclosure,
