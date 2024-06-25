@@ -131,8 +131,13 @@ nav:
       - "admin/themes.md"
   - "Federation":
       - "federation/index.md"
+      - "federation/http_signatures.md"
+      - "federation/access_control.md"
+      - "federation/ratelimiting.md"
+      - "federation/actors.md"
+      - "federation/posts.md"
+      - "federation/moderation.md"
       - "federation/glossary.md"
-      - "federation/federating_with_gotosocial.md"
   - "Client API Docs":
       - "api/authentication.md"
       - "api/swagger.md"
