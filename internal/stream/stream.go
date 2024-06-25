@@ -46,6 +46,10 @@ const (
 	// EventTypeFiltersChanged -- the user's filters
 	// (including keywords and statuses) have changed.
 	EventTypeFiltersChanged = "filters_changed"
+
+	// EventTypeConversation -- a user
+	// should be shown an updated conversation.
+	EventTypeConversation = "conversation"
 )
 
 const (

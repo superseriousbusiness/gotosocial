@@ -15,11 +15,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package util
+package conversations
 
-import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+import (
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+)
 
-// ShortcodeDomain returns the [shortcode]@[domain] for the given emoji.
-func ShortcodeDomain(emoji *gtsmodel.Emoji) string {
-	return emoji.Shortcode + "@" + emoji.Domain
+type Processor struct {
+	state     *state.State
+	converter *typeutils.Converter
+}
+
+func New(state *state.State, converter *typeutils.Converter) Processor {
+	return Processor{
+		state:     state,
+		converter: converter,
+	}
 }

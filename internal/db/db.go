@@ -28,6 +28,7 @@ type DB interface {
 	Admin
 	Application
 	Basic
+	Conversation
 	Domain
 	Emoji
 	HeaderFilter

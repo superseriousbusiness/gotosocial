@@ -1618,6 +1618,56 @@ func (c *Converter) NotificationToAPINotification(
 	}, nil
 }
 
+// ConversationToAPIConversation converts a conversation into its API representation.
+// The conversation status will be filtered using the notification filter context,
+// and may be nil if the status was hidden.
+func (c *Converter) ConversationToAPIConversation(
+	ctx context.Context,
+	conversation *gtsmodel.Conversation,
+	requestingAccount *gtsmodel.Account,
+	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
+) (*apimodel.Conversation, error) {
+	apiConversation := &apimodel.Conversation{
+		ID:     conversation.ID,
+		Unread: !*conversation.Read,
+	}
+	for _, account := range conversation.OtherAccounts {
+		var apiAccount *apimodel.Account
+		// TODO: (Vyr) good enough? is there something reusable for this? should we pull in a Filters dependency?
+		// TODO: (Vyr) duplicated in conversationsget.go
+		blocked, err := c.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, account.ID)
+		if err != nil {
+			return nil, err
+		}
+		if blocked || account.IsSuspended() {
+			apiAccount, err = c.AccountToAPIAccountBlocked(ctx, account)
+		} else {
+			apiAccount, err = c.AccountToAPIAccountPublic(ctx, account)
+		}
+		if err != nil {
+			return nil, err
+		}
+		apiConversation.Accounts = append(apiConversation.Accounts, *apiAccount)
+	}
+	if conversation.LastStatus != nil {
+		var err error
+		apiConversation.LastStatus, err = c.StatusToAPIStatus(
+			ctx,
+			conversation.LastStatus,
+			requestingAccount,
+			statusfilter.FilterContextNotifications,
+			filters,
+			mutes,
+		)
+		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+			return nil, err
+		}
+	}
+
+	return apiConversation, nil
+}
+
 // DomainPermToAPIDomainPerm converts a gts model domin block or allow into an api domain permission.
 func (c *Converter) DomainPermToAPIDomainPerm(
 	ctx context.Context,

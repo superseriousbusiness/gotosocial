@@ -232,6 +232,10 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
+	if err := p.surface.UpdateConversationsForStatus(ctx, status, true); err != nil {
+		log.Errorf(ctx, "error adding status to conversations: %v", err)
+	}
+
 	return nil
 }
 
