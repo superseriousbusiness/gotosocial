@@ -36,6 +36,7 @@ type Emoji struct {
 	ImageStaticContentType string    `validate:"required" bun:",nullzero,notnull"`                                                            // MIME content type of the static version of the emoji image.
 	ImageFileSize          int       `validate:"required,min=1" bun:",nullzero,notnull"`                                                      // Size of the emoji image file in bytes, for serving purposes.
 	ImageStaticFileSize    int       `validate:"required,min=1" bun:",nullzero,notnull"`                                                      // Size of the static version of the emoji image file in bytes, for serving purposes.
+	ImageUpdatedAt         time.Time `validate:"-" bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                         // When was the emoji image last updated?
 	Disabled               *bool     `validate:"-" bun:",nullzero,notnull,default:false"`                                                     // Has a moderation action disabled this emoji from being shown?
 	URI                    string    `validate:"url" bun:",nullzero,notnull,unique"`                                                          // ActivityPub uri of this emoji. Something like 'https://example.org/emojis/1234'
 	VisibleInPicker        *bool     `validate:"-" bun:",nullzero,notnull,default:true"`                                                      // Is this emoji visible in the admin emoji picker?

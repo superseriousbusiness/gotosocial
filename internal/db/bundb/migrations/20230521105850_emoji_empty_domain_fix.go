@@ -20,7 +20,7 @@ package migrations
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20230521105850_emoji_empty_domain_fix"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -85,6 +85,7 @@ func init() {
 				"image_static_content_type",
 				"image_file_size",
 				"image_static_file_size",
+				"image_updated_at",
 				"disabled",
 				"uri",
 				"visible_in_picker",
