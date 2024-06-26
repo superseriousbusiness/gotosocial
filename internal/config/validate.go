@@ -118,6 +118,26 @@ func Validate() error {
 		errf("%s must be set", WebAssetBaseDirFlag())
 	}
 
+	// `storage-s3-custom-url`
+	switch s3CustomURL := GetStorageS3CustomURL(); s3CustomURL {
+	case "":
+		// No problem.
+
+	default:
+		if s3CustomURL[:8] != "https://" && s3CustomURL[:7] != "http://" {
+			errf(
+				"%s must start with http:// or https://",
+				StorageS3CustomURLFlag(),
+			)
+		}
+		if s3CustomURL[len(s3CustomURL)-1] == '/' {
+			errf(
+				"%s must not end with a trailing slash",
+				StorageS3CustomURLFlag(),
+			)
+		}
+	}
+
 	// Custom / LE TLS settings.
 	//
 	// Only one of custom certs or LE can be set,

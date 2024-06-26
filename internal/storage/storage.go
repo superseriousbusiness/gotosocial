@@ -73,6 +73,7 @@ type Driver struct {
 	Proxy          bool
 	Bucket         string
 	PresignedCache *ttl.Cache[string, PresignedURL]
+	CustomURL      string
 }
 
 // Get returns the byte value for key in storage.
@@ -133,12 +134,22 @@ func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
 		return &e.Value
 	}
 
-	u, err := s3.Client().PresignedGetObject(ctx, d.Bucket, key, urlCacheTTL, url.Values{
-		"response-content-type": []string{mime.TypeByExtension(path.Ext(key))},
-	})
-	if err != nil {
-		// If URL request fails, fallback is to fetch the file. So ignore the error here
-		return nil
+	var u *url.URL
+	var err error
+	if d.CustomURL != "" {
+		u, err = url.Parse(d.CustomURL + "/" + key)
+		if err != nil {
+			// If URL request fails, fallback is to fetch the file. So ignore the error here
+			return nil
+		}
+	} else {
+		u, err = s3.Client().PresignedGetObject(ctx, d.Bucket, key, urlCacheTTL, url.Values{
+			"response-content-type": []string{mime.TypeByExtension(path.Ext(key))},
+		})
+		if err != nil {
+			// If URL request fails, fallback is to fetch the file. So ignore the error here
+			return nil
+		}
 	}
 
 	psu := PresignedURL{
@@ -172,6 +183,12 @@ func (d *Driver) ProbeCSPUri(ctx context.Context) (string, error) {
 	s3, ok := d.Storage.(*s3.S3Storage)
 	if !ok || d.Proxy {
 		return "", nil
+	}
+
+	// Check whether S3 custom URL is set.
+	// If it is, return it directly.
+	if d.CustomURL != "" {
+		return d.CustomURL, nil
 	}
 
 	const cspKey = "gotosocial-csp-probe"
@@ -247,6 +264,7 @@ func NewS3Storage() (*Driver, error) {
 	secret := config.GetStorageS3SecretKey()
 	secure := config.GetStorageS3UseSSL()
 	bucket := config.GetStorageS3BucketName()
+	custumURL := config.GetStorageS3CustomURL()
 
 	// Open the s3 storage implementation
 	s3, err := s3.Open(endpoint, bucket, &s3.Config{
@@ -274,5 +292,6 @@ func NewS3Storage() (*Driver, error) {
 		Bucket:         config.GetStorageS3BucketName(),
 		Storage:        s3,
 		PresignedCache: presignedCache,
+		CustomURL:      custumURL,
 	}, nil
 }
